@@ -1,3 +1,4 @@
+[![WICHTIG! Datenschutzrichtlinie lesen!](https://img.shields.io/badge/Datenschutz-WICHTIG-red?style=for-the-badge)](./PRIVACY.md)
 # ⏱ Time.Tracker.SingleFile
 
 > **Eine moderne, hochperformante Zeiterfassungs- und Gleitzeitmanagement-Anwendung mit umfangreicher Analytics.**
