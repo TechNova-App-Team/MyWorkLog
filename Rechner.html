@@ -19,8 +19,11 @@
             --success: #10b981;
             --danger: #ef4444;
             --school: #3b82f6; 
-            --work-color: #a855f7; /* Primary */
-            --expected-color: #64748b; /* Slate gray */
+            --holiday: #f59e0b; 
+            --audit-ok: #10b981;
+            --audit-warn: #fbbf24;
+            --work-color: #a855f7; 
+            --expected-color: #64748b; 
             --border: rgba(255, 255, 255, 0.06);
             --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
@@ -203,7 +206,8 @@
         .entry-row.type-vacation { border-color: var(--success); }
         .entry-row.type-sick { border-color: var(--danger); }
         .entry-row.type-school { border-color: var(--school); }
-        
+        .entry-row.type-holiday { border-color: var(--holiday); } 
+
         .entry-date { font-weight: 600; color: #fff; font-size: 0.95rem; }
         .entry-meta { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
         .tag { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; background: rgba(255,255,255,0.05); }
@@ -248,21 +252,25 @@
             grid-template-rows: repeat(10, 1fr);
             gap: 10px;
             height: 100%;
-            padding-bottom: 30px; /* Space for labels */
+            padding: 0 10px 30px; /* Space for labels */
+            align-items: flex-end;
         }
         .bar-col {
             position: relative;
             display: flex;
             flex-direction: column-reverse;
             align-items: center;
+            height: 100%;
         }
         .bar {
             width: 18px;
             border-radius: 3px 3px 0 0;
             transition: height 0.8s ease;
+            position: absolute;
+            bottom: 0;
         }
-        .bar-expected { background: var(--expected-color); opacity: 0.3; position: absolute; bottom: 0; }
-        .bar-actual { background: var(--work-color); }
+        .bar-expected { background: var(--expected-color); opacity: 0.3; }
+        .bar-actual { background: var(--work-color); z-index: 1; }
 
         .bar-label {
             position: absolute;
@@ -272,6 +280,36 @@
             transform: rotate(-45deg);
             white-space: nowrap;
         }
+        
+        /* --- NEW AUDIT GRID STYLES --- */
+        .audit-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .audit-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 1rem 1.25rem;
+            border-left: 3px solid var(--primary);
+        }
+        .audit-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        .audit-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .audit-card.warn { border-left-color: var(--audit-warn); }
+        .audit-card.danger { border-left-color: var(--danger); }
+        .audit-card.success { border-left-color: var(--audit-ok); }
+
 
     </style>
 </head>
@@ -359,7 +397,21 @@
                     </div>
                 </div>
             </div>
-
+            
+            <div class="audit-grid">
+                <div class="card audit-card" id="auditHoliday">
+                    <div class="audit-label">Feiertag Check</div>
+                    <div class="audit-value" style="color:var(--holiday);" id="auditHolidayValue">Wird geladen...</div>
+                </div>
+                <div class="card audit-card" id="auditShift">
+                    <div class="audit-label">Letzte Schichtwarnung</div>
+                    <div class="audit-value" id="auditShiftValue">Keine Warnung</div>
+                </div>
+                <div class="card audit-card success" id="auditSave">
+                    <div class="audit-label">Letzter Autosave</div>
+                    <div class="audit-value" id="auditSaveValue">Vor Sekunden</div>
+                </div>
+            </div>
             <div class="charts-row">
                 <div class="card">
                     <div class="chart-header">
@@ -382,6 +434,7 @@
                             <circle id="donutSick" cx="50" cy="50" r="40" fill="transparent" stroke="var(--danger)" stroke-width="12" stroke-dasharray="0 251"></circle>
                             <circle id="donutVac" cx="50" cy="50" r="40" fill="transparent" stroke="var(--success)" stroke-width="12" stroke-dasharray="0 251"></circle>
                             <circle id="donutSchool" cx="50" cy="50" r="40" fill="transparent" stroke="var(--school)" stroke-width="12" stroke-dasharray="0 251"></circle>
+                            <circle id="donutHoliday" cx="50" cy="50" r="40" fill="transparent" stroke="var(--holiday)" stroke-width="12" stroke-dasharray="0 251"></circle>
                             <circle id="donutWork" cx="50" cy="50" r="40" fill="transparent" stroke="var(--primary)" stroke-width="12" stroke-dasharray="0 251"></circle>
                         </svg>
                     </div>
@@ -390,6 +443,7 @@
                         <div class="legend-item"><div class="dot" style="background:var(--school)"></div> Schule</div>
                         <div class="legend-item"><div class="dot" style="background:var(--success)"></div> Urlaub</div>
                         <div class="legend-item"><div class="dot" style="background:var(--danger)"></div> Krank</div>
+                        <div class="legend-item"><div class="dot" style="background:var(--holiday)"></div> Feiertag</div>
                     </div>
                 </div>
             </div>
@@ -569,6 +623,9 @@
         applyTheme(data.settings.theme);
         updateUI();
         
+        // NEW: Check and book holidays (async to prevent blocking main UI)
+        setTimeout(checkAndBookHolidays, 500);
+
         // Timer Check
         const savedTimer = localStorage.getItem('tg_timer');
         if(savedTimer) {
@@ -590,25 +647,26 @@
         document.getElementById('inpDate').valueAsDate = new Date();
     };
 
-    function save() { localStorage.setItem('tg_pro_data', JSON.stringify(data)); updateUI(); }
+    function save() { 
+        localStorage.setItem('tg_pro_data', JSON.stringify(data)); 
+        // Log last save time
+        localStorage.setItem('tg_last_save', Date.now()); 
+        updateUI(); 
+    }
     function saveTimerState() { localStorage.setItem('tg_timer', JSON.stringify(timer)); }
 
-    // --- TAB LOGIC (THE FIX!) ---
+    // --- TAB LOGIC ---
     function switchTab(tabId) {
-        // Hide all views
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         
-        // Show target
         document.getElementById('view-' + tabId).classList.add('active');
         const navEl = document.getElementById('nav-' + tabId);
         if(navEl) navEl.classList.add('active');
         
-        // Update UI Title
         const titles = { 'dashboard': 'Übersicht', 'history': 'Gesamte Historie', 'performance': 'Performance Analyse' };
         document.querySelector('.page-title').textContent = titles[tabId];
 
-        // Trigger performance calculation if tab is switched to performance
         if (tabId === 'performance') {
             const perfData = calculatePerformanceData();
             renderPerformanceView(perfData);
@@ -624,13 +682,17 @@
         const direct = document.getElementById('inpHours').value;
 
         if(!dateStr) return alert('Bitte Datum wählen');
+        
         const date = new Date(dateStr);
-
         let worked = 0;
         let dayIndex = date.getDay(); 
         let expected = data.settings.hours[dayIndex] || 0;
         let info = '';
         let diff = 0; 
+        
+        let breakMinutes = 0;
+        let shiftEnd = '';
+        let shiftWarning = false;
 
         if(type === 'work') {
             if(start && end) {
@@ -641,12 +703,21 @@
                 
                 // Auto Break Logic
                 if(data.settings.break.thresh > 0 && hoursDiff >= data.settings.break.thresh) {
-                    hoursDiff -= (data.settings.break.min / 60);
-                    info = `${start} - ${end} (Auto-Pause)`;
+                    breakMinutes = data.settings.break.min;
+                    hoursDiff -= (breakMinutes / 60);
+                    info = `${start} - ${end} (Auto-Pause ${breakMinutes}m)`;
                 } else {
                     info = `${start} - ${end}`;
                 }
                 worked = hoursDiff;
+                
+                // Protocolling: Calculate End of Shift & Warning
+                const endTime = d2.getTime();
+                const endOfShift = new Date(endTime);
+                endOfShift.setMinutes(endOfShift.getMinutes() + breakMinutes);
+                shiftEnd = endOfShift.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+                shiftWarning = worked > 10.0; // Arbeitszeitgesetz Check (>10h)
+
             } else if (direct) {
                 worked = parseFloat(direct);
                 info = 'Manuell';
@@ -671,19 +742,16 @@
                 info = 'Keine Berufsschule (Regulär)';
             }
             
-            // KORREKTUR: Schulzeit zählt als Soll-Zeit erfüllt, kein Minus im Saldo.
+            // Schulzeit zählt als Soll-Zeit erfüllt, kein Minus im Saldo.
             if (worked > 0 && (dayIndex === 3 || (dayIndex === 4 && isOddWeek(date)) || direct)) {
                  diff = 0; 
             } else {
                  diff = worked - expected;
             }
 
-
-        } else {
-            // Sick/Vacation
+        } else if (type === 'vacation' || type === 'sick' || type === 'holiday') {
             worked = expected;
-            info = type === 'vacation' ? 'Urlaubstag' : 'Krankmeldung';
-            // Auch hier wird Soll-Zeit gebucht, daher Diff = 0
+            info = type === 'vacation' ? 'Urlaubstag' : (type === 'sick' ? 'Krankmeldung' : 'Feiertag');
             diff = 0;
         }
 
@@ -691,7 +759,10 @@
             id: editId || Date.now(),
             date: dateStr, type, worked, expected, 
             diff: diff, 
-            info, isPeriod: false
+            info, isPeriod: false,
+            breakMins: breakMinutes,
+            shiftEnd: shiftEnd,
+            shiftWarning: shiftWarning
         };
 
         if(editId) {
@@ -709,23 +780,125 @@
         document.getElementById('inpEnd').value = '';
         document.getElementById('inpHours').value = '';
     }
+    
+    // --- FEIERTAG LOGIC ---
+    function getGermanHolidays(year) {
+        const holidays = [];
+        const pad = n => (n < 10 ? '0' : '') + n;
+        const toKey = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
-    // Hilfsfunktion: Prüft, ob es eine UNGERADE Kalenderwoche ist
-    function isOddWeek(d) {
-        return getWeek(d) % 2 !== 0;
+        const getEasterSunday = (Y) => {
+            const a = Y % 19; const b = Y % 4; const c = Y % 7;
+            const k = Math.floor(Y / 100); const p = Math.floor((13 * k + 8) / 25);
+            const q = Math.floor(k / 4);
+            const M = (15 - p + k - q) % 30;
+            const N = (4 + k - q) % 7;
+            const d = (19 * a + M) % 30;
+            const e = (2 * b + 4 * c + 6 * d + N) % 7;
+            let days = (22 + d + e);
+            let month = 3; 
+
+            if (days > 31) { month = 4; days -= 31; }
+            if (days === 26 && month === 4) days = 19; 
+            if (days === 25 && month === 4 && d === 28 && e === 6 && a > 10) days = 18; 
+
+            return new Date(Y, month - 1, days);
+        };
+
+        const easter = getEasterSunday(year);
+        const addDays = (d, days) => {
+            const result = new Date(d);
+            result.setDate(result.getDate() + days);
+            return result;
+        };
+        const add = (date, name) => holidays.push({ date: toKey(date), name, type: 'holiday' });
+
+        // FEIERTAGS-BERECHNUNG (Bundesweit + Wichtige Regionale)
+        add(new Date(year, 0, 1), "Neujahr");
+        add(new Date(year, 4, 1), "Tag der Arbeit");
+        add(new Date(year, 9, 3), "Tag der Deutschen Einheit");
+        add(new Date(year, 11, 25), "1. Weihnachtstag");
+        add(new Date(year, 11, 26), "2. Weihnachtstag");
+        
+        // Bewegliche Feiertage
+        add(addDays(easter, -2), "Karfreitag");
+        add(addDays(easter, 1), "Ostermontag");
+        add(addDays(easter, 39), "Christi Himmelfahrt");
+        add(addDays(easter, 50), "Pfingstmontag");
+        add(addDays(easter, 60), "Fronleichnam"); 
+        add(new Date(year, 0, 6), "Heilige Drei Könige");
+        add(new Date(year, 10, 1), "Allerheiligen");
+
+        return holidays.filter((h, i, a) => a.findIndex(h2 => h2.date === h.date) === i); 
     }
 
+    function checkAndBookHolidays() {
+        const now = new Date();
+        const year = now.getFullYear();
+        
+        let holidays = getGermanHolidays(year);
+        holidays = holidays.concat(getGermanHolidays(year + 1));
+        
+        const existingDates = data.entries.map(e => e.date);
+
+        let bookedHolidays = [];
+
+        holidays.forEach(h => {
+            const hDate = h.date;
+            
+            // Nur buchen, wenn der Tag in der Datenbank fehlt
+            if (!existingDates.includes(hDate)) {
+                
+                const dateObj = new Date(hDate);
+                const dayIndex = dateObj.getDay();
+                const expected = data.settings.hours[dayIndex] || 0;
+
+                // Nur buchen, wenn es ein Soll-Arbeitstag ist (Mo-Fr) UND in der Vergangenheit/nahen Zukunft
+                if (expected > 0 && dayIndex >= 1 && dayIndex <= 5 && new Date(hDate).getTime() < now.getTime() + (30 * 86400000)) { 
+                    const entry = {
+                        id: Date.now() + Math.random(),
+                        date: hDate,
+                        type: 'holiday',
+                        worked: expected, 
+                        expected: expected,
+                        diff: 0,
+                        info: h.name, 
+                        isPeriod: false,
+                        breakMins: 0,
+                        shiftEnd: '',
+                        shiftWarning: false
+                    };
+                    data.entries.push(entry);
+                    bookedHolidays.push(entry);
+                }
+            }
+        });
+        
+        // NEW: Protokollierung des Holiday Checks
+        localStorage.setItem('tg_last_holiday_check', JSON.stringify({
+            timestamp: Date.now(),
+            count: bookedHolidays.length,
+            next: holidays.find(h => new Date(h.date).getTime() > now.getTime())
+        }));
+
+        if (bookedHolidays.length > 0) {
+            data.entries.sort((a,b) => new Date(b.date) - new Date(a.date));
+            save();
+        } else {
+            updateUI(); // Auch wenn nichts gebucht wurde, UI aktualisieren, um Audit-Protokoll zu füllen
+        }
+    }
+    
     // --- UI UPDATES (Dashboard) ---
     function updateUI() {
         document.getElementById('userGreeting').innerText = `Hallo, ${data.settings.name}`;
         
         const now = new Date();
         let week=0, month=0, total=0, totalWorked=0, countDays=0;
-        let sickSum=0, vacSum=0, workSum=0, schoolSum=0;
+        let sickSum=0, vacSum=0, workSum=0, schoolSum=0, holidaySum=0; 
         let trendData = [];
         let runningTotal = 0;
 
-        // Clone for trend (Oldest first)
         let ascEntries = [...data.entries].sort((a,b) => new Date(a.date) - new Date(b.date));
         
         ascEntries.forEach(e => {
@@ -734,15 +907,14 @@
             if(e.type==='sick') sickSum += e.worked;
             else if(e.type==='vacation') vacSum += e.worked;
             else if(e.type==='school') schoolSum += e.worked;
+            else if(e.type==='holiday') holidaySum += e.worked;
             else workSum += e.worked;
         });
 
-        // Current Stats
         data.entries.forEach(e => {
             const d = new Date(e.date);
             total += e.diff;
-            if(e.type === 'work' || e.type === 'school' || e.type === 'vacation' || e.type === 'sick') { 
-                // Für Ø TÄGLICH zählen wir ALLE Stunden der Soll-Erfüllung
+            if(e.type === 'work' || e.type === 'school' || e.type === 'vacation' || e.type === 'sick' || e.type === 'holiday') { 
                 totalWorked += e.worked; 
                 countDays++; 
             }
@@ -763,7 +935,6 @@
         const avg = countDays > 0 ? totalWorked/countDays : 0;
         document.getElementById('valAvg').innerText = avg.toFixed(1) + 'h';
 
-        // Projection
         const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
         const dailyDrift = dayOfYear > 0 ? total / dayOfYear : 0;
         const projected = total + (dailyDrift * (365 - dayOfYear));
@@ -771,23 +942,76 @@
 
         renderLists();
         renderTrend(trendData, 'trendChart');
-        renderDonut(workSum, vacSum, sickSum, schoolSum);
+        renderDonut(workSum, vacSum, sickSum, schoolSum, holidaySum);
+        renderAuditProtocol(); // NEW: Audit Protokoll rendern
     }
+    
+    // --- NEW AUDIT PROTOCOL RENDER ---
+    function renderAuditProtocol() {
+        const now = Date.now();
+        const dateFormatter = (timestamp) => {
+            const diff = now - timestamp;
+            if (diff < 60000) return `vor ${Math.floor(diff/1000)} Sekunden`;
+            if (diff < 3600000) return `vor ${Math.floor(diff/60000)} Minuten`;
+            return new Date(timestamp).toLocaleDateString('de-DE');
+        };
+
+        // 1. Autosave
+        const saveTime = localStorage.getItem('tg_last_save');
+        if (saveTime) {
+            document.getElementById('auditSaveValue').innerText = dateFormatter(parseInt(saveTime));
+        } else {
+            document.getElementById('auditSaveValue').innerText = 'Nie gespeichert';
+            document.getElementById('auditSave').classList.remove('success');
+            document.getElementById('auditSave').classList.add('danger');
+        }
+
+        // 2. Feiertag
+        const holidayLog = localStorage.getItem('tg_last_holiday_check');
+        const holidayEl = document.getElementById('auditHoliday');
+        if (holidayLog) {
+            const log = JSON.parse(holidayLog);
+            const nextDate = log.next ? new Date(log.next.date) : null;
+            
+            document.getElementById('auditHolidayValue').innerText = nextDate 
+                ? `${log.next.name} (${nextDate.toLocaleDateString('de-DE')})` 
+                : `Check: ${dateFormatter(log.timestamp)}`;
+
+            holidayEl.classList.remove('warn', 'danger');
+            holidayEl.classList.add(log.count > 0 ? 'success' : 'warn');
+
+        } else {
+            document.getElementById('auditHolidayValue').innerText = 'Erster Check steht aus';
+            holidayEl.classList.add('warn');
+        }
+
+        // 3. Schichtwarnung
+        const lastWarning = data.entries.find(e => e.shiftWarning === true && e.type === 'work');
+        const shiftEl = document.getElementById('auditShift');
+        
+        shiftEl.classList.remove('warn', 'success');
+
+        if (lastWarning) {
+            document.getElementById('auditShiftValue').innerText = `${lastWarning.date} (${lastWarning.worked.toFixed(1)}h)`;
+            shiftEl.classList.add('danger');
+        } else {
+            document.getElementById('auditShiftValue').innerText = 'Keine Überziehung erfasst!';
+            shiftEl.classList.add('success');
+        }
+    }
+    
+    // --- CHARTS (Bar Chart Fix included) ---
+    // The rest of the rendering functions (setRadial, renderLists, renderTrend, renderDonut, etc.) are included here for completeness and to ensure the Bar Chart Fix is present.
 
     function setRadial(ringId, txtId, val) {
         const el = document.getElementById(ringId);
         const txt = document.getElementById(txtId);
-        // Circle 276 (r=44)
-        // range +/- 10h
         let pct = 0.5 + (val / 40); 
         if(pct > 1) pct = 1; if(pct < 0) pct = 0;
-        
         const offset = 276 - (pct * 276);
         el.style.strokeDashoffset = offset;
-        
         if(val < 0) el.style.stroke = 'var(--danger)';
         else el.style.stroke = 'var(--primary)';
-        
         txt.innerText = (val>=0?'+':'') + val.toFixed(1) + 'h';
     }
 
@@ -796,10 +1020,10 @@
             <div class="entry-row type-${e.type}">
                 <div>
                     <div class="entry-date">${new Date(e.date).toLocaleDateString('de-DE')}</div>
-                    <div class="entry-meta">${e.isPeriod ? e.label : e.info} (${e.worked.toFixed(2)}h)</div>
+                    <div class="entry-meta">${e.isPeriod ? e.label : e.info} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ SCHICHT MAX!</span>' : ''}</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px;">
-                    <span class="tag">${e.type === 'school' ? 'SCHULE' : e.type.toUpperCase()}</span>
+                    <span class="tag">${e.type === 'school' ? 'SCHULE' : (e.type === 'holiday' ? 'FEIERTAG' : e.type.toUpperCase())}</span>
                     <div style="font-weight:700; width:60px; text-align:right; color:${e.diff>=0?'var(--success)':'var(--danger)'}">
                         ${e.diff>=0?'+':''}${e.diff.toFixed(2)}
                     </div>
@@ -811,18 +1035,14 @@
             </div>
         `;
 
-        // Dashboard List (Limit 5)
         document.getElementById('entryListShort').innerHTML = data.entries.slice(0, 5).map(createRow).join('');
-        
-        // Full List
         document.getElementById('entryListFull').innerHTML = data.entries.map(createRow).join('');
         document.getElementById('historyCount').innerText = `${data.entries.length} Einträge`;
     }
 
-    // --- CHARTS ---
     function renderTrend(dataPoints, elementId, areaFill = true) {
         const c = document.getElementById(elementId);
-        if(!c) return; // Exit if element doesn't exist (e.g., in testing)
+        if(!c) return; 
         if(dataPoints.length < 2) { c.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; color:#555;">Noch keine Daten</div>'; return; }
         
         const subset = dataPoints.slice(-30); 
@@ -862,13 +1082,13 @@
         `;
     }
 
-    function renderDonut(work, vac, sick, school) {
-        const total = work + vac + sick + school || 1; 
+    function renderDonut(work, vac, sick, school, holiday) { 
+        const total = work + vac + sick + school + holiday || 1; 
         const c = 251; 
         
         const setSeg = (id, val, offset) => {
             const el = document.getElementById(id);
-            if (!el) return offset; // Safety check
+            if (!el) return offset; 
             const dash = (val / total) * c;
             el.style.strokeDasharray = `${dash} ${c}`;
             el.style.strokeDashoffset = -offset;
@@ -880,51 +1100,52 @@
         off = setSeg('donutSchool', school, off); 
         off = setSeg('donutVac', vac, off);
         off = setSeg('donutSick', sick, off);
+        off = setSeg('donutHoliday', holiday, off); 
     }
-    
-    // --- PERFORMANCE ANALYSE LOGIC ---
 
     function calculatePerformanceData() {
         const now = new Date();
         const oneDay = 86400000;
+        const oneWeek = 7 * oneDay;
 
-        // 1. Soll-Ist-Vergleich (Weekly)
-        // Groups data into the last 8 weeks (index 0 being current partial week)
-        const weeklyData = Array(8).fill(0).map(() => ({ actual: 0, expected: 0, label: '' }));
+        const weeklyData = [];
         let weekTotalActual = 0;
         let weekTotalExpected = 0;
-        let earliestDate = now.getTime() - (90 * oneDay); // Start for 90-day calculation
+        let earliestDate = now.getTime() - (90 * oneDay);
 
-        data.entries.forEach(e => {
-            const date = new Date(e.date);
-            const entryWeek = getWeek(date);
-            const currentWeek = getWeek(now);
-            const weekDiff = currentWeek - entryWeek;
-            
-            // Adjust for year change, assuming continuous 52-week cycle
-            if (now.getFullYear() > date.getFullYear() && weekDiff > 20) {
-                 // Adjust for end of year wrap-around
-                 const weeksInLastYear = getWeek(new Date(date.getFullYear(), 11, 28)); // Week of Dec 28
-                 weekDiff = currentWeek + weeksInLastYear - entryWeek;
-            }
+        for (let i = 0; i < 8; i++) {
+            const startOfWeek = new Date(now.getTime() - (i * oneWeek));
+            startOfWeek.setHours(0, 0, 0, 0);
+            startOfWeek.setDate(startOfWeek.getDate() - (startOfWeek.getDay() || 7) + 1); 
 
-            if (weekDiff < 8 && weekDiff >= 0) {
-                const idx = 7 - weekDiff; // Map week difference to array index (0=oldest, 7=newest)
-                if (idx >= 0 && idx < 8) {
-                    weeklyData[idx].actual += e.worked;
-                    weeklyData[idx].expected += e.expected;
-                    weeklyData[idx].label = `KW ${entryWeek}`;
+            const weekEntries = data.entries.filter(e => {
+                const eDate = new Date(e.date);
+                return eDate >= startOfWeek && eDate < new Date(startOfWeek.getTime() + oneWeek);
+            });
+
+            let actual = 0;
+            let expected = 0;
+
+            weekEntries.forEach(e => {
+                actual += e.worked;
+                expected += e.expected;
+
+                const eTime = new Date(e.date).getTime();
+                if (eTime >= earliestDate) {
+                    weekTotalActual += e.worked;
+                    weekTotalExpected += e.expected;
                 }
-            }
-
-            // 90-Day KPI Calculation
-            if (date.getTime() >= earliestDate) {
-                weekTotalActual += e.worked;
-                weekTotalExpected += e.expected;
-            }
-        });
-
-        // 2. Saldo-Entwicklung (Monthly)
+            });
+            
+            const weekNum = getWeek(startOfWeek);
+            weeklyData.unshift({ 
+                actual: actual, 
+                expected: expected, 
+                label: `KW ${weekNum}`, 
+                date: startOfWeek.getTime()
+            });
+        }
+        
         const monthlyTrend = {};
         for (let i = 0; i < 12; i++) {
             const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -942,10 +1163,10 @@
         
         const monthlyTrendData = Object.values(monthlyTrend).reverse();
         
-        // 3. KPI Calculation
         const performanceScore = weekTotalExpected > 0 ? (weekTotalActual / weekTotalExpected) * 100 : 0;
         const totalMonthlyDiff = monthlyTrendData.reduce((sum, item) => sum + item.diff, 0);
-        const avgMonthlyDiff = monthlyTrendData.length > 0 ? totalMonthlyDiff / monthlyTrendData.length : 0;
+        const validMonthlyCount = monthlyTrendData.filter(d => d.diff !== 0).length || 1; 
+        const avgMonthlyDiff = totalMonthlyDiff / validMonthlyCount;
 
 
         return {
@@ -959,7 +1180,6 @@
     
     function renderPerformanceView(data) {
         
-        // 1. Render KPIs
         const scoreEl = document.getElementById('kpiPerformance');
         scoreEl.innerText = `${data.kpiScore.toFixed(0)}%`;
         scoreEl.style.color = data.kpiScore >= 100 ? 'var(--success)' : (data.kpiScore >= 95 ? '#fbbf24' : 'var(--danger)');
@@ -971,39 +1191,36 @@
         avgDiffEl.style.color = data.kpiAvgMonthlyDiff >= 0 ? 'var(--primary)' : 'var(--danger)';
 
 
-        // 2. Render Weekly Bar Chart (Soll-Ist-Vergleich)
+        // 2. Render Weekly Bar Chart (Soll-Ist-Vergleich) - MIT FIX DER SKALIERUNG
         const barContainer = document.getElementById('chartWeeklyPerformance');
         const weeklyBars = data.weekly;
         
-        // Finde den maximalen Wert (Soll oder Ist) für die Skalierung
-        const maxVal = Math.max(...weeklyBars.map(d => Math.max(d.actual, d.expected)));
-        const scaleFactor = 250 / (maxVal || 1); // Max height of container is 250px
+        const maxVal = Math.max(...weeklyBars.map(d => Math.max(d.actual, d.expected, 1))); 
+        const chartHeight = 250;
+        const scaleFactor = (chartHeight - 40) / maxVal; 
         
         barContainer.innerHTML = '';
         const barGrid = document.createElement('div');
         barGrid.className = 'bar-chart-grid';
         
-        weeklyBars.forEach((d, i) => {
+        weeklyBars.forEach((d) => {
             const actualH = d.actual * scaleFactor;
             const expectedH = d.expected * scaleFactor;
             
             const col = document.createElement('div');
             col.className = 'bar-col';
             
-            // Expected Bar (Soll, Full height of Soll)
             const barExp = document.createElement('div');
             barExp.className = 'bar bar-expected';
             barExp.style.height = `${expectedH}px`;
             
-            // Actual Bar (Ist)
             const barAct = document.createElement('div');
             barAct.className = 'bar bar-actual';
             barAct.style.height = `${actualH}px`;
             
-            // Label
             const label = document.createElement('span');
             label.className = 'bar-label';
-            label.innerText = d.label || `KW${getWeek(new Date(new Date().setDate(new Date().getDate() - (7 * (7-i)))))}`;
+            label.innerText = d.label;
 
             col.appendChild(barExp);
             col.appendChild(barAct);
@@ -1017,9 +1234,6 @@
         // 3. Render Monthly Trend Line Chart
         const monthlyDiffs = data.monthly.map(d => d.diff);
         const monthlyLabels = data.monthly.map(d => d.label);
-        
-        // Cumulative trend for 12 months (not the goal here)
-        // The goal is to see the monthly SALDO change (diff)
         
         const trendContainer = document.getElementById('chartMonthlyTrend');
         if (monthlyDiffs.length < 2) {
@@ -1037,15 +1251,12 @@
         let path = '';
         monthlyDiffs.forEach((val, i) => {
             const x = (i / (monthlyDiffs.length - 1)) * w;
-            // Scale values to the chart height (20px padding top/bottom)
             const y = h - ((val - min) / range * (h - 40)) - 20; 
             path += `${i===0?'M':'L'} ${x} ${y} `;
         });
 
-        // Add 0-Line for context (where Saldo is neither gained nor lost)
         const zeroLineY = h - ((0 - min) / range * (h - 40)) - 20;
         
-        // Render the line chart
         trendContainer.innerHTML = `
             <svg class="trend-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="overflow: visible;">
                 <line x1="0" y1="${zeroLineY}" x2="${w}" y2="${zeroLineY}" stroke="rgba(148, 163, 184, 0.4)" stroke-dasharray="4" stroke-width="1"/>
@@ -1064,73 +1275,22 @@
         `;
     }
 
-    // --- TIMER ---
-    function timerAction(act) {
-        if(act === 'start') {
-            if(!timer.running) { timer.start = Date.now(); timer.running = true; timerRun(); document.getElementById('timerBox').classList.add('timer-active'); }
-        } else if(act === 'pause') {
-            timer.running = false; timer.paused += Date.now() - timer.start;
-            document.getElementById('timerBox').classList.remove('timer-active');
-        } else if(act === 'stop') {
-            timer.running = false; 
-            document.getElementById('timerBox').classList.remove('timer-active');
-            let total = timer.paused + (Date.now() - timer.start);
-            let h = total / 3.6e6;
-            if(confirm(`Zeit stoppen: ${h.toFixed(2)}h?`)) {
-                document.getElementById('inpHours').value = h.toFixed(2);
-                document.getElementById('inpType').value = 'work';
-                document.getElementById('inpDate').valueAsDate = new Date();
-                handleEntry();
-                timer = {id:null, start:0, paused:0, running:false};
-                displayTimerTime(0);
-            }
-        }
-        saveTimerState();
-    }
-    
-    function timerRun() {
-        if(!timer.running) return;
-        requestAnimationFrame(timerRun);
-        const diff = (Date.now() - timer.start) + timer.paused;
-        displayTimerTime(diff);
-    }
-    
-    function displayTimerTime(ms) {
-        const h = Math.floor(ms / 3600000);
-        const m = Math.floor((ms % 3600000) / 60000);
-        const s = Math.floor((ms % 60000) / 1000);
-        document.getElementById('timerDisplay').innerText = `${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
-    }
+    // --- HILFSFUNKTIONEN ---
+    function isOddWeek(d) { return getWeek(d) % 2 !== 0; }
 
-    // --- SETTINGS ---
-    function openSettings() {
-        document.getElementById('settingsModal').classList.add('active');
-        document.getElementById('confName').value = data.settings.name;
-        document.getElementById('confBreakThresh').value = data.settings.break.thresh;
-        document.getElementById('confBreakMin').value = data.settings.break.min;
-        for(let i=1; i<=5; i++) document.getElementById('h'+i).value = data.settings.hours[i];
-    }
-    function saveSettings() {
-        data.settings.name = document.getElementById('confName').value;
-        data.settings.break.thresh = parseFloat(document.getElementById('confBreakThresh').value);
-        data.settings.break.min = parseFloat(document.getElementById('confBreakMin').value);
-        for(let i=1; i<=5; i++) data.settings.hours[i] = parseFloat(document.getElementById('h'+i).value);
-        
-        save();
-        document.getElementById('settingsModal').classList.remove('active');
-    }
-    function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
-    
-    function setTheme(hex) {
-        data.settings.theme = hex;
-        applyTheme(hex);
+    function getWeek(d) {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
     }
     
-    function applyTheme(hex) {
-        document.documentElement.style.setProperty('--primary', hex);
-        const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
-        document.documentElement.style.setProperty('--primary-rgb', `${r},${g},${b}`);
-        document.documentElement.style.setProperty('--primary-dim', `rgba(${r},${g},${b}, 0.15)`);
+    function toggleTimeInputs() {
+        const t = document.getElementById('inpType').value;
+        const els = [document.getElementById('inpStart'), document.getElementById('inpEnd')];
+        const disableTime = (t !== 'work');
+        els.forEach(e => e.disabled = disableTime);
+        document.getElementById('inpHours').disabled = false; 
     }
 
     function editEntry(id) {
@@ -1159,8 +1319,7 @@
             save();
         }
     }
-
-    // --- CORRECTION ---
+    
     function openCorrection(type) {
         const modal = document.getElementById('corrModal');
         const sel = document.getElementById('corrSelect');
@@ -1189,27 +1348,13 @@
             date: new Date().toISOString().split('T')[0],
             isPeriod: true,
             label: `Korrektur: ${sel.value}`,
-            diff: val, worked:0, expected:0, type:'work', info:'Manuelle Korrektur'
+            diff: val, worked:0, expected:0, type:'work', info:'Manuelle Korrektur',
+            breakMins: 0, shiftEnd: '', shiftWarning: false
         });
         save();
         document.getElementById('corrModal').classList.remove('active');
     }
-
-    function getWeek(d) {
-        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-        return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-    }
     
-    function toggleTimeInputs() {
-        const t = document.getElementById('inpType').value;
-        const els = [document.getElementById('inpStart'), document.getElementById('inpEnd')];
-        const disableTime = (t !== 'work');
-        els.forEach(e => e.disabled = disableTime);
-        document.getElementById('inpHours').disabled = false; 
-    }
-
     function exportData() {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type:'application/json'}));
@@ -1221,6 +1366,34 @@
         const r = new FileReader();
         r.onload = ev => { try { data = JSON.parse(ev.target.result); save(); location.reload(); } catch(x){alert('Error');} };
         r.readAsText(e.target.files[0]);
+    }
+    
+    function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
+    function openSettings() {
+        document.getElementById('settingsModal').classList.add('active');
+        document.getElementById('confName').value = data.settings.name;
+        document.getElementById('confBreakThresh').value = data.settings.break.thresh;
+        document.getElementById('confBreakMin').value = data.settings.break.min;
+        for(let i=1; i<=5; i++) document.getElementById('h'+i).value = data.settings.hours[i];
+    }
+    function saveSettings() {
+        data.settings.name = document.getElementById('confName').value;
+        data.settings.break.thresh = parseFloat(document.getElementById('confBreakThresh').value);
+        data.settings.break.min = parseFloat(document.getElementById('confBreakMin').value);
+        for(let i=1; i<=5; i++) data.settings.hours[i] = parseFloat(document.getElementById('h'+i).value);
+        
+        save();
+        document.getElementById('settingsModal').classList.remove('active');
+    }
+    function setTheme(hex) {
+        data.settings.theme = hex;
+        applyTheme(hex);
+    }
+    function applyTheme(hex) {
+        document.documentElement.style.setProperty('--primary', hex);
+        const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+        document.documentElement.style.setProperty('--primary-rgb', `${r},${g},${b}`);
+        document.documentElement.style.setProperty('--primary-dim', `rgba(${r},${g},${b}, 0.15)`);
     }
 
 </script>
