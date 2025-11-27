@@ -29,6 +29,9 @@
             --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
             --radius: 20px;
+            --note-good: #10b981; /* Für Noten 1.0 - 2.0 */
+            --note-mid: #fbbf24; /* Für Noten 2.1 - 3.0 */
+            --note-bad: #ef4444; /* Für Noten > 3.0 */
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -419,6 +422,9 @@
         <div class="nav-item" id="nav-ihk" onclick="switchTab('ihk')">
             <span>🎓</span> IHK / Karriere
         </div>
+        <div class="nav-item" id="nav-school" onclick="switchTab('school')">
+            <span>🏫</span> Berufsschule
+        </div>
         <div class="nav-item" id="nav-history" onclick="switchTab('history')">
             <span>📅</span> Historie
         </div>
@@ -654,7 +660,7 @@
 
                 <div class="ihk-kpi" style="border-left-color: var(--danger);">
                     <div class="ihk-kpi-label">Tage bis zur Abschlussprüfung</div>
-                    <div class="ihk-kpi-value" id="ihkCountdownEnd">---</div>
+                    <div class="ihk-kpi-value" id="ihkCountdownEndAudit">---</div>
                     <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">
                         Ende: <span id="ihkExamDateEnd">Datum fehlt</span>
                     </div>
@@ -668,6 +674,31 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="kpi-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div class="ihk-exam-kpi" style="background:var(--bg-glass); border:1px solid var(--border); border-left:5px solid var(--danger);">
+                    <div class="ihk-kpi-label">Kumulierte Krankheitstage</div>
+                    <div style="font-size:2.5rem; font-weight:800; color:var(--danger);" id="ihkSickDays">0</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">
+                        Tage mit Typ 'Krank' gebucht
+                    </div>
+                </div>
+                <div class="ihk-exam-kpi" style="background:var(--bg-glass); border:1px solid var(--border); border-left:5px solid var(--school);">
+                    <div class="ihk-kpi-label">Kumulierte Berufsschultage</div>
+                    <div style="font-size:2.5rem; font-weight:800; color:var(--school);" id="ihkSchoolDays">0</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">
+                        Tage mit Typ 'Schule' gebucht
+                    </div>
+                </div>
+                 <div class="ihk-exam-kpi" style="background:var(--bg-glass); border:1px solid var(--border); border-left:5px solid var(--audit-warn);">
+                    <div class="ihk-kpi-label">Warnung Fehlzeit (Max 10%)</div>
+                    <div style="font-size:1.5rem; font-weight:700; color:var(--audit-warn);" id="ihkMissedTimeWarning">Daten fehlen</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">
+                        Aktuelle Fehlzeit in % der Laufzeit
+                    </div>
+                </div>
+            </div>
+
 
             <div class="card">
                 <h3 style="margin-bottom:1.5rem;">IHK Ausbildungsdaten pflegen</h3>
@@ -682,25 +713,99 @@
                         <input type="date" id="confIHKEnd" class="glass-input">
                     </div>
                 </div>
+                
+                <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem;">PRÜFUNGSDATEN & NOTEN</h4>
                 <div class="ihk-input-group">
                     <div style="flex:1;">
                         <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px;">Datum der Zwischenprüfung:</label>
                         <input type="date" id="confIHKExamZwischen" class="glass-input">
                     </div>
                     <div style="flex:1;">
-                        <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px;">Tage bis zur Zwischenprüfung:</label>
-                         <div class="ihk-exam-kpi">
-                            <div style="font-size:1.5rem; font-weight:700;" id="ihkCountdownZwischen">---</div>
-                            <div style="font-size:0.7rem; color:var(--text-muted);">Tage verbleibend</div>
-                        </div>
+                        <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px;">Note Zwischenprüfung (1.0 - 6.0):</label>
+                         <input type="number" id="confIHKNoteZwischen" class="glass-input" step="0.1" placeholder="Note (z.B. 2.7)">
+                    </div>
+                </div>
+                 <div class="ihk-input-group">
+                    <div style="flex:1;">
+                        <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px;">Datum der Abschlussprüfung:</label>
+                        <input type="date" id="confIHKExamAbschluss" class="glass-input" disabled style="background:#151518; color:#777;">
+                        <span style="font-size:0.7rem; color:var(--text-muted);">Wird vom Ausbildungs-Ende übernommen</span>
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px;">Note Abschlussprüfung (1.0 - 6.0):</label>
+                         <input type="number" id="confIHKNoteAbschluss" class="glass-input" step="0.1" placeholder="Note (z.B. 1.3)">
                     </div>
                 </div>
                 
-                <div style="display:flex; justify-content:flex-end;">
+                <div style="display:flex; justify-content:flex-end; margin-top: 1.5rem;">
                      <button class="btn btn-primary" onclick="saveIHKSettings()" style="width: 300px;">Daten speichern & berechnen</button>
                 </div>
             </div>
+            
+            <div class="card">
+                <h4 style="margin-bottom:10px;">Countdown und Noten-Übersicht</h4>
+                <div class="ihk-input-group">
+                    <div class="ihk-exam-kpi">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">Tage bis zur Zwischenprüfung:</div>
+                        <div style="font-size:1.5rem; font-weight:700;" id="ihkCountdownZwischen">---</div>
+                    </div>
+                    <div class="ihk-exam-kpi">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">Note Zwischenprüfung:</div>
+                        <div style="font-size:1.5rem; font-weight:700;" id="ihkDisplayNoteZwischen">---</div>
+                    </div>
+                </div>
+                 <div class="ihk-input-group">
+                    <div class="ihk-exam-kpi">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">Tage bis zur Abschlussprüfung:</div>
+                        <div style="font-size:1.5rem; font-weight:700;" id="ihkCountdownEndAudit">---</div>
+                    </div>
+                    <div class="ihk-exam-kpi">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">Note Abschlussprüfung:</div>
+                        <div style="font-size:1.5rem; font-weight:700;" id="ihkDisplayNoteAbschluss">---</div>
+                    </div>
+                </div>
+            </div>
         </div>
+        
+        <div id="view-school" class="view-section">
+            <div class="kpi-grid" style="grid-template-columns: 1.5fr 1fr 1fr;">
+                 <div class="ihk-kpi" style="border-left-color: var(--school);">
+                    <div class="ihk-kpi-label">AKTUELLER GESAMT-DURCHSCHNITT</div>
+                    <div class="ihk-kpi-value" id="schoolOverallAvg" style="color:var(--school);">1.0</div>
+                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">
+                        (Alle Noten, gewichtet 1:1)
+                    </div>
+                </div>
+                <div class="ihk-exam-kpi" style="background:var(--bg-glass); border:1px solid var(--border); border-left:5px solid var(--note-good);">
+                    <div class="ihk-kpi-label">BESTE NOTE</div>
+                    <div style="font-size:2.5rem; font-weight:800;" id="schoolBestNote">---</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;" id="schoolBestSubject"></div>
+                </div>
+                 <div class="ihk-exam-kpi" style="background:var(--bg-glass); border:1px solid var(--border); border-left:5px solid var(--note-bad);">
+                    <div class="ihk-kpi-label">SCHLECHTESTE NOTE</div>
+                    <div style="font-size:2.5rem; font-weight:800;" id="schoolWorstNote">---</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;" id="schoolWorstSubject"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom:1.5rem; color:var(--school);">Berufsschul-Notenverwaltung</h3>
+                <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem;">FÄCHER UND BEWERTUNGEN</h4>
+                
+                <div id="schoolGradesInputGrid" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:15px;">
+                    <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end; margin-top:1rem;">
+                        <button class="btn btn-primary" onclick="saveSchoolGrades()" style="width: 300px; background:var(--school);">Noten speichern & berechnen</button>
+                    </div>
+                </div>
+                
+            </div>
+             <div class="card">
+                <h4 style="margin-bottom:10px;">Noten-Historie (Alle eingetragenen Noten)</h4>
+                <div id="schoolGradesList" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px;">
+                    </div>
+             </div>
+        </div>
+
         <div id="view-history" class="view-section">
             <div class="card">
                 <div class="list-header" style="display:flex; justify-content:space-between;">
@@ -860,11 +965,23 @@
             hours:[0,8.75,8.75,8.75,8.75,4.5,0], 
             break:{thresh:6, min:30}, 
             vacation:{total:30, used:0, usedManual:0},
-            // IHK Einstellungen
+            // IHK Einstellungen (ERWEITERT)
             ihk: {
                 start: '',
                 end: '',
-                exam_zwischen: '' // NEU: Zwischenprüfung
+                exam_zwischen: '',
+                note_zwischen: '', // Note Zwischenprüfung
+                note_abschluss: '' // Note Abschlussprüfung
+            },
+            // NEUE SCHUL-EINSTELLUNGEN
+            school: {
+                // Noten werden als Objekt gespeichert: { Fachname: [Note1, Note2, ...], ... }
+                grades: {
+                    'Kernprozesse': [],
+                    'Wirtschaftslehre': [],
+                    'IT-Systeme': [],
+                    'Deutsch/Kommunikation': [],
+                }
             }
         } 
     };
@@ -879,8 +996,21 @@
         if(!data.settings.break) data.settings.break = {thresh:6, min:30};
         if(!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0};
         
-        // NEU: IHK Struktur prüfen/initialisieren
-        if(!data.settings.ihk) data.settings.ihk = {start: '', end: '', exam_zwischen: ''};
+        // NEU: IHK Struktur prüfen/initialisieren (ANPASSUNG)
+        if(!data.settings.ihk || !data.settings.ihk.note_zwischen) data.settings.ihk = {start: '', end: '', exam_zwischen: '', note_zwischen: '', note_abschluss: ''};
+        
+        // NEU: School Struktur prüfen/initialisieren
+        if(!data.settings.school || !data.settings.school.grades) {
+             data.settings.school = {
+                grades: {
+                    'Kernprozesse': [],
+                    'Wirtschaftslehre': [],
+                    'IT-Systeme': [],
+                    'Deutsch/Kommunikation': [],
+                }
+             };
+        }
+        
         // Anpassung für alte/fehlende Prüfungsdaten
         if (data.settings.ihk.exam) { 
              data.settings.ihk.end = data.settings.ihk.exam;
@@ -917,11 +1047,16 @@
         }, 1000);
         document.getElementById('inpDate').valueAsDate = new Date();
 
-        // Neuen Export-Filter Listener hinzufügen
+        // Listener hinzufügen
         document.getElementById('exportStart').addEventListener('change', renderExportViewPreview);
         document.getElementById('exportEnd').addEventListener('change', renderExportViewPreview);
         document.getElementById('exportType').addEventListener('change', renderExportViewPreview);
         document.getElementById('exportMinHours').addEventListener('input', renderExportViewPreview);
+        
+        // Listener für den neuen Schul-View
+        if (document.getElementById('schoolGradesInputGrid')) {
+             renderSchoolGradesInputs();
+        }
     };
 
     function save() { 
@@ -945,7 +1080,14 @@
         const navEl = document.getElementById('nav-' + tabId);
         if(navEl) navEl.classList.add('active');
         
-        const titles = { 'dashboard': 'Übersicht', 'history': 'Gesamte Historie', 'performance': 'Performance Analyse', 'ihk': 'IHK / Karriere', 'export': 'Daten Export' };
+        const titles = { 
+            'dashboard': 'Übersicht', 
+            'history': 'Gesamte Historie', 
+            'performance': 'Performance Analyse', 
+            'ihk': 'IHK / Karriere', 
+            'school': 'Berufsschule Audit', // NEU
+            'export': 'Daten Export' 
+        };
         document.querySelector('.page-title').textContent = titles[tabId];
 
         if (tabId === 'performance') {
@@ -955,20 +1097,207 @@
         if (tabId === 'ihk') {
             renderIHKView();
         }
+        if (tabId === 'school') {
+            renderSchoolView();
+        }
         if (tabId === 'export') {
             renderExportViewPreview();
         }
     }
+    
+    // --- SCHOOL LOGIC (NEU) ---
+    
+    const getNoteColor = (note) => {
+         const n = parseFloat(note);
+         if (isNaN(n) || n === 0) return 'var(--text-muted)';
+         if (n <= 2.0) return 'var(--note-good)';
+         if (n <= 3.0) return 'var(--note-mid)';
+         return 'var(--note-bad)';
+    };
 
-    // --- IHK / KARRIERE LOGIC ---
+    function renderSchoolGradesInputs() {
+        const inputGrid = document.getElementById('schoolGradesInputGrid');
+        let html = '';
+        
+        for (const subject in data.settings.school.grades) {
+             const grades = data.settings.school.grades[subject];
+             
+             html += `
+                <div style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:12px;">
+                    <h5 style="color:var(--school); margin-bottom:10px;">${subject}</h5>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        ${grades.map((grade, index) => `
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <label style="font-size:0.8rem; color:var(--text-muted);">Note ${index + 1}:</label>
+                                <input type="number" step="0.1" min="1.0" max="6.0" 
+                                    class="glass-input school-grade-input" data-subject="${subject}" data-index="${index}" value="${grade}"
+                                    style="width:80px; padding:8px; text-align:center; font-family:var(--font-mono);">
+                            </div>
+                        `).join('')}
+                        
+                        <button class="btn btn-ghost" onclick="addSchoolGrade('${subject}')" style="background:transparent; border:1px solid var(--school); color:var(--school); padding:8px;">+ Note hinzufügen</button>
+                    </div>
+                </div>
+             `;
+        }
+        
+        html += `
+            <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end; margin-top:1rem;">
+                <button class="btn btn-primary" onclick="saveSchoolGrades()" style="width: 300px; background:var(--school);">Noten speichern & berechnen</button>
+            </div>
+        `;
+        
+        inputGrid.innerHTML = html;
+        renderSchoolView();
+    }
+    
+    function addSchoolGrade(subject) {
+         // Fügt eine leere Note (oder 0) hinzu, um das Eingabefeld zu rendern
+         data.settings.school.grades[subject].push(''); 
+         renderSchoolGradesInputs();
+    }
+    
+    function saveSchoolGrades() {
+        const inputs = document.querySelectorAll('.school-grade-input');
+        const newGrades = {};
+        
+        // Initialisiere die neue Struktur, um leere Fächer nicht zu verlieren
+        for (const subject in data.settings.school.grades) {
+            newGrades[subject] = [];
+        }
+
+        inputs.forEach(input => {
+            const subject = input.getAttribute('data-subject');
+            const grade = parseFloat(input.value);
+
+            if (!isNaN(grade) && grade >= 1.0 && grade <= 6.0) {
+                 newGrades[subject].push(grade);
+            }
+            // Leere oder ungültige Einträge werden hier ignoriert, da wir nur gültige Noten speichern wollen
+        });
+        
+        data.settings.school.grades = newGrades;
+        save();
+        renderSchoolGradesInputs(); // Neu rendern, um nur gültige Noten anzuzeigen
+        alert('Berufsschulnoten gespeichert!');
+    }
+    
+    function calculateSchoolKPIs() {
+        let totalSum = 0;
+        let totalCount = 0;
+        let bestNote = 6.0;
+        let worstNote = 1.0;
+        let bestSubject = '---';
+        let worstSubject = '---';
+        
+        let gradeListHTML = '';
+        
+        for (const subject in data.settings.school.grades) {
+            const grades = data.settings.school.grades[subject];
+            
+            if (grades.length > 0) {
+                let subjectSum = 0;
+                grades.forEach(grade => {
+                    const n = parseFloat(grade);
+                    if (!isNaN(n)) {
+                        totalSum += n;
+                        totalCount++;
+                        subjectSum += n;
+
+                        if (n < bestNote) {
+                            bestNote = n;
+                            bestSubject = subject;
+                        }
+                        if (n > worstNote) {
+                            worstNote = n;
+                            worstSubject = subject;
+                        }
+                    }
+                });
+                
+                const subjectAvg = subjectSum / grades.length;
+                const avgColor = getNoteColor(subjectAvg);
+
+                 gradeListHTML += `
+                    <div class="card" style="padding:1rem; border-left:5px solid ${avgColor}; margin-bottom:0;">
+                        <h5 style="color:var(--text-main); margin-bottom:5px;">${subject}</h5>
+                        <div style="font-size:1.5rem; font-weight:700; color:${avgColor};">${subjectAvg.toFixed(2)}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:5px;">(${grades.length} Noten)</div>
+                    </div>
+                `;
+            }
+        }
+        
+        const overallAvg = totalCount > 0 ? totalSum / totalCount : 0;
+        
+        return {
+            overallAvg: overallAvg,
+            bestNote: bestNote === 6.0 && totalCount > 0 ? worstNote : bestNote, // Fix, falls nur schlechte Noten da sind
+            worstNote: worstNote === 1.0 && totalCount > 0 ? bestNote : worstNote, // Fix, falls nur gute Noten da sind
+            bestSubject,
+            worstSubject,
+            gradeListHTML
+        };
+    }
+    
+    function renderSchoolView() {
+        const kpis = calculateSchoolKPIs();
+        
+        const avgEl = document.getElementById('schoolOverallAvg');
+        const bestEl = document.getElementById('schoolBestNote');
+        const worstEl = document.getElementById('schoolWorstNote');
+        
+        if (kpis.overallAvg > 0) {
+            avgEl.innerText = kpis.overallAvg.toFixed(2);
+            avgEl.style.color = getNoteColor(kpis.overallAvg);
+            
+            bestEl.innerText = kpis.bestNote.toFixed(1);
+            bestEl.style.color = getNoteColor(kpis.bestNote);
+            document.getElementById('schoolBestSubject').innerText = kpis.bestSubject;
+
+            worstEl.innerText = kpis.worstNote.toFixed(1);
+            worstEl.style.color = getNoteColor(kpis.worstNote);
+            document.getElementById('schoolWorstSubject').innerText = kpis.worstSubject;
+
+        } else {
+            avgEl.innerText = '---';
+            avgEl.style.color = 'var(--school)';
+            bestEl.innerText = '---';
+            worstEl.innerText = '---';
+            document.getElementById('schoolBestSubject').innerText = '';
+            document.getElementById('schoolWorstSubject').innerText = '';
+        }
+        
+        document.getElementById('schoolGradesList').innerHTML = kpis.gradeListHTML;
+    }
+
+
+    // --- IHK / KARRIERE LOGIC (ERWEITERT) ---
     function renderIHKView() {
-        const { start, end, exam_zwischen } = data.settings.ihk;
+        const { start, end, exam_zwischen, note_zwischen, note_abschluss } = data.settings.ihk;
         const now = new Date().getTime();
         
         document.getElementById('confIHKStart').value = start;
         document.getElementById('confIHKEnd').value = end;
-        document.getElementById('confIHKExamZwischen').value = exam_zwischen;
+        // Abschlussprüfungsdatum wird vom End-Datum übernommen
+        document.getElementById('confIHKExamAbschluss').value = end; 
 
+        document.getElementById('confIHKExamZwischen').value = exam_zwischen;
+        document.getElementById('confIHKNoteZwischen').value = note_zwischen;
+        document.getElementById('confIHKNoteAbschluss').value = note_abschluss;
+
+        // Hilfsfunktion zur Formatierung der Note
+        const formatNote = (note) => {
+             const n = parseFloat(note);
+             if (isNaN(n) || n === 0) return '---';
+             const color = n <= 2.0 ? 'var(--success)' : (n <= 3.0 ? 'var(--audit-warn)' : 'var(--danger)');
+             return `<span style="color:${color};">${n.toFixed(1)}</span>`;
+        };
+        
+        // Anzeigen der Noten im Audit-Bereich
+        document.getElementById('ihkDisplayNoteZwischen').innerHTML = formatNote(note_zwischen);
+        document.getElementById('ihkDisplayNoteAbschluss').innerHTML = formatNote(note_abschluss);
+        
         // 1. Ausbildungsfortschritt (Prozente)
         if (start && end) {
             const startDate = new Date(start).getTime();
@@ -994,7 +1323,7 @@
              document.getElementById('ihkStartEndDates').innerText = `Daten fehlen/Ungültig.`;
         }
         
-        // 2. Gesamt Soll-Stunden Audit - **KORREKTUR: Berücksichtige gebuchte Tage**
+        // 2. Gesamt Soll-Stunden Audit - (Logik beibehalten)
         if (start && end) {
             let totalExpectedHours = 0;
             let currentDate = new Date(start);
@@ -1011,16 +1340,12 @@
                 const dayIndex = currentDate.getDay(); // 0=So, 6=Sa
                 const expected = data.settings.hours[dayIndex] || 0;
                 
-                // Nur Tage mit Sollstunden berücksichtigen (Mo-Fr)
                 if (expected > 0) {
                     const bookedType = bookedDays.get(dateKey);
                     
-                    // Sollstunden nur addieren, wenn es kein Urlaub, Feiertag oder Krankheit ist
                     if (bookedType !== 'vacation' && bookedType !== 'holiday' && bookedType !== 'sick') {
-                        // Wenn es Arbeit oder Schule ist (mit Soll-Zeit > 0), wird die Sollzeit gezählt
                         totalExpectedHours += expected;
                     }
-                    // Wenn es Urlaub/Feiertag/Krank ist (und Soll-Zeit > 0 war), wird die Sollzeit ignoriert, da Diff=0.
                 }
 
                 currentDate.setDate(currentDate.getDate() + 1);
@@ -1030,31 +1355,65 @@
              document.getElementById('ihkTotalExpectedHours').innerText = '0h';
         }
 
-        // 3. Abschlussprüfung Countdown
-        const countdownEndEl = document.getElementById('ihkCountdownEnd');
-        const examDateEndEl = document.getElementById('ihkExamDateEnd');
+        // 3. Fehlzeiten Protokoll (NEU)
+        const sickDays = data.entries.filter(e => e.type === 'sick' && e.expected > 0).length;
+        const schoolDays = data.entries.filter(e => e.type === 'school' && e.expected > 0).length; // Zählt Schultage, die Sollzeit hatten
+
+        document.getElementById('ihkSickDays').innerText = sickDays;
+        document.getElementById('ihkSchoolDays').innerText = schoolDays;
+        
+        const totalDurationDays = start && end ? Math.ceil((new Date(end).getTime() - new Date(start).getTime()) / (1000 * 60 * 60 * 24)) : 0;
+        const elapsedDurationDays = start ? Math.ceil((now - new Date(start).getTime()) / (1000 * 60 * 60 * 24)) : 0;
+        
+        const totalMissedDays = sickDays; 
+        
+        const warningEl = document.getElementById('ihkMissedTimeWarning');
+        
+        if (totalDurationDays > 0) {
+            const currentMissedPct = (totalMissedDays / elapsedDurationDays) * 100;
+            
+            if (elapsedDurationDays > 0) {
+                 warningEl.innerText = `${currentMissedPct.toFixed(1)}%`;
+            } else {
+                 warningEl.innerText = '0%';
+            }
+
+            if (currentMissedPct >= 10.0) {
+                warningEl.style.color = 'var(--danger)';
+            } else if (currentMissedPct >= 5.0) {
+                warningEl.style.color = 'var(--audit-warn)';
+            } else {
+                warningEl.style.color = 'var(--success)';
+            }
+
+        } else {
+            warningEl.innerText = 'Daten fehlen';
+            warningEl.style.color = 'var(--text-muted)';
+        }
+
+        // 4. Abschlussprüfung Countdown (Audit-Anzeige)
+        const countdownEndAuditEl = document.getElementById('ihkCountdownEndAudit');
         
         if (end) {
             const examDate = new Date(end).getTime();
             const diffMs = examDate - now;
             
-            examDateEndEl.innerText = new Date(end).toLocaleDateString('de-DE');
+            document.getElementById('ihkExamDateEnd').innerText = new Date(end).toLocaleDateString('de-DE');
 
             if (diffMs > 0) {
                 const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-                countdownEndEl.innerText = daysLeft;
-                countdownEndEl.style.color = daysLeft < 90 ? 'var(--danger)' : 'var(--ihk)';
+                countdownEndAuditEl.innerText = daysLeft;
+                countdownEndAuditEl.style.color = daysLeft < 90 ? 'var(--danger)' : 'var(--ihk)';
             } else {
-                countdownEndEl.innerText = 'ABGESCHLOSSEN';
-                countdownEndEl.style.color = 'var(--success)';
+                countdownEndAuditEl.innerText = '0';
+                countdownEndAuditEl.style.color = 'var(--success)';
             }
         } else {
-            countdownEndEl.innerText = '---';
-            examDateEndEl.innerText = 'Datum fehlt';
-            countdownEndEl.style.color = 'var(--text-muted)';
+            countdownEndAuditEl.innerText = '---';
+            document.getElementById('ihkExamDateEnd').innerText = 'Datum fehlt';
         }
         
-        // 4. Zwischenprüfung Countdown
+        // 5. Zwischenprüfung Countdown (Audit-Anzeige)
         const countdownZwischenEl = document.getElementById('ihkCountdownZwischen');
         
         if (exam_zwischen) {
@@ -1071,7 +1430,6 @@
             }
         } else {
             countdownZwischenEl.innerText = '---';
-            countdownZwischenEl.style.color = 'var(--text-muted)';
         }
     }
     
@@ -1079,10 +1437,13 @@
         data.settings.ihk.start = document.getElementById('confIHKStart').value;
         data.settings.ihk.end = document.getElementById('confIHKEnd').value;
         data.settings.ihk.exam_zwischen = document.getElementById('confIHKExamZwischen').value;
+        // NEU: Noten speichern (Float-Werte)
+        data.settings.ihk.note_zwischen = document.getElementById('confIHKNoteZwischen').value;
+        data.settings.ihk.note_abschluss = document.getElementById('confIHKNoteAbschluss').value;
         
         save();
         renderIHKView();
-        alert('IHK Daten gespeichert und berechnet.');
+        alert('IHK Daten (inkl. Noten) gespeichert und berechnet.');
     }
 
 
