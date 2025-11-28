@@ -215,6 +215,25 @@
         .entry-date { font-weight: 600; color: #fff; font-size: 0.95rem; }
         .entry-meta { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
         .tag { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; background: rgba(255,255,255,0.05); }
+        
+        /* Unified History Filter Grid */
+        .filter-grid {
+             display: grid;
+             grid-template-columns: repeat(4, 1fr);
+             gap: 15px;
+             margin-bottom: 1.5rem;
+        }
+        .filter-grid .glass-input, .filter-grid .glass-select {
+            padding: 10px 14px;
+        }
+        .filter-header { 
+            grid-column: 1 / -1; 
+            margin-bottom: 10px; 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
 
         /* --- MODAL --- */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
@@ -426,10 +445,7 @@
             <span>🏫</span> Berufsschule
         </div>
         <div class="nav-item" id="nav-history" onclick="switchTab('history')">
-            <span>📅</span> Historie
-        </div>
-        <div class="nav-item" id="nav-export" onclick="switchTab('export')">
-            <span>💾</span> Daten Export
+            <span>🔎</span> Analyse & Historie
         </div>
         
         <div class="nav-section">Verwaltung</div>
@@ -808,57 +824,36 @@
 
         <div id="view-history" class="view-section">
             <div class="card">
-                <div class="list-header" style="display:flex; justify-content:space-between;">
-                    <span>Gesamte Historie</span>
+                <div class="filter-header">
+                    <h2 style="font-size:1.5rem;">Daten-Analyse & Historie</h2>
                     <span id="historyCount">0 Einträge</span>
                 </div>
-                <div id="entryListFull"></div>
-            </div>
-        </div>
-
-        <div id="view-export" class="view-section">
-            <div class="card">
-                <h2 style="margin-bottom:1.5rem;">Export-Dashboard</h2>
                 
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-bottom: 2rem;">
-                    <div>
-                        <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem;">ZEITRAUM FILTER</h4>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
-                            <input type="date" id="exportStart" class="glass-input" placeholder="Startdatum">
-                            <input type="date" id="exportEnd" class="glass-input" placeholder="Enddatum">
-                        </div>
-                        <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem;">EINTRAGS-TYP FILTER</h4>
-                        <select id="exportType" class="glass-select">
-                            <option value="all">Alle Typen</option>
-                            <option value="work">💼 Arbeit</option>
-                            <option value="school">📚 Berufsschule</option>
-                            <option value="vacation">🌴 Urlaub</option>
-                            <option value="sick">💊 Krank</option>
-                            <option value="holiday">🏖️ Feiertag</option>
-                        </select>
-                        <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem; margin-top:15px;">MINDESTSTUNDEN (GEARBEITET)</h4>
-                        <input type="number" id="exportMinHours" class="glass-input" step="0.5" placeholder="Mindeststunden (z.B. 4.0)">
-                    </div>
+                <div class="filter-grid">
+                    <input type="date" id="historyFilterStart" class="glass-input" placeholder="Startdatum" onchange="renderHistoryView()">
+                    <input type="date" id="historyFilterEnd" class="glass-input" placeholder="Enddatum" onchange="renderHistoryView()">
 
-                    <div style="background:rgba(255,255,255,0.05); padding:1.5rem; border-radius:12px; border:1px solid var(--border); display:flex; flex-direction:column; justify-content:space-between;">
-                        <div>
-                             <h3 style="margin-bottom:10px;">Filter-Übersicht</h3>
-                             <p style="font-size:0.85rem; color:var(--text-muted);">Anzahl der Einträge, die den Filtern entsprechen:</p>
-                             <div style="font-size:3rem; font-weight:800; color:var(--success); margin:10px 0;" id="exportCount">0</div>
-                        </div>
+                    <select id="historyFilterType" class="glass-select" onchange="renderHistoryView()">
+                        <option value="all">Alle Typen</option>
+                        <option value="work">💼 Arbeit</option>
+                        <option value="school">📚 Berufsschule</option>
+                        <option value="vacation">🌴 Urlaub</option>
+                        <option value="sick">💊 Krank</option>
+                        <option value="holiday">🏖️ Feiertag</option>
+                    </select>
 
-                        <div style="margin-top:2rem;">
-                            <button class="btn btn-primary" onclick="exportFilteredData('csv')" style="margin-bottom:10px;">Als CSV exportieren</button>
-                            <button class="btn btn-primary" onclick="exportFilteredData('json')" style="background:var(--school);">Als JSON exportieren</button>
-                        </div>
-                    </div>
+                    <input type="number" id="historyFilterMinHours" class="glass-input" step="0.5" placeholder="Min. Stunden" oninput="renderHistoryView()">
+                    
+                    <input type="text" id="historyFilterSearch" class="glass-input" placeholder="Suche (Info/Projekt)" oninput="renderHistoryView()" style="grid-column: 1 / span 4;">
                 </div>
 
-                <div class="card" style="padding:1rem; background:rgba(255,255,255,0.02); min-height:150px;">
-                    <h4 style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">Vorschau der gefilterten Daten:</h4>
-                    <div id="exportPreview" style="max-height: 400px; overflow-y: auto;">
-                        <p style="color:var(--text-muted);">Bitte Filter einstellen und auf "Als CSV exportieren" klicken.</p>
-                    </div>
+                <div style="display:flex; gap:15px; margin-bottom: 1.5rem;">
+                    <button class="btn btn-primary" onclick="exportHistoryData('csv')" style="flex:1;">CSV Export (Gefiltert)</button>
+                    <button class="btn btn-primary" onclick="exportHistoryData('json')" style="flex:1; background:var(--school);">JSON Export (Gefiltert)</button>
+                </div>
+
+                <div id="entryListFull">
+                    <p style="color:var(--text-muted); text-align:center;">Lade Historie...</p>
                 </div>
             </div>
         </div>
@@ -1047,15 +1042,17 @@
         }, 1000);
         document.getElementById('inpDate').valueAsDate = new Date();
 
-        // Listener hinzufügen
-        document.getElementById('exportStart').addEventListener('change', renderExportViewPreview);
-        document.getElementById('exportEnd').addEventListener('change', renderExportViewPreview);
-        document.getElementById('exportType').addEventListener('change', renderExportViewPreview);
-        document.getElementById('exportMinHours').addEventListener('input', renderExportViewPreview);
-        
         // Listener für den neuen Schul-View
         if (document.getElementById('schoolGradesInputGrid')) {
              renderSchoolGradesInputs();
+        }
+
+        // Führe die initiale History-Ansicht aus, wenn der Tab aktiv ist
+        if (document.getElementById('view-history').classList.contains('active')) {
+             renderHistoryView();
+        } else {
+             // Wenn das Dashboard aktiv ist, trotzdem History rendern für die Kurzliste
+             renderHistoryView(true);
         }
     };
 
@@ -1082,11 +1079,10 @@
         
         const titles = { 
             'dashboard': 'Übersicht', 
-            'history': 'Gesamte Historie', 
+            'history': 'Daten-Analyse & Historie', 
             'performance': 'Performance Analyse', 
             'ihk': 'IHK / Karriere', 
-            'school': 'Berufsschule Audit', // NEU
-            'export': 'Daten Export' 
+            'school': 'Berufsschule Audit', 
         };
         document.querySelector('.page-title').textContent = titles[tabId];
 
@@ -1100,12 +1096,12 @@
         if (tabId === 'school') {
             renderSchoolView();
         }
-        if (tabId === 'export') {
-            renderExportViewPreview();
+        if (tabId === 'history') {
+            renderHistoryView();
         }
     }
     
-    // --- SCHOOL LOGIC (NEU) ---
+    // --- SCHOOL LOGIC ---
     
     const getNoteColor = (note) => {
          const n = parseFloat(note);
@@ -1141,18 +1137,18 @@
              `;
         }
         
-        html += `
-            <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end; margin-top:1rem;">
+        // Überschreibe den kompletten Content, inkl. des Save Buttons
+        inputGrid.innerHTML = html + `
+             <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end; margin-top:1rem;">
                 <button class="btn btn-primary" onclick="saveSchoolGrades()" style="width: 300px; background:var(--school);">Noten speichern & berechnen</button>
             </div>
         `;
         
-        inputGrid.innerHTML = html;
         renderSchoolView();
     }
     
     function addSchoolGrade(subject) {
-         // Fügt eine leere Note (oder 0) hinzu, um das Eingabefeld zu rendern
+         // Fügt eine leere Note ('') hinzu, die beim Speichern ignoriert wird, aber ein Input-Feld erzeugt
          data.settings.school.grades[subject].push(''); 
          renderSchoolGradesInputs();
     }
@@ -1161,7 +1157,6 @@
         const inputs = document.querySelectorAll('.school-grade-input');
         const newGrades = {};
         
-        // Initialisiere die neue Struktur, um leere Fächer nicht zu verlieren
         for (const subject in data.settings.school.grades) {
             newGrades[subject] = [];
         }
@@ -1173,20 +1168,20 @@
             if (!isNaN(grade) && grade >= 1.0 && grade <= 6.0) {
                  newGrades[subject].push(grade);
             }
-            // Leere oder ungültige Einträge werden hier ignoriert, da wir nur gültige Noten speichern wollen
+            // Leere oder ungültige Einträge werden nicht gespeichert, aber der Subject-Array bleibt bestehen.
         });
         
         data.settings.school.grades = newGrades;
         save();
-        renderSchoolGradesInputs(); // Neu rendern, um nur gültige Noten anzuzeigen
+        renderSchoolGradesInputs(); 
         alert('Berufsschulnoten gespeichert!');
     }
     
     function calculateSchoolKPIs() {
         let totalSum = 0;
         let totalCount = 0;
-        let bestNote = 6.0;
-        let worstNote = 1.0;
+        let bestNote = 6.1; // Höher als die schlechteste Note (6.0)
+        let worstNote = 0.9; // Kleiner als die beste Note (1.0)
         let bestSubject = '---';
         let worstSubject = '---';
         
@@ -1199,7 +1194,7 @@
                 let subjectSum = 0;
                 grades.forEach(grade => {
                     const n = parseFloat(grade);
-                    if (!isNaN(n)) {
+                    if (!isNaN(n) && n >= 1.0 && n <= 6.0) {
                         totalSum += n;
                         totalCount++;
                         subjectSum += n;
@@ -1215,25 +1210,39 @@
                     }
                 });
                 
-                const subjectAvg = subjectSum / grades.length;
-                const avgColor = getNoteColor(subjectAvg);
+                if (grades.filter(n => !isNaN(parseFloat(n))).length > 0) {
+                    const subjectAvg = subjectSum / grades.filter(n => !isNaN(parseFloat(n))).length;
+                    const avgColor = getNoteColor(subjectAvg);
 
-                 gradeListHTML += `
-                    <div class="card" style="padding:1rem; border-left:5px solid ${avgColor}; margin-bottom:0;">
-                        <h5 style="color:var(--text-main); margin-bottom:5px;">${subject}</h5>
-                        <div style="font-size:1.5rem; font-weight:700; color:${avgColor};">${subjectAvg.toFixed(2)}</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:5px;">(${grades.length} Noten)</div>
-                    </div>
-                `;
+                    gradeListHTML += `
+                        <div class="card" style="padding:1rem; border-left:5px solid ${avgColor}; margin-bottom:0;">
+                            <h5 style="color:var(--text-main); margin-bottom:5px;">${subject}</h5>
+                            <div style="font-size:1.5rem; font-weight:700; color:${avgColor};">${subjectAvg.toFixed(2)}</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:5px;">(${grades.filter(n => !isNaN(parseFloat(n))).length} Noten)</div>
+                        </div>
+                    `;
+                }
             }
         }
         
         const overallAvg = totalCount > 0 ? totalSum / totalCount : 0;
         
+        // Anpassung falls nur Noten im unteren/oberen Bereich existieren
+        if (totalCount === 0) {
+            bestNote = 0;
+            worstNote = 0;
+        } else if (bestNote === 6.1) {
+             bestNote = worstNote;
+             bestSubject = worstSubject;
+        } else if (worstNote === 0.9) {
+             worstNote = bestNote;
+             worstSubject = bestSubject;
+        }
+        
         return {
             overallAvg: overallAvg,
-            bestNote: bestNote === 6.0 && totalCount > 0 ? worstNote : bestNote, // Fix, falls nur schlechte Noten da sind
-            worstNote: worstNote === 1.0 && totalCount > 0 ? bestNote : worstNote, // Fix, falls nur gute Noten da sind
+            bestNote: bestNote, 
+            worstNote: worstNote, 
             bestSubject,
             worstSubject,
             gradeListHTML
@@ -1251,11 +1260,11 @@
             avgEl.innerText = kpis.overallAvg.toFixed(2);
             avgEl.style.color = getNoteColor(kpis.overallAvg);
             
-            bestEl.innerText = kpis.bestNote.toFixed(1);
+            bestEl.innerText = kpis.bestNote > 0 ? kpis.bestNote.toFixed(1) : '---';
             bestEl.style.color = getNoteColor(kpis.bestNote);
             document.getElementById('schoolBestSubject').innerText = kpis.bestSubject;
 
-            worstEl.innerText = kpis.worstNote.toFixed(1);
+            worstEl.innerText = kpis.worstNote > 0 ? kpis.worstNote.toFixed(1) : '---';
             worstEl.style.color = getNoteColor(kpis.worstNote);
             document.getElementById('schoolWorstSubject').innerText = kpis.worstSubject;
 
@@ -1555,6 +1564,11 @@
         document.getElementById('inpStart').value = '';
         document.getElementById('inpEnd').value = '';
         document.getElementById('inpHours').value = '';
+        
+        // Neu laden der Historie, falls gerade aktiv
+        if (document.getElementById('view-history').classList.contains('active')) {
+             renderHistoryView();
+        }
     }
     
     // --- TIMER LOGIC (Mit Korrektur) ---
@@ -2088,9 +2102,134 @@
         `;
 
         document.getElementById('entryListShort').innerHTML = data.entries.slice(0, 5).map(createRow).join('');
-        document.getElementById('entryListFull').innerHTML = data.entries.map(createRow).join('');
-        document.getElementById('historyCount').innerText = `${data.entries.length} Einträge`;
     }
+    
+    // --- HISTORY VIEW & FILTER ENGINE (NEU) ---
+
+    // Diese Funktion filtert die Daten basierend auf den Inputs im History-View
+    function filterHistoryData() {
+        const startStr = document.getElementById('historyFilterStart').value;
+        const endStr = document.getElementById('historyFilterEnd').value;
+        const type = document.getElementById('historyFilterType').value;
+        const minHours = parseFloat(document.getElementById('historyFilterMinHours').value) || 0;
+        const searchText = document.getElementById('historyFilterSearch').value.toLowerCase();
+
+        let filtered = data.entries;
+
+        if (startStr) {
+            filtered = filtered.filter(e => new Date(e.date) >= new Date(startStr));
+        }
+        if (endStr) {
+            const endDate = new Date(endStr);
+            endDate.setDate(endDate.getDate() + 1); 
+            filtered = filtered.filter(e => new Date(e.date) < endDate);
+        }
+        if (type !== 'all') {
+            filtered = filtered.filter(e => e.type === type);
+        }
+        if (minHours > 0) {
+            filtered = filtered.filter(e => e.worked >= minHours);
+        }
+        if (searchText) {
+            filtered = filtered.filter(e => e.info.toLowerCase().includes(searchText));
+        }
+
+        return filtered;
+    }
+
+    // Diese Funktion rendert die gefilterte Liste in den History-View
+    function renderHistoryView() {
+        const filteredData = filterHistoryData();
+        const historyListEl = document.getElementById('entryListFull');
+        
+        document.getElementById('historyCount').innerText = `${filteredData.length} Einträge`;
+
+        if (filteredData.length === 0) {
+            historyListEl.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Keine Einträge gefunden, Filter anpassen.</p>';
+            return;
+        }
+
+        const createRow = (e) => `
+            <div class="entry-row type-${e.type}">
+                <div>
+                    <div class="entry-date">${new Date(e.date).toLocaleDateString('de-DE')}</div>
+                    <div class="entry-meta">${e.isPeriod ? e.label : e.info} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ MAX!</span>' : ''}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <span class="tag">${e.type === 'school' ? 'SCHULE' : (e.type === 'holiday' ? 'FEIERTAG' : e.type.toUpperCase())}</span>
+                    <div style="font-weight:700; width:60px; text-align:right; color:${e.diff>=0?'var(--success)':'var(--danger)'}">
+                        ${e.diff>=0?'+':''}${e.diff.toFixed(2)}
+                    </div>
+                    <div>
+                        <button class="btn-ghost" style="padding:5px;" onclick="editEntry(${e.id})">✎</button>
+                        <button class="btn-ghost" style="padding:5px; color:var(--danger)" onclick="delEntry(${e.id})">×</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        historyListEl.innerHTML = filteredData.map(createRow).join('');
+    }
+
+    function exportHistoryData(format) {
+        const filtered = filterHistoryData(); // Nutzt die aktuelle Filterung
+
+        if (filtered.length === 0) {
+            return alert('Keine Daten für den Export gefunden. Bitte Filter prüfen.');
+        }
+
+        let fileContent;
+        let fileName;
+        let mimeType;
+
+        if (format === 'json') {
+            fileContent = JSON.stringify(filtered, null, 2);
+            fileName = 'time_pro_export_filtered.json';
+            mimeType = 'application/json';
+        } else if (format === 'csv') {
+            fileContent = convertToCSV(filtered);
+            fileName = 'time_pro_export_filtered.csv';
+            mimeType = 'text/csv';
+        } else {
+            return;
+        }
+
+        const blob = new Blob([fileContent], { type: mimeType });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        a.click();
+        
+        alert(`Export von ${filtered.length} gefilterten Einträgen als ${format.toUpperCase()} gestartet.`);
+    }
+
+    // NOTE: convertToCSV wurde beibehalten und wird von exportHistoryData verwendet
+    function convertToCSV(dataArray) {
+        if (dataArray.length === 0) return '';
+        
+        const headers = ['Datum', 'Typ', 'Arbeitszeit_h', 'Sollzeit_h', 'Differenz_h', 'Info', 'Break_Min', 'Shift_Warning'];
+        
+        const csvRows = [headers.join(';')]; 
+
+        for (const entry of dataArray) {
+            const row = [
+                entry.date,
+                entry.type,
+                entry.worked.toFixed(2).replace('.', ','),
+                entry.expected.toFixed(2).replace('.', ','),
+                entry.diff.toFixed(2).replace('.', ','),
+                entry.info.replace(/,/g, ''), // Kommas entfernen, um CSV-Struktur nicht zu stören
+                entry.breakMins,
+                entry.shiftWarning ? 'JA' : 'NEIN'
+            ];
+            csvRows.push(row.join(';'));
+        }
+
+        return csvRows.join('\n');
+    }
+    
+    // --- CHARTS & PERFORMANCE (Unverändert) ---
+    // (Alle Funktionen renderTrend, renderDonut, calculatePerformanceData, renderPerformanceView sind unverändert)
 
     function renderTrend(dataPoints, elementId, areaFill = true) {
         const c = document.getElementById(elementId);
@@ -2324,120 +2463,6 @@
         `;
     }
 
-    // --- DATEN EXPORT LOGIC (NEU) ---
-
-    function filterEntries() {
-        const startStr = document.getElementById('exportStart').value;
-        const endStr = document.getElementById('exportEnd').value;
-        const type = document.getElementById('exportType').value;
-        const minHours = parseFloat(document.getElementById('exportMinHours').value) || 0;
-
-        let filtered = data.entries;
-
-        if (startStr) {
-            filtered = filtered.filter(e => new Date(e.date) >= new Date(startStr));
-        }
-        if (endStr) {
-            // Enddatum + 1 Tag, um den gesamten Endtag einzubeziehen
-            const endDate = new Date(endStr);
-            endDate.setDate(endDate.getDate() + 1); 
-            filtered = filtered.filter(e => new Date(e.date) < endDate);
-        }
-        if (type !== 'all') {
-            filtered = filtered.filter(e => e.type === type);
-        }
-        if (minHours > 0) {
-            filtered = filtered.filter(e => e.worked >= minHours);
-        }
-
-        return filtered;
-    }
-
-    function renderExportViewPreview() {
-        const filteredData = filterEntries();
-        const countEl = document.getElementById('exportCount');
-        const previewEl = document.getElementById('exportPreview');
-        
-        countEl.innerText = filteredData.length;
-
-        if (filteredData.length === 0) {
-            previewEl.innerHTML = '<p style="color:var(--text-muted);">Keine Einträge für die gewählten Filter gefunden.</p>';
-            return;
-        }
-
-        let previewHTML = '';
-        
-        // Anzeigen der ersten 10 Einträge in Kurzform
-        previewHTML += filteredData.slice(0, 10).map(e => `
-            <div class="entry-row type-${e.type}" style="padding: 10px 15px; margin-bottom: 5px; border-radius: 8px;">
-                <div style="font-weight: 600;">${new Date(e.date).toLocaleDateString('de-DE')} - ${e.type.toUpperCase()}</div>
-                <div style="font-family: var(--font-mono);">${e.worked.toFixed(2)}h (${e.diff >= 0 ? '+' : ''}${e.diff.toFixed(2)})</div>
-            </div>
-        `).join('');
-
-        if (filteredData.length > 10) {
-            previewHTML += `<p style="color:var(--text-muted); padding:10px;">... und ${filteredData.length - 10} weitere Einträge.</p>`;
-        }
-        
-        previewEl.innerHTML = previewHTML;
-    }
-
-    function convertToCSV(dataArray) {
-        if (dataArray.length === 0) return '';
-        
-        const headers = ['Datum', 'Typ', 'Arbeitszeit_h', 'Sollzeit_h', 'Differenz_h', 'Info', 'Break_Min', 'Shift_Warning'];
-        
-        const csvRows = [headers.join(';')]; 
-
-        for (const entry of dataArray) {
-            const row = [
-                entry.date,
-                entry.type,
-                entry.worked.toFixed(2).replace('.', ','),
-                entry.expected.toFixed(2).replace('.', ','),
-                entry.diff.toFixed(2).replace('.', ','),
-                entry.info.replace(/,/g, ''), // Kommas entfernen, um CSV-Struktur nicht zu stören
-                entry.breakMins,
-                entry.shiftWarning ? 'JA' : 'NEIN'
-            ];
-            csvRows.push(row.join(';'));
-        }
-
-        return csvRows.join('\n');
-    }
-
-    function exportFilteredData(format) {
-        const filtered = filterEntries();
-
-        if (filtered.length === 0) {
-            return alert('Keine Daten für den Export gefunden. Bitte Filter prüfen.');
-        }
-
-        let fileContent;
-        let fileName;
-        let mimeType;
-
-        if (format === 'json') {
-            fileContent = JSON.stringify(filtered, null, 2);
-            fileName = 'time_pro_export.json';
-            mimeType = 'application/json';
-        } else if (format === 'csv') {
-            fileContent = convertToCSV(filtered);
-            fileName = 'time_pro_export.csv';
-            mimeType = 'text/csv';
-        } else {
-            return;
-        }
-
-        const blob = new Blob([fileContent], { type: mimeType });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = fileName;
-        a.click();
-        
-        alert(`Export von ${filtered.length} Einträgen als ${format.toUpperCase()} gestartet.`);
-    }
-
     // --- HILFSFUNKTIONEN (Unverändert) ---
     function isOddWeek(d) { return getWeek(d) % 2 !== 0; }
 
@@ -2481,6 +2506,9 @@
             data.entries = data.entries.filter(e => e.id !== id);
             recalculateVacationUsed(); 
             save();
+            if (document.getElementById('view-history').classList.contains('active')) {
+                 renderHistoryView();
+            }
         }
     }
     
