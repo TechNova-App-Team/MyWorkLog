@@ -32,6 +32,9 @@
             --note-good: #10b981; /* Für Noten 1.0 - 2.0 */
             --note-mid: #fbbf24; /* Für Noten 2.1 - 3.0 */
             --note-bad: #ef4444; /* Für Noten > 3.0 */
+            --heatmap-low: #1e293b;
+            --heatmap-mid: #64748b;
+            --heatmap-high: var(--primary);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -304,6 +307,40 @@
             white-space: nowrap;
         }
         
+        /* Deep Dive Charts */
+        .chart-deep-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr; /* Wochentag | Heatmap */
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Heatmap Styles */
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(16, 1fr); /* 8-24 Uhr = 16 Stunden */
+            gap: 5px;
+            padding: 10px 0;
+        }
+        .heatmap-cell {
+            height: 30px;
+            width: 100%;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--text-main);
+            transition: background-color 0.5s ease;
+        }
+        .heatmap-label {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+
         /* --- AUDIT GRID STYLES --- */
         .audit-grid {
             display: grid;
@@ -647,6 +684,32 @@
                     </div>
                     <div class="chart-container" id="chartWeeklyPerformance">
                         </div>
+                </div>
+            </div>
+
+            <div class="charts-row" style="grid-template-columns: 1fr;">
+                 <div class="card chart-deep-row">
+                     <div style="padding-right: 1.5rem; border-right: 1px solid var(--border);">
+                        <div class="chart-header">
+                            <div>
+                                <div class="chart-title">Ø Produktivität pro Wochentag</div>
+                                <div class="chart-sub">Durchschnittlicher Saldo Mo - Fr</div>
+                            </div>
+                        </div>
+                        <div class="chart-container" id="chartProductivityByDay" style="height: 200px;">
+                            </div>
+                    </div>
+                     
+                    <div style="padding-left: 1.5rem;">
+                         <div class="chart-header">
+                            <div>
+                                <div class="chart-title">Tages-Heatmap</div>
+                                <div class="chart-sub">Durchschnittliche geleistete Zeit pro Stunde (8:00 - 23:00)</div>
+                            </div>
+                        </div>
+                        <div id="chartProductivityHeatmap">
+                            </div>
+                    </div>
                 </div>
             </div>
 
@@ -1047,12 +1110,17 @@
              renderSchoolGradesInputs();
         }
 
-        // Führe die initiale History-Ansicht aus, wenn der Tab aktiv ist
+        // Initiale History-Ansicht für die Kurzliste
+        renderLists(); 
+        
+        // Initiale Performance-Ansicht, falls aktiv (wird durch switchTab() wiederholt)
+        const perfData = calculatePerformanceData();
+        const deepData = calculateDeepPerformanceData();
+        renderPerformanceView(perfData, deepData);
+        
+        // Initiale History-Ansicht, falls aktiv
         if (document.getElementById('view-history').classList.contains('active')) {
              renderHistoryView();
-        } else {
-             // Wenn das Dashboard aktiv ist, trotzdem History rendern für die Kurzliste
-             renderHistoryView(true);
         }
     };
 
@@ -1088,7 +1156,8 @@
 
         if (tabId === 'performance') {
             const perfData = calculatePerformanceData();
-            renderPerformanceView(perfData);
+            const deepData = calculateDeepPerformanceData();
+            renderPerformanceView(perfData, deepData);
         }
         if (tabId === 'ihk') {
             renderIHKView();
@@ -2067,7 +2136,7 @@
         }
     }
     
-    // --- CHARTS & PERFORMANCE (Unverändert) ---
+    // --- CHARTS & PERFORMANCE ---
 
     function setRadial(ringId, txtId, val) {
         const el = document.getElementById(ringId);
@@ -2104,133 +2173,6 @@
         document.getElementById('entryListShort').innerHTML = data.entries.slice(0, 5).map(createRow).join('');
     }
     
-    // --- HISTORY VIEW & FILTER ENGINE (NEU) ---
-
-    // Diese Funktion filtert die Daten basierend auf den Inputs im History-View
-    function filterHistoryData() {
-        const startStr = document.getElementById('historyFilterStart').value;
-        const endStr = document.getElementById('historyFilterEnd').value;
-        const type = document.getElementById('historyFilterType').value;
-        const minHours = parseFloat(document.getElementById('historyFilterMinHours').value) || 0;
-        const searchText = document.getElementById('historyFilterSearch').value.toLowerCase();
-
-        let filtered = data.entries;
-
-        if (startStr) {
-            filtered = filtered.filter(e => new Date(e.date) >= new Date(startStr));
-        }
-        if (endStr) {
-            const endDate = new Date(endStr);
-            endDate.setDate(endDate.getDate() + 1); 
-            filtered = filtered.filter(e => new Date(e.date) < endDate);
-        }
-        if (type !== 'all') {
-            filtered = filtered.filter(e => e.type === type);
-        }
-        if (minHours > 0) {
-            filtered = filtered.filter(e => e.worked >= minHours);
-        }
-        if (searchText) {
-            filtered = filtered.filter(e => e.info.toLowerCase().includes(searchText));
-        }
-
-        return filtered;
-    }
-
-    // Diese Funktion rendert die gefilterte Liste in den History-View
-    function renderHistoryView() {
-        const filteredData = filterHistoryData();
-        const historyListEl = document.getElementById('entryListFull');
-        
-        document.getElementById('historyCount').innerText = `${filteredData.length} Einträge`;
-
-        if (filteredData.length === 0) {
-            historyListEl.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Keine Einträge gefunden, Filter anpassen.</p>';
-            return;
-        }
-
-        const createRow = (e) => `
-            <div class="entry-row type-${e.type}">
-                <div>
-                    <div class="entry-date">${new Date(e.date).toLocaleDateString('de-DE')}</div>
-                    <div class="entry-meta">${e.isPeriod ? e.label : e.info} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ MAX!</span>' : ''}</div>
-                </div>
-                <div style="display:flex; align-items:center; gap:15px;">
-                    <span class="tag">${e.type === 'school' ? 'SCHULE' : (e.type === 'holiday' ? 'FEIERTAG' : e.type.toUpperCase())}</span>
-                    <div style="font-weight:700; width:60px; text-align:right; color:${e.diff>=0?'var(--success)':'var(--danger)'}">
-                        ${e.diff>=0?'+':''}${e.diff.toFixed(2)}
-                    </div>
-                    <div>
-                        <button class="btn-ghost" style="padding:5px;" onclick="editEntry(${e.id})">✎</button>
-                        <button class="btn-ghost" style="padding:5px; color:var(--danger)" onclick="delEntry(${e.id})">×</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        historyListEl.innerHTML = filteredData.map(createRow).join('');
-    }
-
-    function exportHistoryData(format) {
-        const filtered = filterHistoryData(); // Nutzt die aktuelle Filterung
-
-        if (filtered.length === 0) {
-            return alert('Keine Daten für den Export gefunden. Bitte Filter prüfen.');
-        }
-
-        let fileContent;
-        let fileName;
-        let mimeType;
-
-        if (format === 'json') {
-            fileContent = JSON.stringify(filtered, null, 2);
-            fileName = 'time_pro_export_filtered.json';
-            mimeType = 'application/json';
-        } else if (format === 'csv') {
-            fileContent = convertToCSV(filtered);
-            fileName = 'time_pro_export_filtered.csv';
-            mimeType = 'text/csv';
-        } else {
-            return;
-        }
-
-        const blob = new Blob([fileContent], { type: mimeType });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = fileName;
-        a.click();
-        
-        alert(`Export von ${filtered.length} gefilterten Einträgen als ${format.toUpperCase()} gestartet.`);
-    }
-
-    // NOTE: convertToCSV wurde beibehalten und wird von exportHistoryData verwendet
-    function convertToCSV(dataArray) {
-        if (dataArray.length === 0) return '';
-        
-        const headers = ['Datum', 'Typ', 'Arbeitszeit_h', 'Sollzeit_h', 'Differenz_h', 'Info', 'Break_Min', 'Shift_Warning'];
-        
-        const csvRows = [headers.join(';')]; 
-
-        for (const entry of dataArray) {
-            const row = [
-                entry.date,
-                entry.type,
-                entry.worked.toFixed(2).replace('.', ','),
-                entry.expected.toFixed(2).replace('.', ','),
-                entry.diff.toFixed(2).replace('.', ','),
-                entry.info.replace(/,/g, ''), // Kommas entfernen, um CSV-Struktur nicht zu stören
-                entry.breakMins,
-                entry.shiftWarning ? 'JA' : 'NEIN'
-            ];
-            csvRows.push(row.join(';'));
-        }
-
-        return csvRows.join('\n');
-    }
-    
-    // --- CHARTS & PERFORMANCE (Unverändert) ---
-    // (Alle Funktionen renderTrend, renderDonut, calculatePerformanceData, renderPerformanceView sind unverändert)
-
     function renderTrend(dataPoints, elementId, areaFill = true) {
         const c = document.getElementById(elementId);
         if(!c) return; 
@@ -2369,8 +2311,85 @@
         };
     }
     
-    function renderPerformanceView(data) {
+    // NEU: DEEP DIVE PERFORMANCE LOGIC
+    function calculateDeepPerformanceData() {
+        // 1. Produktiver Wochentag (0=So, 6=Sa)
+        const dayStats = [
+            { totalDiff: 0, count: 0, label: 'So' }, // 0
+            { totalDiff: 0, count: 0, label: 'Mo' }, // 1
+            { totalDiff: 0, count: 0, label: 'Di' }, // 2
+            { totalDiff: 0, count: 0, label: 'Mi' }, // 3
+            { totalDiff: 0, count: 0, label: 'Do' }, // 4
+            { totalDiff: 0, count: 0, label: 'Fr' }, // 5
+            { totalDiff: 0, count: 0, label: 'Sa' }  // 6
+        ];
         
+        // 2. Produktivitäts-Heatmap (Stunden 8 bis 23 Uhr)
+        // Index 0 = 8 Uhr, Index 15 = 23 Uhr
+        const hourlyStats = new Array(16).fill(null).map(() => ({ totalWorked: 0, count: 0 }));
+        
+        data.entries.forEach(e => {
+            const d = new Date(e.date);
+            const dayIndex = d.getDay();
+            
+            // Wochentag Statistik (nur Arbeitstage mit Soll-Zeit > 0 und Diff != 0)
+            if (data.settings.hours[dayIndex] > 0 && e.diff !== 0) {
+                 dayStats[dayIndex].totalDiff += e.diff;
+                 dayStats[dayIndex].count++;
+            }
+
+            // Stunden-Statistik (Nur 'work'-Typ, mit tatsächlicher Zeitangabe)
+            if (e.type === 'work' && e.info && e.info.includes('-')) {
+                try {
+                    const [timeStartStr, timeEndStr] = e.info.split(' ')[0].split('-');
+                    let [h1, m1] = timeStartStr.split(':').map(Number);
+                    let [h2, m2] = timeEndStr.split(':').map(Number);
+                    
+                    // Annahme: Schicht ist innerhalb eines Tages (Start < Ende)
+                    const startTimeMins = h1 * 60 + m1;
+                    const endTimeMins = h2 * 60 + m2;
+                    const shiftMinutes = endTimeMins - startTimeMins;
+                    
+                    if (shiftMinutes > 0) {
+                        
+                        // Break Minutes (müssen rückgerechnet werden, da e.worked der Netto-Wert ist)
+                        const rawWorkedHours = e.worked + (e.breakMins / 60);
+                        const rawWorkedMinutes = rawWorkedHours * 60;
+                        
+                        // Wir verteilen die NETTO gearbeitete Zeit gleichmäßig über die Brutto-Schichtzeit
+                        const netWorkedMinutes = e.worked * 60;
+
+                        // Start- und End-Stunde (8:00 = 8)
+                        const startHour = Math.max(8, h1);
+                        const endHour = Math.min(24, h2);
+
+                        for (let hour = startHour; hour < endHour; hour++) {
+                            if (hour >= 8 && hour <= 23) {
+                                // Index ist Stunde - 8 (8 Uhr = 0, 23 Uhr = 15)
+                                const index = hour - 8;
+                                const durationInHour = 60; // Vereinfachung: gesamte Stunde
+                                
+                                // Geschätzte gearbeitete Zeit in dieser Stunde (Prozentual zur gesamten Brutto-Schicht)
+                                const workedFraction = durationInHour / shiftMinutes;
+                                const workedInThisHour = workedFraction * netWorkedMinutes / 60; // In Stunden
+                                
+                                hourlyStats[index].totalWorked += workedInThisHour;
+                                hourlyStats[index].count++;
+                            }
+                        }
+                    }
+                } catch(e) {
+                    console.error("Fehler bei Heatmap-Berechnung:", e);
+                }
+            }
+        });
+        
+        return { dayStats, hourlyStats };
+    }
+    
+    function renderPerformanceView(data, deepData) {
+        
+        // KPI Render (unverändert)
         const scoreEl = document.getElementById('kpiPerformance');
         scoreEl.innerText = `${data.kpiScore.toFixed(0)}%`;
         scoreEl.style.color = data.kpiScore >= 100 ? 'var(--success)' : (data.kpiScore >= 95 ? '#fbbf24' : 'var(--danger)');
@@ -2380,7 +2399,8 @@
         const avgDiffEl = document.getElementById('kpiAvgMonthlyDiff');
         avgDiffEl.innerText = `${data.kpiAvgMonthlyDiff >= 0 ? '+' : ''}${data.kpiAvgMonthlyDiff.toFixed(1)}h`;
         avgDiffEl.style.color = data.kpiAvgMonthlyDiff >= 0 ? 'var(--primary)' : 'var(--danger)';
-
+        
+        // Wöchentlicher Soll/Ist Vergleich (unverändert)
         const barContainer = document.getElementById('chartWeeklyPerformance');
         const weeklyBars = data.weekly;
         
@@ -2420,6 +2440,7 @@
         barContainer.appendChild(barGrid);
 
 
+        // Saldo Trend (unverändert)
         const monthlyDiffs = data.monthly.map(d => d.diff);
         const monthlyLabels = data.monthly.map(d => d.label);
         
@@ -2461,8 +2482,249 @@
                 }).join('')}
             </svg>
         `;
+        
+        // --- DEEP DIVE RENDER ---
+        
+        // 1. Produktiver Wochentag
+        const dayChartContainer = document.getElementById('chartProductivityByDay');
+        const dayStats = deepData.dayStats.slice(1, 6); // Nur Mo-Fr (Index 1 bis 5)
+        const maxAbsDiff = Math.max(0.1, ...dayStats.map(d => Math.abs(d.totalDiff / d.count)));
+        
+        dayChartContainer.innerHTML = '';
+        const dayBarGrid = document.createElement('div');
+        dayBarGrid.className = 'bar-chart-grid';
+        dayBarGrid.style.gridTemplateColumns = 'repeat(5, 1fr)';
+        dayBarGrid.style.height = '100%';
+        dayBarGrid.style.paddingBottom = '30px'; 
+        
+        const dayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
+        
+        dayStats.forEach((d, index) => {
+            const avgDiff = d.count > 0 ? d.totalDiff / d.count : 0;
+            const absHeight = Math.abs(avgDiff) / maxAbsDiff * 80; // max height 80%
+            const isPositive = avgDiff >= 0;
+            
+            const col = document.createElement('div');
+            col.className = 'bar-col';
+            col.style.justifyContent = isPositive ? 'flex-end' : 'flex-start';
+            col.style.paddingTop = isPositive ? '0' : '50%'; // Verschiebt den Anker
+            col.style.paddingBottom = isPositive ? '50%' : '0'; // Verschiebt den Anker
+
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.height = `${absHeight}px`;
+            bar.style.width = '25px';
+            bar.style.background = isPositive ? 'var(--primary)' : 'var(--danger)';
+            bar.style.bottom = isPositive ? '50%' : '0';
+            bar.style.transform = isPositive ? 'translateY(0)' : 'translateY(-100%)';
+            bar.style.borderRadius = isPositive ? '3px 3px 0 0' : '0 0 3px 3px';
+            
+            const valueLabel = document.createElement('span');
+            valueLabel.style.position = 'absolute';
+            valueLabel.style.fontSize = '0.7rem';
+            valueLabel.style.fontWeight = '600';
+            valueLabel.style.color = isPositive ? 'var(--primary)' : 'var(--danger)';
+            valueLabel.style.top = isPositive ? `${50 - absHeight}px` : 'auto';
+            valueLabel.style.bottom = isPositive ? 'auto' : `${50 + absHeight}px`;
+            valueLabel.innerText = avgDiff.toFixed(1) + 'h';
+
+            const label = document.createElement('span');
+            label.className = 'bar-label';
+            label.innerText = dayLabels[index];
+            label.style.bottom = '-10px';
+            label.style.transform = 'none';
+
+            col.appendChild(bar);
+            col.appendChild(valueLabel);
+            col.appendChild(label);
+            dayBarGrid.appendChild(col);
+        });
+        
+        // Mittellinie hinzufügen (y=50%)
+        const zeroLine = document.createElement('div');
+        zeroLine.style.position = 'absolute';
+        zeroLine.style.top = '50%';
+        zeroLine.style.left = '0';
+        zeroLine.style.width = '100%';
+        zeroLine.style.height = '1px';
+        zeroLine.style.background = 'rgba(255,255,255,0.1)';
+        
+        dayChartContainer.style.position = 'relative';
+        dayChartContainer.innerHTML = '';
+        dayChartContainer.appendChild(zeroLine);
+        dayChartContainer.appendChild(dayBarGrid);
+
+
+        // 2. Produktivitäts-Heatmap
+        const heatmapContainer = document.getElementById('chartProductivityHeatmap');
+        const hourlyStats = deepData.hourlyStats;
+        
+        // Find Max for scaling colors
+        const maxWorked = Math.max(0.1, ...hourlyStats.map(h => h.count > 0 ? h.totalWorked / h.count : 0));
+        
+        let heatmapHTML = '<div class="heatmap-grid">';
+        
+        for (let i = 0; i < 16; i++) {
+            const avgWorked = hourlyStats[i].count > 0 ? hourlyStats[i].totalWorked / hourlyStats[i].count : 0;
+            const hour = 8 + i;
+            
+            // Color Scaling (0.0 = low, 1.0 = high)
+            const ratio = avgWorked / maxWorked;
+            
+            let color = 'var(--heatmap-low)'; 
+            if (ratio > 0.66) {
+                 color = `rgba(${getRGB(ratio, 168, 85, 247).join(',')}, 1)`; // High (Primary)
+            } else if (ratio > 0.33) {
+                 color = `rgba(${getRGB(ratio, 251, 191, 36).join(',')}, 0.8)`; // Mid (Warn)
+            } else if (ratio > 0.05) {
+                 color = `rgba(${getRGB(ratio, 100, 116, 139).join(',')}, 0.6)`; // Low-Mid (Muted)
+            } else if (ratio > 0) {
+                 color = 'rgba(255,255,255, 0.05)';
+            }
+            
+            // Generate a color gradient helper function (simple linear interpolation)
+            function getRGB(ratio, r, g, b) {
+                // Skaliert die Farbe basierend auf dem Verhältnis (ratio) zur Max-Farbe
+                const alpha = 0.4 + (ratio * 0.6); // Mindest-Alpha 0.4
+                return [r, g, b, alpha.toFixed(2)];
+            }
+            
+            const displayValue = avgWorked > 0 ? avgWorked.toFixed(1) + 'h' : '---';
+
+            heatmapHTML += `
+                <div class="heatmap-cell" style="background-color: ${color};" title="Ø ${displayValue} gearbeitet ab ${hour}:00">
+                    ${hour}:00
+                </div>
+            `;
+        }
+        
+        heatmapHTML += '</div>';
+        heatmapContainer.innerHTML = heatmapHTML;
     }
 
+
+    // --- DATEN EXPORT LOGIC (Unverändert) ---
+    // (filterHistoryData, renderHistoryView, exportHistoryData, convertToCSV sind unverändert)
+    
+    function filterHistoryData() {
+        const startStr = document.getElementById('historyFilterStart').value;
+        const endStr = document.getElementById('historyFilterEnd').value;
+        const type = document.getElementById('historyFilterType').value;
+        const minHours = parseFloat(document.getElementById('historyFilterMinHours').value) || 0;
+        const searchText = document.getElementById('historyFilterSearch').value.toLowerCase();
+
+        let filtered = data.entries;
+
+        if (startStr) {
+            filtered = filtered.filter(e => new Date(e.date) >= new Date(startStr));
+        }
+        if (endStr) {
+            const endDate = new Date(endStr);
+            endDate.setDate(endDate.getDate() + 1); 
+            filtered = filtered.filter(e => new Date(e.date) < endDate);
+        }
+        if (type !== 'all') {
+            filtered = filtered.filter(e => e.type === type);
+        }
+        if (minHours > 0) {
+            filtered = filtered.filter(e => e.worked >= minHours);
+        }
+        if (searchText) {
+            filtered = filtered.filter(e => e.info.toLowerCase().includes(searchText));
+        }
+
+        return filtered;
+    }
+
+    function renderHistoryView() {
+        const filteredData = filterHistoryData();
+        const historyListEl = document.getElementById('entryListFull');
+        
+        document.getElementById('historyCount').innerText = `${filteredData.length} Einträge`;
+
+        if (filteredData.length === 0) {
+            historyListEl.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Keine Einträge gefunden, Filter anpassen.</p>';
+            return;
+        }
+
+        const createRow = (e) => `
+            <div class="entry-row type-${e.type}">
+                <div>
+                    <div class="entry-date">${new Date(e.date).toLocaleDateString('de-DE')}</div>
+                    <div class="entry-meta">${e.isPeriod ? e.label : e.info} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ MAX!</span>' : ''}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:15px;">
+                    <span class="tag">${e.type === 'school' ? 'SCHULE' : (e.type === 'holiday' ? 'FEIERTAG' : e.type.toUpperCase())}</span>
+                    <div style="font-weight:700; width:60px; text-align:right; color:${e.diff>=0?'var(--success)':'var(--danger)'}">
+                        ${e.diff>=0?'+':''}${e.diff.toFixed(2)}
+                    </div>
+                    <div>
+                        <button class="btn-ghost" style="padding:5px;" onclick="editEntry(${e.id})">✎</button>
+                        <button class="btn-ghost" style="padding:5px; color:var(--danger)" onclick="delEntry(${e.id})">×</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        historyListEl.innerHTML = filteredData.map(createRow).join('');
+    }
+
+    function exportHistoryData(format) {
+        const filtered = filterHistoryData(); 
+
+        if (filtered.length === 0) {
+            return alert('Keine Daten für den Export gefunden. Bitte Filter prüfen.');
+        }
+
+        let fileContent;
+        let fileName;
+        let mimeType;
+
+        if (format === 'json') {
+            fileContent = JSON.stringify(filtered, null, 2);
+            fileName = 'time_pro_export_filtered.json';
+            mimeType = 'application/json';
+        } else if (format === 'csv') {
+            fileContent = convertToCSV(filtered);
+            fileName = 'time_pro_export_filtered.csv';
+            mimeType = 'text/csv';
+        } else {
+            return;
+        }
+
+        const blob = new Blob([fileContent], { type: mimeType });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        a.click();
+        
+        alert(`Export von ${filtered.length} gefilterten Einträgen als ${format.toUpperCase()} gestartet.`);
+    }
+
+    function convertToCSV(dataArray) {
+        if (dataArray.length === 0) return '';
+        
+        const headers = ['Datum', 'Typ', 'Arbeitszeit_h', 'Sollzeit_h', 'Differenz_h', 'Info', 'Break_Min', 'Shift_Warning'];
+        
+        const csvRows = [headers.join(';')]; 
+
+        for (const entry of dataArray) {
+            const row = [
+                entry.date,
+                entry.type,
+                entry.worked.toFixed(2).replace('.', ','),
+                entry.expected.toFixed(2).replace('.', ','),
+                entry.diff.toFixed(2).replace('.', ','),
+                entry.info.replace(/,/g, ''), // Kommas entfernen, um CSV-Struktur nicht zu stören
+                entry.breakMins,
+                entry.shiftWarning ? 'JA' : 'NEIN'
+            ];
+            csvRows.push(row.join(';'));
+        }
+
+        return csvRows.join('\n');
+    }
+    
     // --- HILFSFUNKTIONEN (Unverändert) ---
     function isOddWeek(d) { return getWeek(d) % 2 !== 0; }
 
