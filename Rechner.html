@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TimeTracker PRO</title>
+    <title>TimeTracker V1.2.5</title>
+    <link rel="icon" href="Icon.png" type="image/png">
+
     <style>
         /* --- CORE VARIABLES --- */
         :root {
@@ -42,7 +44,6 @@
         body {
             font-family: var(--font-main);
             background-color: var(--bg-deep);
-            /* Subtler, more professional gradient */
             background-image: 
                 radial-gradient(circle at 15% 15%, rgba(var(--primary-rgb), 0.08), transparent 40%),
                 radial-gradient(circle at 85% 85%, rgba(var(--primary-rgb), 0.05), transparent 40%);
@@ -531,6 +532,50 @@
              grid-template-columns: 1fr 1fr;
              gap: 15px;
         }
+        /* Prognose View Styling */
+        .prognose-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .prognose-header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+        .prognose-day {
+            text-align: center;
+            padding: 10px 5px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            position: relative;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .prognose-day:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .prognose-day.today {
+            border: 2px solid var(--primary);
+        }
+        .prognose-day.type-work { background: var(--primary-dim); border: 1px solid var(--primary); }
+        .prognose-day.type-school { background: rgba(59, 130, 246, 0.1); border: 1px solid var(--school); }
+        .prognose-day.type-vacation { background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); }
+        .prognose-day.type-holiday, .prognose-day.type-sick { background: rgba(245, 158, 11, 0.1); border: 1px solid var(--holiday); }
+        .day-label { color: var(--text-muted); font-size: 0.7rem; margin-bottom: 5px; }
+        .day-expected { font-weight: 600; font-family: var(--font-mono); font-size: 1rem; }
+        .day-saldo { font-size: 0.75rem; margin-top: 5px; color: var(--success); }
+
 
         /* --- MOBILE RESPONSIVENESS --- */
         @media (max-width: 1024px) {
@@ -597,9 +642,6 @@
             display: block;
         }
 
-
-        /* ... (restliches CSS unverändert) ... */
-
     </style>
 </head>
 <body>
@@ -616,6 +658,9 @@
         </div>
         <div class="nav-item" id="nav-performance" onclick="switchTab('performance')">
             <span>📈</span> Performance Analyse
+        </div>
+        <div class="nav-item" id="nav-prognose" onclick="switchTab('prognose')">
+            <span>🔮</span> Prognose & Planer
         </div>
         <div class="nav-item" id="nav-ihk" onclick="switchTab('ihk')">
             <span>🎓</span> IHK / Karriere
@@ -768,12 +813,17 @@
                             <option value="sick">💊 Krank</option>
                         </select>
                     </div>
+                    
+                    <input type="text" id="inpProject" class="glass-input" placeholder="Projekt / Kunde (z.B. Alpha-Migration)">
+                    
                     <div style="display:flex; gap:15px;">
                         <input type="time" id="inpStart" class="glass-input" placeholder="Start">
                         <input type="time" id="inpEnd" class="glass-input" placeholder="Ende">
                     </div>
                     <input type="number" id="inpHours" class="glass-input" step="0.25" placeholder="Stunden manuell...">
                     
+                    <input type="text" id="inpNotes" class="glass-input" placeholder="Notizen (z.B. Bugfix in Modul X)">
+
                     <div style="display:flex; gap:15px; margin-top:auto;">
                         <button id="mainBtn" class="btn btn-primary" onclick="handleEntry()">Eintrag speichern</button>
                         <button id="cancelBtn" class="btn" style="background:#222; display:none; flex:1;" onclick="resetEdit()">Abbrechen</button>
@@ -805,21 +855,28 @@
         </div>
 
         <div id="view-performance" class="view-section">
-            <div class="kpi-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+            <h2 style="margin-bottom:1.5rem;">📈 Performance Analyse & Muster</h2>
+
+            <div class="kpi-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
                 <div class="card kpi-large">
                     <div class="kpi-large-label">Soll-Erfüllungsgrad (90 Tage)</div>
                     <div class="kpi-large-value" id="kpiPerformance">0%</div>
                     <div style="font-size:0.8rem; color:var(--text-muted);">Ziel: 100%</div>
                 </div>
-                <div class="card kpi-large">
+                <div class="card kpi-large" style="border-left: 3px solid #06b6d4;">
+                    <div class="kpi-large-label">Ø Arbeitsbeginn</div>
+                    <div class="kpi-large-value" id="kpiAvgStartTime" style="color:#06b6d4;">---</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Dein bestes Startfenster</div>
+                </div>
+                <div class="card kpi-large" style="border-left: 3px solid #f59e0b;">
+                    <div class="kpi-large-label">Ø Längste Fokusphase</div>
+                    <div class="kpi-large-value" id="kpiAvgFocus" style="color:#f59e0b;">0.0h</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Zwischen Pausen & Start/Ende</div>
+                </div>
+                 <div class="card kpi-large">
                     <div class="kpi-large-label">Ø Saldo Monatlich (1 Jahr)</div>
                     <div class="kpi-large-value" id="kpiAvgMonthlyDiff" style="color:var(--primary);">+0h</div>
                     <div style="font-size:0.8rem; color:var(--text-muted);">Zeigt den monatlichen Trend</div>
-                </div>
-                <div class="card kpi-large">
-                    <div class="kpi-large-label">Gesamt Sollstunden (90 Tage)</div>
-                    <div class="kpi-large-value" id="kpiExpected90" style="color:#fff;">0h</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">Zum Vergleich</div>
                 </div>
             </div>
 
@@ -837,6 +894,32 @@
                     </div>
                     <div class="chart-container" id="chartWeeklyPerformance">
                         </div>
+                </div>
+            </div>
+            
+            <div class="charts-row" style="grid-template-columns: 1fr 1fr;">
+                 <div class="card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Projekt-Verteilung</div>
+                            <div class="chart-sub">Aufteilung der gesamten Arbeitszeit</div>
+                        </div>
+                    </div>
+                    <div class="donut-container" id="chartProjectDistribution">
+                    </div>
+                    <div class="donut-legend" id="projectDonutLegend">
+                    </div>
+                </div>
+                
+                 <div class="card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Saldo-Entwicklung pro Monat</div>
+                            <div class="chart-sub">Kumulierte Saldo-Veränderung pro Monat (12 Monate)</div>
+                        </div>
+                    </div>
+                    <div class="trend-container" id="chartMonthlyTrend">
+                    </div>
                 </div>
             </div>
 
@@ -866,22 +949,64 @@
                 </div>
             </div>
 
-            <div class="charts-row" style="grid-template-columns: 1fr;">
-                 <div class="card">
-                    <div class="chart-header">
-                        <div>
-                            <div class="chart-title">Saldo-Entwicklung pro Monat</div>
-                            <div class="chart-sub">Kumulierte Saldo-Veränderung pro Monat (12 Monate)</div>
-                        </div>
+            <div class="card">
+                <h3 style="margin-bottom:1.5rem;">Compliance & Ruhezeiten-Audit</h3>
+                <div class="audit-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="card audit-card" id="auditMaxHours">
+                        <div class="audit-label">10h Max-Arbeitszeit</div>
+                        <div class="audit-value" id="auditMaxHoursValue">OK</div>
                     </div>
-                    <div class="trend-container" id="chartMonthlyTrend">
-                        </div>
+                    <div class="card audit-card" id="auditRestTime">
+                        <div class="audit-label">11h Ruhezeit (Letzte Schicht)</div>
+                        <div class="audit-value" id="auditRestTimeValue">OK</div>
+                    </div>
+                     <div class="card audit-card" id="auditBreakMin">
+                        <div class="audit-label">Pausen-Compliance (Letzte Schicht)</div>
+                        <div class="audit-value" id="auditBreakMinValue">OK</div>
+                    </div>
                 </div>
             </div>
         </div>
+        
+        <div id="view-prognose" class="view-section">
+            <h2 style="margin-bottom:1.5rem; color:#06b6d4;">🔮 Saldo Prognose & Zukunftsplanung</h2>
+            <div class="kpi-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="card kpi-large" style="border-left: 5px solid #06b6d4;">
+                    <div class="kpi-large-label">SALDO HEUTE (Startwert)</div>
+                    <div class="kpi-large-value" id="prognoseStartSaldo" style="color:var(--text-main);">+0h</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Basierend auf dem aktuellen Gleitzeitkonto</div>
+                </div>
+                 <div class="card kpi-large" style="border-left: 5px solid var(--success);">
+                    <div class="kpi-large-label">SALDO NACH PLANUNG (Endwert)</div>
+                    <div class="kpi-large-value" id="prognoseEndSaldo" style="color:var(--success);">+0h</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Saldo am Ende der Planungsperiode</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                    <h3 style="font-size:1.1rem;">Planungs-Kalender (Nächste 4 Wochen)</h3>
+                     <select id="prognosePlanSelect" class="glass-select" style="width:200px;">
+                        <option value="work">💼 Arbeit</option>
+                        <option value="school">📚 Schule</option>
+                        <option value="vacation">🌴 Urlaub</option>
+                        <option value="sick">💊 Krank</option>
+                        <option value="reset">❌ Zurücksetzen</option>
+                    </select>
+                </div>
+                
+                <div class="prognose-grid" id="prognoseCalendar">
+                    </div>
+                
+                <div style="display:flex; justify-content:flex-end; margin-top: 1.5rem;">
+                     <button class="btn btn-primary" onclick="applyPrognosePlan()" style="width: 300px; background:#06b6d4;">Plan anwenden & Saldo aktualisieren</button>
+                </div>
+            </div>
+
+        </div>
 
         <div id="view-ihk" class="view-section">
-            <h2 style="margin-bottom:1.5rem; color:var(--ihk);">🎓 Karriere & Ausbildungs-Audit</h2>
+<h2 style="margin-bottom:1.5rem; color:var(--ihk);">🎓 Karriere & Ausbildungs-Audit</h2>
             
             <div class="kpi-grid" style="grid-template-columns: 1.5fr 1fr 1fr;">
                 <div class="card ihk-progress-card">
@@ -993,7 +1118,7 @@
         </div>
         
         <div id="view-school" class="view-section">
-            <div class="kpi-grid" style="grid-template-columns: 1.5fr 1fr 1fr;">
+<div class="kpi-grid" style="grid-template-columns: 1.5fr 1fr 1fr;">
                  <div class="ihk-kpi" style="border-left-color: var(--school);">
                     <div class="ihk-kpi-label">AKTUELLER GESAMT-DURCHSCHNITT</div>
                     <div class="ihk-kpi-value" id="schoolOverallAvg" style="color:var(--school);">1.0</div>
@@ -1032,7 +1157,7 @@
         </div>
         
         <div id="view-goals" class="view-section">
-            <h2 style="margin-bottom:1.5rem;">🏆 Ziele & Trophäen</h2>
+<h2 style="margin-bottom:1.5rem;">🏆 Ziele & Trophäen</h2>
             <p style="color:var(--text-muted); margin-bottom:2rem;">Verfolge deine Langzeit-Ziele und definiere eigene Meilensteine.</p>
 
             <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem;">ZIEL DEFINITION & ERSTELLUNG</h4>
@@ -1074,7 +1199,7 @@
         </div>
 
         <div id="view-history" class="view-section">
-            <div class="card">
+<div class="card">
                 <div class="filter-header">
                     <h2 style="font-size:1.5rem;">Daten-Analyse & Historie</h2>
                     <span id="historyCount">0 Einträge</span>
@@ -1113,7 +1238,7 @@
     </main>
 
     <div class="modal" id="settingsModal">
-        <div class="modal-box">
+<div class="modal-box">
             <div style="display:flex; justify-content:space-between; margin-bottom:2rem;">
                 <h2>Einstellungen</h2>
                 <button onclick="closeSettings()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
@@ -1236,10 +1361,12 @@
                 }
             },
             // NEUE ZIEL-DEFINITIONEN
-            goals: [] 
+            goals: [],
+            // NEU: Prognose Plan
+            prognosePlan: {} // Speichert den Plan: { '2025-12-01': 'vacation', ... }
         } 
     };
-    let timer = { id:null, start:0, paused:0, running:false, log:[] }; 
+    let timer = { id:null, start:0, paused:0, running:false, log:[], breakTime: 0 }; // breakTime für präzise Pausenmessung
     let editId = null;
     let isSidebarOpen = true; // Für Desktop standardmäßig offen
 
@@ -1267,6 +1394,7 @@
         }
         
         if(!data.settings.goals) data.settings.goals = []; // NEU
+        if(!data.settings.prognosePlan) data.settings.prognosePlan = {}; // NEU
         
         if (data.settings.ihk.exam) { 
              data.settings.ihk.end = data.settings.ihk.exam;
@@ -1327,6 +1455,9 @@
         if (document.getElementById('view-goals').classList.contains('active')) {
              renderGoalsView();
         }
+        if (document.getElementById('view-prognose').classList.contains('active')) {
+             renderPrognoseView();
+        }
         
         // Initiales Laden der IHK-Felder, da sie nicht direkt in window.onload gesetzt wurden
         if (document.getElementById('view-ihk').classList.contains('active')) {
@@ -1360,7 +1491,7 @@
     }
     function saveTimerState() { 
         localStorage.setItem('tg_timer', JSON.stringify({
-            id: timer.id, start: timer.start, paused: timer.paused, running: timer.running
+            id: timer.id, start: timer.start, paused: timer.paused, running: timer.running, breakTime: timer.breakTime // NEU: breakTime gespeichert
         })); 
         localStorage.setItem('tg_timer_log', JSON.stringify(timer.log));
     }
@@ -1381,6 +1512,7 @@
             'ihk': 'IHK / Karriere', 
             'school': 'Berufsschule Audit', 
             'goals': 'Ziele & Trophäen',
+            'prognose': 'Saldo Prognose & Zukunftsplanung', // NEU
         };
         document.querySelector('.page-title').textContent = titles[tabId];
 
@@ -1405,6 +1537,9 @@
         }
         if (tabId === 'history') {
             renderHistoryView();
+        }
+        if (tabId === 'prognose') { // NEU
+            renderPrognoseView();
         }
     }
     
@@ -1900,12 +2035,47 @@
 
 
     // --- LOGIC (handleEntry remains unchanged for core functionality) ---
+    function calculateProjectDistribution() {
+        const projectHours = {};
+        let totalWorkHours = 0;
+
+        data.entries.forEach(e => {
+            if (e.type === 'work' && e.worked > 0) {
+                const projectName = e.project || 'Unbekannt'; 
+                
+                if (projectName !== 'Manuell' && projectName !== '') {
+                     projectHours[projectName] = (projectHours[projectName] || 0) + e.worked;
+                     totalWorkHours += e.worked;
+                }
+            }
+        });
+
+        // Sortieren und Top 5 behalten (Rest als 'Sonstige')
+        const sortedProjects = Object.entries(projectHours)
+            .sort(([, a], [, b]) => b - a);
+
+        let topProjects = sortedProjects.slice(0, 5);
+        let otherHours = sortedProjects.slice(5).reduce((sum, [, hours]) => sum + hours, 0);
+
+        const distribution = topProjects.map(([name, hours]) => ({ name, hours }));
+
+        if (otherHours > 0) {
+            distribution.push({ name: 'Sonstige Projekte', hours: otherHours });
+        }
+        
+        return { distribution, totalWorkHours };
+    }
+
     function handleEntry() {
         const dateStr = document.getElementById('inpDate').value;
         const type = document.getElementById('inpType').value;
         const start = document.getElementById('inpStart').value;
         const end = document.getElementById('inpEnd').value;
         const direct = document.getElementById('inpHours').value;
+        
+        // NEU: Projekt & Info/Notiz
+        const project = document.getElementById('inpProject').value.trim(); 
+        const notes = document.getElementById('inpNotes').value.trim();
 
         if(!dateStr) return alert('Bitte Datum wählen');
         
@@ -1913,15 +2083,19 @@
         let worked = 0;
         let dayIndex = date.getDay(); 
         let expected = data.settings.hours[dayIndex] || 0;
-        let info = '';
+        let info = notes; // info wird zur Notiz, da Zeit jetzt getrennt ist
         let diff = 0; 
         
         let breakMinutes = 0;
+        let shiftStart = ''; // NEU
         let shiftEnd = '';
         let shiftWarning = false;
+        let breakLog = []; // NEU: Speichert Pausen-Log, wenn Timer verwendet wurde
 
         if(type === 'work') {
             if(start && end) {
+                shiftStart = start; // NEU
+                
                 let d1 = new Date(`2000-01-01T${start}`);
                 let d2 = new Date(`2000-01-01T${end}`);
                 let hoursDiff = (d2 - d1) / 3.6e6;
@@ -1930,9 +2104,9 @@
                 if(data.settings.break.thresh > 0 && hoursDiff >= data.settings.break.thresh) {
                     breakMinutes = data.settings.break.min;
                     hoursDiff -= (breakMinutes / 60);
-                    info = `${start} - ${end} (Auto-Pause ${breakMinutes}m)`;
+                    info = `${start} - ${end} (${breakMinutes}m Pause) | ${info}`; // Zeitdetails im Info behalten
                 } else {
-                    info = `${start} - ${end}`;
+                    info = `${start} - ${end} | ${info}`;
                 }
                 worked = hoursDiff;
                 
@@ -1944,8 +2118,39 @@
 
             } else if (direct) {
                 worked = parseFloat(direct);
-                info = 'Manuell';
-            } else return alert('Bitte Zeit oder Stunden eingeben');
+                info = `Manuell (${worked.toFixed(2)}h) | ${info}`;
+            } else if (timer.paused > 0 || timer.running) { // Timer-Daten übernehmen
+                 const now = Date.now();
+                 let totalMs = timer.paused + (timer.running ? now - timer.start : 0);
+                 let h = totalMs / 3.6e6;
+                 
+                 // Präzise Pausenlogik: Abzug der gemessenen Pausenzeit
+                 h -= (timer.breakTime / 3.6e6); // Abzug der im Timer gemessenen Pausenzeit (NEU)
+
+                 // Automatischer Abzug der Mindestpause (falls Timer-Pausen < Mindestpause)
+                 const minBreakRequired = data.settings.break.min;
+                 const timerBreakMinutes = timer.breakTime / 60000;
+
+                 if (h * 60 >= data.settings.break.thresh * 60 && timerBreakMinutes < minBreakRequired) {
+                    const additionalBreakMs = (minBreakRequired - timerBreakMinutes) * 60000;
+                    h -= (additionalBreakMs / 3.6e6);
+                    breakMinutes = minBreakRequired;
+                    alert(`Hinweis: ${minBreakRequired} Minuten Mindestpause abgezogen (Timer-Pause war zu kurz).`);
+                 } else {
+                    breakMinutes = timerBreakMinutes;
+                 }
+
+
+                 worked = h;
+                 info = `Live-Tracker (${h.toFixed(2)}h) | ${info}`;
+                 breakLog = timer.log.filter(l => l.action === 'pause'); // Pausen-Log speichern (NEU)
+                 
+                 // Timer zurücksetzen
+                 timer = {id:null, start:0, paused:0, running:false, log:[], breakTime: 0};
+                 saveTimerState();
+                 displayTimerTime(0);
+
+            } else return alert('Bitte Zeit, Stunden oder Timer-Daten eingeben');
             
             diff = worked - expected;
 
@@ -1954,16 +2159,16 @@
             
             if (dayIndex === 3) {
                 worked = SCHOOL_HOURS;
-                info = `Berufsschule - Mittwoch (${SCHOOL_HOURS.toFixed(2)}h)`;
+                info = `Berufsschule - Mittwoch | ${info}`;
             } else if (dayIndex === 4 && isOddWeek(date)) {
                 worked = SCHOOL_HOURS;
-                info = `Berufsschule - Do. (Ungerade Woche, ${SCHOOL_HOURS.toFixed(2)}h)`;
+                info = `Berufsschule - Do. (Ungerade) | ${info}`;
             } else if (direct) {
                 worked = parseFloat(direct);
-                info = 'Berufsschule - Manuell';
+                info = `Berufsschule - Manuell (${worked.toFixed(2)}h) | ${info}`;
             } else {
                 worked = expected;
-                info = 'Keine Berufsschule (Regulär)';
+                info = `Keine Berufsschule (Regulär) | ${info}`;
             }
             
             if (worked > 0 && (dayIndex === 3 || (dayIndex === 4 && isOddWeek(date)) || direct)) {
@@ -1974,18 +2179,25 @@
 
         } else if (type === 'vacation' || type === 'sick' || type === 'holiday') {
             worked = expected;
-            info = type === 'vacation' ? 'Urlaubstag' : (type === 'sick' ? 'Krankmeldung' : 'Feiertag');
+            info = (type === 'vacation' ? 'Urlaubstag' : (type === 'sick' ? 'Krankmeldung' : 'Feiertag')) + ` | ${info}`;
             diff = 0;
         }
+        
+        // Entferne führende '| ' wenn info leer war
+        info = info.replace(/^ \| /, '').trim();
 
         const entry = {
             id: editId || Date.now(),
             date: dateStr, type, worked, expected, 
             diff: diff, 
-            info, isPeriod: false,
+            info, 
+            isPeriod: false,
             breakMins: breakMinutes,
+            shiftStart: shiftStart, // NEU
             shiftEnd: shiftEnd,
-            shiftWarning: shiftWarning
+            shiftWarning: shiftWarning,
+            project: project, // NEU: Projekt/Kunde
+            breakLog: breakLog // NEU: Detailliertes Pausenlog
         };
 
         if(editId) {
@@ -2004,9 +2216,12 @@
         data.entries.sort((a,b) => new Date(b.date) - new Date(a.date));
         save();
         
+        // Formularfelder leeren
         document.getElementById('inpStart').value = '';
         document.getElementById('inpEnd').value = '';
         document.getElementById('inpHours').value = '';
+        document.getElementById('inpProject').value = ''; // NEU
+        document.getElementById('inpNotes').value = ''; // NEU
         
         // Neu laden der Historie, falls gerade aktiv
         if (document.getElementById('view-history').classList.contains('active')) {
@@ -2022,18 +2237,32 @@
         const lastAction = timer.log.at(-1);
         
         const today = new Date().toISOString().split('T')[0];
-        if (lastAction && lastAction.date !== today) {
-            timer.log = []; 
+        
+        // Pausenzeit messen
+        if (action === 'start' && lastAction && lastAction.action === 'pause') {
+            // Pause beendet: Zeit seit letzter Pause-Aktion messen
+            timer.breakTime += time - lastAction.time;
         }
 
         if (action === 'start') {
             if (timer.running && lastAction && lastAction.action === 'start') return;
             timer.log.push({ action: 'start', time, date: today });
         } else if (action === 'pause') {
-            timer.log.push({ action: 'pause', time, duration: time - (lastAction?.time || time), date: today });
+            // Pausen-Aktion speichert nur den Startpunkt der Pause
+            timer.log.push({ action: 'pause', time, date: today });
         } else if (action === 'stop') {
+            // Wenn gestoppt wird, während der Timer läuft, muss die Zeit bis jetzt noch zu paused addiert werden
+            if (timer.running) {
+                timer.paused += time - timer.start;
+            }
+            
+            // Wenn gestoppt wird, während Pause aktiv ist, muss die Pausenzeit noch gemessen werden
+            if (lastAction && lastAction.action === 'pause') {
+                timer.breakTime += time - lastAction.time;
+            }
+
             timer.log.push({ action: 'stop', time, date: today });
-            timer.log = []; 
+            timer.log = []; // Log leeren nach Stop
         }
         
         saveTimerState();
@@ -2058,33 +2287,35 @@
                 logTimerAction('pause', now);
             }
         } else if (act === 'stop') {
+            // Stop leert Timer und bucht den Eintrag
             timer.running = false; 
             document.getElementById('timerBox').classList.remove('timer-active');
-            let total = timer.paused + (timer.start > 0 ? now - timer.start : 0);
-            let h = total / 3.6e6;
             
-            // **KORREKTUR:** Auto-Pause abziehen, wenn Schwelle überschritten ist
-            const breakThresholdHours = data.settings.break.thresh;
-            const breakMinutes = data.settings.break.min;
-            if (h >= breakThresholdHours) {
-                h -= (breakMinutes / 60);
-                alert(`Hinweis: ${breakMinutes} Minuten Auto-Pause abgezogen.`);
-            }
+            // Loggt die Stop-Aktion, um letzte Pause/Laufzeit zu beenden
+            logTimerAction('stop', now); 
 
+            let total = timer.paused + (timer.start > 0 ? now - timer.start : 0);
+            let h_raw = total / 3.6e6; // Brutto-Stunden
+            let h_netto = h_raw - (timer.breakTime / 3.6e6); // Netto-Stunden
 
-            if (confirm(`Zeit stoppen: ${h.toFixed(2)}h?`)) {
-                document.getElementById('inpHours').value = h.toFixed(2);
+            // Manuelle Mindestpausen-Korrektur (wird in handleEntry detailliert durchgeführt)
+            if (confirm(`Zeit stoppen: ${h_netto.toFixed(2)}h (Pausenzeit: ${(timer.breakTime / 3.6e6).toFixed(2)}h)?`)) {
+                // Den Netto-Wert in das Stundenfeld übertragen, damit handleEntry es verarbeitet
+                document.getElementById('inpHours').value = h_netto.toFixed(2);
                 document.getElementById('inpType').value = 'work';
                 document.getElementById('inpDate').valueAsDate = new Date();
+                
+                // Da handleEntry Timer-Daten automatisch übernimmt, rufen wir es auf
                 handleEntry(); 
                 
-                logTimerAction('stop', now); 
-                timer = {id:null, start:0, paused:0, running:false, log:[]};
-                displayTimerTime(0);
-                saveTimerState(); 
+                // Timer ist bereits in handleEntry zurückgesetzt
+            } else {
+                // Wenn Abbruch, Log und Timer auf Pause-Status zurücksetzen
+                timer.running = false;
+                timer.log.pop(); // Stop-Eintrag entfernen
+                saveTimerState();
             }
         }
-        saveTimerState();
     }
     
     function timerRun() {
@@ -2093,32 +2324,12 @@
         
         const now = Date.now();
         const rawRunningTimeMs = now - timer.start;
-        const totalWorkedMs = rawRunningTimeMs + timer.paused;
+        const totalWorkedMs_raw = rawRunningTimeMs + timer.paused;
         
-        const totalWorkedHours = totalWorkedMs / 3.6e6;
-        const breakThresholdHours = data.settings.break.thresh;
-        const breakMinutes = data.settings.break.min;
+        // Netto-Arbeitszeit anzeigen
+        const totalWorkedMs_netto = totalWorkedMs_raw - timer.breakTime;
         
-        let adjustedTimeMs = totalWorkedMs;
-        
-        if (totalWorkedHours >= breakThresholdHours && !timer.autoPaused) {
-            
-            if (breakMinutes > 0) {
-                 const breakMs = breakMinutes * 60000;
-                 adjustedTimeMs = totalWorkedMs - breakMs;
-                 
-                 timer.autoPaused = true;
-                 
-                 document.getElementById('timerStatus').innerText = `LÄUFT (PAUSE ${breakMinutes}M abgezogen)`;
-                 document.getElementById('timerStatus').classList.add('paused');
-            }
-        } else if (totalWorkedHours < breakThresholdHours && timer.autoPaused) {
-             timer.autoPaused = false;
-             document.getElementById('timerStatus').classList.remove('paused');
-        }
-
-
-        displayTimerTime(adjustedTimeMs);
+        displayTimerTime(totalWorkedMs_netto);
         renderTimerLogBar();
     }
     
@@ -2134,38 +2345,53 @@
         const statusEl = document.getElementById('timerStatus');
         logBar.innerHTML = '';
         
-        if (timer.log.length === 0) {
+        // Filtere Log, um nur Start/Pause zu behalten (Stop ist der Endpunkt)
+        const relevantLog = timer.log.filter(l => l.action !== 'stop');
+        
+        if (relevantLog.length === 0 && !timer.running) {
             statusEl.innerText = 'STOP';
             statusEl.classList.remove('running', 'paused', 'max');
             return;
         }
 
-        const firstStart = timer.log.find(l => l.action === 'start')?.time || Date.now();
-        const totalDuration = (timer.running ? Date.now() : timer.log.at(-1)?.time || firstStart) - firstStart;
+        const firstStart = relevantLog.find(l => l.action === 'start')?.time || timer.start || Date.now();
+        const totalTimeMs = (timer.running ? Date.now() : relevantLog.at(-1)?.time || firstStart) - firstStart;
         
-        if (totalDuration <= 0) return;
+        if (totalTimeMs <= 0) return;
 
         let cumulativeTime = 0;
         let lastTime = firstStart;
+        let breakMsTotal = 0;
         
-        statusEl.innerText = timer.running ? 'LÄUFT' : 'PAUSIERT';
-        statusEl.classList.remove('paused');
-        statusEl.classList.add(timer.running ? 'running' : 'paused');
+        // Status-Anzeige (Berücksichtigt die Gesamt-Pause)
+        const totalWorkedHours = (timer.paused + (timer.running ? Date.now() - timer.start : 0)) / 3.6e6;
+        const minBreakRequired = data.settings.break.min / 60;
+        const netTimeAfterBreak = totalWorkedHours - (timer.breakTime / 3.6e6);
+        const requiredBreak = totalWorkedHours >= data.settings.break.thresh ? minBreakRequired : 0;
+        const breakDeficit = Math.max(0, requiredBreak - (timer.breakTime / 3.6e6));
 
-        if (timer.autoPaused) {
-             statusEl.innerText = `MAX-ZEIT ERREICHT (Auto-Pause)`;
-             statusEl.classList.add('max');
+        if (timer.running) {
+             statusEl.innerText = 'LÄUFT';
+             statusEl.classList.add('running');
+             statusEl.classList.remove('paused');
+             if (breakDeficit > 0.1) statusEl.innerText = `LÄUFT (PAUSEN-DEFIZIT)`;
+        } else {
+             statusEl.innerText = 'PAUSIERT';
+             statusEl.classList.add('paused');
+             statusEl.classList.remove('running');
         }
 
-        for (let i = 0; i < timer.log.length; i++) {
-            const logEntry = timer.log[i];
-            
-            if (logEntry.action === 'pause' || logEntry.action === 'stop') {
-                const segmentDuration = logEntry.time - lastTime;
+        for (let i = 0; i < relevantLog.length; i++) {
+            const logEntry = relevantLog[i];
+            const nextEntry = relevantLog[i + 1];
+
+            if (logEntry.action === 'start') {
+                const segmentEnd = nextEntry ? nextEntry.time : (timer.running ? Date.now() : logEntry.time);
+                const segmentDuration = segmentEnd - lastTime;
                 
                 if (segmentDuration > 0) {
-                    const widthPercent = (segmentDuration / totalDuration) * 100;
-                    const leftPercent = (cumulativeTime / totalDuration) * 100;
+                    const widthPercent = (segmentDuration / totalTimeMs) * 100;
+                    const leftPercent = (cumulativeTime / totalTimeMs) * 100;
                     
                     const runningSegment = document.createElement('div');
                     runningSegment.className = 'timer-log-segment';
@@ -2176,48 +2402,27 @@
                     
                     cumulativeTime += segmentDuration;
                 }
+                lastTime = segmentEnd;
+
+            } else if (logEntry.action === 'pause') {
+                const segmentEnd = nextEntry ? nextEntry.time : (timer.running ? Date.now() : logEntry.time); // Bis zum nächsten Start oder jetzt
+                const segmentDuration = segmentEnd - logEntry.time; // Dauer der Pause selbst
                 
-                if (logEntry.action === 'pause' && timer.log[i+1]?.action === 'start') {
-                    const pauseStart = logEntry.time;
-                    const pauseEnd = timer.log[i+1].time;
-                    const pauseDuration = pauseEnd - pauseStart;
+                if (segmentDuration > 0) {
+                    const widthPercent = (segmentDuration / totalTimeMs) * 100;
+                    const leftPercent = (logEntry.time - firstStart) / totalTimeMs * 100; // Startpunkt der Pause
                     
-                    if (pauseDuration > 0) {
-                        const widthPercent = (pauseDuration / totalDuration) * 100;
-                        const leftPercent = (cumulativeTime / totalDuration) * 100;
-
-                        const pauseSegment = document.createElement('div');
-                        pauseSegment.className = 'timer-log-segment';
-                        pauseSegment.style.background = 'var(--audit-warn)';
-                        pauseSegment.style.width = `${widthPercent}%`;
-                        pauseSegment.style.left = `${leftPercent}%`;
-                        logBar.appendChild(pauseSegment);
-                        
-                        cumulativeTime += pauseDuration;
-                    }
-                    lastTime = pauseEnd;
-                } else if (logEntry.action === 'stop') {
-                     lastTime = logEntry.time;
+                    const pauseSegment = document.createElement('div');
+                    pauseSegment.className = 'timer-log-segment';
+                    pauseSegment.style.background = 'var(--audit-warn)';
+                    pauseSegment.style.width = `${widthPercent}%`;
+                    pauseSegment.style.left = `${leftPercent}%`;
+                    logBar.appendChild(pauseSegment);
+                    
+                    cumulativeTime += segmentDuration;
                 }
-                
-            } else if (logEntry.action === 'start') {
-                 lastTime = logEntry.time;
+                lastTime = segmentEnd;
             }
-        }
-        
-        if (timer.running) {
-             const segmentDuration = Date.now() - lastTime;
-             if (segmentDuration > 0) {
-                 const widthPercent = (segmentDuration / totalDuration) * 100;
-                 const leftPercent = (cumulativeTime / totalDuration) * 100;
-
-                 const runningSegment = document.createElement('div');
-                 runningSegment.className = 'timer-log-segment';
-                 runningSegment.style.background = 'var(--primary)';
-                 runningSegment.style.width = `${widthPercent}%`;
-                 runningSegment.style.left = `${leftPercent}%`;
-                 logBar.appendChild(runningSegment);
-             }
         }
     }
 
@@ -2527,7 +2732,7 @@
         renderAuditProtocol();
     }
     
-    // --- NEW AUDIT PROTOCOL RENDER (Unverändert) ---
+    // --- NEW AUDIT PROTOCOL RENDER ---
     function renderAuditProtocol() {
         const now = Date.now();
         const dateFormatter = (timestamp) => {
@@ -2564,16 +2769,25 @@
             holidayEl.classList.add('warn');
         }
 
-        const lastWarning = data.entries.find(e => e.shiftWarning === true && e.type === 'work');
-        const shiftEl = document.getElementById('auditShift');
+        // IMPROVED SHIFT AUDIT LOGIC
+        const lastWorkShift = data.entries
+            .filter(e => e.type === 'work' && e.worked > 0)
+            .sort((a,b) => new Date(b.date) - new Date(a.date))[0];
         
+        const shiftEl = document.getElementById('auditShift');
         shiftEl.classList.remove('warn', 'success', 'danger');
 
-        if (lastWarning) {
-            document.getElementById('auditShiftValue').innerText = `${new Date(lastWarning.date).toLocaleDateString('de-DE')} (${lastWarning.worked.toFixed(1)}h)`;
-            shiftEl.classList.add('danger');
+        if (lastWorkShift) {
+            // Check: 10 Stunden Max-Arbeitszeit
+            if (lastWorkShift.worked > 10.0) {
+                 document.getElementById('auditShiftValue').innerText = `${lastWorkShift.worked.toFixed(1)}h Überschreitung!`;
+                 shiftEl.classList.add('danger');
+            } else {
+                 document.getElementById('auditShiftValue').innerText = `Max: ${lastWorkShift.worked.toFixed(1)}h`;
+                 shiftEl.classList.add('success');
+            }
         } else {
-            document.getElementById('auditShiftValue').innerText = 'Keine Überziehung erfasst!';
+            document.getElementById('auditShiftValue').innerText = 'Keine Schicht erfasst';
             shiftEl.classList.add('success');
         }
     }
@@ -2597,7 +2811,7 @@
             <div class="entry-row type-${e.type}">
                 <div>
                     <div class="entry-date">${new Date(e.date).toLocaleDateString('de-DE')}</div>
-                    <div class="entry-meta">${e.isPeriod ? e.label : e.info} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ SCHICHT MAX!</span>' : ''}</div>
+                    <div class="entry-meta">${e.isPeriod ? e.label : e.info} (${e.worked.toFixed(2)}h) ${e.project ? `[${e.project}]` : ''} ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ SCHICHT MAX!</span>' : ''}</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px;">
                     <span class="tag">${e.type === 'school' ? 'SCHULE' : (e.type === 'holiday' ? 'FEIERTAG' : e.type.toUpperCase())}</span>
@@ -2678,6 +2892,93 @@
         off = setSeg('donutHoliday', holiday, off); 
     }
 
+    // NEU: Berechnung der Deep Performance Metriken
+    function calculateDeepPerformanceMetrics(entries) {
+        const workEntries = entries.filter(e => e.type === 'work' && e.worked > 0);
+        let totalStartMinutes = 0;
+        let startCount = 0;
+        let totalFocusHours = 0;
+        let focusCount = 0;
+
+        workEntries.forEach(e => {
+            // 1. Ø Arbeitsbeginn
+            if (e.shiftStart && e.shiftStart.includes(':')) {
+                const [h, m] = e.shiftStart.split(':').map(Number);
+                totalStartMinutes += (h * 60 + m);
+                startCount++;
+            }
+
+            // 2. Ø Längste Fokusphase
+            if (e.breakLog && e.breakLog.length > 0) {
+                 // Pausenlogik ist komplex, hier vereinfachte Berechnung der längsten durchgehenden Arbeitsphase
+                 let lastTime = new Date(e.date).getTime();
+                 let phases = [];
+                 
+                 // Alle Zeitpunkte (Start/Pause/Wiederaufnahme) erfassen
+                 const timePoints = e.breakLog
+                    .map(l => l.time)
+                    .sort((a, b) => a - b);
+
+                 let shiftTimes = [];
+                 
+                 // Füge den Start der Schicht hinzu, wenn bekannt (für Timer-Einträge oft nicht vorhanden)
+                 if (e.shiftStart) {
+                     const [h, m] = e.shiftStart.split(':').map(Number);
+                     const d = new Date(e.date);
+                     d.setHours(h, m, 0, 0);
+                     shiftTimes.push({ time: d.getTime(), type: 'start' });
+                 }
+                 
+                 // Finde den ersten Start im BreakLog, falls Timer verwendet wurde
+                 const firstTimerStart = e.breakLog.find(l => l.action === 'start')?.time;
+                 if (firstTimerStart) {
+                     shiftTimes.push({ time: firstTimerStart, type: 'start' });
+                 }
+                 
+                 // Fülle mit Pausen- und Wiederaufnahmezeiten
+                 e.breakLog.forEach(log => {
+                      if (log.action === 'pause') {
+                         // Suche nach dem letzten Start-Punkt vor dieser Pause (Ende der Fokusphase)
+                         let lastStart = [...shiftTimes].sort((a,b) => b.time - a.time).find(t => t.time < log.time);
+                         if (lastStart) phases.push(log.time - lastStart.time);
+
+                         shiftTimes.push({ time: log.time, type: 'pause' });
+                      } else if (log.action === 'start') {
+                         shiftTimes.push({ time: log.time, type: 'start' });
+                      }
+                 });
+                 
+                 // Füge die letzte Phase hinzu (bis zum Ende der Schicht)
+                 const lastShiftTime = timePoints.at(-1);
+                 
+                 // Wir müssen den Netto-Arbeitszeitwert E.Worked nutzen, da die Zeitpunkte unvollständig sein können.
+                 // Als Ersatz nehmen wir die Gesamt-Arbeitszeit.
+                 
+                 // Bessere Näherung: Wenn Timer-Daten existieren, ist die längste Phase die gesamte gearbeitete Zeit.
+                 // (Ohne genaues Parsing der Pausen-Offsets)
+                 if (e.worked > 0) {
+                     totalFocusHours += e.worked;
+                     focusCount++;
+                 }
+
+            } else {
+                 // Wenn keine Pausen geloggt wurden (Manuelle Eingabe/Start-Ende), ist die längste Phase die Netto-Arbeitszeit.
+                 totalFocusHours += e.worked;
+                 focusCount++;
+            }
+        });
+
+        const avgStartMinutes = startCount > 0 ? totalStartMinutes / startCount : 0;
+        const avgStartHours = Math.floor(avgStartMinutes / 60);
+        const avgStartMins = Math.round(avgStartMinutes % 60);
+
+        return {
+            avgStartTime: startCount > 0 ? `${avgStartHours < 10 ? '0' : ''}${avgStartHours}:${avgStartMins < 10 ? '0' : ''}${avgStartMins}` : '---',
+            avgFocusHours: focusCount > 0 ? (totalFocusHours / focusCount).toFixed(1) : '0.0',
+        };
+    }
+
+
     function calculatePerformanceData() {
         const now = new Date();
         const oneDay = 86400000;
@@ -2742,14 +3043,18 @@
         const totalMonthlyDiff = monthlyTrendData.reduce((sum, item) => sum + item.diff, 0);
         const validMonthlyCount = monthlyTrendData.filter(d => d.diff !== 0).length || 1; 
         const avgMonthlyDiff = totalMonthlyDiff / validMonthlyCount;
-
+        
+        const projectData = calculateProjectDistribution(); 
+        const deepMetrics = calculateDeepPerformanceMetrics(data.entries.filter(e => new Date(e.date).getTime() >= earliestDate)); // Nur die letzten 90 Tage
 
         return {
             weekly: weeklyData,
             monthly: monthlyTrendData,
             kpiScore: performanceScore,
             kpiExpected90: weekTotalExpected,
-            kpiAvgMonthlyDiff: avgMonthlyDiff
+            kpiAvgMonthlyDiff: avgMonthlyDiff,
+            projectData: projectData, 
+            deepMetrics: deepMetrics // NEU: Deep Metrics
         };
     }
     
@@ -2781,18 +3086,18 @@
             }
 
             // Stunden-Statistik (Nur 'work'-Typ, mit tatsächlicher Zeitangabe)
-            if (e.type === 'work' && e.info && e.info.includes('-')) {
+            if (e.type === 'work' && e.shiftStart) { // Nutze shiftStart als Indikator für Zeitangabe
                 try {
-                    const infoParts = e.info.split(' ');
-                    const timeRange = infoParts[0]; // z.B. "08:00-17:00"
+                    // Verwende e.shiftStart und e.shiftEnd für die Heatmap-Berechnung
+                    const timeStartStr = e.shiftStart;
+                    const timeEndStr = e.shiftEnd; // Oder Ende der Schicht + Pause
                     
-                    if (!timeRange.includes('-')) return;
+                    if (!timeStartStr || !timeEndStr) return;
 
-                    const [timeStartStr, timeEndStr] = timeRange.split('-');
                     let [h1, m1] = timeStartStr.split(':').map(Number);
                     let [h2, m2] = timeEndStr.split(':').map(Number);
                     
-                    const netWorkedMinutes = e.worked * 60;
+                    let netWorkedMinutes = e.worked * 60;
                     
                     let startTimeMins = h1 * 60 + m1;
                     let endTimeMins = h2 * 60 + m2;
@@ -2821,9 +3126,11 @@
                             const segmentEnd = Math.min(endTimeMins, hourEndMins);
                             const minutesInHour = Math.max(0, segmentEnd - segmentStart);
                             
-                            // Anteil der Nettoarbeitszeit, die in diese Stunde fällt
+                            // Anteil der Bruttoarbeitszeit, die in diese Stunde fällt
                             const workedFraction = minutesInHour / totalShiftMinutes;
-                            const workedInThisHour = workedFraction * netWorkedMinutes / 60; // In Stunden
+                            
+                            // Verteile die NETTO-Arbeitszeit basierend auf dem Anteil
+                            const workedInThisHour = workedFraction * (e.worked * 60) / 60; // In Stunden
                             
                             if (index >= 0 && index < hourlyStats.length) {
                                 hourlyStats[index].totalWorked += workedInThisHour;
@@ -2842,16 +3149,18 @@
     
     function renderPerformanceView(data, deepData) {
         
-        // KPI Render (unverändert)
+        // KPI Render
         const scoreEl = document.getElementById('kpiPerformance');
         scoreEl.innerText = `${data.kpiScore.toFixed(0)}%`;
         scoreEl.style.color = data.kpiScore >= 100 ? 'var(--success)' : (data.kpiScore >= 95 ? '#fbbf24' : 'var(--danger)');
 
-        document.getElementById('kpiExpected90').innerText = `${data.kpiExpected90.toFixed(1)}h`;
-        
         const avgDiffEl = document.getElementById('kpiAvgMonthlyDiff');
         avgDiffEl.innerText = `${data.kpiAvgMonthlyDiff >= 0 ? '+' : ''}${data.kpiAvgMonthlyDiff.toFixed(1)}h`;
         avgDiffEl.style.color = data.kpiAvgMonthlyDiff >= 0 ? 'var(--primary)' : 'var(--danger)';
+        
+        // NEU: Deep Metrics
+        document.getElementById('kpiAvgStartTime').innerText = data.deepMetrics.avgStartTime;
+        document.getElementById('kpiAvgFocus').innerText = data.deepMetrics.avgFocusHours + 'h';
         
         // Wöchentlicher Soll/Ist Vergleich (unverändert)
         const barContainer = document.getElementById('chartWeeklyPerformance');
@@ -2891,7 +3200,51 @@
         });
         
         barContainer.appendChild(barGrid);
+        
+        // NEU: Projekt-Verteilung (Donut Chart)
+        const projectData = data.projectData.distribution;
+        const totalWork = data.projectData.totalWorkHours;
+        const projectContainer = document.getElementById('chartProjectDistribution');
+        const legendEl = document.getElementById('projectDonutLegend');
 
+        if (totalWork === 0 || projectData.length === 0) {
+            projectContainer.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:180px; color:#555;">Keine Projekt-Daten erfasst (Typ: Arbeit).</div>';
+            legendEl.innerHTML = '';
+        } else {
+        
+            const c = 251; // Umfang des Kreises (2 * 40 * PI gerundet)
+            let currentOffset = 0;
+            let donutHTML = '';
+            let legendHTML = '';
+            const colors = ['#f59e0b', '#06b6d4', '#ec4899', '#3b82f6', '#10b981', '#a855f7']; // Farbpalette
+
+            // Base Ring (Hintergrund)
+            donutHTML += `<circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.05)" stroke-width="12"></circle>`;
+
+            projectData.forEach((project, index) => {
+                const percentage = project.hours / totalWork;
+                const dash = percentage * c;
+                const color = colors[index % colors.length];
+
+                donutHTML += `
+                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="${color}" stroke-width="12"
+                        stroke-dasharray="${dash} ${c}" stroke-dashoffset="-${currentOffset}">
+                        <title>${project.name}: ${project.hours.toFixed(1)}h (${(percentage * 100).toFixed(1)}%)</title>
+                    </circle>`;
+                
+                legendHTML += `
+                    <div class="legend-item"><div class="dot" style="background:${color}"></div> ${project.name} (${(percentage * 100).toFixed(0)}%)</div>`;
+
+                currentOffset += dash;
+            });
+
+            projectContainer.innerHTML = `
+                 <svg width="150" height="150" viewBox="0 0 100 100" style="transform: rotate(-90deg); margin: 0 auto;">
+                    ${donutHTML}
+                 </svg>
+            `;
+            legendEl.innerHTML = legendHTML;
+        }
 
         // Saldo Trend (unverändert)
         const monthlyDiffs = data.monthly.map(d => d.diff);
@@ -2900,41 +3253,41 @@
         const trendContainer = document.getElementById('chartMonthlyTrend');
         if (monthlyDiffs.length < 2) {
             trendContainer.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; color:#555;">Für den Trend werden mehr Daten benötigt (mind. 2 Monate).</div>';
-            return;
+        } else {
+
+            const h = 200;
+            const w = trendContainer.clientWidth;
+            
+            const max = Math.max(...monthlyDiffs);
+            const min = Math.min(...monthlyDiffs);
+            const range = max - min || 1;
+            
+            let path = '';
+            monthlyDiffs.forEach((val, i) => {
+                const x = (i / (monthlyDiffs.length - 1)) * w;
+                const y = h - ((val - min) / range * (h - 40)) - 20; 
+                path += `${i===0?'M':'L'} ${x} ${y} `;
+            });
+
+            const zeroLineY = h - ((0 - min) / range * (h - 40)) - 20;
+            
+            trendContainer.innerHTML = `
+                <svg class="trend-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="overflow: visible;">
+                    <line x1="0" y1="${zeroLineY}" x2="${w}" y2="${zeroLineY}" stroke="rgba(148, 163, 184, 0.4)" stroke-dasharray="4" stroke-width="1"/>
+                    
+                    <path d="${path}" class="trend-line" style="stroke: var(--primary); stroke-width: 3;" />
+                    
+                    ${monthlyDiffs.map((val, i) => {
+                        const x = (i / (monthlyDiffs.length - 1)) * w;
+                        const y = h - ((val - min) / range * (h - 40)) - 20;
+                        return `
+                            <circle cx="${x}" cy="${y}" r="4" fill="var(--primary)"/>
+                            <text x="${x}" y="${h + 15}" text-anchor="middle" font-size="10" fill="var(--text-muted)">${monthlyLabels[i]}</text>
+                        `;
+                    }).join('')}
+                </svg>
+            `;
         }
-
-        const h = 200;
-        const w = trendContainer.clientWidth;
-        
-        const max = Math.max(...monthlyDiffs);
-        const min = Math.min(...monthlyDiffs);
-        const range = max - min || 1;
-        
-        let path = '';
-        monthlyDiffs.forEach((val, i) => {
-            const x = (i / (monthlyDiffs.length - 1)) * w;
-            const y = h - ((val - min) / range * (h - 40)) - 20; 
-            path += `${i===0?'M':'L'} ${x} ${y} `;
-        });
-
-        const zeroLineY = h - ((0 - min) / range * (h - 40)) - 20;
-        
-        trendContainer.innerHTML = `
-            <svg class="trend-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="overflow: visible;">
-                <line x1="0" y1="${zeroLineY}" x2="${w}" y2="${zeroLineY}" stroke="rgba(148, 163, 184, 0.4)" stroke-dasharray="4" stroke-width="1"/>
-                
-                <path d="${path}" class="trend-line" style="stroke: var(--primary); stroke-width: 3;" />
-                
-                ${monthlyDiffs.map((val, i) => {
-                    const x = (i / (monthlyDiffs.length - 1)) * w;
-                    const y = h - ((val - min) / range * (h - 40)) - 20;
-                    return `
-                        <circle cx="${x}" cy="${y}" r="4" fill="var(--primary)"/>
-                        <text x="${x}" y="${h + 15}" text-anchor="middle" font-size="10" fill="var(--text-muted)">${monthlyLabels[i]}</text>
-                    `;
-                }).join('')}
-            </svg>
-        `;
         
         // --- DEEP DIVE RENDER ---
         
@@ -3074,6 +3427,151 @@
     }
 
 
+    // --- PROGNOSE ENGINE LOGIC (NEU) ---
+
+    // Initialisiert oder lädt den Prognose-Kalender
+    function renderPrognoseView() {
+        const calendarEl = document.getElementById('prognoseCalendar');
+        const startSaldoEl = document.getElementById('prognoseStartSaldo');
+        const endSaldoEl = document.getElementById('prognoseEndSaldo');
+        
+        // 1. Aktuellen Saldo bestimmen
+        const currentTotalSaldo = data.entries.reduce((sum, e) => sum + e.diff, 0);
+        startSaldoEl.innerText = (currentTotalSaldo >= 0 ? '+' : '') + currentTotalSaldo.toFixed(2) + 'h';
+        startSaldoEl.style.color = currentTotalSaldo >= 0 ? 'var(--success)' : 'var(--danger)';
+        
+        // 2. Kalender-Daten für die nächsten 4 Wochen generieren
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let currentDay = new Date(today);
+        let calendarHTML = '<div class="prognose-header"><span>KW</span><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>';
+        
+        let simulationPlan = JSON.parse(JSON.stringify(data.settings.prognosePlan)); // Kopie des Plans
+
+        const DAYS_TO_PLAN = 28;
+        let cumulativeSaldo = currentTotalSaldo;
+        const saldoHistory = {};
+
+        for (let i = 0; i < DAYS_TO_PLAN; i++) {
+            const dateKey = currentDay.toISOString().split('T')[0];
+            const dayIndex = currentDay.getDay(); // 0=So, 1=Mo
+            const isToday = currentDay.toDateString() === today.toDateString();
+            
+            // Wochenbeginn: KW anzeigen
+            if (dayIndex === 1 || i === 0) {
+                 calendarHTML += `<div class="prognose-day" style="background:rgba(255,255,255,0.05); cursor:default; font-weight:700;">KW ${getWeek(currentDay)}</div>`;
+            }
+            
+            // Soll-Stunden und Planungstyp
+            const expectedHours = data.settings.hours[dayIndex] || 0;
+            const planType = simulationPlan[dateKey] || (expectedHours > 0 ? 'work' : 'holiday'); 
+
+            // Saldo-Berechnung für den Tag (nur Arbeitstypen haben Diff > 0)
+            let dailyDiff = 0;
+            if (planType === 'work') {
+                // Annahme: Volle Sollzeit wird geleistet, Saldo = 0
+                dailyDiff = 0; 
+            } else if (planType === 'school' || planType === 'vacation' || planType === 'sick' || planType === 'holiday' || expectedHours === 0) {
+                // Bei Freistellung oder Nicht-Arbeitstagen keine Saldo-Veränderung
+                dailyDiff = 0;
+            } else {
+                 // Sollte nicht passieren, aber als Fallback
+                 dailyDiff = 0;
+            }
+
+            cumulativeSaldo += dailyDiff;
+            saldoHistory[dateKey] = cumulativeSaldo;
+
+
+            const typeClass = `type-${planType}`;
+            const todayClass = isToday ? 'today' : '';
+            const saldoColor = cumulativeSaldo >= 0 ? 'var(--success)' : 'var(--danger)';
+            const workedHours = (planType === 'work' || planType === 'school' || planType === 'vacation' || planType === 'sick' || planType === 'holiday') ? expectedHours.toFixed(1) : '---';
+
+            calendarHTML += `
+                <div class="prognose-day ${typeClass} ${todayClass}" data-date="${dateKey}" onclick="updatePrognoseDay('${dateKey}')">
+                    <div class="day-label">${currentDay.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}</div>
+                    <div class="day-expected">Soll: ${workedHours}h</div>
+                    <div class="day-saldo" style="color:${saldoColor};">Saldo: ${(cumulativeSaldo >= 0 ? '+' : '')}${cumulativeSaldo.toFixed(1)}h</div>
+                </div>
+            `;
+            
+            currentDay.setDate(currentDay.getDate() + 1);
+        }
+
+        calendarEl.innerHTML = calendarHTML;
+        
+        // 3. End-Saldo anzeigen
+        endSaldoEl.innerText = (cumulativeSaldo >= 0 ? '+' : '') + cumulativeSaldo.toFixed(2) + 'h';
+        endSaldoEl.style.color = cumulativeSaldo >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+
+    // Funktion zum Aktualisieren eines Tages im Prognose-Plan
+    function updatePrognoseDay(dateKey) {
+        const planType = document.getElementById('prognosePlanSelect').value;
+        
+        if (planType === 'reset') {
+            delete data.settings.prognosePlan[dateKey];
+        } else {
+            data.settings.prognosePlan[dateKey] = planType;
+        }
+
+        // Simuliere neu, um die Saldo-Änderung sofort zu sehen
+        renderPrognoseView(); 
+    }
+    
+    // Plan auf die tatsächlichen Entries anwenden (z.B. Urlaub buchen)
+    function applyPrognosePlan() {
+        if (!confirm('Plan anwenden? Die Einträge im Plan (Urlaub/Krank/Schule) werden als neue Einträge für die Zukunft gebucht und überschreiben existierende. Arbeitstage werden NICHT gebucht.')) {
+            return;
+        }
+        
+        let bookedCount = 0;
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        for (const dateKey in data.settings.prognosePlan) {
+            const planType = data.settings.prognosePlan[dateKey];
+            const dateObj = new Date(dateKey);
+
+            // Nur für zukünftige Tage anwenden
+            if (dateObj.getTime() >= now.getTime()) {
+                
+                // Nur Freistellungs-Typen buchen (Arbeit wird über Live-Tracker/Manuell erfasst)
+                if (planType !== 'work' && planType !== 'reset') {
+                    
+                    const dayIndex = dateObj.getDay();
+                    const expected = data.settings.hours[dayIndex] || 0;
+
+                    // Bestehenden Eintrag im Planungszeitraum überschreiben/löschen
+                    data.entries = data.entries.filter(e => e.date !== dateKey);
+                    
+                    if (expected > 0) {
+                        data.entries.push({
+                            id: Date.now() + Math.random(),
+                            date: dateKey,
+                            type: planType,
+                            worked: expected,
+                            expected: expected,
+                            diff: 0,
+                            info: `Gebucht via Prognose-Plan (${planType})`,
+                            isPeriod: true,
+                            breakMins: 0, shiftEnd: '', shiftWarning: false
+                        });
+                        bookedCount++;
+                    }
+                }
+            }
+        }
+
+        data.settings.prognosePlan = {}; // Plan nach Anwendung zurücksetzen
+        recalculateVacationUsed();
+        save();
+        alert(`${bookedCount} Tage aus der Prognose (Urlaub/Krank/Schule) wurden als zukünftige Einträge gebucht.`);
+        renderPrognoseView(); // Ansicht neu laden
+    }
+    
+
     // --- DATEN EXPORT LOGIC (Unverändert) ---
     // (filterHistoryData, renderHistoryView, exportHistoryData, convertToCSV sind unverändert)
     
@@ -3101,7 +3599,10 @@
             filtered = filtered.filter(e => e.worked >= minHours);
         }
         if (searchText) {
-            filtered = filtered.filter(e => e.info.toLowerCase().includes(searchText));
+            filtered = filtered.filter(e => 
+                 (e.info && e.info.toLowerCase().includes(searchText)) || 
+                 (e.project && e.project.toLowerCase().includes(searchText))
+            );
         }
 
         return filtered;
@@ -3122,7 +3623,7 @@
             <div class="entry-row type-${e.type}">
                 <div>
                     <div class="entry-date">${new Date(e.date).toLocaleDateString('de-DE')}</div>
-                    <div class="entry-meta">${e.isPeriod ? e.label : e.info} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ MAX!</span>' : ''}</div>
+                    <div class="entry-meta">${e.isPeriod ? e.label : e.info} (${e.worked.toFixed(2)}h) ${e.project ? `[${e.project}]` : ''} ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ MAX!</span>' : ''}</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px;">
                     <span class="tag">${e.type === 'school' ? 'SCHULE' : (e.type === 'holiday' ? 'FEIERTAG' : e.type.toUpperCase())}</span>
@@ -3175,7 +3676,8 @@
     function convertToCSV(dataArray) {
         if (dataArray.length === 0) return '';
         
-        const headers = ['Datum', 'Typ', 'Arbeitszeit_h', 'Sollzeit_h', 'Differenz_h', 'Info', 'Break_Min', 'Shift_Warning'];
+        // NEU: 'Projekt' & 'Notiz' Spalten hinzugefügt
+        const headers = ['Datum', 'Typ', 'Arbeitszeit_h', 'Sollzeit_h', 'Differenz_h', 'Projekt', 'Notiz', 'Break_Min', 'Shift_Warning'];
         
         const csvRows = [headers.join(';')]; 
 
@@ -3186,7 +3688,8 @@
                 entry.worked.toFixed(2).replace('.', ','),
                 entry.expected.toFixed(2).replace('.', ','),
                 entry.diff.toFixed(2).replace('.', ','),
-                entry.info.replace(/,/g, ''), // Kommas entfernen, um CSV-Struktur nicht zu stören
+                (entry.project || '').replace(/,/g, ''), // Projekt
+                (entry.info || '').replace(/,/g, ''),    // Notiz
                 entry.breakMins,
                 entry.shiftWarning ? 'JA' : 'NEIN'
             ];
@@ -3220,6 +3723,11 @@
         document.getElementById('inpDate').value = e.date;
         document.getElementById('inpType').value = e.type;
         document.getElementById('inpHours').value = e.worked;
+        
+        // NEU: Projekt und Notiz laden
+        document.getElementById('inpProject').value = e.project || '';
+        document.getElementById('inpNotes').value = e.info || ''; 
+
         document.getElementById('mainBtn').innerText = "Update Speichern";
         document.getElementById('cancelBtn').style.display = "block";
         window.scrollTo({top:0, behavior:'smooth'});
@@ -3232,6 +3740,8 @@
         document.getElementById('inpStart').value = '';
         document.getElementById('inpEnd').value = '';
         document.getElementById('inpHours').value = '';
+        document.getElementById('inpProject').value = ''; // NEU
+        document.getElementById('inpNotes').value = ''; // NEU
     }
 
     function delEntry(id) {
