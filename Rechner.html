@@ -37,6 +37,11 @@
             --heatmap-low: #1e293b;
             --heatmap-mid: #64748b;
             --heatmap-high: var(--primary);
+            /* Farben für Ziel-Kategorien */
+            --goal-work: #a855f7;
+            --goal-saldo: #06b6d4;
+            --goal-weeks: #10b981;
+            --goal-perfect: #f59e0b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -182,7 +187,7 @@
         }
         .kpi-card:hover { transform: translateY(-3px); border-color: var(--primary); }
 
-        /* SVG RINGS (Thinner, cleaner) */
+        /* SVG RINGS (Dashboard) */
         .progress-ring { position: relative; width: 110px; height: 110px; }
         .progress-ring circle {
             fill: transparent; stroke-width: 6; stroke-linecap: round; /* Thinner stroke */
@@ -364,10 +369,10 @@
         .bar-target-overlay {
             position: absolute;
             top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            bottom: 0;
+            width: 0;
             border-left: 2px solid rgba(255, 255, 255, 0.4);
+            z-index: 1;
         }
         .bar-value-label {
             font-size: 0.9rem;
@@ -386,7 +391,7 @@
             margin-bottom: 1.5rem;
         }
         
-        /* NEUER STIL: Horizontal Saldo Bar Chart (Produktivität) */
+        /* Horizontal Saldo Bar Chart (Produktivität) */
         .horizontal-bar-container {
             padding: 20px 0;
         }
@@ -466,9 +471,26 @@
         }
         
         /* Goals View */
+        .goal-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .goal-focus-card {
+            padding: 1.5rem;
+            border-left: 5px solid var(--primary);
+        }
+        .goal-focus-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            margin-top: 10px;
+        }
+        
         .goal-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1.5rem;
         }
         .goal-card {
@@ -476,20 +498,15 @@
             padding: 1.5rem;
             border-radius: 16px;
             border-left: 4px solid var(--primary);
+            position: relative;
+            transition: all 0.2s;
+        }
+        .goal-card.achieved {
+             border: 2px solid gold;
+             box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+             opacity: 1 !important;
         }
         .goal-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
-        .goal-progress-bar {
-            height: 8px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 4px;
-            margin-top: 10px;
-            overflow: hidden;
-        }
-        .goal-progress {
-            height: 100%;
-            background: var(--success);
-            transition: width 0.5s;
-        }
         .goal-status {
             font-size: 0.8rem;
             color: var(--text-muted);
@@ -503,8 +520,14 @@
             font-size: 1rem;
             opacity: 0.5;
             transition: 0.2s;
+            position: absolute;
+            top: 15px;
+            right: 15px;
         }
         .goal-delete-btn:hover { opacity: 1; }
+
+        .progress-ring-goal { width: 60px; height: 60px; margin-bottom: 10px; }
+        .progress-ring-goal circle { stroke-width: 4; }
 
 
         /* --- AUDIT GRID STYLES --- */
@@ -536,71 +559,116 @@
         .audit-card.danger { border-left-color: var(--danger); }
         .audit-card.success { border-left-color: var(--audit-ok); }
         
-        /* --- SETTINGS/VACATION DASHBOARD --- */
-        .vacation-grid {
+        /* --- IHK / KARRIERE STYLES --- */
+        .ihk-kpi-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1.5fr 1fr 1fr;
             gap: 1.5rem;
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border);
+            margin-bottom: 2rem;
         }
-        .vacation-block-tool {
-            background: rgba(255,255,255,0.05);
-            padding: 1.25rem;
-            border-radius: 12px;
-        }
-        
-        /* School KPI Fixes */
-        .school-kpi-note {
-             font-size: 2.5rem;
-             font-weight: 800;
-             font-family: var(--font-mono);
-             margin: 5px 0;
-        }
-        .school-kpi-sub {
-             font-size: 0.7rem;
-             color: var(--text-muted);
-             text-transform: uppercase;
-        }
-        
-        /* IHK Rework Styles */
         .ihk-progress-card {
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             padding: 2.5rem 1.5rem;
-            border-left: 5px solid var(--ihk);
+            border-left: none; /* Nicht mehr nötig */
         }
+        .ihk-progress-ring { 
+            position: relative; 
+            width: 140px; 
+            height: 140px; 
+            margin-bottom: 1rem;
+        }
+        .ihk-progress-ring circle {
+            stroke-width: 8;
+            transform: rotate(-90deg); transform-origin: 50% 50%;
+            filter: drop-shadow(0 0 10px var(--ihk));
+        }
+        .ring-ihk-bg { stroke: rgba(255,255,255,0.06); }
+        .ring-ihk-val { stroke: var(--ihk); transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .ihk-progress-value {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--ihk);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
         .ihk-secondary-kpi {
             background: rgba(255,255,255,0.05);
-            padding: 1rem 1.5rem;
+            padding: 1.25rem;
             border-radius: 12px;
-            border-left: 3px solid var(--ihk);
-            text-align: center;
+            border-left: 4px solid var(--ihk);
+            text-align: left;
         }
         .ihk-metric-value {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
             color: #fff;
             margin-top: 5px;
             font-family: var(--font-mono);
         }
         .ihk-metric-label {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-muted);
             text-transform: uppercase;
-        }
-        .ihk-note-value {
-            font-size: 1.8rem;
-            font-weight: 800;
-            font-family: var(--font-mono);
         }
         .ihk-note-group {
              display: grid;
              grid-template-columns: 1fr 1fr;
-             gap: 15px;
+             gap: 1.5rem;
+        }
+        .ihk-note-card {
+             padding: 1.5rem;
+             text-align: center;
+             border-left: 4px solid var(--ihk);
+        }
+        .ihk-note-value {
+            font-size: 2rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            margin-top: 5px;
+        }
+        
+        /* --- SCHULE / ACADEMIC STYLES (NEU) --- */
+        .school-kpi-grid {
+             display: grid;
+             grid-template-columns: 1.5fr 1fr 1fr;
+             gap: 1.5rem;
+             margin-bottom: 2rem;
+        }
+        .school-progress-ring {
+            position: relative; 
+            width: 140px; 
+            height: 140px; 
+            margin-bottom: 1rem;
+        }
+        .school-progress-ring circle {
+            stroke-width: 8;
+            transform: rotate(-90deg); 
+            transform-origin: 50% 50%;
+        }
+        .ring-school-bg { stroke: rgba(255,255,255,0.06); }
+        .ring-school-val { stroke: var(--school); transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1); filter: drop-shadow(0 0 10px var(--school)); }
+        .school-overall-note {
+             font-size: 3rem;
+             font-weight: 800;
+             position: absolute;
+             top: 50%;
+             left: 50%;
+             transform: translate(-50%, -50%);
+             font-family: var(--font-mono);
+        }
+        .subject-grade-card {
+             padding: 1rem;
+             text-align: center;
+             border-left: 4px solid var(--note-good);
+        }
+        .subject-grade-card .ihk-metric-value {
+             font-size: 1.8rem;
         }
         /* Prognose View Styling */
         .prognose-grid {
@@ -876,7 +944,7 @@
                     <h3 style="font-size:1.1rem;">Eintrag erfassen</h3>
                     <div style="display:flex; gap:15px;">
                         <input type="date" id="inpDate" class="glass-input">
-                        <select id="inpType" class="glass-select" onchange="toggleTimeInputs()">
+                        <select type="date" id="inpType" class="glass-select" onchange="toggleTimeInputs()">
                             <option value="work">💼 Arbeit</option>
                             <option value="school">📚 Berufsschule</option>
                             <option value="vacation">🌴 Urlaub</option>
@@ -1078,19 +1146,24 @@
         <div id="view-ihk" class="view-section">
 <h2 style="margin-bottom:1.5rem; color:var(--ihk);">🎓 Karriere & Ausbildungs-Audit</h2>
             
-            <div class="kpi-grid" style="grid-template-columns: 1.5fr 1fr 1fr;">
-                <div class="card ihk-progress-card">
-                    <div class="ihk-kpi-label">AUSBILDUNGSFORTSCHRITT</div>
-                    <div class="ihk-kpi-value" id="ihkProgress">0%</div>
-                    <div class="progress-bar-ihk" style="width: 80%;">
-                        <div class="progress-ihk" id="ihkProgressBar" style="width: 0%;"></div>
+            <div class="card ihk-kpi-grid">
+                <div class="ihk-progress-card">
+                    <div class="ihk-progress-ring">
+                        <svg width="140" height="140" viewBox="0 0 100 100">
+                            <circle class="ring-ihk-bg" cx="50" cy="50" r="44"></circle>
+                            <circle id="ringIHKProgress" class="ring-ihk-val" cx="50" cy="50" r="44" stroke-dasharray="276" stroke-dashoffset="276"></circle>
+                        </svg>
+                         <div class="ihk-progress-value" id="ihkProgress">0%</div>
+                         <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">
+                            AUSBILDUNGSFORTSCHRITT
+                        </div>
                     </div>
                     <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">
                         <span id="ihkStartEndDates">Start/Ende fehlen</span>
                     </div>
                 </div>
 
-                <div class="card" style="display:flex; flex-direction:column; justify-content:space-around; gap:10px;">
+                <div style="display:flex; flex-direction:column; justify-content:space-around; gap:15px;">
                     <div class="ihk-secondary-kpi" style="border-left-color: var(--danger);">
                         <div class="ihk-metric-label">TAGE BIS ABSCHLUSSPRÜFUNG</div>
                         <div class="ihk-metric-value" id="ihkCountdownEndAudit">---</div>
@@ -1103,7 +1176,7 @@
                     </div>
                 </div>
                 
-                <div class="card" style="display:flex; flex-direction:column; justify-content:space-around; gap:10px;">
+                <div style="display:flex; flex-direction:column; justify-content:space-around; gap:15px;">
                      <div class="ihk-secondary-kpi" style="border-left-color: var(--ihk);">
                         <div class="ihk-metric-label">SOLL-STUNDEN (GESAMT)</div>
                         <div class="ihk-metric-value" id="ihkTotalExpectedHours">0h</div>
@@ -1118,6 +1191,7 @@
             </div>
             
             <div class="card" style="margin-bottom: 2rem;">
+                <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem;">ABWESENHEITSANALYSE</h4>
                 <div class="kpi-grid" style="grid-template-columns: 1fr 1fr;">
                     <div class="ihk-secondary-kpi" style="border-left-color: var(--danger);">
                         <div class="ihk-metric-label">Kumulierte Krankheitstage</div>
@@ -1126,6 +1200,20 @@
                      <div class="ihk-secondary-kpi" style="border-left-color: var(--school);">
                         <div class="ihk-metric-label">Kumulierte Berufsschultage</div>
                         <div class="ihk-metric-value" id="ihkSchoolDays">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h4 style="margin-bottom:10px;">Noten- & Countdown-Übersicht</h4>
+                <div class="ihk-note-group">
+                    <div class="ihk-note-card card" style="border-left: 5px solid var(--ihk);">
+                        <div class="ihk-metric-label">Zwischenprüfung Note:</div>
+                        <div class="ihk-note-value" id="ihkDisplayNoteZwischen">---</div>
+                    </div>
+                    <div class="ihk-note-card card" style="border-left: 5px solid var(--ihk);">
+                        <div class="ihk-metric-label">Abschlussprüfung Note:</div>
+                        <div class="ihk-note-value" id="ihkDisplayNoteAbschluss">---</div>
                     </div>
                 </div>
             </div>
@@ -1172,39 +1260,34 @@
                 </div>
             </div>
             
-            <div class="card">
-                <h4 style="margin-bottom:10px;">Noten- & Countdown-Übersicht</h4>
-                <div class="ihk-note-group">
-                    <div class="ihk-secondary-kpi card" style="border-left: 3px solid var(--ihk);">
-                        <div class="ihk-metric-label">Zwischenprüfung Note:</div>
-                        <div class="ihk-note-value" id="ihkDisplayNoteZwischen">---</div>
-                    </div>
-                    <div class="ihk-secondary-kpi card" style="border-left: 3px solid var(--ihk);">
-                        <div class="ihk-metric-label">Abschlussprüfung Note:</div>
-                        <div class="ihk-note-value" id="ihkDisplayNoteAbschluss">---</div>
-                    </div>
-                </div>
-            </div>
         </div>
         
         <div id="view-school" class="view-section">
-<div class="kpi-grid" style="grid-template-columns: 1.5fr 1fr 1fr;">
-                 <div class="ihk-kpi" style="border-left-color: var(--school);">
-                    <div class="ihk-kpi-label">AKTUELLER GESAMT-DURCHSCHNITT</div>
-                    <div class="ihk-kpi-value" id="schoolOverallAvg" style="color:var(--school);">1.0</div>
-                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px;">
-                        (Alle Noten, gewichtet 1:1)
+            <h2 style="margin-bottom:1.5rem; color:var(--school);">🏫 Berufsschule Audit & Noten</h2>
+
+            <div class="card school-kpi-grid">
+                 <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <div class="school-progress-ring">
+                         <svg width="140" height="140" viewBox="0 0 100 100">
+                            <circle class="ring-school-bg" cx="50" cy="50" r="44"></circle>
+                            <circle id="ringSchoolAvg" class="ring-school-val" cx="50" cy="50" r="44" stroke-dasharray="276" stroke-dashoffset="276"></circle>
+                        </svg>
+                         <div class="school-overall-note" id="schoolOverallAvg">---</div>
+                         <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">
+                            AKTUELLER GESAMT-DURCHSCHNITT
+                        </div>
                     </div>
                 </div>
-                <div class="ihk-exam-kpi card" id="kpiBestNote">
-                    <div class="ihk-kpi-label">BESTE NOTE</div>
-                    <div class="school-kpi-note" id="schoolBestNote">---</div>
-                    <div class="school-kpi-sub" id="schoolBestSubject"></div>
+                
+                <div class="card subject-grade-card" id="kpiBestNote" style="border-left-color: var(--note-good);">
+                    <div class="ihk-metric-label">BESTE NOTE</div>
+                    <div class="ihk-metric-value" id="schoolBestNote" style="color:var(--note-good);">---</div>
+                    <div class="ihk-metric-label" id="schoolBestSubject"></div>
                 </div>
-                 <div class="ihk-exam-kpi card" id="kpiWorstNote">
-                    <div class="ihk-kpi-label">SCHLECHTESTE NOTE</div>
-                    <div class="school-kpi-note" id="schoolWorstNote">---</div>
-                    <div class="school-kpi-sub" id="schoolWorstSubject"></div>
+                 <div class="card subject-grade-card" id="kpiWorstNote" style="border-left-color: var(--note-bad);">
+                    <div class="ihk-metric-label">SCHLECHTESTE NOTE</div>
+                    <div class="ihk-metric-value" id="schoolWorstNote" style="color:var(--note-bad);">---</div>
+                    <div class="ihk-metric-label" id="schoolWorstSubject"></div>
                 </div>
             </div>
 
@@ -1227,8 +1310,24 @@
         </div>
         
         <div id="view-goals" class="view-section">
-<h2 style="margin-bottom:1.5rem;">🏆 Ziele & Trophäen</h2>
+<h2 style="margin-bottom:1.5rem;">🏆 Ziele & Fokus</h2>
             <p style="color:var(--text-muted); margin-bottom:2rem;">Verfolge deine Langzeit-Ziele und definiere eigene Meilensteine.</p>
+            
+            <h4 style="color:var(--primary); margin-bottom:10px; font-size:0.8rem;">AKTUELLE BASIS-KENNZAHLEN</h4>
+            <div class="goal-kpi-grid">
+                <div class="card goal-focus-card" style="border-left-color: var(--goal-saldo);">
+                    <div class="audit-label">Gesamt Saldo</div>
+                    <div class="goal-focus-value" id="goalKpiTotalDiff">+0.0h</div>
+                </div>
+                <div class="card goal-focus-card" style="border-left-color: var(--goal-work);">
+                    <div class="audit-label">Gesamt Gearbeitet</div>
+                    <div class="goal-focus-value" id="goalKpiTotalWorked">0.0h</div>
+                </div>
+                 <div class="card goal-focus-card" style="border-left-color: var(--goal-weeks);">
+                    <div class="audit-label">Wochen im Plus</div>
+                    <div class="goal-focus-value" id="goalKpiPositiveWeeks">0</div>
+                </div>
+            </div>
 
             <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem;">ZIEL DEFINITION & ERSTELLUNG</h4>
             <div class="card" style="margin-bottom: 2rem;">
@@ -1279,7 +1378,7 @@
                     <input type="date" id="historyFilterStart" class="glass-input" placeholder="Startdatum" onchange="renderHistoryView()">
                     <input type="date" id="historyFilterEnd" class="glass-input" placeholder="Enddatum" onchange="renderHistoryView()">
 
-                    <select id="historyFilterType" class="glass-select" onchange="renderHistoryView()">
+                    <select type="date" id="historyFilterType" class="glass-select" onchange="renderHistoryView()">
                         <option value="all">Alle Typen</option>
                         <option value="work">💼 Arbeit</option>
                         <option value="school">📚 Berufsschule</option>
@@ -1375,7 +1474,7 @@
                     <h5 style="margin-bottom:10px;">Blockbuchung verwalten</h5>
                     <select id="periodType" class="glass-select" style="margin-bottom:10px;">
                         <option value="vacation">🌴 Urlaub buchen</option>
-                        <option value="holiday">🏖️ Firmen-Frei/Feiertag buchen</option>
+                        <option value="holiday">🏖️ Firmen-Frei/Feiertag buverchen</option>
                     </select>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
                         <input type="date" id="periodStart" class="glass-input" placeholder="Startdatum">
@@ -1581,7 +1680,7 @@
             'performance': 'Performance Analyse', 
             'ihk': 'IHK / Karriere', 
             'school': 'Berufsschule Audit', 
-            'goals': 'Ziele & Trophäen',
+            'goals': 'Ziele & Fokus',
             'prognose': 'Saldo Prognose & Zukunftsplanung', // NEU
         };
         document.querySelector('.page-title').textContent = titles[tabId];
@@ -1613,8 +1712,18 @@
         }
     }
     
-    // --- GOALS LOGIC (ADVANCED) ---
+    // --- GOALS LOGIC (ADVANCED & NEU) ---
     
+    function getGoalColor(type) {
+         switch (type) {
+            case 'TOTAL_WORKED_HOURS': return 'var(--goal-work)';
+            case 'TOTAL_DIFF_HOURS': return 'var(--goal-saldo)';
+            case 'POSITIVE_WEEKS': return 'var(--goal-weeks)';
+            case 'PERFECT_SHIFTS': return 'var(--goal-perfect)';
+            default: return 'var(--primary)';
+        }
+    }
+
     function calculateGoalValue(type) {
         switch (type) {
             case 'TOTAL_WORKED_HOURS':
@@ -1695,13 +1804,25 @@
 
     function renderGoalsView() {
         const goalsListEl = document.getElementById('goalsList');
+        const totalWorked = calculateGoalValue('TOTAL_WORKED_HOURS');
+        const totalDiff = calculateGoalValue('TOTAL_DIFF_HOURS');
+        const positiveWeeks = calculateGoalValue('POSITIVE_WEEKS');
+
+        // 1. KPI Übersicht rendern
+        document.getElementById('goalKpiTotalDiff').innerText = (totalDiff >= 0 ? '+' : '') + totalDiff.toFixed(1) + 'h';
+        document.getElementById('goalKpiTotalDiff').style.color = totalDiff >= 0 ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('goalKpiTotalWorked').innerText = totalWorked.toFixed(1) + 'h';
+        document.getElementById('goalKpiPositiveWeeks').innerText = positiveWeeks;
+
+
+        // 2. Ziel-Karten rendern
         let html = '';
         
         data.settings.goals.forEach(goal => {
             const current = calculateGoalValue(goal.type);
             const progress = Math.min((current / goal.target) * 100, 100);
             const achieved = progress >= 100;
-            const color = achieved ? 'var(--success)' : 'var(--primary)';
+            const color = getGoalColor(goal.type);
             const unit = getGoalUnit(goal.type);
             
             // Formatierung für Stunden/Saldo-Ziele
@@ -1710,20 +1831,35 @@
                  currentDisplay = (current >= 0 ? '+' : '') + current.toFixed(1);
             }
             
+            // Progress Ring Berechnung (Umfang 251.2 -> r=40, stroke 4)
+            const circumference = 251.2;
+            const radius = 40;
+            const dashOffset = circumference - (progress / 100) * circumference;
+            const offsetAchieved = achieved ? 0 : dashOffset;
+
+            
             html += `
-                <div class="goal-card" style="border-left-color: ${color}; opacity: ${achieved ? 1 : 0.85};">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="font-size: 2rem;">${achieved ? '🏆' : '🎯'}</div>
-                        <button class="goal-delete-btn" onclick="deleteCustomGoal(${goal.id})">×</button>
+                <div class="goal-card ${achieved ? 'achieved' : ''}" style="border-left-color: ${color}; opacity: ${achieved ? 1 : 0.85};">
+                    <button class="goal-delete-btn" onclick="deleteCustomGoal(${goal.id})">×</button>
+                    
+                    <div class="progress-ring-goal" style="position:relative;">
+                         <svg width="60" height="60" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="${radius}" fill="transparent" stroke="rgba(255,255,255,0.05)"></circle>
+                            <circle class="ring-val" cx="50" cy="50" r="${radius}" 
+                                stroke="${color}" stroke-dasharray="${circumference}" 
+                                stroke-dashoffset="${offsetAchieved}">
+                            </circle>
+                         </svg>
+                         <div class="ring-center" style="transform: translate(-50%, -50%); position: absolute; top: 50%; left: 50%;">
+                            <div style="font-size: 1rem; font-weight: 700; color: ${color};">${progress.toFixed(0)}%</div>
+                         </div>
                     </div>
+
                     <div class="goal-title">${goal.title}</div>
                     <div class="goal-status">
                         ${currentDisplay}${unit} / ${goal.target.toFixed(1)}${unit}
                     </div>
-                    <div class="goal-progress-bar">
-                        <div class="goal-progress" style="width: ${progress}%; background:${color};"></div>
-                    </div>
-                    <div class="goal-status" style="color: ${color}; margin-top: 5px;">
+                    <div class="goal-status" style="color: ${achieved ? 'var(--success)' : color}; margin-top: 10px; font-weight: 600;">
                         ${achieved ? '✅ Ziel erreicht!' : 'Aktiv'}
                     </div>
                 </div>
@@ -1734,7 +1870,7 @@
     }
 
 
-    // --- SCHOOL LOGIC (FIXED KPIs) ---
+    // --- SCHOOL LOGIC (NEU GESTALTET) ---
     
     const getNoteColor = (note) => {
          const n = parseFloat(note);
@@ -1743,6 +1879,22 @@
          if (n <= 3.0) return 'var(--note-mid)';
          return 'var(--note-bad)';
     };
+    
+    // Hilfsfunktion zur Umrechnung der Schulnote in einen Radial-Wert (0% bis 100%)
+    function mapNoteToRadial(note) {
+         const n = parseFloat(note);
+         if (isNaN(n) || n <= 0) return 0;
+         
+         // Note 1.0 = 100% (bestes Ergebnis), Note 6.0 = 0% (schlechtestes Ergebnis)
+         const maxNote = 6.0;
+         const minNote = 1.0;
+         
+         // Lineare Interpolation: (max - n) / (max - min) * 100
+         const progress = ((maxNote - n) / (maxNote - minNote)) * 100;
+         
+         return Math.max(0, Math.min(100, progress));
+    }
+
 
     function renderSchoolGradesInputs() {
         const inputGrid = document.getElementById('schoolGradesInputGrid');
@@ -1847,11 +1999,12 @@
                     const subjectAvg = subjectSum / grades.filter(n => !isNaN(parseFloat(n))).length;
                     const avgColor = getNoteColor(subjectAvg);
 
+                    // Neue Fächerkarte
                     gradeListHTML += `
-                        <div class="card" style="padding:1rem; border-left:5px solid ${avgColor}; margin-bottom:0;">
-                            <h5 style="color:var(--text-main); margin-bottom:5px;">${subject}</h5>
-                            <div style="font-size:1.5rem; font-weight:700; color:${avgColor};">${subjectAvg.toFixed(2)}</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:5px;">(${grades.filter(n => !isNaN(parseFloat(n))).length} Noten)</div>
+                        <div class="card subject-grade-card" style="border-left:5px solid ${avgColor}; margin-bottom:0;">
+                            <div class="ihk-metric-label">${subject} - Durchschnitt</div>
+                            <div class="ihk-metric-value" style="color:${avgColor};">${subjectAvg.toFixed(2)}</div>
+                            <div class="ihk-metric-label" style="font-size:0.7rem; margin-top:5px;">(${grades.filter(n => !isNaN(parseFloat(n))).length} Noten)</div>
                         </div>
                     `;
                 }
@@ -1893,11 +2046,24 @@
         const kpiBestCard = document.getElementById('kpiBestNote');
         const kpiWorstCard = document.getElementById('kpiWorstNote');
 
+        const overallAvg = kpis.overallAvg;
+        const avgColor = getNoteColor(overallAvg);
+        const circumference = 276.46; // (2 * 44 * PI)
         
-        if (kpis.overallAvg > 0) {
-            avgEl.innerText = kpis.overallAvg.toFixed(2);
-            avgEl.style.color = getNoteColor(kpis.overallAvg);
-            
+        // Radial Ring Logik: Umrechnung Note -> Prozent
+        const progressPct = mapNoteToRadial(overallAvg);
+        const offset = circumference - (progressPct / 100) * circumference;
+        const ringEl = document.getElementById('ringSchoolAvg');
+
+        if (overallAvg > 0) {
+            // Overall Ring
+            avgEl.innerText = overallAvg.toFixed(2);
+            avgEl.style.color = avgColor;
+            ringEl.style.strokeDashoffset = offset;
+            ringEl.style.stroke = avgColor;
+            ringEl.style.filter = `drop-shadow(0 0 10px ${avgColor})`;
+
+
             // Beste Note
             bestNoteEl.innerText = kpis.bestNote > 0 ? kpis.bestNote.toFixed(1) : '---';
             bestNoteEl.style.color = getNoteColor(kpis.bestNote);
@@ -1913,6 +2079,9 @@
         } else {
             avgEl.innerText = '---';
             avgEl.style.color = 'var(--school)';
+            ringEl.style.strokeDashoffset = circumference;
+            ringEl.style.stroke = 'var(--school)';
+            ringEl.style.filter = `drop-shadow(0 0 10px var(--school))`;
             
             bestNoteEl.innerText = '---';
             worstNoteEl.innerText = '---';
@@ -1930,6 +2099,8 @@
     function renderIHKView() {
         const { start, end, exam_zwischen, note_zwischen, note_abschluss } = data.settings.ihk;
         const now = new Date().getTime();
+        const circumference = 276.46; // (2 * 44 * PI)
+
         
         // **IHK FIX: Daten aus dem LocalStorage ins UI laden**
         document.getElementById('confIHKStart').value = start;
@@ -1946,7 +2117,7 @@
         const formatNote = (note) => {
              const n = parseFloat(note);
              if (isNaN(n) || n === 0) return '---';
-             const color = n <= 2.0 ? 'var(--success)' : (n <= 3.0 ? 'var(--audit-warn)' : 'var(--danger)');
+             const color = n <= 2.0 ? 'var(--note-good)' : (n <= 3.0 ? 'var(--note-mid)' : 'var(--note-bad)');
              return `<span style="color:${color};">${n.toFixed(1)}</span>`;
         };
         
@@ -1954,7 +2125,7 @@
         document.getElementById('ihkDisplayNoteZwischen').innerHTML = formatNote(note_zwischen);
         document.getElementById('ihkDisplayNoteAbschluss').innerHTML = formatNote(note_abschluss);
         
-        // 1. Ausbildungsfortschritt (Prozente)
+        // 1. Ausbildungsfortschritt (Radial-Ring)
         if (start && end) {
             const startDate = new Date(start).getTime();
             const endDate = new Date(end).getTime();
@@ -1965,17 +2136,20 @@
             
             if (totalDuration > 0 && elapsedDuration >= 0) {
                 const progressPct = Math.min((elapsedDuration / totalDuration) * 100, 100);
-                document.getElementById('ihkProgress').innerText = `${progressPct.toFixed(1)}%`;
-                document.getElementById('ihkProgressBar').style.width = `${progressPct}%`;
+                const offset = circumference - (progressPct / 100) * circumference;
+
+                document.getElementById('ihkProgress').innerText = `${progressPct.toFixed(0)}%`;
+                document.getElementById('ringIHKProgress').style.strokeDashoffset = offset;
+                
                 document.getElementById('ihkStartEndDates').innerText = `${daysInTraining} Tage absolviert.`;
             } else {
                 document.getElementById('ihkProgress').innerText = '0%';
-                document.getElementById('ihkProgressBar').style.width = '0%';
+                document.getElementById('ringIHKProgress').style.strokeDashoffset = circumference;
                 document.getElementById('ihkStartEndDates').innerText = `Daten fehlen/Ungültig.`;
             }
         } else {
-             document.getElementById('ihkProgress').innerText = 'Daten fehlen';
-             document.getElementById('ihkProgressBar').style.width = '0%';
+             document.getElementById('ihkProgress').innerText = '0%';
+             document.getElementById('ringIHKProgress').style.strokeDashoffset = circumference;
              document.getElementById('ihkStartEndDates').innerText = `Daten fehlen/Ungültig.`;
         }
         
@@ -2729,7 +2903,7 @@
         }));
 
         if (bookedHolidays.length > 0) {
-            data.entries.sort((a,b) => new Date(b.date) - new Date(b.date));
+            data.entries.sort((a,b) => new Date(b.date) - new Date(a.date));
             save();
         } else {
             updateUI(); 
