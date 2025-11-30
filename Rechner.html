@@ -326,41 +326,57 @@
             position: relative;
         }
 
-        /* Bar Chart Styles */
-        .bar-chart-grid {
-            display: grid;
-            grid-auto-flow: column;
-            grid-template-rows: repeat(10, 1fr);
-            gap: 10px;
-            height: 100%;
-            padding: 0 10px 30px; 
-            align-items: flex-end;
-        }
-        .bar-col {
-            position: relative;
+        /* NEUER STIL: Horizontal Stacked Bar Chart (Wöchentlich Soll/Ist) */
+        .stacked-bar-chart {
             display: flex;
-            flex-direction: column-reverse;
+            flex-direction: column;
+            gap: 12px;
+            padding: 10px 0;
+            margin-top: 10px;
+        }
+        .week-row {
+            display: grid;
+            grid-template-columns: 80px 1fr 100px; /* KW-Label, Bar, Wert */
             align-items: center;
-            height: 100%;
+            gap: 15px;
         }
-        .bar {
-            width: 18px;
-            border-radius: 3px 3px 0 0;
-            transition: height 0.8s ease;
-            position: absolute;
-            bottom: 0;
-        }
-        .bar-expected { background: var(--expected-color); opacity: 0.3; }
-        .bar-actual { background: var(--work-color); z-index: 1; }
-
-        .bar-label {
-            position: absolute;
-            bottom: -25px;
-            font-size: 0.7rem;
+        .week-label {
+            font-weight: 600;
             color: var(--text-muted);
-            transform: rotate(-45deg);
-            white-space: nowrap;
+            font-size: 0.9rem;
         }
+        .bar-container-wrapper {
+            position: relative;
+            height: 12px;
+            background: var(--expected-color);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .bar-actual-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--work-color);
+            transition: width 0.8s ease;
+            border-radius: 6px;
+        }
+        .bar-target-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-left: 2px solid rgba(255, 255, 255, 0.4);
+        }
+        .bar-value-label {
+            font-size: 0.9rem;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            text-align: right;
+            color: var(--text-main);
+        }
+        
         
         /* Deep Dive Charts */
         .chart-deep-row {
@@ -368,6 +384,60 @@
             grid-template-columns: 1fr 2fr; /* Wochentag | Heatmap */
             gap: 1.5rem;
             margin-bottom: 1.5rem;
+        }
+        
+        /* NEUER STIL: Horizontal Saldo Bar Chart (Produktivität) */
+        .horizontal-bar-container {
+            padding: 20px 0;
+        }
+        .horizontal-bar-row {
+            display: grid;
+            grid-template-columns: 40px 1fr 60px; /* Tag, Bar, Wert */
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .bar-label-day {
+            font-weight: 600;
+            color: var(--text-main);
+            text-align: center;
+        }
+        .bar-chart-area {
+            height: 10px;
+            background: rgba(255,255,255,0.05);
+            position: relative;
+            border-radius: 4px;
+        }
+        .bar-zero-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 1px;
+            background: var(--text-muted);
+            opacity: 0.5;
+            z-index: 1;
+        }
+        .bar-value {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            border-radius: 4px;
+            transition: width 0.8s ease, left 0.8s ease;
+        }
+        .bar-value.positive {
+            background: var(--success);
+            left: 50%;
+        }
+        .bar-value.negative {
+            background: var(--danger);
+            right: 50%;
+        }
+        .bar-text-value {
+             font-size: 0.9rem;
+             font-family: var(--font-mono);
+             font-weight: 600;
+             text-align: right;
         }
         
         /* Heatmap Styles */
@@ -892,7 +962,7 @@
                             <div class="legend-item"><div class="dot" style="background:var(--expected-color)"></div> Soll</div>
                         </div>
                     </div>
-                    <div class="chart-container" id="chartWeeklyPerformance">
+                    <div class="stacked-bar-chart" id="chartWeeklyPerformance">
                         </div>
                 </div>
             </div>
@@ -932,7 +1002,7 @@
                                 <div class="chart-sub">Durchschnittlicher Saldo Mo - Fr</div>
                             </div>
                         </div>
-                        <div class="chart-container" id="chartProductivityByDay" style="height: 200px;">
+                        <div class="horizontal-bar-container" id="chartProductivityByDay">
                             </div>
                     </div>
                      
@@ -2659,7 +2729,7 @@
         }));
 
         if (bookedHolidays.length > 0) {
-            data.entries.sort((a,b) => new Date(b.date) - new Date(a.date));
+            data.entries.sort((a,b) => new Date(b.date) - new Date(b.date));
             save();
         } else {
             updateUI(); 
@@ -3162,44 +3232,54 @@
         document.getElementById('kpiAvgStartTime').innerText = data.deepMetrics.avgStartTime;
         document.getElementById('kpiAvgFocus').innerText = data.deepMetrics.avgFocusHours + 'h';
         
-        // Wöchentlicher Soll/Ist Vergleich (unverändert)
+        // **********************************************
+        // NEU GESTALTET: Wöchentlicher Soll/Ist Vergleich
+        // **********************************************
         const barContainer = document.getElementById('chartWeeklyPerformance');
         const weeklyBars = data.weekly;
         
-        const maxVal = Math.max(...weeklyBars.map(d => Math.max(d.actual, d.expected, 1))); 
-        const chartHeight = 250;
-        const scaleFactor = (chartHeight - 40) / maxVal; 
+        // Maximalwert für die Skalierung (entweder höchste Sollzeit oder höchste Istzeit)
+        const maxScaleValue = Math.max(1, ...weeklyBars.map(d => Math.max(d.expected, d.actual))); 
         
-        barContainer.innerHTML = '';
-        const barGrid = document.createElement('div');
-        barGrid.className = 'bar-chart-grid';
-        
-        weeklyBars.forEach((d) => {
-            const actualH = d.actual * scaleFactor;
-            const expectedH = d.expected * scaleFactor;
-            
-            const col = document.createElement('div');
-            col.className = 'bar-col';
-            
-            const barExp = document.createElement('div');
-            barExp.className = 'bar bar-expected';
-            barExp.style.height = `${expectedH}px`;
-            
-            const barAct = document.createElement('div');
-            barAct.className = 'bar bar-actual';
-            barAct.style.height = `${actualH}px`;
-            
-            const label = document.createElement('span');
-            label.className = 'bar-label';
-            label.innerText = d.label;
+        let stackedBarHTML = '';
 
-            col.appendChild(barExp);
-            col.appendChild(barAct);
-            col.appendChild(label);
-            barGrid.appendChild(col);
+        weeklyBars.forEach((d) => {
+            const actualPct = (d.actual / maxScaleValue) * 100;
+            const expectedPct = (d.expected / maxScaleValue) * 100;
+            const diff = d.actual - d.expected;
+            
+            // Textfarbe basierend auf Saldo-Differenz
+            const valueColor = diff >= 0 ? 'var(--success)' : 'var(--danger)';
+            const valueLabel = `${d.actual.toFixed(1)}h / ${d.expected.toFixed(1)}h (${diff >= 0 ? '+' : ''}${diff.toFixed(1)}h)`;
+
+            stackedBarHTML += `
+                <div class="week-row">
+                    <div class="week-label">${d.label}</div>
+                    <div class="bar-container-wrapper" title="${valueLabel}">
+                        <div class="bar-expected-bg" style="width: ${expectedPct}%; background: var(--expected-color); opacity: 0.2; position: absolute; height: 100%;"></div>
+                        
+                        <div class="bar-actual-fill" style="width: ${Math.min(actualPct, expectedPct)}%;"></div>
+                        
+                        ${
+                            diff > 0 
+                            ? `<div class="bar-actual-fill" style="width: ${actualPct - expectedPct}%; left: ${expectedPct}%; background: var(--success);"></div>` 
+                            : ''
+                        }
+                         ${
+                            diff < 0 && actualPct < expectedPct
+                            ? `<div style="position: absolute; left: ${actualPct}%; width: ${expectedPct - actualPct}%; height: 100%; background: var(--danger); opacity: 0.5;"></div>`
+                            : ''
+                        }
+                        
+                        <div class="bar-target-overlay" style="left: ${expectedPct}%; border-color: ${diff >= 0 ? 'var(--success)' : 'var(--danger)'};"></div>
+                    </div>
+                    <div class="bar-value-label" style="color: ${valueColor}">${diff >= 0 ? '+' : ''}${diff.toFixed(1)}h</div>
+                </div>
+            `;
         });
-        
-        barContainer.appendChild(barGrid);
+
+        barContainer.innerHTML = stackedBarHTML;
+        // **********************************************
         
         // NEU: Projekt-Verteilung (Donut Chart)
         const projectData = data.projectData.distribution;
@@ -3265,7 +3345,7 @@
             let path = '';
             monthlyDiffs.forEach((val, i) => {
                 const x = (i / (monthlyDiffs.length - 1)) * w;
-                const y = h - ((val - min) / range * (h - 40)) - 20; 
+                const y = h - ((val - min) / range * (h - 40)) - 20;
                 path += `${i===0?'M':'L'} ${x} ${y} `;
             });
 
@@ -3291,88 +3371,45 @@
         
         // --- DEEP DIVE RENDER ---
         
-        // 1. Produktiver Wochentag (FIXED)
+        // 1. Produktiver Wochentag (Horizontaler Bar Chart)
         const dayChartContainer = document.getElementById('chartProductivityByDay');
         const dayStats = deepData.dayStats.slice(1, 6); // Nur Mo-Fr (Index 1 bis 5)
-        const dayAverages = dayStats.map(d => d.count > 0 ? d.totalDiff / d.count : 0);
+        const dayAverages = dayStats.map(d => ({
+            day: d.label,
+            avgDiff: d.count > 0 ? d.totalDiff / d.count : 0
+        }));
         
         // Findet den Maximalwert (Absolut) über alle positiven und negativen Durchschnitte
-        const maxAbsDiff = Math.max(1, ...dayAverages.map(Math.abs)); // Minimum 1, um Division durch Null zu vermeiden
-        const chartHeightPx = 200;
-        const chartCenterY = chartHeightPx / 2;
-        const barMaxHeight = chartCenterY - 20; // 80px max Höhe
+        const maxAbsDiff = Math.max(1, ...dayAverages.map(d => Math.abs(d.avgDiff))); 
+        const chartScaleFactor = 50 / maxAbsDiff; // Max 50% der Chart-Breite
 
-        dayChartContainer.innerHTML = '';
-        const dayBarGrid = document.createElement('div');
-        dayBarGrid.className = 'bar-chart-grid';
-        dayBarGrid.style.gridTemplateColumns = 'repeat(5, 1fr)';
-        dayBarGrid.style.height = `${chartHeightPx}px`;
-        dayBarGrid.style.paddingBottom = '30px'; 
-        
-        const dayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
-        
-        dayAverages.forEach((avgDiff, index) => {
-            const absHeight = Math.abs(avgDiff) / maxAbsDiff * barMaxHeight;
+        let horizontalBarHTML = '';
+
+        dayAverages.forEach((dayData) => {
+            const avgDiff = dayData.avgDiff;
+            const absWidth = Math.abs(avgDiff) * chartScaleFactor;
             const isPositive = avgDiff >= 0;
-            const barColor = isPositive ? 'var(--success)' : 'var(--danger)'; // Grün/Rot für Saldo-Differenz
+            const barColor = isPositive ? 'var(--success)' : 'var(--danger)'; 
+            const displayValue = (avgDiff >= 0 ? '+' : '') + avgDiff.toFixed(2) + 'h';
             
-            const col = document.createElement('div');
-            col.className = 'bar-col';
-            col.style.height = '100%';
-            col.style.position = 'relative'; 
-
-            const bar = document.createElement('div');
-            bar.className = 'bar';
-            bar.style.height = `${absHeight}px`;
-            bar.style.width = '25px';
-            bar.style.background = barColor;
+            // Die Bar-Chart-Area hat 100% Breite, die Mitte ist 50%.
             
-            // Positionierung relativ zur Y-Mitte (chartCenterY)
-            if (isPositive) {
-                bar.style.bottom = `${chartCenterY}px`;
-                bar.style.transform = 'translateY(0)';
-                bar.style.borderRadius = '3px 3px 0 0';
-            } else {
-                bar.style.bottom = `${chartCenterY}px`;
-                bar.style.transform = 'translateY(100%)'; // Beginnt an der Mittellinie und wächst nach unten
-                bar.style.borderRadius = '0 0 3px 3px';
-            }
-            
-            // Value Label
-            const valueLabel = document.createElement('span');
-            valueLabel.style.position = 'absolute';
-            valueLabel.style.fontSize = '0.7rem';
-            valueLabel.style.fontWeight = '600';
-            valueLabel.style.color = barColor;
-            valueLabel.style.bottom = isPositive ? `${chartCenterY + absHeight + 5}px` : `${chartCenterY - absHeight - 20}px`; 
-            valueLabel.style.left = '50%';
-            valueLabel.style.transform = 'translateX(-50%)';
-            valueLabel.innerText = avgDiff.toFixed(1) + 'h';
-
-            const label = document.createElement('span');
-            label.className = 'bar-label';
-            label.innerText = dayLabels[index];
-            label.style.bottom = '10px'; // Fester Abstand zum Boden des Containers
-
-            col.appendChild(bar);
-            col.appendChild(valueLabel);
-            col.appendChild(label);
-            dayBarGrid.appendChild(col);
+            horizontalBarHTML += `
+                <div class="horizontal-bar-row">
+                    <div class="bar-label-day">${dayData.day}</div>
+                    <div class="bar-chart-area">
+                        <div class="bar-zero-line"></div>
+                        <div class="bar-value ${isPositive ? 'positive' : 'negative'}"
+                             style="width: ${absWidth}%; ${isPositive ? 'left: 50%;' : 'right: 50%; background: ' + barColor};"
+                             title="Ø Saldo: ${displayValue}">
+                        </div>
+                    </div>
+                    <div class="bar-text-value" style="color: ${barColor}">${displayValue}</div>
+                </div>
+            `;
         });
         
-        // Mittellinie (Y=100px)
-        const zeroLine = document.createElement('div');
-        zeroLine.style.position = 'absolute';
-        zeroLine.style.top = `${chartCenterY}px`;
-        zeroLine.style.left = '0';
-        zeroLine.style.width = '100%';
-        zeroLine.style.height = '1px';
-        zeroLine.style.background = 'rgba(255,255,255,0.2)';
-        
-        dayChartContainer.style.position = 'relative';
-        dayChartContainer.innerHTML = '';
-        dayChartContainer.appendChild(zeroLine);
-        dayChartContainer.appendChild(dayBarGrid);
+        dayChartContainer.innerHTML = horizontalBarHTML;
 
 
         // 2. Produktivitäts-Heatmap (FIXED)
