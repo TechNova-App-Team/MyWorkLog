@@ -1,4 +1,5 @@
 [![WICHTIG! Datenschutzrichtlinie lesen!](https://img.shields.io/badge/Datenschutz-WICHTIG-red?style=for-the-badge)](./PRIVACY.md)
+https://technova-app-team.github.io/TimeTracker-Ausbildung-Arbeit/
 App Version V1.1.2
 Aktuell Version V1.2.4e
 # ⏱ Time.Tracker.SingleFile
@@ -512,4 +513,5 @@ v1.0.0 (2025-11-15)
 ---
 
 **Time.Tracker.SingleFile V1.2.0** | Gebaut mit modernstem Web-Standard | 🚀 Production Ready
+
 
