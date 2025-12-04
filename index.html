@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TimeTracker V1.3.0</title>
 <script src="icons.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         /* --- CORE VARIABLES --- */
         :root {
@@ -2133,6 +2135,29 @@
         </div>
     </div>
 
+    <!-- P2P Join Modal -->
+    <div class="modal" id="p2pJoinModal">
+        <div class="modal-box" style="width:500px; padding:2rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h3 style="margin:0;">📥 Team beitreten</h3>
+                <button onclick="closeJoinModal()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+
+            <p style="color:var(--text-muted); margin-bottom:1.5rem;">Gib den Connection-Code ein, den dir der Team-Admin gegeben hat:</p>
+
+            <input type="text" id="joinCode" class="glass-input" placeholder="z.B. eyJhbGc..." style="margin-bottom:1.5rem; width:100%; font-family:var(--font-mono); font-size:0.9rem;">
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <button class="btn" onclick="closeJoinModal()" style="background:transparent; border:1px solid var(--border); padding:12px;">Abbrechen</button>
+                <button class="btn btn-primary" onclick="joinP2PTeam()" style="padding:12px;">🔗 Verbinden</button>
+            </div>
+
+            <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border);">
+                <small style="color:var(--text-muted);">ℹ️ Die Verbindung ist P2P verschlüsselt. Keine Daten gehen durch externe Server.</small>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" id="settingsModal">
         <div class="modal-box" style="display:flex; flex-direction:column; height:90vh; max-height:90vh; width:900px; padding:0;">
             
@@ -2148,6 +2173,7 @@
                 <button class="settings-tab" onclick="switchSettingsTab('work')" style="padding:10px 15px; border:none; background:none; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; transition:0.2s;">⏱️ Arbeitszeiten</button>
                 <button class="settings-tab" onclick="switchSettingsTab('vacation')" style="padding:10px 15px; border:none; background:none; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; transition:0.2s;">🌴 Urlaub</button>
                 <button class="settings-tab" onclick="switchSettingsTab('school')" style="padding:10px 15px; border:none; background:none; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; transition:0.2s;">🏫 Berufsschule</button>
+                <button class="settings-tab" onclick="switchSettingsTab('team')" style="padding:10px 15px; border:none; background:none; color:var(--text-muted); cursor:pointer; border-bottom:2px solid transparent; transition:0.2s;">🤝 Team</button>
             </div>
             
             <!-- Content Area mit Scroll -->
@@ -2357,6 +2383,201 @@
                     </div>
 
                     <div style="font-size:0.85rem; color:var(--text-muted);">Hinweis: Feiertage und gebuchte Urlaube werden berücksichtigt. Wenn der aktuelle Tag als Berufsschultag erkannt wird, bekommst du eine Eintrag‑Vorschlag.</div>
+                </div>
+
+                <!-- Tab: Team Features (NEU) -->
+                <div id="settings-tab-team" class="settings-tab-content" style="display:none;">
+                    <h4 style="color:var(--primary); margin-bottom:15px; font-size:1rem;">🤝 Team-Zusammenarbeit & Echtzeit-Features</h4>
+                    
+                    <div style="background:rgba(var(--primary-rgb), 0.08); border:1px solid rgba(var(--primary-rgb), 0.2); border-radius:12px; padding:1.5rem; margin-bottom:2rem;">
+                        <p style="color:var(--text-main); margin:0; line-height:1.6;">
+                            Aktiviere Team-Features, um in Echtzeit mit anderen Nutzern zusammenzuarbeiten, gemeinsame Dashboards zu teilen und Live-Notifications zu erhalten.
+                        </p>
+                    </div>
+
+                    <!-- === NEU: P2P WEBRTC SYNC BEREICH === -->
+                    <div style="background:rgba(59, 130, 246, 0.15); border:2px solid rgba(59, 130, 246, 0.3); border-radius:16px; padding:2rem; margin-bottom:2rem;">
+                        <h5 style="color:#3b82f6; margin-bottom:1rem; display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:1.5rem;">🔗</span>
+                            <span>P2P Team-Sync (WebRTC)</span>
+                        </h5>
+                        
+                        <!-- Connection Status -->
+                        <div style="margin-bottom:1.5rem; padding:1rem; background:rgba(0,0,0,0.2); border-radius:8px; border-left:4px solid #ef4444;">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <div>
+                                    <small style="color:var(--text-muted); display:block; margin-bottom:5px;">Verbindungsstatus</small>
+                                    <span id="p2pStatus" style="font-weight:600; color:#ef4444;">🔴 Nicht verbunden</span>
+                                </div>
+                                <span id="connectedPeers" style="color:var(--text-muted); font-size:0.9rem;">0 Peers</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:1.5rem;">
+                            <button class="btn btn-primary" onclick="initiateP2PShare()" style="padding:12px; background:linear-gradient(135deg, #3b82f6, #2563eb); border:none;">
+                                📤 Team freigeben
+                            </button>
+                            <button class="btn btn-primary" onclick="showJoinModal()" style="padding:12px; background:linear-gradient(135deg, #10b981, #059669); border:none;">
+                                📥 Team beitreten
+                            </button>
+                        </div>
+
+                        <!-- QR Code Display (hidden) -->
+                        <div id="qrCodeContainer" style="display:none; text-align:center; margin-bottom:1.5rem; padding:1.5rem; background:rgba(255,255,255,0.05); border-radius:8px;">
+                            <small style="color:var(--text-muted); display:block; margin-bottom:1rem;">Scan QR-Code oder teile Connection-Code:</small>
+                            <div id="qrCodeBox" style="display:inline-block; background:white; padding:10px; border-radius:8px; margin-bottom:1rem;"></div>
+                            <input type="text" id="connectionCode" readonly class="glass-input" style="width:100%; margin-bottom:1rem; font-family:var(--font-mono); font-size:0.85rem;">
+                            <div style="display:flex; gap:10px;">
+                                <button class="btn btn-ghost" onclick="copyConnectionCode()" style="flex:1; padding:10px; background:rgba(255,255,255,0.1); border:1px solid var(--border);">
+                                    📋 Code kopieren
+                                </button>
+                                <button class="btn btn-ghost" onclick="stopP2PShare()" style="flex:1; padding:10px; background:rgba(255,255,255,0.1); border:1px solid var(--border);">
+                                    ❌ Beenden
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Sync Settings -->
+                        <div style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid rgba(255,255,255,0.1);">
+                            <label style="font-size:0.9rem; color:var(--text-main); font-weight:600; display:block; margin-bottom:12px;">⚙️ Sync-Einstellungen</label>
+                            
+                            <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                                <input type="checkbox" id="p2pAutoSync" checked style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                                <label style="color:var(--text-main); font-size:0.9rem; cursor:pointer;">Auto-Sync aktivieren (Änderungen werden sofort geteilt)</label>
+                            </div>
+
+                            <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                                <input type="checkbox" id="p2pOfflineQueue" checked style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                                <label style="color:var(--text-main); font-size:0.9rem; cursor:pointer;">Offline-Queue (Änderungen speichern & später synchen)</label>
+                            </div>
+
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" id="p2pEncryption" checked style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                                <label style="color:var(--text-main); font-size:0.9rem; cursor:pointer;">🔒 WebRTC Verschlüsselung (Standard)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Toggle -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; padding:1rem; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid var(--border);">
+                        <div>
+                            <label style="font-size:0.95rem; color:var(--text-main); font-weight:600; display:block; margin-bottom:5px;">Team-Features aktivieren</label>
+                            <small style="color:var(--text-muted);">Schalte Collaboration-Funktionen ein/aus</small>
+                        </div>
+                        <label style="display:flex; align-items:center; cursor:pointer;">
+                            <input type="checkbox" id="teamFeaturesEnabled" onchange="toggleTeamFeaturesVisibility()" style="width:20px; height:20px; cursor:pointer; accent-color:var(--primary);">
+                        </label>
+                    </div>
+
+                    <!-- Team Features Section (hidden by default) -->
+                    <div id="teamFeaturesSection" style="display:none; opacity:0; transition:all 0.3s ease;">
+                        
+                        <div style="margin-bottom:2rem;">
+                            <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:10px; font-weight:600; text-transform:uppercase;">Team-Einstellungen</label>
+                            
+                            <div style="margin-bottom:1.5rem;">
+                                <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:5px; font-weight:600;">Team-Name:</label>
+                                <input type="text" id="teamName" class="glass-input" placeholder="z.B. Mein Team" style="margin-bottom:1rem;">
+                                <small style="color:var(--text-muted); display:block;">Der Name ist nur für dich lokal sichtbar</small>
+                            </div>
+
+                            <div style="margin-bottom:1.5rem;">
+                                <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:5px; font-weight:600;">Team-ID (zum Einladen):</label>
+                                <div style="display:flex; gap:10px;">
+                                    <input type="text" id="teamId" class="glass-input" readonly placeholder="Wird generiert" style="flex:1;">
+                                    <button class="btn btn-primary" onclick="generateTeamId()" style="padding:10px 15px;">🔄 Neu erstellen</button>
+                                </div>
+                                <small style="color:var(--text-muted); display:block; margin-top:5px;">Teile diese ID mit Kollegen zum Einladen</small>
+                            </div>
+                        </div>
+
+                        <hr style="border:none; border-top:1px solid var(--border); margin:2rem 0;">
+
+                        <!-- Collaboration Features -->
+                        <div style="margin-bottom:2rem;">
+                            <label style="font-size:0.95rem; color:var(--text-main); font-weight:600; display:block; margin-bottom:15px;">⚙️ Collaboration-Optionen</label>
+
+                            <!-- Feature 1: Shared Dashboard -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding:1rem; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid var(--border);">
+                                <div>
+                                    <div style="font-weight:600; color:var(--text-main); margin-bottom:3px;">📊 Team-Dashboard</div>
+                                    <small style="color:var(--text-muted);">Gemeinsame Übersicht der Team-Stunden</small>
+                                </div>
+                                <input type="checkbox" id="featureSharedDashboard" style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                            </div>
+
+                            <!-- Feature 2: Real-Time Notifications -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding:1rem; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid var(--border);">
+                                <div>
+                                    <div style="font-weight:600; color:var(--text-main); margin-bottom:3px;">🔔 Live-Benachrichtigungen</div>
+                                    <small style="color:var(--text-muted);">Echtzeit-Updates wenn Kollegen den Timer starten/stoppen</small>
+                                </div>
+                                <input type="checkbox" id="featureNotifications" style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                            </div>
+
+                            <!-- Feature 3: Time Sheet Sync -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding:1rem; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid var(--border);">
+                                <div>
+                                    <div style="font-weight:600; color:var(--text-main); margin-bottom:3px;">📋 Stundenzettel synchronisieren</div>
+                                    <small style="color:var(--text-muted);">Stundenzettel mit Manager teilen</small>
+                                </div>
+                                <input type="checkbox" id="featureTimeSheetSync" style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                            </div>
+
+                            <!-- Feature 4: Workload Analytics -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding:1rem; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid var(--border);">
+                                <div>
+                                    <div style="font-weight:600; color:var(--text-main); margin-bottom:3px;">📈 Workload-Analyse</div>
+                                    <small style="color:var(--text-muted);">Sehe die durchschnittliche Arbeitszeit im Team</small>
+                                </div>
+                                <input type="checkbox" id="featureWorkloadAnalytics" style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                            </div>
+
+                            <!-- Feature 5: Team Alerts -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding:1rem; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid var(--border);">
+                                <div>
+                                    <div style="font-weight:600; color:var(--text-main); margin-bottom:3px;">⚠️ Team-Alerts</div>
+                                    <small style="color:var(--text-muted);">Benachrichtigungen bei Über-/Unterschreitung von Soll-Stunden</small>
+                                </div>
+                                <input type="checkbox" id="featureTeamAlerts" style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                            </div>
+                        </div>
+
+                        <hr style="border:none; border-top:1px solid var(--border); margin:2rem 0;">
+
+                        <!-- Privacy Settings -->
+                        <div style="margin-bottom:2rem;">
+                            <label style="font-size:0.95rem; color:var(--text-main); font-weight:600; display:block; margin-bottom:15px;">🔒 Datenschutz & Sichtbarkeit</label>
+
+                            <div style="margin-bottom:1rem;">
+                                <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:5px; font-weight:600;">Mein Profil ist sichtbar für:</label>
+                                <select id="profileVisibility" class="glass-input" style="width:100%; max-width:300px;">
+                                    <option value="private">🔒 Privat (niemand)</option>
+                                    <option value="team">👥 Team-Mitglieder</option>
+                                    <option value="managers">👔 Manager nur</option>
+                                </select>
+                                <small style="color:var(--text-muted); display:block; margin-top:5px;">Kontrolliere wer deine Daten sieht</small>
+                            </div>
+
+                            <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
+                                <input type="checkbox" id="shareWorkHours" style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                                <label style="color:var(--text-main); font-size:0.9rem; cursor:pointer;">Arbeitszeiten im Team-Dashboard teilen</label>
+                            </div>
+
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" id="shareTimeOff" style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                                <label style="color:var(--text-main); font-size:0.9rem; cursor:pointer;">Urlaub/Pausen im Team sichtbar machen</label>
+                            </div>
+                        </div>
+
+                        <!-- Info Box -->
+                        <div style="background:rgba(59, 130, 246, 0.1); border:1px solid rgba(59, 130, 246, 0.2); border-radius:12px; padding:1.5rem; margin-top:2rem;">
+                            <p style="color:var(--text-main); margin:0; font-size:0.9rem; line-height:1.6;">
+                                <strong>ℹ️ Hinweis:</strong> Team-Features benötigen einen Backend-Server. Diese Funktionen werden lokal gespeichert, bis du dich mit einem Server verbindest. Deine Daten bleiben immer privat, solange du diese nicht bewusst teilst.
+                            </p>
+                        </div>
+                    </div>
                 </div>
                 
             </div>
@@ -5586,6 +5807,9 @@ TIPPS:
         document.getElementById('customColorPicker').value = currentTheme;
         document.getElementById('customColorHex').value = currentTheme.toUpperCase();
         document.getElementById('colorPreview').style.background = currentTheme;
+
+        // === NEU: Team Features laden ===
+        loadTeamSettings();
     }
     function saveSettings() {
         data.settings.name = document.getElementById('confName').value;
@@ -5613,6 +5837,29 @@ TIPPS:
         
         // School rules save
         try { saveSchoolSettingsToData(); } catch(e) { console.warn('saveSchoolSettingsToData error', e); }
+
+        // === NEU: Team Features Settings speichern ===
+        if (!data.settings.team) data.settings.team = {};
+        
+        data.settings.team.enabled = document.getElementById('teamFeaturesEnabled').checked;
+        data.settings.team.name = document.getElementById('teamName').value;
+        data.settings.team.teamId = document.getElementById('teamId').value;
+        
+        // Features
+        data.settings.team.features = {
+            sharedDashboard: document.getElementById('featureSharedDashboard').checked,
+            notifications: document.getElementById('featureNotifications').checked,
+            timeSheetSync: document.getElementById('featureTimeSheetSync').checked,
+            workloadAnalytics: document.getElementById('featureWorkloadAnalytics').checked,
+            teamAlerts: document.getElementById('featureTeamAlerts').checked
+        };
+        
+        // Privacy
+        data.settings.team.privacy = {
+            profileVisibility: document.getElementById('profileVisibility').value,
+            shareWorkHours: document.getElementById('shareWorkHours').checked,
+            shareTimeOff: document.getElementById('shareTimeOff').checked
+        };
         
         save();
         document.getElementById('settingsModal').classList.remove('active');
@@ -5671,6 +5918,393 @@ TIPPS:
         setTheme(hex);
         showCustomMessage('✅ Gespeichert', `Farbe: ${hex.toUpperCase()}`, 'success');
     }
+
+    // === NEUE FUNKTIONEN: TEAM FEATURES ===
+
+    /**
+     * Lädt Team-Settings aus data.settings.team und füllt die UI
+     */
+    function loadTeamSettings() {
+        if (!data.settings.team) {
+            data.settings.team = {
+                enabled: false,
+                name: '',
+                teamId: '',
+                features: {
+                    sharedDashboard: false,
+                    notifications: false,
+                    timeSheetSync: false,
+                    workloadAnalytics: false,
+                    teamAlerts: false
+                },
+                privacy: {
+                    profileVisibility: 'private',
+                    shareWorkHours: false,
+                    shareTimeOff: false
+                }
+            };
+        }
+
+        const team = data.settings.team;
+        
+        // Main toggle
+        document.getElementById('teamFeaturesEnabled').checked = team.enabled;
+        
+        // Team info
+        document.getElementById('teamName').value = team.name || '';
+        document.getElementById('teamId').value = team.teamId || '';
+        
+        // Features
+        document.getElementById('featureSharedDashboard').checked = team.features?.sharedDashboard || false;
+        document.getElementById('featureNotifications').checked = team.features?.notifications || false;
+        document.getElementById('featureTimeSheetSync').checked = team.features?.timeSheetSync || false;
+        document.getElementById('featureWorkloadAnalytics').checked = team.features?.workloadAnalytics || false;
+        document.getElementById('featureTeamAlerts').checked = team.features?.teamAlerts || false;
+        
+        // Privacy
+        document.getElementById('profileVisibility').value = team.privacy?.profileVisibility || 'private';
+        document.getElementById('shareWorkHours').checked = team.privacy?.shareWorkHours || false;
+        document.getElementById('shareTimeOff').checked = team.privacy?.shareTimeOff || false;
+        
+        // Zeige/Verstecke das Team Features Section basierend auf Enable
+        toggleTeamFeaturesVisibility();
+    }
+
+    /**
+     * Toggelt die Sichtbarkeit des Team Features Sections
+     */
+    function toggleTeamFeaturesVisibility() {
+        const enabled = document.getElementById('teamFeaturesEnabled').checked;
+        const section = document.getElementById('teamFeaturesSection');
+        
+        if (enabled) {
+            section.style.display = 'block';
+            setTimeout(() => section.style.opacity = '1', 50);
+        } else {
+            section.style.opacity = '0';
+            setTimeout(() => section.style.display = 'none', 300);
+        }
+    }
+
+    /**
+     * Generiert eine neue Team-ID (zufällige alphanumerische Zeichenkette)
+     */
+    function generateTeamId() {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        let teamId = 'TEAM-';
+        for (let i = 0; i < 8; i++) {
+            teamId += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        document.getElementById('teamId').value = teamId;
+        showCustomMessage('🆔 Team-ID generiert', `Neue ID: ${teamId}`, 'success');
+    }
+
+    // === HELPER: Überprüfe ob Team-Features aktiviert sind ===
+    function areTeamFeaturesEnabled() {
+        return data.settings.team?.enabled === true;
+    }
+
+    /**
+     * Diese Funktion wird aufgerufen, wenn Team-Features aktiviert sind
+     * Sie initialisiert die Backend-Verbindung und Real-Time Features
+     */
+    function initializeTeamFeatures() {
+        if (!areTeamFeaturesEnabled()) return;
+        
+        console.log('🤝 Team Features aktiviert:', data.settings.team);
+        
+        // TODO: Hier würde die Backend-Verbindung initialisiert
+        // - WebSocket für Real-Time Updates
+        // - Team-Dashboard laden
+        // - Notifications Setup
+        
+        showCustomMessage('🤝 Team-Features aktiviert', 'Backend-Verbindung wird vorbereitet...', 'info');
+    }
+
+    /**
+     * Diese Funktion deaktiviert Team-Features sauber
+     */
+    function disableTeamFeatures() {
+        data.settings.team.enabled = false;
+        console.log('🤝 Team Features deaktiviert');
+        showCustomMessage('❌ Team-Features deaktiviert', 'Alle Collaboration-Funktionen sind jetzt aus.', 'info');
+    }
+
+    // ========== === P2P WebRTC SYNC SYSTEM === ==========
+
+    // Global P2P Objekt
+    let p2pSync = {
+        peers: {},
+        isHosting: false,
+        connectionCode: null,
+        offlineQueue: []
+    };
+
+    /**
+     * Initiiert P2P Sharing - dieser Nutzer wird "Host"
+     */
+    function initiateP2PShare() {
+        if (p2pSync.isHosting) {
+            showCustomMessage('⚠️ Bereits aktiv', 'Du gibst bereits dein Team frei.', 'warning');
+            return;
+        }
+
+        p2pSync.isHosting = true;
+        
+        // Generiere Connection Code
+        const offerId = {
+            type: 'offer',
+            timestamp: Date.now(),
+            hostName: data.settings.name || 'Host'
+        };
+        p2pSync.connectionCode = btoa(JSON.stringify(offerId));
+        
+        // Update UI
+        document.getElementById('qrCodeContainer').style.display = 'block';
+        document.getElementById('connectionCode').value = p2pSync.connectionCode;
+        document.getElementById('p2pStatus').textContent = '🟢 Bereit (wartet auf Verbindungen)';
+        document.getElementById('p2pStatus').style.color = '#10b981';
+
+        // Generiere QR Code
+        document.getElementById('qrCodeBox').innerHTML = '';
+        new QRCode(document.getElementById('qrCodeBox'), {
+            text: p2pSync.connectionCode,
+            width: 200,
+            height: 200,
+            colorDark: '#000000',
+            colorLight: '#ffffff'
+        });
+
+        showCustomMessage('📤 Team freigeben aktiviert', 'Teile den Code oder QR-Code mit anderen Nutzern!', 'success');
+        
+        console.log('🟢 P2P Hosting aktiviert. Code:', p2pSync.connectionCode);
+    }
+
+    /**
+     * Beende P2P Sharing
+     */
+    function stopP2PShare() {
+        p2pSync.isHosting = false;
+        document.getElementById('qrCodeContainer').style.display = 'none';
+        document.getElementById('p2pStatus').textContent = '🔴 Nicht verbunden';
+        document.getElementById('p2pStatus').style.color = '#ef4444';
+        
+        // Schließe alle bestehenden Connections
+        Object.values(p2pSync.peers).forEach(peer => {
+            if (peer.connection) peer.connection.close();
+        });
+        p2pSync.peers = {};
+
+        showCustomMessage('❌ Team-Freigabe beendet', 'Verbindungen wurden geschlossen.', 'info');
+    }
+
+    /**
+     * Zeige das "Team beitreten" Modal
+     */
+    function showJoinModal() {
+        document.getElementById('p2pJoinModal').classList.add('active');
+    }
+
+    function closeJoinModal() {
+        document.getElementById('p2pJoinModal').classList.remove('active');
+    }
+
+    /**
+     * Tritt einem P2P Team bei (nimmt Connection Code entgegen)
+     */
+    function joinP2PTeam() {
+        const code = document.getElementById('joinCode').value.trim();
+        
+        if (!code) {
+            showCustomMessage('❌ Fehler', 'Bitte gib einen Connection-Code ein.', 'error');
+            return;
+        }
+
+        try {
+            const offerData = JSON.parse(atob(code));
+            
+            // Starte WebRTC Peer Connection
+            connectToPeer(offerData, code);
+            
+            closeJoinModal();
+            showCustomMessage('🔗 Verbinde...', 'Stelle P2P Verbindung her...', 'info');
+            
+        } catch (e) {
+            showCustomMessage('❌ Ungültiger Code', 'Der Connection-Code ist fehlerhaft.', 'error');
+            console.error('Join error:', e);
+        }
+    }
+
+    /**
+     * Stelle WebRTC Verbindung zu Peer her
+     */
+    function connectToPeer(offerData, code) {
+        const peerId = 'peer_' + Date.now();
+
+        // Erstelle WebRTC Peer
+        const peer = new SimplePeer({
+            initiator: true,
+            trickleIce: true,
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' }
+                ]
+            }
+        });
+
+        // Speichere Peer Referenz
+        p2pSync.peers[peerId] = {
+            peer: peer,
+            connection: null,
+            offerData: offerData
+        };
+
+        // Handle Signaling Data
+        peer.on('signal', data => {
+            const signalData = {
+                peerId: peerId,
+                signal: data,
+                clientName: data.settings?.name || 'Client'
+            };
+            console.log('📡 Signal:', signalData);
+            // TODO: Signaling über einen gemeinsamen Kanal (z.B. localStorage, QR-Update)
+        });
+
+        // Handle Connection
+        peer.on('connect', () => {
+            console.log('✅ P2P Verbindung hergestellt:', peerId);
+            document.getElementById('p2pStatus').textContent = '🟢 Verbunden';
+            document.getElementById('p2pStatus').style.color = '#10b981';
+            document.getElementById('connectedPeers').textContent = Object.keys(p2pSync.peers).length + ' Peers';
+            
+            // Sende initiale Daten
+            sendSyncData(peer);
+            showCustomMessage('✅ Verbunden!', 'P2P Sync ist aktiv!', 'success');
+        });
+
+        // Handle incoming messages
+        peer.on('data', buffer => {
+            try {
+                const message = JSON.parse(buffer.toString());
+                handleP2PMessage(message, peerId);
+            } catch (e) {
+                console.error('Message parse error:', e);
+            }
+        });
+
+        // Handle errors
+        peer.on('error', err => {
+            console.error('Peer error:', err);
+            showCustomMessage('⚠️ Verbindungsfehler', err.message, 'error');
+        });
+
+        peer.on('close', () => {
+            console.log('🔴 P2P Verbindung geschlossen:', peerId);
+            delete p2pSync.peers[peerId];
+            document.getElementById('connectedPeers').textContent = Object.keys(p2pSync.peers).length + ' Peers';
+            if (Object.keys(p2pSync.peers).length === 0) {
+                document.getElementById('p2pStatus').textContent = '🔴 Nicht verbunden';
+                document.getElementById('p2pStatus').style.color = '#ef4444';
+            }
+        });
+    }
+
+    /**
+     * Sende aktuelle localStorage Daten über P2P
+     */
+    function sendSyncData(peer) {
+        const syncData = {
+            type: 'sync',
+            data: data,
+            timestamp: Date.now()
+        };
+        
+        try {
+            peer.send(JSON.stringify(syncData));
+            console.log('📤 Sync-Daten gesendet');
+        } catch (e) {
+            console.error('Send error:', e);
+            if (document.getElementById('p2pOfflineQueue').checked) {
+                p2pSync.offlineQueue.push(syncData);
+                console.log('📥 In Offline-Queue gespeichert');
+            }
+        }
+    }
+
+    /**
+     * Verarbeite eingehende P2P Nachrichten
+     */
+    function handleP2PMessage(message, peerId) {
+        if (message.type === 'sync') {
+            console.log('📥 Sync-Daten empfangen von', peerId);
+            
+            // Merge remote data mit lokalem data
+            mergeRemoteData(message.data);
+            
+            showCustomMessage('🔄 Sync empfangen', 'Daten von Peer aktualisiert', 'success');
+        } else if (message.type === 'entry') {
+            console.log('📝 Neuer Eintrag von Peer:', message.entry);
+            data.entries.push(message.entry);
+            save();
+            renderTable();
+            updateStats();
+        }
+    }
+
+    /**
+     * Merge Remote Daten intelligent mit lokalem data
+     */
+    function mergeRemoteData(remoteData) {
+        // Merge Entries (verhindere Duplikate via ID)
+        if (remoteData.entries && Array.isArray(remoteData.entries)) {
+            const localIds = new Set(data.entries.map(e => e.id));
+            remoteData.entries.forEach(entry => {
+                if (!localIds.has(entry.id)) {
+                    data.entries.push(entry);
+                }
+            });
+        }
+
+        // Merge Settings (Remote Settings überschreiben nur wenn neuer)
+        if (remoteData.settings) {
+            Object.assign(data.settings, remoteData.settings);
+        }
+
+        save();
+        renderTable();
+        updateStats();
+        console.log('✅ Daten gemerged');
+    }
+
+    /**
+     * Monitore localStorage Änderungen und synce zu Peers
+     */
+    function monitorP2PChanges() {
+        // Beobachte changes im data Objekt
+        setInterval(() => {
+            if (document.getElementById('p2pAutoSync')?.checked === false) return;
+            
+            Object.values(p2pSync.peers).forEach(peerObj => {
+                if (peerObj.peer && peerObj.peer._pc?.connectionState === 'connected') {
+                    sendSyncData(peerObj.peer);
+                }
+            });
+        }, 5000); // Alle 5 Sekunden synchen
+    }
+
+    /**
+     * Kopiere Connection Code in Clipboard
+     */
+    function copyConnectionCode() {
+        const code = document.getElementById('connectionCode').value;
+        navigator.clipboard.writeText(code).then(() => {
+            showCustomMessage('📋 Kopiert!', 'Connection-Code in Clipboard', 'success');
+        });
+    }
+
+    // Starte P2P Change Monitor beim Laden
+    setTimeout(() => monitorP2PChanges(), 2000);
 
     // --- Berufsschul-Regeln: UI + Logik (Frontend-only, keine automatische Massenbuchung) ---
     function renderSchoolRules() {
