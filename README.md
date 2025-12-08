@@ -8,6 +8,7 @@
 [![P2P WebRTC](https://img.shields.io/badge/P2P-WebRTC-informational)](https://webrtc.org/)
 
 ## ✨ Überblick & Vision
+**Big Update coming Soon! V2.0.1 ~ 10.12.25**
 
 **TIME.PRO** ist nicht nur ein weiterer Zeiterfasser – es ist ein **datengesteuertes Performance-Cockpit**, das dir hilft, deine Arbeitszeit, deine Produktivität und deine Karriereziele (insbesondere im Kontext der **IHK-Ausbildung** und **Berufsschule**) zu visualisieren und zu optimieren.
 **https://technova-app-team.github.io/TimeTracker-Ausbildung-Arbeit/**
@@ -88,4 +89,5 @@ Wir freuen uns über jede Form von Beitrag! Egal, ob du Bugs findest, Code schre
 
 * **Datenschutz:** Alle Details findest du in unserer [DSGVO.html](https://technova-app-team.github.io/TimeTracker-Ausbildung-Arbeit/DSGVO.html) und [PRIVACY.md](https://github.com/TechNova-App-Team/TimeTracker-Ausbildung-Arbeit/blob/main/PRIVACY.md).
 * **Impressum:** Das [Impressum.html](https://technova-app-team.github.io/TimeTracker-Ausbildung-Arbeit/Impressum.html) enthält alle notwendigen Angaben.
+
 * **Lizenz:** Dieses Projekt steht unter der MIT-Lizenz. Details siehe in der [LICENSE.md](https://github.com/TechNova-App-Team/TimeTracker-Ausbildung-Arbeit/blob/main/LICENSE.md) Datei.
