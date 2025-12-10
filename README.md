@@ -8,9 +8,9 @@
 
 **Grafische Kurzansicht**
 
-[![Dashboard Badge](assets/badge-dashboard.svg)](assets/badge-dashboard.svg) [![Timer Badge](https://img.shields.io/badge/Timer-live-yellow?style=for-the-badge)](#) [![Backup](https://img.shields.io/badge/Backup-JSON-orange?style=for-the-badge)](#)
+[![Timer Badge](https://img.shields.io/badge/Timer-live-yellow?style=for-the-badge)](#) [![Backup](https://img.shields.io/badge/Backup-JSON-orange?style=for-the-badge)](#)
 
-**Version:** `v1.0.0`  •  **Build:** `local`  •  **Stand:** 2025-12-10
+**Version:** `v2.0.1`  •  **Build:** `local`  •  **Stand:** 2025-12-10
 
 ---
 
@@ -56,21 +56,6 @@
 ![Preview Screenshot](assets/preview-screenshot.svg)
 
 
-## ⚙️ Wichtige Dateien & Rechtliches
-
-- **Datenschutz (DSGVO):** `DSGVO.html` → [DSGVO anzeigen](./DSGVO.html)
-- **Impressum:** `Impressum.html` → [Impressum anzeigen](./Impressum.html)
-- **Rechtliches (Markdown):**
-  - `Rechtliches/PRIVACY.md` → [Privacy (DE)](Rechtliches/PRIVACY.md)
-  - `Rechtliches/CONTRIBUTING.md` → [Contributing](Rechtliches/CONTRIBUTING.md)
-  - `Rechtliches/CODE_OF_CONDUCT.md` → [Code of Conduct](Rechtliches/CODE_OF_CONDUCT.md)
-  - `Rechtliches/LICENSE.md` → [License (MIT)](Rechtliches/LICENSE.md)
-  - `Rechtliches/NOTICE.md` → [Notice](Rechtliches/NOTICE.md)
-  - `Rechtliches/SECURITY.md` → [Security](Rechtliches/SECURITY.md)
-
-> Hinweis: Die Links oben verweisen auf lokal vorhandene Dateien im Repository. Stelle sicher, dass beim Hosten die Dateien mit deployed werden.
-
----
 
 ## ✨ Features (kurz)
 - Live-Timer mit Start/Pause/Stop
