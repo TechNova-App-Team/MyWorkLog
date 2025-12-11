@@ -2323,12 +2323,6 @@
                     <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:5px; font-weight:600;">Dein Name:</label>
                     <input type="text" id="confName" class="glass-input" style="margin-bottom:2rem;" placeholder="z.B. Sven">
 
-                        <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:8px; font-weight:600;">Tastenkürzel aktivieren:</label>
-                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:1.5rem;">
-                            <input type="checkbox" id="confShortcuts" />
-                            <small style="color:var(--text-muted);">Ermöglicht S/P/E und Ctrl/Cmd+Enter Shortcuts</small>
-                        </div>
-
                     <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:10px; font-weight:600;">Design Accent Farbe:</label>
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(45px, 1fr)); gap:12px; margin-bottom:2rem;">
                         <!-- Primär Farben -->
@@ -2509,27 +2503,46 @@
                 <div id="settings-tab-shortcuts" class="settings-tab-content" style="display:none;">
                     <h4 style="color:var(--primary); margin-bottom:15px; font-size:1rem;">⌨️ Tastenkürzel</h4>
                     
-                    <div style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:1.5rem; margin-bottom:2rem;">
-                        <p style="color:var(--text-main); margin:0; line-height:1.6;">
-                            Passe deine Tastenkürzel an, um schneller durch die App zu navigieren. Klicke auf einen Shortcut, um ihn zu ändern.
-                        </p>
+                    <div style="background:linear-gradient(135deg, rgba(168,85,247,0.1), rgba(168,85,247,0.05)); border:1px solid rgba(168,85,247,0.2); border-radius:12px; padding:1.5rem; margin-bottom:2rem; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <label style="font-size:0.9rem; color:var(--text-main); font-weight:600; display:block; margin-bottom:6px; cursor:pointer;">⌨️ Tastenkürzel aktivieren</label>
+                            <small style="color:var(--text-muted);">Schneller navigieren mit S/P/E und Ctrl/Cmd+Enter</small>
+                        </div>
+                        <label style="position:relative; display:inline-block; width:60px; height:32px;">
+                            <input type="checkbox" id="confShortcuts" style="opacity:0; width:0; height:0;" />
+                            <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#2a2a3e; transition:0.4s; border-radius:16px; border:1px solid rgba(255,255,255,0.1);"></span>
+                            <span style="position:absolute; cursor:pointer; content:''; height:26px; width:26px; left:3px; bottom:3px; background-color:white; transition:0.4s; border-radius:13px; box-shadow:0 2px 4px rgba(0,0,0,0.3);"></span>
+                            <style>
+                                #confShortcuts:checked + span { background-color:#a855f7; box-shadow:0 0 12px rgba(168,85,247,0.4); }
+                                #confShortcuts:checked + span + span { transform:translateX(28px); background-color:#fff; box-shadow:0 2px 6px rgba(168,85,247,0.3); }
+                            </style>
+                        </label>
                     </div>
+                    
+                    <!-- Shortcuts Panel (wird versteckt wenn deaktiviert) -->
+                    <div id="shortcutsPanel" style="transition:opacity 0.3s ease;">
+                        <div style="background:rgba(168,85,247,0.1); border:1px solid rgba(168,85,247,0.3); border-radius:12px; padding:1.5rem; margin-bottom:2rem;">
+                            <p style="color:var(--text-main); margin:0; line-height:1.6;">
+                                Passe deine Tastenkürzel an, um schneller durch die App zu navigieren. Klicke auf einen Shortcut, um ihn zu ändern.
+                            </p>
+                        </div>
 
-                    <!-- Shortcuts List -->
-                    <div id="shortcutsContainer" style="display:grid; gap:10px; margin-bottom:2rem;">
-                        <!-- wird durch JavaScript gefüllt -->
-                    </div>
+                        <!-- Shortcuts List -->
+                        <div id="shortcutsContainer" style="display:grid; gap:10px; margin-bottom:2rem;">
+                            <!-- wird durch JavaScript gefüllt -->
+                        </div>
 
-                    <!-- Conflict Warning -->
-                    <div id="shortcutConflictWarning" style="display:none; background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239, 68, 68, 0.3); border-radius:12px; padding:1.5rem; margin-bottom:2rem; border-left:4px solid #ef4444;">
-                        <p style="margin:0; color:#ef4444; font-weight:600;">⚠️ Shortcut-Konflikt erkannt!</p>
-                        <p id="conflictMessage" style="margin:0.5rem 0 0 0; color:var(--text-muted); font-size:0.9rem;"></p>
-                    </div>
+                        <!-- Conflict Warning -->
+                        <div id="shortcutConflictWarning" style="display:none; background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239, 68, 68, 0.3); border-radius:12px; padding:1.5rem; margin-bottom:2rem; border-left:4px solid #ef4444;">
+                            <p style="margin:0; color:#ef4444; font-weight:600;">⚠️ Shortcut-Konflikt erkannt!</p>
+                            <p id="conflictMessage" style="margin:0.5rem 0 0 0; color:var(--text-muted); font-size:0.9rem;"></p>
+                        </div>
 
-                    <!-- Action Buttons -->
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-                        <button class="btn btn-primary" onclick="saveAllShortcuts()" style="background:var(--primary); padding:12px;">💾 Speichern</button>
-                        <button class="btn" onclick="resetShortcutsToDefaults()" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:12px;">↺ Standard wiederherstellen</button>
+                        <!-- Action Buttons -->
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                            <button class="btn btn-primary" onclick="saveAllShortcuts()" style="background:var(--primary); padding:12px;">💾 Speichern</button>
+                            <button class="btn" onclick="resetShortcutsToDefaults()" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:12px;">↺ Standard wiederherstellen</button>
+                        </div>
                     </div>
                 </div>
 
@@ -5997,6 +6010,25 @@ TIPPS:
 
     function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
     
+    function updateShortcutsPanelVisibility() {
+        const panel = document.getElementById('shortcutsPanel');
+        const isEnabled = data.settings.shortcutsEnabled !== false;
+        
+        if (panel) {
+            if (isEnabled) {
+                panel.style.display = 'block';
+                panel.style.opacity = '1';
+                panel.style.pointerEvents = 'auto';
+                // Render shortcuts wenn Panel sichtbar wird
+                renderShortcutsPanel();
+            } else {
+                panel.style.display = 'none';
+                panel.style.opacity = '0';
+                panel.style.pointerEvents = 'none';
+            }
+        }
+    }
+    
     // ============================================
     // SHORTCUT MANAGEMENT FUNCTIONS
     // ============================================
@@ -6223,7 +6255,17 @@ TIPPS:
         
         document.getElementById('confName').value = data.settings.name;
         // Shortcuts checkbox
-        const confShortcutsEl = document.getElementById('confShortcuts'); if (confShortcutsEl) confShortcutsEl.checked = (data.settings.shortcutsEnabled !== false);
+        const confShortcutsEl = document.getElementById('confShortcuts'); 
+        if (confShortcutsEl) {
+            confShortcutsEl.checked = (data.settings.shortcutsEnabled !== false);
+            // Echtzeit-Update wenn sich das Häkchen ändert
+            confShortcutsEl.addEventListener('change', (e) => {
+                data.settings.shortcutsEnabled = !!e.target.checked;
+                updateShortcutsPanelVisibility();
+            });
+            // Initiale Sichtbarkeit setzen
+            updateShortcutsPanelVisibility();
+        }
         document.getElementById('confBreakThresh').value = data.settings.break.thresh;
         
         // Lade Pausenzeiten pro Wochentag

@@ -150,7 +150,13 @@ class ShortcutManager {
     }
 
     handleKeyPress(event) {
+        // Überprüfe ob Shortcuts aktiviert sind (sowohl lokale Flag als auch globale Einstellung)
         if (!this.enabled) return;
+        
+        // Überprüfe auch die globale Einstellung aus data.settings
+        if (typeof data !== 'undefined' && data.settings && data.settings.shortcutsEnabled === false) {
+            return;
+        }
         
         // Ignoriere Eingaben in Textfeldern (außer bei bestimmten Shortcuts)
         if (['input', 'textarea'].includes(event.target.tagName.toLowerCase())) {
@@ -277,19 +283,20 @@ class ShortcutManager {
     }
 
     updateShortcut(id, newKeys) {
-        if (!this.shortcuts[id]) return false;
+        if (!this.shortcuts[id]) return { success: false };
         
         this.shortcuts[id].keys = newKeys;
         
-        // Prüfe auf Konflikte
-        const conflicts = this.checkConflicts();
-        if (conflicts.length > 0) {
-            console.warn('Shortcut-Konflikte erkannt:', conflicts);
-            return { success: true, conflicts };
-        }
-        
+        // Speichere immer
         this.saveShortcuts();
-        return { success: true };
+        
+        // Prüfe auf Konflikte (nur für Warnung)
+        const conflicts = this.checkConflicts();
+        
+        return { 
+            success: true, 
+            conflicts: conflicts.filter(c => c.shortcuts.includes(id))
+        };
     }
 
     disable() {
