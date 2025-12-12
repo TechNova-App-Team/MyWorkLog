@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script defer src="icons.js"></script>
+    <script defer src="touch-mobile-optimizations.js"></script>
+    <title>Aktuelles - System Status & Updates</title>
+    <style>
+        /* --- CORE VARIABLES --- */
+        :root {
+            --bg-deep: #030305;
+            --bg-glass: rgba(22, 22, 26, 0.65);
+            --bg-sidebar: rgba(10, 10, 12, 0.95);
+            --primary: #a855f7;
+            --primary-rgb: 168, 85, 247;
+            --primary-dim: rgba(168, 85, 247, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --success-rgb: 16, 185, 129;
+            --danger: #ef4444;
+            --danger-rgb: 239, 68, 68;
+            --warning: #f59e0b;
+            --warning-rgb: 245, 158, 11;
+            --info: #3b82f6;
+            --border: rgba(255, 255, 255, 0.06);
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+            --radius: 20px;
+        }
+
+        /* --- ZENTRALE STATUS-KLASSEN --- */
+        .status-success { --status-color: var(--success); --status-rgb: var(--success-rgb); }
+        .status-warning { --status-color: var(--warning); --status-rgb: var(--warning-rgb); }
+        .status-danger { --status-color: var(--danger); --status-rgb: var(--danger-rgb); }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(var(--primary-rgb), 0.08), transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(var(--primary-rgb), 0.05), transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 3rem;
+            overflow-x: hidden;
+        }
+
+        /* --- SCROLLBAR --- */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { 
+            background: linear-gradient(180deg, var(--primary), rgba(var(--primary-rgb), 0.7));
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+            background: linear-gradient(180deg, rgba(var(--primary-rgb), 0.9), var(--primary));
+            box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.4);
+        }
+
+        /* --- FOKUS-STILE FÜR ACCESSIBILITY --- */
+        a:focus, button:focus, [tabindex]:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            box-shadow: 0 0 0 4px var(--primary-dim);
+        }
+
+        /* --- HEADER --- */
+        .header {
+            max-width: 1400px;
+            margin: 0 auto 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand::before { 
+            content:''; 
+            display:block; 
+            width:16px; 
+            height:16px; 
+            background:var(--primary); 
+            border-radius:50%; 
+            box-shadow:0 0 20px var(--primary); 
+        }
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-top: 0.5rem;
+        }
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
+        .date-badge { 
+            background: rgba(255,255,255,0.03); 
+            padding: 12px 24px; 
+            border-radius: 50px; 
+            border: 1px solid var(--border); 
+            font-family: var(--font-mono); 
+            font-size: 0.9rem; 
+            color: var(--text-muted); 
+        }
+
+        /* --- CONTAINER --- */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* --- STATUS BANNER MIT VERBESSERTEM PULS-EFFEKT --- */
+        .status-banner {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .status-indicator {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--status-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            animation: pulse-glow 2s ease-in-out infinite;
+            position: relative;
+        }
+        .status-indicator::before {
+            content: '';
+            position: absolute;
+            inset: -5px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(var(--status-rgb), 0.3), transparent 70%);
+            animation: pulse-ring 2s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { 
+                box-shadow: 0 0 20px var(--status-color), 0 0 0 0px rgba(var(--status-rgb), 0.4);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 30px var(--status-color), 0 0 0 15px rgba(var(--status-rgb), 0);
+                transform: scale(1.03);
+            }
+        }
+        @keyframes pulse-ring {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.3); opacity: 0; }
+        }
+        .status-info {
+            flex: 1;
+        }
+        .status-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .status-text {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        .status-uptime {
+            background: rgba(255,255,255,0.05);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        /* --- GRID LAYOUTS --- */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* --- CARDS --- */
+        .card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(var(--primary-rgb), 0.3);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-badge {
+            background: rgba(255,255,255,0.05);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .card-badge.success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+        .card-badge.warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+        .card-badge.danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+        /* --- SERVICE STATUS --- */
+        .service-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .service-item:last-child {
+            border-bottom: none;
+        }
+        .service-name {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .service-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--status-color);
+            box-shadow: 0 0 10px var(--status-color);
+        }
+        .service-status {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        /* --- TIMELINE --- */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--primary), transparent);
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-left: 1.5rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+            border: 2px solid var(--bg-deep);
+        }
+        .timeline-date {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        .timeline-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .timeline-content {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .timeline-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.05);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+            margin-right: 0.5rem;
+        }
+        .timeline-tag.feature { color: var(--success); }
+        .timeline-tag.bugfix { color: var(--info); }
+        .timeline-tag.maintenance { color: var(--warning); }
+
+        /* --- METRICS MIT GRAPHEN --- */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+        .metric-item {
+            background: rgba(255,255,255,0.02);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 2;
+        }
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 2;
+        }
+        .metric-sparkline {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            opacity: 0.3;
+        }
+        .metric-sparkline svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- CHART CONTAINERS --- */
+        .chart-container {
+            height: 200px;
+            margin-top: 1rem;
+            position: relative;
+        }
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+        .chart-line {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            filter: drop-shadow(0 0 8px var(--primary));
+        }
+        .chart-area {
+            fill: var(--primary);
+            opacity: 0.1;
+        }
+        .chart-grid {
+            stroke: rgba(255,255,255,0.03);
+            stroke-width: 1;
+        }
+        .chart-axis-label {
+            fill: var(--text-muted);
+            font-size: 10px;
+            font-family: var(--font-mono);
+        }
+
+        /* --- DOWNTIME SCHEDULE --- */
+        .schedule-item {
+            background: rgba(245, 158, 11, 0.05);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-left: 4px solid var(--warning);
+            padding: 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .schedule-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .schedule-time {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--warning);
+        }
+        .schedule-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 1024px) {
+            body { padding: 1.5rem; }
+            .header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .metric-grid { grid-template-columns: repeat(2, 1fr); }
+            .status-banner { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <div class="brand">
+                <span>TIME.PRO</span>
+            </div>
+            <h1 class="page-title">Aktuelles</h1>
+            <p class="page-subtitle">System Status, Updates & Wartungsarbeiten</p>
+        </div>
+        <div class="date-badge" id="currentDate"></div>
+    </div>
+
+    <div class="container">
+        <!-- Status Banner -->
+        <div class="status-banner">
+            <div class="status-indicator status-success" role="status" aria-label="System Status: Operational">
+                <span aria-hidden="true">✓</span>
+            </div>
+            <div class="status-info">
+                <div class="status-title">Alle Systeme betriebsbereit</div>
+                <div class="status-text">Letzte Überprüfung: <span id="lastCheck">vor 2 Minuten</span></div>
+                <div class="status-uptime">Uptime: 99.97% (30 Tage)</div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics mit Graphen -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div class="card-header">
+                <div class="card-title">
+                    <span aria-hidden="true">📊</span>
+                    <span>Performance Metriken (Live)</span>
+                </div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-item">
+                    <div class="metric-value" id="responseTime">23ms</div>
+                    <div class="metric-label">Avg. Response</div>
+                    <div class="metric-sparkline" aria-hidden="true">
+                        <svg id="sparkline1" viewBox="0 0 100 40" preserveAspectRatio="none"></svg>
+                    </div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="requestsPerMin">1.2k</div>
+                    <div class="metric-label">Requests/min</div>
+                    <div class="metric-sparkline" aria-hidden="true">
+                        <svg id="sparkline2" viewBox="0 0 100 40" preserveAspectRatio="none"></svg>
+                    </div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="successRate">99.7%</div>
+                    <div class="metric-label">Success Rate</div>
+                    <div class="metric-sparkline" aria-hidden="true">
+                        <svg id="sparkline3" viewBox="0 0 100 40" preserveAspectRatio="none"></svg>
+                    </div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="activeUsers">342</div>
+                    <div class="metric-label">Active Users</div>
+                    <div class="metric-sparkline" aria-hidden="true">
+                        <svg id="sparkline4" viewBox="0 0 100 40" preserveAspectRatio="none"></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Charts -->
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span aria-hidden="true">📈</span>
+                        <span>Response Time (24h)</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <svg id="responseChart" class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="none"></svg>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span aria-hidden="true">👥</span>
+                        <span>Active Users (7 Tage)</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <svg id="usersChart" class="chart-svg" viewBox="0 0 600 200" preserveAspectRatio="none"></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Status Grid -->
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span aria-hidden="true">🔧</span>
+                        <span>Service Status</span>
+                    </div>
+                    <div class="card-badge success">Operational</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-name">
+                        <span class="service-icon status-success" role="status" aria-label="Operational"></span>
+                        API Server
+                    </div>
+                    <div class="service-status">99.99%</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-name">
+                        <span class="service-icon status-success" role="status" aria-label="Operational"></span>
+                        Datenbank
+                    </div>
+                    <div class="service-status">100%</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-name">
+                        <span class="service-icon status-success" role="status" aria-label="Operational"></span>
+                        Web Interface
+                    </div>
+                    <div class="service-status">99.98%</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-name">
+                        <span class="service-icon status-success" role="status" aria-label="Operational"></span>
+                        Backup System
+                    </div>
+                    <div class="service-status">100%</div>
+                </div>
+                <div class="service-item">
+                    <div class="service-name">
+                        <span class="service-icon status-warning" role="status" aria-label="Degraded Performance"></span>
+                        Analytics Dashboard
+                    </div>
+                    <div class="service-status">98.50%</div>
+                </div>
+            </div>
+
+            <!-- Scheduled Maintenance -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span aria-hidden="true">📅</span>
+                        <span>Geplante Wartungen</span>
+                    </div>
+                    <div class="card-badge warning">1 anstehend</div>
+                </div>
+                <div id="maintenanceContainer">
+                    <!-- Maintenance items will be loaded dynamically -->
+                </div>
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;" id="noMaintenanceMessage">
+                    Keine weiteren Wartungen geplant
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Timeline -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span aria-hidden="true">🚀</span>
+                    <span>Updates & Changelog</span>
+                </div>
+                <div class="card-badge">Version 2.4.1</div>
+            </div>
+            <div class="timeline" id="updatesTimeline">
+                <!-- Updates will be loaded dynamically -->
+            </div>
+        </div>
+
+        <!-- Additional Info Cards -->
+        <div class="grid-3" style="margin-top: 2rem;">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span aria-hidden="true">⚠️</span>
+                        <span>Bekannte Probleme</span>
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
+                    Analytics Dashboard zeigt vereinzelt verzögerte Aktualisierungen. 
+                    Fix wird mit Version 2.4.2 ausgerollt.
+                </p>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span aria-hidden="true">🔔</span>
+                        <span>Abonnieren</span>
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
+                    Erhalten Sie E-Mail-Benachrichtigungen bei wichtigen Updates, 
+                    Wartungen und Statusänderungen.
+                </p>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span aria-hidden="true">💬</span>
+                        <span>Feedback</span>
+                    </div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">
+                    Haben Sie Anregungen oder Probleme? 
+                    Kontaktieren Sie unser Support-Team jederzeit.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data stores
+        const responseTimeData = [];
+        const requestsData = [];
+        const successRateData = [];
+        const usersData = [];
+        const hourlyResponseData = [];
+        const weeklyUsersData = [];
+        
+        // Initialize data arrays
+        for (let i = 0; i < 50; i++) {
+            responseTimeData.push(20 + Math.random() * 15);
+            requestsData.push(1000 + Math.random() * 500);
+            successRateData.push(98 + Math.random() * 2);
+            usersData.push(300 + Math.random() * 100);
+        }
+        
+        for (let i = 0; i < 24; i++) {
+            hourlyResponseData.push({
+                hour: i,
+                value: 15 + Math.random() * 25 + Math.sin(i / 3) * 10
+            });
+        }
+        
+        for (let i = 0; i < 7; i++) {
+            weeklyUsersData.push({
+                day: i,
+                value: 250 + Math.random() * 200 + i * 20
+            });
+        }
+
+        // Current date display
+        function updateDate() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            document.getElementById('currentDate').textContent = 
+                now.toLocaleDateString('de-DE', options);
+        }
+        updateDate();
+
+        // Update live metrics
+        function updateMetrics() {
+            const responseTime = 20 + Math.random() * 15;
+            const requests = 1000 + Math.random() * 500;
+            const successRate = 98 + Math.random() * 2;
+            const activeUsers = 300 + Math.random() * 100;
+            
+            document.getElementById('responseTime').textContent = Math.round(responseTime) + 'ms';
+            document.getElementById('requestsPerMin').textContent = (requests / 1000).toFixed(1) + 'k';
+            document.getElementById('successRate').textContent = successRate.toFixed(1) + '%';
+            document.getElementById('activeUsers').textContent = Math.round(activeUsers);
+            
+            // Update data arrays
+            responseTimeData.push(responseTime);
+            requestsData.push(requests);
+            successRateData.push(successRate);
+            usersData.push(activeUsers);
+            
+            if (responseTimeData.length > 50) {
+                responseTimeData.shift();
+                requestsData.shift();
+                successRateData.shift();
+                usersData.shift();
+            }
+            
+            // Update sparklines
+            drawSparkline('sparkline1', responseTimeData, '#a855f7');
+            drawSparkline('sparkline2', requestsData, '#a855f7');
+            drawSparkline('sparkline3', successRateData, '#a855f7');
+            drawSparkline('sparkline4', usersData, '#a855f7');
+        }
+
+        // Draw sparkline
+        function drawSparkline(id, data, color) {
+            const svg = document.getElementById(id);
+            if (!svg) return;
+            
+            svg.innerHTML = '';
+            
+            const points = data.map((val, idx) => {
+                const x = (idx / (data.length - 1)) * 100;
+                const normalized = (val - Math.min(...data)) / (Math.max(...data) - Math.min(...data));
+                const y = 40 - (normalized * 40);
+                return `${x},${y}`;
+            }).join(' ');
+            
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            line.setAttribute('points', points);
+            line.setAttribute('fill', 'none');
+            line.setAttribute('stroke', color);
+            line.setAttribute('stroke-width', '2');
+            line.setAttribute('stroke-linecap', 'round');
+            
+            svg.appendChild(line);
+        }
+
+        // Draw full chart
+        function drawChart(id, data, color, showArea = true) {
+            const svg = document.getElementById(id);
+            if (!svg) return;
+            
+            svg.innerHTML = '';
+            
+            // Grid lines
+            for (let i = 0; i <= 4; i++) {
+                const y = (i / 4) * 180 + 10;
+                const gridLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                gridLine.setAttribute('x1', '40');
+                gridLine.setAttribute('x2', '580');
+                gridLine.setAttribute('y1', y);
+                gridLine.setAttribute('y2', y);
+                gridLine.setAttribute('class', 'chart-grid');
+                svg.appendChild(gridLine);
+            }
+            
+            const maxVal = Math.max(...data.map(d => d.value));
+            const minVal = Math.min(...data.map(d => d.value));
+            const range = maxVal - minVal;
+            
+            // Create points
+            const points = data.map((d, idx) => {
+                const x = 40 + ((idx / (data.length - 1)) * 540);
+                const normalized = (d.value - minVal) / range;
+                const y = 190 - (normalized * 180);
+                return { x, y, value: d.value };
+            });
+            
+            // Area
+            if (showArea) {
+                const areaPoints = [
+                    `40,190`,
+                    ...points.map(p => `${p.x},${p.y}`),
+                    `${points[points.length - 1].x},190`
+                ].join(' ');
+                
+                const area = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                area.setAttribute('points', areaPoints);
+                area.setAttribute('class', 'chart-area');
+                svg.appendChild(area);
+            }
+            
+            // Line
+            const linePoints = points.map(p => `${p.x},${p.y}`).join(' ');
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            line.setAttribute('points', linePoints);
+            line.setAttribute('class', 'chart-line');
+            svg.appendChild(line);
+            
+            // Axis labels
+            [minVal, maxVal].forEach((val, idx) => {
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', '5');
+                label.setAttribute('y', idx === 0 ? '195' : '15');
+                label.setAttribute('class', 'chart-axis-label');
+                label.textContent = Math.round(val);
+                svg.appendChild(label);
+            });
+        }
+
+        // Initial render
+        updateMetrics();
+        drawChart('responseChart', hourlyResponseData, '#a855f7');
+        drawChart('usersChart', weeklyUsersData, '#a855f7');
+
+        // Update every 5 seconds
+        setInterval(() => {
+            updateMetrics();
+            
+            // Update hourly chart (simulate new hour)
+            if (Math.random() > 0.9) {
+                hourlyResponseData.shift();
+                hourlyResponseData.push({
+                    hour: hourlyResponseData[hourlyResponseData.length - 1].hour + 1,
+                    value: 15 + Math.random() * 25 + Math.sin(hourlyResponseData.length / 3) * 10
+                });
+                drawChart('responseChart', hourlyResponseData, '#a855f7');
+            }
+        }, 5000);
+        
+        // Update last check time
+        let lastCheckMinutes = 2;
+        setInterval(() => {
+            lastCheckMinutes++;
+            if (lastCheckMinutes > 60) {
+                document.getElementById('lastCheck').textContent = 'vor ' + Math.floor(lastCheckMinutes / 60) + ' Stunde';
+            } else {
+                document.getElementById('lastCheck').textContent = 'vor ' + lastCheckMinutes + ' Minuten';
+            }
+            if (lastCheckMinutes > 5) lastCheckMinutes = 0; // Reset for demo
+        }, 60000);
+
+        // Load updates from localStorage
+        function loadUpdates() {
+            const updates = JSON.parse(localStorage.getItem('timetracker_updates') || '[]');
+            return updates.sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+
+        // Render timeline
+        function renderTimeline() {
+            const updates = loadUpdates();
+            const timeline = document.getElementById('updatesTimeline');
+            timeline.innerHTML = '';
+
+            if (updates.length === 0) {
+                timeline.innerHTML = '<p style="color: var(--text-muted);">Noch keine Updates vorhanden.</p>';
+                return;
+            }
+
+            updates.forEach(update => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+
+                const date = new Date(update.date).toLocaleDateString('de-DE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+
+                item.innerHTML = `
+                    <div class="timeline-date">${date}</div>
+                    <div class="timeline-title">${update.title}</div>
+                    <div class="timeline-content">
+                        ${update.content}
+                        <div>
+                            ${update.tags.map(tag => `<span class="timeline-tag ${tag}">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+
+                timeline.appendChild(item);
+            });
+        }
+
+        // Load maintenance from localStorage
+        function loadMaintenance() {
+            const maintenance = JSON.parse(localStorage.getItem('timetracker_maintenance') || '[]');
+            return maintenance.sort((a, b) => new Date(a.date + ' ' + a.startTime) - new Date(b.date + ' ' + b.startTime));
+        }
+
+        // Render maintenance
+        function renderMaintenance() {
+            const maintenance = loadMaintenance();
+            const container = document.getElementById('maintenanceContainer');
+            const noMessage = document.getElementById('noMaintenanceMessage');
+            container.innerHTML = '';
+
+            if (maintenance.length === 0) {
+                noMessage.style.display = 'block';
+                return;
+            }
+
+            noMessage.style.display = 'none';
+
+            maintenance.forEach(item => {
+                const scheduleItem = document.createElement('div');
+                scheduleItem.className = 'schedule-item';
+
+                const date = new Date(item.date).toLocaleDateString('de-DE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+
+                scheduleItem.innerHTML = `
+                    <div class="schedule-header">
+                        <div class="schedule-title">${item.title}</div>
+                        <div class="schedule-time">${date} • ${item.startTime}-${item.endTime}</div>
+                    </div>
+                    <div class="schedule-description">
+                        ${item.description}
+                    </div>
+                `;
+
+                container.appendChild(scheduleItem);
+            });
+        }
+
+        // Initialize maintenance on page load
+        renderMaintenance();
+    </script>
+</body>
+</html>

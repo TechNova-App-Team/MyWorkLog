@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script defer src="icons.js"></script>
+    <script defer src="touch-mobile-optimizations.js"></script>
+    <title>Updates Manager - TimeTracker</title>
+    <style>
+        /* --- CORE VARIABLES --- */
+        :root {
+            --bg-deep: #030305;
+            --bg-glass: rgba(22, 22, 26, 0.65);
+            --bg-sidebar: rgba(10, 10, 12, 0.95);
+            --sidebar-width: 260px;
+            --primary: #a855f7;
+            --primary-rgb: 168, 85, 247;
+            --primary-dim: rgba(168, 85, 247, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --school: #3b82f6;
+            --holiday: #f59e0b;
+            --audit-ok: #10b981;
+            --audit-warn: #fbbf24;
+            --ihk: #ff6347;
+            --work-color: #a855f7;
+            --expected-color: #64748b;
+            --border: rgba(255, 255, 255, 0.06);
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+            --radius: 20px;
+            --note-good: #10b981;
+            --note-mid: #fbbf24;
+            --note-bad: #ef4444;
+            --heatmap-low: #1e293b;
+            --heatmap-mid: #64748b;
+        }
+
+        /* --- BASE STYLES --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: var(--font-main);
+            background: var(--bg-deep);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        /* --- HEADER --- */
+        .header {
+            max-width: 1400px;
+            margin: 0 auto 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .brand {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand::before {
+            content:'';
+            display:block;
+            width:16px;
+            height:16px;
+            background:var(--primary);
+            border-radius:50%;
+            box-shadow:0 0 20px var(--primary);
+        }
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-top: 0.5rem;
+        }
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
+
+        /* --- CONTAINER --- */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* --- CARDS --- */
+        .card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* --- FORM STYLES --- */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+        }
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-dim);
+        }
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: rgba(var(--primary-rgb), 0.8);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        /* --- TIMELINE PREVIEW --- */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--primary), transparent);
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-left: 1.5rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+            border: 2px solid var(--bg-deep);
+        }
+        .timeline-date {
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+        .timeline-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .timeline-content {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .timeline-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.05);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+            margin-right: 0.5rem;
+        }
+        .timeline-tag.maintenance { color: var(--warning); }
+
+        /* --- SCHEDULE ITEMS --- */
+        .schedule-item {
+            background: rgba(245, 158, 11, 0.05);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-left: 4px solid var(--warning);
+            padding: 1.25rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .schedule-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .schedule-time {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--warning);
+        }
+        .schedule-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .card { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <div class="brand">TimeTracker</div>
+            <h1 class="page-title">Updates Manager</h1>
+            <p class="page-subtitle">Generiere HTML-Code für Updates in Aktuelles.html</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>➕</span>
+                    <span>Neues Update erstellen</span>
+                </div>
+            </div>
+            <form id="updateForm">
+                <div class="form-group">
+                    <label class="form-label" for="updateDate">Datum</label>
+                    <input type="date" id="updateDate" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="updateTitle">Titel</label>
+                    <input type="text" id="updateTitle" class="form-input" placeholder="z.B. Version 2.5.0 - Neue Features" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="updateContent">Beschreibung</label>
+                    <textarea id="updateContent" class="form-textarea" placeholder="Beschreibe die Änderungen..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tags</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="feature"> Feature
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="bugfix"> Bugfix
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" value="maintenance"> Maintenance
+                        </label>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary">HTML-Code generieren</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.href='Aktuelles.html'">Zurück zu Aktuelles</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>�</span>
+                    <span>Geplante Wartung hinzufügen</span>
+                </div>
+            </div>
+            <form id="maintenanceForm">
+                <div class="form-group">
+                    <label class="form-label" for="maintenanceDate">Datum</label>
+                    <input type="date" id="maintenanceDate" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="maintenanceTitle">Titel</label>
+                    <input type="text" id="maintenanceTitle" class="form-input" placeholder="z.B. Datenbank-Migration" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Zeit</label>
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="time" id="maintenanceStart" class="form-input" required>
+                        <span style="align-self: center;">bis</span>
+                        <input type="time" id="maintenanceEnd" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="maintenanceDescription">Beschreibung</label>
+                    <textarea id="maintenanceDescription" class="form-textarea" placeholder="Beschreibe die Wartung..." required></textarea>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary">Wartung hinzufügen</button>
+                    <button type="button" class="btn btn-secondary" onclick="location.href='Aktuelles.html'">Zurück zu Aktuelles</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">                    <span>📋</span>
+                    <span>Vorschau der letzten Updates</span>
+                </div>
+            </div>
+            <div id="timelinePreview" class="timeline">
+                <!-- Timeline items will be loaded here -->
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">                    <span>�</span>
+                    <span>Verwalte Wartungen</span>
+                </div>
+            </div>
+            <div id="maintenanceList">
+                <!-- Maintenance items will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load existing updates from localStorage
+        function loadUpdates() {
+            const updates = JSON.parse(localStorage.getItem('timetracker_updates') || '[]');
+            return updates.sort((a, b) => new Date(b.date) - new Date(a.date));
+        }
+
+        // Save updates to localStorage
+        function saveUpdates(updates) {
+            localStorage.setItem('timetracker_updates', JSON.stringify(updates));
+        }
+
+        // Load maintenance from localStorage
+        function loadMaintenance() {
+            const maintenance = JSON.parse(localStorage.getItem('timetracker_maintenance') || '[]');
+            return maintenance.sort((a, b) => new Date(a.date + ' ' + a.startTime) - new Date(b.date + ' ' + b.startTime));
+        }
+
+        // Save maintenance to localStorage
+        function saveMaintenance(maintenance) {
+            localStorage.setItem('timetracker_maintenance', JSON.stringify(maintenance));
+        }
+
+        // Delete update
+        function deleteUpdate(id) {
+            if (confirm('Update wirklich löschen?')) {
+                const updates = loadUpdates().filter(update => update.id !== id);
+                saveUpdates(updates);
+                renderTimeline();
+            }
+        }
+
+        // Delete maintenance
+        function deleteMaintenance(id) {
+            if (confirm('Wartung wirklich löschen?')) {
+                const maintenance = loadMaintenance().filter(item => item.id !== id);
+                saveMaintenance(maintenance);
+                renderMaintenance();
+            }
+        }
+
+        // Render maintenance list
+        function renderMaintenance() {
+            const maintenance = loadMaintenance();
+            const container = document.getElementById('maintenanceList');
+            container.innerHTML = '';
+
+            if (maintenance.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted);">Keine Wartungen vorhanden.</p>';
+                return;
+            }
+
+            maintenance.forEach(item => {
+                const maintenanceItem = document.createElement('div');
+                maintenanceItem.className = 'schedule-item';
+
+                const date = new Date(item.date).toLocaleDateString('de-DE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+
+                maintenanceItem.innerHTML = `
+                    <div class="schedule-header">
+                        <div class="schedule-title">${item.title} <button onclick="deleteMaintenance(${item.id})" style="float:right; background:#ef4444; color:white; border:none; border-radius:4px; padding:2px 6px; font-size:0.7rem; cursor:pointer;">×</button></div>
+                        <div class="schedule-time">${date} • ${item.startTime}-${item.endTime}</div>
+                    </div>
+                    <div class="schedule-description">
+                        ${item.description}
+                    </div>
+                `;
+
+                container.appendChild(maintenanceItem);
+            });
+        }
+
+        // Render timeline preview
+        function renderTimeline() {
+            const updates = loadUpdates();
+            const timeline = document.getElementById('timelinePreview');
+            timeline.innerHTML = '';
+
+            if (updates.length === 0) {
+                timeline.innerHTML = '<p style="color: var(--text-muted);">Noch keine Updates vorhanden.</p>';
+                return;
+            }
+
+            updates.slice(0, 5).forEach(update => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+
+                const date = new Date(update.date).toLocaleDateString('de-DE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+
+                item.innerHTML = `
+                    <div class="timeline-date">${date}</div>
+                    <div class="timeline-title">${update.title} <button onclick="deleteUpdate(${update.id})" style="float:right; background:#ef4444; color:white; border:none; border-radius:4px; padding:2px 6px; font-size:0.7rem; cursor:pointer;">×</button></div>
+                    <div class="timeline-content">
+                        ${update.content}
+                        <div>
+                            ${update.tags.map(tag => `<span class="timeline-tag ${tag}">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+
+                timeline.appendChild(item);
+            });
+        }
+
+        // Handle maintenance form submission
+        document.getElementById('maintenanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const date = document.getElementById('maintenanceDate').value;
+            const title = document.getElementById('maintenanceTitle').value;
+            const startTime = document.getElementById('maintenanceStart').value;
+            const endTime = document.getElementById('maintenanceEnd').value;
+            const description = document.getElementById('maintenanceDescription').value;
+
+            if (!date || !title || !startTime || !endTime || !description) {
+                alert('Bitte fülle alle Felder aus.');
+                return;
+            }
+
+            const maintenance = loadMaintenance();
+            maintenance.push({
+                id: Date.now(),
+                date: date,
+                title: title,
+                startTime: startTime,
+                endTime: endTime,
+                description: description
+            });
+
+            saveMaintenance(maintenance);
+            renderMaintenance();
+
+            // Reset form
+            this.reset();
+            alert('Wartung erfolgreich hinzugefügt! Sie erscheint jetzt in Aktuelles.html');
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('updateDate').value = today;
+            document.getElementById('maintenanceDate').value = today;
+
+            renderTimeline();
+            renderMaintenance();
+        });
+    </script>
+</body>
+</html>
