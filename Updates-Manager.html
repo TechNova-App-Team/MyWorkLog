@@ -323,7 +323,9 @@
                 <input id="ghBranch" class="form-input" placeholder="branch (optional)" style="max-width:160px">
                 <input id="ghFilename" class="form-input" placeholder="Datei (z. B. DB/updates.json)" style="max-width:260px" value="DB/updates.json">
                 <button id="proposePrBtn" class="btn btn-primary">Propose PR (GitHub)</button>
+                <button id="showPushBtn" class="btn btn-secondary">Show Push Commands</button>
                 <small style="color:var(--text-muted); margin-left:8px">Erstellt eine vorbefüllte Datei/Commit im GitHub-Webeditor; nur Besitzer können final committen.</small>
+                <div id="proposePrResult" style="margin-top:8px; color:var(--text-muted); font-size:0.9rem"></div>
             </div>
         </div>
     </div>
@@ -334,6 +336,8 @@
                 <div id="adminStatus" style="font-weight:600">Admin: nicht gesetzt</div>
                 <div id="bindingStatus" style="font-weight:600">Binding: nicht vorhanden</div>
                 <button id="bindDeviceBtn" class="btn btn-secondary">Bind this device (generate JSON)</button>
+                <button id="reloadAdminBtn" class="btn btn-secondary">Reload Status</button>
+                <button id="checkBindingBtn" class="btn btn-secondary">Check Binding</button>
                 <small style="color:var(--text-muted)">Führe das JSON auf deinem privaten Gerät in die Datei <em>DB/admin_binding.json</em> ein und committe. Danach ist nur dieses Gerät berechtigt.</small>
             </div>
             <div style="margin-top:1rem; color:var(--text-muted)">
@@ -769,7 +773,11 @@
             // If binding exists, verify device binding
             if(storedBinding){
                 const b = await computeBindingHmac(p, storedBinding.salt);
-                if(b !== storedBinding.binding){ alert('Binding mismatch: Dieses Gerät ist nicht berechtigt.'); return; }
+                if(b !== storedBinding.binding){
+                    console.log('Binding mismatch — stored binding:', storedBinding.binding, 'computed:', b);
+                    alert('Binding mismatch: Dieses Gerät ist nicht berechtigt. Debug-Info in Konsole.');
+                    return;
+                }
             }
 
             setAdminSession(true);
@@ -834,7 +842,6 @@
                 else { storedBinding = null; document.getElementById('bindingStatus').textContent = 'Binding: nicht vorhanden'; }
             }catch(e){ storedBinding = null; document.getElementById('bindingStatus').textContent = 'Binding: nicht vorhanden'; }
         }
-*** End Patch
 
         // Export current updates JSON (for manual PR creation)
         function exportUpdatesJSON(){
@@ -844,14 +851,48 @@
             const a = document.createElement('a'); a.href = url; a.download = 'updates.json'; a.click(); URL.revokeObjectURL(url);
         }
 
+        // Normalize repo input: accept 'owner/repo' or full 'https://github.com/owner/repo'
+        function normalizeRepo(input){
+            if(!input) return null;
+            input = input.trim();
+            // Full URL
+            const m = input.match(/^https?:\/\/github\.com\/( [^\s\/]+\/[^^\s\/]+ )/i);
+            if(m){ return m[1].replace(/\/$/, ''); }
+            // owner/repo
+            if(/^[^\/]+\/[^\/]+$/.test(input)) return input;
+            return null;
+        }
+
         // Open GitHub new-file editor with prefilled content (works for public GitHub web UI)
         function proposePr(){
-            const repo = document.getElementById('ghRepo').value.trim();
-            if(!repo){ alert('Bitte owner/repo angeben.'); return; }
+            const rawRepo = document.getElementById('ghRepo').value.trim();
+            // Accept full URL or owner/repo; require owner/repo
+            let repo = null;
+            if(!rawRepo){
+                const res = document.getElementById('proposePrResult');
+                if(res) res.textContent = 'Bitte owner/repo angeben (z. B. TechNova-App-Team/TimeTracker-Ausbildung-Arbeit).';
+                alert('Bitte owner/repo angeben (z. B. TechNova-App-Team/TimeTracker-Ausbildung-Arbeit).');
+                return;
+            }
+            const urlMatch = rawRepo.match(/^https?:\/\/github\.com\/(.+?)(?:\.git|\/|$)/i);
+            if(urlMatch) repo = urlMatch[1].replace(/\/$/, '');
+            else if(/^[^\/]+\/[^\/]+$/.test(rawRepo)) repo = rawRepo;
+
+            if(!repo || repo.indexOf('/') === -1){
+                const res = document.getElementById('proposePrResult');
+                if(res) res.textContent = 'Ungültiges Format. Bitte owner/repo angeben (z. B. TechNova-App-Team/TimeTracker-Ausbildung-Arbeit).';
+                alert('Ungültiges Format. Bitte owner/repo angeben (z. B. TechNova-App-Team/TimeTracker-Ausbildung-Arbeit).');
+                return;
+            }
+
             const branch = document.getElementById('ghBranch').value.trim() || 'main';
             const filename = document.getElementById('ghFilename').value.trim() || 'DB/updates.json';
             const content = JSON.stringify(loadUpdates(), null, 2);
-            const url = `https://github.com/${encodeURIComponent(repo)}/new/${encodeURIComponent(branch)}?filename=${encodeURIComponent(filename)}&value=${encodeURIComponent(content)}&message=${encodeURIComponent('Update: updates.json via Updates-Manager')}`;
+            const url = `https://github.com/${repo}/new/${encodeURIComponent(branch)}?filename=${encodeURIComponent(filename)}&value=${encodeURIComponent(content)}&message=${encodeURIComponent('Update: updates.json via Updates-Manager')}`;
+
+            // show link in UI
+            const res = document.getElementById('proposePrResult');
+            if(res){ res.innerHTML = `Öffne: <a href="${url}" target="_blank">${url}</a><br>Falls das Verzeichnis <code>DB/</code> noch nicht existiert, kannst du die Datei lokal erzeugen und pushen. Klicke <em>Show Push Commands</em> für Beispielbefehle.`; }
             window.open(url, '_blank');
         }
 
@@ -873,6 +914,15 @@
             document.getElementById('importBtn').addEventListener('click', importToken);
             document.getElementById('proposePrBtn').addEventListener('click', proposePr);
             document.getElementById('bindDeviceBtn').addEventListener('click', bindThisDevice);
+            document.getElementById('reloadAdminBtn').addEventListener('click', async ()=>{ await loadAdminFiles(); alert('Status neu geladen'); });
+            document.getElementById('checkBindingBtn').addEventListener('click', async ()=>{ await loadAdminFiles(); if(!storedBinding){ alert('Kein Binding vorhanden.'); return; } const b = await computeBindingHmac(prompt('Admin-Token (nur zum Test, sicher behalten!)'), storedBinding.salt); console.log('Stored binding:', storedBinding.binding, 'Computed binding:', b); alert('Check done - info printed to Konsole.'); });
+            document.getElementById('showPushBtn').addEventListener('click', function(){
+                const data = JSON.stringify(loadUpdates(), null, 2);
+                const res = document.getElementById('proposePrResult');
+                const winCmds = `# Windows (PowerShell)\nmkdir DB -ErrorAction SilentlyContinue\n@"\n${data}\n"@ | Out-File -Encoding UTF8 DB\\updates.json\ngit add DB/updates.json\ngit commit -m "Add updates.json"\ngit push`;
+                const unixCmds = `# Unix/macOS\nmkdir -p DB\necho '${data.replace(/'/g, "'\\''")}' > DB/updates.json\ngit add DB/updates.json\ngit commit -m "Add updates.json"\ngit push`;
+                if(res) res.innerHTML = `<strong>Beispiele zum lokalen Anlegen & Pushen</strong><pre style="white-space:pre-wrap">${winCmds}</pre><pre style="white-space:pre-wrap">${unixCmds}</pre>`;
+            });
 
             updateAdminUi();
             // initial load of token/binding files
