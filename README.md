@@ -11,9 +11,9 @@ https://technova-app-team.github.io/MyWorkLog/
 
 [![Timer Badge](https://img.shields.io/badge/Timer-live-yellow?style=for-the-badge)](#) [![Backup](https://img.shields.io/badge/Backup-JSON-orange?style=for-the-badge)](#)
 
- **Web App:** `v2.3.1`  •  **Build:** `local`  •  **Stand:** 2025-12-15
+ **Web App:** `v2.4.0`  •  **Build:** `local`  •  **Stand:** 2025-12-19
  
- **Release:** `v2.2.1`  •  **Stand:** Dezember 2025
+ **Release:** `v2.4.0`  •  **Stand:** Dezember 2025
 
 ---
 
@@ -36,10 +36,10 @@ https://technova-app-team.github.io/MyWorkLog/
 
 `TimeTracker-Ausbildung-Arbeit` ist eine einfache, aber mächtige Browser-Anwendung zur lokalen Zeiterfassung (kein Server). Sie speichert Daten ausschließlich lokal und eignet sich für Mitarbeiter, Auszubildende oder Einzelpersonen, die ein schnelles, datenschutzfreundliches Tool suchen.
 
-## 🎯 Aktueller Projektstand (Stand: 2025-12-10)
-- **Fertig / stabil:** Kernfunktionen (Timer, Buchen, Export/Import, Gleitzeit) funktionieren lokal.
-- **In Arbeit:** Erweiterte Analytics, UI-Polish, optionale Synchronisation (ausstehend).
-- **Datenhaltung:** Alle Daten in `localStorage` / JSON-Export möglich.
+## 🎯 Aktueller Projektstand (Stand: 2025-12-19)
+- **Fertig / stabil:** Kernfunktionen (Timer, Buchen, Export/Import, Gleitzeit, AI-Bot) funktionieren lokal.
+- **In Arbeit:** Weitere Analytics-Features, UI-Polish, optionale Synchronisation (ausstehend).
+- **Datenhaltung:** Alle Daten in `localStorage` / JSON-Export möglich. AI-Bot speichert Conversations lokal.
 
 ---
 
@@ -62,6 +62,13 @@ https://technova-app-team.github.io/MyWorkLog/
 - Farblich codierte Einträge (Work / School / Vacation / Sick / Holiday)
 
 ### Neu & wichtig (Dez 2025)
+- **🤖 AI-Bot Assistent** — Intelligente Conversation mit Echtzeit-Datenanalyse! Der Bot:
+  - Analysiert deine Zeitdaten in Echtzeit
+  - Erkennt Fragen automatisch mit Pattern Recognition
+  - Gibt intelligente Empfehlungen basierend auf Produktivitäts-Patterns
+  - Speichert Conversation History lokal
+  - 100% im Browser — keine Cloud, kein Server, DSGVO-konform! 🔒
+  - Unterstützt: Weekly-Stats, Monthly-Forecast, Produktivitäts-Analysen, Pause-Analysen, Smart Recommendations
 - **🗓️ iCalendar Export (RFC 5545)** — Exportiere Zeiteinträge direkt zu Google Calendar, Outlook, Apple Calendar
 - **🔒 Verschlüsseltes Backup (AES-256-GCM)** — Enterprise-grade Encryption mit PBKDF2 Key-Derivation
 - **📱 Progressive Web App (PWA)** — Installierbar auf Smartphone, Tablet, Desktop mit Offline-Support
@@ -120,6 +127,9 @@ npm run dev
 
 ## 📂 Dateien die du jetzt prüfen solltest
 - `index.html` — Hauptdatei der App
+- `AI-Bot/` — Neue AI-Bot Engine mit intelligenter Datenanalyse:
+  - `AI-Bot/data-analyzer.js` — Intelligente Datenanalyse & Pattern Recognition
+  - `AI-Bot/aibot-engine.js` — AI-Bot Conversation Engine mit Intent Detection
 - `DSGVO.html`, `Impressum.html` — rechtliche Seiten (HTML)
 - `Rechtliches/` — Markdown mit Lizenz & Richtlinien
  - `FEATURES.md` — Aktuelle Liste neuer Features & Roadmap
@@ -199,4 +209,4 @@ Vielen Dank — wenn du noch mehr grafische Elemente (Screenshots, GIFs, echte S
 
 ---
 
-**TimeTracker-Ausbildung-Arbeit V2.2.4** | Gebaut mit modernstem Web-Standard | 🚀 Production Ready
+**TimeTracker-Ausbildung-Arbeit V2.4.0** | Gebaut mit modernstem Web-Standard | 🤖 AI-Bot powered | 🚀 Production Ready
