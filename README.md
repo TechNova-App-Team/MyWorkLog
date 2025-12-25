@@ -4,18 +4,21 @@
 
 ### Professionelle Zeiterfassung. Lokal. Sicher. Intelligent.
 
+[![Website](https://img.shields.io/badge/Website-technova--app--team-blueviolet?style=for-the-badge&logo=googlechrome&logoColor=white)](https://technova-app-team.github.io/MyWorkLog/)
 [![Version](https://img.shields.io/badge/version-2.8.1-blue?style=for-the-badge)](https://github.com)
 [![PWA Ready](https://img.shields.io/badge/PWA-Ready-success?style=for-the-badge&logo=pwa)](https://technova-app-team.github.io/MyWorkLog/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](Rechtliches/LICENSE.md)
+
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen?style=for-the-badge&logo=jest)](package.json)
 [![Coverage](https://img.shields.io/badge/coverage-60%25+-orange?style=for-the-badge)](package.json)
-
 [![DSGVO Compliant](https://img.shields.io/badge/DSGVO-Konform-critical?style=flat-square)](./DSGVO.html)
 [![Offline First](https://img.shields.io/badge/Offline-First-blueviolet?style=flat-square)](Pages/Info/offline.html)
 [![AI Powered](https://img.shields.io/badge/AI-Powered-ff69b4?style=flat-square)](AI-Bot/)
 [![Open Source](https://img.shields.io/badge/Open-Source-informational?style=flat-square)](Rechtliches/LICENSE.md)
 
 [🚀 Live Demo](https://technova-app-team.github.io/MyWorkLog/) • [📖 Dokumentation](README´s/) • [🐛 Bug Report](https://github.com/issues) • [✨ Feature Request](https://github.com/issues)
+
+</div>
 
 ---
 
