@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Cloud Sync - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #111827;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            color: #374151;
+            line-height: 1.6;
+        }
+
+        .demo-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .secondary:hover {
+            background: #d1d5db;
+        }
+
+        .code-block {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #374151;
+        }
+
+        .log-output {
+            background: #111827;
+            color: #10b981;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .log-entry.error {
+            color: #ef4444;
+        }
+
+        .log-entry.success {
+            color: #10b981;
+        }
+
+        .log-entry.warning {
+            color: #f59e0b;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .status.logged-in {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status.logged-out {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .storage-list {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .storage-item {
+            padding: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .storage-item:last-child {
+            border-bottom: none;
+        }
+
+        .storage-key {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .storage-value {
+            color: #6b7280;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>☁️ Supabase Cloud Sync Demo</h1>
+        <p class="subtitle">Teste die Supabase Integration für LocalStorage Synchronisation</p>
+
+        <!-- Status Section -->
+        <div class="section">
+            <div class="section-title">📊 Status</div>
+            <div id="auth-status" class="status logged-out">🔴 Nicht angemeldet</div>
+            <div id="user-info" style="display: none; color: #6b7280; font-size: 14px;">
+                Angemeldet als: <strong id="user-email"></strong>
+            </div>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="section">
+            <div class="section-title">⚙️ Konfiguration</div>
+            <div class="info-box">
+                <strong>Supabase URL:</strong><br>
+                <code>https://fouucibowmukxvweratn.supabase.co</code>
+            </div>
+            <div class="info-box">
+                <strong>Datenbank Tabelle:</strong> Users<br>
+                <strong>Spalten:</strong> case (UUID), all_data (JSONB)
+            </div>
+            <div class="info-box">
+                ⚠️ <strong>WICHTIG:</strong> Bevor du diese Demo nutzt:
+                <ol style="margin-left: 20px; margin-top: 10px;">
+                    <li>Kopiere <code>supabase-config.example.js</code> zu <code>supabase-config.js</code></li>
+                    <li>Ersetze <code>YOUR_ANON_KEY_HERE</code> mit deiner echten Anon Key</li>
+                    <li>Füge <code>supabase-config.js</code> zu .gitignore ein</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Authentication Section -->
+        <div class="section">
+            <div class="section-title">🔐 Authentifizierung</div>
+            <div class="demo-controls">
+                <button id="login-btn" onclick="openLoginModal()">Login mit Magic Link</button>
+                <button id="logout-btn" class="secondary" style="display: none;" onclick="handleLogout()">Abmelden</button>
+            </div>
+        </div>
+
+        <!-- LocalStorage Section -->
+        <div class="section">
+            <div class="section-title">💾 LocalStorage</div>
+            <div class="info-box">
+                Es werden ALLE LocalStorage-Einträge synchronisiert.
+            </div>
+            <div class="demo-controls">
+                <button onclick="addTestData()">+ Test-Daten hinzufügen</button>
+                <button class="secondary" onclick="clearTestData()">- Test-Daten löschen</button>
+            </div>
+            <div>
+                <strong style="display: block; margin: 15px 0 10px 0;">Aktuelle LocalStorage-Einträge:</strong>
+                <div id="storage-list" class="storage-list">
+                    <div style="color: #9ca3af; font-size: 13px;">Leer</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sync Section -->
+        <div class="section">
+            <div class="section-title">🔄 Cloud Synchronisation</div>
+            <div class="demo-controls">
+                <button id="upload-btn" onclick="handleUpload()" disabled>⬆️ In die Cloud hochladen</button>
+                <button id="download-btn" class="secondary" onclick="handleDownload()" disabled>⬇️ Von der Cloud herunterladen</button>
+            </div>
+        </div>
+
+        <!-- Console Output -->
+        <div class="section">
+            <div class="section-title">🖥️ Console Output</div>
+            <div id="log-output" class="log-output">
+                <div class="log-entry warning">[Warte auf Verbindung...]</div>
+            </div>
+            <button class="secondary" onclick="clearLogs()">Logs löschen</button>
+        </div>
+
+        <!-- Implementation Guide -->
+        <div class="section">
+            <div class="section-title">📖 Implementierungs-Schnellanleitung</div>
+            <div class="info-box">
+                <strong>1. Scripts laden:</strong>
+                <div class="code-block">&lt;script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"&gt;&lt;/script&gt;
+&lt;script defer src="./AI-Bot/supabase-integration.js"&gt;&lt;/script&gt;
+&lt;script defer src="./AI-Bot/supabase-ui.js"&gt;&lt;/script&gt;
+&lt;script defer src="./supabase-config.js"&gt;&lt;/script&gt;</div>
+
+                <strong>2. In deinem JavaScript:</strong>
+                <div class="code-block">// Login
+await window.cloudSync.loginWithEmail('user@example.com');
+
+// Sync
+await window.cloudSync.uploadToCloud();
+await window.cloudSync.downloadFromCloud();
+
+// Status
+if (window.cloudSync.isLoggedIn()) {
+  console.log('User:', window.cloudSync.getCurrentUser().email);
+}</div>
+
+                <strong>3. Mehr in der Dokumentation:</strong>
+                <div class="code-block"><a href="./README´s/SUPABASE-INTEGRATION.md" target="_blank">README´s/SUPABASE-INTEGRATION.md</a></div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Cloud Sync Module v1.0.0 | TechNova App Team | MIT License</p>
+            <p style="margin-top: 10px; font-size: 12px;">Diese Demo nutzt das Supabase JavaScript Client und die Cloud Sync Module</p>
+        </div>
+    </div>
+
+    <!-- Supabase JavaScript Client -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Supabase Integration Modules -->
+    <script defer src="../AI-Bot/supabase-integration.js"></script>
+    <script defer src="../AI-Bot/supabase-ui.js"></script>
+
+    <!-- Supabase Config (muss existieren!) -->
+    <script defer src="../supabase-config.js"></script>
+
+    <!-- Demo Script -->
+    <script defer>
+        // Custom Logger
+        const logOutput = document.getElementById('log-output');
+        
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString('de-DE');
+            entry.textContent = `[${timestamp}] ${message}`;
+            logOutput.appendChild(entry);
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        function clearLogs() {
+            logOutput.innerHTML = '';
+        }
+
+        // Überschreibe console.log für diese Demo
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            log(args.join(' '), 'info');
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            log(args.join(' '), 'error');
+        };
+
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            log(args.join(' '), 'warning');
+        };
+
+        // Demo-Funktionen
+        function updateAuthStatus() {
+            const authStatus = document.getElementById('auth-status');
+            const userInfo = document.getElementById('user-info');
+            const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
+            const uploadBtn = document.getElementById('upload-btn');
+            const downloadBtn = document.getElementById('download-btn');
+
+            if (window.cloudSync && window.cloudSync.isLoggedIn()) {
+                const user = window.cloudSync.getCurrentUser();
+                authStatus.textContent = '🟢 Angemeldet';
+                authStatus.className = 'status logged-in';
+                userInfo.style.display = 'block';
+                document.getElementById('user-email').textContent = user.email;
+                loginBtn.style.display = 'none';
+                logoutBtn.style.display = 'block';
+                uploadBtn.disabled = false;
+                downloadBtn.disabled = false;
+            } else {
+                authStatus.textContent = '🔴 Nicht angemeldet';
+                authStatus.className = 'status logged-out';
+                userInfo.style.display = 'none';
+                loginBtn.style.display = 'block';
+                logoutBtn.style.display = 'none';
+                uploadBtn.disabled = true;
+                downloadBtn.disabled = true;
+            }
+        }
+
+        function updateStorageList() {
+            const storageList = document.getElementById('storage-list');
+            
+            if (localStorage.length === 0) {
+                storageList.innerHTML = '<div style="color: #9ca3af; font-size: 13px;">Leer</div>';
+                return;
+            }
+
+            let html = '';
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                const displayValue = value.length > 50 ? value.substring(0, 50) + '...' : value;
+                
+                html += `
+                    <div class="storage-item">
+                        <span class="storage-key">${key}</span>
+                        <span class="storage-value" title="${value}">${displayValue}</span>
+                    </div>
+                `;
+            }
+            storageList.innerHTML = html;
+        }
+
+        function openLoginModal() {
+            if (window.cloudSyncUI) {
+                window.cloudSyncUI.openLoginModal();
+            } else {
+                alert('Cloud Sync UI nicht verfügbar. Bitte Seite neu laden.');
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await window.cloudSync.logout();
+                log('✅ Erfolgreich abgemeldet', 'success');
+                updateAuthStatus();
+            } catch (error) {
+                log('❌ Logout Fehler: ' + error.message, 'error');
+            }
+        }
+
+        async function handleUpload() {
+            try {
+                const uploadBtn = document.getElementById('upload-btn');
+                uploadBtn.disabled = true;
+                uploadBtn.textContent = 'Lädt hoch...';
+                
+                await window.cloudSync.uploadToCloud();
+                log('✅ Daten erfolgreich in die Cloud hochgeladen!', 'success');
+                
+                uploadBtn.textContent = '⬆️ In die Cloud hochladen';
+                uploadBtn.disabled = false;
+            } catch (error) {
+                log('❌ Upload Fehler: ' + error.message, 'error');
+                const uploadBtn = document.getElementById('upload-btn');
+                uploadBtn.textContent = '⬆️ In die Cloud hochladen';
+                uploadBtn.disabled = false;
+            }
+        }
+
+        async function handleDownload() {
+            try {
+                const downloadBtn = document.getElementById('download-btn');
+                downloadBtn.disabled = true;
+                downloadBtn.textContent = 'Lädt herunter...';
+                
+                const result = await window.cloudSync.downloadFromCloud();
+                log(`✅ ${result.itemsLoaded} Items von der Cloud geladen!`, 'success');
+                updateStorageList();
+                
+                downloadBtn.textContent = '⬇️ Von der Cloud herunterladen';
+                downloadBtn.disabled = false;
+            } catch (error) {
+                log('❌ Download Fehler: ' + error.message, 'error');
+                const downloadBtn = document.getElementById('download-btn');
+                downloadBtn.textContent = '⬇️ Von der Cloud herunterladen';
+                downloadBtn.disabled = false;
+            }
+        }
+
+        function addTestData() {
+            const timestamp = new Date().toLocaleTimeString('de-DE');
+            localStorage.setItem('test_data_' + Date.now(), JSON.stringify({
+                timestamp,
+                random: Math.random()
+            }));
+            log(`✅ Test-Daten hinzugefügt (${timestamp})`, 'success');
+            updateStorageList();
+        }
+
+        function clearTestData() {
+            let count = 0;
+            const keys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('test_data_')) {
+                    keys.push(key);
+                }
+            }
+            keys.forEach(key => {
+                localStorage.removeItem(key);
+                count++;
+            });
+            log(`✅ ${count} Test-Einträge gelöscht`, 'success');
+            updateStorageList();
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Demo geladen', 'info');
+            updateStorageList();
+
+            // Warte auf cloudSync
+            const initInterval = setInterval(() => {
+                if (window.cloudSync) {
+                    clearInterval(initInterval);
+                    log('✅ Supabase Cloud Sync initialisiert', 'success');
+                    
+                    // Auth-Callback
+                    const originalCallback = window.cloudSync.onAuthStateChanged;
+                    window.cloudSync.onAuthStateChanged = function(isLoggedIn, user) {
+                        originalCallback.call(this, isLoggedIn, user);
+                        updateAuthStatus();
+                        if (isLoggedIn) {
+                            log(`🔐 User angemeldet: ${user.email}`, 'success');
+                        } else {
+                            log('🔐 User abgemeldet', 'info');
+                        }
+                    };
+                    
+                    // Initial status
+                    updateAuthStatus();
+                    
+                    // Auto-Update storage list
+                    setInterval(updateStorageList, 1000);
+                }
+            }, 100);
+        });
+
+        // Periodic auth status check
+        setInterval(updateAuthStatus, 2000);
+    </script>
+</body>
+</html>

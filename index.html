@@ -57,6 +57,16 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script async src="https://plausible.io/js/pa-jiUWAYasLo3v5kIOac5C3.js"></script>
+
+<!-- Supabase JavaScript Client -->
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Supabase Integration -->
+<script defer src="./AI-Bot/supabase-integration.js"></script>
+<script defer src="./AI-Bot/supabase-ui.js"></script>
+
+<!-- Deine Config -->
+<script defer src="./supabase-config.js"></script>
 <script>
   window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
   plausible.init()
@@ -16188,6 +16198,212 @@ TIPPS:
         document.addEventListener('DOMContentLoaded', initializeApp);
     } else {
         initializeApp();
+    }
+
+    // Initialisiere Cloud Sync UI nach dem App-Load
+    document.addEventListener('DOMContentLoaded', () => {
+        const waitForCloudSync = setInterval(() => {
+            if (window.cloudSync) {
+                clearInterval(waitForCloudSync);
+                window.cloudSyncUI = new SupabaseCloudSyncUI(window.cloudSync);
+                console.log('[App] ✅ Cloud Sync UI erfolgreich aktiviert!');
+                
+                // Integriere Cloud Sync in die bestehende App
+                setupCloudSyncIntegration();
+            }
+        }, 100);
+        
+        // Timeout nach 5s
+        setTimeout(() => {
+            if (!window.cloudSyncUI) {
+                console.warn('[App] ⚠️ Cloud Sync UI konnte nicht initialisiert werden. Prüfe die Supabase Config!');
+            }
+        }, 5000);
+    });
+    
+    // ============================================
+    // CLOUD SYNC INTEGRATION (ECHTE PRODUKTIVE INTEGRATION!)
+    // ============================================
+    
+    function setupCloudSyncIntegration() {
+        // Registriere Auth-State Callbacks
+        if (window.cloudSync && window.cloudSync.onAuthStateChanged) {
+            const originalCallback = window.cloudSync.onAuthStateChanged;
+            window.cloudSync.onAuthStateChanged = function(isLoggedIn, user) {
+                if (typeof originalCallback === 'function') {
+                    originalCallback.call(this, isLoggedIn, user);
+                }
+                updateCloudSyncUI(isLoggedIn, user);
+            };
+        }
+        
+        // Auto-Sync beim Speichern aktivieren
+        setupAutoSync();
+    }
+    
+    function updateCloudSyncUI(isLoggedIn, user) {
+        // Finde oder erstelle Cloud Sync Buttons im Header
+        let syncButton = document.querySelector('[data-cloud-sync-button]');
+        let syncContainer = document.querySelector('[data-cloud-sync-container]');
+        
+        if (!syncButton && !syncContainer) {
+            // Falls nicht existent, erstelle sie im Header
+            createCloudSyncButtons();
+        } else {
+            // Update bestehende Buttons
+            if (isLoggedIn) {
+                document.querySelectorAll('[data-cloud-sync-login-btn]').forEach(btn => btn.style.display = 'none');
+                document.querySelectorAll('[data-cloud-sync-logout-btn]').forEach(btn => btn.style.display = 'block');
+                document.querySelectorAll('[data-cloud-user-email]').forEach(el => el.textContent = user.email);
+                document.querySelectorAll('[data-cloud-sync-upload-btn]').forEach(btn => btn.disabled = false);
+                document.querySelectorAll('[data-cloud-sync-download-btn]').forEach(btn => btn.disabled = false);
+                console.log('[Cloud Sync] User angemeldet:', user.email);
+            } else {
+                document.querySelectorAll('[data-cloud-sync-login-btn]').forEach(btn => btn.style.display = 'block');
+                document.querySelectorAll('[data-cloud-sync-logout-btn]').forEach(btn => btn.style.display = 'none');
+                document.querySelectorAll('[data-cloud-sync-upload-btn]').forEach(btn => btn.disabled = true);
+                document.querySelectorAll('[data-cloud-sync-download-btn]').forEach(btn => btn.disabled = true);
+                console.log('[Cloud Sync] User abgemeldet');
+            }
+        }
+    }
+    
+    function createCloudSyncButtons() {
+        // Erstelle Cloud Sync Buttons als Fixed Element (oben rechts)
+        const cloudSyncHTML = `
+            <div data-cloud-sync-container style="position: fixed; top: 16px; right: 16px; z-index: 1000; display: flex; gap: 8px; align-items: center; padding: 12px 16px; background: linear-gradient(135deg, rgba(22, 22, 26, 0.95), rgba(30, 30, 35, 0.9)); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px; backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+                
+                <!-- Cloud Sync Status (wenn angemeldet) -->
+                <div style="display: none; align-items: center; gap: 8px; padding-right: 8px; border-right: 1px solid rgba(255,255,255,0.1);" data-cloud-sync-status>
+                    <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; animation: pulse 2s infinite;"></span>
+                    <span style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">
+                        <span data-cloud-user-email style="color: var(--primary);">--</span>
+                    </span>
+                </div>
+                
+                <!-- Login Button -->
+                <button data-cloud-sync-login-btn class="cloud-sync-btn" style="padding: 8px 14px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s; white-space: nowrap;">
+                    ☁️ Cloud Login
+                </button>
+                
+                <!-- Logout Button (versteckt) -->
+                <button data-cloud-sync-logout-btn class="cloud-sync-btn" style="display: none; padding: 8px 14px; background: transparent; color: var(--text-muted); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.3s; white-space: nowrap;" title="Von Cloud abmelden">
+                    🚪 Logout
+                </button>
+                
+                <!-- Upload Button (syncs mit Cloud) -->
+                <button data-cloud-sync-upload-btn class="cloud-sync-btn" disabled style="padding: 8px 14px; background: transparent; color: var(--text-muted); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.3s; opacity: 0.5; white-space: nowrap;" title="Alle Daten in die Cloud hochladen">
+                    ⬆️ Sync
+                </button>
+                
+                <!-- Download Button -->
+                <button data-cloud-sync-download-btn class="cloud-sync-btn" disabled style="padding: 8px 14px; background: transparent; color: var(--text-muted); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.3s; opacity: 0.5; white-space: nowrap;" title="Daten von der Cloud herunterladen">
+                    ⬇️ Restore
+                </button>
+            </div>
+        `;
+        
+        // Injiziere ins DOM
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = cloudSyncHTML;
+        const syncContainer = tempDiv.querySelector('[data-cloud-sync-container]');
+        
+        document.body.appendChild(syncContainer);
+        
+        // Binding der Event-Listener
+        syncContainer.querySelector('[data-cloud-sync-login-btn]').addEventListener('click', openCloudLoginModal);
+        syncContainer.querySelector('[data-cloud-sync-logout-btn]').addEventListener('click', handleCloudLogout);
+        syncContainer.querySelector('[data-cloud-sync-upload-btn]').addEventListener('click', handleCloudUpload);
+        syncContainer.querySelector('[data-cloud-sync-download-btn]').addEventListener('click', handleCloudDownload);
+        
+        console.log('[Cloud Sync] 🎯 Buttons ins DOM injiziert (oben rechts)');
+    }
+    
+    function openCloudLoginModal() {
+        if (window.cloudSyncUI && typeof window.cloudSyncUI.openLoginModal === 'function') {
+            window.cloudSyncUI.openLoginModal();
+        } else {
+            showCustomMessage('⚠️ Cloud Sync nicht bereit', 'Bitte lade die Seite neu!', 'warning');
+        }
+    }
+    
+    async function handleCloudLogout() {
+        if (!window.cloudSync) return;
+        
+        showCustomConfirm('🚪 Logout?', 'Du wirst von der Cloud abgemeldet. Deine lokalen Daten bleiben erhalten.', 
+            async () => {
+                try {
+                    await window.cloudSync.logout();
+                    showCustomMessage('✅ Abgemeldet', 'Du bist jetzt von der Cloud getrennt.', 'success');
+                } catch (error) {
+                    showCustomMessage('❌ Fehler', 'Logout fehlgeschlagen: ' + error.message, 'error');
+                }
+            }
+        );
+    }
+    
+    async function handleCloudUpload() {
+        const uploadBtn = document.querySelector('[data-cloud-sync-upload-btn]');
+        if (!uploadBtn || !window.cloudSync) return;
+        
+        const originalText = uploadBtn.textContent;
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = '⏳ Lädt...';
+        
+        try {
+            await window.cloudSync.uploadToCloud();
+            showCustomMessage('✅ Hochgeladen', 'Deine Daten wurden erfolgreich in die Cloud synchronisiert!', 'success');
+        } catch (error) {
+            showCustomMessage('❌ Upload Fehler', error.message, 'error');
+        } finally {
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = originalText;
+        }
+    }
+    
+    async function handleCloudDownload() {
+        const downloadBtn = document.querySelector('[data-cloud-sync-download-btn]');
+        if (!downloadBtn || !window.cloudSync) return;
+        
+        const originalText = downloadBtn.textContent;
+        downloadBtn.disabled = true;
+        downloadBtn.textContent = '⏳ Lädt...';
+        
+        try {
+            const result = await window.cloudSync.downloadFromCloud();
+            showCustomMessage('✅ Restored', `${result.itemsLoaded} Einträge von der Cloud geladen!`, 'success');
+            // Reload der Seite um neue Daten anzuzeigen
+            setTimeout(() => location.reload(), 1500);
+        } catch (error) {
+            showCustomMessage('❌ Download Fehler', error.message, 'error');
+        } finally {
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = originalText;
+        }
+    }
+    
+    function setupAutoSync() {
+        // Auto-Sync beim Speichern von Daten
+        const originalSave = window.save || (() => {});
+        
+        window.save = function() {
+            // Rufe Original-Save auf
+            if (typeof originalSave === 'function') {
+                originalSave.apply(this, arguments);
+            }
+            
+            // Auto-Upload wenn User angemeldet ist
+            if (window.cloudSync && window.cloudSync.isLoggedIn()) {
+                // Debounce: Nur alle 30 Sekunden uploaden
+                if (!window.lastCloudSync || Date.now() - window.lastCloudSync > 30000) {
+                    window.lastCloudSync = Date.now();
+                    window.cloudSync.uploadToCloud().catch(err => {
+                        console.warn('[Cloud Sync] Auto-Upload fehlgeschlagen:', err);
+                    });
+                    console.log('[Cloud Sync] Auto-Upload im Hintergrund');
+                }
+            }
+        };
     }
 
     function updateAchievements() {
