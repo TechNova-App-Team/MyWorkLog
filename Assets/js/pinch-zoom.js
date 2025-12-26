@@ -58,7 +58,7 @@ class PinchZoom {
         // Optimize for smooth transforms
         this.element.style.transformOrigin = '0 0';
         this.element.style.willChange = 'transform';
-        this.element.style.touchAction = 'none';
+        this.element.style.touchAction = 'manipulation';
         this.element.style.userSelect = 'none';
         this.element.style.webkitUserSelect = 'none';
     }
@@ -96,7 +96,7 @@ class PinchZoom {
     }
 
     onTouchStart(e) {
-        e.preventDefault();
+        // Nur preventDefault bei Pinch (2 Finger), nicht bei normalem Scroll
         
         this.touches = Array.from(e.touches);
         this.fingerCount = this.touches.length;
@@ -110,6 +110,7 @@ class PinchZoom {
         this.isResetting = false;
 
         if (this.fingerCount === 2) {
+            e.preventDefault();
             // Start pinch zoom
             this.isZooming = true;
             this.isPanning = false;
@@ -123,6 +124,7 @@ class PinchZoom {
             // Reset velocity
             this.velocity = { x: 0, y: 0, scale: 0 };
         } else if (this.fingerCount === 1 && this.scale > 1.01) {
+            e.preventDefault();
             // Start panning if zoomed
             this.isPanning = true;
             this.isZooming = false;
@@ -134,19 +136,24 @@ class PinchZoom {
     }
 
     onTouchMove(e) {
-        e.preventDefault();
-        
         this.touches = Array.from(e.touches);
         const currentFingerCount = this.touches.length;
 
         if (currentFingerCount === 2 && this.isZooming) {
+            e.preventDefault();
             this.handlePinchZoom();
         } else if (currentFingerCount === 1 && this.isPanning && this.scale > 1.01) {
+            e.preventDefault();
             this.handlePan();
         }
     }
 
     onTouchEnd(e) {
+        // Nur preventDefault wenn wir gerade zoomen/panning
+        if (this.isZooming || this.isPanning) {
+            e.preventDefault();
+        }
+        
         this.touches = Array.from(e.touches);
         const currentFingerCount = this.touches.length;
 
