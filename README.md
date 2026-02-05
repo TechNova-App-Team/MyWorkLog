@@ -46,6 +46,7 @@
 - [🤝 Contributing](#-contributing)
 - [📄 Lizenz & Rechtliches](#-lizenz--rechtliches)
 - [👥 Team](#-team)
+- [📊 Advanced Analytics](README´s/ADVANCED-ANALYTICS.txt)
 
 ---
 

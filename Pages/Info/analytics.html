@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📊 Advanced Analytics - MyWorkLog</title>
+    <script defer src="../../Assets/js/icons.js"></script>
+    <script defer src="../../Assets/js/touch-mobile-optimizations.js"></script>
+    <title>Analytics - MyWorkLog</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -607,6 +609,49 @@
                 <tbody></tbody>
             </table>
         </div>
+
+        <!-- API PARAMETER INFO -->
+        <div class="section-card" style="margin-top: 1.5rem;">
+            <h3>🔧 API Parameter <span class="badge">Referenz</span></h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Zusätzliche Parameter für alle <code style="background:rgba(168,85,247,0.15);padding:2px 6px;border-radius:4px;color:var(--primary);font-family:var(--font-mono);font-size:0.8rem;">/metrics</code> Aufrufe:</p>
+            <table class="data-table">
+                <thead>
+                    <tr><th>Parameter</th><th>Typ</th><th>Beschreibung</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code style="background:rgba(168,85,247,0.15);padding:2px 6px;border-radius:4px;color:var(--primary);font-family:var(--font-mono);font-size:0.8rem;">startAt</code></td>
+                        <td style="color:var(--info);font-family:var(--font-mono);font-size:0.8rem;">number</td>
+                        <td>Unix Timestamp (ms) des Anfangs</td>
+                    </tr>
+                    <tr>
+                        <td><code style="background:rgba(168,85,247,0.15);padding:2px 6px;border-radius:4px;color:var(--primary);font-family:var(--font-mono);font-size:0.8rem;">endAt</code></td>
+                        <td style="color:var(--info);font-family:var(--font-mono);font-size:0.8rem;">number</td>
+                        <td>Unix Timestamp (ms) des Endes</td>
+                    </tr>
+                    <tr>
+                        <td><code style="background:rgba(168,85,247,0.15);padding:2px 6px;border-radius:4px;color:var(--primary);font-family:var(--font-mono);font-size:0.8rem;">type</code></td>
+                        <td style="color:var(--info);font-family:var(--font-mono);font-size:0.8rem;">string</td>
+                        <td>Metrik-Typ (<span style="color:var(--warning);">path, entry, exit, browser, os, device, country, city, language, screen, event, title, referrer, channel</span>)</td>
+                    </tr>
+                    <tr>
+                        <td><code style="background:rgba(168,85,247,0.15);padding:2px 6px;border-radius:4px;color:var(--primary);font-family:var(--font-mono);font-size:0.8rem;">limit</code></td>
+                        <td style="color:var(--info);font-family:var(--font-mono);font-size:0.8rem;">number</td>
+                        <td>Maximale Anzahl Ergebnisse</td>
+                    </tr>
+                    <tr>
+                        <td><code style="background:rgba(168,85,247,0.15);padding:2px 6px;border-radius:4px;color:var(--primary);font-family:var(--font-mono);font-size:0.8rem;">unit</code></td>
+                        <td style="color:var(--info);font-family:var(--font-mono);font-size:0.8rem;">string</td>
+                        <td>Zeiteinheit für Zeitreihen (<span style="color:var(--warning);">hour, day, month</span>)</td>
+                    </tr>
+                    <tr>
+                        <td><code style="background:rgba(168,85,247,0.15);padding:2px 6px;border-radius:4px;color:var(--primary);font-family:var(--font-mono);font-size:0.8rem;">timezone</code></td>
+                        <td style="color:var(--info);font-family:var(--font-mono);font-size:0.8rem;">string</td>
+                        <td>Timezone für Zeitformatierung (<span style="color:var(--success);">Europe/Berlin</span>)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -628,12 +673,13 @@
             return n.toString();
         }
 
-        function fmtDuration(ms) {
-            if (!ms || ms <= 0) return '0s';
-            const totalSecs = Math.round(ms / 1000);
-            const mins = Math.floor(totalSecs / 60);
-            const secs = totalSecs % 60;
-            if (mins > 60) return Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
+        function fmtDuration(seconds) {
+            if (!seconds || seconds <= 0) return '0s';
+            var totalSecs = Math.round(seconds);
+            var hrs = Math.floor(totalSecs / 3600);
+            var mins = Math.floor((totalSecs % 3600) / 60);
+            var secs = totalSecs % 60;
+            if (hrs > 0) return hrs + 'h ' + mins + 'm';
             if (mins > 0) return mins + 'm ' + secs + 's';
             return secs + 's';
         }
@@ -716,11 +762,17 @@
             });
 
             const res = await fetch(url, {
-                headers: { 'Authorization': 'Bearer ' + API_TOKEN, 'Accept': 'application/json' }
+                headers: { 'x-umami-api-key': API_TOKEN, 'Accept': 'application/json' }
             });
 
-            if (!res.ok) throw new Error('API ' + res.status + ': ' + res.statusText);
-            return res.json();
+            if (!res.ok) {
+                var errText = await res.text().catch(function() { return ''; });
+                console.error('API Error:', res.status, res.statusText, url.toString(), errText);
+                throw new Error('API ' + res.status + ': ' + res.statusText);
+            }
+            var json = await res.json();
+            console.log('API OK:', endpoint, json);
+            return json;
         }
 
         // =========================================
@@ -1018,11 +1070,11 @@
                     '<div class="live-dot" style="width:8px;height:8px;"></div> ' + (active.visitors || 0) + ' aktiv';
 
                 // ── Main KPIs ──
-                var pv = stats.pageviews != null ? (stats.pageviews.value != null ? stats.pageviews.value : stats.pageviews) : 0;
-                var vis = stats.visitors != null ? (stats.visitors.value != null ? stats.visitors.value : stats.visitors) : 0;
-                var visits = stats.visits != null ? (stats.visits.value != null ? stats.visits.value : stats.visits) : 0;
-                var bounces = stats.bounces != null ? (stats.bounces.value != null ? stats.bounces.value : stats.bounces) : 0;
-                var totaltime = stats.totaltime != null ? (stats.totaltime.value != null ? stats.totaltime.value : stats.totaltime) : 0;
+                var pv = (typeof stats.pageviews === 'object' && stats.pageviews !== null) ? (stats.pageviews.value || 0) : (stats.pageviews || 0);
+                var vis = (typeof stats.visitors === 'object' && stats.visitors !== null) ? (stats.visitors.value || 0) : (stats.visitors || 0);
+                var visits = (typeof stats.visits === 'object' && stats.visits !== null) ? (stats.visits.value || 0) : (stats.visits || 0);
+                var bounces = (typeof stats.bounces === 'object' && stats.bounces !== null) ? (stats.bounces.value || 0) : (stats.bounces || 0);
+                var totaltime = (typeof stats.totaltime === 'object' && stats.totaltime !== null) ? (stats.totaltime.value || 0) : (stats.totaltime || 0);
 
                 document.getElementById('kpiPageviews').textContent = fmt(pv);
                 document.getElementById('kpiVisitors').textContent = fmt(vis);
@@ -1037,10 +1089,10 @@
 
                 // ── Trends vs previous period ──
                 if (prevStats) {
-                    var ppv = prevStats.pageviews != null ? (prevStats.pageviews.value != null ? prevStats.pageviews.value : prevStats.pageviews) : 0;
-                    var pvis = prevStats.visitors != null ? (prevStats.visitors.value != null ? prevStats.visitors.value : prevStats.visitors) : 0;
-                    var pvisits = prevStats.visits != null ? (prevStats.visits.value != null ? prevStats.visits.value : prevStats.visits) : 0;
-                    var pbounces = prevStats.bounces != null ? (prevStats.bounces.value != null ? prevStats.bounces.value : prevStats.bounces) : 0;
+                    var ppv = (typeof prevStats.pageviews === 'object' && prevStats.pageviews !== null) ? (prevStats.pageviews.value || 0) : (prevStats.pageviews || 0);
+                    var pvis = (typeof prevStats.visitors === 'object' && prevStats.visitors !== null) ? (prevStats.visitors.value || 0) : (prevStats.visitors || 0);
+                    var pvisits = (typeof prevStats.visits === 'object' && prevStats.visits !== null) ? (prevStats.visits.value || 0) : (prevStats.visits || 0);
+                    var pbounces = (typeof prevStats.bounces === 'object' && prevStats.bounces !== null) ? (prevStats.bounces.value || 0) : (prevStats.bounces || 0);
 
                     setTrend('kpiPageviewsTrend', pv, ppv);
                     setTrend('kpiVisitorsTrend', vis, pvis);
