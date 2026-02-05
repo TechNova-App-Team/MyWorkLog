@@ -4235,6 +4235,14 @@
             <h2 style="margin-bottom:0.5rem;">📆 Jahresübersicht & Intelligente Insights</h2>
             <p style="color:var(--text-muted); margin-bottom:2rem;">Deine komplette Arbeitsleistung auf einen Blick. Sieh deine Produktivitätsmuster und erhalte personalisierte Empfehlungen.</p>
             
+            <!-- JAHR-SELECTOR -->
+            <div class="card" style="margin-bottom:2rem; display:flex; gap:15px; align-items:center;">
+                <label style="font-weight:600;">Wähle ein Jahr:</label>
+                <select id="yearSelector" class="glass-select" onchange="onYearSelectorChange()" style="flex:1; max-width:200px;">
+                    <option>2025</option>
+                </select>
+            </div>
+            
             <!-- JAHRES-STATISTIK HEADER -->
             <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom:2rem;">
                 <div class="card" style="border-left: 5px solid var(--primary);">
@@ -6119,6 +6127,7 @@
     let timer = { id:null, start:0, paused:0, running:false, log:[], breakTime: 0 };
     let editId = null;
     let isSidebarOpen = true;
+    let selectedYearForView = new Date().getFullYear(); // Jahr für Jahresansicht
 
     let customModalCallback = null;
     let customModalResolve = null;
@@ -15077,10 +15086,13 @@ TIPPS:
     }
 
     function renderYearView() {
-        // 1. Jahres-Statistiken berechnen
-        const yearStats = calculateYearlyStats();
+        // 1. Jahr-Selector aktualisieren
+        updateYearSelector();
         
-        // 2. KPIs aktualisieren
+        // 2. Jahres-Statistiken berechnen
+        const yearStats = calculateYearlyStats(selectedYearForView);
+        
+        // 3. KPIs aktualisieren
         document.getElementById('yearTotalWorked').innerText = yearStats.totalWorked.toFixed(1) + 'h';
         document.getElementById('yearAvgDaily').innerText = yearStats.avgDaily.toFixed(1) + 'h';
         document.getElementById('yearEndSaldo').innerText = (yearStats.endSaldo >= 0 ? '+' : '') + yearStats.endSaldo.toFixed(1) + 'h';
@@ -15088,19 +15100,51 @@ TIPPS:
         document.getElementById('yearBestWeek').innerText = `KW ${yearStats.bestWeek}`;
         document.getElementById('yearBestWeekValue').innerText = (yearStats.bestWeekValue >= 0 ? '+' : '') + yearStats.bestWeekValue.toFixed(1) + 'h';
         
-        // 3. Heatmap rendern
-        renderYearHeatmap(yearStats);
+        // 4. Heatmap rendern
+        renderYearHeatmap(yearStats, selectedYearForView);
         
-        // 4. Insights generieren
-        generateYearInsights(yearStats);
+        // 5. Insights generieren
+        generateYearInsights(yearStats, selectedYearForView);
         
-        // 5. Monats-Vergleich rendern
-        renderMonthlyComparison(yearStats);
+        // 6. Monats-Vergleich rendern
+        renderMonthlyComparison(yearStats, selectedYearForView);
     }
     
-    function calculateYearlyStats() {
-        const now = new Date();
-        const currentYear = now.getFullYear();
+    function updateYearSelector() {
+        const select = document.getElementById('yearSelector');
+        if (!select) return;
+        
+        // Bestimme verfügbare Jahre aus den Daten
+        const years = new Set();
+        data.entries.forEach(e => {
+            const year = new Date(e.date).getFullYear();
+            years.add(year);
+        });
+        
+        // Aktuelles Jahr hinzufügen
+        years.add(new Date().getFullYear());
+        
+        // Jahre sortieren (aufsteigend)
+        const sortedYears = Array.from(years).sort((a, b) => a - b);
+        
+        // Select füllen
+        let html = '';
+        sortedYears.forEach(year => {
+            const selected = year === selectedYearForView ? 'selected' : '';
+            html += `<option value="${year}" ${selected}>${year}</option>`;
+        });
+        
+        select.innerHTML = html;
+    }
+    
+    function onYearSelectorChange() {
+        const select = document.getElementById('yearSelector');
+        selectedYearForView = parseInt(select.value);
+        renderYearView();
+    }
+    
+    
+    function calculateYearlyStats(year = new Date().getFullYear()) {
         const daysByMonth = {};
         let totalWorked = 0;
         let workDays = 0;
@@ -15117,7 +15161,7 @@ TIPPS:
         // Durchlaufe alle Einträge
         data.entries.forEach(e => {
             const entryDate = new Date(e.date);
-            if (entryDate.getFullYear() !== currentYear) return;
+            if (entryDate.getFullYear() !== year) return;
             
             const month = entryDate.getMonth();
             const week = getWeek(entryDate);
@@ -15166,17 +15210,16 @@ TIPPS:
         };
     }
     
-    function renderYearHeatmap(yearStats) {
+    function renderYearHeatmap(yearStats, year = new Date().getFullYear()) {
         const container = document.getElementById('yearHeatmap');
         const now = new Date();
-        const currentYear = now.getFullYear();
-        const startDate = new Date(currentYear, 0, 1);
-        const endDate = new Date(currentYear, 11, 31);
+        const startDate = new Date(year, 0, 1);
+        const endDate = new Date(year, 11, 31);
         
         // Erstelle Map aller Einträge für schnelle Zugriffe
         const entryMap = {};
         data.entries.forEach(e => {
-            if (new Date(e.date).getFullYear() === currentYear) {
+            if (new Date(e.date).getFullYear() === year) {
                 entryMap[e.date] = e;
             }
         });
@@ -15185,9 +15228,9 @@ TIPPS:
         
         // Für jeden Monat
         for (let month = 0; month < 12; month++) {
-            const monthDate = new Date(currentYear, month, 1);
+            const monthDate = new Date(year, month, 1);
             const monthName = monthDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
-            const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
             
             html += `<div>
                 <h4 style="font-size:0.95rem; margin-bottom:1rem; color:var(--text-main);">${monthName}</h4>
@@ -15195,7 +15238,7 @@ TIPPS:
             
             // Wochentag-Header (Mo-So)
             const weekDays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-            const firstDayOfMonth = new Date(currentYear, month, 1).getDay();
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
             const startDayOffset = (firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1);
             
             // Leere Zellen am Anfang
@@ -15205,9 +15248,9 @@ TIPPS:
             
             // Tage des Monats
             for (let day = 1; day <= daysInMonth; day++) {
-                const dateStr = `${currentYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const entry = entryMap[dateStr];
-                const cellDate = new Date(currentYear, month, day);
+                const cellDate = new Date(year, month, day);
                 const dayOfWeek = cellDate.getDay();
                 const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
                 
@@ -15256,7 +15299,7 @@ TIPPS:
         container.innerHTML = html;
     }
     
-    function generateYearInsights(yearStats) {
+    function generateYearInsights(yearStats, year = new Date().getFullYear()) {
         const container = document.getElementById('yearInsights');
         const insights = [];
         
@@ -15273,7 +15316,7 @@ TIPPS:
         const maxMonth = Math.max(...Object.values(yearStats.daysByMonth).map(m => m.worked));
         const bestMonth = Object.entries(yearStats.daysByMonth).find(([_, m]) => m.worked === maxMonth);
         if (bestMonth) {
-            const monthName = new Date(new Date().getFullYear(), parseInt(bestMonth[0]), 1).toLocaleDateString('de-DE', { month: 'long' });
+            const monthName = new Date(year, parseInt(bestMonth[0]), 1).toLocaleDateString('de-DE', { month: 'long' });
             insights.push({
                 icon: '🏆',
                 title: 'Dein stärkster Monat',
@@ -15311,17 +15354,19 @@ TIPPS:
             description: `${yearStats.bestWeekValue.toFixed(1)}h Saldo in dieser Woche. Das war ein Spitzenwert!`
         });
         
-        // Insight 6: Prognose
-        const now = new Date();
-        const daysLeft = 365 - Math.floor((now - new Date(now.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24));
-        const avgDaily = yearStats.avgDaily;
-        const projectedSaldo = yearStats.endSaldo + (daysLeft * (avgDaily - 8) / 5);
-        insights.push({
-            icon: '🔮',
-            title: 'Jahresende Prognose',
-            value: (projectedSaldo >= 0 ? '+' : '') + projectedSaldo.toFixed(1) + 'h',
-            description: `Basierend auf deinem aktuellen Tempo wirst du mit einem Saldo von ${projectedSaldo.toFixed(1)}h das Jahr beenden.`
-        });
+        // Insight 6: Prognose (nur für aktuelles Jahr)
+        if (year === new Date().getFullYear()) {
+            const now = new Date();
+            const daysLeft = 365 - Math.floor((now - new Date(now.getFullYear(), 0, 1)) / (1000 * 60 * 60 * 24));
+            const avgDaily = yearStats.avgDaily;
+            const projectedSaldo = yearStats.endSaldo + (daysLeft * (avgDaily - 8) / 5);
+            insights.push({
+                icon: '🔮',
+                title: 'Jahresende Prognose',
+                value: (projectedSaldo >= 0 ? '+' : '') + projectedSaldo.toFixed(1) + 'h',
+                description: `Basierend auf deinem aktuellen Tempo wirst du mit einem Saldo von ${projectedSaldo.toFixed(1)}h das Jahr beenden.`
+            });
+        }
         
         // HTML rendern
         let html = '';
@@ -15341,7 +15386,7 @@ TIPPS:
         container.innerHTML = html;
     }
     
-    function renderMonthlyComparison(yearStats) {
+    function renderMonthlyComparison(yearStats, year = new Date().getFullYear()) {
         const container = document.getElementById('yearMonthlyComparison');
         const monthNames = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
         
