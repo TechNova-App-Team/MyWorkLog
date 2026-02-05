@@ -1,7 +1,6 @@
 <div align="center">
 
 # ⏱️ MyWorkLog
-# HAPPY NEW YEAR 2026
 
 ### Professionelle Zeiterfassung. Lokal. Sicher. Intelligent.
 
