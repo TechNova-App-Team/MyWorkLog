@@ -27,7 +27,7 @@
 <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
 <!-- OpenGraph Meta Tags (für Social Sharing) -->
-<meta property="og:title" content="TimeTracker v3.1.0 DB/AI – Moderne Zeiterfassung">
+<meta property="og:title" content="TimeTracker v3.2.0 DB/AI – Moderne Zeiterfassung">
 <meta property="og:description" content="Eine einfache, aber mächtige Browser-Anwendung zur lokalen Zeiterfassung. 100% Datenschutz, keine Server.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://technova-app-team.github.io/MyWorkLog/">
@@ -35,7 +35,7 @@
 <meta property="og:locale" content="de_DE">
 <!-- Twitter Card Meta Tags -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="TimeTracker v3.1.0 DB/AI – Moderne Zeiterfassung">
+<meta name="twitter:title" content="TimeTracker v3.2.0 DB/AI – Moderne Zeiterfassung">
 <meta name="twitter:description" content="Lokal laufende Zeiterfassungs-App ohne Server. 100% Datenschutz, Gleitzeit-Konto.">
 <meta name="twitter:image" content="https://img.shields.io/badge/TimeTracker-Modern%20&%20Local-purple?style=for-the-badge&logo=javascript">
 <meta name="twitter:creator" content="@YourTwitterHandle">
@@ -2661,6 +2661,446 @@
         }
 
     </style>
+
+    <style>
+        /* --- Hero Gleitzeit Card: Subtle premium glass effect --- */
+        .gleitzeit-hero {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(6,182,212,0.04) 50%, rgba(16,185,129,0.06) 100%) !important;
+            border: 1px solid rgba(168,85,247,0.12) !important;
+        }
+
+        /* --- KPI Value Glow Effects --- */
+        .kpi-value-positive {
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.4), 0 0 40px rgba(16, 185, 129, 0.1);
+        }
+        .kpi-value-negative {
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.4), 0 0 40px rgba(239, 68, 68, 0.1);
+        }
+        .kpi-value-accent {
+            text-shadow: 0 0 20px rgba(168, 85, 247, 0.3), 0 0 40px rgba(168, 85, 247, 0.1);
+        }
+
+        /* --- Quick Actions Premium --- */
+        .quick-actions button {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        .quick-actions button::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            background: radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+        .quick-actions button:hover::after {
+            width: 300px;
+            height: 300px;
+        }
+        .quick-actions button:active {
+            transform: scale(0.97);
+        }
+
+        /* --- Streak Pulse Animation --- */
+        @keyframes streakPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        .streak-active {
+            animation: streakPulse 2s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        /* --- Entry Row Enhancements --- */
+        .entry-row {
+            position: relative;
+            backdrop-filter: blur(4px);
+        }
+        .entry-row .entry-relative-time {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            opacity: 0.7;
+            margin-top: 1px;
+            font-family: var(--font-mono);
+        }
+
+        /* --- Donut Legend Enhancement --- */
+        .donut-legend .legend-item {
+            transition: transform 0.2s, opacity 0.2s;
+            cursor: default;
+        }
+        .donut-legend .legend-item:hover {
+            transform: translateX(3px);
+            opacity: 1;
+        }
+
+        /* --- Card Hover Micro-interaction --- */
+        .dashboard-item > .card,
+        .dashboard-item > .kpi-grid > .card {
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+                        box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                        border-color 0.25s;
+        }
+
+        /* --- Vacation Progress Bar Smart Gradient --- */
+        #vacationProgressBar {
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s !important;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        /* --- Mini Week Progress (dots for Mon-Fri) --- */
+        .week-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            margin-top: 6px;
+        }
+        .week-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            transition: all 0.3s;
+            position: relative;
+        }
+        .week-dot.filled {
+            background: var(--success);
+            box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+        }
+        .week-dot.today {
+            border: 1.5px solid var(--primary);
+            box-shadow: 0 0 6px rgba(168, 85, 247, 0.4);
+        }
+        .week-dot-label {
+            font-size: 0.55rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 1px;
+            font-family: var(--font-mono);
+            letter-spacing: 0;
+        }
+
+        /* --- Smooth number transition --- */
+        .counter-animate {
+            transition: color 0.5s;
+        }
+
+        /* --- Charts card subtle shine on hover --- */
+        .charts-row .card:hover {
+            border-color: rgba(168, 85, 247, 0.15);
+        }
+
+        /* --- Ticker Enhancement --- */
+        #quickTicker {
+            border-top: 1px solid rgba(255,255,255,0.04);
+            padding-top: 8px !important;
+        }
+
+        /* --- Greeting Enhancement --- */
+        .greeting-enhanced {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .greeting-emoji {
+            font-size: 1.3rem;
+            display: inline-block;
+            animation: greetWave 2.5s ease-in-out 1;
+            transform-origin: 70% 70%;
+        }
+        @keyframes greetWave {
+            0%, 100% { transform: rotate(0deg); }
+            10% { transform: rotate(14deg); }
+            20% { transform: rotate(-8deg); }
+            30% { transform: rotate(14deg); }
+            40% { transform: rotate(-4deg); }
+            50% { transform: rotate(10deg); }
+            60%, 100% { transform: rotate(0deg); }
+        }
+
+        /* --- Projection badge --- */
+        .projection-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+        }
+        .projection-badge.positive {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        .projection-badge.negative {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* --- Mini Calendar Widget --- */
+        .mini-cal-header {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 4px 0;
+            font-family: var(--font-mono);
+        }
+        .mini-cal-day {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            font-weight: 500;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.02);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            border: 1px solid transparent;
+        }
+        .mini-cal-day:hover {
+            background: rgba(255,255,255,0.06);
+            transform: scale(1.1);
+            z-index: 2;
+        }
+        .mini-cal-day.has-entry {
+            color: #fff;
+            font-weight: 700;
+        }
+        .mini-cal-day.type-work { background: rgba(168,85,247,0.25); border-color: rgba(168,85,247,0.3); }
+        .mini-cal-day.type-school { background: rgba(59,130,246,0.25); border-color: rgba(59,130,246,0.3); }
+        .mini-cal-day.type-vacation { background: rgba(16,185,129,0.25); border-color: rgba(16,185,129,0.3); }
+        .mini-cal-day.type-sick { background: rgba(239,68,68,0.25); border-color: rgba(239,68,68,0.3); }
+        .mini-cal-day.type-holiday { background: rgba(245,158,11,0.25); border-color: rgba(245,158,11,0.3); }
+        .mini-cal-day.is-today {
+            border: 2px solid var(--primary) !important;
+            box-shadow: 0 0 8px rgba(168,85,247,0.3);
+        }
+        .mini-cal-day.is-weekend {
+            opacity: 0.4;
+        }
+        .mini-cal-day.empty {
+            background: transparent;
+            cursor: default;
+        }
+
+        /* --- Week Comparison Widget --- */
+        .week-cmp-block {
+            text-align: center;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.02);
+        }
+        .week-cmp-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .week-cmp-hours {
+            font-size: 1.8rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            color: #fff;
+        }
+        .week-cmp-days {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .week-cmp-delta {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .week-cmp-arrow {
+            font-size: 1.8rem;
+            line-height: 1;
+        }
+        .week-cmp-pct {
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            padding: 3px 10px;
+            border-radius: 8px;
+        }
+
+        /* --- Wochenansicht Tab --- */
+        #view-weekview .wv-day-row {
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        #view-weekview .wv-day-row:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 12px rgba(168,85,247,0.1);
+        }
+        @media (max-width: 640px) {
+            #view-weekview .wv-day-row {
+                grid-template-columns: 1fr !important;
+                gap: 6px !important;
+            }
+            #wvComparisonContent {
+                grid-template-columns: 1fr !important;
+                gap: 10px !important;
+            }
+            .week-cmp-delta {
+                flex-direction: row;
+            }
+        }
+
+        /* --- Quick Templates --- */
+        .quick-tpl-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 8px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+            font-family: var(--font-main);
+        }
+        .quick-tpl-btn:hover {
+            background: var(--primary-dim);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(168,85,247,0.15);
+        }
+        .quick-tpl-btn:active {
+            transform: scale(0.96);
+        }
+        .quick-tpl-icon {
+            font-size: 1.3rem;
+        }
+        .quick-tpl-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.2;
+        }
+        .quick-tpl-sub {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+        }
+
+        /* --- Mobile Bottom Navigation Bar --- */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: rgba(10, 10, 12, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            z-index: 150;
+            padding: 0 8px;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .mobile-bottom-nav-inner {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .mob-nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 6px 12px;
+            border-radius: 10px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font-main);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .mob-nav-btn.active {
+            color: var(--primary);
+        }
+        .mob-nav-btn.active .mob-nav-icon {
+            background: var(--primary-dim);
+        }
+        .mob-nav-icon {
+            font-size: 1.2rem;
+            padding: 4px 12px;
+            border-radius: 12px;
+            transition: background 0.2s;
+        }
+        .mob-nav-label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        @media (max-width: 767px) {
+            .mobile-bottom-nav {
+                display: block;
+            }
+            /* Add bottom padding to main content so it doesn't hide behind bottom nav */
+            .main {
+                padding-bottom: 75px !important;
+            }
+        }
+
+        /* --- Break Warning Banner --- */
+        .break-warning-banner {
+            display: none;
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(245,158,11,0.95) 0%, rgba(239,68,68,0.95) 100%);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 160;
+            box-shadow: 0 8px 32px rgba(239,68,68,0.3);
+            backdrop-filter: blur(10px);
+            animation: breakPulse 2s ease-in-out infinite;
+            cursor: pointer;
+            text-align: center;
+            max-width: 90vw;
+        }
+        .break-warning-banner.visible {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @keyframes breakPulse {
+            0%, 100% { box-shadow: 0 8px 32px rgba(239,68,68,0.3); }
+            50% { box-shadow: 0 8px 40px rgba(239,68,68,0.5); }
+        }
+        @media (min-width: 768px) {
+            .break-warning-banner {
+                bottom: 30px;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -3541,7 +3981,7 @@
         </a>
         <!-- Version Footer -->
         <div style="margin-top: auto; padding-top: 1.5rem; border-top: 1px solid var(--border); text-align: center; font-size: 0.75rem; color: var(--text-muted);">
-            <div style="font-weight: 600; letter-spacing: 0.5px;">v3.1.0 DB/AI</div>
+            <div style="font-weight: 600; letter-spacing: 0.5px;">v3.2.0 DB/AI</div>
             <div style="font-size: 0.7rem; margin-top: 3px; opacity: 0.8;">TIME.PRO</div>
         </div>        
     </nav>
@@ -3593,20 +4033,21 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
+                        <div class="card gleitzeit-hero" style="display:flex; flex-direction:column; justify-content:center;">
                             <div class="ring-lbl">GLEITZEIT KONTO</div>
-                            <div style="font-size:2.8rem; font-weight:800; color:var(--primary); margin:10px 0; font-family:var(--font-mono); letter-spacing:-2px;" id="valTotal">+0.0h</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted);">Prognose: <span id="valProjected" style="color:#fff">0h</span></div>
+                            <div style="font-size:2.8rem; font-weight:800; color:var(--primary); margin:10px 0; font-family:var(--font-mono); letter-spacing:-2px;" id="valTotal" class="counter-animate">+0.0h</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">Prognose: <span id="valProjected" class="projection-badge">0h</span></div>
                         </div>
                         <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
                             <div class="ring-lbl">Ø TÄGLICH</div>
-                            <div style="font-size:2rem; font-weight:800; color:#fff; margin:5px 0; font-family:var(--font-mono);" id="valAvg">0.0h</div>
+                            <div style="font-size:2rem; font-weight:800; color:#fff; margin:5px 0; font-family:var(--font-mono);" id="valAvg" class="counter-animate">0.0h</div>
                             <div style="margin-top:auto; width:100%;">
                                 <div class="ring-lbl" style="margin-bottom:5px; display:flex; justify-content:space-between;">
                                     <span>Urlaubstage</span>
-                                    <span id="valVacationUsed">0 / 30</span>
+                                    <span id="valVacationUsed" style="font-family:var(--font-mono); font-weight:600;">0 / 30</span>
                                 </div>
-                                <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:2px;"><div id="vacationProgressBar" style="width:0%; background:var(--success); height:100%;"></div></div>
+                                <div style="height:5px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;"><div id="vacationProgressBar" style="width:0%; background:var(--success); height:100%; border-radius:3px;"></div></div>
+                                <div id="weekDotsContainer" class="week-dots" style="margin-top:10px;"></div>
                             </div>
                         </div>
                     </div>
@@ -3767,6 +4208,19 @@
                     <div class="card">
                         <div class="list-header">Letzte Aktivitäten</div>
                         <div id="entryListShort"></div>
+                    </div>
+                </div>
+
+                <!-- Quick Entry Templates (NEW) -->
+                <div class="dashboard-item" data-item-id="quick-templates">
+                    <div class="card" style="padding:1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                            <div class="chart-title">⚡ Schnelleintrag</div>
+                            <span style="font-size:0.7rem; color:var(--text-muted);">1-Klick Vorlagen</span>
+                        </div>
+                        <div id="quickTemplatesGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px;">
+                            <!-- filled by JS -->
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4267,12 +4721,28 @@
                     <div style="font-size:2rem; font-weight:800; color:var(--holiday); margin:10px 0; font-family:var(--font-mono);" id="yearBestWeek">KW --</div>
                     <div style="font-size:0.8rem; color:var(--text-muted); font-family:var(--font-mono);" id="yearBestWeekValue">+0h</div>
                 </div>
+                <div class="card" style="border-left: 5px solid #3b82f6;">
+                    <div class="audit-label">🌴 Urlaubstage</div>
+                    <div style="font-size:2rem; font-weight:800; color:#3b82f6; margin:10px 0; font-family:var(--font-mono);" id="yearVacationDays">0</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">In diesem Jahr</div>
+                </div>
+                <div class="card" style="border-left: 5px solid #f59e0b;">
+                    <div class="audit-label">🏖️ Feiertage</div>
+                    <div style="font-size:2rem; font-weight:800; color:#f59e0b; margin:10px 0; font-family:var(--font-mono);" id="yearHolidayDays">0</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">In diesem Jahr</div>
+                </div>
             </div>
             
             <!-- JAHRES-HEATMAP -->
             <div class="card" style="margin-bottom:2rem;">
                 <h3 style="font-size:1.1rem; margin-bottom:1.5rem;">🔥 Produktivitäts-Heatmap</h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">Jedes Quadrat = 1 Tag. Farbe zeigt deine Saldo-Leistung. Grün = positiv, Rot = negativ, Grau = kein Eintrag.</p>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">Jedes Quadrat = 1 Tag. 
+                    <strong style="color:#3b82f6;">Blau = 🌴 Urlaub</strong> | 
+                    <strong style="color:#f59e0b;">Orange = 🏖️ Feiertag</strong> | 
+                    <strong style="color:#ec4899;">Pink = 🤒 Krankheit</strong> | 
+                    <strong style="color:#10b981;">Grün = Positiv</strong> | 
+                    <strong style="color:#ef4444;">Rot = Negativ</strong> | 
+                    Grau = kein Eintrag</p>
                 
                 <div style="overflow-x: auto; padding-bottom: 1rem;">
                     <div id="yearHeatmap" style="display:inline-block; min-width:100%;"></div>
@@ -4323,6 +4793,26 @@
         <div id="view-monthcompare" class="view-section">
             <h2 style="margin-bottom:0.5rem;">📊 Monats-Vergleich & Detailanalyse</h2>
             <p style="color:var(--text-muted); margin-bottom:2rem;">Vergleiche deine aktuelle Performance mit dem Vormonat und Jahresschnitt. Identifiziere Trends und Muster.</p>
+
+            <!-- Monatskalender -->
+            <div class="card" style="padding:1.25rem; margin-bottom:2rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <div class="chart-title">📅 Monatskalender</div>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <button class="btn btn-ghost" style="padding:4px 8px; font-size:0.8rem;" onclick="miniCalNav(-1)" title="Vorheriger Monat">◀</button>
+                        <span id="miniCalMonth" style="font-size:0.85rem; font-weight:600; font-family:var(--font-mono); min-width:120px; text-align:center;"></span>
+                        <button class="btn btn-ghost" style="padding:4px 8px; font-size:0.8rem;" onclick="miniCalNav(1)" title="Nächster Monat">▶</button>
+                    </div>
+                </div>
+                <div id="miniCalGrid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:3px; text-align:center;"></div>
+                <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:10px; justify-content:center;">
+                    <div style="display:flex;align-items:center;gap:4px;font-size:0.65rem;color:var(--text-muted);"><div style="width:8px;height:8px;border-radius:2px;background:var(--primary);"></div>Arbeit</div>
+                    <div style="display:flex;align-items:center;gap:4px;font-size:0.65rem;color:var(--text-muted);"><div style="width:8px;height:8px;border-radius:2px;background:var(--school);"></div>Schule</div>
+                    <div style="display:flex;align-items:center;gap:4px;font-size:0.65rem;color:var(--text-muted);"><div style="width:8px;height:8px;border-radius:2px;background:var(--success);"></div>Urlaub</div>
+                    <div style="display:flex;align-items:center;gap:4px;font-size:0.65rem;color:var(--text-muted);"><div style="width:8px;height:8px;border-radius:2px;background:var(--danger);"></div>Krank</div>
+                    <div style="display:flex;align-items:center;gap:4px;font-size:0.65rem;color:var(--text-muted);"><div style="width:8px;height:8px;border-radius:2px;background:var(--holiday);"></div>Feiertag</div>
+                </div>
+            </div>
             
             <!-- Monats-Wähler -->
             <div class="card" style="margin-bottom:2rem; display:flex; gap:15px; align-items:center;">
@@ -4361,6 +4851,14 @@
                 </div>
             </div>
             
+            <!-- MONATSVERGLEICH KOMPAKT -->
+            <div class="card" style="margin-bottom:2rem;">
+                <h3 style="font-size:1.1rem; margin-bottom:1.5rem;">📊 Monatsvergleich</h3>
+                <div id="mcMonthComparisonBlock" style="display:grid; grid-template-columns:1fr auto 1fr; gap:16px; align-items:center;">
+                    <!-- filled by JS -->
+                </div>
+            </div>
+
             <!-- DETAILLIERTE WOCHENANALYSE -->
             <div class="card" style="margin-bottom:2rem;">
                 <h3 style="font-size:1.1rem; margin-bottom:1.5rem;">📈 Wochenliste dieses Monats</h3>
@@ -4424,6 +4922,65 @@
                 </div>
             </div>
 
+        </div>
+
+        <!-- ============================================ -->
+        <!-- WOCHENANSICHT TAB -->
+        <!-- ============================================ -->
+        <div id="view-weekview" class="view-section">
+            <h2 style="margin-bottom:0.5rem;">📆 Wochenansicht</h2>
+            <p style="color:var(--text-muted); margin-bottom:2rem;">Detaillierte Analyse deiner Arbeitswoche – Tag für Tag. Vergleiche mit der Vorwoche und erkenne Muster.</p>
+
+            <!-- Wochen-Navigator -->
+            <div class="card" style="margin-bottom:2rem; display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
+                <button class="btn-ghost" onclick="weekViewNavigate(-1)" style="padding:8px 14px;">◀ Vorwoche</button>
+                <div style="flex:1; text-align:center;">
+                    <div id="wvWeekLabel" style="font-size:1.1rem; font-weight:700; color:var(--primary);">KW --</div>
+                    <div id="wvDateRange" style="font-size:0.8rem; color:var(--text-muted);"></div>
+                </div>
+                <button class="btn-ghost" onclick="weekViewNavigate(1)" style="padding:8px 14px;">Nächste ▶</button>
+                <button class="btn-ghost" onclick="weekViewNavigate(0)" style="padding:8px 14px; border-color:var(--primary); color:var(--primary);">⟳ Heute</button>
+            </div>
+
+            <!-- KPI Übersicht der Woche -->
+            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom:2rem;" id="wvKPIGrid">
+                <!-- filled by JS -->
+            </div>
+
+            <!-- Woche vs Vorwoche Vergleich -->
+            <div class="card" style="margin-bottom:2rem;">
+                <h3 style="font-size:1.1rem; margin-bottom:1.5rem;">📊 Wochenvergleich</h3>
+                <div id="wvComparisonContent" style="display:grid; grid-template-columns:1fr auto 1fr; gap:16px; align-items:center;">
+                    <!-- filled by JS -->
+                </div>
+            </div>
+
+            <!-- Tagesübersicht der Woche -->
+            <div class="card" style="margin-bottom:2rem;">
+                <h3 style="font-size:1.1rem; margin-bottom:1.5rem;">📋 Tagesübersicht</h3>
+                <div id="wvDailyBreakdown">
+                    <!-- filled by JS -->
+                </div>
+            </div>
+
+            <!-- Wochentags-Analyse (Balkendiagramm) -->
+            <div class="card" style="margin-bottom:2rem;">
+                <h3 style="font-size:1.1rem; margin-bottom:1.5rem;">📈 Stunden pro Tag</h3>
+                <div id="wvDayBars" style="display:flex; gap:8px; align-items:flex-end; height:200px; padding-top:20px;">
+                    <!-- filled by JS -->
+                </div>
+            </div>
+
+            <!-- Wochen-Trend (letzte 8 Wochen) -->
+            <div class="card">
+                <h3 style="font-size:1.1rem; margin-bottom:1.5rem;">🔄 Wochen-Trend (letzte 8 Wochen)</h3>
+                <div id="wvTrendChart" style="display:flex; gap:6px; align-items:flex-end; height:180px;">
+                    <!-- filled by JS -->
+                </div>
+                <div id="wvTrendLabels" style="display:flex; gap:6px; margin-top:8px;">
+                    <!-- filled by JS -->
+                </div>
+            </div>
         </div>
 
         <div id="view-history" class="view-section">
@@ -6777,6 +7334,11 @@
         const navEl = document.getElementById('nav-' + tabId);
         if(navEl) navEl.classList.add('active');
         
+        // Sync mobile bottom nav
+        document.querySelectorAll('.mob-nav-btn').forEach(btn => btn.classList.remove('active'));
+        const mobBtn = document.getElementById('mobNav-' + tabId);
+        if (mobBtn) mobBtn.classList.add('active');
+        
         const titles = { 
             'dashboard': 'Übersicht', 
             'history': 'Daten-Analyse & Historie', 
@@ -6787,6 +7349,7 @@
             'prognose': 'Saldo Prognose & Zukunftsplanung',
             'yearview': 'Jahresübersicht & Insights',
             'monthcompare': 'Monats-Vergleich & Detailanalyse',
+            'weekview': 'Wochenansicht',
             'aibot': 'AI-Bot Assistent',
         };
         document.querySelector('.page-title').textContent = titles[tabId];
@@ -6821,6 +7384,10 @@
         }
         if (tabId === 'monthcompare') {
             renderMonthCompareView();
+            if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
+        }
+        if (tabId === 'weekview') {
+            renderWeekView();
         }
         if (tabId === 'aibot') {
             initializeAIBot();
@@ -8083,13 +8650,75 @@
         }
     }
     
+    // --- DASHBOARD HELPER FUNCTIONS (Premium Enhancements) ---
+    
+    // Smooth value animation for dashboard numbers
+    function animateDashboardValue(el, newText) {
+        if (!el) return;
+        if (el.innerText === newText) return;
+        el.style.opacity = '0.5';
+        el.style.transform = 'translateY(-2px)';
+        setTimeout(() => {
+            el.innerText = newText;
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        }, 150);
+    }
+
+    // Render mini week progress dots (Mo-Fr)
+    function renderWeekDots() {
+        const container = document.getElementById('weekDotsContainer');
+        if (!container) return;
+        
+        const now = new Date();
+        const currentDay = now.getDay(); // 0=So, 1=Mo, ..., 6=Sa
+        const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
+        
+        // Get this week's Monday
+        const monday = new Date(now);
+        const diff = currentDay === 0 ? -6 : 1 - currentDay;
+        monday.setDate(monday.getDate() + diff);
+        monday.setHours(0, 0, 0, 0);
+        
+        let html = '';
+        for (let i = 0; i < 5; i++) {
+            const day = new Date(monday);
+            day.setDate(monday.getDate() + i);
+            const dateStr = day.toISOString().split('T')[0];
+            
+            const hasEntry = data.entries.some(e => e.date === dateStr);
+            const isToday = dateStr === now.toISOString().split('T')[0];
+            
+            const classes = ['week-dot'];
+            if (hasEntry) classes.push('filled');
+            if (isToday) classes.push('today');
+            
+            html += `<div style="text-align:center;">
+                <div class="${classes.join(' ')}" title="${dayNames[i]}: ${hasEntry ? 'Eingetragen' : 'Kein Eintrag'}"></div>
+                <div class="week-dot-label">${dayNames[i]}</div>
+            </div>`;
+        }
+        container.innerHTML = html;
+    }
+
     // --- UI UPDATES (Dashboard) ---
     function updateUI() {
-        document.getElementById('userGreeting').innerText = `Hallo, ${data.settings.name}`;
+        // Smart time-based greeting
+        const greetHour = new Date().getHours();
+        let greetText, greetEmoji;
+        if (greetHour < 6) { greetText = 'Gute Nacht'; greetEmoji = '🌙'; }
+        else if (greetHour < 10) { greetText = 'Guten Morgen'; greetEmoji = '☀️'; }
+        else if (greetHour < 13) { greetText = 'Guten Vormittag'; greetEmoji = '🌤️'; }
+        else if (greetHour < 17) { greetText = 'Guten Nachmittag'; greetEmoji = '⛅'; }
+        else if (greetHour < 21) { greetText = 'Guten Abend'; greetEmoji = '🌅'; }
+        else { greetText = 'Gute Nacht'; greetEmoji = '🌙'; }
+        const greetEl = document.getElementById('userGreeting');
+        greetEl.innerHTML = `<span class="greeting-enhanced"><span class="greeting-emoji">${greetEmoji}</span> ${greetText}, ${data.settings.name}</span>`;
         const trashBadge = document.getElementById('trashCountBadge');
         if (trashBadge) trashBadge.textContent = (Array.isArray(data.trash) ? data.trash.length : 0);
         
         const now = new Date();
+        const currentYear = now.getFullYear(); // Für Jahr-spezifische Statistiken
         let week=0, month=0, total=0, totalWorked=0, countDays=0;
         let sickSum=0, vacSum=0, workSum=0, schoolSum=0, holidaySum=0; 
         let usedVacationDays = 0; 
@@ -8099,12 +8728,14 @@
         let ascEntries = [...data.entries].sort((a,b) => new Date(a.date) - new Date(b.date));
         
         ascEntries.forEach(e => {
+            const entryYear = new Date(e.date).getFullYear();
             runningTotal += e.diff;
             trendData.push(runningTotal);
+            // Nur Arbeits-Summen den aktuellen Trend trennen (für alle Jahre)
             if(e.type==='sick') sickSum += e.worked;
-            else if(e.type==='vacation') { vacSum += e.worked; usedVacationDays++; }
+            else if(e.type==='vacation' && entryYear === currentYear) { vacSum += e.worked; usedVacationDays++; }
             else if(e.type==='school') schoolSum += e.worked;
-            else if(e.type==='holiday') holidaySum += e.worked;
+            else if(e.type==='holiday' && entryYear === currentYear) holidaySum += e.worked;
             else workSum += e.worked;
         });
         
@@ -8128,8 +8759,10 @@
         setRadial('ringMonth', 'valMonth', month);
         
         const totEl = document.getElementById('valTotal');
-        totEl.innerText = (total>=0?'+':'') + total.toFixed(2) + 'h';
+        const totalStr = (total>=0?'+':'') + total.toFixed(2) + 'h';
+        animateDashboardValue(totEl, totalStr);
         totEl.style.color = total>=0 ? 'var(--primary)' : 'var(--danger)';
+        totEl.className = 'counter-animate ' + (total >= 0 ? 'kpi-value-positive' : 'kpi-value-negative');
         
         const avg = countDays > 0 ? totalWorked/countDays : 0;
         document.getElementById('valAvg').innerText = avg.toFixed(1) + 'h';
@@ -8137,13 +8770,23 @@
         const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
         const dailyDrift = dayOfYear > 0 ? total / dayOfYear : 0;
         const projected = total + (dailyDrift * (365 - dayOfYear));
-        document.getElementById('valProjected').innerText = (projected>=0?'+':'') + projected.toFixed(0) + 'h';
+        const projEl = document.getElementById('valProjected');
+        projEl.innerText = (projected>=0?'+':'') + projected.toFixed(0) + 'h';
+        projEl.className = 'projection-badge ' + (projected >= 0 ? 'positive' : 'negative');
 
         const totalVacation = parseFloat(data.settings.vacation.total);
         const usedVacation = data.settings.vacation.used;
         document.getElementById('valVacationUsed').innerText = `${usedVacation} / ${totalVacation}`;
         const vacPct = (usedVacation / totalVacation) * 100;
-        document.getElementById('vacationProgressBar').style.width = `${Math.min(vacPct, 100)}%`;
+        const vacBar = document.getElementById('vacationProgressBar');
+        vacBar.style.width = `${Math.min(vacPct, 100)}%`;
+        // Smart color: green → yellow → red based on usage
+        if (vacPct > 90) vacBar.style.background = 'var(--danger)';
+        else if (vacPct > 70) vacBar.style.background = '#f59e0b';
+        else vacBar.style.background = 'var(--success)';
+
+        // Mini Week Progress Dots (Mo-Fr)
+        renderWeekDots();
 
         renderLists();
         renderTrend(trendData, 'trendChart');
@@ -8156,6 +8799,9 @@
         if (typeof updateLastActivities === 'function') updateLastActivities();
         if (typeof updateMoodStats === 'function') updateMoodStats();
         if (typeof updateProductivityScore === 'function') updateProductivityScore();
+        
+        // Update Advanced Dashboard Widgets
+        if (typeof renderQuickTemplates === 'function') renderQuickTemplates();
     }
     
     // --- NEW AUDIT PROTOCOL RENDER ---
@@ -8247,12 +8893,28 @@
         if (txt) txt.innerText = (val >= 0 ? '+' : '') + val.toFixed(1) + 'h';
     }
 
+    function getRelativeTime(dateStr) {
+        const d = new Date(dateStr);
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+        const yesterdayDate = new Date(now); yesterdayDate.setDate(now.getDate() - 1);
+        const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+        if (dateStr === todayStr) return 'heute';
+        if (dateStr === yesterdayStr) return 'gestern';
+        const diffDays = Math.round((now - d) / (1000*60*60*24));
+        if (diffDays > 0 && diffDays <= 7) return `vor ${diffDays}d`;
+        if (diffDays > 7 && diffDays <= 14) return 'letzte Woche';
+        return d.toLocaleDateString('de-DE');
+    }
+
     function renderLists() {
+        const typeEmoji = {work:'💼', school:'📚', vacation:'🌴', sick:'💊', holiday:'🏖️'};
         const createRow = (e) => `
             <div class="entry-row type-${e.type}">
                 <div>
-                    <div class="entry-date">${new Date(e.date).toLocaleDateString('de-DE')}</div>
+                    <div class="entry-date">${typeEmoji[e.type] || '📋'} ${new Date(e.date).toLocaleDateString('de-DE')}</div>
                     <div class="entry-meta">${e.isPeriod ? e.label : e.info} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ SCHICHT MAX!</span>' : ''}</div>
+                    <div class="entry-relative-time">${getRelativeTime(e.date)}</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px;">
                     <span class="tag">${e.type === 'school' ? 'SCHULE' : (e.type === 'holiday' ? 'FEIERTAG' : e.type.toUpperCase())}</span>
@@ -14909,7 +15571,10 @@ TIPPS:
         const trendLabel = saldoTrend > 10 ? '🚀 Sehr positiv' : (saldoTrend > 0 ? '📈 Positiv' : (saldoTrend < -10 ? '📉 Kritisch' : '↔️ Neutral'));
         document.getElementById('mcSaldoTrendLabel').innerText = trendLabel;
         
-        // 5. Render Wochenanalyse
+        // 5. Render Monatsvergleich-Block (kompakt)
+        renderMonthComparisonBlock(stats, prevStats, selectedMonth, prevMonth);
+        
+        // 5b. Render Wochenanalyse
         renderMonthWeeksList(stats);
         
         // 6. Update Statistiken
@@ -14922,6 +15587,38 @@ TIPPS:
         
         // 7. Render Charts
         renderMonthCompareCharts(stats, prevStats);
+    }
+
+    function renderMonthComparisonBlock(stats, prevStats, selectedMonth, prevMonth) {
+        const container = document.getElementById('mcMonthComparisonBlock');
+        if (!container) return;
+
+        const monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+        const delta = prevStats.worked > 0 ? ((stats.worked - prevStats.worked) / prevStats.worked * 100) : (stats.worked > 0 ? 100 : 0);
+        const deltaColor = delta >= 0 ? 'var(--success)' : 'var(--danger)';
+        const deltaArrow = delta > 0 ? '↑' : (delta < 0 ? '↓' : '→');
+        const deltaBg = delta >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+        const diffH = stats.worked - prevStats.worked;
+
+        container.innerHTML = `
+            <div class="week-cmp-block">
+                <div class="week-cmp-label">${monthNames[prevMonth]} (Vormonat)</div>
+                <div class="week-cmp-hours">${prevStats.worked.toFixed(1)}h</div>
+                <div class="week-cmp-days">${prevStats.workDays} Tage | ${prevStats.saldo >= 0 ? '+' : ''}${prevStats.saldo.toFixed(1)}h Saldo</div>
+            </div>
+            <div class="week-cmp-delta">
+                <div class="week-cmp-arrow" style="color:${deltaColor}">${deltaArrow}</div>
+                <div class="week-cmp-pct" style="color:${deltaColor}; background:${deltaBg}">
+                    ${delta >= 0 ? '+' : ''}${delta.toFixed(0)}%
+                </div>
+                <div style="font-size:0.72rem; color:${deltaColor}; font-family:var(--font-mono); margin-top:2px;">${diffH >= 0 ? '+' : ''}${diffH.toFixed(1)}h</div>
+            </div>
+            <div class="week-cmp-block" style="border-left:2px solid var(--primary-dim);">
+                <div class="week-cmp-label">${monthNames[selectedMonth]} (Aktuell)</div>
+                <div class="week-cmp-hours" style="color:var(--primary);">${stats.worked.toFixed(1)}h</div>
+                <div class="week-cmp-days">${stats.workDays} Tage | ${stats.saldo >= 0 ? '+' : ''}${stats.saldo.toFixed(1)}h Saldo</div>
+            </div>
+        `;
     }
     
     function calculateMonthStats(month, year) {
@@ -15101,6 +15798,8 @@ TIPPS:
         document.getElementById('yearEndSaldo').style.color = yearStats.endSaldo >= 0 ? '#06b6d4' : 'var(--danger)';
         document.getElementById('yearBestWeek').innerText = `KW ${yearStats.bestWeek}`;
         document.getElementById('yearBestWeekValue').innerText = (yearStats.bestWeekValue >= 0 ? '+' : '') + yearStats.bestWeekValue.toFixed(1) + 'h';
+        document.getElementById('yearVacationDays').innerText = yearStats.vacationDays;
+        document.getElementById('yearHolidayDays').innerText = yearStats.holidayDays;
         
         // 4. Heatmap rendern
         renderYearHeatmap(yearStats, selectedYearForView);
@@ -15150,6 +15849,8 @@ TIPPS:
         const daysByMonth = {};
         let totalWorked = 0;
         let workDays = 0;
+        let vacationDays = 0;
+        let holidayDays = 0;
         let totalSaldo = 0;
         const weeklyDiffs = {};
         let bestWeek = 0;
@@ -15157,7 +15858,7 @@ TIPPS:
         
         // Initialisiere Monate
         for (let i = 0; i < 12; i++) {
-            daysByMonth[i] = { worked: 0, saldo: 0, count: 0, days: [] };
+            daysByMonth[i] = { worked: 0, saldo: 0, count: 0, days: [], vacationDays: 0, holidayDays: 0 };
         }
         
         // Durchlaufe alle Einträge
@@ -15183,6 +15884,12 @@ TIPPS:
             
             if (e.type === 'work') {
                 workDays++;
+            } else if (e.type === 'vacation') {
+                vacationDays++;
+                daysByMonth[month].vacationDays++;
+            } else if (e.type === 'holiday') {
+                holidayDays++;
+                daysByMonth[month].holidayDays++;
             }
             
             // Wöchentliche Diffs
@@ -15208,6 +15915,8 @@ TIPPS:
             bestWeekValue,
             daysByMonth,
             workDays,
+            vacationDays,
+            holidayDays,
             weeklyDiffs
         };
     }
@@ -15260,22 +15969,35 @@ TIPPS:
                 let opacity = '0.3';
                 
                 if (entry) {
-                    const diff = entry.diff;
-                    if (diff < -1) {
-                        color = '#ef4444'; // Rot = sehr negativ
-                        opacity = '0.8';
-                    } else if (diff < 0) {
-                        color = '#ef4444'; // Rot = negativ
-                        opacity = '0.5';
-                    } else if (diff < 0.5) {
-                        color = '#fbbf24'; // Gelb = leicht positiv
-                        opacity = '0.6';
-                    } else if (diff < 3) {
-                        color = '#10b981'; // Grün = positiv
-                        opacity = '0.7';
+                    // PRIORTÄT 1: Prüfe auf Urlaub/Feiertag
+                    if (entry.type === 'vacation') {
+                        color = '#3b82f6'; // Blau für Urlaub 🌴
+                        opacity = '0.85';
+                    } else if (entry.type === 'holiday') {
+                        color = '#f59e0b'; // Orange für Feiertag 🏖️
+                        opacity = '0.85';
+                    } else if (entry.type === 'sick') {
+                        color = '#ec4899'; // Pink für Krankheit
+                        opacity = '0.75';
                     } else {
-                        color = 'var(--primary)'; // Lila = sehr positiv
-                        opacity = '0.9';
+                        // PRIORITÄT 2: Farbe basierend auf diff (Saldo)
+                        const diff = entry.diff;
+                        if (diff < -1) {
+                            color = '#ef4444'; // Rot = sehr negativ
+                            opacity = '0.8';
+                        } else if (diff < 0) {
+                            color = '#ef4444'; // Rot = negativ
+                            opacity = '0.5';
+                        } else if (diff < 0.5) {
+                            color = '#fbbf24'; // Gelb = leicht positiv
+                            opacity = '0.6';
+                        } else if (diff < 3) {
+                            color = '#10b981'; // Grün = positiv
+                            opacity = '0.7';
+                        } else {
+                            color = 'var(--primary)'; // Lila = sehr positiv
+                            opacity = '0.9';
+                        }
                     }
                 } else if (isWeekend) {
                     opacity = '0.15';
@@ -15283,7 +16005,15 @@ TIPPS:
                 
                 const isToday = cellDate.toDateString() === now.toDateString();
                 const border = isToday ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)';
-                const tooltip = entry ? `${entry.worked.toFixed(1)}h (${entry.diff >= 0 ? '+' : ''}${entry.diff.toFixed(1)}h)` : 'Kein Eintrag';
+                let typeLabel = '';
+                if (entry) {
+                    if (entry.type === 'vacation') typeLabel = ' 🌴 Urlaub';
+                    else if (entry.type === 'holiday') typeLabel = ' 🏖️ Feiertag';
+                    else if (entry.type === 'sick') typeLabel = ' 🤒 Krankheit';
+                    else if (entry.type === 'school') typeLabel = ' 📚 Schule';
+                    else typeLabel = ' 💼 Arbeit';
+                }
+                const tooltip = entry ? `${entry.worked.toFixed(1)}h (${entry.diff >= 0 ? '+' : ''}${entry.diff.toFixed(1)}h)${typeLabel}` : 'Kein Eintrag';
                 
                 html += `
                     <div style="width:32px; height:32px; background:${color}; opacity:${opacity}; border-radius:6px; border:${border}; cursor:pointer; transition:all 0.2s;" 
@@ -16483,6 +17213,7 @@ TIPPS:
             {id:'history', label:'Verlauf', icon:'📉', visible:true},
             {id:'yearview', label:'Jahresansicht', icon:'📅', visible:true},
             {id:'monthcompare', label:'Monatvergleich', icon:'📊', visible:true},
+            {id:'weekview', label:'Wochenansicht', icon:'📆', visible:true},
             {id:'prognose', label:'Prognose', icon:'🔮', visible:true},
             // 2. Bereich: Ausbildung & Lernen
             {id:'school', label:'Berufsschule', icon:'🏫', visible:true},
@@ -17208,7 +17939,15 @@ TIPPS:
         else if (streak.current >= 5) emoji = '✨';
 
         if (elEmoji) {
-            try { elEmoji.innerText = emoji; } catch (e) { console.warn('updateStreakCounter: failed to set streakEmoji', e); }
+            try { 
+                elEmoji.innerText = emoji; 
+                // Add pulse animation when streak is active
+                if (streak.current > 0) {
+                    elEmoji.classList.add('streak-active');
+                } else {
+                    elEmoji.classList.remove('streak-active');
+                }
+            } catch (e) { console.warn('updateStreakCounter: failed to set streakEmoji', e); }
         } else {
             console.warn('updateStreakCounter: #streakEmoji not found');
         }
@@ -17297,6 +18036,518 @@ TIPPS:
         } catch (e) {
             console.warn('updateQuickTicker error', e);
         }
+    }
+
+    // ============================================
+    // FEATURE: MINI CALENDAR WIDGET
+    // ============================================
+    let miniCalViewMonth = new Date().getMonth();
+    let miniCalViewYear = new Date().getFullYear();
+
+    function miniCalNav(dir) {
+        miniCalViewMonth += dir;
+        if (miniCalViewMonth > 11) { miniCalViewMonth = 0; miniCalViewYear++; }
+        if (miniCalViewMonth < 0) { miniCalViewMonth = 11; miniCalViewYear--; }
+        renderMiniCalendar();
+    }
+
+    function renderMiniCalendar() {
+        const grid = document.getElementById('miniCalGrid');
+        const monthEl = document.getElementById('miniCalMonth');
+        if (!grid || !monthEl) return;
+
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+        const year = miniCalViewYear;
+        const month = miniCalViewMonth;
+
+        // Month label
+        const monthName = new Date(year, month, 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+        monthEl.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+
+        // Build entry map for this month
+        const entryMap = {};
+        (data.entries || []).forEach(e => {
+            const d = new Date(e.date);
+            if (d.getFullYear() === year && d.getMonth() === month) {
+                entryMap[e.date] = e.type;
+            }
+        });
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const firstDay = new Date(year, month, 1).getDay();
+        const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Monday start
+
+        // Header row
+        const dayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+        let html = dayLabels.map(d => `<div class="mini-cal-header">${d}</div>`).join('');
+
+        // Empty cells before first day
+        for (let i = 0; i < startOffset; i++) {
+            html += '<div class="mini-cal-day empty"></div>';
+        }
+
+        // Day cells
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const cellDate = new Date(year, month, day);
+            const dayOfWeek = cellDate.getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const isToday = dateStr === todayStr;
+            const entryType = entryMap[dateStr];
+
+            let classes = 'mini-cal-day';
+            if (entryType) classes += ` has-entry type-${entryType}`;
+            if (isToday) classes += ' is-today';
+            if (isWeekend && !entryType) classes += ' is-weekend';
+
+            const title = entryType ?
+                `${dateStr}: ${entryType === 'work' ? 'Arbeit' : entryType === 'school' ? 'Schule' : entryType === 'vacation' ? 'Urlaub' : entryType === 'sick' ? 'Krank' : 'Feiertag'}` :
+                dateStr;
+
+            html += `<div class="${classes}" title="${title}" onclick="miniCalDayClick('${dateStr}')">${day}</div>`;
+        }
+
+        grid.innerHTML = html;
+    }
+
+    function miniCalDayClick(dateStr) {
+        // Set entry form date to clicked day
+        const inp = document.getElementById('inpDate');
+        if (inp) {
+            inp.value = dateStr;
+            // Scroll to entry form
+            const form = document.querySelector('[data-item-id="entry-form"]');
+            if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    // ============================================
+    // FEATURE: WOCHENANSICHT TAB (Full Week View)
+    // ============================================
+    let weekViewOffset = 0; // 0 = current week, -1 = last week, etc.
+
+    function weekViewNavigate(dir) {
+        if (dir === 0) weekViewOffset = 0;
+        else weekViewOffset += dir;
+        renderWeekView();
+    }
+
+    function getWeekMonday(offset) {
+        const now = new Date();
+        const currentDay = now.getDay();
+        const mondayDiff = currentDay === 0 ? -6 : 1 - currentDay;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() + mondayDiff + (offset * 7));
+        monday.setHours(0, 0, 0, 0);
+        return monday;
+    }
+
+    function getISOWeekNumber(d) {
+        const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        const dayNum = date.getUTCDay() || 7;
+        date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+        return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    }
+
+    function getWeekEntries(monday) {
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        sunday.setHours(23, 59, 59, 999);
+        const entries = [];
+        (data.entries || []).forEach(e => {
+            const d = new Date(e.date);
+            d.setHours(0, 0, 0, 0);
+            if (d >= monday && d <= sunday) {
+                entries.push(e);
+            }
+        });
+        return entries;
+    }
+
+    function calcWeekStats(entries) {
+        let hours = 0, days = 0, saldo = 0, schoolDays = 0, vacDays = 0, sickDays = 0;
+        entries.forEach(e => {
+            hours += e.worked || 0;
+            saldo += e.diff || 0;
+            if (e.type === 'work') days++;
+            if (e.type === 'school') { days++; schoolDays++; }
+            if (e.type === 'vacation') vacDays++;
+            if (e.type === 'sick') sickDays++;
+        });
+        return { hours, days, saldo, schoolDays, vacDays, sickDays };
+    }
+
+    function renderWeekView() {
+        const monday = getWeekMonday(weekViewOffset);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        const kwNum = getISOWeekNumber(monday);
+
+        // Week label
+        const lbl = document.getElementById('wvWeekLabel');
+        const rng = document.getElementById('wvDateRange');
+        if (lbl) lbl.textContent = `KW ${kwNum} – ${monday.getFullYear()}`;
+        if (rng) rng.textContent = `${monday.toLocaleDateString('de-DE', {day:'2-digit',month:'short'})} – ${sunday.toLocaleDateString('de-DE', {day:'2-digit',month:'short',year:'numeric'})}`;
+
+        const entries = getWeekEntries(monday);
+        const tw = calcWeekStats(entries);
+
+        // Previous week for comparison
+        const prevMonday = getWeekMonday(weekViewOffset - 1);
+        const prevEntries = getWeekEntries(prevMonday);
+        const lw = calcWeekStats(prevEntries);
+
+        // Soll hours for this week
+        const sollHours = (data.settings && data.settings.hours) ? data.settings.hours.reduce((a,b) => a + b, 0) : 40;
+
+        // ========== KPI GRID ==========
+        const kpiGrid = document.getElementById('wvKPIGrid');
+        if (kpiGrid) {
+            const pctDone = sollHours > 0 ? (tw.hours / sollHours * 100) : 0;
+            kpiGrid.innerHTML = `
+                <div class="card" style="border-left:4px solid var(--primary); text-align:center; padding:1.2rem;">
+                    <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px;">Gearbeitet</div>
+                    <div style="font-size:1.8rem; font-weight:800; color:var(--primary); font-family:var(--font-mono); margin:6px 0;">${tw.hours.toFixed(1)}h</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">von ${sollHours}h Soll</div>
+                </div>
+                <div class="card" style="border-left:4px solid ${tw.saldo >= 0 ? 'var(--success)' : 'var(--danger)'}; text-align:center; padding:1.2rem;">
+                    <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px;">Saldo</div>
+                    <div style="font-size:1.8rem; font-weight:800; color:${tw.saldo >= 0 ? 'var(--success)' : 'var(--danger)'}; font-family:var(--font-mono); margin:6px 0;">${tw.saldo >= 0 ? '+' : ''}${tw.saldo.toFixed(1)}h</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">Über/Unterstunden</div>
+                </div>
+                <div class="card" style="border-left:4px solid #06b6d4; text-align:center; padding:1.2rem;">
+                    <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px;">Arbeitstage</div>
+                    <div style="font-size:1.8rem; font-weight:800; color:#06b6d4; font-family:var(--font-mono); margin:6px 0;">${tw.days}</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">${tw.schoolDays > 0 ? tw.schoolDays + ' Schule' : ''} ${tw.vacDays > 0 ? tw.vacDays + ' Urlaub' : ''} ${tw.sickDays > 0 ? tw.sickDays + ' Krank' : ''}</div>
+                </div>
+                <div class="card" style="border-left:4px solid #fbbf24; text-align:center; padding:1.2rem;">
+                    <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px;">Fortschritt</div>
+                    <div style="font-size:1.8rem; font-weight:800; color:#fbbf24; font-family:var(--font-mono); margin:6px 0;">${Math.min(pctDone, 100).toFixed(0)}%</div>
+                    <div style="height:4px; border-radius:4px; background:rgba(255,255,255,0.06); margin-top:6px; overflow:hidden;">
+                        <div style="height:100%; width:${Math.min(pctDone, 100)}%; background:linear-gradient(90deg,#fbbf24,var(--success)); border-radius:4px; transition:width 0.5s;"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ========== WEEK COMPARISON ==========
+        const cmpContainer = document.getElementById('wvComparisonContent');
+        if (cmpContainer) {
+            const delta = lw.hours > 0 ? ((tw.hours - lw.hours) / lw.hours * 100) : (tw.hours > 0 ? 100 : 0);
+            const deltaColor = delta >= 0 ? 'var(--success)' : 'var(--danger)';
+            const deltaArrow = delta > 0 ? '↑' : (delta < 0 ? '↓' : '→');
+            const deltaBg = delta >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
+            const prevKW = getISOWeekNumber(prevMonday);
+
+            cmpContainer.innerHTML = `
+                <div class="week-cmp-block">
+                    <div class="week-cmp-label">KW ${prevKW} (Vorwoche)</div>
+                    <div class="week-cmp-hours">${lw.hours.toFixed(1)}h</div>
+                    <div class="week-cmp-days">${lw.days} Tage | ${lw.saldo >= 0 ? '+' : ''}${lw.saldo.toFixed(1)}h Saldo</div>
+                </div>
+                <div class="week-cmp-delta">
+                    <div class="week-cmp-arrow" style="color:${deltaColor}">${deltaArrow}</div>
+                    <div class="week-cmp-pct" style="color:${deltaColor}; background:${deltaBg}">
+                        ${delta >= 0 ? '+' : ''}${delta.toFixed(0)}%
+                    </div>
+                </div>
+                <div class="week-cmp-block" style="border-left:2px solid var(--primary-dim);">
+                    <div class="week-cmp-label">KW ${kwNum} (Aktuell)</div>
+                    <div class="week-cmp-hours" style="color:var(--primary);">${tw.hours.toFixed(1)}h</div>
+                    <div class="week-cmp-days">${tw.days} Tage | ${tw.saldo >= 0 ? '+' : ''}${tw.saldo.toFixed(1)}h Saldo</div>
+                </div>
+            `;
+        }
+
+        // ========== DAILY BREAKDOWN ==========
+        const dayNames = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+        const dayEmojis = { work: '💼', school: '🎓', vacation: '🏖️', sick: '🤒', holiday: '🎉' };
+        const dayColors = { work: 'var(--primary)', school: 'var(--school)', vacation: '#3b82f6', sick: '#f472b6', holiday: '#f59e0b' };
+        const dailyContainer = document.getElementById('wvDailyBreakdown');
+        if (dailyContainer) {
+            let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            for (let i = 0; i < 7; i++) {
+                const dayDate = new Date(monday);
+                dayDate.setDate(monday.getDate() + i);
+                const dateStr = dayDate.toISOString().split('T')[0];
+                const isToday = dateStr === todayStr;
+                const entry = entries.find(e => e.date === dateStr);
+                const sollDay = (data.settings && data.settings.hours) ? (data.settings.hours[(i + 1) % 7] || 0) : (i < 5 ? 8 : 0);
+
+                const bgHighlight = isToday ? 'background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.2);' : 'background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04);';
+
+                html += `<div class="wv-day-row" style="display:grid; grid-template-columns:140px 1fr auto; gap:12px; align-items:center; padding:12px 16px; border-radius:12px; ${bgHighlight}">`;
+
+                // Day label
+                html += `<div>
+                    <div style="font-weight:600; font-size:0.9rem; ${isToday ? 'color:var(--primary);' : ''}">${isToday ? '▸ ' : ''}${dayNames[i]}</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">${dayDate.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}</div>
+                </div>`;
+
+                if (entry) {
+                    const emoji = dayEmojis[entry.type] || '📄';
+                    const color = dayColors[entry.type] || 'var(--text-muted)';
+                    const workedH = (entry.worked || 0).toFixed(1);
+                    const diffH = (entry.diff || 0);
+                    const diffSign = diffH >= 0 ? '+' : '';
+                    const diffColor = diffH >= 0 ? 'var(--success)' : 'var(--danger)';
+
+                    // Progress bar
+                    const pct = sollDay > 0 ? Math.min((entry.worked || 0) / sollDay * 100, 120) : 0;
+                    html += `<div>
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                            <span>${emoji}</span>
+                            <span style="font-weight:700; font-family:var(--font-mono); color:${color};">${workedH}h</span>
+                            <span style="font-size:0.75rem; color:var(--text-muted);">/ ${sollDay}h Soll</span>
+                            <span style="font-size:0.75rem; font-weight:600; color:${diffColor}; font-family:var(--font-mono);">${diffSign}${diffH.toFixed(1)}h</span>
+                        </div>
+                        <div style="height:4px; border-radius:4px; background:rgba(255,255,255,0.06); overflow:hidden;">
+                            <div style="height:100%; width:${Math.min(pct, 100)}%; background:${color}; border-radius:4px; transition:width 0.4s;"></div>
+                        </div>
+                    </div>`;
+                    // Times
+                    html += `<div style="text-align:right; font-size:0.78rem; color:var(--text-muted); font-family:var(--font-mono);">
+                        ${entry.start || '--:--'} – ${entry.end || '--:--'}
+                        ${entry.breakTime ? '<br>☕ ' + entry.breakTime + ' min' : ''}
+                    </div>`;
+                } else {
+                    // No entry
+                    const isPast = dayDate < new Date() && !isToday;
+                    html += `<div style="color:var(--text-muted); font-size:0.85rem; font-style:italic;">
+                        ${(i >= 5) ? '🟡 Wochenende' : (isPast ? '⊘ Kein Eintrag' : (isToday ? '⏳ Noch offen...' : '·'))}
+                    </div>`;
+                    html += `<div style="text-align:right; font-size:0.78rem; color:var(--text-muted);">${sollDay > 0 ? sollDay + 'h Soll' : '—'}</div>`;
+                }
+
+                html += '</div>';
+            }
+            html += '</div>';
+            dailyContainer.innerHTML = html;
+        }
+
+        // ========== DAY BARS (Stunden pro Tag) ==========
+        const barsContainer = document.getElementById('wvDayBars');
+        if (barsContainer) {
+            const shortDays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+            const maxH = Math.max(10, ...entries.map(e => e.worked || 0));
+            let barsHtml = '';
+
+            for (let i = 0; i < 7; i++) {
+                const dayDate = new Date(monday);
+                dayDate.setDate(monday.getDate() + i);
+                const dateStr = dayDate.toISOString().split('T')[0];
+                const entry = entries.find(e => e.date === dateStr);
+                const h = entry ? (entry.worked || 0) : 0;
+                const pct = maxH > 0 ? (h / maxH * 100) : 0;
+                const color = entry ? (dayColors[entry.type] || 'var(--primary)') : 'rgba(255,255,255,0.06)';
+                const isToday = dateStr === new Date().toISOString().split('T')[0];
+
+                barsHtml += `<div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;">
+                    <div style="font-size:0.72rem; font-weight:700; font-family:var(--font-mono); color:${h > 0 ? '#fff' : 'var(--text-muted)'};">${h > 0 ? h.toFixed(1) : '—'}</div>
+                    <div style="width:100%; height:${Math.max(pct, 3)}%; min-height:4px; background:${h > 0 ? color : 'rgba(255,255,255,0.04)'}; border-radius:8px 8px 4px 4px; transition:height 0.4s; ${isToday ? 'box-shadow:0 0 8px rgba(168,85,247,0.4);' : ''}"></div>
+                    <div style="font-size:0.7rem; font-weight:${isToday ? '700' : '500'}; color:${isToday ? 'var(--primary)' : 'var(--text-muted)'};">${shortDays[i]}</div>
+                </div>`;
+            }
+            barsContainer.innerHTML = barsHtml;
+        }
+
+        // ========== TREND CHART (last 8 weeks) ==========
+        const trendContainer = document.getElementById('wvTrendChart');
+        const trendLabels = document.getElementById('wvTrendLabels');
+        if (trendContainer && trendLabels) {
+            const weeksData = [];
+            for (let w = -7; w <= 0; w++) {
+                const wOffset = weekViewOffset + w;
+                const wMonday = getWeekMonday(wOffset);
+                const wEntries = getWeekEntries(wMonday);
+                const wStats = calcWeekStats(wEntries);
+                const wKW = getISOWeekNumber(wMonday);
+                weeksData.push({ kw: wKW, hours: wStats.hours, saldo: wStats.saldo, isCurrent: (w === 0) });
+            }
+
+            const maxTH = Math.max(10, ...weeksData.map(w => w.hours));
+            let trendHtml = '';
+            let labelsHtml = '';
+
+            weeksData.forEach(w => {
+                const pct = maxTH > 0 ? (w.hours / maxTH * 100) : 0;
+                const barColor = w.isCurrent ? 'var(--primary)' : (w.saldo >= 0 ? 'var(--success)' : 'rgba(255,255,255,0.12)');
+                const glow = w.isCurrent ? 'box-shadow:0 0 12px rgba(168,85,247,0.4);' : '';
+                trendHtml += `<div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:4px;" title="KW ${w.kw}: ${w.hours.toFixed(1)}h">
+                    <div style="font-size:0.65rem; font-family:var(--font-mono); color:${w.isCurrent ? 'var(--primary)' : 'var(--text-muted)'};">${w.hours > 0 ? w.hours.toFixed(0) : ''}</div>
+                    <div style="width:100%; height:${Math.max(pct, 3)}%; min-height:4px; background:${barColor}; border-radius:6px 6px 2px 2px; transition:height 0.4s; ${glow}"></div>
+                </div>`;
+                labelsHtml += `<div style="flex:1; text-align:center; font-size:0.65rem; color:${w.isCurrent ? 'var(--primary)' : 'var(--text-muted)'}; font-weight:${w.isCurrent ? '700' : '400'};">KW${w.kw}</div>`;
+            });
+
+            trendContainer.innerHTML = trendHtml;
+            trendLabels.innerHTML = labelsHtml;
+        }
+    }
+
+    // ============================================
+    // FEATURE: QUICK ENTRY TEMPLATES
+    // ============================================
+    function renderQuickTemplates() {
+        const grid = document.getElementById('quickTemplatesGrid');
+        if (!grid) return;
+
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+        const dayIndex = now.getDay();
+        const defaultHours = (data.settings && data.settings.hours) ? (data.settings.hours[dayIndex] || 8) : 8;
+
+        // Check if today already has an entry
+        const hasTodayEntry = (data.entries || []).some(e => e.date === todayStr);
+
+        const templates = [
+            { icon: '💼', label: 'Standard Tag', sub: `${defaultHours}h Arbeit`, type: 'work', hours: defaultHours },
+            { icon: '📚', label: 'Schultag', sub: `${defaultHours}h Schule`, type: 'school', hours: defaultHours },
+            { icon: '🌴', label: 'Urlaub', sub: `${defaultHours}h Urlaub`, type: 'vacation', hours: defaultHours },
+            { icon: '💊', label: 'Krankentag', sub: `${defaultHours}h Krank`, type: 'sick', hours: defaultHours },
+            { icon: '⏰', label: 'Halber Tag', sub: `${(defaultHours / 2).toFixed(1)}h`, type: 'work', hours: defaultHours / 2 },
+            { icon: '🔄', label: 'Überstunden', sub: `${(defaultHours + 2)}h Arbeit`, type: 'work', hours: defaultHours + 2 }
+        ];
+
+        grid.innerHTML = templates.map((t, i) => `
+            <button class="quick-tpl-btn" onclick="applyQuickTemplate(${i})" ${hasTodayEntry ? 'title="Heute ist bereits ein Eintrag vorhanden"' : ''}>
+                <span class="quick-tpl-icon">${t.icon}</span>
+                <span class="quick-tpl-label">${t.label}</span>
+                <span class="quick-tpl-sub">${t.sub}</span>
+            </button>
+        `).join('');
+
+        // Store templates for use
+        window._quickTemplates = templates;
+    }
+
+    function applyQuickTemplate(index) {
+        const t = window._quickTemplates[index];
+        if (!t) return;
+
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+
+        // Check for duplicate
+        const existing = (data.entries || []).find(e => e.date === todayStr && e.type === t.type);
+        if (existing) {
+            if (!confirm(`Heute gibt es bereits einen ${t.type}-Eintrag. Trotzdem hinzufügen?`)) return;
+        }
+
+        const expected = (data.settings && data.settings.hours) ? (data.settings.hours[now.getDay()] || 8) : 8;
+        const entry = {
+            id: Date.now(),
+            date: todayStr,
+            type: t.type,
+            worked: t.hours,
+            diff: t.hours - expected,
+            info: `Schnelleintrag: ${t.label}`,
+            start: '',
+            end: '',
+            project: '',
+            notes: `Per 1-Klick Vorlage erstellt`
+        };
+
+        data.entries.unshift(entry);
+        if (t.type === 'vacation') {
+            recalculateVacationUsed();
+        }
+
+        showSmartNotification('⚡ Schnelleintrag', `${t.icon} ${t.label} (${t.hours}h) für heute gebucht!`, 'success');
+        save();
+    }
+
+    // ============================================
+    // FEATURE: MOBILE BOTTOM NAVIGATION
+    // ============================================
+    function mobNavSwitch(tabId) {
+        // Close sidebar if open
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar && sidebar.classList.contains('active')) {
+            toggleSidebar();
+        }
+
+        // Switch tab using existing system
+        if (typeof switchTab === 'function') {
+            switchTab(tabId);
+        }
+
+        // Update active states
+        document.querySelectorAll('.mob-nav-btn').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.getElementById(`mobNav-${tabId}`);
+        if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    // Sync bottom nav with sidebar tab switches
+    const _origSwitchTab = typeof switchTab === 'function' ? switchTab : null;
+
+    // ============================================
+    // FEATURE: REAL-TIME BREAK WARNING
+    // ============================================
+    let breakWarningInterval = null;
+
+    function startBreakWarningMonitor() {
+        if (breakWarningInterval) clearInterval(breakWarningInterval);
+
+        breakWarningInterval = setInterval(() => {
+            // Check if timer is running
+            if (!window.timer || !window.timer.running) {
+                const banner = document.getElementById('breakWarningBanner');
+                if (banner) banner.classList.remove('visible');
+                return;
+            }
+
+            // Calculate elapsed working time in hours
+            const elapsed = window.timer.elapsed || 0;
+            const breakTime = window.timer.breakTime || 0;
+            const workHours = (elapsed - breakTime) / 3600;
+
+            const banner = document.getElementById('breakWarningBanner');
+            const text = document.getElementById('breakWarningText');
+            if (!banner || !text) return;
+
+            // German labor law: 30min break after 6h, 45min after 9h
+            if (workHours >= 9 && breakTime < 2700) {
+                text.textContent = `⏰ ${workHours.toFixed(1)}h Arbeit! Gesetzlich: mind. 45 Min Pause nötig!`;
+                banner.classList.add('visible');
+            } else if (workHours >= 6 && breakTime < 3600 * 0.5) {
+                text.textContent = `Du arbeitest seit ${workHours.toFixed(1)}h – bitte mach eine Pause (mind. 30 Min)!`;
+                banner.classList.add('visible');
+            } else if (workHours >= 4 && breakTime < 600) {
+                text.textContent = `${workHours.toFixed(1)}h ohne Pause – gönn dir eine kurze Auszeit 🧘`;
+                banner.classList.add('visible');
+            } else {
+                banner.classList.remove('visible');
+            }
+        }, 30000); // Check every 30 seconds
+    }
+
+    // ============================================
+    // INIT NEW DASHBOARD WIDGETS
+    // ============================================
+    function initNewDashboardWidgets() {
+
+
+        try { renderQuickTemplates(); } catch(e) { console.warn('Quick Templates init error:', e); }
+        try { startBreakWarningMonitor(); } catch(e) { console.warn('Break Warning init error:', e); }
+    }
+
+    // Hook into updateUI to refresh new widgets
+    const _origUpdateUI = typeof updateUI === 'function' ? updateUI : null;
+    if (_origUpdateUI) {
+        // We'll call our widgets from the existing updateUI flow
+        // They are already called separately, so just ensure on page load
+    }
+
+    // Initialize on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => setTimeout(initNewDashboardWidgets, 500));
+    } else {
+        setTimeout(initNewDashboardWidgets, 500);
     }
 
     // ============================================
@@ -19232,4 +20483,36 @@ if (document.readyState === 'loading') {
 }
 
 </script>
+
+<!-- Mobile Bottom Navigation Bar -->
+<nav class="mobile-bottom-nav" id="mobileBottomNav">
+    <div class="mobile-bottom-nav-inner">
+        <button class="mob-nav-btn active" onclick="mobNavSwitch('dashboard')" id="mobNav-dashboard">
+            <span class="mob-nav-icon">📊</span>
+            <span class="mob-nav-label">Dashboard</span>
+        </button>
+        <button class="mob-nav-btn" onclick="mobNavSwitch('performance')" id="mobNav-performance">
+            <span class="mob-nav-icon">📈</span>
+            <span class="mob-nav-label">Analyse</span>
+        </button>
+        <button class="mob-nav-btn" onclick="mobNavSwitch('history')" id="mobNav-history">
+            <span class="mob-nav-icon">📋</span>
+            <span class="mob-nav-label">Historie</span>
+        </button>
+        <button class="mob-nav-btn" onclick="mobNavSwitch('yearview')" id="mobNav-yearview">
+            <span class="mob-nav-icon">📆</span>
+            <span class="mob-nav-label">Jahr</span>
+        </button>
+        <button class="mob-nav-btn" onclick="mobNavSwitch('goals')" id="mobNav-goals">
+            <span class="mob-nav-icon">🎯</span>
+            <span class="mob-nav-label">Ziele</span>
+        </button>
+    </div>
+</nav>
+
+<!-- Break Warning Banner -->
+<div class="break-warning-banner" id="breakWarningBanner" onclick="this.classList.remove('visible')">
+    ⚠️ <span id="breakWarningText">Du arbeitest seit 6h ohne Pause!</span>
+</div>
+
 </body>
