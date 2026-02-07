@@ -21,30 +21,34 @@
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --success: #10b981;
+            --success-rgb: 16, 185, 129;
             --danger: #ef4444;
-            --border: rgba(255, 255, 255, 0.1);
+            --warning: #f59e0b;
+            --warning-rgb: 245, 158, 11;
+            --info: #06b6d4;
+            --info-rgb: 6, 182, 212;
+            --border: rgba(255, 255, 255, 0.08);
             --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
             --radius: 24px;
+            --radius-sm: 14px;
             --safe-area-inset-left: env(safe-area-inset-left, 0);
             --safe-area-inset-right: env(safe-area-inset-right, 0);
             --safe-area-inset-top: env(safe-area-inset-top, 0);
             --safe-area-inset-bottom: env(safe-area-inset-bottom, 0);
         }
 
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
 
         body {
             font-family: var(--font-main);
             background-color: var(--bg-deep);
-            background-image: 
-                radial-gradient(circle at 15% 15%, rgba(var(--primary-rgb), 0.15), transparent 50%),
-                radial-gradient(circle at 85% 85%, rgba(var(--primary-rgb), 0.08), transparent 50%),
-                radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.06), transparent 70%);
+            background-image:
+                radial-gradient(ellipse 80% 60% at 10% 0%, rgba(var(--primary-rgb), 0.18), transparent),
+                radial-gradient(ellipse 60% 50% at 90% 100%, rgba(var(--info-rgb), 0.10), transparent),
+                radial-gradient(ellipse 50% 40% at 50% 50%, rgba(var(--primary-rgb), 0.05), transparent);
+            background-attachment: fixed;
             color: var(--text-main);
             min-height: 100dvh;
             padding: 0;
@@ -54,33 +58,20 @@
             -webkit-user-select: none;
             -webkit-touch-callout: none;
             -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
         }
 
         /* --- SCROLLBAR --- */
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
-        }
-
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, var(--primary), rgba(var(--primary-rgb), 0.7));
-            border-radius: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.05);
+            background: linear-gradient(180deg, var(--primary), rgba(var(--primary-rgb), 0.5));
+            border-radius: 99px;
         }
-
         ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, rgba(var(--primary-rgb), 0.9), var(--primary));
-            box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.4);
+            background: var(--primary);
         }
-
-        * {
-            scrollbar-color: var(--primary) rgba(255, 255, 255, 0.03);
-            scrollbar-width: thin;
-        }
+        * { scrollbar-color: rgba(var(--primary-rgb), 0.5) transparent; scrollbar-width: thin; }
 
         /* --- APPLE-STYLE NAVBAR (FLOATING) --- */
         .navbar {
@@ -99,7 +90,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 2.5rem;
-            box-shadow: 
+            box-shadow:
                 0 8px 32px rgba(var(--primary-rgb), 0.2),
                 inset 0 1px 0 rgba(255, 255, 255, 0.1);
             animation: slideDown 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -107,14 +98,8 @@
         }
 
         @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateX(-50%) translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0);
-            }
+            from { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+            to   { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
 
         .navbar-title {
@@ -150,151 +135,341 @@
 
         /* --- CONTAINER --- */
         .container {
-            max-width: 920px;
+            max-width: 860px;
             margin: 0 auto;
             padding: 0 2rem;
         }
 
-        /* --- HEADER --- */
+        /* --- HERO HEADER --- */
         .header {
             text-align: center;
-            margin-bottom: 5rem;
-            padding: 3rem 2rem;
+            margin-bottom: 3rem;
+            padding: 4rem 2rem 3rem;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.25rem;
+            background: rgba(var(--primary-rgb), 0.1);
+            border: 1px solid rgba(var(--primary-rgb), 0.25);
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 1.75rem;
+            animation: fadeUp 0.6s ease 0.1s both;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse-dot 2s ease infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.8); }
         }
 
         .header h1 {
-            font-size: 3.5rem;
+            font-size: 3.8rem;
             font-weight: 900;
-            background: linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb), 0.6), #06b6d4);
+            background: linear-gradient(135deg, #fff 0%, var(--primary) 50%, var(--info) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin: 0 0 1rem 0;
-            letter-spacing: -1.5px;
-            line-height: 1.1;
+            letter-spacing: -2px;
+            line-height: 1.05;
+            animation: fadeUp 0.6s ease 0.2s both;
         }
 
         .header p {
             color: var(--text-muted);
             font-size: 1.1rem;
-            max-width: 600px;
+            max-width: 550px;
             margin: 0 auto;
+            animation: fadeUp 0.6s ease 0.3s both;
         }
 
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
 
-        /* --- SECTION --- */
+        /* --- TABLE OF CONTENTS --- */
+        .toc {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2.5rem auto 3.5rem;
+            max-width: 700px;
+            animation: fadeUp 0.6s ease 0.4s both;
+        }
+
+        .toc a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.4rem 0.9rem;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 99px;
+            text-decoration: none;
+            transition: all 0.25s ease;
+            white-space: nowrap;
+        }
+
+        .toc a:hover {
+            color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.1);
+            border-color: rgba(var(--primary-rgb), 0.3);
+            transform: translateY(-1px);
+        }
+
+        .toc a .toc-num {
+            font-weight: 700;
+            font-size: 0.7rem;
+            color: var(--primary);
+            opacity: 0.7;
+        }
+
+        /* --- SECTION CARDS --- */
         .section {
-            margin-bottom: 2.5rem;
+            margin-bottom: 1.75rem;
             padding: 2.5rem;
-            background: var(--bg-glass);
+            background: rgba(15, 15, 20, 0.5);
             backdrop-filter: blur(32px);
             -webkit-backdrop-filter: blur(32px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 
-                0 8px 32px rgba(var(--primary-rgb), 0.08),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08);
             position: relative;
             overflow: hidden;
+            /* scroll reveal */
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .section::before {
             content: '';
             position: absolute;
-            top: -1px;
-            left: 0;
-            right: 0;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.04), transparent 60%);
+            pointer-events: none;
+        }
+
+        .section::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.5), transparent);
+            background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.4), transparent);
             opacity: 0;
             transition: opacity 0.4s ease;
         }
 
         .section:hover {
-            border-color: rgba(var(--primary-rgb), 0.4);
-            background: rgba(22, 22, 26, 0.5);
-            box-shadow: 
-                0 16px 48px rgba(var(--primary-rgb), 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.12);
-            transform: translateY(-2px);
+            border-color: rgba(var(--primary-rgb), 0.25);
+            box-shadow: 0 20px 60px -15px rgba(var(--primary-rgb), 0.15);
         }
 
-        .section:hover::before {
-            opacity: 1;
-        }
+        .section:hover::after { opacity: 1; }
 
+        /* --- SECTION HEADER --- */
         .section h2 {
-            font-size: 1.75rem;
-            font-weight: 700;
+            font-size: 1.5rem;
+            font-weight: 800;
             color: var(--text-main);
             margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(var(--primary-rgb), 0.25);
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            position: relative;
+            letter-spacing: -0.5px;
         }
 
+        .section h2 .section-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.2), rgba(var(--primary-rgb), 0.05));
+            border: 1px solid rgba(var(--primary-rgb), 0.15);
+            font-size: 1.15rem;
+            flex-shrink: 0;
+        }
+
+        /* --- H3 SUBTITLES --- */
         .section h3 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--primary);
-            margin-top: 1.75rem;
-            margin-bottom: 1rem;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            padding-left: 1rem;
+            border-left: 3px solid rgba(var(--primary-rgb), 0.5);
+            position: relative;
         }
 
-        .section h3:first-child {
-            margin-top: 0;
+        .section h3:first-child { margin-top: 0; }
+
+        /* --- H4 SUB-SUBTITLES --- */
+        .section h4 {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: rgba(var(--primary-rgb), 0.85);
+            margin-top: 1.5rem;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
+        .section h4::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            opacity: 0.5;
+            flex-shrink: 0;
+        }
+
+        /* --- PARAGRAPHS --- */
         .section p {
             color: var(--text-muted);
-            margin-bottom: 1rem;
-            font-size: 0.95rem;
+            margin-bottom: 0.85rem;
+            font-size: 0.92rem;
+            line-height: 1.85;
         }
 
+        /* --- LISTS --- */
         .section ul, .section ol {
-            margin-left: 1.5rem;
-            margin-bottom: 1.5rem;
+            margin-left: 0;
+            margin-bottom: 1.25rem;
             color: var(--text-muted);
+            list-style: none;
+            padding-left: 0;
         }
 
         .section li {
-            margin-bottom: 0.75rem;
-            font-size: 0.95rem;
+            margin-bottom: 0.6rem;
+            font-size: 0.92rem;
+            padding-left: 1.6rem;
+            position: relative;
+            line-height: 1.7;
         }
 
+        .section li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.65em;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb), 0.4));
+            box-shadow: 0 0 6px rgba(var(--primary-rgb), 0.3);
+        }
+
+        .section li strong {
+            color: var(--text-main);
+        }
+
+        /* --- LINKS --- */
         .section a {
             color: var(--primary);
             text-decoration: none;
             font-weight: 500;
-            transition: all 0.3s ease;
-            border-bottom: 1px solid transparent;
+            transition: all 0.25s ease;
+            background-image: linear-gradient(var(--primary), var(--primary));
+            background-size: 0% 1px;
+            background-position: 0 100%;
+            background-repeat: no-repeat;
         }
 
         .section a:hover {
-            border-bottom-color: var(--primary);
-            opacity: 0.8;
+            background-size: 100% 1px;
+            color: #c084fc;
         }
 
-        /* --- HIGHLIGHT BOX --- */
+        /* --- HIGHLIGHT BOXES --- */
         .highlight-box {
-            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.12), rgba(var(--primary-rgb), 0.04));
-            border-left: 4px solid var(--primary);
-            border: 1px solid rgba(var(--primary-rgb), 0.2);
-            padding: 1.75rem;
-            border-radius: 16px;
-            margin: 1.5rem 0;
-            font-size: 0.95rem;
+            background: rgba(var(--primary-rgb), 0.06);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            padding: 1.5rem 1.75rem;
+            margin: 1.75rem 0;
+            font-size: 0.9rem;
             color: var(--text-muted);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            line-height: 1.75;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .highlight-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05), transparent 70%);
+            pointer-events: none;
         }
 
         .highlight-box strong {
             color: var(--primary);
+        }
+
+        .highlight-box a {
+            color: var(--primary);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            text-decoration-color: rgba(var(--primary-rgb), 0.3);
+        }
+
+        .highlight-box a:hover {
+            text-decoration-color: var(--primary);
+        }
+
+        /* --- LEGAL BADGE (Article references) --- */
+        .law-ref {
+            display: inline-block;
+            padding: 0.15rem 0.55rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.1);
+            border: 1px solid rgba(var(--primary-rgb), 0.2);
+            border-radius: 6px;
+            letter-spacing: 0.3px;
+            vertical-align: middle;
+            margin: 0 0.15rem;
+            white-space: nowrap;
         }
 
         /* --- FOOTER --- */
@@ -302,70 +477,112 @@
             text-align: center;
             padding: 4rem 2rem 3rem;
             color: var(--text-muted);
-            font-size: 0.9rem;
-            margin-top: 5rem;
-            border-top: 1px solid rgba(var(--primary-rgb), 0.15);
+            font-size: 0.85rem;
+            margin-top: 4rem;
+            position: relative;
+        }
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.3), transparent);
+        }
+
+        .footer-brand {
+            font-size: 1.1rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--info));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
         }
 
         .footer p {
-            margin: 0.5rem 0;
+            margin: 0.4rem 0;
         }
 
         .footer a {
             color: var(--primary);
             text-decoration: none;
-            transition: all 0.3s ease;
+            font-weight: 500;
+            transition: all 0.25s ease;
         }
 
         .footer a:hover {
-            opacity: 0.8;
+            color: #c084fc;
+        }
+
+        .footer-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            padding: 0.65rem 1.5rem;
+            background: rgba(var(--primary-rgb), 0.1);
+            border: 1px solid rgba(var(--primary-rgb), 0.2);
+            border-radius: 99px;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-back:hover {
+            background: rgba(var(--primary-rgb), 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(var(--primary-rgb), 0.2);
         }
 
         /* --- RESPONSIVE --- */
         @media (max-width: 768px) {
-            body {
-                padding-top: 100px;
-            }
+            body { padding-top: 100px; }
 
             .navbar {
                 max-width: 90vw;
                 gap: 1.5rem;
                 padding: 0.7rem 1.5rem;
             }
-
-            .navbar-title {
-                font-size: 0.9rem;
-            }
+            .navbar-title { font-size: 0.9rem; }
 
             .container {
                 max-width: 100%;
                 padding: 0 1rem;
             }
 
-            .header {
-                margin-bottom: 3rem;
-                padding: 2rem 1rem;
-            }
+            .header { margin-bottom: 2rem; padding: 2.5rem 1rem 2rem; }
+            .header h1 { font-size: 2.4rem; letter-spacing: -1px; }
+            .hero-badge { font-size: 0.7rem; padding: 0.4rem 1rem; }
 
-            .header h1 {
-                font-size: 2.2rem;
-            }
+            .toc { gap: 0.35rem; margin: 1.5rem auto 2rem; }
+            .toc a { padding: 0.35rem 0.7rem; font-size: 0.72rem; }
 
             .section {
-                padding: 1.75rem;
-                margin-bottom: 2rem;
+                padding: 1.5rem;
+                margin-bottom: 1.25rem;
+                border-radius: 18px;
             }
+            .section h2 { font-size: 1.25rem; gap: 0.6rem; }
+            .section h2 .section-icon { width: 36px; height: 36px; border-radius: 11px; font-size: 1rem; }
+            .section h3 { font-size: 0.95rem; }
+            .section h4 { font-size: 0.85rem; }
+            .section p, .section li { font-size: 0.88rem; }
 
-            .section h2 {
-                font-size: 1.4rem;
-                margin-bottom: 1rem;
-            }
-
-            .section h3 {
-                font-size: 1.05rem;
-            }
+            .highlight-box { padding: 1.15rem 1.25rem; font-size: 0.85rem; }
         }
-        /* External link style: small "open in new tab" icon */
+
+        @media (max-width: 420px) {
+            .header h1 { font-size: 2rem; }
+            .toc { flex-direction: column; align-items: center; }
+            .toc a { width: 100%; justify-content: center; }
+        }
+
+        /* External link style */
         .external-link {
             color: inherit;
             text-decoration: underline dotted rgba(255,255,255,0.08);
@@ -398,88 +615,175 @@
 
     <div class="container">
         <div class="header">
-            <h1>Datenschutzerklärung</h1>
-            <p>Deine Privatsphäre ist uns wichtig. Erfahre, wie TimeTracker deine Daten schützt.</p>
+            <div class="hero-badge">DSGVO-konform</div>
+            <h1>Datenschutz&shy;erklärung</h1>
+            <p>Transparenz & Kontrolle — erfahre genau, wie TimeTracker deine Daten schützt.</p>
         </div>
 
-        <div class="section">
-            <h2>📋 1. Verantwortlicher und Datenschutz</h2>
+        <nav class="toc" aria-label="Inhaltsverzeichnis">
+            <a href="#s1"><span class="toc-num">01</span> Verantwortlicher</a>
+            <a href="#s2"><span class="toc-num">02</span> Datenerfassung</a>
+            <a href="#s3"><span class="toc-num">03</span> Speicherung</a>
+            <a href="#s4"><span class="toc-num">04</span> Weitergabe</a>
+            <a href="#s5"><span class="toc-num">05</span> Ihre Rechte</a>
+            <a href="#s6"><span class="toc-num">06</span> Cookies</a>
+            <a href="#s7"><span class="toc-num">07</span> Links</a>
+            <a href="#s8"><span class="toc-num">08</span> Aufbewahrung</a>
+            <a href="#s9"><span class="toc-num">09</span> Minderjährige</a>
+            <a href="#s10"><span class="toc-num">10</span> Änderungen</a>
+            <a href="#s11"><span class="toc-num">11</span> Kontakt</a>
+            <a href="#s12"><span class="toc-num">12</span> Rechtsgrundlagen</a>
+        </nav>
+
+        <div class="section" id="s1">
+            <h2><span class="section-icon">📋</span> 1. Verantwortlicher und Datenschutz</h2>
             <p>Willkommen bei <strong>TimeTracker</strong>. Der Schutz Ihrer persönlichen Daten ist uns wichtig. Diese Datenschutzerklärung informiert Sie darüber, wie wir Ihre Daten verarbeiten.</p>
             
             <h3>Verantwortlicher für die Datenverarbeitung</h3>
             <p>Die Verantwortung für die Datenverarbeitung liegt bei den Betreibern dieser Anwendung.</p>
 
             <div class="highlight-box">
-                <strong>🔔 Wichtig:</strong> Diese Anwendung speichert Daten <strong>lokal in Ihrem Browser</strong>. Keine Daten werden an externe Server übermittelt.
+                <strong>🔔 Wichtig:</strong> Diese Anwendung speichert Daten <strong>standardmäßig lokal in Ihrem Browser</strong>. Eine Datenübermittlung erfolgt nur bei optionaler Cloud-Synchronisation oder der Feedback-Funktion – jeweils mit Ihrer <strong>ausdrücklichen Einwilligung</strong> (siehe Abschnitt 4).
             </div>
         </div>
 
-        <div class="section">
-            <h2>💾 2. Welche Daten werden erfasst?</h2>
+        <div class="section" id="s2">
+            <h2><span class="section-icon">💾</span> 2. Welche Daten werden erfasst?</h2>
             
             <h3>Lokal gespeicherte Daten</h3>
-            <p>TimeTracker speichert folgende Informationen <strong>ausschließlich lokal</strong> im Local Storage Ihres Browsers:</p>
+            <p>TimeTracker speichert folgende Informationen <strong>primär lokal</strong> im Local Storage Ihres Browsers:</p>
             <ul>
-                <li>Zeiterfassungsdaten (Start- und Endzeiten)</li>
-                <li>Projektbezeichnungen und Kategorien</li>
+                <li>Zeiterfassungsdaten (Start- und Endzeiten, Pausenzeiten)</li>
+                <li>Eintragstypen und Kategorien (Arbeit, Schule, Urlaub, Krank, Feiertag)</li>
                 <li>Noten und Bewertungen</li>
                 <li>Persönliche Einstellungen und Präferenzen</li>
                 <li>Ziele und Fortschritt</li>
-                <li>es werden nur Seitenaufrufe erfasst (Plausible Analysen website)</li>
+                <li>Feedback-Verlauf und Feature-Anfragen</li>
             </ul>
+
+            <h3>Optionale Cloud-Synchronisation (Supabase)</h3>
+            <p>Wenn Sie die <strong>Cloud-Synchronisation aktivieren</strong> und sich anmelden, werden Ihre lokal gespeicherten Daten zusätzlich auf Servern von <strong>Supabase</strong> (Supabase Inc., USA) gespeichert. Details hierzu finden Sie in Abschnitt 4.</p>
+
+            <h3>Webanalyse (Plausible Analytics)</h3>
+            <p>Auf der zugehörigen Website werden anonymisierte Seitenaufrufe über <strong>Plausible Analytics</strong> erfasst — ein datenschutzfreundliches Tool, das <strong>keine Cookies</strong> setzt, <strong>keine persönlichen Daten</strong> speichert und vollständig <strong>DSGVO-konform</strong> ist. Es werden keine IP-Adressen gespeichert und kein Tracking über Websites hinweg durchgeführt.</p>
 
             <h3>Automatisch erfasste Daten</h3>
             <p>Wir erfassen <strong>keine</strong> automatischen Daten wie:</p>
             <ul>
                 <li>IP-Adressen</li>
-                <li>Geräteinformationen</li>
                 <li>Browsing-Verhalten</li>
                 <li>Cookies (außer zum Speichern von Einstellungen)</li>
             </ul>
+            <p><strong>Ausnahme:</strong> Beim freiwilligen Senden von Feedback im Modus „Vollständig" werden Geräteinformationen (Bildschirmgröße, Plattform, Sprache, User Agent) mitgesendet. Dies geschieht nur mit Ihrer ausdrücklichen Einwilligung.</p>
 
             <div class="highlight-box">
-                <strong>✅ Datensicherheit:</strong> Alle Daten bleiben auf Ihrem Gerät. Sie kontrollieren vollständig, wann und wie diese Daten gelöscht werden.
+                <strong>✅ Datensicherheit:</strong> Standardmäßig bleiben alle Daten auf Ihrem Gerät. Sie kontrollieren vollständig, wann und wie diese Daten gelöscht werden. Eine Übermittlung an Dritte erfolgt nur mit Ihrer ausdrücklichen Einwilligung.
             </div>
         </div>
 
-        <div class="section">
-            <h2>🔐 3. Datenspeicherung und -sicherheit</h2>
+        <div class="section" id="s3">
+            <h2><span class="section-icon">🔐</span> 3. Datenspeicherung und -sicherheit</h2>
             
             <h3>Wo werden Ihre Daten gespeichert?</h3>
-            <p>Ihre Daten werden <strong>ausschließlich im Local Storage Ihres Browsers</strong> gespeichert:</p>
+            <p>Ihre Daten werden standardmäßig <strong>im Local Storage Ihres Browsers</strong> gespeichert. Optional können Sie die Cloud-Synchronisation aktivieren:</p>
             <ul>
-                <li>Keine Cloud-Speicherung</li>
-                <li>Keine externe Datenbank</li>
-                <li>Keine Remote-Server</li>
+                <li><strong>Lokal (Standard):</strong> Alle Daten verbleiben ausschließlich auf Ihrem Gerät</li>
+                <li><strong>Cloud (optional):</strong> Bei aktivierter Synchronisation werden Daten zusätzlich verschlüsselt bei Supabase (siehe Abschnitt 4) gespeichert</li>
             </ul>
 
             <h3>Sicherheitsmaßnahmen</h3>
-            <p>Da alle Daten lokal gespeichert sind, gelten folgende Sicherheitsaspekte:</p>
             <ul>
-                <li><strong>Browser-Sicherheit:</strong> Ihr Browser schützt den Local Storage durch sein Sicherheitsmodell</li>
-                <li><strong>Lokale Kontrolle:</strong> Nur Sie haben Zugriff auf Ihre Daten</li>
-                <li><strong>Backup:</strong> Sie können Ihre Daten jederzeit exportieren</li>
-                <li><strong>Löschung:</strong> Sie können alle Daten jederzeit löschen (Browser Cache)</li>
+                <li><strong>Browser-Sicherheit:</strong> Ihr Browser schützt den Local Storage durch sein Sicherheitsmodell (Same-Origin Policy)</li>
+                <li><strong>Lokale Kontrolle:</strong> Nur Sie haben Zugriff auf Ihre lokal gespeicherten Daten</li>
+                <li><strong>Verschlüsselung:</strong> Jegliche Datenübertragung (Cloud-Sync, Feedback) erfolgt über HTTPS/TLS</li>
+                <li><strong>Backup:</strong> Sie können Ihre Daten jederzeit als JSON-Datei exportieren</li>
+                <li><strong>Löschung:</strong> Sie können alle Daten jederzeit löschen (App-Einstellungen oder Browser-Cache)</li>
             </ul>
         </div>
 
-        <div class="section">
-            <h2>📤 4. Datenweitergabe</h2>
+        <div class="section" id="s4">
+            <h2><span class="section-icon">📤</span> 4. Datenweitergabe</h2>
             
-            <p>TimeTracker gibt <strong>grundsätzlich keine Daten an Dritte weiter</strong>. Es gibt keine:</p>
+            <p>TimeTracker gibt <strong>grundsätzlich keine Daten an Dritte weiter</strong>, es sei denn, Sie nutzen aktiv eine der folgenden optionalen Funktionen. Es gibt keine:</p>
             <ul>
-                <li>API-Calls zu externen Services</li>
-                <li>Tracking oder Analytics-Tools</li>
                 <li>Advertising-Netzwerke</li>
                 <li>Datenbörsen oder Datenverkäufe</li>
+                <li>Profiling oder automatisierte Entscheidungsfindung</li>
             </ul>
 
-            <h3>Ausnahmen</h3>
-            <p>Sofern zukünftige Features externe Services erfordern (z.B. optionale Cloud-Synchronisation), werden Sie darüber <strong>explizit informiert und müssen ausdrücklich zustimmen</strong>.</p>
+            <h3>Optionale Drittanbieter-Dienste</h3>
+            <p>Folgende externe Dienste werden <strong>nur bei aktiver Nutzung durch Sie</strong> eingesetzt:</p>
+
+            <h4>a) Cloud-Synchronisation (Supabase)</h4>
+            <p>Bei Aktivierung der Cloud-Sync-Funktion werden Ihre <strong>gesamten App-Daten</strong> (Zeiteinträge, Einstellungen, Präferenzen) auf Servern von <strong>Supabase Inc.</strong> (USA) gespeichert.</p>
+            <ul>
+                <li><strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. a DSGVO (Einwilligung durch Anmeldung &amp; Aktivierung)</li>
+                <li><strong>Zweck:</strong> Geräteübergreifende Synchronisation und Backup Ihrer Daten</li>
+                <li><strong>Authentifizierung:</strong> Über Magic Link (E-Mail-basiert, kein Passwort)</li>
+                <li><strong>Übermittelte Daten:</strong> Alle lokal gespeicherten App-Daten (Zeiteinträge, Einstellungen, etc.)</li>
+                <li><strong>Speicherort:</strong> Supabase Server (AWS, Region abhängig von Konfiguration)</li>
+                <li><strong>Verschlüsselung:</strong> TLS bei Übertragung, Verschlüsselung at rest</li>
+                <li><strong>Löschung:</strong> Sie können Ihre Cloud-Daten jederzeit löschen, indem Sie sich abmelden und die Löschung Ihres Kontos beantragen</li>
+            </ul>
+            <p>Weitere Informationen: <a href="https://supabase.com/privacy" target="_blank" rel="noopener" style="color: var(--primary);">Supabase Privacy Policy</a></p>
+
+            <div class="highlight-box">
+                <strong>🔐 Hinweis zur Drittlandübermittlung:</strong> Supabase und EmailJS haben ihren Sitz in den <strong>USA</strong>. Die Datenübermittlung erfolgt auf Basis Ihrer Einwilligung (Art. 49 Abs. 1 lit. a DSGVO). Die USA verfügen über das EU-U.S. Data Privacy Framework. Sie können Ihre Einwilligung jederzeit widerrufen.
+            </div>
+
+            <h4>b) Spenden (PayPal)</h4>
+            <p>Wenn Sie über die Spenden-Funktion eine Zahlung tätigen, werden Sie auf <strong>PayPal</strong> (PayPal (Europe) S.à r.l. et Cie, Luxemburg) weitergeleitet. TimeTracker selbst übermittelt dabei <strong>keine personenbezogenen Daten</strong> — die Verarbeitung erfolgt ausschließlich zwischen Ihnen und PayPal.</p>
+            <p>Weitere Informationen: <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full" target="_blank" rel="noopener" style="color: var(--primary);">PayPal Datenschutzgrundsätze</a></p>
+
+            <h4>c) Externe CDN-Ressourcen</h4>
+            <p>TimeTracker lädt folgende Ressourcen von externen CDNs:</p>
+            <ul>
+                <li><strong>EmailJS SDK</strong> (cdn.jsdelivr.net) — nur für Feedback-Versand</li>
+                <li><strong>Supabase SDK</strong> (cdn.jsdelivr.net) — nur für Cloud-Sync</li>
+            </ul>
+            <p>Beim Laden dieser Ressourcen kann der CDN-Betreiber technisch bedingt Ihre <strong>IP-Adresse</strong> verarbeiten. Dies ist gemäß Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Bereitstellung der App-Funktionalität) gerechtfertigt.</p>
+
+            <h4>d) Feedback-Funktion &amp; EmailJS</h4>
+            <p>Beim Senden von Feedback oder Feature-Anfragen werden Daten <strong>mit Ihrer ausdrücklichen Einwilligung</strong> über den Dienst <strong>EmailJS</strong> (EmailJS Inc., USA) per E-Mail an den Entwickler übermittelt.</p>
+            
+            <h4>Rechtsgrundlage</h4>
+            <p>Art. 6 Abs. 1 lit. a DSGVO (Einwilligung). Sie erteilen die Einwilligung durch Aktivierung der Checkbox vor dem Versand.</p>
+            
+            <h4>Datenmodus „Minimal"</h4>
+            <p>Im Standardmodus werden <strong>nur</strong> folgende Daten übermittelt:</p>
+            <ul>
+                <li>Ihre Nachricht (Freitext)</li>
+                <li>Bewertung (1–5 Sterne)</li>
+                <li>Datum &amp; Uhrzeit des Versands</li>
+                <li>Ihr in der App eingetragener Name</li>
+            </ul>
+
+            <h4>Datenmodus „Vollständig"</h4>
+            <p>Wenn Sie den Datenmodus auf „Vollständig" umschalten, werden <strong>zusätzlich</strong> folgende anonymisierte Nutzungsstatistiken übermittelt:</p>
+            <ul>
+                <li>Aggregierte Statistiken: Anzahl Einträge, Gesamtstunden, Saldo, Streak</li>
+                <li>Eintragsarten-Verteilung (Arbeit, Schule, Urlaub, Krank, Feiertag)</li>
+                <li>App-Einstellungen: Wöchentl. Soll-Stunden, Pausenschwelle, Urlaubskontingent</li>
+                <li>Theme-Farbe und -Modus</li>
+                <li>Gerätedaten: Bildschirmgröße, Viewport, Plattform, Sprache, Zeitzone, User Agent</li>
+            </ul>
+
+            <h4>Zweck der Datenerhebung</h4>
+            <p>Die Daten dienen ausschließlich der <strong>Produktverbesserung</strong> und <strong>Fehlerbehebung</strong>. Sie werden nicht an weitere Dritte weitergegeben, nicht zu Werbezwecken verwendet und nach Bearbeitung des Feedbacks gelöscht.</p>
+
+            <h4>Datenvorschau &amp; Transparenz</h4>
+            <p>Sie können vor dem Versand jederzeit über den Link <em>„Vorschau: Welche Daten werden gesendet?"</em> einsehen, welche konkreten Datenfelder und Werte übermittelt werden.</p>
+
+            <h4>Widerruf der Einwilligung</h4>
+            <p>Sie können Ihre Einwilligung jederzeit widerrufen, indem Sie die Checkbox deaktivieren. Ein Widerruf berührt nicht die Rechtmäßigkeit der bis dahin erfolgten Verarbeitung.</p>
+
+            <div class="highlight-box">
+                <strong>🔒 Hinweis:</strong> EmailJS überträgt Daten verschlüsselt (HTTPS/TLS). Die E-Mail wird direkt an den Entwickler zugestellt. EmailJS speichert keine Nachrichteninhalte dauerhaft. Weitere Informationen: <a href="https://www.emailjs.com/legal/privacy-policy/" target="_blank" rel="noopener" style="color: var(--primary);">EmailJS Privacy Policy</a>.
+            </div>
         </div>
 
-        <div class="section">
-            <h2>🔄 5. Ihre Rechte (DSGVO)</h2>
+        <div class="section" id="s5">
+            <h2><span class="section-icon">🔄</span> 5. Ihre Rechte (DSGVO)</h2>
             
             <p>Nach der Datenschutzgrundverordnung (DSGVO) haben Sie folgende Rechte:</p>
 
@@ -506,11 +810,17 @@
             <p>Sie können jederzeit ein Backup Ihrer Daten als JSON-Datei exportieren und in eine andere Anwendung importieren.</p>
 
             <h3>Recht auf Einschränkung der Verarbeitung (Art. 18 DSGVO)</h3>
-            <p>Da die Verarbeitung lokal erfolgt, können Sie jederzeit die Verwendung einschränken, indem Sie die Anwendung nicht nutzen.</p>
+            <p>Sie können die Verarbeitung einschränken, indem Sie optionale Funktionen (Cloud-Sync, Feedback) deaktivieren oder die Anwendung nicht nutzen.</p>
+
+            <h3>Widerspruchsrecht (Art. 21 DSGVO)</h3>
+            <p>Sie haben das Recht, aus Gründen, die sich aus Ihrer besonderen Situation ergeben, jederzeit gegen die Verarbeitung Ihrer personenbezogenen Daten Widerspruch einzulegen.</p>
+
+            <h3>Recht auf Beschwerde bei einer Aufsichtsbehörde (Art. 77 DSGVO)</h3>
+            <p>Unbeschadet eines anderweitigen Rechtsbehelfs haben Sie das Recht auf Beschwerde bei einer Datenschutz-Aufsichtsbehörde, wenn Sie der Ansicht sind, dass die Verarbeitung Ihrer Daten gegen die DSGVO verstößt.</p>
         </div>
 
-        <div class="section">
-            <h2>📊 6. Cookies und Tracking</h2>
+        <div class="section" id="s6">
+            <h2><span class="section-icon">📊</span> 6. Cookies und Tracking</h2>
             
             <h3>Cookies in TimeTracker</h3>
             <p>TimeTracker verwendet <strong>keine Tracking-Cookies</strong>. Gespeicherte Daten sind:</p>
@@ -532,8 +842,8 @@
             </ul>
         </div>
 
-        <div class="section">
-            <h2>🌐 7. Externe Links und Ressourcen</h2>
+        <div class="section" id="s7">
+            <h2><span class="section-icon">🌐</span> 7. Externe Links und Ressourcen</h2>
             
             <p>TimeTracker kann Links zu externen Websites enthalten. Wir sind nicht verantwortlich für deren Datenschutzpraktiken:</p>
             <ul>
@@ -543,8 +853,8 @@
             </ul>
         </div>
 
-        <div class="section">
-            <h2>🔄 8. Datenaufbewahrung</h2>
+        <div class="section" id="s8">
+            <h2><span class="section-icon">🔄</span> 8. Datenaufbewahrung</h2>
             
             <p><strong>Aufbewahrungsdauer:</strong> Ihre Daten werden so lange gespeichert, wie Sie diese in TimeTracker behalten.</p>
             
@@ -564,15 +874,16 @@
             </ul>
         </div>
 
-        <div class="section">
-            <h2>👥 9. Datenschutz für Minderjährige</h2>
+        <div class="section" id="s9">
+            <h2><span class="section-icon">👥</span> 9. Datenschutz für Minderjährige</h2>
             
             <p>TimeTracker ist konzipiert für Schüler und Studenten, einschließlich Minderjähriger. Besonderheiten:</p>
             <ul>
                 <li><strong>Elternkontrolle:</strong> Eltern können den Browser bzw. Gerätezugriff kontrollieren</li>
-                <li><strong>Keine Tracking:</strong> Keine Weitergabe an Dritte</li>
+                <li><strong>Kein Tracking:</strong> Keine Weitergabe an Dritte zu Werbezwecken</li>
                 <li><strong>Lokale Speicherung:</strong> Vollständige Kontrolle über Daten</li>
-                <li><strong>Keine Kontaktanfragen:</strong> Wir fragen nicht nach E-Mail oder anderen Kontaktdaten</li>
+                <li><strong>Keine Pflicht-Registrierung:</strong> Die App funktioniert vollständig ohne Anmeldung</li>
+                <li><strong>Einwilligung:</strong> Für Minderjährige unter 16 Jahren ist gemäß Art. 8 DSGVO die Einwilligung der Erziehungsberechtigten erforderlich, wenn personenbezogene Daten verarbeitet werden (z.B. bei Cloud-Sync oder Feedback-Versand)</li>
             </ul>
 
             <div class="highlight-box">
@@ -580,8 +891,8 @@
             </div>
         </div>
 
-        <div class="section">
-            <h2>🔔 10. Änderungen dieser Datenschutzerklärung</h2>
+        <div class="section" id="s10">
+            <h2><span class="section-icon">🔔</span> 10. Änderungen dieser Datenschutzerklärung</h2>
             
             <p>Wir können diese Datenschutzerklärung jederzeit aktualisieren. Wesentliche Änderungen werden:</p>
             <ul>
@@ -590,49 +901,56 @@
                 <li>Vor Inkrafttreten angekündigt (sofern möglich)</li>
             </ul>
 
-            <p><strong>Letzte Aktualisierung:</strong> December 2025</p>
+            <p><strong>Letzte Aktualisierung:</strong> Februar 2026</p>
         </div>
 
-        <div class="section">
-            <h2>📞 11. Kontakt und Fragen</h2>
+        <div class="section" id="s11">
+            <h2><span class="section-icon">📞</span> 11. Kontakt und Fragen</h2>
             
-            <p>Fragen zum Datenschutz?</p>
+            <p>Bei Fragen zum Datenschutz oder zur Ausübung Ihrer Betroffenenrechte können Sie uns kontaktieren:</p>
+            <ul>
+                <li><strong>E-Mail:</strong> <a href="mailto:sven9micha37@gmail.com" style="color: var(--primary);">sven9micha37@gmail.com</a></li>
+            </ul>
+            <p>Wir bemühen uns, Ihre Anfrage innerhalb von <strong>30 Tagen</strong> zu beantworten.</p>
+
+            <h3>Selbsthilfe</h3>
             <ul>
                 <li>Überprüfen Sie Ihre Browser-Einstellungen für Local Storage</li>
                 <li>Kontrollieren Sie die App-Einstellungen</li>
-                <li>Lesen Sie diese Datenschutzerklärung erneut</li>
+                <li>Exportieren oder löschen Sie Ihre Daten direkt in der App</li>
             </ul>
 
             <div class="highlight-box">
-                <strong>ℹ️ Hinweis:</strong> Da TimeTracker lokal läuft, können Sie alle Funktionen und Ihre Daten vollständig kontrollieren.
+                <strong>ℹ️ Hinweis:</strong> Da TimeTracker primär lokal läuft, können Sie die meisten Ihrer Rechte (Auskunft, Löschung, Export) direkt in der App ausüben, ohne uns kontaktieren zu müssen.
             </div>
         </div>
 
-        <div class="section">
-            <h2>⚖️ 12. Rechtsgrundlagen</h2>
+        <div class="section" id="s12">
+            <h2><span class="section-icon">⚖️</span> 12. Rechtsgrundlagen</h2>
             
             <p>Diese Datenschutzerklärung basiert auf:</p>
             <ul>
                 <li><strong>DSGVO:</strong> Datenschutz-Grundverordnung (Regulation (EU) 2016/679)</li>
                 <li><strong>BDSG:</strong> Bundesdatenschutzgesetz (Deutschland)</li>
-                <li><strong>TMG:</strong> Telemediengesetz</li>
-                <li><strong>Browser-Sicherheitsrichtlinien</strong></li>
+                <li><strong>TDDDG:</strong> Telekommunikation-Digitale-Dienste-Datenschutz-Gesetz</li>
+                <li><strong>DDG:</strong> Digitale-Dienste-Gesetz</li>
             </ul>
 
             <p>Diese Anwendung ist <strong>datenschutzkonform</strong>, da:</p>
             <ul>
-                <li>Keine persönlichen Daten an Dritte weitergegeben werden</li>
-                <li>Alle Daten lokal und unter Ihrer Kontrolle gespeichert sind</li>
-                <li>Keine Tracking oder Profiling stattfindet</li>
-                <li>Sie jederzeit Ihre Rechte ausüben können</li>
+                <li>Daten standardmäßig lokal und unter Ihrer Kontrolle gespeichert sind</li>
+                <li>Externe Dienste nur mit Ihrer ausdrücklichen Einwilligung genutzt werden</li>
+                <li>Kein Tracking, Profiling oder Werbung stattfindet</li>
+                <li>Sie jederzeit Ihre Betroffenenrechte ausüben können</li>
+                <li>Transparenz über alle Datenverarbeitungsvorgänge herrscht</li>
             </ul>
         </div>
 
         <div class="footer">
-            <p><strong>TimeTracker V1.3.0</strong></p>
+            <p class="footer-brand">TimeTracker V3.2.0</p>
             <p>Deine moderne Zeiterfassungs-Anwendung mit vollständiger Datenkontrolle</p>
-            <p style="margin-top: 1.5rem;"><a href="../../index.html">← Zurück zur Anwendung</a></p>
-            <p style="margin-top: 1.5rem; color: var(--text-muted); font-size: 0.85rem;">© 2025 TimeTracker. Alle Rechte vorbehalten.</p>
+            <a href="../../index.html" class="footer-back">← Zurück zur Anwendung</a>
+            <p style="margin-top: 2rem; color: var(--text-muted); font-size: 0.8rem; opacity: 0.6;">© 2025–2026 TimeTracker. Alle Rechte vorbehalten.</p>
         </div>
     </div>
 
@@ -683,9 +1001,38 @@
                 initializeTheme();
             }
         });
+
+        // === SCROLL REVEAL ===
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.section').forEach(s => revealObserver.observe(s));
+
+        // === ACTIVE TOC HIGHLIGHT ===
+        const tocLinks = document.querySelectorAll('.toc a');
+        const sections = document.querySelectorAll('.section[id]');
+        const tocObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const id = entry.target.id;
+                const link = document.querySelector(`.toc a[href="#${id}"]`);
+                if (link) {
+                    if (entry.isIntersecting) {
+                        tocLinks.forEach(l => { l.style.color = ''; l.style.background = ''; l.style.borderColor = ''; });
+                        link.style.color = 'var(--primary)';
+                        link.style.background = 'rgba(var(--primary-rgb), 0.12)';
+                        link.style.borderColor = 'rgba(var(--primary-rgb), 0.3)';
+                    }
+                }
+            });
+        }, { threshold: 0.3, rootMargin: '-80px 0px -50% 0px' });
+
+        sections.forEach(s => tocObserver.observe(s));
     </script>
-    <div class="site-footer" style="text-align:center; padding:1rem 0; color:var(--text-muted); font-size:0.95rem;">
-        <a href="DSGVO.html" class="external-link" target="_blank" rel="noopener noreferrer" aria-label="DSGVO — Informationen zur Datenerfassung (öffnet in neuem Tab)" title="Öffnet in neuem Tab">DSGVO — Datenschutzinformationen</a>
-    </div>
+
 </body>
 </html>

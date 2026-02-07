@@ -5215,6 +5215,36 @@
                     <button class="btn" onclick="supportRate(1)" style="padding:10px 18px; border-radius:12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); font-size:1.4rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.transform='scale(1.15)'" onmouseout="this.style.transform='scale(1)'" title="Schlecht">😞</button>
                 </div>
                 <textarea id="supportFeedbackText" placeholder="Was können wir besser machen? (Optional)" style="width:100%; min-height:80px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px; color:var(--text-main); font-family:var(--font-main); font-size:0.85rem; resize:vertical; outline:none; transition:border-color 0.2s;" onfocus="this.style.borderColor='rgba(168,85,247,0.4)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'"></textarea>
+
+                <!-- DSGVO: Datenmodus Toggle -->
+                <div style="margin-top:12px; padding:12px 16px; background:rgba(168,85,247,0.04); border:1px solid rgba(168,85,247,0.12); border-radius:12px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:0.95rem;">📊</span>
+                            <span style="font-size:0.78rem; color:var(--text-muted);">Mitgesendete Daten:</span>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button id="feedbackModeMinimal" onclick="setFeedbackDataMode('minimal')" class="btn" style="padding:4px 12px; font-size:0.72rem; border-radius:8px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#10b981; font-weight:600;">🔒 Minimal</button>
+                            <button id="feedbackModeFull" onclick="setFeedbackDataMode('full')" class="btn" style="padding:4px 12px; font-size:0.72rem; border-radius:8px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); color:var(--text-muted); font-weight:600;">📊 Vollständig</button>
+                        </div>
+                    </div>
+                    <div id="feedbackDataModeInfo" style="font-size:0.7rem; color:var(--text-muted); margin-top:8px; line-height:1.5;">
+                        🔒 <strong>Minimal:</strong> Nur Rating, Nachricht & Datum werden gesendet. Keine Gerätedaten.
+                    </div>
+                    <div style="margin-top:8px;">
+                        <a href="/Email/send.html" target="_blank" style="font-size:0.7rem; color:var(--primary); text-decoration:underline; opacity:0.7;">👁️ Vorschau: Feedback-Email-Template</a>
+                    </div>
+                </div>
+
+                <!-- DSGVO: Einwilligung Checkbox -->
+                <div style="margin-top:10px; display:flex; align-items:flex-start; gap:8px;">
+                    <input type="checkbox" id="feedbackDSGVOConsent" style="margin-top:3px; accent-color:var(--primary); min-width:16px; min-height:16px; cursor:pointer;">
+                    <label for="feedbackDSGVOConsent" style="font-size:0.72rem; color:var(--text-muted); line-height:1.5; cursor:pointer;">
+                        Ich stimme zu, dass mein Feedback und die ausgewählten Daten über <strong>EmailJS</strong> (Drittanbieter, USA) an den Entwickler gesendet werden. 
+                        <a href="Pages/DE-Gestz/DSGVO.html" target="_blank" style="color:var(--primary); text-decoration:underline;">Datenschutzerklärung</a>
+                    </label>
+                </div>
+
                 <div style="display:flex; justify-content:flex-end; margin-top:10px;">
                     <button class="btn btn-primary" onclick="supportSendFeedback()" style="padding:10px 28px; font-size:0.85rem;">📨 Feedback senden</button>
                 </div>
@@ -18505,6 +18535,246 @@ TIPPS:
         showCustomMessage(`${emojis[rating]} ${labels[rating]}!`, 'Danke für dein Feedback! Du hilfst uns, TIME.PRO besser zu machen.', 'success');
     }
 
+    function gatherAppStats() {
+        const entries = data.entries || [];
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        
+        // Entry type counts
+        const workEntries = entries.filter(e => e.type === 'work');
+        const schoolEntries = entries.filter(e => e.type === 'school');
+        const vacationEntries = entries.filter(e => e.type === 'vacation');
+        const sickEntries = entries.filter(e => e.type === 'sick');
+        const holidayEntries = entries.filter(e => e.type === 'holiday');
+        
+        // This year entries
+        const thisYearEntries = entries.filter(e => e.date && e.date.startsWith(currentYear.toString()));
+        const thisYearWork = thisYearEntries.filter(e => e.type === 'work');
+        const thisYearSchool = thisYearEntries.filter(e => e.type === 'school');
+        
+        // Total hours
+        const totalWorked = entries.reduce((s, e) => s + (parseFloat(e.worked) || 0), 0);
+        const totalDiff = entries.reduce((s, e) => s + (parseFloat(e.diff) || 0), 0);
+        const thisYearWorked = thisYearEntries.reduce((s, e) => s + (parseFloat(e.worked) || 0), 0);
+        const thisYearDiff = thisYearEntries.reduce((s, e) => s + (parseFloat(e.diff) || 0), 0);
+        
+        // Average hours per work/school day
+        const activeDays = entries.filter(e => e.type === 'work' || e.type === 'school');
+        const avgHoursPerDay = activeDays.length > 0 ? (activeDays.reduce((s, e) => s + (parseFloat(e.worked) || 0), 0) / activeDays.length) : 0;
+        
+        // First & last entry
+        const sortedDates = entries.map(e => e.date).filter(Boolean).sort();
+        const firstEntry = sortedDates[0] || '—';
+        const lastEntry = sortedDates[sortedDates.length - 1] || '—';
+        
+        // Days using app
+        const daysUsingApp = firstEntry !== '—' ? Math.floor((now - new Date(firstEntry)) / 86400000) : 0;
+        
+        // Streak
+        const streak = calculateCurrentStreak();
+        
+        // Weekly Soll hours
+        const sollHours = (data.settings.hours || []).reduce((s, h) => s + (parseFloat(h) || 0), 0);
+        
+        // Vacation stats
+        const vacTotal = data.settings.vacation?.total || 30;
+        const vacUsed = data.settings.vacation?.used || 0;
+        const vacRemaining = Math.max(0, vacTotal - vacUsed);
+        
+        // Break settings
+        const breakThresh = data.settings.break?.thresh || 6;
+        
+        // Unique months with entries
+        const uniqueMonths = new Set(entries.map(e => e.date?.substring(0, 7)).filter(Boolean));
+        
+        // Most productive weekday
+        const weekdayHours = [0, 0, 0, 0, 0, 0, 0];
+        const weekdayCounts = [0, 0, 0, 0, 0, 0, 0];
+        const dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+        entries.forEach(e => {
+            if (e.date && (e.type === 'work' || e.type === 'school')) {
+                const d = new Date(e.date).getDay();
+                weekdayHours[d] += parseFloat(e.worked) || 0;
+                weekdayCounts[d]++;
+            }
+        });
+        let bestDay = 1;
+        for (let i = 0; i < 7; i++) {
+            if (weekdayHours[i] > weekdayHours[bestDay]) bestDay = i;
+        }
+        
+        // Local feedback count
+        const feedbackCount = (data.feedback || []).length;
+        const featureCount = (data.featureRequests || []).length;
+        
+        // Theme
+        const theme = data.settings.theme || '#a855f7';
+        const themeMode = data.settings.themeMode || 'dark';
+        
+        // Custom types
+        const customTypes = data.settings.customTypes || [];
+        
+        return {
+            // User
+            user_name: data.settings.name || 'Anonym',
+            
+            // Totals (all time)
+            total_entries: entries.length.toString(),
+            total_work_days: workEntries.length.toString(),
+            total_school_days: schoolEntries.length.toString(),
+            total_vacation_days: vacationEntries.length.toString(),
+            total_sick_days: sickEntries.length.toString(),
+            total_holiday_days: holidayEntries.length.toString(),
+            total_hours: totalWorked.toFixed(1),
+            total_saldo: (totalDiff >= 0 ? '+' : '') + totalDiff.toFixed(1),
+            
+            // This year
+            year: currentYear.toString(),
+            year_entries: thisYearEntries.length.toString(),
+            year_work_days: thisYearWork.length.toString(),
+            year_school_days: thisYearSchool.length.toString(),
+            year_hours: thisYearWorked.toFixed(1),
+            year_saldo: (thisYearDiff >= 0 ? '+' : '') + thisYearDiff.toFixed(1),
+            
+            // Averages
+            avg_hours: avgHoursPerDay.toFixed(1),
+            
+            // Dates & streak
+            first_entry: firstEntry,
+            last_entry: lastEntry,
+            days_using_app: daysUsingApp.toString(),
+            current_streak: streak.toString(),
+            active_months: uniqueMonths.size.toString(),
+            
+            // Settings
+            weekly_soll: sollHours.toFixed(1),
+            break_threshold: breakThresh.toString(),
+            vacation_total: vacTotal.toString(),
+            vacation_used: vacUsed.toString(),
+            vacation_remaining: vacRemaining.toString(),
+            
+            // Productivity
+            best_weekday: dayNames[bestDay],
+            best_weekday_hours: weekdayHours[bestDay].toFixed(1),
+            
+            // App meta
+            custom_types_count: customTypes.length.toString(),
+            feedback_count: feedbackCount.toString(),
+            feature_request_count: featureCount.toString(),
+            theme_color: theme,
+            theme_mode: themeMode,
+            
+            // Device & browser
+            screen_size: `${window.screen.width}x${window.screen.height}`,
+            viewport: `${window.innerWidth}x${window.innerHeight}`,
+            platform: navigator.platform || '—',
+            language: navigator.language || '—',
+            online: navigator.onLine ? 'Ja' : 'Nein',
+            touch_device: ('ontouchstart' in window) ? 'Ja' : 'Nein',
+            pixel_ratio: (window.devicePixelRatio || 1).toString(),
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '—',
+            user_agent: navigator.userAgent.substring(0, 200),
+        };
+    }
+
+    // ===== DSGVO: Feedback Data Mode =====
+    let feedbackDataMode = 'minimal'; // 'minimal' or 'full'
+
+    function setFeedbackDataMode(mode) {
+        feedbackDataMode = mode;
+        const minBtn = document.getElementById('feedbackModeMinimal');
+        const fullBtn = document.getElementById('feedbackModeFull');
+        const info = document.getElementById('feedbackDataModeInfo');
+        if (mode === 'minimal') {
+            if (minBtn) { minBtn.style.background = 'rgba(16,185,129,0.15)'; minBtn.style.borderColor = 'rgba(16,185,129,0.3)'; minBtn.style.color = '#10b981'; }
+            if (fullBtn) { fullBtn.style.background = 'rgba(255,255,255,0.03)'; fullBtn.style.borderColor = 'rgba(255,255,255,0.08)'; fullBtn.style.color = 'var(--text-muted)'; }
+            if (info) info.innerHTML = '🔒 <strong>Minimal:</strong> Nur Rating, Nachricht & Datum werden gesendet. Keine Gerätedaten.';
+        } else {
+            if (fullBtn) { fullBtn.style.background = 'rgba(168,85,247,0.15)'; fullBtn.style.borderColor = 'rgba(168,85,247,0.3)'; fullBtn.style.color = '#a855f7'; }
+            if (minBtn) { minBtn.style.background = 'rgba(255,255,255,0.03)'; minBtn.style.borderColor = 'rgba(255,255,255,0.08)'; minBtn.style.color = 'var(--text-muted)'; }
+            if (info) info.innerHTML = '📊 <strong>Vollständig:</strong> Rating, Nachricht, Nutzungsstatistiken, Einstellungen & Gerätedaten werden gesendet. Hilft uns, TIME.PRO zu verbessern.';
+        }
+    }
+
+    function buildFeedbackData(message, rating) {
+        const emojis = ['—', '😞', '😕', '😐', '😊', '🤩'];
+        const base = {
+            email: 'sven9micha37@gmail.com',
+            message: message,
+            rating: rating.toString(),
+            rating_emoji: emojis[rating],
+            from_name: data.settings.name || 'Anonym',
+            date: new Date().toLocaleString('de-DE'),
+            data_mode: feedbackDataMode,
+        };
+        if (feedbackDataMode === 'full') {
+            const stats = gatherAppStats();
+            return { ...base, ...stats };
+        }
+        // Minimal: only rating, message, date, name — no device/stats
+        return base;
+    }
+
+    function showFeedbackDataPreview() {
+        const previewData = buildFeedbackData(
+            document.getElementById('supportFeedbackText')?.value?.trim() || '(Deine Nachricht)',
+            data.supportRating || 0
+        );
+        const lines = Object.entries(previewData).map(([k, v]) => {
+            const label = {
+                email: '📧 Empfänger', message: '💬 Nachricht', rating: '⭐ Bewertung',
+                rating_emoji: '😊 Emoji', from_name: '👤 Name', date: '📅 Datum',
+                data_mode: '📊 Datenmodus', user_name: '👤 Benutzername',
+                total_entries: '📋 Einträge gesamt', total_hours: '⏱️ Stunden gesamt',
+                total_saldo: '📈 Saldo gesamt', total_work_days: '💼 Arbeitstage',
+                total_school_days: '🎓 Schultage', total_vacation_days: '🏖️ Urlaubstage',
+                total_sick_days: '🤒 Krankheitstage', total_holiday_days: '🎉 Feiertage',
+                year: '📅 Jahr', year_entries: '📋 Einträge (Jahr)', year_hours: '⏱️ Stunden (Jahr)',
+                year_saldo: '📈 Saldo (Jahr)', year_work_days: '💼 Arbeit (Jahr)',
+                year_school_days: '🎓 Schule (Jahr)',
+                avg_hours: '⌀ Stunden/Tag', weekly_soll: '📐 Wöchentl. Soll',
+                best_weekday: '🏆 Produktivster Tag', best_weekday_hours: '🏆 Std. an dem Tag',
+                active_months: '📆 Aktive Monate', break_threshold: '⏸️ Pausenschwelle',
+                first_entry: '📅 Erster Eintrag', last_entry: '📅 Letzter Eintrag',
+                days_using_app: '📆 Tage aktiv', current_streak: '🔥 Streak',
+                vacation_total: '🏖️ Urlaub gesamt', vacation_used: '✈️ Urlaub verbraucht',
+                vacation_remaining: '✅ Urlaub übrig',
+                custom_types_count: '🎨 Eigene Typen', feedback_count: '💬 Feedbacks',
+                feature_request_count: '💡 Feature Requests',
+                theme_color: '🎨 Theme Farbe', theme_mode: '🌙 Theme Modus',
+                screen_size: '🖥️ Bildschirm', viewport: '📐 Viewport',
+                platform: '💻 Platform', language: '🌐 Sprache',
+                timezone: '🕐 Zeitzone', online: '📶 Online',
+                touch_device: '👆 Touch', pixel_ratio: '🔍 Pixel Ratio',
+                user_agent: '🌐 User Agent',
+            };
+            const displayKey = label[k] || k;
+            const displayVal = (k === 'message') ? '(Dein Text)' : (k === 'email') ? '(Entwickler)' : v;
+            return `<tr><td style="padding:4px 8px; font-size:0.72rem; color:var(--text-muted); white-space:nowrap;">${displayKey}</td><td style="padding:4px 8px; font-size:0.72rem; color:var(--text-main); word-break:break-all; font-family:var(--font-mono);">${displayVal}</td></tr>`;
+        }).join('');
+
+        const count = Object.keys(previewData).length;
+        const html = `
+            <div style="max-height:60vh; overflow-y:auto; margin-top:12px;">
+                <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:12px;">
+                    📊 <strong>${count} Datenfelder</strong> werden im <strong>${feedbackDataMode === 'full' ? 'Vollständig' : 'Minimal'}</strong>-Modus gesendet:
+                </div>
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead><tr>
+                        <th style="text-align:left; padding:6px 8px; font-size:0.7rem; color:var(--primary); border-bottom:1px solid rgba(168,85,247,0.2); text-transform:uppercase; letter-spacing:1px;">Feld</th>
+                        <th style="text-align:left; padding:6px 8px; font-size:0.7rem; color:var(--primary); border-bottom:1px solid rgba(168,85,247,0.2); text-transform:uppercase; letter-spacing:1px;">Wert</th>
+                    </tr></thead>
+                    <tbody>${lines}</tbody>
+                </table>
+            </div>
+            <div style="margin-top:16px; padding:10px 14px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); border-radius:10px; font-size:0.72rem; color:var(--text-muted); line-height:1.5;">
+                🔒 Daten werden verschlüsselt über <strong>EmailJS</strong> (HTTPS) an den Entwickler gesendet. Keine Speicherung bei Drittanbietern über die E-Mail-Zustellung hinaus.
+                <br>📄 <a href="Pages/DE-Gestz/DSGVO.html" target="_blank" style="color:var(--primary);">Datenschutzerklärung lesen</a>
+            </div>
+        `;
+        showCustomMessage('👁️ Datenvorschau — ' + (feedbackDataMode === 'full' ? 'Vollständig' : 'Minimal'), html, 'info');
+    }
+
     function supportSendFeedback() {
         const text = document.getElementById('supportFeedbackText');
         if (!text || !text.value.trim()) {
@@ -18512,18 +18782,16 @@ TIPPS:
             return;
         }
 
+        // DSGVO: Check consent
+        const consent = document.getElementById('feedbackDSGVOConsent');
+        if (!consent || !consent.checked) {
+            showCustomMessage('🔒 Datenschutz', 'Bitte stimme der Datenschutzerklärung zu, bevor du dein Feedback sendest.', 'warning');
+            if (consent) { consent.parentElement.style.animation = 'shake 0.4s ease'; setTimeout(() => consent.parentElement.style.animation = '', 500); }
+            return;
+        }
+
         const rating = data.supportRating || 0;
-        const emojis = ['—', '😞', '😕', '😐', '😊', '🤩'];
-        const feedbackData = {
-            email: 'sven9micha37@gmail.com',
-            message: text.value.trim(),
-            rating: rating,
-            rating_emoji: emojis[rating],
-            from_name: 'TIME.PRO User',
-            date: new Date().toLocaleString('de-DE'),
-            user_agent: navigator.userAgent.substring(0, 100),
-            entries_count: (data.entries || []).length.toString(),
-        };
+        const feedbackData = buildFeedbackData(text.value.trim(), rating);
 
         // Send via EmailJS
         if (typeof emailjs !== 'undefined') {
@@ -18534,10 +18802,11 @@ TIPPS:
                 .then(() => {
                     // Also store locally
                     if (!data.feedback) data.feedback = [];
-                    data.feedback.push({ date: new Date().toISOString(), text: text.value.trim(), rating: rating, sent: true });
+                    data.feedback.push({ date: new Date().toISOString(), text: text.value.trim(), rating: rating, sent: true, dataMode: feedbackDataMode, consent: true });
                     save();
                     text.value = '';
                     data.supportRating = 0;
+                    if (consent) consent.checked = false;
                     if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '📨 Feedback senden'; }
                     showCustomMessage('📨 Gesendet!', 'Dein Feedback wurde erfolgreich zugestellt. Vielen Dank!', 'success');
                 })
@@ -18545,7 +18814,7 @@ TIPPS:
                     console.warn('EmailJS Fehler:', err);
                     // Fallback: store locally
                     if (!data.feedback) data.feedback = [];
-                    data.feedback.push({ date: new Date().toISOString(), text: text.value.trim(), rating: rating, sent: false });
+                    data.feedback.push({ date: new Date().toISOString(), text: text.value.trim(), rating: rating, sent: false, dataMode: feedbackDataMode, consent: true });
                     save();
                     text.value = '';
                     if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = '📨 Feedback senden'; }
@@ -18554,7 +18823,7 @@ TIPPS:
         } else {
             // No EmailJS — store locally only
             if (!data.feedback) data.feedback = [];
-            data.feedback.push({ date: new Date().toISOString(), text: text.value.trim(), rating: rating, sent: false });
+            data.feedback.push({ date: new Date().toISOString(), text: text.value.trim(), rating: rating, sent: false, dataMode: feedbackDataMode, consent: true });
             save();
             text.value = '';
             showCustomMessage('📨 Gespeichert!', 'Dein Feedback wurde lokal gespeichert.', 'success');
@@ -18564,18 +18833,11 @@ TIPPS:
     function supportFeatureRequest() {
         const idea = prompt('💡 Was wünschst du dir in TIME.PRO?');
         if (idea && idea.trim()) {
-            // Send via EmailJS too
+            // DSGVO: Feature requests send minimal data only (just the idea text)
             if (typeof emailjs !== 'undefined') {
-                emailjs.send('service_22m5bcs', 'template_xe5xc1k', {
-                    email: 'sven9micha37@gmail.com',
-                    message: '💡 FEATURE REQUEST: ' + idea.trim(),
-                    rating: 0,
-                    rating_emoji: '💡',
-                    from_name: 'TIME.PRO User',
-                    date: new Date().toLocaleString('de-DE'),
-                    user_agent: navigator.userAgent.substring(0, 100),
-                    entries_count: (data.entries || []).length.toString(),
-                }).catch(e => console.warn('EmailJS Feature-Request Fehler:', e));
+                const minimalData = buildFeedbackData('💡 FEATURE REQUEST: ' + idea.trim(), 0);
+                emailjs.send('service_22m5bcs', 'template_xe5xc1k', minimalData
+                ).catch(e => console.warn('EmailJS Feature-Request Fehler:', e));
             }
             if (!data.featureRequests) data.featureRequests = [];
             data.featureRequests.push({ date: new Date().toISOString(), text: idea.trim() });
