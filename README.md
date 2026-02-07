@@ -69,11 +69,12 @@
 ### 🌟 Warum MyWorkLog?
 
 ```
-✅ 100% lokal – Keine Cloud, kein Server                    🔒 DSGVO-konform
+✅ Lokal-first – Daten bleiben auf deinem Gerät              🔒 DSGVO-konform
 ✅ Offline-fähig – Funktioniert überall                      📱 PWA-installierbar
-✅ KI-gestützt – Intelligente Datenanalyse                   🤖 AI-Bot Assistent
+✅ KI-gestützt – AI-Bot + lokales WebLLM                     🤖 AI-Bot Assistent
 ✅ Gleitzeit-ready – Deutsche Arbeitszeitmodelle             ⚡ Zero-Setup
 ✅ Verschlüsselt – AES-256-GCM Backup                        🎨 Dark/Light Mode
+✅ Cloud-Sync – Optionale Synchronisation via Supabase       ☁️ Geräteübergreifend
 ```
 
 ### 📊 Projektstand
@@ -123,28 +124,34 @@
 - 📊 Echtzeit-Datenanalyse
 - 🎯 Smart Recommendations
 - 📝 Conversation History
+- 🤖 Lokales WebLLM (on-device KI)
 
 #### 🔒 **Sicherheit & Backup**
 - 🔐 AES-256-GCM Verschlüsselung
 - 💾 JSON Export/Import
 - 📅 iCalendar Export (RFC 5545)
 - 🔄 Automatische Backups
+- ☁️ Optionale Cloud-Sync (Supabase)
 - 🛡️ DSGVO-konform
 
 </td>
 </tr>
 </table>
 
-### 🆕 Neue Features (v2.9.3)
+### 🆕 Neue Features (v3.2.0)
 
 | Feature | Beschreibung | Docs |
 |---------|-------------|------|
-| 🤖 **AI-Bot Assistent** | Intelligente Conversation Engine mit Echtzeit-Datenanalyse | [AI-Bot Docs](README´s/AI-Bot/) |
-| 📱 **PWA Support** | Installierbar auf allen Plattformen mit Offline-Modus | [PWA Guide](README´s/PWA-README.md) |
-| 🔒 **Encrypted Backup** | Enterprise-Grade AES-256-GCM mit PBKDF2 | [Security Docs](Rechtliches/SECURITY.md) |
-| 👥 **Multi-Profile** | Team-Mode für mehrere Nutzer auf einem Gerät | [Features](README´s/FEATURES.md) |
-| 🗓️ **iCal Export** | Direkt zu Google/Outlook/Apple Calendar | [Features](README´s/FEATURES.md) |
-| 🎨 **Chart Customization** | 8+ Visualisierungsmodi mit Animationen | [Features](README´s/FEATURES.md) |
+| ☁️ **Cloud-Sync** | Optionale Synchronisation via Supabase (Magic Link Auth) | [Cloud Docs](Assets/js/Cloud/) |
+| 📆 **Wochenansicht** | Dedizierter Wochen-Tab mit KPIs, Vergleich & Breakdown | — |
+| 📊 **Monatvergleich** | Monat-vs-Monat Vergleichswidget mit Mini-Kalender | — |
+| 🤖 **WebLLM** | Lokales LLM (on-device KI) für erweiterte Analyse | [WebLLM Docs](README´s/AI-Bot/WEB-LLM/) |
+| 💬 **Feedback (EmailJS)** | In-App Feedback mit DSGVO-Datenmodus (Minimal/Vollständig) | — |
+| 💰 **Spenden (PayPal)** | Support-Seite mit PayPal-Integration | — |
+| ⚡ **Schnelleintrag** | 1-Klick Vorlagen für Arbeitstag, Schultag etc. | — |
+| 📚 **Lern-Hub** | Lernressourcen für Auszubildende | [Lern-Hub](Pages/App/lern-hub.html) |
+| 📋 **Berichtsheft** | IHK-konforme Ausbildungsnachweise | [Berichtsheft](Pages/App/berichtsheft.html) |
+| 📄 **Vertrags-Manager** | Gehalt & Urlaubsübersicht | [Vertrags-Manager](Pages/App/vertrags-manager.html) |
 
 ---
 
@@ -171,7 +178,7 @@ Der integrierte AI-Bot analysiert deine Zeiterfassungsdaten intelligent und gibt
 
 </div>
 
-**Zwei-Module-System:**
+**Drei-Module-System:**
 
 1. **`data-analyzer-pro.js`** – Datenanalyse-Engine
    - Aggregiert LocalStorage-Daten
@@ -185,6 +192,12 @@ Der integrierte AI-Bot analysiert deine Zeiterfassungsdaten intelligent und gibt
    - User Profiling (Consistency, Performance, Work Style)
    - History Management
 
+3. **WebLLM Integration** – Lokales LLM (on-device)
+   - `webllm-config.js` – Modell-Konfiguration
+   - `webllm-integration.js` – Browser-LLM Engine
+   - `webllm-validator.js` – Response-Validierung
+   - Läuft vollständig im Browser (WebGPU)
+
 <div align="center">
 
 ![Data Analyzer](Grafiken/Bot-Analyzer.png)
@@ -192,11 +205,12 @@ Der integrierte AI-Bot analysiert deine Zeiterfassungsdaten intelligent und gibt
 </div>
 
 **Features:**
-- 🔒 100% lokal – keine Cloud-Kommunikation
+- 🔒 Primär lokal – Cloud nur optional
 - 💾 Conversation History in LocalStorage
 - 🎯 Pattern Recognition für wiederkehrende Fragen
 - 📊 Echtzeit-Zugriff auf Zeiterfassungsdaten
 - 🤝 Graceful Degradation (funktioniert auch ohne Analyzer)
+- 🤖 WebLLM für erweiterte KI-Antworten (optional, on-device)
 
 ➡️ **[Mehr zur AI-Bot Integration](README´s/AI-Bot/INTEGRATION-NOTES.md)**
 
@@ -318,27 +332,45 @@ npm run lint
 
 ```
 MyWorkLog/
-├── 📄 index.html                    # Haupt-App (Single-File) ~7000 Zeilen
+├── 📄 index.html                    # Haupt-App (Single-File) ~21.000 Zeilen
 ├── 📱 manifest.json                 # PWA Manifest
 ├── ⚙️ service-worker.js            # Service Worker (Cache v4)
+├── ☁️ supabase-config.js           # Supabase Cloud-Konfiguration
 ├── 📦 package.json                  # npm Config & Scripts
 │
 ├── 🤖 AI-Bot/
 │   ├── aibot-engine-pro.js         # Conversation Engine
-│   └── data-analyzer-pro.js        # Datenanalyse-Modul
+│   ├── data-analyzer-pro.js        # Datenanalyse-Modul
+│   └── LLM/
+│       ├── webllm-config.js        # WebLLM Konfiguration
+│       ├── webllm-integration.js   # Browser-LLM Engine
+│       └── webllm-validator.js     # Response-Validierung
 │
 ├── 🎨 Assets/
-│   ├── css/                        # (Inline in index.html)
+│   ├── css/                        # Event-Styles (Weihnachten, Neujahr)
 │   └── js/
 │       ├── icons.js                # Icon-Management
 │       ├── shortcuts.js            # Keyboard Shortcuts
 │       ├── touch-mobile-optimizations.js
-│       └── pinch-zoom.js
+│       ├── pinch-zoom.js
+│       └── Cloud/
+│           ├── supabase-integration.js  # Cloud-Sync Logic
+│           ├── supabase-advanced.js     # Erweiterte Sync-Features
+│           └── supabase-ui.js           # Cloud-UI-Komponenten
 │
 ├── 📱 Pages/
 │   ├── DE-Gestz/                   # DSGVO & Impressum
+│   ├── App/
+│   │   ├── berichtsheft.html       # IHK Berichtsheft
+│   │   ├── lern-hub.html           # Lernressourcen
+│   │   ├── vertrags-manager.html   # Vertrags-Manager
+│   │   └── Ausbilungs_Hilfe/       # Fachinformatiker-Hilfe
+│   ├── Event/                      # Saisonale Features
 │   └── Info/
-│       └── offline.html            # PWA Offline-Seite
+│       ├── offline.html            # PWA Offline-Seite
+│       ├── about.html              # Über die App
+│       ├── Aktuelles.html          # News & Updates
+│       └── Updates-Manager.html    # Update-Verlauf
 │
 ├── 📚 README´s/
 │   ├── FEATURES.md                 # Feature-Übersicht
@@ -410,15 +442,22 @@ graph LR
     D --> E[UI Rendering]
     D --> F[AI Bot]
     F --> G[Recommendations]
+    F --> L[WebLLM]
     E --> H[SVG Charts]
     C --> I[Export/Backup]
+    C -->|opt-in| J[Supabase Cloud]
+    C -->|consent| K[EmailJS Feedback]
 ```
 
 **LocalStorage Keys:**
-- `tg_pro_data` – Hauptdaten (Zeiteinträge)
+- `tg_pro_data` – Hauptdaten (Zeiteinträge, Einstellungen, Profile)
 - `aiBotHistoryPro` – AI Conversation History
 - `tt_chart_style` – Chart-Anpassungen
 - `theme` – Dark/Light Mode
+
+**Cloud (optional):**
+- Supabase PostgreSQL – Alle LocalStorage-Daten (verschlüsselt, Magic Link Auth)
+- EmailJS – Feedback-Versand (nur bei Consent)
 
 ---
 
@@ -457,7 +496,10 @@ graph LR
     "QRCode.js": "v1.0.0",      // QR-Code Generation
     "Chart.js": "v3.9.1",       // Charting (komplementär)
     "jsPDF": "v2.5.1",          // PDF Export
-    "html2canvas": "v1.4.1"     // DOM → Canvas
+    "html2canvas": "v1.4.1",    // DOM → Canvas
+    "Supabase JS": "v2",        // Cloud-Sync & Auth
+    "EmailJS": "v4",            // Feedback-Versand
+    "WebLLM": "v0.2.80"         // Lokales LLM (on-device)
   },
   "devDependencies": {
     "Jest": "v29.7.0",          // Testing Framework
@@ -743,14 +785,17 @@ self.addEventListener('fetch', (event) => {
 ### 🛡️ DSGVO-Konformität
 
 ```
-✅ 100% lokale Datenspeicherung (LocalStorage)
-✅ Keine Server-Kommunikation
+✅ Lokale Datenspeicherung als Standard (LocalStorage)
+✅ Cloud-Sync nur mit ausdrücklicher Einwilligung (Supabase)
+✅ Feedback nur mit DSGVO-Consent-Checkbox (EmailJS)
+✅ Datenmodus wählbar: Minimal oder Vollständig
 ✅ Keine Cookies (außer Session)
 ✅ Keine Tracking-Scripts
 ✅ Opt-In für Analytics (Plausible, privacy-friendly)
 ✅ Datenportabilität (JSON Export)
 ✅ Recht auf Löschung (Clear Data)
-✅ Transparente Datennutzung
+✅ Transparente Datenvorschau vor jedem Versand
+✅ Drittlandübermittlung dokumentiert (USA: EU-U.S. DPF)
 ```
 
 ### 🔐 Verschlüsselung
@@ -956,6 +1001,9 @@ Chart.js (MIT) - Charting Library
 QRCode.js (MIT) - QR Code Generation
 jsPDF (MIT) - PDF Generation
 html2canvas (MIT) - Screenshot Library
+Supabase JS (MIT) - Cloud Database & Auth
+EmailJS (MIT) - Email Sending Service SDK
+WebLLM (Apache-2.0) - On-Device LLM Runtime
 ```
 
 **➡️ [Vollständige Third-Party Notices](Rechtliches/NOTICE.md)**
@@ -993,9 +1041,9 @@ Eine moderne Lösung für intelligente Zeiterfassung
 
 ---
 
-<sub>MyWorkLog v2.9.3 | Gebaut mit modernstem Web-Standard | 🤖 AI-Bot powered | 🚀 Production Ready</sub>
+<sub>MyWorkLog v3.2.0 | Gebaut mit modernstem Web-Standard | 🤖 AI-Bot powered | ☁️ Cloud-Sync | 🚀 Production Ready</sub>
 
-<sub>© 2025 TechNova App Team. Alle Rechte vorbehalten. | [DSGVO](./DSGVO.html) | [Impressum](./Impressum.html) | [MIT License](Rechtliches/LICENSE.md)</sub>
+<sub>© 2025–2026 TechNova App Team. Alle Rechte vorbehalten. | [DSGVO](./DSGVO.html) | [Impressum](./Impressum.html) | [MIT License](Rechtliches/LICENSE.md)</sub>
 
 </div>
 
