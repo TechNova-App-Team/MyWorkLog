@@ -183,6 +183,7 @@ class SupabaseCloudSync {
                 .upsert(
                     {
                         id: this.user.id,
+                        user_id: this.user.id,
                         all_data: allData,
                         updated_at: new Date().toISOString()
                     },
