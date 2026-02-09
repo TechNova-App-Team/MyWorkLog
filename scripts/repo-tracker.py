@@ -831,7 +831,7 @@ class RepoAnalyzer:
         print(f"""
 {C.GRAY}   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.RESET}
    {C.PURPLE}⚡{C.RESET} {C.GRAY}Analyse abgeschlossen in {elapsed:.2f}s{C.RESET}
-   {C.PURPLE}📄{C.RESET} {C.GRAY}HTML-Report: repo-report.html{C.RESET}
+   {C.PURPLE}📄{C.RESET} {C.GRAY}HTML-Report: Pages/Info/repo-report.html{C.RESET}
 {C.GRAY}   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━{C.RESET}
 """)
 
@@ -1125,7 +1125,7 @@ new Chart(document.getElementById('linesChart'), {{
 </html>'''
         
         try:
-            report_path = os.path.join(self.repo_path, 'repo-report.html')
+            report_path = os.path.join(self.repo_path, 'Pages', 'Info', 'repo-report.html')
             with open(report_path, 'w', encoding='utf-8') as f:
                 f.write(html)
             print(f"   {C.GREEN}✅ HTML-Report erstellt: {report_path}{C.RESET}")

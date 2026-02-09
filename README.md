@@ -335,7 +335,8 @@ MyWorkLog/
 ├── 📄 index.html                    # Haupt-App (Single-File) ~21.000 Zeilen
 ├── 📱 manifest.json                 # PWA Manifest
 ├── ⚙️ service-worker.js            # Service Worker (Cache v4)
-├── ☁️ supabase-config.js           # Supabase Cloud-Konfiguration
+├── config/
+│   └── ☁️ supabase-config.js       # Supabase Cloud-Konfiguration
 ├── 📦 package.json                  # npm Config & Scripts
 │
 ├── 🤖 AI-Bot/
