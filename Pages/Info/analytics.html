@@ -776,6 +776,76 @@
         }
 
         // =========================================
+        //  FILTER: Clean & normalize page paths
+        // =========================================
+
+        // Paths that should be completely excluded (tokens, fragments with sensitive data, etc.)
+        function isIrrelevantPage(path) {
+            if (!path) return true;
+            // Filter out URLs with access tokens, auth fragments, or other sensitive data
+            if (/#(access_token|token|code|state|session|error|id_token)[\s=]/i.test(path)) return true;
+            if (/#access_token=/i.test(path)) return true;
+            // Filter out very long hash fragments (likely tokens)
+            var hashIdx = path.indexOf('#');
+            if (hashIdx !== -1 && path.substring(hashIdx).length > 40) return true;
+            return false;
+        }
+
+        // Normalize path: collapse index.html, strip hashes/query, unify base path
+        function normalizePath(path) {
+            if (!path) return '/MyWorkLog/';
+            // Remove hash fragments entirely
+            var hashIdx = path.indexOf('#');
+            if (hashIdx !== -1) path = path.substring(0, hashIdx);
+            // Remove query strings
+            var qIdx = path.indexOf('?');
+            if (qIdx !== -1) path = path.substring(0, qIdx);
+            // /index.html → /  (collapse index.html to directory)
+            path = path.replace(/\/index\.html$/i, '/');
+            // Normalize bare "/" or empty to the actual site root "/MyWorkLog/"
+            if (path === '/' || path === '') path = '/MyWorkLog/';
+            // Ensure starts with /
+            if (path[0] !== '/') path = '/' + path;
+            return path;
+        }
+
+        // Clean expanded table data (has .name, .pageviews, .visitors, .visits, .bounces, .totaltime)
+        function cleanExpandedPageData(data) {
+            if (!data || !data.length) return data;
+            var merged = {};
+            data.forEach(function(item) {
+                var key = item.name || item.x || '';
+                if (isIrrelevantPage(key)) return;
+                var norm = normalizePath(key);
+                if (!merged[norm]) {
+                    merged[norm] = { name: norm, pageviews: 0, visitors: 0, visits: 0, bounces: 0, totaltime: 0 };
+                }
+                merged[norm].pageviews += (item.pageviews || item.y || 0);
+                merged[norm].visitors  += (item.visitors || 0);
+                merged[norm].visits    += (item.visits || 0);
+                merged[norm].bounces   += (item.bounces || 0);
+                merged[norm].totaltime += (item.totaltime || 0);
+            });
+            return Object.values(merged).sort(function(a, b) { return b.pageviews - a.pageviews; });
+        }
+
+        // Clean simple metrics data (has .x = path, .y = count)
+        function cleanSimplePageData(data) {
+            if (!data || !data.length) return data;
+            var merged = {};
+            data.forEach(function(item) {
+                var key = item.x || '';
+                if (isIrrelevantPage(key)) return;
+                var norm = normalizePath(key);
+                if (!merged[norm]) {
+                    merged[norm] = { x: norm, y: 0 };
+                }
+                merged[norm].y += (item.y || 0);
+            });
+            return Object.values(merged).sort(function(a, b) { return b.y - a.y; });
+        }
+
+        // =========================================
         //  RENDER: Bar Charts
         // =========================================
         function renderBarChartDual(containerId, pageviews, sessions) {
@@ -1114,7 +1184,11 @@
                 renderBarChartDual('pageviewsChart', pageviewsData.pageviews, pageviewsData.sessions);
                 renderBarChartSingle('visitorsChart', pageviewsData.sessions, 'visitor');
 
-                // ── Tab Tables ──
+                // ── Tab Tables (filtered & normalized) ──
+                topPagesExp = cleanExpandedPageData(topPagesExp);
+                entryPages  = cleanSimplePageData(entryPages);
+                exitPages   = cleanSimplePageData(exitPages);
+
                 renderExpandedTable('topPagesTable', topPagesExp);
 
                 renderSimpleTable('entryPagesTable', entryPages, function(x) { return x || '/'; }, 'green');
