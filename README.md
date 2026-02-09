@@ -216,6 +216,39 @@ Der integrierte AI-Bot analysiert deine Zeiterfassungsdaten intelligent und gibt
 
 ---
 
+## ☁️ Cloud-Sync mit Supabase
+
+Optional: Synchronisiere deine Zeiterfassungsdaten über die Cloud! Deine Einträge werden automatisch in Supabase gespeichert und sind dadurch **geräteübergreifend verfügbar**.
+
+<div align="center">
+
+![Supabase Cloud Sync](Grafiken/supabase.png)
+
+</div>
+
+**Wie es funktioniert:**
+1. 🔐 Lokale App speichert alle Daten in deinem Browser (localStorage)
+2. 🔄 Optional: Synchronisierung zu Supabase Cloud
+3. 📱 Zugriff auf alle Geräten (Handy, Tablet, Computer)
+4. 🔒 Daten bleiben privat – nur du kannst sie sehen
+
+**Features:**
+- ✅ Automatische Synchronisation
+- ✅ Vertrauenswürdig: Magic Link Authentication
+- ✅ Row-Level Security (RLS) Policies
+- ✅ Fallback-Modus: App funktioniert auch ohne Cloud
+- ✅ DSGVO-konform
+
+**Setup:**
+1. Erstelle einen kostenlosen Account auf [supabase.com](https://supabase.com)
+2. Kopiere deine Projekt-URL und Public Key
+3. Füge die Werte in `config/supabase-config.js` ein
+4. Cloud Sync ist aktiviert! ☁️
+
+➡️ **[Cloud-Sync Dokumentation](Assets/js/Cloud/)**
+
+---
+
 ## 🚀 Quick Start
 
 ### Option 1: Direkt im Browser (Empfohlen)
