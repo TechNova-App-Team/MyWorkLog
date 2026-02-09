@@ -8,7 +8,7 @@ const OFFLINE_PAGE = './Pages/Info/offline.html';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './Config/manifest.json',
+  './manifest.json',
   './Assets/js/icons.js',
   './Assets/js/shortcuts.js',
   './Assets/js/touch-mobile-optimizations.js',

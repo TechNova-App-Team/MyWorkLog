@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 – Seite nicht gefunden | MyWorkLog</title>
+    <meta name="theme-color" content="#a855f7">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/svg+xml" href="./Grafiken/favicon.svg">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #030305;
+            --primary: #a855f7;
+            --primary-rgb: 168, 85, 247;
+            --success: #10b981;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: rgba(255, 255, 255, 0.08);
+            --card: rgba(22, 22, 26, 0.85);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image:
+                radial-gradient(ellipse at top left, rgba(168, 85, 247, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 600px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .error-code {
+            font-size: clamp(6rem, 20vw, 12rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            animation: glitch 3s infinite;
+            position: relative;
+        }
+
+        .error-code::after {
+            content: '404';
+            position: absolute;
+            left: 3px;
+            top: 3px;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(16, 185, 129, 0.3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            z-index: -1;
+        }
+
+        @keyframes glitch {
+            0%, 92%, 100% { transform: none; }
+            93% { transform: translate(2px, -1px); }
+            94% { transform: translate(-2px, 1px); }
+            95% { transform: translate(1px, 2px); }
+            96% { transform: none; }
+        }
+
+        .icon-404 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.8rem;
+            color: var(--text);
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--success));
+            color: white;
+            box-shadow: 0 4px 20px rgba(var(--primary-rgb), 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(var(--primary-rgb), 0.5);
+        }
+
+        .btn-secondary {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            background: rgba(168, 85, 247, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px; height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: drift linear infinite;
+        }
+
+        @keyframes drift {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+        }
+
+        .fun-fact {
+            margin-top: 2.5rem;
+            padding: 1rem 1.5rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .fun-fact strong { color: var(--primary); }
+
+        @media (max-width: 480px) {
+            .container { padding: 1rem; }
+            .actions { flex-direction: column; }
+            .btn { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <div class="icon-404">🔍</div>
+        <div class="error-code">404</div>
+        <h2>Seite nicht gefunden</h2>
+        <p>
+            Die gesuchte Seite existiert nicht oder wurde verschoben.<br>
+            Aber keine Sorge – deine Zeiteinträge sind sicher! ⏱️
+        </p>
+
+        <div class="actions">
+            <a href="./" class="btn btn-primary">🏠 Zur App</a>
+            <a href="javascript:history.back()" class="btn btn-secondary">← Zurück</a>
+        </div>
+
+        <div class="fun-fact" id="funFact"></div>
+    </div>
+
+    <script>
+        // Particles
+        const particlesEl = document.getElementById('particles');
+        for (let i = 0; i < 20; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.style.left = Math.random() * 100 + '%';
+            p.style.animationDuration = (8 + Math.random() * 12) + 's';
+            p.style.animationDelay = Math.random() * 8 + 's';
+            p.style.width = p.style.height = (2 + Math.random() * 4) + 'px';
+            if (Math.random() > 0.5) p.style.background = '#10b981';
+            particlesEl.appendChild(p);
+        }
+
+        // Fun facts
+        const facts = [
+            '💡 <strong>Wusstest du?</strong> MyWorkLog speichert alle Daten lokal – 100% Datenschutz!',
+            '⚡ <strong>Tipp:</strong> Drücke <strong>Alt+S</strong> um den Timer in der App zu starten.',
+            '🎯 <strong>Fun Fact:</strong> Der HTTP-Statuscode 404 wurde nach einem Raum am CERN benannt.',
+            '🔒 <strong>Sicher:</strong> Deine Backups werden mit AES-256-GCM verschlüsselt.',
+            '📱 <strong>PWA:</strong> Du kannst MyWorkLog als App auf deinem Handy installieren!',
+            '🤖 <strong>AI:</strong> MyWorkLog hat einen AI-Bot, der direkt im Browser läuft – ohne Server!',
+            '🌍 <strong>Offline:</strong> Die App funktioniert auch ohne Internet. Probier es aus!',
+            '⏱️ <strong>Gleitzeit:</strong> MyWorkLog berechnet automatisch dein Gleitzeit-Konto.',
+        ];
+        document.getElementById('funFact').innerHTML = facts[Math.floor(Math.random() * facts.length)];
+    </script>
+</body>
+</html>

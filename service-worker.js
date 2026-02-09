@@ -9,7 +9,7 @@ const OFFLINE_PAGE = './Pages/Info/offline.html';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './Config/manifest.json',
+  './manifest.json',
   './Assets/js/icons.js',
   './Assets/js/shortcuts.js',
   './Assets/js/touch-mobile-optimizations.js',
@@ -195,7 +195,7 @@ self.addEventListener('push', event => {
   const data = event.data ? event.data.json() : {};
   const options = {
     body: data.body || 'TimeTracker Benachrichtigung',
-    icon: './manifest.json', // Wird durch PWA-Icon ersetzt
+    icon: './Grafiken/icon-192.svg',
     badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect fill="%23a855f7" width="192" height="192"/><text x="96" y="96" font-size="120" fill="%23fff" text-anchor="middle" dominant-baseline="middle">⏱️</text></svg>',
     tag: data.tag || 'timetracker-notification',
     requireInteraction: data.requireInteraction || false
