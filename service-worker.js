@@ -96,9 +96,11 @@ async function cacheFirst(request) {
     console.log('[Cache] MISS, fetching from network:', request.url);
     const response = await fetch(request);
     
-    if (response.ok && request.method === 'GET') {
+    if (response.ok && request.method === 'GET' && isCacheableRequest(request)) {
       const cloned = response.clone();
-      cache.put(request, cloned);
+      cache.put(request, cloned).catch(err => {
+        console.warn('[Cache] Could not cache request:', request.url, err);
+      });
     }
     
     return response;
@@ -114,10 +116,12 @@ async function networkFirst(request) {
     console.log('[Network] Fetching:', request.url);
     const response = await fetch(request);
     
-    if (response.ok && request.method === 'GET') {
+    if (response.ok && request.method === 'GET' && isCacheableRequest(request)) {
       const cache = await caches.open(RUNTIME_CACHE);
       const cloned = response.clone();
-      cache.put(request, cloned);
+      cache.put(request, cloned).catch(err => {
+        console.warn('[Cache] Could not cache request:', request.url, err);
+      });
     }
     
     return response;
@@ -156,6 +160,17 @@ async function getOfflineResponse(request) {
 // ===== UTILITIES =====
 function isStaticAsset(url) {
   return /\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/.test(url);
+}
+
+// Check ob Request gecacht werden kann (nur http/https, nicht chrome-extension, etc.)
+function isCacheableRequest(request) {
+  try {
+    const url = new URL(request.url);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch (err) {
+    console.warn('[Cache] Invalid URL:', request.url, err);
+    return false;
+  }
 }
 
 // ===== MESSAGE HANDLING (für Client-Communication) =====

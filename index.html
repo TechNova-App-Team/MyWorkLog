@@ -3943,9 +3943,6 @@
 
         <!-- 5. Bereich: Tools & Werkzeuge -->
         <div class="nav-section" style="margin-top: 1.5rem; opacity: 0.7;">Tools & Werkzeuge</div>
-        <div class="nav-item" onclick="window.location.href='./Pages/Info/analytics.html'" style="cursor:pointer;">
-            <span>📊</span> Analytics
-        </div>
         <div class="nav-item" id="nav-alerts" onclick="toggleAlertsPanel()" style="position:relative;">
             <span>🔔</span> Alerts
             <div id="alertBadge" style="position:absolute; top:8px; right:8px; background:var(--danger); width:18px; height:18px; border-radius:50%; display:none; font-size:0.7rem; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700;"></div>
@@ -3970,8 +3967,8 @@
         <div class="nav-item" id="nav-support" onclick="switchTab('support')">
             <span>☕</span> Unterstützung
         </div>
-        <a href="./Pages/Info/Aktuelles.html" class="nav-item external-link" style="text-decoration:none; cursor:pointer;" target="_blank" rel="noopener noreferrer" aria-label="Aktuelles — System Status & Updates (öffnet in neuem Tab)" title="Öffnet in neuem Tab">
-            <span>ℹ️</span> Aktuelles
+        <a href="./Pages/Info/analytics.html" class="nav-item external-link" style="text-decoration:none; cursor:pointer;" target="_blank" rel="noopener noreferrer" aria-label="Aktuelles — System Status & Updates (öffnet in neuem Tab)" title="Öffnet in neuem Tab">
+            <span>ℹ️</span> Analytics
         </a>
         <a href="./Pages/DE-Gestz/Impressum.html" class="nav-item external-link" style="text-decoration:none; cursor:pointer;" target="_blank" rel="noopener noreferrer" aria-label="Impressum — Rechtliche Informationen (öffnet in neuem Tab)" title="Öffnet in neuem Tab">
             <span>ℹ️</span> Impressum
@@ -7930,7 +7927,7 @@
             });
             
             while (currentDate <= endDateObj) {
-                const dateKey = currentDate.toISOString().split('T')[0];
+                const dateKey = toLocalISODate(currentDate);
                 const dayIndex = currentDate.getDay(); // 0=So, 6=Sa
                 const expected = data.settings.hours[dayIndex] || 0;
                 
@@ -8561,7 +8558,7 @@
         let currentDate = new Date(startDate);
         
         while (currentDate <= endDate) {
-            const dateKey = currentDate.toISOString().split('T')[0];
+            const dateKey = toLocalISODate(currentDate);
             const dayIndex = currentDate.getDay(); 
             const expected = data.settings.hours[dayIndex] || 0;
             
@@ -8761,10 +8758,10 @@
         for (let i = 0; i < 5; i++) {
             const day = new Date(monday);
             day.setDate(monday.getDate() + i);
-            const dateStr = day.toISOString().split('T')[0];
+            const dateStr = toLocalISODate(day);
             
             const hasEntry = data.entries.some(e => e.date === dateStr);
-            const isToday = dateStr === now.toISOString().split('T')[0];
+            const isToday = dateStr === toLocalISODate(now);
             
             const classes = ['week-dot'];
             if (hasEntry) classes.push('filled');
@@ -8973,9 +8970,9 @@
     function getRelativeTime(dateStr) {
         const d = new Date(dateStr);
         const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
+        const todayStr = toLocalISODate(now);
         const yesterdayDate = new Date(now); yesterdayDate.setDate(now.getDate() - 1);
-        const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+        const yesterdayStr = toLocalISODate(yesterdayDate);
         if (dateStr === todayStr) return 'heute';
         if (dateStr === yesterdayStr) return 'gestern';
         const diffDays = Math.round((now - d) / (1000*60*60*24));
@@ -10280,7 +10277,7 @@
         let weekCounter = 0;
 
         for (let i = 0; i < DAYS_TO_PLAN; i++) {
-            const dateKey = currentDay.toISOString().split('T')[0];
+            const dateKey = toLocalISODate(currentDay);
             const dayIndex = currentDay.getDay(); // 0=So, 1=Mo
             const isToday = currentDay.toDateString() === today.toDateString();
             const dayOfWeek = dayIndex === 0 ? 6 : dayIndex - 1; // 0=Mo, 6=So
@@ -18029,9 +18026,18 @@ TIPPS:
             console.warn('updateStreakCounter: #streakEmoji not found');
         }
 
-        // Trigger Notification bei neuer Best-Streak
+        // Trigger Notification bei neuer Best-Streak (EINMALIG PRO TAG)
         if (streak.current > 0 && streak.current === streak.best && streak.current > 1) {
-            showSmartNotification('🔥 Neue Best-Streak!', `${streak.current} Tage in Folge mit Soll erfüllt!`, 'success');
+            const today = new Date().toISOString().split('T')[0];
+            const lastNotificationDate = localStorage.getItem('tt_last_streak_notification_date');
+            const lastNotificationValue = localStorage.getItem('tt_last_streak_notification_value');
+            
+            // Nur anzeigen, wenn es heute noch nicht angezeigt wurde oder der Streak höher ist
+            if (lastNotificationDate !== today || parseInt(lastNotificationValue || '0') < streak.best) {
+                showSmartNotification('🔥 Neue Best-Streak!', `${streak.current} Tage in Folge mit Soll erfüllt!`, 'success');
+                localStorage.setItem('tt_last_streak_notification_date', today);
+                localStorage.setItem('tt_last_streak_notification_value', streak.best.toString());
+            }
         }
     }
 
@@ -18228,16 +18234,47 @@ TIPPS:
         return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
     }
 
+    // Lokales Datum als YYYY-MM-DD (OHNE UTC-Konvertierung!)
+    function toLocalISODate(d) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // Normalisiert Datumsstrings in ISO-Format (YYYY-MM-DD)
+    function normalizeDate(dateStr) {
+        if (!dateStr) return null;
+        // Falls bereits ISO-Format
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+        // Falls Locale-Format (DD.MM.YYYY)
+        if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) {
+            const parts = dateStr.split('.');
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        // Fallback: versuche zu parsen
+        try {
+            const d = new Date(dateStr);
+            if (!isNaN(d.getTime())) {
+                return toLocalISODate(d);
+            }
+        } catch (e) {}
+        return null;
+    }
+
     function getWeekEntries(monday) {
         const sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6);
         sunday.setHours(23, 59, 59, 999);
         const entries = [];
         (data.entries || []).forEach(e => {
-            const d = new Date(e.date);
+            const normalizedDate = normalizeDate(e.date);
+            if (!normalizedDate) return;
+            const d = new Date(normalizedDate);
             d.setHours(0, 0, 0, 0);
             if (d >= monday && d <= sunday) {
-                entries.push(e);
+                // Normalisiere auch das date-Feld beim Zugriff
+                entries.push({ ...e, date: normalizedDate });
             }
         });
         return entries;
@@ -18345,12 +18382,12 @@ TIPPS:
         const dailyContainer = document.getElementById('wvDailyBreakdown');
         if (dailyContainer) {
             let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = toLocalISODate(new Date());
 
             for (let i = 0; i < 7; i++) {
                 const dayDate = new Date(monday);
                 dayDate.setDate(monday.getDate() + i);
-                const dateStr = dayDate.toISOString().split('T')[0];
+                const dateStr = toLocalISODate(dayDate);
                 const isToday = dateStr === todayStr;
                 const entry = entries.find(e => e.date === dateStr);
                 const sollDay = (data.settings && data.settings.hours) ? (data.settings.hours[(i + 1) % 7] || 0) : (i < 5 ? 8 : 0);
@@ -18416,12 +18453,12 @@ TIPPS:
             for (let i = 0; i < 7; i++) {
                 const dayDate = new Date(monday);
                 dayDate.setDate(monday.getDate() + i);
-                const dateStr = dayDate.toISOString().split('T')[0];
+                const dateStr = toLocalISODate(dayDate);
                 const entry = entries.find(e => e.date === dateStr);
                 const h = entry ? (entry.worked || 0) : 0;
                 const pct = maxH > 0 ? (h / maxH * 100) : 0;
                 const color = entry ? (dayColors[entry.type] || 'var(--primary)') : 'rgba(255,255,255,0.06)';
-                const isToday = dateStr === new Date().toISOString().split('T')[0];
+                const isToday = dateStr === toLocalISODate(new Date());
 
                 barsHtml += `<div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;">
                     <div style="font-size:0.72rem; font-weight:700; font-family:var(--font-mono); color:${h > 0 ? '#fff' : 'var(--text-muted)'};">${h > 0 ? h.toFixed(1) : '—'}</div>
