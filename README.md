@@ -164,7 +164,7 @@ Der integrierte AI-Bot analysiert deine Zeiterfassungsdaten intelligent und gibt
 ```javascript
 // Beispiel-Interaktionen
 "Wie viele Stunden habe ich diese Woche gearbeitet?"     → 📊 Weekly Stats
-"Zeige mir meine Produktivität"                          → 📈 Trend Analysis
+"Zeige mir meine Produktivität."                          → 📈 Trend Analysis
 "Wann sollte ich eine Pause machen?"                     → 💡 Smart Recommendation
 "Wie sieht mein Monat aus?"                              → 📅 Monthly Forecast
 "Bin ich im Saldo?"                                      → ⚖️ Balance Check
