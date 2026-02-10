@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -1628,42 +1628,117 @@
             border-color: var(--primary) !important;
         }
         
-        /* --- ONBOARDING TOUR STYLES (NEU) --- */
-        .onboarding-step-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.3);
-            transition: all 0.3s ease;
-            cursor: pointer;
+        /* --- ONBOARDING TOUR STYLES - IMMERSIVE EDITION --- */
+        @property --tour-angle { syntax:'<angle>'; initial-value:0deg; inherits:false; }
+        .tour-overlay { position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;overflow:hidden; }
+        .tour-overlay.active { display:flex; }
+        .tour-bg {
+            position:absolute;inset:0;
+            background:linear-gradient(135deg,#05050f,#0a0a2e 30%,#150a28 50%,#0a1628 70%,#05050f);
+            background-size:400% 400%;animation:tourBgShift 12s ease infinite;
         }
-        .onboarding-step-dot.active {
-            background: #fff;
-            transform: scale(1.3);
+        @keyframes tourBgShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .tour-orb { position:absolute;border-radius:50%;filter:blur(100px);opacity:.15;pointer-events:none; }
+        .tour-orb-1 { width:500px;height:500px;top:-10%;left:-10%;background:#a855f7;animation:orbM1 18s ease-in-out infinite; }
+        .tour-orb-2 { width:400px;height:400px;bottom:-10%;right:-10%;background:#06b6d4;animation:orbM2 22s ease-in-out infinite; }
+        .tour-orb-3 { width:300px;height:300px;top:40%;left:60%;background:#10b981;animation:orbM3 15s ease-in-out infinite; }
+        @keyframes orbM1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(150px,100px)} }
+        @keyframes orbM2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-120px,-80px)} }
+        @keyframes orbM3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-80px,60px)} }
+        .tour-card {
+            position:relative;z-index:2;width:92%;max-width:780px;
+            background:rgba(255,255,255,.04);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);
+            border:1px solid rgba(255,255,255,.08);border-radius:28px;
+            box-shadow:0 0 80px rgba(168,85,247,.1),0 40px 80px rgba(0,0,0,.5);overflow:hidden;
         }
-        
-        .onboarding-content {
-            animation: slideUp 0.4s ease forwards;
+        .tour-glow {
+            position:absolute;inset:-1px;border-radius:29px;z-index:-1;
+            background:conic-gradient(from var(--tour-angle,0deg),transparent 60%,var(--primary) 78%,#06b6d4 82%,transparent 100%);
+            animation:glowSpin 4s linear infinite;filter:blur(1px);
         }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes glowSpin { to{--tour-angle:360deg} }
+        .tour-header { padding:2rem 2.5rem 1.5rem;position:relative; }
+        .tour-header::after {
+            content:'';position:absolute;bottom:0;left:2.5rem;right:2.5rem;height:1px;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
         }
-        
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(100px); }
-            to { opacity: 1; transform: translateX(0); }
+        .tour-step-icon {
+            width:72px;height:72px;border-radius:18px;display:flex;align-items:center;justify-content:center;
+            font-size:2.2rem;background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(6,182,212,.15));
+            border:1px solid rgba(255,255,255,.08);box-shadow:0 0 40px rgba(168,85,247,.15);
+            animation:iconBob 3s ease-in-out infinite;
         }
-        
-        @keyframes slideOutRight {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(100px); }
+        @keyframes iconBob { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-6px) rotate(2deg)} }
+        .tour-title {
+            font-size:1.6rem;font-weight:800;margin:0;
+            background:linear-gradient(135deg,#fff 30%,var(--primary) 60%,#06b6d4);
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+            background-size:200% auto;animation:titleShimmer 3s ease infinite;
         }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        @keyframes titleShimmer { 0%,100%{background-position:0% center} 50%{background-position:200% center} }
+        .tour-subtitle { color:rgba(255,255,255,.5);font-size:.9rem;margin:.4rem 0 0; }
+        .tour-progress { padding:0 2.5rem; }
+        .tour-progress-track { height:3px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin:1rem 0 .75rem; }
+        .tour-progress-fill {
+            height:100%;border-radius:3px;
+            background:linear-gradient(90deg,var(--primary),#06b6d4,#10b981);background-size:200% 100%;
+            transition:width .6s cubic-bezier(.4,0,.2,1);box-shadow:0 0 20px rgba(168,85,247,.5);
+            animation:progPulse 2s ease infinite;
         }
+        @keyframes progPulse { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+        .tour-dots { display:flex;gap:6px;justify-content:center; }
+        .tour-dot {
+            width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.12);cursor:pointer;
+            transition:all .4s cubic-bezier(.4,0,.2,1);border:none;padding:0;
+        }
+        .tour-dot.active { background:var(--primary);box-shadow:0 0 12px var(--primary);transform:scale(1.5); }
+        .tour-dot.done { background:#10b981;box-shadow:0 0 8px rgba(16,185,129,.4); }
+        .tour-body { padding:1.5rem 2.5rem 2rem;min-height:320px;position:relative; }
+        .tour-enter { animation:tIn .5s cubic-bezier(.23,1,.32,1) forwards; }
+        .tour-exit { animation:tOut .25s ease forwards; }
+        @keyframes tIn { from{opacity:0;transform:translateY(25px) scale(.97);filter:blur(8px)} to{opacity:1;transform:none;filter:blur(0)} }
+        @keyframes tOut { to{opacity:0;transform:translateY(-15px) scale(.97)} }
+        .tour-feat {
+            background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;
+            padding:1.1rem 1.25rem;transition:all .3s cubic-bezier(.23,1,.32,1);position:relative;overflow:hidden;
+        }
+        .tour-feat:hover { background:rgba(255,255,255,.06);border-color:rgba(168,85,247,.25);transform:translateY(-2px); }
+        .tour-feat::before { content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--primary),transparent);opacity:0;transition:.3s; }
+        .tour-feat:hover::before { opacity:1; }
+        .tour-stagger > * { opacity:0;animation:stgIn .45s ease forwards; }
+        .tour-stagger > *:nth-child(1){animation-delay:.08s} .tour-stagger > *:nth-child(2){animation-delay:.16s}
+        .tour-stagger > *:nth-child(3){animation-delay:.24s} .tour-stagger > *:nth-child(4){animation-delay:.32s}
+        .tour-stagger > *:nth-child(5){animation-delay:.40s} .tour-stagger > *:nth-child(6){animation-delay:.48s}
+        @keyframes stgIn { from{opacity:0;transform:translateX(-15px)} to{opacity:1;transform:none} }
+        .tour-kbd {
+            display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:30px;padding:0 10px;
+            background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;
+            font-size:.85rem;font-weight:600;color:rgba(255,255,255,.9);box-shadow:0 2px 0 rgba(255,255,255,.1);
+        }
+        .tour-btn {
+            padding:12px 28px;border-radius:12px;font-weight:700;font-size:.95rem;cursor:pointer;
+            transition:all .3s cubic-bezier(.23,1,.32,1);border:none;font-family:inherit;position:relative;overflow:hidden;
+        }
+        .tour-btn-next { background:linear-gradient(135deg,var(--primary),#06b6d4);color:#fff;box-shadow:0 4px 25px rgba(168,85,247,.35); }
+        .tour-btn-next:hover { transform:translateY(-2px);box-shadow:0 8px 35px rgba(168,85,247,.5); }
+        .tour-btn-back { background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1) !important; }
+        .tour-btn-back:hover { background:rgba(255,255,255,.1);color:#fff; }
+        .tour-btn-skip { background:transparent;color:rgba(255,255,255,.4); }
+        .tour-btn-skip:hover { color:rgba(255,255,255,.7); }
+        .tour-counter { font-size:.8rem;color:rgba(255,255,255,.35);font-weight:500; }
+        .tour-footer { padding:0 2.5rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:12px; }
+        .tour-tip {
+            background:linear-gradient(135deg,rgba(168,85,247,.1),rgba(6,182,212,.1));
+            border:1px solid rgba(168,85,247,.2);border-radius:12px;padding:1rem 1.25rem;
+        }
+        .tour-confetti { position:fixed;inset:0;pointer-events:none;z-index:10001; }
+        @keyframes confettiFall { 0%{transform:translateY(-10vh) rotate(0);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+        .confetti-piece {
+            position:absolute;width:10px;height:10px;top:-10px;
+            animation:confettiFall var(--fall-dur,3s) var(--fall-del,0s) linear forwards;
+        }
+        @keyframes celebScale { 0%{transform:scale(0) rotate(-10deg);opacity:0} 50%{transform:scale(1.1) rotate(2deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+        .tour-celebrate { animation:celebScale .6s cubic-bezier(.175,.885,.32,1.275) forwards; }
 
 
         /* --- MOBILE RESPONSIVENESS --- */
@@ -3940,11 +4015,8 @@
             <span>💼</span> Vertrags-Mgr
         </a>
 
-        <!-- 4. Bereich: Community & KI -->
-        <div class="nav-section" style="margin-top: 1.5rem; opacity: 0.7;">Community & KI</div>
-        <div class="nav-item" onclick="renderCommunityHub()">
-            <span>🧠</span> Community
-        </div>
+        <!-- 4. Bereich: KI -->
+        <div class="nav-section" style="margin-top: 1.5rem; opacity: 0.7;">KI</div>
         <div class="nav-item" id="nav-aibot" onclick="switchTab('aibot')">
             <span>🤖</span> AI-Bot
         </div>
@@ -6413,47 +6485,43 @@
         </div>
     </div>
 
-    <!-- ONBOARDING TOUR MODAL (NEU) -->
-    <div class="modal" id="onboardingModal">
-        <div class="modal-box" style="width:700px; padding:0; overflow:hidden;">
-            <!-- Header mit Progress -->
-            <div style="background:linear-gradient(135deg, var(--primary), #06b6d4); padding:2rem; position:relative; overflow:hidden;">
-                <div style="position:absolute; top:0; right:-50px; width:200px; height:200px; background:radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); border-radius:50%;"></div>
-                
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; position:relative; z-index:1;">
-                    <h2 style="margin:0; font-size:1.5rem; color:#fff;">🎓 TimeTracker Tour</h2>
-                    <button onclick="endOnboardingTour()" style="background:rgba(255,255,255,0.2); border:none; color:#fff; width:40px; height:40px; border-radius:50%; font-size:1.2rem; cursor:pointer; transition:0.2s;"
-                            onmouseover="this.style.background='rgba(255,255,255,0.4)';"
-                            onmouseout="this.style.background='rgba(255,255,255,0.2)';">×</button>
-                </div>
-                
-                <div style="display:flex; gap:8px; position:relative; z-index:1;">
-                    <div id="onboardingProgress" style="display:flex; gap:6px;"></div>
+    <!-- IMMERSIVE TOUR OVERLAY -->
+    <div class="tour-overlay" id="tourOverlay">
+        <div class="tour-bg"></div>
+        <div class="tour-orb tour-orb-1"></div>
+        <div class="tour-orb tour-orb-2"></div>
+        <div class="tour-orb tour-orb-3"></div>
+        <canvas id="tourParticles" style="position:absolute;inset:0;pointer-events:none;z-index:1;"></canvas>
+        <div class="tour-card">
+            <div class="tour-glow"></div>
+            <div class="tour-header">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+                    <div style="display:flex;align-items:center;gap:16px;">
+                        <div class="tour-step-icon" id="tourStepIcon">🚀</div>
+                        <div>
+                            <h2 class="tour-title" id="tourTitle">TimeTracker Tour</h2>
+                            <p class="tour-subtitle" id="tourSubtitle">Entdecke alle Features</p>
+                        </div>
+                    </div>
+                    <button onclick="endOnboardingTour()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);width:40px;height:40px;border-radius:12px;font-size:1.2rem;cursor:pointer;transition:.3s;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background='rgba(255,255,255,.12)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.5)'">&times;</button>
                 </div>
             </div>
-            
-            <!-- Content Area -->
-            <div style="padding:2.5rem; min-height:300px; display:flex; flex-direction:column;">
-                <div id="onboardingContent" style="flex:1;">
-                    <!-- Wird dynamisch gefüllt -->
-                </div>
-                
-                <!-- Buttons -->
-                <div style="display:flex; gap:12px; margin-top:2rem; justify-content:space-between;">
-                    <button id="onboardingPrevBtn" class="btn" style="background:transparent; border:1px solid var(--border); padding:12px 24px; border-radius:10px;" onclick="previousOnboardingStep()">← Zurück</button>
-                    
-                    <div style="display:flex; gap:8px;">
-                        <button id="onboardingSkipBtn" class="btn" style="background:transparent; border:1px solid var(--border); padding:12px 24px; border-radius:10px;" onclick="endOnboardingTour()">Überspringen</button>
-                        <button id="onboardingNextBtn" class="btn btn-primary" style="padding:12px 32px; border-radius:10px; background:var(--primary);" onclick="nextOnboardingStep()">Weiter →</button>
-                    </div>
+            <div class="tour-progress">
+                <div class="tour-progress-track"><div class="tour-progress-fill" id="tourProgressFill" style="width:0%"></div></div>
+                <div class="tour-dots" id="tourDots"></div>
+            </div>
+            <div class="tour-body" id="tourBody"></div>
+            <div class="tour-footer">
+                <button class="tour-btn tour-btn-back" id="tourBtnBack" onclick="previousOnboardingStep()">← Zurück</button>
+                <span class="tour-counter" id="tourCounter">1 / 9</span>
+                <div style="display:flex;gap:10px;">
+                    <button class="tour-btn tour-btn-skip" onclick="endOnboardingTour()">Überspringen</button>
+                    <button class="tour-btn tour-btn-next" id="tourBtnNext" onclick="nextOnboardingStep()">Weiter →</button>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- ONBOARDING SPOTLIGHT OVERLAY (NEU) -->
-    <div id="spotlightOverlay" style="display:none; position:fixed; inset:0; z-index:180; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px);"></div>
-    <div id="spotlightHighlight" style="display:none; position:fixed; z-index:181; border:3px solid var(--primary); border-radius:12px; box-shadow:0 0 30px rgba(168,85,247,0.5); transition:all 0.4s cubic-bezier(0.4,0,0.2,1);"></div>
+    <div class="tour-confetti" id="tourConfetti"></div>
 
     <!-- QUICK HELP MODAL (Kompakt) -->
     <div class="modal" id="quickHelpModal">
@@ -6739,7 +6807,6 @@
         customEntryTypes: [],  // NEW: User-defined entry types
         customFields: [],       // NEW: User-defined fields per type
         workflowRules: [],      // NEW: Conditional rules & automation
-        communityHub: [],       // NEW: Shared features from community
         untis: null,            // NEW: Untis integration data
         settings: { 
             name:'User', 
@@ -11956,407 +12023,6 @@ TIPPS:
     // Alias für save() - wird in Custom Type Funktionen verwendet
     const saveData = save;
 
-    // ===== COMMUNITY HUB SYSTEM =====
-    // Marketplace für Benutzer um Custom Types, Fields & Rules zu teilen
-
-    function shareFeatureToHub(featureType, featureData, description, tags = []) {
-        // featureType: 'type' | 'field' | 'rule'
-        // Erstelle shareable Feature mit Metadaten
-        
-        const sharedFeature = {
-            id: `shared-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            type: featureType,
-            author: data.settings.name || 'Anonym',
-            authorId: `user-${Date.now()}`,  // Local pseudo-ID
-            data: featureData,
-            description: description,
-            tags: tags,
-            rating: 0,
-            downloads: 0,
-            reviews: [],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-
-        data.communityHub.push(sharedFeature);
-        save();
-        showCustomMessage('🎉 Shared!', `Dein ${featureType} wurde ins Community Hub hochgeladen!`, 'success');
-        return sharedFeature.id;
-    }
-
-    function downloadFeatureFromHub(featureId) {
-        const feature = data.communityHub.find(f => f.id === featureId);
-        if (!feature) {
-            showCustomMessage('❌ Fehler', 'Feature nicht gefunden', 'error');
-            return false;
-        }
-
-        try {
-            feature.downloads++;
-            
-            if (feature.type === 'type') {
-                // Importiere Custom Type
-                const newType = { ...feature.data, id: `custom-${Date.now()}` };
-                data.customEntryTypes.push(newType);
-                save();
-                showCustomMessage('✅ Installiert!', `"${newType.label}" wurde zu deinen Typen hinzugefügt!`, 'success');
-                if (typeof renderCustomTypesManager === 'function') renderCustomTypesManager();
-                
-            } else if (feature.type === 'field') {
-                // Importiere Custom Field
-                const newField = { ...feature.data, id: `field-${Date.now()}` };
-                data.customFields.push(newField);
-                save();
-                showCustomMessage('✅ Installiert!', `"${newField.label}" Field wurde hinzugefügt!`, 'success');
-                if (typeof renderCustomFieldsManager === 'function') renderCustomFieldsManager();
-                
-            } else if (feature.type === 'rule') {
-                // Importiere Workflow Rule
-                const newRule = { ...feature.data, id: `rule-${Date.now()}` };
-                data.workflowRules.push(newRule);
-                save();
-                showCustomMessage('✅ Installiert!', 'Workflow Rule wurde hinzugefügt!', 'success');
-            }
-            
-            return true;
-        } catch(e) {
-            showCustomMessage('❌ Fehler', 'Konnte Feature nicht importieren: ' + e.message, 'error');
-            return false;
-        }
-    }
-
-    function rateFeatureInHub(featureId, rating) {
-        // rating: 1-5 stars
-        const feature = data.communityHub.find(f => f.id === featureId);
-        if (!feature) return false;
-
-        feature.rating = ((feature.rating * (feature.reviews.length || 1)) + rating) / ((feature.reviews.length || 1) + 1);
-        feature.reviews.push({
-            author: data.settings.name || 'Anonym',
-            rating: rating,
-            timestamp: new Date().toISOString()
-        });
-
-        save();
-        return true;
-    }
-
-    function searchHubFeatures(query, type = null) {
-        // Suche Features im Community Hub
-        let results = data.communityHub || [];
-
-        if (query) {
-            const q = query.toLowerCase();
-            results = results.filter(f => 
-                f.description.toLowerCase().includes(q) ||
-                f.tags.some(t => t.toLowerCase().includes(q)) ||
-                f.author.toLowerCase().includes(q) ||
-                (f.data.label && f.data.label.toLowerCase().includes(q))
-            );
-        }
-
-        if (type) {
-            results = results.filter(f => f.type === type);
-        }
-
-        // Sortiere nach Downloads & Rating
-        results.sort((a, b) => (b.downloads * 0.6 + b.rating * 2) - (a.downloads * 0.6 + a.rating * 2));
-
-        return results;
-    }
-
-    function deleteFromHub(featureId) {
-        // Nur Author kann löschen
-        const feature = data.communityHub.find(f => f.id === featureId);
-        if (!feature) return false;
-
-        if (feature.author !== data.settings.name) {
-            showCustomMessage('❌ Nicht berechtigt', 'Nur der Author kann dieses Feature löschen', 'error');
-            return false;
-        }
-
-        showCustomConfirm(
-            '🗑️ Bestätigung',
-            'Dieses Feature wirklich vom Community Hub löschen?',
-            () => {
-                const idx = data.communityHub.findIndex(f => f.id === featureId);
-                if (idx > -1) {
-                    data.communityHub.splice(idx, 1);
-                    save();
-                    showCustomMessage('✅ Gelöscht', 'Feature wurde entfernt', 'success');
-                }
-            }
-        );
-
-        return true;
-    }
-
-    function renderCommunityHub() {
-        // Zeige Community Hub Modal mit Marketplace
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.75);
-            z-index: 500;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding: 20px;
-            overflow-y: auto;
-            backdrop-filter: blur(4px);
-        `;
-
-        const searchResults = searchHubFeatures('');
-        
-        modal.innerHTML = `
-            <div style="background:var(--bg); border:1px solid var(--border); border-radius:16px; width:100%; max-width:1200px; overflow:hidden; box-shadow:0 25px 60px rgba(0,0,0,0.6);">
-                <!-- Header mit Gradient -->
-                <div style="background:linear-gradient(135deg, var(--primary), #667eea); padding:2.5rem 2rem; position:relative; overflow:hidden;">
-                    <div style="position:absolute; top:0; right:0; font-size:120px; opacity:0.1; transform:translate(20px, -20px);">🌍</div>
-                    <div style="position:relative; z-index:1;">
-                        <h2 style="margin:0 0 0.5rem 0; color:#fff; font-size:1.8rem;">🌍 Community Hub</h2>
-                        <p style="margin:0; color:rgba(255,255,255,0.9); font-size:0.95rem;">Entdecke, teile und bewerte Custom Features der Community</p>
-                    </div>
-                    <button onclick="this.parentElement.parentElement.parentElement.remove();" style="position:absolute; top:1.5rem; right:1.5rem; background:rgba(255,255,255,0.2); border:none; width:40px; height:40px; border-radius:50%; font-size:1.5rem; color:#fff; cursor:pointer; transition:all 0.3s; hover-background:rgba(255,255,255,0.3);">&times;</button>
-                </div>
-
-                <!-- Content Container -->
-                <div style="padding:2rem;">
-                    <!-- Search & Filter -->
-                    <div style="display:grid; grid-template-columns:1fr auto auto auto; gap:12px; margin-bottom:2.5rem; @media(max-width:768px){grid-template-columns:1fr;}">
-                        <input type="text" id="hubSearch" placeholder="🔍 Suche nach Features..." onkeyup="filterHubResults(this.value)" style="padding:12px 16px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,0.03); color:var(--text); font-size:0.95rem; transition:all 0.3s;">
-                        <select id="hubTypeFilter" onchange="filterHubResults(document.getElementById('hubSearch').value)" style="padding:12px 14px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,0.03); color:var(--text); font-size:0.95rem; cursor:pointer;">
-                            <option value="">Alle Typen</option>
-                            <option value="type">📝 Entry Types</option>
-                            <option value="field">📋 Custom Fields</option>
-                            <option value="rule">⚙️ Workflow Rules</option>
-                        </select>
-                        <button onclick="showShareModal()" style="padding:12px 20px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:600; transition:all 0.3s; font-size:0.95rem;">📤 Share</button>
-                        <button onclick="document.getElementById('importCommunityInput').click()" style="padding:12px 20px; background:linear-gradient(135deg, #3b82f6, #2563eb); color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:600; transition:all 0.3s; font-size:0.95rem;">📥 Import</button>
-                        <input type="file" id="importCommunityInput" accept=".community" style="display:none;" onchange="importCommunityFeature(this.files[0]); this.value='';">
-                    </div>
-
-                    <!-- Results Grid -->
-                    <div style="margin-bottom:3rem;">
-                        <h3 style="margin:0 0 1.5rem 0; color:var(--primary); font-size:1.1rem; font-weight:600;">📦 Featured Features</h3>
-                        <div id="hubResults" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; max-height:500px; overflow-y:auto; padding-right:8px;">
-                            ${searchResults.length > 0 ? searchResults.map(feature => `
-                                <div style="background:linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)); border:1px solid var(--border); border-radius:12px; padding:18px; display:flex; flex-direction:column; transition:all 0.3s; cursor:pointer;">
-                                    <div style="margin-bottom:12px;">
-                                        <div style="font-size:2rem; margin-bottom:8px;">${feature.data.emoji || '📦'}</div>
-                                        <div style="font-weight:700; font-size:1.05rem; color:var(--text); margin-bottom:4px;">${feature.data.label || feature.data.name || feature.type}</div>
-                                        <div style="font-size:0.8rem; color:var(--text-muted);">👤 ${feature.author}</div>
-                                        <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-top:8px;">${feature.description}</div>
-                                    </div>
-                                    
-                                    <div style="display:flex; gap:6px; margin:12px 0; flex-wrap:wrap;">
-                                        ${feature.tags.map(tag => `<span style="background:rgba(168,85,247,0.3); color:#a855f7; padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:500;">#${tag}</span>`).join('')}
-                                    </div>
-
-                                    <div style="display:flex; gap:12px; font-size:0.85rem; color:var(--text-muted); margin-bottom:12px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.05);">
-                                        <span>⭐ ${feature.rating.toFixed(1)}</span>
-                                        <span>💬 ${feature.reviews.length}</span>
-                                        <span>📥 ${feature.downloads}</span>
-                                    </div>
-
-                                    <div style="display:flex; gap:8px; margin-top:auto;">
-                                        <button onclick="downloadFeatureFromHub('${feature.id}'); showCustomMessage('✅', 'Feature installiert!', 'success');" style="flex:1; background:linear-gradient(135deg, #667eea, #764ba2); color:#fff; border:none; border-radius:8px; padding:10px; cursor:pointer; font-weight:600; font-size:0.9rem; transition:all 0.3s;">📥 Install</button>
-                                        <button onclick="exportCommunityFeature('${feature.id}')" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px 12px; cursor:pointer; font-size:1rem; transition:all 0.3s;">📤</button>
-                                        <button onclick="rateFeatureInHub('${feature.id}', 5); showCustomMessage('⭐', '5 Sterne gegeben!', 'success');" style="background:rgba(255,255,255,0.1); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px 12px; cursor:pointer; font-size:1rem; transition:all 0.3s;">⭐</button>
-                                    </div>
-                                </div>
-                            `).join('') : '<div style="grid-column:1/-1; text-align:center; padding:3rem 2rem; color:var(--text-muted);">📦 Keine Features gefunden<br><span style="font-size:0.9rem; margin-top:8px; display:block;">Sei der erste und teile deine Creation!</span></div>'}
-                        </div>
-                    </div>
-
-                    <!-- My Shared Features -->
-                    ${(data.customEntryTypes || []).length > 0 ? `
-                    <div>
-                        <h3 style="margin:0 0 1.5rem 0; color:#10b981; font-size:1.1rem; font-weight:600;">📤 Deine Shared Features</h3>
-                        <div style="display:grid; gap:10px;">
-                            ${(data.customEntryTypes || []).map(type => `
-                                <div style="display:flex; align-items:center; gap:12px; padding:14px 16px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:10px;">
-                                    <span style="font-size:1.5rem;">${type.emoji || '📦'}</span>
-                                    <div>
-                                        <div style="font-weight:600; color:var(--text);">${type.label}</div>
-                                        <div style="font-size:0.8rem; color:var(--text-muted);">Custom Entry Type</div>
-                                    </div>
-                                    <button onclick="shareFeatureToHub('type', ${JSON.stringify(type).replace(/"/g, '&quot;')}, 'Custom Entry Type', ['custom-type']); showCustomMessage('✅', 'Feature geteilt!', 'success');" style="margin-left:auto; background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem; transition:all 0.3s;">📤 Share</button>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-        window.filterHubResults = (query) => {
-            const type = document.getElementById('hubTypeFilter')?.value || '';
-            const results = searchHubFeatures(query, type || null);
-            // Würde Results neu rendern - für jetzt zeige Message
-            showCustomMessage('🔍', `${results.length} Features gefunden`, 'info');
-        };
-    }
-
-    function showShareModal() {
-        // Modal zum ein Feature zu Hub hinzufügen
-        const modal = document.createElement('div');
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 502;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(4px);
-        `;
-
-        const backdrop = document.createElement('div');
-        backdrop.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        `;
-        backdrop.onclick = () => modal.remove();
-
-        const content = document.createElement('div');
-        content.style.cssText = `
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 2rem;
-            min-width: 380px;
-            max-width: 500px;
-            width: 90%;
-            z-index: 1;
-            position: relative;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
-            max-height: 90vh;
-            overflow-y: auto;
-        `;
-
-        content.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h3 style="margin:0; color:var(--primary); font-size:1.3rem;">📤 Feature Teilen</h3>
-                <button onclick="this.parentElement.parentElement.parentElement.remove();" style="background:none; border:none; font-size:1.5rem; color:var(--text-muted); cursor:pointer;">&times;</button>
-            </div>
-            
-            <div style="margin-bottom:1.5rem;">
-                <label style="display:block; font-size:0.9rem; color:var(--text); margin-bottom:8px; font-weight:600;">Feature Typ</label>
-                <select id="shareType" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,0.03); color:var(--text); font-size:0.95rem; cursor:pointer;">
-                    <option value="type">📝 Custom Entry Type</option>
-                    <option value="field">📋 Custom Field</option>
-                    <option value="rule">⚙️ Workflow Rule</option>
-                </select>
-            </div>
-
-            <div style="margin-bottom:1.5rem;">
-                <label style="display:block; font-size:0.9rem; color:var(--text); margin-bottom:8px; font-weight:600;">Beschreibung</label>
-                <textarea id="shareDesc" placeholder="Was macht dein Feature? Warum ist es hilfreich?" style="width:100%; padding:12px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,0.03); color:var(--text); font-size:0.95rem; resize:none; height:100px; font-family:inherit;"></textarea>
-            </div>
-
-            <div style="margin-bottom:2rem;">
-                <label style="display:block; font-size:0.9rem; color:var(--text); margin-bottom:8px; font-weight:600;">Tags (komma-separiert)</label>
-                <input type="text" id="shareTags" placeholder="z.B. productivity, fitness, tracking" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; background:rgba(255,255,255,0.03); color:var(--text); font-size:0.95rem;">
-            </div>
-
-            <div style="display:flex; gap:10px; justify-content:flex-end;">
-                <button onclick="this.parentElement.parentElement.parentElement.remove();" style="padding:10px 20px; border:1px solid var(--border); border-radius:10px; background:transparent; color:var(--text); cursor:pointer; font-weight:600; transition:all 0.3s;">Abbrechen</button>
-                <button onclick="
-                    const type = document.getElementById('shareType').value;
-                    const desc = document.getElementById('shareDesc').value;
-                    const tags = document.getElementById('shareTags').value.split(',').map(t => t.trim()).filter(t => t);
-                    
-                    if (!desc) {
-                        showCustomMessage('❌ Fehler', 'Beschreibung ist erforderlich!', 'error');
-                        return;
-                    }
-                    
-                    let featureData;
-                    if (type === 'type' && Array.isArray(data.customEntryTypes) && data.customEntryTypes.length > 0) {
-                        featureData = data.customEntryTypes[data.customEntryTypes.length - 1];
-                    } else if (type === 'field' && Array.isArray(data.customFields) && data.customFields.length > 0) {
-                        featureData = data.customFields[data.customFields.length - 1];
-                    } else if (type === 'rule' && Array.isArray(data.workflowRules) && data.workflowRules.length > 0) {
-                        featureData = data.workflowRules[data.workflowRules.length - 1];
-                    }
-                    
-                    if (!featureData) {
-                        showCustomMessage('❌ Fehler', 'Erstelle zuerst ein ' + type, 'error');
-                        return;
-                    }
-                    
-                    shareFeatureToHub(type, featureData, desc, tags);
-                    this.parentElement.parentElement.parentElement.remove();
-                " style="padding:10px 20px; background:linear-gradient(135deg, #667eea, #764ba2); color:#fff; border:none; border-radius:10px; cursor:pointer; font-weight:600; transition:all 0.3s;">📤 Hochladen</button>
-            </div>
-        `;
-
-        modal.appendChild(backdrop);
-        modal.appendChild(content);
-        document.body.appendChild(modal);
-        document.getElementById('shareDesc').focus();
-    }
-
-    function exportCommunityFeature(featureId) {
-        // Exportiere ein Feature als .community Datei
-        const feature = data.communityHub.find(f => f.id === featureId);
-        if (!feature) return;
-
-        const exportData = {
-            type: 'community-feature',
-            version: '1.0',
-            feature: feature,
-            exportedAt: new Date().toISOString()
-        };
-
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${feature.data.label || 'feature'}-${feature.id}.community`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        showCustomMessage('📤 Exportiert', 'Feature wurde als .community Datei heruntergeladen!', 'success');
-    }
-
-    function importCommunityFeature(file) {
-        // Importiere ein Feature aus .community Datei
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const importedData = JSON.parse(e.target.result);
-                if (importedData.type !== 'community-feature') {
-                    showCustomMessage('❌ Fehler', 'Ungültige Community Feature Datei', 'error');
-                    return;
-                }
-
-                const feature = importedData.feature;
-                data.communityHub.push(feature);
-                save();
-                showCustomMessage('✅ Importiert', 'Feature wurde zum Hub hinzugefügt!', 'success');
-            } catch (err) {
-                showCustomMessage('❌ Fehler', 'Konnte Datei nicht importieren: ' + err.message, 'error');
-            }
-        };
-        reader.readAsText(file);
-    }
-
     // ===== UNTIS INTEGRATION SYSTEM =====
     // Importiere Stundenplan von Untis (WebUntis Export, JSON/CSV Format)
     
@@ -14699,335 +14365,357 @@ TIPPS:
         showCustomMessage('✅ Eingetragen', `Berufsschule für ${dateISO} wurde hinzugefügt.`, 'success');
     }
 
-    // --- ONBOARDING TOUR SYSTEM (NEU & EPISCH) ---
+    // === IMMERSIVE ONBOARDING TOUR SYSTEM ===
     
     let onboardingStep = 0;
     let onboardingActive = false;
+    let tourParticleRAF = null;
+    let tourTouchStart = null;
+
     const onboardingSteps = [
         {
-            title: '👋 Willkommen bei TimeTracker!',
-            description: 'Dein intelligentes Gleitzeitmanagement-Tool für Ausbildung und Beruf. Diese kurze Tour zeigt dir, wie alles funktioniert.',
+            icon: '🚀',
+            title: 'Willkommen bei TimeTracker',
+            subtitle: 'Dein intelligentes Arbeitszeitmanagement',
             content: `
-                <h3 style="font-size:1.5rem; margin-bottom:1rem;">Willkommen! 🎉</h3>
-                <p style="font-size:1.1rem; line-height:1.8; color:var(--text-muted);">
-                    TimeTracker hilft dir, deine Arbeitszeit zu tracken, Ziele zu setzen und intelligente Insights zu erhalten.
-                </p>
-                <div style="background:var(--primary-dim); padding:1.5rem; border-radius:12px; border-left:4px solid var(--primary); margin-top:1.5rem;">
-                    <p style="margin:0; color:var(--text-muted);">
-                        💡 <strong>Tipp:</strong> Diese Tour kannst du jederzeit über "🎓 Anleitung" im Menü erneut starten.
+                <div style="text-align:center;padding:1rem 0;">
+                    <div style="font-size:4.5rem;margin-bottom:1.25rem;animation:iconBob 2s ease-in-out infinite;">🚀</div>
+                    <h3 class="tour-title" style="font-size:1.8rem;margin-bottom:.75rem;">Bereit für den Überblick?</h3>
+                    <p style="color:rgba(255,255,255,.5);font-size:1.05rem;line-height:1.7;max-width:500px;margin:0 auto 1.5rem;">
+                        In 60 Sekunden kennst du alle Power-Features.<br>Gleitzeitkonto, KI-Insights, Prognosen & mehr.
                     </p>
+                    <div class="tour-tip" style="text-align:left;display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.1rem;">💡</span>
+                        <span style="color:rgba(255,255,255,.55);font-size:.88rem;">Nutze <span class="tour-kbd">←</span> <span class="tour-kbd">→</span> Pfeiltasten oder <strong style="color:rgba(255,255,255,.8);">Swipe</strong> zum Navigieren</span>
+                    </div>
                 </div>
-            `,
-            target: null,
-            highlight: false
+            `
         },
         {
-            title: '📊 Das Dashboard',
-            description: 'Hier siehst du deine wichtigsten KPIs: Saldo diese Woche/Monat, Gleitzeitkonto und Urlaubsstand.',
+            icon: '📊',
+            title: 'Dashboard',
+            subtitle: 'Alles auf einen Blick',
             content: `
-                <h3 style="font-size:1.3rem; margin-bottom:1rem;">📊 Dashboard - Deine Übersicht</h3>
-                <p style="line-height:1.8; color:var(--text-muted); margin-bottom:1.5rem;">
-                    Das Dashboard zeigt dir deine aktuelle Leistung auf einen Blick:
-                </p>
-                <ul style="list-style:none; padding:0; margin-bottom:1.5rem;">
-                    <li style="padding:0.8rem 0; border-bottom:1px solid var(--border); color:var(--text-muted);">
-                        <strong style="color:#fff;">⏰ Saldo Woche/Monat</strong> - Wie viele Stunden vor/nach Soll
-                    </li>
-                    <li style="padding:0.8rem 0; border-bottom:1px solid var(--border); color:var(--text-muted);">
-                        <strong style="color:#fff;">💰 Gleitzeitkonto</strong> - Gesamter Saldo
-                    </li>
-                    <li style="padding:0.8rem 0; border-bottom:1px solid var(--border); color:var(--text-muted);">
-                        <strong style="color:#fff;">🌴 Urlaubstage</strong> - Verbrauchte/Verfügbare Tage
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        <strong style="color:#fff;">📊 Charts</strong> - Trend & Verteilung deiner Arbeitszeit
-                    </li>
-                </ul>
-            `,
-            target: '#view-dashboard',
-            highlight: true
+                <div class="tour-stagger" style="display:grid;gap:12px;">
+                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:1.8rem;width:50px;text-align:center;">⏰</div>
+                        <div><div style="font-weight:700;color:#fff;margin-bottom:2px;">Saldo Woche & Monat</div><div style="font-size:.85rem;color:rgba(255,255,255,.45);">Live-Anzeige deiner Plus/Minus-Stunden</div></div>
+                    </div>
+                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:1.8rem;width:50px;text-align:center;">💰</div>
+                        <div><div style="font-weight:700;color:#fff;margin-bottom:2px;">Gleitzeitkonto</div><div style="font-size:.85rem;color:rgba(255,255,255,.45);">Gesamter aufgebauter Saldo über alle Einträge</div></div>
+                    </div>
+                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:1.8rem;width:50px;text-align:center;">🌴</div>
+                        <div><div style="font-weight:700;color:#fff;margin-bottom:2px;">Urlaubstage</div><div style="font-size:.85rem;color:rgba(255,255,255,.45);">Verbraucht, geplant & verfügbar</div></div>
+                    </div>
+                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:1.8rem;width:50px;text-align:center;">📈</div>
+                        <div><div style="font-weight:700;color:#fff;margin-bottom:2px;">Live Charts</div><div style="font-size:.85rem;color:rgba(255,255,255,.45);">Trend & Verteilung in Echtzeit</div></div>
+                    </div>
+                </div>
+            `
         },
         {
-            title: '⏱️ Timer & Zeiten erfassen',
-            description: 'Erfasse deine Arbeitszeiten mit dem integrierten Timer oder manuell.',
+            icon: '⏱️',
+            title: 'Zeiten erfassen',
+            subtitle: '3 Methoden — du wählst',
             content: `
-                <h3 style="font-size:1.3rem; margin-bottom:1rem;">⏱️ Zeit erfassen - Drei Methoden</h3>
-                <div style="background:rgba(255,255,255,0.02); padding:1.5rem; border-radius:12px; margin-bottom:1.5rem;">
-                    <h4 style="color:var(--primary); margin-bottom:0.5rem;">1️⃣ Live Timer</h4>
-                    <p style="color:var(--text-muted); margin:0;">Start/Pause/Stop - Ideal für längere Schichten</p>
+                <div class="tour-stagger" style="display:grid;gap:12px;">
+                    <div class="tour-feat" style="border-left:3px solid var(--primary);padding-left:1.25rem;">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                            <span style="font-size:1.3rem;">🔴</span>
+                            <span style="font-weight:700;color:#fff;font-size:1.05rem;">Live Timer</span>
+                        </div>
+                        <p style="margin:0;font-size:.88rem;color:rgba(255,255,255,.45);">Start → Pause → Stop. Für lange Sessions. Pausen werden automatisch erfasst.</p>
+                    </div>
+                    <div class="tour-feat" style="border-left:3px solid #06b6d4;padding-left:1.25rem;">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                            <span style="font-size:1.3rem;">🕐</span>
+                            <span style="font-weight:700;color:#fff;font-size:1.05rem;">Start / Ende</span>
+                        </div>
+                        <p style="margin:0;font-size:.88rem;color:rgba(255,255,255,.45);">Gib Start- und Endzeit ein. Pausen automatisch abgezogen. <strong style="color:rgba(255,255,255,.7);">Jetzt</strong>-Buttons für aktuelle Uhrzeit.</p>
+                    </div>
+                    <div class="tour-feat" style="border-left:3px solid #10b981;padding-left:1.25rem;">
+                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                            <span style="font-size:1.3rem;">✍️</span>
+                            <span style="font-weight:700;color:#fff;font-size:1.05rem;">Manuelle Eingabe</span>
+                        </div>
+                        <p style="margin:0;font-size:.88rem;color:rgba(255,255,255,.45);">Direkt Stunden eingeben — perfekt für rückwirkende Einträge.</p>
+                    </div>
                 </div>
-                <div style="background:rgba(255,255,255,0.02); padding:1.5rem; border-radius:12px; margin-bottom:1.5rem;">
-                    <h4 style="color:#06b6d4; margin-bottom:0.5rem;">2️⃣ Start-Ende Zeit</h4>
-                    <p style="color:var(--text-muted); margin:0;">Gib an, wann du angefangen/aufgehört hast. Pausen werden automatisch abgezogen.</p>
-                </div>
-                <div style="background:rgba(255,255,255,0.02); padding:1.5rem; border-radius:12px;">
-                    <h4 style="color:var(--success); margin-bottom:0.5rem;">3️⃣ Manuelle Eingabe</h4>
-                    <p style="color:var(--text-muted); margin:0;">Einfach die Stunden eingeben - Perfekt für rückwirkende Einträge</p>
-                </div>
-            `,
-            target: '#timerBox',
-            highlight: true
+            `
         },
         {
-            title: '⌨️ Shortcuts & Schnellaktionen',
-            description: 'Praktische Tastenkürzel und kleine "Jetzt"-Buttons zum schnellen Erfassen von Zeiten.',
+            icon: '⌨️',
+            title: 'Shortcuts',
+            subtitle: 'Schnell wie der Blitz',
             content: `
-                <h3 style="font-size:1.3rem; margin-bottom:1rem;">⌨️ Shortcuts & Schnellaktionen</h3>
-                <div style="background:rgba(255,255,255,0.02); padding:1rem; border-radius:12px; margin-bottom:1rem; display:flex; gap:12px; align-items:center;">
-                    <div style="font-family:var(--font-mono); background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:8px;">S</div>
-                    <div style="color:var(--text-muted);">Startet den Timer</div>
-                    <div style="font-family:var(--font-mono); background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:8px;">P</div>
-                    <div style="color:var(--text-muted);">Pausiert den Timer</div>
-                    <div style="font-family:var(--font-mono); background:rgba(255,255,255,0.03); padding:6px 10px; border-radius:8px;">E</div>
-                    <div style="color:var(--text-muted);">Stoppt den Timer</div>
+                <div class="tour-stagger" style="display:grid;gap:14px;">
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
+                        <div class="tour-feat" style="padding:1.2rem .5rem;">
+                            <div class="tour-kbd" style="font-size:1.2rem;width:48px;height:48px;margin:0 auto 10px;">S</div>
+                            <div style="font-size:.82rem;color:rgba(255,255,255,.5);">Timer Start</div>
+                        </div>
+                        <div class="tour-feat" style="padding:1.2rem .5rem;">
+                            <div class="tour-kbd" style="font-size:1.2rem;width:48px;height:48px;margin:0 auto 10px;">P</div>
+                            <div style="font-size:.82rem;color:rgba(255,255,255,.5);">Pausieren</div>
+                        </div>
+                        <div class="tour-feat" style="padding:1.2rem .5rem;">
+                            <div class="tour-kbd" style="font-size:1.2rem;width:48px;height:48px;margin:0 auto 10px;">E</div>
+                            <div style="font-size:.82rem;color:rgba(255,255,255,.5);">Timer Stopp</div>
+                        </div>
+                    </div>
+                    <div class="tour-feat" style="display:flex;align-items:center;gap:12px;">
+                        <div style="display:flex;gap:4px;flex-shrink:0;"><span class="tour-kbd">Ctrl</span><span style="color:rgba(255,255,255,.3);line-height:30px;">+</span><span class="tour-kbd">↵</span></div>
+                        <span style="color:rgba(255,255,255,.5);font-size:.88rem;">Formular blitzschnell speichern</span>
+                    </div>
+                    <div class="tour-tip" style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.1rem;">💡</span>
+                        <span style="color:rgba(255,255,255,.55);font-size:.88rem;">Shortcuts sind deaktiviert während du in einem Textfeld tippst</span>
+                    </div>
                 </div>
-                <p style="color:var(--text-muted); line-height:1.6;">Nutze <strong>Ctrl/Cmd+Enter</strong>, um ein Formular schnell zu speichern. Außerdem findest du neben den Zeitfeldern jeweils kleine <strong>Jetzt</strong>-Buttons, die die aktuelle Uhrzeit (HH:MM) einfügen — perfekt für schnelle Buchungen.</p>
-                <div style="background:var(--primary-dim); padding:1rem; border-radius:10px; margin-top:0.75rem;">
-                    <strong style="color:#fff;">Hinweis:</strong> Shortcuts werden nicht ausgelöst, während du aktiv in einem Textfeld tippst (z. B. Notizen), damit du ungestört schreiben kannst.
-                </div>
-            `,
-            target: '#timerBox',
-            highlight: true
+            `
         },
         {
-            title: '📈 Performance Analyse',
-            description: 'Detaillierte Analysen: Soll-Ist Vergleich, Projektverteilung, Produktivitätsmuster.',
+            icon: '📈',
+            title: 'Performance & Analyse',
+            subtitle: 'Deine Daten, deine Insights',
             content: `
-                <h3 style="font-size:1.3rem; margin-bottom:1rem;">📈 Performance Analyse</h3>
-                <p style="line-height:1.8; color:var(--text-muted); margin-bottom:1.5rem;">
-                    Tiefgehende Einblicke in deine Arbeitsleistung:
-                </p>
-                <ul style="list-style:none; padding:0; margin-bottom:1.5rem;">
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        <strong style="color:#fff;">📊 Wöchentlicher Vergleich</strong> - Deine Ist-Zeit vs. Soll-Zeit
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        <strong style="color:#fff;">🎯 Projekt-Verteilung</strong> - Welche Projekte kosten Zeit?
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        <strong style="color:#fff;">📅 Wochentag-Analyse</strong> - An welchen Tagen bist du produktiv?
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        <strong style="color:#fff;">🔥 Stunden-Heatmap</strong> - Wann bist du am produktivsten?
-                    </li>
-                </ul>
-            `,
-            target: null,
-            highlight: false
+                <div class="tour-stagger" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="tour-feat" style="text-align:center;padding:1.5rem 1rem;">
+                        <div style="font-size:2rem;margin-bottom:8px;">📊</div>
+                        <div style="font-weight:700;color:#fff;font-size:.95rem;margin-bottom:4px;">Soll vs. Ist</div>
+                        <div style="font-size:.8rem;color:rgba(255,255,255,.4);">Wöchentlicher Vergleich</div>
+                    </div>
+                    <div class="tour-feat" style="text-align:center;padding:1.5rem 1rem;">
+                        <div style="font-size:2rem;margin-bottom:8px;">🎯</div>
+                        <div style="font-weight:700;color:#fff;font-size:.95rem;margin-bottom:4px;">Projekte</div>
+                        <div style="font-size:.8rem;color:rgba(255,255,255,.4);">Zeit-Verteilung</div>
+                    </div>
+                    <div class="tour-feat" style="text-align:center;padding:1.5rem 1rem;">
+                        <div style="font-size:2rem;margin-bottom:8px;">🔥</div>
+                        <div style="font-weight:700;color:#fff;font-size:.95rem;margin-bottom:4px;">Heatmap</div>
+                        <div style="font-size:.8rem;color:rgba(255,255,255,.4);">Produktivste Stunden</div>
+                    </div>
+                    <div class="tour-feat" style="text-align:center;padding:1.5rem 1rem;">
+                        <div style="font-size:2rem;margin-bottom:8px;">📅</div>
+                        <div style="font-weight:700;color:#fff;font-size:.95rem;margin-bottom:4px;">Wochentage</div>
+                        <div style="font-size:.8rem;color:rgba(255,255,255,.4);">Deine besten Tage</div>
+                    </div>
+                </div>
+            `
         },
         {
-            title: '🔮 Prognose & Planung',
-            description: 'Plane deine nächsten 4 Wochen und sieh Saldo-Veränderungen live.',
+            icon: '🔮',
+            title: 'Prognose & Planung',
+            subtitle: 'Die Zukunft im Griff',
             content: `
-                <h3 style="font-size:1.3rem; margin-bottom:1rem;">🔮 Intelligente Zukunftsplanung</h3>
-                <p style="line-height:1.8; color:var(--text-muted); margin-bottom:1.5rem;">
-                    Plane deine Arbeitszeit intelligent:
-                </p>
-                <div style="background:var(--primary-dim); padding:1.5rem; border-radius:12px; border-left:4px solid var(--primary); margin-bottom:1.5rem;">
-                    <p style="margin:0; color:var(--text-muted);">
-                        📅 <strong>Klick auf einen Tag</strong> um ihn als Urlaub/Schule/Krank zu markieren. Der Saldo aktualisiert sich LIVE!
+                <div class="tour-stagger" style="display:grid;gap:12px;">
+                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:1.8rem;width:50px;text-align:center;">📅</div>
+                        <div><div style="font-weight:700;color:#fff;">4-Wochen Vorschau</div><div style="font-size:.85rem;color:rgba(255,255,255,.4);">Klicke Tage an → markiere als Urlaub / Schule / Krank</div></div>
+                    </div>
+                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:1.8rem;width:50px;text-align:center;">⚡</div>
+                        <div><div style="font-weight:700;color:#fff;">Live Saldo-Simulation</div><div style="font-size:.85rem;color:rgba(255,255,255,.4);">Saldo aktualisiert sich sofort bei jeder Änderung</div></div>
+                    </div>
+                    <div class="tour-tip" style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.2rem;">🧠</span>
+                        <span style="color:rgba(255,255,255,.55);font-size:.88rem;"><em>"Wenn ich nächste Woche 2 Tage Urlaub nehme — wie sieht mein Saldo aus?"</em></span>
+                    </div>
+                </div>
+            `
+        },
+        {
+            icon: '🎓',
+            title: 'Ausbildung & IHK',
+            subtitle: 'Alles für deine Ausbildung',
+            content: `
+                <div class="tour-stagger" style="display:grid;gap:12px;">
+                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:1.8rem;width:50px;text-align:center;">🎓</div>
+                        <div><div style="font-weight:700;color:#fff;">IHK-Audit Dashboard</div><div style="font-size:.85rem;color:rgba(255,255,255,.4);">Fortschritt, Prüfungsdaten, Noten & Compliance</div></div>
+                    </div>
+                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:1.8rem;width:50px;text-align:center;">📚</div>
+                        <div><div style="font-weight:700;color:#fff;">Berufsschul-Noten</div><div style="font-size:.85rem;color:rgba(255,255,255,.4);">Fächer, Durchschnitte & Trend-Analyse</div></div>
+                    </div>
+                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
+                        <div style="font-size:1.8rem;width:50px;text-align:center;">🏆</div>
+                        <div><div style="font-weight:700;color:#fff;">Ziele & Badges</div><div style="font-size:.85rem;color:rgba(255,255,255,.4);">Setze Ziele. Erreiche Trophäen. Bleib motiviert.</div></div>
+                    </div>
+                </div>
+            `
+        },
+        {
+            icon: '🔧',
+            title: 'Daten & Einstellungen',
+            subtitle: 'Volle Kontrolle',
+            content: `
+                <div class="tour-stagger" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="tour-feat" style="text-align:center;padding:1.3rem .75rem;">
+                        <div style="font-size:1.6rem;margin-bottom:6px;">🔍</div>
+                        <div style="font-weight:600;color:#fff;font-size:.9rem;">Filter & Suche</div>
+                    </div>
+                    <div class="tour-feat" style="text-align:center;padding:1.3rem .75rem;">
+                        <div style="font-size:1.6rem;margin-bottom:6px;">📥</div>
+                        <div style="font-weight:600;color:#fff;font-size:.9rem;">CSV / JSON Export</div>
+                    </div>
+                    <div class="tour-feat" style="text-align:center;padding:1.3rem .75rem;">
+                        <div style="font-size:1.6rem;margin-bottom:6px;">☁️</div>
+                        <div style="font-weight:600;color:#fff;font-size:.9rem;">Cloud Sync</div>
+                    </div>
+                    <div class="tour-feat" style="text-align:center;padding:1.3rem .75rem;">
+                        <div style="font-size:1.6rem;margin-bottom:6px;">⚙️</div>
+                        <div style="font-weight:600;color:#fff;font-size:.9rem;">Soll-Zeiten & Pausen</div>
+                    </div>
+                </div>
+            `
+        },
+        {
+            icon: '🎉',
+            title: 'Du bist ready!',
+            subtitle: 'Los geht\'s!',
+            content: `
+                <div style="text-align:center;padding:.5rem 0;" class="tour-celebrate">
+                    <div style="font-size:5rem;margin-bottom:1rem;">🎉</div>
+                    <h3 style="font-size:1.6rem;font-weight:800;color:#fff;margin:0 0 .5rem;">Alles klar!</h3>
+                    <p style="color:rgba(255,255,255,.5);font-size:1rem;line-height:1.7;max-width:450px;margin:0 auto 1.5rem;">
+                        Du kennst jetzt alle Features. Starte deinen ersten Timer und lass dich von den Insights überraschen!
                     </p>
+                    <div class="tour-tip" style="text-align:left;display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:1.5rem;">⚡</span>
+                        <span style="color:rgba(255,255,255,.6);">Pro-Tipp: Starte mit dem <strong style="color:#fff;">Live-Timer</strong> — das geht am schnellsten!</span>
+                    </div>
                 </div>
-                <p style="color:var(--text-muted);">
-                    Perfekt um zu planen: "Wenn ich nächste Woche 3 Tage Urlaub nehme, wie sieht mein Saldo aus?"
-                </p>
-            `,
-            target: null,
-            highlight: false
-        },
-        {
-            title: '📆 Jahresübersicht',
-            description: 'Alle 365 Tage auf einen Blick mit intelligenten KI-Insights.',
-            content: `
-                <h3 style="font-size:1.3rem; margin-bottom:1rem;">📆 Jahresübersicht & KI-Insights</h3>
-                <p style="line-height:1.8; color:var(--text-muted); margin-bottom:1.5rem;">
-                    Die Heatmap zeigt dir das ganze Jahr:
-                </p>
-                <ul style="list-style:none; padding:0; margin-bottom:1.5rem;">
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        🟢 <strong style="color:#fff;">Grüne Felder</strong> = Produktive Tage (positiver Saldo)
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        🔴 <strong style="color:#fff;">Rote Felder</strong> = Weniger produktive Tage (negativer Saldo)
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        ⚪ <strong style="color:#fff;">Graue Felder</strong> = Keine Einträge
-                    </li>
-                </ul>
-                <p style="color:var(--text-muted);">
-                    Plus: 6 KI-Insights über deine Produktivität! 🤖
-                </p>
-            `,
-            target: null,
-            highlight: false
-        },
-        {
-            title: '🎓 IHK & Berufsschule',
-            description: 'Verwalte Ausbildungs-Daten, Noten und Prüfungstermine.',
-            content: `
-                <h3 style="font-size:1.3rem; margin-bottom:1rem;">🎓 Ausbildungs-Management</h3>
-                <p style="line-height:1.8; color:var(--text-muted); margin-bottom:1.5rem;">
-                    Alles für deine Ausbildung an einem Ort:
-                </p>
-                <ul style="list-style:none; padding:0; margin-bottom:1.5rem;">
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        <strong style="color:#fff;">🎓 IHK-Audit</strong> - Ausbildungsfortschritt, Prüfungsdaten, Noten
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        <strong style="color:#fff;">📚 Berufsschul-Noten</strong> - Fächer-Noten, Durchschnitte, Trends
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        <strong style="color:#fff;">📊 Compliance-Check</strong> - Ruhezeiten, Max-Arbeitszeit, Fehlzeitenquote
-                    </li>
-                </ul>
-            `,
-            target: null,
-            highlight: false
-        },
-        {
-            title: '🏆 Ziele & Fokus',
-            description: 'Definiere eigene Ziele und tracke deinen Fortschritt.',
-            content: `
-                <h3 style="font-size:1.3rem; margin-bottom:1rem;">🏆 Ziele setzen & erreichen</h3>
-                <p style="line-height:1.8; color:var(--text-muted); margin-bottom:1.5rem;">
-                    Motiviere dich mit individuellen Zielen:
-                </p>
-                <div style="background:var(--primary-dim); padding:1.5rem; border-radius:12px; border-left:4px solid var(--primary); margin-bottom:1.5rem;">
-                    <p style="margin:0; color:var(--text-muted);">
-                        ✨ Beispiele: "100h Überstunden", "50 positive Wochen", "50 perfekte Schichten"
-                    </p>
-                </div>
-                <p style="color:var(--text-muted);">
-                    Jedes erreichte Ziel bringt dir ein Trophäen-Badge! 🏅
-                </p>
-            `,
-            target: null,
-            highlight: false
-        },
-        {
-            title: '🔎 Daten-Analyse & Historie',
-            description: 'Filter, such und exportiere deine gesamte Arbeitshistorie.',
-            content: `
-                <h3 style="font-size:1.3rem; margin-bottom:1rem;">🔎 Vollständige Dateikontrolle</h3>
-                <p style="line-height:1.8; color:var(--text-muted); margin-bottom:1.5rem;">
-                    Volle Kontrolle über deine Daten:
-                </p>
-                <ul style="list-style:none; padding:0; margin-bottom:1.5rem;">
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        🔍 <strong style="color:#fff;">Filter & Suche</strong> - Nach Datum, Typ, Projekt, Stunden
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        📥 <strong style="color:#fff;">CSV/JSON Export</strong> - Für Excel, Reports, Audits
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        💾 <strong style="color:#fff;">Backup & Restore</strong> - Alle Daten sicher speichern
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        ✏️ <strong style="color:#fff;">Eintrag bearbeiten</strong> - Jederzeit korrigierbar
-                    </li>
-                </ul>
-            `,
-            target: null,
-            highlight: false
-        },
-        {
-            title: '⚙️ Einstellungen anpassen',
-            description: 'Personalisiere deine Arbeitszeiten, Pausen und Design.',
-            content: `
-                <h3 style="font-size:1.3rem; margin-bottom:1rem;">⚙️ Alles individuell einstellen</h3>
-                <p style="line-height:1.8; color:var(--text-muted); margin-bottom:1.5rem;">
-                    TimeTracker passt sich an dich an:
-                </p>
-                <ul style="list-style:none; padding:0; margin-bottom:1.5rem;">
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        👤 <strong style="color:#fff;">Profil</strong> - Dein Name, Lieblingsfarbe
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        ⏱️ <strong style="color:#fff;">Arbeitszeiten</strong> - Soll-Stunden pro Tag, Pausen
-                    </li>
-                    <li style="padding:0.8rem 0; color:var(--text-muted);">
-                        🌴 <strong style="color:#fff;">Urlaub</strong> - Jahresanspruch, Feiertage, Blockbuchungen
-                    </li>
-                </ul>
-            `,
-            target: null,
-            highlight: false
-        },
-        {
-            title: '🚀 Du bist ready!',
-            description: 'Jetzt geht\'s los. Tracke deine erste Stunde und lass dich von den Insights überraschen!',
-            content: `
-                <h3 style="font-size:1.5rem; margin-bottom:1rem;">🎉 Du bist startklar!</h3>
-                <p style="line-height:1.8; color:var(--text-muted); margin-bottom:2rem;">
-                    Du kennst jetzt alle Features von TimeTracker. Es ist Zeit, durchzustarten!
-                </p>
-                <div style="background:linear-gradient(135deg, var(--primary-dim) 0%, rgba(6,182,212,0.1) 100%); padding:2rem; border-radius:12px; border:2px solid var(--primary); margin-bottom:1.5rem; text-align:center;">
-                    <p style="font-size:1.2rem; margin:0; color:var(--text-main);">
-                        💡 <strong>Pro-Tipp:</strong> Starte mit dem Live-Timer - das ist der schnellste Weg!
-                    </p>
-                </div>
-                <p style="color:var(--text-muted); text-align:center;">
-                    Diese Tour kannst du jederzeit über "🎓 Anleitung" im Menü erneut starten.
-                </p>
-            `,
-            target: null,
-            highlight: false
+            `
         }
     ];
-    
+
+    // --- Particle System ---
+    function initTourParticles() {
+        const canvas = document.getElementById('tourParticles');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const particles = [];
+        const colors = ['#a855f7','#06b6d4','#10b981','#f59e0b','#ec4899'];
+        for (let i = 0; i < 50; i++) {
+            particles.push({
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                r: Math.random() * 2 + .5, dx: (Math.random() - .5) * .4,
+                dy: (Math.random() - .5) * .4, color: colors[Math.floor(Math.random() * colors.length)],
+                alpha: Math.random() * .4 + .1
+            });
+        }
+        function animate() {
+            if (!onboardingActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.dx; p.y += p.dy;
+                if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = p.color; ctx.globalAlpha = p.alpha; ctx.fill();
+            });
+            ctx.globalAlpha = .03; ctx.strokeStyle = '#a855f7'; ctx.lineWidth = .5;
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y;
+                    if (Math.sqrt(dx*dx + dy*dy) < 140) {
+                        ctx.beginPath(); ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke();
+                    }
+                }
+            }
+            ctx.globalAlpha = 1;
+            tourParticleRAF = requestAnimationFrame(animate);
+        }
+        animate();
+    }
+
+    // --- Confetti Explosion ---
+    function launchTourConfetti() {
+        const c = document.getElementById('tourConfetti');
+        if (!c) return;
+        const colors = ['#a855f7','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#fff'];
+        const shapes = ['■','●','▲','★','♦','◆'];
+        for (let i = 0; i < 100; i++) {
+            const p = document.createElement('div');
+            p.className = 'confetti-piece';
+            p.style.cssText = 'left:' + (Math.random()*100) + '%;color:' + colors[Math.floor(Math.random()*colors.length)] + ';font-size:' + (Math.random()*14+6) + 'px;--fall-dur:' + (Math.random()*2.5+2) + 's;--fall-del:' + (Math.random()*.8) + 's;';
+            p.textContent = shapes[Math.floor(Math.random()*shapes.length)];
+            c.appendChild(p);
+        }
+        setTimeout(() => { c.innerHTML = ''; }, 5500);
+    }
+
+    // --- Touch/Swipe Support ---
+    function tourTouchStartHandler(e) { tourTouchStart = e.touches[0].clientX; }
+    function tourTouchEndHandler(e) {
+        if (tourTouchStart === null || !onboardingActive) return;
+        const diff = tourTouchStart - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) { diff > 0 ? nextOnboardingStep() : previousOnboardingStep(); }
+        tourTouchStart = null;
+    }
+
+    // --- Keyboard Handler ---
+    function tourKeyHandler(e) {
+        if (!onboardingActive) return;
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextOnboardingStep(); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); previousOnboardingStep(); }
+        if (e.key === 'Escape') { e.preventDefault(); endOnboardingTour(); }
+    }
+
     function startOnboardingTour() {
         onboardingStep = 0;
         onboardingActive = true;
-        document.getElementById('onboardingModal').classList.add('active');
-        document.getElementById('spotlightOverlay').style.display = 'block';
+        // Close sidebar on mobile
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) sidebar.classList.remove('active');
+        const overlay = document.getElementById('tourOverlay');
+        overlay.classList.add('active');
+        overlay.addEventListener('touchstart', tourTouchStartHandler, { passive: true });
+        overlay.addEventListener('touchend', tourTouchEndHandler);
+        document.addEventListener('keydown', tourKeyHandler);
+        initTourParticles();
         renderOnboardingStep();
     }
-    
+
     function renderOnboardingStep() {
         const step = onboardingSteps[onboardingStep];
-        
-        // Render Content
-        const contentEl = document.getElementById('onboardingContent');
-        contentEl.innerHTML = `<div class="onboarding-content">${step.content}</div>`;
-        
-        // Update Progress Dots
-        const progressEl = document.getElementById('onboardingProgress');
-        let progressHTML = '';
-        for (let i = 0; i < onboardingSteps.length; i++) {
-            progressHTML += `<div class="onboarding-step-dot ${i === onboardingStep ? 'active' : ''}" onclick="jumpToStep(${i})"></div>`;
+        const total = onboardingSteps.length;
+        document.getElementById('tourStepIcon').textContent = step.icon;
+        document.getElementById('tourTitle').textContent = step.title;
+        document.getElementById('tourSubtitle').textContent = step.subtitle;
+        // Progress
+        document.getElementById('tourProgressFill').style.width = ((onboardingStep + 1) / total * 100) + '%';
+        const dotsEl = document.getElementById('tourDots');
+        let dh = '';
+        for (let i = 0; i < total; i++) {
+            dh += '<button class="tour-dot ' + (i === onboardingStep ? 'active' : (i < onboardingStep ? 'done' : '')) + '" onclick="jumpToStep(' + i + ')"></button>';
         }
-        progressEl.innerHTML = progressHTML;
-        
-        // Update Button States
-        document.getElementById('onboardingPrevBtn').style.display = onboardingStep === 0 ? 'none' : 'block';
-        document.getElementById('onboardingNextBtn').innerText = onboardingStep === onboardingSteps.length - 1 ? '✓ Fertig!' : 'Weiter →';
-        
-        // Highlight Element
-        if (step.highlight && step.target) {
-            highlightElement(step.target);
+        dotsEl.innerHTML = dh;
+        // Content
+        document.getElementById('tourBody').innerHTML = '<div class="tour-enter">' + step.content + '</div>';
+        // Counter
+        document.getElementById('tourCounter').textContent = (onboardingStep + 1) + ' / ' + total;
+        // Buttons
+        document.getElementById('tourBtnBack').style.visibility = onboardingStep === 0 ? 'hidden' : 'visible';
+        const nb = document.getElementById('tourBtnNext');
+        if (onboardingStep === total - 1) {
+            nb.textContent = '✓ Let\'s go!';
+            nb.style.background = 'linear-gradient(135deg,#10b981,#059669)';
         } else {
-            document.getElementById('spotlightHighlight').style.display = 'none';
-            document.getElementById('spotlightOverlay').style.display = 'none';
+            nb.textContent = 'Weiter →';
+            nb.style.background = 'linear-gradient(135deg,var(--primary),#06b6d4)';
         }
-        
-        // Scroll to Top
-        document.getElementById('onboardingModal').scrollTop = 0;
     }
-    
+
     function highlightElement(selector) {
-        const element = document.querySelector(selector);
-        if (!element) return;
-        
-        const rect = element.getBoundingClientRect();
-        const highlight = document.getElementById('spotlightHighlight');
-        
-        highlight.style.display = 'block';
-        highlight.style.left = (rect.left - 6) + 'px';
-        highlight.style.top = (rect.top - 6) + 'px';
-        highlight.style.width = (rect.width + 12) + 'px';
-        highlight.style.height = (rect.height + 12) + 'px';
-        
-        document.getElementById('spotlightOverlay').style.display = 'block';
+        // Spotlight disabled in immersive mode
     }
 
     // --- Quick Help (contextual) ---
@@ -15225,9 +14913,15 @@ TIPPS:
     
     function endOnboardingTour() {
         onboardingActive = false;
-        document.getElementById('onboardingModal').classList.remove('active');
-        document.getElementById('spotlightOverlay').style.display = 'none';
-        document.getElementById('spotlightHighlight').style.display = 'none';
+        if (tourParticleRAF) { cancelAnimationFrame(tourParticleRAF); tourParticleRAF = null; }
+        document.removeEventListener('keydown', tourKeyHandler);
+        const overlay = document.getElementById('tourOverlay');
+        if (overlay) {
+            overlay.removeEventListener('touchstart', tourTouchStartHandler);
+            overlay.removeEventListener('touchend', tourTouchEndHandler);
+            overlay.classList.remove('active');
+        }
+        if (onboardingStep >= onboardingSteps.length - 1) launchTourConfetti();
         showCustomMessage('✅ Tour abgeschlossen', 'Du kennst jetzt alle Features! Viel Erfolg beim Tracken! 🚀', 'success');
     }
     
