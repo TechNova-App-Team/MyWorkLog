@@ -20,8 +20,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="application-name" content="TimeTracker">
 
-<!-- Viewport is set above in line 5 -->
-
 <!-- Security Headers -->
 <meta http-equiv="X-UA-Compatible" content="ie=edge">
 
@@ -16372,23 +16370,33 @@ TIPPS:
         const dateInput = document.getElementById('inpDate');
         if (dateInput && !dateInput.value) dateInput.value = today;
 
-        // --- Jetzt-Buttons (klein) ---
+        // --- Jetzt-Buttons (mit Event Delegation) ---
         function pad2(n){return n<10?('0'+n):n}
-        const btnNowStart = document.getElementById('btnNowStart');
-        const btnNowEnd = document.getElementById('btnNowEnd');
-        if (btnNowStart) btnNowStart.addEventListener('click', () => {
-            const now = new Date();
-            const v = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
-            const el = document.getElementById('inpStart'); if (el) el.value = v;
-            saveDraft();
-            if (typeof showCustomMessage === 'function') showCustomMessage('✅ Start gesetzt', `Start: ${v}`, 'success');
-        });
-        if (btnNowEnd) btnNowEnd.addEventListener('click', () => {
-            const now = new Date();
-            const v = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
-            const el = document.getElementById('inpEnd'); if (el) el.value = v;
-            saveDraft();
-            if (typeof showCustomMessage === 'function') showCustomMessage('✅ Ende gesetzt', `Ende: ${v}`, 'success');
+        
+        // Use event delegation instead of direct listeners (more robust)
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'btnNowStart') {
+                const now = new Date();
+                const v = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+                const el = document.getElementById('inpStart'); 
+                if (el) {
+                    el.value = v;
+                    el.dispatchEvent(new Event('input', { bubbles: true })); // Trigger input event
+                    saveDraft();
+                    if (typeof showCustomMessage === 'function') showCustomMessage('✅ Start gesetzt', `Start: ${v}`, 'success');
+                }
+            }
+            if (e.target.id === 'btnNowEnd') {
+                const now = new Date();
+                const v = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+                const el = document.getElementById('inpEnd'); 
+                if (el) {
+                    el.value = v;
+                    el.dispatchEvent(new Event('input', { bubbles: true })); // Trigger input event
+                    saveDraft();
+                    if (typeof showCustomMessage === 'function') showCustomMessage('✅ Ende gesetzt', `Ende: ${v}`, 'success');
+                }
+            }
         });
 
         // --- Keyboard Shortcuts ---
