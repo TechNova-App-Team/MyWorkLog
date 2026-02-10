@@ -1628,117 +1628,13 @@
             border-color: var(--primary) !important;
         }
         
-        /* --- ONBOARDING TOUR STYLES - IMMERSIVE EDITION --- */
-        @property --tour-angle { syntax:'<angle>'; initial-value:0deg; inherits:false; }
-        .tour-overlay { position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;overflow:hidden; }
-        .tour-overlay.active { display:flex; }
-        .tour-bg {
-            position:absolute;inset:0;
-            background:linear-gradient(135deg,#05050f,#0a0a2e 30%,#150a28 50%,#0a1628 70%,#05050f);
-            background-size:400% 400%;animation:tourBgShift 12s ease infinite;
-        }
-        @keyframes tourBgShift { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-        .tour-orb { position:absolute;border-radius:50%;filter:blur(100px);opacity:.15;pointer-events:none; }
-        .tour-orb-1 { width:500px;height:500px;top:-10%;left:-10%;background:#a855f7;animation:orbM1 18s ease-in-out infinite; }
-        .tour-orb-2 { width:400px;height:400px;bottom:-10%;right:-10%;background:#06b6d4;animation:orbM2 22s ease-in-out infinite; }
-        .tour-orb-3 { width:300px;height:300px;top:40%;left:60%;background:#10b981;animation:orbM3 15s ease-in-out infinite; }
-        @keyframes orbM1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(150px,100px)} }
-        @keyframes orbM2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-120px,-80px)} }
-        @keyframes orbM3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-80px,60px)} }
-        .tour-card {
-            position:relative;z-index:2;width:92%;max-width:780px;
-            background:rgba(255,255,255,.04);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);
-            border:1px solid rgba(255,255,255,.08);border-radius:28px;
-            box-shadow:0 0 80px rgba(168,85,247,.1),0 40px 80px rgba(0,0,0,.5);overflow:hidden;
-        }
-        .tour-glow {
-            position:absolute;inset:-1px;border-radius:29px;z-index:-1;
-            background:conic-gradient(from var(--tour-angle,0deg),transparent 60%,var(--primary) 78%,#06b6d4 82%,transparent 100%);
-            animation:glowSpin 4s linear infinite;filter:blur(1px);
-        }
-        @keyframes glowSpin { to{--tour-angle:360deg} }
-        .tour-header { padding:2rem 2.5rem 1.5rem;position:relative; }
-        .tour-header::after {
-            content:'';position:absolute;bottom:0;left:2.5rem;right:2.5rem;height:1px;
-            background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);
-        }
-        .tour-step-icon {
-            width:72px;height:72px;border-radius:18px;display:flex;align-items:center;justify-content:center;
-            font-size:2.2rem;background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(6,182,212,.15));
-            border:1px solid rgba(255,255,255,.08);box-shadow:0 0 40px rgba(168,85,247,.15);
-            animation:iconBob 3s ease-in-out infinite;
-        }
-        @keyframes iconBob { 0%,100%{transform:translateY(0) rotate(0)} 50%{transform:translateY(-6px) rotate(2deg)} }
-        .tour-title {
-            font-size:1.6rem;font-weight:800;margin:0;
-            background:linear-gradient(135deg,#fff 30%,var(--primary) 60%,#06b6d4);
-            -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-            background-size:200% auto;animation:titleShimmer 3s ease infinite;
-        }
-        @keyframes titleShimmer { 0%,100%{background-position:0% center} 50%{background-position:200% center} }
-        .tour-subtitle { color:rgba(255,255,255,.5);font-size:.9rem;margin:.4rem 0 0; }
-        .tour-progress { padding:0 2.5rem; }
-        .tour-progress-track { height:3px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;margin:1rem 0 .75rem; }
-        .tour-progress-fill {
-            height:100%;border-radius:3px;
-            background:linear-gradient(90deg,var(--primary),#06b6d4,#10b981);background-size:200% 100%;
-            transition:width .6s cubic-bezier(.4,0,.2,1);box-shadow:0 0 20px rgba(168,85,247,.5);
-            animation:progPulse 2s ease infinite;
-        }
-        @keyframes progPulse { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
-        .tour-dots { display:flex;gap:6px;justify-content:center; }
-        .tour-dot {
-            width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.12);cursor:pointer;
-            transition:all .4s cubic-bezier(.4,0,.2,1);border:none;padding:0;
-        }
-        .tour-dot.active { background:var(--primary);box-shadow:0 0 12px var(--primary);transform:scale(1.5); }
-        .tour-dot.done { background:#10b981;box-shadow:0 0 8px rgba(16,185,129,.4); }
-        .tour-body { padding:1.5rem 2.5rem 2rem;min-height:320px;position:relative; }
-        .tour-enter { animation:tIn .5s cubic-bezier(.23,1,.32,1) forwards; }
-        .tour-exit { animation:tOut .25s ease forwards; }
-        @keyframes tIn { from{opacity:0;transform:translateY(25px) scale(.97);filter:blur(8px)} to{opacity:1;transform:none;filter:blur(0)} }
-        @keyframes tOut { to{opacity:0;transform:translateY(-15px) scale(.97)} }
-        .tour-feat {
-            background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:14px;
-            padding:1.1rem 1.25rem;transition:all .3s cubic-bezier(.23,1,.32,1);position:relative;overflow:hidden;
-        }
-        .tour-feat:hover { background:rgba(255,255,255,.06);border-color:rgba(168,85,247,.25);transform:translateY(-2px); }
-        .tour-feat::before { content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--primary),transparent);opacity:0;transition:.3s; }
-        .tour-feat:hover::before { opacity:1; }
-        .tour-stagger > * { opacity:0;animation:stgIn .45s ease forwards; }
-        .tour-stagger > *:nth-child(1){animation-delay:.08s} .tour-stagger > *:nth-child(2){animation-delay:.16s}
-        .tour-stagger > *:nth-child(3){animation-delay:.24s} .tour-stagger > *:nth-child(4){animation-delay:.32s}
-        .tour-stagger > *:nth-child(5){animation-delay:.40s} .tour-stagger > *:nth-child(6){animation-delay:.48s}
-        @keyframes stgIn { from{opacity:0;transform:translateX(-15px)} to{opacity:1;transform:none} }
-        .tour-kbd {
-            display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:30px;padding:0 10px;
-            background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;
-            font-size:.85rem;font-weight:600;color:rgba(255,255,255,.9);box-shadow:0 2px 0 rgba(255,255,255,.1);
-        }
-        .tour-btn {
-            padding:12px 28px;border-radius:12px;font-weight:700;font-size:.95rem;cursor:pointer;
-            transition:all .3s cubic-bezier(.23,1,.32,1);border:none;font-family:inherit;position:relative;overflow:hidden;
-        }
-        .tour-btn-next { background:linear-gradient(135deg,var(--primary),#06b6d4);color:#fff;box-shadow:0 4px 25px rgba(168,85,247,.35); }
-        .tour-btn-next:hover { transform:translateY(-2px);box-shadow:0 8px 35px rgba(168,85,247,.5); }
-        .tour-btn-back { background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1) !important; }
-        .tour-btn-back:hover { background:rgba(255,255,255,.1);color:#fff; }
-        .tour-btn-skip { background:transparent;color:rgba(255,255,255,.4); }
-        .tour-btn-skip:hover { color:rgba(255,255,255,.7); }
-        .tour-counter { font-size:.8rem;color:rgba(255,255,255,.35);font-weight:500; }
-        .tour-footer { padding:0 2.5rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:12px; }
-        .tour-tip {
-            background:linear-gradient(135deg,rgba(168,85,247,.1),rgba(6,182,212,.1));
-            border:1px solid rgba(168,85,247,.2);border-radius:12px;padding:1rem 1.25rem;
-        }
-        .tour-confetti { position:fixed;inset:0;pointer-events:none;z-index:10001; }
+        /* --- ONBOARDING TOUR STYLES - SPOTLIGHT EDITION --- */
+        .tour-confetti { position:fixed;inset:0;pointer-events:none;z-index:10002; }
         @keyframes confettiFall { 0%{transform:translateY(-10vh) rotate(0);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
         .confetti-piece {
             position:absolute;width:10px;height:10px;top:-10px;
             animation:confettiFall var(--fall-dur,3s) var(--fall-del,0s) linear forwards;
         }
-        @keyframes celebScale { 0%{transform:scale(0) rotate(-10deg);opacity:0} 50%{transform:scale(1.1) rotate(2deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
-        .tour-celebrate { animation:celebScale .6s cubic-bezier(.175,.885,.32,1.275) forwards; }
 
 
         /* --- MOBILE RESPONSIVENESS --- */
@@ -6485,42 +6381,7 @@
         </div>
     </div>
 
-    <!-- IMMERSIVE TOUR OVERLAY -->
-    <div class="tour-overlay" id="tourOverlay">
-        <div class="tour-bg"></div>
-        <div class="tour-orb tour-orb-1"></div>
-        <div class="tour-orb tour-orb-2"></div>
-        <div class="tour-orb tour-orb-3"></div>
-        <canvas id="tourParticles" style="position:absolute;inset:0;pointer-events:none;z-index:1;"></canvas>
-        <div class="tour-card">
-            <div class="tour-glow"></div>
-            <div class="tour-header">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-                    <div style="display:flex;align-items:center;gap:16px;">
-                        <div class="tour-step-icon" id="tourStepIcon">🚀</div>
-                        <div>
-                            <h2 class="tour-title" id="tourTitle">TimeTracker Tour</h2>
-                            <p class="tour-subtitle" id="tourSubtitle">Entdecke alle Features</p>
-                        </div>
-                    </div>
-                    <button onclick="endOnboardingTour()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);width:40px;height:40px;border-radius:12px;font-size:1.2rem;cursor:pointer;transition:.3s;display:flex;align-items:center;justify-content:center;" onmouseover="this.style.background='rgba(255,255,255,.12)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,.06)';this.style.color='rgba(255,255,255,.5)'">&times;</button>
-                </div>
-            </div>
-            <div class="tour-progress">
-                <div class="tour-progress-track"><div class="tour-progress-fill" id="tourProgressFill" style="width:0%"></div></div>
-                <div class="tour-dots" id="tourDots"></div>
-            </div>
-            <div class="tour-body" id="tourBody"></div>
-            <div class="tour-footer">
-                <button class="tour-btn tour-btn-back" id="tourBtnBack" onclick="previousOnboardingStep()">← Zurück</button>
-                <span class="tour-counter" id="tourCounter">1 / 9</span>
-                <div style="display:flex;gap:10px;">
-                    <button class="tour-btn tour-btn-skip" onclick="endOnboardingTour()">Überspringen</button>
-                    <button class="tour-btn tour-btn-next" id="tourBtnNext" onclick="nextOnboardingStep()">Weiter →</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- TOUR CONFETTI CONTAINER -->
     <div class="tour-confetti" id="tourConfetti"></div>
 
     <!-- QUICK HELP MODAL (Kompakt) -->
@@ -14365,284 +14226,136 @@ TIPPS:
         showCustomMessage('✅ Eingetragen', `Berufsschule für ${dateISO} wurde hinzugefügt.`, 'success');
     }
 
-    // === IMMERSIVE ONBOARDING TOUR SYSTEM ===
+    // === PROFESSIONAL STEP-BY-STEP TOUR ===
     
     let onboardingStep = 0;
     let onboardingActive = false;
-    let tourParticleRAF = null;
     let tourTouchStart = null;
+    let _tourResizeHandler = null;
 
     const onboardingSteps = [
         {
-            icon: '🚀',
-            title: 'Willkommen bei TimeTracker',
-            subtitle: 'Dein intelligentes Arbeitszeitmanagement',
-            content: `
-                <div style="text-align:center;padding:1rem 0;">
-                    <div style="font-size:4.5rem;margin-bottom:1.25rem;animation:iconBob 2s ease-in-out infinite;">🚀</div>
-                    <h3 class="tour-title" style="font-size:1.8rem;margin-bottom:.75rem;">Bereit für den Überblick?</h3>
-                    <p style="color:rgba(255,255,255,.5);font-size:1.05rem;line-height:1.7;max-width:500px;margin:0 auto 1.5rem;">
-                        In 60 Sekunden kennst du alle Power-Features.<br>Gleitzeitkonto, KI-Insights, Prognosen & mehr.
-                    </p>
-                    <div class="tour-tip" style="text-align:left;display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:1.1rem;">💡</span>
-                        <span style="color:rgba(255,255,255,.55);font-size:.88rem;">Nutze <span class="tour-kbd">←</span> <span class="tour-kbd">→</span> Pfeiltasten oder <strong style="color:rgba(255,255,255,.8);">Swipe</strong> zum Navigieren</span>
-                    </div>
-                </div>
-            `
+            icon: '👋',
+            title: 'Willkommen bei TIME.PRO',
+            text: 'Diese Tour führt dich Schritt für Schritt durch die App. Du lernst alle wichtigen Bereiche und Funktionen kennen.',
+            target: null,
+            tab: null,
+            position: 'center'
         },
         {
             icon: '📊',
-            title: 'Dashboard',
-            subtitle: 'Alles auf einen Blick',
-            content: `
-                <div class="tour-stagger" style="display:grid;gap:12px;">
-                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
-                        <div style="font-size:1.8rem;width:50px;text-align:center;">⏰</div>
-                        <div><div style="font-weight:700;color:#fff;margin-bottom:2px;">Saldo Woche & Monat</div><div style="font-size:.85rem;color:rgba(255,255,255,.45);">Live-Anzeige deiner Plus/Minus-Stunden</div></div>
-                    </div>
-                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
-                        <div style="font-size:1.8rem;width:50px;text-align:center;">💰</div>
-                        <div><div style="font-weight:700;color:#fff;margin-bottom:2px;">Gleitzeitkonto</div><div style="font-size:.85rem;color:rgba(255,255,255,.45);">Gesamter aufgebauter Saldo über alle Einträge</div></div>
-                    </div>
-                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
-                        <div style="font-size:1.8rem;width:50px;text-align:center;">🌴</div>
-                        <div><div style="font-weight:700;color:#fff;margin-bottom:2px;">Urlaubstage</div><div style="font-size:.85rem;color:rgba(255,255,255,.45);">Verbraucht, geplant & verfügbar</div></div>
-                    </div>
-                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
-                        <div style="font-size:1.8rem;width:50px;text-align:center;">📈</div>
-                        <div><div style="font-weight:700;color:#fff;margin-bottom:2px;">Live Charts</div><div style="font-size:.85rem;color:rgba(255,255,255,.45);">Trend & Verteilung in Echtzeit</div></div>
-                    </div>
-                </div>
-            `
-        },
-        {
-            icon: '⏱️',
-            title: 'Zeiten erfassen',
-            subtitle: '3 Methoden — du wählst',
-            content: `
-                <div class="tour-stagger" style="display:grid;gap:12px;">
-                    <div class="tour-feat" style="border-left:3px solid var(--primary);padding-left:1.25rem;">
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-                            <span style="font-size:1.3rem;">🔴</span>
-                            <span style="font-weight:700;color:#fff;font-size:1.05rem;">Live Timer</span>
-                        </div>
-                        <p style="margin:0;font-size:.88rem;color:rgba(255,255,255,.45);">Start → Pause → Stop. Für lange Sessions. Pausen werden automatisch erfasst.</p>
-                    </div>
-                    <div class="tour-feat" style="border-left:3px solid #06b6d4;padding-left:1.25rem;">
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-                            <span style="font-size:1.3rem;">🕐</span>
-                            <span style="font-weight:700;color:#fff;font-size:1.05rem;">Start / Ende</span>
-                        </div>
-                        <p style="margin:0;font-size:.88rem;color:rgba(255,255,255,.45);">Gib Start- und Endzeit ein. Pausen automatisch abgezogen. <strong style="color:rgba(255,255,255,.7);">Jetzt</strong>-Buttons für aktuelle Uhrzeit.</p>
-                    </div>
-                    <div class="tour-feat" style="border-left:3px solid #10b981;padding-left:1.25rem;">
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-                            <span style="font-size:1.3rem;">✍️</span>
-                            <span style="font-weight:700;color:#fff;font-size:1.05rem;">Manuelle Eingabe</span>
-                        </div>
-                        <p style="margin:0;font-size:.88rem;color:rgba(255,255,255,.45);">Direkt Stunden eingeben — perfekt für rückwirkende Einträge.</p>
-                    </div>
-                </div>
-            `
-        },
-        {
-            icon: '⌨️',
-            title: 'Shortcuts',
-            subtitle: 'Schnell wie der Blitz',
-            content: `
-                <div class="tour-stagger" style="display:grid;gap:14px;">
-                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
-                        <div class="tour-feat" style="padding:1.2rem .5rem;">
-                            <div class="tour-kbd" style="font-size:1.2rem;width:48px;height:48px;margin:0 auto 10px;">S</div>
-                            <div style="font-size:.82rem;color:rgba(255,255,255,.5);">Timer Start</div>
-                        </div>
-                        <div class="tour-feat" style="padding:1.2rem .5rem;">
-                            <div class="tour-kbd" style="font-size:1.2rem;width:48px;height:48px;margin:0 auto 10px;">P</div>
-                            <div style="font-size:.82rem;color:rgba(255,255,255,.5);">Pausieren</div>
-                        </div>
-                        <div class="tour-feat" style="padding:1.2rem .5rem;">
-                            <div class="tour-kbd" style="font-size:1.2rem;width:48px;height:48px;margin:0 auto 10px;">E</div>
-                            <div style="font-size:.82rem;color:rgba(255,255,255,.5);">Timer Stopp</div>
-                        </div>
-                    </div>
-                    <div class="tour-feat" style="display:flex;align-items:center;gap:12px;">
-                        <div style="display:flex;gap:4px;flex-shrink:0;"><span class="tour-kbd">Ctrl</span><span style="color:rgba(255,255,255,.3);line-height:30px;">+</span><span class="tour-kbd">↵</span></div>
-                        <span style="color:rgba(255,255,255,.5);font-size:.88rem;">Formular blitzschnell speichern</span>
-                    </div>
-                    <div class="tour-tip" style="display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:1.1rem;">💡</span>
-                        <span style="color:rgba(255,255,255,.55);font-size:.88rem;">Shortcuts sind deaktiviert während du in einem Textfeld tippst</span>
-                    </div>
-                </div>
-            `
+            title: 'Dein Dashboard',
+            text: 'Hier siehst du deine wichtigsten Kennzahlen auf einen Blick — Wochensaldo, Monatssaldo, Gleitzeitkonto und Tagesdurchschnitt.',
+            target: '#dashboardGrid',
+            tab: 'dashboard',
+            position: 'bottom'
         },
         {
             icon: '📈',
-            title: 'Performance & Analyse',
-            subtitle: 'Deine Daten, deine Insights',
-            content: `
-                <div class="tour-stagger" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                    <div class="tour-feat" style="text-align:center;padding:1.5rem 1rem;">
-                        <div style="font-size:2rem;margin-bottom:8px;">📊</div>
-                        <div style="font-weight:700;color:#fff;font-size:.95rem;margin-bottom:4px;">Soll vs. Ist</div>
-                        <div style="font-size:.8rem;color:rgba(255,255,255,.4);">Wöchentlicher Vergleich</div>
-                    </div>
-                    <div class="tour-feat" style="text-align:center;padding:1.5rem 1rem;">
-                        <div style="font-size:2rem;margin-bottom:8px;">🎯</div>
-                        <div style="font-weight:700;color:#fff;font-size:.95rem;margin-bottom:4px;">Projekte</div>
-                        <div style="font-size:.8rem;color:rgba(255,255,255,.4);">Zeit-Verteilung</div>
-                    </div>
-                    <div class="tour-feat" style="text-align:center;padding:1.5rem 1rem;">
-                        <div style="font-size:2rem;margin-bottom:8px;">🔥</div>
-                        <div style="font-weight:700;color:#fff;font-size:.95rem;margin-bottom:4px;">Heatmap</div>
-                        <div style="font-size:.8rem;color:rgba(255,255,255,.4);">Produktivste Stunden</div>
-                    </div>
-                    <div class="tour-feat" style="text-align:center;padding:1.5rem 1rem;">
-                        <div style="font-size:2rem;margin-bottom:8px;">📅</div>
-                        <div style="font-weight:700;color:#fff;font-size:.95rem;margin-bottom:4px;">Wochentage</div>
-                        <div style="font-size:.8rem;color:rgba(255,255,255,.4);">Deine besten Tage</div>
-                    </div>
-                </div>
-            `
+            title: 'Trend & Verteilung',
+            text: 'Der Wochenverlauf zeigt dir, wie sich dein Saldo entwickelt. Das Donut-Diagramm zeigt die Verteilung deiner Eintragstypen.',
+            target: '[data-item-id="charts"]',
+            tab: 'dashboard',
+            position: 'top'
+        },
+        {
+            icon: '✍️',
+            title: 'Eintrag erfassen',
+            text: 'Wähle Datum, Typ und gib Start/Ende oder Stunden ein. Die „Jetzt"-Buttons setzen die aktuelle Uhrzeit. Entwürfe werden automatisch gespeichert.',
+            target: '[data-item-id="entry-form"]',
+            tab: 'dashboard',
+            position: 'top'
+        },
+        {
+            icon: '📈',
+            title: 'Performance Analyse',
+            text: 'Hier findest du detaillierte Auswertungen: Soll-Ist-Vergleich, Projektverteilung, Wochentag-Analyse und Produktivitäts-Heatmap.',
+            target: '#view-performance',
+            tab: 'performance',
+            position: 'bottom'
         },
         {
             icon: '🔮',
             title: 'Prognose & Planung',
-            subtitle: 'Die Zukunft im Griff',
-            content: `
-                <div class="tour-stagger" style="display:grid;gap:12px;">
-                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
-                        <div style="font-size:1.8rem;width:50px;text-align:center;">📅</div>
-                        <div><div style="font-weight:700;color:#fff;">4-Wochen Vorschau</div><div style="font-size:.85rem;color:rgba(255,255,255,.4);">Klicke Tage an → markiere als Urlaub / Schule / Krank</div></div>
-                    </div>
-                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
-                        <div style="font-size:1.8rem;width:50px;text-align:center;">⚡</div>
-                        <div><div style="font-weight:700;color:#fff;">Live Saldo-Simulation</div><div style="font-size:.85rem;color:rgba(255,255,255,.4);">Saldo aktualisiert sich sofort bei jeder Änderung</div></div>
-                    </div>
-                    <div class="tour-tip" style="display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:1.2rem;">🧠</span>
-                        <span style="color:rgba(255,255,255,.55);font-size:.88rem;"><em>"Wenn ich nächste Woche 2 Tage Urlaub nehme — wie sieht mein Saldo aus?"</em></span>
-                    </div>
-                </div>
-            `
+            text: 'Plane die nächsten 4 Wochen. Klicke auf einen Tag, um ihn als Urlaub, Schule oder Krank zu markieren — der Saldo aktualisiert sich live.',
+            target: '#view-prognose',
+            tab: 'prognose',
+            position: 'bottom'
+        },
+        {
+            icon: '📆',
+            title: 'Jahresübersicht',
+            text: 'Die Heatmap zeigt dir das ganze Jahr. Grün = produktive Tage, Rot = weniger produktive Tage. Dazu gibt es KI-Insights über deine Muster.',
+            target: '#view-yearview',
+            tab: 'yearview',
+            position: 'bottom'
         },
         {
             icon: '🎓',
-            title: 'Ausbildung & IHK',
-            subtitle: 'Alles für deine Ausbildung',
-            content: `
-                <div class="tour-stagger" style="display:grid;gap:12px;">
-                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
-                        <div style="font-size:1.8rem;width:50px;text-align:center;">🎓</div>
-                        <div><div style="font-weight:700;color:#fff;">IHK-Audit Dashboard</div><div style="font-size:.85rem;color:rgba(255,255,255,.4);">Fortschritt, Prüfungsdaten, Noten & Compliance</div></div>
-                    </div>
-                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
-                        <div style="font-size:1.8rem;width:50px;text-align:center;">📚</div>
-                        <div><div style="font-weight:700;color:#fff;">Berufsschul-Noten</div><div style="font-size:.85rem;color:rgba(255,255,255,.4);">Fächer, Durchschnitte & Trend-Analyse</div></div>
-                    </div>
-                    <div class="tour-feat" style="display:flex;align-items:center;gap:14px;">
-                        <div style="font-size:1.8rem;width:50px;text-align:center;">🏆</div>
-                        <div><div style="font-weight:700;color:#fff;">Ziele & Badges</div><div style="font-size:.85rem;color:rgba(255,255,255,.4);">Setze Ziele. Erreiche Trophäen. Bleib motiviert.</div></div>
-                    </div>
-                </div>
-            `
+            title: 'IHK & Ausbildung',
+            text: 'Verwalte deine Ausbildungsdaten, Prüfungstermine und Noten. Der Compliance-Check prüft Ruhezeiten und Arbeitszeitgrenzen.',
+            target: '#view-ihk',
+            tab: 'ihk',
+            position: 'bottom'
         },
         {
-            icon: '🔧',
-            title: 'Daten & Einstellungen',
-            subtitle: 'Volle Kontrolle',
-            content: `
-                <div class="tour-stagger" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                    <div class="tour-feat" style="text-align:center;padding:1.3rem .75rem;">
-                        <div style="font-size:1.6rem;margin-bottom:6px;">🔍</div>
-                        <div style="font-weight:600;color:#fff;font-size:.9rem;">Filter & Suche</div>
-                    </div>
-                    <div class="tour-feat" style="text-align:center;padding:1.3rem .75rem;">
-                        <div style="font-size:1.6rem;margin-bottom:6px;">📥</div>
-                        <div style="font-weight:600;color:#fff;font-size:.9rem;">CSV / JSON Export</div>
-                    </div>
-                    <div class="tour-feat" style="text-align:center;padding:1.3rem .75rem;">
-                        <div style="font-size:1.6rem;margin-bottom:6px;">☁️</div>
-                        <div style="font-weight:600;color:#fff;font-size:.9rem;">Cloud Sync</div>
-                    </div>
-                    <div class="tour-feat" style="text-align:center;padding:1.3rem .75rem;">
-                        <div style="font-size:1.6rem;margin-bottom:6px;">⚙️</div>
-                        <div style="font-weight:600;color:#fff;font-size:.9rem;">Soll-Zeiten & Pausen</div>
-                    </div>
-                </div>
-            `
+            icon: '🏆',
+            title: 'Ziele & Fokus',
+            text: 'Setze persönliche Ziele wie „100h Überstunden" oder „50 positive Wochen". Jedes erreichte Ziel bringt dir ein Achievement-Badge.',
+            target: '#view-goals',
+            tab: 'goals',
+            position: 'bottom'
+        },
+        {
+            icon: '🔍',
+            title: 'Daten & Historie',
+            text: 'Alle deine Einträge — filterbar nach Datum, Typ und Projekt. Exportiere als CSV oder JSON für Excel, Audits oder Backups.',
+            target: '#view-history',
+            tab: 'history',
+            position: 'bottom'
+        },
+        {
+            icon: '⚙️',
+            title: 'Sidebar — Dein Menü',
+            text: 'Über die Sidebar erreichst du alle Bereiche, Einstellungen, Export, Backup und externe Tools wie Berichtsheft oder Lern-Hub.',
+            target: '#sidebar',
+            tab: null,
+            position: 'right'
         },
         {
             icon: '🎉',
-            title: 'Du bist ready!',
-            subtitle: 'Los geht\'s!',
-            content: `
-                <div style="text-align:center;padding:.5rem 0;" class="tour-celebrate">
-                    <div style="font-size:5rem;margin-bottom:1rem;">🎉</div>
-                    <h3 style="font-size:1.6rem;font-weight:800;color:#fff;margin:0 0 .5rem;">Alles klar!</h3>
-                    <p style="color:rgba(255,255,255,.5);font-size:1rem;line-height:1.7;max-width:450px;margin:0 auto 1.5rem;">
-                        Du kennst jetzt alle Features. Starte deinen ersten Timer und lass dich von den Insights überraschen!
-                    </p>
-                    <div class="tour-tip" style="text-align:left;display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:1.5rem;">⚡</span>
-                        <span style="color:rgba(255,255,255,.6);">Pro-Tipp: Starte mit dem <strong style="color:#fff;">Live-Timer</strong> — das geht am schnellsten!</span>
-                    </div>
-                </div>
-            `
+            title: 'Du bist startklar!',
+            text: 'Du kennst jetzt alle wichtigen Bereiche. Starte mit dem Dashboard und erfasse deinen ersten Eintrag. Viel Erfolg!',
+            target: null,
+            tab: 'dashboard',
+            position: 'center'
         }
     ];
 
-    // --- Particle System ---
-    function initTourParticles() {
-        const canvas = document.getElementById('tourParticles');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        const particles = [];
-        const colors = ['#a855f7','#06b6d4','#10b981','#f59e0b','#ec4899'];
-        for (let i = 0; i < 50; i++) {
-            particles.push({
-                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-                r: Math.random() * 2 + .5, dx: (Math.random() - .5) * .4,
-                dy: (Math.random() - .5) * .4, color: colors[Math.floor(Math.random() * colors.length)],
-                alpha: Math.random() * .4 + .1
-            });
-        }
-        function animate() {
-            if (!onboardingActive) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particles.forEach(p => {
-                p.x += p.dx; p.y += p.dy;
-                if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
-                if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
-                ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-                ctx.fillStyle = p.color; ctx.globalAlpha = p.alpha; ctx.fill();
-            });
-            ctx.globalAlpha = .03; ctx.strokeStyle = '#a855f7'; ctx.lineWidth = .5;
-            for (let i = 0; i < particles.length; i++) {
-                for (let j = i + 1; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x, dy = particles[i].y - particles[j].y;
-                    if (Math.sqrt(dx*dx + dy*dy) < 140) {
-                        ctx.beginPath(); ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y); ctx.stroke();
-                    }
-                }
-            }
-            ctx.globalAlpha = 1;
-            tourParticleRAF = requestAnimationFrame(animate);
-        }
-        animate();
+    // --- Tour Keyboard ---
+    function tourKeyHandler(e) {
+        if (!onboardingActive) return;
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextOnboardingStep(); }
+        else if (e.key === 'ArrowLeft') { e.preventDefault(); previousOnboardingStep(); }
+        else if (e.key === 'Escape') { e.preventDefault(); endOnboardingTour(); }
     }
 
-    // --- Confetti Explosion ---
+    // --- Tour Touch/Swipe ---
+    function tourTouchStartHandler(e) { tourTouchStart = e.touches[0].clientX; }
+    function tourTouchEndHandler(e) {
+        if (tourTouchStart === null || !onboardingActive) return;
+        const diff = tourTouchStart - e.changedTouches[0].clientX;
+        if (Math.abs(diff) > 50) { diff > 0 ? nextOnboardingStep() : previousOnboardingStep(); }
+        tourTouchStart = null;
+    }
+
+    // --- Confetti ---
     function launchTourConfetti() {
         const c = document.getElementById('tourConfetti');
         if (!c) return;
         const colors = ['#a855f7','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#fff'];
         const shapes = ['■','●','▲','★','♦','◆'];
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 120; i++) {
             const p = document.createElement('div');
             p.className = 'confetti-piece';
             p.style.cssText = 'left:' + (Math.random()*100) + '%;color:' + colors[Math.floor(Math.random()*colors.length)] + ';font-size:' + (Math.random()*14+6) + 'px;--fall-dur:' + (Math.random()*2.5+2) + 's;--fall-del:' + (Math.random()*.8) + 's;';
@@ -14652,70 +14365,261 @@ TIPPS:
         setTimeout(() => { c.innerHTML = ''; }, 5500);
     }
 
-    // --- Touch/Swipe Support ---
-    function tourTouchStartHandler(e) { tourTouchStart = e.touches[0].clientX; }
-    function tourTouchEndHandler(e) {
-        if (tourTouchStart === null || !onboardingActive) return;
-        const diff = tourTouchStart - e.changedTouches[0].clientX;
-        if (Math.abs(diff) > 50) { diff > 0 ? nextOnboardingStep() : previousOnboardingStep(); }
-        tourTouchStart = null;
-    }
-
-    // --- Keyboard Handler ---
-    function tourKeyHandler(e) {
-        if (!onboardingActive) return;
-        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextOnboardingStep(); }
-        if (e.key === 'ArrowLeft') { e.preventDefault(); previousOnboardingStep(); }
-        if (e.key === 'Escape') { e.preventDefault(); endOnboardingTour(); }
-    }
-
     function startOnboardingTour() {
         onboardingStep = 0;
         onboardingActive = true;
         // Close sidebar on mobile
         const sidebar = document.querySelector('.sidebar');
-        if (sidebar) sidebar.classList.remove('active');
-        const overlay = document.getElementById('tourOverlay');
-        overlay.classList.add('active');
-        overlay.addEventListener('touchstart', tourTouchStartHandler, { passive: true });
-        overlay.addEventListener('touchend', tourTouchEndHandler);
+        if (sidebar && window.innerWidth < 1024) sidebar.classList.remove('active');
         document.addEventListener('keydown', tourKeyHandler);
-        initTourParticles();
+        document.addEventListener('touchstart', tourTouchStartHandler, { passive: true });
+        document.addEventListener('touchend', tourTouchEndHandler);
+        _tourResizeHandler = () => { if (onboardingActive) renderOnboardingStep(); };
+        window.addEventListener('resize', _tourResizeHandler);
         renderOnboardingStep();
     }
 
     function renderOnboardingStep() {
         const step = onboardingSteps[onboardingStep];
         const total = onboardingSteps.length;
-        document.getElementById('tourStepIcon').textContent = step.icon;
-        document.getElementById('tourTitle').textContent = step.title;
-        document.getElementById('tourSubtitle').textContent = step.subtitle;
-        // Progress
-        document.getElementById('tourProgressFill').style.width = ((onboardingStep + 1) / total * 100) + '%';
-        const dotsEl = document.getElementById('tourDots');
-        let dh = '';
-        for (let i = 0; i < total; i++) {
-            dh += '<button class="tour-dot ' + (i === onboardingStep ? 'active' : (i < onboardingStep ? 'done' : '')) + '" onclick="jumpToStep(' + i + ')"></button>';
+
+        // Navigate to correct tab
+        if (step.tab && typeof switchTab === 'function') {
+            switchTab(step.tab);
         }
-        dotsEl.innerHTML = dh;
-        // Content
-        document.getElementById('tourBody').innerHTML = '<div class="tour-enter">' + step.content + '</div>';
-        // Counter
-        document.getElementById('tourCounter').textContent = (onboardingStep + 1) + ' / ' + total;
-        // Buttons
-        document.getElementById('tourBtnBack').style.visibility = onboardingStep === 0 ? 'hidden' : 'visible';
-        const nb = document.getElementById('tourBtnNext');
-        if (onboardingStep === total - 1) {
-            nb.textContent = '✓ Let\'s go!';
-            nb.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+
+        // Show sidebar for sidebar step
+        if (step.target === '#sidebar' && window.innerWidth >= 1024) {
+            // Sidebar already visible on desktop
+        } else if (step.target === '#sidebar' && window.innerWidth < 1024) {
+            const sb = document.querySelector('.sidebar');
+            if (sb) sb.classList.add('active');
+        }
+
+        // Remove old elements
+        const oldOverlay = document.getElementById('tourSpotlightOverlay');
+        const oldTooltip = document.getElementById('tourTooltip');
+        if (oldOverlay) oldOverlay.remove();
+        if (oldTooltip) oldTooltip.remove();
+
+        // Scroll target into view
+        let targetEl = step.target ? document.querySelector(step.target) : null;
+        if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Small delay for scroll to settle
+        setTimeout(() => {
+            targetEl = step.target ? document.querySelector(step.target) : null;
+            const rect = targetEl ? targetEl.getBoundingClientRect() : null;
+
+            // --- Spotlight Overlay with cutout ---
+            const overlay = document.createElement('div');
+            overlay.id = 'tourSpotlightOverlay';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;transition:opacity .3s;';
+
+            if (rect && step.position !== 'center') {
+                const pad = 12;
+                const r = 16;
+                const x = rect.left - pad, y = rect.top - pad, w = rect.width + pad*2, h = rect.height + pad*2;
+                const svgNS = 'http://www.w3.org/2000/svg';
+                const svg = document.createElementNS(svgNS, 'svg');
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '100%');
+                svg.style.cssText = 'position:absolute;inset:0;';
+
+                const defs = document.createElementNS(svgNS, 'defs');
+                const mask = document.createElementNS(svgNS, 'mask');
+                mask.id = 'tourCutout';
+                const maskBg = document.createElementNS(svgNS, 'rect');
+                maskBg.setAttribute('width', '100%'); maskBg.setAttribute('height', '100%'); maskBg.setAttribute('fill', 'white');
+                const maskHole = document.createElementNS(svgNS, 'rect');
+                maskHole.setAttribute('x', x); maskHole.setAttribute('y', y);
+                maskHole.setAttribute('width', Math.max(0, w)); maskHole.setAttribute('height', Math.max(0, h));
+                maskHole.setAttribute('rx', r); maskHole.setAttribute('fill', 'black');
+                mask.appendChild(maskBg); mask.appendChild(maskHole);
+                defs.appendChild(mask); svg.appendChild(defs);
+
+                const bgRect = document.createElementNS(svgNS, 'rect');
+                bgRect.setAttribute('width', '100%'); bgRect.setAttribute('height', '100%');
+                bgRect.setAttribute('fill', 'rgba(0,0,0,0.65)'); bgRect.setAttribute('mask', 'url(#tourCutout)');
+                svg.appendChild(bgRect);
+
+                // Glow ring around cutout
+                const glowRect = document.createElementNS(svgNS, 'rect');
+                glowRect.setAttribute('x', x-1); glowRect.setAttribute('y', y-1);
+                glowRect.setAttribute('width', Math.max(0, w+2)); glowRect.setAttribute('height', Math.max(0, h+2));
+                glowRect.setAttribute('rx', r+1); glowRect.setAttribute('fill', 'none');
+                glowRect.setAttribute('stroke', 'rgba(168,85,247,0.5)'); glowRect.setAttribute('stroke-width', '2');
+                svg.appendChild(glowRect);
+
+                overlay.appendChild(svg);
+            } else {
+                overlay.style.background = 'rgba(0,0,0,0.7)';
+                overlay.style.backdropFilter = 'blur(4px)';
+            }
+
+            overlay.onclick = (e) => { if (e.target === overlay || e.target.tagName === 'svg' || e.target.tagName === 'rect') nextOnboardingStep(); };
+            document.body.appendChild(overlay);
+
+            // --- Tooltip ---
+            const tooltip = document.createElement('div');
+            tooltip.id = 'tourTooltip';
+            tooltip.style.cssText = `
+                position:fixed;z-index:10001;width:380px;max-width:90vw;
+                background:rgba(15,15,25,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+                border:1px solid rgba(255,255,255,0.1);border-radius:16px;
+                box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 40px rgba(168,85,247,0.08);
+                padding:0;overflow:hidden;opacity:0;transition:opacity .3s,transform .3s;
+                transform:translateY(10px);font-family:inherit;
+            `;
+
+            // Progress bar
+            const progressPerc = ((onboardingStep + 1) / total * 100);
+            const progressBar = '<div style="height:3px;background:rgba(255,255,255,0.05);"><div style="height:100%;width:' + progressPerc + '%;background:linear-gradient(90deg,#a855f7,#06b6d4);border-radius:0 3px 3px 0;transition:width .5s;"></div></div>';
+
+            // Dots
+            let dots = '';
+            for (let i = 0; i < total; i++) {
+                const cls = i === onboardingStep ? 'background:#a855f7;box-shadow:0 0 8px #a855f7;transform:scale(1.3);' : (i < onboardingStep ? 'background:#10b981;' : 'background:rgba(255,255,255,0.15);');
+                dots += '<button onclick="jumpToStep(' + i + ')" style="width:7px;height:7px;border-radius:50%;border:none;cursor:pointer;padding:0;transition:all .3s;' + cls + '"></button>';
+            }
+
+            // Back button
+            const backBtn = onboardingStep > 0 ? '<button onclick="previousOnboardingStep()" style="padding:8px 16px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);font-size:.85rem;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit;" onmouseover="this.style.background=\'rgba(255,255,255,.12)\'" onmouseout="this.style.background=\'rgba(255,255,255,.06)\'">←</button>' : '';
+
+            // Next/Finish button
+            const nextBtn = onboardingStep < total - 1 ?
+                '<button onclick="nextOnboardingStep()" style="padding:8px 20px;border-radius:10px;background:linear-gradient(135deg,#a855f7,#06b6d4);border:none;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;box-shadow:0 4px 15px rgba(168,85,247,0.3);" onmouseover="this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.transform=\'none\'">Weiter →</button>' :
+                '<button onclick="endOnboardingTour()" style="padding:8px 20px;border-radius:10px;background:linear-gradient(135deg,#10b981,#059669);border:none;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;transition:.2s;font-family:inherit;box-shadow:0 4px 15px rgba(16,185,129,0.3);" onmouseover="this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.transform=\'none\'">✓ Fertig!</button>';
+
+            tooltip.innerHTML = progressBar +
+                '<div style="padding:1.5rem 1.5rem 1.25rem;">' +
+                    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:.75rem;">' +
+                        '<div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(6,182,212,0.15));border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">' + step.icon + '</div>' +
+                        '<div>' +
+                            '<h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;">' + step.title + '</h3>' +
+                            '<span style="font-size:.75rem;color:rgba(255,255,255,0.35);">Schritt ' + (onboardingStep + 1) + ' von ' + total + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<p style="margin:0 0 1.25rem;font-size:.9rem;line-height:1.65;color:rgba(255,255,255,0.6);">' + step.text + '</p>' +
+                    '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+                        '<div style="display:flex;gap:5px;align-items:center;">' + dots + '</div>' +
+                        '<div style="display:flex;gap:8px;">' + backBtn + nextBtn + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="padding:0 1.5rem .75rem;display:flex;justify-content:space-between;align-items:center;">' +
+                    '<span style="font-size:.72rem;color:rgba(255,255,255,0.2);">← → Pfeiltasten · Esc zum Beenden</span>' +
+                    '<button onclick="endOnboardingTour()" style="background:none;border:none;color:rgba(255,255,255,0.25);font-size:.72rem;cursor:pointer;font-family:inherit;padding:2px 4px;" onmouseover="this.style.color=\'rgba(255,255,255,.5)\'" onmouseout="this.style.color=\'rgba(255,255,255,.25)\'">Überspringen</button>' +
+                '</div>';
+
+            document.body.appendChild(tooltip);
+
+            // Position the tooltip
+            positionTourTooltip(tooltip, rect, step.position);
+
+            // Animate in
+            requestAnimationFrame(() => {
+                tooltip.style.opacity = '1';
+                tooltip.style.transform = 'translateY(0)';
+            });
+        }, 350);
+    }
+
+    function positionTourTooltip(tooltip, rect, position) {
+        const gap = 16;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        if (!rect || position === 'center') {
+            tooltip.style.left = '50%';
+            tooltip.style.top = '50%';
+            tooltip.style.transform = 'translate(-50%, -50%)';
+            return;
+        }
+
+        const tw = Math.min(380, vw * 0.9);
+        const th = tooltip.offsetHeight || 220;
+
+        let left, top;
+        const cx = rect.left + rect.width / 2;
+
+        if (position === 'bottom') {
+            top = rect.bottom + gap;
+            left = cx - tw / 2;
+        } else if (position === 'top') {
+            top = rect.top - th - gap;
+            left = cx - tw / 2;
+        } else if (position === 'right') {
+            left = rect.right + gap;
+            top = rect.top + rect.height / 2 - th / 2;
+        } else if (position === 'left') {
+            left = rect.left - tw - gap;
+            top = rect.top + rect.height / 2 - th / 2;
+        }
+
+        // Clamp to viewport
+        if (left < 10) left = 10;
+        if (left + tw > vw - 10) left = vw - tw - 10;
+        if (top < 10) top = 10;
+        if (top + th > vh - 10) {
+            // Flip to top if we're below viewport
+            if (position === 'bottom' && rect.top - th - gap > 10) {
+                top = rect.top - th - gap;
+            } else {
+                top = vh - th - 10;
+            }
+        }
+
+        tooltip.style.left = left + 'px';
+        tooltip.style.top = top + 'px';
+        tooltip.style.transform = 'none';
+    }
+
+    function nextOnboardingStep() {
+        if (onboardingStep < onboardingSteps.length - 1) {
+            onboardingStep++;
+            renderOnboardingStep();
         } else {
-            nb.textContent = 'Weiter →';
-            nb.style.background = 'linear-gradient(135deg,var(--primary),#06b6d4)';
+            endOnboardingTour();
         }
     }
 
+    function previousOnboardingStep() {
+        if (onboardingStep > 0) {
+            onboardingStep--;
+            renderOnboardingStep();
+        }
+    }
+
+    function jumpToStep(step) {
+        onboardingStep = step;
+        renderOnboardingStep();
+    }
+
+    function endOnboardingTour() {
+        onboardingActive = false;
+        document.removeEventListener('keydown', tourKeyHandler);
+        document.removeEventListener('touchstart', tourTouchStartHandler);
+        document.removeEventListener('touchend', tourTouchEndHandler);
+        if (_tourResizeHandler) { window.removeEventListener('resize', _tourResizeHandler); _tourResizeHandler = null; }
+        const overlay = document.getElementById('tourSpotlightOverlay');
+        const tooltip = document.getElementById('tourTooltip');
+        if (overlay) overlay.remove();
+        if (tooltip) tooltip.remove();
+        // Close sidebar on mobile if open
+        if (window.innerWidth < 1024) {
+            const sb = document.querySelector('.sidebar');
+            if (sb) sb.classList.remove('active');
+        }
+        // Switch back to dashboard
+        if (typeof switchTab === 'function') switchTab('dashboard');
+        if (onboardingStep >= onboardingSteps.length - 1) launchTourConfetti();
+        showCustomMessage('✅ Tour abgeschlossen', 'Du kennst jetzt alle Features! Viel Erfolg beim Tracken! 🚀', 'success');
+    }
+
     function highlightElement(selector) {
-        // Spotlight disabled in immersive mode
+        // Legacy - handled by renderOnboardingStep now
     }
 
     // --- Quick Help (contextual) ---
@@ -14890,40 +14794,6 @@ TIPPS:
         if (modal) modal.classList.remove('active');
     }
     
-    function nextOnboardingStep() {
-        if (onboardingStep < onboardingSteps.length - 1) {
-            onboardingStep++;
-            renderOnboardingStep();
-        } else {
-            endOnboardingTour();
-        }
-    }
-    
-    function previousOnboardingStep() {
-        if (onboardingStep > 0) {
-            onboardingStep--;
-            renderOnboardingStep();
-        }
-    }
-    
-    function jumpToStep(step) {
-        onboardingStep = step;
-        renderOnboardingStep();
-    }
-    
-    function endOnboardingTour() {
-        onboardingActive = false;
-        if (tourParticleRAF) { cancelAnimationFrame(tourParticleRAF); tourParticleRAF = null; }
-        document.removeEventListener('keydown', tourKeyHandler);
-        const overlay = document.getElementById('tourOverlay');
-        if (overlay) {
-            overlay.removeEventListener('touchstart', tourTouchStartHandler);
-            overlay.removeEventListener('touchend', tourTouchEndHandler);
-            overlay.classList.remove('active');
-        }
-        if (onboardingStep >= onboardingSteps.length - 1) launchTourConfetti();
-        showCustomMessage('✅ Tour abgeschlossen', 'Du kennst jetzt alle Features! Viel Erfolg beim Tracken! 🚀', 'success');
-    }
     
     // ===== SMART ALERTS SYSTEM (IMPROVED) =====
     let alertsHistory = [];
