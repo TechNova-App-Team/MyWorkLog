@@ -1438,42 +1438,126 @@
         }
         
         /* --- SCHULE / ACADEMIC STYLES (NEU) --- */
-        .school-kpi-grid {
-             display: grid;
-             grid-template-columns: 1.5fr 1fr 1fr;
-             gap: 1.5rem;
-             margin-bottom: 2rem;
+        /* ===== BERUFSSCHULE - PREMIUM DESIGN ===== */
+        .school-hero {
+            position:relative;border-radius:20px;overflow:hidden;margin-bottom:2rem;padding:2rem 2.5rem;
+        }
+        .school-hero-bg {
+            position:absolute;inset:0;
+            background:linear-gradient(135deg,rgba(59,130,246,0.15) 0%,rgba(99,102,241,0.1) 40%,rgba(168,85,247,0.08) 100%);
+            border:1px solid rgba(59,130,246,0.2);border-radius:20px;
+        }
+        .school-hero-bg::before {
+            content:'';position:absolute;inset:0;
+            background:radial-gradient(ellipse at 30% 50%,rgba(59,130,246,0.12) 0%,transparent 70%);
+        }
+        .school-hero-content { position:relative;z-index:1;display:flex;align-items:center;gap:20px; }
+        .school-hero-icon {
+            width:64px;height:64px;border-radius:18px;display:flex;align-items:center;justify-content:center;
+            font-size:2rem;background:linear-gradient(135deg,rgba(59,130,246,0.2),rgba(99,102,241,0.2));
+            border:1px solid rgba(59,130,246,0.3);flex-shrink:0;
+            box-shadow:0 0 30px rgba(59,130,246,0.15);
+        }
+        .school-kpi-dashboard {
+            display:grid;grid-template-columns:220px 1fr;gap:1.5rem;margin-bottom:2rem;
+        }
+        .school-ring-card {
+            background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:20px;
+            padding:2rem 1.5rem;display:flex;flex-direction:column;align-items:center;justify-content:center;
+            position:relative;overflow:hidden;
+        }
+        .school-ring-card::before {
+            content:'';position:absolute;inset:0;
+            background:radial-gradient(circle at 50% 30%,rgba(59,130,246,0.08) 0%,transparent 70%);
         }
         .school-progress-ring {
-            position: relative; 
-            width: 140px; 
-            height: 140px; 
-            margin-bottom: 1rem;
+            position:relative;width:160px;height:160px;margin-bottom:1rem;
         }
-        .school-progress-ring circle {
-            stroke-width: 8;
-            transform: rotate(-90deg); 
-            transform-origin: 50% 50%;
-        }
-        .ring-school-bg { stroke: rgba(255,255,255,0.06); }
-        .ring-school-val { stroke: var(--school); transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1); filter: drop-shadow(0 0 10px var(--school)); }
+        .school-progress-ring svg { width:100%;height:100%; }
+        .school-progress-ring circle { stroke-width:7;transform:rotate(-90deg);transform-origin:50% 50%;fill:none; }
+        .ring-school-bg { stroke:rgba(255,255,255,0.06); }
+        .ring-school-val { stroke:var(--school);transition:stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1);filter:drop-shadow(0 0 12px var(--school)); }
         .school-overall-note {
-             font-size: 3rem;
-             font-weight: 800;
-             position: absolute;
-             top: 50%;
-             left: 50%;
-             transform: translate(-50%, -50%);
-             font-family: var(--font-mono);
+            font-size:2.8rem;font-weight:800;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+            font-family:var(--font-mono);
         }
-        .subject-grade-card {
-             padding: 1rem;
-             text-align: center;
-             border-left: 4px solid var(--note-good);
+        .school-ring-badge {
+            margin-top:.75rem;padding:4px 14px;border-radius:20px;font-size:.75rem;font-weight:600;
+            background:rgba(59,130,246,0.12);color:var(--school);border:1px solid rgba(59,130,246,0.25);
+            letter-spacing:.5px;
         }
-        .subject-grade-card .ihk-metric-value {
-             font-size: 1.8rem;
+        .school-kpi-cards { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+        .school-kpi-card {
+            background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;
+            padding:1.25rem;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;
+            transition:all .3s cubic-bezier(.23,1,.32,1);
         }
+        .school-kpi-card:hover { transform:translateY(-2px);border-color:rgba(255,255,255,0.12); }
+        .school-kpi-best { border-left:3px solid var(--note-good); }
+        .school-kpi-best::before { content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(16,185,129,0.06),transparent);pointer-events:none; }
+        .school-kpi-worst { border-left:3px solid var(--note-bad); }
+        .school-kpi-worst::before { content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(239,68,68,0.06),transparent);pointer-events:none; }
+        .school-kpi-count { border-left:3px solid #06b6d4; }
+        .school-kpi-count::before { content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(6,182,212,0.06),transparent);pointer-events:none; }
+        .school-kpi-trend { border-left:3px solid var(--primary); }
+        .school-kpi-trend::before { content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(168,85,247,0.06),transparent);pointer-events:none; }
+        .school-kpi-icon { font-size:1.8rem;flex-shrink:0;width:48px;text-align:center; }
+        .school-kpi-info { display:flex;flex-direction:column;gap:2px;min-width:0; }
+        .school-kpi-label { font-size:.65rem;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:1.5px;text-transform:uppercase; }
+        .school-kpi-value { font-size:1.5rem;font-weight:800;color:#fff;font-family:var(--font-mono);line-height:1.2; }
+        .school-kpi-sub { font-size:.75rem;color:rgba(255,255,255,0.4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+        .school-section-header { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px; }
+        .school-section-icon {
+            width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+            font-size:1.2rem;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(168,85,247,0.15));
+            border:1px solid rgba(59,130,246,0.2);flex-shrink:0;
+        }
+        .school-add-btn {
+            display:flex;align-items:center;gap:6px;padding:8px 18px;border-radius:12px;
+            background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);color:var(--school);
+            font-size:.85rem;font-weight:600;cursor:pointer;transition:all .3s;font-family:inherit;
+        }
+        .school-add-btn:hover { background:rgba(59,130,246,0.2);transform:translateY(-1px); }
+        .school-add-btn span { font-size:1.1rem;font-weight:700; }
+        .school-save-btn {
+            width:100%;max-width:320px;background:linear-gradient(135deg,var(--school),#6366f1) !important;
+            box-shadow:0 4px 20px rgba(59,130,246,0.25);display:flex;align-items:center;justify-content:center;gap:8px;
+            font-weight:700;font-size:.95rem;padding:12px 24px;border-radius:14px;
+        }
+        .school-save-btn:hover { box-shadow:0 8px 30px rgba(59,130,246,0.35);transform:translateY(-2px); }
+        .school-input-card { border:1px solid rgba(59,130,246,0.1);position:relative;overflow:hidden; }
+        .school-input-card::before {
+            content:'';position:absolute;top:0;left:0;right:0;height:2px;
+            background:linear-gradient(90deg,var(--school),#6366f1,var(--primary));
+        }
+        .school-overview-card { border:1px solid rgba(6,182,212,0.1);position:relative;overflow:hidden; }
+        .school-overview-card::before {
+            content:'';position:absolute;top:0;left:0;right:0;height:2px;
+            background:linear-gradient(90deg,#06b6d4,var(--school));
+        }
+        .school-empty-state {
+            grid-column:1/-1;padding:3rem 2rem;text-align:center;
+            background:rgba(255,255,255,0.02);border:2px dashed rgba(255,255,255,0.06);border-radius:16px;
+        }
+        .school-subject-card {
+            background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;
+            padding:1.25rem;position:relative;overflow:hidden;transition:all .3s;
+        }
+        .school-subject-card:hover { border-color:rgba(255,255,255,0.12);transform:translateY(-2px); }
+        .school-subject-card .subject-bar {
+            position:absolute;top:0;left:0;right:0;height:3px;border-radius:3px 3px 0 0;
+        }
+        .school-tips-card {
+            background:linear-gradient(135deg,rgba(59,130,246,0.06),rgba(99,102,241,0.04));
+            border:1px solid rgba(59,130,246,0.12);border-radius:18px;padding:1.5rem;margin-top:-.5rem;
+        }
+        .school-tips-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+        .school-tip-item {
+            display:flex;align-items:flex-start;gap:8px;font-size:.85rem;color:rgba(255,255,255,0.5);line-height:1.5;
+        }
+        .school-tip-check { color:var(--school);font-weight:700;flex-shrink:0;margin-top:1px; }
+        .subject-grade-card { padding:1rem;text-align:center;border-left:4px solid var(--note-good); }
+        .subject-grade-card .ihk-metric-value { font-size:1.8rem; }
         /* Prognose View Styling (MODERNISIERT) */
         .prognose-grid {
             display: grid;
@@ -1824,59 +1908,20 @@
             }
 
             /* ===== SCHOOL / BERUFSSCHULE RESPONSIVE ===== */
-            .school-kpi-grid {
-                grid-template-columns: 1fr;
-                gap: 0.5rem;
-                padding: 0 !important;
-            }
-
-            .school-kpi-grid > div {
-                padding: 0.5rem !important;
-                min-width: 0;
-                overflow: hidden;
-            }
-
-            .school-progress-ring {
-                width: 80px;
-                height: 80px;
-                margin: 0 auto 0.5rem;
-            }
-
-            .school-progress-ring svg {
-                width: 80px !important;
-                height: 80px !important;
-                stroke-width: 5 !important;
-            }
-
-            .school-overall-note {
-                font-size: 1.5rem !important;
-                margin-top: -8px;
-            }
-
-            .school-progress-ring > div:last-child {
-                font-size: 0.6rem !important;
-                margin-top: 2px !important;
-            }
-
-            .subject-grade-card {
-                padding: 0.5rem;
-                border-left-width: 2px !important;
-                min-width: 0;
-                word-wrap: break-word;
-            }
-
-            .subject-grade-card .ihk-metric-value {
-                font-size: 1.1rem !important;
-                margin-top: 3px;
-            }
-
-            .subject-grade-card .ihk-metric-label {
-                font-size: 0.6rem !important;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                line-height: 1.2;
-            }
+            .school-hero { padding:1.25rem; }
+            .school-hero-icon { width:48px;height:48px;font-size:1.4rem;border-radius:14px; }
+            .school-hero-content h2 { font-size:1.2rem; }
+            .school-kpi-dashboard { grid-template-columns:1fr;gap:1rem; }
+            .school-ring-card { padding:1.5rem; }
+            .school-progress-ring { width:120px;height:120px; }
+            .school-overall-note { font-size:2.2rem; }
+            .school-kpi-cards { grid-template-columns:1fr; }
+            .school-kpi-card { padding:1rem; }
+            .school-kpi-icon { font-size:1.4rem;width:40px; }
+            .school-kpi-value { font-size:1.2rem; }
+            .school-section-header { flex-direction:column;align-items:flex-start; }
+            .school-add-btn { width:100%; justify-content:center; }
+            .school-tips-grid { grid-template-columns:1fr; }
 
             #schoolGradesInputGrid {
                 grid-template-columns: 1fr !important;
@@ -4541,50 +4586,139 @@
         </div>
         
         <div id="view-school" class="view-section">
-            <h2 style="margin-bottom:1.5rem; color:var(--school);">🏫 Berufsschule Audit & Noten</h2>
+            <!-- HERO HEADER -->
+            <div class="school-hero">
+                <div class="school-hero-bg"></div>
+                <div class="school-hero-content">
+                    <div class="school-hero-icon">📚</div>
+                    <div>
+                        <h2 style="margin:0;font-size:1.6rem;font-weight:800;color:#fff;">Berufsschule & Noten-Audit</h2>
+                        <p style="margin:.4rem 0 0;color:rgba(255,255,255,0.5);font-size:.9rem;">Dein akademischer Fortschritt auf einen Blick — Fächer, Noten, Trends & Insights.</p>
+                    </div>
+                </div>
+            </div>
 
-            <div class="card school-kpi-grid">
-                 <div style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <!-- KPI DASHBOARD -->
+            <div class="school-kpi-dashboard">
+                <!-- Big Ring Card -->
+                <div class="school-ring-card">
                     <div class="school-progress-ring">
-                         <svg width="140" height="140" viewBox="0 0 100 100" style="width: 100%; height: 100%; max-width: 140px; max-height: 140px;">
+                        <svg width="160" height="160" viewBox="0 0 100 100">
                             <circle class="ring-school-bg" cx="50" cy="50" r="44"></circle>
                             <circle id="ringSchoolAvg" class="ring-school-val" cx="50" cy="50" r="44" stroke-dasharray="276" stroke-dashoffset="276"></circle>
                         </svg>
-                         <div class="school-overall-note" id="schoolOverallAvg">---</div>
-                         <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; text-align: center;">
-                            AKTUELLER DURCHSCHNITT
+                        <div class="school-overall-note" id="schoolOverallAvg">---</div>
+                    </div>
+                    <div style="font-size:.75rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">Gesamtdurchschnitt</div>
+                    <div class="school-ring-badge" id="schoolGradeBadge">Keine Daten</div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="school-kpi-cards">
+                    <div class="school-kpi-card school-kpi-best" id="kpiBestNote">
+                        <div class="school-kpi-icon">🏆</div>
+                        <div class="school-kpi-info">
+                            <span class="school-kpi-label">BESTE NOTE</span>
+                            <span class="school-kpi-value" id="schoolBestNote">---</span>
+                            <span class="school-kpi-sub" id="schoolBestSubject"></span>
+                        </div>
+                    </div>
+                    <div class="school-kpi-card school-kpi-worst" id="kpiWorstNote">
+                        <div class="school-kpi-icon">⚠️</div>
+                        <div class="school-kpi-info">
+                            <span class="school-kpi-label">SCHWÄCHSTE NOTE</span>
+                            <span class="school-kpi-value" id="schoolWorstNote">---</span>
+                            <span class="school-kpi-sub" id="schoolWorstSubject"></span>
+                        </div>
+                    </div>
+                    <div class="school-kpi-card school-kpi-count">
+                        <div class="school-kpi-icon">📋</div>
+                        <div class="school-kpi-info">
+                            <span class="school-kpi-label">NOTEN ERFASST</span>
+                            <span class="school-kpi-value" id="schoolSubjectCount">0</span>
+                            <span class="school-kpi-sub" id="schoolSubjectTotal">in 0 Fächern</span>
+                        </div>
+                    </div>
+                    <div class="school-kpi-card school-kpi-trend">
+                        <div class="school-kpi-icon" id="schoolTrendIcon">➜</div>
+                        <div class="school-kpi-info">
+                            <span class="school-kpi-label">TREND</span>
+                            <span class="school-kpi-value" id="schoolTrendText" style="font-size:1rem;">Keine Daten</span>
                         </div>
                     </div>
                 </div>
-                
-                <div class="card subject-grade-card" id="kpiBestNote" style="border-left-color: var(--note-good);">
-                    <div class="ihk-metric-label">BESTE NOTE</div>
-                    <div class="ihk-metric-value" id="schoolBestNote" style="color:var(--note-good);">---</div>
-                    <div class="ihk-metric-label" id="schoolBestSubject"></div>
+            </div>
+
+            <!-- GRADE INPUT SECTION -->
+            <div class="card school-input-card">
+                <div class="school-section-header">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="school-section-icon">✏️</div>
+                        <div>
+                            <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:#fff;">Noten erfassen</h3>
+                            <p style="margin:.2rem 0 0;font-size:.8rem;color:rgba(255,255,255,0.4);">Fächer hinzufügen & Bewertungen eintragen</p>
+                        </div>
+                    </div>
+                    <button class="school-add-btn" onclick="addSchoolSubjectInput()">
+                        <span>+</span> Fach hinzufügen
+                    </button>
                 </div>
-                 <div class="card subject-grade-card" id="kpiWorstNote" style="border-left-color: var(--note-bad);">
-                    <div class="ihk-metric-label">SCHLECHTESTE NOTE</div>
-                    <div class="ihk-metric-value" id="schoolWorstNote" style="color:var(--note-bad);">---</div>
-                    <div class="ihk-metric-label" id="schoolWorstSubject"></div>
+                
+                <div id="schoolGradesInputGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:1.5rem;">
+                </div>
+                
+                <div style="display:flex; justify-content:flex-end; margin-top:1.5rem;">
+                    <button class="btn btn-primary school-save-btn" onclick="saveSchoolGrades()">
+                        <span style="font-size:1.1rem;">💾</span> Noten speichern & berechnen
+                    </button>
                 </div>
             </div>
 
-            <div class="card">
-                <h3 style="margin-bottom:1.5rem; color:var(--school);">Berufsschul-Notenverwaltung</h3>
-                <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem;">FÄCHER UND BEWERTUNGEN</h4>
-                
-                <div id="schoolGradesInputGrid" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:15px;">
-                    <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end; margin-top:1rem;">
-                        <button class="btn btn-primary" onclick="saveSchoolGrades()" style="width: 100%; max-width: 300px; background:var(--school);">Noten speichern & berechnen</button>
+            <!-- GRADES OVERVIEW -->
+            <div class="card school-overview-card">
+                <div class="school-section-header" style="margin-bottom:1.5rem;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="school-section-icon" style="background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(59,130,246,0.2));">📊</div>
+                        <div>
+                            <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:#fff;">Fächer-Übersicht</h3>
+                            <p style="margin:.2rem 0 0;font-size:.8rem;color:rgba(255,255,255,0.4);">Alle Fächer mit Durchschnittsnoten & Verlauf</p>
+                        </div>
                     </div>
                 </div>
-                
-            </div>
-             <div class="card">
-                <h4 style="margin-bottom:10px;">Noten-Historie (Alle eingetragenen Noten)</h4>
-                <div id="schoolGradesList" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px;">
+                <div id="schoolGradesList" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:14px;">
+                    <div class="school-empty-state">
+                        <div style="font-size:3rem;margin-bottom:1rem;opacity:0.3;">📚</div>
+                        <div style="font-weight:600;color:rgba(255,255,255,0.5);margin-bottom:.5rem;">Noch keine Noten vorhanden</div>
+                        <div style="font-size:.85rem;color:rgba(255,255,255,0.3);">Füge oben ein Fach hinzu und trage deine ersten Noten ein!</div>
                     </div>
-             </div>
+                </div>
+            </div>
+
+            <!-- TIPS SECTION -->
+            <div class="school-tips-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+                    <span style="font-size:1.3rem;">💡</span>
+                    <span style="font-weight:700;color:rgba(255,255,255,0.8);font-size:.9rem;">Pro-Tipps zur Notenverwaltung</span>
+                </div>
+                <div class="school-tips-grid">
+                    <div class="school-tip-item">
+                        <span class="school-tip-check">✓</span>
+                        <span>Erfasse alle Fächer mit fortlaufenden Noten für einen genauen Durchschnitt</span>
+                    </div>
+                    <div class="school-tip-item">
+                        <span class="school-tip-check">✓</span>
+                        <span>Der Gesamtdurchschnitt wird automatisch aus allen Noten berechnet</span>
+                    </div>
+                    <div class="school-tip-item">
+                        <span class="school-tip-check">✓</span>
+                        <span>Erkenne Stärken & Schwächen auf einen Blick über die Farbcodierung</span>
+                    </div>
+                    <div class="school-tip-item">
+                        <span class="school-tip-check">✓</span>
+                        <span>Behalte den Trend im Auge — verbessere dich Schritt für Schritt!</span>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div id="view-goals" class="view-section">
@@ -7605,33 +7739,45 @@
         
         for (const subject in data.settings.school.grades) {
              const grades = data.settings.school.grades[subject];
+             const validGrades = grades.filter(n => !isNaN(parseFloat(n)) && n >= 1 && n <= 6);
+             const avg = validGrades.length > 0 ? validGrades.reduce((a,b) => a + parseFloat(b), 0) / validGrades.length : 0;
+             const avgColor = avg > 0 ? getNoteColor(avg) : 'var(--school)';
              
              html += `
-                <div style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:12px;">
-                    <h5 style="color:var(--school); margin-bottom:10px;">${subject}</h5>
-                    <div style="display:flex; flex-direction:column; gap:8px;">
+                <div style="background:rgba(255,255,255,0.03);padding:1.25rem;border-radius:16px;border:1px solid rgba(255,255,255,0.06);position:relative;overflow:hidden;">
+                    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${avgColor};border-radius:3px 3px 0 0;"></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                        <div style="display:flex;align-items:center;gap:8px;flex:1;">
+                            <h5 style="color:#fff;margin:0;font-size:1rem;font-weight:700;">${subject}</h5>
+                            ${avg > 0 ? '<span style="font-size:.75rem;padding:3px 10px;border-radius:8px;background:' + avgColor + '20;color:' + avgColor + ';font-weight:600;">Ø ' + avg.toFixed(1) + '</span>' : ''}
+                        </div>
+                        <div style="display:flex;gap:6px;">
+                            <button onclick="renameSchoolSubject('${subject.replace(/'/g, "\\'")}')" style="background:rgba(59,130,246,0.2);color:var(--school);border:none;padding:4px 8px;border-radius:6px;font-size:.9rem;cursor:pointer;transition:all 0.2s;font-weight:600;" title="Fach umbenennen" class="school-action-btn">✏️</button>
+                            <button onclick="deleteSchoolSubject('${subject.replace(/'/g, "\\'")}')" style="background:rgba(239,68,68,0.2);color:#ef4444;border:none;padding:4px 8px;border-radius:6px;font-size:.9rem;cursor:pointer;transition:all 0.2s;font-weight:600;" title="Fach löschen" class="school-action-btn">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:8px;">
                         ${grades.map((grade, index) => `
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <label style="font-size:0.8rem; color:var(--text-muted);">Note ${index + 1}:</label>
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:10px;">
+                                <label style="font-size:.8rem;color:rgba(255,255,255,0.4);font-weight:500;">Note ${index + 1}</label>
                                 <input type="number" step="0.1" min="1.0" max="6.0" 
                                     class="glass-input school-grade-input" data-subject="${subject}" data-index="${index}" value="${grade}"
-                                    style="width:80px; padding:8px; text-align:center; font-family:var(--font-mono);">
+                                    style="width:80px;padding:8px;text-align:center;font-family:var(--font-mono);border-radius:10px;">
                             </div>
                         `).join('')}
                         
-                        <button class="btn btn-ghost" onclick="addSchoolGrade('${subject}')" style="background:transparent; border:1px solid var(--school); color:var(--school); padding:8px;">+ Note hinzufügen</button>
+                        <button class="btn btn-ghost" onclick="addSchoolGrade('${subject}')" style="background:transparent;border:1px dashed rgba(59,130,246,0.3);color:var(--school);padding:10px;border-radius:12px;font-size:.85rem;">+ Note hinzufügen</button>
                     </div>
                 </div>
              `;
         }
         
-        // Überschreibe den kompletten Content, inkl. des Save Buttons
-        inputGrid.innerHTML = html + `
-             <div style="grid-column: 1 / -1; display:flex; justify-content:flex-end; margin-top:1rem;">
-                <button class="btn btn-primary" onclick="saveSchoolGrades()" style="width: 300px; background:var(--school);">Noten speichern & berechnen</button>
-            </div>
-        `;
-        
+        inputGrid.innerHTML = html;
+        const buttons = document.querySelectorAll('.school-action-btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', function() { this.style.background = this.style.background.includes('#ef4444') ? 'rgba(239,68,68,0.3)' : 'rgba(59,130,246,0.3)'; });
+            btn.addEventListener('mouseleave', function() { this.style.background = this.style.background.includes('#ef4444') ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)'; });
+        });
         renderSchoolView();
     }
     
@@ -7639,6 +7785,49 @@
          // Fügt eine leere Note ('') hinzu, die beim Speichern ignoriert wird, aber ein Input-Feld erzeugt
          data.settings.school.grades[subject].push(''); 
          renderSchoolGradesInputs();
+    }
+
+    function addSchoolSubjectInput() {
+        const subject = prompt('Fachname eingeben (z.B. "Mathematik", "Englisch"):');
+        if (subject && subject.trim()) {
+            const cleanSubject = subject.trim();
+            if (!data.settings.school.grades[cleanSubject]) {
+                data.settings.school.grades[cleanSubject] = [''];
+                renderSchoolGradesInputs();
+                showCustomMessage('✅ Fach hinzugefügt', `Das Fach "${cleanSubject}" wurde hinzugefügt. Gib jetzt Noten ein!`, 'success');
+            } else {
+                showCustomMessage('⚠️ Fach existiert', `Das Fach "${cleanSubject}" existiert bereits!`, 'warning');
+            }
+        }
+    }
+
+    function deleteSchoolSubject(subject) {
+        if (confirm(`Möchtest du das Fach "${subject}" wirklich löschen? Alle Noten in diesem Fach werden gelöscht.`)) {
+            delete data.settings.school.grades[subject];
+            save();
+            renderSchoolGradesInputs();
+            showCustomMessage('✅ Fach gelöscht', `Das Fach "${subject}" wurde gelöscht.`, 'success');
+        }
+    }
+
+    function renameSchoolSubject(oldSubject) {
+        const newSubject = prompt(`Neuer Name für "${oldSubject}":`, oldSubject);
+        if (newSubject && newSubject.trim()) {
+            const cleanNewSubject = newSubject.trim();
+            if (cleanNewSubject === oldSubject) {
+                return; // Keine Änderung
+            }
+            if (data.settings.school.grades[cleanNewSubject]) {
+                showCustomMessage('⚠️ Fach existiert bereits', `Das Fach "${cleanNewSubject}" existiert bereits!`, 'warning');
+                return;
+            }
+            // Alte Grades zu neue Subject kopieren
+            data.settings.school.grades[cleanNewSubject] = data.settings.school.grades[oldSubject];
+            delete data.settings.school.grades[oldSubject];
+            save();
+            renderSchoolGradesInputs();
+            showCustomMessage('✅ Fach umbenannt', `"${oldSubject}" wurde in "${cleanNewSubject}" umbenannt.`, 'success');
+        }
     }
     
     function saveSchoolGrades() {
@@ -7699,15 +7888,33 @@
                 });
                 
                 if (grades.filter(n => !isNaN(parseFloat(n))).length > 0) {
-                    const subjectAvg = subjectSum / grades.filter(n => !isNaN(parseFloat(n))).length;
+                    const validCount = grades.filter(n => !isNaN(parseFloat(n))).length;
+                    const subjectAvg = subjectSum / validCount;
                     const avgColor = getNoteColor(subjectAvg);
+                    const pct = mapNoteToRadial(subjectAvg);
+                    const emoji = subjectAvg <= 1.5 ? '🌟' : subjectAvg <= 2.5 ? '✅' : subjectAvg <= 3.5 ? '📘' : subjectAvg <= 4.5 ? '⚠️' : '🔴';
 
-                    // Neue Fächerkarte
+                    // Premium Fächerkarte
                     gradeListHTML += `
-                        <div class="card subject-grade-card" style="border-left:5px solid ${avgColor}; margin-bottom:0;">
-                            <div class="ihk-metric-label">${subject} - Durchschnitt</div>
-                            <div class="ihk-metric-value" style="color:${avgColor};">${subjectAvg.toFixed(2)}</div>
-                            <div class="ihk-metric-label" style="font-size:0.7rem; margin-top:5px;">(${grades.filter(n => !isNaN(parseFloat(n))).length} Noten)</div>
+                        <div class="school-subject-card">
+                            <div class="subject-bar" style="background:linear-gradient(90deg,${avgColor},${avgColor}80);"></div>
+                            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                                <span style="font-size:1.4rem;">${emoji}</span>
+                                <div style="flex:1;min-width:0;">
+                                    <div style="font-weight:700;color:#fff;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${subject}</div>
+                                    <div style="font-size:.72rem;color:rgba(255,255,255,0.35);">${validCount} Note${validCount > 1 ? 'n' : ''} erfasst</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-size:1.6rem;font-weight:800;color:${avgColor};font-family:var(--font-mono);line-height:1;">${subjectAvg.toFixed(1)}</div>
+                                </div>
+                            </div>
+                            <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;">
+                                <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${avgColor},${avgColor}aa);border-radius:4px;transition:width 1s cubic-bezier(.4,0,.2,1);"></div>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.72rem;color:rgba(255,255,255,0.3);">
+                                <span>Einzelnoten: ${grades.filter(n => !isNaN(parseFloat(n)) && n >= 1 && n <= 6).map(n => parseFloat(n).toFixed(1)).join(', ')}</span>
+                                <span>${pct.toFixed(0)}%</span>
+                            </div>
                         </div>
                     `;
                 }
@@ -7746,38 +7953,55 @@
         const bestSubjectEl = document.getElementById('schoolBestSubject');
         const worstNoteEl = document.getElementById('schoolWorstNote');
         const worstSubjectEl = document.getElementById('schoolWorstSubject');
-        const kpiBestCard = document.getElementById('kpiBestNote');
-        const kpiWorstCard = document.getElementById('kpiWorstNote');
+        const subjectCountEl = document.getElementById('schoolSubjectCount');
+        const trendIconEl = document.getElementById('schoolTrendIcon');
+        const trendTextEl = document.getElementById('schoolTrendText');
+        const badgeEl = document.getElementById('schoolGradeBadge');
+        const subjectTotalEl = document.getElementById('schoolSubjectTotal');
 
         const overallAvg = kpis.overallAvg;
         const avgColor = getNoteColor(overallAvg);
-        const circumference = 276.46; // (2 * 44 * PI)
+        const circumference = 276.46;
         
-        // Radial Ring Logik: Umrechnung Note -> Prozent
         const progressPct = mapNoteToRadial(overallAvg);
         const offset = circumference - (progressPct / 100) * circumference;
         const ringEl = document.getElementById('ringSchoolAvg');
 
+        const subjectCount = Object.keys(data.settings.school.grades).length;
+        const totalNotes = Object.values(data.settings.school.grades).flat().filter(n => !isNaN(parseFloat(n)) && n >= 1 && n <= 6).length;
+
         if (overallAvg > 0) {
-            // Overall Ring
             avgEl.innerText = overallAvg.toFixed(2);
             avgEl.style.color = avgColor;
             ringEl.style.strokeDashoffset = offset;
             ringEl.style.stroke = avgColor;
-            ringEl.style.filter = `drop-shadow(0 0 10px ${avgColor})`;
+            ringEl.style.filter = `drop-shadow(0 0 12px ${avgColor})`;
 
+            // Badge
+            if (badgeEl) {
+                if (overallAvg <= 1.5) { badgeEl.textContent = '🌟 Exzellent'; badgeEl.style.background = 'rgba(16,185,129,0.15)'; badgeEl.style.color = '#10b981'; badgeEl.style.borderColor = 'rgba(16,185,129,0.3)'; }
+                else if (overallAvg <= 2.5) { badgeEl.textContent = '✅ Gut'; badgeEl.style.background = 'rgba(16,185,129,0.1)'; badgeEl.style.color = '#10b981'; badgeEl.style.borderColor = 'rgba(16,185,129,0.2)'; }
+                else if (overallAvg <= 3.5) { badgeEl.textContent = '📘 Befriedigend'; badgeEl.style.background = 'rgba(59,130,246,0.12)'; badgeEl.style.color = '#3b82f6'; badgeEl.style.borderColor = 'rgba(59,130,246,0.25)'; }
+                else if (overallAvg <= 4.5) { badgeEl.textContent = '⚠️ Ausreichend'; badgeEl.style.background = 'rgba(245,158,11,0.12)'; badgeEl.style.color = '#f59e0b'; badgeEl.style.borderColor = 'rgba(245,158,11,0.25)'; }
+                else { badgeEl.textContent = '🔴 Mangelhaft'; badgeEl.style.background = 'rgba(239,68,68,0.12)'; badgeEl.style.color = '#ef4444'; badgeEl.style.borderColor = 'rgba(239,68,68,0.25)'; }
+            }
 
-            // Beste Note
             bestNoteEl.innerText = kpis.bestNote > 0 ? kpis.bestNote.toFixed(1) : '---';
             bestNoteEl.style.color = getNoteColor(kpis.bestNote);
             bestSubjectEl.innerText = kpis.bestSubject;
-            kpiBestCard.style.borderLeftColor = getNoteColor(kpis.bestNote);
             
-            // Schlechteste Note
             worstNoteEl.innerText = kpis.worstNote > 0 ? kpis.worstNote.toFixed(1) : '---';
             worstNoteEl.style.color = getNoteColor(kpis.worstNote);
             worstSubjectEl.innerText = kpis.worstSubject;
-            kpiWorstCard.style.borderLeftColor = getNoteColor(kpis.worstNote);
+
+            if (subjectCountEl) subjectCountEl.innerText = totalNotes;
+            if (subjectTotalEl) subjectTotalEl.innerText = `in ${subjectCount} Fächern`;
+            
+            if (trendIconEl && trendTextEl) {
+                if (overallAvg < 2.0) { trendIconEl.innerText = '📈'; trendTextEl.innerText = 'Sehr gut!'; }
+                else if (overallAvg < 3.5) { trendIconEl.innerText = '➜'; trendTextEl.innerText = 'Im Plan'; }
+                else { trendIconEl.innerText = '📉'; trendTextEl.innerText = 'Verbesserung nötig'; }
+            }
 
         } else {
             avgEl.innerText = '---';
@@ -7790,11 +8014,20 @@
             worstNoteEl.innerText = '---';
             bestSubjectEl.innerText = '';
             worstSubjectEl.innerText = '';
-            kpiBestCard.style.borderLeftColor = 'var(--note-good)';
-            kpiWorstCard.style.borderLeftColor = 'var(--note-bad)';
+            if (badgeEl) { badgeEl.textContent = 'Keine Daten'; badgeEl.style.background = 'rgba(59,130,246,0.12)'; badgeEl.style.color = 'var(--school)'; badgeEl.style.borderColor = 'rgba(59,130,246,0.25)'; }
+            if (subjectCountEl) subjectCountEl.innerText = '0';
+            if (subjectTotalEl) subjectTotalEl.innerText = 'in 0 Fächern';
+            if (trendIconEl) trendIconEl.innerText = '➜';
+            if (trendTextEl) trendTextEl.innerText = 'Keine Daten';
         }
         
-        document.getElementById('schoolGradesList').innerHTML = kpis.gradeListHTML;
+        document.getElementById('schoolGradesList').innerHTML = kpis.gradeListHTML || `
+            <div class="school-empty-state">
+                <div style="font-size:3rem;margin-bottom:1rem;opacity:0.3;">📚</div>
+                <div style="font-weight:600;color:rgba(255,255,255,0.5);margin-bottom:.5rem;">Noch keine Noten vorhanden</div>
+                <div style="font-size:.85rem;color:rgba(255,255,255,0.3);">Füge oben ein Fach hinzu und trage deine ersten Noten ein!</div>
+            </div>
+        `;
     }
 
 
@@ -11364,7 +11597,7 @@ TIPPS:
 
     const DEFAULT_ENTRY_TYPES = [
         { id: 'work', label: '⏱️ Arbeit', emoji: '⏱️', color: '#a855f7', description: 'Normale Arbeitszeit' },
-        { id: 'school', label: '🎓 Schule', emoji: '🎓', color: '#3b82f6', description: 'Berufsschule / Unterricht' },
+        { id: 'school', label: '📚 Berufsschule', emoji: '📚', color: '#3b82f6', description: 'Berufsschule / Noten' },
         { id: 'vacation', label: '🏖️ Urlaub', emoji: '🏖️', color: '#10b981', description: 'Urlaubstage' },
         { id: 'sick', label: '🤒 Krankheit', emoji: '🤒', color: '#ef4444', description: 'Krankheitstage' },
         { id: 'holiday', label: '🎉 Feiertag', emoji: '🎉', color: '#f59e0b', description: 'Offizielle Feiertage' }
