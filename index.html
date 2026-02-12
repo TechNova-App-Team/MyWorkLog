@@ -1363,78 +1363,110 @@
         .audit-card.danger { border-left-color: var(--danger); }
         .audit-card.success { border-left-color: var(--audit-ok); }
         
-        /* --- IHK / KARRIERE STYLES --- */
-        .ihk-kpi-grid {
-            display: grid;
-            grid-template-columns: 1.5fr 1fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+        /* === IHK / KARRIERE - PREMIUM DESIGN === */
+        .ihk-hero {
+            position:relative;border-radius:20px;overflow:hidden;margin-bottom:2rem;padding:2rem 2.5rem;
         }
-        .ihk-progress-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2.5rem 1.5rem;
-            border-left: none; /* Nicht mehr nötig */
+        .ihk-hero-bg {
+            position:absolute;inset:0;
+            background:linear-gradient(135deg,rgba(255,99,71,0.15) 0%,rgba(255,140,0,0.1) 40%,rgba(255,165,0,0.08) 100%);
+            border:1px solid rgba(255,99,71,0.2);border-radius:20px;
         }
-        .ihk-progress-ring { 
-            position: relative; 
-            width: 140px; 
-            height: 140px; 
-            margin-bottom: 1rem;
+        .ihk-hero-bg::before {
+            content:'';position:absolute;inset:0;background:radial-gradient(circle at 100% 0%,rgba(255,215,0,0.15),transparent 50%);
+        }
+        .ihk-hero-bg::after {
+            content:'';position:absolute;inset:0;background:radial-gradient(circle at 0% 100%,rgba(255,99,71,0.1),transparent 50%);
+        }
+        .ihk-hero-content {
+            position:relative;z-index:1;display:flex;gap:1.5rem;align-items:flex-start;
+        }
+        .ihk-hero-icon {
+            font-size:2.5rem;opacity:0.9;
+        }
+        .ihk-hero-content h2 { margin:0;font-size:1.6rem;font-weight:800;color:#fff;letter-spacing:-0.5px; }
+        .ihk-hero-content p { margin:.4rem 0 0;color:rgba(255,255,255,0.5);font-size:.9rem;line-height:1.5; }
+
+        .ihk-kpi-dashboard {
+            display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1.5rem;margin-bottom:2rem;
+        }
+        .ihk-ring-card {
+            grid-column:1;padding:2rem;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,99,71,0.15);backdrop-filter:blur(8px);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:all 0.3s ease;
+        }
+        .ihk-ring-card:hover {
+            background:rgba(255,255,255,0.05);border-color:rgba(255,99,71,0.3);transform:translateY(-2px);
+        }
+        .ihk-progress-ring {
+            position:relative;width:160px;height:160px;margin-bottom:1rem;
         }
         .ihk-progress-ring circle {
-            stroke-width: 8;
-            transform: rotate(-90deg); transform-origin: 50% 50%;
-            filter: drop-shadow(0 0 10px var(--ihk));
+            stroke-width:8;transform:rotate(-90deg);transform-origin:50% 50%;filter:drop-shadow(0 2px 8px rgba(255,99,71,0.3));
         }
-        .ring-ihk-bg { stroke: rgba(255,255,255,0.06); }
-        .ring-ihk-val { stroke: var(--ihk); transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .ring-ihk-bg { stroke:rgba(255,255,255,0.06); }
+        .ring-ihk-val { stroke:var(--ihk);transition:stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1); }
         .ihk-progress-value {
-            font-size: 2.8rem;
-            font-weight: 800;
-            color: var(--ihk);
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            font-size:2.8rem;font-weight:800;color:var(--ihk);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+        }
+        .ihk-ring-label {
+            font-size:.75rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;
+        }
+        .ihk-ring-badge {
+            margin-top:0.8rem;padding:0.5rem 1rem;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:20px;font-size:.7rem;color:#63f;font-weight:600;white-space:nowrap;
+        }
+
+        .ihk-kpi-cards {
+            grid-column:2/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;
+        }
+        .ihk-kpi-card {
+            padding:1.5rem;border-radius:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(8px);display:flex;align-items:center;gap:1rem;transition:all 0.3s ease;cursor:pointer;
+        }
+        .ihk-kpi-card:hover {
+            background:rgba(255,255,255,0.06);border-color:rgba(255,99,71,0.3);transform:translateY(-2px);
+        }
+        .ihk-kpi-icon {
+            font-size:2rem;opacity:0.8;
+        }
+        .ihk-kpi-info {
+            display:flex;flex-direction:column;gap:0.3rem;
+        }
+        .ihk-kpi-label {
+            font-size:.65rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;font-weight:600;
+        }
+        .ihk-kpi-value {
+            font-size:1.4rem;font-weight:800;color:#fff;font-family:var(--font-mono);
+        }
+        .ihk-kpi-sub {
+            font-size:.7rem;color:rgba(255,255,255,0.45);margin-top:2px;
         }
 
         .ihk-secondary-kpi {
-            background: rgba(255,255,255,0.05);
-            padding: 1.25rem;
-            border-radius: 12px;
-            border-left: 4px solid var(--ihk);
-            text-align: left;
+            background:rgba(255,255,255,0.03);padding:1.5rem;border-radius:14px;border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(8px);text-align:left;transition:all 0.3s ease;
+        }
+        .ihk-secondary-kpi:hover {
+            background:rgba(255,255,255,0.06);border-color:rgba(255,99,71,0.3);transform:translateY(-2px);
         }
         .ihk-metric-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #fff;
-            margin-top: 5px;
-            font-family: var(--font-mono);
+            font-size:1.8rem;font-weight:700;color:#fff;margin-top:8px;font-family:var(--font-mono);
         }
         .ihk-metric-label {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
+            font-size:0.7rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;font-weight:600;
         }
+        
         .ihk-note-group {
-             display: grid;
-             grid-template-columns: 1fr 1fr;
-             gap: 1.5rem;
+            display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;
         }
         .ihk-note-card {
-             padding: 1.5rem;
-             text-align: center;
-             border-left: 4px solid var(--ihk);
+            padding:1.5rem;text-align:center;border-radius:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(8px);transition:all 0.3s ease;
+        }
+        .ihk-note-card:hover {
+            background:rgba(255,255,255,0.06);border-color:rgba(255,99,71,0.3);transform:translateY(-2px);
         }
         .ihk-note-value {
-            font-size: 2rem;
-            font-weight: 800;
-            font-family: var(--font-mono);
-            margin-top: 5px;
+            font-size:2rem;font-weight:800;font-family:var(--font-mono);margin-top:8px;color:#fff;
+        }
+        
+        .ihk-input-group {
+            display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;
         }
         
         /* --- SCHULE / ACADEMIC STYLES (NEU) --- */
@@ -1641,75 +1673,74 @@
             }
         }
         
+        /* === ALERTS PANEL - PREMIUM DESIGN === */
         .alert-item {
-            padding: 12px;
-            border-radius: 10px;
-            border-left: 4px solid var(--primary);
-            background: rgba(255, 255, 255, 0.03);
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            animation: slideInLeft 0.3s ease;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            padding:1rem 1.25rem;
+            border-radius:14px;
+            border:1px solid rgba(255,255,255,0.06);
+            background:rgba(255,255,255,0.03);
+            display:flex;
+            gap:1rem;
+            align-items:flex-start;
+            animation:slideInLeft 0.3s ease;
+            cursor:pointer;
+            transition:all 0.3s ease;
+            backdrop-filter:blur(8px);
+            position:relative;
+            overflow:hidden;
         }
-        
+        .alert-item::before {
+            content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px;background:var(--primary);transition:width 0.3s ease;
+        }
         .alert-item:hover {
-            background: rgba(255, 255, 255, 0.06);
-            transform: translateX(4px);
+            background:rgba(255,255,255,0.06);
+            border-color:rgba(255,255,255,0.12);
+            transform:translateX(4px);
         }
-        
-        .alert-item.warning {
-            border-left-color: #f59e0b;
-        }
-        
-        .alert-item.success {
-            border-left-color: #10b981;
-        }
-        
-        .alert-item.danger {
-            border-left-color: #ef4444;
-        }
-        
+        .alert-item:hover::before { width:4px; }
+        .alert-item.warning::before { background:#f59e0b; }
+        .alert-item.success::before { background:#10b981; }
+        .alert-item.danger::before { background:#ef4444; }
+
         .alert-item-icon {
-            font-size: 1.5rem;
-            flex-shrink: 0;
-            margin-top: 2px;
+            font-size:1.3rem;flex-shrink:0;margin-top:1px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:rgba(255,255,255,0.05);
         }
-        
-        .alert-item-content {
-            flex: 1;
-        }
-        
+        .alert-item-content { flex:1;min-width:0; }
         .alert-item-title {
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin: 0 0 4px 0;
+            font-weight:600;font-size:0.88rem;margin:0 0 4px 0;color:#fff;line-height:1.4;
         }
-        
         .alert-item-time {
-            font-size: 0.75rem;
-            color: var(--text-muted);
+            font-size:0.7rem;color:rgba(255,255,255,0.35);font-weight:500;
         }
-        
         .alert-item-dismiss {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 1.2rem;
-            padding: 0;
-            transition: color 0.2s ease;
+            background:none;border:none;color:rgba(255,255,255,0.25);cursor:pointer;font-size:1rem;padding:4px;transition:all 0.2s ease;border-radius:6px;line-height:1;
         }
-        
         .alert-item-dismiss:hover {
-            color: var(--text);
+            color:#fff;background:rgba(239,68,68,0.2);
         }
-        
+        .alert-filter-btn {
+            padding:6px 14px;border-radius:8px;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.3s ease;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.5);letter-spacing:0.3px;
+        }
+        .alert-filter-btn:hover {
+            background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);
+        }
         .alert-filter-btn.active {
-            background: var(--primary-dim) !important;
-            color: var(--primary) !important;
-            border-color: var(--primary) !important;
+            background:rgba(99,102,241,0.15) !important;color:#818cf8 !important;border-color:rgba(99,102,241,0.3) !important;
+        }
+        .alert-setting-row {
+            display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:10px;transition:all 0.2s ease;
+        }
+        .alert-setting-row:hover {
+            background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.1);
+        }
+        .alert-setting-row label {
+            display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;
+        }
+        .alert-setting-row input[type='checkbox'] {
+            width:16px;height:16px;cursor:pointer;accent-color:#818cf8;
+        }
+        .alert-setting-row span {
+            font-size:0.85rem;color:rgba(255,255,255,0.7);
         }
         
         /* --- ONBOARDING TOUR STYLES - SPOTLIGHT EDITION --- */
@@ -1940,43 +1971,18 @@
             }
 
             /* ===== IHK / KARRIERE RESPONSIVE ===== */
-            .ihk-kpi-grid {
-                grid-template-columns: 1fr;
-                gap: 0.75rem;
-                padding: 0 !important;
-                margin-bottom: 1rem !important;
-            }
-
-            .ihk-kpi-grid > div {
-                padding: 0.75rem !important;
-                min-width: 0;
-                overflow: hidden;
-            }
-
-            .ihk-progress-card {
-                padding: 1rem !important;
-            }
-
-            .ihk-progress-ring {
-                width: 90px;
-                height: 90px;
-                margin-bottom: 0.5rem;
-            }
-
-            .ihk-progress-ring svg {
-                width: 90px !important;
-                height: 90px !important;
-                stroke-width: 5 !important;
-            }
-
-            .ihk-progress-value {
-                font-size: 1.8rem !important;
-                margin-top: -10px;
-            }
-
-            .ihk-progress-card > div:last-child {
-                font-size: 0.7rem !important;
-            }
+            .ihk-hero { padding:1.25rem;margin-bottom:1.5rem; }
+            .ihk-hero-icon { font-size:1.8rem; }
+            .ihk-hero-content h2 { font-size:1.1rem;line-height:1.3; }
+            .ihk-hero-content p { font-size:0.75rem; }
+            .ihk-kpi-dashboard { grid-template-columns:1fr;gap:1rem;margin-bottom:1.5rem; }
+            .ihk-ring-card { padding:1.25rem; }
+            .ihk-progress-ring { width:120px;height:120px; }
+            .ihk-progress-value { font-size:2.2rem; }
+            .ihk-kpi-cards { grid-template-columns:1fr;gap:1rem; }
+            .ihk-kpi-card { padding:1rem;gap:0.75rem; }
+            .ihk-kpi-icon { font-size:1.4rem; }
+            .ihk-kpi-value { font-size:1.2rem; }
 
             .ihk-secondary-kpi {
                 padding: 0.75rem !important;
@@ -1999,20 +2005,16 @@
             }
 
             .ihk-note-card {
-                padding: 1rem !important;
+                padding:1.25rem;
             }
 
             .ihk-note-value {
-                font-size: 1.6rem !important;
+                font-size:1.4rem;
             }
 
             .ihk-input-group {
-                grid-template-columns: 1fr !important;
-                gap: 1rem !important;
-            }
-
-            .ihk-input-group > div {
-                flex: 1 !important;
+                grid-template-columns:1fr;
+                gap:1rem;
             }
 
             .glass-input,
@@ -2169,6 +2171,7 @@
                 from { transform: translateY(100%); opacity: 0; }
                 to { transform: translateY(0); opacity: 1; }
             }
+        }
             
             @media (max-width: 480px) {
                 .modal {
@@ -2312,7 +2315,6 @@
                 min-width: 40px;
                 min-height: 40px;
             }
-        }
         
         /* ===== LANDSCAPE MOBILE (< 768px & landscape) ===== */
         @media (max-height: 600px) and (min-width: 600px) {
@@ -4467,119 +4469,138 @@
         </div>
 
         <div id="view-ihk" class="view-section">
-<h2 style="margin-bottom:1.5rem; color:var(--ihk);">🎓 Karriere & Ausbildungs-Audit</h2>
-            
-            <div class="card ihk-kpi-grid">
-                <div class="ihk-progress-card">
+            <!-- HERO HEADER -->
+            <div class="ihk-hero">
+                <div class="ihk-hero-bg"></div>
+                <div class="ihk-hero-content">
+                    <div class="ihk-hero-icon">🎓</div>
+                    <div>
+                        <h2 style="margin:0;font-size:1.6rem;font-weight:800;color:#fff;">Karriere & Ausbildungs-Audit</h2>
+                        <p style="margin:.4rem 0 0;color:rgba(255,255,255,0.5);font-size:.9rem;">Dein Ausbildungsfortschritt, Prüfungstermine & Leistungsmetriken auf einen Blick.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI DASHBOARD -->
+            <div class="ihk-kpi-dashboard">
+                <!-- Big Ring Card -->
+                <div class="ihk-ring-card">
                     <div class="ihk-progress-ring">
-                        <svg width="140" height="140" viewBox="0 0 100 100" style="width: 100%; height: 100%; max-width: 140px; max-height: 140px;">
+                        <svg width="160" height="160" viewBox="0 0 100 100">
                             <circle class="ring-ihk-bg" cx="50" cy="50" r="44"></circle>
                             <circle id="ringIHKProgress" class="ring-ihk-val" cx="50" cy="50" r="44" stroke-dasharray="276" stroke-dashoffset="276"></circle>
                         </svg>
-                         <div class="ihk-progress-value" id="ihkProgress">0%</div>
-                         <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; text-align: center;">
-                            AUSBILDUNGSFORTSCHRITT
-                        </div>
+                        <div class="ihk-progress-value" id="ihkProgress">0%</div>
                     </div>
-                    <div style="font-size: 0.9rem; color: var(--text-muted); margin-top: 10px; text-align: center;">
-                        <span id="ihkStartEndDates">Start/Ende fehlen</span>
-                    </div>
+                    <div class="ihk-ring-label">Ausbildungsfortschritt</div>
+                    <div style="font-size:.8rem;color:rgba(255,255,255,0.45);margin-top:0.8rem;text-align:center;" id="ihkStartEndDates">Daten fehlen</div>
                 </div>
 
-                <div style="display:flex; flex-direction:column; justify-content:space-around; gap:15px;">
-                    <div class="ihk-secondary-kpi" style="border-left-color: var(--danger);">
-                        <div class="ihk-metric-label">TAGE BIS ABSCHLUSSPRÜFUNG</div>
-                        <div class="ihk-metric-value" id="ihkCountdownEndAudit">---</div>
-                        <div class="ihk-metric-label" style="font-size:0.7rem;">Ende: <span id="ihkExamDateEnd">Datum fehlt</span></div>
+                <!-- KPI Cards -->
+                <div class="ihk-kpi-cards">
+                    <div class="ihk-kpi-card">
+                        <div class="ihk-kpi-icon">⏰</div>
+                        <div class="ihk-kpi-info">
+                            <span class="ihk-kpi-label">Tage bis Abschluss</span>
+                            <span class="ihk-kpi-value" id="ihkCountdownEndAudit">---</span>
+                            <span class="ihk-kpi-sub" id="ihkExamDateEnd">Datum fehlt</span>
+                        </div>
                     </div>
-                    <div class="ihk-secondary-kpi" style="border-left-color: var(--school);">
-                        <div class="ihk-metric-label">TAGE BIS ZWISCHENPRÜFUNG</div>
-                        <div class="ihk-metric-value" id="ihkCountdownZwischen">---</div>
-                        <div class="ihk-metric-label" style="font-size:0.7rem;">Datum: <span id="ihkExamDateZwischen">Datum fehlt</span></div>
+                    <div class="ihk-kpi-card">
+                        <div class="ihk-kpi-icon">📝</div>
+                        <div class="ihk-kpi-info">
+                            <span class="ihk-kpi-label">Tage bis Zwischenprüfung</span>
+                            <span class="ihk-kpi-value" id="ihkCountdownZwischen">---</span>
+                            <span class="ihk-kpi-sub" id="ihkExamDateZwischen">Datum fehlt</span>
+                        </div>
+                    </div>
+                    <div class="ihk-kpi-card">
+                        <div class="ihk-kpi-icon">⏲️</div>
+                        <div class="ihk-kpi-info">
+                            <span class="ihk-kpi-label">Soll-Stunden</span>
+                            <span class="ihk-kpi-value" id="ihkTotalExpectedHours">0h</span>
+                            <span class="ihk-kpi-sub">Bis Ende</span>
+                        </div>
                     </div>
                 </div>
-                
-                <div style="display:flex; flex-direction:column; justify-content:space-around; gap:15px;">
-                     <div class="ihk-secondary-kpi" style="border-left-color: var(--ihk);">
-                        <div class="ihk-metric-label">SOLL-STUNDEN (GESAMT)</div>
-                        <div class="ihk-metric-value" id="ihkTotalExpectedHours">0h</div>
-                        <div class="ihk-metric-label" style="font-size:0.7rem;">Erwartete Soll-Zeit bis Ende</div>
+            </div>
+
+            <!-- FEHLZEIT SECTION -->
+            <div class="card" style="margin-bottom:1.5rem;padding:2rem;">
+                <h4 style="margin:0 0 1.5rem 0;font-size:0.85rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;font-weight:600;">Abwesenheitsanalyse</h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;">
+                    <div class="ihk-secondary-kpi">
+                        <div class="ihk-metric-label">Krankheitstage</div>
+                        <div class="ihk-metric-value" id="ihkSickDays">0</div>
+                        <div class="ihk-metric-label" style="margin-top:8px;">Kumuliert</div>
                     </div>
                     <div class="ihk-secondary-kpi">
-                        <div class="ihk-metric-label">FEHLZEIT WARNUNG (Max. 10%)</div>
-                        <div class="ihk-metric-value" id="ihkMissedTimeWarning" style="font-size:1.5rem;">Daten fehlen</div>
-                        <div class="ihk-metric-label" style="font-size:0.7rem;">Ø Fehltage in % der Laufzeit</div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card" style="margin-bottom: 2rem;">
-                <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem;">ABWESENHEITSANALYSE</h4>
-                <div class="kpi-grid" style="grid-template-columns: 1fr 1fr;">
-                    <div class="ihk-secondary-kpi" style="border-left-color: var(--danger);">
-                        <div class="ihk-metric-label">Kumulierte Krankheitstage</div>
-                        <div class="ihk-metric-value" id="ihkSickDays">0</div>
-                    </div>
-                     <div class="ihk-secondary-kpi" style="border-left-color: var(--school);">
-                        <div class="ihk-metric-label">Kumulierte Berufsschultage</div>
+                        <div class="ihk-metric-label">Berufsschultage</div>
                         <div class="ihk-metric-value" id="ihkSchoolDays">0</div>
+                        <div class="ihk-metric-label" style="margin-top:8px;">Mit Sollzeit</div>
+                    </div>
+                    <div class="ihk-secondary-kpi">
+                        <div class="ihk-metric-label">Fehlquote (Max. 10%)</div>
+                        <div class="ihk-metric-value" id="ihkMissedTimeWarning" style="font-size:1.6rem;">---</div>
+                        <div class="ihk-metric-label" style="margin-top:8px;">Ø Fehltage %</div>
                     </div>
                 </div>
             </div>
-            
-            <div class="card">
-                <h4 style="margin-bottom:10px;">Noten Übersicht</h4>
+
+            <!-- NOTEN ÜBERSICHT -->
+            <div class="card" style="padding:2rem;">
+                <h4 style="margin:0 0 1.5rem 0;font-size:0.85rem;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;font-weight:600;">Prüfungsnoten</h4>
                 <div class="ihk-note-group">
-                    <div class="ihk-note-card card" style="border-left: 5px solid var(--ihk);">
-                        <div class="ihk-metric-label">Zwischenprüfung Note:</div>
+                    <div class="ihk-note-card">
+                        <div class="ihk-metric-label">Zwischenprüfung</div>
                         <div class="ihk-note-value" id="ihkDisplayNoteZwischen">---</div>
                     </div>
-                    <div class="ihk-note-card card" style="border-left: 5px solid var(--ihk);">
-                        <div class="ihk-metric-label">Abschlussprüfung Note:</div>
+                    <div class="ihk-note-card">
+                        <div class="ihk-metric-label">Abschlussprüfung</div>
                         <div class="ihk-note-value" id="ihkDisplayNoteAbschluss">---</div>
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <h3 style="margin-bottom:1.5rem;">IHK Ausbildungsdaten pflegen</h3>
+            <div class="card" style="margin-top:2rem;padding:2rem;">
+                <h3 style="margin:0 0 1.5rem 0;font-size:1.1rem;font-weight:700;color:#fff;">⚙️ Ausbildungsdaten Konfiguration</h3>
                 
-                <div class="ihk-input-group">
-                    <div style="flex:1;">
-                        <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px;">Ausbildungs-Startdatum:</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+                    <div>
+                        <label style="font-size:0.7rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Ausbildungs-Startdatum</label>
                         <input type="date" id="confIHKStart" class="glass-input">
                     </div>
-                    <div style="flex:1;">
-                        <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px;">Erwartetes Ausbildungs-Ende (Abschlussprüfung):</label>
+                    <div>
+                        <label style="font-size:0.7rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Ausbildungs-Ende (Abschlussprüfung)</label>
                         <input type="date" id="confIHKEnd" class="glass-input">
                     </div>
                 </div>
                 
-                <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem;">PRÜFUNGSDATEN & NOTEN</h4>
-                <div class="ihk-input-group">
-                    <div style="flex:1;">
-                        <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px;">Datum der Zwischenprüfung:</label>
+                <h4 style="margin:1.5rem 0 1.5rem 0;font-size:0.75rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;font-weight:600;">Prüfungsdaten & Noten</h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+                    <div>
+                        <label style="font-size:0.7rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Datum Zwischenprüfung</label>
                         <input type="date" id="confIHKExamZwischen" class="glass-input">
                     </div>
-                    <div style="flex:1;">
-                        <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px;">Note Zwischenprüfung (1.0 - 6.0):</label>
-                         <input type="number" id="confIHKNoteZwischen" class="glass-input" step="0.1" placeholder="Note (z.B. 2.7)">
+                    <div>
+                        <label style="font-size:0.7rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Note Zwischenprüfung (1.0 - 6.0)</label>
+                        <input type="number" id="confIHKNoteZwischen" class="glass-input" step="0.1" placeholder="z.B. 2.7">
                     </div>
                 </div>
-                 <div class="ihk-input-group">
-                    <div style="flex:1;">
-                        <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px;">Datum der Abschlussprüfung:</label>
-                        <input type="date" id="confIHKExamAbschluss" class="glass-input" disabled style="background:#151518; color:#777;">
-                        <span style="font-size:0.7rem; color:var(--text-muted);">Wird vom Ausbildungs-Ende übernommen</span>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+                    <div>
+                        <label style="font-size:0.7rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Datum Abschlussprüfung</label>
+                        <input type="date" id="confIHKExamAbschluss" class="glass-input" disabled style="background:rgba(255,255,255,0.02);color:rgba(255,255,255,0.3);cursor:not-allowed;">
+                        <div style="font-size:0.65rem;color:rgba(255,255,255,0.3);margin-top:5px;">← Wird vom Ausbildungs-Ende übernommen</div>
                     </div>
-                    <div style="flex:1;">
-                        <label style="font-size:0.7rem; color:var(--text-muted); display:block; margin-bottom:5px;">Note Abschlussprüfung (1.0 - 6.0):</label>
-                         <input type="number" id="confIHKNoteAbschluss" class="glass-input" step="0.1" placeholder="Note (z.B. 1.3)">
+                    <div>
+                        <label style="font-size:0.7rem;color:rgba(255,255,255,0.5);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Note Abschlussprüfung (1.0 - 6.0)</label>
+                        <input type="number" id="confIHKNoteAbschluss" class="glass-input" step="0.1" placeholder="z.B. 1.3">
                     </div>
                 </div>
                 
-                <div style="display:flex; justify-content:flex-end; margin-top: 1.5rem;">
-                     <button class="btn btn-primary" onclick="saveIHKSettings()" style="width: 100%; max-width: 300px;">Daten speichern & berechnen</button>
+                <div style="display:flex;justify-content:flex-end;margin-top:2rem;">
+                    <button class="btn btn-primary" onclick="saveIHKSettings()" style="padding:12px 2rem;font-weight:600;border-radius:10px;background:linear-gradient(135deg,rgba(255,99,71,0.8),rgba(255,140,0,0.6));border:1px solid rgba(255,99,71,0.4);transition:all 0.3s ease;" onmouseover="this.style.background='linear-gradient(135deg,rgba(255,99,71,1),rgba(255,140,0,0.8))';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(255,99,71,0.8),rgba(255,140,0,0.6))';this.style.transform='translateY(0)'">💾 Daten speichern & Berechnen</button>
                 </div>
             </div>
             
@@ -6202,97 +6223,88 @@
         </div>
     </div>
 
-    <!-- ALERTS PANEL (NEU) -->
-    <div id="alertsPanel" style="position:fixed; right:0; top:0; width:450px; height:100vh; background:var(--bg-sidebar); backdrop-filter:blur(24px); border-left:1px solid var(--border); z-index:1000; transform:translateX(100%); transition:transform 0.3s ease; overflow-y:auto; display:flex; flex-direction:column;">
+    <!-- ALERTS PANEL (PREMIUM) -->
+    <div id="alertsPanel" style="position:fixed;right:0;top:0;width:420px;height:100vh;background:rgba(14,15,20,0.95);backdrop-filter:blur(40px) saturate(1.5);border-left:1px solid rgba(255,255,255,0.06);z-index:1000;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;display:flex;flex-direction:column;">
         <!-- Header -->
-        <div style="padding:1.5rem; border-bottom:1px solid var(--border); flex-shrink:0;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                <h3 style="margin:0; font-size:1.2rem;">🔔 Intelligente Alerts</h3>
-                <button onclick="toggleAlertsPanel()" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">×</button>
+        <div style="padding:1.75rem 1.5rem 1.25rem;flex-shrink:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+                <div style="display:flex;align-items:center;gap:0.75rem;">
+                    <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(168,85,247,0.15));display:flex;align-items:center;justify-content:center;font-size:1.1rem;">🔔</div>
+                    <div>
+                        <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;letter-spacing:-0.3px;">Alerts</h3>
+                        <p style="margin:0;font-size:0.7rem;color:rgba(255,255,255,0.35);font-weight:500;">Intelligente Benachrichtigungen</p>
+                    </div>
+                </div>
+                <button onclick="toggleAlertsPanel()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;" onmouseover="this.style.background='rgba(239,68,68,0.15)';this.style.color='#ef4444';this.style.borderColor='rgba(239,68,68,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='rgba(255,255,255,0.5)';this.style.borderColor='rgba(255,255,255,0.08)'">×</button>
             </div>
-            <div style="display:flex; gap:10px; font-size:0.8rem;">
-                <button onclick="filterAlerts('all')" class="alert-filter-btn" style="background:var(--primary-dim); color:var(--primary); padding:6px 12px; border:1px solid var(--primary); border-radius:6px; cursor:pointer;">
-                    Alle
-                </button>
-                <button onclick="filterAlerts('warning')" class="alert-filter-btn" style="background:transparent; color:var(--text-muted); padding:6px 12px; border:1px solid var(--border); border-radius:6px; cursor:pointer;">
-                    ⚠️ Warnungen
-                </button>
-                <button onclick="filterAlerts('success')" class="alert-filter-btn" style="background:transparent; color:var(--text-muted); padding:6px 12px; border:1px solid var(--border); border-radius:6px; cursor:pointer;">
-                    ✅ Erfolge
-                </button>
+            <div style="display:flex;gap:8px;">
+                <button onclick="filterAlerts('all')" class="alert-filter-btn active">Alle</button>
+                <button onclick="filterAlerts('warning')" class="alert-filter-btn">⚠️ Warnungen</button>
+                <button onclick="filterAlerts('success')" class="alert-filter-btn">✅ Erfolge</button>
             </div>
         </div>
+
+        <!-- Divider -->
+        <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06) 20%,rgba(255,255,255,0.06) 80%,transparent);margin:0 1.5rem;"></div>
         
         <!-- Alert Settings -->
-        <div style="padding:1.5rem; border-bottom:1px solid var(--border); flex-shrink:0;">
-            <h4 style="font-size:0.9rem; color:var(--text-muted); margin:0 0 1rem 0; text-transform:uppercase; letter-spacing:0.5px;">Alert-Einstellungen</h4>
+        <div style="padding:1.25rem 1.5rem;flex-shrink:0;">
+            <h4 style="font-size:0.7rem;color:rgba(255,255,255,0.35);margin:0 0 1rem 0;text-transform:uppercase;letter-spacing:1.2px;font-weight:600;">Einstellungen</h4>
             
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; padding:12px; background:rgba(255,255,255,0.02); border-radius:10px;">
-                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0;">
-                    <input type="checkbox" id="alertSaldoPositive" checked onchange="saveAlertSettings()" style="width:18px; height:18px; cursor:pointer;">
-                    <span style="font-size:0.9rem;">Saldo > +20h</span>
-                </label>
-            </div>
-            
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; padding:12px; background:rgba(255,255,255,0.02); border-radius:10px;">
-                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0;">
-                    <input type="checkbox" id="alertSaldoNegative" checked onchange="saveAlertSettings()" style="width:18px; height:18px; cursor:pointer;">
-                    <span style="font-size:0.9rem;">Saldo < -5h</span>
-                </label>
-            </div>
-            
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; padding:12px; background:rgba(255,255,255,0.02); border-radius:10px;">
-                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0;">
-                    <input type="checkbox" id="alertShiftMax" checked onchange="saveAlertSettings()" style="width:18px; height:18px; cursor:pointer;">
-                    <span style="font-size:0.9rem;">Schicht > 10h</span>
-                </label>
-            </div>
-            
-            <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:rgba(255,255,255,0.02); border-radius:10px;">
-                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0;">
-                    <input type="checkbox" id="alertVacationLow" checked onchange="saveAlertSettings()" style="width:18px; height:18px; cursor:pointer;">
-                    <span style="font-size:0.9rem;">Urlaub fast aufgebraucht</span>
-                </label>
-            </div>
-            
-            <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
-                <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:rgba(255,255,255,0.02); border-radius:10px;">
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0;">
-                        <input type="checkbox" id="alertExportReminder" onchange="saveAlertSettings()" style="width:18px; height:18px; cursor:pointer;">
-                        <span style="font-size:0.9rem;">Backup-Erinnerung (7 Tage)</span>
-                    </label>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+                <div class="alert-setting-row">
+                    <label><input type="checkbox" id="alertSaldoPositive" checked onchange="saveAlertSettings()"><span>Saldo > +20h</span></label>
                 </div>
+                <div class="alert-setting-row">
+                    <label><input type="checkbox" id="alertSaldoNegative" checked onchange="saveAlertSettings()"><span>Saldo < -5h</span></label>
+                </div>
+                <div class="alert-setting-row">
+                    <label><input type="checkbox" id="alertShiftMax" checked onchange="saveAlertSettings()"><span>Schicht > 10h</span></label>
+                </div>
+                <div class="alert-setting-row">
+                    <label><input type="checkbox" id="alertVacationLow" checked onchange="saveAlertSettings()"><span>Urlaub fast aufgebraucht</span></label>
+                </div>
+                <div class="alert-setting-row">
+                    <label><input type="checkbox" id="alertExportReminder" onchange="saveAlertSettings()"><span>Backup-Erinnerung (7 Tage)</span></label>
+                </div>
+            </div>
 
-                <div id="alertExportSection" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:rgba(255,255,255,0.01); border-radius:10px;">
-                    <div style="display:flex; flex-direction:column; gap:4px;">
-                        <div style="font-size:0.85rem; color:var(--text-muted);">Letztes Backup</div>
-                        <div id="lastExportInfo" style="font-weight:600;">—</div>
+            <!-- Backup Section -->
+            <div id="alertExportSection" style="margin-top:1rem;padding:1rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+                    <div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Letztes Backup</div>
+                        <div id="lastExportInfo" style="font-weight:600;font-size:0.9rem;color:#fff;margin-top:4px;">—</div>
                     </div>
-                    <div style="display:flex; gap:8px;">
-                        <button class="btn" onclick="exportData('json'); setTimeout(updateAlertExportInfo, 800);" style="background:rgba(255,255,255,0.08); border:1px solid var(--border); padding:8px 14px; font-size:0.9rem;">💾 Standard</button>
-                        <button class="btn" onclick="document.getElementById('encryptedBackupModal').classList.add('active');" style="background:linear-gradient(135deg, #10b981, #06b6d4); color:#fff; padding:8px 14px; font-size:0.9rem; border:none;">🔒 Verschlüsselt</button>
-                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <button class="btn" onclick="exportData('json'); setTimeout(updateAlertExportInfo, 800);" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);padding:10px;font-size:0.8rem;border-radius:8px;color:rgba(255,255,255,0.7);font-weight:600;transition:all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.borderColor='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.08)'">💾 Standard</button>
+                    <button class="btn" onclick="document.getElementById('encryptedBackupModal').classList.add('active');" style="background:linear-gradient(135deg,rgba(16,185,129,0.25),rgba(6,182,212,0.2));color:#10b981;padding:10px;font-size:0.8rem;border:1px solid rgba(16,185,129,0.25);border-radius:8px;font-weight:600;transition:all 0.2s ease;" onmouseover="this.style.background='linear-gradient(135deg,rgba(16,185,129,0.35),rgba(6,182,212,0.3))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(16,185,129,0.25),rgba(6,182,212,0.2))'">🔒 Verschlüsselt</button>
                 </div>
             </div>
         </div>
+
+        <!-- Divider -->
+        <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06) 20%,rgba(255,255,255,0.06) 80%,transparent);margin:0 1.5rem;"></div>
         
         <!-- Alerts List -->
-        <div style="flex:1; overflow-y:auto; padding:1.5rem;">
-            <div id="alertsList" style="display:flex; flex-direction:column; gap:12px;">
+        <div style="flex:1;overflow-y:auto;padding:1.25rem 1.5rem;">
+            <h4 style="font-size:0.7rem;color:rgba(255,255,255,0.35);margin:0 0 1rem 0;text-transform:uppercase;letter-spacing:1.2px;font-weight:600;">Aktive Alerts</h4>
+            <div id="alertsList" style="display:flex;flex-direction:column;gap:10px;">
                 <!-- Werden dynamisch gefüllt -->
             </div>
         </div>
         
         <!-- Clear Button -->
-        <div style="padding:1.5rem; border-top:1px solid var(--border); flex-shrink:0;">
-            <button class="btn btn-primary" onclick="clearAllAlerts()" style="width:100%; background:rgba(239,68,68,0.2); color:var(--danger); border:1px solid var(--danger);">
+        <div style="padding:1rem 1.5rem;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;">
+            <button class="btn" onclick="clearAllAlerts()" style="width:100%;padding:10px;background:rgba(239,68,68,0.08);color:rgba(239,68,68,0.7);border:1px solid rgba(239,68,68,0.15);border-radius:10px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s ease;" onmouseover="this.style.background='rgba(239,68,68,0.15)';this.style.color='#ef4444';this.style.borderColor='rgba(239,68,68,0.3)'" onmouseout="this.style.background='rgba(239,68,68,0.08)';this.style.color='rgba(239,68,68,0.7)';this.style.borderColor='rgba(239,68,68,0.15)'">
                 🗑️ Alle Alerts löschen
             </button>
         </div>
     </div>
     
     <!-- ALERTS OVERLAY -->
-    <div id="alertsOverlay" onclick="toggleAlertsPanel()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.3); z-index:999; transition:opacity 0.3s ease;"></div>
+    <div id="alertsOverlay" onclick="toggleAlertsPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);z-index:999;transition:opacity 0.3s ease;"></div>
 
     <!-- ENCRYPTED BACKUP EXPORT MODAL (KRASS SICHER!) -->
     <div class="modal" id="encryptedBackupModal">
