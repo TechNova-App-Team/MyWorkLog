@@ -17,11 +17,14 @@ class SupabaseCloudSync {
         // Supabase Client initialisieren
         this.initializeClient();
         
+        // WICHTIG: Auth-Listener ZUERST, damit OAuth-Callbacks erkannt werden
+        this.setupAuthListener();
+        
+        // OAuth Callback aus URL verarbeiten (Hash-Fragment oder PKCE Code)
+        this.handleOAuthCallback();
+        
         // Session bei Seitenladung wiederherstellen
         this.checkExistingSession();
-        
-        // Event Listener für Authentifizierung
-        this.setupAuthListener();
     }
 
     /**
@@ -56,6 +59,45 @@ class SupabaseCloudSync {
                 this.onAuthStateChanged(false, null);
             }
         });
+    }
+
+    /**
+     * Verarbeitet OAuth-Callback aus der URL (Hash-Fragment oder PKCE Code)
+     * @private
+     */
+    async handleOAuthCallback() {
+        if (!this.client) return;
+
+        const hash = window.location.hash;
+        const params = new URLSearchParams(window.location.search);
+
+        // Check für Hash-Fragment (#access_token=...) oder PKCE (?code=...)
+        const hasHashToken = hash && hash.includes('access_token');
+        const hasPKCECode = params.has('code');
+
+        if (hasHashToken || hasPKCECode) {
+            try {
+                // Supabase v2 verarbeitet dies automatisch via getSession()
+                const { data: { session }, error } = await this.client.auth.getSession();
+                
+                if (error) {
+                    console.error('[Auth] OAuth Callback Fehler:', error);
+                    return;
+                }
+
+                if (session) {
+                    this.session = session;
+                    this.user = session.user;
+                    this.onAuthStateChanged(true, this.user);
+                    
+                    // URL aufräumen — Token/Code aus der Adressleiste entfernen
+                    const cleanUrl = window.location.origin + window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }
+            } catch (err) {
+                console.error('[Auth] OAuth Callback Verarbeitung fehlgeschlagen:', err);
+            }
+        }
     }
 
     /**
@@ -121,6 +163,90 @@ class SupabaseCloudSync {
             return { success: true, data };
         } catch (error) {
             console.error('[Auth] signInWithOtp Fehler:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Login mit Google OAuth
+     * @returns {Promise<Object>} Resultat der signInWithOAuth Operation
+     */
+    async loginWithGoogle() {
+        if (!this.client) {
+            throw new Error('Supabase Client nicht verfügbar');
+        }
+
+        try {
+            const { data, error } = await this.client.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + window.location.pathname
+                }
+            });
+
+            if (error) {
+                throw error;
+            }
+
+            return { success: true, data };
+        } catch (error) {
+            console.error('[Auth] Google OAuth Fehler:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Login mit GitHub OAuth
+     * @returns {Promise<Object>} Resultat der signInWithOAuth Operation
+     */
+    async loginWithGitHub() {
+        if (!this.client) {
+            throw new Error('Supabase Client nicht verfügbar');
+        }
+
+        try {
+            const { data, error } = await this.client.auth.signInWithOAuth({
+                provider: 'github',
+                options: {
+                    redirectTo: window.location.origin + window.location.pathname
+                }
+            });
+
+            if (error) {
+                throw error;
+            }
+
+            return { success: true, data };
+        } catch (error) {
+            console.error('[Auth] GitHub OAuth Fehler:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Login mit Discord OAuth
+     * @returns {Promise<Object>} Resultat der signInWithOAuth Operation
+     */
+    async loginWithDiscord() {
+        if (!this.client) {
+            throw new Error('Supabase Client nicht verfügbar');
+        }
+
+        try {
+            const { data, error } = await this.client.auth.signInWithOAuth({
+                provider: 'discord',
+                options: {
+                    redirectTo: window.location.origin + window.location.pathname
+                }
+            });
+
+            if (error) {
+                throw error;
+            }
+
+            return { success: true, data };
+        } catch (error) {
+            console.error('[Auth] Discord OAuth Fehler:', error);
             throw error;
         }
     }

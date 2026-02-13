@@ -71,6 +71,24 @@ class SupabaseCloudSyncUI {
         if (overlay) {
             overlay.addEventListener('click', () => this.closeLoginModal());
         }
+
+        // Discord OAuth Button
+        const discordBtn = document.getElementById('cloud-login-discord');
+        if (discordBtn) {
+            discordBtn.addEventListener('click', () => this.handleDiscordLogin());
+        }
+
+        // GitHub OAuth Button
+        const githubBtn = document.getElementById('cloud-login-github');
+        if (githubBtn) {
+            githubBtn.addEventListener('click', () => this.handleGitHubLogin());
+        }
+
+        // Google OAuth Button
+        const googleBtn = document.getElementById('cloud-login-google');
+        if (googleBtn) {
+            googleBtn.addEventListener('click', () => this.handleGoogleLogin());
+        }
         
         // Sync Buttons sind jetzt in Settings Modal - keine Event Listener nötig hier
         // Sie werden über onclick Handler in index.html aufgerufen
@@ -189,6 +207,63 @@ class SupabaseCloudSyncUI {
             submitBtn.disabled = false;
             submitText.style.display = 'inline';
             loadingSpan.style.display = 'none';
+        }
+    }
+
+    /**
+     * Handler für Discord OAuth Login
+     */
+    async handleDiscordLogin() {
+        const discordBtn = document.getElementById('cloud-login-discord');
+        const originalText = discordBtn.innerHTML;
+
+        try {
+            discordBtn.disabled = true;
+            discordBtn.innerHTML = '⏳ Discord...';
+
+            await this.sync.loginWithDiscord();
+        } catch (error) {
+            this.showMessage(`❌ Discord Login fehlgeschlagen: ${error.message}`, 'error');
+            discordBtn.disabled = false;
+            discordBtn.innerHTML = originalText;
+        }
+    }
+
+    /**
+     * Handler für GitHub OAuth Login
+     */
+    async handleGitHubLogin() {
+        const githubBtn = document.getElementById('cloud-login-github');
+        const originalText = githubBtn.innerHTML;
+
+        try {
+            githubBtn.disabled = true;
+            githubBtn.innerHTML = '⏳ GitHub...';
+
+            await this.sync.loginWithGitHub();
+        } catch (error) {
+            this.showMessage(`❌ GitHub Login fehlgeschlagen: ${error.message}`, 'error');
+            githubBtn.disabled = false;
+            githubBtn.innerHTML = originalText;
+        }
+    }
+
+    /**
+     * Handler für Google OAuth Login
+     */
+    async handleGoogleLogin() {
+        const googleBtn = document.getElementById('cloud-login-google');
+        const originalText = googleBtn.innerHTML;
+
+        try {
+            googleBtn.disabled = true;
+            googleBtn.innerHTML = '⏳ Google...';
+
+            await this.sync.loginWithGoogle();
+        } catch (error) {
+            this.showMessage(`❌ Google Login fehlgeschlagen: ${error.message}`, 'error');
+            googleBtn.disabled = false;
+            googleBtn.innerHTML = originalText;
         }
     }
 
