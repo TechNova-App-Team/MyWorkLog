@@ -6328,7 +6328,7 @@
                     </div>
                     
                     <div class="settings-hint" style="margin-top:1.25rem;">
-                        ℹ️ Automatische Synchronisation bei Anmeldung. Manuell jederzeit möglich.
+                        ℹ️ Daten werden <strong>nicht</strong> automatisch synchronisiert. Nutze die Buttons zum manuellen Hoch- oder Runterladen.
                     </div>
 
                     <!-- ═══════════ API STATUS MONITOR ═══════════ -->
@@ -19869,7 +19869,7 @@ TIPPS:
                 downloadBtn.style.opacity = '1';
             }
             if (statusDiv) {
-                statusDiv.innerHTML = `<p>🟢 <strong>Angemeldet als:</strong> ${user.email}</p><p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">Deine Daten werden automatisch synchronisiert.</p>`;
+                statusDiv.innerHTML = `<p>🟢 <strong>Angemeldet als:</strong> ${user.email}</p><p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">Nutze die Buttons um manuell hoch- oder runterzuladen.</p>`;
             }
             console.log('[Cloud Sync] User angemeldet:', user.email);
         } else {
@@ -19969,27 +19969,8 @@ TIPPS:
     }
     
     function setupAutoSync() {
-        // Auto-Sync beim Speichern von Daten
-        const originalSave = window.save || (() => {});
-        
-        window.save = function() {
-            // Rufe Original-Save auf
-            if (typeof originalSave === 'function') {
-                originalSave.apply(this, arguments);
-            }
-            
-            // Auto-Upload wenn User angemeldet ist
-            if (window.cloudSync && window.cloudSync.isLoggedIn()) {
-                // Debounce: Nur alle 30 Sekunden uploaden
-                if (!window.lastCloudSync || Date.now() - window.lastCloudSync > 30000) {
-                    window.lastCloudSync = Date.now();
-                    window.cloudSync.uploadToCloud().catch(err => {
-                        console.warn('[Cloud Sync] Auto-Upload fehlgeschlagen:', err);
-                    });
-                    console.log('[Cloud Sync] Auto-Upload im Hintergrund');
-                }
-            }
-        };
+        // Auto-Sync DEAKTIVIERT — User steuert manuell über Upload/Download Buttons
+        console.log('[Cloud Sync] Manueller Modus — kein Auto-Sync');
     }
 
     function updateAchievements() {

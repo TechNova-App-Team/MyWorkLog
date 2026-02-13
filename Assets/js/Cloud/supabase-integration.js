@@ -84,10 +84,8 @@ class SupabaseCloudSync {
                 // Trigger UI Update
                 this.onAuthStateChanged(true, this.user);
                 
-                // Automatisch vom Server synchronisieren (nicht-blocking)
-                this.downloadFromCloud().catch(err => {
-                    console.warn('[Cloud] Auto-Download beim Login fehlgeschlagen:', err);
-                });
+                // Kein Auto-Download — User entscheidet manuell über Hoch-/Runterladen
+                console.log('[Cloud] Session aktiv — manueller Sync über Buttons möglich');
             }
         } catch (error) {
             console.error('[Session] Fehler:', error);
