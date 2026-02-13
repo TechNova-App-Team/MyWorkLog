@@ -1203,6 +1203,116 @@
             margin: 1.25rem 0;
             border: none;
         }
+        
+        /* ═══════ API STATUS MONITOR ═══════ */
+        @keyframes pulse-dot {
+            0%, 100% { opacity:1; }
+            50% { opacity:0.4; }
+        }
+        .api-range-tab {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.4);
+            font-size: 0.68rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 0;
+        }
+        .api-range-tab:first-child { border-radius: 6px 0 0 6px; }
+        .api-range-tab:last-child { border-radius: 0 6px 6px 0; }
+        .api-range-tab:not(:first-child) { border-left: none; }
+        .api-range-tab.active {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border-color: rgba(255,255,255,0.12);
+        }
+        .api-range-tab:hover:not(.active) {
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.6);
+        }
+        .api-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            line-height: 1;
+        }
+        .api-status-pill.s2xx { background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.2); }
+        .api-status-pill.s3xx { background:rgba(6,182,212,0.12); color:#06b6d4; border:1px solid rgba(6,182,212,0.2); }
+        .api-status-pill.s4xx { background:rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.2); }
+        .api-status-pill.s5xx { background:rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.2); }
+        .api-endpoint-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 10px;
+            background: rgba(255,255,255,0.015);
+            border: 1px solid rgba(255,255,255,0.03);
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+        .api-endpoint-row:hover { background: rgba(255,255,255,0.03); }
+        .api-method-badge {
+            font-size: 0.6rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            min-width: 38px;
+            text-align: center;
+        }
+        .api-method-badge.get  { background:rgba(16,185,129,0.15); color:#10b981; }
+        .api-method-badge.post { background:rgba(99,102,241,0.15); color:#818cf8; }
+        .api-method-badge.head { background:rgba(148,163,184,0.12); color:#94a3b8; }
+        .api-method-badge.put  { background:rgba(245,158,11,0.15); color:#f59e0b; }
+        .api-method-badge.del  { background:rgba(239,68,68,0.15); color:#ef4444; }
+        .api-method-badge.opt  { background:rgba(168,85,247,0.12); color:#a855f7; }
+        .api-log-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            transition: background 0.15s;
+        }
+        .api-log-row:hover { background:rgba(255,255,255,0.03); }
+        .api-log-status {
+            font-family: var(--font-mono);
+            font-weight: 800;
+            font-size: 0.68rem;
+            min-width: 28px;
+            text-align: center;
+        }
+        .api-log-status.c2 { color:#10b981; }
+        .api-log-status.c3 { color:#06b6d4; }
+        .api-log-status.c4 { color:#f59e0b; }
+        .api-log-status.c5 { color:#ef4444; }
+        .api-log-path {
+            color: rgba(255,255,255,0.5);
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .api-log-time {
+            color: rgba(255,255,255,0.2);
+            font-size: 0.62rem;
+            white-space: nowrap;
+            font-family: var(--font-mono);
+        }
+        /* ═══════ END API STATUS MONITOR ═══════ */
+        
         .settings-btn {
             padding: 10px 20px;
             border-radius: 10px;
@@ -6220,6 +6330,82 @@
                     <div class="settings-hint" style="margin-top:1.25rem;">
                         ℹ️ Automatische Synchronisation bei Anmeldung. Manuell jederzeit möglich.
                     </div>
+
+                    <!-- ═══════════ API STATUS MONITOR ═══════════ -->
+                    <div class="settings-section" style="margin-top:1.5rem; padding:0; overflow:hidden;">
+                        
+                        <!-- Header -->
+                        <div style="padding:1.25rem 1.25rem 0.75rem; display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div id="apiStatusDot" style="width:10px; height:10px; border-radius:50%; background:#10b981; box-shadow:0 0 8px rgba(16,185,129,0.5); animation:pulse-dot 2s infinite;"></div>
+                                <div>
+                                    <div style="font-size:0.9rem; font-weight:700; color:#fff;">API Status</div>
+                                    <div id="apiStatusText" style="font-size:0.72rem; color:rgba(255,255,255,0.4); margin-top:1px;">Alle Systeme operational</div>
+                                </div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <button onclick="refreshApiStatus()" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:rgba(255,255,255,0.5); padding:5px 10px; border-radius:8px; font-size:0.7rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.color='rgba(255,255,255,0.5)'">↻ Refresh</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Time Range Tabs -->
+                        <div style="display:flex; gap:0; padding:0 1.25rem; margin-bottom:0.75rem;">
+                            <button class="api-range-tab active" data-range="1h" onclick="setApiRange('1h',this)">1h</button>
+                            <button class="api-range-tab" data-range="24h" onclick="setApiRange('24h',this)">24h</button>
+                            <button class="api-range-tab" data-range="7d" onclick="setApiRange('7d',this)">7 Tage</button>
+                            <button class="api-range-tab" data-range="30d" onclick="setApiRange('30d',this)">30 Tage</button>
+                        </div>
+
+                        <!-- Uptime Bar (like BetterUptime/Instatus) -->
+                        <div style="padding:0 1.25rem 0.75rem;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                                <span style="font-size:0.68rem; color:rgba(255,255,255,0.3);">Uptime</span>
+                                <span id="apiUptimePercent" style="font-size:0.68rem; color:#10b981; font-weight:700; font-family:var(--font-mono);">100%</span>
+                            </div>
+                            <div id="apiUptimeBar" style="display:flex; gap:1.5px; height:28px; border-radius:6px; overflow:hidden;">
+                                <!-- Uptime segments rendered by JS -->
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                                <span id="apiRangeStart" style="font-size:0.62rem; color:rgba(255,255,255,0.2);">—</span>
+                                <span id="apiRangeEnd" style="font-size:0.62rem; color:rgba(255,255,255,0.2);">Jetzt</span>
+                            </div>
+                        </div>
+
+                        <!-- Status Code Breakdown -->
+                        <div style="padding:0 1.25rem 1rem;">
+                            <div style="font-size:0.68rem; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; font-weight:600;">Status Codes</div>
+                            <div id="apiStatusCodes" style="display:flex; flex-wrap:wrap; gap:6px;">
+                                <!-- Status code pills rendered by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Endpoint Health -->
+                        <div style="padding:0 1.25rem 1rem;">
+                            <div style="font-size:0.68rem; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; font-weight:600;">Endpoints</div>
+                            <div id="apiEndpointList" style="display:flex; flex-direction:column; gap:4px;">
+                                <!-- Endpoint rows rendered by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Recent Requests Log -->
+                        <div style="padding:0 1.25rem 1rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <div style="font-size:0.68rem; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Letzte Requests</div>
+                                <span id="apiTotalRequests" style="font-size:0.65rem; color:rgba(255,255,255,0.25); font-family:var(--font-mono);">0 total</span>
+                            </div>
+                            <div id="apiRequestLog" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:2px;">
+                                <!-- Request log rows rendered by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div style="padding:0.75rem 1.25rem; background:rgba(255,255,255,0.015); border-top:1px solid rgba(255,255,255,0.04); display:flex; justify-content:space-between; align-items:center;">
+                            <span id="apiLastChecked" style="font-size:0.65rem; color:rgba(255,255,255,0.2);">Zuletzt geprüft: —</span>
+                            <span style="font-size:0.62rem; color:rgba(255,255,255,0.15);">Supabase Edge Logs</span>
+                        </div>
+                    </div>
+                    <!-- ═══════════ END API STATUS MONITOR ═══════════ -->
+
                 </div>
                 
             </div>
@@ -19319,6 +19505,323 @@ TIPPS:
         }, 5000);
     });
     
+    // ============================================
+    // API STATUS MONITOR (Edge Logs Style)
+    // ============================================
+    
+    const apiStatusMonitor = {
+        logs: JSON.parse(localStorage.getItem('api_status_logs') || '[]'),
+        currentRange: '24h',
+        
+        // Record an API call result
+        record(method, path, status, timestamp) {
+            const entry = {
+                method: (method || 'GET').toUpperCase(),
+                path: path || '/',
+                status: parseInt(status) || 0,
+                ts: timestamp || Date.now()
+            };
+            this.logs.push(entry);
+            // Keep max 2000 entries (roughly 30 days of moderate usage)
+            if (this.logs.length > 2000) this.logs = this.logs.slice(-2000);
+            this.save();
+        },
+        
+        save() {
+            try { localStorage.setItem('api_status_logs', JSON.stringify(this.logs)); } catch(e) {}
+        },
+        
+        getFilteredLogs(range) {
+            const now = Date.now();
+            const ranges = {
+                '1h': 3600000,
+                '24h': 86400000,
+                '7d': 604800000,
+                '30d': 2592000000
+            };
+            const cutoff = now - (ranges[range] || ranges['24h']);
+            return this.logs.filter(l => l.ts >= cutoff).sort((a, b) => b.ts - a.ts);
+        },
+        
+        render() {
+            const range = this.currentRange;
+            const logs = this.getFilteredLogs(range);
+            const now = Date.now();
+            
+            // --- Uptime bar (segments representing time buckets) ---
+            const barEl = document.getElementById('apiUptimeBar');
+            const totalSegments = 45;
+            const ranges = { '1h': 3600000, '24h': 86400000, '7d': 604800000, '30d': 2592000000 };
+            const totalMs = ranges[range] || ranges['24h'];
+            const segmentMs = totalMs / totalSegments;
+            
+            let uptimeSegments = '';
+            let totalOk = 0, totalErr = 0;
+            
+            for (let i = 0; i < totalSegments; i++) {
+                const segStart = now - totalMs + (i * segmentMs);
+                const segEnd = segStart + segmentMs;
+                const segLogs = this.logs.filter(l => l.ts >= segStart && l.ts < segEnd);
+                
+                let color = 'rgba(255,255,255,0.04)'; // No data
+                let tooltip = 'Keine Daten';
+                
+                if (segLogs.length > 0) {
+                    const errors = segLogs.filter(l => l.status >= 500);
+                    const warnings = segLogs.filter(l => l.status >= 400 && l.status < 500);
+                    totalOk += segLogs.length - errors.length;
+                    totalErr += errors.length;
+                    
+                    if (errors.length > 0) {
+                        color = '#ef4444';
+                        tooltip = `${errors.length} Fehler / ${segLogs.length} Requests`;
+                    } else if (warnings.length > segLogs.length * 0.5) {
+                        color = '#f59e0b';
+                        tooltip = `${warnings.length} Warnings / ${segLogs.length} Requests`;
+                    } else {
+                        color = '#10b981';
+                        tooltip = `${segLogs.length} Requests — alles OK`;
+                    }
+                }
+                
+                uptimeSegments += `<div title="${tooltip}" style="flex:1; height:100%; background:${color}; border-radius:2px; transition:opacity 0.15s; cursor:pointer;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'"></div>`;
+            }
+            barEl.innerHTML = uptimeSegments;
+            
+            // Uptime percentage
+            const totalAll = totalOk + totalErr;
+            const uptime = totalAll > 0 ? ((totalOk / totalAll) * 100) : 100;
+            const uptimeEl = document.getElementById('apiUptimePercent');
+            uptimeEl.textContent = uptime.toFixed(uptime >= 99.9 ? 2 : 1) + '%';
+            uptimeEl.style.color = uptime >= 99 ? '#10b981' : uptime >= 95 ? '#f59e0b' : '#ef4444';
+            
+            // Range labels
+            const rangeLabels = { '1h': 'Vor 1 Stunde', '24h': 'Vor 24h', '7d': 'Vor 7 Tagen', '30d': 'Vor 30 Tagen' };
+            document.getElementById('apiRangeStart').textContent = rangeLabels[range] || '—';
+            
+            // Overall status
+            const statusDot = document.getElementById('apiStatusDot');
+            const statusText = document.getElementById('apiStatusText');
+            const recentLogs = this.getFilteredLogs('1h');
+            const recent5xx = recentLogs.filter(l => l.status >= 500).length;
+            const recent4xx = recentLogs.filter(l => l.status >= 400 && l.status < 500).length;
+            
+            if (recent5xx > 0) {
+                statusDot.style.background = '#ef4444';
+                statusDot.style.boxShadow = '0 0 8px rgba(239,68,68,0.5)';
+                statusText.textContent = `${recent5xx} Server-Fehler in der letzten Stunde`;
+                statusText.style.color = '#ef4444';
+            } else if (recent4xx > 2) {
+                statusDot.style.background = '#f59e0b';
+                statusDot.style.boxShadow = '0 0 8px rgba(245,158,11,0.5)';
+                statusText.textContent = `${recent4xx} Client-Fehler — prüfen`;
+                statusText.style.color = '#f59e0b';
+            } else if (logs.length === 0) {
+                statusDot.style.background = 'rgba(255,255,255,0.15)';
+                statusDot.style.boxShadow = 'none';
+                statusText.textContent = 'Keine Daten im Zeitraum';
+                statusText.style.color = 'rgba(255,255,255,0.4)';
+            } else {
+                statusDot.style.background = '#10b981';
+                statusDot.style.boxShadow = '0 0 8px rgba(16,185,129,0.5)';
+                statusText.textContent = 'Alle Systeme operational';
+                statusText.style.color = 'rgba(255,255,255,0.4)';
+            }
+            
+            // --- Status Code Breakdown ---
+            const codesEl = document.getElementById('apiStatusCodes');
+            const codeCounts = {};
+            logs.forEach(l => {
+                const code = l.status || 0;
+                codeCounts[code] = (codeCounts[code] || 0) + 1;
+            });
+            
+            if (Object.keys(codeCounts).length === 0) {
+                codesEl.innerHTML = '<span style="font-size:0.72rem; color:rgba(255,255,255,0.2);">Noch keine Requests aufgezeichnet</span>';
+            } else {
+                // Sort: 5xx first, then 4xx, 3xx, 2xx
+                const sorted = Object.entries(codeCounts).sort((a, b) => {
+                    const ca = Math.floor(parseInt(a[0]) / 100);
+                    const cb = Math.floor(parseInt(b[0]) / 100);
+                    if (cb !== ca) return cb - ca; // 5xx > 4xx > 3xx > 2xx
+                    return parseInt(b[0]) - parseInt(a[0]);
+                });
+                
+                codesEl.innerHTML = sorted.map(([code, count]) => {
+                    const cat = Math.floor(parseInt(code) / 100);
+                    const cls = cat >= 5 ? 's5xx' : cat >= 4 ? 's4xx' : cat >= 3 ? 's3xx' : 's2xx';
+                    return `<span class="api-status-pill ${cls}">${code} <span style="opacity:0.7; font-weight:500;">×${count}</span></span>`;
+                }).join('');
+            }
+            
+            // --- Endpoint Health ---
+            const endpointEl = document.getElementById('apiEndpointList');
+            const endpoints = {};
+            logs.forEach(l => {
+                const key = l.path;
+                if (!endpoints[key]) endpoints[key] = { path: key, methods: new Set(), total: 0, errors: 0, lastStatus: 0 };
+                endpoints[key].methods.add(l.method);
+                endpoints[key].total++;
+                if (l.status >= 400) endpoints[key].errors++;
+                endpoints[key].lastStatus = l.status;
+            });
+            
+            const endpointArr = Object.values(endpoints).sort((a, b) => b.total - a.total).slice(0, 8);
+            
+            if (endpointArr.length === 0) {
+                endpointEl.innerHTML = '<div style="padding:12px; text-align:center; color:rgba(255,255,255,0.2); font-size:0.72rem;">Keine Endpoints erfasst</div>';
+            } else {
+                endpointEl.innerHTML = endpointArr.map(ep => {
+                    const errorRate = ep.total > 0 ? (ep.errors / ep.total * 100) : 0;
+                    const healthColor = errorRate > 20 ? '#ef4444' : errorRate > 5 ? '#f59e0b' : '#10b981';
+                    const methodArr = [...ep.methods];
+                    const methodBadges = methodArr.map(m => {
+                        const cls = m === 'GET' ? 'get' : m === 'POST' ? 'post' : m === 'HEAD' ? 'head' : m === 'PUT' ? 'put' : m === 'DELETE' ? 'del' : 'opt';
+                        return `<span class="api-method-badge ${cls}">${m}</span>`;
+                    }).join('');
+                    
+                    return `<div class="api-endpoint-row">
+                        <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:0;">
+                            <div style="width:6px; height:6px; border-radius:50%; background:${healthColor}; flex-shrink:0;"></div>
+                            ${methodBadges}
+                            <span style="font-family:var(--font-mono); font-size:0.7rem; color:rgba(255,255,255,0.55); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${ep.path}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:0.65rem; color:rgba(255,255,255,0.25); font-family:var(--font-mono);">${ep.total}×</span>
+                            ${ep.errors > 0 ? `<span style="font-size:0.62rem; color:#ef4444; font-family:var(--font-mono);">${ep.errors} err</span>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+            }
+            
+            // --- Request Log ---
+            const logEl = document.getElementById('apiRequestLog');
+            const totalEl = document.getElementById('apiTotalRequests');
+            totalEl.textContent = `${logs.length} total`;
+            
+            if (logs.length === 0) {
+                logEl.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.15); font-size:0.75rem;">Noch keine API Requests aufgezeichnet.<br><span style="font-size:0.68rem;">Requests werden automatisch beim Sync erfasst.</span></div>';
+            } else {
+                const displayLogs = logs.slice(0, 50); // Show last 50
+                logEl.innerHTML = displayLogs.map(l => {
+                    const cat = Math.floor(l.status / 100);
+                    const statusCls = cat >= 5 ? 'c5' : cat >= 4 ? 'c4' : cat >= 3 ? 'c3' : 'c2';
+                    const methodCls = l.method === 'GET' ? 'get' : l.method === 'POST' ? 'post' : l.method === 'HEAD' ? 'head' : l.method === 'PUT' ? 'put' : l.method === 'DELETE' ? 'del' : 'opt';
+                    const timeAgo = formatTimeAgo(l.ts);
+                    
+                    return `<div class="api-log-row">
+                        <span class="api-log-status ${statusCls}">${l.status}</span>
+                        <span class="api-method-badge ${methodCls}">${l.method}</span>
+                        <span class="api-log-path" title="${l.path}">${l.path}</span>
+                        <span class="api-log-time">${timeAgo}</span>
+                    </div>`;
+                }).join('');
+            }
+            
+            // Last checked
+            document.getElementById('apiLastChecked').textContent = 'Zuletzt geprüft: ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+        }
+    };
+    
+    function formatTimeAgo(ts) {
+        const diff = Date.now() - ts;
+        if (diff < 60000) return 'gerade eben';
+        if (diff < 3600000) return Math.floor(diff / 60000) + 'min';
+        if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
+        return Math.floor(diff / 86400000) + 'd';
+    }
+    
+    function setApiRange(range, btn) {
+        apiStatusMonitor.currentRange = range;
+        document.querySelectorAll('.api-range-tab').forEach(t => t.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        apiStatusMonitor.render();
+    }
+    
+    function refreshApiStatus() {
+        // Ping Supabase health endpoints and record results
+        const baseUrl = typeof SUPABASE_CONFIG !== 'undefined' ? SUPABASE_CONFIG.URL : null;
+        if (!baseUrl) {
+            apiStatusMonitor.render();
+            return;
+        }
+        
+        const healthChecks = [
+            { method: 'GET', path: '/auth/v1/health', url: baseUrl + '/auth/v1/health' },
+            { method: 'HEAD', path: '/rest-admin/v1/ready', url: baseUrl + '/rest/v1/' }
+        ];
+        
+        healthChecks.forEach(check => {
+            const startTime = Date.now();
+            fetch(check.url, { method: check.method === 'HEAD' ? 'HEAD' : 'GET', mode: 'cors', headers: { 'apikey': typeof SUPABASE_CONFIG !== 'undefined' ? SUPABASE_CONFIG.ANON_KEY : '' } })
+                .then(resp => {
+                    apiStatusMonitor.record(check.method, check.path, resp.status, startTime);
+                    apiStatusMonitor.render();
+                })
+                .catch(() => {
+                    apiStatusMonitor.record(check.method, check.path, 0, startTime);
+                    apiStatusMonitor.render();
+                });
+        });
+    }
+    
+    // Intercept Supabase fetch calls to auto-log
+    (function patchSupabaseFetch() {
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            const input = args[0];
+            const init = args[1] || {};
+            let url = '';
+            let method = (init.method || 'GET').toUpperCase();
+            
+            if (typeof input === 'string') url = input;
+            else if (input instanceof Request) { url = input.url; method = (input.method || method).toUpperCase(); }
+            else if (input && input.href) url = input.href;
+            
+            // Only track Supabase API calls  
+            const isSupabase = typeof SUPABASE_CONFIG !== 'undefined' && url.includes(SUPABASE_CONFIG.URL);
+            
+            if (isSupabase) {
+                const ts = Date.now();
+                try {
+                    const urlObj = new URL(url);
+                    const path = urlObj.pathname;
+                    
+                    return originalFetch.apply(this, args).then(resp => {
+                        apiStatusMonitor.record(method, path, resp.status, ts);
+                        // Debounce render to avoid flooding
+                        clearTimeout(apiStatusMonitor._renderTimer);
+                        apiStatusMonitor._renderTimer = setTimeout(() => apiStatusMonitor.render(), 500);
+                        return resp;
+                    }).catch(err => {
+                        apiStatusMonitor.record(method, path, 0, ts);
+                        clearTimeout(apiStatusMonitor._renderTimer);
+                        apiStatusMonitor._renderTimer = setTimeout(() => apiStatusMonitor.render(), 500);
+                        throw err;
+                    });
+                } catch(e) {
+                    // URL parsing failed, proceed normally
+                }
+            }
+            
+            return originalFetch.apply(this, args);
+        };
+    })();
+    
+    // Render on cloud tab open
+    const _origSwitchTabCloud = window.switchSettingsTab;
+    if (typeof _origSwitchTabCloud === 'function') {
+        window.switchSettingsTab = function(tab) {
+            _origSwitchTabCloud.call(this, tab);
+            if (tab === 'cloud') {
+                apiStatusMonitor.render();
+            }
+        };
+    }
+    
+    // Initial render if cloud tab visible
+    setTimeout(() => { try { apiStatusMonitor.render(); } catch(e){} }, 2000);
+
     // ============================================
     // CLOUD SYNC INTEGRATION (ECHTE PRODUKTIVE INTEGRATION!)
     // ============================================
