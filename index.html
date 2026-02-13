@@ -7125,7 +7125,14 @@
 
         const dayIndex = new Date(newDate).getDay();
         entry.expected = data.settings.hours[dayIndex] || 0;
-        entry.diff = entry.worked - entry.expected;
+        
+        // Schultag = voller Arbeitstag (Ausbildung) → worked = expected, diff = 0
+        if (entry.type === 'school') {
+            entry.worked = entry.expected;
+            entry.diff = 0;
+        } else {
+            entry.diff = entry.worked - entry.expected;
+        }
 
         save();
         closeEditModal();
@@ -8516,24 +8523,22 @@
             const SCHOOL_HOURS = 6.75;
             
             if (dayIndex === 3) {
-                worked = SCHOOL_HOURS;
-                info = `Berufsschule - Mittwoch | ${info}`;
+                // Berufsschultag = voller Arbeitstag (Ausbildung)
+                worked = expected; // Zählt als voller Tag
+                info = `Berufsschule - Mittwoch (${SCHOOL_HOURS}h Unterricht → ${expected}h angerechnet) | ${info}`;
             } else if (dayIndex === 4 && isOddWeek(date)) {
-                worked = SCHOOL_HOURS;
-                info = `Berufsschule - Do. (Ungerade) | ${info}`;
+                worked = expected; // Zählt als voller Tag
+                info = `Berufsschule - Do. Ungerade (${SCHOOL_HOURS}h Unterricht → ${expected}h angerechnet) | ${info}`;
             } else if (direct) {
-                worked = parseFloat(direct);
-                info = `Berufsschule - Manuell (${worked.toFixed(2)}h) | ${info}`;
+                worked = expected; // Auch manuell eingegebene Schultage = voller Tag
+                info = `Berufsschule - Manuell (${parseFloat(direct).toFixed(2)}h Unterricht → ${expected}h angerechnet) | ${info}`;
             } else {
                 worked = expected;
                 info = `Keine Berufsschule (Regulär) | ${info}`;
             }
             
-            if (worked > 0 && (dayIndex === 3 || (dayIndex === 4 && isOddWeek(date)) || direct)) {
-                 diff = 0; 
-            } else {
-                 diff = worked - expected;
-            }
+            // Schultag = voller Arbeitstag → diff immer 0
+            diff = 0;
 
         } else if (type === 'vacation' || type === 'sick' || type === 'holiday') {
             worked = expected;
@@ -9151,7 +9156,7 @@
             // Nur Arbeits-Summen den aktuellen Trend trennen (für alle Jahre)
             if(e.type==='sick') sickSum += e.worked;
             else if(e.type==='vacation' && entryYear === currentYear) { vacSum += e.worked; usedVacationDays++; }
-            else if(e.type==='school') schoolSum += e.worked;
+            else if(e.type==='school') schoolSum += (e.expected || e.worked); // Schultag = voller Arbeitstag
             else if(e.type==='holiday' && entryYear === currentYear) holidaySum += e.worked;
             else workSum += e.worked;
         });
@@ -9162,7 +9167,8 @@
             const d = new Date(e.date);
             total += e.diff;
             if(e.type === 'work' || e.type === 'school' || e.type === 'vacation' || e.type === 'sick' || e.type === 'holiday') { 
-                totalWorked += e.worked; 
+                // Schultag = voller Arbeitstag → expected statt worked für Durchschnitt
+                totalWorked += (e.type === 'school' ? (e.expected || e.worked) : e.worked); 
                 countDays++; 
             }
 
@@ -10190,12 +10196,14 @@
             let expected = 0;
 
             weekEntries.forEach(e => {
-                actual += e.worked;
+                // Schultag = voller Arbeitstag (Ausbildung) → expected als actual
+                const effectiveWorked = (e.type === 'school') ? (e.expected || e.worked) : e.worked;
+                actual += effectiveWorked;
                 expected += e.expected;
 
                 const eTime = new Date(e.date).getTime();
                 if (eTime >= earliestDate) {
-                    weekTotalActual += e.worked;
+                    weekTotalActual += effectiveWorked;
                     weekTotalExpected += e.expected;
                 }
             });
