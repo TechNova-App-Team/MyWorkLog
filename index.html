@@ -59,6 +59,17 @@
 <!-- EmailJS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init('dLaRbQLynU5R8A0ti');</script>
+
+<!-- Console Gate: Production-silent, dev-mode via localStorage -->
+<script>
+(function(){
+    var n=function(){};
+    if(localStorage.getItem('__dev')!=='1'){
+        console.log=n;console.info=n;console.debug=n;console.warn=n;console.trace=n;
+    }
+})();
+</script>
+
 <!-- Supabase JavaScript Client (MUSS zuerst laden!) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Supabase Integration (NACH Supabase JS) -->
@@ -7559,16 +7570,8 @@
             console.warn('⚠️ Backup snapshot failed:', e);
         }
 
-        // Debug logging: entries count and a short preview of last 3 entries
-        try {
-            const lastEntries = (data.entries || []).slice(-3).map(e => ({ id: e.id, date: e.date, type: e.type }));
-            console.log('🔁 Saving data — entries:', (data.entries || []).length, 'last3:', lastEntries);
-            console.trace('save called from:');
-        } catch (e) { /* ignore logging failures */ }
-
         localStorage.setItem('tg_pro_data', JSON.stringify(data)); 
-        localStorage.setItem('tg_last_save', Date.now()); 
-        console.log('✅ Daten gespeichert (inkl. IHK, Berufsschule, Ziele):', data.settings);
+        localStorage.setItem('tg_last_save', Date.now());
         checkAlertsThresholds();
         checkOvertimeAlert();
         updateUI(); 
@@ -20871,14 +20874,8 @@ if ('serviceWorker' in navigator) {
 // ===== INSTALL PROMPT HANDLER (Add to Home Screen) =====
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
+    // Prompt speichern für manuellen Trigger via Install-Button
     deferredPrompt = e;
-    console.log('[PWA] Install prompt ready');
-    
-    // Show custom install button (optional, can be triggered later)
-    if (typeof showInstallPrompt === 'function') {
-        showInstallPrompt();
-    }
 });
 
 window.addEventListener('appinstalled', () => {

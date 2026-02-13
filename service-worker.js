@@ -4,6 +4,7 @@
 
 const CACHE_NAME = 'timetracker-v5';
 const RUNTIME_CACHE = 'timetracker-runtime-v5';
+const SW_DEBUG = false;
 const OFFLINE_PAGE = './Pages/Info/offline.html';
 
 const ASSETS_TO_CACHE = [
@@ -18,41 +19,28 @@ const ASSETS_TO_CACHE = [
 
 // ===== INSTALL EVENT =====
 self.addEventListener('install', event => {
-  console.log('[Service Worker] Installing...');
-  
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('[Service Worker] Caching assets');
       return cache.addAll(ASSETS_TO_CACHE).catch(err => {
-        console.warn('[Service Worker] Some assets could not be cached:', err);
-        // Teilweises Caching erlauben (nicht alle Assets müssen sofort verfügbar sein)
+        if(SW_DEBUG) console.warn('[SW] Cache partial fail:', err);
         return Promise.resolve();
       });
-    }).then(() => {
-      console.log('[Service Worker] Install complete');
-      return self.skipWaiting(); // Alte Worker sofort ersetzen
-    })
+    }).then(() => self.skipWaiting())
   );
 });
 
 // ===== ACTIVATE EVENT =====
 self.addEventListener('activate', event => {
-  console.log('[Service Worker] Activating...');
-  
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
-            console.log('[Service Worker] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => {
-      console.log('[Service Worker] Activation complete');
-      return self.clients.claim(); // Neuer Worker übernimmt alle Clients
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
@@ -88,45 +76,35 @@ async function cacheFirst(request) {
   const cached = await cache.match(request);
   
   if (cached) {
-    console.log('[Cache] HIT:', request.url);
     return cached;
   }
 
   try {
-    console.log('[Cache] MISS, fetching from network:', request.url);
     const response = await fetch(request);
     
     if (response.ok && request.method === 'GET' && isCacheableRequest(request)) {
       const cloned = response.clone();
-      cache.put(request, cloned).catch(err => {
-        console.warn('[Cache] Could not cache request:', request.url, err);
-      });
+      cache.put(request, cloned).catch(() => {});
     }
     
     return response;
   } catch (err) {
-    console.error('[Cache] Network failed:', err);
     return getOfflineResponse(request);
   }
 }
 
-// Network-First: Immer aktuell, Fallback auf Cache
 async function networkFirst(request) {
   try {
-    console.log('[Network] Fetching:', request.url);
     const response = await fetch(request);
     
     if (response.ok && request.method === 'GET' && isCacheableRequest(request)) {
       const cache = await caches.open(RUNTIME_CACHE);
       const cloned = response.clone();
-      cache.put(request, cloned).catch(err => {
-        console.warn('[Cache] Could not cache request:', request.url, err);
-      });
+      cache.put(request, cloned).catch(() => {});
     }
     
     return response;
   } catch (err) {
-    console.warn('[Network] Failed, using cache:', request.url);
     
     const cache = await caches.open(RUNTIME_CACHE);
     const cached = await cache.match(request);
@@ -168,7 +146,6 @@ function isCacheableRequest(request) {
     const url = new URL(request.url);
     return url.protocol === 'http:' || url.protocol === 'https:';
   } catch (err) {
-    console.warn('[Cache] Invalid URL:', request.url, err);
     return false;
   }
 }
@@ -190,7 +167,6 @@ self.addEventListener('message', event => {
 
 // ===== PUSH NOTIFICATIONS (Optional) =====
 self.addEventListener('push', event => {
-  console.log('[Push] Received notification');
   
   const data = event.data ? event.data.json() : {};
   const options = {
@@ -208,7 +184,6 @@ self.addEventListener('push', event => {
 
 // ===== NOTIFICATION CLICK =====
 self.addEventListener('notificationclick', event => {
-  console.log('[Notification] Clicked:', event.notification.tag);
   
   event.notification.close();
   
@@ -228,5 +203,4 @@ self.addEventListener('notificationclick', event => {
   );
 });
 
-// ===== LOGGING =====
-console.log('[Service Worker] Loaded and ready!');
+
