@@ -16256,6 +16256,7 @@ TIPPS:
                     notes: document.getElementById('inpNotes')?.value || ''
                 };
                 localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+                console.log('Draft saved:', draft);
                 if (typeof window.updateDraftUI === 'function') window.updateDraftUI();
             } catch (e) {
                 console.warn('Failed to save draft:', e);
@@ -16314,15 +16315,20 @@ TIPPS:
         window.deleteDraft = deleteDraft;
         window.updateDraftUI = updateDraftUI;
 
-        // Attach listeners to save draft on change/input
+        // Attach listeners to save draft on change/input (using Event Delegation for robustness)
         function attachDraftListeners() {
             const ids = ['inpDate','inpType','inpProject','inpStart','inpEnd','inpHours','inpNotes'];
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.addEventListener('input', saveDraft);
-                el.addEventListener('change', saveDraft);
+            document.addEventListener('input', (e) => {
+                if (ids.includes(e.target.id)) {
+                    saveDraft();
+                }
             });
+            document.addEventListener('change', (e) => {
+                if (ids.includes(e.target.id)) {
+                    saveDraft();
+                }
+            });
+            console.log('📝 Draft listeners attached with Event Delegation for: ' + ids.join(', '));
         }
 
         // Load draft before setting defaults
