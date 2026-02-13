@@ -2,8 +2,8 @@
 // Cache-First Strategy für Assets, Network-First für API/Data
 // VERSION BUMP: Force cache invalidation
 
-const CACHE_NAME = 'timetracker-v5';
-const RUNTIME_CACHE = 'timetracker-runtime-v5';
+const CACHE_NAME = 'timetracker-v6';
+const RUNTIME_CACHE = 'timetracker-runtime-v6';
 const SW_DEBUG = false;
 const OFFLINE_PAGE = './Pages/Info/offline.html';
 
@@ -56,6 +56,11 @@ self.addEventListener('fetch', event => {
 
   // HTML → Network-First (für Updates)
   if (request.mode === 'navigate') {
+    return event.respondWith(networkFirst(request));
+  }
+
+  // Cloud/Config JS → Network-First (OAuth etc. muss aktuell sein)
+  if (url.pathname.includes('/Cloud/') || url.pathname.includes('/config/')) {
     return event.respondWith(networkFirst(request));
   }
 
