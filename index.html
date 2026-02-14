@@ -22,6 +22,20 @@
 
 <!-- Security Headers -->
 <meta http-equiv="X-UA-Compatible" content="ie=edge">
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cloud.umami.is https://esm.run https://unpkg.com;
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: blob: https:;
+  font-src 'self' data:;
+  connect-src 'self' https://*.supabase.co https://cloud.umami.is https://api.emailjs.com https://cdn.jsdelivr.net https://esm.run https://unpkg.com https://www.google.com wss:;
+  media-src 'self' data:;
+  worker-src 'self' blob:;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+">
 
 <!-- OpenGraph Meta Tags (für Social Sharing) -->
 <meta property="og:title" content="TimeTracker v3.2.0 DB/AI – Moderne Zeiterfassung">
@@ -59,6 +73,14 @@
 <!-- EmailJS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init('dLaRbQLynU5R8A0ti');</script>
+<!-- DOMPurify - XSS Sanitizer -->
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
+<script>
+/** Safe innerHTML helper – sanitizes HTML before DOM injection */
+function safeHTML(html) { return typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(html, { USE_PROFILES: { html: true }, ADD_ATTR: ['onclick', 'onchange', 'oninput', 'onmouseover', 'onmouseout', 'onkeydown'] }) : html; }
+/** Escape user text for safe interpolation into HTML templates */
+function esc(s) { var d = document.createElement('div'); d.appendChild(document.createTextNode(s == null ? '' : String(s))); return d.innerHTML; }
+</script>
 
 <!-- Console Gate: Production-silent, dev-mode via localStorage -->
 <script>
@@ -9590,7 +9612,7 @@
         else if (greetHour < 21) { greetText = 'Guten Abend'; greetEmoji = '🌅'; }
         else { greetText = 'Gute Nacht'; greetEmoji = '🌙'; }
         const greetEl = document.getElementById('userGreeting');
-        greetEl.innerHTML = `<span class="greeting-enhanced"><span class="greeting-emoji">${greetEmoji}</span> ${greetText}, ${data.settings.name}</span>`;
+        greetEl.innerHTML = `<span class="greeting-enhanced"><span class="greeting-emoji">${greetEmoji}</span> ${greetText}, ${esc(data.settings.name)}</span>`;
         const trashBadge = document.getElementById('trashCountBadge');
         if (trashBadge) trashBadge.textContent = (Array.isArray(data.trash) ? data.trash.length : 0);
         
@@ -9791,12 +9813,12 @@
             <div class="entry-row type-${e.type}">
                 <div>
                     <div class="entry-date">${typeEmoji[e.type] || '📋'} ${new Date(e.date).toLocaleDateString('de-DE')}</div>
-                    <div class="entry-meta">${e.isPeriod ? e.label : e.info} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ SCHICHT MAX!</span>' : ''}</div>
+                    <div class="entry-meta">${e.isPeriod ? esc(e.label) : esc(e.info)} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ SCHICHT MAX!</span>' : ''}</div>
                     <div class="entry-relative-time">${getRelativeTime(e.date)}</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px;">
                     <span class="tag">${e.type === 'school' ? 'SCHULE' : (e.type === 'holiday' ? 'FEIERTAG' : e.type.toUpperCase())}</span>
-                    ${e.project ? `<span class="tag project-tag">${e.project}</span>` : ''}
+                    ${e.project ? `<span class="tag project-tag">${esc(e.project)}</span>` : ''}
                     <div style="font-weight:700; width:60px; text-align:right; color:${e.diff>=0?'var(--success)':'var(--danger)'}">
                         ${e.diff>=0?'+':''}${e.diff.toFixed(2)}
                     </div>
@@ -9818,7 +9840,7 @@
         if (!entries.length) {
             entryListEl.innerHTML = '<div style="color:#555; padding:12px;">Noch keine Einträge</div>';
         } else {
-            entryListEl.innerHTML = entries.slice(0, 5).map(createRow).join('');
+            entryListEl.innerHTML = safeHTML(entries.slice(0, 5).map(createRow).join(''));
         }
     }
     
@@ -11469,11 +11491,11 @@ TIPPS:
             <div class="entry-row type-${e.type}">
                 <div>
                     <div class="entry-date">${new Date(e.date).toLocaleDateString('de-DE')}</div>
-                    <div class="entry-meta">${e.isPeriod ? e.label : e.info} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ MAX!</span>' : ''} ${e.mood ? `<span class="mood-display" title="Stimmung: ${getMoodDescription(e.mood)}">${e.mood}</span>` : ''}</div>
+                    <div class="entry-meta">${e.isPeriod ? esc(e.label) : esc(e.info)} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ MAX!</span>' : ''} ${e.mood ? `<span class="mood-display" title="Stimmung: ${getMoodDescription(e.mood)}">${e.mood}</span>` : ''}</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px;">
                     <span class="tag">${e.type === 'school' ? 'SCHULE' : (e.type === 'holiday' ? 'FEIERTAG' : e.type.toUpperCase())}</span>
-                    ${e.project ? `<span class="tag project-tag">${e.project}</span>` : ''}
+                    ${e.project ? `<span class="tag project-tag">${esc(e.project)}</span>` : ''}
                     <div style="font-weight:700; width:60px; text-align:right; color:${e.diff>=0?'var(--success)':'var(--danger)'}">
                         ${e.diff>=0?'+':''}${e.diff.toFixed(2)}
                     </div>
@@ -11485,7 +11507,7 @@ TIPPS:
             </div>
         `;
 
-        historyListEl.innerHTML = filteredData.map(createRow).join('');
+        historyListEl.innerHTML = safeHTML(filteredData.map(createRow).join(''));
     }
 
     function exportHistoryData(format) {
