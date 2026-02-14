@@ -3413,32 +3413,43 @@
         /* ===== NETWORK STATUS INDICATOR ===== */
         .net-status {
             position: fixed;
-            bottom: 80px;
-            left: 16px;
+            bottom: 10px;
+            left: 8px;
             z-index: 1500;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
             font-family: var(--font-main);
+            opacity: 0.4;
+            transition: opacity 0.3s ease;
+        }
+        .net-status:hover,
+        .net-status.expanded {
+            opacity: 1;
         }
         .net-status-pill {
             position: relative;
             display: flex;
             align-items: center;
+            gap: 0;
+            padding: 6px;
+            background: rgba(10, 10, 14, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            overflow: hidden;
+        }
+        .net-status:hover .net-status-pill,
+        .net-status.expanded .net-status-pill {
             gap: 8px;
             padding: 7px 13px;
             background: rgba(10, 10, 14, 0.88);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255,255,255,0.07);
             border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            user-select: none;
-        }
-        .net-status-pill:hover {
-            background: rgba(18, 18, 24, 0.95);
-            border-color: rgba(255,255,255,0.12);
         }
         .net-status-dot {
             width: 7px; height: 7px;
@@ -3450,8 +3461,19 @@
         .net-status-dot.offline { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.5); animation: netPulse 1.5s infinite; }
         .net-status-dot.reconnecting { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.5); animation: netPulse 1s infinite; }
         @keyframes netPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+        .net-status-label,
+        .net-status-latency {
+            max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+            transition: max-width 0.35s ease, opacity 0.25s ease;
+        }
         .net-status-label { font-size: 11.5px; font-weight: 600; color: #cbd5e1; letter-spacing: 0.2px; }
         .net-status-latency { font-size: 10.5px; font-weight: 500; color: #64748b; font-family: var(--font-mono); }
+        .net-status:hover .net-status-label,
+        .net-status.expanded .net-status-label,
+        .net-status:hover .net-status-latency,
+        .net-status.expanded .net-status-latency {
+            max-width: 80px; opacity: 1;
+        }
         .net-queue-badge {
             position: absolute; top: -5px; right: -5px;
             background: #f59e0b; color: #000;
@@ -3482,44 +3504,105 @@
         .net-quality-bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.06); margin-top: 8px; overflow: hidden; }
         .net-quality-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease, background 0.3s; }
 
-        /* ===== UPDATE BANNER ===== */
-        .update-banner {
-            position: fixed; top: 0; left: 0; right: 0;
+        /* ===== UPDATE TOAST ===== */
+        .upd-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            left: auto;
             z-index: 2500;
-            transform: translateY(-100%);
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0;
+            transform: translateY(12px) scale(0.98);
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
         }
-        .update-banner.visible { transform: translateY(0); }
-        .update-banner-inner {
-            display: flex; align-items: center; justify-content: space-between; gap: 14px;
-            padding: 11px 20px;
-            background: rgba(10, 10, 16, 0.96);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(168,85,247,0.15);
-            box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+        .upd-toast.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
         }
-        .update-banner-info { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
-        .update-banner-icon {
-            width: 34px; height: 34px; border-radius: 9px;
-            background: rgba(168,85,247,0.12);
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; font-size: 16px; color: var(--primary);
+        .upd-toast-card {
+            width: 320px;
+            padding: 16px;
+            background: #18181b;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.05) inset;
+            font-family: var(--font-main);
         }
-        .update-banner-text h4 { margin: 0; font-size: 12.5px; font-weight: 700; color: #f1f5f9; }
-        .update-banner-text p { margin: 2px 0 0; font-size: 11.5px; color: #94a3b8; }
-        .update-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
-        .update-btn { padding: 6px 13px; border: none; border-radius: 7px; font-size: 11.5px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .update-btn-primary { background: var(--primary); color: white; }
-        .update-btn-primary:hover { filter: brightness(1.15); }
-        .update-btn-ghost { background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.07); }
-        .update-btn-ghost:hover { background: rgba(255,255,255,0.09); color: #e2e8f0; }
+        .upd-toast-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .upd-toast-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .upd-toast-icon svg { width: 18px; height: 18px; stroke: #fff; fill: none; }
+        .upd-toast-body { flex: 1; min-width: 0; padding-top: 1px; }
+        .upd-toast-title {
+            font-size: 13px;
+            font-weight: 650;
+            color: #fafafa;
+            margin: 0;
+            line-height: 1.3;
+        }
+        .upd-toast-desc {
+            font-size: 12px;
+            color: #71717a;
+            margin: 3px 0 0;
+            line-height: 1.35;
+        }
+        .upd-toast-close {
+            background: none; border: none; color: #52525b; cursor: pointer;
+            padding: 2px; margin: -2px -2px 0 0; line-height: 1; font-size: 16px;
+            transition: color 0.15s;
+        }
+        .upd-toast-close:hover { color: #a1a1aa; }
+        .upd-toast-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .upd-toast-btn {
+            padding: 8px 0;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+            border: none;
+            font-family: var(--font-main);
+        }
+        .upd-toast-btn-secondary {
+            background: #27272a;
+            color: #a1a1aa;
+        }
+        .upd-toast-btn-secondary:hover {
+            background: #303033;
+            color: #d4d4d8;
+        }
+        .upd-toast-btn-primary {
+            background: #a855f7;
+            color: #fff;
+        }
+        .upd-toast-btn-primary:hover {
+            background: #9333ea;
+        }
 
         @media (max-width: 600px) {
-            .net-status { bottom: 68px; left: 10px; }
+            .net-status { bottom: 6px; left: 6px; }
             .net-status-panel { width: 250px; }
-            .update-banner-inner { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px; }
-            .update-banner-actions { justify-content: flex-end; }
+            .upd-toast { bottom: 12px; right: 12px; left: 12px; }
+            .upd-toast-card { width: auto; }
         }
 
         /* --- Break Warning Banner --- */
@@ -3560,6 +3643,54 @@
     </style>
 </head>
 <body>
+    <!-- Network Status Indicator -->
+    <div class="net-status" id="netStatus">
+        <div class="net-status-pill" id="netStatusPill" onclick="networkMonitor.togglePanel()">
+            <div class="net-status-dot online" id="netDot"></div>
+            <span class="net-status-label" id="netLabel">Online</span>
+            <span class="net-status-latency" id="netLatency"></span>
+            <div class="net-queue-badge" id="netQueueBadge" style="display:none;">0</div>
+        </div>
+        <div class="net-status-panel" id="netPanel">
+            <div class="net-panel-title">
+                <span>Netzwerk</span>
+                <span style="cursor:pointer;color:#64748b;font-size:15px;" onclick="networkMonitor.togglePanel()">&times;</span>
+            </div>
+            <div class="net-panel-row"><span class="net-panel-key">Status</span><span class="net-panel-val" id="npStatus">Online</span></div>
+            <div class="net-panel-row"><span class="net-panel-key">Latenz</span><span class="net-panel-val" id="npLatency">&mdash;</span></div>
+            <div class="net-panel-row"><span class="net-panel-key">Verbindung</span><span class="net-panel-val" id="npConnection">&mdash;</span></div>
+            <div class="net-panel-row"><span class="net-panel-key">Downlink</span><span class="net-panel-val" id="npDownlink">&mdash;</span></div>
+            <div class="net-panel-row"><span class="net-panel-key">Online seit</span><span class="net-panel-val" id="npUptime">&mdash;</span></div>
+            <div class="net-panel-row"><span class="net-panel-key">Letzter Check</span><span class="net-panel-val" id="npLastCheck">&mdash;</span></div>
+            <div class="net-panel-row"><span class="net-panel-key">Qualität</span><span class="net-panel-val" id="npQuality">&mdash;</span></div>
+            <div class="net-quality-bar"><div class="net-quality-fill" id="npQualityBar" style="width:100%;background:#10b981;"></div></div>
+            <div class="net-panel-row" id="npQueueRow" style="display:none;"><span class="net-panel-key">Offline-Queue</span><span class="net-panel-val" id="npQueue">0 ausstehend</span></div>
+            <div style="margin-top:10px;display:flex;gap:6px;">
+                <button style="flex:1;padding:6px 0;font-size:10.5px;background:rgba(255,255,255,0.04);color:#94a3b8;border:1px solid rgba(255,255,255,0.06);border-radius:7px;cursor:pointer;font-weight:600;font-family:var(--font-main);transition:all 0.15s;" onclick="networkMonitor.checkNow()" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">Jetzt prüfen</button>
+                <button style="flex:1;padding:6px 0;font-size:10.5px;background:rgba(255,255,255,0.04);color:#94a3b8;border:1px solid rgba(255,255,255,0.06);border-radius:7px;cursor:pointer;font-weight:600;font-family:var(--font-main);transition:all 0.15s;" onclick="networkMonitor.showLog()" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">Verlauf</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Toast -->
+    <div class="upd-toast" id="updateBanner">
+        <div class="upd-toast-card">
+            <div class="upd-toast-top">
+                <div class="upd-toast-icon">
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <div class="upd-toast-body">
+                    <p class="upd-toast-title">Update verfügbar</p>
+                    <p class="upd-toast-desc">Eine neue Version ist bereit.</p>
+                </div>
+                <button class="upd-toast-close" onclick="updateManager.dismiss()">&times;</button>
+            </div>
+            <div class="upd-toast-btns">
+                <button class="upd-toast-btn upd-toast-btn-secondary" onclick="updateManager.dismiss()">Später</button>
+                <button class="upd-toast-btn upd-toast-btn-primary" onclick="updateManager.apply()">Jetzt aktualisieren</button>
+            </div>
+        </div>
+    </div>
 
 <!-- Fallback für deaktiviertes JavaScript -->
 <noscript>
@@ -20982,6 +21113,13 @@ if ('serviceWorker' in navigator) {
                 registration.update();
             }, 60000); // Check every minute
 
+            // Check for already-waiting worker from previous update
+            if (registration.waiting) {
+                if (typeof updateManager !== 'undefined') {
+                    updateManager.notifyUpdate(registration.waiting);
+                }
+            }
+
             // Handle service worker updates → Advanced Update Manager
             registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
@@ -21593,6 +21731,9 @@ const networkMonitor = (() => {
         checkNow();
         startInterval();
         ui();
+        // Only expand if offline (otherwise stay as tiny dot)
+        const w = document.getElementById('netStatus');
+        if (w && !s.online) w.classList.add('expanded');
     }
 
     function startInterval() {
@@ -21623,15 +21764,19 @@ const networkMonitor = (() => {
     function onStatusChange(on) {
         const wasOff = !s.online;
         s.online = on;
+        const wrapper = document.getElementById('netStatus');
         if (on) {
             s.onlineSince = Date.now();
             s.retries = 0;
             log('online', 'Verbindung hergestellt');
             if (s.queue.length > 0) flushQueue();
+            // Briefly show expanded, then auto-collapse after 3s
+            if (wrapper) { wrapper.classList.add('expanded'); setTimeout(() => { if (s.online && !s.panelOpen) wrapper.classList.remove('expanded'); }, 3000); }
         } else {
             s.onlineSince = null;
             log('offline', 'Verbindung verloren');
             scheduleRetry();
+            if (wrapper) wrapper.classList.add('expanded');
         }
         startInterval();
         ui();
@@ -21726,6 +21871,8 @@ const networkMonitor = (() => {
         s.panelOpen = !s.panelOpen;
         const p = document.getElementById('netPanel');
         if (p) p.classList.toggle('open', s.panelOpen);
+        const w = document.getElementById('netStatus');
+        if (w) w.classList.toggle('expanded', s.panelOpen || !s.online);
     }
 
     function showLog() {
@@ -21750,7 +21897,14 @@ const updateManager = (() => {
     let newWorker = null;
     let dismissed = false;
 
-    function init() {}
+    function init() {
+        // Check for already-waiting service worker on page load
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(reg => {
+                if (reg.waiting) notifyUpdate(reg.waiting);
+            });
+        }
+    }
 
     function notifyUpdate(worker) {
         newWorker = worker;
@@ -21773,14 +21927,35 @@ const updateManager = (() => {
         location.reload();
     }
 
-    return { init, notifyUpdate, dismiss, apply };
+    function test() {
+        dismissed = false;
+        localStorage.removeItem('mwl_upd_dismissed');
+        const b = document.getElementById('updateBanner');
+        if (b) { b.classList.add('visible'); console.log('✅ Update-Banner Test angezeigt'); }
+    }
+
+    return { init, notifyUpdate, dismiss, apply, test };
 })();
 
-// Initialize monitors
-document.addEventListener('DOMContentLoaded', () => {
-    networkMonitor.init();
-    updateManager.init();
-});
+// Initialize monitors with retry logic
+function initMonitors() {
+    if (typeof networkMonitor === 'undefined' || typeof updateManager === 'undefined') {
+        return setTimeout(initMonitors, 100);
+    }
+    try {
+        networkMonitor.init();
+        updateManager.init();
+        console.log('[Init] Network Monitor + Update Manager started');
+    } catch(e) {
+        console.warn('[Init] Error:', e.message);
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMonitors);
+} else {
+    initMonitors();
+}
 
 // ===== WEBLLM FEATURE DETECTION =====
 function initWebLLMButtonVisibility() {
@@ -21872,51 +22047,7 @@ if (document.readyState === 'loading') {
     </div>
 </nav>
 
-<!-- Network Status Indicator -->
-<div class="net-status" id="netStatus">
-    <div class="net-status-pill" id="netStatusPill" onclick="networkMonitor.togglePanel()">
-        <div class="net-status-dot online" id="netDot"></div>
-        <span class="net-status-label" id="netLabel">Online</span>
-        <span class="net-status-latency" id="netLatency"></span>
-        <div class="net-queue-badge" id="netQueueBadge" style="display:none;">0</div>
-    </div>
-    <div class="net-status-panel" id="netPanel">
-        <div class="net-panel-title">
-            <span>Netzwerk</span>
-            <span style="cursor:pointer;color:#64748b;font-size:15px;" onclick="networkMonitor.togglePanel()">&times;</span>
-        </div>
-        <div class="net-panel-row"><span class="net-panel-key">Status</span><span class="net-panel-val" id="npStatus">Online</span></div>
-        <div class="net-panel-row"><span class="net-panel-key">Latenz</span><span class="net-panel-val" id="npLatency">&mdash;</span></div>
-        <div class="net-panel-row"><span class="net-panel-key">Verbindung</span><span class="net-panel-val" id="npConnection">&mdash;</span></div>
-        <div class="net-panel-row"><span class="net-panel-key">Downlink</span><span class="net-panel-val" id="npDownlink">&mdash;</span></div>
-        <div class="net-panel-row"><span class="net-panel-key">Online seit</span><span class="net-panel-val" id="npUptime">&mdash;</span></div>
-        <div class="net-panel-row"><span class="net-panel-key">Letzter Check</span><span class="net-panel-val" id="npLastCheck">&mdash;</span></div>
-        <div class="net-panel-row"><span class="net-panel-key">Qualität</span><span class="net-panel-val" id="npQuality">&mdash;</span></div>
-        <div class="net-quality-bar"><div class="net-quality-fill" id="npQualityBar" style="width:100%;background:#10b981;"></div></div>
-        <div class="net-panel-row" id="npQueueRow" style="display:none;"><span class="net-panel-key">Offline-Queue</span><span class="net-panel-val" id="npQueue">0 ausstehend</span></div>
-        <div style="margin-top:10px;display:flex;gap:6px;">
-            <button class="update-btn update-btn-ghost" style="flex:1;font-size:10.5px;" onclick="networkMonitor.checkNow()">Jetzt prüfen</button>
-            <button class="update-btn update-btn-ghost" style="flex:1;font-size:10.5px;" onclick="networkMonitor.showLog()">Verlauf</button>
-        </div>
-    </div>
-</div>
 
-<!-- Update Banner -->
-<div class="update-banner" id="updateBanner">
-    <div class="update-banner-inner">
-        <div class="update-banner-info">
-            <div class="update-banner-icon">↑</div>
-            <div class="update-banner-text">
-                <h4 id="updateBannerTitle">Update verfügbar</h4>
-                <p id="updateBannerDesc">Neue Version bereit — Seite neuladen für Verbesserungen.</p>
-            </div>
-        </div>
-        <div class="update-banner-actions">
-            <button class="update-btn update-btn-ghost" onclick="updateManager.dismiss()">Später</button>
-            <button class="update-btn update-btn-primary" onclick="updateManager.apply()">Aktualisieren</button>
-        </div>
-    </div>
-</div>
 
 <!-- Break Warning Banner -->
 <div class="break-warning-banner" id="breakWarningBanner" onclick="this.classList.remove('visible')">
