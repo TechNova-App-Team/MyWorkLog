@@ -3410,6 +3410,118 @@
             }
         }
 
+        /* ===== NETWORK STATUS INDICATOR ===== */
+        .net-status {
+            position: fixed;
+            bottom: 80px;
+            left: 16px;
+            z-index: 1500;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            font-family: var(--font-main);
+        }
+        .net-status-pill {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 13px;
+            background: rgba(10, 10, 14, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        .net-status-pill:hover {
+            background: rgba(18, 18, 24, 0.95);
+            border-color: rgba(255,255,255,0.12);
+        }
+        .net-status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        .net-status-dot.online { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+        .net-status-dot.offline { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.5); animation: netPulse 1.5s infinite; }
+        .net-status-dot.reconnecting { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.5); animation: netPulse 1s infinite; }
+        @keyframes netPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+        .net-status-label { font-size: 11.5px; font-weight: 600; color: #cbd5e1; letter-spacing: 0.2px; }
+        .net-status-latency { font-size: 10.5px; font-weight: 500; color: #64748b; font-family: var(--font-mono); }
+        .net-queue-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: #f59e0b; color: #000;
+            font-size: 9px; font-weight: 800;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid rgba(10,10,14,0.88);
+        }
+        .net-status-panel {
+            margin-top: 6px;
+            background: rgba(10, 10, 16, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            width: 272px;
+            max-height: 0; overflow: hidden; opacity: 0;
+            padding: 0 14px;
+            transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.35s ease;
+        }
+        .net-status-panel.open { max-height: 420px; opacity: 1; padding: 14px; }
+        .net-panel-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .net-panel-row:last-child { border-bottom: none; }
+        .net-panel-key { font-size: 11.5px; color: #94a3b8; font-weight: 500; }
+        .net-panel-val { font-size: 11.5px; color: #e2e8f0; font-weight: 600; font-family: var(--font-mono); }
+        .net-panel-title { font-size: 12.5px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; padding-bottom: 7px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; }
+        .net-quality-bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.06); margin-top: 8px; overflow: hidden; }
+        .net-quality-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease, background 0.3s; }
+
+        /* ===== UPDATE BANNER ===== */
+        .update-banner {
+            position: fixed; top: 0; left: 0; right: 0;
+            z-index: 2500;
+            transform: translateY(-100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .update-banner.visible { transform: translateY(0); }
+        .update-banner-inner {
+            display: flex; align-items: center; justify-content: space-between; gap: 14px;
+            padding: 11px 20px;
+            background: rgba(10, 10, 16, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(168,85,247,0.15);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+        }
+        .update-banner-info { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+        .update-banner-icon {
+            width: 34px; height: 34px; border-radius: 9px;
+            background: rgba(168,85,247,0.12);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; font-size: 16px; color: var(--primary);
+        }
+        .update-banner-text h4 { margin: 0; font-size: 12.5px; font-weight: 700; color: #f1f5f9; }
+        .update-banner-text p { margin: 2px 0 0; font-size: 11.5px; color: #94a3b8; }
+        .update-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        .update-btn { padding: 6px 13px; border: none; border-radius: 7px; font-size: 11.5px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .update-btn-primary { background: var(--primary); color: white; }
+        .update-btn-primary:hover { filter: brightness(1.15); }
+        .update-btn-ghost { background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.07); }
+        .update-btn-ghost:hover { background: rgba(255,255,255,0.09); color: #e2e8f0; }
+
+        @media (max-width: 600px) {
+            .net-status { bottom: 68px; left: 10px; }
+            .net-status-panel { width: 250px; }
+            .update-banner-inner { flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 14px; }
+            .update-banner-actions { justify-content: flex-end; }
+        }
+
         /* --- Break Warning Banner --- */
         .break-warning-banner {
             display: none;
@@ -20870,15 +20982,13 @@ if ('serviceWorker' in navigator) {
                 registration.update();
             }, 60000); // Check every minute
 
-            // Handle service worker updates
+            // Handle service worker updates → Advanced Update Manager
             registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
                 newWorker.addEventListener('statechange', () => {
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        // New service worker available, show update notification
-                        console.log('[PWA] Update available! Please refresh to get the latest version.');
-                        if (typeof showCustomMessage === 'function') {
-                            showCustomMessage('🔄 Update verfügbar', 'Neue Version bereit! Seite neuladen für Updates.', 'info');
+                        if (typeof updateManager !== 'undefined') {
+                            updateManager.notifyUpdate(newWorker);
                         }
                     }
                 });
@@ -21449,19 +21559,227 @@ function calculateWeeklyHours() {
 }
 
 // ===== AI-BOT MODAL FUNCTIONS =====
-// ===== PWA STATUS CHECK =====
-window.addEventListener('online', () => {
-    console.log('[PWA] Online');
-    if (typeof showCustomMessage === 'function') {
-        showCustomMessage('📡 Online', 'Verbindung wiederhergestellt!', 'success');
-    }
-});
 
-window.addEventListener('offline', () => {
-    console.log('[PWA] Offline');
-    if (typeof showCustomMessage === 'function') {
-        showCustomMessage('📡 Offline', 'Du bist offline. App funktioniert weiterhin!', 'warning');
+// ===== ADVANCED NETWORK MONITOR =====
+const networkMonitor = (() => {
+    const PING_URL = './manifest.json';
+    const INTERVAL_ON = 30000;
+    const INTERVAL_OFF = 5000;
+    const MAX_LOG = 100;
+
+    const s = {
+        online: navigator.onLine,
+        latency: null,
+        quality: 'unknown',
+        connType: null,
+        downlink: null,
+        onlineSince: navigator.onLine ? Date.now() : null,
+        lastCheck: null,
+        timer: null,
+        retries: 0,
+        queue: [],
+        log: [],
+        panelOpen: false
+    };
+
+    function init() {
+        window.addEventListener('online', () => onStatusChange(true));
+        window.addEventListener('offline', () => onStatusChange(false));
+        if (navigator.connection) {
+            readConnInfo();
+            navigator.connection.addEventListener('change', readConnInfo);
+        }
+        try { s.queue = JSON.parse(localStorage.getItem('mwl_offline_queue') || '[]'); } catch(e) { s.queue = []; }
+        checkNow();
+        startInterval();
+        ui();
     }
+
+    function startInterval() {
+        if (s.timer) clearInterval(s.timer);
+        s.timer = setInterval(checkNow, s.online ? INTERVAL_ON : INTERVAL_OFF);
+    }
+
+    async function checkNow() {
+        const t0 = performance.now();
+        try {
+            await fetch(PING_URL, { method: 'HEAD', cache: 'no-store', signal: AbortSignal.timeout(5000) });
+            const ms = Math.round(performance.now() - t0);
+            s.latency = ms;
+            s.lastCheck = Date.now();
+            if (!s.online) onStatusChange(true);
+            s.quality = ms < 100 ? 'excellent' : ms < 300 ? 'good' : ms < 800 ? 'moderate' : 'poor';
+            log('ping', ms + 'ms — ' + s.quality);
+        } catch(e) {
+            s.latency = null;
+            s.lastCheck = Date.now();
+            if (s.online && !navigator.onLine) onStatusChange(false);
+            s.quality = s.online ? 'unknown' : 'offline';
+            log('fail', e.message || 'timeout');
+        }
+        ui();
+    }
+
+    function onStatusChange(on) {
+        const wasOff = !s.online;
+        s.online = on;
+        if (on) {
+            s.onlineSince = Date.now();
+            s.retries = 0;
+            log('online', 'Verbindung hergestellt');
+            if (s.queue.length > 0) flushQueue();
+        } else {
+            s.onlineSince = null;
+            log('offline', 'Verbindung verloren');
+            scheduleRetry();
+        }
+        startInterval();
+        ui();
+        if (typeof showCustomMessage === 'function') {
+            if (on && wasOff) showCustomMessage('Verbindung hergestellt', 'Du bist wieder online.', 'success');
+            else if (!on) showCustomMessage('Verbindung verloren', 'Offline-Modus aktiv — Daten werden lokal gespeichert.', 'warning');
+        }
+    }
+
+    function scheduleRetry() {
+        if (s.retries >= 50) return;
+        s.retries++;
+        const delay = Math.min(2000 * Math.pow(2, s.retries - 1), 60000);
+        setTimeout(() => { if (!s.online) checkNow(); }, delay);
+    }
+
+    function readConnInfo() {
+        const c = navigator.connection;
+        if (!c) return;
+        s.connType = c.effectiveType || c.type || null;
+        s.downlink = c.downlink || null;
+        ui();
+    }
+
+    function log(type, msg) {
+        s.log.unshift({ t: Date.now(), type, msg });
+        if (s.log.length > MAX_LOG) s.log.length = MAX_LOG;
+    }
+
+    function enqueue(action) {
+        s.queue.push({ ...action, ts: Date.now() });
+        localStorage.setItem('mwl_offline_queue', JSON.stringify(s.queue));
+        ui();
+    }
+
+    function flushQueue() {
+        log('queue', s.queue.length + ' Aktionen verarbeitet');
+        s.queue = [];
+        localStorage.removeItem('mwl_offline_queue');
+        ui();
+    }
+
+    function fmtDur(ms) {
+        const sec = Math.floor(ms / 1000);
+        if (sec < 60) return sec + 's';
+        const min = Math.floor(sec / 60);
+        if (min < 60) return min + 'min';
+        return Math.floor(min / 60) + 'h ' + (min % 60) + 'min';
+    }
+
+    function ui() {
+        const dot = document.getElementById('netDot');
+        if (!dot) return;
+        dot.className = 'net-status-dot ' + (s.online ? 'online' : 'offline');
+
+        const lbl = document.getElementById('netLabel');
+        if (lbl) lbl.textContent = s.online ? 'Online' : 'Offline';
+
+        const lat = document.getElementById('netLatency');
+        if (lat) lat.textContent = (s.latency !== null && s.online) ? s.latency + 'ms' : '';
+
+        const badge = document.getElementById('netQueueBadge');
+        if (badge) { badge.style.display = s.queue.length > 0 ? 'flex' : 'none'; badge.textContent = s.queue.length; }
+
+        // Panel
+        const el = (id) => document.getElementById(id);
+        const npS = el('npStatus'); if (npS) { npS.textContent = s.online ? 'Online' : 'Offline'; npS.style.color = s.online ? '#10b981' : '#ef4444'; }
+        const npL = el('npLatency'); if (npL) npL.textContent = s.latency !== null ? s.latency + 'ms' : '\u2014';
+        const npC = el('npConnection'); if (npC) { const m = {'4g':'LTE/4G','3g':'3G','2g':'2G','slow-2g':'Langsam','wifi':'WLAN'}; npC.textContent = m[s.connType] || s.connType || '\u2014'; }
+        const npD = el('npDownlink'); if (npD) npD.textContent = s.downlink ? s.downlink + ' Mbps' : '\u2014';
+        const npU = el('npUptime'); if (npU) npU.textContent = s.onlineSince ? fmtDur(Date.now() - s.onlineSince) : '\u2014';
+        const npT = el('npLastCheck'); if (npT) npT.textContent = s.lastCheck ? new Date(s.lastCheck).toLocaleTimeString('de-DE') : '\u2014';
+        const npQ = el('npQuality');
+        if (npQ) {
+            const lab = {excellent:'Exzellent',good:'Gut',moderate:'Mittel',poor:'Schlecht',offline:'Offline',unknown:'\u2014'};
+            const col = {excellent:'#10b981',good:'#22d3ee',moderate:'#f59e0b',poor:'#ef4444',offline:'#ef4444',unknown:'#64748b'};
+            npQ.textContent = lab[s.quality] || '\u2014';
+            npQ.style.color = col[s.quality] || '#64748b';
+        }
+        const bar = el('npQualityBar');
+        if (bar) {
+            const w = {excellent:'100%',good:'75%',moderate:'50%',poor:'25%',offline:'0%',unknown:'0%'};
+            const c = {excellent:'#10b981',good:'#22d3ee',moderate:'#f59e0b',poor:'#ef4444',offline:'#ef4444',unknown:'#64748b'};
+            bar.style.width = w[s.quality] || '0%';
+            bar.style.background = c[s.quality] || '#64748b';
+        }
+        const qRow = el('npQueueRow'), qVal = el('npQueue');
+        if (qRow && qVal) { qRow.style.display = s.queue.length > 0 ? 'flex' : 'none'; qVal.textContent = s.queue.length + ' ausstehend'; }
+    }
+
+    function togglePanel() {
+        s.panelOpen = !s.panelOpen;
+        const p = document.getElementById('netPanel');
+        if (p) p.classList.toggle('open', s.panelOpen);
+    }
+
+    function showLog() {
+        if (s.log.length === 0) { if (typeof showCustomMessage === 'function') showCustomMessage('Netzwerk-Verlauf', 'Noch keine Eintr\u00e4ge.', 'info'); return; }
+        const ico = {ping:'\u25cf',fail:'\u25cb',online:'\u25b2',offline:'\u25bc',queue:'\u25c6'};
+        const rows = s.log.slice(0, 30).map(e => {
+            const t = new Date(e.t).toLocaleTimeString('de-DE');
+            return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:11.5px;"><span style="color:#64748b;font-family:var(--font-mono);min-width:62px;">' + t + '</span><span style="color:#94a3b8;">' + (ico[e.type]||'\u00b7') + '</span><span style="color:#e2e8f0;">' + e.msg + '</span></div>';
+        }).join('');
+        const ov = document.createElement('div');
+        ov.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:20px;';
+        ov.onclick = (ev) => { if (ev.target === ov) ov.remove(); };
+        ov.innerHTML = '<div style="background:rgba(10,10,16,0.96);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:18px;max-width:380px;width:100%;max-height:65vh;overflow-y:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-weight:700;font-size:13px;color:#f1f5f9;">Netzwerk-Verlauf</span><span style="cursor:pointer;color:#64748b;font-size:18px;" onclick="this.closest(\x27[style*=fixed]\x27).remove()">&times;</span></div>' + rows + '</div>';
+        document.body.appendChild(ov);
+    }
+
+    return { init, checkNow, togglePanel, showLog, enqueue, getState: () => ({...s}) };
+})();
+
+// ===== ADVANCED UPDATE MANAGER =====
+const updateManager = (() => {
+    let newWorker = null;
+    let dismissed = false;
+
+    function init() {}
+
+    function notifyUpdate(worker) {
+        newWorker = worker;
+        dismissed = false;
+        const last = localStorage.getItem('mwl_upd_dismissed');
+        if (last && (Date.now() - parseInt(last)) < 300000) return;
+        const b = document.getElementById('updateBanner');
+        if (b) b.classList.add('visible');
+    }
+
+    function dismiss() {
+        const b = document.getElementById('updateBanner');
+        if (b) b.classList.remove('visible');
+        dismissed = true;
+        localStorage.setItem('mwl_upd_dismissed', Date.now().toString());
+    }
+
+    function apply() {
+        if (newWorker) newWorker.postMessage({ type: 'SKIP_WAITING' });
+        location.reload();
+    }
+
+    return { init, notifyUpdate, dismiss, apply };
+})();
+
+// Initialize monitors
+document.addEventListener('DOMContentLoaded', () => {
+    networkMonitor.init();
+    updateManager.init();
 });
 
 // ===== WEBLLM FEATURE DETECTION =====
@@ -21553,6 +21871,52 @@ if (document.readyState === 'loading') {
         </button>
     </div>
 </nav>
+
+<!-- Network Status Indicator -->
+<div class="net-status" id="netStatus">
+    <div class="net-status-pill" id="netStatusPill" onclick="networkMonitor.togglePanel()">
+        <div class="net-status-dot online" id="netDot"></div>
+        <span class="net-status-label" id="netLabel">Online</span>
+        <span class="net-status-latency" id="netLatency"></span>
+        <div class="net-queue-badge" id="netQueueBadge" style="display:none;">0</div>
+    </div>
+    <div class="net-status-panel" id="netPanel">
+        <div class="net-panel-title">
+            <span>Netzwerk</span>
+            <span style="cursor:pointer;color:#64748b;font-size:15px;" onclick="networkMonitor.togglePanel()">&times;</span>
+        </div>
+        <div class="net-panel-row"><span class="net-panel-key">Status</span><span class="net-panel-val" id="npStatus">Online</span></div>
+        <div class="net-panel-row"><span class="net-panel-key">Latenz</span><span class="net-panel-val" id="npLatency">&mdash;</span></div>
+        <div class="net-panel-row"><span class="net-panel-key">Verbindung</span><span class="net-panel-val" id="npConnection">&mdash;</span></div>
+        <div class="net-panel-row"><span class="net-panel-key">Downlink</span><span class="net-panel-val" id="npDownlink">&mdash;</span></div>
+        <div class="net-panel-row"><span class="net-panel-key">Online seit</span><span class="net-panel-val" id="npUptime">&mdash;</span></div>
+        <div class="net-panel-row"><span class="net-panel-key">Letzter Check</span><span class="net-panel-val" id="npLastCheck">&mdash;</span></div>
+        <div class="net-panel-row"><span class="net-panel-key">Qualität</span><span class="net-panel-val" id="npQuality">&mdash;</span></div>
+        <div class="net-quality-bar"><div class="net-quality-fill" id="npQualityBar" style="width:100%;background:#10b981;"></div></div>
+        <div class="net-panel-row" id="npQueueRow" style="display:none;"><span class="net-panel-key">Offline-Queue</span><span class="net-panel-val" id="npQueue">0 ausstehend</span></div>
+        <div style="margin-top:10px;display:flex;gap:6px;">
+            <button class="update-btn update-btn-ghost" style="flex:1;font-size:10.5px;" onclick="networkMonitor.checkNow()">Jetzt prüfen</button>
+            <button class="update-btn update-btn-ghost" style="flex:1;font-size:10.5px;" onclick="networkMonitor.showLog()">Verlauf</button>
+        </div>
+    </div>
+</div>
+
+<!-- Update Banner -->
+<div class="update-banner" id="updateBanner">
+    <div class="update-banner-inner">
+        <div class="update-banner-info">
+            <div class="update-banner-icon">↑</div>
+            <div class="update-banner-text">
+                <h4 id="updateBannerTitle">Update verfügbar</h4>
+                <p id="updateBannerDesc">Neue Version bereit — Seite neuladen für Verbesserungen.</p>
+            </div>
+        </div>
+        <div class="update-banner-actions">
+            <button class="update-btn update-btn-ghost" onclick="updateManager.dismiss()">Später</button>
+            <button class="update-btn update-btn-primary" onclick="updateManager.apply()">Aktualisieren</button>
+        </div>
+    </div>
+</div>
 
 <!-- Break Warning Banner -->
 <div class="break-warning-banner" id="breakWarningBanner" onclick="this.classList.remove('visible')">

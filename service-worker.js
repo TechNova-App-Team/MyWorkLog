@@ -7,6 +7,13 @@ const RUNTIME_CACHE = 'timetracker-runtime-v6';
 const SW_DEBUG = false;
 const OFFLINE_PAGE = './Pages/Info/offline.html';
 
+// Listen for SKIP_WAITING message from Update Manager
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
