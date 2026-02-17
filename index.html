@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-<title>MyWorkLog / AI</title>
+<title>MyWorkLog</title>
 <meta name="description" content="TimeTracker: Eine moderne, lokal laufende Single-File Zeiterfassungs-App. Kein Server, kein Cloud, nur deine Daten. Perfekt für Auszubildende und Mitarbeiter.">
 <meta name="theme-color" content="#a855f7">
 <meta name="author" content="TechNova App Team">
@@ -6511,7 +6511,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                     
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px;">
                         <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Aktuelles.png', 'Aktuelles')">
-                            <img loading="lazy" src="./Grafiken/Aktuelles.png" alt="Aktuelles">
+                            <img loading="lazy" src="./Grafiken/Aktuelles.png" alt="MyWorkLog Updates und neue Features für Zeiterfassung 2026">
                             <div class="card-info">
                                 <h5>📰 Aktuelles</h5>
                                 <p>Aktuelle Informationen</p>
@@ -6519,7 +6519,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         </div>
                         
                         <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Touch.png', 'Touch Optimization')">
-                            <img loading="lazy" src="./Grafiken/Touch.png" alt="Touch Optimization">
+                            <img loading="lazy" src="./Grafiken/Touch.png" alt="Mobile und Touch-Optimierung für Smartphones und Tablets in MyWorkLog">
                             <div class="card-info">
                                 <h5>📱 Touch Optimization</h5>
                                 <p>Mobile & Touch-Optimierungen</p>
@@ -6527,7 +6527,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         </div>
                         
                         <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Bot-engine.png', 'AI Bot Engine')">
-                            <img loading="lazy" src="./Grafiken/Bot-engine.png" alt="Bot Engine">
+                            <img loading="lazy" src="./Grafiken/Bot-engine.png" alt="AI Bot Engine für intelligente Zeiterfassungsanalyse und Auswertung">
                             <div class="card-info">
                                 <h5>🤖 Bot Engine</h5>
                                 <p>AI-Bot Architektur</p>
@@ -6535,7 +6535,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         </div>
                         
                         <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Bot-Analyzer.png', 'Data Analyzer')">
-                            <img loading="lazy" src="./Grafiken/Bot-Analyzer.png" alt="Data Analyzer">
+                            <img loading="lazy" src="./Grafiken/Bot-Analyzer.png" alt="Datenanalyse und automatische Auswertung von Arbeitsstunden und Gleitzeit">
                             <div class="card-info">
                                 <h5>📊 Data Analyzer</h5>
                                 <p>Datenanalyse & Auswertung</p>
@@ -6543,7 +6543,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         </div>
                         
                         <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Service.png', 'Service Worker')">
-                            <img loading="lazy" src="./Grafiken/Service.png" alt="Service Worker">
+                            <img loading="lazy" src="./Grafiken/Service.png" alt="Progressive Web App PWA und Service Worker für Offline-Unterstützung">
                             <div class="card-info">
                                 <h5>⚙️ Service Worker</h5>
                                 <p>PWA & Offline-Funktionalität</p>
@@ -6551,7 +6551,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         </div>
                         
                         <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Offline.png', 'Offline Mode')">
-                            <img loading="lazy" src="./Grafiken/Offline.png" alt="Offline Mode">
+                            <img loading="lazy" src="./Grafiken/Offline.png" alt="Offline-Funktionalität und lokale Datenspeicherung im LocalStorage">
                             <div class="card-info">
                                 <h5>📡 Offline Mode</h5>
                                 <p>Offline-Funktionalität</p>
@@ -6559,7 +6559,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         </div>
                         
                         <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Website.png', 'Website Architektur')">
-                            <img loading="lazy" src="./Grafiken/Website.png" alt="Website Architektur">
+                            <img loading="lazy" src="./Grafiken/Website.png" alt="MyWorkLog Website Architektur und technische Infrastruktur mit Cloud-Integration">
                             <div class="card-info">
                                 <h5>🌐 Website</h5>
                                 <p>Website-Architektur</p>
@@ -18419,51 +18419,73 @@ TIPPS:
     function calculateStreak() {
         if (!data.entries || data.entries.length === 0) return { current: 0, best: 0 };
 
-        const now = new Date();
-        const entries = [...data.entries].sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        let currentStreak = 0;
-        let bestStreak = 0;
-        let tempStreak = 0;
-        let lastDate = null;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-        for (let i = 0; i < entries.length; i++) {
-            const entry = entries[i];
-            const entryDate = new Date(entry.date);
-            const dayOfWeek = entryDate.getDay();
-            
-            if (dayOfWeek === 0 || dayOfWeek === 6) continue;
-            
-            const expectedHours = (typeof entry.expected === 'number' && isFinite(entry.expected)) ? entry.expected : (data.settings.workTime?.default || data.settings.hours?.[entryDate.getDay()] || 8);
-            const workedHours = (typeof entry.worked === 'number' && isFinite(entry.worked)) ? entry.worked : 0;
-            if (workedHours >= expectedHours) {
-                if (!lastDate || isConsecutiveWorkDay(lastDate, entryDate)) {
-                    tempStreak++;
-                } else {
-                    tempStreak = 1;
-                }
-                lastDate = entryDate;
+        // Alle Eintrags-Daten (unique) an Arbeitstagen, sortiert newest→oldest
+        const entryDates = [...new Set(data.entries.map(e => {
+            const d = new Date(e.date);
+            d.setHours(0, 0, 0, 0);
+            return d.getTime();
+        }))].filter(ts => {
+            const dow = new Date(ts).getDay();
+            return dow !== 0 && dow !== 6;
+        }).sort((a, b) => b - a).map(ts => new Date(ts));
+
+        if (entryDates.length === 0) return { current: 0, best: 0 };
+
+        // Best Streak (all time): längste Kette aufeinanderfolgender Arbeitstage
+        let bestStreak = 1;
+        let tempStreak = 1;
+        for (let i = 0; i < entryDates.length - 1; i++) {
+            if (isConsecutiveWorkDay(entryDates[i], entryDates[i + 1])) {
+                tempStreak++;
                 bestStreak = Math.max(bestStreak, tempStreak);
             } else {
-                if (tempStreak > 0) {
-                    currentStreak = Math.max(currentStreak, tempStreak);
-                }
-                tempStreak = 0;
+                tempStreak = 1;
             }
         }
 
-        currentStreak = Math.max(currentStreak, tempStreak);
-        return { current: currentStreak, best: bestStreak };
+        // Current Streak: muss von heute oder letztem Arbeitstag starten
+        const lastWorkday = getLastWorkday(today);
+        const newestEntry = entryDates[0];
+        let currentStreak = 0;
+
+        if (newestEntry.getTime() === today.getTime() || newestEntry.getTime() === lastWorkday.getTime()) {
+            currentStreak = 1;
+            for (let i = 0; i < entryDates.length - 1; i++) {
+                if (isConsecutiveWorkDay(entryDates[i], entryDates[i + 1])) {
+                    currentStreak++;
+                } else {
+                    break;
+                }
+            }
+        }
+
+        return { current: currentStreak, best: Math.max(bestStreak, currentStreak) };
+    }
+
+    function getLastWorkday(date) {
+        const d = new Date(date);
+        const dow = d.getDay();
+        if (dow === 0) d.setDate(d.getDate() - 2); // Sonntag → Freitag
+        else if (dow === 6) d.setDate(d.getDate() - 1); // Samstag → Freitag
+        // Wenn heute ein Arbeitstag ist, dann ist der letzte Arbeitstag gestern (oder Freitag)
+        else {
+            d.setDate(d.getDate() - 1);
+            if (d.getDay() === 0) d.setDate(d.getDate() - 2);
+            else if (d.getDay() === 6) d.setDate(d.getDate() - 1);
+        }
+        d.setHours(0, 0, 0, 0);
+        return d;
     }
 
     function isConsecutiveWorkDay(date1, date2) {
-        // Vergleiche zwei Dates und prüfe ob sie an aufeinanderfolgenden Arbeitstagen liegen
+        // date1 = neueres Datum, date2 = älteres Datum (sorted desc)
         const oneDayMs = 1000 * 60 * 60 * 24;
-        const diffDays = Math.round((date2 - date1) / oneDayMs);
-        const absDiff = Math.abs(diffDays);
-        if (absDiff === 1) return true; // normaler aufeinanderfolgender Tag
-        // Freitag (4) zu Montag (1) ergibt diff = 3
-        if (absDiff === 3) return true; // Fri->Mon Sprung
+        const diffDays = Math.round((date1 - date2) / oneDayMs);
+        if (diffDays === 1) return true; // normaler aufeinanderfolgender Tag
+        if (diffDays === 3 && date2.getDay() === 5) return true; // Freitag→Montag
         return false;
     }
 
@@ -19018,12 +19040,31 @@ TIPPS:
         if (entries.length === 0) return 0;
         const dates = [...new Set(entries.filter(e => e.type === 'work' || e.type === 'school').map(e => e.date))].sort().reverse();
         if (dates.length === 0) return 0;
+
+        // Prüfe ob der neueste Eintrag aktuell ist (heute oder letzter Arbeitstag)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const lastWorkday = typeof getLastWorkday === 'function' ? getLastWorkday(today) : (function() {
+            const d = new Date(today);
+            const dow = d.getDay();
+            if (dow === 0) d.setDate(d.getDate() - 2);
+            else if (dow === 6) d.setDate(d.getDate() - 1);
+            else { d.setDate(d.getDate() - 1); if (d.getDay() === 0) d.setDate(d.getDate() - 2); else if (d.getDay() === 6) d.setDate(d.getDate() - 1); }
+            d.setHours(0, 0, 0, 0);
+            return d;
+        })();
+
+        const newestDate = new Date(dates[0]);
+        newestDate.setHours(0, 0, 0, 0);
+        // Streak nur zählen wenn der letzte Eintrag von heute oder dem letzten Arbeitstag ist
+        if (newestDate.getTime() !== today.getTime() && newestDate < lastWorkday) return 0;
+
         let streak = 1;
         for (let i = 0; i < dates.length - 1; i++) {
             const d1 = new Date(dates[i]);
             const d2 = new Date(dates[i + 1]);
             const diffDays = Math.floor((d1 - d2) / 86400000);
-            if (diffDays === 1 || (diffDays <= 3 && d2.getDay() === 5)) { // skip weekends
+            if (diffDays === 1 || (diffDays <= 3 && d2.getDay() === 5)) {
                 streak++;
             } else break;
         }
