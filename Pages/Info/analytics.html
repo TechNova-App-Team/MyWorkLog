@@ -393,6 +393,56 @@
         /* Last Updated */
         .last-updated { font-size: 0.8rem; color: var(--text-muted); opacity: 0.6; margin-top: 0.8rem; }
 
+        /* Skeleton Loading */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            background-size: 200% 100%;
+            animation: skeleton-pulse 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes skeleton-pulse {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton-kpi-value {
+            height: 2rem; margin: 0.5rem 0; width: 70%;
+        }
+
+        .skeleton-kpi-sub {
+            height: 0.8rem; margin-top: 0.4rem; width: 80%;
+        }
+
+        .skeleton-bar-chart {
+            display: flex; align-items: flex-end; gap: 4px; height: 180px;
+        }
+
+        .skeleton-bar {
+            flex: 1; background: var(--skeleton); 
+            border-radius: 4px 4px 0 0; 
+            animation: skeleton-pulse 1.5s infinite;
+            background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            background-size: 200% 100%;
+        }
+
+        .skeleton-table-row {
+            display: grid; grid-template-columns: 30px 1fr 80px 80px 80px; gap: 1rem;
+            padding: 0.75rem 0; border-bottom: 1px solid var(--border);
+            align-items: center;
+        }
+
+        .skeleton-table-cell {
+            height: 1rem;
+            border-radius: 4px;
+            animation: skeleton-pulse 1.5s infinite;
+            background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+            background-size: 200% 100%;
+        }
+
+        .skeleton-hidden { display: none; }
+        .data-hidden { display: none; }
+
         /* Responsive */
         @media (max-width: 768px) {
             body { padding: 0.75rem; }
@@ -478,6 +528,40 @@
             </div>
         </div>
 
+        <!-- KPI Skeletons -->
+        <div class="kpi-grid" id="mainKpisSkeletons">
+            <div class="kpi-card purple">
+                <div class="kpi-icon">👁️</div>
+                <div class="kpi-label">Seitenaufrufe</div>
+                <div class="skeleton skeleton-kpi-value"></div>
+                <div class="skeleton skeleton-kpi-sub"></div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-icon">👥</div>
+                <div class="kpi-label">Besucher</div>
+                <div class="skeleton skeleton-kpi-value"></div>
+                <div class="skeleton skeleton-kpi-sub"></div>
+            </div>
+            <div class="kpi-card cyan">
+                <div class="kpi-icon">🔗</div>
+                <div class="kpi-label">Sessions</div>
+                <div class="skeleton skeleton-kpi-value"></div>
+                <div class="skeleton skeleton-kpi-sub"></div>
+            </div>
+            <div class="kpi-card yellow">
+                <div class="kpi-icon">⏱️</div>
+                <div class="kpi-label">Ø Verweildauer</div>
+                <div class="skeleton skeleton-kpi-value"></div>
+                <div class="skeleton skeleton-kpi-sub"></div>
+            </div>
+            <div class="kpi-card red">
+                <div class="kpi-icon">🚀</div>
+                <div class="kpi-label">Bounce Rate</div>
+                <div class="skeleton skeleton-kpi-value"></div>
+                <div class="skeleton skeleton-kpi-sub"></div>
+            </div>
+        </div>
+
         <!-- CHARTS ROW -->
         <div class="grid-2">
             <div class="section-card">
@@ -491,6 +575,38 @@
             <div class="section-card">
                 <h3>👥 Unique Visitors <span class="badge" id="chartPeriodLabel2">7 Tage</span></h3>
                 <div class="bar-chart" id="visitorsChart"></div>
+            </div>
+        </div>
+
+        <!-- Chart Skeletons -->
+        <div class="grid-2">
+            <div class="section-card">
+                <h3>📈 Seitenaufrufe &amp; Sessions <span class="badge" id="chartPeriodLabelSkel">7 Tage</span></h3>
+                <div class="skeleton-bar-chart" id="pageviewsChartSkeleton">
+                    <div class="skeleton-bar" style="height:60%;"></div>
+                    <div class="skeleton-bar" style="height:40%;"></div>
+                    <div class="skeleton-bar" style="height:75%;"></div>
+                    <div class="skeleton-bar" style="height:90%;"></div>
+                    <div class="skeleton-bar" style="height:45%;"></div>
+                    <div class="skeleton-bar" style="height:55%;"></div>
+                    <div class="skeleton-bar" style="height:70%;"></div>
+                </div>
+                <div style="display:flex; gap:1.5rem; margin-top:0.8rem; justify-content:center;">
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--primary)"></div> Pageviews</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--info)"></div> Sessions</div>
+                </div>
+            </div>
+            <div class="section-card">
+                <h3>👥 Unique Visitors <span class="badge" id="chartPeriodLabelSkel2">7 Tage</span></h3>
+                <div class="skeleton-bar-chart" id="visitorsChartSkeleton">
+                    <div class="skeleton-bar" style="height:50%;"></div>
+                    <div class="skeleton-bar" style="height:65%;"></div>
+                    <div class="skeleton-bar" style="height:80%;"></div>
+                    <div class="skeleton-bar" style="height:35%;"></div>
+                    <div class="skeleton-bar" style="height:70%;"></div>
+                    <div class="skeleton-bar" style="height:55%;"></div>
+                    <div class="skeleton-bar" style="height:85%;"></div>
+                </div>
             </div>
         </div>
 
@@ -540,6 +656,55 @@
                     <thead><tr><th>#</th><th>Titel</th><th>Aufrufe</th><th>Anteil</th></tr></thead>
                     <tbody></tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Table Skeleton -->
+        <div class="section-card" style="margin-top: 1.5rem;" id="tableSkeletonContainer">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab(this, 'pages')">🔥 Top Seiten</button>
+                <button class="tab-btn" onclick="switchTab(this, 'entry')">🚪 Entry Pages</button>
+                <button class="tab-btn" onclick="switchTab(this, 'exit')">🚶 Exit Pages</button>
+                <button class="tab-btn" onclick="switchTab(this, 'referrers')">🔗 Referrers</button>
+                <button class="tab-btn" onclick="switchTab(this, 'channels')">📢 Channels</button>
+                <button class="tab-btn" onclick="switchTab(this, 'titles')">📄 Seitentitel</button>
+            </div>
+            <div style="padding: 1rem;">
+                <div class="skeleton-table-row">
+                    <div class="skeleton-table-cell" style="width:30px;"></div>
+                    <div class="skeleton-table-cell" style="flex:1;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                </div>
+                <div class="skeleton-table-row">
+                    <div class="skeleton-table-cell" style="width:30px;"></div>
+                    <div class="skeleton-table-cell" style="flex:1;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                </div>
+                <div class="skeleton-table-row">
+                    <div class="skeleton-table-cell" style="width:30px;"></div>
+                    <div class="skeleton-table-cell" style="flex:1;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                </div>
+                <div class="skeleton-table-row">
+                    <div class="skeleton-table-cell" style="width:30px;"></div>
+                    <div class="skeleton-table-cell" style="flex:1;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                </div>
+                <div class="skeleton-table-row">
+                    <div class="skeleton-table-cell" style="width:30px;"></div>
+                    <div class="skeleton-table-cell" style="flex:1;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                    <div class="skeleton-table-cell" style="width:80px;"></div>
+                </div>
             </div>
         </div>
 
@@ -1071,6 +1236,31 @@
         }
 
         // =========================================
+        //  SKELETON LOADING
+        // =========================================
+        function showSkeletons() {
+            document.getElementById('mainKpis').style.display = 'none';
+            document.getElementById('mainKpisSkeletons').style.display = 'grid';
+            document.getElementById('pageviewsChart').parentElement.parentElement.style.display = 'none';
+            document.getElementById('visitorsChart').parentElement.parentElement.style.display = 'none';
+            document.getElementById('pageviewsChartSkeleton').parentElement.parentElement.style.display = 'grid';
+            document.getElementById('visitorsChartSkeleton').parentElement.parentElement.style.display = 'grid';
+            document.getElementById('tableSkeletonContainer').style.display = 'block';
+            document.querySelector('.section-card:has(#topPagesTable)').style.display = 'none';
+        }
+
+        function hideSkeletons() {
+            document.getElementById('mainKpis').style.display = 'grid';
+            document.getElementById('mainKpisSkeletons').style.display = 'none';
+            document.getElementById('pageviewsChart').parentElement.parentElement.style.display = 'grid';
+            document.getElementById('visitorsChart').parentElement.parentElement.style.display = 'grid';
+            document.getElementById('pageviewsChartSkeleton').parentElement.parentElement.style.display = 'none';
+            document.getElementById('visitorsChartSkeleton').parentElement.parentElement.style.display = 'none';
+            document.getElementById('tableSkeletonContainer').style.display = 'none';
+            document.querySelector('.section-card:has(#topPagesTable)').style.display = 'block';
+        }
+
+        // =========================================
         //  LOAD ALL DATA
         // =========================================
         async function loadAll() {
@@ -1082,6 +1272,8 @@
             var btn = document.getElementById('refreshBtn');
             btn.disabled = true;
             btn.innerHTML = '⏳ Laden...';
+
+            showSkeletons();
 
             try {
                 var range = getRange(currentRange);
@@ -1218,8 +1410,11 @@
                 // ── Timestamp ──
                 document.getElementById('lastUpdated').textContent = 'Zuletzt aktualisiert: ' + new Date().toLocaleString('de-DE');
 
+                hideSkeletons();
+
             } catch (err) {
                 console.error('Analytics Error:', err);
+                hideSkeletons();
                 if (err.message.indexOf('401') !== -1 || err.message.indexOf('403') !== -1) {
                     document.getElementById('configNotice').style.display = 'block';
                     alert('❌ Ungültiger API Token!\n\nBitte neuen Token erstellen unter:\nUmami Cloud → Settings → API Keys');
