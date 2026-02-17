@@ -69,6 +69,19 @@
 <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <!-- Umami Analytics - Privacy Focused -->
 <script defer src="https://cloud.umami.is/script.js" data-website-id="1ad00d56-ca9d-4fc7-a252-26ca5bd8acf8"></script>
+<script>
+/** Umami Deep-Tracking Helpers – SPA Page Views & Custom Events */
+function uPageView(path, title) {
+    if (typeof umami !== 'undefined' && umami.track) {
+        try { umami.track(props => ({ ...props, url: path, title: title || path })); } catch(e){}
+    }
+}
+function uEvent(eventName, eventData) {
+    if (typeof umami !== 'undefined' && umami.track) {
+        try { umami.track(eventName, eventData || {}); } catch(e){}
+    }
+}
+</script>
 <!-- EmailJS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>emailjs.init('dLaRbQLynU5R8A0ti');</script>
@@ -7597,6 +7610,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     }
 
     function saveEditEntry() {
+        uEvent('entry-edit-saved');
         if (!editingEntryId) return;
 
         const entry = data.entries.find(x => x.id === editingEntryId);
@@ -8050,6 +8064,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     }
 
     function restoreSingleTrash(trashIndex) {
+        uEvent('trash-restore');
         if (!data.trash || data.trash.length === 0) return;
         const t = data.trash[trashIndex];
         if (!t) return;
@@ -8142,6 +8157,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         document.getElementById('view-' + tabId).classList.add('active');
         const navEl = document.getElementById('nav-' + tabId);
         if(navEl) navEl.classList.add('active');
+
+        // Umami SPA Page View
+        uPageView('/app/' + tabId, 'MyWorkLog – ' + tabId);
         
         // Sync mobile bottom nav
         document.querySelectorAll('.mob-nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -8910,6 +8928,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     }
 
     function handleEntry() {
+        uEvent('entry-save-attempt');
         const dateStr = document.getElementById('inpDate').value;
         const type = document.getElementById('inpType').value;
         const start = document.getElementById('inpStart').value;
@@ -9076,6 +9095,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         
         data.entries.sort((a,b) => new Date(b.date) - new Date(a.date));
         save();
+        uEvent('entry-saved', { type: type, isEdit: !!editId });
         
         // NEU: Mood Selector nach Eintrag
         if (!editId) { // Nur bei neuen Einträgen
@@ -9137,6 +9157,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     }
     
     function timerAction(act) {
+        uEvent('timer-' + act);
         const now = Date.now();
         if (act === 'start') {
             if (!timer.running) { 
@@ -11326,6 +11347,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     
     // Plan auf die tatsächlichen Entries anwenden
     function applyPrognosePlan() {
+        uEvent('prognose-plan-apply');
         const planCount = Object.keys(data.settings.prognosePlan).length;
         
         if (planCount === 0) {
@@ -11850,6 +11872,7 @@ TIPPS:
 
     // ===== BACKUP IMPORT MENU =====
     function showBackupMenu() {
+        uEvent('backup-import-menu');
         const menu = document.createElement('div');
         menu.style.cssText = `
             position: fixed;
@@ -11933,6 +11956,7 @@ TIPPS:
     
     // ===== BACKUP EXPORT MENU =====
     function showExportMenu() {
+        uEvent('backup-export-menu');
         const menu = document.createElement('div');
         menu.style.cssText = `
             position: fixed;
@@ -12048,6 +12072,7 @@ TIPPS:
     }
 
     async function generateAndDownloadICalFile() {
+        uEvent('ical-export');
         const dateRangeSelect = document.getElementById('iCalDateRange');
         const typeFilterSelect = document.getElementById('iCalTypeFilter');
         const includeAlarms = document.getElementById('iCalIncludeAlarms')?.checked ?? true;
@@ -13474,6 +13499,7 @@ TIPPS:
     
     // Export mit Verschlüsselung
     async function exportEncryptedBackup() {
+        uEvent('backup-export-encrypted');
         console.log('[DEBUG] exportEncryptedBackup called');
         
         const modal = document.getElementById('encryptedBackupModal');
@@ -13711,6 +13737,7 @@ TIPPS:
     }
 
     function exportData(format) {
+        uEvent('backup-export', { format: format });
         if (format === 'json') {
              const backup = collectFullBackup();
              const a = document.createElement('a');
@@ -13736,6 +13763,7 @@ TIPPS:
     }
     
     function importData(e) {
+        uEvent('backup-import');
         const r = new FileReader();
         r.onload = ev => { 
             try { 
@@ -13998,6 +14026,7 @@ TIPPS:
     
     
     function switchSettingsTab(tabName) {
+        uPageView('/app/settings/' + tabName, 'Settings – ' + tabName);
         // Alle Tab-Contents verstecken
         document.querySelectorAll('.settings-tab-content').forEach(el => el.style.display = 'none');
         // Alle Tab-Buttons deaktivieren
@@ -14067,6 +14096,7 @@ TIPPS:
     }
     
     function openSettings() {
+        uEvent('settings-open');
         document.getElementById('settingsModal').classList.add('active');
         switchSettingsTab('profile'); // Standardmäßig auf Profile Tab
         
@@ -14195,6 +14225,7 @@ TIPPS:
     }
 
     function openRecoveryModal() {
+        uEvent('recovery-modal-open');
         const modal = document.getElementById('recoveryModal');
         if(!modal) return;
         modal.classList.add('active');
@@ -18434,6 +18465,7 @@ TIPPS:
     }
 
     function startPomodoroTimer() {
+        uEvent('pomodoro-start');
         if (pomodoroState.intervalId) clearInterval(pomodoroState.intervalId);
         
         pomodoroState.intervalId = setInterval(() => {
@@ -18498,6 +18530,7 @@ TIPPS:
 
     // FEATURE 4: Dark/Light Mode Theme
     function setTheme(theme) {
+        uEvent('theme-switch', { theme: theme });
         if (theme === 'light') {
             document.documentElement.style.setProperty('--bg-deep', '#f5f5f7');
             document.documentElement.style.setProperty('--bg-glass', 'rgba(245, 245, 247, 0.8)');
@@ -20601,6 +20634,7 @@ function startFocusMode() {
 }
 
 function startFocusTimer() {
+    uEvent('focus-timer-start');
     if (focusRunning) return;
     focusRunning = true;
     document.getElementById('focusStartBtn').disabled = true;
@@ -21818,6 +21852,7 @@ function clearConversation() {
 function sendAIBotMessage() {
     const input = document.getElementById('aiBotInput');
     if (!input || !input.value.trim()) return;
+    uEvent('aibot-message');
     
     const message = input.value.trim();
     addAIBotMessage(message, 'user');
