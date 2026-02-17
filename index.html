@@ -955,6 +955,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         .entry-row:hover { background: rgba(255,255,255,0.04); transform: translateX(4px); }
         .entry-row.type-work { border-color: var(--primary); }
         .entry-row.type-vacation { border-color: var(--success); }
+        .entry-row.type-gleittag { border-color: #f59e0b; }
         .entry-row.type-sick { border-color: var(--danger); }
         .entry-row.type-school { border-color: var(--school); }
         .entry-row.type-holiday { border-color: var(--holiday); } 
@@ -1981,6 +1982,10 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         .prognose-day.type-vacation { 
             border-color: rgba(16, 185, 129, 0.5);
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+        }
+        .prognose-day.type-gleittag { 
+            border-color: rgba(245, 158, 11, 0.6);
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.05) 100%);
         }
         .prognose-day.type-holiday { 
             border-color: rgba(245, 158, 11, 0.5);
@@ -3249,6 +3254,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         .mini-cal-day.type-vacation { background: rgba(16,185,129,0.25); border-color: rgba(16,185,129,0.3); }
         .mini-cal-day.type-sick { background: rgba(239,68,68,0.25); border-color: rgba(239,68,68,0.3); }
         .mini-cal-day.type-holiday { background: rgba(245,158,11,0.25); border-color: rgba(245,158,11,0.3); }
+        .mini-cal-day.type-gleittag { background: rgba(245,158,11,0.2); border-color: rgba(245,158,11,0.4); }
         .mini-cal-day.is-today {
             border: 2px solid var(--primary) !important;
             box-shadow: 0 0 8px rgba(168,85,247,0.3);
@@ -4767,6 +4773,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                                     <option value="work">💼 Arbeit</option>
                                     <option value="school">📚 Berufsschule</option>
                                     <option value="vacation">🌴 Urlaub</option>
+                                    <option value="gleittag">⚡ Gleittag (Überstunden)</option>
                                     <option value="sick">💊 Krank</option>
                                 </select>
                             </div>
@@ -5018,6 +5025,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                                 <option value="work">💼 Arbeit</option>
                                 <option value="school">📚 Schule</option>
                                 <option value="vacation">🌴 Urlaub</option>
+                                <option value="gleittag">⚡ Gleittag</option>
                                 <option value="sick">💊 Krank</option>
                                 <option value="reset">❌ Zurücksetzen</option>
                             </select>
@@ -5727,6 +5735,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         <option value="work">💼 Arbeit</option>
                         <option value="school">📚 Berufsschule</option>
                         <option value="vacation">🌴 Urlaub</option>
+                        <option value="gleittag">⚡ Gleittag</option>
                         <option value="sick">💊 Krank</option>
                         <option value="holiday">🏖️ Feiertag</option>
                     </select>
@@ -6828,6 +6837,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                     
                     <select id="vacationModalPeriodType" class="glass-select" style="margin-bottom:12px;">
                         <option value="vacation">🌴 Urlaub</option>
+                        <option value="gleittag">⚡ Gleittag (Überstunden)</option>
                         <option value="holiday">🏖️ Firmen-Frei/Feiertag</option>
                     </select>
                     
@@ -7075,6 +7085,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         <option value="work">⏱️ Arbeit</option>
                         <option value="school">🎓 Schule</option>
                         <option value="vacation">🏖️ Urlaub</option>
+                        <option value="gleittag">⚡ Gleittag</option>
                         <option value="sick">🤒 Krankheit</option>
                         <option value="holiday">🎉 Feiertag</option>
                     </select>
@@ -7220,6 +7231,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         <option value="work">💼 Arbeit</option>
                         <option value="school">📚 Berufsschule</option>
                         <option value="vacation">🌴 Urlaub</option>
+                        <option value="gleittag">⚡ Gleittag</option>
                         <option value="sick">💊 Krank</option>
                     </select>
                 </div>
@@ -8760,7 +8772,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 if (expected > 0) {
                     const bookedType = bookedDays.get(dateKey);
                     
-                    if (bookedType !== 'vacation' && bookedType !== 'holiday' && bookedType !== 'sick') {
+                    if (bookedType !== 'vacation' && bookedType !== 'holiday' && bookedType !== 'sick' && bookedType !== 'gleittag') {
                         totalExpectedHours += expected;
                     }
                 }
@@ -9015,6 +9027,12 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             
             // Schultag = voller Arbeitstag → diff immer 0
             diff = 0;
+
+        } else if (type === 'gleittag') {
+            // Gleittag: Frei durch Überstundenabbau → zählt als gearbeitet, aber diff = -expected (Überstunden werden abgezogen)
+            worked = 0;
+            diff = -expected;
+            info = `Gleittag (Überstundenabbau: -${expected.toFixed(2)}h) | ${info}`;
 
         } else if (type === 'vacation' || type === 'sick' || type === 'holiday') {
             worked = expected;
@@ -9318,6 +9336,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     }
 
     function recalculateVacationUsed() {
+        // Gleittage zählen NICHT als Urlaubstage (nur echte vacation-Einträge)
         const vacationEntries = data.entries.filter(e => e.type === 'vacation' && e.expected > 0);
         const autoUsedDays = vacationEntries.length;
         data.settings.vacation.used = autoUsedDays + parseFloat(data.settings.vacation.usedManual || 0);
@@ -9632,6 +9651,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             // Nur Arbeits-Summen den aktuellen Trend trennen (für alle Jahre)
             if(e.type==='sick') sickSum += e.worked;
             else if(e.type==='vacation' && entryYear === currentYear) { vacSum += e.worked; usedVacationDays++; }
+            else if(e.type==='gleittag') { /* Gleittag: kein Urlaubstag, Überstunden werden in diff abgezogen */ }
             else if(e.type==='school') schoolSum += (e.expected || e.worked); // Schultag = voller Arbeitstag
             else if(e.type==='holiday' && entryYear === currentYear) holidaySum += e.worked;
             else workSum += e.worked;
@@ -9642,8 +9662,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         data.entries.forEach(e => {
             const d = new Date(e.date);
             total += e.diff;
-            if(e.type === 'work' || e.type === 'school' || e.type === 'vacation' || e.type === 'sick' || e.type === 'holiday') { 
+            if(e.type === 'work' || e.type === 'school' || e.type === 'vacation' || e.type === 'sick' || e.type === 'holiday' || e.type === 'gleittag') { 
                 // Schultag = voller Arbeitstag → expected statt worked für Durchschnitt
+                // Gleittag = zählt als Tag, worked=0
                 totalWorked += (e.type === 'school' ? (e.expected || e.worked) : e.worked); 
                 countDays++; 
             }
@@ -9666,9 +9687,23 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         const avg = countDays > 0 ? totalWorked/countDays : 0;
         document.getElementById('valAvg').innerText = avg.toFixed(1) + 'h';
 
-        const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
-        const dailyDrift = dayOfYear > 0 ? total / dayOfYear : 0;
-        const projected = total + (dailyDrift * (365 - dayOfYear));
+        // Gleitzeit-Prognose: basiert auf Trend im aktuellen Jahr
+        // Nur aktuelle-Jahr-Einträge für den Durchschnitts-Drift verwenden
+        const currentYearEntries = data.entries.filter(e => new Date(e.date).getFullYear() === now.getFullYear());
+        const currentYearDiff = currentYearEntries.reduce((s, e) => s + e.diff, 0);
+        const currentYearDays = currentYearEntries.filter(e => 
+            e.type === 'work' || e.type === 'school' || e.type === 'vacation' || 
+            e.type === 'sick' || e.type === 'holiday' || e.type === 'gleittag'
+        ).length;
+        const avgDiffPerWorkDay = currentYearDays > 0 ? currentYearDiff / currentYearDays : 0;
+        // Tatsächliche verbleibende Arbeitstage (Mo-Fr) von morgen bis 31.12.
+        let remainingWorkDays = 0;
+        {
+            const d = new Date(now); d.setHours(0,0,0,0); d.setDate(d.getDate() + 1);
+            const eoy = new Date(now.getFullYear(), 11, 31);
+            while (d <= eoy) { if (d.getDay() !== 0 && d.getDay() !== 6) remainingWorkDays++; d.setDate(d.getDate() + 1); }
+        }
+        const projected = total + (avgDiffPerWorkDay * remainingWorkDays);
         const projEl = document.getElementById('valProjected');
         projEl.innerText = (projected>=0?'+':'') + projected.toFixed(0) + 'h';
         projEl.className = 'projection-badge ' + (projected >= 0 ? 'positive' : 'negative');
@@ -9807,7 +9842,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     }
 
     function renderLists() {
-        const typeEmoji = {work:'💼', school:'📚', vacation:'🌴', sick:'💊', holiday:'🏖️'};
+        const typeEmoji = {work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'💊', holiday:'🏖️'};
         const createRow = (e) => `
             <div class="entry-row type-${e.type}">
                 <div>
@@ -11178,6 +11213,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             'work': 'var(--primary)',
             'school': 'var(--school)',
             'vacation': 'var(--success)',
+            'gleittag': '#f59e0b',
             'sick': 'var(--danger)',
             'holiday': 'var(--holiday)',
             'reset': '#64748b'
@@ -11190,6 +11226,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             'work': '💼',
             'school': '📚',
             'vacation': '🌴',
+            'gleittag': '⚡',
             'sick': '💊',
             'holiday': '🏖️',
             'reset': '❌'
@@ -11203,9 +11240,11 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         let sickDays = 0;
         let schoolDays = 0;
         let workDays = 0;
+        let gleittagDays = 0;
 
         for (const date in plan) {
             if (plan[date] === 'vacation') vacationDays++;
+            else if (plan[date] === 'gleittag') gleittagDays++;
             else if (plan[date] === 'sick') sickDays++;
             else if (plan[date] === 'school') schoolDays++;
             else if (plan[date] === 'work') workDays++;
@@ -11226,6 +11265,13 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 </div>
                 <div style="font-size:1.5rem;">🌴</div>
             </div>
+            ${gleittagDays > 0 ? `<div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:rgba(255,255,255,0.03); border-radius:10px; border-left:4px solid #f59e0b;">
+                <div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Geplante Gleittage</div>
+                    <div style="font-size:1.5rem; font-weight:700; color:#f59e0b; margin-top:4px;">${gleittagDays}</div>
+                </div>
+                <div style="font-size:1.5rem;">⚡</div>
+            </div>` : ''}
             <div style="display:flex; align-items:center; justify-content:space-between; padding:12px; background:rgba(255,255,255,0.03); border-radius:10px; border-left:4px solid var(--danger);">
                 <div>
                     <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">Geplante Kranktage</div>
@@ -11377,6 +11423,7 @@ GEPLANTE ÄNDERUNGEN:
                 const typeLabel = {
                     'work': 'Arbeit',
                     'vacation': 'Urlaub',
+                    'gleittag': 'Gleittag',
                     'sick': 'Krank',
                     'school': 'Schule',
                     'holiday': 'Feiertag'
@@ -11385,6 +11432,7 @@ GEPLANTE ÄNDERUNGEN:
                 reportContent += `  ${date} (${new Date(date).toLocaleDateString('de-DE', {weekday:'short'})}): ${typeLabel}\n`;
                 
                 if (type === 'vacation') vacationDays++;
+                else if (type === 'gleittag') { /* Gleittag: kein Urlaubstag */ }
                 else if (type === 'sick') sickDays++;
                 else if (type === 'school') schoolDays++;
                 else if (type === 'work') workDays++;
@@ -11493,7 +11541,7 @@ TIPPS:
                     <div class="entry-meta">${e.isPeriod ? esc(e.label) : esc(e.info)} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ MAX!</span>' : ''} ${e.mood ? `<span class="mood-display" title="Stimmung: ${getMoodDescription(e.mood)}">${e.mood}</span>` : ''}</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px;">
-                    <span class="tag">${e.type === 'school' ? 'SCHULE' : (e.type === 'holiday' ? 'FEIERTAG' : e.type.toUpperCase())}</span>
+                    <span class="tag">${e.type === 'school' ? 'SCHULE' : (e.type === 'holiday' ? 'FEIERTAG' : (e.type === 'gleittag' ? 'GLEITTAG' : e.type.toUpperCase()))}</span>
                     ${e.project ? `<span class="tag project-tag">${esc(e.project)}</span>` : ''}
                     <div style="font-weight:700; width:60px; text-align:right; color:${e.diff>=0?'var(--success)':'var(--danger)'}">
                         ${e.diff>=0?'+':''}${e.diff.toFixed(2)}
@@ -11582,7 +11630,7 @@ TIPPS:
         const els = [document.getElementById('inpStart'), document.getElementById('inpEnd')];
         const disableTime = (t !== 'work');
         els.forEach(e => e.disabled = disableTime);
-        document.getElementById('inpHours').disabled = false; 
+        document.getElementById('inpHours').disabled = (t === 'gleittag' || t === 'vacation' || t === 'sick' || t === 'holiday');
     }
 
     function editEntry(id) {
@@ -11840,8 +11888,8 @@ TIPPS:
             " onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'" onclick="closeBackupMenu(); document.getElementById('fileImp').click();">
                 <span style="font-size:1.3rem;">📄</span>
                 <div>
-                    <div style="font-weight:600;">Standard Backup</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">Unverschlüsseltes JSON</div>
+                    <div style="font-weight:600;">Vollständiges Backup</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">JSON-Datei (v2 oder Legacy)</div>
                 </div>
             </button>
             <button style="
@@ -11923,8 +11971,8 @@ TIPPS:
             " onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'" onclick="closeExportMenu(); exportData('json');">
                 <span style="font-size:1.3rem;">📄</span>
                 <div>
-                    <div style="font-weight:600;">Standard Backup</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">Unverschlüsseltes JSON</div>
+                    <div style="font-weight:600;">Vollständiges Backup</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Alle Daten, Settings, Theme, Timer & mehr (JSON)</div>
                 </div>
             </button>
             <button style="
@@ -11945,7 +11993,7 @@ TIPPS:
                 <span style="font-size:1.3rem;">🔒</span>
                 <div>
                     <div style="font-weight:600;">Verschlüsseltes Backup</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">Mit Passwort geschützt</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Alle Daten, AES-256 verschlüsselt</div>
                 </div>
             </button>
             <button style="
@@ -12153,6 +12201,7 @@ TIPPS:
             'work': '⏱️ Arbeit',
             'school': '🎓 Schule',
             'vacation': '🏖️ Urlaub',
+            'gleittag': '⚡ Gleittag',
             'sick': '🤒 Krankheit',
             'holiday': '🎉 Feiertag'
         }[entry.type] || entry.type;
@@ -12188,6 +12237,7 @@ TIPPS:
             'work': '#a855f7',
             'school': '#3b82f6',
             'vacation': '#10b981',
+            'gleittag': '#f59e0b',
             'sick': '#ef4444',
             'holiday': '#f59e0b'
         };
@@ -12251,6 +12301,7 @@ TIPPS:
         { id: 'work', label: '⏱️ Arbeit', emoji: '⏱️', color: '#a855f7', description: 'Normale Arbeitszeit' },
         { id: 'school', label: '📚 Berufsschule', emoji: '📚', color: '#3b82f6', description: 'Berufsschule / Noten' },
         { id: 'vacation', label: '🏖️ Urlaub', emoji: '🏖️', color: '#10b981', description: 'Urlaubstage' },
+        { id: 'gleittag', label: '⚡ Gleittag', emoji: '⚡', color: '#f59e0b', description: 'Gleittag (Überstundenabbau)' },
         { id: 'sick', label: '🤒 Krankheit', emoji: '🤒', color: '#ef4444', description: 'Krankheitstage' },
         { id: 'holiday', label: '🎉 Feiertag', emoji: '🎉', color: '#f59e0b', description: 'Offizielle Feiertage' }
     ];
@@ -13481,7 +13532,7 @@ TIPPS:
             console.log('[DEBUG] Starting encryption...');
             console.log('[DEBUG] Data object size:', JSON.stringify(data).length, 'bytes');
             
-            const jsonData = JSON.stringify(data);
+            const jsonData = JSON.stringify(collectFullBackup());
             const encryptedData = await encryptBackupData(jsonData, password);
             
             console.log('[DEBUG] Encryption successful, encrypted size:', encryptedData.length, 'bytes');
@@ -13558,22 +13609,20 @@ TIPPS:
         try {
             const encryptedJson = await file.text();
             const plainJson = await decryptBackupData(encryptedJson, password);
-            const importedData = JSON.parse(plainJson);
+            const parsed = JSON.parse(plainJson);
             
-            // Validierung der Datenstruktur
-            if (!importedData.entries || !importedData.settings) {
-                throw new Error('Ungültige Datenstruktur in Backup');
-            }
-            
-            // Daten ersetzen
-            data = importedData;
-            save();
+            // Unterstützt v2 (full) und v1 (legacy)
+            restoreFullBackup(parsed);
             
             passwordInput.value = '';
             modal.classList.remove('active');
             window.pendingEncryptedBackupFile = null;
             
-            showCustomMessage('✅ Daten wiederhergestellt', 'Verschlüsseltes Backup erfolgreich importiert. Seite wird aktualisiert...', 'success');
+            showCustomMessage('✅ Daten wiederhergestellt', 
+                parsed._backupVersion === 2 
+                    ? `Vollständiges verschlüsseltes Backup (${parsed._keyCount || '?'} Keys) wiederhergestellt. Seite wird aktualisiert...`
+                    : 'Legacy-Backup entschlüsselt & importiert. Seite wird aktualisiert...', 
+                'success');
             setTimeout(() => location.reload(), 1500);
         } catch (e) {
             showCustomMessage('❌ Import fehlgeschlagen', e.message, 'error');
@@ -13617,16 +13666,62 @@ TIPPS:
         if (labelEl) labelEl.textContent = level.label;
     }
     
+    // ========== FULL LOCALSTORAGE BACKUP HELPERS ==========
+    // Sammelt ALLE relevanten localStorage-Schlüssel für ein vollständiges Backup
+    function collectFullBackup() {
+        const snapshot = {};
+        const skipPrefixes = ['p2p_signal_', 'p2p_answer_', 'p2p_candidates_'];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            // P2P-Signaling ist transient → nicht sichern
+            if (skipPrefixes.some(p => key.startsWith(p))) continue;
+            try { snapshot[key] = localStorage.getItem(key); } catch(e) {}
+        }
+        return {
+            _backupVersion: 2,
+            _created: new Date().toISOString(),
+            _appName: 'MyWorkLog',
+            _keyCount: Object.keys(snapshot).length,
+            _localStorage: snapshot
+        };
+    }
+
+    // Stellt ein Backup wieder her – unterstützt v2 (full) und v1 (legacy data-only)
+    function restoreFullBackup(parsed) {
+        if (parsed._backupVersion === 2 && parsed._localStorage) {
+            // V2: Komplettes localStorage-Backup
+            // Alle bestehenden App-Keys entfernen
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) keysToRemove.push(localStorage.key(i));
+            keysToRemove.forEach(k => { try { localStorage.removeItem(k); } catch(e){} });
+            // Alle gesicherten Keys wiederherstellen
+            for (const [key, value] of Object.entries(parsed._localStorage)) {
+                try { localStorage.setItem(key, value); } catch(e) {}
+            }
+            // Aktuelles data-Objekt aus wiederhergestelltem Storage laden
+            const restored = localStorage.getItem('tg_pro_data');
+            if (restored) data = JSON.parse(restored);
+        } else if (parsed.entries && parsed.settings) {
+            // V1 Legacy: nur data-Objekt
+            data = parsed;
+            save();
+        } else {
+            throw new Error('Ungültige Backup-Datei: weder v2-Format noch gültiges Legacy-Format erkannt.');
+        }
+    }
+
     function exportData(format) {
         if (format === 'json') {
+             const backup = collectFullBackup();
              const a = document.createElement('a');
-             a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], {type:'application/json'}));
-             a.download = 'time_pro_backup.json';
+             a.href = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'}));
+             a.download = 'MyWorkLog_Backup_' + new Date().toISOString().split('T')[0] + '.json';
              a.click();
+             URL.revokeObjectURL(a.href);
              try { localStorage.setItem('tt_last_export', new Date().toISOString()); } catch(e) {}
             try { const today = new Date().toISOString().split('T')[0]; localStorage.setItem('tt_export_reminder_shown_' + today, '1'); } catch(e) {}
             if (typeof updateAlertExportInfo === 'function') setTimeout(updateAlertExportInfo, 300);
-             if (typeof showSmartNotification === 'function') showSmartNotification('💾 Backup', 'JSON-Export gestartet. Datei wurde heruntergeladen.', 'success');
+             if (typeof showSmartNotification === 'function') showSmartNotification('💾 Vollständiges Backup', `${backup._keyCount} localStorage-Keys exportiert. Alle Einstellungen, Timer, Alerts, Theme & mehr gesichert.`, 'success');
         } else if (format === 'csv') {
             const csv = convertToCSV(data.entries);
             const a = document.createElement('a');
@@ -13644,13 +13739,16 @@ TIPPS:
         const r = new FileReader();
         r.onload = ev => { 
             try { 
-                const importedData = JSON.parse(ev.target.result);
-                // Komplette Daten-Struktur ersetzen
-                data = importedData;
-                save(); 
-                location.reload(); 
+                const parsed = JSON.parse(ev.target.result);
+                restoreFullBackup(parsed);
+                showCustomMessage('✅ Backup wiederhergestellt', 
+                    parsed._backupVersion === 2 
+                        ? `Vollständiges Backup vom ${parsed._created?.split('T')[0] || '?'} mit ${parsed._keyCount || '?'} Keys wiederhergestellt. Seite wird neu geladen...` 
+                        : 'Legacy-Backup importiert. Seite wird neu geladen...', 
+                    'success');
+                setTimeout(() => location.reload(), 1500);
             } catch(x){
-                showCustomMessage('❌ Import-Fehler', 'Fehler beim Importieren der Datei. Stelle sicher, dass es eine gültige JSON-Backup-Datei ist.', 'error');
+                showCustomMessage('❌ Import-Fehler', 'Fehler: ' + x.message, 'error');
             } 
         };
         r.readAsText(e.target.files[0]);
@@ -14116,9 +14214,15 @@ TIPPS:
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                window.pendingRecoveryImport = JSON.parse(e.target.result);
-                const count = (window.pendingRecoveryImport.entries || []).length;
-                showCustomMessage('📥 Import bereit', `${count} Einträge geladen. Klicke 'Import & Apply' um anzuwenden.`, 'success');
+                const parsed = JSON.parse(e.target.result);
+                window.pendingRecoveryImport = parsed;
+                if (parsed._backupVersion === 2 && parsed._localStorage) {
+                    const count = parsed._localStorage['tg_pro_data'] ? (JSON.parse(parsed._localStorage['tg_pro_data']).entries || []).length : 0;
+                    showCustomMessage('📥 Full-Backup bereit', `V2-Backup vom ${parsed._created?.split('T')[0] || '?'} mit ${parsed._keyCount} Keys & ${count} Einträgen. Klicke 'Import & Apply'.`, 'success');
+                } else {
+                    const count = (parsed.entries || []).length;
+                    showCustomMessage('📥 Legacy-Import bereit', `${count} Einträge geladen. Klicke 'Import & Apply' um anzuwenden.`, 'success');
+                }
             } catch (err) {
                 console.error('Import parse error', err);
                 showCustomMessage('❌ Fehler', 'Ungültiges JSON.', 'error');
@@ -14131,14 +14235,12 @@ TIPPS:
     function finalizeRecoveryImport() {
         if(!window.pendingRecoveryImport) return showCustomMessage('ℹ️ Kein Import', 'Bitte zuerst eine Datei auswählen (Import Backup).', 'info');
         try {
-            applyDataDefaults(window.pendingRecoveryImport);
-            localStorage.setItem('tg_pro_data', JSON.stringify(window.pendingRecoveryImport));
-            localStorage.setItem('tg_last_save', Date.now());
-            showCustomMessage('✅ Import angewendet', 'Die importierten Daten wurden übernommen. Die Seite lädt neu.', 'success');
+            restoreFullBackup(window.pendingRecoveryImport);
+            showCustomMessage('✅ Import angewendet', 'Backup wiederhergestellt. Die Seite lädt neu.', 'success');
             setTimeout(() => location.reload(), 800);
         } catch (e) {
             console.error('Finalize import failed', e);
-            showCustomMessage('❌ Fehler', 'Import fehlgeschlagen. Siehe Konsole.', 'error');
+            showCustomMessage('❌ Fehler', 'Import fehlgeschlagen: ' + e.message, 'error');
         }
     }
 
@@ -16199,6 +16301,7 @@ TIPPS:
             let dayHasWork = false;
             let dayHasSchool = false;
             let dayHasVacation = false;
+            let dayHasGleittag = false;
             let dayHasSick = false;
             let dayHasHoliday = false;
 
@@ -16227,6 +16330,8 @@ TIPPS:
                     dayHasSchool = true;
                 } else if (type === 'vacation') {
                     dayHasVacation = true;
+                } else if (type === 'gleittag') {
+                    dayHasGleittag = true;
                 } else if (type === 'sick') {
                     dayHasSick = true;
                 } else if (type === 'holiday') {
@@ -16242,6 +16347,7 @@ TIPPS:
             }
             if (dayHasSchool) stats.schoolDays += 1;
             if (dayHasVacation) stats.vacationDays += 1;
+            if (dayHasGleittag) stats.gleittagDays = (stats.gleittagDays || 0) + 1;
             if (dayHasSick) stats.sickDays += 1;
             if (dayHasHoliday) stats.holidayDays += 1;
 
@@ -16424,6 +16530,8 @@ TIPPS:
             } else if (e.type === 'vacation') {
                 vacationDays++;
                 daysByMonth[month].vacationDays++;
+            } else if (e.type === 'gleittag') {
+                // Gleittag: zählt nicht als Urlaub/Feiertag
             } else if (e.type === 'holiday') {
                 holidayDays++;
                 daysByMonth[month].holidayDays++;
@@ -16516,6 +16624,9 @@ TIPPS:
                     } else if (entry.type === 'sick') {
                         color = '#ec4899'; // Pink für Krankheit
                         opacity = '0.75';
+                    } else if (entry.type === 'gleittag') {
+                        color = '#f59e0b'; // Amber für Gleittag ⚡
+                        opacity = '0.75';
                     } else {
                         // PRIORITÄT 2: Farbe basierend auf diff (Saldo)
                         const diff = entry.diff;
@@ -16548,6 +16659,7 @@ TIPPS:
                     else if (entry.type === 'holiday') typeLabel = ' 🏖️ Feiertag';
                     else if (entry.type === 'sick') typeLabel = ' 🤒 Krankheit';
                     else if (entry.type === 'school') typeLabel = ' 📚 Schule';
+                    else if (entry.type === 'gleittag') typeLabel = ' ⚡ Gleittag';
                     else typeLabel = ' 💼 Arbeit';
                 }
                 const tooltip = entry ? `${entry.worked.toFixed(1)}h (${entry.diff >= 0 ? '+' : ''}${entry.diff.toFixed(1)}h)${typeLabel}` : 'Kein Eintrag';
@@ -18686,7 +18798,7 @@ TIPPS:
             if (isWeekend && !entryType) classes += ' is-weekend';
 
             const title = entryType ?
-                `${dateStr}: ${entryType === 'work' ? 'Arbeit' : entryType === 'school' ? 'Schule' : entryType === 'vacation' ? 'Urlaub' : entryType === 'sick' ? 'Krank' : 'Feiertag'}` :
+                `${dateStr}: ${entryType === 'work' ? 'Arbeit' : entryType === 'school' ? 'Schule' : entryType === 'vacation' ? 'Urlaub' : entryType === 'gleittag' ? 'Gleittag' : entryType === 'sick' ? 'Krank' : 'Feiertag'}` :
                 dateStr;
 
             html += `<div class="${classes}" title="${title}" onclick="miniCalDayClick('${dateStr}')">${day}</div>`;
@@ -18878,8 +18990,8 @@ TIPPS:
 
         // ========== DAILY BREAKDOWN ==========
         const dayNames = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
-        const dayEmojis = { work: '💼', school: '🎓', vacation: '🏖️', sick: '🤒', holiday: '🎉' };
-        const dayColors = { work: 'var(--primary)', school: 'var(--school)', vacation: '#3b82f6', sick: '#f472b6', holiday: '#f59e0b' };
+        const dayEmojis = { work: '💼', school: '🎓', vacation: '🏖️', gleittag: '⚡', sick: '🤒', holiday: '🎉' };
+        const dayColors = { work: 'var(--primary)', school: 'var(--school)', vacation: '#3b82f6', gleittag: '#f59e0b', sick: '#f472b6', holiday: '#f59e0b' };
         const dailyContainer = document.getElementById('wvDailyBreakdown');
         if (dailyContainer) {
             let html = '<div style="display:flex; flex-direction:column; gap:8px;">';
@@ -19101,6 +19213,7 @@ TIPPS:
         const workEntries = entries.filter(e => e.type === 'work');
         const schoolEntries = entries.filter(e => e.type === 'school');
         const vacationEntries = entries.filter(e => e.type === 'vacation');
+        const gleittagEntries = entries.filter(e => e.type === 'gleittag');
         const sickEntries = entries.filter(e => e.type === 'sick');
         const holidayEntries = entries.filter(e => e.type === 'holiday');
         
