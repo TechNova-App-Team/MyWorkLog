@@ -7,14 +7,21 @@
     <script defer src="../../Assets/js/touch-mobile-optimizations.js"></script>
     <title>Berichtsheft Generator - IHK Ausbildungsnachweis</title>
     <style>
+        /* ═══════════════════════════════════════════════════════════
+           BERICHTSHEFT.PRO — PREMIUM UI v2.0
+           ═══════════════════════════════════════════════════════════ */
+
         /* --- CORE VARIABLES --- */
         :root {
             --bg-deep: #030305;
             --bg-glass: rgba(22, 22, 26, 0.65);
+            --bg-glass-heavy: rgba(16, 16, 20, 0.85);
             --bg-sidebar: rgba(10, 10, 12, 0.95);
             --primary: #a855f7;
             --primary-rgb: 168, 85, 247;
             --primary-dim: rgba(168, 85, 247, 0.1);
+            --secondary: #ec4899;
+            --secondary-rgb: 236, 72, 153;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --success: #10b981;
@@ -24,19 +31,29 @@
             --warning: #f59e0b;
             --warning-rgb: 245, 158, 11;
             --info: #3b82f6;
+            --info-rgb: 59, 130, 246;
+            --cyan: #06b6d4;
+            --cyan-rgb: 6, 182, 212;
             --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
             --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
             --radius: 20px;
+            --radius-sm: 12px;
+            --shadow-glow: 0 0 40px rgba(var(--primary-rgb), 0.15);
+            --transition-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+            --transition-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         [data-theme="light"] {
             --bg-deep: #f8fafc;
             --bg-glass: rgba(255,255,255,0.85);
+            --bg-glass-heavy: rgba(255,255,255,0.92);
             --bg-sidebar: rgba(255,255,255,0.98);
             --text-main: #071023;
             --text-muted: #475569;
             --border: rgba(7, 16, 35, 0.06);
+            --border-hover: rgba(7, 16, 35, 0.12);
             --primary-dim: rgba(168, 85, 247, 0.08);
         }
 
@@ -45,66 +62,163 @@
         body {
             font-family: var(--font-main);
             background-color: var(--bg-deep);
-            background-image:
-                radial-gradient(circle at 15% 15%, rgba(var(--primary-rgb), 0.08), transparent 40%),
-                radial-gradient(circle at 85% 85%, rgba(var(--primary-rgb), 0.05), transparent 40%);
             color: var(--text-main);
             min-height: 100vh;
             padding: 2rem;
             overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ===== ANIMATED BACKGROUND ===== */
+        .bg-mesh {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0;
+            animation: orbDrift linear infinite, orbAppear 2s ease forwards;
+            will-change: transform;
+        }
+        .bg-orb.o1 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(var(--primary-rgb), 0.14), transparent 70%);
+            top: 5%; left: 10%;
+            animation-duration: 28s;
+        }
+        .bg-orb.o2 {
+            width: 320px; height: 320px;
+            background: radial-gradient(circle, rgba(var(--cyan-rgb), 0.10), transparent 70%);
+            top: 55%; right: 5%;
+            animation-duration: 32s; animation-delay: 0.5s;
+        }
+        .bg-orb.o3 {
+            width: 260px; height: 260px;
+            background: radial-gradient(circle, rgba(var(--secondary-rgb), 0.08), transparent 70%);
+            bottom: 10%; left: 35%;
+            animation-duration: 24s; animation-delay: 1s;
+        }
+        .bg-orb.o4 {
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(var(--success-rgb), 0.06), transparent 70%);
+            top: 30%; right: 30%;
+            animation-duration: 20s; animation-delay: 1.5s;
+        }
+        @keyframes orbDrift {
+            0%   { transform: translate(0, 0) scale(1); }
+            25%  { transform: translate(50px, -40px) scale(1.06); }
+            50%  { transform: translate(-30px, 30px) scale(0.94); }
+            75%  { transform: translate(40px, 50px) scale(1.04); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+        @keyframes orbAppear { to { opacity: 1; } }
+
+        [data-theme="light"] .bg-orb { filter: blur(100px); }
+        [data-theme="light"] .bg-orb.o1 { background: radial-gradient(circle, rgba(var(--primary-rgb), 0.08), transparent 70%); }
+        [data-theme="light"] .bg-orb.o2 { background: radial-gradient(circle, rgba(var(--cyan-rgb), 0.06), transparent 70%); }
+
+        /* ===== GRID LINES (subtle) ===== */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(var(--primary-rgb), 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(var(--primary-rgb), 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 20%, transparent 70%);
+            -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 20%, transparent 70%);
+        }
+        [data-theme="light"] .bg-grid { background-image:
+            linear-gradient(rgba(var(--primary-rgb), 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(var(--primary-rgb), 0.03) 1px, transparent 1px);
+        }
+
+        /* ===== PAGE WRAPPER ===== */
+        .page-wrap {
+            position: relative;
+            z-index: 1;
         }
 
         /* --- SCROLLBAR --- */
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
-        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); border-radius: 10px; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, var(--primary), rgba(var(--primary-rgb), 0.7));
+            background: linear-gradient(180deg, var(--primary), rgba(var(--primary-rgb), 0.5));
             border-radius: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.05);
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, rgba(var(--primary-rgb), 0.9), var(--primary));
-            box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.4);
+            background: var(--primary);
+            box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.5);
         }
 
-        /* --- HEADER --- */
+        /* ===== HEADER ===== */
         .header {
             max-width: 1400px;
-            margin: 0 auto 3rem;
+            margin: 0 auto 2.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 1.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUp 0.6s var(--transition-smooth) 0.1s forwards;
+        }
+        @keyframes slideUp {
+            to { opacity: 1; transform: translateY(0); }
         }
         .brand {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 800;
             letter-spacing: 0.5px;
-            color: #fff;
+            color: var(--text-main);
             display: flex;
             align-items: center;
             gap: 12px;
         }
-        .brand::before {
-            content:'';
-            display:block;
-            width:16px;
-            height:16px;
-            background:var(--primary);
-            border-radius:50%;
-            box-shadow:0 0 20px var(--primary);
+        .brand-dot {
+            width: 14px; height: 14px;
+            background: var(--primary);
+            border-radius: 50%;
+            box-shadow: 0 0 20px var(--primary), 0 0 40px rgba(var(--primary-rgb), 0.3);
+            animation: brandPulse 3s ease-in-out infinite;
+        }
+        @keyframes brandPulse {
+            0%, 100% { box-shadow: 0 0 15px var(--primary); transform: scale(1); }
+            50% { box-shadow: 0 0 30px var(--primary), 0 0 50px rgba(var(--primary-rgb), 0.3); transform: scale(1.15); }
         }
         .page-title {
             font-size: 2.5rem;
-            font-weight: 700;
-            letter-spacing: -1px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
             margin-top: 0.5rem;
+            background: linear-gradient(135deg, var(--text-main) 0%, var(--primary) 50%, var(--cyan) 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 6s ease infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
         .page-subtitle {
             color: var(--text-muted);
             font-size: 0.95rem;
             margin-top: 0.5rem;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
         .btn-back {
             display: inline-flex;
@@ -114,30 +228,212 @@
             background: var(--bg-glass);
             backdrop-filter: blur(20px);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius-sm);
             color: var(--text-main);
             text-decoration: none;
             font-weight: 500;
-            transition: all 0.3s ease;
+            transition: all 0.3s var(--transition-smooth);
         }
         .btn-back:hover {
-            background: rgba(var(--primary-rgb), 0.15);
+            background: rgba(var(--primary-rgb), 0.12);
             border-color: var(--primary);
             transform: translateX(-4px);
+            box-shadow: 4px 0 20px rgba(var(--primary-rgb), 0.15);
         }
 
-        /* --- CONTAINER --- */
+        /* ===== THEME TOGGLE ===== */
+        .theme-toggle {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s var(--transition-smooth);
+        }
+        .theme-toggle:hover {
+            border-color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.12);
+            transform: rotate(30deg) scale(1.1);
+        }
+
+        /* ===== KEYBOARD SHORTCUT HINT ===== */
+        .kbd-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            opacity: 0.5;
+            margin-left: 6px;
+        }
+        .kbd {
+            display: inline-block;
+            padding: 1px 5px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            line-height: 1.4;
+        }
+        @media (max-width: 768px) { .kbd-hint { display: none; } }
+
+        /* ===== CONTAINER ===== */
         .container {
             max-width: 1400px;
             margin: 0 auto;
         }
 
-        /* --- STATS GRID --- */
+        /* ===== STREAK + PROGRESS BAR ===== */
+        .top-bar {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            opacity: 0;
+            transform: translateY(16px);
+            animation: slideUp 0.6s var(--transition-smooth) 0.2s forwards;
+        }
+        .streak-card {
+            flex: 0 0 auto;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.2rem 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s var(--transition-smooth);
+        }
+        .streak-card:hover {
+            border-color: rgba(var(--warning-rgb), 0.3);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            transform: translateY(-2px);
+        }
+        .streak-fire {
+            font-size: 2rem;
+            animation: fireFlicker 1.5s ease-in-out infinite alternate;
+        }
+        @keyframes fireFlicker {
+            0% { transform: scale(1) rotate(-3deg); filter: brightness(1); }
+            100% { transform: scale(1.1) rotate(3deg); filter: brightness(1.3); }
+        }
+        .streak-num {
+            font-size: 1.8rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            color: var(--warning);
+            line-height: 1;
+        }
+        .streak-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .progress-card {
+            flex: 1;
+            min-width: 250px;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.2rem 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            transition: all 0.3s var(--transition-smooth);
+        }
+        .progress-card:hover {
+            border-color: rgba(var(--primary-rgb), 0.2);
+            transform: translateY(-2px);
+        }
+        .progress-ring-wrap {
+            position: relative;
+            width: 52px; height: 52px;
+            flex-shrink: 0;
+        }
+        .progress-ring-wrap svg { transform: rotate(-90deg); }
+        .progress-ring-bg {
+            fill: none;
+            stroke: rgba(var(--primary-rgb), 0.1);
+            stroke-width: 4;
+        }
+        .progress-ring-val {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 4;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s var(--transition-smooth);
+            filter: drop-shadow(0 0 4px rgba(var(--primary-rgb), 0.4));
+        }
+        .progress-ring-text {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            color: var(--primary);
+        }
+        .progress-info { flex: 1; }
+        .progress-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.3rem;
+        }
+        .progress-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: rgba(var(--primary-rgb), 0.08);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--cyan));
+            transition: width 1s var(--transition-smooth);
+            position: relative;
+        }
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 20px; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3));
+            border-radius: 3px;
+            animation: barShine 2s ease-in-out infinite;
+        }
+        @keyframes barShine {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        .progress-sub {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+
+        /* ===== STATS GRID ===== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
+            gap: 1rem;
             margin-bottom: 2rem;
+            opacity: 0;
+            transform: translateY(16px);
+            animation: slideUp 0.6s var(--transition-smooth) 0.3s forwards;
         }
         .stat-card {
             background: var(--bg-glass);
@@ -146,36 +442,185 @@
             border-radius: var(--radius);
             padding: 1.5rem;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.35s var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+            cursor: default;
         }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--cyan));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .stat-card:hover::before { opacity: 1; }
         .stat-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(var(--primary-rgb), 0.3);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            transform: translateY(-6px) scale(1.02);
+            border-color: rgba(var(--primary-rgb), 0.25);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25), var(--shadow-glow);
+        }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(115deg, transparent 42%, rgba(255,255,255,0.03) 48%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0.03) 52%, transparent 58%);
+            animation: shimmerStat 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes shimmerStat {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+        .stat-icon {
+            font-size: 1.6rem;
+            margin-bottom: 0.5rem;
+            display: block;
         }
         .stat-value {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 800;
             color: var(--primary);
             font-family: var(--font-mono);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.3rem;
+            letter-spacing: -1px;
         }
+        .stat-card:nth-child(2) .stat-value { color: var(--cyan); }
+        .stat-card:nth-child(3) .stat-value { color: var(--success); }
+        .stat-card:nth-child(4) .stat-value { color: var(--warning); }
         .stat-label {
             color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 0.78rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            font-weight: 500;
         }
 
-        /* --- CARD --- */
-        .card {
+        /* ===== CALENDAR HEATMAP ===== */
+        .calendar-section {
+            margin-bottom: 2rem;
+            opacity: 0;
+            transform: translateY(16px);
+            animation: slideUp 0.6s var(--transition-smooth) 0.35s forwards;
+        }
+        .calendar-card {
             background: var(--bg-glass);
             backdrop-filter: blur(20px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
+            padding: 1.5rem 2rem;
+        }
+        .calendar-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .calendar-grid {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+        }
+        .cal-week {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .cal-cell {
+            width: 14px; height: 14px;
+            border-radius: 3px;
+            background: rgba(var(--primary-rgb), 0.04);
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            cursor: default;
+            position: relative;
+        }
+        .cal-cell.has-report {
+            background: rgba(var(--primary-rgb), 0.25);
+            border-color: rgba(var(--primary-rgb), 0.15);
+        }
+        .cal-cell.complete {
+            background: rgba(var(--success-rgb), 0.35);
+            border-color: rgba(var(--success-rgb), 0.2);
+        }
+        .cal-cell.signed {
+            background: var(--success);
+            border-color: var(--success);
+            box-shadow: 0 0 6px rgba(var(--success-rgb), 0.4);
+        }
+        .cal-cell:hover {
+            transform: scale(1.5);
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .cal-cell[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-glass-heavy);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .cal-legend {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.8rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            align-items: center;
+        }
+        .cal-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .cal-legend-dot {
+            width: 10px; height: 10px;
+            border-radius: 2px;
+        }
+
+        /* ===== QUICK ACTIONS ===== */
+        .actions-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            opacity: 0;
+            transform: translateY(16px);
+            animation: slideUp 0.6s var(--transition-smooth) 0.4s forwards;
+        }
+
+        /* ===== CARD ===== */
+        .card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
             padding: 2rem;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+            transition: border-color 0.3s, box-shadow 0.3s;
+            opacity: 0;
+            transform: translateY(16px);
+            animation: slideUp 0.6s var(--transition-smooth) 0.45s forwards;
+        }
+        .card:hover {
+            border-color: var(--border-hover);
         }
         .card-header {
             display: flex;
@@ -186,90 +631,120 @@
             gap: 1rem;
         }
         .card-title {
-            font-size: 1.3rem;
+            font-size: 1.25rem;
             font-weight: 700;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        /* --- BUTTONS --- */
+        /* ===== BUTTONS ===== */
         .btn {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 12px 24px;
-            border-radius: 12px;
+            padding: 11px 22px;
+            border-radius: var(--radius-sm);
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             cursor: pointer;
             border: none;
-            transition: all 0.3s ease;
+            transition: all 0.25s var(--transition-smooth);
             text-decoration: none;
+            position: relative;
+            overflow: hidden;
         }
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%), rgba(255,255,255,0.15), transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s;
+            pointer-events: none;
+        }
+        .btn:active::after { opacity: 1; }
+        .btn:active { transform: scale(0.97); }
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), #8b5cf6);
             color: #fff;
-            box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.4);
+            box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);
         }
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.6);
+            box-shadow: 0 8px 25px rgba(var(--primary-rgb), 0.45);
         }
         .btn-secondary {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.04);
             color: var(--text-main);
             border: 1px solid var(--border);
         }
         .btn-secondary:hover {
-            background: rgba(255,255,255,0.1);
-            border-color: var(--primary);
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(var(--primary-rgb), 0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
         }
         .btn-success {
             background: linear-gradient(135deg, var(--success), #059669);
             color: #fff;
+            box-shadow: 0 4px 15px rgba(var(--success-rgb), 0.3);
+        }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(var(--success-rgb), 0.4);
         }
         .btn-danger {
             background: linear-gradient(135deg, var(--danger), #dc2626);
             color: #fff;
         }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-muted);
+            padding: 8px 14px;
+        }
+        .btn-ghost:hover { color: var(--text-main); background: rgba(255,255,255,0.04); }
 
-        /* --- FORM ELEMENTS --- */
+        /* ===== FORM ELEMENTS ===== */
         .form-group {
             margin-bottom: 1.5rem;
+            position: relative;
         }
         .form-label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
             color: var(--text-main);
-            font-size: 0.9rem;
+            font-size: 0.88rem;
+            transition: color 0.3s;
         }
         .form-input,
         .form-textarea,
         .form-select {
             width: 100%;
             padding: 12px 16px;
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.04);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius-sm);
             color: var(--text-main);
             font-family: var(--font-main);
             font-size: 0.95rem;
-            transition: all 0.3s ease;
+            transition: all 0.3s var(--transition-smooth);
         }
         .form-input:focus,
         .form-textarea:focus,
         .form-select:focus {
             outline: none;
             border-color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.05);
-            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+            background: rgba(var(--primary-rgb), 0.04);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.08), 0 4px 12px rgba(0,0,0,0.1);
         }
+        .form-input:focus ~ .form-label,
+        .form-textarea:focus ~ .form-label { color: var(--primary); }
         .form-textarea {
             min-height: 120px;
             resize: vertical;
             font-family: var(--font-main);
+            line-height: 1.7;
         }
         .form-row {
             display: grid;
@@ -277,106 +752,171 @@
             gap: 1rem;
         }
 
-        /* --- REPORT LIST --- */
+        /* ===== QUALITY METER ===== */
+        .quality-meter {
+            margin-top: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .quality-bar-bg {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .quality-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.4s var(--transition-smooth), background 0.4s;
+            width: 0%;
+        }
+        .quality-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            min-width: 32px;
+            text-align: right;
+        }
+        .quality-text {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        /* ===== REPORT LIST ===== */
         .report-list {
             display: grid;
-            gap: 1rem;
+            gap: 0.75rem;
         }
         .report-item {
-            background: rgba(255,255,255,0.03);
+            background: rgba(255,255,255,0.02);
             border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
+            border-radius: var(--radius-sm);
+            padding: 1.25rem 1.5rem;
             display: grid;
             grid-template-columns: auto 1fr auto;
-            gap: 1.5rem;
+            gap: 1.25rem;
             align-items: center;
-            transition: all 0.3s ease;
+            transition: all 0.3s var(--transition-smooth);
             cursor: pointer;
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        .report-item.visible {
+            opacity: 1;
+            transform: translateX(0);
         }
         .report-item:hover {
-            background: rgba(var(--primary-rgb), 0.08);
-            border-color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.06);
+            border-color: rgba(var(--primary-rgb), 0.2);
             transform: translateX(4px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
         }
         .report-week {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
             color: #fff;
-            padding: 8px 16px;
-            border-radius: 8px;
+            padding: 10px 16px;
+            border-radius: 10px;
             font-weight: 700;
             font-family: var(--font-mono);
             text-align: center;
             min-width: 80px;
+            box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.25);
+            transition: box-shadow 0.3s;
         }
-        .report-content {
-            flex: 1;
+        .report-item:hover .report-week {
+            box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.4);
         }
+        .report-content { flex: 1; min-width: 0; }
         .report-title {
             font-weight: 600;
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+            margin-bottom: 0.4rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .report-meta {
             color: var(--text-muted);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             display: flex;
-            gap: 1rem;
+            gap: 0.8rem;
             flex-wrap: wrap;
+            align-items: center;
         }
         .report-actions {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
         .btn-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
+            width: 38px; height: 38px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.04);
             border: 1px solid var(--border);
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 1.1rem;
+            transition: all 0.25s var(--transition-smooth);
+            font-size: 1rem;
+            color: var(--text-muted);
         }
         .btn-icon:hover {
-            background: var(--primary);
+            background: rgba(var(--primary-rgb), 0.15);
             border-color: var(--primary);
+            color: var(--primary);
             transform: scale(1.1);
         }
+        .btn-icon.danger:hover {
+            background: rgba(var(--danger-rgb), 0.15);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        .btn-icon.success:hover {
+            background: rgba(var(--success-rgb), 0.15);
+            border-color: var(--success);
+            color: var(--success);
+        }
 
-        /* --- BADGE --- */
+        /* ===== BADGE ===== */
         .badge {
-            display: inline-block;
-            padding: 4px 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
             border-radius: 6px;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
         }
         .badge-success {
-            background: rgba(var(--success-rgb), 0.15);
+            background: rgba(var(--success-rgb), 0.12);
             color: var(--success);
         }
         .badge-warning {
-            background: rgba(var(--warning-rgb), 0.15);
+            background: rgba(var(--warning-rgb), 0.12);
             color: var(--warning);
         }
         .badge-danger {
-            background: rgba(var(--danger-rgb), 0.15);
+            background: rgba(var(--danger-rgb), 0.12);
             color: var(--danger);
         }
+        .badge-signed {
+            background: rgba(var(--success-rgb), 0.15);
+            color: var(--success);
+            border: 1px solid rgba(var(--success-rgb), 0.2);
+        }
 
-        /* --- MODAL --- */
+        /* ===== MODAL ===== */
         .modal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(10px);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -385,219 +925,724 @@
         }
         .modal.active {
             display: flex;
+            animation: modalBgIn 0.3s ease;
+        }
+        @keyframes modalBgIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
         .modal-content {
-            background: var(--bg-sidebar);
+            background: var(--bg-glass-heavy);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 2rem;
+            padding: 2.5rem;
             max-width: 900px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
             position: relative;
+            animation: modalSlideIn 0.4s var(--transition-smooth);
+        }
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .modal-close {
             position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            width: 40px;
-            height: 40px;
+            top: 1.25rem;
+            right: 1.25rem;
+            width: 40px; height: 40px;
             border-radius: 50%;
             background: rgba(255,255,255,0.05);
             border: 1px solid var(--border);
-            color: var(--text-main);
-            font-size: 1.5rem;
+            color: var(--text-muted);
+            font-size: 1.3rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
+            transition: all 0.3s var(--transition-smooth);
         }
         .modal-close:hover {
-            background: var(--danger);
+            background: rgba(var(--danger-rgb), 0.15);
             border-color: var(--danger);
+            color: var(--danger);
             transform: rotate(90deg);
         }
 
-        /* --- EMPTY STATE --- */
+        /* ===== EMPTY STATE ===== */
         .empty-state {
             text-align: center;
             padding: 4rem 2rem;
         }
         .empty-icon {
-            font-size: 5rem;
+            font-size: 4rem;
             margin-bottom: 1rem;
-            opacity: 0.5;
+            animation: emptyFloat 4s ease-in-out infinite;
+        }
+        @keyframes emptyFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
         }
         .empty-title {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
         .empty-text {
             color: var(--text-muted);
             margin-bottom: 2rem;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
         }
 
-        /* --- SEARCH & FILTER --- */
+        /* ===== SEARCH & FILTER ===== */
         .search-filter-bar {
             display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
             flex-wrap: wrap;
         }
         .search-input {
             flex: 1;
-            min-width: 250px;
-            padding: 12px 16px 12px 44px;
-            background: rgba(255,255,255,0.05);
+            min-width: 220px;
+            padding: 11px 16px 11px 42px;
+            background: rgba(255,255,255,0.04);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius-sm);
             color: var(--text-main);
-            font-size: 0.95rem;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+            font-size: 0.9rem;
+            transition: all 0.3s var(--transition-smooth);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: 12px center;
-            background-size: 20px;
+            background-size: 18px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.08);
         }
         .filter-select {
-            padding: 12px 16px;
-            background: rgba(255,255,255,0.05);
+            padding: 11px 16px;
+            background: rgba(255,255,255,0.04);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius-sm);
             color: var(--text-main);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             cursor: pointer;
+            transition: all 0.3s var(--transition-smooth);
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
-        /* --- TEMPLATE CARDS --- */
+        /* ===== TEMPLATE CARDS ===== */
         .template-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 1rem;
             margin-top: 1.5rem;
         }
         .template-card {
             background: rgba(255,255,255,0.03);
             border: 2px solid var(--border);
-            border-radius: 12px;
+            border-radius: var(--radius-sm);
             padding: 1.5rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s var(--transition-smooth);
             text-align: center;
+            position: relative;
+            overflow: hidden;
         }
+        .template-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(var(--primary-rgb), 0.08), transparent 60%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .template-card:hover::before { opacity: 1; }
         .template-card:hover {
             border-color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.1);
             transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2), 0 0 20px rgba(var(--primary-rgb), 0.1);
         }
         .template-card.selected {
             border-color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.15);
-            box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.3);
+            background: rgba(var(--primary-rgb), 0.1);
         }
         .template-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            position: relative;
+            z-index: 1;
         }
         .template-name {
             font-weight: 700;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
+            position: relative;
+            z-index: 1;
         }
         .template-desc {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== CONFETTI ===== */
+        .confetti-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        .confetti-piece {
+            position: absolute;
+            width: 8px; height: 14px;
+            opacity: 0;
+            animation: confettiFall 2.5s ease-in forwards;
+        }
+        @keyframes confettiFall {
+            0% { opacity: 1; transform: translateY(-20px) rotate(0deg) scale(1); }
+            80% { opacity: 1; }
+            100% { opacity: 0; transform: translateY(100vh) rotate(720deg) scale(0.5); }
+        }
+
+        /* ===== TOAST NOTIFICATION ===== */
+        .toast {
+            position: fixed;
+            top: 2rem; right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: white;
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: toastIn 0.4s var(--transition-smooth);
+            max-width: 400px;
+        }
+        .toast.success { background: rgba(var(--success-rgb), 0.9); border: 1px solid var(--success); }
+        .toast.error { background: rgba(var(--danger-rgb), 0.9); border: 1px solid var(--danger); }
+        .toast.info { background: rgba(var(--info-rgb), 0.9); border: 1px solid var(--info); }
+        .toast.removing { animation: toastOut 0.3s ease forwards; }
+
+        @keyframes toastIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes toastOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(120%); opacity: 0; }
+        }
+
+        /* ===== MODE TOGGLE (Daily/Weekly) ===== */
+        .mode-toggle-wrap {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            opacity: 0;
+            transform: translateY(16px);
+            animation: slideUp 0.6s var(--transition-smooth) 0.15s forwards;
+        }
+        .mode-toggle-label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .mode-toggle {
+            display: flex;
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+        }
+        .mode-toggle-btn {
+            padding: 10px 22px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
             font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s var(--transition-smooth);
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .mode-toggle-btn.active {
+            color: #fff;
+        }
+        .mode-toggle-slider {
+            position: absolute;
+            top: 3px; bottom: 3px;
+            left: 3px;
+            width: calc(50% - 3px);
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            border-radius: 11px;
+            transition: transform 0.35s var(--transition-smooth);
+            box-shadow: 0 2px 10px rgba(var(--primary-rgb), 0.3);
+        }
+        .mode-toggle-slider.right {
+            transform: translateX(100%);
+        }
+        .mode-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            background: rgba(var(--success-rgb), 0.15);
+            color: var(--success);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* ===== DAILY FIELDS ===== */
+        .daily-fields {
+            display: none;
+        }
+        .daily-fields.active {
+            display: block;
+        }
+        .daily-day-block {
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+        .daily-day-block:focus-within {
+            border-color: var(--primary);
+        }
+        .daily-day-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.65rem 1rem;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+        .daily-day-header .day-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .daily-day-header .day-date {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            font-family: var(--font-mono);
+        }
+        .daily-day-header .day-hours {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .daily-day-header .day-hours input {
+            width: 50px;
+            padding: 3px 6px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-main);
+            font-size: 0.78rem;
+            font-family: var(--font-mono);
+            text-align: center;
+        }
+        .daily-day-header .day-hours input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .daily-day-header .day-hours span {
+            font-size: 0.7rem;
             color: var(--text-muted);
         }
-
-        /* --- PRINT STYLES --- */
-        @media print {
-            body {
-                background: white;
-                color: black;
-            }
-            .header, .btn, .search-filter-bar {
-                display: none;
-            }
-            .card {
-                border: 1px solid #ccc;
-                page-break-inside: avoid;
-            }
+        .daily-day-block textarea {
+            width: 100%;
+            min-height: 65px;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-family: var(--font-main);
+            font-size: 0.88rem;
+            line-height: 1.6;
+            resize: vertical;
+        }
+        .daily-day-block textarea:focus {
+            outline: none;
+        }
+        .daily-day-block textarea::placeholder {
+            color: var(--text-muted);
+            opacity: 0.5;
+        }
+        .daily-total-bar {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: var(--font-mono);
         }
 
-        /* --- RESPONSIVE --- */
+        /* ===== AI SUGGESTIONS ===== */
+        .ai-suggestions {
+            margin-top: 0.75rem;
+        }
+        .ai-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .ai-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+        .ai-title .ai-pulse {
+            width: 7px; height: 7px;
+            background: var(--cyan);
+            border-radius: 50%;
+            animation: aiPulse 2s ease-in-out infinite;
+            box-shadow: 0 0 6px var(--cyan);
+        }
+        @keyframes aiPulse {
+            0%, 100% { opacity: 0.5; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        .ai-refresh-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.68rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .ai-refresh-btn:hover {
+            border-color: var(--cyan);
+            color: var(--cyan);
+        }
+        .ai-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .ai-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            background: rgba(var(--cyan-rgb), 0.06);
+            border: 1px solid rgba(var(--cyan-rgb), 0.15);
+            border-radius: 8px;
+            font-size: 0.78rem;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.25s var(--transition-smooth);
+            max-width: 100%;
+            animation: chipIn 0.3s var(--transition-smooth) backwards;
+        }
+        .ai-chip:nth-child(1) { animation-delay: 0s; }
+        .ai-chip:nth-child(2) { animation-delay: 0.05s; }
+        .ai-chip:nth-child(3) { animation-delay: 0.1s; }
+        .ai-chip:nth-child(4) { animation-delay: 0.15s; }
+        .ai-chip:nth-child(5) { animation-delay: 0.2s; }
+        .ai-chip:nth-child(6) { animation-delay: 0.25s; }
+        @keyframes chipIn {
+            from { opacity: 0; transform: translateY(6px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .ai-chip:hover {
+            background: rgba(var(--cyan-rgb), 0.14);
+            border-color: var(--cyan);
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(var(--cyan-rgb), 0.15);
+        }
+        .ai-chip::before {
+            content: '+';
+            font-weight: 700;
+            color: var(--cyan);
+            font-size: 0.85rem;
+        }
+        .ai-chip.used {
+            opacity: 0.4;
+            pointer-events: none;
+            text-decoration: line-through;
+        }
+        .ai-chip.history {
+            background: rgba(var(--primary-rgb), 0.06);
+            border-color: rgba(var(--primary-rgb), 0.18);
+        }
+        .ai-chip.history::before {
+            content: '🧠';
+            font-size: 0.75rem;
+        }
+        .ai-chip.history:hover {
+            background: rgba(var(--primary-rgb), 0.14);
+            border-color: var(--primary);
+            box-shadow: 0 3px 10px rgba(var(--primary-rgb), 0.15);
+        }
+        .ai-context-note {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+            font-style: italic;
+        }
+
+        /* ===== AUTO-SAVE INDICATOR ===== */
+        .autosave-indicator {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: var(--bg-glass-heavy);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 100;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s var(--transition-smooth);
+        }
+        .autosave-indicator.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .autosave-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: autosavePulse 1s ease-in-out;
+        }
+        @keyframes autosavePulse {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ===== PRINT ===== */
+        @media print {
+            body { background: white !important; color: black !important; padding: 0; }
+            .bg-mesh, .bg-grid, .header, .actions-row, .search-filter-bar, .top-bar, .calendar-section, .stats-grid, .toast, .autosave-indicator, .confetti-container { display: none !important; }
+            .card { border: 1px solid #ddd; page-break-inside: avoid; backdrop-filter: none; background: white; box-shadow: none; }
+            .page-wrap { position: static; }
+        }
+
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             body { padding: 1rem; }
             .header { flex-direction: column; align-items: flex-start; }
             .page-title { font-size: 1.8rem; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .report-item {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            .report-actions {
-                justify-self: start;
-            }
-            .form-row {
-                grid-template-columns: 1fr;
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+            .stat-value { font-size: 1.6rem; }
+            .stat-card { padding: 1rem; }
+            .report-item { grid-template-columns: 1fr; gap: 0.75rem; }
+            .report-actions { justify-self: start; }
+            .form-row { grid-template-columns: 1fr; }
+            .top-bar { flex-direction: column; }
+            .calendar-grid { overflow-x: auto; }
+            .card { padding: 1.25rem; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .actions-row { flex-direction: column; }
+            .actions-row .btn { width: 100%; justify-content: center; }
+            .streak-card { width: 100%; }
+        }
+
+        /* ===== REDUCED MOTION ===== */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
             }
         }
     </style>
 </head>
 <body>
+    <!-- ===== ANIMATED BACKGROUND ===== -->
+    <div class="bg-mesh">
+        <div class="bg-orb o1"></div>
+        <div class="bg-orb o2"></div>
+        <div class="bg-orb o3"></div>
+        <div class="bg-orb o4"></div>
+    </div>
+    <div class="bg-grid"></div>
+
+    <!-- ===== PAGE WRAPPER ===== -->
+    <div class="page-wrap">
+
+    <!-- ===== HEADER ===== -->
     <div class="header">
         <div>
             <div class="brand">
+                <span class="brand-dot"></span>
                 <span>BERICHTSHEFT.PRO</span>
             </div>
             <h1 class="page-title">📋 Berichtsheft Generator</h1>
             <p class="page-subtitle">IHK-konforme Ausbildungsnachweise erstellen & verwalten</p>
         </div>
-        <a href="../../index.html" class="btn-back">
-            <span>←</span> Zurück zum Dashboard
-        </a>
+        <div class="header-right">
+            <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Theme wechseln">🌙</button>
+            <a href="../../index.html" class="btn-back">
+                <span>←</span> Zurück zum Dashboard
+            </a>
+        </div>
     </div>
 
     <div class="container">
-        <!-- Stats Overview -->
+
+        <!-- ===== MODE TOGGLE ===== -->
+        <div class="mode-toggle-wrap">
+            <span class="mode-toggle-label">Berichtsformat:</span>
+            <div class="mode-toggle" id="modeToggle">
+                <div class="mode-toggle-slider" id="modeSlider"></div>
+                <button class="mode-toggle-btn active" id="btnWeekly" onclick="setMode('weekly')">
+                    📅 Wöchentlich
+                </button>
+                <button class="mode-toggle-btn" id="btnDaily" onclick="setMode('daily')">
+                    📆 Täglich <span class="mode-badge">IHK</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ===== STREAK + PROGRESS BAR ===== -->
+        <div class="top-bar">
+            <div class="streak-card" id="streakCard">
+                <span class="streak-fire">🔥</span>
+                <div>
+                    <div class="streak-num" id="streakNum">0</div>
+                    <div class="streak-label">Wochen-Streak</div>
+                </div>
+            </div>
+            <div class="progress-card">
+                <div class="progress-ring-wrap">
+                    <svg width="52" height="52">
+                        <circle class="progress-ring-bg" cx="26" cy="26" r="22"></circle>
+                        <circle class="progress-ring-val" id="progressRing" cx="26" cy="26" r="22"
+                            stroke-dasharray="138.23" stroke-dashoffset="138.23"></circle>
+                    </svg>
+                    <span class="progress-ring-text" id="progressPercent">0%</span>
+                </div>
+                <div class="progress-info">
+                    <div class="progress-label">Ausbildungsfortschritt</div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-sub" id="progressSub">0 von 0 Wochen dokumentiert</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== STATS GRID ===== -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-value" id="totalReports">0</div>
+                <span class="stat-icon">📄</span>
+                <div class="stat-value" id="totalReports" data-target="0">0</div>
                 <div class="stat-label">Berichte erstellt</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="totalWeeks">0</div>
+                <span class="stat-icon">📅</span>
+                <div class="stat-value" id="totalWeeks" data-target="0">0</div>
                 <div class="stat-label">Wochen erfasst</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="completionRate">0%</div>
+                <span class="stat-icon">✅</span>
+                <div class="stat-value" id="completionRate" data-target="0">0%</div>
                 <div class="stat-label">Vollständigkeit</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="avgWordsPerWeek">0</div>
+                <span class="stat-icon">📝</span>
+                <div class="stat-value" id="avgWordsPerWeek" data-target="0">0</div>
                 <div class="stat-label">Ø Wörter/Woche</div>
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+        <!-- ===== CALENDAR HEATMAP ===== -->
+        <div class="calendar-section">
+            <div class="calendar-card">
+                <div class="calendar-title">
+                    <span>📆</span> Wochen-Übersicht <span id="calendarYear" style="color:var(--text-muted);font-weight:400;font-size:0.85rem;"></span>
+                </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
+                <div class="cal-legend">
+                    <span class="cal-legend-item"><span class="cal-legend-dot" style="background: rgba(var(--primary-rgb), 0.04); border: 1px solid var(--border);"></span> Keine Daten</span>
+                    <span class="cal-legend-item"><span class="cal-legend-dot" style="background: rgba(var(--primary-rgb), 0.25);"></span> Entwurf</span>
+                    <span class="cal-legend-item"><span class="cal-legend-dot" style="background: rgba(var(--success-rgb), 0.35);"></span> Vollständig</span>
+                    <span class="cal-legend-item"><span class="cal-legend-dot" style="background: var(--success);"></span> Unterschrieben</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== QUICK ACTIONS ===== -->
+        <div class="actions-row">
             <button class="btn btn-primary" onclick="openNewReportModal()">
                 <span>➕</span> Neuen Bericht erstellen
+                <span class="kbd-hint"><span class="kbd">N</span></span>
             </button>
             <button class="btn btn-secondary" onclick="autoFillFromTimeTracker()">
                 <span>🔄</span> Aus TimeTracker importieren
             </button>
             <button class="btn btn-secondary" onclick="exportAllPDF()">
                 <span>📄</span> Alle als PDF exportieren
+                <span class="kbd-hint"><span class="kbd">E</span></span>
             </button>
             <button class="btn btn-secondary" onclick="showTemplates()">
                 <span>📝</span> Vorlagen
+                <span class="kbd-hint"><span class="kbd">T</span></span>
+            </button>
+            <button class="btn btn-secondary" onclick="duplicateLastReport()">
+                <span>📋</span> Letzte Woche duplizieren
             </button>
         </div>
 
-        <!-- Search & Filter -->
+        <!-- ===== SEARCH & FILTER ===== -->
         <div class="search-filter-bar">
-            <input type="text" class="search-input" id="searchInput" placeholder="Berichte durchsuchen..." oninput="filterReports()">
+            <input type="text" class="search-input" id="searchInput" placeholder="Berichte durchsuchen... (Strg+F)" oninput="filterReports()">
             <select class="filter-select" id="yearFilter" onchange="filterReports()">
                 <option value="">Alle Jahre</option>
             </select>
@@ -605,24 +1650,40 @@
                 <option value="">Alle Status</option>
                 <option value="complete">Vollständig</option>
                 <option value="incomplete">Unvollständig</option>
+                <option value="signed">Unterschrieben</option>
+            </select>
+            <select class="filter-select" id="sortOrder" onchange="filterReports()">
+                <option value="newest">Neueste zuerst</option>
+                <option value="oldest">Älteste zuerst</option>
+                <option value="week-asc">KW aufsteigend</option>
+                <option value="week-desc">KW absteigend</option>
             </select>
         </div>
 
-        <!-- Reports List -->
+        <!-- ===== REPORTS LIST ===== -->
         <div class="card">
             <div class="card-header">
                 <div class="card-title">
                     <span>📚</span> Meine Berichtshefte
                 </div>
-                <div style="color: var(--text-muted); font-size: 0.9rem;" id="reportCount">0 Berichte</div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="color: var(--text-muted); font-size: 0.85rem;" id="reportCount">0 Berichte</div>
+                    <button class="btn-ghost" id="bulkToggle" onclick="toggleBulkMode()" style="display:none;">
+                        ☑️ Mehrfachauswahl
+                    </button>
+                </div>
             </div>
-            <div class="report-list" id="reportList">
-                <!-- Reports will be loaded here -->
+            <div id="bulkBar" style="display:none; padding: 0.75rem 1rem; margin-bottom: 1rem; background: rgba(var(--primary-rgb),0.06); border: 1px solid rgba(var(--primary-rgb),0.15); border-radius: var(--radius-sm); display:none; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <span style="font-size: 0.85rem; font-weight: 600;"><span id="bulkCount">0</span> ausgewählt</span>
+                <button class="btn btn-danger" onclick="bulkDelete()" style="padding: 6px 14px; font-size: 0.8rem;">🗑️ Löschen</button>
+                <button class="btn btn-success" onclick="bulkExportPDF()" style="padding: 6px 14px; font-size: 0.8rem;">📄 PDF Export</button>
+                <button class="btn btn-ghost" onclick="toggleBulkMode()">Abbrechen</button>
             </div>
+            <div class="report-list" id="reportList"></div>
             <div class="empty-state" id="emptyState" style="display: none;">
                 <div class="empty-icon">📋</div>
                 <div class="empty-title">Noch keine Berichte</div>
-                <div class="empty-text">Erstelle deinen ersten Ausbildungsnachweis und starte mit der Dokumentation!</div>
+                <div class="empty-text">Erstelle deinen ersten Ausbildungsnachweis und starte mit der Dokumentation deiner Ausbildung!</div>
                 <button class="btn btn-primary" onclick="openNewReportModal()">
                     <span>➕</span> Ersten Bericht erstellen
                 </button>
@@ -630,11 +1691,19 @@
         </div>
     </div>
 
-    <!-- New/Edit Report Modal -->
+    </div><!-- /page-wrap -->
+
+    <!-- ===== AUTOSAVE INDICATOR ===== -->
+    <div class="autosave-indicator" id="autosaveIndicator">
+        <span class="autosave-dot"></span>
+        <span>Gespeichert</span>
+    </div>
+
+    <!-- ===== NEW/EDIT REPORT MODAL ===== -->
     <div class="modal" id="reportModal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeReportModal()">×</button>
-            <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px;">
+            <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; font-size: 1.4rem;">
                 <span>📝</span> <span id="modalTitle">Neuen Bericht erstellen</span>
             </h2>
 
@@ -665,10 +1734,26 @@
 
                 <div class="form-group">
                     <label class="form-label">Abteilung / Bereich</label>
-                    <input type="text" class="form-input" id="reportDepartment" placeholder="z.B. IT-Entwicklung, Buchhaltung, etc.">
+                    <input type="text" class="form-input" id="reportDepartment" placeholder="z.B. IT-Entwicklung, Buchhaltung, etc." list="departmentList">
+                    <datalist id="departmentList"></datalist>
                 </div>
 
-                <div class="form-group">
+                <!-- ===== INLINE MODE TOGGLE ===== -->
+                <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;padding:0.75rem 1rem;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);">
+                    <span style="font-size:0.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.3px;">Format:</span>
+                    <div class="mode-toggle" style="flex:1;max-width:320px;">
+                        <div class="mode-toggle-slider" id="modeSliderModal"></div>
+                        <button type="button" class="mode-toggle-btn" id="btnWeeklyModal" onclick="setMode('weekly')">
+                            📅 Wöchentlich
+                        </button>
+                        <button type="button" class="mode-toggle-btn" id="btnDailyModal" onclick="setMode('daily')">
+                            📆 Täglich <span class="mode-badge">IHK</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ===== WEEKLY FIELD ===== -->
+                <div class="form-group" id="weeklyFieldGroup">
                     <label class="form-label">Ausgeführte Tätigkeiten / Beschreibung</label>
                     <textarea class="form-textarea" id="reportActivities" rows="8" placeholder="Beschreibe detailliert deine Tätigkeiten in dieser Woche...
 
@@ -677,9 +1762,44 @@ Beispiel:
 • Implementierung von Unit-Tests
 • Code Review und Bugfixing
 • Teilnahme an Daily Stand-up Meetings" required></textarea>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
                         <small style="color: var(--text-muted);">Mind. 50 Zeichen empfohlen</small>
                         <small style="color: var(--text-muted);" id="charCount">0 Zeichen</small>
+                    </div>
+                    <div class="quality-meter" id="qualityMeter">
+                        <span class="quality-text">Qualität:</span>
+                        <div class="quality-bar-bg">
+                            <div class="quality-bar-fill" id="qualityBarFill"></div>
+                        </div>
+                        <span class="quality-label" id="qualityLabel">0%</span>
+                    </div>
+                    <!-- AI SUGGESTIONS (Weekly) -->
+                    <div class="ai-suggestions" id="aiSuggestionsWeekly">
+                        <div class="ai-header">
+                            <span class="ai-title"><span class="ai-pulse"></span> AI Vorschläge</span>
+                            <button class="ai-refresh-btn" onclick="refreshAISuggestions('weekly')">🔄 Neu</button>
+                        </div>
+                        <div class="ai-chips" id="aiChipsWeekly"></div>
+                        <div class="ai-context-note" id="aiContextWeekly">Tippe los oder wähle eine Abteilung — die AI passt sich an.</div>
+                    </div>
+                </div>
+
+                <!-- ===== DAILY FIELDS ===== -->
+                <div class="daily-fields" id="dailyFieldsGroup">
+                    <label class="form-label" style="margin-bottom: 0.75rem;">Tägliche Tätigkeiten (IHK-Format)</label>
+                    <div id="dailyFieldsContainer"></div>
+                    <div class="daily-total-bar">
+                        <span>Gesamt:</span>
+                        <span id="dailyTotalHours">0.0</span> Std.
+                    </div>
+                    <!-- AI SUGGESTIONS (Daily) -->
+                    <div class="ai-suggestions" id="aiSuggestionsDaily">
+                        <div class="ai-header">
+                            <span class="ai-title"><span class="ai-pulse"></span> AI Vorschläge</span>
+                            <button class="ai-refresh-btn" onclick="refreshAISuggestions('daily')">🔄 Neu</button>
+                        </div>
+                        <div class="ai-chips" id="aiChipsDaily"></div>
+                        <div class="ai-context-note" id="aiContextDaily">Klicke auf einen Vorschlag, um ihn zum aktuellen Tag hinzuzufügen.</div>
                     </div>
                 </div>
 
@@ -703,19 +1823,20 @@ Beispiel:
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                    <button type="submit" class="btn btn-success" style="flex: 1;">
+                <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+                    <button type="submit" class="btn btn-success" style="flex: 1; min-width: 180px;">
                         <span>💾</span> Speichern
+                        <span class="kbd-hint"><span class="kbd">Strg</span>+<span class="kbd">S</span></span>
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="closeReportModal()">
-                        Abbrechen
+                        Abbrechen <span class="kbd-hint"><span class="kbd">Esc</span></span>
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- View Report Modal -->
+    <!-- ===== VIEW REPORT MODAL ===== -->
     <div class="modal" id="viewModal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeViewModal()">×</button>
@@ -723,24 +1844,126 @@ Beispiel:
         </div>
     </div>
 
-    <!-- Templates Modal -->
+    <!-- ===== TEMPLATES MODAL ===== -->
     <div class="modal" id="templatesModal">
         <div class="modal-content">
             <button class="modal-close" onclick="closeTemplatesModal()">×</button>
-            <h2 style="margin-bottom: 1rem;">📝 Vorlagen</h2>
-            <p style="color: var(--text-muted); margin-bottom: 2rem;">Wähle eine Vorlage für deinen Bericht aus</p>
+            <h2 style="margin-bottom: 0.75rem; display: flex; align-items: center; gap: 10px;">
+                <span>📝</span> Vorlagen
+            </h2>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Wähle eine Vorlage für deinen Bericht aus</p>
             <div class="template-grid" id="templateGrid"></div>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        // LocalStorage key
+        /* ═══════════════════════════════════════════════════════════
+           BERICHTSHEFT ENGINE v2.0 — Premium JavaScript
+           ═══════════════════════════════════════════════════════════ */
+
+        // ===== CONSTANTS & STATE =====
         const STORAGE_KEY = 'berichtsheft_reports';
+        const THEME_KEY = 'berichtsheft_theme';
+        const AUTOSAVE_KEY = 'berichtsheft_draft';
+        const MODE_KEY = 'berichtsheft_mode';
         let reports = [];
         let editingId = null;
+        let bulkMode = false;
+        let selectedIds = new Set();
+        let autoSaveTimer = null;
+        let currentMode = localStorage.getItem(MODE_KEY) || 'daily'; // IHK default
+        let activeDailyField = null; // currently focused daily textarea
+        let aiUsedChips = new Set();
 
-        // Templates
+        // ===== AI BRAIN — Generative Local Intelligence =====
+        // Keine API, keine Tokens. Echtes kombinatorisches Denken.
+        // Erkennt JEDEN Beruf, generiert dynamische Sätze, lernt aus History.
+
+        const AI_BRAIN = {
+            // === PROFESSION DETECTION: Keywords → Berufskategorie ===
+            professions: {
+                'software': { verbs: ['entwickeln', 'implementieren', 'testen', 'debuggen', 'deployen', 'refactoren', 'dokumentieren', 'reviewen', 'optimieren', 'automatisieren'], objects: ['Webanwendung', 'REST-API', 'Datenbank-Modul', 'Frontend-Komponente', 'Backend-Service', 'Unit-Tests', 'Microservice', 'UI-Feature', 'Schnittstelle', 'Algorithmus', 'Login-System', 'Dashboard', 'CI/CD-Pipeline', 'Docker-Container', 'Serverless-Funktion'], tools: ['Git', 'VS Code', 'Docker', 'Jira', 'Jenkins', 'React', 'Node.js', 'Python', 'TypeScript', 'SQL', 'MongoDB', 'Kubernetes', 'Postman', 'Figma'], keywords: ['it', 'entwickl', 'programm', 'software', 'web', 'dev', 'coder', 'fullstack', 'frontend', 'backend', 'app', 'fachinformatik', 'anwendung'] },
+
+                'sysadmin': { verbs: ['konfigurieren', 'installieren', 'warten', 'überwachen', 'administrieren', 'sichern', 'patchen', 'troubleshooten', 'migrieren', 'automatisieren'], objects: ['Server', 'Netzwerk', 'Firewall', 'Active Directory', 'Backup-System', 'VPN-Tunnel', 'DHCP/DNS-Dienst', 'Virtualisierungs-Cluster', 'Storage-System', 'Mail-Server', 'Monitoring-System', 'WLAN-Infrastruktur', 'Client-PCs', 'Druckerumgebung'], tools: ['PowerShell', 'Bash', 'VMware', 'Hyper-V', 'Azure', 'AWS', 'Nagios', 'Zabbix', 'Windows Server', 'Linux', 'pfSense', 'Ansible'], keywords: ['system', 'admin', 'netzwerk', 'infrastruktur', 'server', 'support', 'helpdesk', 'systemintegr'] },
+
+                'kaufmann': { verbs: ['bearbeiten', 'prüfen', 'verbuchen', 'erstellen', 'pflegen', 'koordinieren', 'kalkulieren', 'archivieren', 'abgleichen', 'kommunizieren'], objects: ['Rechnungen', 'Aufträge', 'Kundenanfragen', 'Angebote', 'Buchhaltungsbelege', 'Personalakten', 'Lieferscheine', 'Stammdaten', 'Monatsbericht', 'Kostenrechnung', 'Bestellungen', 'Gesprächsprotokoll', 'Präsentation'], tools: ['SAP', 'DATEV', 'Lexware', 'Excel', 'ERP-System', 'CRM-System', 'Outlook', 'Word', 'Teams', 'SharePoint'], keywords: ['kaufm', 'buch', 'büro', 'verwalt', 'office', 'personal', 'handel', 'bank', 'versicher', 'finanz', 'steuer', 'industrie', 'logistik', 'einkauf', 'vertrieb', 'lager', 'spedition'] },
+
+                'handwerk_bau': { verbs: ['mauern', 'betonieren', 'verputzen', 'verlegen', 'montieren', 'messen', 'schneiden', 'schleifen', 'abdichten', 'verschalen', 'transportieren', 'einrichten', 'sichern', 'abreißen', 'fundamentieren'], objects: ['Backsteinmauer', 'Fundament', 'Deckenplatte', 'Estrichboden', 'Treppenanlage', 'Schalungssystem', 'Bewehrungskorb', 'Drainageystem', 'Mauerwerk', 'Fassade', 'Innenputz', 'Außenwand', 'Stützpfeiler', 'Fensterbänke', 'Bodenplatte'], tools: ['Wasserwaage', 'Kelle', 'Mischmaschine', 'Rüttler', 'Nivelliergerät', 'Betonmischer', 'Kreissäge', 'Flex', 'Bohrmaschine', 'Bauplan'], keywords: ['mauer', 'bau', 'beton', 'hochbau', 'tiefbau', 'zimmerer', 'zimmermann', 'dachdecker', 'gerüstbau', 'straßenbau', 'pflaster', 'fliesenleger', 'fliesen', 'estrich', 'trockenbau', 'stuckateur'] },
+
+                'handwerk_holz': { verbs: ['sägen', 'hobeln', 'fräsen', 'schleifen', 'leimen', 'montieren', 'konstruieren', 'furnieren', 'lackieren', 'messen', 'zeichnen', 'zusammenbauen'], objects: ['Möbelstück', 'Türrahmen', 'Fensterrahmen', 'Schranksystem', 'Tischplatte', 'Holztreppe', 'Einbauküche', 'Regalwand', 'Werkstück', 'Dachstuhl', 'Holzverbindung', 'Innenausbau'], tools: ['Kreissäge', 'Oberfräse', 'Bandschleifer', 'CNC-Fräse', 'Hobelmaschine', 'Stechbeitel', 'Winkelschleifer', 'CAD-Software'], keywords: ['tischler', 'schreiner', 'holz', 'möbel', 'zimmerei'] },
+
+                'elektro': { verbs: ['installieren', 'verdrahten', 'prüfen', 'messen', 'programmieren', 'inbetriebnehmen', 'warten', 'reparieren', 'konfigurieren', 'dokumentieren', 'planen'], objects: ['Schaltschrank', 'Elektroverteiler', 'Beleuchtungsanlage', 'Steckdosen/Schalter', 'SPS-Steuerung', 'Kabeltrasse', 'Sicherungskasten', 'Brandmeldeanlage', 'Sprechanlage', 'Photovoltaikanlage', 'Ladestation', 'Bustechnologie (KNX)'], tools: ['Multimeter', 'Oszilloskop', 'Installationstester', 'SPS (Siemens)', 'EPLAN', 'CAD', 'ETS-Software', 'Crimpzange', 'Abisolierwerkzeug'], keywords: ['elektr', 'elektronik', 'mechatronik', 'strom', 'energie', 'anlagenmechanik'] },
+
+                'gastronomie': { verbs: ['zubereiten', 'kochen', 'backen', 'anrichten', 'dekorieren', 'portionieren', 'einlagern', 'kontrollieren', 'reinigen', 'bestellen', 'servieren', 'beraten', 'kalkulieren'], objects: ['Vorspeisen', 'Hauptgerichte', 'Desserts', 'Brotteig', 'Feingebäck', 'Tortenkreation', 'Sauerteig', 'Brötchensortiment', 'Pralinenserie', 'Konditorei-Spezialität', 'Menüfolge', 'Buffet-Aufbau', 'Mise en Place', 'Saucen-Fond', 'Vorratsbestand'], tools: ['Konvektomat', 'Teigknetmaschine', 'Rührmaschine', 'Gärschrank', 'Friteuse', 'Thermometer', 'Waage', 'Spritzbeutel', 'Backofen', 'Salamander', 'Vakuumierer'], keywords: ['koch', 'bäck', 'konditor', 'gastro', 'küche', 'restaurant', 'hotel', 'catering', 'fleisch', 'metzger', 'fachverkäufer'] },
+
+                'pflege': { verbs: ['pflegen', 'betreuen', 'dokumentieren', 'assistieren', 'mobilisieren', 'messen', 'verabreichen', 'beraten', 'begleiten', 'überwachen', 'anleiten', 'versorgen', 'lagern'], objects: ['Patient/in', 'Vitalzeichen', 'Wundversorgung', 'Medikamente', 'Pflegeplanung', 'Körperpflege', 'Mobilisation', 'Ernährungsplan', 'Inkontinenzversorgung', 'Verbandswechsel', 'Lagerungshilfe', 'Pflegedokumentation'], tools: ['Blutdruckmessgerät', 'Blutzuckermessgerät', 'Rollator', 'Pflegebett', 'Dokumentationssoftware', 'Desinfektionsmittel', 'Pulsoximeter', 'Stethoskop'], keywords: ['pflege', 'kranken', 'alten', 'gesundheit', 'arzthelf', 'medizin', 'mfa', 'zahnmedizin', 'zfa', 'labor', 'pharma', 'apothek', 'therapeut', 'ergo', 'physio'] },
+
+                'kfz': { verbs: ['diagnostizieren', 'reparieren', 'warten', 'prüfen', 'austauschen', 'einstellen', 'montieren', 'programmieren', 'auslesen', 'lackieren', 'schweißen', 'vermessen'], objects: ['Bremsanlage', 'Motorsteuerung', 'Fahrwerk', 'Klimaanlage', 'Getriebe', 'Abgasanlage', 'Beleuchtungssystem', 'Reifen/Räder', 'Ölwechsel', 'Inspektion', 'AU/HU-Vorbereitung', 'Karosserie-Teil', 'Steuergerät', 'Batterie/Akku'], tools: ['OBD-Diagnosetester', 'Hebebühne', 'Drehmomentschlüssel', 'Achsvermessungsgerät', 'Schaltplan', 'Oszilloskop', 'Schweißgerät', 'Lackierkabine'], keywords: ['kfz', 'auto', 'fahrzeug', 'werkstatt', 'mechatronik', 'karosserie', 'lackier', 'zweirad', 'motorrad'] },
+
+                'friseur': { verbs: ['schneiden', 'färben', 'föhnen', 'beraten', 'waschen', 'stylen', 'pflegen', 'hochstecken', 'ondulieren', 'rasieren', 'tönen', 'blondieren'], objects: ['Damenhaarschnitt', 'Herrenhaarschnitt', 'Colorations-Technik', 'Balayage', 'Dauerwelle', 'Hochsteckfrisur', 'Bartpflege', 'Haarpflege-Behandlung', 'Strähnen-Technik', 'Kinderhaarschnitt', 'Brautfrisur'], tools: ['Haarschneidemaschine', 'Schere', 'Effilier-Schere', 'Föhn', 'Glätteisen', 'Lockenstab', 'Farbtabelle', 'Alufolie', 'Papilloten'], keywords: ['friseur', 'frisör', 'hair', 'salon', 'kosmetik', 'beauty', 'coiffeur'] },
+
+                'einzelhandel': { verbs: ['beraten', 'verkaufen', 'kassieren', 'einräumen', 'dekorieren', 'bestellen', 'kontrollieren', 'präsentieren', 'inventurisieren', 'reklamieren', 'etikettieren', 'umtauschen'], objects: ['Wareneingang', 'Schaufensterdekoration', 'Kassenabrechnung', 'Kundenberatung', 'Reklamation', 'Warenbestellung', 'Lagerbestand', 'Preisauszeichnung', 'Produktpräsentation', 'Inventurliste', 'Sonderaktion'], tools: ['Kassensystem', 'Warenwirtschaftssystem', 'Scanner', 'Preisauszeichner', 'POS-Terminal'], keywords: ['einzelhandel', 'verkauf', 'drogist', 'buchhändl', 'florist', 'augenoptik', 'uhrmacher', 'juwelier', 'textil', 'schuh', 'sport', 'lebensmittel', 'discounter'] },
+
+                'lager': { verbs: ['kommissionieren', 'einlagern', 'auslagern', 'verpacken', 'verladen', 'scannen', 'kontrollieren', 'inventarisieren', 'transportieren', 'sortieren', 'buchen'], objects: ['Wareneingang', 'Warenausgang', 'Lieferung', 'Palette', 'Sendung', 'Kommissionierauftrag', 'Retourenbearbeitung', 'Bestandsliste', 'Versandpapiere', 'Gefahrgut-Ladung'], tools: ['Gabelstapler', 'Ameise', 'Handscanner', 'SAP WMS', 'Lagerverwaltungssystem', 'Verpackungsmaschine', 'Etikettendrucker'], keywords: ['lager', 'fachlager', 'logistik', 'spedition', 'kommission', 'versand', 'fachkraft lager'] },
+
+                'medien': { verbs: ['gestalten', 'entwerfen', 'layouten', 'bearbeiten', 'animieren', 'schneiden', 'retouchieren', 'exportieren', 'drucken', 'präsentieren', 'konzipieren'], objects: ['Printlayout', 'Social-Media-Grafik', 'Webdesign-Mockup', 'Video-Clip', 'Banner-Animation', 'Firmenlogo', 'Broschüre', 'Flyer', 'Corporate-Design-Manual', 'Druckauftrag', 'E-Mail-Template', 'Bildbearbeitung'], tools: ['Photoshop', 'InDesign', 'Illustrator', 'Figma', 'Premiere Pro', 'After Effects', 'Canva', 'Blender', 'Sketch'], keywords: ['medien', 'design', 'grafik', 'kreativ', 'druck', 'foto', 'video', 'film', 'veranstaltungstechnik'] },
+
+                'garten': { verbs: ['pflanzen', 'schneiden', 'mähen', 'pflegen', 'gestalten', 'bewässern', 'mulchen', 'düngen', 'jäten', 'vermessen', 'pflastern', 'ausheben', 'roden'], objects: ['Rasenfläche', 'Hecke', 'Beet', 'Baumbestand', 'Pflasterweg', 'Teichanlage', 'Gewächshaus', 'Blumen-Arrangement', 'Grabpflege', 'Sträucher', 'Staudenbeet', 'Rollrasen'], tools: ['Motorsäge', 'Heckenschere', 'Rasenmäher', 'Freischneider', 'Minibagger', 'Rüttelplatte', 'Gießwagen', 'Pflanzentransporter'], keywords: ['garten', 'gärtner', 'landschaft', 'grünpflege', 'friedhof', 'florist', 'blumen', 'baumschul'] },
+
+                'metall': { verbs: ['drehen', 'fräsen', 'bohren', 'schweißen', 'schleifen', 'biegen', 'stanzen', 'programmieren', 'messen', 'montieren', 'entgraten', 'härten'], objects: ['Werkstück', 'CNC-Drehteil', 'Fräsbauteil', 'Schweißkonstruktion', 'Blechzuschnitt', 'Gewindebohrung', 'Passbohrung', 'Metallrahmen', 'Edelstahlgehäuse', 'Rohrkonstruktion', 'Prototyp', 'Serienbauteil'], tools: ['CNC-Drehmaschine', 'CNC-Fräse', 'Schweißgerät (MAG/WIG)', 'Messschieber', 'Bügelmessschraube', 'Höhenreißer', 'Abkantpresse', 'Bandsäge', 'CAD/CAM-Software'], keywords: ['metall', 'industrie mechanik', 'zerspanung', 'werkzeugmech', 'konstruktion', 'schlosser', 'stahlbau', 'maschinen', 'cnc', 'dreh'] },
+
+                'chemie': { verbs: ['analysieren', 'mischen', 'prüfen', 'messen', 'destillieren', 'filtrieren', 'dokumentieren', 'kalibrieren', 'titrieren', 'synthetisieren'], objects: ['Probe', 'Lösung', 'Reaktionsgemisch', 'Analyseergebnis', 'Versuchsreihe', 'Prüfprotokoll', 'Reinheitsgrad', 'Produktionsbatch', 'Stoffgemisch', 'Kalibrierlösung'], tools: ['Photometer', 'pH-Meter', 'Analysenwaage', 'Gaschromatograph', 'HPLC', 'Titriergerät', 'Laborjob-Software', 'Pipette', 'Autoklav'], keywords: ['chemie', 'labor', 'chemikant', 'pharmakant', 'lack', 'farbe', 'verfahrensmech', 'kunststoff', 'biologie'] },
+            },
+
+            // === UNIVERSAL VERBS (work for any profession) ===
+            universalVerbs: ['durchführen', 'erledigen', 'bearbeiten', 'vorbereiten', 'nachbereiten', 'organisieren', 'kontrollieren', 'dokumentieren', 'besprechen', 'unterstützen', 'überprüfen', 'koordinieren', 'planen', 'fertigstellen', 'optimieren'],
+
+            // === UNIVERSAL CONTEXTS (added to any profession) ===
+            universalActivities: [
+                'Arbeitsplatz eingerichtet und Materialien vorbereitet',
+                'Werkzeug und Arbeitsmittel auf Funktion geprüft',
+                'Arbeitsauftrag vom Ausbilder entgegengenommen und besprochen',
+                'Sicherheitsunterweisung durchgeführt/teilgenommen',
+                'Arbeitsmaterialien bestellt bzw. nachgefüllt',
+                'Arbeitsbereich aufgeräumt und gereinigt',
+                'Dokumentation der heutigen Tätigkeiten angefertigt',
+                'Feedback-Gespräch mit Ausbilder/in geführt',
+                'Kolleg/innen bei Aufgaben unterstützt',
+                'Neues Themengebiet selbstständig eingearbeitet',
+                'An Team-Besprechung / Meeting teilgenommen',
+                'Qualitätskontrolle durchgeführt',
+                'Kundenkontakt: Anfrage bearbeitet/beraten',
+                'Berufsschulstoff nachbereitet und zusammengefasst',
+                'Prüfungsvorbereitung: Übungsaufgaben bearbeitet',
+            ],
+
+            // === SENTENCE TEMPLATES (slots: {V}=verb, {O}=object, {T}=tool, {D}=detail) ===
+            templates: [
+                '• {O} {V} und dokumentiert',
+                '• {V}: {O} für aktuelles Projekt',
+                '• {O} mithilfe von {T} {V}',
+                '• Anleitung erhalten: {O} fachgerecht {V}',
+                '• Selbstständig {O} {V}',
+                '• {O} — Ergebnis mit Ausbilder besprochen',
+                '• Im Team: {O} {V} und geprüft',
+                '• {V} von {O} nach Arbeitsanweisung',
+                '• Qualitätskontrolle: {O} überprüft und nachgebessert',
+                '• Neues gelernt: {O} {V} (Erstanwendung)',
+                '• Fehler bei {O} identifiziert und behoben',
+                '• {O} nach Zeichnung/Plan {V}',
+                '• {T} eingesetzt um {O} zu {V}',
+            ],
+
+            // === DETAIL/QUALIFIER POOLS ===
+            details: [
+                'nach Vorgabe', 'selbstständig', 'unter Anleitung', 'im Team', 'nach DIN-Norm',
+                'nach Kundenwunsch', 'nach Arbeitsanweisung', 'gemeinsam mit Kollegen', 'termingerecht', 'fachgerecht',
+                'nach Sicherheitsvorschriften', 'nach technischer Zeichnung', 'nach Hygienevorschriften',
+            ],
+        };
+
+        // ===== TEMPLATES =====
         const templates = [
             {
                 id: 'it-dev',
@@ -751,7 +1974,8 @@ Beispiel:
 • Code-Review und Qualitätssicherung
 • Debugging und Fehlerbehebung
 • Dokumentation der Entwicklungsprozesse
-• Teilnahme an Team-Meetings und Planungen`
+• Teilnahme an Team-Meetings und Planungen
+• Unit-Tests erstellt und durchgeführt`
             },
             {
                 id: 'it-admin',
@@ -762,7 +1986,8 @@ Beispiel:
 • Benutzer- und Rechteverwaltung
 • Installation und Konfiguration von Software
 • Netzwerk-Monitoring und Troubleshooting
-• Erstellung von technischen Dokumentationen`
+• Erstellung von technischen Dokumentationen
+• Backup-Systeme überprüft und gewartet`
             },
             {
                 id: 'business',
@@ -773,7 +1998,8 @@ Beispiel:
 • Kundenkommunikation und -betreuung
 • Erstellung von Angeboten und Rechnungen
 • Büroorganisation und Verwaltung
-• Mitarbeit an Projekten und Präsentationen`
+• Mitarbeit an Projekten und Präsentationen
+• Datenerfassung und Pflege im ERP-System`
             },
             {
                 id: 'design',
@@ -784,30 +2010,86 @@ Beispiel:
 • Bildbearbeitung und Layout-Erstellung
 • Abstimmung mit Kunden und Kollegen
 • Qualitätsprüfung und Korrekturschleifen
-• Recherche und Trend-Analyse`
+• Recherche und Trend-Analyse
+• Reinzeichnung und Druckvorbereitung`
+            },
+            {
+                id: 'data',
+                name: 'Daten & KI',
+                icon: '🤖',
+                description: 'Für Fachinformatiker Daten & Prozesse',
+                content: `• Analyse und Aufbereitung von Datensätzen
+• Entwicklung und Training von ML-Modellen
+• Datenbankabfragen und -optimierung
+• Prozessanalyse und Automatisierung
+• Erstellung von Dashboards und Reportings
+• Qualitätssicherung der Datenbestände`
             }
         ];
 
-        // Load reports from localStorage
+        // ═══════════════════════════════════════
+        // CORE DATA OPERATIONS
+        // ═══════════════════════════════════════
+
         function loadReports() {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            reports = stored ? JSON.parse(stored) : [];
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                reports = stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                console.error('Fehler beim Laden:', e);
+                reports = [];
+            }
             updateUI();
         }
 
-        // Save reports to localStorage
         function saveToStorage() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+                showAutoSave();
+            } catch (e) {
+                console.error('Fehler beim Speichern:', e);
+                showToast('⚠️ Fehler beim Speichern!', 'error');
+            }
         }
 
-        // Update UI
         function updateUI() {
             updateStats();
             renderReports();
             populateYearFilter();
+            updateStreak();
+            updateProgress();
+            renderCalendarHeatmap();
+            updateDepartmentSuggestions();
+            // Show bulk toggle if there are reports
+            const bulkToggle = document.getElementById('bulkToggle');
+            if (bulkToggle) bulkToggle.style.display = reports.length > 1 ? 'block' : 'none';
         }
 
-        // Update statistics
+        // ═══════════════════════════════════════
+        // ANIMATED COUNTER
+        // ═══════════════════════════════════════
+
+        function animateCounter(el, target, suffix = '') {
+            const start = parseInt(el.textContent) || 0;
+            const duration = 600;
+            const startTime = performance.now();
+
+            function tick(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // ease out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const current = Math.round(start + (target - start) * eased);
+                el.textContent = current + suffix;
+                if (progress < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+        }
+
+        // ═══════════════════════════════════════
+        // STATISTICS
+        // ═══════════════════════════════════════
+
         function updateStats() {
             const totalReports = reports.length;
             const uniqueWeeks = new Set(reports.map(r => `${r.year}-${r.week}`)).size;
@@ -820,36 +2102,194 @@ Beispiel:
             }, 0);
             const avgWords = totalReports > 0 ? Math.round(totalWords / totalReports) : 0;
 
-            document.getElementById('totalReports').textContent = totalReports;
-            document.getElementById('totalWeeks').textContent = uniqueWeeks;
-            document.getElementById('completionRate').textContent = completionRate + '%';
-            document.getElementById('avgWordsPerWeek').textContent = avgWords;
+            // Animate counters
+            animateCounter(document.getElementById('totalReports'), totalReports);
+            animateCounter(document.getElementById('totalWeeks'), uniqueWeeks);
+            animateCounter(document.getElementById('completionRate'), completionRate, '%');
+            animateCounter(document.getElementById('avgWordsPerWeek'), avgWords);
         }
 
-        // Render reports list
+        // ═══════════════════════════════════════
+        // STREAK CALCULATION
+        // ═══════════════════════════════════════
+
+        function updateStreak() {
+            if (reports.length === 0) {
+                document.getElementById('streakNum').textContent = '0';
+                return;
+            }
+
+            // Find all documented weeks as "year-week" keys, sorted descending
+            const weekKeys = [...new Set(reports.map(r => {
+                const y = new Date().getFullYear(); // Simplify: use current year context
+                return r.year * 100 + r.week;
+            }))].sort((a, b) => b - a);
+
+            // Current week
+            const now = new Date();
+            const currentWeek = getWeekNumber(now);
+            let streak = 0;
+            let checkWeek = currentWeek;
+
+            // Count consecutive weeks backwards
+            for (let i = 0; i < 200; i++) {
+                const found = reports.some(r => r.week === checkWeek);
+                if (found) {
+                    streak++;
+                    checkWeek--;
+                    if (checkWeek <= 0) checkWeek = 52; // wrap around
+                } else {
+                    break;
+                }
+            }
+
+            const el = document.getElementById('streakNum');
+            animateCounter(el, streak);
+
+            // Fire animation intensity based on streak
+            const fire = document.querySelector('.streak-fire');
+            if (streak >= 10) fire.style.fontSize = '2.5rem';
+            else if (streak >= 5) fire.style.fontSize = '2.2rem';
+        }
+
+        // ═══════════════════════════════════════
+        // PROGRESS TRACKING
+        // ═══════════════════════════════════════
+
+        function updateProgress() {
+            // 3-year apprenticeship = ~156 weeks, 2-year = ~104
+            const maxWeeks = 156;
+            const documentedWeeks = new Set(reports.map(r => `${r.year}-${r.week}`)).size;
+            const percent = Math.min(Math.round((documentedWeeks / maxWeeks) * 100), 100);
+
+            // Progress ring
+            const ring = document.getElementById('progressRing');
+            const circumference = 2 * Math.PI * 22; // r=22
+            const offset = circumference - (percent / 100) * circumference;
+            ring.style.strokeDasharray = circumference;
+            ring.style.strokeDashoffset = offset;
+
+            // Progress text
+            document.getElementById('progressPercent').textContent = percent + '%';
+
+            // Progress bar
+            document.getElementById('progressBarFill').style.width = percent + '%';
+
+            // Sub text
+            document.getElementById('progressSub').textContent = `${documentedWeeks} von ${maxWeeks} Wochen dokumentiert`;
+        }
+
+        // ═══════════════════════════════════════
+        // CALENDAR HEATMAP
+        // ═══════════════════════════════════════
+
+        function renderCalendarHeatmap() {
+            const grid = document.getElementById('calendarGrid');
+            const year = new Date().getFullYear();
+            document.getElementById('calendarYear').textContent = year;
+
+            // Create a map of week -> status
+            const weekMap = {};
+            reports.forEach(r => {
+                const key = r.week;
+                const existing = weekMap[key];
+                if (!existing || statusPriority(r.status) > statusPriority(existing)) {
+                    weekMap[key] = r.status;
+                }
+            });
+
+            let html = '';
+            for (let w = 1; w <= 52; w++) {
+                const status = weekMap[w] || null;
+                let cls = 'cal-cell';
+                if (status === 'signed') cls += ' signed';
+                else if (status === 'complete') cls += ' complete';
+                else if (status === 'incomplete') cls += ' has-report';
+
+                const tooltip = status
+                    ? `KW ${w}: ${status === 'signed' ? 'Unterschrieben' : status === 'complete' ? 'Vollständig' : 'Entwurf'}`
+                    : `KW ${w}: Keine Daten`;
+
+                html += `<div class="${cls}" data-tooltip="${tooltip}" data-week="${w}" onclick="filterByWeek(${w})"></div>`;
+            }
+            grid.innerHTML = html;
+        }
+
+        function statusPriority(status) {
+            return { 'incomplete': 1, 'complete': 2, 'signed': 3 }[status] || 0;
+        }
+
+        function filterByWeek(week) {
+            document.getElementById('searchInput').value = '';
+            const yearFilter = document.getElementById('yearFilter');
+            yearFilter.value = '';
+            const statusFilter = document.getElementById('statusFilter');
+            statusFilter.value = '';
+
+            // Filter to show only this week
+            const filtered = reports.filter(r => r.week === week);
+            if (filtered.length > 0) {
+                viewReport(filtered[0].id);
+            } else {
+                // Open new report for this week
+                openNewReportModal();
+                document.getElementById('reportWeek').value = week;
+                const { monday, friday } = getWeekDates(week);
+                document.getElementById('reportDateFrom').value = monday;
+                document.getElementById('reportDateTo').value = friday;
+            }
+        }
+
+        // ═══════════════════════════════════════
+        // RENDER REPORTS
+        // ═══════════════════════════════════════
+
         function renderReports() {
             const list = document.getElementById('reportList');
             const emptyState = document.getElementById('emptyState');
             const reportCount = document.getElementById('reportCount');
 
-            // Apply filters
+            // Filters
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const yearFilter = document.getElementById('yearFilter').value;
             const statusFilter = document.getElementById('statusFilter').value;
+            const sortOrder = document.getElementById('sortOrder')?.value || 'newest';
 
-            const filtered = reports.filter(r => {
-                const matchesSearch = r.activities.toLowerCase().includes(searchTerm) ||
-                                    (r.department && r.department.toLowerCase().includes(searchTerm));
+            let filtered = reports.filter(r => {
+                // Search in activities AND dailyActivities
+                let searchableText = (r.activities || '').toLowerCase();
+                if (r.dailyActivities) {
+                    Object.values(r.dailyActivities).forEach(t => searchableText += ' ' + (t || '').toLowerCase());
+                }
+                const matchesSearch = searchableText.includes(searchTerm) ||
+                                    (r.department && r.department.toLowerCase().includes(searchTerm)) ||
+                                    `kw ${r.week}`.includes(searchTerm);
                 const matchesYear = !yearFilter || r.year.toString() === yearFilter;
                 const matchesStatus = !statusFilter || r.status === statusFilter;
                 return matchesSearch && matchesYear && matchesStatus;
             });
 
-            // Sort by year and week (newest first)
-            filtered.sort((a, b) => {
-                if (a.year !== b.year) return b.year - a.year;
-                return b.week - a.week;
-            });
+            // Sort
+            switch (sortOrder) {
+                case 'newest':
+                    filtered.sort((a, b) => {
+                        if (a.year !== b.year) return b.year - a.year;
+                        return b.week - a.week;
+                    });
+                    break;
+                case 'oldest':
+                    filtered.sort((a, b) => {
+                        if (a.year !== b.year) return a.year - b.year;
+                        return a.week - b.week;
+                    });
+                    break;
+                case 'week-asc':
+                    filtered.sort((a, b) => a.week - b.week);
+                    break;
+                case 'week-desc':
+                    filtered.sort((a, b) => b.week - a.week);
+                    break;
+            }
 
             if (filtered.length === 0) {
                 list.innerHTML = '';
@@ -861,18 +2301,27 @@ Beispiel:
             emptyState.style.display = 'none';
             reportCount.textContent = `${filtered.length} Bericht${filtered.length !== 1 ? 'e' : ''}`;
 
-            list.innerHTML = filtered.map(report => {
+            list.innerHTML = filtered.map((report, index) => {
                 const statusBadge = {
                     'incomplete': '<span class="badge badge-warning">In Bearbeitung</span>',
                     'complete': '<span class="badge badge-success">Vollständig</span>',
-                    'signed': '<span class="badge badge-success">✓ Unterschrieben</span>'
+                    'signed': '<span class="badge badge-signed">✅ Unterschrieben</span>'
                 }[report.status];
 
+                const wordCount = (report.activities + ' ' + (report.school || '')).split(/\s+/).filter(w => w.length > 0).length;
+                const isSelected = selectedIds.has(report.id);
+                const modeBadge = report.mode === 'daily'
+                    ? '<span style="font-size:0.6rem;padding:1px 5px;background:rgba(var(--success-rgb),0.15);color:var(--success);border-radius:4px;font-weight:700;">TÄGLICH</span>'
+                    : '<span style="font-size:0.6rem;padding:1px 5px;background:rgba(var(--primary-rgb),0.15);color:var(--primary);border-radius:4px;font-weight:700;">WÖCHENTL.</span>';
+
                 return `
-                    <div class="report-item" onclick="viewReport('${report.id}')">
+                    <div class="report-item" data-id="${report.id}" style="transition-delay: ${index * 0.04}s"
+                         onclick="${bulkMode ? `toggleSelect('${report.id}')` : `viewReport('${report.id}')`}"
+                         ${isSelected ? 'style="border-color: var(--primary); background: rgba(var(--primary-rgb), 0.08);"' : ''}>
+                        ${bulkMode ? `<div style="display:flex;align-items:center;"><input type="checkbox" ${isSelected ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;"></div>` : ''}
                         <div class="report-week">
                             KW ${report.week}<br>
-                            <small style="font-size: 0.7rem; opacity: 0.8;">${report.year}. Jahr</small>
+                            <small style="font-size: 0.65rem; opacity: 0.8;">${report.year}. Jahr</small>
                         </div>
                         <div class="report-content">
                             <div class="report-title">
@@ -881,47 +2330,85 @@ Beispiel:
                             <div class="report-meta">
                                 <span>📅 ${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}</span>
                                 <span>⏱️ ${report.hours || 0} Std.</span>
+                                <span>📝 ${wordCount} Wörter</span>
+                                ${modeBadge}
                                 ${statusBadge}
                             </div>
                         </div>
+                        ${!bulkMode ? `
                         <div class="report-actions" onclick="event.stopPropagation()">
                             <button class="btn-icon" onclick="editReport('${report.id}')" title="Bearbeiten">✏️</button>
+                            <button class="btn-icon success" onclick="duplicateReport('${report.id}')" title="Duplizieren">📋</button>
                             <button class="btn-icon" onclick="exportReportPDF('${report.id}')" title="Als PDF exportieren">📄</button>
-                            <button class="btn-icon" onclick="deleteReport('${report.id}')" title="Löschen" style="color: var(--danger);">🗑️</button>
-                        </div>
+                            <button class="btn-icon danger" onclick="deleteReport('${report.id}')" title="Löschen">🗑️</button>
+                        </div>` : ''}
                     </div>
                 `;
             }).join('');
+
+            // Staggered entrance animation
+            requestAnimationFrame(() => {
+                document.querySelectorAll('.report-item').forEach((el, i) => {
+                    setTimeout(() => el.classList.add('visible'), i * 50);
+                });
+            });
         }
 
-        // Format date
+        // ═══════════════════════════════════════
+        // DATE HELPERS
+        // ═══════════════════════════════════════
+
         function formatDate(dateStr) {
+            if (!dateStr) return '-';
             const d = new Date(dateStr);
             return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
-        // Populate year filter
         function populateYearFilter() {
             const yearFilter = document.getElementById('yearFilter');
             const years = [...new Set(reports.map(r => r.year))].sort((a, b) => b - a);
+            const currentValue = yearFilter.value;
 
-            const currentOptions = Array.from(yearFilter.options).slice(1).map(o => o.value);
-            const newYears = years.filter(y => !currentOptions.includes(y.toString()));
-
-            newYears.forEach(year => {
+            // Rebuild options
+            yearFilter.innerHTML = '<option value="">Alle Jahre</option>';
+            years.forEach(year => {
                 const option = document.createElement('option');
                 option.value = year;
                 option.textContent = `${year}. Ausbildungsjahr`;
                 yearFilter.appendChild(option);
             });
+            yearFilter.value = currentValue;
         }
 
-        // Filter reports
         function filterReports() {
             renderReports();
         }
 
-        // Open new report modal
+        function getWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        function getWeekDates(weekNum) {
+            const year = new Date().getFullYear();
+            const jan1 = new Date(year, 0, 1);
+            const days = (weekNum - 1) * 7;
+            const monday = new Date(year, 0, 1 + days + (8 - jan1.getDay()) % 7);
+            const friday = new Date(monday);
+            friday.setDate(monday.getDate() + 4);
+            return {
+                monday: monday.toISOString().split('T')[0],
+                friday: friday.toISOString().split('T')[0]
+            };
+        }
+
+        // ═══════════════════════════════════════
+        // MODAL OPERATIONS
+        // ═══════════════════════════════════════
+
         function openNewReportModal() {
             editingId = null;
             document.getElementById('modalTitle').textContent = 'Neuen Bericht erstellen';
@@ -937,52 +2424,60 @@ Beispiel:
             document.getElementById('reportDateFrom').value = monday;
             document.getElementById('reportDateTo').value = friday;
 
+            // Restore draft if exists
+            restoreDraft();
+
+            // Apply saved mode
+            setMode(currentMode);
+
             document.getElementById('reportModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Reset quality meter
+            updateQualityMeter('');
+
+            // Initialize AI suggestions
+            aiUsedChips.clear();
+            setTimeout(() => renderAISuggestions(currentMode), 150);
         }
 
-        // Close report modal
         function closeReportModal() {
             document.getElementById('reportModal').classList.remove('active');
+            document.body.style.overflow = '';
             editingId = null;
+            clearDraft();
         }
 
-        // Get week number
-        function getWeekNumber(date) {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.remove('active');
+            document.body.style.overflow = '';
         }
 
-        // Get week dates (Monday to Friday)
-        function getWeekDates(weekNum) {
-            const year = new Date().getFullYear();
-            const jan1 = new Date(year, 0, 1);
-            const days = (weekNum - 1) * 7;
-            const monday = new Date(year, 0, 1 + days + (8 - jan1.getDay()) % 7);
-            const friday = new Date(monday);
-            friday.setDate(monday.getDate() + 4);
-
-            return {
-                monday: monday.toISOString().split('T')[0],
-                friday: friday.toISOString().split('T')[0]
-            };
+        function closeTemplatesModal() {
+            document.getElementById('templatesModal').classList.remove('active');
+            document.body.style.overflow = '';
         }
 
-        // Character counter
-        document.addEventListener('DOMContentLoaded', () => {
-            const textarea = document.getElementById('reportActivities');
-            const counter = document.getElementById('charCount');
+        // ═══════════════════════════════════════
+        // SAVE REPORT
+        // ═══════════════════════════════════════
 
-            textarea.addEventListener('input', () => {
-                counter.textContent = textarea.value.length + ' Zeichen';
-            });
-        });
-
-        // Save report
         function saveReport(event) {
             event.preventDefault();
+
+            // Determine activities based on mode
+            let activities = '';
+            let dailyActivities = null;
+            let dailyHours = null;
+
+            if (currentMode === 'daily') {
+                dailyActivities = getDailyActivitiesFromForm();
+                dailyHours = getDailyHoursFromForm();
+                // Combine daily texts into a single string for backward compat & search
+                activities = combineDailyToWeeklyText(dailyActivities);
+            } else {
+                activities = document.getElementById('reportActivities').value;
+            }
 
             const report = {
                 id: editingId || Date.now().toString(),
@@ -991,17 +2486,20 @@ Beispiel:
                 dateFrom: document.getElementById('reportDateFrom').value,
                 dateTo: document.getElementById('reportDateTo').value,
                 department: document.getElementById('reportDepartment').value,
-                activities: document.getElementById('reportActivities').value,
+                activities: activities,
+                mode: currentMode,
+                dailyActivities: dailyActivities,
+                dailyHours: dailyHours,
                 school: document.getElementById('reportSchool').value,
                 hours: parseFloat(document.getElementById('reportHours').value) || 0,
                 status: document.getElementById('reportStatus').value,
-                createdAt: editingId ? reports.find(r => r.id === editingId).createdAt : new Date().toISOString(),
+                createdAt: editingId ? (reports.find(r => r.id === editingId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             };
 
             if (editingId) {
                 const index = reports.findIndex(r => r.id === editingId);
-                reports[index] = report;
+                if (index !== -1) reports[index] = report;
             } else {
                 reports.push(report);
             }
@@ -1009,11 +2507,20 @@ Beispiel:
             saveToStorage();
             updateUI();
             closeReportModal();
+            clearDraft();
 
-            showNotification('✅ Bericht erfolgreich gespeichert!', 'success');
+            showToast(editingId ? '✅ Bericht aktualisiert!' : '✅ Bericht erstellt!', 'success');
+
+            // Confetti on new complete report
+            if (!editingId && (report.status === 'complete' || report.status === 'signed')) {
+                launchConfetti();
+            }
         }
 
-        // Edit report
+        // ═══════════════════════════════════════
+        // EDIT / VIEW / DELETE
+        // ═══════════════════════════════════════
+
         function editReport(id) {
             const report = reports.find(r => r.id === id);
             if (!report) return;
@@ -1025,68 +2532,116 @@ Beispiel:
             document.getElementById('reportDateFrom').value = report.dateFrom;
             document.getElementById('reportDateTo').value = report.dateTo;
             document.getElementById('reportDepartment').value = report.department || '';
-            document.getElementById('reportActivities').value = report.activities;
             document.getElementById('reportSchool').value = report.school || '';
             document.getElementById('reportHours').value = report.hours;
             document.getElementById('reportStatus').value = report.status;
 
+            // Restore mode
+            const reportMode = report.mode || 'weekly';
+            setMode(reportMode);
+
+            if (reportMode === 'daily' && report.dailyActivities) {
+                // Small delay to ensure daily fields are rendered
+                setTimeout(() => {
+                    setDailyFieldsFromData(report.dailyActivities, report.dailyHours);
+                    renderAISuggestions('daily');
+                }, 50);
+                document.getElementById('reportActivities').value = report.activities || '';
+            } else {
+                document.getElementById('reportActivities').value = report.activities;
+                document.getElementById('charCount').textContent = report.activities.length + ' Zeichen';
+                updateQualityMeter(report.activities);
+                renderAISuggestions('weekly');
+            }
+
             document.getElementById('reportModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
-        // View report
         function viewReport(id) {
             const report = reports.find(r => r.id === id);
             if (!report) return;
 
             const statusText = {
-                'incomplete': 'In Bearbeitung',
-                'complete': 'Vollständig',
-                'signed': 'Unterschrieben'
+                'incomplete': '<span class="badge badge-warning" style="font-size: 0.8rem; padding: 5px 14px;">In Bearbeitung</span>',
+                'complete': '<span class="badge badge-success" style="font-size: 0.8rem; padding: 5px 14px;">Vollständig</span>',
+                'signed': '<span class="badge badge-signed" style="font-size: 0.8rem; padding: 5px 14px;">✅ Unterschrieben</span>'
             }[report.status];
 
+            const wordCount = (report.activities + ' ' + (report.school || '')).split(/\s+/).filter(w => w.length > 0).length;
+            const quality = calculateQuality(report.activities);
+
             const content = `
-                <div style="text-align: center; margin-bottom: 2rem;">
-                    <h2 style="margin-bottom: 0.5rem;">Ausbildungsnachweis</h2>
-                    <p style="color: var(--text-muted);">KW ${report.week} • ${report.year}. Ausbildungsjahr</p>
+                <div style="text-align: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border);">
+                    <h2 style="margin-bottom: 0.5rem; font-size: 1.5rem; letter-spacing: -0.5px;">Ausbildungsnachweis</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">KW ${report.week} • ${report.year}. Ausbildungsjahr</p>
+                    <div style="margin-top: 0.75rem;">${statusText}</div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 12px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: var(--radius-sm); border: 1px solid var(--border);">
                     <div>
-                        <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.25rem;">Zeitraum</div>
-                        <div style="font-weight: 600;">${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}</div>
+                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">Zeitraum</div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}</div>
                     </div>
                     <div>
-                        <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.25rem;">Abteilung</div>
-                        <div style="font-weight: 600;">${report.department || '-'}</div>
+                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">Abteilung</div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">${report.department || '-'}</div>
                     </div>
                     <div>
-                        <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.25rem;">Stunden</div>
-                        <div style="font-weight: 600;">${report.hours || 0} Std.</div>
+                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">Stunden</div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">${report.hours || 0} Std.</div>
                     </div>
                     <div>
-                        <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.25rem;">Status</div>
-                        <div style="font-weight: 600;">${statusText}</div>
+                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">Wörter</div>
+                        <div style="font-weight: 600; font-size: 0.95rem;">${wordCount}</div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.3px;">Qualität</div>
+                        <div style="font-weight: 700; font-size: 0.95rem; color: ${quality >= 80 ? 'var(--success)' : quality >= 50 ? 'var(--warning)' : 'var(--danger)'};">${quality}%</div>
                     </div>
                 </div>
 
                 <div style="margin-bottom: 2rem;">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--primary);">Ausgeführte Tätigkeiten</h3>
-                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); white-space: pre-wrap; line-height: 1.8;">${report.activities}</div>
+                    <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                        <span>📋</span> Ausgeführte Tätigkeiten
+                        ${report.mode === 'daily' ? '<span style="font-size:0.68rem;padding:2px 8px;background:rgba(var(--success-rgb),0.15);color:var(--success);border-radius:5px;font-weight:700;">TÄGLICH / IHK</span>' : '<span style="font-size:0.68rem;padding:2px 8px;background:rgba(var(--primary-rgb),0.15);color:var(--primary);border-radius:5px;font-weight:700;">WÖCHENTLICH</span>'}
+                    </h3>
+                    ${report.mode === 'daily' && report.dailyActivities ? `
+                        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                            ${DAYS.map(day => {
+                                const text = report.dailyActivities[day.key];
+                                const hrs = report.dailyHours ? report.dailyHours[day.key] : null;
+                                if (!text) return '';
+                                return `<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 1rem;background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border);font-size:0.82rem;font-weight:700;">
+                                        <span>${day.icon} ${day.name}</span>
+                                        ${hrs ? `<span style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);">${hrs} Std.</span>` : ''}
+                                    </div>
+                                    <div style="padding:0.75rem 1rem;white-space:pre-wrap;line-height:1.7;font-size:0.88rem;">${escapeHtml(text)}</div>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    ` : `<div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border); white-space: pre-wrap; line-height: 1.8; font-size: 0.92rem;">${escapeHtml(report.activities)}</div>`}
                 </div>
 
                 ${report.school ? `
                 <div style="margin-bottom: 2rem;">
-                    <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--primary);">Berufsschule</h3>
-                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); white-space: pre-wrap; line-height: 1.8;">${report.school}</div>
+                    <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--cyan); display: flex; align-items: center; gap: 8px;">
+                        <span>🎓</span> Berufsschule
+                    </h3>
+                    <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border); white-space: pre-wrap; line-height: 1.8; font-size: 0.92rem;">${escapeHtml(report.school)}</div>
                 </div>
                 ` : ''}
 
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <div style="display: flex; gap: 0.75rem; margin-top: 2rem; flex-wrap: wrap;">
                     <button class="btn btn-primary" onclick="editReport('${report.id}'); closeViewModal();">
                         <span>✏️</span> Bearbeiten
                     </button>
+                    <button class="btn btn-secondary" onclick="duplicateReport('${report.id}'); closeViewModal();">
+                        <span>📋</span> Duplizieren
+                    </button>
                     <button class="btn btn-secondary" onclick="exportReportPDF('${report.id}')">
-                        <span>📄</span> Als PDF exportieren
+                        <span>📄</span> PDF Export
                     </button>
                     <button class="btn btn-secondary" onclick="window.print()">
                         <span>🖨️</span> Drucken
@@ -1096,125 +2651,381 @@ Beispiel:
 
             document.getElementById('viewContent').innerHTML = content;
             document.getElementById('viewModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
-        // Close view modal
-        function closeViewModal() {
-            document.getElementById('viewModal').classList.remove('active');
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
-        // Delete report
         function deleteReport(id) {
             if (!confirm('Möchtest du diesen Bericht wirklich löschen?')) return;
 
             reports = reports.filter(r => r.id !== id);
             saveToStorage();
             updateUI();
-            showNotification('🗑️ Bericht gelöscht', 'success');
+            showToast('🗑️ Bericht gelöscht', 'info');
         }
 
-        // Export report as PDF
+        // ═══════════════════════════════════════
+        // DUPLICATE REPORT
+        // ═══════════════════════════════════════
+
+        function duplicateReport(id) {
+            const original = reports.find(r => r.id === id);
+            if (!original) return;
+
+            const newReport = {
+                ...original,
+                id: Date.now().toString(),
+                week: original.week + 1 > 52 ? 1 : original.week + 1,
+                status: 'incomplete',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            // Update dates for next week
+            const { monday, friday } = getWeekDates(newReport.week);
+            newReport.dateFrom = monday;
+            newReport.dateTo = friday;
+
+            reports.push(newReport);
+            saveToStorage();
+            updateUI();
+            showToast('📋 Bericht dupliziert (KW ' + newReport.week + ')', 'success');
+        }
+
+        function duplicateLastReport() {
+            if (reports.length === 0) {
+                showToast('ℹ️ Kein Bericht zum Duplizieren vorhanden.', 'info');
+                return;
+            }
+
+            // Find the most recent report
+            const sorted = [...reports].sort((a, b) => {
+                if (a.year !== b.year) return b.year - a.year;
+                return b.week - a.week;
+            });
+
+            duplicateReport(sorted[0].id);
+        }
+
+        // ═══════════════════════════════════════
+        // BULK OPERATIONS
+        // ═══════════════════════════════════════
+
+        function toggleBulkMode() {
+            bulkMode = !bulkMode;
+            selectedIds.clear();
+
+            const bulkBar = document.getElementById('bulkBar');
+            bulkBar.style.display = bulkMode ? 'flex' : 'none';
+            document.getElementById('bulkCount').textContent = '0';
+
+            renderReports();
+        }
+
+        function toggleSelect(id) {
+            if (selectedIds.has(id)) selectedIds.delete(id);
+            else selectedIds.add(id);
+
+            document.getElementById('bulkCount').textContent = selectedIds.size;
+            renderReports();
+        }
+
+        function bulkDelete() {
+            if (selectedIds.size === 0) return;
+            if (!confirm(`${selectedIds.size} Berichte wirklich löschen?`)) return;
+
+            reports = reports.filter(r => !selectedIds.has(r.id));
+            saveToStorage();
+            toggleBulkMode();
+            updateUI();
+            showToast(`🗑️ ${selectedIds.size} Berichte gelöscht`, 'info');
+        }
+
+        function bulkExportPDF() {
+            if (selectedIds.size === 0) return;
+
+            let delay = 0;
+            selectedIds.forEach(id => {
+                setTimeout(() => exportReportPDF(id), delay);
+                delay += 500;
+            });
+        }
+
+        // ═══════════════════════════════════════
+        // QUALITY METER
+        // ═══════════════════════════════════════
+
+        function calculateQuality(text) {
+            if (!text) return 0;
+            let score = 0;
+            const len = text.length;
+            const words = text.split(/\s+/).filter(w => w.length > 0).length;
+            const bullets = (text.match(/^[•\-\*]/gm) || []).length;
+            const hasMultipleLines = text.split('\n').filter(l => l.trim().length > 0).length;
+
+            // Length score (max 30)
+            if (len >= 300) score += 30;
+            else if (len >= 200) score += 25;
+            else if (len >= 100) score += 15;
+            else if (len >= 50) score += 8;
+
+            // Word count (max 25)
+            if (words >= 60) score += 25;
+            else if (words >= 40) score += 20;
+            else if (words >= 20) score += 12;
+            else if (words >= 10) score += 5;
+
+            // Bullet points (max 20)
+            if (bullets >= 5) score += 20;
+            else if (bullets >= 3) score += 14;
+            else if (bullets >= 1) score += 7;
+
+            // Multiple lines (max 15)
+            if (hasMultipleLines >= 5) score += 15;
+            else if (hasMultipleLines >= 3) score += 10;
+            else if (hasMultipleLines >= 2) score += 5;
+
+            // Specificity bonus: numbers, tools, technologies (max 10)
+            const hasNumbers = /\d+/.test(text);
+            const hasTechTerms = /API|SQL|HTML|CSS|Python|Java|C\+\+|Server|Datenbank|Framework|Docker|Git|Linux|Windows/i.test(text);
+            if (hasNumbers) score += 5;
+            if (hasTechTerms) score += 5;
+
+            return Math.min(score, 100);
+        }
+
+        function updateQualityMeter(text) {
+            const quality = calculateQuality(text);
+            const fill = document.getElementById('qualityBarFill');
+            const label = document.getElementById('qualityLabel');
+
+            fill.style.width = quality + '%';
+            label.textContent = quality + '%';
+
+            if (quality >= 80) {
+                fill.style.background = 'linear-gradient(90deg, var(--success), #22d3ee)';
+                label.style.color = 'var(--success)';
+            } else if (quality >= 50) {
+                fill.style.background = 'linear-gradient(90deg, var(--warning), #fbbf24)';
+                label.style.color = 'var(--warning)';
+            } else {
+                fill.style.background = 'linear-gradient(90deg, var(--danger), #f87171)';
+                label.style.color = 'var(--danger)';
+            }
+        }
+
+        // ═══════════════════════════════════════
+        // PDF EXPORT (Enhanced)
+        // ═══════════════════════════════════════
+
         function exportReportPDF(id) {
             const report = reports.find(r => r.id === id);
             if (!report) return;
 
             if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
-                alert('PDF-Export ist derzeit nicht verfügbar. Bitte verwende die Druckfunktion.');
+                showToast('⚠️ PDF nicht verfügbar. Nutze die Druckfunktion.', 'error');
                 return;
             }
 
             const { jsPDF } = jspdf;
             const doc = new jsPDF();
 
-            // Header
-            doc.setFontSize(18);
-            doc.text('Ausbildungsnachweis', 105, 20, { align: 'center' });
-
+            // ─── Header ───
+            doc.setFillColor(88, 28, 135); // Purple
+            doc.rect(0, 0, 210, 35, 'F');
+            doc.setFontSize(22);
+            doc.setTextColor(255, 255, 255);
+            doc.text('Ausbildungsnachweis', 105, 18, { align: 'center' });
             doc.setFontSize(11);
-            doc.text(`KW ${report.week} • ${report.year}. Ausbildungsjahr`, 105, 28, { align: 'center' });
+            doc.text(`KW ${report.week}  |  ${report.year}. Ausbildungsjahr`, 105, 28, { align: 'center' });
 
-            // Info box
+            // ─── Info Box ───
+            doc.setTextColor(60, 60, 60);
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(15, 42, 180, 28, 3, 3, 'S');
+
+            doc.setFontSize(9);
+            doc.setTextColor(120, 120, 120);
+            doc.text('Zeitraum', 22, 50);
+            doc.text('Abteilung', 80, 50);
+            doc.text('Stunden', 140, 50);
+            doc.text('Status', 170, 50);
+
             doc.setFontSize(10);
-            const info = [
-                `Zeitraum: ${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}`,
-                `Abteilung: ${report.department || '-'}`,
-                `Stunden: ${report.hours || 0}`,
-            ];
-            let y = 40;
-            info.forEach(line => {
-                doc.text(line, 20, y);
-                y += 7;
-            });
+            doc.setTextColor(30, 30, 30);
+            const statusLabel = { 'incomplete': 'Entwurf', 'complete': 'Vollständig', 'signed': 'Unterschrieben' }[report.status];
+            doc.text(`${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}`, 22, 58);
+            doc.text(report.department || '-', 80, 58);
+            doc.text(`${report.hours || 0} Std.`, 140, 58);
+            doc.text(statusLabel, 170, 58);
 
-            // Activities
-            y += 5;
+            // ─── Activities ───
+            let y = 80;
             doc.setFontSize(12);
+            doc.setTextColor(88, 28, 135);
             doc.setFont(undefined, 'bold');
-            doc.text('Ausgeführte Tätigkeiten:', 20, y);
-            y += 8;
 
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            const activitiesLines = doc.splitTextToSize(report.activities, 170);
-            doc.text(activitiesLines, 20, y);
-            y += activitiesLines.length * 5 + 10;
+            if (report.mode === 'daily' && report.dailyActivities) {
+                doc.text('Tägliche Tätigkeiten (IHK-Format)', 15, y);
+                y += 3;
+                doc.setDrawColor(88, 28, 135);
+                doc.setLineWidth(0.5);
+                doc.line(15, y, 130, y);
+                y += 8;
 
-            // School
-            if (report.school && y < 250) {
-                doc.setFontSize(12);
-                doc.setFont(undefined, 'bold');
-                doc.text('Berufsschule:', 20, y);
+                const dayNames = { monday: 'Montag', tuesday: 'Dienstag', wednesday: 'Mittwoch', thursday: 'Donnerstag', friday: 'Freitag' };
+                const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+
+                days.forEach(dayKey => {
+                    const text = report.dailyActivities[dayKey];
+                    if (!text) return;
+
+                    if (y > 245) { doc.addPage(); y = 20; }
+
+                    const hrs = report.dailyHours ? report.dailyHours[dayKey] : null;
+
+                    // Day header with colored box
+                    doc.setFillColor(245, 243, 255);
+                    doc.roundedRect(15, y - 4, 180, 8, 1, 1, 'F');
+                    doc.setFontSize(10);
+                    doc.setTextColor(88, 28, 135);
+                    doc.setFont(undefined, 'bold');
+                    doc.text(dayNames[dayKey], 18, y + 1);
+                    if (hrs) {
+                        doc.setFontSize(8);
+                        doc.setTextColor(120, 120, 120);
+                        doc.text(`${hrs} Std.`, 175, y + 1);
+                    }
+                    y += 8;
+
+                    doc.setFontSize(9.5);
+                    doc.setTextColor(40, 40, 40);
+                    doc.setFont(undefined, 'normal');
+                    const lines = doc.splitTextToSize(text, 170);
+                    lines.forEach(line => {
+                        if (y > 260) { doc.addPage(); y = 20; }
+                        doc.text(line, 20, y);
+                        y += 5;
+                    });
+                    y += 3;
+                });
+            } else {
+                doc.text('Ausgeführte Tätigkeiten', 15, y);
+                y += 3;
+                doc.setDrawColor(88, 28, 135);
+                doc.setLineWidth(0.5);
+                doc.line(15, y, 100, y);
                 y += 8;
 
                 doc.setFontSize(10);
+                doc.setTextColor(40, 40, 40);
                 doc.setFont(undefined, 'normal');
-                const schoolLines = doc.splitTextToSize(report.school, 170);
-                doc.text(schoolLines, 20, y);
+                const activitiesLines = doc.splitTextToSize(report.activities, 175);
+                activitiesLines.forEach(line => {
+                    if (y > 260) { doc.addPage(); y = 20; }
+                    doc.text(line, 18, y);
+                    y += 5.5;
+                });
             }
 
-            // Signature line
-            if (y < 250) {
-                doc.line(20, 270, 90, 270);
-                doc.text('Unterschrift Auszubildende/r', 20, 275);
+            // ─── School ───
+            if (report.school) {
+                y += 8;
+                if (y > 240) { doc.addPage(); y = 20; }
+                doc.setFontSize(12);
+                doc.setTextColor(6, 182, 212);
+                doc.setFont(undefined, 'bold');
+                doc.text('Berufsschule', 15, y);
+                y += 3;
+                doc.setDrawColor(6, 182, 212);
+                doc.line(15, y, 80, y);
+                y += 8;
 
-                doc.line(120, 270, 190, 270);
-                doc.text('Unterschrift Ausbilder/in', 120, 275);
+                doc.setFontSize(10);
+                doc.setTextColor(40, 40, 40);
+                doc.setFont(undefined, 'normal');
+                const schoolLines = doc.splitTextToSize(report.school, 175);
+                schoolLines.forEach(line => {
+                    if (y > 260) { doc.addPage(); y = 20; }
+                    doc.text(line, 18, y);
+                    y += 5.5;
+                });
             }
+
+            // ─── Signature Lines ───
+            const pageHeight = doc.internal.pageSize.getHeight();
+            doc.setDrawColor(150, 150, 150);
+            doc.setLineWidth(0.4);
+            doc.line(15, pageHeight - 25, 85, pageHeight - 25);
+            doc.line(120, pageHeight - 25, 195, pageHeight - 25);
+
+            doc.setFontSize(8);
+            doc.setTextColor(120, 120, 120);
+            doc.text('Auszubildende/r', 15, pageHeight - 20);
+            doc.text('Datum, Unterschrift', 15, pageHeight - 16);
+            doc.text('Ausbilder/in', 120, pageHeight - 20);
+            doc.text('Datum, Unterschrift', 120, pageHeight - 16);
+
+            // ─── Footer ───
+            doc.setFontSize(7);
+            doc.setTextColor(180, 180, 180);
+            doc.text(`Erstellt mit Berichtsheft.PRO • ${new Date().toLocaleDateString('de-DE')}`, 105, pageHeight - 8, { align: 'center' });
 
             doc.save(`Berichtsheft_KW${report.week}_Jahr${report.year}.pdf`);
-            showNotification('📄 PDF erfolgreich exportiert!', 'success');
+            showToast('📄 PDF exportiert!', 'success');
         }
 
-        // Export all as PDF
         function exportAllPDF() {
             if (reports.length === 0) {
-                alert('Keine Berichte zum Exportieren vorhanden.');
+                showToast('ℹ️ Keine Berichte vorhanden.', 'info');
                 return;
             }
 
-            // For simplicity, export each report separately
             let exported = 0;
-            reports.forEach(report => {
+            const sorted = [...reports].sort((a, b) => {
+                if (a.year !== b.year) return a.year - b.year;
+                return a.week - b.week;
+            });
+
+            sorted.forEach((report, i) => {
                 setTimeout(() => {
                     exportReportPDF(report.id);
-                }, exported * 500);
-                exported++;
+                    exported++;
+                    if (exported === sorted.length) {
+                        showToast(`📄 ${exported} PDFs exportiert!`, 'success');
+                    }
+                }, i * 400);
             });
         }
 
-        // Auto-fill from TimeTracker
+        // ═══════════════════════════════════════
+        // AUTO-FILL FROM TIMETRACKER
+        // ═══════════════════════════════════════
+
         function autoFillFromTimeTracker() {
             const timeTrackerData = localStorage.getItem('tg_pro_data');
             if (!timeTrackerData) {
-                alert('Keine TimeTracker-Daten gefunden. Bitte erfasse zuerst Einträge im TimeTracker.');
+                showToast('⚠️ Keine TimeTracker-Daten gefunden.', 'error');
                 return;
             }
 
-            const data = JSON.parse(timeTrackerData);
+            let data;
+            try {
+                data = JSON.parse(timeTrackerData);
+            } catch (e) {
+                showToast('⚠️ Fehler beim Lesen der TimeTracker-Daten.', 'error');
+                return;
+            }
             const entries = data.entries || [];
 
             if (entries.length === 0) {
-                alert('Keine Einträge im TimeTracker vorhanden.');
+                showToast('ℹ️ Keine Einträge im TimeTracker.', 'info');
                 return;
             }
 
@@ -1223,39 +3034,29 @@ Beispiel:
             entries.forEach(entry => {
                 const date = new Date(entry.date);
                 const week = getWeekNumber(date);
-                const year = date.getFullYear();
-                const key = `${year}-${week}`;
+                const key = `${date.getFullYear()}-${week}`;
 
                 if (!weekGroups[key]) {
-                    weekGroups[key] = {
-                        week,
-                        year,
-                        entries: [],
-                        totalHours: 0
-                    };
+                    weekGroups[key] = { week, year: date.getFullYear(), entries: [], totalHours: 0 };
                 }
-
                 weekGroups[key].entries.push(entry);
                 weekGroups[key].totalHours += entry.worked || 0;
             });
 
-            // Create reports for weeks not yet documented
             let imported = 0;
             Object.values(weekGroups).forEach(group => {
-                // Check if report already exists
-                const exists = reports.some(r => r.week === group.week && r.year === group.year);
+                const exists = reports.some(r => r.week === group.week);
                 if (exists) return;
 
                 const { monday, friday } = getWeekDates(group.week);
-
                 const activities = group.entries
                     .filter(e => e.type === 'work')
-                    .map(e => `• Arbeitszeit erfasst: ${e.worked} Stunden${e.notes ? ' - ' + e.notes : ''}`)
+                    .map(e => `• Arbeitszeit erfasst: ${e.worked} Std.${e.notes ? ' — ' + e.notes : ''}`)
                     .join('\n');
 
-                const report = {
+                reports.push({
                     id: Date.now().toString() + imported,
-                    year: 1, // Default to first year
+                    year: 1,
                     week: group.week,
                     dateFrom: monday,
                     dateTo: friday,
@@ -1266,22 +3067,24 @@ Beispiel:
                     status: 'incomplete',
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
-                };
-
-                reports.push(report);
+                });
                 imported++;
             });
 
             if (imported > 0) {
                 saveToStorage();
                 updateUI();
-                showNotification(`✅ ${imported} Berichte aus TimeTracker importiert!`, 'success');
+                showToast(`✅ ${imported} Berichte importiert!`, 'success');
+                launchConfetti();
             } else {
-                showNotification('ℹ️ Alle Wochen wurden bereits dokumentiert.', 'info');
+                showToast('ℹ️ Alle Wochen bereits dokumentiert.', 'info');
             }
         }
 
-        // Show templates
+        // ═══════════════════════════════════════
+        // TEMPLATES
+        // ═══════════════════════════════════════
+
         function showTemplates() {
             const grid = document.getElementById('templateGrid');
             grid.innerHTML = templates.map(t => `
@@ -1293,65 +3096,755 @@ Beispiel:
             `).join('');
 
             document.getElementById('templatesModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
         }
 
-        // Close templates modal
-        function closeTemplatesModal() {
-            document.getElementById('templatesModal').classList.remove('active');
-        }
-
-        // Apply template
         function applyTemplate(templateId) {
             const template = templates.find(t => t.id === templateId);
             if (!template) return;
 
-            document.getElementById('reportActivities').value = template.content;
-            document.getElementById('charCount').textContent = template.content.length + ' Zeichen';
-
             closeTemplatesModal();
             openNewReportModal();
 
-            showNotification(`✅ Vorlage "${template.name}" angewendet`, 'success');
+            // Slight delay so modal is visible
+            setTimeout(() => {
+                document.getElementById('reportActivities').value = template.content;
+                document.getElementById('charCount').textContent = template.content.length + ' Zeichen';
+                updateQualityMeter(template.content);
+            }, 100);
+
+            showToast(`📝 Vorlage "${template.name}" geladen`, 'success');
         }
 
-        // Show notification
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 2rem;
-                right: 2rem;
-                padding: 1rem 1.5rem;
-                background: ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : 'var(--info)'};
-                color: white;
-                border-radius: 12px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-                z-index: 10000;
-                animation: slideIn 0.3s ease;
-                font-weight: 600;
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
+        // ═══════════════════════════════════════
+        // AUTO-SAVE DRAFTS
+        // ═══════════════════════════════════════
+
+        function saveDraft() {
+            const draft = {
+                year: document.getElementById('reportYear').value,
+                week: document.getElementById('reportWeek').value,
+                dateFrom: document.getElementById('reportDateFrom').value,
+                dateTo: document.getElementById('reportDateTo').value,
+                department: document.getElementById('reportDepartment').value,
+                activities: document.getElementById('reportActivities').value,
+                school: document.getElementById('reportSchool').value,
+                hours: document.getElementById('reportHours').value,
+                status: document.getElementById('reportStatus').value,
+                mode: currentMode,
+                dailyActivities: currentMode === 'daily' ? getDailyActivitiesFromForm() : null,
+                dailyHours: currentMode === 'daily' ? getDailyHoursFromForm() : null,
+                savedAt: Date.now()
+            };
+
+            if (draft.activities.length > 10 || draft.department.length > 0) {
+                localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(draft));
+            }
+        }
+
+        function restoreDraft() {
+            if (editingId) return; // Don't restore draft when editing
+            try {
+                const draft = JSON.parse(localStorage.getItem(AUTOSAVE_KEY));
+                if (!draft) return;
+                // Only restore if less than 24 hours old
+                if (Date.now() - draft.savedAt > 86400000) { clearDraft(); return; }
+
+                const hasContent = (draft.activities && draft.activities.length > 10) ||
+                    (draft.dailyActivities && Object.values(draft.dailyActivities).some(t => t && t.length > 5));
+
+                if (hasContent) {
+                    if (confirm('Es gibt einen ungespeicherten Entwurf. Möchtest du ihn wiederherstellen?')) {
+                        document.getElementById('reportYear').value = draft.year || 1;
+                        document.getElementById('reportWeek').value = draft.week || '';
+                        document.getElementById('reportDateFrom').value = draft.dateFrom || '';
+                        document.getElementById('reportDateTo').value = draft.dateTo || '';
+                        document.getElementById('reportDepartment').value = draft.department || '';
+                        document.getElementById('reportActivities').value = draft.activities || '';
+                        document.getElementById('reportSchool').value = draft.school || '';
+                        document.getElementById('reportHours').value = draft.hours || '';
+                        document.getElementById('reportStatus').value = draft.status || 'incomplete';
+                        document.getElementById('charCount').textContent = (draft.activities || '').length + ' Zeichen';
+                        updateQualityMeter(draft.activities || '');
+
+                        // Restore mode
+                        if (draft.mode) {
+                            setMode(draft.mode);
+                            if (draft.mode === 'daily' && draft.dailyActivities) {
+                                setTimeout(() => setDailyFieldsFromData(draft.dailyActivities, draft.dailyHours), 50);
+                            }
+                        }
+                    }
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        function clearDraft() {
+            localStorage.removeItem(AUTOSAVE_KEY);
+        }
+
+        // ═══════════════════════════════════════
+        // DEPARTMENT SUGGESTIONS
+        // ═══════════════════════════════════════
+
+        function updateDepartmentSuggestions() {
+            const departments = [...new Set(reports.map(r => r.department).filter(Boolean))];
+            const datalist = document.getElementById('departmentList');
+            if (!datalist) return;
+            datalist.innerHTML = departments.map(d => `<option value="${escapeHtml(d)}">`).join('');
+        }
+
+        // ═══════════════════════════════════════
+        // CONFETTI
+        // ═══════════════════════════════════════
+
+        function launchConfetti() {
+            const container = document.createElement('div');
+            container.className = 'confetti-container';
+            document.body.appendChild(container);
+
+            const colors = ['#a855f7', '#ec4899', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#fff'];
+            const shapes = ['square', 'circle'];
+
+            for (let i = 0; i < 80; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const shape = shapes[Math.floor(Math.random() * shapes.length)];
+                const left = Math.random() * 100;
+                const delay = Math.random() * 0.8;
+                const rotation = Math.random() * 360;
+                const size = 6 + Math.random() * 8;
+
+                piece.style.cssText = `
+                    left: ${left}%;
+                    top: -10px;
+                    width: ${size}px;
+                    height: ${shape === 'circle' ? size : size * 1.6}px;
+                    background: ${color};
+                    border-radius: ${shape === 'circle' ? '50%' : '2px'};
+                    animation-delay: ${delay}s;
+                    transform: rotate(${rotation}deg);
+                `;
+                container.appendChild(piece);
+            }
+
+            setTimeout(() => container.remove(), 3500);
+        }
+
+        // ═══════════════════════════════════════
+        // THEME TOGGLE
+        // ═══════════════════════════════════════
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'light' ? '' : 'light';
+
+            if (next) {
+                html.setAttribute('data-theme', 'light');
+                localStorage.setItem(THEME_KEY, 'light');
+                document.getElementById('themeToggle').textContent = '☀️';
+            } else {
+                html.removeAttribute('data-theme');
+                localStorage.setItem(THEME_KEY, 'dark');
+                document.getElementById('themeToggle').textContent = '🌙';
+            }
+        }
+
+        function restoreTheme() {
+            const saved = localStorage.getItem(THEME_KEY);
+            if (saved === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+                document.getElementById('themeToggle').textContent = '☀️';
+            }
+        }
+
+        // ═══════════════════════════════════════
+        // TOAST NOTIFICATIONS
+        // ═══════════════════════════════════════
+
+        function showToast(message, type = 'info') {
+            // Remove existing toasts
+            document.querySelectorAll('.toast').forEach(t => t.remove());
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = message;
+            document.body.appendChild(toast);
 
             setTimeout(() => {
-                notification.style.animation = 'slideOut 0.3s ease';
-                setTimeout(() => notification.remove(), 300);
+                toast.classList.add('removing');
+                setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
-        // Initialize
-        loadReports();
-    </script>
+        // ═══════════════════════════════════════
+        // AUTO-SAVE INDICATOR
+        // ═══════════════════════════════════════
 
-    <style>
-        @keyframes slideIn {
-            from { transform: translateX(400px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        function showAutoSave() {
+            const indicator = document.getElementById('autosaveIndicator');
+            if (!indicator) return;
+            indicator.classList.add('visible');
+            setTimeout(() => indicator.classList.remove('visible'), 2500);
         }
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(400px); opacity: 0; }
+
+        // For backwards compatibility
+        function showNotification(message, type) {
+            showToast(message, type);
         }
-    </style>
+
+        // ═══════════════════════════════════════
+        // AI SUGGESTION ENGINE — Generative Core
+        // ═══════════════════════════════════════
+
+        // Detect which profession(s) match the user's input
+        function detectProfessions(department, currentText) {
+            const haystack = ((department || '') + ' ' + (currentText || '')).toLowerCase();
+            const matches = [];
+
+            for (const [key, prof] of Object.entries(AI_BRAIN.professions)) {
+                let score = 0;
+                for (const kw of prof.keywords) {
+                    if (haystack.includes(kw)) score += 3;
+                }
+                // Also check if any tool/object is mentioned → strong signal
+                for (const t of prof.tools) {
+                    if (haystack.includes(t.toLowerCase())) score += 2;
+                }
+                for (const o of prof.objects) {
+                    if (haystack.includes(o.toLowerCase())) score += 1;
+                }
+                if (score > 0) matches.push({ key, prof, score });
+            }
+
+            matches.sort((a, b) => b.score - a.score);
+            return matches.length > 0 ? matches.slice(0, 2) : null;
+        }
+
+        // Randomly pick N items from an array (Fisher-Yates partial)
+        function pickRandom(arr, n) {
+            const copy = [...arr];
+            const result = [];
+            for (let i = 0; i < Math.min(n, copy.length); i++) {
+                const idx = Math.floor(Math.random() * (copy.length - i)) + i;
+                [copy[i], copy[idx]] = [copy[idx], copy[i]];
+                result.push(copy[i]);
+            }
+            return result;
+        }
+
+        // Conjugate a German infinitive into past participle (simplified heuristic)
+        function conjugate(verb) {
+            // Common irregular mappings
+            const irregulars = {
+                'entwickeln': 'entwickelt', 'implementieren': 'implementiert', 'testen': 'getestet',
+                'debuggen': 'debuggt', 'deployen': 'deployed', 'refactoren': 'refactored',
+                'dokumentieren': 'dokumentiert', 'reviewen': 'reviewed', 'optimieren': 'optimiert',
+                'automatisieren': 'automatisiert', 'konfigurieren': 'konfiguriert', 'installieren': 'installiert',
+                'warten': 'gewartet', 'überwachen': 'überwacht', 'administrieren': 'administriert',
+                'sichern': 'gesichert', 'patchen': 'gepatcht', 'troubleshooten': 'getroubleshot',
+                'migrieren': 'migriert', 'bearbeiten': 'bearbeitet', 'prüfen': 'geprüft',
+                'verbuchen': 'verbucht', 'erstellen': 'erstellt', 'pflegen': 'gepflegt',
+                'koordinieren': 'koordiniert', 'kalkulieren': 'kalkuliert', 'archivieren': 'archiviert',
+                'abgleichen': 'abgeglichen', 'kommunizieren': 'kommuniziert', 'mauern': 'gemauert',
+                'betonieren': 'betoniert', 'verputzen': 'verputzt', 'verlegen': 'verlegt',
+                'montieren': 'montiert', 'messen': 'gemessen', 'schneiden': 'geschnitten',
+                'schleifen': 'geschliffen', 'abdichten': 'abgedichtet', 'verschalen': 'verschalt',
+                'transportieren': 'transportiert', 'einrichten': 'eingerichtet', 'abreißen': 'abgerissen',
+                'fundamentieren': 'fundamentiert', 'sägen': 'gesägt', 'hobeln': 'gehobelt',
+                'fräsen': 'gefräst', 'leimen': 'geleimt', 'konstruieren': 'konstruiert',
+                'furnieren': 'furniert', 'lackieren': 'lackiert', 'zeichnen': 'gezeichnet',
+                'zusammenbauen': 'zusammengebaut', 'verdrahten': 'verdrahtet', 'programmieren': 'programmiert',
+                'inbetriebnehmen': 'in Betrieb genommen', 'reparieren': 'repariert', 'planen': 'geplant',
+                'zubereiten': 'zubereitet', 'kochen': 'gekocht', 'backen': 'gebacken',
+                'anrichten': 'angerichtet', 'dekorieren': 'dekoriert', 'portionieren': 'portioniert',
+                'einlagern': 'eingelagert', 'kontrollieren': 'kontrolliert', 'reinigen': 'gereinigt',
+                'bestellen': 'bestellt', 'servieren': 'serviert', 'beraten': 'beraten',
+                'pflegen': 'gepflegt', 'betreuen': 'betreut', 'assistieren': 'assistiert',
+                'mobilisieren': 'mobilisiert', 'verabreichen': 'verabreicht', 'begleiten': 'begleitet',
+                'anleiten': 'angeleitet', 'versorgen': 'versorgt', 'lagern': 'gelagert',
+                'diagnostizieren': 'diagnostiziert', 'austauschen': 'ausgetauscht', 'einstellen': 'eingestellt',
+                'auslesen': 'ausgelesen', 'schweißen': 'geschweißt', 'vermessen': 'vermessen',
+                'färben': 'gefärbt', 'föhnen': 'geföhnt', 'waschen': 'gewaschen',
+                'stylen': 'gestylt', 'hochstecken': 'hochgesteckt', 'ondulieren': 'onduliert',
+                'rasieren': 'rasiert', 'tönen': 'getönt', 'blondieren': 'blondiert',
+                'verkaufen': 'verkauft', 'kassieren': 'kassiert', 'einräumen': 'eingeräumt',
+                'inventurisieren': 'inventurisiert', 'reklamieren': 'reklamiert', 'etikettieren': 'etikettiert',
+                'umtauschen': 'umgetauscht', 'kommissionieren': 'kommissioniert', 'auslagern': 'ausgelagert',
+                'verpacken': 'verpackt', 'verladen': 'verladen', 'scannen': 'gescannt',
+                'sortieren': 'sortiert', 'buchen': 'gebucht', 'gestalten': 'gestaltet',
+                'entwerfen': 'entworfen', 'layouten': 'gelayoutet', 'animieren': 'animiert',
+                'retouchieren': 'retouchiert', 'exportieren': 'exportiert', 'drucken': 'gedruckt',
+                'präsentieren': 'präsentiert', 'konzipieren': 'konzipiert', 'pflanzen': 'gepflanzt',
+                'mähen': 'gemäht', 'bewässern': 'bewässert', 'mulchen': 'gemulcht',
+                'düngen': 'gedüngt', 'jäten': 'gejätet', 'pflastern': 'gepflastert',
+                'ausheben': 'ausgehoben', 'roden': 'gerodet', 'drehen': 'gedreht',
+                'bohren': 'gebohrt', 'biegen': 'gebogen', 'stanzen': 'gestanzt',
+                'entgraten': 'entgratet', 'härten': 'gehärtet', 'analysieren': 'analysiert',
+                'mischen': 'gemischt', 'destillieren': 'destilliert', 'filtrieren': 'filtriert',
+                'kalibrieren': 'kalibriert', 'titrieren': 'titriert', 'synthetisieren': 'synthetisiert',
+                'durchführen': 'durchgeführt', 'erledigen': 'erledigt', 'vorbereiten': 'vorbereitet',
+                'nachbereiten': 'nachbereitet', 'organisieren': 'organisiert', 'besprechen': 'besprochen',
+                'unterstützen': 'unterstützt', 'überprüfen': 'überprüft', 'fertigstellen': 'fertiggestellt',
+            };
+
+            if (irregulars[verb]) return irregulars[verb];
+
+            // Heuristic: -ieren → -iert, else ge- + stem + -t
+            if (verb.endsWith('ieren')) return verb.slice(0, -2) + 't';
+            if (verb.endsWith('en')) return 'ge' + verb.slice(0, -2) + 't';
+            if (verb.endsWith('n')) return 'ge' + verb.slice(0, -1) + 't';
+            return verb;
+        }
+
+        // Generate a single unique sentence from profession data
+        function generateSentence(prof) {
+            const template = pickRandom(AI_BRAIN.templates, 1)[0];
+            const verb = pickRandom(prof.verbs, 1)[0];
+            const object = pickRandom(prof.objects, 1)[0];
+            const tool = pickRandom(prof.tools, 1)[0];
+            const detail = pickRandom(AI_BRAIN.details, 1)[0];
+            const pastVerb = conjugate(verb);
+
+            return template
+                .replace('{V}', pastVerb)
+                .replace('{O}', object)
+                .replace('{T}', tool)
+                .replace('{D}', detail);
+        }
+
+        // Learn patterns from past reports → extract usable lines
+        function learnFromHistory() {
+            const learned = [];
+            reports.forEach(r => {
+                const texts = [r.activities || ''];
+                if (r.dailyActivities) {
+                    Object.values(r.dailyActivities).forEach(t => { if (t) texts.push(t); });
+                }
+                texts.forEach(text => {
+                    text.split('\n').forEach(line => {
+                        const trimmed = line.trim();
+                        if (trimmed.length > 15 && /^[•\-\*]/.test(trimmed)) {
+                            learned.push(trimmed.replace(/^[•\-\*]\s*/, '• '));
+                        }
+                    });
+                });
+            });
+            return [...new Set(learned)];
+        }
+
+        // The main AI generator — produces unique suggestions every time
+        function getAISuggestions(department, currentText, maxSuggestions = 6) {
+            const detected = detectProfessions(department, currentText);
+            const currentLower = (currentText || '').toLowerCase();
+            const generated = new Set();
+            const result = [];
+
+            // 1) Generate profession-specific sentences (3-4)
+            if (detected) {
+                for (const match of detected) {
+                    const count = match === detected[0] ? 3 : 1;
+                    let attempts = 0;
+                    while (result.length < count + (match === detected[0] ? 0 : 3) && attempts < 20) {
+                        const sentence = generateSentence(match.prof);
+                        const sentenceLower = sentence.toLowerCase().replace(/^[•\-\*]\s*/, '');
+                        if (!generated.has(sentence) && !currentLower.includes(sentenceLower.substring(0, 25)) && !aiUsedChips.has(sentence)) {
+                            generated.add(sentence);
+                            result.push(sentence);
+                        }
+                        attempts++;
+                    }
+                }
+            } else {
+                // No profession detected → generate from ALL professions randomly
+                const allProfs = Object.values(AI_BRAIN.professions);
+                const randomProfs = pickRandom(allProfs, 3);
+                for (const prof of randomProfs) {
+                    let attempts = 0;
+                    while (result.length < 3 && attempts < 15) {
+                        const sentence = generateSentence(prof);
+                        if (!generated.has(sentence) && !aiUsedChips.has(sentence)) {
+                            generated.add(sentence);
+                            result.push(sentence);
+                        }
+                        attempts++;
+                    }
+                }
+            }
+
+            // 2) Add 1-2 universal activities
+            const universals = pickRandom(AI_BRAIN.universalActivities, 4);
+            for (const u of universals) {
+                const full = '• ' + u;
+                if (result.length >= maxSuggestions) break;
+                if (!currentLower.includes(u.toLowerCase().substring(0, 25)) && !aiUsedChips.has(full) && !generated.has(full)) {
+                    generated.add(full);
+                    result.push(full);
+                }
+            }
+
+            // 3) Sprinkle in 1 learned-from-history item
+            const history = learnFromHistory();
+            if (history.length > 0) {
+                const histPick = pickRandom(history, 3);
+                for (const h of histPick) {
+                    if (result.length >= maxSuggestions) break;
+                    const hLower = h.toLowerCase().replace(/^[•\-\*]\s*/, '');
+                    if (!currentLower.includes(hLower.substring(0, 25)) && !aiUsedChips.has(h) && !generated.has(h)) {
+                        generated.add(h);
+                        result.push('🧠 ' + h.replace(/^• /, ''));
+                    }
+                }
+            }
+
+            // Shuffle final set & cap
+            return pickRandom(result, Math.min(maxSuggestions, result.length));
+        }
+
+        function refreshAISuggestions(mode) {
+            aiUsedChips.clear();
+            renderAISuggestions(mode);
+        }
+
+        function renderAISuggestions(mode) {
+            const department = document.getElementById('reportDepartment')?.value || '';
+            let currentText = '';
+
+            if (mode === 'weekly') {
+                currentText = document.getElementById('reportActivities')?.value || '';
+            } else {
+                const dailyTexts = document.querySelectorAll('.daily-textarea');
+                dailyTexts.forEach(ta => currentText += ' ' + ta.value);
+            }
+
+            const suggestions = getAISuggestions(department, currentText);
+            const chipContainer = document.getElementById(mode === 'weekly' ? 'aiChipsWeekly' : 'aiChipsDaily');
+            const contextNote = document.getElementById(mode === 'weekly' ? 'aiContextWeekly' : 'aiContextDaily');
+
+            if (!chipContainer) return;
+
+            chipContainer.innerHTML = suggestions.map(s => {
+                const isHistory = s.startsWith('🧠 ');
+                const displayRaw = s.replace(/^[•\-\*🧠]\s*/g, '').trim();
+                const displayText = displayRaw.substring(0, 60);
+                const fullForInsert = isHistory ? '• ' + displayRaw : (s.startsWith('•') ? s : '• ' + s);
+                return `<div class="ai-chip ${isHistory ? 'history' : ''}" onclick="insertAISuggestion(this, '${mode}')" data-full="${escapeHtml(fullForInsert)}" title="${escapeHtml(fullForInsert)}">${displayText}${displayRaw.length > 60 ? '…' : ''}</div>`;
+            }).join('');
+
+            // Smart context note
+            const detected = detectProfessions(department, currentText);
+            if (detected && detected.length > 0) {
+                const profName = detected[0].key;
+                const nameMap = { software: 'IT-Entwicklung', sysadmin: 'Systemadministration', kaufmann: 'Kaufmännisch', handwerk_bau: 'Bau/Handwerk', handwerk_holz: 'Holztechnik/Tischlerei', elektro: 'Elektrotechnik', gastronomie: 'Gastronomie/Bäckerei', pflege: 'Pflege/Gesundheit', kfz: 'KFZ-Technik', friseur: 'Friseurhandwerk', einzelhandel: 'Einzelhandel', lager: 'Lagerlogistik', medien: 'Mediengestaltung', garten: 'Garten-/Landschaftsbau', metall: 'Metalltechnik', chemie: 'Chemie/Labor' };
+                contextNote.innerHTML = `🧠 AI erkennt: <strong>${nameMap[profName] || profName}</strong> — Vorschläge werden generiert, nie wiederholt.`;
+            } else if (department) {
+                contextNote.textContent = `💡 Tippe z.B. deinen Beruf oder Tätigkeiten — die AI erkennt es automatisch.`;
+            } else {
+                contextNote.textContent = '💡 Gib eine Abteilung ein (z.B. "Bäckerei", "Maurer", "IT") — die AI denkt mit.';
+            }
+        }
+
+        function insertAISuggestion(chipEl, mode) {
+            const fullText = chipEl.getAttribute('data-full');
+            chipEl.classList.add('used');
+            aiUsedChips.add(fullText);
+
+            if (mode === 'weekly') {
+                const textarea = document.getElementById('reportActivities');
+                const current = textarea.value.trim();
+                textarea.value = current ? current + '\n' + fullText : fullText;
+                document.getElementById('charCount').textContent = textarea.value.length + ' Zeichen';
+                updateQualityMeter(textarea.value);
+            } else {
+                let target = activeDailyField;
+                if (!target) {
+                    const fields = document.querySelectorAll('.daily-textarea');
+                    for (const f of fields) {
+                        if (!f.value.trim()) { target = f; break; }
+                    }
+                    if (!target && fields.length > 0) target = fields[0];
+                }
+                if (target) {
+                    const current = target.value.trim();
+                    target.value = current ? current + '\n' + fullText : fullText;
+                    target.dispatchEvent(new Event('input'));
+                }
+            }
+
+            showToast('✨ AI-Vorschlag eingefügt', 'success');
+            setTimeout(() => renderAISuggestions(mode), 400);
+        }
+
+        // ═══════════════════════════════════════
+        // DAILY / WEEKLY MODE
+        // ═══════════════════════════════════════
+
+        const DAYS = [
+            { key: 'monday',    name: 'Montag',     short: 'Mo', icon: '🟣' },
+            { key: 'tuesday',   name: 'Dienstag',   short: 'Di', icon: '🔵' },
+            { key: 'wednesday', name: 'Mittwoch',    short: 'Mi', icon: '🟢' },
+            { key: 'thursday',  name: 'Donnerstag',  short: 'Do', icon: '🟡' },
+            { key: 'friday',    name: 'Freitag',     short: 'Fr', icon: '🟠' }
+        ];
+
+        function setMode(mode) {
+            currentMode = mode;
+            localStorage.setItem(MODE_KEY, mode);
+
+            // Main page toggle
+            const btnWeekly = document.getElementById('btnWeekly');
+            const btnDaily = document.getElementById('btnDaily');
+            const slider = document.getElementById('modeSlider');
+            // Modal toggle
+            const btnWeeklyM = document.getElementById('btnWeeklyModal');
+            const btnDailyM = document.getElementById('btnDailyModal');
+            const sliderM = document.getElementById('modeSliderModal');
+
+            const weeklyGroup = document.getElementById('weeklyFieldGroup');
+            const dailyGroup = document.getElementById('dailyFieldsGroup');
+
+            if (mode === 'daily') {
+                if (btnDaily) btnDaily.classList.add('active');
+                if (btnWeekly) btnWeekly.classList.remove('active');
+                if (slider) slider.classList.add('right');
+                if (btnDailyM) btnDailyM.classList.add('active');
+                if (btnWeeklyM) btnWeeklyM.classList.remove('active');
+                if (sliderM) sliderM.classList.add('right');
+                if (weeklyGroup) weeklyGroup.style.display = 'none';
+                if (dailyGroup) dailyGroup.classList.add('active');
+                // Remove required from weekly textarea so form can submit
+                const weeklyTA = document.getElementById('reportActivities');
+                if (weeklyTA) weeklyTA.removeAttribute('required');
+                renderDailyFields();
+                renderAISuggestions('daily');
+            } else {
+                if (btnWeekly) btnWeekly.classList.add('active');
+                if (btnDaily) btnDaily.classList.remove('active');
+                if (slider) slider.classList.remove('right');
+                if (btnWeeklyM) btnWeeklyM.classList.add('active');
+                if (btnDailyM) btnDailyM.classList.remove('active');
+                if (sliderM) sliderM.classList.remove('right');
+                if (weeklyGroup) weeklyGroup.style.display = '';
+                if (dailyGroup) dailyGroup.classList.remove('active');
+                // Restore required
+                const weeklyTA = document.getElementById('reportActivities');
+                if (weeklyTA) weeklyTA.setAttribute('required', '');
+                renderAISuggestions('weekly');
+            }
+        }
+
+        function renderDailyFields() {
+            const container = document.getElementById('dailyFieldsContainer');
+            if (!container) return;
+
+            // Get the week dates
+            const weekNum = parseInt(document.getElementById('reportWeek')?.value) || getWeekNumber(new Date());
+            const { monday } = getWeekDates(weekNum);
+            const monDate = new Date(monday);
+
+            container.innerHTML = DAYS.map((day, i) => {
+                const dayDate = new Date(monDate);
+                dayDate.setDate(monDate.getDate() + i);
+                const dateStr = dayDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+
+                return `
+                    <div class="daily-day-block">
+                        <div class="daily-day-header">
+                            <span class="day-name">${day.icon} ${day.name}</span>
+                            <span class="day-date">${dateStr}</span>
+                            <div class="day-hours">
+                                <input type="number" step="0.5" min="0" max="12" value="8" 
+                                       class="daily-hours-input" data-day="${day.key}" 
+                                       oninput="updateDailyTotalHours()">
+                                <span>Std.</span>
+                            </div>
+                        </div>
+                        <textarea class="daily-textarea" data-day="${day.key}" rows="2"
+                                  placeholder="${day.name}: Tätigkeiten beschreiben..."
+                                  onfocus="activeDailyField = this"
+                                  oninput="onDailyInput()"></textarea>
+                    </div>
+                `;
+            }).join('');
+
+            updateDailyTotalHours();
+        }
+
+        function updateDailyTotalHours() {
+            const inputs = document.querySelectorAll('.daily-hours-input');
+            let total = 0;
+            inputs.forEach(inp => total += parseFloat(inp.value) || 0);
+            const el = document.getElementById('dailyTotalHours');
+            if (el) el.textContent = total.toFixed(1);
+
+            // Also sync to the main hours field
+            const hoursField = document.getElementById('reportHours');
+            if (hoursField && currentMode === 'daily') {
+                hoursField.value = total.toFixed(1);
+            }
+        }
+
+        function onDailyInput() {
+            // Debounced AI refresh
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                renderAISuggestions('daily');
+                saveDraft();
+            }, 1500);
+        }
+
+        function getDailyActivitiesFromForm() {
+            const result = {};
+            DAYS.forEach(day => {
+                const ta = document.querySelector(`.daily-textarea[data-day="${day.key}"]`);
+                result[day.key] = ta ? ta.value : '';
+            });
+            return result;
+        }
+
+        function getDailyHoursFromForm() {
+            const result = {};
+            DAYS.forEach(day => {
+                const inp = document.querySelector(`.daily-hours-input[data-day="${day.key}"]`);
+                result[day.key] = inp ? (parseFloat(inp.value) || 0) : 0;
+            });
+            return result;
+        }
+
+        function setDailyFieldsFromData(dailyActivities, dailyHours) {
+            if (!dailyActivities) return;
+            DAYS.forEach(day => {
+                const ta = document.querySelector(`.daily-textarea[data-day="${day.key}"]`);
+                if (ta && dailyActivities[day.key]) ta.value = dailyActivities[day.key];
+                const inp = document.querySelector(`.daily-hours-input[data-day="${day.key}"]`);
+                if (inp && dailyHours && dailyHours[day.key] !== undefined) inp.value = dailyHours[day.key];
+            });
+            updateDailyTotalHours();
+        }
+
+        function combineDailyToWeeklyText(dailyActivities) {
+            if (!dailyActivities) return '';
+            return DAYS.map(day => {
+                const text = dailyActivities[day.key];
+                return text ? `${day.name}:\n${text}` : null;
+            }).filter(Boolean).join('\n\n');
+        }
+
+        // ═══════════════════════════════════════
+        // KEYBOARD SHORTCUTS
+        // ═══════════════════════════════════════
+
+        document.addEventListener('keydown', (e) => {
+            // Don't trigger in inputs/textareas
+            const tag = e.target.tagName;
+            const inModal = document.querySelector('.modal.active');
+
+            if (e.key === 'Escape') {
+                if (inModal) {
+                    closeReportModal();
+                    closeViewModal();
+                    closeTemplatesModal();
+                }
+                if (bulkMode) toggleBulkMode();
+                return;
+            }
+
+            // Ctrl+S to save when in modal
+            if (e.ctrlKey && e.key === 's' && inModal) {
+                e.preventDefault();
+                const form = document.getElementById('reportForm');
+                if (form) form.dispatchEvent(new Event('submit', { cancelable: true }));
+                return;
+            }
+
+            // Don't trigger letter shortcuts in inputs
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+            switch (e.key.toLowerCase()) {
+                case 'n':
+                    e.preventDefault();
+                    openNewReportModal();
+                    break;
+                case 'e':
+                    e.preventDefault();
+                    exportAllPDF();
+                    break;
+                case 't':
+                    e.preventDefault();
+                    showTemplates();
+                    break;
+                case 'f':
+                    if (e.ctrlKey) {
+                        e.preventDefault();
+                        document.getElementById('searchInput').focus();
+                    }
+                    break;
+            }
+        });
+
+        // ═══════════════════════════════════════
+        // EVENT LISTENERS
+        // ═══════════════════════════════════════
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Character counter + quality meter
+            const textarea = document.getElementById('reportActivities');
+            const counter = document.getElementById('charCount');
+
+            textarea.addEventListener('input', () => {
+                counter.textContent = textarea.value.length + ' Zeichen';
+                updateQualityMeter(textarea.value);
+
+                // Auto-save draft (debounced)
+                clearTimeout(autoSaveTimer);
+                autoSaveTimer = setTimeout(() => {
+                    saveDraft();
+                    renderAISuggestions('weekly');
+                }, 1500);
+            });
+
+            // Auto-set dates when week changes
+            document.getElementById('reportWeek').addEventListener('change', (e) => {
+                const week = parseInt(e.target.value);
+                if (week >= 1 && week <= 53) {
+                    const { monday, friday } = getWeekDates(week);
+                    document.getElementById('reportDateFrom').value = monday;
+                    document.getElementById('reportDateTo').value = friday;
+                    // Re-render daily fields with correct dates
+                    if (currentMode === 'daily') renderDailyFields();
+                }
+            });
+
+            // Re-render AI when department changes
+            const deptInput = document.getElementById('reportDepartment');
+            if (deptInput) {
+                deptInput.addEventListener('input', () => {
+                    clearTimeout(autoSaveTimer);
+                    autoSaveTimer = setTimeout(() => renderAISuggestions(currentMode), 600);
+                });
+            }
+
+            // Close modals on backdrop click
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                        document.body.style.overflow = '';
+                    }
+                });
+            });
+
+            // Initialize mode toggle UI
+            setMode(currentMode);
+
+            // Restore theme
+            restoreTheme();
+
+            // Load reports
+            loadReports();
+        });
+    </script>
 </body>
 </html>
