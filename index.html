@@ -16659,6 +16659,8 @@ TIPPS:
     // === STEP 1: HOST - Create Offer ===
     async function p2pStartHost() {
         p2pSync.role = 'host';
+        p2pSync.offerGenerated = false;
+        p2pSync.answerApplied = false;
         p2pShowStep(2);
         document.getElementById('p2pWizStep2Host').style.display = '';
         document.getElementById('p2pWizardSubtitle').textContent = 'Schritt 1/2 — Einladungscode';
@@ -16668,7 +16670,7 @@ TIPPS:
 
         console.log('🏗️ P2P Host: Erstelle Offer mit trickle:false...');
 
-        p2pSync.peer = new SimplePeer({
+        const peer = new SimplePeer({
             initiator: true,
             trickle: false,
             config: {
@@ -16681,8 +16683,17 @@ TIPPS:
             }
         });
 
-        p2pSync.peer.on('signal', async (signalData) => {
-            console.log('📡 Host: Offer-Signal generiert (inkl. ICE Candidates)');
+        // WICHTIG: Erst Events registrieren, DANN peer zuweisen
+        p2pSetupPeerEvents(peer);
+
+        peer.on('signal', async (signalData) => {
+            // trickle:false → nur 1 Signal mit allen ICE Candidates
+            if (p2pSync.offerGenerated) {
+                console.log('⏭️ Host: Doppeltes Signal ignoriert (Offer bereits generiert)');
+                return;
+            }
+            p2pSync.offerGenerated = true;
+            console.log('📡 Host: Offer-Signal generiert (inkl. ICE Candidates). SDP type:', signalData.type);
             try {
                 const payload = {
                     v: 2,
@@ -16705,7 +16716,7 @@ TIPPS:
             }
         });
 
-        p2pSetupPeerEvents(p2pSync.peer);
+        p2pSync.peer = peer;
     }
 
     // === STEP 1: CLIENT - Paste Offer ===
@@ -16730,16 +16741,22 @@ TIPPS:
 
         try {
             const offerPayload = await p2pDecompress(input);
-            console.log('📥 Client: Offer dekomprimiert:', offerPayload);
+            console.log('📥 Client: Offer dekomprimiert. Version:', offerPayload.v, 'Type:', offerPayload.t);
 
             if (!offerPayload || !offerPayload.s || offerPayload.t !== 'offer') {
                 throw new Error('Ungültiger Einladungscode (kein offer)');
             }
 
-            // Destroy old peer
-            if (p2pSync.peer) { try { p2pSync.peer.destroy(); } catch(e){} }
+            if (!offerPayload.s.type || offerPayload.s.type !== 'offer') {
+                throw new Error('SDP-Signal ist kein offer (type: ' + (offerPayload.s.type || 'undefined') + ')');
+            }
 
-            p2pSync.peer = new SimplePeer({
+            // Destroy old peer
+            if (p2pSync.peer) { try { p2pSync.peer.destroy(); } catch(e){} p2pSync.peer = null; }
+
+            p2pSync.answerGenerated = false;
+
+            const peer = new SimplePeer({
                 initiator: false,
                 trickle: false,
                 config: {
@@ -16752,8 +16769,17 @@ TIPPS:
                 }
             });
 
-            p2pSync.peer.on('signal', async (signalData) => {
-                console.log('📡 Client: Answer-Signal generiert');
+            // WICHTIG: Events zuerst registrieren
+            p2pSetupPeerEvents(peer);
+
+            peer.on('signal', async (signalData) => {
+                // trickle:false → nur 1 answer Signal
+                if (p2pSync.answerGenerated) {
+                    console.log('⏭️ Client: Doppeltes Signal ignoriert (Answer bereits generiert)');
+                    return;
+                }
+                p2pSync.answerGenerated = true;
+                console.log('📡 Client: Answer-Signal generiert. SDP type:', signalData.type);
                 try {
                     const payload = {
                         v: 2,
@@ -16776,11 +16802,11 @@ TIPPS:
                 }
             });
 
-            p2pSetupPeerEvents(p2pSync.peer);
+            p2pSync.peer = peer;
 
-            // Signal the offer to our peer (this triggers answer generation)
+            // Signal the offer to our peer NACH setup (this triggers answer generation)
             console.log('📡 Client: Signalisiere Offer an Peer...');
-            p2pSync.peer.signal(offerPayload.s);
+            peer.signal(offerPayload.s);
 
             const devInfo = document.getElementById('p2pDeviceInfo');
             if (devInfo) {
@@ -16804,17 +16830,38 @@ TIPPS:
             return;
         }
 
+        if (p2pSync.answerApplied) {
+            showCustomMessage('⚠️ Bereits verarbeitet', 'Der Antwort-Code wurde bereits eingegeben. Starte neu falls nötig.', 'warning');
+            return;
+        }
+
         try {
             const answerPayload = await p2pDecompress(input);
-            console.log('📥 Host: Answer dekomprimiert:', answerPayload);
+            console.log('📥 Host: Answer dekomprimiert. Version:', answerPayload.v, 'Type:', answerPayload.t);
 
             if (!answerPayload || !answerPayload.s || answerPayload.t !== 'answer') {
                 throw new Error('Ungültiger Antwort-Code (kein answer)');
             }
 
+            if (!answerPayload.s.type || answerPayload.s.type !== 'answer') {
+                throw new Error('SDP-Signal ist kein answer (type: ' + (answerPayload.s.type || 'undefined') + ')');
+            }
+
             if (!p2pSync.peer) {
                 throw new Error('Kein aktiver Peer. Bitte starte den Vorgang neu.');
             }
+
+            // Check RTCPeerConnection state
+            const pc = p2pSync.peer._pc;
+            if (pc) {
+                console.log('📊 Host RTCPeerConnection State:', pc.signalingState, '| ICE:', pc.iceConnectionState);
+                if (pc.signalingState !== 'have-local-offer') {
+                    console.error('❌ Falsche Signaling-State:', pc.signalingState, '(erwartet: have-local-offer)');
+                    throw new Error('Verbindung ist in falschem Zustand (' + pc.signalingState + '). Bitte klicke "Daten senden" erneut und generiere einen neuen Code.');
+                }
+            }
+
+            p2pSync.answerApplied = true;
 
             const devInfo = document.getElementById('p2pDeviceInfo');
             if (devInfo) {
@@ -16825,10 +16872,12 @@ TIPPS:
             // Signal the answer to our peer (this completes the handshake!)
             console.log('📡 Host: Signalisiere Answer an Peer...');
             p2pSync.peer.signal(answerPayload.s);
+            console.log('✅ Host: Answer signalisiert. Warte auf connect...');
 
         } catch (e) {
             console.error('❌ Answer-Verarbeitung fehlgeschlagen:', e);
-            showCustomMessage('❌ Ungültiger Code', 'Der Antwort-Code ist fehlerhaft: ' + e.message, 'error');
+            showCustomMessage('❌ Fehler', e.message, 'error');
+            p2pSync.answerApplied = false; // allow retry
         }
     }
 
