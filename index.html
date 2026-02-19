@@ -29,7 +29,7 @@
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src 'self' data: https://fonts.gstatic.com;
   img-src 'self' data: blob: https:;
-  connect-src 'self' https://*.supabase.co https://cloud.umami.is https://api-gateway.umami.dev https://api.emailjs.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.run https://unpkg.com https://www.google.com wss:;
+  connect-src 'self' https://*.supabase.co https://cloud.umami.is https://api-gateway.umami.dev https://api.emailjs.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://esm.run https://unpkg.com https://www.google.com https://nominatim.openstreetmap.org https://api.open-meteo.com wss:;
   media-src 'self' data:;
   worker-src 'self' blob:;
   object-src 'none';
@@ -11238,7 +11238,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     // --- WEATHER INTEGRATION (Open-Meteo API - Free, No API Key) ---
     let weatherData = null;
     let weatherLastFetch = 0;
+    let weatherAutoRefreshInterval = null;
     const WEATHER_CACHE_DURATION = 30 * 60 * 1000; // 30 Minuten Cache
+    const WEATHER_REFRESH_INTERVAL = 30 * 60 * 1000; // Aktualisiere Wetter alle 30 Min
 
     // Weather Code Mapping (WMO Standard)
     const weatherCodeMap = {
@@ -11303,6 +11305,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 weatherData = parsed.data;
                 weatherLastFetch = parsed.timestamp;
                 updateWeatherUI();
+                updateGreetingWeather();
                 return;
             }
         }
@@ -11322,11 +11325,45 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 }));
                 weatherLastFetch = Date.now();
                 updateWeatherUI();
+                updateGreetingWeather();
             }
         } else {
             // Show location setup prompt in modal
             updateWeatherUINoLocation();
         }
+    }
+
+    function startWeatherAutoRefresh() {
+        // Stoppe existierendes Interval wenn vorhanden
+        if (weatherAutoRefreshInterval) {
+            clearInterval(weatherAutoRefreshInterval);
+        }
+        
+        // Starte neues Interval: Wetter alle 30 Minuten aktualisieren
+        weatherAutoRefreshInterval = setInterval(async () => {
+            const savedLat = localStorage.getItem('myworklog_weather_lat');
+            const savedLon = localStorage.getItem('myworklog_weather_lon');
+            const savedCity = localStorage.getItem('myworklog_weather_city');
+
+            if (savedLat && savedLon) {
+                console.log('🔄 Auto-Aktualisiere Wetter für:', savedCity);
+                // Force refresh (ignoriere Cache)
+                const data = await fetchWeather(savedLat, savedLon);
+                if (data) {
+                    weatherData = { ...data, cityName: savedCity };
+                    localStorage.setItem('myworklog_weather', JSON.stringify({
+                        data: weatherData,
+                        timestamp: Date.now()
+                    }));
+                    weatherLastFetch = Date.now();
+                    updateWeatherUI();
+                    updateGreetingWeather();
+                    console.log('✅ Wetter aktualisiert');
+                }
+            }
+        }, WEATHER_REFRESH_INTERVAL);
+        
+        console.log('⏰ Wetter Auto-Refresh gestartet (alle 30 Min)');
     }
 
     function requestLocationPermission() {
@@ -11335,6 +11372,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             return;
         }
 
+        showCustomMessage('📍 Standort wird ermittelt...', 'Bitte warten...', 'info');
+
+        // Erst schnell mit niedrigerer Genauigkeit versuchen, dann ggf. mit GPS
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude, longitude } = position.coords;
@@ -11364,14 +11404,57 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                     weatherLastFetch = Date.now();
                     updateWeatherUI();
                     updateGreetingWeather();
+                    startWeatherAutoRefresh(); // Auto-Refresh für GPS-Standort
                     showCustomMessage('✅ Wetter aktiviert', `Standort: ${cityName}`, 'success');
                 }
             },
             (error) => {
-                console.error('Geolocation error:', error);
-                showCustomMessage('❌ Standort-Fehler', 'Bitte erlaube den Standortzugriff in deinem Browser.', 'error');
+                console.warn('Geolocation Versuch 1 (schnell) fehlgeschlagen:', error.code, error.message);
+                // Fallback: Zweiter Versuch mit enableHighAccuracy: false und längerem Timeout
+                if (error.code === 3 /* TIMEOUT */ || error.code === 2 /* POSITION_UNAVAILABLE */) {
+                    console.log('🔄 Zweiter Versuch mit niedrigerer Genauigkeit...');
+                    navigator.geolocation.getCurrentPosition(
+                        async (position) => {
+                            const { latitude, longitude } = position.coords;
+                            localStorage.setItem('myworklog_weather_lat', latitude);
+                            localStorage.setItem('myworklog_weather_lon', longitude);
+                            try {
+                                const geoUrl = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
+                                const geoRes = await fetch(geoUrl);
+                                const geoData = await geoRes.json();
+                                const cityName = geoData.address?.city || geoData.address?.town || geoData.address?.village || 'Dein Standort';
+                                localStorage.setItem('myworklog_weather_city', cityName);
+                            } catch (e) {
+                                localStorage.setItem('myworklog_weather_city', 'Dein Standort');
+                            }
+                            const data = await fetchWeather(latitude, longitude);
+                            if (data) {
+                                const cityName = localStorage.getItem('myworklog_weather_city') || 'Dein Standort';
+                                weatherData = { ...data, cityName };
+                                localStorage.setItem('myworklog_weather', JSON.stringify({ data: weatherData, timestamp: Date.now() }));
+                                weatherLastFetch = Date.now();
+                                updateWeatherUI();
+                                updateGreetingWeather();
+                                startWeatherAutoRefresh(); // Auto-Refresh für GPS-Fallback
+                                showCustomMessage('✅ Wetter aktiviert', `Standort: ${cityName}`, 'success');
+                            }
+                        },
+                        (error2) => {
+                            console.error('Geolocation Versuch 2 ebenfalls fehlgeschlagen:', error2);
+                            weatherShowCityInput('Automatische Standort-Erkennung fehlgeschlagen. Gib deine Stadt manuell ein:');
+                        },
+                        { enableHighAccuracy: false, timeout: 30000, maximumAge: 600000 }
+                    );
+                } else {
+                    // Fehlercode 1 = PERMISSION_DENIED
+                    showCustomMessage('❌ Standort-Zugriff verweigert', 
+                        'Bitte erlaube den Standortzugriff in deinem Browser:\n\n' +
+                        '• Klicke auf das 🔒 Symbol in der Adressleiste\n' +
+                        '• Setze "Standort" auf "Erlauben"\n' +
+                        '• Seite neu laden', 'error');
+                }
             },
-            { enableHighAccuracy: true, timeout: 10000 }
+            { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
         );
     }
 
@@ -11444,6 +11527,11 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                     ${forecastHtml}
                 </div>
             </div>
+            <div style="margin-top:20px; text-align:center;">
+                <button onclick="weatherShowCityInput('Wähle eine andere Stadt:')" style="padding:10px 16px; background:linear-gradient(135deg,#8b5cf6,#7c3aed); border:none; color:#fff; border-radius:10px; font-weight:600; cursor:pointer; font-size:0.85rem; white-space:nowrap;">
+                    📍 Stadt ändern
+                </button>
+            </div>
         `;
     }
 
@@ -11459,8 +11547,87 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 <button class="weather-location-btn" onclick="requestLocationPermission()">
                     📍 Standort freigeben
                 </button>
+                <div style="margin-top: 0.75rem; display:flex; align-items:center; gap:8px; color:var(--text-muted); font-size:0.78rem;">
+                    <span>──────</span><span>oder</span><span>──────</span>
+                </div>
+                <div style="margin-top: 0.75rem; display:flex; gap:8px;">
+                    <input id="weatherCityInput" type="text" placeholder="z.B. Berlin, München, Wien..." 
+                        style="flex:1; padding:10px 14px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:var(--text-main); font-size:0.85rem; outline:none;" 
+                        onkeydown="if(event.key==='Enter') weatherSearchCity()" />
+                    <button onclick="weatherSearchCity()" style="padding:10px 16px; background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:#fff; border-radius:10px; font-weight:600; cursor:pointer; font-size:0.85rem; white-space:nowrap;">🔍 Suchen</button>
+                </div>
             </div>
         `;
+    }
+
+    // === MANUELLER STADT-FALLBACK ===
+    function weatherShowCityInput(message) {
+        document.getElementById('weatherContent').innerHTML = `
+            <div class="weather-location-setup">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🏙️</div>
+                <h3 style="color: var(--text-main); margin: 0 0 0.5rem 0;">Stadt eingeben</h3>
+                <p style="color: var(--text-muted); margin: 0 0 1rem 0; font-size: 0.85rem;">${message || 'Gib deine Stadt ein um das Wetter zu sehen:'}</p>
+                <div style="display:flex; gap:8px;">
+                    <input id="weatherCityInput" type="text" placeholder="z.B. Berlin, München, Wien..." 
+                        style="flex:1; padding:10px 14px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:var(--text-main); font-size:0.85rem; outline:none;" 
+                        onkeydown="if(event.key==='Enter') weatherSearchCity()" autofocus />
+                    <button onclick="weatherSearchCity()" style="padding:10px 16px; background:linear-gradient(135deg,#3b82f6,#2563eb); border:none; color:#fff; border-radius:10px; font-weight:600; cursor:pointer; font-size:0.85rem; white-space:nowrap;">🔍 Suchen</button>
+                </div>
+                <button onclick="requestLocationPermission()" style="margin-top:0.75rem; width:100%; padding:8px; background:transparent; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); border-radius:10px; cursor:pointer; font-size:0.8rem;">📍 Nochmal automatisch versuchen</button>
+            </div>
+        `;
+        setTimeout(() => document.getElementById('weatherCityInput')?.focus(), 100);
+    }
+
+    async function weatherSearchCity() {
+        const input = document.getElementById('weatherCityInput');
+        if (!input) return;
+        const city = input.value.trim();
+        if (!city) {
+            showCustomMessage('⚠️ Bitte Stadt eingeben', 'Gib eine Stadt ein, z.B. "Berlin" oder "München"', 'warning');
+            return;
+        }
+
+        input.disabled = true;
+        input.style.opacity = '0.5';
+
+        try {
+            // Nominatim Geocoding: Stadt → Koordinaten
+            const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1&accept-language=de`;
+            const geoRes = await fetch(geoUrl);
+            const geoData = await geoRes.json();
+
+            if (!geoData || geoData.length === 0) {
+                showCustomMessage('❌ Stadt nicht gefunden', `"${city}" konnte nicht gefunden werden. Prüfe die Schreibweise.`, 'error');
+                input.disabled = false;
+                input.style.opacity = '1';
+                return;
+            }
+
+            const lat = parseFloat(geoData[0].lat);
+            const lon = parseFloat(geoData[0].lon);
+            const cityName = geoData[0].display_name.split(',')[0];
+
+            localStorage.setItem('myworklog_weather_lat', lat);
+            localStorage.setItem('myworklog_weather_lon', lon);
+            localStorage.setItem('myworklog_weather_city', cityName);
+
+            const data = await fetchWeather(lat, lon);
+            if (data) {
+                weatherData = { ...data, cityName };
+                localStorage.setItem('myworklog_weather', JSON.stringify({ data: weatherData, timestamp: Date.now() }));
+                weatherLastFetch = Date.now();
+                updateWeatherUI();
+                updateGreetingWeather();
+                startWeatherAutoRefresh(); // Starte Auto-Refresh für neue Stadt
+                showCustomMessage('✅ Wetter aktiviert', `Standort: ${cityName}`, 'success');
+            }
+        } catch (e) {
+            console.error('Stadt-Suche fehlgeschlagen:', e);
+            showCustomMessage('❌ Fehler', 'Stadt-Suche fehlgeschlagen. Prüfe deine Internetverbindung.', 'error');
+            input.disabled = false;
+            input.style.opacity = '1';
+        }
     }
 
     function updateGreetingWeather() {
@@ -11522,6 +11689,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             getLocationAndWeather();
+            startWeatherAutoRefresh(); // Starte Auto-Refresh alle 30 Min
         }, 1000); // Delayed to prioritize UI loading
     });
 
