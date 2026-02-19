@@ -16664,11 +16664,124 @@ TIPPS:
         }
     }
 
+    // === ICE CONFIG (shared) ===
+    function p2pGetIceConfig() {
+        return {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:freeturn.net:5349' },
+                { urls: 'stun:stun.relay.metered.ca:80' },
+                {
+                    urls: 'turn:freeturn.net:5349',
+                    username: 'free',
+                    credential: 'free'
+                },
+                {
+                    urls: 'turns:freeturn.net:5349',
+                    username: 'free',
+                    credential: 'free'
+                },
+                {
+                    urls: 'turn:global.relay.metered.ca:80',
+                    username: 'e8dd65b92a0d1172e8810b28',
+                    credential: 'zHCzO/N6+Ogv7jnq'
+                },
+                {
+                    urls: 'turn:global.relay.metered.ca:80?transport=tcp',
+                    username: 'e8dd65b92a0d1172e8810b28',
+                    credential: 'zHCzO/N6+Ogv7jnq'
+                },
+                {
+                    urls: 'turn:global.relay.metered.ca:443',
+                    username: 'e8dd65b92a0d1172e8810b28',
+                    credential: 'zHCzO/N6+Ogv7jnq'
+                },
+                {
+                    urls: 'turns:global.relay.metered.ca:443?transport=tcp',
+                    username: 'e8dd65b92a0d1172e8810b28',
+                    credential: 'zHCzO/N6+Ogv7jnq'
+                }
+            ],
+            iceCandidatePoolSize: 2
+        };
+    }
+
+    // === ICE DIAGNOSTICS ===
+    function p2pAnalyzeSDP(sdp) {
+        if (!sdp) return { host: 0, srflx: 0, relay: 0, total: 0 };
+        const candidates = sdp.match(/a=candidate:.+/g) || [];
+        const types = { host: 0, srflx: 0, relay: 0, total: candidates.length };
+        candidates.forEach(c => {
+            if (c.includes('typ relay')) types.relay++;
+            else if (c.includes('typ srflx')) types.srflx++;
+            else if (c.includes('typ host')) types.host++;
+        });
+        return types;
+    }
+
+    async function p2pTestTURN() {
+        console.log('🧪 TURN Server Test gestartet...');
+        p2pLog('🧪 Teste TURN Server...');
+        const config = p2pGetIceConfig();
+        const pc = new RTCPeerConnection(config);
+        pc.createDataChannel('turntest');
+
+        const candidates = { host: 0, srflx: 0, relay: 0 };
+        const relayDetails = [];
+
+        return new Promise(async (resolve) => {
+            const timeout = setTimeout(() => {
+                pc.close();
+                const result = { ...candidates, working: candidates.relay > 0, details: relayDetails };
+                console.log('🧪 TURN Test Ergebnis:', result);
+                p2pLog(result.working
+                    ? `✅ TURN OK: ${candidates.relay} Relay, ${candidates.srflx} STUN, ${candidates.host} Host`
+                    : `⚠️ TURN fehlgeschlagen: nur ${candidates.srflx} STUN, ${candidates.host} Host (kein Relay)`);
+                resolve(result);
+            }, 8000);
+
+            pc.onicecandidate = (event) => {
+                if (event.candidate) {
+                    const c = event.candidate.candidate;
+                    if (c.includes('typ relay')) { candidates.relay++; relayDetails.push(c); }
+                    else if (c.includes('typ srflx')) candidates.srflx++;
+                    else if (c.includes('typ host')) candidates.host++;
+                    console.log(`🧊 [TEST] ${c.includes('typ relay') ? '🔄 RELAY' : c.includes('typ srflx') ? '📡 STUN' : '🏠 HOST'}: ${c.substring(0, 80)}...`);
+                }
+                if (!event.candidate) {
+                    clearTimeout(timeout);
+                    pc.close();
+                    const result = { ...candidates, working: candidates.relay > 0, details: relayDetails };
+                    console.log('🧪 TURN Test Ergebnis:', result);
+                    p2pLog(result.working
+                        ? `✅ TURN OK: ${candidates.relay} Relay, ${candidates.srflx} STUN, ${candidates.host} Host`
+                        : `⚠️ Kein TURN Relay: ${candidates.srflx} STUN, ${candidates.host} Host`);
+                    resolve(result);
+                }
+            };
+
+            try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+            } catch (e) {
+                clearTimeout(timeout);
+                pc.close();
+                console.error('🧪 TURN Test Error:', e);
+                p2pLog('❌ TURN Test fehlgeschlagen: ' + e.message);
+                resolve({ ...candidates, working: false, error: e.message });
+            }
+        });
+    }
+
     // === STEP 1: HOST - Create Offer ===
     async function p2pStartHost() {
         p2pSync.role = 'host';
         p2pSync.offerGenerated = false;
         p2pSync.answerApplied = false;
+        p2pSync.iceDiag = { host: 0, srflx: 0, relay: 0 };
         p2pShowStep(2);
         document.getElementById('p2pWizStep2Host').style.display = '';
         document.getElementById('p2pWizardSubtitle').textContent = 'Schritt 1/2 — Einladungscode';
@@ -16681,19 +16794,7 @@ TIPPS:
         const peer = new SimplePeer({
             initiator: true,
             trickle: false,
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' },
-                    { urls: 'stun:stun3.l.google.com:19302' },
-                    { urls: 'stun:stun.relay.metered.ca:80' },
-                    { urls: 'turn:global.relay.metered.ca:80', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' },
-                    { urls: 'turn:global.relay.metered.ca:80?transport=tcp', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' },
-                    { urls: 'turn:global.relay.metered.ca:443', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' },
-                    { urls: 'turns:global.relay.metered.ca:443?transport=tcp', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' }
-                ]
-            }
+            config: p2pGetIceConfig()
         });
 
         // WICHTIG: Erst Events registrieren, DANN peer zuweisen
@@ -16706,7 +16807,19 @@ TIPPS:
                 return;
             }
             p2pSync.offerGenerated = true;
-            console.log('📡 Host: Offer-Signal generiert (inkl. ICE Candidates). SDP type:', signalData.type);
+
+            // ICE Diagnostik: SDP auf Relay-Kandidaten prüfen
+            const sdpDiag = p2pAnalyzeSDP(signalData.sdp);
+            console.log(`📡 Host: Offer-Signal generiert. SDP type: ${signalData.type}`);
+            console.log(`🧊 ICE Candidates im SDP: ${sdpDiag.total} total → Host: ${sdpDiag.host}, STUN: ${sdpDiag.srflx}, RELAY: ${sdpDiag.relay}`);
+            if (sdpDiag.relay === 0) {
+                console.warn('⚠️ KEIN RELAY Candidate im Offer! TURN-Server funktionieren möglicherweise nicht.');
+                p2pLog('⚠️ Kein TURN-Relay — nur direkte Verbindung möglich');
+            } else {
+                p2pLog(`✅ ${sdpDiag.relay} TURN-Relay Candidate(s) gefunden`);
+            }
+            p2pSync.iceDiag = sdpDiag;
+
             try {
                 const payload = {
                     v: 2,
@@ -16772,19 +16885,7 @@ TIPPS:
             const peer = new SimplePeer({
                 initiator: false,
                 trickle: false,
-                config: {
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' },
-                        { urls: 'stun:stun2.l.google.com:19302' },
-                        { urls: 'stun:stun3.l.google.com:19302' },
-                        { urls: 'stun:stun.relay.metered.ca:80' },
-                        { urls: 'turn:global.relay.metered.ca:80', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' },
-                        { urls: 'turn:global.relay.metered.ca:80?transport=tcp', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' },
-                        { urls: 'turn:global.relay.metered.ca:443', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' },
-                        { urls: 'turns:global.relay.metered.ca:443?transport=tcp', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' }
-                    ]
-                }
+                config: p2pGetIceConfig()
             });
 
             // WICHTIG: Events zuerst registrieren
@@ -16797,7 +16898,19 @@ TIPPS:
                     return;
                 }
                 p2pSync.answerGenerated = true;
-                console.log('📡 Client: Answer-Signal generiert. SDP type:', signalData.type);
+
+                // ICE Diagnostik: SDP auf Relay-Kandidaten prüfen
+                const sdpDiag = p2pAnalyzeSDP(signalData.sdp);
+                console.log(`📡 Client: Answer-Signal generiert. SDP type: ${signalData.type}`);
+                console.log(`🧊 ICE Candidates im SDP: ${sdpDiag.total} total → Host: ${sdpDiag.host}, STUN: ${sdpDiag.srflx}, RELAY: ${sdpDiag.relay}`);
+                if (sdpDiag.relay === 0) {
+                    console.warn('⚠️ KEIN RELAY Candidate im Answer! TURN-Server funktionieren möglicherweise nicht.');
+                    p2pLog('⚠️ Kein TURN-Relay — nur direkte Verbindung möglich');
+                } else {
+                    p2pLog(`✅ ${sdpDiag.relay} TURN-Relay Candidate(s) gefunden`);
+                }
+                p2pSync.iceDiag = sdpDiag;
+
                 try {
                     const payload = {
                         v: 2,
@@ -16925,6 +17038,29 @@ TIPPS:
 
     // === SHARED PEER EVENT HANDLERS ===
     function p2pSetupPeerEvents(peer) {
+        // ICE Diagnostik: Verbindungszustand überwachen
+        try {
+            if (peer._pc) {
+                peer._pc.addEventListener('iceconnectionstatechange', () => {
+                    console.log(`🧊 ICE Connection: ${peer._pc.iceConnectionState}`);
+                    p2pLog(`🧊 ICE: ${peer._pc.iceConnectionState}`);
+                });
+                peer._pc.addEventListener('icegatheringstatechange', () => {
+                    console.log(`🧊 ICE Gathering: ${peer._pc.iceGatheringState}`);
+                });
+                peer._pc.addEventListener('connectionstatechange', () => {
+                    console.log(`🧊 Connection State: ${peer._pc.connectionState}`);
+                });
+                peer._pc.addEventListener('icecandidate', (event) => {
+                    if (event.candidate) {
+                        const c = event.candidate.candidate;
+                        const type = c.includes('typ relay') ? '🔄 RELAY' : c.includes('typ srflx') ? '📡 STUN' : '🏠 HOST';
+                        console.log(`🧊 ICE Candidate: ${type} | ${c.substring(0, 100)}`);
+                    }
+                });
+            }
+        } catch(e) { console.warn('ICE Diagnostik konnte nicht initialisiert werden:', e); }
+
         peer.on('connect', () => {
             console.log('✅ P2P VERBUNDEN! Rolle:', p2pSync.role);
             p2pSync.connected = true;
@@ -16977,12 +17113,20 @@ TIPPS:
             p2pSync.answerApplied = false;
 
             if (err.message === 'Connection failed.' || err.code === 'ERR_ICE_CONNECTION_FAILURE') {
+                const diag = p2pSync.iceDiag || { host: '?', srflx: '?', relay: '?' };
+                const hasRelay = diag.relay > 0;
+                const diagText = `\n\n📊 Diagnostik: Host=${diag.host}, STUN=${diag.srflx}, RELAY=${diag.relay}`;
+                const turnHint = hasRelay
+                    ? '\n• TURN-Relay war verfügbar, aber Verbindung schlug trotzdem fehl'
+                    : '\n• ⚠️ KEIN TURN-Relay verfügbar — TURN-Server antwortet nicht';
+
                 showCustomMessage('❌ Verbindung fehlgeschlagen',
-                    'Die direkte P2P-Verbindung konnte nicht hergestellt werden. Mögliche Gründe:\n' +
+                    'Die P2P-Verbindung konnte nicht hergestellt werden.' + turnHint + '\n' +
                     '• Firewall oder striktes NAT blockiert die Verbindung\n' +
-                    '• VPN aktiv (bitte deaktivieren)\n' +
-                    '• Beide Geräte im selben Netzwerk? → WiFi verwenden\n\n' +
-                    'Tipp: Generiere einen neuen Code und versuche es erneut.', 'error');
+                    '• VPN aktiv? Bitte deaktivieren\n' +
+                    '• Beide Geräte im selben WLAN? Dann sollte es direkt gehen\n\n' +
+                    'Tipp: Öffne die Konsole (F12) → teste mit p2pTestTURN()' + diagText, 'error');
+                console.error('🔍 P2P Diagnostik:', diag);
             }
         });
 
