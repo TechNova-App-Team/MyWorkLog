@@ -288,15 +288,21 @@ class RepoAnalyzer:
                     
                     code += 1
                     
-                    # TODO/FIXME/HACK Scanner
-                    for marker in ['TODO', 'FIXME', 'HACK', 'BUG', 'XXX', 'OPTIMIZE']:
-                        if marker in stripped.upper():
-                            self.todos.append({
-                                'file': relpath,
-                                'line': lines.index(line) + 1,
-                                'marker': marker,
-                                'text': stripped[:120]
-                            })
+                    # TODO/FIXME/HACK Scanner (nur in Code-Dateien, nicht in Docs)
+                    skip_todo_exts = {'.md', '.txt', '.json', '.html', '.xml', '.svg', '.yml', '.yaml', '.css'}
+                    if ext not in skip_todo_exts and comment_single:
+                        for marker in ['TODO', 'FIXME', 'HACK', 'BUG', 'XXX']:
+                            # Nur in Kommentar-Zeilen matchen (echte Code-TODOs)
+                            if marker in stripped.upper() and (
+                                stripped.startswith(comment_single) or
+                                f' {comment_single}' in stripped
+                            ):
+                                self.todos.append({
+                                    'file': relpath,
+                                    'line': lines.index(line) + 1,
+                                    'marker': marker,
+                                    'text': stripped[:120]
+                                })
                 
                 # Hash für Duplikat-Erkennung
                 if total > 5:  # Nur Dateien > 5 Zeilen
@@ -399,7 +405,8 @@ class RepoAnalyzer:
         stats['hourly_commits'] = dict(sorted(hour_counts.items()))
         
         # Erster Commit (Projektstart)
-        stats['first_commit_date'] = run_git('log --reverse --format="%ai" HEAD', self.repo_path).splitlines()[0][:10] if run_git('log --reverse --format="%ai" HEAD', self.repo_path) else 'N/A'
+        first_raw = run_git('log --reverse --format=%ai HEAD', self.repo_path)
+        stats['first_commit_date'] = first_raw.splitlines()[0].strip().strip('"')[:10] if first_raw else 'N/A'
         
         # Geänderte Dateien (uncommitted)
         status_raw = run_git('status --porcelain', self.repo_path)
@@ -433,8 +440,9 @@ class RepoAnalyzer:
             s = 5; factors.append(('📏 Micro Codebase (<5k)', s))
         score += s
         
-        # Faktor 2: Sprachen-Vielfalt
-        num_langs = len([l for l in self.languages if l not in ('Text', 'Markdown', 'JSON', 'Other')])
+        # Faktor 2: Sprachen-Vielfalt (nur echte Programmiersprachen)
+        code_langs = [l for l in self.languages if l not in ('Text', 'Markdown', 'JSON', 'Other', 'YAML', 'TOML', 'INI', 'Environment')]
+        num_langs = len(code_langs)
         if num_langs >= 5:
             s = 20; factors.append(('🌐 Polyglot (5+ Sprachen)', s))
         elif num_langs >= 3:
@@ -453,33 +461,46 @@ class RepoAnalyzer:
             s = 5; factors.append(('📁 Simple Structure', s))
         score += s
         
-        # Faktor 4: Kommentar-Ratio
+        # Faktor 4: Dokumentation (Kommentare + Markdown/README Dateien)
+        md_files = [f for f in self.files if f['ext'] in ('.md', '.txt') and not f['binary']]
+        md_lines = sum(f['lines'] for f in md_files)
+        doc_lines = self.comment_lines + md_lines
+        
         if self.total_lines > 0:
-            comment_ratio = self.comment_lines / self.total_lines * 100
-            if comment_ratio > 20:
-                s = 10; factors.append(('💬 Well Documented (>20%)', s))
-            elif comment_ratio > 10:
-                s = 7; factors.append(('💬 Documented (>10%)', s))
+            doc_ratio = doc_lines / self.total_lines * 100
+            if doc_ratio > 20:
+                s = 10; factors.append((f'💬 Excellent Docs ({len(md_files)} READMEs + Kommentare)', s))
+            elif doc_ratio > 10:
+                s = 7; factors.append((f'💬 Well Documented ({len(md_files)} READMEs)', s))
+            elif len(md_files) >= 5:
+                s = 7; factors.append((f'💬 Good Docs ({len(md_files)} READMEs, {format_number(md_lines)} Zeilen)', s))
+            elif doc_ratio > 5 or len(md_files) >= 3:
+                s = 5; factors.append((f'💬 Documented ({len(md_files)} READMEs)', s))
             else:
                 s = 2; factors.append(('💬 Low Documentation', s))
             score += s
         
         # Faktor 5: Projektlaufzeit
         if self.git_available:
-            first = run_git('log --reverse --format="%ai" HEAD', self.repo_path)
+            first = run_git('log --reverse --format=%ai HEAD', self.repo_path)
             if first:
                 try:
-                    first_date = datetime.strptime(first.splitlines()[0][:10], '%Y-%m-%d')
+                    date_str = first.splitlines()[0].strip().strip('"')[:10]
+                    first_date = datetime.strptime(date_str, '%Y-%m-%d')
                     days = (datetime.now() - first_date).days
                     if days > 365:
-                        s = 15; factors.append(('📅 Mature Project (1yr+)', s))
+                        s = 15; factors.append((f'📅 Mature Project ({days // 365}yr+, {days} Tage)', s))
+                    elif days > 180:
+                        s = 12; factors.append((f'📅 Established ({days} Tage)', s))
                     elif days > 90:
-                        s = 10; factors.append(('📅 Growing Project (3mo+)', s))
+                        s = 10; factors.append((f'📅 Growing Project ({days} Tage)', s))
+                    elif days > 30:
+                        s = 7; factors.append((f'📅 Active Project ({days} Tage)', s))
                     else:
-                        s = 5; factors.append(('📅 Young Project', s))
+                        s = 5; factors.append((f'📅 New Project ({days} Tage)', s))
                     score += s
-                except:
-                    pass
+                except Exception as e:
+                    factors.append(('📅 Projektlaufzeit: Parse-Fehler', 0))
         
         # Faktor 6: Dependencies
         pkg_path = os.path.join(self.repo_path, 'package.json')
@@ -489,14 +510,32 @@ class RepoAnalyzer:
                     pkg = json.load(f)
                 deps = len(pkg.get('dependencies', {})) + len(pkg.get('devDependencies', {}))
                 if deps > 20:
-                    s = 15; factors.append(('📦 Heavy Dependencies (20+)', s))
+                    s = 15; factors.append((f'📦 Heavy Dependencies ({deps})', s))
                 elif deps > 10:
-                    s = 10; factors.append(('📦 Moderate Deps', s))
+                    s = 10; factors.append((f'📦 Moderate Deps ({deps})', s))
+                elif deps > 0:
+                    s = 5; factors.append((f'📦 Lean Deps ({deps})', s))
                 else:
-                    s = 5; factors.append(('📦 Lean Deps', s))
+                    s = 5; factors.append(('📦 Zero-Dep (Standalone)', s))
                 score += s
             except:
                 pass
+        
+        # Faktor 7: Projektstruktur (Bonus für READMEs, CI, Tests, etc.)
+        has_readme = any(f['path'].lower() in ('readme.md', 'readme.txt') for f in self.files)
+        has_license = any('license' in f['path'].lower() for f in self.files)
+        has_contributing = any('contributing' in f['path'].lower() for f in self.files)
+        has_security = any('security' in f['path'].lower() for f in self.files)
+        has_coc = any('code_of_conduct' in f['path'].lower() for f in self.files)
+        
+        community_score = sum([has_readme, has_license, has_contributing, has_security, has_coc])
+        if community_score >= 4:
+            s = 10; factors.append((f'🏛️ Pro Community Files ({community_score}/5)', s))
+        elif community_score >= 2:
+            s = 5; factors.append((f'🏛️ Community Files ({community_score}/5)', s))
+        else:
+            s = 2; factors.append(('🏛️ Basic Setup', s))
+        score += s
         
         return {'score': min(score, 100), 'factors': factors}
 
