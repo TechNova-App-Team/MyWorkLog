@@ -846,7 +846,7 @@
             position: relative;
             height: 130vh;
             overflow: hidden;
-            background: linear-gradient(180deg, var(--bg-deep) 0%, #1a0a2e 50%, var(--bg-deep) 100%);
+            background: linear-gradient(180deg, var(--bg-deep) 0%, #1a0a2e 30%, #1a0a2e 70%, var(--bg-deep) 100%);
         }
 
         .code-video-sticky {
@@ -869,7 +869,6 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: brightness(0.4) contrast(1.2);
         }
 
         .code-video-overlay {
@@ -886,13 +885,15 @@
             max-width: 900px;
             padding: 0 5%;
             opacity: 0;
-            transform: translateY(50px);
-            transition: opacity 0.8s ease, transform 0.8s ease;
+            transform: translateY(40px) scale(0.95);
+            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+            filter: blur(10px);
         }
 
         .code-video-content.visible {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
+            filter: blur(0px);
         }
 
         .code-video-title {
@@ -1095,7 +1096,7 @@
         </div>
 
         <div class="hero-content">
-            <div class="hero-badge">🚀 Version 2.8.1 - Now Live</div>
+            <div class="hero-badge">🚀 Version 3.2.0 - Now Live</div>
             <h1 class="hero-title">
                 <span class="gradient-text">MyWorkLog</span><br>
                 Azubi Zeiterfassung & Berichtsheft
@@ -1120,11 +1121,11 @@
             </div>
 
             <div class="code-video-content" id="codeVideoContent">
-                <h2 class="code-video-title">Entwickelt mit Präzision</h2>
+                <h2 class="code-video-title">Handcrafted Code</h2>
                 <p class="code-video-description">
                     Jede Zeile Code wurde handgefertigt, optimiert und auf Perfektion getestet.
-                    Moderne Architektur trifft auf bewährte Patterns - das Resultat:
-                    Eine Time-Tracking-Lösung, die neue Standards setzt.
+                    Moderne Architektur trifft auf bewährte Patterns — das Resultat:
+                    Eine Azubi-Zeiterfassung, die neue Standards setzt.
                 </p>
 
                 <div class="code-video-features">
@@ -1133,16 +1134,16 @@
                         <div class="code-video-feature-text">60fps Performance</div>
                     </div>
                     <div class="code-video-feature">
-                        <div class="code-video-feature-icon">🎨</div>
-                        <div class="code-video-feature-text">Pixel-Perfect UI</div>
+                        <div class="code-video-feature-icon">🤖</div>
+                        <div class="code-video-feature-text">Lokale KI</div>
                     </div>
                     <div class="code-video-feature">
                         <div class="code-video-feature-icon">🔒</div>
-                        <div class="code-video-feature-text">Zero Trust Security</div>
+                        <div class="code-video-feature-text">AES-256 Encrypted</div>
                     </div>
                     <div class="code-video-feature">
-                        <div class="code-video-feature-icon">🚀</div>
-                        <div class="code-video-feature-text">PWA Technology</div>
+                        <div class="code-video-feature-icon">📱</div>
+                        <div class="code-video-feature-text">Offline PWA</div>
                     </div>
                 </div>
             </div>
@@ -1477,34 +1478,59 @@
 
         // Code samples to display
         const codeLines = [
-            'const app = {',
-            '  version: "2.8.1",',
+            '// MyWorkLog v3.2 — Azubi Zeiterfassung',
+            '',
+            'const MyWorkLog = {',
+            '  version: "3.2.0",',
+            '  name: "MyWorkLog",',
+            '',
             '  features: {',
-            '    timeTracking: true,',
-            '    aiAnalytics: true,',
-            '    offlineFirst: true,',
+            '    zeiterfassung: true,',
+            '    berichtsheft: "IHK-konform",',
+            '    gleitzeitkonto: true,',
+            '    ueberstundenrechner: true,',
+            '    lokaleKI: true,',
             '    encryption: "AES-256-GCM",',
+            '    offlineFirst: true,',
             '  },',
+            '',
             '  performance: {',
             '    fps: 60,',
             '    loadTime: "< 100ms",',
-            '  }',
+            '    storage: "IndexedDB",',
+            '  },',
             '};',
             '',
-            'class TimeTracker {',
-            '  constructor() {',
+            'class AzubiTracker {',
+            '  constructor(name) {',
+            '    this.azubi = name;',
             '    this.initPWA();',
             '    this.startTimer();',
+            '    this.initAI();',
             '  }',
             '',
-            '  async track() {',
-            '    return await this.save();',
+            '  async erfassen(start, ende) {',
+            '    const stunden = this.calc(start, ende);',
+            '    await this.save(stunden);',
+            '    return this.updateGleitzeit();',
+            '  }',
+            '',
+            '  async berichtsheft() {',
+            '    return await this.ki.generate();',
             '  }',
             '}',
+            '',
+            '// 🚀 Made in Germany',
         ];
 
+        // Syntax highlighting categories
+        const keywords = ['const', 'class', 'async', 'await', 'return', 'new', 'true', 'this'];
+        const strings = /"[^"]*"|'[^']*'/g;
+        const comments = /\/\/.*/g;
+        const numbers = /\b\d+\.?\d*\b/g;
+
         let animationFrame = 0;
-        const totalFrames = 120;
+        let lastProgress = 0;
 
         function resizeCanvas() {
             canvas.width = canvas.offsetWidth * window.devicePixelRatio;
@@ -1512,114 +1538,204 @@
             ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         }
 
+        // Easing function for smooth progress
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function getCharColor(line, charIndex) {
+            // Comment lines
+            if (line.trimStart().startsWith('//')) return '#6b7280';
+
+            // Find if char is inside a string
+            let inString = false;
+            let stringChar = null;
+            for (let i = 0; i <= charIndex; i++) {
+                if ((line[i] === '"' || line[i] === "'") && (i === 0 || line[i-1] !== '\\')) {
+                    if (!inString) { inString = true; stringChar = line[i]; }
+                    else if (line[i] === stringChar) { if (i === charIndex) return '#34d399'; inString = false; }
+                }
+            }
+            if (inString) return '#34d399';
+
+            const char = line[charIndex];
+
+            // Check if char is part of a keyword
+            for (const kw of keywords) {
+                const idx = line.indexOf(kw);
+                if (idx !== -1 && charIndex >= idx && charIndex < idx + kw.length) {
+                    // Check word boundary
+                    const before = idx > 0 ? line[idx - 1] : ' ';
+                    const after = idx + kw.length < line.length ? line[idx + kw.length] : ' ';
+                    if (/\W/.test(before) && /\W/.test(after)) return '#c084fc';
+                }
+            }
+
+            // Brackets
+            if ('{}()[]'.includes(char)) return '#fbbf24';
+            // Punctuation
+            if (':;,.'.includes(char)) return '#6b7280';
+            // Numbers
+            if (/\d/.test(char)) return '#f472b6';
+            // Property names (before colon)
+            const colonIdx = line.indexOf(':');
+            if (colonIdx > 0 && charIndex < colonIdx && line.trim()[0] !== '/' && !line.trimStart().startsWith('//')) {
+                const trimStart = line.length - line.trimStart().length;
+                if (charIndex >= trimStart) return '#60a5fa';
+            }
+
+            return '#e2e8f0'; // Default: light text
+        }
+
         function drawCodeFrame(progress) {
             const width = canvas.offsetWidth;
             const height = canvas.offsetHeight;
 
-            // Clear canvas
             ctx.clearRect(0, 0, width, height);
 
-            // Background gradient
+            // Background
             const gradient = ctx.createLinearGradient(0, 0, 0, height);
             gradient.addColorStop(0, '#0a0a0f');
-            gradient.addColorStop(0.5, '#1a0a2e');
+            gradient.addColorStop(0.3, '#110a1f');
+            gradient.addColorStop(0.7, '#110a1f');
             gradient.addColorStop(1, '#0a0a0f');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, width, height);
 
-            // Grid pattern
-            ctx.strokeStyle = 'rgba(168, 85, 247, 0.05)';
+            // Subtle grid
+            ctx.strokeStyle = 'rgba(168, 85, 247, 0.03)';
             ctx.lineWidth = 1;
-            const gridSize = 40;
-
+            const gridSize = 30;
             for (let x = 0; x < width; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, height);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
             }
-
             for (let y = 0; y < height; y += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
             }
 
-            // Purple glow effects
-            const glowCount = 5;
-            for (let i = 0; i < glowCount; i++) {
-                const offset = (progress * 100 + i * 50) % width;
-                const glowGradient = ctx.createRadialGradient(offset, height / 2, 0, offset, height / 2, 200);
-                glowGradient.addColorStop(0, 'rgba(168, 85, 247, 0.15)');
-                glowGradient.addColorStop(1, 'transparent');
-                ctx.fillStyle = glowGradient;
-                ctx.fillRect(0, 0, width, height);
-            }
+            // Ambient glow - follows progress
+            const glowX = width * 0.3 + Math.sin(progress * Math.PI * 2) * width * 0.2;
+            const glowY = height * 0.4 + Math.cos(progress * Math.PI) * height * 0.15;
+            const ambientGlow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, 350);
+            ambientGlow.addColorStop(0, 'rgba(168, 85, 247, 0.12)');
+            ambientGlow.addColorStop(0.5, 'rgba(124, 58, 237, 0.05)');
+            ambientGlow.addColorStop(1, 'transparent');
+            ctx.fillStyle = ambientGlow;
+            ctx.fillRect(0, 0, width, height);
 
-            // Draw code
-            const fontSize = Math.max(14, width / 60);
-            ctx.font = `${fontSize}px "Courier New", monospace`;
+            // Second glow
+            const glow2X = width * 0.7 + Math.cos(progress * Math.PI * 1.5) * width * 0.15;
+            const glow2Y = height * 0.6;
+            const g2 = ctx.createRadialGradient(glow2X, glow2Y, 0, glow2X, glow2Y, 250);
+            g2.addColorStop(0, 'rgba(236, 72, 153, 0.08)');
+            g2.addColorStop(1, 'transparent');
+            ctx.fillStyle = g2;
+            ctx.fillRect(0, 0, width, height);
+
+            // Code rendering
+            const fontSize = Math.max(13, Math.min(16, width / 55));
+            const lineHeight = fontSize * 1.6;
+            const charWidth = fontSize * 0.6;
+            ctx.font = `${fontSize}px "JetBrains Mono", "Fira Code", "Courier New", monospace`;
             ctx.textBaseline = 'top';
 
-            const linesToShow = Math.floor(progress * codeLines.length);
-            const startY = height / 2 - (linesToShow * fontSize * 1.5) / 2;
+            // How many lines to show based on progress (ease it)
+            const easedProgress = easeInOutCubic(Math.min(progress * 1.1, 1));
+            const totalLines = codeLines.length;
+            const linesToReveal = easedProgress * totalLines;
 
-            codeLines.slice(0, linesToShow).forEach((line, index) => {
-                const y = startY + index * fontSize * 1.5;
-                const lineProgress = Math.min(1, (progress * codeLines.length - index) * 2);
+            // Center the code block
+            const visibleLines = Math.min(Math.ceil(linesToReveal), totalLines);
+            const codeBlockHeight = visibleLines * lineHeight;
+            const startY = Math.max(40, (height - codeBlockHeight) / 2);
+
+            // Editor-like left gutter
+            const gutterWidth = 55;
+            const codeStartX = gutterWidth + 15;
+
+            // Gutter background
+            ctx.fillStyle = 'rgba(168, 85, 247, 0.03)';
+            ctx.fillRect(0, startY - 10, gutterWidth, codeBlockHeight + 20);
+
+            // Gutter separator line
+            ctx.strokeStyle = 'rgba(168, 85, 247, 0.1)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(gutterWidth, startY - 10);
+            ctx.lineTo(gutterWidth, startY + codeBlockHeight + 10);
+            ctx.stroke();
+
+            for (let i = 0; i < visibleLines; i++) {
+                const line = codeLines[i];
+                const y = startY + i * lineHeight;
+                const lineRevealProgress = Math.min(1, (linesToReveal - i) * 1.5);
+
+                if (lineRevealProgress <= 0) continue;
 
                 // Line number
-                ctx.fillStyle = `rgba(168, 85, 247, ${0.5 * lineProgress})`;
-                ctx.fillText((index + 1).toString().padStart(2, '0'), 20, y);
+                const lineAlpha = Math.min(1, lineRevealProgress * 2);
+                ctx.fillStyle = `rgba(168, 85, 247, ${0.35 * lineAlpha})`;
+                ctx.fillText((i + 1).toString().padStart(2, ' '), 15, y);
 
-                // Code text with syntax highlighting
-                const x = 60;
-                const chars = line.split('');
-                const charsToShow = Math.floor(chars.length * lineProgress);
-
-                chars.slice(0, charsToShow).forEach((char, charIndex) => {
-                    let color = '#a78bfa';
-
-                    // Simple syntax highlighting
-                    if (['const', 'class', 'async', 'await', 'return'].some(kw => line.includes(kw))) {
-                        color = '#c084fc';
-                    }
-                    if (char === '{' || char === '}' || char === '(' || char === ')') {
-                        color = '#8b5cf6';
-                    }
-                    if (char === '"' || char === "'") {
-                        color = '#a855f7';
-                    }
-                    if (!isNaN(char) && char.trim() !== '') {
-                        color = '#e879f9';
-                    }
-
-                    ctx.fillStyle = color;
-                    ctx.fillText(char, x + charIndex * (fontSize * 0.6), y);
-                });
-
-                // Cursor
-                if (lineProgress < 1 && lineProgress > 0) {
-                    const cursorX = x + charsToShow * (fontSize * 0.6);
-                    ctx.fillStyle = '#a855f7';
-                    ctx.fillRect(cursorX, y, 2, fontSize);
+                // Active line highlight
+                if (lineRevealProgress < 1 && lineRevealProgress > 0.1) {
+                    ctx.fillStyle = 'rgba(168, 85, 247, 0.04)';
+                    ctx.fillRect(gutterWidth + 1, y - 2, width - gutterWidth, lineHeight);
                 }
-            });
 
-            // Purple overlay particles
-            const particleCount = 30;
+                // Characters with typing effect
+                const chars = line.split('');
+                const charsToShow = Math.floor(chars.length * Math.min(1, lineRevealProgress * 1.2));
+
+                for (let ci = 0; ci < charsToShow; ci++) {
+                    const charAlpha = Math.min(1, (lineRevealProgress * chars.length - ci) * 3);
+                    const color = getCharColor(line, ci);
+
+                    // Parse color to rgba
+                    ctx.fillStyle = color;
+                    ctx.globalAlpha = charAlpha;
+                    ctx.fillText(chars[ci], codeStartX + ci * charWidth, y);
+                    ctx.globalAlpha = 1;
+                }
+
+                // Blinking cursor at end of typing line
+                if (lineRevealProgress < 1 && lineRevealProgress > 0.05) {
+                    const cursorBlink = Math.sin(Date.now() * 0.006) > 0;
+                    if (cursorBlink) {
+                        const cursorX = codeStartX + charsToShow * charWidth;
+                        ctx.fillStyle = '#a855f7';
+                        ctx.shadowColor = '#a855f7';
+                        ctx.shadowBlur = 8;
+                        ctx.fillRect(cursorX, y, 2, fontSize);
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            }
+
+            // Floating particles
+            const particleCount = 40;
             for (let i = 0; i < particleCount; i++) {
-                const particleProgress = (progress + i / particleCount) % 1;
-                const x = (Math.sin(i * 0.5 + progress * Math.PI * 2) * 0.5 + 0.5) * width;
-                const y = particleProgress * height;
-                const size = 2;
+                const t = Date.now() * 0.001 + i * 1.7;
+                const px = (Math.sin(t * 0.3 + i) * 0.4 + 0.5) * width;
+                const py = (Math.cos(t * 0.2 + i * 0.7) * 0.4 + 0.5) * height;
+                const size = 1 + Math.sin(t) * 0.5;
+                const alpha = 0.15 + Math.sin(t * 0.5) * 0.1;
 
-                const particleGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 5);
-                particleGradient.addColorStop(0, 'rgba(168, 85, 247, 0.8)');
-                particleGradient.addColorStop(1, 'transparent');
-                ctx.fillStyle = particleGradient;
-                ctx.fillRect(x - size * 5, y - size * 5, size * 10, size * 10);
+                ctx.beginPath();
+                ctx.arc(px, py, size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(168, 85, 247, ${alpha * progress})`;
+                ctx.fill();
+            }
+
+            // Scanline effect (subtle)
+            if (progress > 0.1) {
+                const scanY = ((Date.now() * 0.05) % height);
+                const scanGrad = ctx.createLinearGradient(0, scanY - 30, 0, scanY + 30);
+                scanGrad.addColorStop(0, 'transparent');
+                scanGrad.addColorStop(0.5, 'rgba(168, 85, 247, 0.03)');
+                scanGrad.addColorStop(1, 'transparent');
+                ctx.fillStyle = scanGrad;
+                ctx.fillRect(0, scanY - 30, width, 60);
             }
         }
 
@@ -1630,7 +1746,6 @@
             const sectionHeight = codeVideoSection.offsetHeight;
             const windowHeight = window.innerHeight;
 
-            // Calculate scroll progress (0 to 1)
             let progress = 0;
 
             if (rect.top <= 0 && rect.bottom >= windowHeight) {
@@ -1638,11 +1753,13 @@
                 progress = Math.max(0, Math.min(1, progress));
             }
 
-            // Draw frame based on progress
-            drawCodeFrame(progress);
+            // Smooth interpolation
+            lastProgress += (progress - lastProgress) * 0.15;
 
-            // Show/hide content based on progress
-            if (progress > 0.3 && progress < 0.8) {
+            drawCodeFrame(lastProgress);
+
+            // Show text overlay in the middle section
+            if (lastProgress > 0.4 && lastProgress < 0.85) {
                 codeVideoContent.classList.add('visible');
             } else {
                 codeVideoContent.classList.remove('visible');
@@ -1653,20 +1770,12 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // Update on scroll
-        let ticking = false;
-        window.addEventListener('scroll', () => {
-            if (!ticking) {
-                window.requestAnimationFrame(() => {
-                    updateCodeVideo();
-                    ticking = false;
-                });
-                ticking = true;
-            }
-        });
-
-        // Initial draw
-        updateCodeVideo();
+        // Continuous render loop for cursor blink + particles
+        function renderLoop() {
+            updateCodeVideo();
+            requestAnimationFrame(renderLoop);
+        }
+        renderLoop();
     </script>
 </body>
 </html>
