@@ -51,17 +51,21 @@
 <meta name="twitter:image" content="https://technova-app-team.github.io/MyWorkLog/Grafiken/Meta.png">
 <meta name="twitter:creator" content="@TechNovaTeam">
 
-<!-- Local Scripts (defer für korrektes Laden) -->
-<script defer src="./Assets/js/icons.js"></script>
-<script defer src="./Assets/js/shortcuts.js"></script>
-<script defer src="./Assets/js/touch-mobile-optimizations.js"></script>
-<script defer src="./Assets/js/pinch-zoom.js"></script>
 <!-- Preload External CDN Resources (für bessere Performance) -->
 <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js">
 <link rel="preload" as="script" href="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
 <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1">
 <link rel="preload" as="script" href="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
 <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js">
+
+<!-- HTTPS Redirect Guard (SYNCHRON - vor allem anderen) -->
+<script src="./Assets/js/https-redirect.js"></script>
+
+<!-- Local Scripts (defer für korrektes Laden) -->
+<script defer src="./Assets/js/icons.js"></script>
+<script defer src="./Assets/js/shortcuts.js"></script>
+<script defer src="./Assets/js/touch-mobile-optimizations.js"></script>
+<script defer src="./Assets/js/pinch-zoom.js"></script>
 <!-- External CDN Scripts -->
 <script defer src="https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -7194,28 +7198,188 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         </div>
     </div>
 
-    <!-- P2P Join Modal -->
-    <div class="modal" id="p2pJoinModal">
-        <div class="modal-box" style="width:90%; max-width:500px; padding:2rem; max-height:85vh; overflow-y:auto;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h3 style="margin:0;">📥 Team beitreten</h3>
-                <button onclick="closeJoinModal()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
+    <!-- P2P Sync Wizard Modal -->
+    <div class="modal" id="p2pWizardModal">
+        <div class="modal-box" style="width:95%; max-width:580px; padding:0; max-height:90vh; overflow:hidden; border-radius:20px; border:1px solid rgba(168,85,247,0.3); background:linear-gradient(145deg, #0f0a18 0%, #1a1025 50%, #0f0a18 100%);">
+            
+            <!-- Wizard Header -->
+            <div style="padding:1.5rem 2rem 1rem; border-bottom:1px solid rgba(168,85,247,0.15); position:relative; overflow:hidden;">
+                <div style="position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg, transparent, #a855f7, #7c3aed, transparent);"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h3 style="margin:0; font-size:1.2rem; font-weight:700; color:#fff;">🔗 P2P Sync</h3>
+                        <p style="margin:4px 0 0; font-size:0.75rem; color:var(--text-muted);" id="p2pWizardSubtitle">Wähle eine Rolle</p>
+                    </div>
+                    <button onclick="closeP2PWizard()" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; width:36px; height:36px; border-radius:10px; cursor:pointer; font-size:1.2rem; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">&times;</button>
+                </div>
+                <!-- Step Indicator -->
+                <div style="display:flex; gap:6px; margin-top:1rem;" id="p2pStepIndicator">
+                    <div class="p2p-step-dot active" id="p2pStep1Dot"></div>
+                    <div class="p2p-step-dot" id="p2pStep2Dot"></div>
+                    <div class="p2p-step-dot" id="p2pStep3Dot"></div>
+                </div>
             </div>
 
-            <p style="color:var(--text-muted); margin-bottom:1.5rem;">Gib den Connection-Code ein, den dir der Team-Admin gegeben hat:</p>
+            <!-- Wizard Body -->
+            <div style="padding:1.5rem 2rem; overflow-y:auto; max-height:calc(90vh - 120px);" id="p2pWizardBody">
+                
+                <!-- Step 1: Choose Role -->
+                <div id="p2pWizStep1">
+                    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem; line-height:1.6;">
+                        Verbinde zwei Geräte direkt miteinander — ohne Server, ohne Cloud. Alles bleibt verschlüsselt zwischen dir und deinem Gerät.
+                    </p>
+                    <div style="display:grid; gap:12px;">
+                        <button onclick="p2pStartHost()" style="background:linear-gradient(135deg, rgba(168,85,247,0.15) 0%, rgba(124,58,237,0.1) 100%); border:1px solid rgba(168,85,247,0.3); border-radius:14px; padding:1.25rem; text-align:left; cursor:pointer; transition:all 0.3s; color:#fff;" onmouseover="this.style.borderColor='rgba(168,85,247,0.6)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(168,85,247,0.3)';this.style.transform='none'">
+                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                                <span style="font-size:1.5rem;">📤</span>
+                                <span style="font-weight:700; font-size:1rem;">Daten senden</span>
+                            </div>
+                            <p style="margin:0; font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
+                                Erstellt einen Einladungscode. Das andere Gerät bekommt deine Einträge.
+                            </p>
+                        </button>
+                        <button onclick="p2pStartClient()" style="background:linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.08) 100%); border:1px solid rgba(16,185,129,0.3); border-radius:14px; padding:1.25rem; text-align:left; cursor:pointer; transition:all 0.3s; color:#fff;" onmouseover="this.style.borderColor='rgba(16,185,129,0.6)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(16,185,129,0.3)';this.style.transform='none'">
+                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                                <span style="font-size:1.5rem;">📥</span>
+                                <span style="font-weight:700; font-size:1rem;">Daten empfangen</span>
+                            </div>
+                            <p style="margin:0; font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
+                                Gib den Einladungscode vom anderen Gerät ein, um die Daten zu empfangen.
+                            </p>
+                        </button>
+                    </div>
+                    <div style="margin-top:1.5rem; padding:1rem; background:rgba(168,85,247,0.06); border-radius:10px; border:1px solid rgba(168,85,247,0.1);">
+                        <p style="margin:0; font-size:0.75rem; color:var(--text-muted); line-height:1.5;">
+                            🔒 <strong style="color:#a855f7;">100% Serverless</strong> — WebRTC P2P-Verbindung direkt zwischen deinen Geräten. Keine Daten verlassen deine Kontrolle. Die Codes werden nur zur Verbindungsherstellung genutzt.
+                        </p>
+                    </div>
+                </div>
 
-            <input type="text" id="joinCode" class="glass-input" placeholder="z.B. eyJhbGc..." style="margin-bottom:1.5rem; width:100%; font-family:var(--font-mono); font-size:0.9rem;">
+                <!-- Step 2a: Host - Show Offer Code -->
+                <div id="p2pWizStep2Host" style="display:none;">
+                    <div style="text-align:center; margin-bottom:1.25rem;">
+                        <div id="p2pHostSpinner" style="margin:0 auto 1rem;">
+                            <div style="width:48px; height:48px; border:3px solid rgba(168,85,247,0.2); border-top-color:#a855f7; border-radius:50%; animation:p2pSpin 0.8s linear infinite; margin:0 auto;"></div>
+                            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.75rem;">Generiere sicheren Verbindungscode...</p>
+                        </div>
+                        <div id="p2pHostReady" style="display:none;">
+                            <div style="font-size:2.5rem; margin-bottom:0.5rem;">📡</div>
+                            <p style="color:#a855f7; font-weight:600; font-size:0.95rem; margin-bottom:0.25rem;">Einladungscode bereit!</p>
+                            <p style="color:var(--text-muted); font-size:0.8rem;">Kopiere diesen Code und öffne ihn auf dem anderen Gerät.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="p2pOfferCodeBox" style="display:none;">
+                        <div style="position:relative;">
+                            <textarea id="p2pOfferCode" readonly style="width:100%; height:100px; background:rgba(0,0,0,0.4); border:1px solid rgba(168,85,247,0.2); border-radius:10px; color:#a855f7; font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all;"></textarea>
+                            <button onclick="p2pCopyOffer()" style="position:absolute; top:8px; right:8px; background:rgba(168,85,247,0.2); border:1px solid rgba(168,85,247,0.3); color:#fff; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:600; transition:all 0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.4)'" onmouseout="this.style.background='rgba(168,85,247,0.2)'">📋 Kopieren</button>
+                        </div>
+                    </div>
 
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <button class="btn" onclick="closeJoinModal()" style="background:transparent; border:1px solid var(--border); padding:12px;">Abbrechen</button>
-                <button class="btn btn-primary" onclick="joinP2PTeam()" style="padding:12px;">🔗 Verbinden</button>
-            </div>
+                    <div style="margin-top:1.25rem; padding:1rem; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.15); border-radius:10px;">
+                        <p style="margin:0 0 0.75rem; font-size:0.85rem; font-weight:600; color:#fbbf24;">⏳ Warte auf Antwort-Code</p>
+                        <p style="margin:0 0 0.75rem; font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
+                            Nachdem das andere Gerät deinen Code eingegeben hat, erhältst du dort einen <strong style="color:#fff;">Antwort-Code</strong>. Füge ihn hier ein:
+                        </p>
+                        <textarea id="p2pAnswerInput" placeholder="Antwort-Code hier einfügen..." style="width:100%; height:80px; background:rgba(0,0,0,0.3); border:1px solid rgba(16,185,129,0.2); border-radius:10px; color:#10b981; font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all;"></textarea>
+                        <button onclick="p2pHostProcessAnswer()" style="width:100%; margin-top:10px; background:linear-gradient(135deg, #10b981, #059669); border:none; color:#fff; padding:12px; border-radius:10px; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">🔗 Verbindung herstellen</button>
+                    </div>
+                </div>
 
-            <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border);">
-                <small style="color:var(--text-muted);">ℹ️ Die Verbindung ist P2P verschlüsselt. Keine Daten gehen durch externe Server.</small>
+                <!-- Step 2b: Client - Paste Offer & Show Answer -->
+                <div id="p2pWizStep2Client" style="display:none;">
+                    <div style="text-align:center; margin-bottom:1rem;">
+                        <div style="font-size:2.5rem; margin-bottom:0.5rem;">📥</div>
+                        <p style="color:#10b981; font-weight:600; font-size:0.95rem;">Einladungscode eingeben</p>
+                        <p style="color:var(--text-muted); font-size:0.8rem;">Füge den Code vom sendenden Gerät ein:</p>
+                    </div>
+
+                    <textarea id="p2pOfferInput" placeholder="Einladungscode hier einfügen..." style="width:100%; height:100px; background:rgba(0,0,0,0.3); border:1px solid rgba(168,85,247,0.2); border-radius:10px; color:#a855f7; font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all; margin-bottom:12px;"></textarea>
+                    <button onclick="p2pClientProcessOffer()" id="p2pClientConnectBtn" style="width:100%; background:linear-gradient(135deg, #a855f7, #7c3aed); border:none; color:#fff; padding:12px; border-radius:10px; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">🔗 Code verarbeiten</button>
+
+                    <!-- Answer display (hidden initially) -->
+                    <div id="p2pAnswerCodeBox" style="display:none; margin-top:1.25rem;">
+                        <div style="padding:1rem; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.2); border-radius:10px;">
+                            <p style="margin:0 0 0.75rem; font-size:0.85rem; font-weight:600; color:#10b981;">✅ Antwort-Code generiert!</p>
+                            <p style="margin:0 0 0.75rem; font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
+                                Kopiere diesen Code und füge ihn auf dem <strong style="color:#fff;">sendenden Gerät</strong> ein:
+                            </p>
+                            <div style="position:relative;">
+                                <textarea id="p2pAnswerCode" readonly style="width:100%; height:80px; background:rgba(0,0,0,0.4); border:1px solid rgba(16,185,129,0.2); border-radius:10px; color:#10b981; font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all;"></textarea>
+                                <button onclick="p2pCopyAnswer()" style="position:absolute; top:8px; right:8px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.3); color:#fff; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:600; transition:all 0.2s;" onmouseover="this.style.background='rgba(16,185,129,0.4)'" onmouseout="this.style.background='rgba(16,185,129,0.2)'">📋 Kopieren</button>
+                            </div>
+                            <div style="margin-top:1rem; text-align:center;">
+                                <div style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:rgba(251,191,36,0.08); border-radius:8px;">
+                                    <div style="width:8px; height:8px; border-radius:50%; background:#fbbf24; animation:p2pPulse 1.5s infinite;"></div>
+                                    <span style="font-size:0.8rem; color:#fbbf24;">Warte auf Verbindung...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Connected! -->
+                <div id="p2pWizStep3" style="display:none;">
+                    <div style="text-align:center; padding:1rem 0;">
+                        <div style="font-size:3rem; margin-bottom:0.75rem;" id="p2pConnAnim">🎉</div>
+                        <h3 style="color:#10b981; margin:0 0 0.5rem; font-size:1.2rem; font-weight:700;">Verbunden!</h3>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">P2P-Verbindung hergestellt. Daten werden synchronisiert.</p>
+                    </div>
+
+                    <!-- Sync Progress -->
+                    <div id="p2pSyncProgress" style="margin-bottom:1.25rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:0.8rem; color:var(--text-muted);">Sync-Fortschritt</span>
+                            <span id="p2pSyncPercent" style="font-size:0.8rem; font-weight:700; color:#a855f7;">0%</span>
+                        </div>
+                        <div style="height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden;">
+                            <div id="p2pSyncBar" style="height:100%; width:0%; background:linear-gradient(90deg, #a855f7, #10b981); border-radius:3px; transition:width 0.4s ease;"></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:6px;">
+                            <span id="p2pSyncStatus" style="font-size:0.75rem; color:var(--text-muted);">Starte...</span>
+                            <span id="p2pSyncSpeed" style="font-size:0.75rem; color:var(--text-muted);"></span>
+                        </div>
+                    </div>
+
+                    <!-- Sync Stats -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:1.25rem;">
+                        <div style="background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.15); border-radius:10px; padding:12px; text-align:center;">
+                            <div id="p2pStatSent" style="font-size:1.2rem; font-weight:800; color:#a855f7;">0</div>
+                            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Gesendet</div>
+                        </div>
+                        <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.15); border-radius:10px; padding:12px; text-align:center;">
+                            <div id="p2pStatReceived" style="font-size:1.2rem; font-weight:800; color:#10b981;">0</div>
+                            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Empfangen</div>
+                        </div>
+                        <div style="background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.15); border-radius:10px; padding:12px; text-align:center;">
+                            <div id="p2pStatMerged" style="font-size:1.2rem; font-weight:800; color:#fbbf24;">0</div>
+                            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Gemergt</div>
+                        </div>
+                    </div>
+
+                    <!-- Sync Log -->
+                    <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:12px; max-height:150px; overflow-y:auto;" id="p2pSyncLog">
+                        <div style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;" id="p2pLogContent">
+                            <div>⏳ Initialisiere Sync...</div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:1.25rem;">
+                        <button onclick="p2pManualSync()" style="background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.3); color:#fff; padding:10px; border-radius:10px; cursor:pointer; font-weight:600; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.25)'" onmouseout="this.style.background='rgba(168,85,247,0.15)'">🔄 Nochmal syncen</button>
+                        <button onclick="p2pDisconnect()" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#f87171; padding:10px; border-radius:10px; cursor:pointer; font-weight:600; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.2)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">❌ Trennen</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <style>
+        @keyframes p2pSpin { to { transform: rotate(360deg); } }
+        @keyframes p2pPulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+        .p2p-step-dot { height:4px; flex:1; border-radius:2px; background:rgba(255,255,255,0.08); transition:all 0.4s ease; }
+        .p2p-step-dot.active { background:linear-gradient(90deg, #a855f7, #7c3aed); }
+        .p2p-step-dot.done { background:#10b981; }
+    </style>
 
     <div class="modal" id="settingsModal">
         <div class="modal-box" style="display:flex; flex-direction:column; height:90vh; max-height:90vh; width:900px; padding:0;">
@@ -7545,38 +7709,35 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
                     <!-- P2P Sync -->
                     <div class="settings-section">
-                        <div class="settings-section-title">P2P Team-Sync (WebRTC)</div>
+                        <div class="settings-section-title">P2P Geräte-Sync (WebRTC)</div>
                         
                         <!-- Connection Status -->
-                        <div style="margin-bottom:1rem; padding:0.75rem 1rem; background:rgba(255,255,255,0.02); border-radius:8px; border-left:3px solid rgba(255,255,255,0.15);">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div>
-                                    <small style="color:var(--text-muted); display:block; margin-bottom:3px; font-size:0.75rem;">Status</small>
-                                    <span id="p2pStatus" style="font-weight:600; color:var(--text-muted); font-size:0.85rem;">⚫ Nicht verbunden</span>
+                        <div style="margin-bottom:1rem; padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.06);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div id="p2pStatusDot" style="width:10px; height:10px; border-radius:50%; background:#6b7280; transition:all 0.3s;"></div>
+                                    <div>
+                                        <span id="p2pStatus" style="font-weight:600; color:var(--text-muted); font-size:0.85rem;">Nicht verbunden</span>
+                                        <div id="p2pDeviceInfo" style="font-size:0.7rem; color:var(--text-muted); margin-top:2px; display:none;"></div>
+                                    </div>
                                 </div>
-                                <span id="connectedPeers" style="color:var(--text-muted); font-size:0.8rem;">0 Peers</span>
+                                <span id="connectedPeers" style="color:var(--text-muted); font-size:0.75rem; background:rgba(255,255,255,0.05); padding:3px 10px; border-radius:6px;">Offline</span>
+                            </div>
+                            <!-- Last Sync Info -->
+                            <div id="p2pLastSync" style="display:none; font-size:0.7rem; color:var(--text-muted); padding-top:8px; border-top:1px solid rgba(255,255,255,0.05);">
+                                Letzter Sync: <span id="p2pLastSyncTime">—</span>
                             </div>
                         </div>
 
-                        <!-- Action Buttons -->
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:1rem;">
-                            <button class="settings-btn" onclick="initiateP2PShare()">
-                                📤 Team freigeben
-                            </button>
-                            <button class="settings-btn" onclick="showJoinModal()">
-                                📥 Team beitreten
-                            </button>
-                        </div>
+                        <!-- Main Action Button -->
+                        <button class="settings-btn" onclick="openP2PWizard()" style="width:100%; padding:14px; font-size:0.95rem; font-weight:600; background:linear-gradient(135deg, rgba(168,85,247,0.15), rgba(124,58,237,0.1)); border:1px solid rgba(168,85,247,0.3); border-radius:12px; margin-bottom:1rem; transition:all 0.3s;" onmouseover="this.style.borderColor='rgba(168,85,247,0.5)'" onmouseout="this.style.borderColor='rgba(168,85,247,0.3)'">
+                            🔗 Geräte verbinden
+                        </button>
 
-                        <!-- QR Code Display (hidden) -->
-                        <div id="qrCodeContainer" style="display:none; text-align:center; margin-bottom:1rem; padding:1.25rem; background:rgba(255,255,255,0.03); border-radius:10px; border:1px solid rgba(255,255,255,0.06);">
-                            <small style="color:var(--text-muted); display:block; margin-bottom:0.75rem; font-size:0.8rem;">Scan QR-Code oder teile Connection-Code:</small>
-                            <div id="qrCodeBox" style="display:inline-block; background:white; padding:8px; border-radius:8px; margin-bottom:0.75rem;"></div>
-                            <input type="text" id="connectionCode" readonly class="glass-input" style="width:100%; margin-bottom:0.75rem; font-family:var(--font-mono); font-size:0.8rem;">
-                            <div style="display:flex; gap:8px;">
-                                <button class="settings-btn" onclick="copyConnectionCode()" style="flex:1; padding:8px;">📋 Kopieren</button>
-                                <button class="settings-btn" onclick="stopP2PShare()" style="flex:1; padding:8px; color:#f87171;">❌ Beenden</button>
-                            </div>
+                        <!-- Quick Actions (visible when connected) -->
+                        <div id="p2pQuickActions" style="display:none; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1rem;">
+                            <button class="settings-btn" onclick="p2pManualSync()" style="padding:10px;">🔄 Sync</button>
+                            <button class="settings-btn" onclick="p2pDisconnect()" style="padding:10px; color:#f87171;">❌ Trennen</button>
                         </div>
                     </div>
 
@@ -7586,21 +7747,21 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
                             <input type="checkbox" id="p2pAutoSync" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
-                            <label style="color:var(--text-main); font-size:0.85rem; cursor:pointer;">Auto-Sync aktivieren</label>
+                            <label style="color:var(--text-main); font-size:0.85rem; cursor:pointer;">Auto-Sync bei Verbindung</label>
                         </div>
 
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
                             <input type="checkbox" id="p2pOfflineQueue" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
-                            <label style="color:var(--text-main); font-size:0.85rem; cursor:pointer;">Offline-Queue</label>
+                            <label style="color:var(--text-main); font-size:0.85rem; cursor:pointer;">Offline-Queue (bei Verbindungsverlust)</label>
                         </div>
 
                         <div style="display:flex; align-items:center; gap:10px;">
                             <input type="checkbox" id="p2pEncryption" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
-                            <label style="color:var(--text-main); font-size:0.85rem; cursor:pointer;">🔒 WebRTC Verschlüsselung</label>
+                            <label style="color:var(--text-main); font-size:0.85rem; cursor:pointer;">🔒 Ende-zu-Ende Verschlüsselung</label>
                         </div>
 
                         <div class="settings-hint" style="margin-top:1rem;">
-                            P2P = direkte Verbindung. Keine zentralen Server, vollständig verschlüsselt.
+                            P2P = direkte Verbindung via WebRTC. Keine zentralen Server, kein Tracking. 3-Schritt Handshake: Einladen → Antworten → Verbunden.
                         </div>
                     </div>
                 </div>
@@ -15457,7 +15618,7 @@ TIPPS:
     // Sammelt ALLE relevanten localStorage-Schlüssel für ein vollständiges Backup
     function collectFullBackup() {
         const snapshot = {};
-        const skipPrefixes = ['p2p_signal_', 'p2p_answer_', 'p2p_candidates_'];
+        const skipPrefixes = ['p2p_deviceId', 'p2p_lastSync'];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             // P2P-Signaling ist transient → nicht sichern
@@ -16394,509 +16555,702 @@ TIPPS:
         if (encryptionEl) encryptionEl.checked = team.encryption !== false;
     }
 
-    // ========== === P2P WebRTC SYNC SYSTEM === ==========
+    // ========== === P2P WebRTC SYNC SYSTEM v2.0 === ==========
+    // Vollständig serverless, 3-Schritt Handshake mit gzip-komprimierten Codes
+    // Chunked Transfer, Delta Sync, Heartbeat, Conflict Resolution
 
-    // Global P2P Objekt
+    // Global P2P State
     let p2pSync = {
-        peers: {},
-        isHosting: false,
-        connectionCode: null,
-        offlineQueue: [],
-        signalingChannel: null,
-        localPeer: null
+        peer: null,
+        role: null, // 'host' | 'client'
+        connected: false,
+        syncStats: { sent: 0, received: 0, merged: 0 },
+        heartbeatInterval: null,
+        lastSyncTime: null,
+        deviceId: localStorage.getItem('p2p_deviceId') || (() => {
+            const id = 'dev_' + crypto.randomUUID().substring(0, 8);
+            localStorage.setItem('p2p_deviceId', id);
+            return id;
+        })()
     };
 
-    /**
-     * Initiiert P2P Sharing - dieser Nutzer wird "Host"
-     */
-    function initiateP2PShare() {
-        if (p2pSync.isHosting) {
-            showCustomMessage('⚠️ Bereits aktiv', 'Du gibst bereits dein Team frei.', 'warning');
-            return;
+    // === COMPRESSION UTILITIES ===
+    async function p2pCompress(obj) {
+        try {
+            const json = JSON.stringify(obj);
+            const blob = new Blob([json]);
+            const stream = blob.stream().pipeThrough(new CompressionStream('gzip'));
+            const compressed = await new Response(stream).arrayBuffer();
+            const bytes = new Uint8Array(compressed);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        } catch (e) {
+            console.warn('Compression failed, using raw base64:', e);
+            return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
         }
-
-        p2pSync.isHosting = true;
-        
-        // Generiere Connection Code (Signaling Channel ID)
-        const offerId = {
-            type: 'offer',
-            timestamp: Date.now(),
-            hostName: data.settings.name || 'Host',
-            channelId: 'p2p_' + Math.random().toString(36).substring(7)
-        };
-        p2pSync.connectionCode = btoa(JSON.stringify(offerId));
-        p2pSync.signalingChannel = offerId.channelId;
-        
-        // Starte WebRTC Peer als Host
-        createHostPeer();
-        
-        // Update UI
-        document.getElementById('qrCodeContainer').style.display = 'block';
-        document.getElementById('connectionCode').value = p2pSync.connectionCode;
-        document.getElementById('p2pStatus').textContent = '🟢 Bereit (wartet auf Verbindungen)';
-        document.getElementById('p2pStatus').style.color = '#10b981';
-
-        // Generiere QR Code
-        document.getElementById('qrCodeBox').innerHTML = '';
-        new QRCode(document.getElementById('qrCodeBox'), {
-            text: p2pSync.connectionCode,
-            width: 200,
-            height: 200,
-            colorDark: '#000000',
-            colorLight: '#ffffff'
-        });
-
-        showCustomMessage('📤 Team freigeben aktiviert', 'Teile den Code oder QR-Code mit anderen Nutzern!', 'success');
-        
-        console.log('🟢 P2P Hosting aktiviert. Channel:', p2pSync.signalingChannel);
-        
-        // Starte Signaling Listener
-        listenForSignals();
     }
 
-    /**
-     * Erstelle Host Peer (Initiator)
-     */
-    function createHostPeer() {
-        if (p2pSync.localPeer) {
-            console.log('⚠️ Host Peer existiert bereits');
-            return;
+    async function p2pDecompress(str) {
+        try {
+            const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+            const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+            const binary = atob(padded);
+            const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+            const blob = new Blob([bytes]);
+            const stream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
+            const text = await new Response(stream).text();
+            return JSON.parse(text);
+        } catch (e) {
+            console.warn('Decompression failed, trying raw base64:', e);
+            try {
+                return JSON.parse(decodeURIComponent(escape(atob(str))));
+            } catch (e2) {
+                return JSON.parse(atob(str));
+            }
         }
-        
-        console.log('🏗️ Erstelle Host Peer...');
-        
-        p2pSync.localPeer = new SimplePeer({
+    }
+
+    // === WIZARD UI CONTROL ===
+    function openP2PWizard() {
+        const modal = document.getElementById('p2pWizardModal');
+        modal.classList.add('active');
+        p2pWizardReset();
+    }
+
+    function closeP2PWizard() {
+        document.getElementById('p2pWizardModal').classList.remove('active');
+    }
+
+    function p2pWizardReset() {
+        document.getElementById('p2pWizStep1').style.display = '';
+        document.getElementById('p2pWizStep2Host').style.display = 'none';
+        document.getElementById('p2pWizStep2Client').style.display = 'none';
+        document.getElementById('p2pWizStep3').style.display = 'none';
+        document.getElementById('p2pStep1Dot').className = 'p2p-step-dot active';
+        document.getElementById('p2pStep2Dot').className = 'p2p-step-dot';
+        document.getElementById('p2pStep3Dot').className = 'p2p-step-dot';
+        document.getElementById('p2pWizardSubtitle').textContent = 'Wähle eine Rolle';
+    }
+
+    function p2pShowStep(step) {
+        document.getElementById('p2pWizStep1').style.display = 'none';
+        document.getElementById('p2pWizStep2Host').style.display = 'none';
+        document.getElementById('p2pWizStep2Client').style.display = 'none';
+        document.getElementById('p2pWizStep3').style.display = 'none';
+
+        const dots = ['p2pStep1Dot', 'p2pStep2Dot', 'p2pStep3Dot'];
+        dots.forEach((d, i) => {
+            const el = document.getElementById(d);
+            if (i < step - 1) el.className = 'p2p-step-dot done';
+            else if (i === step - 1) el.className = 'p2p-step-dot active';
+            else el.className = 'p2p-step-dot';
+        });
+    }
+
+    function p2pLog(msg) {
+        const logEl = document.getElementById('p2pLogContent');
+        if (!logEl) return;
+        const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const line = document.createElement('div');
+        line.style.marginBottom = '3px';
+        line.textContent = `[${time}] ${msg}`;
+        logEl.appendChild(line);
+        const container = document.getElementById('p2pSyncLog');
+        if (container) container.scrollTop = container.scrollHeight;
+    }
+
+    function p2pUpdateProgress(percent, status) {
+        const bar = document.getElementById('p2pSyncBar');
+        const pct = document.getElementById('p2pSyncPercent');
+        const stat = document.getElementById('p2pSyncStatus');
+        if (bar) bar.style.width = percent + '%';
+        if (pct) pct.textContent = Math.round(percent) + '%';
+        if (stat) stat.textContent = status;
+    }
+
+    function p2pUpdateStats() {
+        const els = {
+            sent: document.getElementById('p2pStatSent'),
+            received: document.getElementById('p2pStatReceived'),
+            merged: document.getElementById('p2pStatMerged')
+        };
+        if (els.sent) els.sent.textContent = p2pSync.syncStats.sent;
+        if (els.received) els.received.textContent = p2pSync.syncStats.received;
+        if (els.merged) els.merged.textContent = p2pSync.syncStats.merged;
+    }
+
+    function p2pUpdateConnectionUI(connected) {
+        const statusEl = document.getElementById('p2pStatus');
+        const dotEl = document.getElementById('p2pStatusDot');
+        const peersEl = document.getElementById('connectedPeers');
+        const quickEl = document.getElementById('p2pQuickActions');
+        const lastSyncEl = document.getElementById('p2pLastSync');
+
+        if (connected) {
+            if (statusEl) statusEl.textContent = 'Verbunden';
+            if (statusEl) statusEl.style.color = '#10b981';
+            if (dotEl) { dotEl.style.background = '#10b981'; dotEl.style.boxShadow = '0 0 8px rgba(16,185,129,0.5)'; }
+            if (peersEl) { peersEl.textContent = '1 Peer'; peersEl.style.color = '#10b981'; }
+            if (quickEl) quickEl.style.display = 'grid';
+        } else {
+            if (statusEl) statusEl.textContent = 'Nicht verbunden';
+            if (statusEl) statusEl.style.color = 'var(--text-muted)';
+            if (dotEl) { dotEl.style.background = '#6b7280'; dotEl.style.boxShadow = 'none'; }
+            if (peersEl) { peersEl.textContent = 'Offline'; peersEl.style.color = 'var(--text-muted)'; }
+            if (quickEl) quickEl.style.display = 'none';
+        }
+
+        if (p2pSync.lastSyncTime && lastSyncEl) {
+            lastSyncEl.style.display = '';
+            const timeEl = document.getElementById('p2pLastSyncTime');
+            if (timeEl) timeEl.textContent = new Date(p2pSync.lastSyncTime).toLocaleString('de-DE');
+        }
+    }
+
+    // === STEP 1: HOST - Create Offer ===
+    async function p2pStartHost() {
+        p2pSync.role = 'host';
+        p2pShowStep(2);
+        document.getElementById('p2pWizStep2Host').style.display = '';
+        document.getElementById('p2pWizardSubtitle').textContent = 'Schritt 1/2 — Einladungscode';
+
+        // Destroy old peer if exists
+        if (p2pSync.peer) { try { p2pSync.peer.destroy(); } catch(e){} p2pSync.peer = null; }
+
+        console.log('🏗️ P2P Host: Erstelle Offer mit trickle:false...');
+
+        p2pSync.peer = new SimplePeer({
             initiator: true,
-            trickleIce: true,
+            trickle: false,
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' }
                 ]
             }
         });
 
-        p2pSync.localPeer.on('signal', data => {
-            console.log('📡 Host Signal generiert. Type:', data.type);
-            const signalingData = {
-                type: 'host-offer',
-                signal: data,
-                timestamp: Date.now(),
-                channel: p2pSync.signalingChannel,
-                signalType: data.type // WICHTIG: Speichere auch den Signal-Typ
-            };
-            
-            // Speichere nur das ERSTE offer-Signal (nicht die candidates)
-            if (data.type === 'offer') {
-                console.log('💾 Speichere Host OFFER in localStorage. Key:', 'p2p_signal_' + p2pSync.signalingChannel);
-                localStorage.setItem('p2p_signal_' + p2pSync.signalingChannel, JSON.stringify(signalingData));
-            } else if (data.type === 'candidate') {
-                // ICE candidates speichern wir in separater Queue
-                console.log('📋 Speichere ICE Candidate in Queue');
-                const queueKey = 'p2p_candidates_' + p2pSync.signalingChannel;
-                let candidates = [];
-                const existing = localStorage.getItem(queueKey);
-                if (existing) {
-                    try {
-                        candidates = JSON.parse(existing);
-                    } catch (e) {}
-                }
-                candidates.push(signalingData);
-                localStorage.setItem(queueKey, JSON.stringify(candidates));
-            }
-        });
-
-        p2pSync.localPeer.on('connect', () => {
-            console.log('✅ HOST: Peer verbunden!');
-            document.getElementById('p2pStatus').textContent = '🟢 Verbunden';
-            document.getElementById('p2pStatus').style.color = '#10b981';
-            document.getElementById('connectedPeers').textContent = '1 Peers';
-            sendSyncData(p2pSync.localPeer);
-            showCustomMessage('✅ Verbunden!', 'P2P Sync ist aktiv!', 'success');
-        });
-
-        p2pSync.localPeer.on('data', buffer => {
+        p2pSync.peer.on('signal', async (signalData) => {
+            console.log('📡 Host: Offer-Signal generiert (inkl. ICE Candidates)');
             try {
-                const message = JSON.parse(buffer.toString());
-                handleP2PMessage(message, 'peer_remote');
+                const payload = {
+                    v: 2,
+                    t: 'offer',
+                    s: signalData,
+                    d: p2pSync.deviceId,
+                    n: data.settings?.name || 'Gerät',
+                    ts: Date.now()
+                };
+                const compressed = await p2pCompress(payload);
+                console.log(`📦 Offer komprimiert: ${JSON.stringify(signalData).length} → ${compressed.length} Zeichen`);
+
+                document.getElementById('p2pHostSpinner').style.display = 'none';
+                document.getElementById('p2pHostReady').style.display = '';
+                document.getElementById('p2pOfferCodeBox').style.display = '';
+                document.getElementById('p2pOfferCode').value = compressed;
             } catch (e) {
-                console.error('Message parse error:', e);
+                console.error('❌ Offer-Kompression fehlgeschlagen:', e);
+                showCustomMessage('❌ Fehler', 'Konnte Einladungscode nicht erstellen: ' + e.message, 'error');
             }
         });
 
-        p2pSync.localPeer.on('error', err => {
-            console.error('❌ Host Peer error:', err);
-            showCustomMessage('⚠️ Verbindungsfehler', err.message, 'error');
-        });
-
-        p2pSync.localPeer.on('close', () => {
-            console.log('🔴 Host Peer geschlossen');
-        });
+        p2pSetupPeerEvents(p2pSync.peer);
     }
 
-    /**
-     * Beende P2P Sharing
-     */
-    function stopP2PShare() {
-        p2pSync.isHosting = false;
-        document.getElementById('qrCodeContainer').style.display = 'none';
-        document.getElementById('p2pStatus').textContent = '🔴 Nicht verbunden';
-        document.getElementById('p2pStatus').style.color = '#ef4444';
-        
-        if (p2pSync.localPeer) {
-            p2pSync.localPeer.destroy();
-            p2pSync.localPeer = null;
+    // === STEP 1: CLIENT - Paste Offer ===
+    function p2pStartClient() {
+        p2pSync.role = 'client';
+        p2pShowStep(2);
+        document.getElementById('p2pWizStep2Client').style.display = '';
+        document.getElementById('p2pWizardSubtitle').textContent = 'Schritt 1/2 — Code eingeben';
+    }
+
+    // === STEP 2: CLIENT - Process Offer & Generate Answer ===
+    async function p2pClientProcessOffer() {
+        const input = document.getElementById('p2pOfferInput').value.trim();
+        if (!input) {
+            showCustomMessage('❌ Fehler', 'Bitte füge den Einladungscode ein.', 'error');
+            return;
         }
-        
-        Object.values(p2pSync.peers).forEach(peerObj => {
-            if (peerObj.peer) peerObj.peer.destroy();
-        });
-        p2pSync.peers = {};
 
-        showCustomMessage('❌ Team-Freigabe beendet', 'Verbindungen wurden geschlossen.', 'info');
+        const btn = document.getElementById('p2pClientConnectBtn');
+        btn.textContent = '⏳ Verarbeite...';
+        btn.disabled = true;
+
+        try {
+            const offerPayload = await p2pDecompress(input);
+            console.log('📥 Client: Offer dekomprimiert:', offerPayload);
+
+            if (!offerPayload || !offerPayload.s || offerPayload.t !== 'offer') {
+                throw new Error('Ungültiger Einladungscode (kein offer)');
+            }
+
+            // Destroy old peer
+            if (p2pSync.peer) { try { p2pSync.peer.destroy(); } catch(e){} }
+
+            p2pSync.peer = new SimplePeer({
+                initiator: false,
+                trickle: false,
+                config: {
+                    iceServers: [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun3.l.google.com:19302' }
+                    ]
+                }
+            });
+
+            p2pSync.peer.on('signal', async (signalData) => {
+                console.log('📡 Client: Answer-Signal generiert');
+                try {
+                    const payload = {
+                        v: 2,
+                        t: 'answer',
+                        s: signalData,
+                        d: p2pSync.deviceId,
+                        n: data.settings?.name || 'Gerät',
+                        ts: Date.now()
+                    };
+                    const compressed = await p2pCompress(payload);
+                    console.log(`📦 Answer komprimiert: ${compressed.length} Zeichen`);
+
+                    // Show answer code
+                    document.getElementById('p2pAnswerCodeBox').style.display = '';
+                    document.getElementById('p2pAnswerCode').value = compressed;
+                    btn.textContent = '✅ Answer generiert';
+                } catch (e) {
+                    console.error('❌ Answer-Kompression fehlgeschlagen:', e);
+                    showCustomMessage('❌ Fehler', 'Answer-Code konnte nicht erstellt werden.', 'error');
+                }
+            });
+
+            p2pSetupPeerEvents(p2pSync.peer);
+
+            // Signal the offer to our peer (this triggers answer generation)
+            console.log('📡 Client: Signalisiere Offer an Peer...');
+            p2pSync.peer.signal(offerPayload.s);
+
+            const devInfo = document.getElementById('p2pDeviceInfo');
+            if (devInfo) {
+                devInfo.textContent = `Verbunden mit: ${offerPayload.n || 'Unbekannt'} (${offerPayload.d || '?'})`;
+                devInfo.style.display = '';
+            }
+
+        } catch (e) {
+            console.error('❌ Offer-Verarbeitung fehlgeschlagen:', e);
+            showCustomMessage('❌ Ungültiger Code', 'Der Einladungscode konnte nicht verarbeitet werden: ' + e.message, 'error');
+            btn.textContent = '🔗 Code verarbeiten';
+            btn.disabled = false;
+        }
     }
 
-    /**
-     * Zeige das "Team beitreten" Modal
-     */
-    function showJoinModal() {
-        document.getElementById('p2pJoinModal').classList.add('active');
-    }
-
-    function closeJoinModal() {
-        document.getElementById('p2pJoinModal').classList.remove('active');
-    }
-
-    /**
-     * Tritt einem P2P Team bei (nimmt Connection Code entgegen)
-     */
-    function joinP2PTeam() {
-        const code = document.getElementById('joinCode').value.trim();
-        
-        if (!code) {
-            showCustomMessage('❌ Fehler', 'Bitte gib einen Connection-Code ein.', 'error');
+    // === STEP 2: HOST - Process Answer ===
+    async function p2pHostProcessAnswer() {
+        const input = document.getElementById('p2pAnswerInput').value.trim();
+        if (!input) {
+            showCustomMessage('❌ Fehler', 'Bitte füge den Antwort-Code ein.', 'error');
             return;
         }
 
         try {
-            const offerData = JSON.parse(atob(code));
-            console.log('📥 Join Code dekodiert:', offerData);
-            
-            // Verbinde zu diesem Kanal
-            connectAsClient(offerData);
-            
-            closeJoinModal();
-            showCustomMessage('🔗 Verbinde...', 'Stelle P2P Verbindung her...', 'info');
-            
+            const answerPayload = await p2pDecompress(input);
+            console.log('📥 Host: Answer dekomprimiert:', answerPayload);
+
+            if (!answerPayload || !answerPayload.s || answerPayload.t !== 'answer') {
+                throw new Error('Ungültiger Antwort-Code (kein answer)');
+            }
+
+            if (!p2pSync.peer) {
+                throw new Error('Kein aktiver Peer. Bitte starte den Vorgang neu.');
+            }
+
+            const devInfo = document.getElementById('p2pDeviceInfo');
+            if (devInfo) {
+                devInfo.textContent = `Verbunden mit: ${answerPayload.n || 'Unbekannt'} (${answerPayload.d || '?'})`;
+                devInfo.style.display = '';
+            }
+
+            // Signal the answer to our peer (this completes the handshake!)
+            console.log('📡 Host: Signalisiere Answer an Peer...');
+            p2pSync.peer.signal(answerPayload.s);
+
         } catch (e) {
-            showCustomMessage('❌ Ungültiger Code', 'Der Connection-Code ist fehlerhaft.', 'error');
-            console.error('Join error:', e);
+            console.error('❌ Answer-Verarbeitung fehlgeschlagen:', e);
+            showCustomMessage('❌ Ungültiger Code', 'Der Antwort-Code ist fehlerhaft: ' + e.message, 'error');
         }
     }
 
-    /**
-     * Verbinde als Client zu Host
-     */
-    function connectAsClient(offerData) {
-        p2pSync.signalingChannel = offerData.channelId;
-        console.log('🔗 Client: Verbinde zu Channel:', p2pSync.signalingChannel);
-        
-        // Erstelle Client Peer (Non-initiator)
-        const clientPeer = new SimplePeer({
-            initiator: false,
-            trickleIce: true,
-            config: {
-                iceServers: [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' }
-                ]
+    // === SHARED PEER EVENT HANDLERS ===
+    function p2pSetupPeerEvents(peer) {
+        peer.on('connect', () => {
+            console.log('✅ P2P VERBUNDEN! Rolle:', p2pSync.role);
+            p2pSync.connected = true;
+            p2pSync.syncStats = { sent: 0, received: 0, merged: 0 };
+
+            // Show step 3
+            p2pShowStep(3);
+            document.getElementById('p2pWizStep3').style.display = '';
+            document.getElementById('p2pWizardSubtitle').textContent = 'Verbunden!';
+
+            // Update settings UI
+            p2pUpdateConnectionUI(true);
+
+            showCustomMessage('✅ P2P Verbunden!', 'Direkte Verbindung hergestellt. Daten werden synchronisiert...', 'success');
+
+            // Start heartbeat
+            p2pStartHeartbeat();
+
+            // Auto-sync if enabled
+            if (document.getElementById('p2pAutoSync')?.checked) {
+                setTimeout(() => p2pExecuteSync(), 500);
             }
+
+            p2pLog('✅ Verbindung hergestellt');
         });
 
-        p2pSync.localPeer = clientPeer;
-        let offerProcessed = false;
-        let lastCandidateCount = 0;
-
-        // Warte auf Host Offer im localStorage
-        console.log('🎧 Client: Warte auf Host Offer...');
-        const checkInterval = setInterval(() => {
-            // 1. Verarbeite Host Offer
-            if (!offerProcessed) {
-                const signalData = localStorage.getItem('p2p_signal_' + p2pSync.signalingChannel);
-                if (signalData) {
-                    console.log('💾 Host Signal aus localStorage gefunden');
-                    try {
-                        const signal = JSON.parse(signalData);
-                        console.log('📦 Signal. Type:', signal.signal?.type);
-                        
-                        // WICHTIG: Nur das OFFER verarbeiten, nicht candidates!
-                        if (signal.type === 'host-offer' && signal.signal && signal.signal.type === 'offer') {
-                            console.log('📥 Host OFFER empfangen! (Nicht Candidate!)');
-                            clientPeer.signal(signal.signal);
-                            console.log('✅ Offer an Client Peer signalisiert');
-                            offerProcessed = true;
-                        } else {
-                            console.log('⏭️ Skip - das ist kein Offer, sondern:', signal.signal?.type);
-                        }
-                    } catch (e) {
-                        console.error('❌ Signal parse error:', e);
-                    }
-                }
-            }
-            
-            // 2. Verarbeite ICE Candidates (nach Offer!)
-            if (offerProcessed) {
-                const candidatesData = localStorage.getItem('p2p_candidates_' + p2pSync.signalingChannel);
-                if (candidatesData) {
-                    try {
-                        const candidates = JSON.parse(candidatesData);
-                        if (candidates.length > lastCandidateCount) {
-                            const newCandidates = candidates.slice(lastCandidateCount);
-                            console.log('🧊 ' + newCandidates.length + ' neue ICE Candidates');
-                            newCandidates.forEach(c => {
-                                clientPeer.signal(c.signal);
-                            });
-                            lastCandidateCount = candidates.length;
-                        }
-                    } catch (e) {
-                        console.error('❌ Candidates parse error:', e);
-                    }
-                }
-            }
-        }, 500);
-
-        // Timeout nach 30 Sekunden
-        setTimeout(() => {
-            clearInterval(checkInterval);
-            console.log('⏱️ Client Signal Check Timeout nach 30s');
-        }, 30000);
-
-
-        clientPeer.on('signal', data => {
-            console.log('📤 Client Signal generiert. Type:', data.type);
-            const answerData = {
-                type: 'client-answer',
-                signal: data,
-                timestamp: Date.now(),
-                channel: p2pSync.signalingChannel,
-                signalType: data.type
-            };
-            
-            // Speichere nur die ERSTE answer (nicht die candidates nachher)
-            if (data.type === 'answer') {
-                console.log('💾 Speichere Client ANSWER in localStorage. Key:', 'p2p_answer_' + p2pSync.signalingChannel);
-                localStorage.setItem('p2p_answer_' + p2pSync.signalingChannel, JSON.stringify(answerData));
-            } else if (data.type === 'candidate') {
-                // ICE candidates speichern wir in separater Queue
-                console.log('📋 Speichere Client ICE Candidate in Queue');
-                const queueKey = 'p2p_answer_candidates_' + p2pSync.signalingChannel;
-                let candidates = [];
-                const existing = localStorage.getItem(queueKey);
-                if (existing) {
-                    try {
-                        candidates = JSON.parse(existing);
-                    } catch (e) {}
-                }
-                candidates.push(answerData);
-                localStorage.setItem(queueKey, JSON.stringify(candidates));
-            }
-        });
-
-        clientPeer.on('connect', () => {
-            console.log('✅ Client: Peer verbunden!');
-            document.getElementById('p2pStatus').textContent = '🟢 Verbunden';
-            document.getElementById('p2pStatus').style.color = '#10b981';
-            document.getElementById('connectedPeers').textContent = '1 Peers';
-            sendSyncData(clientPeer);
-            showCustomMessage('✅ Verbunden!', 'P2P Sync ist aktiv!', 'success');
-        });
-
-        clientPeer.on('data', buffer => {
+        peer.on('data', (rawData) => {
             try {
-                const message = JSON.parse(buffer.toString());
-                handleP2PMessage(message, 'peer_remote');
+                const msg = JSON.parse(rawData.toString());
+                p2pHandleMessage(msg);
             } catch (e) {
-                console.error('Message parse error:', e);
+                console.error('❌ P2P Message Parse Error:', e);
             }
         });
 
-        clientPeer.on('error', err => {
-            console.error('Client Peer error:', err);
-            showCustomMessage('⚠️ Verbindungsfehler', err.message, 'error');
+        peer.on('error', (err) => {
+            console.error('❌ P2P Peer Error:', err);
+            p2pLog('❌ Fehler: ' + err.message);
+            if (err.code === 'ERR_ICE_CONNECTION_FAILURE') {
+                showCustomMessage('❌ Verbindung fehlgeschlagen', 'ICE-Verbindung konnte nicht hergestellt werden. Versuche es mit einem anderen Netzwerk.', 'error');
+            }
+        });
+
+        peer.on('close', () => {
+            console.log('🔴 P2P Verbindung geschlossen');
+            p2pSync.connected = false;
+            p2pStopHeartbeat();
+            p2pUpdateConnectionUI(false);
+            p2pLog('🔴 Verbindung getrennt');
         });
     }
 
-    /**
-     * Höre auf Signaling Änderungen (als Host)
-     */
-    function listenForSignals() {
-        if (!p2pSync.isHosting) return;
-        
-        console.log('🎧 Host: Höre auf Client Answer...');
-        
-        let answerProcessed = false;
-        let lastAnswerCandidateCount = 0;
-        
-        const checkInterval = setInterval(() => {
-            if (!p2pSync.isHosting) {
-                console.log('🛑 Host Mode beendet, stoppe Listener');
-                clearInterval(checkInterval);
+    // === HEARTBEAT (Connection Health) ===
+    function p2pStartHeartbeat() {
+        p2pStopHeartbeat();
+        p2pSync.heartbeatInterval = setInterval(() => {
+            if (p2pSync.peer && p2pSync.connected) {
+                try {
+                    p2pSync.peer.send(JSON.stringify({ type: 'heartbeat', ts: Date.now(), d: p2pSync.deviceId }));
+                } catch (e) {
+                    console.warn('Heartbeat failed:', e);
+                    p2pSync.connected = false;
+                    p2pUpdateConnectionUI(false);
+                    p2pStopHeartbeat();
+                }
+            }
+        }, 5000);
+    }
+
+    function p2pStopHeartbeat() {
+        if (p2pSync.heartbeatInterval) {
+            clearInterval(p2pSync.heartbeatInterval);
+            p2pSync.heartbeatInterval = null;
+        }
+    }
+
+    // === DATA SYNC ENGINE ===
+    function p2pExecuteSync() {
+        if (!p2pSync.peer || !p2pSync.connected) {
+            console.warn('P2P: Nicht verbunden, Sync nicht möglich');
+            return;
+        }
+
+        p2pLog('📤 Starte Sync...');
+        p2pUpdateProgress(10, 'Bereite Daten vor...');
+
+        // Prepare sync package
+        const entries = data.entries || [];
+        const totalEntries = entries.length;
+
+        // Calculate checksum for conflict detection
+        const checksum = entries.reduce((sum, e) => sum + (e.timestamp || 0), 0).toString(36);
+
+        // Send handshake first
+        const handshake = {
+            type: 'sync-handshake',
+            deviceId: p2pSync.deviceId,
+            deviceName: data.settings?.name || 'Gerät',
+            entryCount: totalEntries,
+            checksum: checksum,
+            timestamp: Date.now(),
+            settings: {
+                name: data.settings?.name,
+                weeklyHours: data.settings?.weeklyHours,
+                expectedDaily: data.settings?.expectedDaily
+            }
+        };
+
+        p2pSendMessage(handshake);
+        p2pUpdateProgress(20, 'Handshake gesendet...');
+
+        // Chunk entries for reliable transfer
+        const CHUNK_SIZE = 50;
+        const chunks = [];
+        for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
+            chunks.push(entries.slice(i, i + CHUNK_SIZE));
+        }
+
+        // Send chunks with delay for reliability
+        chunks.forEach((chunk, idx) => {
+            setTimeout(() => {
+                p2pSendMessage({
+                    type: 'sync-chunk',
+                    chunkIndex: idx,
+                    totalChunks: chunks.length,
+                    entries: chunk,
+                    timestamp: Date.now()
+                });
+
+                const progress = 20 + ((idx + 1) / chunks.length) * 70;
+                p2pUpdateProgress(progress, `Sende Chunk ${idx + 1}/${chunks.length}...`);
+                p2pSync.syncStats.sent += chunk.length;
+                p2pUpdateStats();
+                p2pLog(`📦 Chunk ${idx + 1}/${chunks.length} gesendet (${chunk.length} Einträge)`);
+
+                if (idx === chunks.length - 1) {
+                    // Final chunk sent
+                    setTimeout(() => {
+                        p2pSendMessage({ type: 'sync-complete', timestamp: Date.now() });
+                        p2pUpdateProgress(95, 'Warte auf Bestätigung...');
+                        p2pLog('📤 Alle Daten gesendet, warte auf ACK...');
+                    }, 100);
+                }
+            }, idx * 150); // 150ms delay between chunks
+        });
+
+        // Handle empty data
+        if (entries.length === 0) {
+            p2pSendMessage({ type: 'sync-complete', timestamp: Date.now(), empty: true });
+            p2pUpdateProgress(95, 'Keine Einträge zum Senden');
+            p2pLog('ℹ️ Keine Einträge vorhanden');
+        }
+    }
+
+    function p2pSendMessage(msg) {
+        if (!p2pSync.peer || !p2pSync.connected) return;
+        try {
+            p2pSync.peer.send(JSON.stringify(msg));
+        } catch (e) {
+            console.error('P2P Send Error:', e);
+        }
+    }
+
+    // === MESSAGE HANDLER ===
+    let p2pReceivedChunks = [];
+    let p2pExpectedChunks = 0;
+
+    function p2pHandleMessage(msg) {
+        switch (msg.type) {
+            case 'heartbeat':
+                // Peer is alive
+                break;
+
+            case 'sync-handshake':
+                console.log('🤝 Sync-Handshake empfangen:', msg);
+                p2pLog(`🤝 Handshake von "${msg.deviceName}" (${msg.entryCount} Einträge)`);
+                p2pReceivedChunks = [];
+                p2pExpectedChunks = 0;
+                p2pUpdateProgress(15, 'Handshake empfangen...');
+                break;
+
+            case 'sync-chunk':
+                console.log(`📦 Chunk ${msg.chunkIndex + 1}/${msg.totalChunks} empfangen (${msg.entries.length} Einträge)`);
+                p2pReceivedChunks.push(...msg.entries);
+                p2pExpectedChunks = msg.totalChunks;
+                p2pSync.syncStats.received += msg.entries.length;
+                p2pUpdateStats();
+
+                const progress = 20 + ((msg.chunkIndex + 1) / msg.totalChunks) * 60;
+                p2pUpdateProgress(progress, `Empfange ${msg.chunkIndex + 1}/${msg.totalChunks}...`);
+                p2pLog(`📥 Chunk ${msg.chunkIndex + 1}/${msg.totalChunks} empfangen`);
+                break;
+
+            case 'sync-complete':
+                console.log('✅ Sync-Complete empfangen. Merging', p2pReceivedChunks.length, 'Einträge...');
+                p2pUpdateProgress(85, 'Merge läuft...');
+                p2pLog('🔄 Starte Smart-Merge...');
+
+                const mergeResult = p2pSmartMerge(p2pReceivedChunks);
+                p2pSync.syncStats.merged = mergeResult.new + mergeResult.updated;
+                p2pUpdateStats();
+
+                p2pLog(`✅ Merge: ${mergeResult.new} neu, ${mergeResult.updated} aktualisiert, ${mergeResult.skipped} übersprungen`);
+
+                // Send ACK
+                p2pSendMessage({
+                    type: 'sync-ack',
+                    received: p2pReceivedChunks.length,
+                    merged: mergeResult.new + mergeResult.updated,
+                    timestamp: Date.now()
+                });
+
+                p2pReceivedChunks = [];
+                p2pSync.lastSyncTime = Date.now();
+                localStorage.setItem('p2p_lastSync', p2pSync.lastSyncTime);
+
+                p2pUpdateProgress(100, 'Sync abgeschlossen!');
+                p2pLog('🎉 Synchronisation erfolgreich abgeschlossen!');
+
+                showCustomMessage('✅ Sync erfolgreich!',
+                    `${mergeResult.new} neue & ${mergeResult.updated} aktualisierte Einträge empfangen.`, 'success');
+
+                // Update all UI
+                if (typeof renderEntries === 'function') renderEntries();
+                if (typeof computeAll === 'function') computeAll();
+                p2pUpdateConnectionUI(true);
+                break;
+
+            case 'sync-ack':
+                console.log('✅ Sync-ACK empfangen:', msg);
+                p2pUpdateProgress(100, 'Bestätigt!');
+                p2pLog(`✅ Empfänger bestätigt: ${msg.received} empfangen, ${msg.merged} gemergt`);
+                p2pSync.lastSyncTime = Date.now();
+                localStorage.setItem('p2p_lastSync', p2pSync.lastSyncTime);
+                p2pUpdateConnectionUI(true);
+
+                showCustomMessage('✅ Sync bestätigt!',
+                    `${msg.received} Einträge erfolgreich übertragen. ${msg.merged} gemergt.`, 'success');
+                break;
+
+            default:
+                console.log('P2P: Unbekannter Message-Typ:', msg.type);
+        }
+    }
+
+    // === SMART MERGE ENGINE ===
+    function p2pSmartMerge(remoteEntries) {
+        let newCount = 0;
+        let updatedCount = 0;
+        let skippedCount = 0;
+
+        if (!remoteEntries || !Array.isArray(remoteEntries)) {
+            return { new: 0, updated: 0, skipped: 0 };
+        }
+
+        remoteEntries.forEach(remoteEntry => {
+            if (!remoteEntry || !remoteEntry.id) {
+                skippedCount++;
                 return;
             }
-            
-            // 1. Verarbeite Client Answer
-            if (!answerProcessed) {
-                const answerData = localStorage.getItem('p2p_answer_' + p2pSync.signalingChannel);
-                
-                if (answerData) {
-                    console.log('💾 Answer aus localStorage gefunden');
-                    try {
-                        const answer = JSON.parse(answerData);
-                        console.log('📦 Answer Daten. Type:', answer.signal?.type);
-                        
-                        // WICHTIG: Nur das ANSWER verarbeiten, nicht candidates!
-                        if (answer.type === 'client-answer' && answer.signal && answer.signal.type === 'answer' && p2pSync.localPeer) {
-                            console.log('📥 Client ANSWER empfangen! (Nicht Candidate!)');
-                            p2pSync.localPeer.signal(answer.signal);
-                            console.log('✅ Answer an Host Peer signalisiert');
-                            answerProcessed = true;
-                        } else {
-                            console.log('⏭️ Skip - das ist kein Answer, sondern:', answer.signal?.type);
-                        }
-                    } catch (e) {
-                        console.error('❌ Answer parse error:', e);
-                    }
-                }
-            }
-            
-            // 2. Verarbeite Client Answer Candidates (nach Answer!)
-            if (answerProcessed && p2pSync.localPeer) {
-                const candidatesData = localStorage.getItem('p2p_answer_candidates_' + p2pSync.signalingChannel);
-                if (candidatesData) {
-                    try {
-                        const candidates = JSON.parse(candidatesData);
-                        if (candidates.length > lastAnswerCandidateCount) {
-                            const newCandidates = candidates.slice(lastAnswerCandidateCount);
-                            console.log('🧊 ' + newCandidates.length + ' neue Client Candidates');
-                            newCandidates.forEach(c => {
-                                p2pSync.localPeer.signal(c.signal);
-                            });
-                            lastAnswerCandidateCount = candidates.length;
-                        }
-                    } catch (e) {
-                        console.error('❌ Answer Candidates parse error:', e);
-                    }
-                }
-            }
-        }, 500);
-        
-        // Timeout nach 60 Sekunden
-        setTimeout(() => {
-            console.log('⏱️ Host Answer Listener Timeout nach 60s');
-            clearInterval(checkInterval);
-        }, 60000);
-    }
 
-    /**
-     * Sende NUR neue/geänderte Einträge über P2P Connection (Delta Sync)
-     */
-    function sendSyncData(peer) {
-        if (!peer || !peer.connected) return;
-        
-        // Sende nur Einträge die Timestamp haben (neue/geänderte)
-        const deltaEntries = data.entries.filter(e => e.timestamp);
-        
-        const syncData = {
-            type: 'sync',
-            entries: deltaEntries,  // Nur neue/geänderte
-            settings: data.settings,
-            timestamp: Date.now()
-        };
-        
-        try {
-            peer.send(JSON.stringify(syncData));
-            console.log(`📤 Delta Sync gesendet: ${deltaEntries.length} Einträge`);
-        } catch (e) {
-            console.error('Send error:', e);
-            if (document.getElementById('p2pOfflineQueue')?.checked) {
-                p2pSync.offlineQueue.push(syncData);
-                console.log('📥 In Offline-Queue gespeichert');
-            }
-        }
-    }
+            const localEntry = data.entries.find(e => e.id === remoteEntry.id);
 
-    /**
-     * Verarbeite eingehende P2P Nachrichten
-     */
-    function handleP2PMessage(message, peerId) {
-        if (message.type === 'sync') {
-            console.log('📥 Sync-Daten empfangen:', message.entries?.length, 'Einträge');
-            smartMergeData(message);
-            showCustomMessage('🔄 Sync empfangen', `${message.entries?.length || 0} Einträge synchronisiert`, 'success');
-        }
-    }
+            if (!localEntry) {
+                // Neuer Eintrag → hinzufügen
+                data.entries.push({ ...remoteEntry });
+                newCount++;
+            } else {
+                const remoteTs = remoteEntry.timestamp || 0;
+                const localTs = localEntry.timestamp || 0;
 
-    /**
-     * Smart Merge: Intelligent mit Versionskontrolle (Last-Write-Wins)
-     */
-    function smartMergeData(remoteSync) {
-        let mergedCount = 0;
-        let newCount = 0;
-        
-        // Merge Entries mit Timestamp-Vergleich
-        if (remoteSync.entries && Array.isArray(remoteSync.entries)) {
-            remoteSync.entries.forEach(remoteEntry => {
-                const localEntry = data.entries.find(e => e.id === remoteEntry.id);
-                
-                if (!localEntry) {
-                    // Neuer Eintrag → hinzufügen
-                    data.entries.push(remoteEntry);
-                    newCount++;
-                } else if (remoteEntry.timestamp > (localEntry.timestamp || 0)) {
-                    // Remote ist neuer → überschreiben
+                if (remoteTs > localTs) {
+                    // Remote ist neuer → überschreiben (Last-Write-Wins)
                     Object.assign(localEntry, remoteEntry);
-                    mergedCount++;
+                    updatedCount++;
+                } else {
+                    // Lokal ist neuer oder gleich → nichts tun
+                    skippedCount++;
                 }
-                // Sonst: lokale Version ist neuer → nichts tun
-            });
-        }
-        
-        // Settings nur wenn remote neuer ist
-        if (remoteSync.settings) {
-            Object.keys(remoteSync.settings).forEach(key => {
-                if (remoteSync.settings[key].timestamp > (data.settings[key]?.timestamp || 0)) {
-                    data.settings[key] = remoteSync.settings[key];
-                }
-            });
-        }
+            }
+        });
+
+        // Sort entries by date after merge
+        data.entries.sort((a, b) => {
+            const da = a.date || '';
+            const db = b.date || '';
+            return da.localeCompare(db);
+        });
 
         save();
-        console.log(`✅ Merge abgeschlossen: ${newCount} neu, ${mergedCount} aktualisiert`);
+        console.log(`✅ Smart-Merge: ${newCount} neu, ${updatedCount} aktualisiert, ${skippedCount} übersprungen`);
+        return { new: newCount, updated: updatedCount, skipped: skippedCount };
     }
 
-    /**
-     * Monitore localStorage Änderungen und synce zu Peers
-     */
-    function monitorP2PChanges() {
-        if (!document.getElementById('p2pAutoSync')?.checked) return;
-        
-        if (p2pSync.localPeer && p2pSync.localPeer.connected) {
-            sendSyncData(p2pSync.localPeer);
+    // === USER ACTIONS ===
+    function p2pManualSync() {
+        if (!p2pSync.connected) {
+            showCustomMessage('⚠️ Nicht verbunden', 'Stelle zuerst eine P2P-Verbindung her.', 'warning');
+            return;
         }
+        p2pSync.syncStats = { sent: 0, received: 0, merged: 0 };
+        p2pUpdateStats();
+        p2pExecuteSync();
     }
 
-    /**
-     * Kopiere Connection Code in Clipboard
-     */
-    function copyConnectionCode() {
-        const code = document.getElementById('connectionCode').value;
+    function p2pDisconnect() {
+        if (p2pSync.peer) {
+            try { p2pSync.peer.destroy(); } catch(e) {}
+            p2pSync.peer = null;
+        }
+        p2pSync.connected = false;
+        p2pSync.role = null;
+        p2pStopHeartbeat();
+        p2pUpdateConnectionUI(false);
+
+        // Reset wizard to step 1 if open
+        const modal = document.getElementById('p2pWizardModal');
+        if (modal && modal.classList.contains('active')) {
+            p2pWizardReset();
+        }
+
+        showCustomMessage('🔴 Getrennt', 'P2P-Verbindung wurde beendet.', 'info');
+    }
+
+    function p2pCopyOffer() {
+        const code = document.getElementById('p2pOfferCode').value;
         navigator.clipboard.writeText(code).then(() => {
-            showCustomMessage('📋 Kopiert!', 'Connection-Code in Clipboard', 'success');
+            showCustomMessage('📋 Kopiert!', 'Einladungscode in die Zwischenablage kopiert.', 'success');
+        }).catch(() => {
+            // Fallback
+            const el = document.getElementById('p2pOfferCode');
+            el.select();
+            document.execCommand('copy');
+            showCustomMessage('📋 Kopiert!', 'Einladungscode kopiert (Fallback).', 'success');
         });
     }
 
-    // Starte P2P Change Monitor beim Laden
-    setInterval(() => monitorP2PChanges(), 5000);
+    function p2pCopyAnswer() {
+        const code = document.getElementById('p2pAnswerCode').value;
+        navigator.clipboard.writeText(code).then(() => {
+            showCustomMessage('📋 Kopiert!', 'Antwort-Code in die Zwischenablage kopiert.', 'success');
+        }).catch(() => {
+            const el = document.getElementById('p2pAnswerCode');
+            el.select();
+            document.execCommand('copy');
+            showCustomMessage('📋 Kopiert!', 'Antwort-Code kopiert (Fallback).', 'success');
+        });
+    }
+
+    // === LEGACY COMPAT (alte Button-Handler redirigieren) ===
+    function initiateP2PShare() { openP2PWizard(); }
+    function showJoinModal() { openP2PWizard(); }
+    function closeJoinModal() { closeP2PWizard(); }
+    function joinP2PTeam() { openP2PWizard(); }
+    function stopP2PShare() { p2pDisconnect(); }
+    function copyConnectionCode() { p2pCopyOffer(); }
+
+    // Load last sync time on startup
+    (() => {
+        const lastSync = localStorage.getItem('p2p_lastSync');
+        if (lastSync) {
+            p2pSync.lastSyncTime = parseInt(lastSync);
+            p2pUpdateConnectionUI(false);
+        }
+    })();
 
     // --- Berufsschul-Regeln: UI + Logik (Frontend-only, keine automatische Massenbuchung) ---
     function renderSchoolRules() {
