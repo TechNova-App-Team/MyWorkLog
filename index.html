@@ -58,8 +58,7 @@
 <link rel="preload" as="script" href="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
 <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js">
 
-<!-- HTTPS Redirect Guard (SYNCHRON - vor allem anderen) -->
-<script src="./Assets/js/https-redirect.js"></script>
+
 
 <!-- Local Scripts (defer für korrektes Laden) -->
 <script defer src="./Assets/js/icons.js"></script>
@@ -7230,7 +7229,16 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             Nachdem das andere Gerät deinen Code eingegeben hat, erhältst du dort einen <strong style="color:#fff;">Antwort-Code</strong>. Füge ihn hier ein:
                         </p>
                         <textarea id="p2pAnswerInput" placeholder="Antwort-Code hier einfügen..." style="width:100%; height:80px; background:rgba(0,0,0,0.3); border:1px solid rgba(16,185,129,0.2); border-radius:10px; color:#10b981; font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all;"></textarea>
-                        <button onclick="p2pHostProcessAnswer()" style="width:100%; margin-top:10px; background:linear-gradient(135deg, #10b981, #059669); border:none; color:#fff; padding:12px; border-radius:10px; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">🔗 Verbindung herstellen</button>
+                        <button onclick="p2pHostProcessAnswer()" id="p2pHostConnectBtn" style="width:100%; margin-top:10px; background:linear-gradient(135deg, #10b981, #059669); border:none; color:#fff; padding:12px; border-radius:10px; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">🔗 Verbindung herstellen</button>
+                        <div id="p2pHostConnecting" style="display:none; margin-top:12px; text-align:center;">
+                            <div style="display:inline-flex; align-items:center; gap:10px; padding:10px 20px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:10px;">
+                                <div style="width:16px; height:16px; border:2px solid rgba(16,185,129,0.3); border-top-color:#10b981; border-radius:50%; animation:p2pSpin 0.8s linear infinite;"></div>
+                                <span id="p2pHostConnectStatus" style="font-size:0.8rem; color:#10b981;">Verbinde...</span>
+                            </div>
+                            <div style="margin-top:8px; height:3px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden;">
+                                <div id="p2pHostConnectBar" style="height:100%; width:0%; background:linear-gradient(90deg, #10b981, #a855f7); border-radius:2px; transition:width 0.5s ease;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -16678,7 +16686,12 @@ TIPPS:
                     { urls: 'stun:stun.l.google.com:19302' },
                     { urls: 'stun:stun1.l.google.com:19302' },
                     { urls: 'stun:stun2.l.google.com:19302' },
-                    { urls: 'stun:stun3.l.google.com:19302' }
+                    { urls: 'stun:stun3.l.google.com:19302' },
+                    { urls: 'stun:stun.relay.metered.ca:80' },
+                    { urls: 'turn:global.relay.metered.ca:80', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' },
+                    { urls: 'turn:global.relay.metered.ca:80?transport=tcp', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' },
+                    { urls: 'turn:global.relay.metered.ca:443', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' },
+                    { urls: 'turns:global.relay.metered.ca:443?transport=tcp', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' }
                 ]
             }
         });
@@ -16764,7 +16777,12 @@ TIPPS:
                         { urls: 'stun:stun.l.google.com:19302' },
                         { urls: 'stun:stun1.l.google.com:19302' },
                         { urls: 'stun:stun2.l.google.com:19302' },
-                        { urls: 'stun:stun3.l.google.com:19302' }
+                        { urls: 'stun:stun3.l.google.com:19302' },
+                        { urls: 'stun:stun.relay.metered.ca:80' },
+                        { urls: 'turn:global.relay.metered.ca:80', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' },
+                        { urls: 'turn:global.relay.metered.ca:80?transport=tcp', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' },
+                        { urls: 'turn:global.relay.metered.ca:443', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' },
+                        { urls: 'turns:global.relay.metered.ca:443?transport=tcp', username: 'e8dd65b92a0d1172e8810b28', credential: 'zHCzO/N6+Ogv7jnq' }
                     ]
                 }
             });
@@ -16863,6 +16881,30 @@ TIPPS:
 
             p2pSync.answerApplied = true;
 
+            // Show loading UI
+            const connectBtn = document.getElementById('p2pHostConnectBtn');
+            const connectingDiv = document.getElementById('p2pHostConnecting');
+            if (connectBtn) { connectBtn.disabled = true; connectBtn.textContent = '⏳ Verbinde...'; connectBtn.style.opacity = '0.6'; connectBtn.style.cursor = 'not-allowed'; }
+            if (connectingDiv) connectingDiv.style.display = '';
+
+            // Animate progress bar
+            p2pSync._connectBarInterval = setInterval(() => {
+                const bar = document.getElementById('p2pHostConnectBar');
+                const status = document.getElementById('p2pHostConnectStatus');
+                if (!bar) return;
+                const current = parseFloat(bar.style.width) || 0;
+                if (current < 90) {
+                    bar.style.width = (current + 2) + '%';
+                }
+                // Show ICE state if available
+                if (p2pSync.peer && p2pSync.peer._pc && status) {
+                    const iceState = p2pSync.peer._pc.iceConnectionState;
+                    const stateLabels = { 'new': 'Initialisiere...', 'checking': 'Suche Route...', 'connected': 'Verbunden!', 'completed': 'Verbunden!', 'failed': 'Fehlgeschlagen', 'disconnected': 'Getrennt', 'closed': 'Geschlossen' };
+                    status.textContent = stateLabels[iceState] || 'Verbinde...';
+                    if (iceState === 'failed') { status.style.color = '#f87171'; bar.style.background = '#ef4444'; }
+                }
+            }, 300);
+
             const devInfo = document.getElementById('p2pDeviceInfo');
             if (devInfo) {
                 devInfo.textContent = `Verbunden mit: ${answerPayload.n || 'Unbekannt'} (${answerPayload.d || '?'})`;
@@ -16887,6 +16929,9 @@ TIPPS:
             console.log('✅ P2P VERBUNDEN! Rolle:', p2pSync.role);
             p2pSync.connected = true;
             p2pSync.syncStats = { sent: 0, received: 0, merged: 0 };
+
+            // Clear connecting animation
+            if (p2pSync._connectBarInterval) { clearInterval(p2pSync._connectBarInterval); p2pSync._connectBarInterval = null; }
 
             // Show step 3
             p2pShowStep(3);
@@ -16921,8 +16966,23 @@ TIPPS:
         peer.on('error', (err) => {
             console.error('❌ P2P Peer Error:', err);
             p2pLog('❌ Fehler: ' + err.message);
-            if (err.code === 'ERR_ICE_CONNECTION_FAILURE') {
-                showCustomMessage('❌ Verbindung fehlgeschlagen', 'ICE-Verbindung konnte nicht hergestellt werden. Versuche es mit einem anderen Netzwerk.', 'error');
+            // Clear connecting animation
+            if (p2pSync._connectBarInterval) { clearInterval(p2pSync._connectBarInterval); p2pSync._connectBarInterval = null; }
+            // Reset connect button
+            const connectBtn = document.getElementById('p2pHostConnectBtn');
+            if (connectBtn) { connectBtn.disabled = false; connectBtn.textContent = '🔗 Verbindung herstellen'; connectBtn.style.opacity = '1'; connectBtn.style.cursor = 'pointer'; }
+            const connectingDiv = document.getElementById('p2pHostConnecting');
+            if (connectingDiv) connectingDiv.style.display = 'none';
+            // Allow retry
+            p2pSync.answerApplied = false;
+
+            if (err.message === 'Connection failed.' || err.code === 'ERR_ICE_CONNECTION_FAILURE') {
+                showCustomMessage('❌ Verbindung fehlgeschlagen',
+                    'Die direkte P2P-Verbindung konnte nicht hergestellt werden. Mögliche Gründe:\n' +
+                    '• Firewall oder striktes NAT blockiert die Verbindung\n' +
+                    '• VPN aktiv (bitte deaktivieren)\n' +
+                    '• Beide Geräte im selben Netzwerk? → WiFi verwenden\n\n' +
+                    'Tipp: Generiere einen neuen Code und versuche es erneut.', 'error');
             }
         });
 
@@ -16930,6 +16990,7 @@ TIPPS:
             console.log('🔴 P2P Verbindung geschlossen');
             p2pSync.connected = false;
             p2pStopHeartbeat();
+            if (p2pSync._connectBarInterval) { clearInterval(p2pSync._connectBarInterval); p2pSync._connectBarInterval = null; }
             p2pUpdateConnectionUI(false);
             p2pLog('🔴 Verbindung getrennt');
         });

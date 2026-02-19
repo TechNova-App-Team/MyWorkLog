@@ -52,7 +52,8 @@
 - [🛠️ Entwicklung](#️-entwicklung)
 - [📊 Tech Stack](#-tech-stack)
 - [🧪 Testing](#-testing)
-- [📱 PWA Features](#-pwa-features)
+- [� P2P Sync (WebRTC)](#-p2p-sync-webrtc)
+- [�📱 PWA Features](#-pwa-features)
 - [🔒 Sicherheit & Datenschutz](#-sicherheit--datenschutz)
 - [🌍 Browser-Kompatibilität](#-browser-kompatibilität)
 - [🤝 Contributing](#-contributing)
@@ -701,7 +702,57 @@ npm run test:coverage
 
 ---
 
-## 📱 PWA Features
+## � P2P Sync (WebRTC)
+
+MyWorkLog unterstützt **direkte Geräte-zu-Geräte-Synchronisation** über WebRTC (SimplePeer). Keine Server-Infrastruktur nötig – Daten werden verschlüsselt direkt zwischen den Geräten übertragen.
+
+### 1. TURN Servers (Host + Client ICE Config)
+
+- **5 Metered.ca TURN/TURNS Server** (TCP + UDP + TLS) neben den bestehenden STUN-Servern
+- Unterstützt: **UDP Port 80**, **TCP Port 80**, **UDP Port 443**, **TURNS (TLS) Port 443**
+- Ermöglicht NAT-Traversal auch bei strikten Firewalls und verschiedenen Netzwerken
+
+```javascript
+iceServers: [
+    // STUN (Google)
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    // STUN + TURN (Metered.ca)
+    { urls: 'stun:stun.relay.metered.ca:80' },
+    { urls: 'turn:global.relay.metered.ca:80',  username: '...', credential: '...' },
+    { urls: 'turn:global.relay.metered.ca:80?transport=tcp',  username: '...', credential: '...' },
+    { urls: 'turn:global.relay.metered.ca:443', username: '...', credential: '...' },
+    { urls: 'turns:global.relay.metered.ca:443?transport=tcp', username: '...', credential: '...' }
+]
+```
+
+### 2. Loading-Animation beim Verbinden (Host-Seite)
+
+- **"Verbindung herstellen"** Button wird `disabled` + zeigt "⏳ Verbinde..." Text
+- Animierter **Spinner + Fortschrittsbalken** mit Gradient erscheint darunter
+- **ICE-Status** wird live angezeigt:
+  - `Initialisiere...` → `Suche Route...` → `Verbunden!`
+- Bei Fehler: Button wird zurückgesetzt, **Retry möglich** (`answerApplied` wird reset)
+
+### 3. Bessere Fehlermeldung bei Connection Failed
+
+- **Detaillierte Hinweise** (Firewall, VPN, Netzwerk-Tipps) bei fehlgeschlagener Verbindung
+- Erkennt sowohl `Connection failed.` als auch `ERR_ICE_CONNECTION_FAILURE`
+- User bekommt konkrete Lösungsvorschläge angezeigt
+
+### 4. Cleanup in allen Handlern
+
+- **connect**, **error** und **close** Handler räumen die Loading-Animation sauber auf
+- Interval wird gestoppt, Button-State wird zurückgesetzt
+- Kein Memory-Leak durch verwaiste Intervalle
+
+> **⚠️ Hinweis:** Die aktuellen Metered.ca TURN-Credentials sind kostenlose Demo-Keys. Für Produktion eigene Keys auf [metered.ca](https://www.metered.ca/stun-turn) erstellen (kostenloser Tier: 500 MB/Monat).
+
+---
+
+## �📱 PWA Features
 
 ### ✨ Progressive Web App Highlights
 
