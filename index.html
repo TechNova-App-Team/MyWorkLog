@@ -1606,6 +1606,302 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         }
         /* ===== END RECOVERY MODAL ===== */
 
+        /* ===== ADVANCED EDIT ENTRY MODAL ===== */
+        .edit-modal-advanced {
+            width: 680px;
+            max-width: 95vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            overflow: hidden;
+            background: linear-gradient(165deg, #0f0f14 0%, #0a0a0f 40%, #090912 100%);
+            border: 1px solid rgba(168, 85, 247, 0.15);
+            border-radius: 20px;
+            box-shadow: 0 0 80px rgba(168, 85, 247, 0.08), 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+        .edit-modal-header {
+            position: relative;
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(6, 182, 212, 0.06) 100%);
+            border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+        }
+        .edit-modal-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.35), rgba(6, 182, 212, 0.25), transparent);
+        }
+        .edit-modal-header-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .edit-modal-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(168, 85, 247, 0.3);
+        }
+        .edit-modal-title {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .edit-modal-subtitle {
+            margin: 2px 0 0;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .edit-modal-close {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            color: rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .edit-modal-close:hover {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+        .edit-modal-body {
+            padding: 1.25rem 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .edit-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 1rem;
+        }
+        .edit-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .edit-field.full {
+            grid-column: 1 / -1;
+        }
+        .edit-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .edit-label svg {
+            opacity: 0.5;
+        }
+        .edit-hint {
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: 0;
+            opacity: 0.5;
+            font-size: 0.72rem;
+        }
+        .edit-input, .edit-select, .edit-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            color: #fff;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .edit-input:focus, .edit-select:focus, .edit-textarea:focus {
+            outline: none;
+            border-color: rgba(168, 85, 247, 0.4);
+            background: rgba(168, 85, 247, 0.05);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+        }
+        .edit-input.edit-time {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+        .edit-select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+        .edit-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        /* Time Section */
+        .edit-section {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 14px;
+            background: rgba(6, 182, 212, 0.04);
+            border: 1px solid rgba(6, 182, 212, 0.1);
+        }
+        .edit-section-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #06b6d4;
+        }
+        .edit-time-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+        .edit-calc-row {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(6, 182, 212, 0.1);
+        }
+        .edit-calc-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .edit-calc-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .edit-calc-value {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            font-family: 'SF Mono', 'Consolas', monospace;
+        }
+        .edit-calc-item.highlight .edit-calc-value {
+            color: #10b981;
+            font-size: 1rem;
+        }
+        /* Advanced Section */
+        .edit-advanced-section {
+            margin-top: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .edit-advanced-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            user-select: none;
+            list-style: none;
+        }
+        .edit-advanced-toggle::-webkit-details-marker { display: none; }
+        .edit-advanced-toggle::after {
+            content: '';
+            margin-left: auto;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.2s;
+        }
+        .edit-advanced-section[open] .edit-advanced-toggle::after {
+            transform: rotate(180deg);
+        }
+        .edit-advanced-content {
+            padding: 0 14px 14px;
+        }
+        /* Footer */
+        .edit-modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        .edit-footer-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.35);
+        }
+        .edit-footer-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .edit-btn {
+            padding: 9px 20px;
+            border-radius: 10px;
+            border: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .edit-btn-ghost {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .edit-btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+        .edit-btn-primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+        }
+        .edit-btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
+        }
+        /* Mobile */
+        @media (max-width: 600px) {
+            .edit-modal-advanced { max-width: 98vw; border-radius: 16px; }
+            .edit-row { grid-template-columns: 1fr; }
+            .edit-time-grid { grid-template-columns: 1fr 1fr; }
+            .edit-time-grid > .edit-field:last-child { grid-column: 1 / -1; }
+            .edit-calc-row { flex-wrap: wrap; }
+            .edit-modal-footer { flex-direction: column; }
+            .edit-footer-actions { width: 100%; justify-content: stretch; }
+            .edit-footer-actions .edit-btn { flex: 1; justify-content: center; }
+        }
+        /* ===== END ADVANCED EDIT MODAL ===== */
+
         /* Modal Box für Einstellungen ist breiter für das Urlaubs-Dashboard */
         .modal-box.widget-manager-box {
             width: 90%;
@@ -3740,6 +4036,246 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             40% { transform: rotate(-4deg); }
             50% { transform: rotate(10deg); }
             60%, 100% { transform: rotate(0deg); }
+        }
+
+        /* --- Weather Widget --- */
+        .weather-trigger {
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .weather-trigger:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(168,85,247,0.3);
+            transform: translateY(-1px);
+        }
+        .weather-icon {
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+        .weather-temp {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+        }
+        .weather-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .weather-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .weather-modal-box {
+            width: 95%;
+            max-width: 480px;
+            background: linear-gradient(145deg, rgba(30, 30, 45, 0.98), rgba(20, 20, 35, 0.98));
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(168, 85, 247, 0.1);
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s ease;
+        }
+        .weather-modal.active .weather-modal-box {
+            transform: scale(1) translateY(0);
+        }
+        .weather-header {
+            padding: 1.5rem 1.75rem;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(6, 182, 212, 0.1));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .weather-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .weather-header-icon {
+            font-size: 2.5rem;
+        }
+        .weather-location {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .weather-date {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .weather-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .weather-close:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+        }
+        .weather-current {
+            padding: 2rem 1.75rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .weather-current-icon {
+            font-size: 5rem;
+            margin-bottom: 0.5rem;
+        }
+        .weather-current-temp {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            letter-spacing: -2px;
+        }
+        .weather-current-desc {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            text-transform: capitalize;
+        }
+        .weather-details {
+            padding: 1.25rem 1.75rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .weather-detail-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .weather-detail-icon {
+            font-size: 1.3rem;
+            margin-bottom: 0.25rem;
+        }
+        .weather-detail-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+        }
+        .weather-detail-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+        .weather-forecast {
+            padding: 1.25rem 1.75rem;
+        }
+        .weather-forecast-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        .weather-forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+        .weather-forecast-day {
+            text-align: center;
+            padding: 0.75rem 0.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.2s;
+        }
+        .weather-forecast-day:hover {
+            background: rgba(168, 85, 247, 0.1);
+            border-color: rgba(168, 85, 247, 0.2);
+        }
+        .weather-forecast-day-name {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .weather-forecast-day-icon {
+            font-size: 1.5rem;
+            margin: 0.5rem 0;
+        }
+        .weather-forecast-day-temp {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+        }
+        .weather-forecast-day-low {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .weather-location-setup {
+            padding: 2rem 1.75rem;
+            text-align: center;
+        }
+        .weather-location-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s;
+        }
+        .weather-location-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.4);
+        }
+        .weather-loading {
+            padding: 3rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+        .weather-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(168, 85, 247, 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         /* --- Projection badge --- */
@@ -7876,53 +8412,200 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         </div>
     </div>
 
-    <!-- EDIT ENTRY MODAL (NEU) -->
+    <!-- ADVANCED EDIT ENTRY MODAL -->
     <div class="modal" id="editEntryModal">
-        <div class="modal-box" style="width:700px; padding:2rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
-                <h3 style="margin:0;">✎ Eintrag bearbeiten</h3>
-                <button onclick="closeEditModal()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:2rem;">
-                <div>
-                    <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:5px; font-weight:600;">Datum:</label>
-                    <input type="date" id="editInpDate" class="glass-input">
+        <div class="modal-box edit-modal-advanced">
+            <!-- Header -->
+            <div class="edit-modal-header">
+                <div class="edit-modal-header-content">
+                    <div class="edit-modal-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="edit-modal-title">Eintrag bearbeiten</h3>
+                        <p class="edit-modal-subtitle" id="editModalSubtitle">Vollständige Nachbearbeitung</p>
+                    </div>
                 </div>
-                <div>
-                    <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:5px; font-weight:600;">Typ:</label>
-                    <select id="editInpType" class="glass-select">
-                        <option value="work">💼 Arbeit</option>
-                        <option value="school">📚 Berufsschule</option>
-                        <option value="vacation">🌴 Urlaub</option>
-                        <option value="gleittag">⚡ Gleittag</option>
-                        <option value="sick">💊 Krank</option>
-                    </select>
+                <button class="edit-modal-close" onclick="closeEditModal()" aria-label="Schließen">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="edit-modal-body">
+                <!-- Row 1: Datum & Typ -->
+                <div class="edit-row">
+                    <div class="edit-field">
+                        <label class="edit-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            Datum
+                        </label>
+                        <input type="date" id="editInpDate" class="edit-input">
+                    </div>
+                    <div class="edit-field">
+                        <label class="edit-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                            Typ
+                        </label>
+                        <select id="editInpType" class="edit-select" onchange="editTypeChanged()">
+                            <option value="work">💼 Arbeit</option>
+                            <option value="school">📚 Berufsschule</option>
+                            <option value="vacation">🌴 Urlaub</option>
+                            <option value="gleittag">⚡ Gleittag</option>
+                            <option value="sick">💊 Krank</option>
+                            <option value="holiday">🎉 Feiertag</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Zeit-Sektion (nur für Arbeit sichtbar) -->
+                <div class="edit-section" id="editTimeSection">
+                    <div class="edit-section-header">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Arbeitszeit
+                    </div>
+                    <div class="edit-time-grid">
+                        <div class="edit-field">
+                            <label class="edit-label">Beginn</label>
+                            <input type="time" id="editInpStart" class="edit-input edit-time" onchange="recalcEditWorked()">
+                        </div>
+                        <div class="edit-field">
+                            <label class="edit-label">Ende</label>
+                            <input type="time" id="editInpEnd" class="edit-input edit-time" onchange="recalcEditWorked()">
+                        </div>
+                        <div class="edit-field">
+                            <label class="edit-label">Pause (Min)</label>
+                            <input type="number" id="editInpBreak" class="edit-input" min="0" step="5" placeholder="30" onchange="recalcEditWorked()">
+                        </div>
+                    </div>
+                    <!-- Berechnete Arbeitszeit -->
+                    <div class="edit-calc-row">
+                        <div class="edit-calc-item">
+                            <span class="edit-calc-label">Brutto:</span>
+                            <span class="edit-calc-value" id="editCalcGross">—</span>
+                        </div>
+                        <div class="edit-calc-item">
+                            <span class="edit-calc-label">Pause:</span>
+                            <span class="edit-calc-value" id="editCalcBreak">—</span>
+                        </div>
+                        <div class="edit-calc-item highlight">
+                            <span class="edit-calc-label">Netto:</span>
+                            <span class="edit-calc-value" id="editCalcNet">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manuelle Stunden (Alternative/Override) -->
+                <div class="edit-row">
+                    <div class="edit-field full">
+                        <label class="edit-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Geleistete Stunden (Dezimal)
+                            <span class="edit-hint">— überschreibt Zeit-Berechnung</span>
+                        </label>
+                        <input type="number" id="editInpHours" class="edit-input" step="0.25" placeholder="z.B. 8.5" onchange="editHoursManualChanged()">
+                    </div>
+                </div>
+
+                <!-- Projekt -->
+                <div class="edit-row">
+                    <div class="edit-field full">
+                        <label class="edit-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                            Projekt / Kunde
+                        </label>
+                        <input type="text" id="editInpProject" class="edit-input" list="editProjectList" placeholder="Projekt auswählen oder eingeben">
+                        <datalist id="editProjectList"></datalist>
+                    </div>
+                </div>
+
+                <!-- Notizen -->
+                <div class="edit-row">
+                    <div class="edit-field full">
+                        <label class="edit-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                            Notizen / Info
+                        </label>
+                        <textarea id="editInpNotes" class="edit-textarea" placeholder="z.B. Bugfix in Modul X, Meeting mit Kunde..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Erweiterte Optionen (kollabierbar) -->
+                <details class="edit-advanced-section">
+                    <summary class="edit-advanced-toggle">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        Erweiterte Optionen
+                    </summary>
+                    <div class="edit-advanced-content">
+                        <div class="edit-row">
+                            <div class="edit-field">
+                                <label class="edit-label">Soll-Stunden</label>
+                                <input type="number" id="editInpExpected" class="edit-input" step="0.25" placeholder="Auto">
+                            </div>
+                            <div class="edit-field">
+                                <label class="edit-label">Saldo (Auto)</label>
+                                <input type="text" id="editInpDiff" class="edit-input" readonly style="opacity:0.6;">
+                            </div>
+                        </div>
+                        <div class="edit-row">
+                            <div class="edit-field full">
+                                <label class="edit-label">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>
+                                    Mood
+                                </label>
+                                <select id="editInpMood" class="edit-select">
+                                    <option value="">— Kein Mood —</option>
+                                    <option value="energized">⚡ Energized</option>
+                                    <option value="focused">🎯 Focused</option>
+                                    <option value="productive">🚀 Productive</option>
+                                    <option value="creative">💡 Creative</option>
+                                    <option value="neutral">😐 Neutral</option>
+                                    <option value="tired">😴 Tired</option>
+                                    <option value="stressed">😰 Stressed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Footer -->
+            <div class="edit-modal-footer">
+                <div class="edit-footer-info" id="editFooterInfo">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span id="editInfoText">Änderungen werden sofort gespeichert</span>
+                </div>
+                <div class="edit-footer-actions">
+                    <button class="edit-btn edit-btn-ghost" onclick="closeEditModal()">Abbrechen</button>
+                    <button class="edit-btn edit-btn-primary" onclick="saveEditEntry()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        Speichern
+                    </button>
                 </div>
             </div>
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:2rem;">
-                <div>
-                    <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:5px; font-weight:600;">Geleistete Stunden:</label>
-                    <input type="number" id="editInpHours" class="glass-input" step="0.25" placeholder="z.B. 8.5">
+        </div>
+    </div>
+
+    <!-- WEATHER MODAL -->
+    <div class="weather-modal" id="weatherModal" onclick="if(event.target === this) closeWeatherModal()">
+        <div class="weather-modal-box">
+            <div class="weather-header">
+                <div class="weather-header-left">
+                    <span class="weather-header-icon" id="weatherHeaderIcon">🌤️</span>
+                    <div>
+                        <div class="weather-location" id="weatherLocation">Standort wird ermittelt...</div>
+                        <div class="weather-date" id="weatherDate"></div>
+                    </div>
                 </div>
-                <div>
-                    <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:5px; font-weight:600;">Projekt/Kunde:</label>
-                    <input type="text" id="editInpProject" class="glass-input" list="editProjectList" placeholder="Projekt eingeben oder auswählen">
-                    <datalist id="editProjectList">
-                        <!-- Options will be populated by JS -->
-                    </datalist>
+                <button class="weather-close" onclick="closeWeatherModal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div id="weatherContent">
+                <div class="weather-loading">
+                    <div class="weather-loading-spinner"></div>
+                    <div>Wetter wird geladen...</div>
                 </div>
-            </div>
-            
-            <div style="margin-bottom:2rem;">
-                <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:5px; font-weight:600;">Notizen/Info:</label>
-                <textarea id="editInpNotes" class="glass-input" placeholder="z.B. Bugfix in Modul X" style="min-height:100px; resize:vertical;"></textarea>
-            </div>
-            
-            <div style="display:flex; gap:10px; justify-content:flex-end;">
-                <button class="btn" style="background:transparent; border:1px solid var(--border); padding:10px 20px;" onclick="closeEditModal()">Abbrechen</button>
-                <button class="btn btn-primary" onclick="saveEditEntry()" style="padding:10px 30px; background:var(--success);">💾 Speichern</button>
             </div>
         </div>
     </div>
@@ -8223,41 +8906,154 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         }
     }
 
-    // --- EDIT ENTRY MODAL FUNCTIONS (NEU) ---
+    // --- ADVANCED EDIT ENTRY MODAL FUNCTIONS ---
     let editingEntryId = null;
+    let editManualHoursOverride = false;
 
     function openEditModal(id) {
         const entry = data.entries.find(x => x.id === id);
         if (!entry) return;
 
         editingEntryId = id;
-        
+        editManualHoursOverride = false;
+
+        // Basic fields
         document.getElementById('editInpDate').value = entry.date;
         document.getElementById('editInpType').value = entry.type;
-        document.getElementById('editInpHours').value = entry.worked;
+        document.getElementById('editInpHours').value = entry.worked || '';
         document.getElementById('editInpProject').value = entry.project || '';
         document.getElementById('editInpNotes').value = entry.info || '';
-        
+
+        // Time fields
+        document.getElementById('editInpStart').value = entry.shiftStart || entry.start || '';
+        document.getElementById('editInpEnd').value = entry.shiftEnd || entry.end || '';
+        document.getElementById('editInpBreak').value = entry.breakMins || '';
+
+        // Advanced fields
+        document.getElementById('editInpExpected').value = entry.expected || '';
+        document.getElementById('editInpDiff').value = entry.diff !== undefined ? (entry.diff >= 0 ? '+' : '') + entry.diff.toFixed(2) + 'h' : '';
+        const moodSelect = document.getElementById('editInpMood');
+        if (moodSelect) moodSelect.value = entry.mood || '';
+
+        // Update subtitle with entry date
+        const dateObj = new Date(entry.date);
+        const dateStr = dateObj.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+        document.getElementById('editModalSubtitle').textContent = dateStr;
+
         populateProjectOptions();
-        
+        editTypeChanged();
+        recalcEditWorked();
+
         document.getElementById('editEntryModal').classList.add('active');
     }
 
     function populateProjectOptions() {
         const datalist = document.getElementById('editProjectList');
-        // Clear existing options
         datalist.innerHTML = '';
-        // Add projects
-        data.settings.projects.forEach(project => {
-            const option = document.createElement('option');
-            option.value = project;
-            datalist.appendChild(option);
-        });
+        if (data.settings.projects && data.settings.projects.length > 0) {
+            data.settings.projects.forEach(project => {
+                const option = document.createElement('option');
+                option.value = project;
+                datalist.appendChild(option);
+            });
+        }
+    }
+
+    function editTypeChanged() {
+        const type = document.getElementById('editInpType').value;
+        const timeSection = document.getElementById('editTimeSection');
+
+        // Show time section only for work type
+        if (type === 'work') {
+            timeSection.style.display = 'block';
+        } else {
+            timeSection.style.display = 'none';
+        }
+
+        // Update info text
+        const infoText = document.getElementById('editInfoText');
+        const typeLabels = {
+            'work': 'Arbeitszeit mit Start/Ende/Pause bearbeiten',
+            'school': 'Berufsschultag = volle Sollstunden',
+            'vacation': 'Urlaubstag wird automatisch berechnet',
+            'gleittag': 'Gleittag: Überstundenabbau',
+            'sick': 'Kranktag ohne Auswirkung auf Saldo',
+            'holiday': 'Feiertag ohne Auswirkung auf Saldo'
+        };
+        infoText.textContent = typeLabels[type] || 'Änderungen werden sofort gespeichert';
+    }
+
+    function recalcEditWorked() {
+        if (editManualHoursOverride) return;
+
+        const startVal = document.getElementById('editInpStart').value;
+        const endVal = document.getElementById('editInpEnd').value;
+        const breakVal = parseInt(document.getElementById('editInpBreak').value) || 0;
+
+        const grossEl = document.getElementById('editCalcGross');
+        const breakEl = document.getElementById('editCalcBreak');
+        const netEl = document.getElementById('editCalcNet');
+
+        if (!startVal || !endVal) {
+            grossEl.textContent = '—';
+            breakEl.textContent = '—';
+            netEl.textContent = '—';
+            return;
+        }
+
+        const [h1, m1] = startVal.split(':').map(Number);
+        const [h2, m2] = endVal.split(':').map(Number);
+
+        let startMins = h1 * 60 + m1;
+        let endMins = h2 * 60 + m2;
+
+        // Handle overnight shifts
+        if (endMins < startMins) endMins += 24 * 60;
+
+        const grossMins = endMins - startMins;
+        const netMins = grossMins - breakVal;
+
+        const grossHours = grossMins / 60;
+        const netHours = netMins / 60;
+
+        grossEl.textContent = grossHours.toFixed(2) + 'h';
+        breakEl.textContent = breakVal + ' min';
+        netEl.textContent = netHours.toFixed(2) + 'h';
+
+        // Auto-fill hours field
+        if (netHours >= 0) {
+            document.getElementById('editInpHours').value = netHours.toFixed(2);
+        }
+
+        // Update diff preview
+        const dateVal = document.getElementById('editInpDate').value;
+        if (dateVal) {
+            const dayIndex = new Date(dateVal).getDay();
+            const expected = parseFloat(document.getElementById('editInpExpected').value) || data.settings.hours[dayIndex] || 0;
+            const diff = netHours - expected;
+            document.getElementById('editInpDiff').value = (diff >= 0 ? '+' : '') + diff.toFixed(2) + 'h';
+        }
+    }
+
+    function editHoursManualChanged() {
+        const val = document.getElementById('editInpHours').value;
+        if (val && val.trim() !== '') {
+            editManualHoursOverride = true;
+            // Update diff preview
+            const dateVal = document.getElementById('editInpDate').value;
+            if (dateVal) {
+                const dayIndex = new Date(dateVal).getDay();
+                const expected = parseFloat(document.getElementById('editInpExpected').value) || data.settings.hours[dayIndex] || 0;
+                const diff = parseFloat(val) - expected;
+                document.getElementById('editInpDiff').value = (diff >= 0 ? '+' : '') + diff.toFixed(2) + 'h';
+            }
+        }
     }
 
     function closeEditModal() {
         document.getElementById('editEntryModal').classList.remove('active');
         editingEntryId = null;
+        editManualHoursOverride = false;
     }
 
     function saveEditEntry() {
@@ -8273,37 +9069,68 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         const newProject = document.getElementById('editInpProject').value.trim();
         const newInfo = document.getElementById('editInpNotes').value.trim();
 
-        if (!newDate || isNaN(newWorked)) {
-            showCustomMessage('❌ Validierungsfehler', 'Bitte fülle alle erforderlichen Felder aus (Datum, Stunden).', 'error');
+        // Time fields
+        const newStart = document.getElementById('editInpStart').value;
+        const newEnd = document.getElementById('editInpEnd').value;
+        const newBreak = parseInt(document.getElementById('editInpBreak').value) || 0;
+
+        // Advanced fields
+        const newExpected = parseFloat(document.getElementById('editInpExpected').value);
+        const newMood = document.getElementById('editInpMood')?.value || '';
+
+        if (!newDate) {
+            showCustomMessage('❌ Validierungsfehler', 'Bitte gib ein Datum ein.', 'error');
             return;
         }
 
+        // Update entry
         entry.date = newDate;
         entry.type = newType;
-        entry.worked = newWorked;
         entry.project = newProject || undefined;
         entry.info = newInfo || undefined;
+        entry.mood = newMood || undefined;
 
+        // Time data
+        if (newStart) entry.shiftStart = entry.start = newStart;
+        if (newEnd) entry.shiftEnd = entry.end = newEnd;
+        entry.breakMins = newBreak;
+
+        // Calculate expected if not manually set
         const dayIndex = new Date(newDate).getDay();
-        entry.expected = data.settings.hours[dayIndex] || 0;
-        
-        // Schultag = voller Arbeitstag (Ausbildung) → worked = expected, diff = 0
-        if (entry.type === 'school') {
+        entry.expected = !isNaN(newExpected) ? newExpected : (data.settings.hours[dayIndex] || 0);
+
+        // Type-specific logic
+        if (newType === 'school') {
             entry.worked = entry.expected;
             entry.diff = 0;
+        } else if (newType === 'vacation' || newType === 'sick' || newType === 'holiday') {
+            entry.worked = entry.expected;
+            entry.diff = 0;
+        } else if (newType === 'gleittag') {
+            entry.worked = 0;
+            entry.diff = -entry.expected;
         } else {
+            // Work type
+            if (!isNaN(newWorked)) {
+                entry.worked = newWorked;
+            }
             entry.diff = entry.worked - entry.expected;
         }
 
+        // Update timestamp for sync
+        entry.timestamp = Date.now();
+
         save();
         closeEditModal();
-        
-        if (document.getElementById('view-history').classList.contains('active')) {
+
+        // Refresh views
+        if (document.getElementById('view-history')?.classList.contains('active')) {
             renderHistoryView();
         }
-        
-        showCustomMessage('✅ Erfolg', 'Eintrag erfolgreich aktualisiert!', 'success');
-        updateUI();
+        try { updateUI(); } catch(e) {}
+        try { renderLists(); } catch(e) {}
+
+        showCustomMessage('✅ Gespeichert', 'Eintrag erfolgreich aktualisiert!', 'success');
     }
 
     // --- INIT ---
@@ -10290,19 +11117,301 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         container.innerHTML = html;
     }
 
+    // --- WEATHER INTEGRATION (Open-Meteo API - Free, No API Key) ---
+    let weatherData = null;
+    let weatherLastFetch = 0;
+    const WEATHER_CACHE_DURATION = 30 * 60 * 1000; // 30 Minuten Cache
+
+    // Weather Code Mapping (WMO Standard)
+    const weatherCodeMap = {
+        0: { icon: '☀️', desc: 'Klar' },
+        1: { icon: '🌤️', desc: 'Überwiegend klar' },
+        2: { icon: '⛅', desc: 'Teilweise bewölkt' },
+        3: { icon: '☁️', desc: 'Bewölkt' },
+        45: { icon: '🌫️', desc: 'Nebel' },
+        48: { icon: '🌫️', desc: 'Reifnebel' },
+        51: { icon: '🌧️', desc: 'Leichter Nieselregen' },
+        53: { icon: '🌧️', desc: 'Nieselregen' },
+        55: { icon: '🌧️', desc: 'Starker Nieselregen' },
+        56: { icon: '🌨️', desc: 'Gefrierender Nieselregen' },
+        57: { icon: '🌨️', desc: 'Starker gefrierender Nieselregen' },
+        61: { icon: '🌧️', desc: 'Leichter Regen' },
+        63: { icon: '🌧️', desc: 'Regen' },
+        65: { icon: '🌧️', desc: 'Starker Regen' },
+        66: { icon: '🌨️', desc: 'Gefrierender Regen' },
+        67: { icon: '🌨️', desc: 'Starker gefrierender Regen' },
+        71: { icon: '❄️', desc: 'Leichter Schneefall' },
+        73: { icon: '❄️', desc: 'Schneefall' },
+        75: { icon: '❄️', desc: 'Starker Schneefall' },
+        77: { icon: '🌨️', desc: 'Schneekörner' },
+        80: { icon: '🌦️', desc: 'Leichte Regenschauer' },
+        81: { icon: '🌦️', desc: 'Regenschauer' },
+        82: { icon: '⛈️', desc: 'Starke Regenschauer' },
+        85: { icon: '🌨️', desc: 'Leichte Schneeschauer' },
+        86: { icon: '🌨️', desc: 'Schneeschauer' },
+        95: { icon: '⛈️', desc: 'Gewitter' },
+        96: { icon: '⛈️', desc: 'Gewitter mit leichtem Hagel' },
+        99: { icon: '⛈️', desc: 'Gewitter mit Hagel' }
+    };
+
+    function getWeatherIcon(code, isNight = false) {
+        const weather = weatherCodeMap[code] || { icon: '🌡️', desc: 'Unbekannt' };
+        // Nacht-Varianten für klare Tage
+        if (isNight && (code === 0 || code === 1)) {
+            return { icon: '🌙', desc: weather.desc };
+        }
+        return weather;
+    }
+
+    async function fetchWeather(lat, lon) {
+        try {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FBerlin&forecast_days=6`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Weather API Fehler');
+            const data = await response.json();
+            return data;
+        } catch (err) {
+            console.error('Weather fetch error:', err);
+            return null;
+        }
+    }
+
+    async function getLocationAndWeather() {
+        // Check cache first
+        const cached = localStorage.getItem('myworklog_weather');
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Date.now() - parsed.timestamp < WEATHER_CACHE_DURATION) {
+                weatherData = parsed.data;
+                weatherLastFetch = parsed.timestamp;
+                updateWeatherUI();
+                return;
+            }
+        }
+
+        // Check if we have saved coordinates
+        const savedLat = localStorage.getItem('myworklog_weather_lat');
+        const savedLon = localStorage.getItem('myworklog_weather_lon');
+        const savedCity = localStorage.getItem('myworklog_weather_city');
+
+        if (savedLat && savedLon) {
+            const data = await fetchWeather(savedLat, savedLon);
+            if (data) {
+                weatherData = { ...data, cityName: savedCity || 'Standort' };
+                localStorage.setItem('myworklog_weather', JSON.stringify({
+                    data: weatherData,
+                    timestamp: Date.now()
+                }));
+                weatherLastFetch = Date.now();
+                updateWeatherUI();
+            }
+        } else {
+            // Show location setup prompt in modal
+            updateWeatherUINoLocation();
+        }
+    }
+
+    function requestLocationPermission() {
+        if (!navigator.geolocation) {
+            showCustomMessage('❌ Fehler', 'Geolocation wird nicht unterstützt.', 'error');
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+                localStorage.setItem('myworklog_weather_lat', latitude);
+                localStorage.setItem('myworklog_weather_lon', longitude);
+                
+                // Try to get city name via reverse geocoding
+                try {
+                    const geoUrl = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
+                    const geoRes = await fetch(geoUrl);
+                    const geoData = await geoRes.json();
+                    const cityName = geoData.address?.city || geoData.address?.town || geoData.address?.village || 'Dein Standort';
+                    localStorage.setItem('myworklog_weather_city', cityName);
+                } catch (e) {
+                    localStorage.setItem('myworklog_weather_city', 'Dein Standort');
+                }
+
+                // Fetch weather
+                const data = await fetchWeather(latitude, longitude);
+                if (data) {
+                    const cityName = localStorage.getItem('myworklog_weather_city') || 'Dein Standort';
+                    weatherData = { ...data, cityName };
+                    localStorage.setItem('myworklog_weather', JSON.stringify({
+                        data: weatherData,
+                        timestamp: Date.now()
+                    }));
+                    weatherLastFetch = Date.now();
+                    updateWeatherUI();
+                    updateGreetingWeather();
+                    showCustomMessage('✅ Wetter aktiviert', `Standort: ${cityName}`, 'success');
+                }
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                showCustomMessage('❌ Standort-Fehler', 'Bitte erlaube den Standortzugriff in deinem Browser.', 'error');
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    }
+
+    function updateWeatherUI() {
+        if (!weatherData || !weatherData.current) return;
+
+        const hour = new Date().getHours();
+        const isNight = hour < 6 || hour >= 21;
+        const currentWeather = getWeatherIcon(weatherData.current.weather_code, isNight);
+        
+        // Update modal header
+        document.getElementById('weatherHeaderIcon').textContent = currentWeather.icon;
+        document.getElementById('weatherLocation').textContent = weatherData.cityName || 'Dein Standort';
+        document.getElementById('weatherDate').textContent = new Date().toLocaleDateString('de-DE', { 
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+        });
+
+        // Build weather content
+        const temp = Math.round(weatherData.current.temperature_2m);
+        const feelsLike = Math.round(weatherData.current.apparent_temperature);
+        const humidity = weatherData.current.relative_humidity_2m;
+        const windSpeed = Math.round(weatherData.current.wind_speed_10m);
+
+        // Build forecast HTML
+        const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+        let forecastHtml = '';
+        for (let i = 1; i <= 5 && i < weatherData.daily.time.length; i++) {
+            const date = new Date(weatherData.daily.time[i]);
+            const dayName = dayNames[date.getDay()];
+            const dayWeather = getWeatherIcon(weatherData.daily.weather_code[i]);
+            const maxTemp = Math.round(weatherData.daily.temperature_2m_max[i]);
+            const minTemp = Math.round(weatherData.daily.temperature_2m_min[i]);
+            
+            forecastHtml += `
+                <div class="weather-forecast-day">
+                    <div class="weather-forecast-day-name">${dayName}</div>
+                    <div class="weather-forecast-day-icon">${dayWeather.icon}</div>
+                    <div class="weather-forecast-day-temp">${maxTemp}°</div>
+                    <div class="weather-forecast-day-low">${minTemp}°</div>
+                </div>
+            `;
+        }
+
+        document.getElementById('weatherContent').innerHTML = `
+            <div class="weather-current">
+                <div class="weather-current-icon">${currentWeather.icon}</div>
+                <div class="weather-current-temp">${temp}°C</div>
+                <div class="weather-current-desc">${currentWeather.desc}</div>
+            </div>
+            <div class="weather-details">
+                <div class="weather-detail-item">
+                    <div class="weather-detail-icon">🌡️</div>
+                    <div class="weather-detail-value">${feelsLike}°C</div>
+                    <div class="weather-detail-label">Gefühlt</div>
+                </div>
+                <div class="weather-detail-item">
+                    <div class="weather-detail-icon">💧</div>
+                    <div class="weather-detail-value">${humidity}%</div>
+                    <div class="weather-detail-label">Luftfeuchtigkeit</div>
+                </div>
+                <div class="weather-detail-item">
+                    <div class="weather-detail-icon">💨</div>
+                    <div class="weather-detail-value">${windSpeed} km/h</div>
+                    <div class="weather-detail-label">Wind</div>
+                </div>
+            </div>
+            <div class="weather-forecast">
+                <div class="weather-forecast-title">5-Tage Vorhersage</div>
+                <div class="weather-forecast-grid">
+                    ${forecastHtml}
+                </div>
+            </div>
+        `;
+    }
+
+    function updateWeatherUINoLocation() {
+        document.getElementById('weatherContent').innerHTML = `
+            <div class="weather-location-setup">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">📍</div>
+                <h3 style="color: var(--text-main); margin: 0 0 0.5rem 0;">Standort benötigt</h3>
+                <p style="color: var(--text-muted); margin: 0 0 1rem 0; font-size: 0.9rem;">
+                    Um das aktuelle Wetter anzuzeigen, benötigen wir deinen Standort.
+                    Deine Daten werden nur lokal gespeichert.
+                </p>
+                <button class="weather-location-btn" onclick="requestLocationPermission()">
+                    📍 Standort freigeben
+                </button>
+            </div>
+        `;
+    }
+
+    function updateGreetingWeather() {
+        const greetEl = document.getElementById('userGreeting');
+        if (!greetEl) return;
+
+        const greetHour = new Date().getHours();
+        let greetText;
+        if (greetHour < 6) { greetText = 'Gute Nacht'; }
+        else if (greetHour < 10) { greetText = 'Guten Morgen'; }
+        else if (greetHour < 13) { greetText = 'Guten Vormittag'; }
+        else if (greetHour < 17) { greetText = 'Guten Nachmittag'; }
+        else if (greetHour < 21) { greetText = 'Guten Abend'; }
+        else { greetText = 'Gute Nacht'; }
+
+        let weatherIcon = '🌡️';
+        let weatherTemp = '';
+        
+        if (weatherData && weatherData.current) {
+            const isNight = greetHour < 6 || greetHour >= 21;
+            const weather = getWeatherIcon(weatherData.current.weather_code, isNight);
+            weatherIcon = weather.icon;
+            weatherTemp = Math.round(weatherData.current.temperature_2m) + '°';
+        } else {
+            // Fallback to time-based emoji if no weather data
+            if (greetHour < 6) { weatherIcon = '🌙'; }
+            else if (greetHour < 10) { weatherIcon = '☀️'; }
+            else if (greetHour < 13) { weatherIcon = '🌤️'; }
+            else if (greetHour < 17) { weatherIcon = '⛅'; }
+            else if (greetHour < 21) { weatherIcon = '🌅'; }
+            else { weatherIcon = '🌙'; }
+        }
+
+        greetEl.innerHTML = `
+            <span class="greeting-enhanced">
+                <span class="weather-trigger" onclick="openWeatherModal()" title="Wetter anzeigen">
+                    <span class="weather-icon">${weatherIcon}</span>
+                    ${weatherTemp ? `<span class="weather-temp">${weatherTemp}</span>` : ''}
+                </span>
+                ${greetText}, ${esc(data.settings.name)}
+            </span>
+        `;
+    }
+
+    function openWeatherModal() {
+        document.getElementById('weatherModal').classList.add('active');
+        if (!weatherData) {
+            updateWeatherUINoLocation();
+        } else {
+            updateWeatherUI();
+        }
+    }
+
+    function closeWeatherModal() {
+        document.getElementById('weatherModal').classList.remove('active');
+    }
+
+    // Initialize weather on load
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            getLocationAndWeather();
+        }, 1000); // Delayed to prioritize UI loading
+    });
+
     // --- UI UPDATES (Dashboard) ---
     function updateUI() {
-        // Smart time-based greeting
-        const greetHour = new Date().getHours();
-        let greetText, greetEmoji;
-        if (greetHour < 6) { greetText = 'Gute Nacht'; greetEmoji = '🌙'; }
-        else if (greetHour < 10) { greetText = 'Guten Morgen'; greetEmoji = '☀️'; }
-        else if (greetHour < 13) { greetText = 'Guten Vormittag'; greetEmoji = '🌤️'; }
-        else if (greetHour < 17) { greetText = 'Guten Nachmittag'; greetEmoji = '⛅'; }
-        else if (greetHour < 21) { greetText = 'Guten Abend'; greetEmoji = '🌅'; }
-        else { greetText = 'Gute Nacht'; greetEmoji = '🌙'; }
-        const greetEl = document.getElementById('userGreeting');
-        greetEl.innerHTML = `<span class="greeting-enhanced"><span class="greeting-emoji">${greetEmoji}</span> ${greetText}, ${esc(data.settings.name)}</span>`;
+        // Weather-based greeting (calls updateGreetingWeather)
+        updateGreetingWeather();
+        
         const trashBadge = document.getElementById('trashCountBadge');
         if (trashBadge) trashBadge.textContent = (Array.isArray(data.trash) ? data.trash.length : 0);
         
