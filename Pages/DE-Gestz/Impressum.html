@@ -6,31 +6,32 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#a855f7">
-    <title>TechNova - Impressum</title>
+    <meta name="description" content="Impressum & rechtliche Angaben von MyWorkLog gemäß § 5 DDG (Digitale-Dienste-Gesetz).">
+    <title>MyWorkLog — Impressum</title>
     <script src="../../Assets/js/icons.js"></script>
     <script defer src="../../Assets/js/touch-mobile-optimizations.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-        
+
         :root {
-            --bg: #0a0a0f;
+            --bg: #030305;
+            --bg-card: rgba(255, 255, 255, 0.025);
             --primary: #a855f7;
             --primary-rgb: 168, 85, 247;
             --primary-dim: rgba(168, 85, 247, 0.1);
+            --cyan: #06b6d4;
             --accent: #ec4899;
+            --success: #10b981;
             --text: #e2e8f0;
             --text-dim: #64748b;
+            --border: rgba(255, 255, 255, 0.06);
             --safe-area-inset-left: env(safe-area-inset-left, 0);
             --safe-area-inset-right: env(safe-area-inset-right, 0);
             --safe-area-inset-top: env(safe-area-inset-top, 0);
             --safe-area-inset-bottom: env(safe-area-inset-bottom, 0);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Inter', sans-serif;
@@ -44,291 +45,344 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        body::before {
-            content: '';
+        /* Animated background orbs */
+        .bg-orbs {
             position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 40% 90%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
-            animation: drift 20s ease-in-out infinite;
+            inset: 0;
             z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
         }
+        .bg-orbs .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.12;
+            animation: orbFloat 25s ease-in-out infinite;
+        }
+        .bg-orbs .orb:nth-child(1) { width: 600px; height: 600px; top: -10%; left: -10%; background: var(--primary); }
+        .bg-orbs .orb:nth-child(2) { width: 500px; height: 500px; bottom: -15%; right: -10%; background: var(--cyan); animation-delay: -8s; animation-duration: 30s; }
+        .bg-orbs .orb:nth-child(3) { width: 400px; height: 400px; top: 40%; left: 50%; background: var(--accent); animation-delay: -15s; animation-duration: 35s; opacity: 0.06; }
 
-        @keyframes drift {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            33% { transform: translate(30px, -30px) rotate(3deg); }
-            66% { transform: translate(-20px, 20px) rotate(-3deg); }
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(40px, -30px) scale(1.05); }
+            66% { transform: translate(-25px, 25px) scale(0.95); }
         }
 
         .container {
             position: relative;
             z-index: 1;
-            max-width: 1400px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 4rem 2rem;
+            padding: 3rem 1.5rem 2rem;
         }
 
+        /* ===== HERO ===== */
         .hero {
             text-align: center;
-            margin-bottom: 6rem;
+            margin-bottom: 3.5rem;
+            padding: 2.5rem 2rem;
+            background: linear-gradient(165deg, rgba(168,85,247,0.08) 0%, rgba(6,182,212,0.04) 100%);
+            border: 1px solid rgba(168,85,247,0.1);
+            border-radius: 24px;
             position: relative;
+            overflow: hidden;
         }
-
-        .logo {
-            display: inline-flex;
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(168,85,247,0.4), rgba(6,182,212,0.3), transparent);
+        }
+        .hero-icon {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 1rem;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary), var(--cyan));
+            display: flex;
             align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.6rem;
+            font-weight: 900;
+            box-shadow: 0 8px 32px rgba(168,85,247,0.35);
+            animation: heroFloat 4s ease-in-out infinite;
+        }
+        @keyframes heroFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .hero-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 30%, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.4rem;
+        }
+        .hero-sub {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.4);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        .hero-legal-ref {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 6px 16px;
+            border-radius: 20px;
+            background: rgba(168,85,247,0.1);
+            border: 1px solid rgba(168,85,247,0.2);
+            font-size: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .hero-date {
+            display: block;
+            margin-top: 0.75rem;
+            font-size: 0.78rem;
+            color: rgba(255,255,255,0.3);
         }
 
-        .logo-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+        /* ===== CARDS GRID ===== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1.75rem;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.3), transparent);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(var(--primary-rgb), 0.2);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 30px rgba(var(--primary-rgb), 0.06);
+        }
+        .card:hover::before { opacity: 1; }
+        .card.full-width { grid-column: 1 / -1; }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.25rem;
+        }
+        .card-icon {
+            width: 44px;
+            height: 44px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: white;
-            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.4);
-            animation: float 3s ease-in-out infinite;
+            flex-shrink: 0;
+            color: #fff;
         }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .logo-text {
-            font-size: 3rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            color: var(--text-dim);
-            font-weight: 300;
-            letter-spacing: 2px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
-            padding: 2.5rem;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary), transparent);
-            opacity: 0;
-            transition: opacity 0.4s;
-        }
-
-        .card:hover {
-            transform: translateY(-8px);
-            border-color: rgba(168, 85, 247, 0.3);
-            box-shadow: 0 20px 60px rgba(168, 85, 247, 0.2);
-        }
-
-        .card:hover::before {
-            opacity: 1;
-        }
-
-        .card-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            margin-bottom: 1.5rem;
-        }
+        .card-icon.purple { background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(168,85,247,0.08)); color: var(--primary); }
+        .card-icon.cyan { background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(6,182,212,0.08)); color: var(--cyan); }
+        .card-icon.pink { background: linear-gradient(135deg, rgba(236,72,153,0.2), rgba(236,72,153,0.08)); color: var(--accent); }
+        .card-icon.green { background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.08)); color: var(--success); }
 
         .card-title {
-            font-size: 1.4rem;
+            font-size: 1.05rem;
             font-weight: 700;
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, #fff, var(--text-dim));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #fff;
         }
-
         .card-content {
             color: var(--text-dim);
-            line-height: 1.8;
-            font-size: 0.95rem;
+            line-height: 1.7;
+            font-size: 0.9rem;
         }
-
         .info-row {
             display: flex;
             justify-content: space-between;
-            padding: 1rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            align-items: center;
+            padding: 0.7rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
         }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
+        .info-row:last-child { border-bottom: none; }
         .info-label {
             font-weight: 600;
-            color: var(--text);
+            color: rgba(255,255,255,0.7);
+            font-size: 0.85rem;
         }
-
         .info-value {
             color: var(--text-dim);
             text-align: right;
+            font-size: 0.85rem;
         }
-
         .info-value a {
             color: var(--primary);
             text-decoration: none;
             transition: all 0.3s;
         }
-
         .info-value a:hover {
             color: #fff;
-            text-shadow: 0 0 20px var(--primary);
+            text-shadow: 0 0 16px rgba(var(--primary-rgb), 0.5);
         }
 
+        /* ===== LEGAL SECTIONS ===== */
         .section {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 24px;
-            padding: 3rem;
-            margin-bottom: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 2rem;
+            margin-bottom: 1.25rem;
+            position: relative;
         }
-
+        .section-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 1rem;
+        }
+        .section-badge.eu {
+            background: rgba(6,182,212,0.1);
+            border: 1px solid rgba(6,182,212,0.2);
+            color: var(--cyan);
+        }
+        .section-badge.legal {
+            background: rgba(168,85,247,0.1);
+            border: 1px solid rgba(168,85,247,0.2);
+            color: var(--primary);
+        }
+        .section-badge.dsa {
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.2);
+            color: var(--success);
+        }
         .section-title {
-            font-size: 2rem;
-            font-weight: 800;
-            margin-bottom: 2rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            color: #fff;
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 10px;
         }
-
-        .section-title::before {
-            content: '';
-            width: 6px;
-            height: 40px;
-            background: linear-gradient(180deg, var(--primary), var(--accent));
-            border-radius: 3px;
+        .section-title .title-dot {
+            width: 4px;
+            height: 28px;
+            border-radius: 2px;
+            flex-shrink: 0;
         }
+        .section-title .title-dot.purple { background: linear-gradient(180deg, var(--primary), var(--accent)); }
+        .section-title .title-dot.cyan { background: linear-gradient(180deg, var(--cyan), #3b82f6); }
+        .section-title .title-dot.green { background: linear-gradient(180deg, var(--success), #34d399); }
 
         .text-block {
             color: var(--text-dim);
             line-height: 1.8;
-            margin-bottom: 1.5rem;
+            font-size: 0.88rem;
         }
-
+        .text-block p { margin-bottom: 1rem; }
+        .text-block p:last-child { margin-bottom: 0; }
         .text-block h3 {
-            color: var(--text);
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            border-radius: 50px;
-            font-size: 0.85rem;
+            color: rgba(255,255,255,0.85);
+            font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            margin-top: 1.5rem;
+            margin-bottom: 0.6rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .text-block h3 svg { flex-shrink: 0; opacity: 0.6; }
+        .text-block a {
+            color: var(--primary);
+            text-decoration: none;
+            border-bottom: 1px dashed rgba(var(--primary-rgb), 0.3);
+            transition: all 0.2s;
+        }
+        .text-block a:hover {
+            color: #fff;
+            border-bottom-color: transparent;
+        }
+        .text-block ul {
+            list-style: none;
+            margin: 0.5rem 0 1rem;
+            padding: 0;
+        }
+        .text-block ul li {
+            padding: 0.4rem 0 0.4rem 1.5rem;
+            position: relative;
+        }
+        .text-block ul li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            opacity: 0.5;
         }
 
+        /* ===== FOOTER ===== */
         .footer {
             text-align: center;
-            padding: 3rem 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            margin-top: 4rem;
+            padding: 2rem 0 1rem;
+            border-top: 1px solid var(--border);
+            margin-top: 2.5rem;
         }
-
         .footer-text {
             color: var(--text-dim);
-            font-size: 0.9rem;
+            font-size: 0.82rem;
+            line-height: 1.6;
         }
-
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .footer-link {
+            color: rgba(255,255,255,0.4);
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .footer-link:hover { color: var(--primary); }
         .highlight {
             color: var(--primary);
             font-weight: 600;
         }
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 2rem 1rem;
-            }
-
-            .grid {
-                grid-template-columns: 1fr;
-            }
-
-            .logo-text {
-                font-size: 2rem;
-            }
-
-            .section {
-                padding: 2rem;
-            }
-
-            .section-title {
-                font-size: 1.5rem;
-            }
-        }
-
-        ::-webkit-scrollbar {
-            width: 12px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, var(--primary), var(--accent));
-            border-radius: 6px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, var(--accent), var(--primary));
-        }
-        /* External link style: small "open in new tab" icon */
+        /* External link style */
         .external-link {
             color: inherit;
             text-decoration: underline dotted rgba(255,255,255,0.08);
@@ -338,83 +392,116 @@
         .external-link::after {
             content: "";
             display: inline-block;
-            width: 0.95em;
-            height: 0.95em;
-            margin-left: 6px;
+            width: 0.85em;
+            height: 0.85em;
+            margin-left: 5px;
             vertical-align: text-bottom;
             background-repeat: no-repeat;
             background-size: contain;
             background-position: center;
-            opacity: 0.95;
+            opacity: 0.7;
             pointer-events: none;
             background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a855f7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M7 17L17 7'/><path d='M7 7h10v10'/></svg>");
         }
-        .external-link:hover { color: var(--primary); opacity: 0.95; }
+        .external-link:hover { color: var(--primary); opacity: 1; }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--primary), rgba(var(--primary-rgb),0.4)); border-radius: 8px; }
+        ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(var(--primary-rgb),0.9), var(--primary)); }
+
+        /* ===== MOBILE ===== */
+        @media (max-width: 700px) {
+            .container { padding: 1.5rem 1rem 1rem; }
+            .grid { grid-template-columns: 1fr; }
+            .hero { padding: 2rem 1.25rem; }
+            .hero-title { font-size: 1.6rem; }
+            .section { padding: 1.5rem; }
+            .section-title { font-size: 1.1rem; }
+            .info-row { flex-direction: column; align-items: flex-start; gap: 2px; }
+            .info-value { text-align: left; }
+        }
     </style>
 </head>
 <body>
+    <div class="bg-orbs">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+
     <script>
-        // Theme-Farbe von localStorage laden (von index.html)
-        function loadTheme() {
+        // Theme-Farbe von localStorage laden
+        (function() {
             try {
                 const stored = localStorage.getItem('tg_pro_data');
                 if (stored) {
-                    const data = JSON.parse(stored);
-                    if (data.settings && data.settings.theme) {
-                        applyTheme(data.settings.theme);
+                    const d = JSON.parse(stored);
+                    if (d.settings && d.settings.theme) {
+                        const hex = d.settings.theme;
+                        document.documentElement.style.setProperty('--primary', hex);
+                        const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+                        document.documentElement.style.setProperty('--primary-rgb', `${r},${g},${b}`);
+                        document.documentElement.style.setProperty('--primary-dim', `rgba(${r},${g},${b}, 0.1)`);
                     }
                 }
-            } catch (e) {
-                console.log('Theme nicht gefunden, verwende Standard');
-            }
-        }
-
-        function applyTheme(hex) {
-            document.documentElement.style.setProperty('--primary', hex);
-            const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
-            document.documentElement.style.setProperty('--primary-rgb', `${r},${g},${b}`);
-            document.documentElement.style.setProperty('--primary-dim', `rgba(${r},${g},${b}, 0.1)`);
-        }
-
-        // Theme beim Laden der Seite anwenden
-        loadTheme();
+            } catch(e) {}
+        })();
     </script>
+
     <div class="container">
+        <!-- Hero -->
         <div class="hero">
-            <div class="logo">
-                <div class="logo-icon">T</div>
-                <div class="logo-text">TechNova</div>
-            </div>
-            <p class="subtitle">IMPRESSUM</p>
+            <div class="hero-icon">M</div>
+            <h1 class="hero-title">MyWorkLog</h1>
+            <p class="hero-sub">Impressum</p>
+            <span class="hero-legal-ref">Angaben gemäß § 5 DDG</span>
+            <span class="hero-date">Stand: 19. Februar 2026</span>
         </div>
 
+        <!-- Info Cards -->
         <div class="grid">
+            <!-- Anbieter -->
             <div class="card">
-                <div class="card-icon">🏢</div>
-                <div class="card-title">Unternehmen</div>
+                <div class="card-header">
+                    <div class="card-icon purple">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    </div>
+                    <div class="card-title">Anbieter</div>
+                </div>
                 <div class="card-content">
                     <div class="info-row">
-                        <span class="info-label">Repo</span>
-                        <span class="info-value">TechNova</span>
+                        <span class="info-label">Projekt</span>
+                        <span class="info-value">MyWorkLog</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Betreiber</span>
+                        <span class="info-value">Sven Kunz</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Rechtsform</span>
-                        <span class="info-value">/</span>
+                        <span class="info-value">Privatperson / Open Source</span>
                     </div>
                     <div class="info-row">
-                        <span class="info-label">Gründung</span>
-                        <span class="info-value">Dez 2025</span>
+                        <span class="info-label">Online seit</span>
+                        <span class="info-value">Dezember 2025</span>
                     </div>
                 </div>
             </div>
 
+            <!-- Anschrift -->
             <div class="card">
-                <div class="card-icon">📍</div>
-                <div class="card-title">Standort</div>
+                <div class="card-header">
+                    <div class="card-icon cyan">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </div>
+                    <div class="card-title">Anschrift</div>
+                </div>
                 <div class="card-content">
                     <div class="info-row">
                         <span class="info-label">Straße</span>
-                        <span class="info-value"> XXX </span>
+                        <span class="info-value">XXX</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">PLZ / Ort</span>
@@ -422,160 +509,193 @@
                     </div>
                     <div class="info-row">
                         <span class="info-label">Land</span>
-                        <span class="info-value">Deutschland</span>
+                        <span class="info-value">Deutschland 🇩🇪</span>
                     </div>
                 </div>
             </div>
 
+            <!-- Kontakt -->
             <div class="card">
-                <div class="card-icon">📞</div>
-                <div class="card-title">Kontakt</div>
+                <div class="card-header">
+                    <div class="card-icon green">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </div>
+                    <div class="card-title">Kontakt</div>
+                </div>
                 <div class="card-content">
                     <div class="info-row">
-                        <span class="info-label">Telefon</span>
-                        <span class="info-value"><a href="tel:+493012345678">+49 30 123 456 78</a></span>
-                    </div>
-                    <div class="info-row">
                         <span class="info-label">E-Mail</span>
-                        <span class="info-value"><a href="mailto:info@technova.de"> XXX </a></span>
+                        <span class="info-value"><a href="mailto:kontakt@myworklog.de">kontakt@myworklog.de</a></span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Web</span>
-                        <span class="info-value"><a href="https://myworklog.de/" target="_blank">https://myworklog.de/</a></span>
+                        <span class="info-value"><a href="https://myworklog.de" target="_blank" rel="noopener">myworklog.de</a></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">GitHub</span>
+                        <span class="info-value"><a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener">TechNova-App-Team</a></span>
                     </div>
                 </div>
             </div>
 
+            <!-- Verantwortlich -->
             <div class="card">
-                <div class="card-icon">👔</div>
-                <div class="card-title">Geschäftsführung</div>
-                <div class="card-content">
-                    <div class="info-row">
-                        <span class="info-label">CEO</span>
-                        <span class="info-value">Sven Kunz</span>
+                <div class="card-header">
+                    <div class="card-icon pink">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     </div>
-                    <div class="info-row">
-                        <span class="info-label">CTO</span>
-                        <span class="info-value"> / </span>
-                    </div>
+                    <div class="card-title">Verantwortlich für den Inhalt</div>
                 </div>
-            </div>
-
-            <div class="card">
-                <div class="card-icon">📋</div>
-                <div class="card-title">Registrierung</div>
                 <div class="card-content">
                     <div class="info-row">
-                        <span class="info-label">Registergericht</span>
-                        <span class="info-value"> / </span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Handelsregister</span>
-                        <span class="info-value"> / </span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">USt-IdNr.</span>
-                        <span class="info-value"> / </span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-icon">⚖️</div>
-                <div class="card-title">Verantwortlich</div>
-                <div class="card-content">
-                    <div class="info-row">
-                        <span class="info-label">§ 55 Abs. 2 RStV</span>
+                        <span class="info-label">§ 18 Abs. 2 MStV</span>
                         <span class="info-value">Sven Kunz</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Anschrift</span>
-                        <span class="info-value">XXX<br>91572 Bechhofen</span>
+                        <span class="info-value">XXX, 91572 Bechhofen</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">USt-IdNr.</span>
+                        <span class="info-value">Nicht vorhanden (Privatprojekt)</span>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- EU-Streitschlichtung (Art. 14 ODR-VO) -->
         <div class="section">
-            <div class="badge">EU-Streitschlichtung</div>
-            <h2 class="section-title">Online-Streitbeilegung</h2>
+            <div class="section-badge eu">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                EU-Verordnung · Art. 14 ODR-VO
+            </div>
+            <h2 class="section-title">
+                <span class="title-dot cyan"></span>
+                Online-Streitbeilegung
+            </h2>
             <div class="text-block">
-                <p>Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit. Diese finden Sie unter: <a href="https://ec.europa.eu/consumers/odr/" target="_blank" style="color: var(--primary);">ec.europa.eu/consumers/odr</a></p>
-                <p>Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>
+                <p>Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:<br>
+                <a href="https://ec.europa.eu/consumers/odr/" target="_blank" rel="noopener">https://ec.europa.eu/consumers/odr/</a></p>
+                <p>Unsere E-Mail-Adresse finden Sie oben im Impressum. Wir sind weder bereit noch verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen (§ 36 VSBG).</p>
             </div>
         </div>
 
+        <!-- DSA — Digital Services Act -->
         <div class="section">
-            <div class="badge">Rechtliche Hinweise</div>
-            <h2 class="section-title">Haftungsausschluss</h2>
+            <div class="section-badge dsa">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                EU Digital Services Act (DSA)
+            </div>
+            <h2 class="section-title">
+                <span class="title-dot green"></span>
+                Hinweise nach dem DSA
+            </h2>
             <div class="text-block">
-                <h3>Haftung für Inhalte</h3>
-                <p>Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen.</p>
-
-                <h3>Haftung für Links</h3>
-                <p>Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber verantwortlich.</p>
-
-                <h3>Urheberrecht</h3>
-                <p>Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors.</p>
+                <p>Gemäß der Verordnung (EU) 2022/2065 über digitale Dienste (Digital Services Act) weisen wir auf Folgendes hin:</p>
+                <h3>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    Keine Vermittlungsdienste
+                </h3>
+                <p>MyWorkLog ist eine progressive Web-App zur persönlichen Arbeitszeiterfassung. Es werden keine Inhalte Dritter gehostet, vermittelt oder zwischengespeichert. Nutzerdaten werden ausschließlich lokal im Browser (localStorage) gespeichert.</p>
+                <h3>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Datenschutz & Transparenz
+                </h3>
+                <p>Informationen zur Datenverarbeitung finden Sie in unserer <a href="DSGVO.html">Datenschutzerklärung (DSGVO)</a>. Es findet kein External-Tracking, keine Profilbildung und keine Datenweitergabe an Dritte statt.</p>
             </div>
         </div>
 
+        <!-- Haftungsausschluss (DDG) -->
+        <div class="section">
+            <div class="section-badge legal">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Rechtliche Hinweise
+            </div>
+            <h2 class="section-title">
+                <span class="title-dot purple"></span>
+                Haftungsausschluss
+            </h2>
+            <div class="text-block">
+                <h3>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Haftung für Inhalte
+                </h3>
+                <p>Als Diensteanbieter sind wir gemäß § 7 Abs. 1 DDG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 DDG sind wir als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen.</p>
+
+                <h3>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    Haftung für Links
+                </h3>
+                <p>Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Links umgehend entfernen.</p>
+
+                <h3>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M15 9l-6 6"/><path d="M9 9h6v6"/></svg>
+                    Urheberrecht
+                </h3>
+                <p>Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers. Downloads und Kopien dieser Seite sind nur für den privaten, nicht kommerziellen Gebrauch gestattet.</p>
+                <p>Der Quellcode von MyWorkLog ist Open Source und unter der jeweiligen Lizenz auf <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener">GitHub</a> verfügbar.</p>
+            </div>
+        </div>
+
+        <!-- DSGVO Verweis -->
+        <div class="section">
+            <div class="section-badge eu">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                DSGVO · Art. 13, 14
+            </div>
+            <h2 class="section-title">
+                <span class="title-dot cyan"></span>
+                Datenschutz
+            </h2>
+            <div class="text-block">
+                <p>Die ausführliche Datenschutzerklärung gemäß Art. 13 und 14 DSGVO (Datenschutz-Grundverordnung) finden Sie hier:</p>
+                <p style="margin-top: 0.75rem;"><a href="DSGVO.html" style="display:inline-flex; align-items:center; gap:8px; padding:10px 20px; border-radius:12px; background:rgba(6,182,212,0.1); border:1px solid rgba(6,182,212,0.2); color:var(--cyan); text-decoration:none; font-weight:600; font-size:0.88rem; transition:all 0.25s;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    Datenschutzerklärung öffnen
+                </a></p>
+            </div>
+        </div>
+
+        <!-- Footer -->
         <div class="footer">
-            <p class="footer-text">© 2024 <span class="highlight">TechNova-App-Team</span> · Alle Rechte vorbehalten</p>
-            <p class="footer-text" style="margin-top: 0.5rem; font-size: 0.8rem;">Made with 💜 in Bechhofen</p>
+            <p class="footer-text">© 2025–2026 <span class="highlight">MyWorkLog</span> · Sven Kunz · Alle Rechte vorbehalten</p>
+            <p class="footer-text" style="margin-top:0.4rem; font-size:0.75rem; color:rgba(255,255,255,0.25);">
+                Zuletzt aktualisiert: 19. Februar 2026
+            </p>
+            <div class="footer-links">
+                <a href="DSGVO.html" class="footer-link">Datenschutz</a>
+                <a href="../../index.html" class="footer-link">Zurück zur App</a>
+                <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener" class="footer-link">GitHub</a>
+            </div>
         </div>
     </div>
 
     <script>
         // === COLOR SYNC SYSTEM ===
-        // Lädt die Theme-Farbe aus localStorage (gespeichert von index.html)
         function initializeTheme() {
             const savedData = localStorage.getItem('tg_pro_data');
             if (savedData) {
                 try {
-                    const data = JSON.parse(savedData);
-                    if (data.settings && data.settings.theme) {
-                        applyTheme(data.settings.theme);
+                    const d = JSON.parse(savedData);
+                    if (d.settings && d.settings.theme) {
+                        const hex = d.settings.theme;
+                        document.documentElement.style.setProperty('--primary', hex);
+                        const r = parseInt(hex.slice(1, 3), 16);
+                        const g = parseInt(hex.slice(3, 5), 16);
+                        const b = parseInt(hex.slice(5, 7), 16);
+                        document.documentElement.style.setProperty('--primary-rgb', `${r},${g},${b}`);
+                        document.documentElement.style.setProperty('--primary-dim', `rgba(${r},${g},${b}, 0.15)`);
                     }
-                } catch (e) {
-                    console.warn('Theme sync error:', e);
-                }
+                } catch (e) {}
             }
         }
-
-        // Wendet die Theme-Farbe auf die CSS-Variablen an
-        function applyTheme(hex) {
-            document.documentElement.style.setProperty('--primary', hex);
-            const r = parseInt(hex.slice(1, 3), 16);
-            const g = parseInt(hex.slice(3, 5), 16);
-            const b = parseInt(hex.slice(5, 7), 16);
-            document.documentElement.style.setProperty('--primary-rgb', `${r},${g},${b}`);
-            document.documentElement.style.setProperty('--primary-dim', `rgba(${r},${g},${b}, 0.15)`);
-        }
-
-        // Initialisiere Theme beim Laden
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeTheme);
         } else {
             initializeTheme();
         }
-
-        // Beobachte localStorage-Änderungen (wenn Nutzer von index.html zurück kommt)
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'tg_pro_data') {
-                initializeTheme();
-            }
-        });
-
-        // Beobachte Tab-Aktivierung (wenn Nutzer von index.html zurück kommt)
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                initializeTheme();
-            }
-        });
+        window.addEventListener('storage', (e) => { if (e.key === 'tg_pro_data') initializeTheme(); });
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) initializeTheme(); });
     </script>
-        <div class="site-footer" style="text-align:center; padding:1rem 0; color:var(--text-muted); font-size:0.95rem;">
-            <a href="DSGVO.html" class="external-link" target="_blank" rel="noopener noreferrer" aria-label="DSGVO — Informationen zur Datenerfassung (öffnet in neuem Tab)" title="Öffnet in neuem Tab">DSGVO — Datenschutzinformationen</a>
-        </div>
-    </body>
-    </html>
+</body>
+</html>
