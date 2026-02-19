@@ -4,9 +4,9 @@
 
 ### Professionelle Zeiterfassung. Lokal. Sicher. Intelligent.
 
-[![Website](https://img.shields.io/badge/Website-technova--app--team-blueviolet?style=for-the-badge&logo=googlechrome&logoColor=white)](https://technova-app-team.github.io/MyWorkLog/)
+[![Website](https://img.shields.io/badge/Website-MyWorkLog-blueviolet?style=for-the-badge&logo=googlechrome&logoColor=white)](https://myworklog.de/)
 [![Version](https://img.shields.io/badge/version-3.2.0-blue?style=for-the-badge)](https://github.com)
-[![PWA Ready](https://img.shields.io/badge/PWA-Ready-success?style=for-the-badge&logo=pwa)](https://technova-app-team.github.io/MyWorkLog/)
+[![PWA Ready](https://img.shields.io/badge/PWA-Ready-success?style=for-the-badge&logo=pwa)](https://myworklog.de/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](Rechtliches/LICENSE.md)
 
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen?style=for-the-badge&logo=jest)](package.json)
@@ -16,7 +16,7 @@
 [![AI Powered](https://img.shields.io/badge/AI-Powered-ff69b4?style=flat-square)](AI-Bot/)
 [![Open Source](https://img.shields.io/badge/Open-Source-informational?style=flat-square)](Rechtliches/LICENSE.md)
 
-[🚀 Live Demo](https://technova-app-team.github.io/MyWorkLog/) • [📖 Dokumentation](README´s/) • [🐛 Bug Report](https://github.com/issues) • [✨ Feature Request](https://github.com/issues)
+[🚀 Live Demo](https://myworklog.de/) • [📖 Dokumentation](README´s/) • [🐛 Bug Report](https://github.com/issues) • [✨ Feature Request](https://github.com/issues)
 
 </div>
 
@@ -262,7 +262,7 @@ Optional: Synchronisiere deine Zeiterfassungsdaten über die Cloud! Deine Eintr�
 
 ### Option 2: Als PWA installieren
 
-1. Öffne https://technova-app-team.github.io/MyWorkLog/
+1. Öffne https://myworklog.de/
 2. Klicke auf das Install-Icon in der Adressleiste
 3. Bestätige Installation
 4. App läuft jetzt offline!
@@ -1071,7 +1071,7 @@ Eine moderne Lösung für intelligente Zeiterfassung
 
 ### 🚀 Live Version
 
-**[https://technova-app-team.github.io/MyWorkLog/](https://technova-app-team.github.io/MyWorkLog/)**
+**[https://myworklog.de/](https://myworklog.de/)**
 
 ---
 
