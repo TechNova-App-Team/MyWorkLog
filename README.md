@@ -5,7 +5,7 @@
 ### Professionelle Zeiterfassung. Lokal. Sicher. Intelligent.
 
 [![Website](https://img.shields.io/badge/Website-MyWorkLog-blueviolet?style=for-the-badge&logo=googlechrome&logoColor=white)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-3.2.0-blue?style=for-the-badge)](https://github.com)
+[![Version](https://img.shields.io/badge/version-3.2.1-blue?style=for-the-badge)](https://github.com)
 [![PWA Ready](https://img.shields.io/badge/PWA-Ready-success?style=for-the-badge&logo=pwa)](https://myworklog.de/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](Rechtliches/LICENSE.md)
 
@@ -88,9 +88,11 @@
 | ✅ **Stabil** | Multi-Profile / Team-Mode | v2.9.3 |
 | ✅ **Stabil** | IndexedDB Migration | v3.0.0 |
 | ✅ **Stabil** | Cloud-Sync (optional) | v3.1.0 |
-| ✅ **Stabil** | New Tracking Features | v3.2.0 |
+| ✅ **Stabil** | P2P Sync + TURN Config | v3.2.0 |
+| ✅ **Stabil** | Weather Auto-Refresh | v3.2.1 |
+| ✅ **Stabil** | Quantum Translator | v3.2.1 |
 
-**Letztes Update:** 23. Dezember 2025 | **Release:** v2.9.3
+**Letztes Update:** 20. Februar 2026 | **Release:** v3.2.1
 
 ---
 
