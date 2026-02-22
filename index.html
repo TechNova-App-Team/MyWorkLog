@@ -17825,7 +17825,10 @@ TIPPS:
     let tourTouchStart = null;
     let _tourResizeHandler = null;
 
-    const onboardingSteps = [
+    function _isMobile() { return window.innerWidth < 1024; }
+
+    // Desktop steps (original — unchanged)
+    const desktopSteps = [
         {
             icon: '👋',
             title: 'Willkommen bei TIME.PRO',
@@ -17924,6 +17927,87 @@ TIPPS:
         }
     ];
 
+    // Mobile steps — optimiert für Handy-Layout
+    const mobileSteps = [
+        {
+            icon: '👋',
+            title: 'Willkommen!',
+            text: 'Swipe links/rechts oder tippe auf "Weiter" um durch die Tour zu gehen. Du lernst alle wichtigen Bereiche deiner App kennen.',
+            target: null,
+            tab: null,
+            position: 'center'
+        },
+        {
+            icon: '📊',
+            title: 'Dashboard — Deine Übersicht',
+            text: 'Hier siehst du Wochensaldo, Monatssaldo, Gleitzeitkonto und mehr. Scrolle runter für Diagramme und das Eintragsformular.',
+            target: '#dashboardGrid',
+            tab: 'dashboard',
+            position: 'bottom-sheet'
+        },
+        {
+            icon: '✍️',
+            title: 'Eintrag erfassen',
+            text: 'Scrolle im Dashboard runter zum Formular. Wähle Datum & Typ, gib Start- und Endzeit ein. Die „Jetzt"-Buttons setzen die aktuelle Uhrzeit.',
+            target: '[data-item-id="entry-form"]',
+            tab: 'dashboard',
+            position: 'bottom-sheet'
+        },
+        {
+            icon: '📈',
+            title: 'Analyse',
+            text: 'Tippe in der unteren Leiste auf „Analyse" für Soll-Ist-Vergleiche, Projektverteilung und Produktivitäts-Heatmap.',
+            target: '#mobNav-performance',
+            tab: 'performance',
+            position: 'above-nav'
+        },
+        {
+            icon: '📋',
+            title: 'Historie',
+            text: 'Alle deine Einträge — filterbar nach Datum, Typ und Projekt. Hier kannst du auch einzelne Einträge bearbeiten oder löschen.',
+            target: '#mobNav-history',
+            tab: 'history',
+            position: 'above-nav'
+        },
+        {
+            icon: '📆',
+            title: 'Jahresübersicht',
+            text: 'Die Heatmap zeigt dir das ganze Jahr auf einen Blick. Grün = produktive Tage, Rot = weniger. Dazu KI-Insights.',
+            target: '#mobNav-yearview',
+            tab: 'yearview',
+            position: 'above-nav'
+        },
+        {
+            icon: '🎯',
+            title: 'Ziele & Achievements',
+            text: 'Setze persönliche Ziele wie „100h Überstunden". Jedes erreichte Ziel bringt dir ein Badge!',
+            target: '#mobNav-goals',
+            tab: 'goals',
+            position: 'above-nav'
+        },
+        {
+            icon: '☰',
+            title: 'Menü & Einstellungen',
+            text: 'Tippe oben links auf das Menü-Icon (☰) für weitere Bereiche: Prognose, IHK, Berichtsheft, Lern-Hub, Export, Backup und Einstellungen.',
+            target: null,
+            tab: 'dashboard',
+            position: 'center',
+            action: 'show-menu-hint'
+        },
+        {
+            icon: '🎉',
+            title: 'Du bist startklar!',
+            text: 'Du kennst jetzt alle Bereiche! Starte auf dem Dashboard und erfasse deinen ersten Eintrag. Viel Erfolg! 🚀',
+            target: null,
+            tab: 'dashboard',
+            position: 'center'
+        }
+    ];
+
+    function _getSteps() { return _isMobile() ? mobileSteps : desktopSteps; }
+    // Keep old name for compat
+    const onboardingSteps = desktopSteps;
+
     // --- Tour Keyboard ---
     function tourKeyHandler(e) {
         if (!onboardingActive) return;
@@ -17962,7 +18046,7 @@ TIPPS:
         onboardingActive = true;
         // Close sidebar on mobile
         const sidebar = document.querySelector('.sidebar');
-        if (sidebar && window.innerWidth < 1024) sidebar.classList.remove('active');
+        if (sidebar && _isMobile()) sidebar.classList.remove('active');
         document.addEventListener('keydown', tourKeyHandler);
         document.addEventListener('touchstart', tourTouchStartHandler, { passive: true });
         document.addEventListener('touchend', tourTouchEndHandler);
@@ -17972,18 +18056,24 @@ TIPPS:
     }
 
     function renderOnboardingStep() {
-        const step = onboardingSteps[onboardingStep];
-        const total = onboardingSteps.length;
+        const steps = _getSteps();
+        const step = steps[onboardingStep];
+        const total = steps.length;
+        const isMob = _isMobile();
 
         // Navigate to correct tab
-        if (step.tab && typeof switchTab === 'function') {
-            switchTab(step.tab);
+        if (step.tab) {
+            if (isMob && typeof mobNavSwitch === 'function') {
+                mobNavSwitch(step.tab);
+            } else if (typeof switchTab === 'function') {
+                switchTab(step.tab);
+            }
         }
 
-        // Show sidebar for sidebar step
-        if (step.target === '#sidebar' && window.innerWidth >= 1024) {
+        // Show sidebar for sidebar step (desktop only)
+        if (step.target === '#sidebar' && !isMob) {
             // Sidebar already visible on desktop
-        } else if (step.target === '#sidebar' && window.innerWidth < 1024) {
+        } else if (step.target === '#sidebar' && isMob) {
             const sb = document.querySelector('.sidebar');
             if (sb) sb.classList.add('active');
         }
@@ -18057,13 +18147,15 @@ TIPPS:
             // --- Tooltip ---
             const tooltip = document.createElement('div');
             tooltip.id = 'tourTooltip';
+            const isBSheet = isMob && (step.position === 'bottom-sheet' || step.position === 'above-nav');
             tooltip.style.cssText = `
-                position:fixed;z-index:10001;width:380px;max-width:90vw;
+                position:fixed;z-index:10001;
+                width:${isBSheet ? '100vw' : '380px'};max-width:${isBSheet ? '100vw' : '90vw'};
                 background:rgba(15,15,25,0.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-                border:1px solid rgba(255,255,255,0.1);border-radius:16px;
+                border:1px solid rgba(255,255,255,0.1);border-radius:${isBSheet ? '18px 18px 0 0' : '16px'};
                 box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 40px rgba(168,85,247,0.08);
                 padding:0;overflow:hidden;opacity:0;transition:opacity .3s,transform .3s;
-                transform:translateY(10px);font-family:inherit;
+                transform:translateY(${isBSheet ? '20px' : '10px'});font-family:inherit;
             `;
 
             // Progress bar
@@ -18101,7 +18193,7 @@ TIPPS:
                     '</div>' +
                 '</div>' +
                 '<div style="padding:0 1.5rem .75rem;display:flex;justify-content:space-between;align-items:center;">' +
-                    '<span style="font-size:.72rem;color:rgba(255,255,255,0.2);">← → Pfeiltasten · Esc zum Beenden</span>' +
+                    '<span style="font-size:.72rem;color:rgba(255,255,255,0.2);">' + (isMob ? '← Swipe → · Tippe zum Überspringen' : '← → Pfeiltasten · Esc zum Beenden') + '</span>' +
                     '<button onclick="endOnboardingTour()" style="background:none;border:none;color:rgba(255,255,255,0.25);font-size:.72rem;cursor:pointer;font-family:inherit;padding:2px 4px;" onmouseover="this.style.color=\'rgba(255,255,255,.5)\'" onmouseout="this.style.color=\'rgba(255,255,255,.25)\'">Überspringen</button>' +
                 '</div>';
 
@@ -18122,6 +18214,30 @@ TIPPS:
         const gap = 16;
         const vw = window.innerWidth;
         const vh = window.innerHeight;
+
+        // --- Mobile bottom-sheet: full-width sheet pinned above bottom nav ---
+        if (position === 'bottom-sheet') {
+            const navH = 64; // mobile bottom nav height
+            tooltip.style.left = '0';
+            tooltip.style.bottom = navH + 'px';
+            tooltip.style.top = 'auto';
+            tooltip.style.transform = 'none';
+            tooltip.style.width = '100vw';
+            tooltip.style.maxWidth = '100vw';
+            return;
+        }
+
+        // --- Mobile above-nav: tooltip floating just above mobile bottom nav ---
+        if (position === 'above-nav') {
+            const navH = 64;
+            tooltip.style.left = '50%';
+            tooltip.style.bottom = (navH + gap) + 'px';
+            tooltip.style.top = 'auto';
+            tooltip.style.transform = 'translateX(-50%)';
+            tooltip.style.width = 'calc(100vw - 24px)';
+            tooltip.style.maxWidth = '420px';
+            return;
+        }
 
         if (!rect || position === 'center') {
             tooltip.style.left = '50%';
@@ -18169,7 +18285,7 @@ TIPPS:
     }
 
     function nextOnboardingStep() {
-        if (onboardingStep < onboardingSteps.length - 1) {
+        if (onboardingStep < _getSteps().length - 1) {
             onboardingStep++;
             renderOnboardingStep();
         } else {
@@ -18206,7 +18322,7 @@ TIPPS:
         }
         // Switch back to dashboard
         if (typeof switchTab === 'function') switchTab('dashboard');
-        if (onboardingStep >= onboardingSteps.length - 1) launchTourConfetti();
+        if (onboardingStep >= _getSteps().length - 1) launchTourConfetti();
         showCustomMessage('✅ Tour abgeschlossen', 'Du kennst jetzt alle Features! Viel Erfolg beim Tracken! 🚀', 'success');
     }
 
