@@ -1499,6 +1499,433 @@
                 transition-duration: 0.01ms !important;
             }
         }
+
+        /* ===== AI STUDIO — Enterprise Berichtsheft Generator ===== */
+        .ai-studio-fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 900;
+            width: 60px;
+            height: 60px;
+            border-radius: 18px;
+            border: none;
+            background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 50%, #a855f7 100%);
+            background-size: 200% 200%;
+            animation: fabGradient 4s ease infinite;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(124,58,237,0.4), 0 0 0 0 rgba(168,85,247,0);
+            transition: all 0.3s cubic-bezier(0.32,0.72,0,1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+        }
+        @keyframes fabGradient { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+        .ai-studio-fab:hover {
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 12px 40px rgba(124,58,237,0.5), 0 0 0 4px rgba(168,85,247,0.15);
+        }
+        .ai-studio-fab:active { transform: scale(0.96); }
+        .ai-studio-fab .fab-pulse {
+            position: absolute; inset: -4px; border-radius: 22px;
+            border: 2px solid rgba(168,85,247,0.3);
+            animation: fabPulseRing 2.5s ease-out infinite;
+        }
+        @keyframes fabPulseRing { 0%{transform:scale(1);opacity:1} 100%{transform:scale(1.4);opacity:0} }
+        .ai-studio-fab .fab-label {
+            position: absolute; right: 68px; top: 50%; transform: translateY(-50%);
+            background: #18181b; color: #e2e8f0; padding: 6px 14px;
+            border-radius: 10px; font-size: 0.78rem; font-weight: 600;
+            white-space: nowrap; pointer-events: none;
+            opacity: 0; transition: opacity 0.2s;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .ai-studio-fab:hover .fab-label { opacity: 1; }
+
+        /* AI Studio Panel */
+        .ai-studio {
+            position: fixed;
+            bottom: 0; right: 0; top: 0;
+            width: 480px;
+            background: var(--bg-deep);
+            border-left: 1px solid var(--border);
+            z-index: 950;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.32,0.72,0,1);
+            box-shadow: -20px 0 60px rgba(0,0,0,0.5);
+        }
+        .ai-studio.open { transform: translateX(0); }
+
+        .ai-studio-backdrop {
+            position: fixed; inset: 0; z-index: 949;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .ai-studio-backdrop.open { opacity: 1; pointer-events: auto; }
+
+        /* Header */
+        .ais-header {
+            padding: 18px 20px;
+            background: linear-gradient(180deg, rgba(124,58,237,0.08) 0%, transparent 100%);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 14px;
+        }
+        .ais-logo {
+            width: 44px; height: 44px; border-radius: 14px;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+        }
+        .ais-header-text { flex: 1; }
+        .ais-header-text h2 { font-size: 1.05rem; font-weight: 800; margin: 0; letter-spacing: -0.3px; color: var(--text-main); }
+        .ais-header-text p { font-size: 0.72rem; color: var(--text-muted); margin: 2px 0 0; }
+        .ais-close {
+            width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03); color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 18px;
+            transition: all 0.15s;
+        }
+        .ais-close:hover { background: rgba(239,68,68,0.1); color: #ef4444; border-color: rgba(239,68,68,0.3); }
+
+        /* Tabs */
+        .ais-tabs {
+            display: flex; border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.01);
+        }
+        .ais-tab {
+            flex: 1; padding: 12px 8px; border: none; background: none;
+            color: var(--text-muted); font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; position: relative;
+            font-family: var(--font-main);
+        }
+        .ais-tab:hover { color: var(--text-main); background: rgba(255,255,255,0.02); }
+        .ais-tab.active { color: var(--primary); }
+        .ais-tab.active::after {
+            content: ''; position: absolute; bottom: -1px; left: 16px; right: 16px;
+            height: 2px; background: var(--primary); border-radius: 2px;
+        }
+
+        /* Tab Panels */
+        .ais-panel { display: none; flex: 1; overflow-y: auto; }
+        .ais-panel.active { display: flex; flex-direction: column; }
+
+        /* === GENERATE TAB === */
+        .ais-generate { padding: 16px 20px; flex: 1; overflow-y: auto; }
+        .ais-section { margin-bottom: 20px; }
+        .ais-section-label {
+            font-size: 0.7rem; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px;
+        }
+
+        /* Profession Grid */
+        .ais-prof-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .ais-prof-card {
+            padding: 10px 8px; border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            cursor: pointer; text-align: center;
+            transition: all 0.2s; position: relative;
+            overflow: hidden;
+        }
+        .ais-prof-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(var(--primary-rgb),0.1), rgba(var(--cyan-rgb),0.05));
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .ais-prof-card:hover::before { opacity: 1; }
+        .ais-prof-card:hover { border-color: rgba(var(--primary-rgb),0.3); transform: translateY(-1px); }
+        .ais-prof-card.selected {
+            border-color: var(--primary);
+            background: rgba(var(--primary-rgb),0.08);
+            box-shadow: 0 0 0 1px var(--primary), 0 4px 16px rgba(var(--primary-rgb),0.15);
+        }
+        .ais-prof-card.selected::before { opacity: 1; }
+        .ais-prof-icon { font-size: 1.5rem; margin-bottom: 4px; position: relative; z-index: 1; }
+        .ais-prof-name { font-size: 0.7rem; font-weight: 600; color: var(--text-main); position: relative; z-index: 1; line-height: 1.3; }
+
+        /* Custom profession input */
+        .ais-custom-prof {
+            margin-top: 10px; display: flex; gap: 8px;
+        }
+        .ais-custom-input {
+            flex: 1; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            border-radius: 10px; padding: 10px 14px; color: var(--text-main);
+            font-size: 0.85rem; font-family: var(--font-main); outline: none;
+            transition: border-color 0.2s;
+        }
+        .ais-custom-input:focus { border-color: var(--primary); }
+        .ais-custom-input::placeholder { color: var(--text-muted); }
+
+        /* Settings Row */
+        .ais-settings-row {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        }
+        .ais-setting {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            border-radius: 12px; padding: 12px 14px;
+        }
+        .ais-setting label {
+            font-size: 0.72rem; font-weight: 600; color: var(--text-muted);
+            display: block; margin-bottom: 6px;
+        }
+        .ais-setting select, .ais-setting input[type="number"] {
+            width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            border-radius: 8px; padding: 8px 10px; color: var(--text-main);
+            font-size: 0.85rem; font-family: var(--font-main); outline: none;
+        }
+        .ais-setting select:focus, .ais-setting input:focus { border-color: var(--primary); }
+
+        /* Days selector */
+        .ais-days-selector {
+            display: flex; gap: 6px; flex-wrap: wrap;
+        }
+        .ais-day-chip {
+            padding: 8px 14px; border-radius: 10px;
+            border: 1px solid var(--border); background: rgba(255,255,255,0.02);
+            color: var(--text-muted); font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; transition: all 0.15s; user-select: none;
+        }
+        .ais-day-chip:hover { border-color: rgba(var(--primary-rgb),0.3); color: var(--text-main); }
+        .ais-day-chip.selected {
+            background: rgba(var(--primary-rgb),0.12); border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Generate Button */
+        .ais-generate-btn {
+            width: 100%; padding: 14px 20px; border-radius: 14px;
+            border: none; font-size: 0.95rem; font-weight: 700;
+            cursor: pointer; transition: all 0.25s;
+            background: linear-gradient(135deg, #7c3aed, #06b6d4);
+            color: #fff; font-family: var(--font-main);
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            box-shadow: 0 6px 24px rgba(124,58,237,0.3);
+            position: relative; overflow: hidden;
+        }
+        .ais-generate-btn::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: translateX(-100%);
+        }
+        .ais-generate-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(124,58,237,0.4); }
+        .ais-generate-btn:hover::before { animation: btnShine 0.8s ease; }
+        @keyframes btnShine { from{transform:translateX(-100%)} to{transform:translateX(100%)} }
+        .ais-generate-btn:active { transform: scale(0.98); }
+        .ais-generate-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .ais-generate-btn .spinner {
+            width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite;
+            display: none;
+        }
+        .ais-generate-btn.loading .spinner { display: block; }
+        .ais-generate-btn.loading .btn-text { display: none; }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        /* === PREVIEW TAB === */
+        .ais-preview { flex: 1; display: flex; flex-direction: column; }
+        .ais-preview-toolbar {
+            padding: 10px 20px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.01);
+        }
+        .ais-preview-toolbar .ais-toolbar-btn {
+            padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03); color: var(--text-muted);
+            font-size: 0.75rem; font-weight: 600; cursor: pointer;
+            transition: all 0.15s; font-family: var(--font-main);
+        }
+        .ais-preview-toolbar .ais-toolbar-btn:hover { background: rgba(var(--primary-rgb),0.1); color: var(--primary); border-color: var(--primary); }
+        .ais-preview-toolbar .ais-toolbar-btn.primary {
+            background: linear-gradient(135deg, var(--primary), var(--cyan)); color: #fff; border: none;
+        }
+        .ais-preview-toolbar .ais-toolbar-btn.primary:hover { opacity: 0.9; }
+        .ais-preview-score {
+            margin-left: auto; display: flex; align-items: center; gap: 6px;
+            font-size: 0.75rem; font-weight: 700;
+        }
+        .ais-score-ring {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem; font-weight: 800;
+        }
+
+        .ais-preview-content {
+            flex: 1; overflow-y: auto; padding: 16px 20px;
+        }
+        .ais-preview-empty {
+            text-align: center; padding: 4rem 2rem; color: var(--text-muted);
+        }
+        .ais-preview-empty .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        .ais-preview-empty h3 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--text-main); }
+        .ais-preview-empty p { font-size: 0.85rem; line-height: 1.5; }
+
+        /* Day Card */
+        .ais-day-card {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            border-radius: 16px; padding: 16px 18px; margin-bottom: 12px;
+            transition: all 0.2s; position: relative; overflow: hidden;
+        }
+        .ais-day-card::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+            background: linear-gradient(180deg, var(--primary), var(--cyan));
+            border-radius: 4px 0 0 4px;
+        }
+        .ais-day-card:hover { border-color: rgba(var(--primary-rgb),0.2); }
+        .ais-day-card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .ais-day-name {
+            font-size: 0.85rem; font-weight: 700; color: var(--primary);
+        }
+        .ais-day-hours {
+            font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
+            background: rgba(var(--primary-rgb),0.08); padding: 3px 10px; border-radius: 20px;
+        }
+        .ais-day-card-actions {
+            display: flex; gap: 4px;
+        }
+        .ais-day-action {
+            width: 28px; height: 28px; border-radius: 8px; border: none;
+            background: rgba(255,255,255,0.04); color: var(--text-muted);
+            cursor: pointer; font-size: 0.8rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+        }
+        .ais-day-action:hover { background: rgba(var(--primary-rgb),0.15); color: var(--primary); }
+        .ais-day-entries {
+            list-style: none; padding: 0; margin: 0;
+        }
+        .ais-day-entries li {
+            padding: 5px 0; font-size: 0.84rem; color: var(--text-main); line-height: 1.5;
+            display: flex; gap: 8px; align-items: flex-start;
+        }
+        .ais-day-entries li::before {
+            content: '•'; color: var(--primary); font-weight: 700; flex-shrink: 0; margin-top: 1px;
+        }
+        .ais-day-entries li .entry-text {
+            flex: 1;
+        }
+        .ais-day-school {
+            margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+            font-size: 0.8rem; color: var(--text-muted);
+        }
+        .ais-day-school strong { color: var(--cyan); font-weight: 600; }
+
+        /* Editable entry */
+        .ais-day-entries li .entry-text[contenteditable="true"] {
+            outline: none; padding: 2px 6px; border-radius: 4px; margin: -2px -6px;
+            transition: background 0.15s;
+        }
+        .ais-day-entries li .entry-text[contenteditable="true"]:focus {
+            background: rgba(var(--primary-rgb),0.08);
+        }
+
+        /* IHK Compliance Badge */
+        .ais-compliance {
+            padding: 12px 20px; border-top: 1px solid var(--border);
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.01);
+        }
+        .ais-compliance-badge {
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 700;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .ais-compliance-badge.pass { background: rgba(var(--success-rgb),0.12); color: var(--success); }
+        .ais-compliance-badge.warn { background: rgba(var(--warning-rgb),0.12); color: var(--warning); }
+        .ais-compliance-badge.fail { background: rgba(var(--danger-rgb),0.12); color: var(--danger); }
+        .ais-compliance-text { flex: 1; font-size: 0.72rem; color: var(--text-muted); }
+
+        /* === HISTORY TAB === */
+        .ais-history { flex: 1; overflow-y: auto; padding: 16px 20px; }
+        .ais-history-item {
+            padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border);
+            background: rgba(255,255,255,0.02); margin-bottom: 8px; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .ais-history-item:hover { border-color: rgba(var(--primary-rgb),0.3); background: rgba(var(--primary-rgb),0.04); }
+        .ais-history-item-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .ais-history-item-prof { font-size: 0.8rem; font-weight: 700; color: var(--text-main); }
+        .ais-history-item-date { font-size: 0.7rem; color: var(--text-muted); margin-left: auto; }
+        .ais-history-item-preview { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* === GEMINI API SECTION === */
+        .ais-engine-section { padding: 0 20px; margin-bottom: 12px; }
+        .ais-engine-toggle {
+            display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            border-radius: 14px; cursor: pointer; transition: all 0.2s;
+        }
+        .ais-engine-toggle:has(input:checked) {
+            border-color: rgba(56,189,248,0.4); background: rgba(56,189,248,0.06);
+        }
+        .ais-engine-toggle-label { font-size: 0.85rem; font-weight: 600; color: var(--text-main); flex: 1; }
+        .ais-engine-toggle-badge {
+            font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 6px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .ais-engine-badge-local { background: rgba(var(--primary-rgb),0.15); color: var(--primary); }
+        .ais-engine-badge-gemini { background: rgba(56,189,248,0.15); color: #38bdf8; }
+        .ais-api-key-row {
+            margin-top: 10px; display: none; flex-direction: column; gap: 8px;
+            padding: 14px 16px; background: rgba(56,189,248,0.03);
+            border: 1px solid rgba(56,189,248,0.15); border-radius: 14px;
+            animation: aisSlideDown 0.2s ease;
+        }
+        .ais-api-key-row.visible { display: flex; }
+        @keyframes aisSlideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .ais-api-key-input-wrap { display: flex; gap: 8px; }
+        .ais-api-key-input {
+            flex: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 10px 14px; font-size: 0.82rem;
+            color: var(--text-main); font-family: 'JetBrains Mono', monospace;
+            outline: none; transition: border-color 0.2s;
+        }
+        .ais-api-key-input:focus { border-color: rgba(56,189,248,0.5); }
+        .ais-api-key-input::placeholder { color: var(--text-muted); }
+        .ais-api-save-btn {
+            padding: 10px 16px; border-radius: 10px; border: none;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            color: #fff; font-weight: 700; font-size: 0.8rem; cursor: pointer;
+            transition: opacity 0.2s; white-space: nowrap;
+        }
+        .ais-api-save-btn:hover { opacity: 0.85; }
+        .ais-api-hint {
+            font-size: 0.72rem; color: var(--text-muted); line-height: 1.5;
+        }
+        .ais-api-hint a { color: #38bdf8; text-decoration: none; }
+        .ais-api-hint a:hover { text-decoration: underline; }
+        .ais-api-status {
+            display: flex; align-items: center; gap: 6px; font-size: 0.75rem;
+            font-weight: 600; margin-top: 2px;
+        }
+        .ais-api-status.connected { color: #4ade80; }
+        .ais-api-status.disconnected { color: var(--text-muted); }
+        .ais-api-status-dot {
+            width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+        }
+        .ais-api-status.connected .ais-api-status-dot { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,0.5); }
+        .ais-api-status.disconnected .ais-api-status-dot { background: var(--text-muted); }
+
+        @media (max-width: 600px) {
+            .ai-studio { width: 100%; border-left: none; }
+            .ai-studio-fab { bottom: 16px; right: 16px; width: 52px; height: 52px; }
+            .ais-prof-grid { grid-template-columns: repeat(2, 1fr); }
+            .ais-settings-row { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -1855,6 +2282,171 @@ Beispiel:
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- ===== AI STUDIO — Enterprise Berichtsheft Generator ===== -->
+    <button class="ai-studio-fab" id="aiStudioFab" onclick="AIStudio.toggle()" title="AI Studio — Berichtsheft Generator">
+        🧠
+        <div class="fab-pulse"></div>
+        <div class="fab-label">AI Studio</div>
+    </button>
+
+    <div class="ai-studio-backdrop" id="aiStudioBackdrop" onclick="AIStudio.close()"></div>
+
+    <div class="ai-studio" id="aiStudioPanel">
+        <!-- Header -->
+        <div class="ais-header">
+            <div class="ais-logo">🧠</div>
+            <div class="ais-header-text">
+                <h2>AI Studio</h2>
+                <p>Enterprise Berichtsheft-Generator — 100% lokal</p>
+            </div>
+            <button class="ais-close" onclick="AIStudio.close()">&times;</button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="ais-tabs">
+            <button class="ais-tab active" data-tab="generate" onclick="AIStudio.switchTab('generate')">⚡ Generieren</button>
+            <button class="ais-tab" data-tab="preview" onclick="AIStudio.switchTab('preview')">👁 Vorschau</button>
+            <button class="ais-tab" data-tab="history" onclick="AIStudio.switchTab('history')">📜 Verlauf</button>
+        </div>
+
+        <!-- GENERATE TAB -->
+        <div class="ais-panel active" data-panel="generate">
+            <div class="ais-generate">
+
+                <!-- Profession Selector -->
+                <div class="ais-section">
+                    <div class="ais-section-label">Ausbildungsberuf wählen</div>
+                    <div class="ais-prof-grid" id="aisProfGrid"></div>
+                    <div class="ais-custom-prof">
+                        <input class="ais-custom-input" id="aisCustomProf" placeholder="Oder eigenen Beruf eingeben..." oninput="AIStudio.onCustomProf(this.value)">
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div class="ais-section">
+                    <div class="ais-section-label">Einstellungen</div>
+                    <div class="ais-settings-row">
+                        <div class="ais-setting">
+                            <label>Lehrjahr</label>
+                            <select id="aisTrainingYear">
+                                <option value="1">1. Lehrjahr</option>
+                                <option value="2" selected>2. Lehrjahr</option>
+                                <option value="3">3. Lehrjahr</option>
+                            </select>
+                        </div>
+                        <div class="ais-setting">
+                            <label>Komplexität</label>
+                            <select id="aisComplexity">
+                                <option value="simple">Einfach</option>
+                                <option value="medium" selected>Mittel</option>
+                                <option value="complex">Komplex</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="ais-settings-row" style="margin-top:10px;">
+                        <div class="ais-setting">
+                            <label>Kalenderwoche</label>
+                            <input type="number" id="aisCalendarWeek" min="1" max="53" placeholder="Auto">
+                        </div>
+                        <div class="ais-setting">
+                            <label>Abteilung</label>
+                            <input type="text" class="ais-custom-input" id="aisDepartment" placeholder="z.B. IT-Abteilung" style="width:100%;border-radius:8px;padding:8px 10px;font-size:0.85rem;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day Selection -->
+                <div class="ais-section">
+                    <div class="ais-section-label">Tage generieren</div>
+                    <div class="ais-days-selector" id="aisDaysSelector">
+                        <div class="ais-day-chip selected" data-day="0" onclick="AIStudio.toggleDay(this)">Mo</div>
+                        <div class="ais-day-chip selected" data-day="1" onclick="AIStudio.toggleDay(this)">Di</div>
+                        <div class="ais-day-chip selected" data-day="2" onclick="AIStudio.toggleDay(this)">Mi</div>
+                        <div class="ais-day-chip selected" data-day="3" onclick="AIStudio.toggleDay(this)">Do</div>
+                        <div class="ais-day-chip selected" data-day="4" onclick="AIStudio.toggleDay(this)">Fr</div>
+                    </div>
+                </div>
+
+                <!-- School toggle -->
+                <div class="ais-section">
+                    <div class="ais-section-label">Optionen</div>
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 14px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;">
+                        <input type="checkbox" id="aisIncludeSchool" checked style="accent-color:var(--primary);width:18px;height:18px;">
+                        <span style="font-size:0.85rem;color:var(--text-main);font-weight:600;">Berufsschultag einbauen</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 14px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;margin-top:8px;">
+                        <input type="checkbox" id="aisVariation" checked style="accent-color:var(--primary);width:18px;height:18px;">
+                        <span style="font-size:0.85rem;color:var(--text-main);font-weight:600;">Maximale Variation (keine Wiederholungen)</span>
+                    </label>
+                </div>
+
+                <!-- Engine Selection (Local / Gemini API) -->
+                <div class="ais-engine-section">
+                    <label class="ais-engine-toggle">
+                        <input type="checkbox" id="aisUseGemini" onchange="AIStudio.toggleEngine(this.checked)" style="accent-color:#38bdf8;width:18px;height:18px;">
+                        <span class="ais-engine-toggle-label">Google Gemini AI verwenden</span>
+                        <span class="ais-engine-toggle-badge ais-engine-badge-local" id="aisEngineBadge">Lokal</span>
+                    </label>
+                    <div class="ais-api-key-row" id="aisApiKeyRow">
+                        <div class="ais-api-key-input-wrap">
+                            <input type="password" class="ais-api-key-input" id="aisApiKeyInput" placeholder="API Key einfügen..." autocomplete="off">
+                            <button class="ais-api-save-btn" onclick="AIStudio.saveApiKey()">Speichern</button>
+                        </div>
+                        <div class="ais-api-status disconnected" id="aisApiStatus">
+                            <div class="ais-api-status-dot"></div>
+                            <span>Kein API Key gespeichert</span>
+                        </div>
+                        <div class="ais-api-hint">
+                            Kostenlos — 1.500 Anfragen/Tag, keine Kreditkarte nötig.<br>
+                            <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">→ Kostenlosen API Key holen (Google AI Studio)</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <button class="ais-generate-btn" id="aisGenerateBtn" onclick="AIStudio.generate()">
+                    <div class="spinner"></div>
+                    <span class="btn-text">⚡ Komplette Woche generieren</span>
+                </button>
+
+            </div>
+        </div>
+
+        <!-- PREVIEW TAB -->
+        <div class="ais-panel" data-panel="preview">
+            <div class="ais-preview-toolbar" id="aisPreviewToolbar" style="display:none;">
+                <button class="ais-toolbar-btn" onclick="AIStudio.regenerateAll()">🔄 Neu generieren</button>
+                <button class="ais-toolbar-btn" onclick="AIStudio.shuffleEntries()">🔀 Mischen</button>
+                <button class="ais-toolbar-btn primary" onclick="AIStudio.insertAll()">📥 Alle einfügen</button>
+                <div class="ais-preview-score" id="aisPreviewScore"></div>
+            </div>
+            <div class="ais-preview-content" id="aisPreviewContent">
+                <div class="ais-preview-empty">
+                    <div class="empty-icon">✨</div>
+                    <h3>Noch keine Einträge generiert</h3>
+                    <p>Wähle im Tab "Generieren" deinen Beruf und klicke auf den Button — die AI erstellt dir sofort IHK-konforme Einträge.</p>
+                </div>
+            </div>
+            <div class="ais-compliance" id="aisCompliance" style="display:none;">
+                <div class="ais-compliance-badge pass" id="aisComplianceBadge">
+                    <span>✓</span> IHK-Konform
+                </div>
+                <div class="ais-compliance-text" id="aisComplianceText">Alle Einträge erfüllen die IHK-Richtlinien.</div>
+            </div>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div class="ais-panel" data-panel="history">
+            <div class="ais-history" id="aisHistory">
+                <div class="ais-preview-empty">
+                    <div class="empty-icon">📜</div>
+                    <h3>Noch kein Verlauf</h3>
+                    <p>Generierte Einträge werden hier gespeichert, damit du sie wiederverwenden kannst.</p>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         /* ═══════════════════════════════════════════════════════════
            BERICHTSHEFT ENGINE v2.0 — Premium JavaScript
@@ -3842,7 +4434,1613 @@ Beispiel:
 
             // Load reports
             loadReports();
+
+            // Initialize AI Studio
+            AIStudio.init();
         });
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       AI STUDIO — Enterprise Berichtsheft Generator v3.0
+       ═══════════════════════════════════════════════════════════════════════════
+       100% lokal — kein WebGPU, kein Download, kein API-Key.
+       Generative AI Engine mit 20+ Berufen, IHK-Konformitätsprüfung,
+       Saisonbewusstsein, Lehrjahr-Skalierung, Variationsalgorithmen,
+       History-Learning und One-Click Auto-Fill.
+       ═══════════════════════════════════════════════════════════════════════════ */
+
+    const AIStudio = (() => {
+        'use strict';
+
+        // ═══════════════════════════════════════
+        // CONFIGURATION & STATE
+        // ═══════════════════════════════════════
+
+        const VERSION = '3.0.0';
+        const STORAGE_KEYS = {
+            profession: 'ais_profession',
+            trainingYear: 'ais_training_year',
+            complexity: 'ais_complexity',
+            history: 'ais_generation_history',
+            usedPhrases: 'ais_used_phrases',
+            settings: 'ais_settings',
+            apiKey: 'ais_gemini_api_key',
+            useGemini: 'ais_use_gemini',
+        };
+
+        const state = {
+            isOpen: false,
+            selectedProfession: null,
+            customProfession: '',
+            selectedDays: [0, 1, 2, 3, 4],
+            generatedEntries: null,
+            generationHistory: [],
+            usedPhrases: new Set(),
+            isGenerating: false,
+            apiKey: '',
+            useGemini: false,
+        };
+
+        // ═══════════════════════════════════════
+        // PROFESSION DATABASE — 20+ Berufe mit Deep Knowledge
+        // ═══════════════════════════════════════
+
+        const PROFESSIONS = {
+            software: {
+                id: 'software', icon: '💻', name: 'Fachinformatiker AE',
+                category: 'IT',
+                verbs: ['entwickeln', 'implementieren', 'testen', 'debuggen', 'deployen', 'refactoren', 'dokumentieren', 'reviewen', 'optimieren', 'automatisieren', 'migrieren', 'analysieren', 'konzipieren', 'programmieren', 'integrieren'],
+                objects: ['Webanwendung', 'REST-API', 'Datenbankmodul', 'Frontend-Komponente', 'Backend-Service', 'Unit-Tests', 'Microservice', 'UI-Feature', 'Schnittstelle', 'Algorithmus', 'Login-System', 'Dashboard-Widget', 'CI/CD-Pipeline', 'Docker-Container', 'Serverless-Funktion', 'GraphQL-Endpoint', 'Websocket-Handler', 'Caching-Layer', 'ORM-Modell', 'Middleware', 'Auth-Service', 'Webhook-Integration', 'Batch-Prozess', 'Responsive Layout', 'PWA-Feature'],
+                tools: ['Git', 'VS Code', 'Docker', 'Jira', 'Jenkins', 'React', 'Node.js', 'Python', 'TypeScript', 'SQL', 'MongoDB', 'Kubernetes', 'Postman', 'Figma', 'GitHub Actions', 'Webpack', 'ESLint', 'Jest', 'PostgreSQL', 'Redis'],
+                departments: ['Softwareentwicklung', 'Web-Entwicklung', 'App-Entwicklung', 'Backend-Team', 'Frontend-Team', 'DevOps', 'QA-Abteilung'],
+                yearTasks: {
+                    1: ['Grundlagen der Programmierung erlernt', 'Einfache Skripte geschrieben', 'Versionskontrolle mit Git gelernt', 'HTML/CSS-Layouts erstellt', 'Entwicklungsumgebung eingerichtet', 'Erste Unit-Tests geschrieben', 'Code-Conventions studiert', 'Datenbanken Grundlagen erarbeitet'],
+                    2: ['Feature-Branches eigenständig verwaltet', 'REST-APIs entwickelt und getestet', 'Code Reviews durchgeführt', 'Server-Konfiguration vorgenommen', 'Automatisierte Tests implementiert', 'Performance-Optimierung durchgeführt', 'Technische Dokumentation erstellt', 'Sprint-Planungen mitgestaltet'],
+                    3: ['Architekturentscheidungen getroffen', 'Junior-Entwickler eingearbeitet', 'Produktions-Deployments durchgeführt', 'Monitoring und Alerting eingerichtet', 'Technische Schulungen gehalten', 'Komplexe Refactorings geplant und umgesetzt', 'Release-Prozesse optimiert', 'Sicherheitsaudits durchgeführt']
+                },
+                schoolTopics: ['Datenbanken und SQL', 'Objektorientierte Programmierung', 'Netzwerktechnik', 'IT-Sicherheit', 'Projektmanagement', 'Wirtschaft und Sozialkunde', 'Softwareengineering', 'UML-Diagramme', 'Algorithmik und Datenstrukturen', 'Betriebssysteme']
+            },
+
+            sysadmin: {
+                id: 'sysadmin', icon: '🖥️', name: 'Fachinformatiker SI',
+                category: 'IT',
+                verbs: ['konfigurieren', 'installieren', 'warten', 'überwachen', 'administrieren', 'sichern', 'patchen', 'troubleshooten', 'migrieren', 'automatisieren', 'provisionieren', 'härten', 'dokumentieren', 'skalieren', 'replizieren'],
+                objects: ['Server', 'Netzwerk', 'Firewall', 'Active Directory', 'Backup-System', 'VPN-Tunnel', 'DHCP/DNS-Dienst', 'Virtualisierungs-Cluster', 'Storage-System', 'Mail-Server', 'Monitoring-System', 'WLAN-Infrastruktur', 'Client-PCs', 'Druckerumgebung', 'Load-Balancer', 'Proxy-Server', 'Zertifikats-Infrastruktur', 'Ticketsystem', 'Patch-Management', 'Group Policies'],
+                tools: ['PowerShell', 'Bash', 'VMware', 'Hyper-V', 'Azure', 'AWS', 'Nagios', 'Zabbix', 'Windows Server', 'Linux', 'pfSense', 'Ansible', 'Terraform', 'SCCM', 'WSUS', 'WireShark', 'PuTTY', 'Remote Desktop'],
+                departments: ['IT-Infrastruktur', 'Systemadministration', 'Netzwerkadministration', 'IT-Support', 'Rechenzentrum', 'Helpdesk'],
+                yearTasks: {
+                    1: ['Arbeitsplatz-PCs eingerichtet', 'Betriebssysteme installiert und konfiguriert', 'Netzwerkkabel konfektioniert', 'Benutzerkonten angelegt', 'Drucker eingerichtet', 'Grundlagen Netzwerktechnik erlernt', 'Support-Tickets bearbeitet', 'Hardware-Inventarisierung durchgeführt'],
+                    2: ['Server-Wartung eigenständig durchgeführt', 'Netzwerk-Segmentierung konfiguriert', 'Backup-Konzepte implementiert', 'Firewall-Regeln erstellt', 'Virtual Machines provisioniert', 'Monitoring-Alerts konfiguriert', 'Patch-Management durchgeführt', 'VPN-Zugänge eingerichtet'],
+                    3: ['Server-Migrationen geplant und durchgeführt', 'Hochverfügbarkeits-Cluster aufgesetzt', 'IT-Sicherheitskonzept erarbeitet', 'Automatisierungsskripte für Routineaufgaben erstellt', 'Disaster-Recovery-Tests durchgeführt', 'Neue Mitarbeiter eingewiesen', 'Infrastruktur-Dokumentation aktualisiert']
+                },
+                schoolTopics: ['Netzwerktechnik und Protokolle', 'Betriebssysteme', 'IT-Sicherheit', 'Server-Dienste', 'Virtualisierung', 'Cloud-Computing', 'Projektmanagement', 'Wirtschaft und Sozialkunde']
+            },
+
+            kaufmann: {
+                id: 'kaufmann', icon: '📊', name: 'Kaufmann/-frau',
+                category: 'Büro',
+                verbs: ['bearbeiten', 'prüfen', 'verbuchen', 'erstellen', 'pflegen', 'koordinieren', 'kalkulieren', 'archivieren', 'abgleichen', 'kommunizieren', 'auswerten', 'organisieren', 'vorbereiten', 'recherchieren', 'kontrollieren'],
+                objects: ['Rechnungen', 'Aufträge', 'Kundenanfragen', 'Angebote', 'Buchhaltungsbelege', 'Personalakten', 'Lieferscheine', 'Stammdaten', 'Monatsbericht', 'Kostenrechnung', 'Bestellungen', 'Gesprächsprotokoll', 'Präsentation', 'Mahnungen', 'Gutschriften', 'Reisekostenabrechnungen', 'Statistiken', 'Verträge', 'Inventurlisten', 'Newsletter'],
+                tools: ['SAP', 'DATEV', 'Lexware', 'Excel', 'ERP-System', 'CRM-System', 'Outlook', 'Word', 'Teams', 'SharePoint', 'PowerPoint', 'Access', 'Power BI'],
+                departments: ['Buchhaltung', 'Einkauf', 'Vertrieb', 'Personalwesen', 'Controlling', 'Marketing', 'Sachbearbeitung'],
+                yearTasks: {
+                    1: ['Eingangspost sortiert und verteilt', 'Einfache Dateneingabe in ERP-System', 'Telefonische Kundenanfragen angenommen', 'Ablage und Archivierung durchgeführt', 'Besprechungsräume vorbereitet', 'Büromaterial bestellt', 'Einfache Korrespondenz verfasst'],
+                    2: ['Angebote eigenständig erstellt', 'Rechnungsprüfung durchgeführt', 'Kundenreklamationen bearbeitet', 'Materialbedarfsplanung unterstützt', 'Statistiken und Auswertungen erstellt', 'Zahlungseingänge kontrolliert', 'Projekte mitkoordiniert'],
+                    3: ['Monatsabschlüsse vorbereitet', 'Vertragsverhandlungen begleitet', 'Budgetplanung unterstützt', 'Prozessoptimierungen vorgeschlagen', 'Neue Mitarbeiter eingearbeitet', 'Eigenständige Kundenkommunikation', 'Geschäftsbriefe und Reports erstellt']
+                },
+                schoolTopics: ['Rechnungswesen', 'Wirtschaftslehre', 'Geschäftsprozesse', 'Bürokommunikation', 'Personalwirtschaft', 'Marketing', 'Wirtschaft und Sozialkunde', 'Steuerrecht Grundlagen']
+            },
+
+            elektro: {
+                id: 'elektro', icon: '⚡', name: 'Elektroniker/in',
+                category: 'Handwerk',
+                verbs: ['installieren', 'verdrahten', 'prüfen', 'messen', 'programmieren', 'inbetriebnehmen', 'warten', 'reparieren', 'konfigurieren', 'dokumentieren', 'planen', 'verlegen', 'anschließen', 'dimensionieren', 'parametrieren'],
+                objects: ['Schaltschrank', 'Elektroverteiler', 'Beleuchtungsanlage', 'Steckdosen/Schalter', 'SPS-Steuerung', 'Kabeltrasse', 'Sicherungskasten', 'Brandmeldeanlage', 'Sprechanlage', 'Photovoltaikanlage', 'Ladestation', 'KNX-Bustechnologie', 'Netzersatzanlage', 'Potentialausgleich', 'Blitzschutzanlage', 'Antriebstechnik', 'Frequenzumrichter', 'Schaltplan', 'Erdungsanlage', 'Energiemessgerät'],
+                tools: ['Multimeter', 'Oszilloskop', 'Installationstester', 'SPS-Software (TIA Portal)', 'EPLAN', 'CAD', 'ETS-Software', 'Crimpzange', 'Abisolierwerkzeug', 'Duspol', 'Wärmebildkamera', 'Isolationsmessgerät', 'Leitungssucher'],
+                departments: ['Elektroinstallation', 'Industrieautomation', 'Gebäudetechnik', 'Wartung', 'Kundendienst'],
+                yearTasks: {
+                    1: ['Leitungen zugeschnitten und abisoliert', 'Einfache Schaltungen aufgebaut', 'VDE-Vorschriften studiert', 'Werkzeugkunde durchgeführt', 'Kabelkanäle montiert', 'Grundlagen Elektrotechnik erlernt', 'Erste Messungen durchgeführt', 'Schutzmaßnahmen gelernt'],
+                    2: ['Unterverteilungen eigenständig verdrahtet', 'SPS-Programme erstellt', 'Fehlersuche an Anlagen durchgeführt', 'Installationen nach Schaltplan', 'Prüfprotokolle erstellt', 'Kundenanlagen gewartet', 'Motorsteuerungen aufgebaut'],
+                    3: ['Anlagen eigenständig in Betrieb genommen', 'Komplexe Fehleranalysen durchgeführt', 'Lehrlinge angeleitet', 'Kundengespräche geführt', 'Anlagenprojektierung unterstützt', 'Abnahmeprüfungen durchgeführt', 'Dokumentation der Anlage erstellt']
+                },
+                schoolTopics: ['Elektrotechnik Grundlagen', 'Installationstechnik', 'Steuerungstechnik', 'Schaltungstechnik', 'Messtechnik', 'Automatisierung', 'Energieversorgung', 'Sicherheitstechnik']
+            },
+
+            kfz: {
+                id: 'kfz', icon: '🚗', name: 'KFZ-Mechatroniker/in',
+                category: 'Handwerk',
+                verbs: ['diagnostizieren', 'reparieren', 'warten', 'prüfen', 'austauschen', 'einstellen', 'montieren', 'programmieren', 'auslesen', 'lackieren', 'schweißen', 'vermessen', 'instandsetzen', 'kalibrieren', 'befüllen'],
+                objects: ['Bremsanlage', 'Motorsteuerung', 'Fahrwerk', 'Klimaanlage', 'Getriebe', 'Abgasanlage', 'Beleuchtungssystem', 'Reifen/Räder', 'Ölwechsel', 'Inspektion', 'AU/HU-Vorbereitung', 'Karosserie-Teil', 'Steuergerät', 'Batterie/Akku', 'Keilriemen', 'Kupplungssatz', 'Achslager', 'Stoßdämpfer', 'Zündkerzen', 'Kraftstoffsystem'],
+                tools: ['OBD-Diagnosetester', 'Hebebühne', 'Drehmomentschlüssel', 'Achsvermessungsgerät', 'Schaltplan', 'Oszilloskop', 'Schweißgerät', 'Lackierkabine', 'Bremsenprüfstand', 'Druckluft-Werkzeug', 'Klimaservicegerät', 'Abgastester'],
+                departments: ['Werkstatt', 'Karosserie/Lack', 'Service-Annahme', 'Teile-Lager', 'Kundendienst'],
+                yearTasks: {
+                    1: ['Ölwechsel und Filterwechsel durchgeführt', 'Reifenwechsel und Auswuchten gelernt', 'Werkzeugkunde absolviert', 'Einfache Inspektionsarbeiten', 'Fahrzeuge auf Hebebühne positioniert', 'Arbeitsplatz eingerichtet und gesäubert', 'Bremsbeläge gewechselt'],
+                    2: ['Fehlerdiagnose mit OBD durchgeführt', 'Fahrwerk-Komponenten getauscht', 'Klimaanlage gewartet und befüllt', 'Abgasuntersuchung vorbereitet', 'Steuergeräte ausgelesen und parametriert', 'Service-Inspektionen eigenständig durchgeführt', 'Elektrik-Fehlersuche betrieben'],
+                    3: ['Komplexe Motordiagnosen gestellt', 'Kundenberatung und Auftragsannahme', 'Garantie-Arbeiten dokumentiert', 'Lehrlinge eingewiesen', 'Getriebe- und Kupplungsarbeiten', 'Kalibrierung von Fahrerassistenzsystemen', 'Qualitätskontrolle der Werkstattarbeit']
+                },
+                schoolTopics: ['Fahrzeugtechnik', 'Motorentechnik', 'Elektrik/Elektronik', 'Fahrwerktechnik', 'Diagnosetechnik', 'Kundenorientierung', 'Wirtschaft und Sozialkunde']
+            },
+
+            gastronomie: {
+                id: 'gastronomie', icon: '👨‍🍳', name: 'Koch/Köchin',
+                category: 'Gastronomie',
+                verbs: ['zubereiten', 'kochen', 'backen', 'anrichten', 'dekorieren', 'portionieren', 'einlagern', 'kontrollieren', 'reinigen', 'bestellen', 'servieren', 'beraten', 'kalkulieren', 'marinieren', 'filetieren'],
+                objects: ['Vorspeisen', 'Hauptgerichte', 'Desserts', 'Beilagen', 'Saucen', 'Fonds', 'Suppen', 'Menüfolge', 'Buffet-Aufbau', 'Mise en Place', 'Vorratsbestand', 'Tagesmenü', 'Salatkreation', 'Fleischgericht', 'Fischgericht', 'Vegetarisches Gericht', 'Garnitur', 'Patisserie', 'Kalte Platte', 'Mittagsmenü'],
+                tools: ['Konvektomat', 'Thermometer', 'Waage', 'Backofen', 'Salamander', 'Vakuumierer', 'Friteuse', 'Pürierstab', 'Küchenmaschine', 'Mandoline', 'Grillstation', 'Bratstation'],
+                departments: ['Küche', 'Patisserie', 'Kalte Küche', 'Service', 'Lager/Einkauf'],
+                yearTasks: {
+                    1: ['Mise en Place für das Tagesmenü vorbereitet', 'Grundschnitte (Brunoise, Julienne) geübt', 'Lebensmittelhygiene (HACCP) beachtet', 'Salate und kalte Vorspeisen zubereitet', 'Arbeitsplatz nach Hygienevorschriften gereinigt', 'Warenlieferungen kontrolliert und eingelagert'],
+                    2: ['Hauptgerichte selbstständig gekocht', 'Saucen und Fonds angesetzt', 'Speisekarte mitgestaltet', 'Warenkalkulation durchgeführt', 'Fleisch und Fisch fachgerecht verarbeitet', 'Desserts kreiert und angerichtet'],
+                    3: ['Tagesmenü eigenverantwortlich geplant und gekocht', 'Auszubildende angeleitet', 'Bankettvorbereitungen koordiniert', 'Neue Rezepte entwickelt', 'Kundenwünsche umgesetzt (Allergien, Diäten)', 'Warenbestellung und Kostenüberwachung']
+                },
+                schoolTopics: ['Ernährungslehre', 'Warenkunde', 'Kochtechniken', 'HACCP/Hygiene', 'Kalkulation', 'Menügestaltung', 'Wirtschaft und Sozialkunde']
+            },
+
+            pflege: {
+                id: 'pflege', icon: '🏥', name: 'Pflegefachkraft',
+                category: 'Gesundheit',
+                verbs: ['pflegen', 'betreuen', 'dokumentieren', 'assistieren', 'mobilisieren', 'messen', 'verabreichen', 'beraten', 'begleiten', 'überwachen', 'anleiten', 'versorgen', 'lagern', 'unterstützen', 'evaluieren'],
+                objects: ['Patient/in', 'Vitalzeichen', 'Wundversorgung', 'Medikamente', 'Pflegeplanung', 'Körperpflege', 'Mobilisation', 'Ernährungsplan', 'Inkontinenzversorgung', 'Verbandswechsel', 'Lagerungshilfe', 'Pflegedokumentation', 'Infusionstherapie', 'Sondenernährung', 'Prophylaxen', 'Sturzprophylaxe', 'Dekubitusprophylaxe', 'Schmerzmanagement', 'Biografie-Arbeit', 'Beschäftigungsangebot'],
+                tools: ['Blutdruckmessgerät', 'Blutzuckermessgerät', 'Rollator', 'Pflegebett', 'Dokumentationssoftware', 'Desinfektionsmittel', 'Pulsoximeter', 'Stethoskop', 'Infusionspumpe', 'Absauggerät', 'Lift/Transfer-Hilfe'],
+                departments: ['Station', 'Ambulanter Dienst', 'Intensivstation', 'Geriatrie', 'Tagespflege', 'OP-Bereich'],
+                yearTasks: {
+                    1: ['Grundpflege unter Anleitung durchgeführt', 'Vitalzeichen gemessen und dokumentiert', 'Patienten bei Mahlzeiten unterstützt', 'Bettenmachen und Wäschewechsel', 'Hygienemaßnahmen beachtet', 'Pflegeplanung kennengelernt', 'Kommunikation mit Patienten geübt'],
+                    2: ['Behandlungspflege eigenständig übernommen', 'Wundversorgung durchgeführt', 'Medikamente nach Anordnung verabreicht', 'Pflegeplanungen erstellt und angepasst', 'Prophylaxen durchgeführt', 'Angehörige beraten und begleitet', 'Notfallsituationen geübt'],
+                    3: ['Schichtleitung übernommen', 'Komplexe Pflegesituationen gelöst', 'Auszubildende angeleitet', 'Qualitätsmanagement mitgestaltet', 'Fallbesprechungen moderiert', 'Entlassmanagement durchgeführt', 'Pflegevisite durchgeführt und dokumentiert']
+                },
+                schoolTopics: ['Anatomie/Physiologie', 'Krankheitslehre', 'Pflegetheorie', 'Arzneimittellehre', 'Hygiene', 'Recht in der Pflege', 'Kommunikation', 'Ethik']
+            },
+
+            einzelhandel: {
+                id: 'einzelhandel', icon: '🛒', name: 'Einzelhandelskaufmann/-frau',
+                category: 'Handel',
+                verbs: ['beraten', 'verkaufen', 'kassieren', 'einräumen', 'dekorieren', 'bestellen', 'kontrollieren', 'präsentieren', 'inventurisieren', 'umtauschen', 'etikettieren', 'kommissionieren', 'platzieren', 'disponieren', 'stornieren'],
+                objects: ['Wareneingang', 'Schaufensterdekoration', 'Kassenabrechnung', 'Kundenberatung', 'Reklamation', 'Warenbestellung', 'Lagerbestand', 'Preisauszeichnung', 'Produktpräsentation', 'Inventurliste', 'Sonderaktion', 'Umtauschvorgang', 'Regalbestückung', 'Warenbeschaffung', 'Kundenbindungsaktion'],
+                tools: ['Kassensystem', 'Warenwirtschaftssystem', 'Scanner', 'Preisauszeichner', 'POS-Terminal', 'MDE-Gerät', 'Etikettendrucker'],
+                departments: ['Verkauf', 'Lager', 'Einkauf', 'Dekoration', 'Kasse', 'Kundenservice'],
+                yearTasks: {
+                    1: ['Waren eingeräumt und nach Planogramm platziert', 'Kassensystem bedient und Abrechnungen erstellt', 'Kunden zu Produkten beraten', 'Wareneingang kontrolliert und erfasst', 'Preisauszeichnungen angebracht', 'Filiale auf Sauberkeit kontrolliert'],
+                    2: ['Schaufensterdekoration eigenständig gestaltet', 'Bestellvorschläge erstellt', 'Reklamationen bearbeitet und Lösungen gefunden', 'Inventurarbeiten durchgeführt', 'Umsatzauswertungen miterstellt', 'Warenpräsentationen zum Thema erstellt'],
+                    3: ['Bestellwesen eigenverantwortlich geführt', 'Verkaufsaktionen geplant und umgesetzt', 'Mitarbeiter im Verkauf angeleitet', 'Kennzahlenauswertungen erstellt', 'Lieferantenverhandlungen begleitet', 'Qualitätsmanagement mitgestaltet']
+                },
+                schoolTopics: ['Warenkunde', 'Verkaufsstrategie', 'Rechnungswesen', 'Kundenorientierung', 'Wirtschaftslehre', 'Warenwirtschaft', 'Marketing']
+            },
+
+            handwerk_bau: {
+                id: 'handwerk_bau', icon: '🏗️', name: 'Maurer/in / Bau',
+                category: 'Handwerk',
+                verbs: ['mauern', 'betonieren', 'verputzen', 'verlegen', 'montieren', 'messen', 'schneiden', 'schleifen', 'abdichten', 'verschalen', 'fundamentieren', 'armieren', 'schütten', 'stampfen', 'verfugen'],
+                objects: ['Backsteinmauer', 'Fundament', 'Deckenplatte', 'Estrichboden', 'Treppenanlage', 'Schalungssystem', 'Bewehrungskorb', 'Drainagesystem', 'Mauerwerk', 'Fassade', 'Innenputz', 'Außenwand', 'Stützpfeiler', 'Fensterbänke', 'Bodenplatte', 'Ringbalken', 'Sturzschalung', 'Sockelbreich', 'Dachsparren', 'Trennwand'],
+                tools: ['Wasserwaage', 'Kelle', 'Mischmaschine', 'Rüttler', 'Nivelliergerät', 'Betonmischer', 'Kreissäge', 'Flex', 'Bohrmaschine', 'Bauplan', 'Schnurgerüst', 'Fluchtstab', 'Richtlatte'],
+                departments: ['Baustelle', 'Rohbau', 'Ausbau', 'Tiefbau', 'Werkstatt'],
+                yearTasks: {
+                    1: ['Baustelle eingerichtet und gesichert', 'Baustoffe transportiert und bereitgestellt', 'Einfaches Mauerwerk erstellt', 'Werkzeugpflege durchgeführt', 'Baugrube ausgehoben', 'Schalung aufgebaut', 'Grundkenntnisse Vermessung erlernt'],
+                    2: ['Mauerwerk nach Plan erstellt', 'Betonarbeiten eigenständig durchgeführt', 'Putzarbeiten innen und außen', 'Estrich verlegt', 'Abdichtungsarbeiten durchgeführt', 'Bewehrung verlegt und fixiert'],
+                    3: ['Komplexe Mauerwerksverbände erstellt', 'Lehrlinge angeleitet', 'Bauabschnitte eigenständig geplant', 'Materialbestellungen veranlasst', 'Aufmaß erstellt', 'Qualitätskontrolle durchgeführt']
+                },
+                schoolTopics: ['Bautechnik', 'Baustoffkunde', 'Bauzeichnen', 'Vermessung', 'Arbeitssicherheit', 'Statik Grundlagen', 'Wirtschaft und Sozialkunde']
+            },
+
+            handwerk_holz: {
+                id: 'handwerk_holz', icon: '🪚', name: 'Tischler/Schreiner',
+                category: 'Handwerk',
+                verbs: ['sägen', 'hobeln', 'fräsen', 'schleifen', 'leimen', 'montieren', 'konstruieren', 'furnieren', 'lackieren', 'messen', 'zeichnen', 'zusammenbauen', 'profilieren', 'dübeln', 'verleimen'],
+                objects: ['Möbelstück', 'Türrahmen', 'Fensterrahmen', 'Schranksystem', 'Tischplatte', 'Holztreppe', 'Einbauküche', 'Regalwand', 'Werkstück', 'Dachstuhl', 'Holzverbindung', 'Innenausbau', 'Schubladenführung', 'Beschlag', 'Furnierarbeit', 'Massivholzplatte', 'Arbeitsplatte', 'Schiebetür'],
+                tools: ['Kreissäge', 'Oberfräse', 'Bandschleifer', 'CNC-Fräse', 'Hobelmaschine', 'Stechbeitel', 'Winkelschleifer', 'CAD-Software', 'Abrichte', 'Dickenhobel', 'Langlochbohrer', 'Kantenfräse'],
+                departments: ['Werkstatt', 'Montage', 'Oberflächenbehandlung', 'Konstruktion', 'Kundendienst'],
+                yearTasks: {
+                    1: ['Holzarten bestimmt und sortiert', 'Einfache Werkstücke nach Zeichnung gefertigt', 'Handwerkzeuge sachgerecht eingesetzt', 'Holzverbindungen geübt (Zinken, Dübel)', 'Werkstattmaschinen unter Aufsicht bedient', 'Oberflächen geschliffen'],
+                    2: ['Möbelstücke eigenständig gefertigt', 'CNC-Programme erstellt und ausgeführt', 'Furnierarbeiten durchgeführt', 'Kundenmontagen begleitet', 'Maße aufgenommen und übertragen', 'Oberflächen behandelt und lackiert'],
+                    3: ['Komplexe Möbel konstruiert und gefertigt', 'Kundengespräche geführt', 'Lehrlinge angeleitet', 'Materialkalkulationen erstellt', 'Montageleitung übernommen', 'CAD-Zeichnungen erstellt']
+                },
+                schoolTopics: ['Holztechnik', 'Werkstoffkunde', 'Technisches Zeichnen', 'Maschinenarbeit', 'Konstruktion', 'Oberflächentechnik', 'Wirtschaft und Sozialkunde']
+            },
+
+            friseur: {
+                id: 'friseur', icon: '💇', name: 'Friseur/in',
+                category: 'Handwerk',
+                verbs: ['schneiden', 'färben', 'föhnen', 'beraten', 'waschen', 'stylen', 'pflegen', 'hochstecken', 'ondulieren', 'rasieren', 'tönen', 'blondieren', 'strähnchen setzen', 'modellieren', 'frisieren'],
+                objects: ['Damenhaarschnitt', 'Herrenhaarschnitt', 'Coloration', 'Balayage', 'Dauerwelle', 'Hochsteckfrisur', 'Bartpflege', 'Haarpflegebehandlung', 'Strähnen-Technik', 'Kinderhaarschnitt', 'Brautfrisur', 'Typberatung', 'Kopfhautbehandlung', 'Extensions', 'Farbberatung'],
+                tools: ['Schere', 'Effilierschere', 'Föhn', 'Glätteisen', 'Lockenstab', 'Farbtabelle', 'Alufolie', 'Papilloten', 'Haarschneidemaschine', 'Rasierer', 'Clips', 'Kamm-Set'],
+                departments: ['Salon', 'Herren-Abteilung', 'Damen-Abteilung', 'Empfang'],
+                yearTasks: {
+                    1: ['Haare gewaschen und Kopfhautmassage durchgeführt', 'Wickler eingedreht', 'Arbeitsmittel vorbereitet und gereinigt', 'Farbe angemischt unter Anleitung', 'Einfache Föhntechniken geübt', 'Kunden empfangen und beraten'],
+                    2: ['Damenschnitte eigenständig geschnitten', 'Colorationstechniken angewendet', 'Strähnen in Folientechnik gesetzt', 'Styling-Looks kreiert', 'Produktberatung durchgeführt', 'Kundenwünsche umgesetzt'],
+                    3: ['Kreaive Farbkonzepte entwickelt', 'Komplexe Hochsteckfrisuren gestaltet', 'Auszubildende angeleitet', 'Kundenberatung eigenverantwortlich', 'Salonmanagement unterstützt', 'Trends analysiert und umgesetzt']
+                },
+                schoolTopics: ['Frisurtechnik', 'Farb- und Formenlehre', 'Chemie der Haarpflege', 'Kundenberatung', 'Salonmanagement', 'Hautpflege', 'Wirtschaft und Sozialkunde']
+            },
+
+            lager: {
+                id: 'lager', icon: '📦', name: 'Fachkraft für Lagerlogistik',
+                category: 'Logistik',
+                verbs: ['kommissionieren', 'einlagern', 'auslagern', 'verpacken', 'verladen', 'scannen', 'kontrollieren', 'inventarisieren', 'transportieren', 'sortieren', 'buchen', 'etikettieren', 'disponieren', 'palettieren', 'optimieren'],
+                objects: ['Wareneingang', 'Warenausgang', 'Lieferung', 'Palette', 'Sendung', 'Kommissionierauftrag', 'Retourenbearbeitung', 'Bestandsliste', 'Versandpapiere', 'Gefahrgut-Ladung', 'Tourenplanung', 'Lagerplatz', 'Ladungsträger', 'Frachtbrief', 'Zollpapiere'],
+                tools: ['Gabelstapler', 'Ameise (Hubwagen)', 'Handscanner', 'SAP WMS', 'Lagerverwaltungssystem', 'Verpackungsmaschine', 'Etikettendrucker', 'E-Stapler', 'Regalbediengerät'],
+                departments: ['Wareneingang', 'Warenausgang', 'Kommissionierung', 'Verpackung', 'Versand', 'Gefahrgutlager'],
+                yearTasks: {
+                    1: ['Warenannahme und Eingangskontrolle durchgeführt', 'Waren im Regal eingelagert', 'Lieferscheine kontrolliert und abgezeichnet', 'Stapler-Führerschein erworben', 'Lagerbereiche aufgeräumt', 'Einfache Kommissionieraufträge bearbeitet'],
+                    2: ['Selbstständig kommissioniert und versandfertig gemacht', 'Bestandskorrekturen im WMS gebucht', 'Retouren bearbeitet und eingelagert', 'Inventurvorbereitungen getroffen', 'Ladungssicherung durchgeführt', 'Gefahrgutvorschriften angewendet'],
+                    3: ['Tourenplanung mitgestaltet', 'Lagerkennzahlen ausgewertet', 'Lagerplatzoptimierung vorgeschlagen', 'Azubis eingewiesen', 'Reklamationen bei Lieferanten veranlasst', 'Zolldokumente bearbeitet']
+                },
+                schoolTopics: ['Lagerwirtschaft', 'Logistikprozesse', 'Güterverkehr', 'Gefahrgut', 'Warenwirtschaft', 'Wirtschaft und Sozialkunde', 'Ladungssicherung']
+            },
+
+            medien: {
+                id: 'medien', icon: '🎨', name: 'Mediengestalter/in',
+                category: 'Kreativ',
+                verbs: ['gestalten', 'entwerfen', 'layouten', 'bearbeiten', 'animieren', 'schneiden', 'retouchieren', 'exportieren', 'drucken', 'präsentieren', 'konzipieren', 'illustrieren', 'rendern', 'prototypen', 'optimieren'],
+                objects: ['Printlayout', 'Social-Media-Grafik', 'Webdesign-Mockup', 'Video-Clip', 'Banner-Animation', 'Firmenlogo', 'Broschüre', 'Flyer', 'Corporate-Design-Manual', 'Druckauftrag', 'E-Mail-Template', 'Bildbearbeitung', 'Infografik', 'Plakat', 'Verpackungsdesign', 'UI/UX-Design', 'Präsentationsvorlage'],
+                tools: ['Photoshop', 'InDesign', 'Illustrator', 'Figma', 'Premiere Pro', 'After Effects', 'Canva', 'Blender', 'Sketch', 'XD', 'Lightroom', 'Cinema 4D'],
+                departments: ['Grafikabteilung', 'Marketing', 'Druckvorstufe', 'Webdesign', 'Social Media', 'Video/Film'],
+                yearTasks: {
+                    1: ['Einfache Grafiken nach Vorlage erstellt', 'Bilder freigestellt und bearbeitet', 'Druckdaten vorbereitet', 'Farbprofile eingestellt', 'Gestaltungsgrundlagen erlernt', 'Social-Media-Posts gestaltet'],
+                    2: ['Layouts eigenständig konzipiert und umgesetzt', 'Videos geschnitten und exportiert', 'Kundenprojekte bearbeitet', 'Animationen erstellt', 'Druckfreigaben vorbereitet', 'Webgrafiken optimiert'],
+                    3: ['Gesamte Broschüren/Kataloge gestaltet', 'Kreativkonzepte präsentiert', 'Lehrlinge angeleitet', 'Kundenbriefings geführt', 'Corporate-Design-Richtlinien erstellt', 'Qualitätssicherung im Druck']
+                },
+                schoolTopics: ['Gestaltungsgrundlagen', 'Typografie', 'Farblehre', 'Drucktechnik', 'Webdesign', 'AV-Produktion', 'Medienproduktion', 'Wirtschaft und Sozialkunde']
+            },
+
+            metall: {
+                id: 'metall', icon: '⚙️', name: 'Industriemechaniker/in',
+                category: 'Industrie',
+                verbs: ['drehen', 'fräsen', 'bohren', 'schweißen', 'schleifen', 'biegen', 'stanzen', 'programmieren', 'messen', 'montieren', 'entgraten', 'härten', 'justieren', 'zerspanen', 'polieren'],
+                objects: ['Werkstück', 'CNC-Drehteil', 'Fräsbauteil', 'Schweißkonstruktion', 'Blechzuschnitt', 'Gewindebohrung', 'Passbohrung', 'Metallrahmen', 'Edelstahlgehäuse', 'Rohrkonstruktion', 'Prototyp', 'Serienbauteil', 'Pneumatik-Baugruppe', 'Hydraulik-Zylinder', 'Getriebebauteil', 'Vorrichtung'],
+                tools: ['CNC-Drehmaschine', 'CNC-Fräse', 'Schweißgerät (MAG/WIG)', 'Messschieber', 'Bügelmessschraube', 'Höhenreißer', 'Abkantpresse', 'Bandsäge', 'CAD/CAM-Software', 'Koordinatenmessgerät', 'Rundschleifmaschine'],
+                departments: ['Werkstatt', 'CNC-Fertigung', 'Montage', 'Qualitätssicherung', 'Instandhaltung', 'Konstruktion'],
+                yearTasks: {
+                    1: ['Grundlagen Feilen, Sägen, Bohren geübt', 'Technische Zeichnungen lesen gelernt', 'Werkzeugkunde absolviert', 'Messmittel eingesetzt', 'Erste Werkstücke nach Plan gefertigt', 'Sicherheitsunterweisung Werkstatt'],
+                    2: ['CNC-Programme erstellt und gefahren', 'Schweißnähte (MAG) gefertigt', 'Baugruppen montiert', 'Qualitätsprüfung durchgeführt', 'Instandhaltungsarbeiten', 'Pneumatik-Schaltungen aufgebaut'],
+                    3: ['Komplexe CNC-Programme optimiert', 'Vorrichtungen konstruiert und gefertigt', 'Azubis angeleitet', 'Fertigungsplanung unterstützt', 'Fehleranalyse an Maschinen', 'Programmier- und Rüstprotokolle erstellt']
+                },
+                schoolTopics: ['Fertigungstechnik', 'Werkstoffkunde', 'Technisches Zeichnen', 'CNC-Technik', 'Steuerungstechnik', 'Qualitätsmanagement', 'Wirtschaft und Sozialkunde']
+            },
+
+            garten: {
+                id: 'garten', icon: '🌿', name: 'Gärtner/in',
+                category: 'Handwerk',
+                verbs: ['pflanzen', 'schneiden', 'mähen', 'pflegen', 'gestalten', 'bewässern', 'mulchen', 'düngen', 'jäten', 'vermessen', 'pflastern', 'ausheben', 'roden', 'säen', 'pikieren'],
+                objects: ['Rasenfläche', 'Hecke', 'Beet', 'Baumbestand', 'Pflasterweg', 'Teichanlage', 'Gewächshaus', 'Blumen-Arrangement', 'Grabpflege', 'Sträucher', 'Staudenbeet', 'Rollrasen', 'Natursteinmauer', 'Pflanzgefäß', 'Bewässerungssystem'],
+                tools: ['Motorsäge', 'Heckenschere', 'Rasenmäher', 'Freischneider', 'Minibagger', 'Rüttelplatte', 'Gießwagen', 'Pflanzentransporter', 'Astschere', 'Spaten', 'Baumschere'],
+                departments: ['Garten- und Landschaftsbau', 'Zierpflanzenbau', 'Baumschule', 'Friedhofsgärtnerei', 'Gemüsebau'],
+                yearTasks: {
+                    1: ['Pflanzen bestimmt und gepflegt', 'Beete angelegt und bepflanzt', 'Rasen gemäht und vertikutiert', 'Werkzeuge gewartet', 'Einfache Pflasterarbeiten durchgeführt', 'Bewässerung kontrolliert'],
+                    2: ['Hecken formgerecht geschnitten', 'Natursteinarbeiten durchgeführt', 'Pflanzpläne umgesetzt', 'Bäume fachgerecht geschnitten', 'Pflanzenschutzmaßnahmen ergriffen', 'Kundengärten gepflegt'],
+                    3: ['Gartenanlagen geplant und umgesetzt', 'Kundengespräche geführt', 'Azubis angeleitet', 'Materialkalkulationen erstellt', 'Spezialschnitte durchgeführt', 'Teichanlagen gebaut']
+                },
+                schoolTopics: ['Pflanzenkunde', 'Bodenkunde', 'Pflanzenschutz', 'Gestaltungslehre', 'Bautechnik', 'Maschinenkunde', 'Wirtschaft und Sozialkunde']
+            },
+
+            chemie: {
+                id: 'chemie', icon: '🧪', name: 'Chemielaborant/in',
+                category: 'Industrie',
+                verbs: ['analysieren', 'mischen', 'prüfen', 'messen', 'destillieren', 'filtrieren', 'dokumentieren', 'kalibrieren', 'titrieren', 'synthetisieren', 'extrahieren', 'zentrifugieren', 'wiegen', 'protokollieren', 'chromatographieren'],
+                objects: ['Probe', 'Lösung', 'Reaktionsgemisch', 'Analyseergebnis', 'Versuchsreihe', 'Prüfprotokoll', 'Reinheitsgrad', 'Produktionsbatch', 'Stoffgemisch', 'Kalibrierlösung', 'Reagenz', 'Standardlösung', 'Umweltprobe', 'Qualitätsprobe', 'Titration'],
+                tools: ['Photometer', 'pH-Meter', 'Analysenwaage', 'Gaschromatograph', 'HPLC', 'Titriergerät', 'Laborjob-Software', 'Pipette', 'Autoklav', 'Rotationsverdampfer', 'Spektrometer', 'Bunsenbrenner'],
+                departments: ['Analytik-Labor', 'Synthese-Labor', 'Qualitätskontrolle', 'F&E', 'Produktionslabor'],
+                yearTasks: {
+                    1: ['Laborgeräte kennen gelernt und gereinigt', 'Einfache Lösungen angesetzt', 'Wägen und Volumenmessung geübt', 'Sicherheitsregeln im Labor gelernt', 'Laborjournal geführt', 'pH-Werte gemessen'],
+                    2: ['Titrationen eigenständig durchgeführt', 'Chromatographische Analysen', 'Qualitätsprüfungen durchgeführt', 'Versuchsreihen geplant und dokumentiert', 'Geräte kalibriert', 'Analyseergebnisse ausgewertet'],
+                    3: ['Komplexe Synthesen durchgeführt', 'Methodenentwicklung unterstützt', 'Azubis angeleitet', 'Prüfberichte erstellt', 'Validierungen begleitet', 'Gerätewartung eigenständig']
+                },
+                schoolTopics: ['Allgemeine Chemie', 'Analytische Chemie', 'Organische Chemie', 'Physikalische Chemie', 'Laborsicherheit', 'Qualitätsmanagement', 'Wirtschaft und Sozialkunde']
+            },
+
+            mfa: {
+                id: 'mfa', icon: '🩺', name: 'Med. Fachangestellte/r',
+                category: 'Gesundheit',
+                verbs: ['assistieren', 'vorbereiten', 'dokumentieren', 'messen', 'desinfizieren', 'sterilisieren', 'beraten', 'koordinieren', 'abrechnen', 'aufklären', 'kontrollieren', 'durchführen', 'anmelden', 'organisieren', 'untersuchen'],
+                objects: ['Patientenaufnahme', 'Blutentnahme', 'EKG-Ableitung', 'Wundversorgung', 'Impfassistenz', 'Abrechnung (KV)', 'Sprechstundenplanung', 'Medikamentenausgabe', 'Hygieneplan', 'Laborprobe', 'Verbandswechsel', 'Sterilisation', 'Patientenakte', 'Recall-System', 'Terminmanagement'],
+                tools: ['Blutdruckmessgerät', 'EKG-Gerät', 'Praxis-Software', 'Sterilisator', 'Spirometer', 'Blutzuckermessgerät', 'Otoskop', 'Dermatoskop', 'Inhalationsgerät', 'Centrifuge'],
+                departments: ['Anmeldung/Empfang', 'Behandlungsraum', 'Labor', 'Verwaltung', 'OP-Assistenz'],
+                yearTasks: {
+                    1: ['Patienten empfangen und Daten aufgenommen', 'Einfache Vitalwerte gemessen', 'Behandlungsräume vorbereitet', 'Instrumente sterilisiert', 'Terminvergabe durchgeführt', 'Laborproben beschriftet'],
+                    2: ['Blutentnahmen eigenständig durchgeführt', 'EKGs geschrieben und vorbereitet', 'Abrechnungen erstellt', 'Wunden versorgt', 'Impfassistenz geleistet', 'Arzneimittel-Verwaltung übernommen'],
+                    3: ['Praxis-Abläufe eigenständig organisiert', 'Auszubildende angeleitet', 'Notfallmanagement', 'KV-Abrechnungen erstellt', 'QM-Maßnahmen mitgestaltet', 'Patientenschulungen durchgeführt']
+                },
+                schoolTopics: ['Medizinische Terminologie', 'Anatomie/Physiologie', 'Arzneimittellehre', 'Abrechnung', 'Hygiene', 'Labordiagnostik', 'Wirtschaft und Sozialkunde']
+            },
+
+            hotel: {
+                id: 'hotel', icon: '🏨', name: 'Hotelfachmann/-frau',
+                category: 'Gastronomie',
+                verbs: ['empfangen', 'beraten', 'servieren', 'organisieren', 'reservieren', 'dekorieren', 'kontrollieren', 'koordinieren', 'kommunizieren', 'kalkulieren', 'eindecken', 'abrechnen', 'pflegen', 'reinigen', 'planen'],
+                objects: ['Check-in/Check-out', 'Zimmerreinigung', 'Frühstücksbuffet', 'Tischgedeck', 'Reservierungssystem', 'Veranstaltung', 'Bankettplanung', 'Beschwerdemanagement', 'Housekeeping-Kontrolle', 'Minibar-Abrechnung', 'Wäscheservice', 'Gästebetreuung', 'Konferenzraum-Setup', 'Nachtschicht-Übergabe'],
+                tools: ['PMS (Property Management System)', 'Kassensystem', 'Buchungssystem', 'Channel-Manager', 'Housekeeping-App', 'POS-Terminal', 'Reservierungssoftware'],
+                departments: ['Empfang/Front Office', 'Housekeeping', 'F&B (Restaurant)', 'Bankett', 'Reservierung', 'Nachtdienst'],
+                yearTasks: {
+                    1: ['Gäste begrüßt und eingecheckt', 'Zimmer auf Standard kontrolliert', 'Frühstücksservice durchgeführt', 'Tische eingedeckt', 'Telefonanfragen bearbeitet', 'Housekeeping unterstützt'],
+                    2: ['Check-in/Check-out eigenständig durchgeführt', 'Reservierungen verwaltet', 'Beschwerden bearbeitet', 'Bar-Service übernommen', 'Veranstaltungen vorbereitet', 'Rechnungen erstellt'],
+                    3: ['Schichtleitung übernommen', 'Revenue Management unterstützt', 'Events koordiniert', 'Azubis angeleitet', 'VIP-Gästebetreuung', 'Umsatzanalysen erstellt']
+                },
+                schoolTopics: ['Hotelorganisation', 'Service', 'Housekeeping', 'Marketing', 'F&B-Management', 'Buchführung', 'Wirtschaft und Sozialkunde']
+            },
+
+            dachdecker: {
+                id: 'dachdecker', icon: '🏠', name: 'Dachdecker/in',
+                category: 'Handwerk',
+                verbs: ['eindecken', 'abdichten', 'dämmen', 'verlegen', 'montieren', 'reparieren', 'aufbauen', 'sichern', 'messen', 'schneiden', 'kleben', 'schrauben', 'löten', 'schweißen', 'gestalten'],
+                objects: ['Dacheindeckung', 'Flachdachaufbau', 'Dachdämmung', 'Dachrinne', 'Dachfenster', 'Firstziegel', 'Unterspannbahn', 'Abdichtungsbahn', 'Schornsteineinfassung', 'Solaranlage', 'Dachgaube', 'Fassadenbekleidung', 'Blitzschutzanlage', 'Schneefanggitter'],
+                tools: ['Dachziegelschneider', 'Gasbrenner', 'Falzzange', 'Blechschere', 'Schieferhammer', 'Abrissgerät', 'Sicherungsseil', 'Gerüst', 'Dachleiter', 'Lötkolben'],
+                departments: ['Steildach', 'Flachdach', 'Klempnerarbeiten', 'Abdichtung', 'Dachsanierung'],
+                yearTasks: {
+                    1: ['Materialtransport auf das Dach', 'Dachlatten angebracht', 'Einfache Ziegel verlegt', 'Sicherheitseinrichtungen aufgebaut', 'Werkzeugpflege durchgeführt', 'Unterspannbahn verlegt'],
+                    2: ['Dacheindeckungen eigenständig', 'Dachrinnen montiert', 'Abdichtungsarbeiten Flachdach', 'Dachfenster eingebaut', 'Schornsteineinfassungen hergestellt', 'Wärmedämmung eingebaut'],
+                    3: ['Komplexe Dachgeometrien bearbeitet', 'Aufmaß und Kalkulation', 'Azubis angeleitet', 'Kundengespräche geführt', 'Solarmodule montiert', 'Qualitätskontrolle']
+                },
+                schoolTopics: ['Dachtechnik', 'Abdichtungstechnik', 'Wärmeschutz', 'Baustoffkunde', 'Bauzeichnen', 'Arbeitssicherheit', 'Wirtschaft und Sozialkunde']
+            },
+
+            sanitaer: {
+                id: 'sanitaer', icon: '🔧', name: 'Anlagenmechaniker SHK',
+                category: 'Handwerk',
+                verbs: ['installieren', 'montieren', 'verlegen', 'löten', 'schweißen', 'pressen', 'dämmen', 'prüfen', 'reparieren', 'warten', 'einstellen', 'inbetriebnehmen', 'spülen', 'entlüften', 'messen'],
+                objects: ['Heizungsanlage', 'Sanitärinstallation', 'Trinkwasserleitung', 'Abwasserleitung', 'Wärmepumpe', 'Solarthermieanlage', 'Badezimmer-Ausstattung', 'Fußbodenheizung', 'Heizkörper', 'Lüftungsanlage', 'Gasleitung', 'Thermostatventil', 'Zirkulation', 'Speicher', 'Regelungstechnik'],
+                tools: ['Rohrschneider', 'Presszange', 'Lötlampe', 'Rohrzange', 'Gewindeschneider', 'Manometer', 'Wasserwaage', 'Abdrückpumpe', 'Schlitzmaschine', 'Kernbohrgerät'],
+                departments: ['Sanitär', 'Heizung', 'Kundendienst', 'Neubau', 'Wartung'],
+                yearTasks: {
+                    1: ['Rohre zugeschnitten und verbunden', 'Einfache Sanitärmontage', 'Werkzeugkunde absolviert', 'Lötverbindungen geübt', 'Baustellenvorbereitung', 'Materialberechnung erlernt'],
+                    2: ['Bäder eigenständig installiert', 'Heizungsrohre verlegt und gepresst', 'Wandheizkörper montiert', 'Abwasserleitungen verlegt', 'Dichtheitsprüfungen durchgeführt', 'Kundendienst-Aufträge bearbeitet'],
+                    3: ['Heizungsanlagen in Betrieb genommen', 'Wärmepumpen installiert', 'Regelungstechnik eingestellt', 'Azubis angeleitet', 'Aufmaß und Abrechnung', 'Komplexe Sanierungen geplant']
+                },
+                schoolTopics: ['Sanitärtechnik', 'Heizungstechnik', 'Lüftungstechnik', 'Werkstoffkunde', 'Bauphysik', 'Regelungstechnik', 'Wirtschaft und Sozialkunde']
+            }
+        };
+
+        // ═══════════════════════════════════════
+        // SEASON & CALENDAR AWARENESS
+        // ═══════════════════════════════════════
+
+        const SEASONS = {
+            winter: { months: [12, 1, 2], label: 'Winter', weather: ['kalt', 'frostig', 'winterlich'] },
+            spring: { months: [3, 4, 5], label: 'Frühling', weather: ['mild', 'frühlingshaft', 'wechselhaft'] },
+            summer: { months: [6, 7, 8], label: 'Sommer', weather: ['warm', 'sommerlich', 'heiß'] },
+            autumn: { months: [9, 10, 11], label: 'Herbst', weather: ['kühl', 'herbstlich', 'regnerisch'] }
+        };
+
+        function getCurrentSeason() {
+            const month = new Date().getMonth() + 1;
+            return Object.entries(SEASONS).find(([_, s]) => s.months.includes(month))?.[0] || 'spring';
+        }
+
+        const SEASONAL_ACTIVITIES = {
+            garten: {
+                winter: ['Gehölzschnitt bei Frost durchgeführt', 'Pflanzen winterfest gemacht', 'Werkzeugwartung in der Werkstatt', 'Schneelast von Sträuchern entfernt'],
+                spring: ['Beete für Frühjahrspflanzung vorbereitet', 'Frühblüher gesetzt', 'Rasen vertikutiert und nachgesät', 'Hecken formiert nach dem Winter'],
+                summer: ['Bewässerung bei Hitze sichergestellt', 'Rasen regelmäßig gemäht', 'Sommerblumen gepflegt', 'Staudenbeet gejätet und gedüngt'],
+                autumn: ['Laub zusammengeharkt und kompostiert', 'Herbstpflanzungen durchgeführt', 'Gartenteich winterfest gemacht', 'Rosen zurückgeschnitten']
+            },
+            handwerk_bau: {
+                winter: ['Innenausbauarbeiten bei Frost durchgeführt', 'Frostschutzmaßnahmen am Bau getroffen', 'Mauerwerk bei Kälte geschützt', 'Innenputz aufgetragen'],
+                spring: ['Außenarbeiten nach Frostperiode aufgenommen', 'Fundamente bei trockener Witterung gegossen', 'Frühjahrs-Baustelle eingerichtet', 'Fassadenarbeiten begonnen'],
+                summer: ['Betonarbeiten bei optimaler Temperatur', 'Dacharbeiten bei gutem Wetter', 'Außenputz aufgebracht', 'Pflasterarbeiten im Außenbereich'],
+                autumn: ['Baustelle winterfest gemacht', 'Abdichtungsarbeiten vor Frost abgeschlossen', 'Letzte Außenarbeiten vor dem Winter', 'Heizestrich eingebracht']
+            },
+            dachdecker: {
+                winter: ['Dachboden-Dämmarbeiten durchgeführt', 'Sturmschäden kontrolliert und repariert', 'Schneelasten kontrolliert', 'Innenarbeiten an Dachausbau'],
+                spring: ['Dachinspektionen nach dem Winter', 'Winterschäden repariert', 'Neue Dachprojekte begonnen', 'Regenrinnen gereinigt und geprüft'],
+                summer: ['Dacheindeckungen bei gutem Wetter', 'Solaranlagen montiert', 'Flachdachsanierung', 'Dachfenster eingebaut'],
+                autumn: ['Sturmschutz-Maßnahmen getroffen', 'Dachrinnen gereinigt', 'Letzte Abdichtungen vor dem Winter', 'Schneefanggitter montiert']
+            }
+        };
+
+        // ═══════════════════════════════════════
+        // SCHOOL TOPIC DATABASE
+        // ═══════════════════════════════════════
+
+        function generateSchoolEntry(profession, yearNum) {
+            const prof = PROFESSIONS[profession];
+            if (!prof || !prof.schoolTopics) return null;
+
+            const topics = prof.schoolTopics;
+            const topic = pickRandom(topics);
+
+            const schoolFormats = [
+                `Berufsschule: ${topic} — Unterrichtsinhalte nachbereitet`,
+                `Berufsschulunterricht: ${topic}. Aufgaben bearbeitet und Zusammenfassung erstellt`,
+                `Berufsschultag: Thema "${topic}" behandelt. Übungen durchgeführt und Notizen gemacht`,
+                `${topic} im Berufsschulunterricht. Lernstoff zusammengefasst und Übungsaufgaben gelöst`,
+                `Berufsschule: Klassenarbeitsvorbereitung zum Thema ${topic}`,
+                `Berufsschultag: ${topic} — Gruppenarbeit und Präsentation vorbereitet`
+            ];
+
+            return pickRandom(schoolFormats);
+        }
+
+        // ═══════════════════════════════════════
+        // UTILITY FUNCTIONS
+        // ═══════════════════════════════════════
+
+        function pickRandom(arr, exclude = []) {
+            if (!arr || arr.length === 0) return '';
+            const filtered = arr.filter(item => !exclude.includes(item));
+            if (filtered.length === 0) return arr[Math.floor(Math.random() * arr.length)];
+            return filtered[Math.floor(Math.random() * filtered.length)];
+        }
+
+        function pickMultipleUnique(arr, count, exclude = []) {
+            const available = arr.filter(item => !exclude.includes(item));
+            const shuffled = [...available].sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, Math.min(count, shuffled.length));
+        }
+
+        function shuffleArray(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function conjugateVerb(verb) {
+            // Partizip II Generierung (vereinfacht)
+            const irregulars = {
+                'entwickeln': 'entwickelt', 'implementieren': 'implementiert', 'testen': 'getestet',
+                'debuggen': 'gedebugged', 'deployen': 'deployed', 'refactoren': 'refactored',
+                'dokumentieren': 'dokumentiert', 'reviewen': 'reviewt', 'optimieren': 'optimiert',
+                'automatisieren': 'automatisiert', 'migrieren': 'migriert', 'analysieren': 'analysiert',
+                'konzipieren': 'konzipiert', 'programmieren': 'programmiert', 'integrieren': 'integriert',
+                'konfigurieren': 'konfiguriert', 'installieren': 'installiert', 'warten': 'gewartet',
+                'überwachen': 'überwacht', 'administrieren': 'administriert', 'sichern': 'gesichert',
+                'patchen': 'gepatcht', 'troubleshooten': 'getroubleshooted', 'provisionieren': 'provisioniert',
+                'bearbeiten': 'bearbeitet', 'prüfen': 'geprüft', 'verbuchen': 'verbucht',
+                'erstellen': 'erstellt', 'pflegen': 'gepflegt', 'koordinieren': 'koordiniert',
+                'kalkulieren': 'kalkuliert', 'archivieren': 'archiviert', 'abgleichen': 'abgeglichen',
+                'kommunizieren': 'kommuniziert', 'auswerten': 'ausgewertet', 'recherchieren': 'recherchiert',
+                'verdrahten': 'verdrahtet', 'messen': 'gemessen', 'inbetriebnehmen': 'in Betrieb genommen',
+                'planen': 'geplant', 'verlegen': 'verlegt', 'anschließen': 'angeschlossen',
+                'dimensionieren': 'dimensioniert', 'parametrieren': 'parametriert',
+                'diagnostizieren': 'diagnostiziert', 'reparieren': 'repariert', 'austauschen': 'ausgetauscht',
+                'einstellen': 'eingestellt', 'montieren': 'montiert', 'auslesen': 'ausgelesen',
+                'lackieren': 'lackiert', 'schweißen': 'geschweißt', 'vermessen': 'vermessen',
+                'instandsetzen': 'instandgesetzt', 'kalibrieren': 'kalibriert', 'befüllen': 'befüllt',
+                'zubereiten': 'zubereitet', 'kochen': 'gekocht', 'backen': 'gebacken',
+                'anrichten': 'angerichtet', 'dekorieren': 'dekoriert', 'portionieren': 'portioniert',
+                'einlagern': 'eingelagert', 'kontrollieren': 'kontrolliert', 'reinigen': 'gereinigt',
+                'bestellen': 'bestellt', 'servieren': 'serviert', 'beraten': 'beraten',
+                'marinieren': 'mariniert', 'filetieren': 'filetiert',
+                'pflegen': 'gepflegt', 'betreuen': 'betreut', 'assistieren': 'assistiert',
+                'mobilisieren': 'mobilisiert', 'verabreichen': 'verabreicht', 'begleiten': 'begleitet',
+                'anleiten': 'angeleitet', 'versorgen': 'versorgt', 'lagern': 'gelagert',
+                'unterstützen': 'unterstützt', 'evaluieren': 'evaluiert',
+                'schneiden': 'geschnitten', 'färben': 'gefärbt', 'föhnen': 'geföhnt',
+                'waschen': 'gewaschen', 'stylen': 'gestylt', 'hochstecken': 'hochgesteckt',
+                'rasieren': 'rasiert', 'tönen': 'getönt', 'blondieren': 'blondiert',
+                'verkaufen': 'verkauft', 'kassieren': 'kassiert', 'einräumen': 'eingeräumt',
+                'inventurisieren': 'inventarisiert', 'umtauschen': 'umgetauscht',
+                'etikettieren': 'etikettiert', 'disponieren': 'disponiert',
+                'kommissionieren': 'kommissioniert', 'auslagern': 'ausgelagert',
+                'verpacken': 'verpackt', 'verladen': 'verladen', 'scannen': 'gescannt',
+                'sortieren': 'sortiert', 'buchen': 'gebucht', 'palettieren': 'palettiert',
+                'gestalten': 'gestaltet', 'entwerfen': 'entworfen', 'layouten': 'gelayoutet',
+                'animieren': 'animiert', 'retouchieren': 'retouchiert', 'exportieren': 'exportiert',
+                'drucken': 'gedruckt', 'präsentieren': 'präsentiert', 'illustrieren': 'illustriert',
+                'rendern': 'gerendert', 'prototypen': 'prototyped',
+                'drehen': 'gedreht', 'fräsen': 'gefräst', 'bohren': 'gebohrt',
+                'schleifen': 'geschliffen', 'biegen': 'gebogen', 'stanzen': 'gestanzt',
+                'entgraten': 'entgratet', 'härten': 'gehärtet', 'justieren': 'justiert',
+                'zerspanen': 'zerspant', 'polieren': 'poliert',
+                'pflanzen': 'gepflanzt', 'mähen': 'gemäht', 'bewässern': 'bewässert',
+                'mulchen': 'gemulcht', 'düngen': 'gedüngt', 'jäten': 'gejätet',
+                'pflastern': 'gepflastert', 'ausheben': 'ausgehoben', 'roden': 'gerodet',
+                'säen': 'gesät', 'pikieren': 'pikiert',
+                'mischen': 'gemischt', 'destillieren': 'destilliert', 'filtrieren': 'filtriert',
+                'titrieren': 'titriert', 'synthetisieren': 'synthetisiert',
+                'extrahieren': 'extrahiert', 'zentrifugieren': 'zentrifugiert',
+                'wiegen': 'gewogen', 'protokollieren': 'protokolliert',
+                'chromatographieren': 'chromatographiert',
+                'sägen': 'gesägt', 'hobeln': 'gehobelt', 'leimen': 'geleimt',
+                'furnieren': 'furniert', 'zeichnen': 'gezeichnet', 'zusammenbauen': 'zusammengebaut',
+                'profilieren': 'profiliert', 'dübeln': 'gedübelt', 'verleimen': 'verleimt',
+                'mauern': 'gemauert', 'betonieren': 'betoniert', 'verputzen': 'verputzt',
+                'abdichten': 'abgedichtet', 'verschalen': 'verschalt', 'fundamentieren': 'fundamentiert',
+                'armieren': 'armiert', 'schütten': 'geschüttet', 'stampfen': 'gestampft',
+                'verfugen': 'verfugt',
+                'empfangen': 'empfangen', 'reservieren': 'reserviert', 'eindecken': 'eingedeckt',
+                'abrechnen': 'abgerechnet', 'desinfizieren': 'desinfiziert',
+                'sterilisieren': 'sterilisiert', 'aufklären': 'aufgeklärt',
+                'anmelden': 'angemeldet', 'untersuchen': 'untersucht',
+                'eindecken': 'eingedeckt', 'dämmen': 'gedämmt', 'kleben': 'geklebt',
+                'schrauben': 'geschraubt', 'löten': 'gelötet',
+                'pressen': 'gepresst', 'spülen': 'gespült', 'entlüften': 'entlüftet',
+                'konstruieren': 'konstruiert', 'organisieren': 'organisiert',
+                'vorbereiten': 'vorbereitet', 'nachbereiten': 'nachbereitet',
+                'überprüfen': 'überprüft', 'fertigstellen': 'fertiggestellt',
+                'durchführen': 'durchgeführt', 'erledigen': 'erledigt',
+                'besprechen': 'besprochen', 'härten': 'gehärtet',
+                'stornieren': 'storniert', 'platzieren': 'platziert',
+                'frisieren': 'frisiert', 'modellieren': 'modelliert',
+                'ondulieren': 'onduliert',
+            };
+
+            if (irregulars[verb]) return irregulars[verb];
+
+            // Fallback-Regeln
+            if (verb.endsWith('ieren')) return verb.slice(0, -2) + 't';
+            if (verb.endsWith('en')) return 'ge' + verb.slice(0, -2) + 't';
+            return verb;
+        }
+
+        // ═══════════════════════════════════════
+        // ADVANCED SENTENCE GENERATION ENGINE
+        // ═══════════════════════════════════════
+
+        const SENTENCE_PATTERNS = [
+            // Pattern: Simple action
+            (v, o, t) => `${o} ${conjugateVerb(v)}`,
+            // Pattern: With tool
+            (v, o, t) => `${o} mit ${t} ${conjugateVerb(v)}`,
+            // Pattern: Action-first
+            (v, o, t) => `${conjugateVerb(v).charAt(0).toUpperCase() + conjugateVerb(v).slice(1)}: ${o}`,
+            // Pattern: Detailed action
+            (v, o, t) => `${o} fachgerecht ${conjugateVerb(v)} und dokumentiert`,
+            // Pattern: Team action
+            (v, o, t) => `Gemeinsam im Team: ${o} ${conjugateVerb(v)}`,
+            // Pattern: Independent action
+            (v, o, t) => `Selbstständig ${o} ${conjugateVerb(v)}`,
+            // Pattern: Instruction-based
+            (v, o, t) => `Nach Anleitung ${o} ${conjugateVerb(v)}`,
+            // Pattern: With tool detailed
+            (v, o, t) => `${o} mithilfe von ${t} ${conjugateVerb(v)} und überprüft`,
+            // Pattern: Process
+            (v, o, t) => `${o} vorbereitet, ${conjugateVerb(v)} und Ergebnis kontrolliert`,
+            // Pattern: Learning
+            (v, o, t) => `Neues Verfahren: ${o} ${conjugateVerb(v)} (${t})`,
+            // Pattern: Problem-solving
+            (v, o, t) => `Fehler bei ${o} identifiziert und behoben`,
+            // Pattern: Documentation
+            (v, o, t) => `${o} ${conjugateVerb(v)} — Arbeitsschritte dokumentiert`,
+            // Pattern: Guided
+            (v, o, t) => `Unter Aufsicht: ${o} ${conjugateVerb(v)}`,
+            // Pattern: Quality check
+            (v, o, t) => `Qualitätskontrolle: ${o} geprüft und ${conjugateVerb(v)}`,
+            // Pattern: Project-based
+            (v, o, t) => `Im Rahmen des aktuellen Projekts: ${o} ${conjugateVerb(v)}`,
+        ];
+
+        const UNIVERSAL_ACTIVITIES_EXTENDED = [
+            'Arbeitsplatz eingerichtet und Materialien vorbereitet',
+            'Werkzeug und Arbeitsmittel auf Funktion geprüft',
+            'Arbeitsauftrag vom Ausbilder entgegengenommen und besprochen',
+            'Sicherheitsunterweisung durchgeführt/teilgenommen',
+            'Arbeitsmaterialien bestellt bzw. nachgefüllt',
+            'Arbeitsbereich aufgeräumt und gereinigt',
+            'Dokumentation der heutigen Tätigkeiten angefertigt',
+            'Feedback-Gespräch mit Ausbilder/in geführt',
+            'Kolleg/innen bei Aufgaben unterstützt',
+            'Neues Themengebiet selbstständig eingearbeitet',
+            'An Team-Besprechung / Meeting teilgenommen',
+            'Qualitätskontrolle durchgeführt',
+            'Kundenkontakt: Anfrage bearbeitet/beraten',
+            'Berufsschulstoff nachbereitet und zusammengefasst',
+            'Prüfungsvorbereitung: Übungsaufgaben bearbeitet',
+            'Arbeitszeiterfassung und Stundenzettel ausgefüllt',
+            'Material- und Werkzeugbestand kontrolliert',
+            'Unterweisungsgespräch mit Ausbilder durchgeführt',
+            'Standardarbeitsanweisung (SOP) studiert',
+            'Ergonomie am Arbeitsplatz beachtet und umgesetzt',
+            'Arbeitsschutzmaßnahmen überprüft',
+            'Projektfortschritt besprochen und geplant',
+            'Fehler im Arbeitsprozess erkannt und gemeldet',
+            'Abteilungsübergreifende Zusammenarbeit',
+            'Prozessoptimierung vorgeschlagen und besprochen',
+        ];
+
+        // ═══════════════════════════════════════
+        // ENTRY GENERATION — Core Engine
+        // ═══════════════════════════════════════
+
+        function generateDayEntries(professionId, options = {}) {
+            const {
+                yearNum = 2,
+                complexity = 'medium',
+                dayIndex = 0,
+                isSchoolDay = false,
+                season = getCurrentSeason(),
+                excludePhrases = [],
+                department = '',
+            } = options;
+
+            const prof = PROFESSIONS[professionId];
+            if (!prof) return generateGenericDayEntries(options);
+
+            const entryCount = {
+                'simple': { min: 3, max: 4 },
+                'medium': { min: 4, max: 5 },
+                'complex': { min: 5, max: 7 }
+            }[complexity] || { min: 4, max: 5 };
+
+            const numEntries = entryCount.min + Math.floor(Math.random() * (entryCount.max - entryCount.min + 1));
+
+            if (isSchoolDay) {
+                return generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases);
+            }
+
+            const entries = [];
+            const usedVerbs = [];
+            const usedObjects = [];
+
+            // 1. Add year-appropriate task (50% chance)
+            if (Math.random() > 0.5 && prof.yearTasks && prof.yearTasks[yearNum]) {
+                const yearTask = pickRandom(prof.yearTasks[yearNum], excludePhrases);
+                if (yearTask) {
+                    entries.push('• ' + yearTask);
+                    excludePhrases.push(yearTask);
+                }
+            }
+
+            // 2. Add seasonal activity (30% chance for applicable professions)
+            if (Math.random() > 0.7 && SEASONAL_ACTIVITIES[professionId]) {
+                const seasonalActivities = SEASONAL_ACTIVITIES[professionId][season];
+                if (seasonalActivities) {
+                    const seasonal = pickRandom(seasonalActivities, excludePhrases);
+                    if (seasonal) {
+                        entries.push('• ' + seasonal);
+                        excludePhrases.push(seasonal);
+                    }
+                }
+            }
+
+            // 3. Generate profession-specific entries
+            while (entries.length < numEntries) {
+                const verb = pickRandom(prof.verbs, usedVerbs);
+                const obj = pickRandom(prof.objects, usedObjects);
+                const tool = pickRandom(prof.tools);
+
+                usedVerbs.push(verb);
+                usedObjects.push(obj);
+
+                const pattern = pickRandom(SENTENCE_PATTERNS);
+                let sentence = pattern(verb, obj, tool);
+
+                // Ensure no duplicates
+                if (!entries.includes('• ' + sentence) && !excludePhrases.includes(sentence)) {
+                    entries.push('• ' + sentence);
+                    excludePhrases.push(sentence);
+                }
+            }
+
+            // 4. Add universal activity (40% chance)
+            if (entries.length < numEntries + 1 && Math.random() > 0.6) {
+                const universal = pickRandom(UNIVERSAL_ACTIVITIES_EXTENDED, excludePhrases);
+                if (universal) {
+                    entries.push('• ' + universal);
+                    excludePhrases.push(universal);
+                }
+            }
+
+            return {
+                entries: entries.slice(0, numEntries),
+                hours: isSchoolDay ? 0 : 8,
+                isSchoolDay: false,
+                excludePhrases
+            };
+        }
+
+        function generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases) {
+            const schoolEntry = generateSchoolEntry(professionId, yearNum);
+            const entries = [];
+            if (schoolEntry) {
+                entries.push('• ' + schoolEntry);
+            }
+
+            // Add 1-2 study-related entries
+            const studyActivities = [
+                'Berufsschulheft nachgeführt und Lernstoff zusammengefasst',
+                'Übungsaufgaben aus dem Unterricht bearbeitet',
+                'Mit Mitschülern Gruppenarbeit durchgeführt',
+                'Hausaufgaben für nächsten Berufsschultag erledigt',
+                'Lernmaterial für bevorstehende Prüfung organisiert',
+                'Fachbegriffe und Definitionen wiederholt',
+                'Online-Lernplattform genutzt und Aufgaben bearbeitet',
+            ];
+
+            entries.push('• ' + pickRandom(studyActivities, excludePhrases));
+
+            return {
+                entries,
+                hours: 8,
+                isSchoolDay: true,
+                schoolTopic: schoolEntry,
+                excludePhrases: [...excludePhrases, ...entries.map(e => e.replace('• ', ''))]
+            };
+        }
+
+        function generateGenericDayEntries(options) {
+            const { complexity = 'medium', excludePhrases = [] } = options;
+            const numEntries = complexity === 'simple' ? 3 : complexity === 'complex' ? 6 : 4;
+
+            const entries = pickMultipleUnique(UNIVERSAL_ACTIVITIES_EXTENDED, numEntries, excludePhrases)
+                .map(e => '• ' + e);
+
+            return {
+                entries,
+                hours: 8,
+                isSchoolDay: false,
+                excludePhrases: [...excludePhrases, ...entries.map(e => e.replace('• ', ''))]
+            };
+        }
+
+        // ═══════════════════════════════════════
+        // FULL WEEK GENERATION
+        // ═══════════════════════════════════════
+
+        function generateWeek(professionId, options = {}) {
+            const {
+                yearNum = 2,
+                complexity = 'medium',
+                selectedDays = [0, 1, 2, 3, 4],
+                includeSchool = true,
+                maxVariation = true,
+                department = '',
+                calendarWeek = null,
+            } = options;
+
+            const DAY_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+            const season = getCurrentSeason();
+            const allExcludePhrases = maxVariation ? [...state.usedPhrases] : [];
+
+            // Pick a school day (usually Wednesday or Friday)
+            let schoolDayIndex = -1;
+            if (includeSchool && selectedDays.length >= 3) {
+                const schoolCandidates = selectedDays.filter(d => d === 2 || d === 4 || d === 1);
+                schoolDayIndex = schoolCandidates.length > 0 ? pickRandom(schoolCandidates) : pickRandom(selectedDays);
+            }
+
+            const week = {
+                profession: professionId,
+                professionName: PROFESSIONS[professionId]?.name || professionId,
+                professionIcon: PROFESSIONS[professionId]?.icon || '📋',
+                yearNum,
+                complexity,
+                calendarWeek: calendarWeek || getCalendarWeek(),
+                department: department || (PROFESSIONS[professionId]?.departments ? pickRandom(PROFESSIONS[professionId].departments) : ''),
+                season,
+                timestamp: Date.now(),
+                days: [],
+                totalHours: 0,
+            };
+
+            for (const dayIdx of selectedDays) {
+                const isSchoolDay = dayIdx === schoolDayIndex;
+                const result = generateDayEntries(professionId, {
+                    yearNum,
+                    complexity,
+                    dayIndex: dayIdx,
+                    isSchoolDay,
+                    season,
+                    excludePhrases: allExcludePhrases,
+                    department: week.department,
+                });
+
+                const day = {
+                    index: dayIdx,
+                    name: DAY_NAMES[dayIdx],
+                    entries: result.entries,
+                    hours: result.hours || 8,
+                    isSchoolDay: result.isSchoolDay,
+                    schoolTopic: result.schoolTopic || null,
+                };
+
+                week.days.push(day);
+                week.totalHours += day.hours;
+
+                // Track used phrases for variation
+                if (result.excludePhrases) {
+                    result.excludePhrases.forEach(p => allExcludePhrases.push(p));
+                }
+            }
+
+            // Update global used phrases (for max variation across sessions)
+            if (maxVariation) {
+                allExcludePhrases.forEach(p => state.usedPhrases.add(p));
+                // Keep set manageable — max 500 entries
+                if (state.usedPhrases.size > 500) {
+                    const arr = [...state.usedPhrases];
+                    state.usedPhrases = new Set(arr.slice(arr.length - 200));
+                }
+                try { localStorage.setItem(STORAGE_KEYS.usedPhrases, JSON.stringify([...state.usedPhrases])); } catch(e) {}
+            }
+
+            return week;
+        }
+
+        function getCalendarWeek() {
+            const now = new Date();
+            const start = new Date(now.getFullYear(), 0, 1);
+            const diff = now - start;
+            const oneWeek = 604800000;
+            return Math.ceil((diff / oneWeek) + (start.getDay() + 6) % 7 / 7);
+        }
+
+        // ═══════════════════════════════════════
+        // IHK COMPLIANCE VALIDATION
+        // ═══════════════════════════════════════
+
+        function validateIHKCompliance(week) {
+            const issues = [];
+            let score = 0;
+            const maxScore = 100;
+
+            // 1. Check minimum entries per day (3+)
+            let allDaysHaveMin = true;
+            for (const day of week.days) {
+                if (day.entries.length < 3) {
+                    issues.push(`${day.name}: Weniger als 3 Einträge (min. 3 empfohlen)`);
+                    allDaysHaveMin = false;
+                }
+            }
+            if (allDaysHaveMin) score += 20;
+            else score += 10;
+
+            // 2. Check for variety (no duplicate entries)
+            const allEntries = week.days.flatMap(d => d.entries.map(e => e.replace('• ', '').toLowerCase()));
+            const uniqueEntries = new Set(allEntries);
+            const varietyRatio = uniqueEntries.size / Math.max(allEntries.length, 1);
+            if (varietyRatio >= 0.9) score += 20;
+            else if (varietyRatio >= 0.7) score += 15;
+            else { score += 5; issues.push('Zu viele ähnliche Einträge — mehr Variation empfohlen'); }
+
+            // 3. Check hours (should be ~40h/week for 5 days)
+            const expectedHours = week.days.length * 8;
+            if (Math.abs(week.totalHours - expectedHours) <= 2) score += 15;
+            else { score += 5; issues.push(`Stundenzahl (${week.totalHours}h) weicht von ${expectedHours}h ab`); }
+
+            // 4. Check if school day is included (important for IHK)
+            const hasSchoolDay = week.days.some(d => d.isSchoolDay);
+            if (hasSchoolDay) score += 15;
+            else { score += 5; issues.push('Kein Berufsschultag — IHK empfiehlt Berufsschuleinträge'); }
+
+            // 5. Check entry length (not too short)
+            let goodLength = true;
+            for (const day of week.days) {
+                for (const entry of day.entries) {
+                    if (entry.replace('• ', '').length < 15) {
+                        goodLength = false;
+                        break;
+                    }
+                }
+            }
+            if (goodLength) score += 15;
+            else { score += 5; issues.push('Einige Einträge zu kurz — mindestens 15 Zeichen empfohlen'); }
+
+            // 6. Department mentioned
+            if (week.department) score += 5;
+            else issues.push('Keine Abteilung angegeben');
+
+            // 7. Profession-specific content
+            if (week.profession && PROFESSIONS[week.profession]) score += 10;
+            else { score += 5; issues.push('Kein spezifischer Beruf gewählt'); }
+
+            const status = score >= 85 ? 'pass' : score >= 60 ? 'warn' : 'fail';
+            const statusText = score >= 85 ? 'IHK-Konform' : score >= 60 ? 'Verbesserung empfohlen' : 'Nicht ausreichend';
+
+            return {
+                score: Math.min(score, maxScore),
+                maxScore,
+                status,
+                statusText,
+                issues,
+            };
+        }
+
+        // ═══════════════════════════════════════
+        // UI RENDERING
+        // ═══════════════════════════════════════
+
+        function renderProfessionGrid() {
+            const grid = document.getElementById('aisProfGrid');
+            if (!grid) return;
+
+            const profList = Object.values(PROFESSIONS);
+            grid.innerHTML = profList.map(p => `
+                <div class="ais-prof-card${state.selectedProfession === p.id ? ' selected' : ''}"
+                     data-prof="${p.id}" onclick="AIStudio.selectProfession('${p.id}')">
+                    <div class="ais-prof-icon">${p.icon}</div>
+                    <div class="ais-prof-name">${p.name}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderPreview(week) {
+            const content = document.getElementById('aisPreviewContent');
+            const toolbar = document.getElementById('aisPreviewToolbar');
+            const compliance = document.getElementById('aisCompliance');
+            if (!content) return;
+
+            if (!week || !week.days || week.days.length === 0) {
+                content.innerHTML = `
+                    <div class="ais-preview-empty">
+                        <div class="empty-icon">✨</div>
+                        <h3>Noch keine Einträge generiert</h3>
+                        <p>Wähle im Tab "Generieren" deinen Beruf und klicke auf den Button — die AI erstellt dir sofort IHK-konforme Einträge.</p>
+                    </div>`;
+                if (toolbar) toolbar.style.display = 'none';
+                if (compliance) compliance.style.display = 'none';
+                return;
+            }
+
+            // Show toolbar
+            if (toolbar) toolbar.style.display = 'flex';
+
+            // Render day cards
+            content.innerHTML = week.days.map((day, i) => `
+                <div class="ais-day-card" data-day-idx="${day.index}">
+                    <div class="ais-day-card-header">
+                        <span class="ais-day-name">${day.isSchoolDay ? '📚 ' : ''}${day.name}</span>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="ais-day-hours">${day.hours}h</span>
+                            <div class="ais-day-card-actions">
+                                <button class="ais-day-action" onclick="AIStudio.regenerateDay(${i})" title="Tag neu generieren">🔄</button>
+                                <button class="ais-day-action" onclick="AIStudio.insertDay(${i})" title="Einzeln einfügen">📥</button>
+                            </div>
+                        </div>
+                    </div>
+                    ${day.isSchoolDay && day.schoolTopic ? `<div class="ais-day-school"><strong>📖</strong> ${day.schoolTopic}</div>` : ''}
+                    <ul class="ais-day-entries">
+                        ${day.entries.map((entry, j) => `
+                            <li>
+                                <span class="entry-text" contenteditable="true" onblur="AIStudio.updateEntry(${i}, ${j}, this.textContent)">${entry.replace('• ', '')}</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `).join('');
+
+            // IHK Compliance
+            const ihk = validateIHKCompliance(week);
+            if (compliance) {
+                compliance.style.display = 'flex';
+                const badge = document.getElementById('aisComplianceBadge');
+                const text = document.getElementById('aisComplianceText');
+                if (badge) {
+                    badge.className = `ais-compliance-badge ${ihk.status}`;
+                    badge.innerHTML = `<span>${ihk.status === 'pass' ? '✓' : ihk.status === 'warn' ? '⚠' : '✗'}</span> ${ihk.statusText}`;
+                }
+                if (text) {
+                    text.textContent = ihk.issues.length > 0
+                        ? ihk.issues.slice(0, 2).join('. ')
+                        : 'Alle Einträge erfüllen die IHK-Richtlinien.';
+                }
+            }
+
+            // Score in toolbar
+            const scoreEl = document.getElementById('aisPreviewScore');
+            if (scoreEl) {
+                const color = ihk.score >= 85 ? 'var(--success)' : ihk.score >= 60 ? 'var(--warning)' : 'var(--danger)';
+                scoreEl.innerHTML = `
+                    <div class="ais-score-ring" style="background:${color}22;color:${color};border:2px solid ${color}">${ihk.score}</div>
+                    <span style="color:${color}">IHK Score</span>`;
+            }
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('aisHistory');
+            if (!container) return;
+
+            if (state.generationHistory.length === 0) {
+                container.innerHTML = `
+                    <div class="ais-preview-empty">
+                        <div class="empty-icon">📜</div>
+                        <h3>Noch kein Verlauf</h3>
+                        <p>Generierte Einträge werden hier gespeichert, damit du sie wiederverwenden kannst.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = state.generationHistory
+                .slice()
+                .reverse()
+                .slice(0, 30)
+                .map((item, i) => {
+                    const date = new Date(item.timestamp);
+                    const dateStr = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                    const preview = item.days?.[0]?.entries?.[0]?.replace('• ', '') || 'Kein Inhalt';
+                    return `
+                        <div class="ais-history-item" onclick="AIStudio.loadFromHistory(${state.generationHistory.length - 1 - i})">
+                            <div class="ais-history-item-header">
+                                <span class="ais-history-item-prof">${item.professionIcon || '📋'} ${item.professionName || item.profession}</span>
+                                <span class="ais-history-item-date">${dateStr}</span>
+                            </div>
+                            <div class="ais-history-item-preview">KW ${item.calendarWeek || '?'} • ${item.days?.length || 0} Tage • ${preview}</div>
+                        </div>`;
+                }).join('');
+        }
+
+        // ═══════════════════════════════════════
+        // FORM AUTO-FILL — Direct Insertion
+        // ═══════════════════════════════════════
+
+        // Helper: wait until daily fields exist in DOM (polls every 50ms, max 2s)
+        function _waitForDailyFields(callback, maxWait = 2000) {
+            const start = Date.now();
+            const check = () => {
+                if (document.getElementById('daily_0')) {
+                    callback();
+                } else if (Date.now() - start < maxWait) {
+                    setTimeout(check, 50);
+                } else {
+                    // Fallback: force render and try once more
+                    if (typeof renderDailyFields === 'function') renderDailyFields();
+                    setTimeout(callback, 100);
+                }
+            };
+            check();
+        }
+
+        // Helper: ensure modal is open and in daily mode, then call action
+        function _ensureModalDailyMode(callback) {
+            const modal = document.getElementById('reportModal');
+            const needsOpen = !modal.classList.contains('active');
+
+            if (needsOpen) {
+                openNewReportModal();
+            }
+
+            // Switch to daily mode (creates daily_0..daily_4 fields)
+            if (typeof setMode === 'function') setMode('daily');
+
+            // Wait for daily fields to exist, then fill
+            _waitForDailyFields(callback);
+        }
+
+        function fillFormWithGeneratedWeek(week) {
+            if (!week || !week.days) return;
+
+            _ensureModalDailyMode(() => _doFillForm(week));
+        }
+
+        function _doFillForm(week) {
+            // Set metadata
+            const yearSelect = document.getElementById('reportYear');
+            if (yearSelect && week.yearNum) yearSelect.value = week.yearNum;
+
+            const weekInput = document.getElementById('reportWeek');
+            if (weekInput && week.calendarWeek) {
+                weekInput.value = week.calendarWeek;
+                weekInput.dispatchEvent(new Event('change'));
+                // Re-render daily fields with correct dates after week change
+                if (typeof renderDailyFields === 'function') renderDailyFields();
+            }
+
+            const deptInput = document.getElementById('reportDepartment');
+            if (deptInput && week.department) deptInput.value = week.department;
+
+            // Always use daily mode — we generate per-day entries
+            _waitForDailyFields(() => {
+                for (const day of week.days) {
+                    const textarea = document.getElementById(`daily_${day.index}`);
+                    if (textarea) {
+                        const text = day.entries.join('\n');
+                        textarea.value = text;
+                        textarea.dispatchEvent(new Event('input'));
+                    }
+                    const hoursInput = document.getElementById(`daily_hours_${day.index}`);
+                    if (hoursInput) {
+                        hoursInput.value = day.hours;
+                        hoursInput.dispatchEvent(new Event('input'));
+                    }
+                }
+                if (typeof updateDailyTotalHours === 'function') updateDailyTotalHours();
+
+                // Fill school
+                const schoolDay = week.days.find(d => d.isSchoolDay && d.schoolTopic);
+                if (schoolDay) {
+                    const schoolTextarea = document.getElementById('reportSchool');
+                    if (schoolTextarea && !schoolTextarea.value.trim()) {
+                        schoolTextarea.value = schoolDay.schoolTopic;
+                    }
+                }
+
+                // Set hours
+                const hoursInput = document.getElementById('reportHours');
+                if (hoursInput) {
+                    hoursInput.value = week.totalHours || (week.days.length * 8);
+                }
+
+                showToast('Alle Einträge in Tagesfelder eingefügt! ✅', 'success');
+            });
+        }
+
+        function fillSingleDay(dayData, dayIndex) {
+            _ensureModalDailyMode(() => _fillSingleDay(dayData, dayIndex));
+        }
+
+        function _fillSingleDay(dayData, dayIndex) {
+            // Re-render daily fields to make sure they exist
+            if (!document.getElementById(`daily_${dayIndex}`) && typeof renderDailyFields === 'function') {
+                renderDailyFields();
+            }
+
+            _waitForDailyFields(() => {
+                const textarea = document.getElementById(`daily_${dayIndex}`);
+                if (textarea) {
+                    textarea.value = dayData.entries.join('\n');
+                    textarea.dispatchEvent(new Event('input'));
+                } else {
+                    console.warn(`[AIStudio] daily_${dayIndex} not found`);
+                }
+                const hoursInput = document.getElementById(`daily_hours_${dayIndex}`);
+                if (hoursInput) {
+                    hoursInput.value = dayData.hours;
+                    hoursInput.dispatchEvent(new Event('input'));
+                }
+                if (typeof updateDailyTotalHours === 'function') updateDailyTotalHours();
+                showToast(`${dayData.name} in Tagesfeld eingefügt! ✅`, 'success');
+            });
+        }
+
+        // ═══════════════════════════════════════
+        // PUBLIC API — Called from HTML/onclick
+        // ═══════════════════════════════════════
+
+        function init() {
+            // Restore state from localStorage
+            try {
+                const savedProf = localStorage.getItem(STORAGE_KEYS.profession);
+                if (savedProf && PROFESSIONS[savedProf]) state.selectedProfession = savedProf;
+
+                const savedYear = localStorage.getItem(STORAGE_KEYS.trainingYear);
+                if (savedYear) {
+                    const sel = document.getElementById('aisTrainingYear');
+                    if (sel) sel.value = savedYear;
+                }
+
+                const savedHistory = localStorage.getItem(STORAGE_KEYS.history);
+                if (savedHistory) state.generationHistory = JSON.parse(savedHistory);
+
+                const savedPhrases = localStorage.getItem(STORAGE_KEYS.usedPhrases);
+                if (savedPhrases) state.usedPhrases = new Set(JSON.parse(savedPhrases));
+            } catch(e) { console.warn('[AIStudio] State restore failed:', e); }
+
+            renderProfessionGrid();
+            _restoreApiSettings();
+            console.log(`[AI Studio] Enterprise Berichtsheft Generator v${VERSION} initialized. ${Object.keys(PROFESSIONS).length} Berufe geladen.`);
+        }
+
+        function toggle() {
+            state.isOpen ? close() : open();
+        }
+
+        function open() {
+            state.isOpen = true;
+            const panel = document.getElementById('aiStudioPanel');
+            const backdrop = document.getElementById('aiStudioBackdrop');
+            if (panel) panel.classList.add('open');
+            if (backdrop) backdrop.classList.add('open');
+            renderProfessionGrid();
+        }
+
+        function close() {
+            state.isOpen = false;
+            const panel = document.getElementById('aiStudioPanel');
+            const backdrop = document.getElementById('aiStudioBackdrop');
+            if (panel) panel.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.ais-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.tab === tabName);
+            });
+            document.querySelectorAll('.ais-panel').forEach(p => {
+                p.classList.toggle('active', p.dataset.panel === tabName);
+            });
+            if (tabName === 'history') renderHistory();
+        }
+
+        function selectProfession(id) {
+            state.selectedProfession = id;
+            state.customProfession = '';
+            const customInput = document.getElementById('aisCustomProf');
+            if (customInput) customInput.value = '';
+            localStorage.setItem(STORAGE_KEYS.profession, id);
+            renderProfessionGrid();
+        }
+
+        function onCustomProf(value) {
+            if (value.trim()) {
+                state.customProfession = value.trim();
+                state.selectedProfession = _detectProfession(value.trim());
+                // Deselect all cards
+                document.querySelectorAll('.ais-prof-card').forEach(c => c.classList.remove('selected'));
+                if (state.selectedProfession) {
+                    const card = document.querySelector(`.ais-prof-card[data-prof="${state.selectedProfession}"]`);
+                    if (card) card.classList.add('selected');
+                }
+            }
+        }
+
+        function _detectProfession(input) {
+            const lower = input.toLowerCase();
+            for (const [key, prof] of Object.entries(AI_BRAIN.professions)) {
+                if (prof.keywords && prof.keywords.some(kw => lower.includes(kw))) {
+                    // Map AI_BRAIN keys to PROFESSIONS keys
+                    if (PROFESSIONS[key]) return key;
+                }
+            }
+            // Fallback: check PROFESSIONS directly
+            for (const [key, prof] of Object.entries(PROFESSIONS)) {
+                const nameLower = prof.name.toLowerCase();
+                if (nameLower.includes(lower) || lower.includes(nameLower) || lower.includes(key)) {
+                    return key;
+                }
+            }
+            return null;
+        }
+
+        function toggleDay(el) {
+            const dayIdx = parseInt(el.dataset.day);
+            el.classList.toggle('selected');
+            if (el.classList.contains('selected')) {
+                if (!state.selectedDays.includes(dayIdx)) state.selectedDays.push(dayIdx);
+            } else {
+                state.selectedDays = state.selectedDays.filter(d => d !== dayIdx);
+            }
+            state.selectedDays.sort();
+        }
+
+        // ═══════════════════════════════════════
+        // GEMINI API INTEGRATION
+        // ═══════════════════════════════════════
+
+        const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
+        function toggleEngine(useGemini) {
+            state.useGemini = useGemini;
+            localStorage.setItem(STORAGE_KEYS.useGemini, useGemini ? '1' : '0');
+            const badge = document.getElementById('aisEngineBadge');
+            const apiRow = document.getElementById('aisApiKeyRow');
+            if (badge) {
+                badge.textContent = useGemini ? 'Gemini' : 'Lokal';
+                badge.className = 'ais-engine-toggle-badge ' + (useGemini ? 'ais-engine-badge-gemini' : 'ais-engine-badge-local');
+            }
+            if (apiRow) apiRow.classList.toggle('visible', useGemini);
+            const btnText = document.querySelector('#aisGenerateBtn .btn-text');
+            if (btnText) btnText.textContent = useGemini && state.apiKey ? '🤖 Mit Gemini AI generieren' : '⚡ Komplette Woche generieren';
+        }
+
+        function saveApiKey() {
+            const input = document.getElementById('aisApiKeyInput');
+            const key = input?.value?.trim();
+            if (!key) {
+                showToast('Bitte API Key eingeben!', 'warning');
+                return;
+            }
+            state.apiKey = key;
+            localStorage.setItem(STORAGE_KEYS.apiKey, key);
+            input.value = '';
+            input.placeholder = '••••••••' + key.slice(-4);
+            _updateApiStatus(true);
+            showToast('API Key gespeichert! 🔑', 'success');
+            const btnText = document.querySelector('#aisGenerateBtn .btn-text');
+            if (btnText && state.useGemini) btnText.textContent = '🤖 Mit Gemini AI generieren';
+        }
+
+        function _updateApiStatus(connected) {
+            const el = document.getElementById('aisApiStatus');
+            if (!el) return;
+            el.className = 'ais-api-status ' + (connected ? 'connected' : 'disconnected');
+            el.innerHTML = `<div class="ais-api-status-dot"></div><span>${connected ? 'API Key gespeichert ✓' : 'Kein API Key gespeichert'}</span>`;
+        }
+
+        function _restoreApiSettings() {
+            const savedKey = localStorage.getItem(STORAGE_KEYS.apiKey);
+            const savedUse = localStorage.getItem(STORAGE_KEYS.useGemini);
+            if (savedKey) {
+                state.apiKey = savedKey;
+                const input = document.getElementById('aisApiKeyInput');
+                if (input) input.placeholder = '••••••••' + savedKey.slice(-4);
+                _updateApiStatus(true);
+            }
+            if (savedUse === '1') {
+                state.useGemini = true;
+                const cb = document.getElementById('aisUseGemini');
+                if (cb) cb.checked = true;
+                toggleEngine(true);
+            }
+        }
+
+        function _buildGeminiPrompt(professionId, options) {
+            const prof = PROFESSIONS[professionId];
+            const DAY_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+            const daysList = options.selectedDays.map(d => DAY_NAMES[d]).join(', ');
+            const profName = prof?.name || state.customProfession || professionId;
+            const complexityMap = { low: 'einfach', medium: 'mittel', high: 'fortgeschritten' };
+            const cplx = complexityMap[options.complexity] || 'mittel';
+
+            const systemPrompt = `Du bist ein Experte für IHK-konforme Berichtshefte (Ausbildungsnachweise) in Deutschland.
+Erstelle realistische, abwechslungsreiche Tageseinträge für ein Berichtsheft.
+
+REGELN:
+- Schreibe auf Deutsch in Ich-Form oder Passiv (z.B. "Habe das Ticketsystem aktualisiert" oder "Datenbank wurde migriert")
+- Jeder Tag braucht 3-5 kurze Einträge (Stichpunkte, keine ganzen Sätze)
+- 8 Stunden pro Arbeitstag, Schultage: 6h Schule + 2h Betrieb oder 8h Schule
+- Verwende realistische, berufsspezifische Fachbegriffe und Tätigkeiten
+- Keine Wiederholungen — jeder Tag muss anders sein
+- Einträge sollen zum Lehrjahr ${options.yearNum} passen (Komplexität: ${cplx})
+- Saison: ${getCurrentSeason()} — berücksichtige saisonale Besonderheiten wenn passend
+${options.department ? `- Abteilung: ${options.department}` : ''}
+${options.includeSchool ? '- Baue an EINEM Tag Berufsschule ein mit konkreten Unterrichtsthemen' : '- Keine Berufsschule, nur Betriebstage'}
+
+BERUF: ${profName}
+${prof ? `TOOLS/TECHNOLOGIEN: ${(prof.tools || []).join(', ')}` : ''}
+
+Antworte NUR mit einem JSON-Array. Jedes Element hat:
+- "day": "${DAY_NAMES[0]}" etc.
+- "entries": ["Eintrag 1", "Eintrag 2", ...]  (3-5 Stück)
+- "hours": 8
+- "isSchoolDay": true/false
+- "schoolTopic": "Thema" oder null
+
+Generiere Einträge für: ${daysList}
+Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
+
+            return systemPrompt;
+        }
+
+        async function generateWithGemini(professionId, options) {
+            const prompt = _buildGeminiPrompt(professionId, options);
+            const url = `${GEMINI_ENDPOINT}?key=${state.apiKey}`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        temperature: 0.9,
+                        topP: 0.95,
+                        maxOutputTokens: 2048,
+                        responseMimeType: 'application/json',
+                    },
+                }),
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                const errMsg = errData?.error?.message || response.statusText;
+                if (response.status === 400 && errMsg.includes('API key')) {
+                    throw new Error('Ungültiger API Key. Bitte prüfe deinen Key.');
+                }
+                if (response.status === 429) {
+                    throw new Error('Rate-Limit erreicht. Bitte warte kurz und versuche es erneut.');
+                }
+                throw new Error(`Gemini API Fehler (${response.status}): ${errMsg}`);
+            }
+
+            const data = await response.json();
+            const textContent = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!textContent) throw new Error('Leere Antwort von Gemini API.');
+
+            // Parse JSON from response (may be wrapped in markdown code block)
+            let jsonStr = textContent.trim();
+            if (jsonStr.startsWith('```')) {
+                jsonStr = jsonStr.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+            }
+
+            const daysData = JSON.parse(jsonStr);
+            if (!Array.isArray(daysData) || daysData.length === 0) {
+                throw new Error('Unerwartetes Antwort-Format von Gemini.');
+            }
+
+            const DAY_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+            const prof = PROFESSIONS[professionId];
+
+            // Build the same week structure as generateWeek()
+            const week = {
+                profession: professionId,
+                professionName: prof?.name || state.customProfession || professionId,
+                professionIcon: prof?.icon || '🤖',
+                yearNum: options.yearNum,
+                complexity: options.complexity,
+                calendarWeek: options.calendarWeek || getCalendarWeek(),
+                department: options.department || (prof?.departments ? pickRandom(prof.departments) : ''),
+                season: getCurrentSeason(),
+                timestamp: Date.now(),
+                source: 'gemini',
+                days: [],
+                totalHours: 0,
+            };
+
+            for (const dayData of daysData) {
+                const dayName = dayData.day || '';
+                const dayIdx = DAY_NAMES.indexOf(dayName);
+                if (dayIdx === -1) continue;
+
+                const day = {
+                    index: dayIdx,
+                    name: dayName,
+                    entries: Array.isArray(dayData.entries) ? dayData.entries : [],
+                    hours: dayData.hours || 8,
+                    isSchoolDay: !!dayData.isSchoolDay,
+                    schoolTopic: dayData.schoolTopic || null,
+                };
+                week.days.push(day);
+                week.totalHours += day.hours;
+            }
+
+            if (week.days.length === 0) {
+                throw new Error('Keine gültigen Tage in der Gemini-Antwort.');
+            }
+
+            return week;
+        }
+
+        async function generate() {
+            if (state.isGenerating) return;
+            if (!state.selectedProfession) {
+                showToast('Bitte wähle zuerst einen Beruf aus!', 'warning');
+                return;
+            }
+            if (state.selectedDays.length === 0) {
+                showToast('Bitte wähle mindestens einen Tag aus!', 'warning');
+                return;
+            }
+
+            state.isGenerating = true;
+            const btn = document.getElementById('aisGenerateBtn');
+            if (btn) btn.classList.add('loading');
+
+            try {
+                const yearNum = parseInt(document.getElementById('aisTrainingYear')?.value) || 2;
+                const complexity = document.getElementById('aisComplexity')?.value || 'medium';
+                const calendarWeek = parseInt(document.getElementById('aisCalendarWeek')?.value) || null;
+                const department = document.getElementById('aisDepartment')?.value || '';
+                const includeSchool = document.getElementById('aisIncludeSchool')?.checked ?? true;
+                const maxVariation = document.getElementById('aisVariation')?.checked ?? true;
+
+                localStorage.setItem(STORAGE_KEYS.trainingYear, yearNum);
+
+                const genOptions = {
+                    yearNum,
+                    complexity,
+                    selectedDays: state.selectedDays,
+                    includeSchool,
+                    maxVariation,
+                    department,
+                    calendarWeek,
+                };
+
+                let week;
+                let usedGemini = false;
+
+                // Try Gemini API first if enabled and key is set
+                if (state.useGemini && state.apiKey) {
+                    try {
+                        week = await generateWithGemini(state.selectedProfession, genOptions);
+                        usedGemini = true;
+                    } catch (apiErr) {
+                        console.warn('[AIStudio] Gemini API failed, falling back to local engine:', apiErr);
+                        showToast('Gemini fehlgeschlagen — nutze lokale Engine. ' + apiErr.message, 'warning');
+                        // Small delay for UX
+                        await new Promise(r => setTimeout(r, 400));
+                        week = generateWeek(state.selectedProfession, genOptions);
+                    }
+                } else {
+                    // Local engine with small UX delay
+                    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+                    week = generateWeek(state.selectedProfession, genOptions);
+                }
+
+                state.generatedEntries = week;
+
+                // Save to history
+                state.generationHistory.push(week);
+                if (state.generationHistory.length > 50) {
+                    state.generationHistory = state.generationHistory.slice(-50);
+                }
+                try { localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(state.generationHistory)); } catch(e) {}
+
+                // Switch to preview tab
+                switchTab('preview');
+                renderPreview(week);
+
+                showToast(`${week.days.length} Tage generiert${usedGemini ? ' mit Gemini AI' : ''}! 📝`, 'success');
+            } catch(e) {
+                console.error('[AIStudio] Generation error:', e);
+                showToast('Fehler bei der Generierung: ' + e.message, 'error');
+            } finally {
+                state.isGenerating = false;
+                if (btn) btn.classList.remove('loading');
+            }
+        }
+
+        function regenerateAll() {
+            if (!state.selectedProfession) return;
+            switchTab('generate');
+            setTimeout(() => generate(), 100);
+        }
+
+        function regenerateDay(dayIdx) {
+            if (!state.generatedEntries || !state.selectedProfession) return;
+
+            const day = state.generatedEntries.days[dayIdx];
+            if (!day) return;
+
+            const yearNum = parseInt(document.getElementById('aisTrainingYear')?.value) || 2;
+            const complexity = document.getElementById('aisComplexity')?.value || 'medium';
+
+            const result = generateDayEntries(state.selectedProfession, {
+                yearNum,
+                complexity,
+                dayIndex: day.index,
+                isSchoolDay: day.isSchoolDay,
+                excludePhrases: [...state.usedPhrases],
+            });
+
+            state.generatedEntries.days[dayIdx].entries = result.entries;
+            if (result.schoolTopic) state.generatedEntries.days[dayIdx].schoolTopic = result.schoolTopic;
+
+            renderPreview(state.generatedEntries);
+            showToast(`${day.name} neu generiert!`, 'info');
+        }
+
+        function updateEntry(dayIdx, entryIdx, newText) {
+            if (!state.generatedEntries?.days?.[dayIdx]?.entries?.[entryIdx]) return;
+            state.generatedEntries.days[dayIdx].entries[entryIdx] = '• ' + newText.trim();
+        }
+
+        function shuffleEntries() {
+            if (!state.generatedEntries) return;
+            for (const day of state.generatedEntries.days) {
+                day.entries = shuffleArray(day.entries);
+            }
+            renderPreview(state.generatedEntries);
+            showToast('Einträge gemischt!', 'info');
+        }
+
+        function insertAll() {
+            if (!state.generatedEntries) {
+                showToast('Keine Einträge zum Einfügen vorhanden!', 'warning');
+                return;
+            }
+            fillFormWithGeneratedWeek(state.generatedEntries);
+            close();
+        }
+
+        function insertDay(dayIdx) {
+            if (!state.generatedEntries?.days?.[dayIdx]) return;
+            const day = state.generatedEntries.days[dayIdx];
+            fillSingleDay(day, day.index);
+        }
+
+        function loadFromHistory(idx) {
+            if (idx < 0 || idx >= state.generationHistory.length) return;
+            state.generatedEntries = JSON.parse(JSON.stringify(state.generationHistory[idx]));
+            state.selectedProfession = state.generatedEntries.profession;
+            switchTab('preview');
+            renderPreview(state.generatedEntries);
+            showToast('Verlaufs-Eintrag geladen!', 'info');
+        }
+
+        // ═══════════════════════════════════════
+        // PUBLIC INTERFACE
+        // ═══════════════════════════════════════
+
+        return {
+            init,
+            toggle,
+            open,
+            close,
+            switchTab,
+            selectProfession,
+            onCustomProf,
+            toggleDay,
+            toggleEngine,
+            saveApiKey,
+            generate,
+            regenerateAll,
+            regenerateDay,
+            updateEntry,
+            shuffleEntries,
+            insertAll,
+            insertDay,
+            loadFromHistory,
+            VERSION,
+        };
+
+    })();
     </script>
 </body>
 </html>
