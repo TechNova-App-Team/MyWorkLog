@@ -15788,6 +15788,12 @@ TIPPS:
         } else {
             throw new Error('Ungültige Backup-Datei: weder v2-Format noch gültiges Legacy-Format erkannt.');
         }
+        // Import = gültiges Backup vorhanden → Reminder zurücksetzen
+        try {
+            localStorage.setItem('tt_last_export', new Date().toISOString());
+            const today = new Date().toISOString().split('T')[0];
+            localStorage.setItem('tt_export_reminder_shown_' + today, '1');
+        } catch(e) {}
     }
 
     function exportData(format) {

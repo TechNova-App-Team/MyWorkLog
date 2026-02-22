@@ -165,8 +165,9 @@
 
         .kpi-card {
             background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 14px; padding: 1.2rem;
+            border-radius: 16px; padding: 1.2rem 1.3rem;
             position: relative; overflow: hidden; transition: all 0.3s;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
         }
 
         .kpi-card:hover {
@@ -174,6 +175,8 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.3);
             border-color: rgba(255,255,255,0.15);
         }
+
+        .kpi-card:active { transform: scale(0.97); }
 
         .kpi-card::before {
             content: ''; position: absolute; top: 0; left: 0;
@@ -222,8 +225,11 @@
         /* Section Card */
         .section-card {
             background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem;
+            border-radius: 18px; padding: 1.5rem; margin-bottom: 1.5rem;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            transition: border-color 0.3s;
         }
+        .section-card:hover { border-color: rgba(255,255,255,0.12); }
 
         .section-card h3 {
             font-size: 1rem; margin-bottom: 1.2rem;
@@ -348,26 +354,36 @@
 
         /* Tabs */
         .tabs {
-            display: flex; gap: 0; margin-bottom: 1rem;
+            display: flex; gap: 6px; margin-bottom: 1rem;
             border-bottom: 1px solid var(--border);
-            overflow-x: auto;
+            overflow-x: auto; padding-bottom: 8px;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
         }
+        .tabs::-webkit-scrollbar { display: none; }
 
         .tab-btn {
-            padding: 0.6rem 1.2rem; border: none; background: transparent;
-            color: var(--text-muted); cursor: pointer; font-size: 0.85rem;
-            font-weight: 500; transition: all 0.2s; border-bottom: 2px solid transparent;
-            white-space: nowrap;
+            padding: 0.55rem 1.1rem; border: 1px solid transparent; background: transparent;
+            color: var(--text-muted); cursor: pointer; font-size: 0.82rem;
+            font-weight: 600; transition: all 0.2s; border-radius: 10px;
+            white-space: nowrap; -webkit-tap-highlight-color: transparent;
         }
 
         .tab-btn.active {
-            color: var(--primary); border-bottom-color: var(--primary);
+            color: var(--primary); background: var(--primary-dim);
+            border-color: rgba(var(--primary-rgb), 0.25);
         }
 
-        .tab-btn:hover:not(.active) { color: var(--text-main); }
+        .tab-btn:hover:not(.active) { color: var(--text-main); background: rgba(255,255,255,0.04); }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+
+        /* Table Scroll Wrapper */
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -0.5rem; padding: 0 0.5rem; }
+        .table-scroll::-webkit-scrollbar { height: 4px; }
+        .table-scroll::-webkit-scrollbar-track { background: transparent; }
+        .table-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
 
         /* Config Notice */
         .config-notice {
@@ -443,20 +459,78 @@
         .skeleton-hidden { display: none; }
         .data-hidden { display: none; }
 
+        /* Fade-in animation */
+        .fade-in { opacity: 0; transform: translateY(16px); transition: opacity 0.5s ease, transform 0.5s ease; }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        /* Scroll to top FAB */
+        .scroll-top-btn {
+            position: fixed; bottom: 24px; right: 24px; z-index: 999;
+            width: 48px; height: 48px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            border: none; color: #fff; font-size: 1.3rem; cursor: pointer;
+            box-shadow: 0 4px 20px rgba(168,85,247,0.4);
+            opacity: 0; pointer-events: none; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .scroll-top-btn.show { opacity: 1; pointer-events: auto; }
+        .scroll-top-btn:hover { transform: translateY(-3px) scale(1.08); }
+
+        /* Insights Card */
+        .insights-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+        .insight-item {
+            display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px;
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            border-radius: 14px; transition: all 0.2s;
+        }
+        .insight-item:hover { border-color: rgba(var(--primary-rgb),0.3); }
+        .insight-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+        .insight-text { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; }
+        .insight-text strong { color: var(--text-main); font-weight: 700; }
+
         /* Responsive */
         @media (max-width: 768px) {
-            body { padding: 0.75rem; }
-            .header h1 { font-size: 1.5rem; }
-            .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
+            body { padding: 0.6rem; }
+            .header { padding: 1.4rem 1rem; border-radius: 16px; }
+            .header h1 { font-size: 1.4rem; }
+            .header p { font-size: 0.85rem; }
+            .kpi-grid {
+                display: flex; overflow-x: auto; gap: 10px;
+                scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+                padding-bottom: 8px; margin: 0 -0.3rem;
+            }
+            .kpi-grid::-webkit-scrollbar { display: none; }
+            .kpi-card {
+                min-width: 150px; flex-shrink: 0;
+                scroll-snap-align: start;
+            }
             .kpi-value { font-size: 1.5rem; }
-            .grid-2, .grid-3 { grid-template-columns: 1fr; }
-            .bar-chart { height: 140px; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; gap: 1rem; }
+            .section-card { padding: 1.1rem; border-radius: 14px; }
+            .bar-chart { height: 130px; overflow-x: auto; min-width: 0; }
             .time-selector { flex-wrap: wrap; justify-content: center; }
+            .time-btn { padding: 0.45rem 0.8rem; font-size: 0.8rem; }
+            .donut-container { flex-direction: column; gap: 1rem; }
+            .donut { width: 120px; height: 120px; }
+            .donut-center { width: 78px; height: 78px; }
+            .data-table th, .data-table td { padding: 0.6rem 0.5rem; font-size: 0.78rem; }
+            .refresh-btn { padding: 0.5rem 1rem; font-size: 0.82rem; }
+            .back-btn { padding: 0.5rem 1rem; font-size: 0.85rem; margin-bottom: 1rem; }
+            .insights-grid { grid-template-columns: 1fr; }
+            .scroll-top-btn { bottom: 16px; right: 16px; width: 44px; height: 44px; }
         }
 
         @media (max-width: 480px) {
-            .kpi-grid { grid-template-columns: 1fr 1fr; }
-            .header-row { flex-direction: column; }
+            .header-row { flex-direction: column; gap: 0.8rem; }
+            .kpi-card { min-width: 140px; padding: 1rem; }
+            .kpi-value { font-size: 1.35rem; }
+            .kpi-label { font-size: 0.65rem; }
+            .tab-btn { padding: 0.45rem 0.8rem; font-size: 0.75rem; }
+        }
+
+        @media (max-width: 360px) {
+            body { padding: 0.4rem; }
+            .kpi-card { min-width: 130px; padding: 0.85rem; }
         }
     </style>
 </head>
@@ -536,6 +610,18 @@
                 <div class="kpi-value" id="kpiBounce">--</div>
                 <div class="kpi-trend neutral" id="kpiBouncesTrend">--</div>
             </div>
+            <div class="kpi-card cyan">
+                <div class="kpi-icon">📊</div>
+                <div class="kpi-label">Seiten/Session</div>
+                <div class="kpi-value" id="kpiPagesPerSession">--</div>
+                <div class="kpi-sub" id="kpiPagesPerSessionSub"></div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-icon">🎯</div>
+                <div class="kpi-label">Engagement</div>
+                <div class="kpi-value" id="kpiEngagement">--</div>
+                <div class="kpi-sub" id="kpiEngagementSub"></div>
+            </div>
         </div>
 
         <!-- KPI Skeletons -->
@@ -567,6 +653,18 @@
             <div class="kpi-card red">
                 <div class="kpi-icon">🚀</div>
                 <div class="kpi-label">Bounce Rate</div>
+                <div class="skeleton skeleton-kpi-value"></div>
+                <div class="skeleton skeleton-kpi-sub"></div>
+            </div>
+            <div class="kpi-card cyan">
+                <div class="kpi-icon">📊</div>
+                <div class="kpi-label">Seiten/Session</div>
+                <div class="skeleton skeleton-kpi-value"></div>
+                <div class="skeleton skeleton-kpi-sub"></div>
+            </div>
+            <div class="kpi-card green">
+                <div class="kpi-icon">🎯</div>
+                <div class="kpi-label">Engagement</div>
                 <div class="skeleton skeleton-kpi-value"></div>
                 <div class="skeleton skeleton-kpi-sub"></div>
             </div>
@@ -620,6 +718,17 @@
             </div>
         </div>
 
+        <!-- INSIGHTS -->
+        <div class="section-card fade-in" style="margin-top: 1.5rem;">
+            <h3>💡 Insights <span class="badge">Auto-Analyse</span></h3>
+            <div class="insights-grid" id="insightsGrid">
+                <div class="insight-item">
+                    <div class="insight-icon">⏳</div>
+                    <div class="insight-text">Daten werden geladen...</div>
+                </div>
+            </div>
+        </div>
+
         <!-- CONTENT TABS SECTION -->
         <div class="section-card" style="margin-top: 1.5rem;">
             <div class="tabs">
@@ -632,40 +741,52 @@
             </div>
 
             <div class="tab-content active" id="tab-pages">
+                <div class="table-scroll">
                 <table class="data-table" id="topPagesTable">
                     <thead><tr><th>#</th><th>Seite</th><th>Aufrufe</th><th>Besucher</th><th>Bounce</th><th>Ø Zeit</th><th>Anteil</th></tr></thead>
                     <tbody></tbody>
                 </table>
+                </div>
             </div>
             <div class="tab-content" id="tab-entry">
+                <div class="table-scroll">
                 <table class="data-table" id="entryPagesTable">
                     <thead><tr><th>#</th><th>Entry Page</th><th>Besucher</th><th>Anteil</th></tr></thead>
                     <tbody></tbody>
                 </table>
+                </div>
             </div>
             <div class="tab-content" id="tab-exit">
+                <div class="table-scroll">
                 <table class="data-table" id="exitPagesTable">
                     <thead><tr><th>#</th><th>Exit Page</th><th>Besucher</th><th>Anteil</th></tr></thead>
                     <tbody></tbody>
                 </table>
+                </div>
             </div>
             <div class="tab-content" id="tab-referrers">
+                <div class="table-scroll">
                 <table class="data-table" id="referrersTable">
                     <thead><tr><th>#</th><th>Quelle</th><th>Besucher</th><th>Anteil</th></tr></thead>
                     <tbody></tbody>
                 </table>
+                </div>
             </div>
             <div class="tab-content" id="tab-channels">
+                <div class="table-scroll">
                 <table class="data-table" id="channelsTable">
                     <thead><tr><th>#</th><th>Channel</th><th>Besucher</th><th>Anteil</th></tr></thead>
                     <tbody></tbody>
                 </table>
+                </div>
             </div>
             <div class="tab-content" id="tab-titles">
+                <div class="table-scroll">
                 <table class="data-table" id="titlesTable">
                     <thead><tr><th>#</th><th>Titel</th><th>Aufrufe</th><th>Anteil</th></tr></thead>
                     <tbody></tbody>
                 </table>
+                </div>
             </div>
         </div>
 
@@ -719,7 +840,7 @@
         </div>
 
         <!-- AUDIENCE SECTION -->
-        <div class="grid-3" style="margin-top: 1.5rem;">
+        <div class="grid-3 fade-in" style="margin-top: 1.5rem;">
             <div class="section-card">
                 <h3>📱 Geräte</h3>
                 <div class="donut-container" id="devicesDonut"></div>
@@ -741,7 +862,7 @@
         </div>
 
         <!-- GEO SECTION -->
-        <div class="grid-2" style="margin-top: 1.5rem;">
+        <div class="grid-2 fade-in" style="margin-top: 1.5rem;">
             <div class="section-card">
                 <h3>🌍 Länder</h3>
                 <table class="data-table" id="countriesTable">
@@ -759,7 +880,7 @@
         </div>
 
         <!-- TECH SECTION -->
-        <div class="grid-2" style="margin-top: 1.5rem;">
+        <div class="grid-2 fade-in" style="margin-top: 1.5rem;">
             <div class="section-card">
                 <h3>🗣️ Sprachen</h3>
                 <table class="data-table" id="languagesTable">
@@ -777,16 +898,25 @@
         </div>
 
         <!-- EVENTS SECTION -->
-        <div class="section-card" style="margin-top: 1.5rem;">
+        <div class="section-card fade-in" style="margin-top: 1.5rem;">
             <h3>⚡ Events <span class="badge">Custom Events</span></h3>
+            <div class="table-scroll">
             <table class="data-table" id="eventsTable">
                 <thead><tr><th>#</th><th>Event Name</th><th>Anzahl</th><th>Anteil</th></tr></thead>
                 <tbody></tbody>
             </table>
+            </div>
         </div>
 
+        <!-- FOOTER -->
+        <div style="text-align:center;padding:2rem 0;margin-top:1rem;">
+            <p style="font-size:0.75rem;color:var(--text-muted);opacity:0.5;">MyWorkLog Analytics · Powered by Umami · Datenschutzfreundlich & Cookie-frei</p>
+        </div>
 
     </div>
+
+    <!-- Scroll to top -->
+    <button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Nach oben">↑</button>
 
     <script>
         // =========================================
@@ -885,6 +1015,119 @@
 
         const DEVICE_ICONS = { 'desktop': '🖥️', 'mobile': '📱', 'tablet': '📱', 'laptop': '💻' };
         const DEVICE_COLORS = { 'desktop': 'var(--primary)', 'mobile': 'var(--success)', 'tablet': 'var(--warning)', 'laptop': 'var(--info)' };
+
+        // =========================================
+        //  ANIMATED COUNTER
+        // =========================================
+        function animateValue(el, target, suffix, duration) {
+            if (!el) return;
+            suffix = suffix || '';
+            duration = duration || 800;
+            var start = 0;
+            var startTime = null;
+            var isFloat = String(target).includes('.');
+            function step(ts) {
+                if (!startTime) startTime = ts;
+                var progress = Math.min((ts - startTime) / duration, 1);
+                var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+                var current = start + (target - start) * eased;
+                el.textContent = (isFloat ? current.toFixed(1) : Math.round(current)) + suffix;
+                if (progress < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        // =========================================
+        //  INSIGHTS ENGINE
+        // =========================================
+        function generateInsights(stats, prevStats, devices, pageviewsData, topPages) {
+            var insights = [];
+            var pv = extractVal(stats.pageviews);
+            var vis = extractVal(stats.visitors);
+            var visits = extractVal(stats.visits);
+            var bounces = extractVal(stats.bounces);
+            var totaltime = extractVal(stats.totaltime);
+
+            // Traffic trend
+            if (prevStats) {
+                var ppv = extractVal(prevStats.pageviews);
+                if (ppv > 0) {
+                    var change = ((pv - ppv) / ppv * 100).toFixed(0);
+                    if (change > 10) {
+                        insights.push({ icon: '📈', text: '<strong>Traffic ↑' + change + '%</strong> im Vergleich zum Vorzeitraum — starkes Wachstum!' });
+                    } else if (change < -10) {
+                        insights.push({ icon: '📉', text: 'Traffic <strong>↓' + Math.abs(change) + '%</strong> im Vergleich zum Vorzeitraum. Evtl. saisonale Schwankung.' });
+                    } else {
+                        insights.push({ icon: '📊', text: 'Traffic ist <strong>stabil</strong> im Vergleich zum Vorzeitraum (' + (change >= 0 ? '+' : '') + change + '%).' });
+                    }
+                }
+            }
+
+            // Bounce rate insight
+            var br = visits > 0 ? (bounces / visits * 100) : 0;
+            if (br < 30) {
+                insights.push({ icon: '🎯', text: 'Bounce Rate nur <strong>' + br.toFixed(0) + '%</strong> — Nutzer interagieren aktiv mit der App!' });
+            } else if (br > 60) {
+                insights.push({ icon: '⚠️', text: 'Bounce Rate bei <strong>' + br.toFixed(0) + '%</strong> — viele Nutzer verlassen die Seite sofort.' });
+            }
+
+            // Average time insight
+            var avgTime = visits > 0 ? totaltime / visits : 0;
+            if (avgTime > 300) {
+                insights.push({ icon: '⏱️', text: 'Nutzer verbringen durchschnittlich <strong>' + fmtDuration(avgTime) + '</strong> — hohe Engagement-Zeit!' });
+            } else if (avgTime > 60) {
+                insights.push({ icon: '⏱️', text: 'Ø Verweildauer: <strong>' + fmtDuration(avgTime) + '</strong> pro Session.' });
+            }
+
+            // Devices insight
+            if (devices && devices.length > 0) {
+                var totalDevices = devices.reduce(function(s,d) { return s + d.y; }, 0);
+                var mobile = devices.find(function(d) { return d.x === 'mobile'; });
+                var mobilePct = mobile ? ((mobile.y / totalDevices) * 100).toFixed(0) : 0;
+                if (mobilePct > 50) {
+                    insights.push({ icon: '📱', text: '<strong>' + mobilePct + '% mobile Nutzer</strong> — die PWA wird hauptsächlich am Handy genutzt.' });
+                } else if (mobilePct > 0) {
+                    insights.push({ icon: '🖥️', text: '<strong>' + (100 - mobilePct) + '% Desktop</strong>, ' + mobilePct + '% Mobile — ausgewogene Nutzung.' });
+                }
+            }
+
+            // Pages/session insight
+            var pps = visits > 0 ? (pv / visits) : 0;
+            if (pps > 3) {
+                insights.push({ icon: '🔥', text: '<strong>' + pps.toFixed(1) + ' Seiten pro Session</strong> — Nutzer erkunden verschiedene Features.' });
+            }
+
+            // Top page insight
+            if (topPages && topPages.length > 0) {
+                var top = topPages[0];
+                var topPct = pv > 0 ? ((top.pageviews || top.y || 0) / pv * 100).toFixed(0) : 0;
+                insights.push({ icon: '🏆', text: 'Beliebteste Seite: <strong>' + (top.name || top.x) + '</strong> mit ' + topPct + '% aller Aufrufe.' });
+            }
+
+            // Total time insight
+            if (totaltime > 3600) {
+                var hrs = (totaltime / 3600).toFixed(1);
+                insights.push({ icon: '📅', text: 'Insgesamt <strong>' + hrs + ' Stunden</strong> Nutzungszeit im ausgewählten Zeitraum.' });
+            }
+
+            if (insights.length === 0) {
+                insights.push({ icon: '📊', text: 'Noch nicht genug Daten für automatische Insights. Schau in ein paar Tagen nochmal rein!' });
+            }
+
+            return insights;
+        }
+
+        function renderInsights(insights) {
+            var el = document.getElementById('insightsGrid');
+            if (!el) return;
+            el.innerHTML = insights.map(function(ins) {
+                return '<div class="insight-item"><div class="insight-icon">' + ins.icon + '</div><div class="insight-text">' + ins.text + '</div></div>';
+            }).join('');
+        }
+
+        function extractVal(v) {
+            return (typeof v === 'object' && v !== null) ? (v.value || 0) : (v || 0);
+        }
 
         // =========================================
         //  API
@@ -1311,12 +1554,31 @@
                 document.getElementById('kpiVisitors').textContent = fmt(vis);
                 document.getElementById('kpiVisits').textContent = fmt(visits);
 
+                // Animated counters
+                animateValue(document.getElementById('kpiPageviews'), pv, '');
+                animateValue(document.getElementById('kpiVisitors'), vis, '');
+                animateValue(document.getElementById('kpiVisits'), visits, '');
+
                 var avgTime = visits > 0 ? totaltime / visits : 0;
                 document.getElementById('kpiDuration').textContent = fmtDuration(avgTime);
                 document.getElementById('kpiTotalTime').textContent = 'Gesamt: ' + fmtDuration(totaltime);
 
                 var bounceRate = visits > 0 ? ((bounces / visits) * 100).toFixed(1) : 0;
                 document.getElementById('kpiBounce').textContent = bounceRate + '%';
+
+                // New KPIs: Pages/Session & Engagement Score
+                var pagesPerSession = visits > 0 ? (pv / visits) : 0;
+                document.getElementById('kpiPagesPerSession').textContent = pagesPerSession.toFixed(1);
+                document.getElementById('kpiPagesPerSessionSub').textContent = fmt(pv) + ' Seiten / ' + fmt(visits) + ' Sessions';
+
+                // Engagement = weighted score from bounce, time, pages/session
+                var engBounce = Math.max(0, 100 - parseFloat(bounceRate)); // lower bounce = better
+                var engTime = Math.min(100, (avgTime / 300) * 100);       // up to 5min = 100
+                var engPages = Math.min(100, (pagesPerSession / 5) * 100); // up to 5 pages = 100
+                var engScore = Math.round(engBounce * 0.35 + engTime * 0.4 + engPages * 0.25);
+                document.getElementById('kpiEngagement').textContent = engScore + '%';
+                var engLabel = engScore >= 75 ? 'Hervorragend' : engScore >= 50 ? 'Gut' : engScore >= 25 ? 'Ausbaufähig' : 'Niedrig';
+                document.getElementById('kpiEngagementSub').textContent = engLabel;
 
                 // ── Trends vs previous period ──
                 if (prevStats) {
@@ -1376,6 +1638,10 @@
                 // ── Events ──
                 renderSimpleTable('eventsTable', events, function(x) { return x; }, 'yellow');
 
+                // ── Insights ──
+                var insights = generateInsights(stats, prevStats, devices, pageviewsData, topPagesExp);
+                renderInsights(insights);
+
                 // ── Timestamp ──
                 document.getElementById('lastUpdated').textContent = 'Zuletzt aktualisiert: ' + new Date().toLocaleString('de-DE');
 
@@ -1404,6 +1670,25 @@
                 document.getElementById('configNotice').style.display = 'block';
             } else {
                 loadAll();
+            }
+
+            // Scroll-to-top visibility
+            var scrollBtn = document.getElementById('scrollTopBtn');
+            window.addEventListener('scroll', function() {
+                if (scrollBtn) scrollBtn.classList.toggle('show', window.scrollY > 400);
+            }, { passive: true });
+
+            // Fade-in observer for sections
+            var fadeEls = document.querySelectorAll('.fade-in');
+            if (fadeEls.length > 0 && 'IntersectionObserver' in window) {
+                var obs = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(e) {
+                        if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+                    });
+                }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+                fadeEls.forEach(function(el) { obs.observe(el); });
+            } else {
+                fadeEls.forEach(function(el) { el.classList.add('visible'); });
             }
 
             // Auto-refresh active users every 30s
