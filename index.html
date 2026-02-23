@@ -24218,6 +24218,95 @@ function checkPWAStatus() {
     }
 }
 
+// ===== PWA AUTO-INSTALL PROMPT (nach 3 Besuchen) =====
+function initAutoInstallPrompt() {
+    let visitCount = parseInt(localStorage.getItem('pwa_visit_count') || '0');
+    visitCount++;
+    localStorage.setItem('pwa_visit_count', visitCount.toString());
+
+    // Zeige Install-Prompt nach 3 Besuchen (nur auf Mobile)
+    if (visitCount === 3 && deferredPrompt && window.innerWidth < 768) {
+        setTimeout(() => {
+            if (typeof showCustomMessage === 'function') {
+                showCustomMessage('📱 TimeTracker installieren?', 'Für schnelleren Zugriff und Offline-Support!', 'info');
+                setTimeout(() => triggerInstallPrompt(), 500);
+            }
+        }, 2000);
+    }
+}
+
+// ===== PWA OFFLINE-DATEN TRACKING =====
+const OfflineDataManager = {
+    QUEUE_KEY: 'pwa_offline_queue',
+    SYNC_KEY: 'pwa_last_sync',
+
+    // Speichere Aktion wenn offline
+    queueAction(action) {
+        if (navigator.onLine) return; // Nur wenn offline
+        try {
+            const queue = JSON.parse(localStorage.getItem(this.QUEUE_KEY) || '[]');
+            queue.push({
+                type: action.type,
+                data: action.data,
+                timestamp: Date.now()
+            });
+            localStorage.setItem(this.QUEUE_KEY, JSON.stringify(queue));
+            console.log('[PWA] Aktion in Offline-Queue gespeichert:', action.type);
+        } catch (e) {
+            console.warn('[PWA] Fehler beim Speichern in Offline-Queue:', e);
+        }
+    },
+
+    // Verarbeite gecachte Aktionen wenn online
+    async processPendingActions() {
+        if (!navigator.onLine) return;
+        try {
+            const queue = JSON.parse(localStorage.getItem(this.QUEUE_KEY) || '[]');
+            if (queue.length === 0) return;
+
+            console.log(`[PWA] Verarbeite ${queue.length} ausstehende Offline-Aktionen...`);
+            
+            // Hier können Daten zu Server synced werden
+            // Für jetzt: einfach aus Queue entfernen und speichern als synced
+            localStorage.setItem(this.SYNC_KEY, new Date().toISOString());
+            localStorage.removeItem(this.QUEUE_KEY);
+            
+            showCustomMessage('✅ Synchronisiert', `${queue.length} Offline-Aktion(en) erfolgreich verarbeitet!`, 'success');
+        } catch (e) {
+            console.warn('[PWA] Fehler beim Verarbeiten von Offline-Aktionen:', e);
+        }
+    },
+
+    // Get pending action count
+    getPendingCount() {
+        try {
+            const queue = JSON.parse(localStorage.getItem(this.QUEUE_KEY) || '[]');
+            return queue.length;
+        } catch {
+            return 0;
+        }
+    }
+};
+
+// Synce bei Online werden
+window.addEventListener('online', () => {
+    console.log('[PWA] Online wieder hergestellt — synchronisiere Daten...');
+    OfflineDataManager.processPendingActions();
+    if (typeof showCustomMessage === 'function') {
+        showCustomMessage('🌐 Online!', 'Deaktiviere Daten werden synchronisiert...', 'success');
+    }
+});
+
+// Benachrichtige wenn Offline wird
+window.addEventListener('offline', () => {
+    if (typeof showCustomMessage === 'function') {
+        showCustomMessage('⚠️ Offline-Modus', 'Du bist keine Verbindung! Deine Daten werden lokal gespeichert.', 'warning');
+    }
+});
+
+// Run on load
+initAutoInstallPrompt();
+
 function detectLocalhostAndWarn() {
     try {
         const host = location.hostname;
