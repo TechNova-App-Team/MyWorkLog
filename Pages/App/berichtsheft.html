@@ -4246,12 +4246,12 @@ Beispiel:
                             <span class="day-date">${dateStr}</span>
                             <div class="day-hours">
                                 <input type="number" step="0.5" min="0" max="12" value="8" 
-                                       class="daily-hours-input" data-day="${day.key}" 
+                                       id="daily_hours_${i}" class="daily-hours-input" data-day="${day.key}" 
                                        oninput="updateDailyTotalHours()">
                                 <span>Std.</span>
                             </div>
                         </div>
-                        <textarea class="daily-textarea" data-day="${day.key}" rows="2"
+                        <textarea class="daily-textarea" id="daily_${i}" data-day="${day.key}" rows="2"
                                   placeholder="${day.name}: Tätigkeiten beschreiben..."
                                   onfocus="activeDailyField = this"
                                   oninput="onDailyInput()"></textarea>
@@ -5371,8 +5371,8 @@ Beispiel:
                         <div style="display:flex;align-items:center;gap:8px;">
                             <span class="ais-day-hours">${day.hours}h</span>
                             <div class="ais-day-card-actions">
-                                <button class="ais-day-action" onclick="AIStudio.regenerateDay(${i})" title="Tag neu generieren">🔄</button>
-                                <button class="ais-day-action" onclick="AIStudio.insertDay(${i})" title="Einzeln einfügen">📥</button>
+                                <button class="ais-day-action" onclick="AIStudio.regenerateDay(${day.index})" title="Tag neu generieren">🔄</button>
+                                <button class="ais-day-action" onclick="AIStudio.insertDay(${day.index})" title="Einzeln einfügen">📥</button>
                             </div>
                         </div>
                     </div>
@@ -5380,7 +5380,7 @@ Beispiel:
                     <ul class="ais-day-entries">
                         ${day.entries.map((entry, j) => `
                             <li>
-                                <span class="entry-text" contenteditable="true" onblur="AIStudio.updateEntry(${i}, ${j}, this.textContent)">${entry.replace('• ', '')}</span>
+                                <span class="entry-text" contenteditable="true" onblur="AIStudio.updateEntry(${day.index}, ${j}, this.textContent)">${entry.replace('• ', '')}</span>
                             </li>
                         `).join('')}
                     </ul>
@@ -5433,14 +5433,16 @@ Beispiel:
                 .reverse()
                 .slice(0, 30)
                 .map((item, i) => {
+                    const origIdx = state.generationHistory.length - 1 - i;
                     const date = new Date(item.timestamp);
                     const dateStr = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
                     const preview = item.days?.[0]?.entries?.[0]?.replace('• ', '') || 'Kein Inhalt';
                     return `
-                        <div class="ais-history-item" onclick="AIStudio.loadFromHistory(${state.generationHistory.length - 1 - i})">
+                        <div class="ais-history-item" onclick="AIStudio.loadFromHistory(${origIdx})">
                             <div class="ais-history-item-header">
                                 <span class="ais-history-item-prof">${item.professionIcon || '📋'} ${item.professionName || item.profession}</span>
                                 <span class="ais-history-item-date">${dateStr}</span>
+                                <button onclick="event.stopPropagation(); AIStudio.deleteFromHistory(${origIdx});" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px 8px;font-size:0.8rem;" title="Löschen">✕</button>
                             </div>
                             <div class="ais-history-item-preview">KW ${item.calendarWeek || '?'} • ${item.days?.length || 0} Tage • ${preview}</div>
                         </div>`;
@@ -5469,16 +5471,16 @@ Beispiel:
         }
 
         // Helper: ensure modal is open and in daily mode, then call action
+        // When modal is already open, do NOT reset/restore draft — just fill existing fields
         function _ensureModalDailyMode(callback) {
             const modal = document.getElementById('reportModal');
-            const needsOpen = !modal.classList.contains('active');
-
-            if (needsOpen) {
+            const dailyFieldsExist = document.getElementById('daily_0') !== null;
+            
+            if (!modal.classList.contains('active') || !dailyFieldsExist) {
+                // Modal closed OR daily fields don't exist yet: open it normally
                 openNewReportModal();
             }
-
-            // Switch to daily mode (creates daily_0..daily_4 fields)
-            if (typeof setMode === 'function') setMode('daily');
+            // Modal open and daily fields exist: just fill them
 
             // Wait for daily fields to exist, then fill
             _waitForDailyFields(callback);
@@ -5955,8 +5957,10 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
         function regenerateDay(dayIdx) {
             if (!state.generatedEntries || !state.selectedProfession) return;
 
-            const day = state.generatedEntries.days[dayIdx];
-            if (!day) return;
+            const dayArrayIndex = state.generatedEntries.days.findIndex(d => d.index === dayIdx);
+            if (dayArrayIndex === -1) return;
+
+            const day = state.generatedEntries.days[dayArrayIndex];
 
             const yearNum = parseInt(document.getElementById('aisTrainingYear')?.value) || 2;
             const complexity = document.getElementById('aisComplexity')?.value || 'medium';
@@ -5969,16 +5973,17 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                 excludePhrases: [...state.usedPhrases],
             });
 
-            state.generatedEntries.days[dayIdx].entries = result.entries;
-            if (result.schoolTopic) state.generatedEntries.days[dayIdx].schoolTopic = result.schoolTopic;
+            state.generatedEntries.days[dayArrayIndex].entries = result.entries;
+            if (result.schoolTopic) state.generatedEntries.days[dayArrayIndex].schoolTopic = result.schoolTopic;
 
             renderPreview(state.generatedEntries);
             showToast(`${day.name} neu generiert!`, 'info');
         }
 
         function updateEntry(dayIdx, entryIdx, newText) {
-            if (!state.generatedEntries?.days?.[dayIdx]?.entries?.[entryIdx]) return;
-            state.generatedEntries.days[dayIdx].entries[entryIdx] = '• ' + newText.trim();
+            const day = state.generatedEntries?.days?.find(d => d.index === dayIdx);
+            if (!day?.entries?.[entryIdx]) return;
+            day.entries[entryIdx] = '• ' + newText.trim();
         }
 
         function shuffleEntries() {
@@ -6000,8 +6005,8 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
         }
 
         function insertDay(dayIdx) {
-            if (!state.generatedEntries?.days?.[dayIdx]) return;
-            const day = state.generatedEntries.days[dayIdx];
+            const day = state.generatedEntries?.days?.find(d => d.index === dayIdx);
+            if (!day) return;
             fillSingleDay(day, day.index);
         }
 
@@ -6011,7 +6016,17 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
             state.selectedProfession = state.generatedEntries.profession;
             switchTab('preview');
             renderPreview(state.generatedEntries);
+            renderHistory();
             showToast('Verlaufs-Eintrag geladen!', 'info');
+        }
+
+        function deleteFromHistory(idx) {
+            if (idx < 0 || idx >= state.generationHistory.length) return;
+            if (!confirm('Diesen Verlaufs-Eintrag wirklich löschen?')) return;
+            state.generationHistory.splice(idx, 1);
+            try { localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(state.generationHistory)); } catch(e) {}
+            renderHistory();
+            showToast('Verlaufs-Eintrag gelöscht', 'info');
         }
 
         // ═══════════════════════════════════════
@@ -6037,6 +6052,7 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
             insertAll,
             insertDay,
             loadFromHistory,
+            deleteFromHistory,
             VERSION,
         };
 
