@@ -22539,13 +22539,17 @@ TIPPS:
             todayWorked += e.worked || 0;
         });
 
+        // todayWorked ist bereits in Stunden, nicht in Sekunden!
         const todayExpected = data.settings.workTime?.default || 8;
-        const deficit = todayExpected - (todayWorked / 3600);
+        const deficit = todayExpected - todayWorked;
 
         // Nachmittag-Erinnerung (15:00 Uhr)
         if (now.getHours() === 15 && !sessionStorage.getItem('tt_notif_afternoon')) {
             if (deficit > 0) {
-                showSmartNotification('⏰ Nachmittags-Check', `Noch ${deficit.toFixed(1)}h bis zum Soll heute!`, 'warning');
+                showSmartNotification('⏰ Nachmittags-Check', `Du brauchst noch ${deficit.toFixed(1)}h heute!`, 'warning');
+                sessionStorage.setItem('tt_notif_afternoon', 'shown');
+            } else {
+                showSmartNotification('✅ Tagesgoal erreicht!', `Du hast dein Soll bereits erfüllt! 🎉`, 'success');
                 sessionStorage.setItem('tt_notif_afternoon', 'shown');
             }
         }
@@ -22553,7 +22557,10 @@ TIPPS:
         // Feierabend-Erinnerung (17:00 Uhr)
         if (now.getHours() === 17 && !sessionStorage.getItem('tt_notif_evening')) {
             if (deficit > 0) {
-                showSmartNotification('🌆 Feierabend-Reminder', `Noch ${deficit.toFixed(1)}h - Magst du noch ein bisschen machen?`, 'info');
+                showSmartNotification('🌆 Feierabend-Reminder', `Noch ${deficit.toFixed(1)}h — möchtest du noch ein bisschen arbeiten?`, 'info');
+                sessionStorage.setItem('tt_notif_evening', 'shown');
+            } else {
+                showSmartNotification('✨ Schönes Wochenende!', `Dein Tag ist voll! Genieß die Freizeit! 🏖️`, 'success');
                 sessionStorage.setItem('tt_notif_evening', 'shown');
             }
         }
