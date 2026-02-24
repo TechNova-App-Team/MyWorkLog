@@ -2052,8 +2052,11 @@
             <button class="btn btn-secondary" onclick="autoFillFromTimeTracker()">
                 <span>🔄</span> Aus TimeTracker importieren
             </button>
+            <button class="btn btn-secondary" onclick="exportSummaryPDF()">
+                <span>📊</span> Jahresbericht exportieren
+            </button>
             <button class="btn btn-secondary" onclick="exportAllPDF()">
-                <span>📄</span> Alle als PDF exportieren
+                <span>📄</span> Alle Wochen einzeln exportieren
                 <span class="kbd-hint"><span class="kbd">E</span></span>
             </button>
             <button class="btn btn-secondary" onclick="showTemplates()">
@@ -3423,152 +3426,242 @@ Beispiel:
             }
 
             const { jsPDF } = jspdf;
-            const doc = new jsPDF();
-
-            // ─── Header ───
-            doc.setFillColor(88, 28, 135); // Purple
-            doc.rect(0, 0, 210, 35, 'F');
-            doc.setFontSize(22);
-            doc.setTextColor(255, 255, 255);
-            doc.text('Ausbildungsnachweis', 105, 18, { align: 'center' });
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            
+            // ═══════════════════════════════════════════════════════
+            // MODERN HEADER WITH GRADIENT & BRANDING
+            // ═══════════════════════════════════════════════════════
+            // Dark background panel (glassmorphism effect)
+            doc.setFillColor(13, 11, 26); // #0d0b1a
+            doc.rect(0, 0, pageWidth, 50, 'F');
+            
+            // Gradient accent line (purple→cyan simulation with segments)
+            doc.setFillColor(168, 85, 247); // #a855f7
+            doc.rect(0, 0, pageWidth / 2, 4, 'F');
+            doc.setFillColor(6, 182, 212); // #06b6d4
+            doc.rect(pageWidth / 2, 0, pageWidth / 2, 4, 'F');
+            
+            // MW Logo/Branding (text-based modern design)
             doc.setFontSize(11);
-            doc.text(`KW ${report.week}  |  ${report.year}. Ausbildungsjahr`, 105, 28, { align: 'center' });
-
-            // ─── Info Box ───
-            doc.setTextColor(60, 60, 60);
-            doc.setDrawColor(200, 200, 200);
-            doc.setLineWidth(0.3);
-            doc.roundedRect(15, 42, 180, 28, 3, 3, 'S');
-
-            doc.setFontSize(9);
-            doc.setTextColor(120, 120, 120);
-            doc.text('Zeitraum', 22, 50);
-            doc.text('Abteilung', 80, 50);
-            doc.text('Stunden', 140, 50);
-            doc.text('Status', 170, 50);
-
-            doc.setFontSize(10);
-            doc.setTextColor(30, 30, 30);
-            const statusLabel = { 'incomplete': 'Entwurf', 'complete': 'Vollständig', 'signed': 'Unterschrieben' }[report.status];
-            doc.text(`${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}`, 22, 58);
-            doc.text(report.department || '-', 80, 58);
-            doc.text(`${report.hours || 0} Std.`, 140, 58);
-            doc.text(statusLabel, 170, 58);
-
-            // ─── Activities ───
-            let y = 80;
-            doc.setFontSize(12);
-            doc.setTextColor(88, 28, 135);
+            doc.setTextColor(168, 85, 247);
             doc.setFont(undefined, 'bold');
-
+            doc.text('MW', 18, 16);
+            
+            // Title
+            doc.setFontSize(24);
+            doc.setTextColor(255, 255, 255);
+            doc.setFont(undefined, 'bold');
+            doc.text('Ausbildungsnachweis', pageWidth / 2, 20, { align: 'center' });
+            
+            // Subtitle with elegant separator
+            doc.setFontSize(10);
+            doc.setTextColor(168, 200, 255, 0.7);
+            doc.text(`Kalenderwoche ${report.week}  •  ${report.year}. Ausbildungsjahr`, pageWidth / 2, 30, { align: 'center' });
+            
+            // ═══════════════════════════════════════════════════════
+            // PROFESSIONAL INFO GRID
+            // ═══════════════════════════════════════════════════════
+            let y = 60;
+            
+            // Info cards background
+            doc.setFillColor(245, 243, 255); // Very light lav
+            doc.roundedRect(15, y - 2, 180, 34, 3, 3, 'F');
+            
+            // Subtle border
+            doc.setDrawColor(168, 85, 247);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(15, y - 2, 180, 34, 3, 3, 'S');
+            
+            const statusLabel = { 'incomplete': 'Entwurf', 'complete': 'Verarbeitet', 'signed': 'Signiert' }[report.status];
+            const statusColor = { 'incomplete': [239, 68, 68], 'complete': [34, 197, 94], 'signed': [59, 130, 246] }[report.status];
+            
+            doc.setFontSize(8);
+            doc.setTextColor(120, 114, 150);
+            doc.text('Zeitraum', 22, y + 4);
+            doc.text('Abteilung', 80, y + 4);
+            doc.text('Gesamtstundenvolumen', 140, y + 4);
+            
+            doc.setFontSize(11);
+            doc.setTextColor(30, 30, 50);
+            doc.setFont(undefined, 'bold');
+            doc.text(`${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}`, 22, y + 14);
+            doc.text(report.department || '-', 80, y + 14);
+            doc.text(`${report.hours || 0} Std.`, 140, y + 14);
+            
+            // Status badge (colored dot + text)
+            doc.setFillColor(...statusColor);
+            doc.circle(160, y + 24, 1.5, 'F');
+            doc.setFontSize(9);
+            doc.setTextColor(...statusColor);
+            doc.setFont(undefined, 'bold');
+            doc.text(statusLabel, 165, y + 26);
+            
+            // ═══════════════════════════════════════════════════════
+            // SECTION: DAILY ACTIVITIES
+            // ═══════════════════════════════════════════════════════
+            y = 100;
+            
             if (report.mode === 'daily' && report.dailyActivities) {
-                doc.text('Tägliche Tätigkeiten (IHK-Format)', 15, y);
-                y += 3;
-                doc.setDrawColor(88, 28, 135);
-                doc.setLineWidth(0.5);
-                doc.line(15, y, 130, y);
-                y += 8;
-
-                const dayNames = { monday: 'Montag', tuesday: 'Dienstag', wednesday: 'Mittwoch', thursday: 'Donnerstag', friday: 'Freitag' };
+                // Section title with gradient accent
+                doc.setFillColor(168, 85, 247);
+                doc.rect(15, y - 2, 2, 8, 'F');
+                doc.setFontSize(13);
+                doc.setTextColor(40, 30, 60);
+                doc.setFont(undefined, 'bold');
+                doc.text('Wöchentliche Tätigkeiten', 22, y + 3);
+                
+                y += 12;
+                
+                const dayNames = { 
+                    monday: 'Montag', 
+                    tuesday: 'Dienstag', 
+                    wednesday: 'Mittwoch', 
+                    thursday: 'Donnerstag', 
+                    friday: 'Freitag' 
+                };
                 const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-
-                days.forEach(dayKey => {
+                const dayColors = [
+                    [168, 85, 247], // Purple Mon
+                    [139, 92, 246], // Purple Tue
+                    [110, 102, 219], // Indigo Wed
+                    [59, 130, 246], // Blue Thu
+                    [6, 182, 212]   // Cyan Fri
+                ];
+                
+                days.forEach((dayKey, idx) => {
                     const text = report.dailyActivities[dayKey];
                     if (!text) return;
-
-                    if (y > 245) { doc.addPage(); y = 20; }
-
+                    
+                    if (y > 250) { doc.addPage(); y = 20; }
+                    
                     const hrs = report.dailyHours ? report.dailyHours[dayKey] : null;
-
-                    // Day header with colored box
-                    doc.setFillColor(245, 243, 255);
-                    doc.roundedRect(15, y - 4, 180, 8, 1, 1, 'F');
+                    
+                    // Day card background (light with colored left border)
+                    doc.setFillColor(248, 247, 255);
+                    doc.rect(15, y - 1, 180, 1, 'F'); // Top accent line
+                    
+                    doc.setDrawColor(248, 250, 250);
+                    doc.setLineWidth(0.3);
+                    doc.roundedRect(15, y, 180, 5, 1, 1, 'S');
+                    
+                    // Day name
                     doc.setFontSize(10);
-                    doc.setTextColor(88, 28, 135);
+                    doc.setTextColor(...dayColors[idx]);
                     doc.setFont(undefined, 'bold');
-                    doc.text(dayNames[dayKey], 18, y + 1);
+                    doc.text(dayNames[dayKey], 20, y + 3.5);
+                    
+                    // Hours on right
                     if (hrs) {
                         doc.setFontSize(8);
-                        doc.setTextColor(120, 120, 120);
-                        doc.text(`${hrs} Std.`, 175, y + 1);
+                        doc.setTextColor(120, 114, 150);
+                        doc.text(`${hrs} Std.`, 175, y + 3.5);
                     }
-                    y += 8;
-
+                    
+                    y += 7;
+                    
+                    // Activity text
                     doc.setFontSize(9.5);
-                    doc.setTextColor(40, 40, 40);
+                    doc.setTextColor(40, 30, 60);
                     doc.setFont(undefined, 'normal');
                     const lines = doc.splitTextToSize(text, 170);
-                    lines.forEach(line => {
-                        if (y > 260) { doc.addPage(); y = 20; }
+                    lines.forEach((line, idx) => {
+                        if (y > 270) { doc.addPage(); y = 20; }
                         doc.text(line, 20, y);
-                        y += 5;
+                        y += 4.5;
                     });
-                    y += 3;
+                    y += 2;
                 });
             } else {
-                doc.text('Ausgeführte Tätigkeiten', 15, y);
-                y += 3;
-                doc.setDrawColor(88, 28, 135);
-                doc.setLineWidth(0.5);
-                doc.line(15, y, 100, y);
-                y += 8;
-
+                // Single activity mode
+                doc.setFillColor(168, 85, 247);
+                doc.rect(15, y - 2, 2, 8, 'F');
+                doc.setFontSize(13);
+                doc.setTextColor(40, 30, 60);
+                doc.setFont(undefined, 'bold');
+                doc.text('Ausgeführte Tätigkeiten', 22, y + 3);
+                
+                y += 12;
+                
+                doc.setFillColor(248, 247, 255);
+                doc.roundedRect(15, y - 1, 180, 5, 1, 1, 'F');
+                
                 doc.setFontSize(10);
-                doc.setTextColor(40, 40, 40);
+                doc.setTextColor(40, 30, 60);
                 doc.setFont(undefined, 'normal');
-                const activitiesLines = doc.splitTextToSize(report.activities, 175);
+                const activitiesLines = doc.splitTextToSize(report.activities, 170);
                 activitiesLines.forEach(line => {
-                    if (y > 260) { doc.addPage(); y = 20; }
-                    doc.text(line, 18, y);
-                    y += 5.5;
+                    if (y > 270) { doc.addPage(); y = 20; }
+                    doc.text(line, 20, y);
+                    y += 5;
                 });
             }
-
-            // ─── School ───
+            
+            // ═══════════════════════════════════════════════════════
+            // SECTION: SCHOOL NOTES
+            // ═══════════════════════════════════════════════════════
             if (report.school) {
                 y += 8;
-                if (y > 240) { doc.addPage(); y = 20; }
-                doc.setFontSize(12);
-                doc.setTextColor(6, 182, 212);
+                if (y > 245) { doc.addPage(); y = 20; }
+                
+                doc.setFillColor(6, 182, 212);
+                doc.rect(15, y - 2, 2, 8, 'F');
+                doc.setFontSize(13);
+                doc.setTextColor(40, 30, 60);
                 doc.setFont(undefined, 'bold');
-                doc.text('Berufsschule', 15, y);
-                y += 3;
-                doc.setDrawColor(6, 182, 212);
-                doc.line(15, y, 80, y);
-                y += 8;
-
-                doc.setFontSize(10);
-                doc.setTextColor(40, 40, 40);
+                doc.text('Berufsschule', 22, y + 3);
+                
+                y += 12;
+                
+                doc.setFillColor(245, 254, 255);
+                doc.roundedRect(15, y - 1, 180, 5, 1, 1, 'F');
+                
+                doc.setFontSize(9.5);
+                doc.setTextColor(40, 30, 60);
                 doc.setFont(undefined, 'normal');
-                const schoolLines = doc.splitTextToSize(report.school, 175);
+                const schoolLines = doc.splitTextToSize(report.school, 170);
                 schoolLines.forEach(line => {
-                    if (y > 260) { doc.addPage(); y = 20; }
-                    doc.text(line, 18, y);
-                    y += 5.5;
+                    if (y > 270) { doc.addPage(); y = 20; }
+                    doc.text(line, 20, y);
+                    y += 5;
                 });
             }
-
-            // ─── Signature Lines ───
-            const pageHeight = doc.internal.pageSize.getHeight();
-            doc.setDrawColor(150, 150, 150);
-            doc.setLineWidth(0.4);
-            doc.line(15, pageHeight - 25, 85, pageHeight - 25);
-            doc.line(120, pageHeight - 25, 195, pageHeight - 25);
-
+            
+            // ═══════════════════════════════════════════════════════
+            // PROFESSIONAL SIGNATURE SECTION
+            // ═══════════════════════════════════════════════════════
+            const sigY = pageHeight - 38;
+            
+            // Divider
+            doc.setDrawColor(168, 85, 247);
+            doc.setLineWidth(0.5);
+            doc.line(15, sigY, 195, sigY);
+            
+            // Signature blocks
             doc.setFontSize(8);
-            doc.setTextColor(120, 120, 120);
-            doc.text('Auszubildende/r', 15, pageHeight - 20);
-            doc.text('Datum, Unterschrift', 15, pageHeight - 16);
-            doc.text('Ausbilder/in', 120, pageHeight - 20);
-            doc.text('Datum, Unterschrift', 120, pageHeight - 16);
-
-            // ─── Footer ───
+            doc.setTextColor(120, 114, 150);
+            doc.setFont(undefined, 'normal');
+            doc.text('Auszubildende/r', 20, sigY + 8);
+            doc.text('Datum: _____________    Unterschrift: ___________________________', 20, sigY + 13);
+            
+            doc.text('Ausbilder/in', 120, sigY + 8);
+            doc.text('Datum: _____________    Unterschrift: ___________________________', 120, sigY + 13);
+            
+            // ═══════════════════════════════════════════════════════
+            // ELEGANT FOOTER
+            // ═══════════════════════════════════════════════════════
             doc.setFontSize(7);
-            doc.setTextColor(180, 180, 180);
-            doc.text(`Erstellt mit Berichtsheft.PRO • ${new Date().toLocaleDateString('de-DE')}`, 105, pageHeight - 8, { align: 'center' });
-
-            doc.save(`Berichtsheft_KW${report.week}_Jahr${report.year}.pdf`);
-            showToast('📄 PDF exportiert!', 'success');
+            doc.setTextColor(168, 85, 247);
+            doc.setFont(undefined, 'normal');
+            doc.text('MyWorkLog • Professionelle Ausbildungsdokumentation', pageWidth / 2, pageHeight - 6, { align: 'center' });
+            
+            doc.setTextColor(200, 200, 200);
+            doc.setFontSize(6);
+            doc.text(`Erstellt: ${new Date().toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth / 2, pageHeight - 3, { align: 'center' });
+            
+            doc.save(`Ausbildungsnachweis_KW${report.week}_${report.year}.pdf`);
+            showToast('📄 Ausbildungsnachweis als PDF exportiert!', 'success');
         }
 
         function exportAllPDF() {
@@ -3588,10 +3681,225 @@ Beispiel:
                     exportReportPDF(report.id);
                     exported++;
                     if (exported === sorted.length) {
-                        showToast(`📄 ${exported} PDFs exportiert!`, 'success');
+                        showToast(`📄 ${exported} Berichte als separate PDFs exportiert!`, 'success');
                     }
                 }, i * 400);
             });
+        }
+
+        // NEW: Export comprehensive summary as single PDF
+        function exportSummaryPDF() {
+            if (reports.length === 0) {
+                showToast('ℹ️ Keine Berichte vorhanden.', 'info');
+                return;
+            }
+
+            if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
+                showToast('⚠️ PDF nicht verfügbar.', 'error');
+                return;
+            }
+
+            const { jsPDF } = jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            
+            const sorted = [...reports].sort((a, b) => {
+                if (a.year !== b.year) return a.year - b.year;
+                return a.week - b.week;
+            });
+            
+            // ═══════════════════════════════════════════════════════
+            // PROFESSIONAL COVER PAGE
+            // ═══════════════════════════════════════════════════════
+            // Dark background
+            doc.setFillColor(13, 11, 26);
+            doc.rect(0, 0, pageWidth, pageHeight, 'F');
+            
+            // Gradient accent (purple→cyan)
+            doc.setFillColor(168, 85, 247);
+            doc.rect(0, 0, pageWidth, 6, 'F');
+            
+            // Logo/Branding
+            doc.setFontSize(14);
+            doc.setTextColor(168, 85, 247);
+            doc.setFont(undefined, 'bold');
+            doc.text('MW', 20, 30);
+            
+            // Title
+            doc.setFontSize(28);
+            doc.setTextColor(255, 255, 255);
+            doc.setFont(undefined, 'bold');
+            doc.text('Ausbildungsnachweis', pageWidth / 2, 60, { align: 'center' });
+            doc.text('Jahresbericht', pageWidth / 2, 85, { align: 'center' });
+            
+            // Decorative line
+            doc.setDrawColor(6, 182, 212);
+            doc.setLineWidth(1);
+            doc.line(60, 95, 150, 95);
+            
+            // Info section
+            doc.setFontSize(11);
+            doc.setTextColor(168, 200, 255, 0.7);
+            
+            const totalWeeks = sorted.length;
+            const totalHours = sorted.reduce((sum, r) => sum + (r.hours || 0), 0);
+            const year = sorted[0]?.year || new Date().getFullYear();
+            
+            doc.text(`${totalWeeks} Wochen dokumentiert`, pageWidth / 2, 115, { align: 'center' });
+            doc.text(`${totalHours} Stunden Ausbildung`, pageWidth / 2, 125, { align: 'center' });
+            doc.text(`${year}. Ausbildungsjahr`, pageWidth / 2, 135, { align: 'center' });
+            
+            // Footer on cover
+            doc.setFontSize(8);
+            doc.setTextColor(120, 114, 150);
+            doc.text('MyWorkLog Professionelle Ausbildungsdokumentation', pageWidth / 2, pageHeight - 15, { align: 'center' });
+            doc.setFontSize(7);
+            doc.setTextColor(80, 80, 100);
+            doc.text(`Erstellt: ${new Date().toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+            
+            // ═══════════════════════════════════════════════════════
+            // TABLE OF CONTENTS
+            // ═══════════════════════════════════════════════════════
+            doc.addPage();
+            
+            doc.setFillColor(168, 85, 247);
+            doc.rect(15, 10, 2, 8, 'F');
+            doc.setFontSize(14);
+            doc.setTextColor(40, 30, 60);
+            doc.setFont(undefined, 'bold');
+            doc.text('Übersicht', 22, 16);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(40, 30, 60);
+            doc.setFont(undefined, 'normal');
+            let tocY = 30;
+            sorted.forEach((report, idx) => {
+                const statusEmoji = { 'incomplete': '📝', 'complete': '✅', 'signed': '✓' }[report.status];
+                const line = `${statusEmoji} KW ${String(report.week).padStart(2, '0')} — ${report.department || 'Keine Abteilung angegeben'} — ${report.hours || 0} Std.`;
+                doc.text(line, 20, tocY);
+                tocY += 6;
+                if (tocY > 270) { doc.addPage(); tocY = 20; }
+            });
+            
+            // ═══════════════════════════════════════════════════════
+            // SUMMARY STATISTICS PAGE
+            // ═══════════════════════════════════════════════════════
+            doc.addPage();
+            
+            doc.setFillColor(6, 182, 212);
+            doc.rect(15, 10, 2, 8, 'F');
+            doc.setFontSize(14);
+            doc.setTextColor(40, 30, 60);
+            doc.setFont(undefined, 'bold');
+            doc.text('Statistiken', 22, 16);
+            
+            let statY = 35;
+            
+            // Stat cards background
+            doc.setFillColor(245, 254, 255);
+            doc.roundedRect(15, statY, 88, 30, 2, 2, 'F');
+            doc.roundedRect(107, statY, 88, 30, 2, 2, 'F');
+            
+            // Stat 1: Total weeks
+            doc.setFontSize(12);
+            doc.setTextColor(168, 85, 247);
+            doc.setFont(undefined, 'bold');
+            doc.text('Wochen', 20, statY + 8);
+            doc.setFontSize(18);
+            doc.text(String(totalWeeks), 20, statY + 22);
+            
+            // Stat 2: Total hours
+            doc.setFontSize(12);
+            doc.setTextColor(6, 182, 212);
+            doc.setFont(undefined, 'bold');
+            doc.text('Gesamtstunden', 112, statY + 8);
+            doc.setFontSize(18);
+            doc.text(String(totalHours), 112, statY + 22);
+            
+            // Department breakdown
+            statY += 45;
+            doc.setFillColor(168, 85, 247);
+            doc.rect(15, statY - 2, 2, 6, 'F');
+            doc.setFontSize(11);
+            doc.setTextColor(40, 30, 60);
+            doc.setFont(undefined, 'bold');
+            doc.text('Abteilungsverteilung', 24, statY + 2);
+            
+            statY += 12;
+            const deptMap = {};
+            sorted.forEach(r => {
+                const dept = r.department || 'Unbekannt';
+                deptMap[dept] = (deptMap[dept] || 0) + (r.hours || 0);
+            });
+            
+            doc.setFontSize(9);
+            doc.setTextColor(40, 30, 60);
+            doc.setFont(undefined, 'normal');
+            Object.entries(deptMap).forEach(([dept, hours]) => {
+                doc.text(`• ${dept}: ${hours} Std.`, 20, statY);
+                statY += 6;
+            });
+            
+            // Status breakdown
+            statY += 8;
+            doc.setFillColor(6, 182, 212);
+            doc.rect(15, statY - 2, 2, 6, 'F');
+            doc.setFontSize(11);
+            doc.setTextColor(40, 30, 60);
+            doc.setFont(undefined, 'bold');
+            doc.text('Status', 24, statY + 2);
+            
+            statY += 12;
+            const statusMap = { incomplete: 0, complete: 0, signed: 0 };
+            sorted.forEach(r => statusMap[r.status || 'incomplete']++);
+            
+            doc.setFontSize(9);
+            doc.setTextColor(40, 30, 60);
+            doc.setFont(undefined, 'normal');
+            doc.text(`• Entwürfe: ${statusMap.incomplete}`, 20, statY);
+            doc.text(`• Verarbeitet: ${statusMap.complete}`, 20, statY + 6);
+            doc.text(`• Signiert: ${statusMap.signed}`, 20, statY + 12);
+            
+            // ═══════════════════════════════════════════════════════
+            // FINAL PAGE: SIGNATURES
+            // ═══════════════════════════════════════════════════════
+            doc.addPage();
+            
+            doc.setFillColor(168, 85, 247);
+            doc.rect(15, 10, 2, 8, 'F');
+            doc.setFontSize(14);
+            doc.setTextColor(40, 30, 60);
+            doc.setFont(undefined, 'bold');
+            doc.text('Bestätigung', 22, 16);
+            
+            let sigY = 50;
+            doc.setFontSize(10);
+            doc.setTextColor(40, 30, 60);
+            doc.setFont(undefined, 'normal');
+            doc.text('Der/Die Auszubildende bestätigt die Korrektheit der dokumentierten Tätigkeiten.', 20, sigY);
+            
+            sigY += 35;
+            doc.setDrawColor(120, 114, 150);
+            doc.setLineWidth(0.3);
+            doc.line(20, sigY, 90, sigY);
+            
+            doc.setFontSize(8);
+            doc.setTextColor(120, 114, 150);
+            doc.text('Auszubildende/r', 20, sigY + 7);
+            doc.text('Datum: ___________', 20, sigY + 12);
+            
+            doc.line(110, sigY, 180, sigY);
+            doc.text('Ausbilder/in', 110, sigY + 7);
+            doc.text('Datum: ___________', 110, sigY + 12);
+            
+            // Footer
+            doc.setFontSize(7);
+            doc.setTextColor(168, 85, 247);
+            doc.text('MyWorkLog • Professionelle Ausbildungsdokumentation', pageWidth / 2, pageHeight - 10, { align: 'center' });
+            
+            doc.save(`Ausbildungsnachweis_Jahresbericht_${year}.pdf`);
+            showToast('📊 Jahresbericht als PDF exportiert!', 'success');
         }
 
         // ═══════════════════════════════════════
