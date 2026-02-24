@@ -152,8 +152,7 @@
 | 💬 **Feedback (EmailJS)** | In-App Feedback mit DSGVO-Datenmodus (Minimal/Vollständig) | — |
 | 💰 **Spenden (PayPal)** | Support-Seite mit PayPal-Integration | — |
 | ⚡ **Schnelleintrag** | 1-Klick Vorlagen für Arbeitstag, Schultag etc. | — |
-| 📚 **Lern-Hub** | Lernressourcen für Auszubildende | [Lern-Hub](Pages/App/lern-hub.html) |
-| 📋 **Berichtsheft** | IHK-konforme Ausbildungsnachweise | [Berichtsheft](Pages/App/berichtsheft.html) |
+|  **Berichtsheft** | IHK-konforme Ausbildungsnachweise | [Berichtsheft](Pages/App/berichtsheft.html) |
 | 📄 **Vertrags-Manager** | Gehalt & Urlaubsübersicht | [Vertrags-Manager](Pages/App/vertrags-manager.html) |
 
 ---
@@ -399,7 +398,6 @@ MyWorkLog/
 │   ├── DE-Gestz/                   # DSGVO & Impressum
 │   ├── App/
 │   │   ├── berichtsheft.html       # IHK Berichtsheft
-│   │   ├── lern-hub.html           # Lernressourcen
 │   │   ├── vertrags-manager.html   # Vertrags-Manager
 │   │   └── Ausbilungs_Hilfe/       # Fachinformatiker-Hilfe
 │   ├── Event/                      # Saisonale Features
