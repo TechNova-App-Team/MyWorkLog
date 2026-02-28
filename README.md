@@ -22,19 +22,19 @@
 
 ---
 
-![MyWorkLog Dashboard](Grafiken/Website.png)
-
-
-</div>
-
----
-
-
-</div>
-
----
-
 ![MyWorkLog Dashboard](Grafiken/Dashboard.png)
+
+
+</div>
+
+---
+
+
+</div>
+
+---
+
+![MyWorkLog Dashboard](Grafiken/Website.webp)
 
 
 </div>
