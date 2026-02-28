@@ -176,7 +176,7 @@ Der integrierte AI-Bot analysiert deine Zeiterfassungsdaten intelligent und gibt
 
 <div align="center">
 
-![AI Bot Architecture](Grafiken/Bot-engine.png)
+[AI Bot Architecture](Grafiken/Bot-engine.webp)
 
 </div>
 
@@ -202,7 +202,7 @@ Der integrierte AI-Bot analysiert deine Zeiterfassungsdaten intelligent und gibt
 
 <div align="center">
 
-![Data Analyzer](Grafiken/Bot-Analyzer.png)
+[Data Analyzer](Grafiken/Bot-Analyzer.webp)
 
 </div>
 
@@ -329,7 +329,7 @@ npm run lint
 
 ### 🖥️ Desktop-Ansicht
 
-![Dashboard](Grafiken/Aktuelles.png)
+[Dashboard](Grafiken/Aktuelles.webp)
 
 *Dashboard mit KPI-Ringen, Live-Timer und Trend-Chart*
 
@@ -337,7 +337,7 @@ npm run lint
 
 ### 📱 Mobile & Touch-Optimierung
 
-![Touch Optimization](Grafiken/Touch.png)
+[Touch Optimization](Grafiken/Touch.webp)
 
 *Optimierte Touch-Interaktionen und Pinch-to-Zoom*
 
@@ -345,7 +345,7 @@ npm run lint
 
 ### 🌙 Offline-Modus
 
-![Offline Support](Grafiken/Offline.png)
+[Offline Support](Grafiken/Offline.webp)
 
 *PWA Offline-Fallback mit Service Worker*
 
@@ -353,7 +353,7 @@ npm run lint
 
 ### ⚙️ Service Worker
 
-![Service Worker](Grafiken/Service.png)
+[Service Worker](Grafiken/Service.webp)
 
 *Cache-First Strategie für Assets, Network-First für Daten*
 
@@ -1056,7 +1056,7 @@ gh pr create --title "Add XYZ feature" --body "Beschreibung..."
 
 ### 📜 Lizenz
 
-**MIT License** – Siehe [LICENSE.md](Rechtliches/LICENSE.md)
+**MIT License** für den Quellcode – Siehe [LICENSE.md](Rechtliches/LICENSE.md)
 
 ```
 Copyright (c) 2025 TechNova App Team
@@ -1065,6 +1065,33 @@ Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction...
 ```
+
+**⚠️ WICHTIG: Nutzungsbedingungen & Einschränkungen**
+
+Die MIT-Lizenz gilt **NUR für den Quellcode**. Folgende Komponenten und Inhalte sind **NICHT unter MIT-Lizenz** und dürfen **NICHT kopiert, geklont oder nachgebaut werden**:
+
+| ❌ NICHT erlaubt | Grund |
+|---|---|
+| **Design & UI/UX** | Proprietary Brand Design |
+| **Website-Klon** | Copyrighted Website Architecture |
+| **Branding & Logo** | Trademark & Brand Protection |
+| **Inhalte & Texte** | Copyright der Creative Works |
+| **Kommerzielle Nutzung ohne Lizenz** | Requires explicit permission |
+
+**✅ WAS erlaubt ist:**
+- ✓ Forking & Modifizieren des **Quellcodes** für private/Lehr-Zwecke
+- ✓ Integration einzelner Code-Module in andere Projekte
+- ✓ Verbessern & Erweitern des Codes (siehe [CONTRIBUTING.md](Rechtliches/CONTRIBUTING.md))
+- ✓ Kommerzielle Nutzung des modifizierten Codes (mit Attribution)
+
+**🔗 Attribution erforderlich:**
+Wenn du den Code nutzt, musst du folgende Nennung einfügen:
+```
+MyWorkLog © 2025 TechNova App Team. Licensed under MIT License.
+Original Project: https://github.com/yourusername/MyWorkLog
+```
+
+---
 
 ### 🛡️ Rechtliche Dokumente
 

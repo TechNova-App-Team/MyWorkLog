@@ -40,6 +40,59 @@ THE SOFTWARE.
 
 ---
 
+## ⚠️ WICHTIGE ZUSATZBEDINGUNGEN (Supplementary Clause)
+
+Obwohl die MIT-Lizenz sehr permissiv ist, gibt es folgende **EXPLIZITE AUSNAHMEN**:
+
+### ❌ NICHT unter dieser Lizenz (NOT included):
+
+1. **Website Design & UI/UX**
+   - Das komplette Design dieser Website
+   - Brand Colors, Typography, Layout
+   - Visual Components & Design System
+   - → Kopieren der Website ist NICHT erlaubt
+
+2. **Website Content & Branding**
+   - All descriptive text & marketing content
+   - MyWorkLog Brand Name & Logo
+   - Trademarks & Corporate Identity
+   - → Kommerzielle Verbreitung NICHT erlaubt
+
+3. **Asset Files (wenn nicht explizit als Code)**
+   - Images, Graphics, Videos in /Grafiken
+   - Icons, Icons Bundles
+   - Proprietary Documentation
+
+### ✅ WAS erlaubt ist:
+
+- ✓ Quellcode (JavaScript, HTML, CSS) frei nutzen, modifizieren, weitergeben
+- ✓ Individual Code-Module extrahieren und in eigene Projekte einbinden
+- ✓ Kommerzielle Produkte mit diesem Code entwickeln
+- ✓ Verbessern des Codes via Pull Requests
+
+### Attribution Requirement:
+
+Wenn du den Code nutzt, muss folgende Nennung erfolgen:
+```
+MyWorkLog © 2025 TechNova App Team. Licensed under MIT License.
+Original Project: https://myworklog.de/
+```
+
+---
+
+## Violations & Enforcement
+
+Folgende Handlungen sind VERBOTEN und werden rechtlich verfolgt:
+
+- 🚫 Klonen & Neuveröffentlichen dieser Website als eigenes Produkt
+- 🚫 Verwenden des Brandnamens "MyWorkLog" ohne Genehmigung
+- 🚫 Kopieren von Design/UI ohne Attribution
+- 🚫 Claiming authorship des Original-Designs oder der Marke
+
+**Bei Verstößen:** Kontakt unter [DSGVO.html](../../DSGVO.html) oder [Impressum.html](../../Impressum.html)
+
+---
+
 HOW THIS FILE IS STRUCTURED (QUICK GUIDE)
 
 - Header: Project meta (project name, date, author). Replace if needed.
