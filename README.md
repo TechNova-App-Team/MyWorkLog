@@ -5,7 +5,7 @@
 ### Professionelle Zeiterfassung. Lokal. Sicher. Intelligent.
 
 [![Website](https://img.shields.io/badge/Website-MyWorkLog-blueviolet?style=for-the-badge&logo=googlechrome&logoColor=white)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-3.2.1-blue?style=for-the-badge)](https://github.com)
+[![Version](https://img.shields.io/badge/version-3.3.1-blue?style=for-the-badge)](https://github.com)
 [![PWA Ready](https://img.shields.io/badge/PWA-Ready-success?style=for-the-badge&logo=pwa)](https://myworklog.de/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](Rechtliches/LICENSE.md)
 
@@ -90,9 +90,9 @@
 | ✅ **Stabil** | Cloud-Sync (optional) | v3.1.0 |
 | ✅ **Stabil** | P2P Sync + TURN Config | v3.2.0 |
 | ✅ **Stabil** | Weather Auto-Refresh | v3.2.1 |
-| ✅ **Stabil** | Quantum Translator | v3.2.1 |
-
-**Letztes Update:** 20. Februar 2026 | **Release:** v3.2.1
+| 🚧 **in Progress** | Quantum Translator | v3.2.1 |
+| ✅ **Stabil** | Smaller Updates | v3.3.1 |
+**Letztes Update:** 1. März 2026 | **Release:** v3.3.1
 
 ---
 
@@ -141,7 +141,7 @@
 </tr>
 </table>
 
-### 🆕 Neue Features (v3.2.0)
+### 🆕 Neue Features (v3.2.0) (Now 3.3.1)
 
 | Feature | Beschreibung | Docs |
 |---------|-------------|------|
@@ -1126,7 +1126,7 @@ Eine moderne Lösung für intelligente Zeiterfassung
 
 ---
 
-<sub>MyWorkLog v3.2.0 | Gebaut mit modernstem Web-Standard | 🤖 AI-Bot powered | ☁️ Cloud-Sync | 🚀 Production Ready</sub>
+<sub>MyWorkLog v3.3.1 | Gebaut mit modernstem Web-Standard | 🤖 AI-Bot powered | ☁️ Cloud-Sync | 🚀 Production Ready</sub>
 
 <sub>© 2025–2026 TechNova App Team. Alle Rechte vorbehalten. | [DSGVO](./DSGVO.html) | [Impressum](./Impressum.html) | [MIT License](Rechtliches/LICENSE.md)</sub>
 
