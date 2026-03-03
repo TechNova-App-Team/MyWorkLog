@@ -329,7 +329,7 @@ npm run lint
 
 ### 🖥️ Desktop-Ansicht
 
-[Dashboard](Grafiken/Aktuelles.webp)
+[Dashboard](Grafiken/Dashboard.png)
 
 *Dashboard mit KPI-Ringen, Live-Timer und Trend-Chart*
 

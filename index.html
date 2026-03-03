@@ -575,6 +575,24 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 30px rgba(var(--primary-rgb), 0.08);
             border-color: rgba(var(--primary-rgb), 0.15);
         }
+        /* Cards with SVG filters: disable 3D to prevent glow clipping */
+        .card-3d > .charts-row > .card,
+        .card-3d > .card:has(svg),
+        .card-3d > .charts-row .card,
+        .card-3d > .kpi-grid > .card:has(svg) {
+            transform-style: flat !important;
+            perspective: none !important;
+        }
+        /* Prevent backdrop-filter from killing SVG drop-shadow glow in any card */
+        .card:has(svg[class*="trend"]),
+        .card:has(.trend-container),
+        .card:has(.donut-container),
+        .card:has(.progress-ring),
+        .charts-row .card,
+        .chart-deep-row {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
 
         /* Glow halo on hover behind cards */
         .card-glow {
@@ -888,7 +906,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             transform: rotate(-90deg); transform-origin: 50% 50%;
         }
         .ring-bg { stroke: rgba(255,255,255,0.04); }
-        .ring-val { stroke: var(--primary); transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1); filter: drop-shadow(0 0 8px var(--primary)); }
+        .ring-val { stroke: var(--primary); transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1); filter: drop-shadow(0 0 8px var(--primary)); will-change: filter; }
         
         .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
         .ring-num { font-size: 1.25rem; font-weight: 700; color: #fff; font-family: var(--font-mono); }
@@ -901,10 +919,82 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         .chart-title { font-size: 1rem; font-weight: 600; }
         .chart-sub { font-size: 0.8rem; color: var(--text-muted); }
 
-        .trend-container { height: 220px; width: 100%; position: relative; }
+        .trend-container { height: 220px; width: 100%; position: relative; overflow: visible; isolation: isolate; }
+        .trend-container svg, .donut-container svg { overflow: visible; will-change: filter; }
         .trend-line { fill: none; stroke: var(--primary); stroke-width: 2.5; stroke-linecap: round; filter: drop-shadow(0 0 10px var(--primary)); }
         .trend-area { fill: var(--primary); opacity: 0.08; }
         .trend-grid { stroke: rgba(255,255,255,0.03); stroke-width: 1; }
+
+        /* === ENHANCED SALDO TREND === */
+        .trend-period-selector {
+            display: flex; gap: 2px; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 2px;
+        }
+        .trend-period-btn {
+            padding: 3px 8px; font-size: 0.65rem; border: none; background: transparent;
+            color: var(--text-muted); cursor: pointer; border-radius: 6px; transition: all 0.25s;
+            font-weight: 500; font-family: var(--font-mono);
+        }
+        .trend-period-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-main, #e2e8f0); }
+        .trend-period-btn.active {
+            background: var(--primary); color: #fff; box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.4);
+        }
+        .trend-stats-bar {
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+            padding: 10px 0; margin-bottom: 10px; border-bottom: 1px solid var(--border);
+        }
+        .trend-stat {
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+        }
+        .trend-stat-label {
+            font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500;
+        }
+        .trend-stat-value {
+            font-size: 0.85rem; font-weight: 700; font-family: var(--font-mono); color: var(--text-main, #e2e8f0);
+        }
+        .trend-stat-positive { color: var(--success) !important; }
+        .trend-stat-negative { color: var(--danger) !important; }
+        .trend-container-wrapper {
+            display: flex; gap: 0; position: relative;
+        }
+        .trend-container-wrapper .trend-container {
+            flex: 1; min-width: 0;
+        }
+        .trend-y-axis {
+            display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end;
+            padding: 0 6px 0 0; width: 48px; min-width: 48px; font-size: 0.6rem; color: var(--text-muted);
+            font-family: var(--font-mono); pointer-events: none;
+        }
+        .trend-x-axis {
+            display: flex; justify-content: space-between; padding: 4px 0 0 54px;
+            font-size: 0.58rem; color: var(--text-muted); font-family: var(--font-mono);
+        }
+        .trend-tooltip {
+            position: absolute; pointer-events: none; z-index: 100;
+            background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(var(--primary-rgb), 0.3);
+            border-radius: 10px; padding: 10px 14px; min-width: 180px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(var(--primary-rgb), 0.15);
+            backdrop-filter: blur(12px); font-size: 0.78rem; line-height: 1.6;
+            color: #e2e8f0; transition: opacity 0.15s, transform 0.15s;
+        }
+        .trend-tooltip .tt-date { font-weight: 700; color: #fff; font-size: 0.85rem; margin-bottom: 4px; }
+        .trend-tooltip .tt-row { display: flex; justify-content: space-between; gap: 16px; }
+        .trend-tooltip .tt-label { color: var(--text-muted); }
+        .trend-tooltip .tt-val { font-weight: 600; font-family: var(--font-mono); }
+        .trend-tooltip .tt-positive { color: var(--success); }
+        .trend-tooltip .tt-negative { color: var(--danger); }
+        .trend-tooltip .tt-type-badge {
+            display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.65rem;
+            background: rgba(var(--primary-rgb), 0.15); color: var(--primary); font-weight: 600; margin-top: 4px;
+        }
+        .trend-crosshair { stroke: rgba(255,255,255,0.15); stroke-width: 1; stroke-dasharray: 4 3; pointer-events: none; }
+        .trend-zero-line { stroke: rgba(255,255,255,0.12); stroke-width: 1.5; stroke-dasharray: 6 4; }
+        .trend-dot-hover {
+            transition: r 0.15s ease, opacity 0.15s ease; cursor: pointer;
+        }
+        @keyframes trendPulse {
+            0%, 100% { r: 5; opacity: 0.9; }
+            50% { r: 8; opacity: 1; }
+        }
         
         @keyframes drawLine {
             from { stroke-dasharray: 1000; stroke-dashoffset: 1000; }
@@ -994,7 +1084,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         .effect-pulse-intense { animation: pulse 0.6s ease-in-out infinite; }
         .particle-container { position: fixed; pointer-events: none; z-index: 999; }
 
-        .donut-container { display: flex; align-items: center; justify-content: center; height: 180px; position: relative; }
+        .donut-container { display: flex; align-items: center; justify-content: center; height: 180px; position: relative; overflow: visible; isolation: isolate; }
         .donut-legend { margin-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.8rem; }
         .legend-item { display: flex; align-items: center; color: var(--text-muted); gap: 8px; }
         .dot { width: 8px; height: 8px; border-radius: 2px; }
@@ -1099,7 +1189,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             background: rgba(255,255,255,0.02); padding: 16px 20px; border-radius: 14px;
             margin-bottom: 8px; border-left: 3px solid transparent; transition: 0.2s;
         }
-        .entry-row:hover { background: rgba(255,255,255,0.04); transform: translateX(4px); }
+        .entry-row:hover { background: rgba(255,255,255,0.04); padding-left: 24px; }
         .entry-row.type-work { border-color: var(--primary); }
         .entry-row.type-vacation { border-color: var(--success); }
         .entry-row.type-gleittag { border-color: #f59e0b; }
@@ -1126,6 +1216,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         /* Scrollable List Container */
         #entryListShort, #entryListFull {
             overflow-y: auto;
+            overflow-x: hidden;
             max-height: 600px;
         }
         #entryListShort::-webkit-scrollbar,
@@ -3297,6 +3388,27 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 font-size: 0.7rem !important;
             }
 
+            /* Enhanced Trend Responsive */
+            .trend-stats-bar {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 6px !important;
+            }
+            .trend-period-selector {
+                gap: 1px;
+            }
+            .trend-period-btn {
+                padding: 2px 5px; font-size: 0.58rem;
+            }
+            .trend-y-axis {
+                width: 36px !important; min-width: 36px !important; font-size: 0.52rem !important;
+            }
+            .trend-x-axis {
+                padding-left: 42px !important; font-size: 0.5rem !important;
+            }
+            .trend-tooltip {
+                min-width: 150px !important; font-size: 0.7rem !important;
+            }
+
             .stacked-bar-chart {
                 max-height: 250px !important;
             }
@@ -4020,6 +4132,13 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         }
 
         /* --- Charts card subtle shine on hover --- */
+        .charts-row .card {
+            overflow: visible;
+            transform-style: flat !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            background: var(--bg-glass);
+        }
         .charts-row .card:hover {
             border-color: rgba(168, 85, 247, 0.15);
         }
@@ -5769,16 +5888,59 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 <!-- Charts Row (Saldo Trend + Verteilung) -->
                 <div class="dashboard-item card-3d" data-item-id="charts">
                     <div class="charts-row">
-                        <div class="card">
+                        <div class="card" style="overflow:visible; position:relative;">
                             <div class="chart-header">
                                 <div>
-                                    <div class="chart-title">Saldo Trend</div>
-                                    <div class="chart-sub">Entwicklung der letzten 30 Tage</div>
+                                    <div class="chart-title">📊 Saldo Trend</div>
+                                    <div class="chart-sub" id="trendSubtitle">Entwicklung der letzten 30 Tage</div>
                                 </div>
-                                <button class="btn btn-ghost" style="padding:2px 6px; font-size:0.65rem; border:none; cursor:pointer; border-radius:4px; background:rgba(255,255,255,0.02); opacity:0.4; transition:all 0.3s;" onclick="openChartStyleModal()" title="Chart-Stil anpassen" onmouseover="this.style.opacity='0.8'; this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.opacity='0.4'; this.style.background='rgba(255,255,255,0.02)'">🎨</button>
+                                <div style="display:flex; gap:6px; align-items:center;">
+                                    <div class="trend-period-selector" id="trendPeriodSelector">
+                                        <button class="trend-period-btn" data-period="7" onclick="setTrendPeriod(7)">7T</button>
+                                        <button class="trend-period-btn" data-period="14" onclick="setTrendPeriod(14)">14T</button>
+                                        <button class="trend-period-btn active" data-period="30" onclick="setTrendPeriod(30)">30T</button>
+                                        <button class="trend-period-btn" data-period="90" onclick="setTrendPeriod(90)">90T</button>
+                                        <button class="trend-period-btn" data-period="0" onclick="setTrendPeriod(0)">Alle</button>
+                                    </div>
+                                    <button class="btn btn-ghost" style="padding:2px 6px; font-size:0.65rem; border:none; cursor:pointer; border-radius:4px; background:rgba(255,255,255,0.02); opacity:0.4; transition:all 0.3s;" onclick="openChartStyleModal()" title="Chart-Stil anpassen" onmouseover="this.style.opacity='0.8'; this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.opacity='0.4'; this.style.background='rgba(255,255,255,0.02)'">🎨</button>
+                                </div>
                             </div>
-                            <div class="trend-container" id="trendChart" style="cursor:pointer;" onclick="openChartStyleModal()">
+                            <!-- Trend Stats Summary -->
+                            <div class="trend-stats-bar" id="trendStatsBar">
+                                <div class="trend-stat">
+                                    <span class="trend-stat-label">Aktuell</span>
+                                    <span class="trend-stat-value" id="trendStatCurrent">—</span>
                                 </div>
+                                <div class="trend-stat">
+                                    <span class="trend-stat-label">Hoch</span>
+                                    <span class="trend-stat-value trend-stat-positive" id="trendStatHigh">—</span>
+                                </div>
+                                <div class="trend-stat">
+                                    <span class="trend-stat-label">Tief</span>
+                                    <span class="trend-stat-value trend-stat-negative" id="trendStatLow">—</span>
+                                </div>
+                                <div class="trend-stat">
+                                    <span class="trend-stat-label">Ø Täglich</span>
+                                    <span class="trend-stat-value" id="trendStatAvgDaily">—</span>
+                                </div>
+                                <div class="trend-stat">
+                                    <span class="trend-stat-label">Tendenz</span>
+                                    <span class="trend-stat-value" id="trendStatDirection">—</span>
+                                </div>
+                                <div class="trend-stat">
+                                    <span class="trend-stat-label">Volatilität</span>
+                                    <span class="trend-stat-value" id="trendStatVolatility">—</span>
+                                </div>
+                            </div>
+                            <!-- Chart + Tooltip -->
+                            <div class="trend-container-wrapper">
+                                <div class="trend-y-axis" id="trendYAxis"></div>
+                                <div class="trend-container" id="trendChart" style="cursor:crosshair;">
+                                </div>
+                            </div>
+                            <div class="trend-x-axis" id="trendXAxis"></div>
+                            <!-- Hover Tooltip -->
+                            <div class="trend-tooltip" id="trendTooltip" style="display:none;"></div>
                         </div>
 
                         <div class="card">
@@ -6621,8 +6783,13 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 
                 <div class="card" style="border-left: 5px solid #06b6d4;">
                     <div class="audit-label">⚖️ Saldo-Trend</div>
-                    <div style="font-size:1.8rem; font-weight:800; color:#06b6d4; margin:15px 0; font-family:var(--font-mono);" id="mcSaldoTrend">+0h</div>
+                    <div style="font-size:1.8rem; font-weight:800; color:#06b6d4; margin:10px 0; font-family:var(--font-mono);" id="mcSaldoTrend">+0h</div>
                     <div style="font-size:0.85rem; color:var(--text-muted);" id="mcSaldoTrendLabel">Neutral</div>
+                    <div id="mcSaldoSparkline" style="height:40px; margin-top:8px; opacity:0.7;"></div>
+                    <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:0.7rem; color:var(--text-muted); font-family:var(--font-mono);">
+                        <span id="mcSaldoPeak">Hoch: —</span>
+                        <span id="mcSaldoLow">Tief: —</span>
+                    </div>
                 </div>
             </div>
             
@@ -11720,7 +11887,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         ascEntries.forEach(e => {
             const entryYear = new Date(e.date).getFullYear();
             runningTotal += e.diff;
-            trendData.push(runningTotal);
+            trendData.push({ date: e.date, diff: e.diff, total: runningTotal, type: e.type, worked: e.worked });
             // Nur Arbeits-Summen den aktuellen Trend trennen (für alle Jahre)
             if(e.type==='sick') sickSum += e.worked;
             else if(e.type==='vacation' && entryYear === currentYear) { vacSum += e.worked; usedVacationDays++; }
@@ -11796,7 +11963,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         renderWeekDots();
 
         renderLists();
-        renderTrend(trendData, 'trendChart');
+        renderTrend(trendData, 'trendChart', true, null, ascEntries);
         renderDonut(workSum, vacSum, sickSum, schoolSum, holidaySum);
         renderAuditProtocol();
         
@@ -11951,10 +12118,37 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         }
     }
     
-    function renderTrend(dataPoints, elementId, areaFill = true, chartStyle = null) {
+    // --- GLOBAL TREND STATE ---
+    window._trendPeriod = 30;
+    window._trendDataFull = [];
+    
+    function setTrendPeriod(days) {
+        window._trendPeriod = days;
+        document.querySelectorAll('.trend-period-btn').forEach(b => {
+            b.classList.toggle('active', parseInt(b.dataset.period) === days);
+        });
+        const sub = document.getElementById('trendSubtitle');
+        if (sub) sub.textContent = days === 0 ? 'Gesamter Zeitraum' : `Entwicklung der letzten ${days} Tage`;
+        if (window._trendDataFull && window._trendDataFull.length > 0) {
+            renderTrend(window._trendDataFull, 'trendChart');
+        }
+    }
+
+    function renderTrend(dataPoints, elementId, areaFill = true, chartStyle = null, allEntries = null) {
         const c = document.getElementById(elementId);
-        if(!c) return; 
-        if(dataPoints.length < 2) { c.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; color:#555;">Noch keine Daten</div>'; return; }
+        if(!c) return;
+        
+        // Support legacy numeric arrays (from chart preview etc.)
+        const isRichData = dataPoints.length > 0 && typeof dataPoints[0] === 'object';
+        
+        if (isRichData) {
+            window._trendDataFull = dataPoints;
+        }
+        
+        if(dataPoints.length < 2) { 
+            c.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; color:#555;">Noch keine Daten</div>'; 
+            return; 
+        }
         
         // Lade oder nutze Default-Style
         if (!chartStyle) {
@@ -11971,68 +12165,400 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             };
         }
         
-        const subset = dataPoints.slice(-30); 
-        const max = Math.max(...subset);
-        const min = Math.min(...subset);
+        // Slice by period for rich data, else last 30
+        let subset;
+        if (isRichData) {
+            const period = (window._trendPeriod !== undefined && window._trendPeriod !== null) ? window._trendPeriod : 30;
+            if (period === 0) {
+                // "Alle" — use all data points, but thin out if too many for readability
+                if (dataPoints.length > 120) {
+                    // Aggregate: keep every Nth point + always first & last
+                    const step = Math.ceil(dataPoints.length / 120);
+                    subset = dataPoints.filter((_, i) => i === 0 || i === dataPoints.length - 1 || i % step === 0);
+                } else {
+                    subset = dataPoints;
+                }
+            } else {
+                subset = dataPoints.slice(-period);
+            }
+        } else {
+            subset = dataPoints.slice(-30);
+        }
+        
+        const vals = isRichData ? subset.map(d => d.total) : subset;
+        const diffs = isRichData ? subset.map(d => d.diff) : [];
+        const max = Math.max(...vals);
+        const min = Math.min(...vals);
         const range = max - min || 1;
         
-        const w = c.clientWidth;
-        const h = 200;
-        
-        let path = '';
-        let dotsHtml = '';
-        subset.forEach((val, i) => {
-            const x = (i / (subset.length - 1)) * w;
-            const y = h - ((val - min) / range * (h - 40)) - 20;
-            path += `${i===0?'M':'L'} ${x} ${y} `;
+        // ============ STATS BAR ============
+        if (isRichData && elementId === 'trendChart') {
+            const current = vals[vals.length - 1];
+            const highest = max;
+            const lowest = min;
+            const avgDaily = diffs.length > 0 ? diffs.reduce((s,v) => s+v, 0) / diffs.length : 0;
             
-            // Generate dots if enabled
-            if (chartStyle.dots && (chartStyle.type.includes('line') || chartStyle.type.includes('area'))) {
-                dotsHtml += `<circle cx="${x}" cy="${y}" r="4" fill="${chartStyle.color.includes('var') ? 'var(--primary)' : chartStyle.color}" opacity="0.8" style="animation: expandPulse 0.6s ease-out ${i * 30}ms; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.setAttribute('r', '6'); this.style.opacity = 1; this.style.filter = 'drop-shadow(0 0 8px var(--primary))';" onmouseout="this.setAttribute('r', '4'); this.style.opacity = 0.8; this.style.filter = 'none';" />`;
+            // Trend direction: compare last 7 vs previous 7
+            let direction = '↔️';
+            if (vals.length >= 14) {
+                const recent7 = vals.slice(-7);
+                const prev7 = vals.slice(-14, -7);
+                const recentAvg = recent7.reduce((s,v)=>s+v,0)/7;
+                const prevAvg = prev7.reduce((s,v)=>s+v,0)/7;
+                const delta = recentAvg - prevAvg;
+                if (delta > 1) direction = '🚀 Steigend';
+                else if (delta > 0.2) direction = '📈 Leicht ↑';
+                else if (delta < -1) direction = '📉 Fallend';
+                else if (delta < -0.2) direction = '📉 Leicht ↓';
+                else direction = '↔️ Stabil';
+            } else if (vals.length >= 2) {
+                direction = vals[vals.length-1] > vals[0] ? '📈 Positiv' : '📉 Negativ';
             }
+            
+            // Volatility (standard deviation of daily diffs)
+            let volatility = '—';
+            if (diffs.length > 1) {
+                const mean = diffs.reduce((s,v)=>s+v,0)/diffs.length;
+                const variance = diffs.reduce((s,v)=>s+(v-mean)**2,0)/diffs.length;
+                const stdDev = Math.sqrt(variance);
+                if (stdDev < 0.3) volatility = '🟢 Niedrig';
+                else if (stdDev < 0.8) volatility = '🟡 Mittel';
+                else volatility = '🔴 Hoch';
+            }
+            
+            const statEl = (id, text, colorClass) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.textContent = text;
+                    el.className = 'trend-stat-value' + (colorClass ? ' ' + colorClass : '');
+                }
+            };
+            statEl('trendStatCurrent', (current >= 0 ? '+' : '') + current.toFixed(1) + 'h', current >= 0 ? 'trend-stat-positive' : 'trend-stat-negative');
+            statEl('trendStatHigh', '+' + highest.toFixed(1) + 'h', 'trend-stat-positive');
+            statEl('trendStatLow', (lowest >= 0 ? '+' : '') + lowest.toFixed(1) + 'h', lowest < 0 ? 'trend-stat-negative' : '');
+            statEl('trendStatAvgDaily', (avgDaily >= 0 ? '+' : '') + avgDaily.toFixed(2) + 'h', avgDaily >= 0 ? 'trend-stat-positive' : 'trend-stat-negative');
+            statEl('trendStatDirection', direction, '');
+            statEl('trendStatVolatility', volatility, '');
+        }
+        
+        const w = c.clientWidth || 400;
+        const h = 220;
+        const padTop = 15, padBot = 15, padLeft = 0, padRight = 0;
+        const chartH = h - padTop - padBot;
+        const chartW = w - padLeft - padRight;
+        
+        // ============ Y-AXIS LABELS ============
+        if (elementId === 'trendChart') {
+            const yAxis = document.getElementById('trendYAxis');
+            if (yAxis) {
+                const steps = 5;
+                let yHtml = '';
+                for (let i = 0; i <= steps; i++) {
+                    const val = max - (i / steps) * range;
+                    const color = val >= 0 ? 'var(--success)' : 'var(--danger)';
+                    yHtml += `<span style="color:${color}; white-space:nowrap;">${val >= 0 ? '+' : ''}${val.toFixed(1)}</span>`;
+                }
+                yAxis.innerHTML = yHtml;
+                yAxis.style.height = h + 'px';
+            }
+        }
+        
+        // ============ X-AXIS LABELS ============
+        if (isRichData && elementId === 'trendChart') {
+            const xAxis = document.getElementById('trendXAxis');
+            if (xAxis) {
+                const firstDate = new Date(subset[0].date);
+                const lastDate = new Date(subset[subset.length - 1].date);
+                const spanDays = (lastDate - firstDate) / (1000 * 60 * 60 * 24);
+                
+                // Adaptive format based on time span
+                let dateFormat;
+                if (spanDays > 365) {
+                    dateFormat = { month: 'short', year: '2-digit' }; // "Jan 25"
+                } else if (spanDays > 90) {
+                    dateFormat = { day: '2-digit', month: 'short' }; // "14. Jan"
+                } else {
+                    dateFormat = { day: '2-digit', month: '2-digit' }; // "14.01"
+                }
+                
+                const maxLabels = Math.min(subset.length, spanDays > 180 ? 6 : 8);
+                const step = Math.max(1, Math.floor(subset.length / maxLabels));
+                let xHtml = '';
+                let lastLabel = '';
+                for (let i = 0; i < subset.length; i += step) {
+                    const d = new Date(subset[i].date);
+                    const label = d.toLocaleDateString('de-DE', dateFormat);
+                    if (label !== lastLabel) {
+                        xHtml += `<span>${label}</span>`;
+                        lastLabel = label;
+                    }
+                }
+                // Always show last date
+                const lastLabel2 = lastDate.toLocaleDateString('de-DE', dateFormat);
+                if (lastLabel !== lastLabel2) {
+                    xHtml += `<span>${lastLabel2}</span>`;
+                }
+                xAxis.innerHTML = xHtml;
+            }
+        }
+        
+        // ============ BUILD SVG ============
+        const getX = (i) => padLeft + (i / (vals.length - 1)) * chartW;
+        const getY = (val) => padTop + (1 - (val - min) / range) * chartH;
+        
+        // Zero line
+        let zeroLineY = null;
+        let zeroLineHtml = '';
+        if (min < 0 && max > 0) {
+            zeroLineY = getY(0);
+            zeroLineHtml = `<line x1="0" y1="${zeroLineY}" x2="${w}" y2="${zeroLineY}" class="trend-zero-line" />
+                <text x="${w - 4}" y="${zeroLineY - 4}" fill="rgba(255,255,255,0.25)" font-size="9" text-anchor="end" font-family="var(--font-mono)">0h</text>`;
+        }
+        
+        // Grid lines (horizontal)
+        let gridHtml = '';
+        const gridSteps = 5;
+        for (let i = 0; i <= gridSteps; i++) {
+            const gy = padTop + (i / gridSteps) * chartH;
+            gridHtml += `<line x1="0" y1="${gy}" x2="${w}" y2="${gy}" stroke="rgba(255,255,255,0.04)" stroke-width="1" />`;
+        }
+        
+        // Build path
+        let path = '';
+        vals.forEach((val, i) => {
+            const x = getX(i);
+            const y = getY(val);
+            path += `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)} `;
         });
-
-        // Smooth Path (Spline)
+        
+        // Smooth path
         let smoothPath = '';
         if (chartStyle.type.includes('smooth')) {
-            smoothPath = generateSmoothPath(dataPoints, subset, min, range, w, h);
+            smoothPath = '';
+            for (let i = 0; i < vals.length; i++) {
+                const x = getX(i);
+                const y = getY(vals[i]);
+                if (i === 0) {
+                    smoothPath += `M ${x.toFixed(1)} ${y.toFixed(1)} `;
+                } else {
+                    const x0 = getX(i - 1);
+                    const y0 = getY(vals[i - 1]);
+                    const cp1x = (x0 + x) / 2;
+                    const cp1y = y0;
+                    const cp2x = (x0 + x) / 2;
+                    const cp2y = y;
+                    smoothPath += `C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${x.toFixed(1)} ${y.toFixed(1)} `;
+                }
+            }
         }
-
-        let areaPath = '';
+        
+        const linePath = smoothPath || path;
+        const colorHex = chartStyle.color.includes('var') ? 'rgb(168, 85, 247)' : chartStyle.color;
+        const strokeColor = chartStyle.color.includes('var') ? 'var(--primary)' : chartStyle.color;
+        
+        // Positive/negative gradient area fill
+        let areaHtml = '';
         let defs = '';
         
-        const colorHex = chartStyle.color.includes('var') ? 'rgb(168, 85, 247)' : chartStyle.color;
-        
-        if(chartStyle.gradient && (chartStyle.type.includes('area') || chartStyle.type === 'bar')) {
-             const actualPath = smoothPath || path;
-             areaPath = `L ${w} ${h} L 0 ${h} Z`;
-             defs = `
-                <defs>
+        if (chartStyle.type.includes('area') || chartStyle.gradient) {
+            // Dual gradient: green above zero, red below
+            if (zeroLineY !== null && isRichData) {
+                defs = `<defs>
+                    <linearGradient id="gradPos" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.25" />
+                        <stop offset="100%" style="stop-color:#10b981;stop-opacity:0.02" />
+                    </linearGradient>
+                    <linearGradient id="gradNeg" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.02" />
+                        <stop offset="100%" style="stop-color:#ef4444;stop-opacity:0.25" />
+                    </linearGradient>
+                    <clipPath id="clipAbove"><rect x="0" y="0" width="${w}" height="${zeroLineY}" /></clipPath>
+                    <clipPath id="clipBelow"><rect x="0" y="${zeroLineY}" width="${w}" height="${h - zeroLineY}" /></clipPath>
+                    ${chartStyle.glow ? `<filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>` : ''}
+                </defs>`;
+                const closedPath = linePath + `L ${getX(vals.length - 1).toFixed(1)} ${h} L ${getX(0).toFixed(1)} ${h} Z`;
+                areaHtml = `<path d="${closedPath}" fill="url(#gradPos)" clip-path="url(#clipAbove)" />
+                    <path d="${closedPath}" fill="url(#gradNeg)" clip-path="url(#clipBelow)" />`;
+            } else {
+                defs = `<defs>
                     <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:${colorHex};stop-opacity:${chartStyle.rainbow ? 0.5 : 0.3}" />
+                        <stop offset="0%" style="stop-color:${colorHex};stop-opacity:0.3" />
                         <stop offset="100%" style="stop-color:${colorHex};stop-opacity:0" />
                     </linearGradient>
                     ${chartStyle.glow ? `<filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>` : ''}
-                    ${chartStyle.rainbow ? `<filter id="rainbow"><feColorMatrix type="saturate" values="1.5"/></filter>` : ''}
                 </defs>`;
+                const closedPath = linePath + `L ${getX(vals.length - 1).toFixed(1)} ${h} L ${getX(0).toFixed(1)} ${h} Z`;
+                areaHtml = `<path d="${closedPath}" fill="url(#grad)" />`;
+            }
         }
-
-        const linePath = smoothPath || path;
+        
+        // Dots (interactive hit areas)
+        let dotsHtml = '';
+        const typeEmojis = { work: '💼', school: '📚', vacation: '🌴', gleittag: '⚡', sick: '💊', holiday: '🏖️' };
+        vals.forEach((val, i) => {
+            const x = getX(i);
+            const y = getY(val);
+            const dotColor = val >= 0 ? 'var(--success)' : 'var(--danger)';
+            // Visible dot (small, colored by +/-)
+            dotsHtml += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${dotColor}" opacity="0.7" class="trend-dot-hover" data-idx="${i}" style="transition: all 0.15s ease;" />`;
+            // Invisible larger hit area
+            dotsHtml += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="12" fill="transparent" data-idx="${i}" style="cursor:pointer;" />`;
+        });
+        
+        // Animated line drawing
         const animStyle = chartStyle.animation ? 'animation: drawLine 2s ease-in-out forwards;' : '';
-        const strokeColor = chartStyle.color.includes('var') ? 'var(--primary)' : chartStyle.color;
-        const glowFilter = chartStyle.glow ? 'drop-shadow(0 0 8px ' + colorHex + ') drop-shadow(0 0 4px ' + colorHex + ')' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))';
-        const rainbowFilter = chartStyle.rainbow ? 'drop-shadow(0 0 12px #ff1493) drop-shadow(0 0 8px #00ffff) drop-shadow(0 0 6px #00ff00)' : '';
-        const blurEffect = chartStyle.blur ? 'backdrop-filter: blur(4px);' : '';
-        const combinedFilter = chartStyle.rainbow ? rainbowFilter : glowFilter;
+        const glowFilter = chartStyle.glow ? `filter: drop-shadow(0 0 6px ${colorHex}) drop-shadow(0 0 3px ${colorHex});` : '';
+        
+        // Multi-colored line path (green when positive, red when negative)
+        let multiColorLine = '';
+        if (isRichData && vals.some(v => v < 0) && vals.some(v => v >= 0)) {
+            // Segments approach: draw positive and negative separately
+            for (let i = 1; i < vals.length; i++) {
+                const x1 = getX(i - 1), y1 = getY(vals[i - 1]);
+                const x2 = getX(i), y2 = getY(vals[i]);
+                const segColor = (vals[i] >= 0 && vals[i - 1] >= 0) ? 'var(--success)' : 
+                                 (vals[i] < 0 && vals[i - 1] < 0) ? 'var(--danger)' : 'var(--primary)';
+                const segGlow = chartStyle.glow ? `filter: drop-shadow(0 0 4px ${segColor === 'var(--success)' ? '#10b981' : segColor === 'var(--danger)' ? '#ef4444' : colorHex});` : '';
+                multiColorLine += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${segColor}" stroke-width="2.5" stroke-linecap="round" style="${segGlow}" />`;
+            }
+        }
+        
+        // Final line or multi-color
+        const mainLine = multiColorLine || `<path d="${linePath}" class="trend-line" stroke="${strokeColor}" stroke-width="2.5" fill="none" stroke-linecap="round" style="${animStyle} ${glowFilter}" />`;
+        
+        // Crosshair elements (updated on hover via JS)
+        const crosshairHtml = `<line id="trendCrossV" class="trend-crosshair" x1="0" y1="0" x2="0" y2="${h}" style="display:none;" />
+            <line id="trendCrossH" class="trend-crosshair" x1="0" y1="0" x2="${w}" y2="0" style="display:none;" />`;
+        
+        // Current position marker (pulsing dot on last point)
+        const lastX = getX(vals.length - 1);
+        const lastY = getY(vals[vals.length - 1]);
+        const lastColor = vals[vals.length - 1] >= 0 ? '#10b981' : '#ef4444';
+        const currentMarker = `
+            <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="5" fill="${lastColor}" opacity="0.9" style="animation: trendPulse 2s ease-in-out infinite;" />
+            <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="10" fill="${lastColor}" opacity="0.15" style="animation: trendPulse 2s ease-in-out infinite;" />`;
         
         c.innerHTML = `
-            <svg class="trend-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="filter: ${combinedFilter}; ${blurEffect}${chartStyle.rainbow ? 'animation: rainbowShift 3s linear infinite;' : ''}">
+            <svg class="trend-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%; height:100%;" id="trendSvgMain">
                 ${defs}
-                ${chartStyle.type.includes('area') ? `<path d="${linePath} ${areaPath}" fill="url(#grad)" style="animation: ${chartStyle.animation ? 'fadeIn 0.8s ease-in-out' : 'none'};" />` : ''}
-                ${chartStyle.type === 'bar' ? generateBarChart(subset, min, range, w, h, strokeColor) : `<path d="${linePath}" class="trend-line" stroke="${strokeColor}" stroke-width="2.5" fill="none" style="${animStyle}" />`}
+                ${gridHtml}
+                ${zeroLineHtml}
+                ${areaHtml}
+                ${mainLine}
                 ${dotsHtml}
+                ${crosshairHtml}
+                ${currentMarker}
             </svg>
         `;
+        
+        // ============ HOVER TOOLTIP INTERACTION ============
+        if (isRichData && elementId === 'trendChart') {
+            const svg = document.getElementById('trendSvgMain');
+            const tooltip = document.getElementById('trendTooltip');
+            const crossV = document.getElementById('trendCrossV');
+            const crossH = document.getElementById('trendCrossH');
+            
+            if (svg && tooltip) {
+                const showTooltip = (idx) => {
+                    if (idx < 0 || idx >= subset.length) return;
+                    const dp = subset[idx];
+                    const val = vals[idx];
+                    const x = getX(idx);
+                    const y = getY(val);
+                    
+                    const d = new Date(dp.date);
+                    const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+                    const dateStr = dayNames[d.getDay()] + ', ' + d.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+                    const typeLabel = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', gleittag: 'Gleittag', sick: 'Krank', holiday: 'Feiertag' };
+                    const emoji = typeEmojis[dp.type] || '📋';
+                    
+                    // Streak info
+                    let streak = 0;
+                    const isPos = dp.diff >= 0;
+                    for (let j = idx; j >= 0; j--) {
+                        if ((subset[j].diff >= 0) === isPos) streak++;
+                        else break;
+                    }
+                    
+                    tooltip.innerHTML = `
+                        <div class="tt-date">${dateStr}</div>
+                        <div class="tt-row"><span class="tt-label">Saldo</span><span class="tt-val ${val >= 0 ? 'tt-positive' : 'tt-negative'}">${val >= 0 ? '+' : ''}${val.toFixed(2)}h</span></div>
+                        <div class="tt-row"><span class="tt-label">Tages-Diff</span><span class="tt-val ${dp.diff >= 0 ? 'tt-positive' : 'tt-negative'}">${dp.diff >= 0 ? '+' : ''}${dp.diff.toFixed(2)}h</span></div>
+                        <div class="tt-row"><span class="tt-label">Gearbeitet</span><span class="tt-val">${dp.worked.toFixed(1)}h</span></div>
+                        <div class="tt-row"><span class="tt-label">Streak</span><span class="tt-val">${streak}× ${isPos ? '✅' : '⚠️'}</span></div>
+                        <div style="margin-top:4px;"><span class="tt-type-badge">${emoji} ${typeLabel[dp.type] || dp.type}</span></div>
+                    `;
+                    
+                    // Position tooltip
+                    const chartRect = c.getBoundingClientRect();
+                    const tooltipW = 200;
+                    let left = (x / w) * chartRect.width;
+                    if (left + tooltipW > chartRect.width) left = left - tooltipW - 10;
+                    else left += 15;
+                    let top = (y / h) * chartRect.height - 80;
+                    if (top < 0) top = 10;
+                    
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = left + 'px';
+                    tooltip.style.top = top + 'px';
+                    
+                    // Crosshair
+                    if (crossV) { crossV.style.display = 'block'; crossV.setAttribute('x1', x); crossV.setAttribute('x2', x); }
+                    if (crossH) { crossH.style.display = 'block'; crossH.setAttribute('y1', y); crossH.setAttribute('y2', y); }
+                    
+                    // Highlight dot
+                    svg.querySelectorAll('.trend-dot-hover').forEach(dot => {
+                        if (parseInt(dot.dataset.idx) === idx) {
+                            dot.setAttribute('r', '6');
+                            dot.setAttribute('opacity', '1');
+                        } else {
+                            dot.setAttribute('r', '3');
+                            dot.setAttribute('opacity', '0.7');
+                        }
+                    });
+                };
+                
+                const hideTooltip = () => {
+                    tooltip.style.display = 'none';
+                    if (crossV) crossV.style.display = 'none';
+                    if (crossH) crossH.style.display = 'none';
+                    svg.querySelectorAll('.trend-dot-hover').forEach(dot => {
+                        dot.setAttribute('r', '3');
+                        dot.setAttribute('opacity', '0.7');
+                    });
+                };
+                
+                svg.addEventListener('mousemove', (e) => {
+                    const rect = svg.getBoundingClientRect();
+                    const mouseX = (e.clientX - rect.left) / rect.width * w;
+                    // find nearest data point
+                    let nearest = 0;
+                    let nearestDist = Infinity;
+                    for (let i = 0; i < vals.length; i++) {
+                        const dist = Math.abs(getX(i) - mouseX);
+                        if (dist < nearestDist) { nearestDist = dist; nearest = i; }
+                    }
+                    showTooltip(nearest);
+                });
+                
+                svg.addEventListener('mouseleave', hideTooltip);
+                
+                // Touch support
+                svg.addEventListener('touchstart', (e) => {
+                    const touch = e.touches[0];
+                    const rect = svg.getBoundingClientRect();
+                    const mouseX = (touch.clientX - rect.left) / rect.width * w;
+                    let nearest = 0;
+                    let nearestDist = Infinity;
+                    for (let i = 0; i < vals.length; i++) {
+                        const dist = Math.abs(getX(i) - mouseX);
+                        if (dist < nearestDist) { nearestDist = dist; nearest = i; }
+                    }
+                    showTooltip(nearest);
+                }, { passive: true });
+                svg.addEventListener('touchend', () => setTimeout(hideTooltip, 2000), { passive: true });
+            }
+        }
     }
     
     function generateSmoothPath(dataPoints, subset, min, range, w, h) {
@@ -18638,8 +19164,35 @@ TIPPS:
         const saldoTrend = stats.saldo;
         document.getElementById('mcSaldoTrend').innerText = (saldoTrend >= 0 ? '+' : '') + saldoTrend.toFixed(1) + 'h';
         document.getElementById('mcSaldoTrend').style.color = saldoTrend >= 0 ? 'var(--success)' : 'var(--danger)';
-        const trendLabel = saldoTrend > 10 ? '🚀 Sehr positiv' : (saldoTrend > 0 ? '📈 Positiv' : (saldoTrend < -10 ? '📉 Kritisch' : '↔️ Neutral'));
+        const trendLabel = saldoTrend > 10 ? '🚀 Sehr positiv' : (saldoTrend > 5 ? '📈 Gut' : (saldoTrend > 0 ? '✅ Positiv' : (saldoTrend > -5 ? '⚠️ Leicht negativ' : (saldoTrend > -10 ? '📉 Negativ' : '🔴 Kritisch'))));
         document.getElementById('mcSaldoTrendLabel').innerText = trendLabel;
+        
+        // Sparkline for Saldo-Trend in Monatscontrol
+        const sparkContainer = document.getElementById('mcSaldoSparkline');
+        if (sparkContainer && stats.dailyDiffs && stats.dailyDiffs.length > 1) {
+            const sparkVals = [];
+            let sparkRunning = 0;
+            stats.dailyDiffs.forEach(d => { sparkRunning += d; sparkVals.push(sparkRunning); });
+            const sparkMax = Math.max(...sparkVals);
+            const sparkMin = Math.min(...sparkVals);
+            const sparkRange = sparkMax - sparkMin || 1;
+            const sw = sparkContainer.clientWidth || 180;
+            const sh = 40;
+            let sparkPath = '';
+            sparkVals.forEach((v, i) => {
+                const x = (i / (sparkVals.length - 1)) * sw;
+                const y = sh - ((v - sparkMin) / sparkRange * (sh - 6)) - 3;
+                sparkPath += (i === 0 ? 'M' : 'L') + ` ${x.toFixed(1)} ${y.toFixed(1)} `;
+            });
+            const lastColor = sparkVals[sparkVals.length - 1] >= 0 ? '#10b981' : '#ef4444';
+            sparkContainer.innerHTML = `<svg viewBox="0 0 ${sw} ${sh}" style="width:100%;height:100%;" preserveAspectRatio="none">
+                <path d="${sparkPath} L ${sw} ${sh} L 0 ${sh} Z" fill="${lastColor}" opacity="0.1"/>
+                <path d="${sparkPath}" fill="none" stroke="${lastColor}" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>`;
+            
+            document.getElementById('mcSaldoPeak').innerText = 'Hoch: +' + sparkMax.toFixed(1) + 'h';
+            document.getElementById('mcSaldoLow').innerText = 'Tief: ' + (sparkMin >= 0 ? '+' : '') + sparkMin.toFixed(1) + 'h';
+        }
         
         // 5. Render Monatsvergleich-Block (kompakt)
         renderMonthComparisonBlock(stats, prevStats, selectedMonth, prevMonth);
@@ -18703,7 +19256,8 @@ TIPPS:
             sickDays: 0,
             holidayDays: 0,
             saldo: 0,
-            weeks: []
+            weeks: [],
+            dailyDiffs: []
         };
 
         // Sammle alle Einträge für diesen Monat
@@ -18774,7 +19328,9 @@ TIPPS:
             if (dayHasWork) {
                 stats.worked += dayWorkedHours;
                 stats.workDays += 1; // pro Arbeitstag nur einmal zählen
-                stats.saldo += (dayWorkedHours - 8.75);
+                const dayDiff = dayWorkedHours - 8.75;
+                stats.saldo += dayDiff;
+                stats.dailyDiffs.push(dayDiff);
             }
             if (dayHasSchool) stats.schoolDays += 1;
             if (dayHasVacation) stats.vacationDays += 1;
@@ -22151,6 +22707,8 @@ TIPPS:
     function checkSmartNotifications() {
         const now = new Date();
         const today = now.toISOString().split('T')[0];
+        const dayIndex = now.getDay(); // 0=So, 1=Mo, ..., 5=Fr, 6=Sa
+        const isFriday = dayIndex === 5;
         const todayEntries = data.entries.filter(e => e.date === today);
         let todayWorked = 0;
 
@@ -22158,8 +22716,18 @@ TIPPS:
             todayWorked += e.worked || 0;
         });
 
-        // todayWorked ist bereits in Stunden, nicht in Sekunden!
-        const todayExpected = data.settings.workTime?.default || 8;
+        // Laufenden Timer einrechnen
+        if (window.timer && window.timer.running && window.timer.start) {
+            const timerMs = window.timer.paused + (Date.now() - window.timer.start) - (window.timer.breakTime || 0);
+            todayWorked += Math.max(0, timerMs / 3.6e6);
+        }
+
+        // Erwartete Stunden aus den tatsächlichen Tageseinstellungen (nicht hardcoded 8!)
+        const todayExpected = (data.settings && data.settings.hours) ? (data.settings.hours[dayIndex] || 0) : 0;
+        
+        // Kein Arbeitstag (Wochenende etc.) → keine Notifications
+        if (todayExpected === 0) return;
+        
         const deficit = todayExpected - todayWorked;
 
         // Nachmittag-Erinnerung (15:00 Uhr)
@@ -22178,8 +22746,11 @@ TIPPS:
             if (deficit > 0) {
                 showSmartNotification('🌆 Feierabend-Reminder', `Noch ${deficit.toFixed(1)}h — möchtest du noch ein bisschen arbeiten?`, 'info');
                 sessionStorage.setItem('tt_notif_evening', 'shown');
-            } else {
+            } else if (isFriday) {
                 showSmartNotification('✨ Schönes Wochenende!', `Dein Tag ist voll! Genieß die Freizeit! 🏖️`, 'success');
+                sessionStorage.setItem('tt_notif_evening', 'shown');
+            } else {
+                showSmartNotification('✅ Feierabend!', `Tagesziel erreicht — schönen Feierabend! 🎉`, 'success');
                 sessionStorage.setItem('tt_notif_evening', 'shown');
             }
         }
