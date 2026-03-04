@@ -320,6 +320,14 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         [data-theme="light"] .cmd-palette-input-wrap::after {
             background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.1), transparent);
         }
+        [data-theme="light"] .cmd-palette-close-btn {
+            border-color: rgba(0,0,0,0.1);
+            background: rgba(0,0,0,0.03);
+        }
+        [data-theme="light"] .cmd-palette-close-btn:hover {
+            background: rgba(239,68,68,0.08);
+            border-color: rgba(239,68,68,0.15);
+        }
         [data-theme="light"] .cmd-palette-item:hover,
         [data-theme="light"] .cmd-palette-item.selected {
             background: rgba(var(--primary-rgb), 0.06);
@@ -876,6 +884,25 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             padding: 18px 22px;
             border-bottom: 1px solid rgba(255,255,255,0.05);
             position: relative;
+        }
+        .cmd-palette-close-btn {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            flex-shrink: 0;
+            transition: all 0.15s;
+            padding: 0;
+            line-height: 1;
+        }
+        .cmd-palette-close-btn:hover {
+            background: rgba(239,68,68,0.12);
+            border-color: rgba(239,68,68,0.2);
+            color: #ef4444;
         }
         .cmd-palette-input-wrap::after {
             content: '';
@@ -5573,9 +5600,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             opacity: 0.4;
             transition: opacity 0.3s ease;
         }
-        @media (max-width: 767px) {
-            .net-status { display: flex; }
-        }
         .net-status:hover,
         .net-status.expanded {
             opacity: 1;
@@ -6611,6 +6635,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             <div class="cmd-palette-input-wrap">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 <input class="cmd-palette-input" id="cmdPaletteInput" type="text" placeholder="Seite suchen, navigieren…" autocomplete="off" spellcheck="false">
+                <button class="cmd-palette-close-btn" onclick="closeCmdPalette()" title="Schließen" aria-label="Suche schließen">✕</button>
             </div>
             <div class="cmd-palette-results" id="cmdPaletteResults"></div>
             <div class="cmd-palette-footer">
@@ -22189,7 +22214,13 @@ TIPPS:
         input.value = '';
         cmdSelectedIdx = 0;
         renderCmdResults('');
-        setTimeout(() => input.focus(), 60);
+        // Use requestAnimationFrame + short delay for reliable mobile focus
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                input.focus();
+                input.click();
+            }, 50);
+        });
     }
 
     function closeCmdPalette() {
@@ -22247,8 +22278,8 @@ TIPPS:
         }
     }
 
-    // Input handler
-    document.addEventListener('DOMContentLoaded', () => {
+    // Input handler — attach directly (DOM elements already exist above this script)
+    (function initCmdPaletteHandlers() {
         const input = document.getElementById('cmdPaletteInput');
         if (input) {
             input.addEventListener('input', () => renderCmdResults(input.value));
@@ -22277,7 +22308,7 @@ TIPPS:
                 if (e.target === overlay) closeCmdPalette();
             });
         }
-    });
+    })();
 
     // Global Ctrl+K / ⌘K shortcut
     document.addEventListener('keydown', (e) => {
