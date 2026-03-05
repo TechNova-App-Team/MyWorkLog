@@ -2224,6 +2224,178 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
         .modal.active { display: flex !important; animation: fadeIn 0.2s ease; }
 
+        /* ===== HOLIDAY CONFIRM MODAL ===== */
+        .holiday-modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(16px) saturate(1.3);
+            -webkit-backdrop-filter: blur(16px) saturate(1.3);
+            z-index: 10001;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .holiday-modal-overlay.active { opacity: 1; }
+        .holiday-modal {
+            background: linear-gradient(165deg, rgba(22,22,30,0.98), rgba(12,12,18,0.99));
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 24px 80px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03) inset;
+            transform: scale(0.95) translateY(10px);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .holiday-modal-overlay.active .holiday-modal {
+            transform: scale(1) translateY(0);
+        }
+        .holiday-modal-lg { max-width: 520px; text-align: left; }
+        .holiday-modal-icon {
+            font-size: 2.2rem;
+            margin-bottom: 12px;
+        }
+        .holiday-modal-lg .holiday-modal-icon { text-align: center; }
+        .holiday-modal-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 8px;
+        }
+        .holiday-modal-lg .holiday-modal-title { text-align: center; }
+        .holiday-modal-desc {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin: 0 0 20px;
+        }
+        .holiday-modal-lg .holiday-modal-desc { text-align: center; }
+        .holiday-check-list {
+            max-height: 280px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 20px;
+            padding-right: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.08) transparent;
+        }
+        .holiday-check-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.02);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .holiday-check-item:hover {
+            background: rgba(var(--primary-rgb), 0.06);
+            border-color: rgba(var(--primary-rgb), 0.12);
+        }
+        .holiday-check-item input[type="checkbox"] {
+            display: none;
+        }
+        .holiday-check-mark {
+            width: 20px; height: 20px;
+            border-radius: 6px;
+            border: 2px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.03);
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+            position: relative;
+        }
+        .holiday-check-item input:checked ~ .holiday-check-mark {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        .holiday-check-item input:checked ~ .holiday-check-mark::after {
+            content: '✔';
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 800;
+        }
+        .holiday-check-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+        .holiday-check-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .holiday-check-date {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            opacity: 0.6;
+            font-family: var(--font-mono);
+        }
+        .holiday-modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .holiday-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: var(--font-main);
+            cursor: pointer;
+            transition: all 0.15s;
+            border: none;
+        }
+        .holiday-btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.3);
+        }
+        .holiday-btn-primary:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(var(--primary-rgb), 0.4);
+        }
+        .holiday-btn-ghost {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .holiday-btn-ghost:hover {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-main);
+        }
+        [data-theme="light"] .holiday-modal {
+            background: linear-gradient(165deg, rgba(255,255,255,0.98), rgba(248,249,251,0.99));
+            border-color: rgba(0,0,0,0.08);
+            box-shadow: 0 24px 80px -12px rgba(0,0,0,0.15);
+        }
+        [data-theme="light"] .holiday-check-item {
+            border-color: rgba(0,0,0,0.06);
+            background: rgba(0,0,0,0.015);
+        }
+        [data-theme="light"] .holiday-check-item:hover {
+            background: rgba(var(--primary-rgb), 0.04);
+        }
+        [data-theme="light"] .holiday-check-mark {
+            border-color: rgba(0,0,0,0.15);
+            background: rgba(0,0,0,0.02);
+        }
+        [data-theme="light"] .holiday-btn-ghost {
+            background: rgba(0,0,0,0.04);
+            border-color: rgba(0,0,0,0.08);
+        }
+        [data-theme="light"] .holiday-btn-ghost:hover {
+            background: rgba(0,0,0,0.07);
+        }
+
         /* ===== RECOVERY MODAL — PREMIUM REDESIGN ===== */
         .recovery-modal-box {
             width: 780px;
@@ -8586,6 +8758,31 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         <input type="text" id="confName" class="glass-input" placeholder="z.B. Sven" style="max-width:320px;">
                     </div>
 
+                    <!-- Bundesland -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Bundesland</div>
+                        <label class="settings-label">Dein Bundesland (für Feiertage)</label>
+                        <select id="confBundesland" class="glass-input" style="max-width:320px; padding:8px 12px; appearance:auto;" onchange="data.settings.bundesland = this.value; save();">
+                            <option value="">— Bitte wählen —</option>
+                            <option value="BW">Baden-Württemberg</option>
+                            <option value="BY">Bayern</option>
+                            <option value="BE">Berlin</option>
+                            <option value="BB">Brandenburg</option>
+                            <option value="HB">Bremen</option>
+                            <option value="HH">Hamburg</option>
+                            <option value="HE">Hessen</option>
+                            <option value="MV">Mecklenburg-Vorpommern</option>
+                            <option value="NI">Niedersachsen</option>
+                            <option value="NW">Nordrhein-Westfalen</option>
+                            <option value="RP">Rheinland-Pfalz</option>
+                            <option value="SL">Saarland</option>
+                            <option value="SN">Sachsen</option>
+                            <option value="ST">Sachsen-Anhalt</option>
+                            <option value="SH">Schleswig-Holstein</option>
+                            <option value="TH">Thüringen</option>
+                        </select>
+                    </div>
+
                     <!-- Accent Color -->
                     <div class="settings-section">
                         <div class="settings-section-title">Akzentfarbe</div>
@@ -10543,7 +10740,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         try { autoEmptyTrash(); } catch(e) { console.warn('autoEmptyTrash error', e); }
         setInterval(() => { try { autoEmptyTrash(); } catch(e) {} }, 24*3600*1000);
         
-        setTimeout(checkAndBookHolidays, 500);
+        // Feiertage werden nicht mehr automatisch gebucht — Nutzer muss "Feiertage prüfen" klicken
         try { renderSchoolRules(); checkTodayVocSchool(); } catch(e) { console.warn('School check init error', e); }
 
         const savedTimer = localStorage.getItem('tg_timer');
@@ -12310,6 +12507,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         const holidays = [];
         const pad = n => (n < 10 ? '0' : '') + n;
         const toKey = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+        const bundesland = (data.settings && data.settings.bundesland) || '';
 
         const getEasterSunday = (Y) => {
             const a = Y % 19; const b = Y % 4; const c = Y % 7;
@@ -12320,90 +12518,193 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             const d = (19 * a + M) % 30;
             const e = (2 * b + 4 * c + 6 * d + N) % 7;
             let days = (22 + d + e);
-            let month = 3; 
-
+            let month = 3;
             if (days > 31) { month = 4; days -= 31; }
-            if (days === 26 && month === 4) days = 19; 
-            if (days === 25 && month === 4 && d === 28 && e === 6 && a > 10) days = 18; 
-
+            if (days === 26 && month === 4) days = 19;
+            if (days === 25 && month === 4 && d === 28 && e === 6 && a > 10) days = 18;
             return new Date(Y, month - 1, days);
         };
 
         const easter = getEasterSunday(year);
-        const addDays = (d, days) => {
-            const result = new Date(d);
-            result.setDate(result.getDate() + days);
-            return result;
-        };
+        const addDays = (d, days) => { const r = new Date(d); r.setDate(r.getDate() + days); return r; };
         const add = (date, name) => holidays.push({ date: toKey(date), name, type: 'holiday' });
 
+        // Bundesweite Feiertage (gelten in allen Bundesländern)
         add(new Date(year, 0, 1), "Neujahr");
+        add(addDays(easter, -2), "Karfreitag");
+        add(addDays(easter, 1), "Ostermontag");
         add(new Date(year, 4, 1), "Tag der Arbeit");
+        add(addDays(easter, 39), "Christi Himmelfahrt");
+        add(addDays(easter, 50), "Pfingstmontag");
         add(new Date(year, 9, 3), "Tag der Deutschen Einheit");
         add(new Date(year, 11, 25), "1. Weihnachtstag");
         add(new Date(year, 11, 26), "2. Weihnachtstag");
-        
-        add(addDays(easter, -2), "Karfreitag");
-        add(addDays(easter, 1), "Ostermontag");
-        add(addDays(easter, 39), "Christi Himmelfahrt");
-        add(addDays(easter, 50), "Pfingstmontag");
-        add(addDays(easter, 60), "Fronleichnam"); 
-        add(new Date(year, 0, 6), "Heilige Drei Könige");
-        add(new Date(year, 10, 1), "Allerheiligen");
 
-        return holidays.filter((h, i, a) => a.findIndex(h2 => h2.date === h.date) === i); 
+        // Regionale Feiertage nur wenn Bundesland gesetzt
+        if (bundesland) {
+            const dreiKoenige = ['BW','BY','ST'];
+            const fronleichnam = ['BW','BY','HE','NW','RP','SL','SN','TH'];
+            const mariaeHimmelfahrt = ['BY','SL'];
+            const reformationstag = ['BB','HB','HH','MV','NI','SN','ST','SH','TH'];
+            const allerheiligen = ['BW','BY','NW','RP','SL'];
+            const bussUndBettag = ['SN'];
+            const weltKindertag = ['TH'];
+            const frauentag = ['BE','MV'];
+
+            if (dreiKoenige.includes(bundesland)) add(new Date(year, 0, 6), "Heilige Drei Könige");
+            if (frauentag.includes(bundesland)) add(new Date(year, 2, 8), "Internationaler Frauentag");
+            if (fronleichnam.includes(bundesland)) add(addDays(easter, 60), "Fronleichnam");
+            if (mariaeHimmelfahrt.includes(bundesland)) add(new Date(year, 7, 15), "Mariä Himmelfahrt");
+            if (weltKindertag.includes(bundesland)) add(new Date(year, 8, 20), "Weltkindertag");
+            if (reformationstag.includes(bundesland)) add(new Date(year, 9, 31), "Reformationstag");
+            if (allerheiligen.includes(bundesland)) add(new Date(year, 10, 1), "Allerheiligen");
+            if (bussUndBettag.includes(bundesland)) {
+                // Buß- und Bettag: Mittwoch vor dem 23. November
+                let nov23 = new Date(year, 10, 23);
+                let dayOfWeek = nov23.getDay();
+                let diff = (dayOfWeek >= 3) ? (dayOfWeek - 3) : (dayOfWeek + 4);
+                add(new Date(year, 10, 23 - diff), "Buß- und Bettag");
+            }
+        }
+
+        return holidays.filter((h, i, a) => a.findIndex(h2 => h2.date === h.date) === i);
     }
 
     function checkAndBookHolidays() {
+        const bundesland = (data.settings && data.settings.bundesland) || '';
+        if (!bundesland) {
+            showHolidayNoBundesland();
+            return;
+        }
+
         const now = new Date();
         const year = now.getFullYear();
-        
-        let holidays = getGermanHolidays(year);
-        holidays = holidays.concat(getGermanHolidays(year + 1));
-        
+        let holidays = getGermanHolidays(year).concat(getGermanHolidays(year + 1));
         const existingDates = data.entries.map(e => e.date);
 
-        let bookedHolidays = [];
+        // Filter: nur Arbeitstage (Mo-Fr), mit Sollstunden, nicht bereits gebucht, max 60 Tage Vorausschau
+        const pending = holidays.filter(h => {
+            if (existingDates.includes(h.date)) return false;
+            const dateObj = new Date(h.date);
+            const dayIndex = dateObj.getDay();
+            const expected = data.settings.hours[dayIndex] || 0;
+            return expected > 0 && dayIndex >= 1 && dayIndex <= 5 && dateObj.getTime() < now.getTime() + (60 * 86400000);
+        });
 
-        holidays.forEach(h => {
-            const hDate = h.date;
-            const dateObj = new Date(hDate);
-            
-            if (!existingDates.includes(hDate)) {
-                
+        if (pending.length === 0) {
+            showHolidayNoPending();
+            return;
+        }
+
+        showHolidayConfirmModal(pending);
+    }
+
+    function showHolidayNoBundesland() {
+        const overlay = document.createElement('div');
+        overlay.className = 'holiday-modal-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="holiday-modal">
+                <div class="holiday-modal-icon">📍</div>
+                <h3 class="holiday-modal-title">Bundesland nicht gesetzt</h3>
+                <p class="holiday-modal-desc">Bitte wähle zuerst dein Bundesland in den Einstellungen aus, damit nur die für dich relevanten Feiertage angezeigt werden.</p>
+                <div class="holiday-modal-actions">
+                    <button class="holiday-btn holiday-btn-primary" onclick="this.closest('.holiday-modal-overlay').remove(); openSettings();">⚙️ Einstellungen öffnen</button>
+                    <button class="holiday-btn holiday-btn-ghost" onclick="this.closest('.holiday-modal-overlay').remove();">Abbrechen</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('active'));
+    }
+
+    function showHolidayNoPending() {
+        const overlay = document.createElement('div');
+        overlay.className = 'holiday-modal-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div class="holiday-modal">
+                <div class="holiday-modal-icon">✅</div>
+                <h3 class="holiday-modal-title">Alles aktuell!</h3>
+                <p class="holiday-modal-desc">Keine neuen Feiertage zum Eintragen. Alle relevanten Feiertage sind bereits erfasst.</p>
+                <div class="holiday-modal-actions">
+                    <button class="holiday-btn holiday-btn-ghost" onclick="this.closest('.holiday-modal-overlay').remove();">Schließen</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('active'));
+    }
+
+    function showHolidayConfirmModal(pendingHolidays) {
+        const overlay = document.createElement('div');
+        overlay.className = 'holiday-modal-overlay';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+
+        const bundeslandNames = {BW:'Baden-Württemberg',BY:'Bayern',BE:'Berlin',BB:'Brandenburg',HB:'Bremen',HH:'Hamburg',HE:'Hessen',MV:'Mecklenburg-Vorpommern',NI:'Niedersachsen',NW:'Nordrhein-Westfalen',RP:'Rheinland-Pfalz',SL:'Saarland',SN:'Sachsen',ST:'Sachsen-Anhalt',SH:'Schleswig-Holstein',TH:'Thüringen'};
+        const bl = bundeslandNames[data.settings.bundesland] || data.settings.bundesland;
+
+        const listHtml = pendingHolidays.map((h, i) => {
+            const d = new Date(h.date);
+            const dayName = d.toLocaleDateString('de-DE', { weekday: 'short' });
+            const dateStr = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            return `<label class="holiday-check-item">
+                <input type="checkbox" checked data-holiday-idx="${i}">
+                <span class="holiday-check-mark"></span>
+                <span class="holiday-check-info">
+                    <span class="holiday-check-name">${h.name}</span>
+                    <span class="holiday-check-date">${dayName}, ${dateStr}</span>
+                </span>
+            </label>`;
+        }).join('');
+
+        overlay.innerHTML = `
+            <div class="holiday-modal holiday-modal-lg">
+                <div class="holiday-modal-icon">🗓️</div>
+                <h3 class="holiday-modal-title">Feiertage eintragen</h3>
+                <p class="holiday-modal-desc">${pendingHolidays.length} Feiertag${pendingHolidays.length > 1 ? 'e' : ''} für <strong>${bl}</strong> gefunden. Wähle aus, welche als Arbeitstag gebucht werden sollen:</p>
+                <div class="holiday-check-list" id="holidayCheckList">
+                    ${listHtml}
+                </div>
+                <div class="holiday-modal-actions">
+                    <button class="holiday-btn holiday-btn-primary" id="holidayConfirmBtn">✓ Ausgewählte eintragen</button>
+                    <button class="holiday-btn holiday-btn-ghost" onclick="this.closest('.holiday-modal-overlay').remove();">Abbrechen</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        requestAnimationFrame(() => overlay.classList.add('active'));
+
+        document.getElementById('holidayConfirmBtn').onclick = () => {
+            const checkboxes = overlay.querySelectorAll('input[data-holiday-idx]');
+            let booked = 0;
+            checkboxes.forEach(cb => {
+                if (!cb.checked) return;
+                const idx = parseInt(cb.dataset.holidayIdx);
+                const h = pendingHolidays[idx];
+                const dateObj = new Date(h.date);
                 const dayIndex = dateObj.getDay();
                 const expected = data.settings.hours[dayIndex] || 0;
-
-                if (expected > 0 && dayIndex >= 1 && dayIndex <= 5 && new Date(hDate).getTime() < now.getTime() + (30 * 86400000)) { 
-                    const entry = {
-                        id: Date.now() + Math.random(),
-                        date: hDate,
-                        type: 'holiday',
-                        worked: expected, 
-                        expected: expected,
-                        diff: 0,
-                        info: h.name, 
-                        isPeriod: false, 
-                        breakMins: 0, shiftEnd: '', shiftWarning: false
-                    };
-                    data.entries.push(entry);
-                    bookedHolidays.push(entry);
-                }
+                data.entries.push({
+                    id: Date.now() + Math.random(),
+                    date: h.date,
+                    type: 'holiday',
+                    worked: expected,
+                    expected: expected,
+                    diff: 0,
+                    info: h.name,
+                    isPeriod: false,
+                    breakMins: 0, shiftEnd: '', shiftWarning: false
+                });
+                booked++;
+            });
+            if (booked > 0) {
+                data.entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+                save();
+                updateUI();
             }
-        });
-        
-        localStorage.setItem('tg_last_holiday_check', JSON.stringify({
-            timestamp: Date.now(),
-            count: bookedHolidays.length,
-            next: holidays.find(h => new Date(h.date).getTime() > now.getTime())
-        }));
-
-        if (bookedHolidays.length > 0) {
-            data.entries.sort((a,b) => new Date(b.date) - new Date(a.date));
-            save();
-        } else {
-            updateUI(); 
-        }
+            overlay.remove();
+        };
     }
     
     // --- DASHBOARD HELPER FUNCTIONS (Premium Enhancements) ---
@@ -17335,6 +17636,9 @@ TIPPS:
         switchSettingsTab('profile'); // Standardmäßig auf Profile Tab
         
         document.getElementById('confName').value = data.settings.name;
+        // Bundesland
+        const confBundeslandEl = document.getElementById('confBundesland');
+        if (confBundeslandEl) confBundeslandEl.value = data.settings.bundesland || '';
         // Shortcuts checkbox
         const confShortcutsEl = document.getElementById('confShortcuts'); 
         if (confShortcutsEl) {
@@ -17683,6 +17987,9 @@ TIPPS:
         // Shortcuts setting
         const confShortcutsEl = document.getElementById('confShortcuts');
         if (confShortcutsEl) data.settings.shortcutsEnabled = !!confShortcutsEl.checked;
+        // Bundesland
+        const confBLEl = document.getElementById('confBundesland');
+        if (confBLEl) data.settings.bundesland = confBLEl.value;
         data.settings.break.thresh = parseFloat(document.getElementById('confBreakThresh').value);
         
         // Speichere Pausenzeiten pro Wochentag
