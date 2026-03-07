@@ -75,6 +75,8 @@
 <script defer src="https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/three@0.145.0/build/three.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <!-- Umami Analytics - Privacy Focused -->
@@ -847,6 +849,400 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             border-color: rgba(var(--primary-rgb), 0.15);
             color: rgba(255,255,255,0.7);
         }
+
+        /* ═══════════════════════════════════════════════════════════ */
+        /* ── ANALYTICS PRO — Premium Data Visualization Suite ────── */
+        /* ═══════════════════════════════════════════════════════════ */
+        .ap-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* ── Tab Navigation Bar ── */
+        .ap-tab-bar {
+            display: flex;
+            gap: 4px;
+            padding: 6px;
+            background: rgba(var(--primary-rgb), 0.04);
+            border: 1px solid rgba(var(--primary-rgb), 0.08);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .ap-tab-bar::-webkit-scrollbar { display: none; }
+        .ap-tab {
+            flex: 0 0 auto;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: var(--font-main);
+            color: rgba(255,255,255,0.5);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.25s cubic-bezier(.4,0,.2,1);
+            position: relative;
+            letter-spacing: 0.02em;
+        }
+        .ap-tab:hover {
+            background: rgba(var(--primary-rgb), 0.08);
+            color: rgba(255,255,255,0.8);
+        }
+        .ap-tab.active {
+            background: rgba(var(--primary-rgb), 0.15);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(var(--primary-rgb), 0.2);
+        }
+        .ap-tab .ap-tab-icon {
+            margin-right: 6px;
+            font-size: 1em;
+        }
+
+        /* ── Chart Panel Wrapper ── */
+        .ap-panels { position: relative; }
+        .ap-panel {
+            display: none;
+            animation: apFadeIn 0.4s cubic-bezier(.4,0,.2,1);
+        }
+        .ap-panel.active { display: block; }
+        @keyframes apFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Chart Card ── */
+        .ap-card {
+            background: rgba(var(--primary-rgb), 0.03);
+            border: 1px solid rgba(var(--primary-rgb), 0.08);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .ap-card:hover {
+            border-color: rgba(var(--primary-rgb), 0.2);
+            box-shadow: 0 4px 24px rgba(var(--primary-rgb), 0.08);
+        }
+        .ap-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), #06b6d4, var(--primary));
+            background-size: 200% 100%;
+            animation: apShimmer 3s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .ap-card:hover::before { opacity: 1; }
+        @keyframes apShimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .ap-card-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ap-card-title .ap-card-icon {
+            font-size: 1.1em;
+            opacity: 0.7;
+        }
+
+        /* ── Chart Canvas ── */
+        .ap-chart-wrap {
+            position: relative;
+            width: 100%;
+            min-height: 300px;
+        }
+        .ap-chart-wrap canvas {
+            width: 100% !important;
+            max-height: 400px;
+        }
+
+        /* ── KPI Row ── */
+        .ap-kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .ap-kpi {
+            background: rgba(var(--primary-rgb), 0.04);
+            border: 1px solid rgba(var(--primary-rgb), 0.08);
+            border-radius: 16px;
+            padding: 1.2rem 1rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .ap-kpi:hover {
+            transform: translateY(-2px);
+            border-color: rgba(var(--primary-rgb), 0.2);
+            box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.1);
+        }
+        .ap-kpi-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            background: linear-gradient(135deg, var(--primary), #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
+        }
+        .ap-kpi-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255,255,255,0.4);
+            margin-top: 4px;
+        }
+        .ap-kpi-sub {
+            font-size: 0.68rem;
+            color: rgba(255,255,255,0.25);
+            margin-top: 2px;
+            font-family: var(--font-mono);
+        }
+
+        /* ── Grid Layouts ── */
+        .ap-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+        }
+        .ap-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.25rem;
+        }
+
+        /* ── Heatmap ── */
+        .ap-heatmap {
+            display: grid;
+            grid-template-columns: 30px repeat(53, 1fr);
+            gap: 2px;
+            overflow-x: auto;
+        }
+        .ap-heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 3px;
+            background: rgba(var(--primary-rgb), 0.06);
+            min-width: 11px;
+            transition: all 0.15s;
+            cursor: default;
+            position: relative;
+        }
+        .ap-heatmap-cell:hover {
+            outline: 2px solid var(--primary);
+            outline-offset: 1px;
+            z-index: 2;
+        }
+        .ap-heatmap-cell[data-level="1"] { background: rgba(var(--primary-rgb), 0.2); }
+        .ap-heatmap-cell[data-level="2"] { background: rgba(var(--primary-rgb), 0.4); }
+        .ap-heatmap-cell[data-level="3"] { background: rgba(var(--primary-rgb), 0.6); }
+        .ap-heatmap-cell[data-level="4"] { background: var(--primary); }
+        .ap-heatmap-label {
+            font-size: 0.6rem;
+            color: rgba(255,255,255,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 4px;
+        }
+        .ap-heatmap-legend {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            justify-content: flex-end;
+            margin-top: 8px;
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.3);
+        }
+        .ap-heatmap-legend span {
+            width: 12px; height: 12px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        /* ── Tooltip ── */
+        .ap-tooltip {
+            position: fixed;
+            background: rgba(10,10,18,0.95);
+            border: 1px solid rgba(var(--primary-rgb), 0.2);
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 0.75rem;
+            color: #fff;
+            pointer-events: none;
+            z-index: 9999;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            opacity: 0;
+            transition: opacity 0.15s;
+            font-family: var(--font-mono);
+            max-width: 220px;
+        }
+        .ap-tooltip.visible { opacity: 1; }
+
+        /* ── Period Selector ── */
+        .ap-period-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 1rem;
+        }
+        .ap-period-btn {
+            padding: 5px 14px;
+            border-radius: 8px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            font-family: var(--font-main);
+            color: rgba(255,255,255,0.4);
+            background: transparent;
+            border: 1px solid rgba(var(--primary-rgb), 0.08);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ap-period-btn:hover { background: rgba(var(--primary-rgb), 0.08); color: rgba(255,255,255,0.7); }
+        .ap-period-btn.active {
+            background: rgba(var(--primary-rgb), 0.15);
+            color: #fff;
+            border-color: rgba(var(--primary-rgb), 0.3);
+        }
+
+        /* ── Empty State ── */
+        .ap-empty {
+            text-align: center;
+            padding: 3rem;
+            color: rgba(255,255,255,0.25);
+            font-size: 0.85rem;
+        }
+        .ap-empty-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+            .ap-grid-2, .ap-grid-3 { grid-template-columns: 1fr; }
+            .ap-kpi-row { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .ap-kpi-row { grid-template-columns: 1fr; }
+            .ap-tab { padding: 8px 12px; font-size: 0.75rem; }
+            .ap-card { padding: 1rem; border-radius: 14px; }
+            .ap-chart-wrap { min-height: 220px; }
+        }
+
+        /* ── Light Theme Overrides ── */
+        [data-theme="light"] .ap-tab { color: rgba(0,0,0,0.45); }
+        [data-theme="light"] .ap-tab:hover { background: rgba(var(--primary-rgb), 0.06); color: rgba(0,0,0,0.7); }
+        [data-theme="light"] .ap-tab.active { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
+        [data-theme="light"] .ap-tab-bar { background: rgba(var(--primary-rgb), 0.03); border-color: rgba(0,0,0,0.06); }
+        [data-theme="light"] .ap-card { background: #fff; border-color: rgba(0,0,0,0.06); }
+        [data-theme="light"] .ap-card:hover { border-color: rgba(var(--primary-rgb), 0.2); box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+        [data-theme="light"] .ap-card-title { color: rgba(0,0,0,0.4); }
+        [data-theme="light"] .ap-kpi { background: #fff; border-color: rgba(0,0,0,0.06); }
+        [data-theme="light"] .ap-kpi:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.06); }
+        [data-theme="light"] .ap-kpi-label { color: rgba(0,0,0,0.45); }
+        [data-theme="light"] .ap-kpi-sub { color: rgba(0,0,0,0.3); }
+        [data-theme="light"] .ap-heatmap-cell { background: rgba(var(--primary-rgb), 0.04); }
+        [data-theme="light"] .ap-heatmap-label { color: rgba(0,0,0,0.3); }
+        [data-theme="light"] .ap-heatmap-legend { color: rgba(0,0,0,0.3); }
+        [data-theme="light"] .ap-tooltip { background: rgba(255,255,255,0.95); color: #1a1a2e; border-color: rgba(0,0,0,0.08); }
+        [data-theme="light"] .ap-period-btn { color: rgba(0,0,0,0.4); border-color: rgba(0,0,0,0.08); }
+        [data-theme="light"] .ap-period-btn:hover { background: rgba(var(--primary-rgb), 0.05); color: rgba(0,0,0,0.7); }
+        [data-theme="light"] .ap-period-btn.active { color: var(--primary); }
+        [data-theme="light"] .ap-empty { color: rgba(0,0,0,0.3); }
+
+        /* ── 3D City Viewport ── */
+        .ap3d-viewport {
+            width: 100%;
+            height: 520px;
+            background: radial-gradient(ellipse at 50% 120%, rgba(var(--primary-rgb),0.08) 0%, var(--bg-deep) 70%);
+            cursor: grab;
+            position: relative;
+            border-top: 1px solid rgba(var(--primary-rgb),0.08);
+            border-bottom: 1px solid rgba(var(--primary-rgb),0.08);
+        }
+        .ap3d-viewport:active { cursor: grabbing; }
+        .ap3d-viewport canvas { display: block; width: 100% !important; height: 100% !important; }
+        .ap3d-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .ap3d-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255,255,255,0.5);
+        }
+        .ap3d-controls { display: flex; gap: 4px; flex-wrap: wrap; }
+        .ap3d-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            padding: 0.8rem 1.5rem;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.4);
+        }
+        .ap3d-legend-item { display: flex; align-items: center; gap: 5px; }
+        .ap3d-legend-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+        .ap3d-hint {
+            text-align: center;
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.2);
+            padding: 6px;
+        }
+        .ap3d-info-overlay {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10,10,18,0.9);
+            border: 1px solid rgba(var(--primary-rgb),0.2);
+            border-radius: 12px;
+            padding: 10px 18px;
+            font-size: 0.75rem;
+            color: #fff;
+            font-family: var(--font-mono);
+            pointer-events: none;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+        .ap3d-info-overlay.visible { opacity: 1; }
+
+        @media (max-width: 768px) {
+            .ap3d-viewport { height: 360px; }
+            .ap3d-header { padding: 0.75rem 1rem; }
+            .ap3d-legend { padding: 0.5rem 1rem; gap: 8px; }
+        }
+
+        [data-theme="light"] .ap3d-viewport { background: radial-gradient(ellipse at 50% 120%, rgba(var(--primary-rgb),0.05) 0%, #f8f9fb 70%); }
+        [data-theme="light"] .ap3d-title { color: rgba(0,0,0,0.5); }
+        [data-theme="light"] .ap3d-legend { color: rgba(0,0,0,0.4); }
+        [data-theme="light"] .ap3d-hint { color: rgba(0,0,0,0.2); }
+        [data-theme="light"] .ap3d-info-overlay { background: rgba(255,255,255,0.92); color: #1a1a2e; border-color: rgba(0,0,0,0.1); }
 
         /* ── COMMAND PALETTE MODAL — Raycast quality ── */
         .cmd-palette-overlay {
@@ -8460,6 +8856,215 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
         </div>
 
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- ──  ANALYTICS PRO — Premium Data Viz Suite  ── -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="view-analytics-pro" class="view-section">
+            <div class="ap-container">
+
+                <!-- Tab Navigation -->
+                <div class="ap-tab-bar" id="apTabBar">
+                    <button class="ap-tab active" data-ap-tab="overview" onclick="apSwitchTab('overview')">
+                        <span class="ap-tab-icon">🏠</span>Übersicht
+                    </button>
+                    <button class="ap-tab" data-ap-tab="saldo" onclick="apSwitchTab('saldo')">
+                        <span class="ap-tab-icon">📈</span>Saldo Trend
+                    </button>
+                    <button class="ap-tab" data-ap-tab="heatmap" onclick="apSwitchTab('heatmap')">
+                        <span class="ap-tab-icon">🔥</span>Aktivitäts-Heatmap
+                    </button>
+                    <button class="ap-tab" data-ap-tab="weekly" onclick="apSwitchTab('weekly')">
+                        <span class="ap-tab-icon">📊</span>Wochen Soll/Ist
+                    </button>
+                    <button class="ap-tab" data-ap-tab="monthly" onclick="apSwitchTab('monthly')">
+                        <span class="ap-tab-icon">📅</span>Monats-Breakdown
+                    </button>
+                    <button class="ap-tab" data-ap-tab="projects" onclick="apSwitchTab('projects')">
+                        <span class="ap-tab-icon">🎯</span>Projekte
+                    </button>
+                    <button class="ap-tab" data-ap-tab="weekday" onclick="apSwitchTab('weekday')">
+                        <span class="ap-tab-icon">🕐</span>Wochentag-Radar
+                    </button>
+                    <button class="ap-tab" data-ap-tab="distribution" onclick="apSwitchTab('distribution')">
+                        <span class="ap-tab-icon">🍩</span>Verteilung
+                    </button>
+                    <button class="ap-tab" data-ap-tab="3d" onclick="apSwitchTab('3d')">
+                        <span class="ap-tab-icon">🏛️</span>3D City
+                    </button>
+                </div>
+
+                <!-- Panels -->
+                <div class="ap-panels">
+
+                    <!-- OVERVIEW -->
+                    <div class="ap-panel active" id="apPanel-overview">
+                        <div class="ap-kpi-row" id="apKpiRow"></div>
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">📈</span>Saldo Verlauf (30 Tage)</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartOverviewSaldo"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🍩</span>Eintragstypen</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartOverviewTypes"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">🔥</span>Aktivität (letztes Jahr)</div>
+                            <div id="apMiniHeatmap" style="overflow-x:auto;"></div>
+                        </div>
+                    </div>
+
+                    <!-- SALDO TREND -->
+                    <div class="ap-panel" id="apPanel-saldo">
+                        <div class="ap-period-bar" id="apSaldoPeriod"></div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📈</span>Kumulierter Saldo</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartSaldo"></canvas></div>
+                        </div>
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">📊</span>Tägliche Differenz</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartDailyDiff"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🎯</span>Saldo-Histogramm</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartSaldoHist"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HEATMAP -->
+                    <div class="ap-panel" id="apPanel-heatmap">
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">🔥</span>Arbeitsaktivität — GitHub Style Heatmap</div>
+                            <div id="apHeatmapFull"></div>
+                        </div>
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">⏰</span>Stunden pro Tag</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartHoursPerDay"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🏆</span>Streaks & Records</div>
+                                <div id="apStreakStats" style="padding:0.5rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WEEKLY -->
+                    <div class="ap-panel" id="apPanel-weekly">
+                        <div class="ap-period-bar" id="apWeeklyPeriod"></div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📊</span>Soll vs. Ist — Wochenvergleich</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartWeekly"></canvas></div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📉</span>Wöchentlicher Saldo</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartWeeklySaldo"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- MONTHLY -->
+                    <div class="ap-panel" id="apPanel-monthly">
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📅</span>Monatliche Stunden nach Typ</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartMonthlyStack"></canvas></div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📈</span>Monatlicher Trend — Durchschnittliche Tagesleistung</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartMonthlyAvg"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- PROJECTS -->
+                    <div class="ap-panel" id="apPanel-projects">
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🎯</span>Projekt-Verteilung</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartProjects"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">📊</span>Top Projekte — Stunden</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartProjectBar"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📈</span>Projekt-Timeline</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartProjectTimeline"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- WEEKDAY RADAR -->
+                    <div class="ap-panel" id="apPanel-weekday">
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🕐</span>Produktivität nach Wochentag</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartRadar"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">⏱️</span>Durchschnittliche Arbeitszeit</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartWeekdayBar"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">😊</span>Stimmung nach Wochentag</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartMoodWeekday"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- DISTRIBUTION -->
+                    <div class="ap-panel" id="apPanel-distribution">
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🍩</span>Eintragstypen — Doughnut</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartTypeDoughnut"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🌀</span>Eintragstypen — Polar</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartTypePolar"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📊</span>Stunden-Verteilung (Histogramm)</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartHoursHist"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- 3D CITY VISUALIZATION -->
+                    <div class="ap-panel" id="apPanel-3d">
+                        <div class="ap-card" style="padding:0; overflow:hidden; border-radius:20px;">
+                            <div class="ap3d-header">
+                                <div class="ap3d-title">🏛️ 3D Work-City — Deine Arbeitstage als Skyline</div>
+                                <div class="ap3d-controls">
+                                    <button class="ap-period-btn active" onclick="ap3dSetRange(90, this)">90 Tage</button>
+                                    <button class="ap-period-btn" onclick="ap3dSetRange(180, this)">180 Tage</button>
+                                    <button class="ap-period-btn" onclick="ap3dSetRange(365, this)">1 Jahr</button>
+                                    <button class="ap-period-btn" onclick="ap3dSetRange(0, this)">Alle</button>
+                                    <button class="ap-period-btn" onclick="ap3dToggleAutoRotate(this)" id="ap3dAutoRotBtn">↻ Auto</button>
+                                </div>
+                            </div>
+                            <div id="ap3dContainer" class="ap3d-viewport"></div>
+                            <div class="ap3d-legend">
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#22c55e;"></span>Übersollt (&ge;100%)</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#a855f7;"></span>Normal (70-99%)</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#f59e0b;"></span>Niedrig (40-69%)</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#ef4444;"></span>Minimal (&lt;40%)</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#06b6d4;"></span>Schule</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#3b82f6;"></span>Urlaub/Feiertag</span>
+                            </div>
+                            <div class="ap3d-hint">🖱️ Drehen: Linke Maustaste • Zoomen: Scrollrad • Verschieben: Rechte Maustaste</div>
+                        </div>
+                        <div class="ap-grid-3" style="margin-top:1.25rem;" id="ap3dStats"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tooltip -->
+            <div class="ap-tooltip" id="apTooltip"></div>
+        </div>
+
     </main>
 
     <!-- Focus Mode Overlay (NEU: KRASS MODERN!) -->
@@ -11194,6 +11799,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             'weekview': 'Wochenansicht',
             'aibot': 'AI-Bot Assistent',
             'support': 'Unterstützung',
+            'analytics-pro': 'Analytics Pro',
         };
         document.querySelector('.page-title').textContent = titles[tabId];
 
@@ -11237,6 +11843,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         }
         if (tabId === 'support') {
             if (typeof renderSupportStats === 'function') renderSupportStats();
+        }
+        if (tabId === 'analytics-pro') {
+            if (typeof renderAnalyticsPro === 'function') renderAnalyticsPro();
         }
     }
     
@@ -22242,6 +22851,7 @@ TIPPS:
             {id:'monthcompare', label:'Monatvergleich', icon:'📊', visible:true},
             {id:'weekview', label:'Wochenansicht', icon:'📆', visible:true},
             {id:'prognose', label:'Prognose', icon:'🔮', visible:true},
+            {id:'analytics-pro', label:'Analytics Pro', icon:'📊', visible:true},
             // 2. Bereich: Ausbildung & Lernen
             {id:'school', label:'Berufsschule', icon:'🏫', visible:true},
         ];
@@ -22493,6 +23103,7 @@ TIPPS:
         { id: 'school',       label: 'Berufsschule',      icon: '🏫', group: 'Navigation', action: () => switchTab('school') },
         { id: 'aibot',        label: 'AI-Bot',            icon: '🤖', group: 'Navigation', action: () => switchTab('aibot') },
         { id: 'support',      label: 'Unterstützung',     icon: '☕', group: 'Navigation', action: () => switchTab('support') },
+        { id: 'analytics-pro', label: 'Analytics Pro',     icon: '📊', group: 'Navigation', action: () => switchTab('analytics-pro') },
         // Tools
         { id: 'settings',     label: 'Einstellungen',     icon: '⚙️', group: 'Tools',      action: () => openSettings() },
         { id: 'alerts',       label: 'Alerts',            icon: '🔔', group: 'Tools',      action: () => toggleAlertsPanel() },
@@ -23788,6 +24399,1433 @@ TIPPS:
             trendContainer.innerHTML = trendHtml;
             trendLabels.innerHTML = labelsHtml;
         }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // ██  ANALYTICS PRO — Premium Data Visualization Engine        ██
+    // ██  Chart.js powered, real-time data from MyWorkLog          ██
+    // ════════════════════════════════════════════════════════════════
+
+    // Chart instance registry (destroy before recreate)
+    const apCharts = {};
+
+    function apDestroy(id) {
+        if (apCharts[id]) { apCharts[id].destroy(); delete apCharts[id]; }
+    }
+
+    // Global Chart.js defaults for Analytics Pro
+    function apChartDefaults() {
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        return {
+            gridColor: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
+            textColor: isLight ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)',
+            primary: '#a855f7',
+            primaryRgb: '168,85,247',
+            cyan: '#06b6d4',
+            green: '#22c55e',
+            amber: '#f59e0b',
+            red: '#ef4444',
+            blue: '#3b82f6',
+            pink: '#ec4899',
+            indigo: '#6366f1',
+            fontFamily: "'Inter', sans-serif",
+            monoFamily: "'JetBrains Mono', monospace",
+            isLight
+        };
+    }
+
+    // Tab switching
+    function apSwitchTab(tabId) {
+        document.querySelectorAll('.ap-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.ap-panel').forEach(p => p.classList.remove('active'));
+        const tab = document.querySelector('.ap-tab[data-ap-tab="' + tabId + '"]');
+        const panel = document.getElementById('apPanel-' + tabId);
+        if (tab) tab.classList.add('active');
+        if (panel) panel.classList.add('active');
+        apRenderPanel(tabId);
+    }
+
+    let apCurrentPeriod = { saldo: 90, weekly: 12 };
+
+    function apRenderPanel(tabId) {
+        switch (tabId) {
+            case 'overview':   apRenderOverview(); break;
+            case 'saldo':      apRenderSaldo(); break;
+            case 'heatmap':    apRenderHeatmap(); break;
+            case 'weekly':     apRenderWeekly(); break;
+            case 'monthly':    apRenderMonthly(); break;
+            case 'projects':   apRenderProjects(); break;
+            case 'weekday':    apRenderWeekday(); break;
+            case 'distribution': apRenderDistribution(); break;
+            case '3d':         apRender3D(); break;
+        }
+    }
+
+    function renderAnalyticsPro() {
+        apRenderOverview();
+    }
+
+    // ── Helper: Get entries sorted by date ──
+    function apEntries() {
+        return (data.entries || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    // ── Helper: Running saldo array ──
+    function apRunningSaldo(entries) {
+        let sum = 0;
+        return entries.map(e => { sum += (e.diff || 0); return { date: e.date, saldo: sum, diff: e.diff, worked: e.worked, type: e.type }; });
+    }
+
+    // ── Helper: Group entries by key ──
+    function apGroupBy(entries, keyFn) {
+        const map = {};
+        entries.forEach(e => {
+            const k = keyFn(e);
+            if (!map[k]) map[k] = [];
+            map[k].push(e);
+        });
+        return map;
+    }
+
+    // ── Helper: Format hours ──
+    function apFmtH(h) { return (h >= 0 ? '+' : '') + h.toFixed(2) + 'h'; }
+
+    // ── Helper: Common chart options ──
+    function apBaseOpts(cfg) {
+        cfg = cfg || {};
+        var d = apChartDefaults();
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 700, easing: 'easeInOutQuart' },
+            plugins: {
+                legend: {
+                    display: cfg.legend !== false,
+                    labels: { color: d.textColor, font: { family: d.fontFamily, size: 11, weight: '600' }, padding: 16, usePointStyle: true, pointStyleWidth: 8 }
+                },
+                tooltip: {
+                    backgroundColor: d.isLight ? 'rgba(255,255,255,0.95)' : 'rgba(10,10,18,0.95)',
+                    titleColor: d.isLight ? '#1a1a2e' : '#fff',
+                    bodyColor: d.isLight ? '#333' : 'rgba(255,255,255,0.8)',
+                    borderColor: 'rgba(' + d.primaryRgb + ',0.2)',
+                    borderWidth: 1,
+                    cornerRadius: 10,
+                    padding: 12,
+                    titleFont: { family: d.fontFamily, size: 12, weight: '700' },
+                    bodyFont: { family: d.monoFamily, size: 11 },
+                    displayColors: true,
+                    boxPadding: 4
+                }
+            },
+            scales: cfg.noScales ? undefined : {
+                x: {
+                    grid: { color: d.gridColor, drawBorder: false },
+                    ticks: { color: d.textColor, font: { family: d.fontFamily, size: 10 }, maxRotation: 45 }
+                },
+                y: {
+                    grid: { color: d.gridColor, drawBorder: false },
+                    ticks: { color: d.textColor, font: { family: d.monoFamily, size: 10 } }
+                }
+            }
+        };
+    }
+
+    // ════════════════════════════════════════
+    //  1. OVERVIEW PANEL
+    // ════════════════════════════════════════
+    function apRenderOverview() {
+        var entries = apEntries();
+        if (!entries.length) {
+            document.getElementById('apKpiRow').innerHTML = '<div class="ap-empty"><div class="ap-empty-icon">📊</div>Noch keine Einträge vorhanden</div>';
+            return;
+        }
+        var d = apChartDefaults();
+
+        // KPIs
+        var workE = entries.filter(function(e){ return e.type === 'work'; });
+        var totalWorked = entries.reduce(function(s, e){ return s + (e.worked || 0); }, 0);
+        var totalSaldo = entries.reduce(function(s, e){ return s + (e.diff || 0); }, 0);
+        var avgDaily = workE.length ? (workE.reduce(function(s, e){ return s + (e.worked || 0); }, 0) / workE.length) : 0;
+        var vacDays = entries.filter(function(e){ return e.type === 'vacation'; }).length;
+        var sickDays = entries.filter(function(e){ return e.type === 'sick'; }).length;
+        var uniqueMonths = new Set(entries.map(function(e){ return e.date.substring(0, 7); })).size;
+        var streak = apCalcStreak(entries);
+
+        document.getElementById('apKpiRow').innerHTML =
+            '<div class="ap-kpi"><div class="ap-kpi-value">' + totalWorked.toFixed(1) + '</div><div class="ap-kpi-label">Stunden gesamt</div><div class="ap-kpi-sub">' + entries.length + ' Einträge</div></div>' +
+            '<div class="ap-kpi"><div class="ap-kpi-value" style="' + (totalSaldo >= 0 ? '' : '-webkit-text-fill-color:#ef4444;') + '">' + apFmtH(totalSaldo) + '</div><div class="ap-kpi-label">Gleitzeit-Saldo</div><div class="ap-kpi-sub">' + (totalSaldo >= 0 ? 'Überstunden' : 'Minus') + '</div></div>' +
+            '<div class="ap-kpi"><div class="ap-kpi-value">' + avgDaily.toFixed(2) + '</div><div class="ap-kpi-label">⌀ Stunden/Tag</div><div class="ap-kpi-sub">Arbeitstage</div></div>' +
+            '<div class="ap-kpi"><div class="ap-kpi-value">' + vacDays + '</div><div class="ap-kpi-label">Urlaubstage</div><div class="ap-kpi-sub">' + sickDays + ' Krankheitstage</div></div>' +
+            '<div class="ap-kpi"><div class="ap-kpi-value">' + streak + '</div><div class="ap-kpi-label">Tage-Streak</div><div class="ap-kpi-sub">' + uniqueMonths + ' Monate aktiv</div></div>';
+
+        // Overview Saldo (last 30 entries)
+        var last30 = apRunningSaldo(entries).slice(-30);
+        apDestroy('overviewSaldo');
+        var ctx1 = document.getElementById('apChartOverviewSaldo');
+        if (ctx1) {
+            apCharts.overviewSaldo = new Chart(ctx1.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: last30.map(function(e){ var dt = new Date(e.date); return dt.toLocaleDateString('de-DE', {day:'2-digit', month:'short'}); }),
+                    datasets: [{
+                        label: 'Saldo',
+                        data: last30.map(function(e){ return parseFloat(e.saldo.toFixed(2)); }),
+                        borderColor: d.primary,
+                        backgroundColor: 'rgba(' + d.primaryRgb + ',0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 2,
+                        pointHoverRadius: 6,
+                        borderWidth: 2.5
+                    }]
+                },
+                options: (function(){ var o = apBaseOpts({legend: false}); o.plugins.legend = {display:false}; return o; })()
+            });
+        }
+
+        // Overview Types Doughnut
+        var typeCounts = {};
+        entries.forEach(function(e) {
+            var t = e.type || 'other';
+            typeCounts[t] = (typeCounts[t] || 0) + 1;
+        });
+        var typeLabels = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', sick: 'Krank', holiday: 'Feiertag', gleittag: 'Gleittag' };
+        var typeColors = { work: d.primary, school: d.cyan, vacation: d.green, sick: d.red, holiday: d.amber, gleittag: d.indigo };
+
+        apDestroy('overviewTypes');
+        var ctx2 = document.getElementById('apChartOverviewTypes');
+        if (ctx2) {
+            apCharts.overviewTypes = new Chart(ctx2.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(typeCounts).map(function(k){ return typeLabels[k] || k; }),
+                    datasets: [{
+                        data: Object.values(typeCounts),
+                        backgroundColor: Object.keys(typeCounts).map(function(k){ return typeColors[k] || '#666'; }),
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    animation: { duration: 700, easing: 'easeInOutQuart' },
+                    cutout: '65%',
+                    plugins: {
+                        legend: { position: 'right', labels: { color: d.textColor, font: { family: d.fontFamily, size: 11 }, padding: 12, usePointStyle: true } },
+                        tooltip: apBaseOpts({noScales:true}).plugins.tooltip
+                    }
+                }
+            });
+        }
+
+        // Mini heatmap
+        apRenderMiniHeatmap(entries);
+    }
+
+    function apCalcStreak(entries) {
+        var dates = new Set(entries.filter(function(e){ return e.type === 'work'; }).map(function(e){ return e.date; }));
+        var streak = 0;
+        var today = new Date();
+        for (var i = 0; i < 365; i++) {
+            var dd = new Date(today);
+            dd.setDate(dd.getDate() - i);
+            var dow = dd.getDay();
+            if (dow === 0 || dow === 6) continue;
+            var iso = dd.toISOString().split('T')[0];
+            if (dates.has(iso)) streak++;
+            else break;
+        }
+        return streak;
+    }
+
+    function apRenderMiniHeatmap(entries) {
+        var container = document.getElementById('apMiniHeatmap');
+        if (!container) return;
+        var hoursMap = {};
+        entries.forEach(function(e) { hoursMap[e.date] = (hoursMap[e.date] || 0) + (e.worked || 0); });
+
+        var today = new Date();
+        var oneYearAgo = new Date(today);
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+        var dayLabels = ['', 'Mo', '', 'Mi', '', 'Fr', ''];
+        var html = '';
+        dayLabels.forEach(function(l) { html += '<div class="ap-heatmap-label">' + l + '</div>'; });
+
+        var startDate = new Date(oneYearAgo);
+        startDate.setDate(startDate.getDate() - startDate.getDay() + 1);
+
+        for (var w = 0; w < 53; w++) {
+            for (var dd = 0; dd < 7; dd++) {
+                var date = new Date(startDate);
+                date.setDate(date.getDate() + w * 7 + dd);
+                if (date > today) { html += '<div></div>'; continue; }
+                var iso = date.toISOString().split('T')[0];
+                var h = hoursMap[iso] || 0;
+                var level = h === 0 ? 0 : h < 4 ? 1 : h < 7 ? 2 : h < 9 ? 3 : 4;
+                html += '<div class="ap-heatmap-cell" data-level="' + level + '" title="' + date.toLocaleDateString('de-DE') + ': ' + h.toFixed(1) + 'h"></div>';
+            }
+        }
+
+        html += '<div class="ap-heatmap-legend" style="grid-column: 1/-1;">Weniger ';
+        [0,1,2,3,4].forEach(function(l) {
+            var bg = l===0?'rgba(168,85,247,0.06)':l===1?'rgba(168,85,247,0.2)':l===2?'rgba(168,85,247,0.4)':l===3?'rgba(168,85,247,0.6)':'#a855f7';
+            html += '<span style="background:' + bg + '"></span>';
+        });
+        html += ' Mehr</div>';
+
+        container.innerHTML = '<div class="ap-heatmap" style="grid-template-columns:30px repeat(53,1fr);">' + html + '</div>';
+    }
+
+    // ════════════════════════════════════════
+    //  2. SALDO TREND PANEL
+    // ════════════════════════════════════════
+    function apRenderSaldo() {
+        var entries = apEntries();
+        if (!entries.length) return;
+        var d = apChartDefaults();
+        var days = apCurrentPeriod.saldo;
+
+        // Period selector
+        var periodEl = document.getElementById('apSaldoPeriod');
+        if (periodEl) {
+            periodEl.innerHTML = [30,60,90,180,365,0].map(function(n) {
+                return '<button class="ap-period-btn ' + (days===n?'active':'') + '" onclick="apCurrentPeriod.saldo=' + n + ';apRenderSaldo();">' + (n===0?'Alle':n+'d') + '</button>';
+            }).join('');
+        }
+
+        var all = apRunningSaldo(entries);
+        var sliced = days > 0 ? all.slice(-days) : all;
+
+        // Cumulative saldo line
+        apDestroy('saldo');
+        var ctx = document.getElementById('apChartSaldo');
+        if (ctx) {
+            var saldoData = sliced.map(function(e){ return parseFloat(e.saldo.toFixed(2)); });
+            var gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 350);
+            gradient.addColorStop(0, 'rgba(' + d.primaryRgb + ',0.25)');
+            gradient.addColorStop(1, 'rgba(' + d.primaryRgb + ',0.01)');
+
+            apCharts.saldo = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: sliced.map(function(e){ return new Date(e.date).toLocaleDateString('de-DE', {day:'2-digit',month:'short'}); }),
+                    datasets: [{
+                        label: 'Kumulierter Saldo',
+                        data: saldoData,
+                        borderColor: d.primary,
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: sliced.length > 60 ? 0 : 3,
+                        pointHoverRadius: 6,
+                        borderWidth: 2.5
+                    }, {
+                        label: 'Nulllinie',
+                        data: saldoData.map(function(){ return 0; }),
+                        borderColor: 'rgba(255,255,255,0.15)',
+                        borderDash: [5,5],
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        fill: false
+                    }]
+                },
+                options: apBaseOpts()
+            });
+        }
+
+        // Daily diff bar chart
+        apDestroy('dailyDiff');
+        var ctx2 = document.getElementById('apChartDailyDiff');
+        if (ctx2) {
+            apCharts.dailyDiff = new Chart(ctx2.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: sliced.map(function(e){ return new Date(e.date).toLocaleDateString('de-DE', {day:'2-digit',month:'short'}); }),
+                    datasets: [{
+                        label: 'Tages-Diff',
+                        data: sliced.map(function(e){ return parseFloat((e.diff||0).toFixed(2)); }),
+                        backgroundColor: sliced.map(function(e){ return (e.diff||0) >= 0 ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.6)'; }),
+                        borderRadius: 4,
+                        borderSkipped: false
+                    }]
+                },
+                options: (function(){ var o = apBaseOpts({legend: false}); o.plugins.legend = {display:false}; return o; })()
+            });
+        }
+
+        // Saldo histogram
+        apDestroy('saldoHist');
+        var ctx3 = document.getElementById('apChartSaldoHist');
+        if (ctx3) {
+            var diffs = sliced.map(function(e){ return e.diff || 0; });
+            var bins = {};
+            diffs.forEach(function(df) {
+                var bin = (Math.round(df * 2) / 2).toFixed(1);
+                bins[bin] = (bins[bin] || 0) + 1;
+            });
+            var sortedKeys = Object.keys(bins).sort(function(a,b){ return parseFloat(a) - parseFloat(b); });
+
+            apCharts.saldoHist = new Chart(ctx3.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: sortedKeys.map(function(k){ return k + 'h'; }),
+                    datasets: [{
+                        label: 'Häufigkeit',
+                        data: sortedKeys.map(function(k){ return bins[k]; }),
+                        backgroundColor: sortedKeys.map(function(k){ return parseFloat(k) >= 0 ? 'rgba(34,197,94,0.5)' : 'rgba(239,68,68,0.5)'; }),
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: (function(){ var o = apBaseOpts({legend: false}); o.plugins.legend = {display:false}; return o; })()
+            });
+        }
+    }
+
+    // ════════════════════════════════════════
+    //  3. HEATMAP PANEL
+    // ════════════════════════════════════════
+    function apRenderHeatmap() {
+        var entries = apEntries();
+        if (!entries.length) return;
+        var d = apChartDefaults();
+
+        // Full year heatmap
+        var container = document.getElementById('apHeatmapFull');
+        if (container) {
+            var hoursMap = {};
+            entries.forEach(function(e) { hoursMap[e.date] = (hoursMap[e.date] || 0) + (e.worked || 0); });
+            var today = new Date();
+            var oneYearAgo = new Date(today);
+            oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+            var dayLabels = ['', 'Mo', '', 'Mi', '', 'Fr', ''];
+            var html = '';
+            dayLabels.forEach(function(l) { html += '<div class="ap-heatmap-label">' + l + '</div>'; });
+
+            var startDate = new Date(oneYearAgo);
+            startDate.setDate(startDate.getDate() - startDate.getDay() + 1);
+
+            // Month labels row
+            var monthHtml = '<div></div>';
+            var lastMonth = -1;
+            for (var w = 0; w < 53; w++) {
+                var mdate = new Date(startDate);
+                mdate.setDate(mdate.getDate() + w * 7);
+                var m = mdate.getMonth();
+                if (m !== lastMonth) {
+                    monthHtml += '<div style="font-size:0.6rem;color:' + d.textColor + ';text-align:center;">' + mdate.toLocaleDateString('de-DE',{month:'short'}) + '</div>';
+                    lastMonth = m;
+                } else {
+                    monthHtml += '<div></div>';
+                }
+            }
+
+            for (var w2 = 0; w2 < 53; w2++) {
+                for (var dd = 0; dd < 7; dd++) {
+                    var date = new Date(startDate);
+                    date.setDate(date.getDate() + w2 * 7 + dd);
+                    if (date > today) { html += '<div></div>'; continue; }
+                    var iso = date.toISOString().split('T')[0];
+                    var h = hoursMap[iso] || 0;
+                    var level = h === 0 ? 0 : h < 4 ? 1 : h < 7 ? 2 : h < 9 ? 3 : 4;
+                    html += '<div class="ap-heatmap-cell" data-level="' + level + '" title="' + date.toLocaleDateString('de-DE') + ': ' + h.toFixed(1) + 'h"></div>';
+                }
+            }
+            html += '<div class="ap-heatmap-legend" style="grid-column: 1/-1;">Weniger ';
+            [0,1,2,3,4].forEach(function(l) {
+                var bg = l===0?'rgba(168,85,247,0.06)':l===1?'rgba(168,85,247,0.2)':l===2?'rgba(168,85,247,0.4)':l===3?'rgba(168,85,247,0.6)':'#a855f7';
+                html += '<span style="background:' + bg + '"></span>';
+            });
+            html += ' Mehr</div>';
+
+            container.innerHTML = '<div style="font-size:0;display:grid;grid-template-columns:30px repeat(53,1fr);gap:2px;margin-bottom:4px;">' + monthHtml + '</div><div class="ap-heatmap" style="grid-template-columns:30px repeat(53,1fr);">' + html + '</div>';
+        }
+
+        // Hours per day bar chart (last 60 days)
+        apDestroy('hoursPerDay');
+        var ctx = document.getElementById('apChartHoursPerDay');
+        if (ctx) {
+            var last60 = entries.slice(-60);
+            apCharts.hoursPerDay = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: last60.map(function(e){ return new Date(e.date).toLocaleDateString('de-DE', {day:'2-digit',month:'short'}); }),
+                    datasets: [{
+                        label: 'Stunden',
+                        data: last60.map(function(e){ return parseFloat((e.worked||0).toFixed(2)); }),
+                        backgroundColor: last60.map(function(e) {
+                            var hh = e.worked || 0;
+                            return hh >= (e.expected||8) ? 'rgba(34,197,94,0.5)' : hh > 0 ? 'rgba(168,85,247,0.5)' : 'rgba(239,68,68,0.3)';
+                        }),
+                        borderRadius: 4,
+                        borderSkipped: false
+                    }]
+                },
+                options: (function(){ var o = apBaseOpts({legend: false}); o.plugins.legend = {display:false}; return o; })()
+            });
+        }
+
+        // Streak stats
+        var statsEl = document.getElementById('apStreakStats');
+        if (statsEl) {
+            var workDates = entries.filter(function(e){ return e.type === 'work' && e.worked > 0; }).map(function(e){ return e.date; });
+            var uniqueDates = [];
+            var seen = {};
+            workDates.forEach(function(d){ if(!seen[d]){seen[d]=true;uniqueDates.push(d);} });
+            uniqueDates.sort();
+            var maxStreak = 0, curStreak = 0;
+            var longestStart = '', longestEnd = '';
+            var sStart = '';
+            for (var i = 0; i < uniqueDates.length; i++) {
+                var cur = new Date(uniqueDates[i]);
+                var prev = i > 0 ? new Date(uniqueDates[i-1]) : null;
+                var diffDays = prev ? Math.round((cur - prev) / 86400000) : 999;
+                if (diffDays <= 3) {
+                    curStreak++;
+                } else {
+                    curStreak = 1;
+                    sStart = uniqueDates[i];
+                }
+                if (curStreak > maxStreak) {
+                    maxStreak = curStreak;
+                    longestStart = sStart;
+                    longestEnd = uniqueDates[i];
+                }
+            }
+            var maxHours = entries.reduce(function(mx, e){ return Math.max(mx, e.worked || 0); }, 0);
+            var maxEntry = entries.find(function(e){ return (e.worked || 0) === maxHours; });
+            var totalDays = new Set(entries.map(function(e){ return e.date; })).size;
+
+            statsEl.innerHTML =
+                '<div class="ap-kpi-row" style="margin:0;">' +
+                '<div class="ap-kpi"><div class="ap-kpi-value">' + maxStreak + '</div><div class="ap-kpi-label">Längster Streak</div><div class="ap-kpi-sub">' + (longestStart ? new Date(longestStart).toLocaleDateString('de-DE',{day:'2-digit',month:'short'}) + ' – ' + new Date(longestEnd).toLocaleDateString('de-DE',{day:'2-digit',month:'short'}) : '—') + '</div></div>' +
+                '<div class="ap-kpi"><div class="ap-kpi-value">' + maxHours.toFixed(1) + 'h</div><div class="ap-kpi-label">Rekord-Tag</div><div class="ap-kpi-sub">' + (maxEntry ? new Date(maxEntry.date).toLocaleDateString('de-DE') : '—') + '</div></div>' +
+                '<div class="ap-kpi"><div class="ap-kpi-value">' + totalDays + '</div><div class="ap-kpi-label">Aktive Tage</div><div class="ap-kpi-sub">Einzigartige Tage</div></div>' +
+                '</div>';
+        }
+    }
+
+    // ════════════════════════════════════════
+    //  4. WEEKLY PANEL
+    // ════════════════════════════════════════
+    function apRenderWeekly() {
+        var entries = apEntries();
+        if (!entries.length) return;
+        var d = apChartDefaults();
+        var weeks = apCurrentPeriod.weekly;
+
+        var periodEl = document.getElementById('apWeeklyPeriod');
+        if (periodEl) {
+            periodEl.innerHTML = [8,12,20,52,0].map(function(n) {
+                return '<button class="ap-period-btn ' + (weeks===n?'active':'') + '" onclick="apCurrentPeriod.weekly=' + n + ';apRenderWeekly();">' + (n===0?'Alle':n+'W') + '</button>';
+            }).join('');
+        }
+
+        // Group by ISO week
+        var weekMap = {};
+        entries.forEach(function(e) {
+            var date = new Date(e.date);
+            var wk = apGetISOWeek(date);
+            var yr = date.getFullYear();
+            var key = yr + '-KW' + String(wk).padStart(2,'0');
+            if (!weekMap[key]) weekMap[key] = { worked: 0, expected: 0, saldo: 0 };
+            weekMap[key].worked += (e.worked || 0);
+            weekMap[key].expected += (e.expected || 0);
+            weekMap[key].saldo += (e.diff || 0);
+        });
+
+        var weekKeys = Object.keys(weekMap).sort();
+        if (weeks > 0) weekKeys = weekKeys.slice(-weeks);
+
+        // Grouped bar chart
+        apDestroy('weekly');
+        var ctx = document.getElementById('apChartWeekly');
+        if (ctx) {
+            apCharts.weekly = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: weekKeys,
+                    datasets: [{
+                        label: 'Soll',
+                        data: weekKeys.map(function(k){ return parseFloat(weekMap[k].expected.toFixed(2)); }),
+                        backgroundColor: 'rgba(' + d.primaryRgb + ',0.2)',
+                        borderColor: d.primary,
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }, {
+                        label: 'Ist',
+                        data: weekKeys.map(function(k){ return parseFloat(weekMap[k].worked.toFixed(2)); }),
+                        backgroundColor: 'rgba(6,182,212,0.5)',
+                        borderColor: d.cyan,
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: apBaseOpts()
+            });
+        }
+
+        // Weekly saldo line
+        apDestroy('weeklySaldo');
+        var ctx2 = document.getElementById('apChartWeeklySaldo');
+        if (ctx2) {
+            var runSum = 0;
+            var weekSaldoData = weekKeys.map(function(k){ runSum += weekMap[k].saldo; return parseFloat(runSum.toFixed(2)); });
+
+            var grad = ctx2.getContext('2d').createLinearGradient(0, 0, 0, 300);
+            grad.addColorStop(0, 'rgba(' + d.primaryRgb + ',0.2)');
+            grad.addColorStop(1, 'rgba(' + d.primaryRgb + ',0.01)');
+
+            apCharts.weeklySaldo = new Chart(ctx2.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: weekKeys,
+                    datasets: [{
+                        label: 'Kum. Wochen-Saldo',
+                        data: weekSaldoData,
+                        borderColor: d.primary,
+                        backgroundColor: grad,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointHoverRadius: 7,
+                        borderWidth: 2.5,
+                        pointBackgroundColor: d.primary
+                    }]
+                },
+                options: apBaseOpts({ legend: false })
+            });
+        }
+    }
+
+    function apGetISOWeek(date) {
+        var d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        var dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    }
+
+    // ════════════════════════════════════════
+    //  5. MONTHLY PANEL
+    // ════════════════════════════════════════
+    function apRenderMonthly() {
+        var entries = apEntries();
+        if (!entries.length) return;
+        var d = apChartDefaults();
+
+        // Group by month and type
+        var monthMap = {};
+        entries.forEach(function(e) {
+            var m = e.date.substring(0, 7);
+            if (!monthMap[m]) monthMap[m] = { work: 0, school: 0, vacation: 0, sick: 0, holiday: 0, gleittag: 0, total: 0, count: 0 };
+            var t = e.type || 'work';
+            if (monthMap[m][t] !== undefined) monthMap[m][t] += (e.worked || 0);
+            monthMap[m].total += (e.worked || 0);
+            monthMap[m].count++;
+        });
+        var monthKeys = Object.keys(monthMap).sort();
+        var monthLabels = monthKeys.map(function(k) {
+            var parts = k.split('-');
+            return new Date(parseInt(parts[0]), parseInt(parts[1])-1).toLocaleDateString('de-DE', {month:'short', year:'2-digit'});
+        });
+
+        // Stacked bar chart
+        apDestroy('monthlyStack');
+        var ctx = document.getElementById('apChartMonthlyStack');
+        if (ctx) {
+            var baseOpts = apBaseOpts();
+            apCharts.monthlyStack = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: monthLabels,
+                    datasets: [
+                        { label: 'Arbeit',    data: monthKeys.map(function(k){ return parseFloat(monthMap[k].work.toFixed(1)); }),     backgroundColor: 'rgba(' + d.primaryRgb + ',0.6)', borderRadius: 4, borderSkipped: false },
+                        { label: 'Schule',    data: monthKeys.map(function(k){ return parseFloat(monthMap[k].school.toFixed(1)); }),   backgroundColor: 'rgba(6,182,212,0.6)',       borderRadius: 4, borderSkipped: false },
+                        { label: 'Urlaub',    data: monthKeys.map(function(k){ return parseFloat(monthMap[k].vacation.toFixed(1)); }), backgroundColor: 'rgba(34,197,94,0.6)',       borderRadius: 4, borderSkipped: false },
+                        { label: 'Krank',     data: monthKeys.map(function(k){ return parseFloat(monthMap[k].sick.toFixed(1)); }),     backgroundColor: 'rgba(239,68,68,0.5)',       borderRadius: 4, borderSkipped: false },
+                        { label: 'Feiertag',  data: monthKeys.map(function(k){ return parseFloat(monthMap[k].holiday.toFixed(1)); }),  backgroundColor: 'rgba(245,158,11,0.5)',      borderRadius: 4, borderSkipped: false },
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    animation: baseOpts.animation,
+                    plugins: baseOpts.plugins,
+                    scales: {
+                        x: { stacked: true, grid: { color: d.gridColor, drawBorder: false }, ticks: { color: d.textColor, font: { family: d.fontFamily, size: 10 }, maxRotation: 45 } },
+                        y: { stacked: true, grid: { color: d.gridColor, drawBorder: false }, ticks: { color: d.textColor, font: { family: d.monoFamily, size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // Monthly avg daily hours line
+        apDestroy('monthlyAvg');
+        var ctx2 = document.getElementById('apChartMonthlyAvg');
+        if (ctx2) {
+            var avgData = monthKeys.map(function(k) {
+                var workDays = entries.filter(function(e){ return e.date.startsWith(k) && e.type === 'work'; }).length;
+                return workDays ? parseFloat((monthMap[k].work / workDays).toFixed(2)) : 0;
+            });
+            var grad = ctx2.getContext('2d').createLinearGradient(0, 0, 0, 300);
+            grad.addColorStop(0, 'rgba(6,182,212,0.2)');
+            grad.addColorStop(1, 'rgba(6,182,212,0.01)');
+
+            apCharts.monthlyAvg = new Chart(ctx2.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: monthLabels,
+                    datasets: [{
+                        label: '⌀ Stunden/Arbeitstag',
+                        data: avgData,
+                        borderColor: d.cyan,
+                        backgroundColor: grad,
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        borderWidth: 2.5,
+                        pointBackgroundColor: d.cyan
+                    }]
+                },
+                options: apBaseOpts({ legend: false })
+            });
+        }
+    }
+
+    // ════════════════════════════════════════
+    //  6. PROJECTS PANEL
+    // ════════════════════════════════════════
+    function apRenderProjects() {
+        var entries = apEntries();
+        if (!entries.length) return;
+        var d = apChartDefaults();
+
+        var projMap = {};
+        entries.forEach(function(e) {
+            var p = e.project || 'Kein Projekt';
+            if (!projMap[p]) projMap[p] = { hours: 0, count: 0, months: {} };
+            projMap[p].hours += (e.worked || 0);
+            projMap[p].count++;
+            var m = e.date.substring(0, 7);
+            projMap[p].months[m] = (projMap[p].months[m] || 0) + (e.worked || 0);
+        });
+
+        var sorted = Object.entries(projMap).sort(function(a,b){ return b[1].hours - a[1].hours; });
+        var top = sorted.slice(0, 8);
+        var projColors = [d.primary, d.cyan, d.green, d.amber, d.blue, d.pink, d.indigo, d.red];
+
+        // Doughnut
+        apDestroy('projects');
+        var ctx = document.getElementById('apChartProjects');
+        if (ctx) {
+            apCharts.projects = new Chart(ctx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: top.map(function(t){ var name = t[0]; return name.length > 20 ? name.substring(0,18)+'…' : name; }),
+                    datasets: [{
+                        data: top.map(function(t){ return parseFloat(t[1].hours.toFixed(1)); }),
+                        backgroundColor: projColors,
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    cutout: '60%',
+                    animation: { duration: 700, easing: 'easeInOutQuart' },
+                    plugins: {
+                        legend: { position: 'right', labels: { color: d.textColor, font: { family: d.fontFamily, size: 11 }, padding: 10, usePointStyle: true } },
+                        tooltip: apBaseOpts({noScales:true}).plugins.tooltip
+                    }
+                }
+            });
+        }
+
+        // Horizontal bar
+        apDestroy('projectBar');
+        var ctx2 = document.getElementById('apChartProjectBar');
+        if (ctx2) {
+            apCharts.projectBar = new Chart(ctx2.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: top.map(function(t){ var name = t[0]; return name.length > 18 ? name.substring(0,16)+'…' : name; }),
+                    datasets: [{
+                        label: 'Stunden',
+                        data: top.map(function(t){ return parseFloat(t[1].hours.toFixed(1)); }),
+                        backgroundColor: projColors.map(function(c){ return c + '99'; }),
+                        borderColor: projColors,
+                        borderWidth: 1.5,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: (function(){ var o = apBaseOpts({legend: false}); o.plugins.legend = {display:false}; o.indexAxis = 'y'; return o; })()
+            });
+        }
+
+        // Project timeline (top 5 projects over months)
+        apDestroy('projectTimeline');
+        var ctx3 = document.getElementById('apChartProjectTimeline');
+        if (ctx3) {
+            var allMonthsSet = {};
+            entries.forEach(function(e){ allMonthsSet[e.date.substring(0,7)] = true; });
+            var allMonths = Object.keys(allMonthsSet).sort();
+            var top5 = sorted.slice(0, 5);
+
+            apCharts.projectTimeline = new Chart(ctx3.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: allMonths.map(function(m) {
+                        var parts = m.split('-');
+                        return new Date(parseInt(parts[0]), parseInt(parts[1])-1).toLocaleDateString('de-DE', {month:'short', year:'2-digit'});
+                    }),
+                    datasets: top5.map(function(item, i) {
+                        var name = item[0];
+                        var val = item[1];
+                        return {
+                            label: name.length > 15 ? name.substring(0,13)+'…' : name,
+                            data: allMonths.map(function(m){ return parseFloat((val.months[m] || 0).toFixed(1)); }),
+                            borderColor: projColors[i],
+                            backgroundColor: projColors[i] + '20',
+                            fill: false,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointHoverRadius: 6,
+                            borderWidth: 2
+                        };
+                    })
+                },
+                options: apBaseOpts()
+            });
+        }
+    }
+
+    // ════════════════════════════════════════
+    //  7. WEEKDAY RADAR PANEL
+    // ════════════════════════════════════════
+    function apRenderWeekday() {
+        var entries = apEntries();
+        if (!entries.length) return;
+        var d = apChartDefaults();
+        var dayNames = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+        var dayData = [];
+        for (var i = 0; i < 7; i++) dayData.push({ hours: 0, count: 0, diffs: 0, moods: {} });
+
+        entries.forEach(function(e) {
+            var dow = new Date(e.date).getDay();
+            dayData[dow].hours += (e.worked || 0);
+            dayData[dow].count++;
+            dayData[dow].diffs += (e.diff || 0);
+            if (e.mood) dayData[dow].moods[e.mood] = (dayData[dow].moods[e.mood] || 0) + 1;
+        });
+
+        var avgByDay = dayData.map(function(dd){ return dd.count ? dd.hours / dd.count : 0; });
+
+        // Radar chart
+        apDestroy('radar');
+        var ctx = document.getElementById('apChartRadar');
+        if (ctx) {
+            apCharts.radar = new Chart(ctx.getContext('2d'), {
+                type: 'radar',
+                data: {
+                    labels: dayNames,
+                    datasets: [{
+                        label: '⌀ Stunden',
+                        data: avgByDay.map(function(v){ return parseFloat(v.toFixed(2)); }),
+                        borderColor: d.primary,
+                        backgroundColor: 'rgba(' + d.primaryRgb + ',0.15)',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: d.primary,
+                        pointRadius: 4,
+                        pointHoverRadius: 7
+                    }, {
+                        label: '⌀ Saldo',
+                        data: dayData.map(function(dd){ return dd.count ? parseFloat((dd.diffs / dd.count).toFixed(2)) : 0; }),
+                        borderColor: d.cyan,
+                        backgroundColor: 'rgba(6,182,212,0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: d.cyan,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    animation: { duration: 700, easing: 'easeInOutQuart' },
+                    scales: {
+                        r: {
+                            grid: { color: d.gridColor },
+                            angleLines: { color: d.gridColor },
+                            pointLabels: { color: d.textColor, font: { family: d.fontFamily, size: 11, weight: '600' } },
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: d.textColor, font: { family: d.fontFamily, size: 11, weight: '600' }, padding: 16, usePointStyle: true } },
+                        tooltip: apBaseOpts({noScales:true}).plugins.tooltip
+                    }
+                }
+            });
+        }
+
+        // Weekday bar (Mon-Fri)
+        apDestroy('weekdayBar');
+        var ctx2 = document.getElementById('apChartWeekdayBar');
+        if (ctx2) {
+            var workDays = [1,2,3,4,5];
+            apCharts.weekdayBar = new Chart(ctx2.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: workDays.map(function(i){ return dayNames[i]; }),
+                    datasets: [{
+                        label: '⌀ Stunden',
+                        data: workDays.map(function(i){ return parseFloat(avgByDay[i].toFixed(2)); }),
+                        backgroundColor: workDays.map(function(i) {
+                            var avg = avgByDay[i];
+                            return avg >= 8 ? 'rgba(34,197,94,0.5)' : avg >= 4 ? 'rgba(168,85,247,0.5)' : 'rgba(245,158,11,0.5)';
+                        }),
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }, {
+                        label: '⌀ Saldo',
+                        data: workDays.map(function(i){ return dayData[i].count ? parseFloat((dayData[i].diffs / dayData[i].count).toFixed(2)) : 0; }),
+                        backgroundColor: workDays.map(function(i) {
+                            var avg = dayData[i].count ? dayData[i].diffs / dayData[i].count : 0;
+                            return avg >= 0 ? 'rgba(6,182,212,0.5)' : 'rgba(239,68,68,0.5)';
+                        }),
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: apBaseOpts()
+            });
+        }
+
+        // Mood by weekday
+        apDestroy('moodWeekday');
+        var ctx3 = document.getElementById('apChartMoodWeekday');
+        if (ctx3) {
+            var allMoods = {};
+            dayData.forEach(function(dd){ Object.keys(dd.moods).forEach(function(m){ allMoods[m] = true; }); });
+            var moodArr = Object.keys(allMoods);
+            var moodColors = ['#f59e0b', '#22c55e', '#3b82f6', '#ef4444', '#ec4899', '#a855f7', '#06b6d4'];
+
+            if (moodArr.length > 0) {
+                var mBaseOpts = apBaseOpts();
+                apCharts.moodWeekday = new Chart(ctx3.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: dayNames.slice(1, 6),
+                        datasets: moodArr.map(function(mood, i) {
+                            return {
+                                label: mood,
+                                data: [1,2,3,4,5].map(function(dow){ return dayData[dow].moods[mood] || 0; }),
+                                backgroundColor: (moodColors[i % moodColors.length]) + '80',
+                                borderRadius: 4,
+                                borderSkipped: false
+                            };
+                        })
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        animation: mBaseOpts.animation,
+                        plugins: mBaseOpts.plugins,
+                        scales: {
+                            x: { stacked: true, grid: { color: d.gridColor, drawBorder: false }, ticks: { color: d.textColor, font: { family: d.fontFamily, size: 10 } } },
+                            y: { stacked: true, grid: { color: d.gridColor, drawBorder: false }, ticks: { color: d.textColor, font: { family: d.monoFamily, size: 10 } } }
+                        }
+                    }
+                });
+            } else {
+                ctx3.parentElement.innerHTML = '<div class="ap-empty"><div class="ap-empty-icon">😊</div>Noch keine Stimmungs-Daten erfasst</div>';
+            }
+        }
+    }
+
+    // ════════════════════════════════════════
+    //  8. DISTRIBUTION PANEL
+    // ════════════════════════════════════════
+    function apRenderDistribution() {
+        var entries = apEntries();
+        if (!entries.length) return;
+        var d = apChartDefaults();
+
+        var typeCounts = {};
+        var typeHours = {};
+        entries.forEach(function(e) {
+            var t = e.type || 'work';
+            typeCounts[t] = (typeCounts[t] || 0) + 1;
+            typeHours[t] = (typeHours[t] || 0) + (e.worked || 0);
+        });
+        var typeLabels = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', sick: 'Krank', holiday: 'Feiertag', gleittag: 'Gleittag' };
+        var typeColors = { work: d.primary, school: d.cyan, vacation: d.green, sick: d.red, holiday: d.amber, gleittag: d.indigo };
+
+        // Type Doughnut
+        apDestroy('typeDoughnut');
+        var ctx = document.getElementById('apChartTypeDoughnut');
+        if (ctx) {
+            var totalTypeHours = Object.values(typeHours).reduce(function(s,v){ return s+v; }, 0);
+            apCharts.typeDoughnut = new Chart(ctx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(typeHours).map(function(k){ return typeLabels[k] || k; }),
+                    datasets: [{
+                        data: Object.values(typeHours).map(function(v){ return parseFloat(v.toFixed(1)); }),
+                        backgroundColor: Object.keys(typeHours).map(function(k){ return typeColors[k] || '#666'; }),
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    cutout: '60%',
+                    animation: { duration: 700, easing: 'easeInOutQuart' },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: d.textColor, font: { family: d.fontFamily, size: 11 }, padding: 14, usePointStyle: true } },
+                        tooltip: {
+                            backgroundColor: d.isLight ? 'rgba(255,255,255,0.95)' : 'rgba(10,10,18,0.95)',
+                            titleColor: d.isLight ? '#1a1a2e' : '#fff',
+                            bodyColor: d.isLight ? '#333' : 'rgba(255,255,255,0.8)',
+                            borderColor: 'rgba(' + d.primaryRgb + ',0.2)',
+                            borderWidth: 1, cornerRadius: 10, padding: 12,
+                            callbacks: { label: function(c) { return ' ' + c.label + ': ' + c.parsed.toFixed(1) + 'h (' + (totalTypeHours > 0 ? ((c.parsed / totalTypeHours)*100).toFixed(1) : 0) + '%)'; } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Polar area
+        apDestroy('typePolar');
+        var ctx2 = document.getElementById('apChartTypePolar');
+        if (ctx2) {
+            apCharts.typePolar = new Chart(ctx2.getContext('2d'), {
+                type: 'polarArea',
+                data: {
+                    labels: Object.keys(typeCounts).map(function(k){ return typeLabels[k] || k; }),
+                    datasets: [{
+                        data: Object.values(typeCounts),
+                        backgroundColor: Object.keys(typeCounts).map(function(k){ return (typeColors[k] || '#666') + '80'; }),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    animation: { duration: 700, easing: 'easeInOutQuart' },
+                    scales: { r: { grid: { color: d.gridColor }, ticks: { display: false } } },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: d.textColor, font: { family: d.fontFamily, size: 11 }, padding: 14, usePointStyle: true } },
+                        tooltip: apBaseOpts({noScales:true}).plugins.tooltip
+                    }
+                }
+            });
+        }
+
+        // Hours histogram
+        apDestroy('hoursHist');
+        var ctx3 = document.getElementById('apChartHoursHist');
+        if (ctx3) {
+            var workEntries = entries.filter(function(e){ return e.type === 'work' && e.worked > 0; });
+            var bins = {};
+            workEntries.forEach(function(e) {
+                var bin = Math.floor(e.worked);
+                var label = bin + '-' + (bin+1) + 'h';
+                bins[label] = (bins[label] || 0) + 1;
+            });
+            var sortedBins = Object.entries(bins).sort(function(a,b){ return parseInt(a[0]) - parseInt(b[0]); });
+
+            apCharts.hoursHist = new Chart(ctx3.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: sortedBins.map(function(b){ return b[0]; }),
+                    datasets: [{
+                        label: 'Tage',
+                        data: sortedBins.map(function(b){ return b[1]; }),
+                        backgroundColor: sortedBins.map(function(b) {
+                            var h = parseInt(b[0]);
+                            return h >= 8 ? 'rgba(34,197,94,0.5)' : h >= 6 ? 'rgba(168,85,247,0.5)' : h >= 4 ? 'rgba(245,158,11,0.5)' : 'rgba(239,68,68,0.5)';
+                        }),
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: (function(){ var o = apBaseOpts({legend: false}); o.plugins.legend = {display:false}; return o; })()
+            });
+        }
+    }
+
+    // ════════════════════════════════════════
+    //  9. 3D CITY VISUALIZATION (Three.js)
+    // ════════════════════════════════════════
+    var ap3dState = { scene: null, camera: null, renderer: null, controls: null, animId: null, range: 90, buildings: [], raycaster: null, mouse: null, hoveredBar: null };
+
+    function ap3dSetRange(days, btn) {
+        ap3dState.range = days;
+        var btns = document.querySelectorAll('.ap3d-controls .ap-period-btn');
+        btns.forEach(function(b) { if (b.id !== 'ap3dAutoRotBtn') b.classList.remove('active'); });
+        if (btn && btn.id !== 'ap3dAutoRotBtn') btn.classList.add('active');
+        apRender3D();
+    }
+
+    function ap3dToggleAutoRotate(btn) {
+        if (ap3dState.controls) {
+            ap3dState.controls.autoRotate = !ap3dState.controls.autoRotate;
+            btn.classList.toggle('active');
+        }
+    }
+
+    function ap3dCleanup() {
+        if (ap3dState.animId) { cancelAnimationFrame(ap3dState.animId); ap3dState.animId = null; }
+        if (ap3dState.renderer) { ap3dState.renderer.dispose(); ap3dState.renderer = null; }
+        if (ap3dState.controls) { ap3dState.controls.dispose(); ap3dState.controls = null; }
+        ap3dState.scene = null;
+        ap3dState.camera = null;
+        ap3dState.buildings = [];
+        ap3dState.hoveredBar = null;
+        var container = document.getElementById('ap3dContainer');
+        if (container) container.innerHTML = '';
+    }
+
+    function apRender3D() {
+        if (typeof THREE === 'undefined') {
+            var container = document.getElementById('ap3dContainer');
+            if (container) container.innerHTML = '<div class="ap-empty" style="padding:4rem;"><div class="ap-empty-icon">⏳</div>Three.js wird geladen... Bitte Seite neu laden.</div>';
+            return;
+        }
+
+        ap3dCleanup();
+
+        var entries = apEntries();
+        if (!entries.length) {
+            document.getElementById('ap3dContainer').innerHTML = '<div class="ap-empty" style="padding:4rem;"><div class="ap-empty-icon">🏗️</div>Noch keine Daten für 3D-Ansicht</div>';
+            return;
+        }
+
+        var range = ap3dState.range;
+        var filtered = range > 0 ? entries.slice(-range) : entries;
+        var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+
+        // Container setup
+        var container = document.getElementById('ap3dContainer');
+        var w = container.clientWidth;
+        var h = container.clientHeight;
+
+        // Scene
+        var scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(isLight ? 0xf8f9fb : 0x030305, 0.012);
+
+        // Camera
+        var camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 200);
+        camera.position.set(25, 20, 25);
+        camera.lookAt(0, 0, 0);
+
+        // Renderer
+        var renderer;
+        var webglFailed = false;
+        try {
+            var canvas3d = document.createElement('canvas');
+            var glCtx = canvas3d.getContext('webgl2') || canvas3d.getContext('webgl') || canvas3d.getContext('experimental-webgl');
+            if (!glCtx) throw new Error('No WebGL support');
+            renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: true, alpha: true, powerPreference: 'high-performance', failIfMajorPerformanceCaveat: false });
+        } catch (e) {
+            webglFailed = true;
+        }
+        if (webglFailed || !renderer || !renderer.getContext()) {
+            container.innerHTML = '<div class="ap-empty" style="padding:4rem;"><div class="ap-empty-icon">⚠️</div>WebGL nicht verfügbar.<br>Bitte Hardware-Beschleunigung im Browser aktivieren:<br><small>chrome://settings → System → "Hardwarebeschleunigung verwenden"</small><br><br><small>Oder starte Chrome mit: --use-gl=angle --use-angle=d3d11</small></div>';
+            return;
+        }
+        renderer.setSize(w, h);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        // Controls
+        var OrbitControlsCtor = THREE.OrbitControls || (window.THREE && window.THREE.OrbitControls);
+        if (!OrbitControlsCtor) {
+            container.innerHTML = '<div class="ap-empty" style="padding:4rem;"><div class="ap-empty-icon">🔄</div>3D-Steuerung wird geladen…<br>Bitte Seite neu laden (F5).</div>';
+            renderer.dispose();
+            return;
+        }
+        var controls = new OrbitControlsCtor(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.minDistance = 8;
+        controls.maxDistance = 80;
+        controls.maxPolarAngle = Math.PI / 2.15;
+        controls.autoRotate = false;
+        controls.autoRotateSpeed = 1.2;
+
+        // Lighting
+        var ambientLight = new THREE.AmbientLight(isLight ? 0x666666 : 0x222233, 1);
+        scene.add(ambientLight);
+
+        var dirLight = new THREE.DirectionalLight(isLight ? 0xffffff : 0xddc8ff, 1.5);
+        dirLight.position.set(15, 25, 10);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 80;
+        dirLight.shadow.camera.left = -30;
+        dirLight.shadow.camera.right = 30;
+        dirLight.shadow.camera.top = 30;
+        dirLight.shadow.camera.bottom = -30;
+        scene.add(dirLight);
+
+        var pointLight = new THREE.PointLight(0xa855f7, 0.6, 50);
+        pointLight.position.set(-8, 15, -8);
+        scene.add(pointLight);
+
+        var pointLight2 = new THREE.PointLight(0x06b6d4, 0.4, 50);
+        pointLight2.position.set(8, 10, 8);
+        scene.add(pointLight2);
+
+        // Ground plane
+        var groundGeo = new THREE.PlaneGeometry(80, 80);
+        var groundMat = new THREE.MeshStandardMaterial({
+            color: isLight ? 0xe8e8ee : 0x0a0a12,
+            roughness: 0.9,
+            metalness: 0.1
+        });
+        var ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = -0.01;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // Grid helper
+        var grid = new THREE.GridHelper(60, 60, isLight ? 0xccccdd : 0x1a1a2e, isLight ? 0xddddee : 0x12121e);
+        grid.position.y = 0;
+        scene.add(grid);
+
+        // Build the city
+        var buildings = [];
+        var maxHours = 12;
+        var dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+
+        // Group by week
+        var weekGroups = [];
+        var currentWeek = [];
+        var lastWeekNum = -1;
+        filtered.forEach(function(e) {
+            var d = new Date(e.date);
+            var wk = apGetISOWeek(d);
+            if (wk !== lastWeekNum && currentWeek.length > 0) {
+                weekGroups.push(currentWeek);
+                currentWeek = [];
+            }
+            currentWeek.push(e);
+            lastWeekNum = wk;
+        });
+        if (currentWeek.length > 0) weekGroups.push(currentWeek);
+
+        var gridSpacing = 1.6;
+        var barWidth = 1.1;
+        var offsetX = -(Math.min(weekGroups.length, 20) * gridSpacing) / 2;
+        var offsetZ = -(7 * gridSpacing) / 2;
+
+        // Limit to last N weeks for reasonable rendering
+        var maxWeeks = Math.min(weekGroups.length, 52);
+        var startWeek = weekGroups.length - maxWeeks;
+
+        for (var wi = startWeek; wi < weekGroups.length; wi++) {
+            var week = weekGroups[wi];
+            var weekIdx = wi - startWeek;
+
+            for (var di = 0; di < week.length; di++) {
+                var entry = week[di];
+                var dow = new Date(entry.date).getDay();
+                var hours = entry.worked || 0;
+                var expected = entry.expected || 8;
+                var ratio = expected > 0 ? hours / expected : 0;
+                var h = Math.max(0.15, (hours / maxHours) * 10);
+                var type = entry.type || 'work';
+
+                // Color based on type and performance
+                var color;
+                if (type === 'school') color = 0x06b6d4;
+                else if (type === 'vacation' || type === 'holiday' || type === 'gleittag') color = 0x3b82f6;
+                else if (type === 'sick') color = 0xef4444;
+                else if (ratio >= 1.0) color = 0x22c55e;
+                else if (ratio >= 0.7) color = 0xa855f7;
+                else if (ratio >= 0.4) color = 0xf59e0b;
+                else color = 0xef4444;
+
+                // Building geometry with beveled top
+                var geo = new THREE.BoxGeometry(barWidth, h, barWidth);
+                var mat = new THREE.MeshStandardMaterial({
+                    color: color,
+                    roughness: 0.35,
+                    metalness: 0.3,
+                    transparent: true,
+                    opacity: 0.88
+                });
+                var mesh = new THREE.Mesh(geo, mat);
+                mesh.position.set(
+                    offsetX + weekIdx * gridSpacing,
+                    h / 2,
+                    offsetZ + dow * gridSpacing
+                );
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+
+                // Store metadata
+                mesh.userData = {
+                    date: entry.date,
+                    dayName: dayNames[dow],
+                    hours: hours,
+                    expected: expected,
+                    type: type,
+                    diff: entry.diff || 0,
+                    project: entry.project || '',
+                    ratio: ratio
+                };
+
+                scene.add(mesh);
+                buildings.push(mesh);
+
+                // Top glow for high performers
+                if (ratio >= 1.0 && type === 'work') {
+                    var glowGeo = new THREE.BoxGeometry(barWidth * 1.15, 0.08, barWidth * 1.15);
+                    var glowMat = new THREE.MeshBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.5 });
+                    var glow = new THREE.Mesh(glowGeo, glowMat);
+                    glow.position.set(mesh.position.x, h + 0.04, mesh.position.z);
+                    scene.add(glow);
+                }
+            }
+        }
+
+        // Day labels on Z axis
+        if (typeof THREE.FontLoader === 'undefined') {
+            // Use sprites for day labels instead
+            dayNames.forEach(function(name, i) {
+                var canvas = document.createElement('canvas');
+                canvas.width = 64; canvas.height = 32;
+                var ctx = canvas.getContext('2d');
+                ctx.fillStyle = isLight ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)';
+                ctx.font = 'bold 18px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(name, 32, 22);
+                var tex = new THREE.CanvasTexture(canvas);
+                var spMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+                var sprite = new THREE.Sprite(spMat);
+                sprite.scale.set(2.5, 1.2, 1);
+                sprite.position.set(offsetX - 2.5, 0.5, offsetZ + i * gridSpacing);
+                scene.add(sprite);
+            });
+        }
+
+        // Save state
+        ap3dState.scene = scene;
+        ap3dState.camera = camera;
+        ap3dState.renderer = renderer;
+        ap3dState.controls = controls;
+        ap3dState.buildings = buildings;
+
+        // Raycaster for hover
+        ap3dState.raycaster = new THREE.Raycaster();
+        ap3dState.mouse = new THREE.Vector2();
+
+        // Info overlay
+        var infoOverlay = document.createElement('div');
+        infoOverlay.className = 'ap3d-info-overlay';
+        infoOverlay.id = 'ap3dInfo';
+        container.appendChild(infoOverlay);
+
+        // Mouse move for hover
+        renderer.domElement.addEventListener('mousemove', function(event) {
+            var rect = renderer.domElement.getBoundingClientRect();
+            ap3dState.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            ap3dState.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        });
+
+        // Animate
+        var clock = new THREE.Clock();
+        function animate() {
+            ap3dState.animId = requestAnimationFrame(animate);
+            controls.update();
+
+            // Hover detection
+            if (ap3dState.raycaster && ap3dState.buildings.length > 0) {
+                ap3dState.raycaster.setFromCamera(ap3dState.mouse, camera);
+                var intersects = ap3dState.raycaster.intersectObjects(ap3dState.buildings);
+                var info = document.getElementById('ap3dInfo');
+
+                if (ap3dState.hoveredBar && ap3dState.hoveredBar !== (intersects.length > 0 ? intersects[0].object : null)) {
+                    ap3dState.hoveredBar.material.opacity = 0.88;
+                    ap3dState.hoveredBar.material.emissive.setHex(0x000000);
+                }
+
+                if (intersects.length > 0) {
+                    var obj = intersects[0].object;
+                    if (obj.userData.date) {
+                        obj.material.opacity = 1.0;
+                        obj.material.emissive.setHex(0x222222);
+                        ap3dState.hoveredBar = obj;
+                        var ud = obj.userData;
+                        var typeLabels = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', sick: 'Krank', holiday: 'Feiertag', gleittag: 'Gleittag' };
+                        if (info) {
+                            info.innerHTML = '<b>' + ud.dayName + ', ' + new Date(ud.date).toLocaleDateString('de-DE') + '</b> &nbsp;|&nbsp; ' +
+                                (typeLabels[ud.type] || ud.type) + ' &nbsp;|&nbsp; ' +
+                                ud.hours.toFixed(2) + 'h / ' + ud.expected.toFixed(2) + 'h &nbsp;|&nbsp; ' +
+                                '<span style="color:' + (ud.diff >= 0 ? '#22c55e' : '#ef4444') + ';">' + (ud.diff >= 0 ? '+' : '') + ud.diff.toFixed(2) + 'h</span>' +
+                                (ud.project ? ' &nbsp;|&nbsp; ' + ud.project : '');
+                            info.classList.add('visible');
+                        }
+                    }
+                } else {
+                    ap3dState.hoveredBar = null;
+                    if (info) info.classList.remove('visible');
+                }
+            }
+
+            // Subtle floating animation for buildings
+            var time = clock.getElapsedTime();
+            ap3dState.buildings.forEach(function(b, i) {
+                b.position.y = (b.geometry.parameters.height / 2) + Math.sin(time * 0.8 + i * 0.15) * 0.03;
+            });
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Resize handler
+        var resizeHandler = function() {
+            if (!ap3dState.renderer) return;
+            var c = document.getElementById('ap3dContainer');
+            if (!c) return;
+            var nw = c.clientWidth;
+            var nh = c.clientHeight;
+            camera.aspect = nw / nh;
+            camera.updateProjectionMatrix();
+            renderer.setSize(nw, nh);
+        };
+        window.addEventListener('resize', resizeHandler);
+
+        // Stats cards
+        ap3dRenderStats(filtered);
+    }
+
+    function ap3dRenderStats(entries) {
+        var statsEl = document.getElementById('ap3dStats');
+        if (!statsEl) return;
+        var totalDays = entries.length;
+        var workDays = entries.filter(function(e){ return e.type === 'work'; });
+        var overTarget = workDays.filter(function(e){ return (e.expected||8) > 0 && (e.worked||0) >= (e.expected||8); }).length;
+        var avgHours = workDays.length ? (workDays.reduce(function(s,e){ return s + (e.worked||0); }, 0) / workDays.length) : 0;
+        var maxH = entries.reduce(function(m,e){ return Math.max(m, e.worked||0); }, 0);
+        var buildings = entries.filter(function(e){ return (e.worked||0) > 0; }).length;
+        var pctOver = workDays.length ? ((overTarget / workDays.length) * 100).toFixed(1) : 0;
+
+        statsEl.innerHTML =
+            '<div class="ap-kpi"><div class="ap-kpi-value">' + buildings + '</div><div class="ap-kpi-label">Gebäude in City</div><div class="ap-kpi-sub">' + totalDays + ' Tage insgesamt</div></div>' +
+            '<div class="ap-kpi"><div class="ap-kpi-value">' + pctOver + '%</div><div class="ap-kpi-label">Ziel erreicht</div><div class="ap-kpi-sub">' + overTarget + ' von ' + workDays.length + ' Arbeitstagen</div></div>' +
+            '<div class="ap-kpi"><div class="ap-kpi-value">' + avgHours.toFixed(1) + 'h</div><div class="ap-kpi-label">⌀ pro Tag</div><div class="ap-kpi-sub">Rekord: ' + maxH.toFixed(1) + 'h</div></div>';
     }
 
     // ============================================
