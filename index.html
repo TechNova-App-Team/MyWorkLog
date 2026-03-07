@@ -77,6 +77,12 @@
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/three@0.145.0/build/three.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/postprocessing/RenderPass.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/shaders/CopyShader.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <!-- Umami Analytics - Privacy Focused -->
@@ -869,8 +875,14 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             border-radius: 16px;
             margin-bottom: 1.5rem;
             overflow-x: auto;
+            overflow-y: hidden;
             scrollbar-width: none;
             -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+            /* Scroll fade hints */
+            mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
         }
         .ap-tab-bar::-webkit-scrollbar { display: none; }
         .ap-tab {
@@ -1141,7 +1153,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         }
         @media (max-width: 600px) {
             .ap-kpi-row { grid-template-columns: 1fr; }
-            .ap-tab { padding: 8px 12px; font-size: 0.75rem; }
+            .ap-tab { padding: 7px 10px; font-size: 0.7rem; gap: 2px; }
+            .ap-tab .ap-tab-icon { font-size: 0.85em; margin-right: 3px; }
+            .ap-tab-bar { gap: 2px; padding: 4px; border-radius: 12px; margin-bottom: 1rem; }
             .ap-card { padding: 1rem; border-radius: 14px; }
             .ap-chart-wrap { min-height: 220px; }
         }
@@ -1233,9 +1247,18 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         .ap3d-info-overlay.visible { opacity: 1; }
 
         @media (max-width: 768px) {
-            .ap3d-viewport { height: 360px; }
-            .ap3d-header { padding: 0.75rem 1rem; }
-            .ap3d-legend { padding: 0.5rem 1rem; gap: 8px; }
+            .ap3d-viewport { height: 300px; }
+            .ap3d-header { padding: 0.6rem 0.8rem; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .ap3d-title { font-size: 0.72rem; }
+            .ap3d-controls { flex-wrap: wrap; gap: 3px; }
+            .ap3d-controls .ap-period-btn { padding: 4px 8px; font-size: 0.65rem; }
+            .ap3d-legend { padding: 0.4rem 0.8rem; gap: 6px; font-size: 0.6rem; flex-wrap: wrap; }
+            .ap3d-hint { font-size: 0.58rem; padding: 4px; }
+            .ap3d-info-overlay { font-size: 0.65rem; padding: 6px 12px; white-space: normal; max-width: 90vw; text-align: center; bottom: 8px; }
+        }
+        @media (max-width: 420px) {
+            .ap3d-viewport { height: 240px; }
+            .ap3d-legend { display: none; }
         }
 
         [data-theme="light"] .ap3d-viewport { background: radial-gradient(ellipse at 50% 120%, rgba(var(--primary-rgb),0.05) 0%, #f8f9fb 70%); }
@@ -1243,6 +1266,105 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         [data-theme="light"] .ap3d-legend { color: rgba(0,0,0,0.4); }
         [data-theme="light"] .ap3d-hint { color: rgba(0,0,0,0.2); }
         [data-theme="light"] .ap3d-info-overlay { background: rgba(255,255,255,0.92); color: #1a1a2e; border-color: rgba(0,0,0,0.1); }
+
+        /* ── Galaxy Visualization ── */
+        .apgx-viewport {
+            width: 100%;
+            height: 580px;
+            background: radial-gradient(ellipse at 50% 50%, #0d001a 0%, #030305 60%, #000 100%);
+            cursor: grab;
+            position: relative;
+            overflow: hidden;
+        }
+        .apgx-viewport:active { cursor: grabbing; }
+        .apgx-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(var(--primary-rgb),0.15);
+        }
+        .apgx-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.45);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .apgx-controls {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .apgx-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            padding: 0.6rem 1.5rem;
+            font-size: 0.72rem;
+            color: rgba(255,255,255,0.35);
+            background: rgba(0,0,0,0.2);
+        }
+        .apgx-legend-item { display: flex; align-items: center; gap: 5px; }
+        .apgx-legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .apgx-hint {
+            text-align: center;
+            font-size: 0.68rem;
+            color: rgba(255,255,255,0.18);
+            padding: 0.4rem;
+            background: rgba(0,0,0,0.25);
+        }
+        .apgx-info-overlay {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10,0,20,0.88);
+            backdrop-filter: blur(12px);
+            color: #e2e8f0;
+            font-size: 0.78rem;
+            padding: 8px 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(var(--primary-rgb),0.3);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(var(--primary-rgb),0.3);
+        }
+        .apgx-info-overlay.visible { opacity: 1; }
+
+        @keyframes apgx-pulse { 0%,100%{box-shadow:0 0 8px rgba(var(--primary-rgb),0.4);} 50%{box-shadow:0 0 20px rgba(var(--primary-rgb),0.8);} }
+
+        @media (max-width: 768px) {
+            .apgx-viewport { height: 300px; }
+            .apgx-header { padding: 0.6rem 0.8rem; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .apgx-title { font-size: 0.72rem; }
+            .apgx-controls { flex-wrap: wrap; gap: 3px; }
+            .apgx-controls .ap-period-btn { padding: 4px 8px; font-size: 0.65rem; }
+            .apgx-legend { padding: 0.4rem 0.8rem; gap: 6px; font-size: 0.6rem; flex-wrap: wrap; }
+            .apgx-hint { font-size: 0.58rem; padding: 4px; }
+            .apgx-info-overlay { font-size: 0.65rem; padding: 6px 12px; white-space: normal; max-width: 90vw; text-align: center; bottom: 8px; }
+        }
+        @media (max-width: 420px) {
+            .apgx-viewport { height: 240px; }
+            .apgx-legend { display: none; }
+        }
+
+        [data-theme="light"] .apgx-viewport { background: radial-gradient(ellipse at 50% 50%, #e8e0f0 0%, #f0f0f5 60%, #f8f9fb 100%); }
+        [data-theme="light"] .apgx-title { color: rgba(0,0,0,0.5); }
+        [data-theme="light"] .apgx-legend { color: rgba(0,0,0,0.4); background: rgba(0,0,0,0.03); }
+        [data-theme="light"] .apgx-hint { color: rgba(0,0,0,0.2); }
+        [data-theme="light"] .apgx-info-overlay { background: rgba(255,255,255,0.92); color: #1a1a2e; border-color: rgba(0,0,0,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
 
         /* ── COMMAND PALETTE MODAL — Raycast quality ── */
         .cmd-palette-overlay {
@@ -8891,6 +9013,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                     <button class="ap-tab" data-ap-tab="3d" onclick="apSwitchTab('3d')">
                         <span class="ap-tab-icon">🏛️</span>3D City
                     </button>
+                    <button class="ap-tab" data-ap-tab="galaxy" onclick="apSwitchTab('galaxy')">
+                        <span class="ap-tab-icon">🌌</span>Galaxy
+                    </button>
                 </div>
 
                 <!-- Panels -->
@@ -9056,6 +9181,35 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             <div class="ap3d-hint">🖱️ Drehen: Linke Maustaste • Zoomen: Scrollrad • Verschieben: Rechte Maustaste</div>
                         </div>
                         <div class="ap-grid-3" style="margin-top:1.25rem;" id="ap3dStats"></div>
+                    </div>
+
+                    <!-- GALAXY VISUALIZATION -->
+                    <div class="ap-panel" id="apPanel-galaxy">
+                        <div class="ap-card" style="padding:0; overflow:hidden; border-radius:20px; position:relative;">
+                            <div class="apgx-header">
+                                <div class="apgx-title">🌌 Work Galaxy — Dein Universum aus Arbeitstagen</div>
+                                <div class="apgx-controls">
+                                    <button class="ap-period-btn active" onclick="apGxSetRange(90, this)">90d</button>
+                                    <button class="ap-period-btn" onclick="apGxSetRange(180, this)">180d</button>
+                                    <button class="ap-period-btn" onclick="apGxSetRange(365, this)">1J</button>
+                                    <button class="ap-period-btn" onclick="apGxSetRange(0, this)">All</button>
+                                    <button class="ap-period-btn" onclick="apGxToggleBloom(this)" id="apGxBloomBtn">✨ Bloom</button>
+                                    <button class="ap-period-btn" onclick="apGxToggleAutoRotate(this)" id="apGxAutoRotBtn">↻ Orbit</button>
+                                </div>
+                            </div>
+                            <div id="apGxContainer" class="apgx-viewport"></div>
+                            <div id="apGxInfoOverlay" class="apgx-info-overlay"></div>
+                            <div class="apgx-legend">
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#22c55e; box-shadow:0 0 6px #22c55e;"></span>Superstar (&ge;100%)</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#a855f7; box-shadow:0 0 6px #a855f7;"></span>Nebula (70-99%)</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#f59e0b; box-shadow:0 0 6px #f59e0b;"></span>Dwarf (40-69%)</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#ef4444; box-shadow:0 0 6px #ef4444;"></span>Red Giant (&lt;40%)</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#06b6d4; box-shadow:0 0 6px #06b6d4;"></span>Schule</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#3b82f6; box-shadow:0 0 6px #3b82f6;"></span>Urlaub/Feiertag</span>
+                            </div>
+                            <div class="apgx-hint">🖱️ Orbit: Maus ziehen • Zoom: Scrollrad • Pan: Rechtsklick • Hover: Stern-Info</div>
+                        </div>
+                        <div class="ap-grid-3" style="margin-top:1.25rem;" id="apGxStats"></div>
                     </div>
 
                 </div>
@@ -24440,7 +24594,10 @@ TIPPS:
         document.querySelectorAll('.ap-panel').forEach(p => p.classList.remove('active'));
         const tab = document.querySelector('.ap-tab[data-ap-tab="' + tabId + '"]');
         const panel = document.getElementById('apPanel-' + tabId);
-        if (tab) tab.classList.add('active');
+        if (tab) {
+            tab.classList.add('active');
+            tab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
         if (panel) panel.classList.add('active');
         apRenderPanel(tabId);
     }
@@ -24458,6 +24615,7 @@ TIPPS:
             case 'weekday':    apRenderWeekday(); break;
             case 'distribution': apRenderDistribution(); break;
             case '3d':         apRender3D(); break;
+            case 'galaxy':     apRenderGalaxy(); break;
         }
     }
 
@@ -25826,6 +25984,465 @@ TIPPS:
             '<div class="ap-kpi"><div class="ap-kpi-value">' + buildings + '</div><div class="ap-kpi-label">Gebäude in City</div><div class="ap-kpi-sub">' + totalDays + ' Tage insgesamt</div></div>' +
             '<div class="ap-kpi"><div class="ap-kpi-value">' + pctOver + '%</div><div class="ap-kpi-label">Ziel erreicht</div><div class="ap-kpi-sub">' + overTarget + ' von ' + workDays.length + ' Arbeitstagen</div></div>' +
             '<div class="ap-kpi"><div class="ap-kpi-value">' + avgHours.toFixed(1) + 'h</div><div class="ap-kpi-label">⌀ pro Tag</div><div class="ap-kpi-sub">Rekord: ' + maxH.toFixed(1) + 'h</div></div>';
+    }
+
+    // ════════════════════════════════════════════
+    //  10. GALAXY VISUALIZATION (Three.js + Bloom)
+    // ════════════════════════════════════════════
+    var apGxState = { scene:null, camera:null, renderer:null, controls:null, composer:null, animId:null, range:90, stars:[], raycaster:null, mouse:null, hoveredStar:null, bloomEnabled:true };
+
+    function apGxSetRange(days, btn) {
+        apGxState.range = days;
+        var btns = document.querySelectorAll('.apgx-controls .ap-period-btn');
+        btns.forEach(function(b){ if(b.id!=='apGxBloomBtn'&&b.id!=='apGxAutoRotBtn') b.classList.remove('active'); });
+        if(btn&&btn.id!=='apGxBloomBtn'&&btn.id!=='apGxAutoRotBtn') btn.classList.add('active');
+        apRenderGalaxy();
+    }
+    function apGxToggleAutoRotate(btn) {
+        if(apGxState.controls){ apGxState.controls.autoRotate=!apGxState.controls.autoRotate; btn.classList.toggle('active'); }
+    }
+    function apGxToggleBloom(btn) {
+        apGxState.bloomEnabled = !apGxState.bloomEnabled;
+        btn.classList.toggle('active');
+    }
+    function apGxCleanup() {
+        if(apGxState.animId){ cancelAnimationFrame(apGxState.animId); apGxState.animId=null; }
+        if(apGxState.composer){ apGxState.composer=null; }
+        if(apGxState.renderer){ apGxState.renderer.dispose(); apGxState.renderer=null; }
+        if(apGxState.controls){ apGxState.controls.dispose(); apGxState.controls=null; }
+        apGxState.scene=null; apGxState.camera=null; apGxState.stars=[]; apGxState.hoveredStar=null;
+        var c=document.getElementById('apGxContainer'); if(c) c.innerHTML='';
+    }
+
+    function apGxCreateStarTexture(color, size) {
+        var canvas = document.createElement('canvas');
+        canvas.width = size; canvas.height = size;
+        var ctx = canvas.getContext('2d');
+        var half = size / 2;
+        // Outer glow
+        var grad = ctx.createRadialGradient(half, half, 0, half, half, half);
+        grad.addColorStop(0, color);
+        grad.addColorStop(0.15, color);
+        grad.addColorStop(0.4, color.replace('1)', '0.3)'));
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, size, size);
+        // Cross flare
+        ctx.globalCompositeOperation = 'lighter';
+        var flareGrad = ctx.createLinearGradient(0, half, size, half);
+        flareGrad.addColorStop(0, 'rgba(255,255,255,0)');
+        flareGrad.addColorStop(0.4, color.replace('1)', '0.15)'));
+        flareGrad.addColorStop(0.5, color.replace('1)', '0.5)'));
+        flareGrad.addColorStop(0.6, color.replace('1)', '0.15)'));
+        flareGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = flareGrad;
+        ctx.fillRect(0, half - 1, size, 3);
+        var flareGrad2 = ctx.createLinearGradient(half, 0, half, size);
+        flareGrad2.addColorStop(0, 'rgba(255,255,255,0)');
+        flareGrad2.addColorStop(0.4, color.replace('1)', '0.1)'));
+        flareGrad2.addColorStop(0.5, color.replace('1)', '0.35)'));
+        flareGrad2.addColorStop(0.6, color.replace('1)', '0.1)'));
+        flareGrad2.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = flareGrad2;
+        ctx.fillRect(half - 1, 0, 3, size);
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    function apRenderGalaxy() {
+        if(typeof THREE==='undefined'){ var c=document.getElementById('apGxContainer'); if(c) c.innerHTML='<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">⏳</div>Three.js wird geladen…</div>'; return; }
+        apGxCleanup();
+
+        var entries = apEntries();
+        if(!entries.length){ document.getElementById('apGxContainer').innerHTML='<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">🌌</div>Noch keine Daten für Galaxy</div>'; return; }
+
+        var range = apGxState.range;
+        var filtered = range > 0 ? entries.slice(-range) : entries;
+        var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+
+        var container = document.getElementById('apGxContainer');
+        var w = container.clientWidth, h = container.clientHeight;
+
+        // ── Scene ──
+        var scene = new THREE.Scene();
+
+        // ── Camera ──
+        var camera = new THREE.PerspectiveCamera(60, w/h, 0.1, 2000);
+        camera.position.set(0, 35, 60);
+        camera.lookAt(0, 0, 0);
+
+        // ── Renderer ──
+        var renderer;
+        try {
+            var cv = document.createElement('canvas');
+            var gl = cv.getContext('webgl2') || cv.getContext('webgl');
+            if(!gl) throw new Error('WebGL');
+            renderer = new THREE.WebGLRenderer({ canvas:cv, antialias:true, alpha:true, powerPreference:'high-performance' });
+        } catch(e) {
+            container.innerHTML='<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">⚠️</div>WebGL nicht verfügbar</div>';
+            return;
+        }
+        renderer.setSize(w, h);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.appendChild(renderer.domElement);
+
+        // ── OrbitControls ──
+        var OC = THREE.OrbitControls || (window.THREE && window.THREE.OrbitControls);
+        if(!OC){ container.innerHTML='<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">🔄</div>Controls laden… Bitte F5</div>'; renderer.dispose(); return; }
+        var controls = new OC(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.minDistance = 10;
+        controls.maxDistance = 150;
+        controls.autoRotate = false;
+        controls.autoRotateSpeed = 0.6;
+
+        // ── Bloom Postprocessing ──
+        var composer = null;
+        var hasBloom = typeof THREE.EffectComposer !== 'undefined' && typeof THREE.RenderPass !== 'undefined' && typeof THREE.UnrealBloomPass !== 'undefined';
+        if(hasBloom) {
+            composer = new THREE.EffectComposer(renderer);
+            composer.addPass(new THREE.RenderPass(scene, camera));
+            var bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(w, h), 1.8, 0.6, 0.2);
+            bloomPass.threshold = 0.15;
+            bloomPass.strength = 1.8;
+            bloomPass.radius = 0.6;
+            composer.addPass(bloomPass);
+        }
+
+        // ── Lighting ──
+        scene.add(new THREE.AmbientLight(isLight ? 0x444444 : 0x111122, 0.3));
+
+        // ── Background starfield (3000 particles) ──
+        var bgStarCount = 3000;
+        var bgGeo = new THREE.BufferGeometry();
+        var bgPos = new Float32Array(bgStarCount * 3);
+        var bgSizes = new Float32Array(bgStarCount);
+        for(var i=0; i<bgStarCount; i++){
+            bgPos[i*3]   = (Math.random()-0.5)*800;
+            bgPos[i*3+1] = (Math.random()-0.5)*800;
+            bgPos[i*3+2] = (Math.random()-0.5)*800;
+            bgSizes[i]   = Math.random()*1.5+0.3;
+        }
+        bgGeo.setAttribute('position', new THREE.BufferAttribute(bgPos, 3));
+        bgGeo.setAttribute('size', new THREE.BufferAttribute(bgSizes, 1));
+        var bgMat = new THREE.PointsMaterial({ color: isLight ? 0x8888aa : 0xffffff, size:0.8, transparent:true, opacity:0.5, sizeAttenuation:true });
+        scene.add(new THREE.Points(bgGeo, bgMat));
+
+        // ── Central core (glowing sun) ──
+        var coreGeo = new THREE.SphereGeometry(2.5, 32, 32);
+        var coreMat = new THREE.MeshBasicMaterial({ color:0xa855f7, transparent:true, opacity:0.9 });
+        var core = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(core);
+
+        // Core glow layers
+        for(var g=0; g<3; g++){
+            var glowGeo = new THREE.SphereGeometry(3+g*1.5, 24, 24);
+            var glowMat = new THREE.MeshBasicMaterial({ color:0xa855f7, transparent:true, opacity:0.08-g*0.02, side:THREE.BackSide });
+            scene.add(new THREE.Mesh(glowGeo, glowMat));
+        }
+
+        // ── Nebula dust ring (subtle ring of particles) ──
+        var dustCount = 1200;
+        var dustGeo = new THREE.BufferGeometry();
+        var dustPos = new Float32Array(dustCount * 3);
+        var dustColors = new Float32Array(dustCount * 3);
+        for(var d=0; d<dustCount; d++){
+            var dAngle = Math.random() * Math.PI * 2;
+            var dRadius = 5 + Math.random() * 40;
+            var dSpread = (Math.random()-0.5) * 4;
+            dustPos[d*3]   = Math.cos(dAngle)*dRadius + (Math.random()-0.5)*3;
+            dustPos[d*3+1] = dSpread;
+            dustPos[d*3+2] = Math.sin(dAngle)*dRadius + (Math.random()-0.5)*3;
+            var dc = Math.random();
+            if(dc<0.33){ dustColors[d*3]=0.66; dustColors[d*3+1]=0.33; dustColors[d*3+2]=0.97; }
+            else if(dc<0.66){ dustColors[d*3]=0.02; dustColors[d*3+1]=0.71; dustColors[d*3+2]=0.83; }
+            else{ dustColors[d*3]=0.13; dustColors[d*3+1]=0.77; dustColors[d*3+2]=0.37; }
+        }
+        dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+        dustGeo.setAttribute('color', new THREE.BufferAttribute(dustColors, 3));
+        var dustMat = new THREE.PointsMaterial({ size:0.4, transparent:true, opacity:0.15, vertexColors:true, sizeAttenuation:true, blending:THREE.AdditiveBlending });
+        var dustSystem = new THREE.Points(dustGeo, dustMat);
+        scene.add(dustSystem);
+
+        // ── Spiral galaxy ring (dense particles forming spiral arms) ──
+        var spiralCount = 2000;
+        var spiralGeo = new THREE.BufferGeometry();
+        var spiralPos = new Float32Array(spiralCount * 3);
+        var spiralColors = new Float32Array(spiralCount * 3);
+        for(var sp=0; sp<spiralCount; sp++){
+            var arm = sp % 3; // 3 spiral arms
+            var t = (sp / spiralCount) * Math.PI * 6;
+            var r = 4 + t * 1.5;
+            var armOffset = arm * (Math.PI * 2 / 3);
+            var scatter = (Math.random()-0.5) * (2 + t*0.3);
+            spiralPos[sp*3]   = Math.cos(t + armOffset)*r + scatter;
+            spiralPos[sp*3+1] = (Math.random()-0.5)*1.5;
+            spiralPos[sp*3+2] = Math.sin(t + armOffset)*r + scatter;
+            var brightness = 0.3 + Math.random()*0.4;
+            spiralColors[sp*3]   = 0.5*brightness + 0.3;
+            spiralColors[sp*3+1] = 0.2*brightness + 0.1;
+            spiralColors[sp*3+2] = brightness;
+        }
+        spiralGeo.setAttribute('position', new THREE.BufferAttribute(spiralPos, 3));
+        spiralGeo.setAttribute('color', new THREE.BufferAttribute(spiralColors, 3));
+        var spiralMat = new THREE.PointsMaterial({ size:0.5, transparent:true, opacity:0.3, vertexColors:true, sizeAttenuation:true, blending:THREE.AdditiveBlending });
+        var spiralSystem = new THREE.Points(spiralGeo, spiralMat);
+        scene.add(spiralSystem);
+
+        // ── Data stars (each entry = one star) ──
+        var stars = [];
+        var totalEntries = filtered.length;
+        var colorMap = {
+            'superstar': { hex:0x22c55e, rgba:'rgba(34,197,94,1)' },
+            'normal':    { hex:0xa855f7, rgba:'rgba(168,85,247,1)' },
+            'low':       { hex:0xf59e0b, rgba:'rgba(245,158,11,1)' },
+            'red':       { hex:0xef4444, rgba:'rgba(239,68,68,1)' },
+            'school':    { hex:0x06b6d4, rgba:'rgba(6,182,212,1)' },
+            'special':   { hex:0x3b82f6, rgba:'rgba(59,130,246,1)' }
+        };
+
+        // Group by month for spiral arm placement
+        var monthGroups = {};
+        filtered.forEach(function(e){
+            var key = e.date.substring(0,7);
+            if(!monthGroups[key]) monthGroups[key]=[];
+            monthGroups[key].push(e);
+        });
+        var monthKeys = Object.keys(monthGroups).sort();
+
+        monthKeys.forEach(function(monthKey, monthIdx){
+            var group = monthGroups[monthKey];
+            var armAngleBase = (monthIdx / Math.max(monthKeys.length,1)) * Math.PI * 4; // spiral angle per month
+            var armRadius = 8 + monthIdx * (35 / Math.max(monthKeys.length,1)); // increasing radius
+
+            group.forEach(function(entry, dayIdx){
+                var hours = entry.worked || 0;
+                var expected = entry.expected || 8;
+                var ratio = expected > 0 ? hours / expected : 0;
+                var type = entry.type || 'work';
+
+                // Determine category
+                var category;
+                if(type==='school') category='school';
+                else if(type==='vacation'||type==='holiday'||type==='gleittag') category='special';
+                else if(type==='sick') category='red';
+                else if(ratio>=1.0) category='superstar';
+                else if(ratio>=0.7) category='normal';
+                else if(ratio>=0.4) category='low';
+                else category='red';
+
+                var cm = colorMap[category];
+
+                // Position in spiral
+                var dayAngle = armAngleBase + (dayIdx / Math.max(group.length,1)) * (Math.PI * 2 / Math.max(monthKeys.length,1)) * 0.8;
+                var rJitter = (Math.random()-0.5)*3;
+                var yJitter = (Math.random()-0.5)*2.5;
+                var px = Math.cos(dayAngle) * (armRadius + rJitter);
+                var py = yJitter;
+                var pz = Math.sin(dayAngle) * (armRadius + rJitter);
+
+                // Star size based on hours
+                var starSize = 0.3 + (hours / 12) * 1.2;
+                if(category==='superstar') starSize *= 1.4;
+
+                // Create star sprite with glow texture
+                var tex = apGxCreateStarTexture(cm.rgba, 128);
+                var spriteMat = new THREE.SpriteMaterial({
+                    map: tex,
+                    transparent: true,
+                    opacity: 0.9,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                var sprite = new THREE.Sprite(spriteMat);
+                sprite.scale.set(starSize*2.5, starSize*2.5, 1);
+                sprite.position.set(px, py, pz);
+
+                // Store metadata
+                sprite.userData = {
+                    date: entry.date,
+                    hours: hours,
+                    expected: expected,
+                    type: type,
+                    diff: entry.diff || 0,
+                    project: entry.project || '',
+                    ratio: ratio,
+                    category: category,
+                    baseScale: starSize*2.5,
+                    dayName: ['So','Mo','Di','Mi','Do','Fr','Sa'][new Date(entry.date).getDay()]
+                };
+
+                scene.add(sprite);
+                stars.push(sprite);
+
+                // Extra orbiting particle for superstars
+                if(category==='superstar'){
+                    var orbitGeo = new THREE.RingGeometry(starSize*1.8, starSize*2.0, 32);
+                    var orbitMat = new THREE.MeshBasicMaterial({ color:cm.hex, transparent:true, opacity:0.15, side:THREE.DoubleSide });
+                    var orbitRing = new THREE.Mesh(orbitGeo, orbitMat);
+                    orbitRing.position.copy(sprite.position);
+                    orbitRing.rotation.x = Math.random()*Math.PI;
+                    orbitRing.rotation.z = Math.random()*Math.PI;
+                    scene.add(orbitRing);
+                }
+            });
+        });
+
+        // ── Month label sprites on outer edge ──
+        var monthNames = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+        monthKeys.forEach(function(key, mi){
+            var angle = (mi / Math.max(monthKeys.length,1)) * Math.PI * 4;
+            var r = 10 + mi * (35 / Math.max(monthKeys.length,1));
+            var parts = key.split('-');
+            var label = monthNames[parseInt(parts[1],10)-1] + ' ' + parts[0].substring(2);
+            var lCanvas = document.createElement('canvas');
+            lCanvas.width = 128; lCanvas.height = 48;
+            var lCtx = lCanvas.getContext('2d');
+            lCtx.fillStyle = isLight ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.35)';
+            lCtx.font = 'bold 20px Inter, sans-serif';
+            lCtx.textAlign = 'center';
+            lCtx.fillText(label, 64, 30);
+            var lTex = new THREE.CanvasTexture(lCanvas);
+            var lSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map:lTex, transparent:true }));
+            lSprite.scale.set(5,2,1);
+            lSprite.position.set(Math.cos(angle)*(r+4), 4, Math.sin(angle)*(r+4));
+            scene.add(lSprite);
+        });
+
+        // ── Constellation lines connecting streak days ──
+        var streakLines = [];
+        for(var si=1; si<stars.length; si++){
+            var prev = stars[si-1], curr = stars[si];
+            if(prev.userData.type==='work' && curr.userData.type==='work'){
+                var d1 = new Date(prev.userData.date), d2 = new Date(curr.userData.date);
+                var dayDiff = Math.abs(d2-d1)/86400000;
+                if(dayDiff<=3){
+                    var lineGeo = new THREE.BufferGeometry().setFromPoints([prev.position, curr.position]);
+                    var lineMat = new THREE.LineBasicMaterial({ color:0xa855f7, transparent:true, opacity:0.06 });
+                    scene.add(new THREE.Line(lineGeo, lineMat));
+                }
+            }
+        }
+
+        // ── Save state ──
+        apGxState.scene = scene;
+        apGxState.camera = camera;
+        apGxState.renderer = renderer;
+        apGxState.controls = controls;
+        apGxState.composer = composer;
+        apGxState.stars = stars;
+        apGxState.raycaster = new THREE.Raycaster();
+        apGxState.raycaster.params.Points = { threshold: 1 };
+        apGxState.mouse = new THREE.Vector2();
+
+        // ── Mouse move ──
+        renderer.domElement.addEventListener('mousemove', function(ev){
+            var rect = renderer.domElement.getBoundingClientRect();
+            apGxState.mouse.x = ((ev.clientX-rect.left)/rect.width)*2-1;
+            apGxState.mouse.y = -((ev.clientY-rect.top)/rect.height)*2+1;
+        });
+
+        // ── Animation loop ──
+        var clock = new THREE.Clock();
+        function animate(){
+            apGxState.animId = requestAnimationFrame(animate);
+            var elapsed = clock.getElapsedTime();
+            controls.update();
+
+            // Core pulsing
+            var pulse = 1 + Math.sin(elapsed*2)*0.08;
+            core.scale.set(pulse, pulse, pulse);
+
+            // Dust rotation
+            dustSystem.rotation.y += 0.0003;
+            spiralSystem.rotation.y += 0.00015;
+
+            // Star twinkle
+            for(var si=0; si<stars.length; si++){
+                var s = stars[si];
+                var twinkle = 1 + Math.sin(elapsed*3 + si*0.7) * 0.12;
+                var bs = s.userData.baseScale;
+                s.scale.set(bs*twinkle, bs*twinkle, 1);
+            }
+
+            // Hover detection (raycaster against sprites)
+            apGxState.raycaster.setFromCamera(apGxState.mouse, camera);
+            var hits = apGxState.raycaster.intersectObjects(stars);
+            var infoEl = document.getElementById('apGxInfoOverlay');
+
+            if(apGxState.hoveredStar && apGxState.hoveredStar !== (hits.length>0 ? hits[0].object : null)){
+                var hbs = apGxState.hoveredStar.userData.baseScale;
+                apGxState.hoveredStar.scale.set(hbs, hbs, 1);
+                apGxState.hoveredStar.material.opacity = 0.9;
+            }
+
+            if(hits.length>0){
+                var hit = hits[0].object;
+                if(hit.userData.date){
+                    hit.material.opacity = 1;
+                    var hs = hit.userData.baseScale * 1.6;
+                    hit.scale.set(hs, hs, 1);
+                    apGxState.hoveredStar = hit;
+                    var ud = hit.userData;
+                    var typeLabels = {work:'Arbeit',school:'Schule',vacation:'Urlaub',sick:'Krank',holiday:'Feiertag',gleittag:'Gleittag'};
+                    if(infoEl){
+                        infoEl.innerHTML = '<b>⭐ ' + ud.dayName + ', ' + new Date(ud.date).toLocaleDateString('de-DE') + '</b> &nbsp;|&nbsp; ' +
+                            (typeLabels[ud.type]||ud.type) + ' &nbsp;|&nbsp; ' +
+                            ud.hours.toFixed(2)+'h / '+ud.expected.toFixed(2)+'h &nbsp;|&nbsp; ' +
+                            '<span style="color:'+(ud.diff>=0?'#22c55e':'#ef4444')+'">'+(ud.diff>=0?'+':'')+ud.diff.toFixed(2)+'h</span>' +
+                            (ud.project ? ' &nbsp;|&nbsp; '+ud.project : '') +
+                            ' &nbsp;|&nbsp; <span style="color:'+(colorMap[ud.category]||colorMap.normal).rgba.replace('1)','0.9)')+'">'+({superstar:'⭐ Superstar',normal:'🟣 Normal',low:'🟡 Dwarf',red:'🔴 Red Giant',school:'🔵 Schule',special:'💙 Spezial'}[ud.category]||'')+'</span>';
+                        infoEl.classList.add('visible');
+                    }
+                }
+            } else {
+                apGxState.hoveredStar = null;
+                if(infoEl) infoEl.classList.remove('visible');
+            }
+
+            // Render with or without bloom
+            if(apGxState.bloomEnabled && composer){
+                composer.render();
+            } else {
+                renderer.render(scene, camera);
+            }
+        }
+        animate();
+
+        // ── Resize ──
+        window.addEventListener('resize', function(){
+            if(!apGxState.renderer) return;
+            var c = document.getElementById('apGxContainer');
+            if(!c) return;
+            var nw=c.clientWidth, nh=c.clientHeight;
+            camera.aspect = nw/nh;
+            camera.updateProjectionMatrix();
+            renderer.setSize(nw, nh);
+            if(composer) composer.setSize(nw, nh);
+        });
+
+        // ── Stats ──
+        apGxRenderStats(filtered);
+    }
+
+    function apGxRenderStats(entries){
+        var el = document.getElementById('apGxStats');
+        if(!el) return;
+        var total = entries.length;
+        var work = entries.filter(function(e){return e.type==='work';});
+        var superstars = work.filter(function(e){return (e.expected||8)>0&&(e.worked||0)>=(e.expected||8);}).length;
+        var totalHrs = work.reduce(function(s,e){return s+(e.worked||0);},0);
+        var avgH = work.length ? totalHrs/work.length : 0;
+        var maxStreak = 0, curStreak = 0;
+        for(var i=0;i<entries.length;i++){
+            if(entries[i].type==='work'&&(entries[i].worked||0)>=(entries[i].expected||8)){curStreak++;if(curStreak>maxStreak)maxStreak=curStreak;}else{curStreak=0;}
+        }
+        el.innerHTML =
+            '<div class="ap-kpi"><div class="ap-kpi-value">'+total+'</div><div class="ap-kpi-label">⭐ Sterne im Universum</div><div class="ap-kpi-sub">'+superstars+' Superstars</div></div>' +
+            '<div class="ap-kpi"><div class="ap-kpi-value">'+avgH.toFixed(1)+'h</div><div class="ap-kpi-label">⌀ Leuchtkraft</div><div class="ap-kpi-sub">'+totalHrs.toFixed(0)+'h Gesamtenergie</div></div>' +
+            '<div class="ap-kpi"><div class="ap-kpi-value">'+maxStreak+'</div><div class="ap-kpi-label">🔥 Längste Supernova</div><div class="ap-kpi-sub">Tage in Serie ≥ Soll</div></div>';
     }
 
     // ============================================
