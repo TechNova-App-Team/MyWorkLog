@@ -1223,6 +1223,26 @@
         }
 
         // =========================================
+        //  HELPER: Aggregate daily data into weekly buckets
+        // =========================================
+        function aggregateWeekly(dailyData) {
+            if (!dailyData || !dailyData.length) return dailyData;
+            var weeks = {};
+            dailyData.forEach(function(item) {
+                var d = new Date(item.x);
+                // Get Monday of that week (ISO week start)
+                var day = d.getDay();
+                var diff = d.getDate() - day + (day === 0 ? -6 : 1);
+                var monday = new Date(d);
+                monday.setDate(diff);
+                var key = monday.toISOString().substring(0, 10);
+                if (!weeks[key]) weeks[key] = { x: monday.toISOString(), y: 0 };
+                weeks[key].y += (item.y || 0);
+            });
+            return Object.values(weeks).sort(function(a, b) { return new Date(a.x) - new Date(b.x); });
+        }
+
+        // =========================================
         //  RENDER: Bar Charts
         // =========================================
         function renderBarChartDual(containerId, pageviews, sessions) {
@@ -1244,6 +1264,11 @@
                 const d = new Date(pv.x);
                 let label;
                 if (currentRange <= 1) label = d.getHours() + ':00';
+                else if (currentRange >= 30 && currentRange <= 90) {
+                    // Weekly: show "KW" + week range
+                    var endD = new Date(d); endD.setDate(endD.getDate() + 6);
+                    label = d.getDate() + '.' + (d.getMonth()+1) + '–' + endD.getDate() + '.' + (endD.getMonth()+1);
+                }
                 else if (currentRange <= 90) label = d.getDate() + '.' + (d.getMonth()+1);
                 else label = monthNames[d.getMonth()];
 
@@ -1274,6 +1299,10 @@
                 const d = new Date(item.x);
                 let label;
                 if (currentRange <= 1) label = d.getHours() + ':00';
+                else if (currentRange >= 30 && currentRange <= 90) {
+                    var endD = new Date(d); endD.setDate(endD.getDate() + 6);
+                    label = d.getDate() + '.' + (d.getMonth()+1) + '–' + endD.getDate() + '.' + (endD.getMonth()+1);
+                }
                 else if (currentRange <= 90) label = d.getDate() + '.' + (d.getMonth()+1);
                 else label = monthNames[d.getMonth()];
                 return '<div class="bar-item">' +
@@ -1603,9 +1632,15 @@
                     }
                 }
 
-                // ── Charts ──
-                renderBarChartDual('pageviewsChart', pageviewsData.pageviews, pageviewsData.sessions);
-                renderBarChartSingle('visitorsChart', pageviewsData.sessions, 'visitor');
+                // ── Charts ── (aggregate weekly if range >= 30 days)
+                var chartPV = pageviewsData.pageviews;
+                var chartSessions = pageviewsData.sessions;
+                if (currentRange >= 30 && currentRange <= 90) {
+                    chartPV = aggregateWeekly(chartPV);
+                    chartSessions = aggregateWeekly(chartSessions);
+                }
+                renderBarChartDual('pageviewsChart', chartPV, chartSessions);
+                renderBarChartSingle('visitorsChart', chartSessions, 'visitor');
 
                 // ── Tab Tables (filtered & normalized) ──
                 topPagesExp = cleanExpandedPageData(topPagesExp);
