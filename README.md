@@ -5,7 +5,7 @@
 ### Professionelle Zeiterfassung. Lokal. Sicher. Intelligent.
 
 [![Website](https://img.shields.io/badge/Website-MyWorkLog-blueviolet?style=for-the-badge&logo=googlechrome&logoColor=white)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-3.3.1-blue?style=for-the-badge)](https://github.com/TechNova-App-Team/MyWorkLog)
+[![Version](https://img.shields.io/badge/version-3.3.2-blue?style=for-the-badge)](https://github.com)
 [![PWA Ready](https://img.shields.io/badge/PWA-Ready-success?style=for-the-badge&logo=pwa)](https://myworklog.de/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](Rechtliches/LICENSE.md)
 
@@ -16,7 +16,7 @@
 [![AI Powered](https://img.shields.io/badge/AI-Powered-ff69b4?style=flat-square)](AI-Bot/)
 [![Open Source](https://img.shields.io/badge/Open-Source-informational?style=flat-square)](Rechtliches/LICENSE.md)
 
-[🚀 Live Demo](https://myworklog.de/) • [📖 Dokumentation](README´s/) • [🐛 Bug Report](https://github.com/TechNova-App-Team/MyWorkLog/issues) • [✨ Feature Request](https://github.com/TechNova-App-Team/MyWorkLog/issues)
+[🚀 Live Demo](https://myworklog.de/) • [📖 Dokumentation](README´s/) • [🐛 Bug Report](https://github.com/issues) • [✨ Feature Request](https://github.com/issues)
 
 </div>
 
@@ -238,7 +238,8 @@ MyWorkLog/
 | ✅ **Stabil** | Weather Auto-Refresh | v3.2.1 |
 | 🚧 **in Progress** | Quantum Translator | v3.2.1 |
 | ✅ **Stabil** | Smaller Updates | v3.3.1 |
-**Letztes Update:** 1. März 2026 | **Release:** v3.3.1
+| ✅ **Stabil** | Smaller Updates and new aufgaben.html | v3.3.2 |
+**Letztes Update:** 09. März 2026 | **Release:** v3.3.2
 
 ---
 
@@ -287,7 +288,7 @@ MyWorkLog/
 </tr>
 </table>
 
-### 🆕 Neue Features (v3.2.0) (Now 3.3.1)
+### 🆕 Neue Features (v3.2.0) (Now 3.3.2)
 
 | Feature | Beschreibung | Docs |
 |---------|-------------|------|
@@ -1385,7 +1386,7 @@ Eine moderne Lösung für intelligente Zeiterfassung
 
 ---
 
-<sub>MyWorkLog v3.3.1 | Gebaut mit modernstem Web-Standard | 🤖 AI-Bot powered | ☁️ Cloud-Sync | 🚀 Production Ready</sub>
+<sub>MyWorkLog v3.3.2 | Gebaut mit modernstem Web-Standard | 🤖 AI-Bot powered | ☁️ Cloud-Sync | 🚀 Production Ready</sub>
 
 <sub>© 2025–2026 TechNova App Team. Alle Rechte vorbehalten. | [DSGVO](./DSGVO.html) | [Impressum](./Impressum.html) | [MIT License](Rechtliches/LICENSE.md)</sub>
 
