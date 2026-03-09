@@ -5,7 +5,7 @@
 ### Professionelle Zeiterfassung. Lokal. Sicher. Intelligent.
 
 [![Website](https://img.shields.io/badge/Website-MyWorkLog-blueviolet?style=for-the-badge&logo=googlechrome&logoColor=white)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-3.3.1-blue?style=for-the-badge)](https://github.com)
+[![Version](https://img.shields.io/badge/version-3.3.1-blue?style=for-the-badge)](https://github.com/TechNova-App-Team/MyWorkLog)
 [![PWA Ready](https://img.shields.io/badge/PWA-Ready-success?style=for-the-badge&logo=pwa)](https://myworklog.de/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](Rechtliches/LICENSE.md)
 
@@ -16,7 +16,7 @@
 [![AI Powered](https://img.shields.io/badge/AI-Powered-ff69b4?style=flat-square)](AI-Bot/)
 [![Open Source](https://img.shields.io/badge/Open-Source-informational?style=flat-square)](Rechtliches/LICENSE.md)
 
-[🚀 Live Demo](https://myworklog.de/) • [📖 Dokumentation](README´s/) • [🐛 Bug Report](https://github.com/issues) • [✨ Feature Request](https://github.com/issues)
+[🚀 Live Demo](https://myworklog.de/) • [📖 Dokumentation](README´s/) • [🐛 Bug Report](https://github.com/TechNova-App-Team/MyWorkLog/issues) • [✨ Feature Request](https://github.com/TechNova-App-Team/MyWorkLog/issues)
 
 </div>
 
