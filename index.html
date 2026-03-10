@@ -5992,11 +5992,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             border-color: rgba(168, 85, 247, 0.15);
         }
 
-        /* --- Ticker Enhancement --- */
-        #quickTicker {
-            border-top: 1px solid rgba(255,255,255,0.04);
-            padding-top: 8px !important;
-        }
+
 
         /* --- Greeting Enhancement --- */
         .greeting-enhanced {
@@ -7794,6 +7790,12 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             <div class="ring-lbl">GLEITZEIT KONTO</div>
                             <div style="font-size:2.8rem; font-weight:800; color:var(--primary); margin:10px 0; font-family:var(--font-mono); letter-spacing:-2px;" id="valTotal" class="counter-animate">+0.0h</div>
                             <div style="font-size:0.8rem; color:var(--text-muted);">Prognose: <span id="valProjected" class="projection-badge">0h</span></div>
+                            <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:6px; font-size:0.8rem;">
+                                <span id="streakEmoji" class="streak-active" style="font-size:1rem;">🔥</span>
+                                <span style="color:var(--text-muted);">Streak:</span>
+                                <span id="streakCount" style="color:var(--success); font-weight:800;">0</span>
+                                <span style="font-size:0.7rem; color:var(--text-muted);" id="streakBest">Best: 0</span>
+                            </div>
                         </div>
                         <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
                             <div class="ring-lbl">Ø TÄGLICH</div>
@@ -7820,31 +7822,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                     </div>
                 </div>
 
-                <!-- Heute / Streak / Quick Ticker -->
-                <div class="dashboard-item card-3d" data-item-id="daily-summary">
-                    <div class="card" style="background:linear-gradient(90deg, rgba(168,85,247,0.08) 0%, rgba(16,185,129,0.08) 100%); border:1px solid rgba(168,85,247,0.15); padding:1rem;">
-                        <div style="display:flex; align-items:center; gap:12px; justify-content:space-between;">
-                            <div style="display:flex; align-items:center; gap:6px; flex:1;">
-                                <span style="font-size:1rem;">📅</span>
-                                <h5 style="margin:0; color:var(--text-main); font-size:0.9rem;">Heute: <span id="todayWorked" style="color:var(--primary);">0.0h</span> | <span id="todayEntries" style="color:var(--text-muted);">0 Eintr.</span></h5>
-                            </div>
-                            <div style="border-left:1px solid rgba(255,255,255,0.1); padding-left:12px; display:flex; align-items:center; gap:6px;">
-                                <span style="font-size:1rem;" id="streakEmoji">🔥</span>
-                                <h5 style="margin:0; color:var(--text-main); font-size:0.9rem;">Streak: <span id="streakCount" style="color:var(--success); font-weight:800;">0</span> | <span style="font-size:0.75rem; color:var(--text-muted);" id="streakBest">Best: 0</span></h5>
-                            </div>
-                        </div>
-                        <div id="quickTicker" style="margin-top:8px; font-family:var(--font-mono); font-size:0.82rem; color:var(--text-muted); overflow:hidden; white-space:nowrap;">
-                            <!-- Ticker wird per JS gefüllt -->
-                            <div id="quickTickerInner" style="display:inline-block; padding-left:100%; animation: tickerScroll 12s linear infinite;">&nbsp;</div>
-                        </div>
-                        <style>
-                            @keyframes tickerScroll {
-                                0% { transform: translateX(0%); }
-                                100% { transform: translateX(-100%); }
-                            }
-                        </style>
-                    </div>
-                </div>
+
 
                 <!-- Charts Row (Saldo Trend + Verteilung) -->
                 <div class="dashboard-item card-3d" data-item-id="charts">
@@ -22671,6 +22649,12 @@ TIPPS:
                         <div class="ring-lbl">GLEITZEIT KONTO</div>
                         <div style="font-size:2.8rem; font-weight:800; color:var(--primary); margin:10px 0; font-family:var(--font-mono); letter-spacing:-2px;" id="valTotal">+0.0h</div>
                         <div style="font-size:0.8rem; color:var(--text-muted);">Prognose: <span id="valProjected" style="color:var(--text-main)">0h</span></div>
+                        <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:6px; font-size:0.8rem;">
+                            <span id="streakEmoji" class="streak-active" style="font-size:1rem;">🔥</span>
+                            <span style="color:var(--text-muted);">Streak:</span>
+                            <span id="streakCount" style="color:var(--success); font-weight:800;">0</span>
+                            <span style="font-size:0.7rem; color:var(--text-muted);" id="streakBest">Best: 0</span>
+                        </div>
                     </div>
                     <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
                         <div class="ring-lbl">Ø TÄGLICH</div>
@@ -22700,35 +22684,7 @@ TIPPS:
                 </div>
             `
         },
-        'daily-summary': {
-            name: 'Tägliche Zusammenfassung',
-            description: 'Heutige Arbeitszeit, Streak und Ticker',
-            icon: '📅',
-            defaultEnabled: true,
-            html: `
-                <div class="card" style="background:linear-gradient(90deg, rgba(168,85,247,0.08) 0%, rgba(16,185,129,0.08) 100%); border:1px solid rgba(168,85,247,0.15); padding:1rem;">
-                    <div style="display:flex; align-items:center; gap:12px; justify-content:space-between;">
-                        <div style="display:flex; align-items:center; gap:6px; flex:1;">
-                            <span style="font-size:1rem;">📅</span>
-                            <h5 style="margin:0; color:var(--text-main); font-size:0.9rem;">Heute: <span id="todayWorked" style="color:var(--primary);">0.0h</span> | <span id="todayEntries" style="color:var(--text-muted);">0 Eintr.</span></h5>
-                        </div>
-                        <div style="border-left:1px solid rgba(255,255,255,0.1); padding-left:12px; display:flex; align-items:center; gap:6px;">
-                            <span style="font-size:1rem;" id="streakEmoji">🔥</span>
-                            <h5 style="margin:0; color:var(--text-main); font-size:0.9rem;">Streak: <span id="streakCount" style="color:var(--success); font-weight:800;">0</span> | <span style="font-size:0.75rem; color:var(--text-muted);" id="streakBest">Best: 0</span></h5>
-                        </div>
-                    </div>
-                    <div id="quickTicker" style="margin-top:8px; font-family:var(--font-mono); font-size:0.82rem; color:var(--text-muted); overflow:hidden; white-space:nowrap;">
-                        <div id="quickTickerInner" style="display:inline-block; padding-left:100%; animation: tickerScroll 12s linear infinite;">&nbsp;</div>
-                    </div>
-                    <style>
-                        @keyframes tickerScroll {
-                            0% { transform: translateX(0%); }
-                            100% { transform: translateX(-100%); }
-                        }
-                    </style>
-                </div>
-            `
-        },
+
         'charts': {
             name: 'Diagramme',
             description: 'Saldo-Trend und Arbeitszeit-Verteilung',
@@ -23847,9 +23803,7 @@ TIPPS:
                 }, 100);
                 break;
                 
-            case 'daily-summary':
-                if (typeof updateDailySummary === 'function') updateDailySummary();
-                break;
+
                 
             case 'last-activities':
                 if (typeof updateLastActivities === 'function') updateLastActivities();
@@ -23909,7 +23863,7 @@ TIPPS:
                 dashboardContainer.innerHTML = '';
                 
                 // Add default widgets
-                const defaultWidgets = ['kpi-cards', 'quick-actions', 'daily-summary', 'charts'];
+                const defaultWidgets = ['kpi-cards', 'quick-actions', 'charts'];
                 defaultWidgets.forEach(widgetId => {
                     const widget = widgetLibrary[widgetId];
                     if (widget) {
@@ -24066,32 +24020,9 @@ TIPPS:
     // NEW FEATURES
     // ============================================
 
-    // FEATURE 1: Daily Summary Widget
+    // FEATURE 1: Daily Summary (Streak only)
     function updateDailySummary() {
-        const today = new Date().toISOString().split('T')[0];
-        const todayEntries = data.entries.filter(e => e.date === today);
-        
-        let todayWorked = 0, todayBreaks = 0;
-        todayEntries.forEach(e => {
-            todayWorked += e.worked || 0;
-            todayBreaks += (e.diff - (e.worked || 0));
-        });
-
-        const elDate = document.getElementById('todaySummaryDate');
-        if (elDate) elDate.innerText = new Date().toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'2-digit'});
-        const elWorked = document.getElementById('todayWorked');
-        if (elWorked) elWorked.innerText = (todayWorked / 3600).toFixed(1) + 'h';
-        const elBreaks = document.getElementById('todayBreaks');
-        if (elBreaks) elBreaks.innerText = (todayBreaks / 3600).toFixed(1) + 'h';
-        const elEntries = document.getElementById('todayEntries');
-        if (elEntries) elEntries.innerText = todayEntries.length;
-        const elTimer = document.getElementById('todayTimerActive');
-        if (elTimer) elTimer.innerText = (window.timer && window.timer.running) ? '▶️ AKTIV' : '⏹️ Inaktiv';
-        
-        // Update Streak Counter
         if (typeof updateStreakCounter === 'function') updateStreakCounter();
-        // Update compact quick ticker (combined stats)
-        if (typeof updateQuickTicker === 'function') updateQuickTicker();
     }
 
     // FEATURE 2: Pomodoro Timer Mode
@@ -24339,85 +24270,7 @@ TIPPS:
         }
     }
 
-    // Compact quick stats ticker - shows short rolling stats
-    function updateQuickTicker() {
-        try {
-            // New non-redundant ticker: Backup | Autosave | Nächster Urlaub | Tage seit letztem Eintrag | Ungelesene Alerts
-            const inner = document.getElementById('quickTickerInner');
-            if (!inner) return;
 
-            // Last export
-            let lastExport = localStorage.getItem('tt_last_export');
-            let lastExportText = 'Kein Backup';
-            if (lastExport) {
-                try { lastExportText = new Date(lastExport).toLocaleString('de-DE'); } catch(e) { lastExportText = lastExport; }
-            }
-
-            // Offene Korrekturen (Einträge mit Label 'Korrektur')
-            let correctionsCount = 0;
-            try {
-                correctionsCount = (data.entries || []).filter(e => typeof e.label === 'string' && e.label.startsWith('Korrektur')).length;
-            } catch (e) { correctionsCount = 0; }
-
-            // Helper to parse various date formats (ISO YYYY-MM-DD or DD.MM.YYYY or JS Date strings)
-            function parseDateSafe(v) {
-                if (!v) return null;
-                try {
-                    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return new Date(v + 'T00:00:00');
-                    if (/^\d{2}\.\d{2}\.\d{4}$/.test(v)) {
-                        const m = v.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-                        return new Date(`${m[3]}-${m[2]}-${m[1]}T00:00:00`);
-                    }
-                    const d = new Date(v);
-                    if (!isNaN(d.getTime())) return d;
-                } catch(e) {}
-                return null;
-            }
-
-            // Next vacation entry (future) - use robust parsing
-            const todayMid = new Date(); todayMid.setHours(0,0,0,0);
-            const futureVacEntries = (data.entries || []).map(e => ({e, d: parseDateSafe(e.date)})).filter(x => x.d && x.d.getTime() > todayMid.getTime() && x.e.type === 'vacation').sort((a,b)=>a.d - b.d);
-            const nextVac = futureVacEntries.length > 0 ? futureVacEntries[0].d : null;
-            const nextVacText = nextVac ? nextVac.toLocaleDateString('de-DE') : 'keiner';
-
-            // Days since last entry (robust parsing + human-friendly for future dates)
-            // Only count actual work/school entries, ignore vacation/holiday/sick
-            let daysSince = '—';
-            if (data.entries && data.entries.length > 0) {
-                let latestDate = null;
-                let latestEntry = null;
-                (data.entries || []).forEach(e => {
-                    // Skip non-work types (vacation, holiday, sick, correction)
-                    if (!e.type || !['work', 'school'].includes(e.type)) return;
-                    const d = parseDateSafe(e.date);
-                    if (d && (!latestDate || d.getTime() > latestDate.getTime())) {
-                        latestDate = d;
-                        latestEntry = e;
-                    }
-                });
-                if (latestDate && latestEntry) {
-                    const latestMid = new Date(latestDate); latestMid.setHours(0,0,0,0);
-                    const diffDays = Math.round((todayMid - latestMid) / (1000*60*60*24));
-                    if (diffDays === 0) daysSince = 'heute';
-                    else if (diffDays > 0) daysSince = `${diffDays}d`;
-                    else daysSince = `in ${Math.abs(diffDays)}d`;
-                }
-            }
-
-            // Unread alerts
-            let unread = 0;
-            try { unread = (alertsHistory || []).filter(a => !a.isRead).length; } catch(e) { unread = 0; }
-
-            const text = `Backup: ${lastExportText}  •  Offene Korrekturen: ${correctionsCount}  •  Nächster Urlaub: ${nextVacText}  •  Seit letztem Eintrag: ${daysSince}  •  Ungelesene Alerts: ${unread}`;
-            // single copy (no doubling)
-            inner.innerText = text;
-            inner.style.paddingLeft = '0px';
-            const duration = Math.max(10, Math.min(28, Math.floor(inner.innerText.length / 3)));
-            inner.style.animation = `tickerScroll ${duration}s linear infinite`;
-        } catch (e) {
-            console.warn('updateQuickTicker error', e);
-        }
-    }
 
     // ============================================
     // FEATURE: MINI CALENDAR WIDGET
