@@ -202,8 +202,8 @@ MyWorkLog/
 | **Dark Mode Toggle** | `Assets/js/shortcuts.js` | Tastatur-Hotkeys & Event-Listener |
 | **Command Palette** | `index.html` | **Zeilen ~23200-23400** - Befehl-Registry |
 | **Analytics Charts** | `Pages/Info/analytics.html` | Komplette Analytics-Seite mit 8+ Tabs |
-| **3D City Visualization** | `Pages/Info/analytics.html` | City Tab - Three.js 3D-Rendering |
-| **Galaxy 3D** | `Pages/Info/analytics.html` | Galaxy Tab - 3D-Weltraum-Szene |
+| **3D City Visualization** | `inde.html` | City Tab - Three.js 3D-Rendering |
+| **Galaxy 3D** | `index.html` | Galaxy Tab - 3D-Weltraum-Szene |
 | **AI Bot Engine** | `AI-Bot/aibot-engine-pro.js` | Conversation, Intent Detection, Pattern Recognition |
 | **AI Data Analyzer** | `AI-Bot/data-analyzer-pro.js` | KPI-Berechnung, Trends, Insights |
 | **WebLLM (On-Device AI)** | `AI-Bot/LLM/webllm-integration.js` | Lokales Language Model (WebGPU) |
