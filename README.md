@@ -5,7 +5,7 @@
 ### Professionelle Zeiterfassung. Lokal. Sicher. Intelligent.
 
 [![Website](https://img.shields.io/badge/Website-MyWorkLog-blueviolet?style=for-the-badge&logo=googlechrome&logoColor=white)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-3.3.2-blue?style=for-the-badge)](https://github.com)
+[![Version](https://img.shields.io/badge/version-3.3.3a-blue?style=for-the-badge)](https://github.com)
 [![PWA Ready](https://img.shields.io/badge/PWA-Ready-success?style=for-the-badge&logo=pwa)](https://myworklog.de/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](Rechtliches/LICENSE.md)
 
