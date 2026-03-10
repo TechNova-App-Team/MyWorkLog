@@ -1,13 +1,147 @@
-# MyWorkLog - robots.txt
+# ═══════════════════════════════════════════════════════════
+# MyWorkLog — robots.txt
 # https://myworklog.de/
+# Last updated: 2026-03-10
+# ═══════════════════════════════════════════════════════════
 
-User-agent: *
-Allow: /
+# ── Canonical Host ──
+Host: https://myworklog.de
 
-# Sitemap
+# ── Sitemap Location ──
 Sitemap: https://myworklog.de/sitemap.xml
 
-# Sensitive directories
+# ═══════════════════════════════════════════════════════════
+# DEFAULT RULES — All well-behaved crawlers
+# ═══════════════════════════════════════════════════════════
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /Pages/
+Allow: /Grafiken/
+Allow: /manifest.json
+
+# Public pages explicitly allowed
+Allow: /Pages/App/berichtsheft.html
+Allow: /Pages/App/vertrags-manager.html
+Allow: /Pages/App/Tasks/aufgaben.html
+Allow: /Pages/Info/about.html
+Allow: /Pages/Info/analytics.html
+Allow: /Pages/DE-Gestz/DSGVO.html
+Allow: /Pages/DE-Gestz/Impressum.html
+
+# Sensitive / internal directories — BLOCK
 Disallow: /DB/
 Disallow: /Email/
+Disallow: /config/
+Disallow: /scripts/
 Disallow: /.well-known/
+Disallow: /node_modules/
+Disallow: /tests/
+Disallow: /.git/
+
+# Internal asset files not for indexing
+Disallow: /Assets/js/Cloud/
+Disallow: /AI-Bot/LLM/
+
+# ═══════════════════════════════════════════════════════════
+# GOOGLEBOT — Premium treatment
+# ═══════════════════════════════════════════════════════════
+User-agent: Googlebot
+Allow: /
+Allow: /Grafiken/*.png$
+Allow: /Grafiken/*.webp$
+Allow: /Grafiken/*.svg$
+Disallow: /DB/
+Disallow: /Email/
+Disallow: /config/
+Disallow: /scripts/
+Disallow: /.git/
+
+# Google Image Bot — let it index all graphics
+User-agent: Googlebot-Image
+Allow: /Grafiken/
+Disallow: /DB/
+Disallow: /Email/
+
+# ═══════════════════════════════════════════════════════════
+# BINGBOT
+# ═══════════════════════════════════════════════════════════
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+Disallow: /DB/
+Disallow: /Email/
+Disallow: /config/
+Disallow: /scripts/
+
+# ═══════════════════════════════════════════════════════════
+# SOCIAL MEDIA CRAWLERS — allow rich previews
+# ═══════════════════════════════════════════════════════════
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+# ═══════════════════════════════════════════════════════════
+# AI TRAINING CRAWLERS — Block (protect content)
+# ═══════════════════════════════════════════════════════════
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+# ═══════════════════════════════════════════════════════════
+# AGGRESSIVE / SPAM BOTS — Block
+# ═══════════════════════════════════════════════════════════
+User-agent: AhrefsBot
+Crawl-delay: 10
+Disallow: /DB/
+Disallow: /Email/
+Disallow: /config/
+
+User-agent: SemrushBot
+Crawl-delay: 10
+Disallow: /DB/
+Disallow: /Email/
+Disallow: /config/
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: PetalBot
+Crawl-delay: 5
