@@ -623,9 +623,13 @@
             font-family: var(--font-main);
             font-size: 12px;
             outline: none;
+            display: none;
+            pointer-events: none;
+            transition: display 0.2s;
         }
         .add-subtask-input::placeholder { color: var(--text-dim); }
         .add-subtask-input:focus { color: var(--text-main); }
+        .task-wrapper:hover .add-subtask-input { display: block; pointer-events: auto; }
 
         /* ── ADD TASK ROW ── */
         .add-task-row {
@@ -1360,11 +1364,14 @@ function buildTaskHTML(t, ti, ci, states) {
                     '<button class="subtask-del" onclick="delSub(' + ci + ',' + ti + ',' + si + ')">\u2715</button>' +
                 '</div>';
             }).join('') +
+            '<input class="add-subtask-input" placeholder="+ Unteraufgabe..." onkeydown="if(event.key===\'Enter\') addSub(' + ci + ',' + ti + ',this)">' +
         '</div>';
+    } else {
+        subHTML = '<div class="subtask-list"><input class="add-subtask-input" placeholder="+ Unteraufgabe..." onkeydown="if(event.key===\'Enter\') addSub(' + ci + ',' + ti + ',this)"></div>';
     }
-    subHTML += '<input class="add-subtask-input" placeholder="+ Unteraufgabe..." onkeydown="if(event.key===\'Enter\') addSub(' + ci + ',' + ti + ',this)">';
 
-    return '<div class="task ' + (done ? 'done' : '') + '" id="t-' + t.id + '">' +
+    return '<div class="task-wrapper">' +
+        '<div class="task ' + (done ? 'done' : '') + '" id="t-' + t.id + '">' +
             '<div class="task-check" onclick="toggleTask(\'' + t.id + '\',' + ci + ')"></div>' +
             '<div class="task-content">' +
                 '<span class="task-label">' + esc(t.name) + '</span>' +
@@ -1375,7 +1382,8 @@ function buildTaskHTML(t, ti, ci, states) {
                 '<button class="task-act del" onclick="deleteTask(' + ci + ',' + ti + ')" title="L\u00f6schen">\u2715</button>' +
             '</div>' +
         '</div>' +
-        subHTML;
+        subHTML +
+    '</div>';
 }
 
 /* ═══════════════════════════════════════════════════

@@ -194,18 +194,32 @@ MyWorkLog/
 
 ### 🎯 Wo finde ich was?
 
-| Funktion | Datei |
-|----------|-------|
-| **Timer starten** | `index.html` (Zeilen 1-2000) |
-| **Dark Mode** | `index.html` (Zeilen 27500-28000) |
-| **Analytics Charts** | `Pages/Info/analytics.html` |
-| **3D City Visualization** | `Pages/Info/analytics.html` (City Tab) |
-| **Galaxy 3D** | `Pages/Info/analytics.html` (Galaxy Tab) |
-| **AI Bot** | `AI-Bot/aibot-engine-pro.js` + `data-analyzer-pro.js` |
-| **Cloud Sync** | `Assets/js/Cloud/supabase-integration.js` |
-| **Offline Mode** | `service-worker.js` |
-| **Berichtsheft (IHK)** | `Pages/App/berichtsheft.html` |
-| **Verträge & Gehalt** | `Pages/App/vertrags-manager.html` |
+| Funktion | Datei | Zeilen / Details |
+|----------|-------|-----------------|
+| **Timer (DOM)** | `index.html` | **Zeile 7773** - timer-box HTML-Element |
+| **Timer (Logik)** | `index.html` | **Zeilen 11161-11300+** - Timer-Objekt, Funktionen & Intervals |
+| **Dark Mode (CSS)** | `index.html` | **Zeilen 183-280** - [data-theme="light"] Styles |
+| **Dark Mode Toggle** | `Assets/js/shortcuts.js` | Tastatur-Hotkeys & Event-Listener |
+| **Command Palette** | `index.html` | **Zeilen ~23200-23400** - Befehl-Registry |
+| **Analytics Charts** | `Pages/Info/analytics.html` | Komplette Analytics-Seite mit 8+ Tabs |
+| **3D City Visualization** | `Pages/Info/analytics.html` | City Tab - Three.js 3D-Rendering |
+| **Galaxy 3D** | `Pages/Info/analytics.html` | Galaxy Tab - 3D-Weltraum-Szene |
+| **AI Bot Engine** | `AI-Bot/aibot-engine-pro.js` | Conversation, Intent Detection, Pattern Recognition |
+| **AI Data Analyzer** | `AI-Bot/data-analyzer-pro.js` | KPI-Berechnung, Trends, Insights |
+| **WebLLM (On-Device AI)** | `AI-Bot/LLM/webllm-integration.js` | Lokales Language Model (WebGPU) |
+| **Cloud Sync (Supabase)** | `Assets/js/Cloud/supabase-integration.js` | Magic Link Auth, Data Sync |
+| **Cloud UI & Dashboard** | `Assets/js/Cloud/supabase-ui.js` | Cloud Status, Account Menu |
+| **Offline Mode (Cache)** | `service-worker.js` | Cache-First & Network-First Strategies |
+| **Berichtsheft (IHK)** | `Pages/App/berichtsheft.html` | IHK-konforme Ausbildungsnachweise |
+| **Verträge & Gehalt** | `Pages/App/vertrags-manager.html` | Arbeitzeitkonten, Urlaub, Lohnzuschläge |
+| **Aufgaben Manager (NEU🆕)** | `Pages/App/Tasks/aufgaben.html` | Task-Management mit Kategorien, Recurring, Achievements |
+| **Task Manager Logik** | `Assets/js/task-manager.js` | Aufgaben-Speicherung & Verarbeitung (veraltet) |
+| **Shortcuts & Hotkeys** | `Assets/js/shortcuts.js` | Tastaturkürzel, Command Palette, Toggle-Events |
+| **Benachrichtigungen** | `index.html` | **Zeilen 27000-27100** - Smart Notifications System |
+| **WeatherAPI Integration** | `index.html` | **Zeilen 13000-13700** - Weather Auto-Refresh |
+| **P2P Sync (WebRTC)** | `index.html` | **Zeilen 19000-20000** - SimplePeer P2P Verbindungen |
+| **Pomodoro Timer** | `index.html` | **Zeile 23901** - Focus Timer Interval |
+| **Fokus Modus** | `index.html` | **Zeilen 28000-28500** - Focus Mode UI & Logic |
 
 ---
 
@@ -228,7 +242,7 @@ MyWorkLog/
 
 | Status | Feature | Version |
 |--------|---------|---------|
-| ✅ **Produktiv** | Core App (Timer, Buchen, Export) | v2.9.3 |
+| ✅ **Produktiv** | Core App (Timer, Buchen, Export) | ≤ v2.9.3 |
 | ✅ **Stabil** | AI-Bot mit Datenanalyse | v2.9.3 |
 | ✅ **Stabil** | PWA mit Service Worker | v2.9.3 |
 | ✅ **Stabil** | Multi-Profile / Team-Mode | v2.9.3 |
@@ -507,167 +521,6 @@ npm run lint
 </div>
 
 ---
-
-## 🏗️ Architektur
-
-### 📁 Projektstruktur
-
-```
-MyWorkLog/
-│   .eslintrc.json
-│   .gitignore
-│   .nojekyll
-│   browserconfig.xml
-│   favicon.ico
-│   index.html
-│   manifest.json
-│   package-lock.json
-│   package.json
-│   README.md
-│   robots.txt
-│   service-worker.js
-│   sitemap.xml
-│
-├───.github
-│   └───workflows
-│           static.yml
-│
-├───.well-known
-│       security.txt
-│
-├───AI-Bot
-│   │   aibot-engine-pro.js
-│   │   data-analyzer-pro.js
-│   │
-│   └───LLM
-│           webllm-config.js
-│           webllm-integration.js
-│           webllm-validator.js
-│
-├───Assets
-│   ├───css
-│   │   └───Event
-│   │       ├───New_Year
-│   │       │       fireworks.css
-│   │       │
-│   │       └───Weihnachten
-│   │               snowflakes.css
-│   │
-│   └───js
-│       │   icons.js
-│       │   pinch-zoom.js
-│       │   service-worker.js
-│       │   shortcuts.js
-│       │   task-manager.js
-│       │   touch-mobile-optimizations.js
-│       │   version-loader.js
-│       │
-│       ├───Cloud
-│       │       supabase-advanced.js
-│       │       supabase-integration.js
-│       │       supabase-ui.js
-│       │
-│       └───Event
-│           ├───New_Year
-│           │       fireworks.js
-│           │
-│           └───Weihnachten
-│                   snowflakes.js
-│
-├───config
-│       humans.txt
-│       supabase-config.js
-│       version.json
-│
-├───DB
-│       rls-policies.sql
-│
-├───Email
-│       send.html
-│
-├───Grafiken
-│       apple-touch-icon.svg
-│       Bot-Analyzer.webp
-│       Bot-engine.webp
-│       Dashboard.png
-│       favicon.svg
-│       icon-192.svg
-│       image.png
-│       Meta.png
-│       Offline.webp
-│       Service.webp
-│       supabase.png
-│       Touch.webp
-│       Website.webp
-│
-├───Pages
-│   │   quantum-translator.html
-│   │
-│   ├───App
-│   │   │   berichtsheft.html
-│   │   │   vertrags-manager.html
-│   │   │
-│   │   └───Ausbilungs_Hilfe
-│   │       │   index.html
-│   │       │
-│   │       └───Fachinformatiker
-│   │               Fachinformatiker.html
-│   │
-│   ├───DE-Gestz
-│   │       DSGVO.html
-│   │       Impressum.html
-│   │
-│   ├───Error
-│   │       404.html
-│   │
-│   ├───Event
-│   │       Weihnachten.html
-│   │
-│   └───Info
-│           about.html
-│           analytics.html
-│           offline.html
-│           repo-report.html
-│
-├───README´s
-│   │   ADVANCED-ANALYTICS.md
-│   │   COMPLETION-REPORT-STEP2.md
-│   │   FEATURES.md
-│   │   INDEX-DOCUMENTATION.md
-│   │   PWA-README.md
-│   │   ROADMAP-NEXT-STEPS.md
-│   │   TASK-MANAGER-README.md
-│   │   VISUAL-SUMMARY-STEP2.md
-│   │
-│   ├───AI-Bot
-│   │   │   INTEGRATION-NOTES.md
-│   │   │
-│   │   └───WEB-LLM
-│   │           CDN-DIAGNOSTICS.md
-│   │           CDN-UPDATE-JANUARY-2026.md
-│   │           WEBLLM-CHECKLIST.md
-│   │           WEBLLM-COMPLETE-REPORT.md
-│   │           WEBLLM-DONE.md
-│   │           WEBLLM-IMPLEMENTATION.md
-│   │           WEBLLM-INTEGRATION.md
-│   │           WEBLLM-QUICK-START.md
-│   │           WEBLLM-READY.md
-│   │
-│   └───ICAL
-│           ICAL-EXPORT-SETUP.md
-│           STEP2-ICAL-COMPLETE.md
-│
-├───Rechtliches
-│       CODE_OF_CONDUCT.md
-│       CONTRIBUTING.md
-│       LICENSE.md
-│       NOTICE.md
-│       PRIVACY.md
-│       SECURITY.md
-│
-└───scripts
-        repo-tracker.py
-```
 
 ### 🎨 Design-System
 
@@ -1410,252 +1263,3 @@ Eine moderne Lösung für intelligente Zeiterfassung
 **[⬆ Zurück nach oben](#️-myworklog)**
 
 </div>
-
-```
-MyWorkLog
-├─ .eslintrc.json
-├─ .nojekyll
-├─ .well-known
-│  └─ security.txt
-├─ AI-Bot
-│  ├─ aibot-engine-pro.js
-│  ├─ data-analyzer-pro.js
-│  └─ LLM
-│     ├─ webllm-config.js
-│     ├─ webllm-integration.js
-│     └─ webllm-validator.js
-├─ Assets
-│  ├─ css
-│  │  └─ Event
-│  │     ├─ New_Year
-│  │     │  └─ fireworks.css
-│  │     └─ Weihnachten
-│  │        └─ snowflakes.css
-│  └─ js
-│     ├─ Cloud
-│     │  ├─ supabase-advanced.js
-│     │  ├─ supabase-integration.js
-│     │  └─ supabase-ui.js
-│     ├─ Event
-│     │  ├─ New_Year
-│     │  │  └─ fireworks.js
-│     │  └─ Weihnachten
-│     │     └─ snowflakes.js
-│     ├─ icons.js
-│     ├─ pinch-zoom.js
-│     ├─ service-worker.js
-│     ├─ shortcuts.js
-│     ├─ task-manager.js
-│     ├─ touch-mobile-optimizations.js
-│     └─ version-loader.js
-├─ browserconfig.xml
-├─ config
-│  ├─ humans.txt
-│  ├─ supabase-config.js
-│  └─ version.json
-├─ DB
-├─ Email
-│  └─ send.html
-├─ favicon.ico
-├─ Grafiken
-│  ├─ apple-touch-icon.svg
-│  ├─ Bot-Analyzer.webp
-│  ├─ Bot-engine.webp
-│  ├─ Dashboard.png
-│  ├─ favicon.svg
-│  ├─ icon-192.svg
-│  ├─ image.png
-│  ├─ Meta.png
-│  ├─ Offline.webp
-│  ├─ Service.webp
-│  ├─ supabase.png
-│  ├─ Touch.webp
-│  └─ Website.webp
-├─ index.html
-├─ manifest.json
-├─ package-lock.json
-├─ package.json
-├─ Pages
-│  ├─ App
-│  │  ├─ Ausbilungs_Hilfe
-│  │  │  ├─ Fachinformatiker
-│  │  │  │  └─ Fachinformatiker.html
-│  │  │  └─ index.html
-│  │  ├─ berichtsheft.html
-│  │  └─ vertrags-manager.html
-│  ├─ DE-Gestz
-│  │  ├─ DSGVO.html
-│  │  └─ Impressum.html
-│  ├─ Error
-│  │  └─ 404.html
-│  ├─ Event
-│  │  └─ Weihnachten.html
-│  ├─ Info
-│  │  ├─ about.html
-│  │  ├─ analytics.html
-│  │  ├─ offline.html
-│  │  └─ repo-report.html
-│  └─ quantum-translator.html
-├─ README.md
-├─ README´s
-│  ├─ ADVANCED-ANALYTICS.md
-│  ├─ AI-Bot
-│  │  ├─ INTEGRATION-NOTES.md
-│  │  └─ WEB-LLM
-│  │     ├─ CDN-DIAGNOSTICS.md
-│  │     ├─ CDN-UPDATE-JANUARY-2026.md
-│  │     ├─ WEBLLM-CHECKLIST.md
-│  │     ├─ WEBLLM-COMPLETE-REPORT.md
-│  │     ├─ WEBLLM-DONE.md
-│  │     ├─ WEBLLM-IMPLEMENTATION.md
-│  │     ├─ WEBLLM-INTEGRATION.md
-│  │     ├─ WEBLLM-QUICK-START.md
-│  │     └─ WEBLLM-READY.md
-│  ├─ COMPLETION-REPORT-STEP2.md
-│  ├─ FEATURES.md
-│  ├─ ICAL
-│  │  ├─ ICAL-EXPORT-SETUP.md
-│  │  └─ STEP2-ICAL-COMPLETE.md
-│  ├─ INDEX-DOCUMENTATION.md
-│  ├─ PWA-README.md
-│  ├─ ROADMAP-NEXT-STEPS.md
-│  ├─ TASK-MANAGER-README.md
-│  └─ VISUAL-SUMMARY-STEP2.md
-├─ Rechtliches
-│  ├─ CODE_OF_CONDUCT.md
-│  ├─ CONTRIBUTING.md
-│  ├─ LICENSE.md
-│  ├─ NOTICE.md
-│  ├─ PRIVACY.md
-│  └─ SECURITY.md
-├─ robots.txt
-├─ scripts
-│  └─ repo-tracker.py
-├─ service-worker.js
-└─ sitemap.xml
-
-```
-```
-MyWorkLog
-├─ .eslintrc.json
-├─ .nojekyll
-├─ .well-known
-│  └─ security.txt
-├─ AI-Bot
-│  ├─ aibot-engine-pro.js
-│  ├─ data-analyzer-pro.js
-│  └─ LLM
-│     ├─ webllm-config.js
-│     ├─ webllm-integration.js
-│     └─ webllm-validator.js
-├─ Assets
-│  ├─ css
-│  │  └─ Event
-│  │     ├─ New_Year
-│  │     │  └─ fireworks.css
-│  │     └─ Weihnachten
-│  │        └─ snowflakes.css
-│  └─ js
-│     ├─ Cloud
-│     │  ├─ supabase-advanced.js
-│     │  ├─ supabase-integration.js
-│     │  └─ supabase-ui.js
-│     ├─ Event
-│     │  ├─ New_Year
-│     │  │  └─ fireworks.js
-│     │  └─ Weihnachten
-│     │     └─ snowflakes.js
-│     ├─ icons.js
-│     ├─ pinch-zoom.js
-│     ├─ service-worker.js
-│     ├─ shortcuts.js
-│     ├─ task-manager.js
-│     ├─ touch-mobile-optimizations.js
-│     └─ version-loader.js
-├─ browserconfig.xml
-├─ config
-│  ├─ humans.txt
-│  ├─ supabase-config.js
-│  └─ version.json
-├─ DB
-├─ Email
-│  └─ send.html
-├─ favicon.ico
-├─ Grafiken
-│  ├─ apple-touch-icon.svg
-│  ├─ Bot-Analyzer.webp
-│  ├─ Bot-engine.webp
-│  ├─ Dashboard.png
-│  ├─ favicon.svg
-│  ├─ icon-192.svg
-│  ├─ image.png
-│  ├─ Meta.png
-│  ├─ Offline.webp
-│  ├─ Service.webp
-│  ├─ supabase.png
-│  ├─ Touch.webp
-│  └─ Website.webp
-├─ index.html
-├─ manifest.json
-├─ package-lock.json
-├─ package.json
-├─ Pages
-│  ├─ App
-│  │  ├─ Ausbilungs_Hilfe
-│  │  │  ├─ Fachinformatiker
-│  │  │  │  └─ Fachinformatiker.html
-│  │  │  └─ index.html
-│  │  ├─ berichtsheft.html
-│  │  └─ vertrags-manager.html
-│  ├─ DE-Gestz
-│  │  ├─ DSGVO.html
-│  │  └─ Impressum.html
-│  ├─ Error
-│  │  └─ 404.html
-│  ├─ Event
-│  │  └─ Weihnachten.html
-│  ├─ Info
-│  │  ├─ about.html
-│  │  ├─ analytics.html
-│  │  ├─ offline.html
-│  │  └─ repo-report.html
-│  └─ quantum-translator.html
-├─ README.md
-├─ README´s
-│  ├─ ADVANCED-ANALYTICS.md
-│  ├─ AI-Bot
-│  │  ├─ INTEGRATION-NOTES.md
-│  │  └─ WEB-LLM
-│  │     ├─ CDN-DIAGNOSTICS.md
-│  │     ├─ CDN-UPDATE-JANUARY-2026.md
-│  │     ├─ WEBLLM-CHECKLIST.md
-│  │     ├─ WEBLLM-COMPLETE-REPORT.md
-│  │     ├─ WEBLLM-DONE.md
-│  │     ├─ WEBLLM-IMPLEMENTATION.md
-│  │     ├─ WEBLLM-INTEGRATION.md
-│  │     ├─ WEBLLM-QUICK-START.md
-│  │     └─ WEBLLM-READY.md
-│  ├─ COMPLETION-REPORT-STEP2.md
-│  ├─ FEATURES.md
-│  ├─ ICAL
-│  │  ├─ ICAL-EXPORT-SETUP.md
-│  │  └─ STEP2-ICAL-COMPLETE.md
-│  ├─ INDEX-DOCUMENTATION.md
-│  ├─ PWA-README.md
-│  ├─ ROADMAP-NEXT-STEPS.md
-│  ├─ TASK-MANAGER-README.md
-│  └─ VISUAL-SUMMARY-STEP2.md
-├─ Rechtliches
-│  ├─ CODE_OF_CONDUCT.md
-│  ├─ CONTRIBUTING.md
-│  ├─ LICENSE.md
-│  ├─ NOTICE.md
-│  ├─ PRIVACY.md
-│  └─ SECURITY.md
-├─ robots.txt
-├─ scripts
-│  └─ repo-tracker.py
-├─ service-worker.js
-└─ sitemap.xml
-
-```

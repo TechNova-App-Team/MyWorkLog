@@ -8878,6 +8878,18 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                     <div style="color:var(--text-muted);font-size:0.78rem;line-height:1.5;">Erzähl's weiter!</div>
                 </div>
 
+                <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
+                    <div style="padding:1.5rem; background:linear-gradient(135deg, rgba(168,85,247,0.12), rgba(6,182,212,0.08)); border:1.5px solid rgba(168,85,247,0.3); border-radius:16px; text-align:center; transition:all 0.25s; cursor:pointer; position:relative; overflow:hidden;" onmouseover="this.style.borderColor='rgba(168,85,247,0.6)';this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(168,85,247,0.15)';this.style.background='linear-gradient(135deg, rgba(168,85,247,0.18), rgba(6,182,212,0.12))'" onmouseout="this.style.borderColor='rgba(168,85,247,0.3)';this.style.transform='translateY(0)';this.style.boxShadow='none';this.style.background='linear-gradient(135deg, rgba(168,85,247,0.12), rgba(6,182,212,0.08))'">
+                        <div style="position:absolute; top:-40%; right:-8%; width:120px; height:120px; background:radial-gradient(circle, rgba(168,85,247,0.1), transparent); border-radius:50%; pointer-events:none;"></div>
+                        <div style="position:relative; z-index:1;">
+                            <div style="font-size:2.2rem;margin-bottom:8px;">📖</div>
+                            <div style="font-weight:700;color:var(--text-main);font-size:0.95rem;margin-bottom:4px;">Dokumentation</div>
+                            <div style="color:var(--text-muted);font-size:0.78rem;line-height:1.5;">README & Guides</div>
+                            <div style="font-size:0.7rem; color:var(--primary); margin-top:8px; font-weight:600;">⭐ Gib uns einen Star!</div>
+                        </div>
+                    </div>
+                </a>
+
             </div>
 
             <!-- App-Statistiken -->
@@ -11124,7 +11136,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             name:'User', 
             theme:'#a855f7',
             themeMode: 'dark',
-            hours:[0,8.75,8.75,8.75,4.5,0], 
+            hours:[0,8.75,8.75,8.75,8.75,4.5,0], 
             break:{thresh:6, min:[0, 15, 30, 30, 30, 30, 0]},
             vacation:{total:30, used:0, usedManual:0},
             ihk: {
@@ -18774,10 +18786,10 @@ TIPPS:
         }
         data.settings.break.min = breakMinutesArray;
         
-        // Sollstunden speichern (Index 1 bis 5 für Mo-Fr)
-        for(let i=1; i<=5; i++) {
+        // Sollstunden speichern (alle 7 Wochentage)
+        for(let i=0; i<=6; i++) {
             const el = document.getElementById('h'+i);
-            if(el) data.settings.hours[i] = parseFloat(el.value);
+            if(el) data.settings.hours[i] = parseFloat(el.value) || 0;
         }
         
         // Urlaub: Den eingegebenen Anspruch direkt speichern
@@ -27040,6 +27052,14 @@ TIPPS:
 
     // Smart Notification Trigger Funktion
     function checkSmartNotifications() {
+        // Ensure data is loaded from localStorage
+        const stored = localStorage.getItem('tg_pro_data');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.entries) data.entries = parsed.entries;
+            if (parsed.settings) data.settings = parsed.settings;
+        }
+        
         const now = new Date();
         const today = now.toISOString().split('T')[0];
         const dayIndex = now.getDay(); // 0=So, 1=Mo, ..., 5=Fr, 6=Sa
@@ -27047,28 +27067,35 @@ TIPPS:
         const todayEntries = data.entries.filter(e => e.date === today);
         let todayWorked = 0;
 
+        // Gearbeitete Stunden aus den Einträgen summieren
         todayEntries.forEach(e => {
             todayWorked += e.worked || 0;
         });
 
-        // Laufenden Timer einrechnen
+        // Laufenden Timer einrechnen (mit Break-Abzug)
         if (window.timer && window.timer.running && window.timer.start) {
-            const timerMs = window.timer.paused + (Date.now() - window.timer.start) - (window.timer.breakTime || 0);
-            todayWorked += Math.max(0, timerMs / 3.6e6);
+            const timerMs = (window.timer.paused || 0) + (Date.now() - (window.timer.start || Date.now())) - (window.timer.breakTime || 0);
+            const timerHours = Math.max(0, timerMs / 3.6e6);
+            todayWorked += timerHours;
         }
 
-        // Erwartete Stunden aus den tatsächlichen Tageseinstellungen (nicht hardcoded 8!)
-        const todayExpected = (data.settings && data.settings.hours) ? (data.settings.hours[dayIndex] || 0) : 0;
+        // Erwartete Stunden aus den tatsächlichen Tageseinstellungen auslesen
+        let todayExpected = 0;
+        if (data.settings && Array.isArray(data.settings.hours)) {
+            todayExpected = data.settings.hours[dayIndex] || 0;
+        }
         
         // Kein Arbeitstag (Wochenende etc.) → keine Notifications
         if (todayExpected === 0) return;
         
-        const deficit = todayExpected - todayWorked;
+        const deficit = Math.max(0, todayExpected - todayWorked);
 
         // Nachmittag-Erinnerung (15:00 Uhr)
         if (now.getHours() === 15 && !sessionStorage.getItem('tt_notif_afternoon')) {
+            let message = '';
             if (deficit > 0) {
-                showSmartNotification('⏰ Nachmittags-Check', `Du brauchst noch ${deficit.toFixed(1)}h heute!`, 'warning');
+                message = `Du brauchst noch ${deficit.toFixed(1)}h heute! (Soll: ${todayExpected.toFixed(2)}h, bisher: ${todayWorked.toFixed(2)}h)`;
+                showSmartNotification('⏰ Nachmittags-Check', message, 'warning');
                 sessionStorage.setItem('tt_notif_afternoon', 'shown');
             } else {
                 showSmartNotification('✅ Tagesgoal erreicht!', `Du hast dein Soll bereits erfüllt! 🎉`, 'success');
