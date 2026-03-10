@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Fahrtkosten-Tracker mit echtem Routing, Adresssuche, ÖPNV-Links, Spritkosten & Pendlerpauschale. Komplett kostenlos für Azubis.">
+    <meta name="keywords" content="Fahrtkosten, Pendlerpauschale, Azubi, Routing, ÖPNV, Spritkosten, Pendelstrecke, Deutsche Bahn, Fahrtkostenerstattung">
+    <script defer src="../../Assets/js/icons.js"></script>
+    <script defer src="../../Assets/js/touch-mobile-optimizations.js"></script>
+    <title>Fahrtkosten-Tracker - MyWorkLog</title>
+
+    <!-- MapLibre GL JS -->
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+
+    <!-- Fahrtkosten CSS -->
+    <link rel="stylesheet" href="../../Assets/css/fahrtkosten.css">
+
+    <style>
+        /* === CORE VARIABLES === */
+        :root {
+            --bg-deep: #030305;
+            --bg-glass: rgba(22, 22, 26, 0.65);
+            --bg-glass-heavy: rgba(16, 16, 20, 0.85);
+            --primary: #a855f7;
+            --primary-rgb: 168, 85, 247;
+            --primary-dim: rgba(168, 85, 247, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;     --success-rgb: 16, 185, 129;
+            --danger: #ef4444;      --danger-rgb: 239, 68, 68;
+            --warning: #f59e0b;     --warning-rgb: 245, 158, 11;
+            --info: #3b82f6;        --info-rgb: 59, 130, 246;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(255, 255, 255, 0.12);
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+            --radius: 20px;
+            --radius-sm: 12px;
+            --shadow-glow: 0 0 40px rgba(var(--primary-rgb), 0.15);
+            --transition-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        [data-theme="light"] {
+            --bg-deep: #f8fafc;
+            --bg-glass: rgba(255,255,255,0.85);
+            --bg-glass-heavy: rgba(255,255,255,0.92);
+            --text-main: #071023;
+            --text-muted: #475569;
+            --border: rgba(7, 16, 35, 0.06);
+            --border-hover: rgba(7, 16, 35, 0.12);
+            --primary-dim: rgba(168, 85, 247, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--bg-deep);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .bg-mesh { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .bg-orb {
+            position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.12;
+            animation: orbFloat 25s ease-in-out infinite alternate;
+        }
+        .bg-orb.o1 { width: 600px; height: 600px; background: var(--primary); top: -10%; left: -10%; }
+        .bg-orb.o2 { width: 500px; height: 500px; background: #06b6d4; bottom: -15%; right: -10%; animation-delay: -8s; }
+        .bg-orb.o3 { width: 400px; height: 400px; background: #ec4899; top: 50%; left: 50%; animation-delay: -15s; }
+        @keyframes orbFloat { 0% { transform: translate(0,0) scale(1); } 100% { transform: translate(60px,-40px) scale(1.15); } }
+
+        .page-wrap { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+        /* Header */
+        .header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+        }
+        .brand { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
+        .brand-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 12px rgba(var(--primary-rgb),0.5); }
+        .page-title { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.3px; }
+        .page-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+        .header-right { display: flex; align-items: center; gap: 0.75rem; }
+
+        .theme-toggle {
+            width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--border);
+            background: var(--bg-glass); color: var(--text-main); font-size: 1.1rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .theme-toggle:hover { border-color: var(--primary); background: rgba(var(--primary-rgb),0.1); }
+
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+            background: var(--bg-glass); backdrop-filter: blur(20px); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-main); text-decoration: none;
+            font-weight: 500; font-size: 0.85rem; transition: all 0.3s var(--transition-smooth);
+        }
+        .btn-back:hover {
+            background: rgba(var(--primary-rgb),0.12); border-color: var(--primary);
+            transform: translateX(-4px); box-shadow: 4px 0 20px rgba(var(--primary-rgb),0.15);
+        }
+
+        @media (max-width: 640px) {
+            .page-wrap { padding: 1rem 1rem 3rem; }
+            .page-title { font-size: 1.3rem; }
+            .header { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-mesh">
+        <div class="bg-orb o1"></div>
+        <div class="bg-orb o2"></div>
+        <div class="bg-orb o3"></div>
+    </div>
+
+    <div class="page-wrap">
+        <!-- HEADER -->
+        <div class="header">
+            <div>
+                <div class="brand">
+                    <span class="brand-dot"></span>
+                    <span>MyWorkLog</span>
+                </div>
+                <h1 class="page-title">🚗 Fahrtkosten-Tracker</h1>
+                <p class="page-subtitle">Echtes Routing · Adresssuche · ÖPNV-Links · Spritkosten · Pendlerpauschale</p>
+            </div>
+            <div class="header-right">
+                <button class="theme-toggle" id="themeToggle" onclick="fkToggleTheme()" title="Theme wechseln">🌙</button>
+                <a href="../../index.html" class="btn-back">
+                    <span>←</span> Zurück zum Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- OFFLINE FALLBACK -->
+        <div class="offline-fallback" id="fk-offline-fallback">
+            <div class="offline-icon">📡</div>
+            <div class="offline-text">Karte & Routing im Offline-Modus nicht verfügbar — gib die Strecke manuell ein:</div>
+            <div class="offline-input-wrap">
+                <label for="fk-offline-km">Einfache Strecke (km)</label>
+                <input type="number" id="fk-offline-km" class="calc-input" min="0" step="0.1" placeholder="z.B. 15.3">
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT (online) -->
+        <div id="fk-map-section">
+
+            <!-- TRANSPORT MODE TABS -->
+            <div class="mode-tabs">
+                <button class="mode-tab active" data-mode="car">
+                    <span class="mode-emoji">🚗</span> Auto
+                </button>
+                <button class="mode-tab" data-mode="bike">
+                    <span class="mode-emoji">🚲</span> Fahrrad
+                </button>
+                <button class="mode-tab" data-mode="walk">
+                    <span class="mode-emoji">🚶</span> Zu Fuß
+                </button>
+                <button class="mode-tab" data-mode="transit">
+                    <span class="mode-emoji">🚌</span> ÖPNV
+                </button>
+            </div>
+
+            <!-- ADDRESS SEARCH -->
+            <div class="search-row">
+                <div class="search-field">
+                    <label><span class="dot home"></span> Startadresse (Zuhause)</label>
+                    <input type="text" id="fk-search-home" class="search-input" placeholder="Straße, Stadt eingeben..." autocomplete="off">
+                    <button class="search-clear" id="fk-search-home-clear" title="Löschen">✕</button>
+                    <div class="search-results" id="fk-search-home-results"></div>
+                </div>
+                <div class="search-field">
+                    <label><span class="dot work"></span> Zieladresse (Betrieb / Berufsschule)</label>
+                    <input type="text" id="fk-search-work" class="search-input" placeholder="Straße, Stadt eingeben..." autocomplete="off">
+                    <button class="search-clear" id="fk-search-work-clear" title="Löschen">✕</button>
+                    <div class="search-results" id="fk-search-work-results"></div>
+                </div>
+            </div>
+
+            <!-- MAP -->
+            <div class="map-wrapper">
+                <div class="map-overlay-top">
+                    <div class="map-chip" id="fk-map-route-chip" style="display:none;"></div>
+                </div>
+                <div class="map-actions">
+                    <button class="map-action-btn" onclick="fkResetMarkers()" title="Alles zurücksetzen">
+                        🗑️ Reset
+                    </button>
+                </div>
+                <div id="fk-map" class="map-container"></div>
+                <div class="marker-legend">
+                    <div class="legend-item">
+                        <span class="legend-dot home"></span>
+                        <span>Zuhause</span>
+                        <span class="legend-coords" id="fk-legend-home-coords">nicht gesetzt</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot work"></span>
+                        <span>Ziel</span>
+                        <span class="legend-coords" id="fk-legend-work-coords">nicht gesetzt</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROUTE LOADING -->
+            <div class="route-loading" id="fk-route-loading">
+                <div class="spinner"></div>
+                <span>Route wird berechnet...</span>
+            </div>
+
+            <!-- ROUTE STATS -->
+            <div class="route-stats">
+                <div class="route-stat">
+                    <div class="rs-icon">📏</div>
+                    <div class="rs-value" id="fk-rs-distance">—</div>
+                    <div class="rs-label">Strecke (einfach)</div>
+                </div>
+                <div class="route-stat">
+                    <div class="rs-icon">⏱️</div>
+                    <div class="rs-value" id="fk-rs-duration">—</div>
+                    <div class="rs-label">Fahrzeit</div>
+                </div>
+                <div class="route-stat highlight">
+                    <div class="rs-icon">🔄</div>
+                    <div class="rs-value" id="fk-rs-total">—</div>
+                    <div class="rs-label">Gesamt/Monat</div>
+                </div>
+                <div class="route-stat">
+                    <div class="rs-icon">⛽</div>
+                    <div class="rs-value" id="fk-rs-fuel">—</div>
+                    <div class="rs-label">Spritkosten/Monat</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CALCULATOR -->
+        <div class="calc-panel">
+            <div class="calc-title">🧮 Monatsrechner</div>
+            <div class="calc-grid">
+                <div class="calc-field">
+                    <label for="fk-days">Arbeitstage / Monat</label>
+                    <input type="number" id="fk-days" class="calc-input" min="0" max="31" step="1" placeholder="z.B. 20">
+                </div>
+                <div class="calc-field">
+                    <label for="fk-fuel-price">Spritpreis (€/L)</label>
+                    <input type="number" id="fk-fuel-price" class="calc-input" min="0" step="0.01" value="1.75" placeholder="1.75">
+                </div>
+                <div class="calc-field">
+                    <label for="fk-consumption">Verbrauch (L/100km)</label>
+                    <input type="number" id="fk-consumption" class="calc-input" min="0" step="0.1" value="7.0" placeholder="7.0">
+                </div>
+            </div>
+
+            <!-- RESULTS -->
+            <div class="result-grid">
+                <div class="result-card">
+                    <div class="rc-label">Gesamtstrecke</div>
+                    <div class="rc-value" id="fk-total-km">—</div>
+                    <div class="rc-sub">Hin + Rück</div>
+                </div>
+                <div class="result-card">
+                    <div class="rc-label">Fahrten</div>
+                    <div class="rc-value" id="fk-total-trips">—</div>
+                    <div class="rc-sub">pro Monat</div>
+                </div>
+                <div class="result-card">
+                    <div class="rc-label">Spritkosten</div>
+                    <div class="rc-value" id="fk-fuel-cost">—</div>
+                    <div class="rc-sub">pro Monat</div>
+                </div>
+                <div class="result-card highlight">
+                    <div class="rc-label">Pendlerpauschale</div>
+                    <div class="rc-value" id="fk-pauschale">—</div>
+                    <div class="rc-sub">absetzbar / Monat</div>
+                </div>
+            </div>
+
+            <div class="save-row">
+                <button class="btn-save" id="fk-save-btn" onclick="fkSaveMonth()">💾 Monat speichern</button>
+                <span class="save-hint">Speichert den aktuellen Monat in die Historie</span>
+            </div>
+        </div>
+
+        <!-- CO₂ COMPARISON -->
+        <div class="co2-section">
+            <div class="co2-title">🌱 CO₂-Vergleich (einfache Strecke)</div>
+            <div class="co2-bar-row">
+                <span class="co2-bar-label">🚗 Auto</span>
+                <div class="co2-bar-track"><div class="co2-bar-fill car" id="fk-co2-car" style="width:0%">—</div></div>
+            </div>
+            <div class="co2-bar-row">
+                <span class="co2-bar-label">🔌 E-Auto</span>
+                <div class="co2-bar-track"><div class="co2-bar-fill ecar" id="fk-co2-ecar" style="width:0%">—</div></div>
+            </div>
+            <div class="co2-bar-row">
+                <span class="co2-bar-label">🚌 Bus</span>
+                <div class="co2-bar-track"><div class="co2-bar-fill bus" id="fk-co2-bus" style="width:0%">—</div></div>
+            </div>
+            <div class="co2-bar-row">
+                <span class="co2-bar-label">🚂 Zug</span>
+                <div class="co2-bar-track"><div class="co2-bar-fill train" id="fk-co2-train" style="width:0%">—</div></div>
+            </div>
+            <div class="co2-bar-row">
+                <span class="co2-bar-label">🚲 Fahrrad</span>
+                <div class="co2-bar-track"><div class="co2-bar-fill bike" id="fk-co2-bike" style="width:0%">0 g</div></div>
+            </div>
+        </div>
+
+        <!-- TRANSPORT LINKS -->
+        <div class="transport-links">
+            <div class="transport-title">🔗 Tickets & Verbindungen</div>
+            <div class="transport-grid" id="fk-transport-links">
+                <a href="https://www.bahn.de/" target="_blank" rel="noopener noreferrer" class="transport-card">
+                    <span class="tc-icon">🚂</span>
+                    <div class="tc-info">
+                        <div class="tc-name">Deutsche Bahn</div>
+                        <div class="tc-desc">Setze Start & Ziel für Direkt-Link</div>
+                    </div>
+                    <span class="tc-arrow">→</span>
+                </a>
+                <a href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" class="transport-card">
+                    <span class="tc-icon">🗺️</span>
+                    <div class="tc-info">
+                        <div class="tc-name">Google Maps</div>
+                        <div class="tc-desc">Alle Verkehrsmittel</div>
+                    </div>
+                    <span class="tc-arrow">→</span>
+                </a>
+                <a href="https://www.flixbus.de/" target="_blank" rel="noopener noreferrer" class="transport-card">
+                    <span class="tc-icon">🚌</span>
+                    <div class="tc-info">
+                        <div class="tc-name">FlixBus</div>
+                        <div class="tc-desc">Fernbus-Verbindungen</div>
+                    </div>
+                    <span class="tc-arrow">→</span>
+                </a>
+                <a href="https://www.blablacar.de/" target="_blank" rel="noopener noreferrer" class="transport-card">
+                    <span class="tc-icon">🚗</span>
+                    <div class="tc-info">
+                        <div class="tc-name">BlaBlaCar</div>
+                        <div class="tc-desc">Mitfahrgelegenheit</div>
+                    </div>
+                    <span class="tc-arrow">→</span>
+                </a>
+                <a href="https://www.komoot.com/" target="_blank" rel="noopener noreferrer" class="transport-card">
+                    <span class="tc-icon">🚲</span>
+                    <div class="tc-info">
+                        <div class="tc-name">Komoot</div>
+                        <div class="tc-desc">Fahrrad-Route planen</div>
+                    </div>
+                    <span class="tc-arrow">→</span>
+                </a>
+                <a href="https://deutschlandticket.de/" target="_blank" rel="noopener noreferrer" class="transport-card">
+                    <span class="tc-icon">🎫</span>
+                    <div class="tc-info">
+                        <div class="tc-name">Deutschlandticket</div>
+                        <div class="tc-desc">49€ Monatsticket</div>
+                    </div>
+                    <span class="tc-arrow">→</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- INFO -->
+        <div class="info-banner">
+            <span class="info-icon">ℹ️</span>
+            <div>
+                <strong>Pendlerpauschale 2024–2026:</strong> 30 ct/km für die ersten 20 km, danach 38 ct/km (einfache Strecke, kürzeste Straßenverbindung).
+                Routing via <strong>OSRM</strong> (echte Straßenroute), Adresssuche via <strong>Nominatim/OpenStreetMap</strong>. 
+                CO₂-Werte sind Durchschnitte für Deutschland (UBA).
+            </div>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="history-section">
+            <div class="history-title">📊 Monatshistorie</div>
+            <div class="history-wrap">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Monat</th>
+                            <th>Modus</th>
+                            <th>Tage</th>
+                            <th>Strecke</th>
+                            <th>Gesamt</th>
+                            <th>Sprit</th>
+                            <th>Pauschale</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="fk-history-body"></tbody>
+                </table>
+                <div class="empty-state" id="fk-history-empty">
+                    <div class="empty-icon">📭</div>
+                    <div>Noch keine Monate gespeichert — berechne oben und klicke "Monat speichern"</div>
+                </div>
+                <div class="history-summary" id="fk-history-summary" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fahrtkosten JS -->
+    <script src="../../Assets/js/fahrtkosten.js"></script>
+</body>
+</html>
