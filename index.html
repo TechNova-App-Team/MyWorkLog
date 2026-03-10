@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-<title>MyWorkLog – Kostenlose Azubi Zeiterfassung, Berichtsheft & Gleitzeitkonto</title>
+<title>MyWorkLog</title>
 <meta name="description" content="MyWorkLog: Die kostenlose Azubi Zeiterfassung App. Digitales Berichtsheft, Gleitzeitkonto, Überstundenrechner & Arbeitszeitnachweis für Auszubildende. 100% offline, kein Server, DSGVO-konform. Perfekt für Fachinformatiker, kaufmännische & gewerbliche Ausbildung. Mit KI-Assistent & Cloud Sync.">
 <meta name="keywords" content="Azubi Zeiterfassung, Berichtsheft digital, Gleitzeitkonto, Ausbildung Arbeitszeitnachweis, Überstunden Azubi, Arbeitszeit App, Berichtsheft App, Zeiterfassung Auszubildende, Gleitzeitkonto App, Ausbildungsnachweis digital, IHK Berichtsheft, Stundenkonto Azubi, Arbeitszeiten erfassen, Zeiterfassung kostenlos, Azubi App, Fachinformatiker Berichtsheft, Ausbildung Zeitkonto, PWA Zeiterfassung, Arbeitszeitrechner, Stempeluhr App, Ausbildungsnachweis IHK, Zeitkonto Azubi, Berichtsheft online, Arbeitszeit dokumentieren">
 <meta name="theme-color" content="#a855f7">
@@ -7610,23 +7610,15 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 </a>
             </div>
 
-            <!-- Aufgaben & Produktivität -->
-            <div class="nav-section" data-section="tasks" onclick="toggleNavSection(this)">
-                Aufgaben & Produktivität
+            <!-- Aufgaben & KI -->
+            <div class="nav-section" data-section="tasks-ai" onclick="toggleNavSection(this)">
+                Aufgaben & KI
                 <span class="nav-section-chevron">▾</span>
             </div>
-            <div class="nav-section-group" data-group="tasks">
+            <div class="nav-section-group" data-group="tasks-ai">
                 <a href="./Pages/App/Tasks/aufgaben.html" class="nav-item nav-external" style="text-decoration:none;" aria-label="Aufgaben Manager — Tages-Planung mit Wiederholen & Reminders">
                     <span class="nav-icon">✅</span> Aufgaben
                 </a>
-            </div>
-
-            <!-- KI -->
-            <div class="nav-section" data-section="ai" onclick="toggleNavSection(this)">
-                Künstliche Intelligenz
-                <span class="nav-section-chevron">▾</span>
-            </div>
-            <div class="nav-section-group" data-group="ai">
                 <div class="nav-item" id="nav-aibot" onclick="switchTab('aibot')">
                     <span class="nav-icon">🤖</span> AI-Bot
                 </div>
@@ -7660,17 +7652,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             <input type="file" id="fileImp" hidden onchange="importData(event)">
             <input type="file" id="fileImpEncrypted" hidden accept=".encrypted.json,application/json" onchange="importEncryptedBackup(event)">
 
-            <!-- Projekt & Entwicklung -->
-            <div class="nav-section" data-section="project" onclick="toggleNavSection(this)">
-                Projekt & Dev
-                <span class="nav-section-chevron">▾</span>
-            </div>
-            <div class="nav-section-group" data-group="project">
-                <div class="nav-item nav-external" onclick="window.open('Pages/Info/repo-report.html', '_blank')">
-                    <span class="nav-icon">🔥</span> Repo-Analyse
-                </div>
-            </div>
-
             <!-- Hilfe & Rechtliches -->
             <div class="nav-section" data-section="legal" onclick="toggleNavSection(this)">
                 Hilfe & Rechtliches
@@ -7679,6 +7660,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             <div class="nav-section-group" data-group="legal">
                 <div class="nav-item" id="nav-support" onclick="switchTab('support')">
                     <span class="nav-icon">☕</span> Unterstützung
+                </div>
+                <div class="nav-item nav-external" onclick="window.open('Pages/Info/repo-report.html', '_blank')">
+                    <span class="nav-icon">🔥</span> Repo-Analyse
                 </div>
                 <a href="./Pages/Info/analytics.html" class="nav-item nav-external" style="text-decoration:none;" target="_blank" rel="noopener noreferrer" aria-label="Analytics">
                     <span class="nav-icon">📊</span> Analytics
@@ -23245,31 +23229,41 @@ TIPPS:
 
         // Default nav items - RICHTIG SORTIERT nach Benutzervorgabe
         const defaultNavItems = [
-            // 1. Bereich: Dashboard & Fortschritt (Zentraler Fokus)
             {id:'dashboard', label:'Dashboard', icon:'📈', visible:true},
             {id:'performance', label:'Performance', icon:'📊', visible:true},
             {id:'history', label:'Verlauf', icon:'📉', visible:true},
             {id:'yearview', label:'Jahresansicht', icon:'📅', visible:true},
-            {id:'monthcompare', label:'Monatvergleich', icon:'📊', visible:true},
+            {id:'monthcompare', label:'Monatsansicht', icon:'📊', visible:true},
             {id:'weekview', label:'Wochenansicht', icon:'📆', visible:true},
-            {id:'prognose', label:'Prognose', icon:'🔮', visible:true},
-            {id:'analytics-pro', label:'Analytics Pro', icon:'📊', visible:true},
-            // 2. Bereich: Ausbildung & Lernen
             {id:'school', label:'Berufsschule', icon:'🏫', visible:true},
+            {id:'ihk', label:'IHK', icon:'🎓', visible:true},
+            {id:'prognose', label:'Prognose', icon:'🔮', visible:true},
+            {id:'goals', label:'Ziele', icon:'🎯', visible:true},
+            {id:'analytics-pro', label:'Analytics Pro', icon:'📊', visible:true},
         ];
 
-        // Ensure settings.nav exists and add missing items
-        if (!Array.isArray(data.settings.nav)) {
-            data.settings.nav = defaultNavItems;
+        // Nav-Version: bei Änderung der Reihenfolge/Items hochzählen → erzwingt Reset
+        const NAV_VERSION = 2;
+        const navNeedsReset = !Array.isArray(data.settings.nav) || data.settings.navVersion !== NAV_VERSION;
+        if (navNeedsReset) {
+            // Bestehende visibility-Einstellungen übernehmen, aber neue Reihenfolge erzwingen
+            const oldNav = Array.isArray(data.settings.nav) ? data.settings.nav : [];
+            data.settings.nav = defaultNavItems.map(item => {
+                const existing = oldNav.find(o => o.id === item.id);
+                return existing ? { ...item, visible: existing.visible } : item;
+            });
+            data.settings.navVersion = NAV_VERSION;
             save();
         } else {
-            // Add any missing items from the default list
+            // Fehlende neue Items hinzufügen
+            let changed = false;
             defaultNavItems.forEach(defaultItem => {
                 if (!data.settings.nav.find(item => item.id === defaultItem.id)) {
                     data.settings.nav.push(defaultItem);
+                    changed = true;
                 }
             });
-            save();
+            if (changed) save();
         }
 
         navList.innerHTML = '';
