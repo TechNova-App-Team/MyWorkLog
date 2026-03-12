@@ -27128,10 +27128,26 @@ TIPPS:
         });
 
         // Laufenden Timer einrechnen (mit Break-Abzug)
-        if (window.timer && window.timer.running && window.timer.start) {
-            const timerMs = (window.timer.paused || 0) + (Date.now() - (window.timer.start || Date.now())) - (window.timer.breakTime || 0);
+        if (timer && timer.running && timer.start) {
+            const timerMs = (timer.paused || 0) + (Date.now() - timer.start) - (timer.breakTime || 0);
             const timerHours = Math.max(0, timerMs / 3.6e6);
             todayWorked += timerHours;
+        }
+
+        // Laufende Schicht einrechnen (Start-Zeit eingegeben aber noch nicht gespeichert)
+        if (todayWorked === 0) {
+            try {
+                const startInput = document.getElementById('inpStart');
+                const dateInput = document.getElementById('inpDate');
+                if (startInput && startInput.value && dateInput && dateInput.value === today) {
+                    const [sh, sm] = startInput.value.split(':').map(Number);
+                    const shiftStartMs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), sh, sm).getTime();
+                    if (shiftStartMs < now.getTime()) {
+                        const elapsedHours = (now.getTime() - shiftStartMs) / 3.6e6;
+                        todayWorked += Math.max(0, elapsedHours);
+                    }
+                }
+            } catch(e) { /* ignore */ }
         }
 
         // Erwartete Stunden aus den tatsächlichen Tageseinstellungen auslesen
