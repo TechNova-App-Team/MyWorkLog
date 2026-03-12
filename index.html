@@ -4200,29 +4200,121 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         #settings-tab-school {
             background: rgba(255,255,255,0.02);
             border: 1px solid rgba(255,255,255,0.06);
-            padding: 1.25rem;
-            border-radius: 14px;
+            padding: 1.5rem;
+            border-radius: 16px;
             margin-bottom: 1rem;
         }
-        #settings-tab-school p { color: var(--text-muted); }
-        #settings-tab-school .glass-input, #settings-tab-school .glass-select { background: rgba(0,0,0,0.22); }
-        .bi-rule {
-            display: grid;
-            grid-template-columns: 120px 90px 160px 40px;
-            gap: 10px;
-            align-items: center;
-            padding: 10px;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.03);
+        .school-settings-hero {
+            display: flex; align-items: center; gap: 14px;
+            padding: 16px 20px; border-radius: 14px; margin-bottom: 20px;
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.12) 0%, rgba(var(--primary-rgb), 0.08) 100%);
+            border: 1px solid rgba(var(--primary-rgb), 0.2);
         }
-        .bi-rule .glass-select, .bi-rule .glass-input { padding: 10px; }
-        .bi-rule button { padding: 6px 10px; min-width:40px; height:38px; }
-        .bi-rule .bi-weekday { width:100%; }
-        .bi-rule .bi-interval { text-align:center; }
-        #settings-tab-school label { display:flex; flex-direction:column; align-items:center; gap:8px; }
-        #settings-tab-school input[type="checkbox"] { width:18px; height:18px; }
-        #settings-tab-school .btn { padding:8px 12px; font-size:0.9rem; }
+        .school-settings-hero-icon {
+            width: 48px; height: 48px; border-radius: 14px; display: flex;
+            align-items: center; justify-content: center; font-size: 1.6rem;
+            background: rgba(var(--primary-rgb), 0.15); border: 1px solid rgba(var(--primary-rgb), 0.25);
+            flex-shrink: 0;
+        }
+        .school-settings-section {
+            margin-bottom: 20px; padding: 16px; border-radius: 14px;
+            background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);
+        }
+        .school-settings-label {
+            font-size: 0.85rem; font-weight: 700; color: var(--text-main);
+            margin-bottom: 12px; letter-spacing: 0.3px;
+        }
+        .school-day-chips {
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .school-day-chip {
+            position: relative; cursor: pointer; user-select: none;
+        }
+        .school-day-chip input[type="checkbox"] {
+            position: absolute; opacity: 0; width: 0; height: 0;
+        }
+        .school-day-chip span {
+            display: flex; align-items: center; justify-content: center;
+            width: 52px; height: 44px; border-radius: 12px; font-size: 0.85rem;
+            font-weight: 700; color: var(--text-muted);
+            background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.08);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .school-day-chip input:checked + span {
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.25), rgba(var(--primary-rgb), 0.2));
+            border-color: rgba(var(--primary-rgb), 0.5); color: var(--primary);
+            box-shadow: 0 0 16px rgba(var(--primary-rgb), 0.15);
+        }
+        .school-day-chip:hover span {
+            border-color: rgba(var(--primary-rgb), 0.3); transform: translateY(-1px);
+        }
+        .school-settings-add-btn {
+            display: flex; align-items: center; gap: 5px; padding: 6px 14px;
+            border-radius: 10px; font-size: 0.8rem; font-weight: 600;
+            background: rgba(var(--primary-rgb), 0.1); border: 1px solid rgba(var(--primary-rgb), 0.25);
+            color: var(--primary); cursor: pointer; transition: all 0.2s;
+            font-family: inherit;
+        }
+        .school-settings-add-btn:hover {
+            background: rgba(var(--primary-rgb), 0.18); transform: translateY(-1px);
+        }
+        .school-settings-add-btn span { font-size: 1rem; font-weight: 800; }
+        .bi-rule {
+            display: grid; grid-template-columns: 1fr 80px 1fr 40px;
+            gap: 10px; align-items: center; padding: 12px 14px;
+            border-radius: 12px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: border-color 0.2s;
+        }
+        .bi-rule:hover { border-color: rgba(var(--primary-rgb), 0.2); }
+        .bi-rule .glass-select, .bi-rule .glass-input {
+            padding: 9px 12px; border-radius: 10px; font-size: 0.85rem;
+            background: rgba(0,0,0,0.22);
+        }
+        .bi-rule button {
+            padding: 6px; min-width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; color: var(--text-muted); transition: all 0.2s;
+        }
+        .bi-rule button:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+        .bi-rule .bi-interval { text-align: center; }
+        .school-settings-hint {
+            font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; margin: 0;
+        }
+        .school-check-row {
+            display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+        }
+        .school-check-row .glass-input { flex: 1; min-width: 140px; max-width: 200px; }
+        .school-settings-check-btn {
+            padding: 9px 18px; border-radius: 10px; font-size: 0.82rem; font-weight: 600;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-main); cursor: pointer; transition: all 0.2s;
+            font-family: inherit;
+        }
+        .school-settings-check-btn:hover {
+            background: rgba(255,255,255,0.08); transform: translateY(-1px);
+        }
+        .school-settings-check-today {
+            background: rgba(var(--primary-rgb), 0.1); border-color: rgba(var(--primary-rgb), 0.25);
+            color: var(--primary);
+        }
+        .school-settings-check-today:hover {
+            background: rgba(var(--primary-rgb), 0.18);
+        }
+        .school-settings-footer {
+            display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+            border-radius: 12px; font-size: 0.8rem; color: var(--text-muted);
+            background: rgba(var(--primary-rgb), 0.04); border: 1px solid rgba(var(--primary-rgb), 0.08);
+            line-height: 1.5;
+        }
+        @media (max-width: 600px) {
+            .school-day-chips { gap: 6px; }
+            .school-day-chip span { width: 44px; height: 40px; font-size: 0.8rem; }
+            .bi-rule { grid-template-columns: 1fr 1fr; }
+            .bi-rule .bi-start { grid-column: 1 / -1; }
+            .school-check-row { flex-direction: column; }
+            .school-check-row .glass-input { max-width: 100%; }
+        }
 
         /* --- PERFORMANCE SPECIFIC STYLES --- */
         .kpi-large {
@@ -9930,35 +10022,69 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
                 <!-- Tab: Berufsschule -->
                 <div id="settings-tab-school" class="settings-tab-content" style="display:none;">
-                    <div class="settings-section-title" style="margin-bottom:1rem;">Berufsschule Einstellungen</div>
-
-                    <p style="color:var(--text-muted); margin-bottom:12px; font-size:0.85rem; line-height:1.6;">Wähle die Wochentage, an denen regelmäßig Berufsschule ist, sowie Regeln für alle x‑wochentliche Tage. Der aktuelle Tag wird beim Laden geprüft und vorgeschlagen.</p>
-
-                    <div style="display:grid; grid-template-columns: repeat(7, 1fr); gap:8px; margin-bottom:12px;">
-                        <label style="font-size:0.8rem; text-align:center; color:var(--text-muted);">So<br><input type="checkbox" id="sch_week_0"></label>
-                        <label style="font-size:0.8rem; text-align:center; color:var(--text-muted);">Mo<br><input type="checkbox" id="sch_week_1"></label>
-                        <label style="font-size:0.8rem; text-align:center; color:var(--text-muted);">Di<br><input type="checkbox" id="sch_week_2"></label>
-                        <label style="font-size:0.8rem; text-align:center; color:var(--text-muted);">Mi<br><input type="checkbox" id="sch_week_3"></label>
-                        <label style="font-size:0.8rem; text-align:center; color:var(--text-muted);">Do<br><input type="checkbox" id="sch_week_4"></label>
-                        <label style="font-size:0.8rem; text-align:center; color:var(--text-muted);">Fr<br><input type="checkbox" id="sch_week_5"></label>
-                        <label style="font-size:0.8rem; text-align:center; color:var(--text-muted);">Sa<br><input type="checkbox" id="sch_week_6"></label>
-                    </div>
-
-                    <div style="margin-bottom:12px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <div style="font-weight:700; font-size:0.9rem;">Bi‑weekly / Multi‑week Regeln</div>
-                            <button class="settings-btn" onclick="addBiweeklyRule()" style="padding:6px 14px; font-size:0.8rem;">+ Regel</button>
+                    
+                    <!-- Hero Header -->
+                    <div class="school-settings-hero">
+                        <div class="school-settings-hero-icon">🏫</div>
+                        <div>
+                            <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:#fff;">Berufsschule</h3>
+                            <p style="margin:4px 0 0; font-size:0.8rem; color:var(--text-muted); line-height:1.4;">Schultage konfigurieren — abgelehnte Vorschläge kommen nicht wieder.</p>
                         </div>
-                        <div id="biweeklyRulesList" style="display:flex; flex-direction:column; gap:8px;"></div>
                     </div>
 
-                    <div style="display:flex; gap:10px; align-items:center; margin-bottom:1rem;">
-                        <input type="date" id="checkVocDate" class="glass-input" style="max-width:200px;">
-                        <button class="settings-btn settings-btn-primary" onclick="checkDateVocFromInput()" style="padding:8px 16px;">Prüfen</button>
-                        <button class="settings-btn" onclick="checkTodayVocSchool()" style="padding:8px 16px;">Heute</button>
+                    <!-- Weekly Day Chips -->
+                    <div class="school-settings-section">
+                        <div class="school-settings-label">📅 Wöchentliche Schultage</div>
+                        <div class="school-day-chips">
+                            <label class="school-day-chip" data-day="1">
+                                <input type="checkbox" id="sch_week_1"><span>Mo</span>
+                            </label>
+                            <label class="school-day-chip" data-day="2">
+                                <input type="checkbox" id="sch_week_2"><span>Di</span>
+                            </label>
+                            <label class="school-day-chip" data-day="3">
+                                <input type="checkbox" id="sch_week_3"><span>Mi</span>
+                            </label>
+                            <label class="school-day-chip" data-day="4">
+                                <input type="checkbox" id="sch_week_4"><span>Do</span>
+                            </label>
+                            <label class="school-day-chip" data-day="5">
+                                <input type="checkbox" id="sch_week_5"><span>Fr</span>
+                            </label>
+                            <label class="school-day-chip" data-day="6">
+                                <input type="checkbox" id="sch_week_6"><span>Sa</span>
+                            </label>
+                            <label class="school-day-chip" data-day="0">
+                                <input type="checkbox" id="sch_week_0"><span>So</span>
+                            </label>
+                        </div>
                     </div>
 
-                    <div class="settings-hint">Feiertage und gebuchte Urlaube werden berücksichtigt. Berufsschultage werden als Eintrag vorgeschlagen.</div>
+                    <!-- Biweekly Rules -->
+                    <div class="school-settings-section">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div class="school-settings-label">🔁 Turnus-Regeln</div>
+                            <button class="school-settings-add-btn" onclick="addBiweeklyRule()">
+                                <span>+</span> Regel
+                            </button>
+                        </div>
+                        <div id="biweeklyRulesList" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;"></div>
+                        <p class="school-settings-hint" style="margin-top:8px;">Für z.B. alle 2 Wochen: Wochentag + Intervall + Startdatum festlegen.</p>
+                    </div>
+
+                    <!-- Quick Check -->
+                    <div class="school-settings-section">
+                        <div class="school-settings-label">🔍 Datum prüfen</div>
+                        <div class="school-check-row">
+                            <input type="date" id="checkVocDate" class="glass-input">
+                            <button class="school-settings-check-btn" onclick="checkDateVocFromInput()">Prüfen</button>
+                            <button class="school-settings-check-btn school-settings-check-today" onclick="checkTodayVocSchool()">Heute</button>
+                        </div>
+                    </div>
+
+                    <div class="school-settings-footer">
+                        <span>💡</span> Feiertage & Urlaub werden automatisch berücksichtigt.
+                    </div>
                 </div>
 
                 <!-- Tab: Shortcuts -->
@@ -20089,10 +20215,20 @@ TIPPS:
             const res = isVocSchoolForDate(today);
             if(res.isVocSchool) {
                 const exists = data.entries.some(e => e.date === iso && e.type === 'school');
-                if(!exists) {
+                // Check if user already dismissed this date
+                const dismissed = JSON.parse(localStorage.getItem('tg_school_dismissed') || '[]');
+                if(!exists && !dismissed.includes(iso)) {
                     showCustomConfirm('🏫 Berufsschule heute?', `Heute (${iso}) sieht nach Berufsschule aus (${res.reason}). Soll ein Eintrag für heute angelegt werden?`, () => {
                         createSchoolEntryForDate(today);
-                    }, null);
+                    }, () => {
+                        // Store dismissed date so it won't be suggested again
+                        const list = JSON.parse(localStorage.getItem('tg_school_dismissed') || '[]');
+                        list.push(iso);
+                        // Keep only last 90 days of dismissed dates to avoid unbounded growth
+                        const cutoff = new Date(Date.now() - 90 * 86400000).toISOString().slice(0,10);
+                        const pruned = list.filter(d => d >= cutoff);
+                        localStorage.setItem('tg_school_dismissed', JSON.stringify(pruned));
+                    });
                 }
             }
         } catch(e) { console.warn('checkTodayVocSchool error', e); }
