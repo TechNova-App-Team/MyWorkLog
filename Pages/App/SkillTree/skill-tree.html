@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RPG Skill-Baum — MyWorkLog</title>
+<script defer src="../../../Assets/js/icons.js"></script>
+<script defer src="../../../Assets/js/touch-mobile-optimizations.js"></script>
+<style>
+/* ══════════════════════════════════════════════════
+   CSS VARIABLES
+   ══════════════════════════════════════════════════ */
+:root {
+    --bg-deep: #030305;
+    --bg-glass: rgba(22,22,26,0.65);
+    --bg-card: rgba(16,16,20,0.85);
+    --primary: #a855f7;
+    --primary-rgb: 168,85,247;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border: rgba(255,255,255,0.06);
+    --border-hover: rgba(255,255,255,0.12);
+    --radius: 20px;
+    --radius-sm: 12px;
+    --font-main: 'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    --font-mono: 'JetBrains Mono','Roboto Mono',monospace;
+    --transition-smooth: cubic-bezier(0.16,1,0.3,1);
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+    --cyan: #06b6d4;
+}
+
+/* ══════════════════════════════════════════════════
+   RESET & BASE
+   ══════════════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html{height:100%;overflow:hidden;}
+body{
+    font-family:var(--font-main);
+    background:var(--bg-deep);
+    color:var(--text-main);
+    height:100%;
+    overflow:hidden;
+    position:relative;
+}
+
+/* ══════════════════════════════════════════════════
+   TOP BAR
+   ══════════════════════════════════════════════════ */
+.top-bar{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    height:56px;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 20px;
+    background:rgba(3,3,5,0.85);
+    backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);
+}
+.top-bar-left{display:flex;align-items:center;gap:14px;}
+.back-btn{
+    width:36px;height:36px;border-radius:10px;border:1px solid var(--border);
+    background:rgba(255,255,255,0.04);color:var(--text-main);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:18px;
+    transition:all .2s var(--transition-smooth);
+}
+.back-btn:hover{background:rgba(var(--primary-rgb),0.15);border-color:rgba(var(--primary-rgb),0.3);}
+.top-bar h1{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:8px;}
+.top-bar h1 span.glow{color:var(--primary);text-shadow:0 0 20px rgba(var(--primary-rgb),0.5);}
+
+.top-bar-right{display:flex;align-items:center;gap:10px;}
+.top-bar-right .level-badge{
+    background:linear-gradient(135deg,rgba(var(--primary-rgb),0.25),rgba(var(--primary-rgb),0.08));
+    border:1px solid rgba(var(--primary-rgb),0.3);border-radius:20px;
+    padding:6px 14px;font-size:0.8rem;font-weight:700;
+    display:flex;align-items:center;gap:6px;
+}
+.top-bar-right .level-badge .lvl{color:var(--primary);font-family:var(--font-mono);}
+.top-bar-right .xp-text{font-size:0.7rem;color:var(--text-muted);font-family:var(--font-mono);}
+
+.top-btn{
+    width:36px;height:36px;border-radius:10px;border:1px solid var(--border);
+    background:rgba(255,255,255,0.04);color:var(--text-muted);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:16px;
+    transition:all .2s var(--transition-smooth);position:relative;
+}
+.top-btn:hover{background:rgba(var(--primary-rgb),0.15);color:var(--text-main);}
+.top-btn .scan-pulse{
+    position:absolute;inset:-3px;border-radius:13px;
+    border:2px solid rgba(var(--primary-rgb),0.6);
+    animation:scanPulse 1.5s ease-in-out infinite;
+    pointer-events:none;display:none;
+}
+.top-btn.scanning .scan-pulse{display:block;}
+@keyframes scanPulse{0%,100%{opacity:0;transform:scale(1);}50%{opacity:1;transform:scale(1.08);}}
+
+/* ══════════════════════════════════════════════════
+   3D CANVAS & OVERLAY
+   ══════════════════════════════════════════════════ */
+#canvas3d{
+    position:fixed;top:56px;left:0;right:0;bottom:0;
+    z-index:1;
+}
+.canvas-overlay{
+    position:fixed;top:56px;left:0;right:0;bottom:0;
+    z-index:2;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 30%,transparent 40%,rgba(3,3,5,0.4) 100%);
+}
+.canvas-overlay .hint{
+    position:absolute;bottom:20px;left:50%;transform:translateX(-50%);
+    font-size:0.72rem;color:rgba(255,255,255,0.25);
+    pointer-events:none;text-align:center;
+    transition:opacity .5s;
+}
+
+/* ══════════════════════════════════════════════════
+   SIDE PANEL (Skill Detail)
+   ══════════════════════════════════════════════════ */
+.side-panel{
+    position:fixed;top:56px;right:0;bottom:0;width:380px;z-index:50;
+    background:rgba(8,8,12,0.92);backdrop-filter:blur(30px);
+    border-left:1px solid var(--border);
+    transform:translateX(100%);transition:transform .45s var(--transition-smooth);
+    overflow-y:auto;overflow-x:hidden;
+    pointer-events:auto;
+}
+.side-panel.open{transform:translateX(0);}
+.side-panel-header{
+    padding:24px 20px 16px;
+    border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:2;
+    background:rgba(8,8,12,0.95);backdrop-filter:blur(20px);
+}
+.side-panel-close{
+    position:absolute;top:16px;right:16px;
+    width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
+    background:rgba(255,255,255,0.04);color:var(--text-muted);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.side-panel-close:hover{background:rgba(var(--primary-rgb),0.15);}
+.sp-icon{font-size:2.2rem;margin-bottom:8px;}
+.sp-title{font-size:1.3rem;font-weight:800;}
+.sp-branch{font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-top:4px;}
+
+.sp-level-ring{
+    width:100px;height:100px;margin:20px auto;position:relative;
+}
+.sp-level-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
+.sp-level-ring .ring-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:6;}
+.sp-level-ring .ring-fill{fill:none;stroke:var(--primary);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset .8s var(--transition-smooth);}
+.sp-level-ring .ring-label{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.sp-level-ring .ring-lvl{font-size:1.8rem;font-weight:900;font-family:var(--font-mono);line-height:1;}
+.sp-level-ring .ring-txt{font-size:0.55rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:600;}
+
+.sp-xp-bar{
+    margin:0 20px 20px;background:rgba(255,255,255,0.04);border-radius:8px;height:10px;overflow:hidden;
+    border:1px solid var(--border);
+}
+.sp-xp-fill{height:100%;background:linear-gradient(90deg,var(--primary),#c084fc);border-radius:8px;transition:width .6s var(--transition-smooth);}
+.sp-xp-text{text-align:center;font-size:0.7rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:20px;}
+
+.sp-section{padding:0 20px 16px;}
+.sp-section-title{font-size:0.65rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);font-weight:700;margin-bottom:10px;}
+
+.sp-history-item{
+    display:flex;align-items:flex-start;gap:10px;padding:10px 12px;
+    background:rgba(255,255,255,0.02);border-radius:var(--radius-sm);
+    border:1px solid var(--border);margin-bottom:8px;
+    transition:border-color .2s;
+}
+.sp-history-item:hover{border-color:var(--border-hover);}
+.sp-history-xp{
+    font-size:0.8rem;font-weight:800;font-family:var(--font-mono);
+    color:var(--success);white-space:nowrap;min-width:50px;
+}
+.sp-history-text{font-size:0.78rem;color:var(--text-muted);line-height:1.4;}
+.sp-history-date{font-size:0.6rem;color:rgba(255,255,255,0.2);margin-top:3px;}
+
+.sp-empty{text-align:center;padding:32px 20px;color:var(--text-muted);font-size:0.85rem;}
+
+/* ══════════════════════════════════════════════════
+   BOTTOM HUD
+   ══════════════════════════════════════════════════ */
+.bottom-hud{
+    position:fixed;bottom:0;left:0;right:0;z-index:30;
+    pointer-events:none;
+    display:flex;justify-content:center;padding:0 20px 16px;
+}
+.hud-strip{
+    pointer-events:auto;
+    display:flex;gap:6px;padding:8px 12px;
+    background:rgba(8,8,12,0.8);backdrop-filter:blur(20px);
+    border:1px solid var(--border);border-radius:16px;
+    overflow-x:auto;max-width:100%;
+}
+.hud-chip{
+    display:flex;align-items:center;gap:6px;padding:8px 14px;
+    background:rgba(255,255,255,0.03);border-radius:10px;
+    border:1px solid transparent;cursor:pointer;white-space:nowrap;
+    transition:all .25s var(--transition-smooth);
+    min-width:0;
+}
+.hud-chip:hover{background:rgba(var(--primary-rgb),0.1);border-color:rgba(var(--primary-rgb),0.2);}
+.hud-chip.active{background:rgba(var(--primary-rgb),0.15);border-color:rgba(var(--primary-rgb),0.35);}
+.hud-chip-icon{font-size:1.1rem;flex-shrink:0;}
+.hud-chip-info{display:flex;flex-direction:column;min-width:0;}
+.hud-chip-name{font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;overflow:hidden;text-overflow:ellipsis;}
+.hud-chip-lvl{font-size:0.6rem;color:var(--text-muted);font-family:var(--font-mono);}
+
+/* ══════════════════════════════════════════════════
+   SCAN MODAL
+   ══════════════════════════════════════════════════ */
+.scan-overlay{
+    position:fixed;inset:0;z-index:200;
+    background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.scan-overlay.open{opacity:1;pointer-events:auto;}
+.scan-box{
+    background:rgba(12,12,16,0.95);border:1px solid var(--border);
+    border-radius:var(--radius);padding:32px;
+    max-width:480px;width:90%;text-align:center;
+    transform:scale(0.95);transition:transform .35s var(--transition-smooth);
+}
+.scan-overlay.open .scan-box{transform:scale(1);}
+.scan-box h2{font-size:1.3rem;font-weight:800;margin-bottom:8px;}
+.scan-box p{color:var(--text-muted);font-size:0.85rem;margin-bottom:24px;line-height:1.5;}
+
+.scan-progress{
+    width:100%;height:8px;background:rgba(255,255,255,0.06);
+    border-radius:8px;overflow:hidden;margin-bottom:12px;
+}
+.scan-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--primary),#c084fc);border-radius:8px;transition:width .3s;}
+.scan-status{font-size:0.75rem;color:var(--text-muted);margin-bottom:20px;min-height:1.2em;}
+
+.scan-results{
+    text-align:left;max-height:200px;overflow-y:auto;
+    margin-bottom:20px;display:none;
+}
+.scan-result-item{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:8px 12px;background:rgba(255,255,255,0.03);
+    border-radius:8px;margin-bottom:4px;
+}
+.scan-result-skill{font-size:0.8rem;font-weight:600;}
+.scan-result-xp{font-size:0.8rem;font-weight:800;font-family:var(--font-mono);color:var(--success);}
+
+.scan-actions{display:flex;gap:10px;justify-content:center;}
+.btn-scan{
+    padding:10px 28px;border-radius:var(--radius-sm);border:none;
+    font-weight:700;font-size:0.85rem;cursor:pointer;
+    transition:all .2s var(--transition-smooth);
+}
+.btn-scan-primary{
+    background:linear-gradient(135deg,var(--primary),#9333ea);
+    color:#fff;
+}
+.btn-scan-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(var(--primary-rgb),0.4);}
+.btn-scan-secondary{background:rgba(255,255,255,0.06);color:var(--text-muted);border:1px solid var(--border);}
+.btn-scan-secondary:hover{background:rgba(255,255,255,0.1);}
+
+/* ══════════════════════════════════════════════════
+   TOAST NOTIFICATION
+   ══════════════════════════════════════════════════ */
+.skill-toast{
+    position:fixed;top:70px;right:20px;z-index:300;
+    padding:14px 20px;border-radius:var(--radius-sm);
+    background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);
+    color:var(--success);font-weight:600;font-size:0.85rem;
+    transform:translateX(120%);transition:transform .4s var(--transition-smooth);
+    display:flex;align-items:center;gap:10px;
+    max-width:360px;
+}
+.skill-toast.show{transform:translateX(0);}
+.skill-toast .toast-xp{font-family:var(--font-mono);font-weight:800;}
+
+/* ══════════════════════════════════════════════════
+   LOADING STATE
+   ══════════════════════════════════════════════════ */
+.loading-screen{
+    position:fixed;inset:0;z-index:500;
+    background:var(--bg-deep);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;transition:opacity .5s;
+}
+.loading-screen.hide{opacity:0;pointer-events:none;}
+.loading-spinner{
+    width:40px;height:40px;border:3px solid rgba(var(--primary-rgb),0.15);
+    border-top-color:var(--primary);border-radius:50%;
+    animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:0.85rem;color:var(--text-muted);}
+
+/* ══════════════════════════════════════════════════
+   SCROLLBAR
+   ══════════════════════════════════════════════════ */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(var(--primary-rgb),0.3);border-radius:4px;}
+
+/* ══════════════════════════════════════════════════
+   RESPONSIVE
+   ══════════════════════════════════════════════════ */
+@media(max-width:600px){
+    .side-panel{width:100%;border-left:none;}
+    .hud-strip{gap:4px;padding:6px 8px;}
+    .hud-chip{padding:6px 10px;}
+    .hud-chip-name{font-size:0.6rem;}
+    .scan-box{padding:24px 16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════ LOADING ════════════ -->
+<div class="loading-screen" id="loadingScreen">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Skill-Baum wird geladen…</div>
+</div>
+
+<!-- ════════════ TOP BAR ════════════ -->
+<div class="top-bar">
+    <div class="top-bar-left">
+        <button class="back-btn" onclick="history.back()" title="Zurück">←</button>
+        <h1>🌳 <span class="glow">Skill-Baum</span></h1>
+    </div>
+    <div class="top-bar-right">
+        <div class="level-badge">
+            <span>⚡</span>
+            <span>Gesamt Lv.</span>
+            <span class="lvl" id="totalLevel">1</span>
+            <span class="xp-text" id="totalXpText">0 XP</span>
+        </div>
+        <button class="top-btn" id="btnScan" onclick="openScanModal()" title="Berichtsheft scannen">
+            🔍
+            <div class="scan-pulse"></div>
+        </button>
+        <button class="top-btn" onclick="openManualAdd()" title="Manuell XP vergeben">+</button>
+    </div>
+</div>
+
+<!-- ════════════ 3D CANVAS ════════════ -->
+<canvas id="canvas3d"></canvas>
+<div class="canvas-overlay">
+    <div class="hint" id="canvasHint">Klicke auf einen Skill-Knoten oder nutze Mausrad zum Zoomen</div>
+</div>
+
+<!-- ════════════ SIDE PANEL ════════════ -->
+<div class="side-panel" id="sidePanel">
+    <div class="side-panel-header">
+        <button class="side-panel-close" onclick="closeSidePanel()">✕</button>
+        <div class="sp-icon" id="spIcon">💻</div>
+        <div class="sp-title" id="spTitle">Skill</div>
+        <div class="sp-branch" id="spBranch">Branch</div>
+    </div>
+    <div class="sp-level-ring" id="spRing">
+        <svg viewBox="0 0 100 100">
+            <circle class="ring-bg" cx="50" cy="50" r="44"></circle>
+            <circle class="ring-fill" id="spRingFill" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="276.46"></circle>
+        </svg>
+        <div class="ring-label">
+            <div class="ring-lvl" id="spLvl">1</div>
+            <div class="ring-txt">Level</div>
+        </div>
+    </div>
+    <div class="sp-xp-bar"><div class="sp-xp-fill" id="spXpFill"></div></div>
+    <div class="sp-xp-text" id="spXpText">0 / 100 XP</div>
+
+    <div class="sp-section">
+        <div class="sp-section-title">XP-Verlauf</div>
+        <div id="spHistory"></div>
+    </div>
+</div>
+
+<!-- ════════════ BOTTOM HUD ════════════ -->
+<div class="bottom-hud">
+    <div class="hud-strip" id="hudStrip"></div>
+</div>
+
+<!-- ════════════ SCAN MODAL ════════════ -->
+<div class="scan-overlay" id="scanOverlay">
+    <div class="scan-box">
+        <h2>🔍 Berichtsheft-Scan</h2>
+        <p>Die lokale KI analysiert deine Berichtsheft-Einträge und vergibt automatisch XP auf erkannte Skills.</p>
+        <div class="scan-progress"><div class="scan-progress-fill" id="scanProgressFill"></div></div>
+        <div class="scan-status" id="scanStatus">Bereit zum Scannen</div>
+        <div class="scan-results" id="scanResults"></div>
+        <div class="scan-actions">
+            <button class="btn-scan btn-scan-secondary" onclick="closeScanModal()">Schließen</button>
+            <button class="btn-scan btn-scan-primary" id="btnStartScan" onclick="startScan()">🚀 Scan starten</button>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════ TOAST ════════════ -->
+<div class="skill-toast" id="skillToast">
+    <span id="toastIcon">⚡</span>
+    <span id="toastText">+50 XP DevOps</span>
+</div>
+
+<!-- ════════════ THREE.JS CDN ════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   RPG SKILL-BAUM ENGINE
+   Powered by WebLLM + Three.js
+   ══════════════════════════════════════════════════════════════ */
+
+/* ─── SKILL DEFINITIONS ─── */
+const SKILL_BRANCHES = [
+    {
+        id: 'devops',
+        name: 'DevOps',
+        icon: '🐳',
+        color: '#3b82f6',
+        skills: [
+            { id: 'docker', name: 'Docker & Container', icon: '🐳' },
+            { id: 'cicd', name: 'CI/CD Pipelines', icon: '🔄' },
+            { id: 'kubernetes', name: 'Kubernetes', icon: '☸️' },
+            { id: 'monitoring', name: 'Monitoring & Logging', icon: '📊' },
+            { id: 'cloud', name: 'Cloud Services', icon: '☁️' },
+        ]
+    },
+    {
+        id: 'backend',
+        name: 'Backend',
+        icon: '⚙️',
+        color: '#10b981',
+        skills: [
+            { id: 'api', name: 'REST APIs', icon: '🔌' },
+            { id: 'database', name: 'Datenbanken', icon: '🗃️' },
+            { id: 'auth', name: 'Auth & Security', icon: '🔐' },
+            { id: 'serverlogic', name: 'Server-Logik', icon: '⚙️' },
+            { id: 'microservices', name: 'Microservices', icon: '🧩' },
+        ]
+    },
+    {
+        id: 'frontend',
+        name: 'Frontend',
+        icon: '🎨',
+        color: '#a855f7',
+        skills: [
+            { id: 'html_css', name: 'HTML & CSS', icon: '🎨' },
+            { id: 'javascript', name: 'JavaScript', icon: '⚡' },
+            { id: 'frameworks', name: 'Frameworks', icon: '🏗️' },
+            { id: 'responsive', name: 'Responsive Design', icon: '📱' },
+            { id: 'ux', name: 'UX / Accessibility', icon: '♿' },
+        ]
+    },
+    {
+        id: 'netzwerk',
+        name: 'Netzwerk',
+        icon: '🌐',
+        color: '#06b6d4',
+        skills: [
+            { id: 'tcp_ip', name: 'TCP/IP & Protokolle', icon: '🌐' },
+            { id: 'firewall', name: 'Firewall & VPN', icon: '🛡️' },
+            { id: 'dns_dhcp', name: 'DNS & DHCP', icon: '📡' },
+            { id: 'switching', name: 'Switching & Routing', icon: '🔀' },
+            { id: 'wlan', name: 'WLAN-Konfiguration', icon: '📶' },
+        ]
+    },
+    {
+        id: 'linux',
+        name: 'Linux & Sys',
+        icon: '🐧',
+        color: '#f59e0b',
+        skills: [
+            { id: 'shell', name: 'Shell & Scripting', icon: '💻' },
+            { id: 'admin', name: 'Systemadministration', icon: '🖥️' },
+            { id: 'virtualisierung', name: 'Virtualisierung', icon: '📦' },
+            { id: 'backup', name: 'Backup & Recovery', icon: '💾' },
+            { id: 'hardening', name: 'System Hardening', icon: '🔒' },
+        ]
+    },
+    {
+        id: 'softskills',
+        name: 'Soft Skills',
+        icon: '🧠',
+        color: '#ec4899',
+        skills: [
+            { id: 'doku', name: 'Dokumentation', icon: '📝' },
+            { id: 'teamwork', name: 'Teamarbeit', icon: '🤝' },
+            { id: 'problemloesung', name: 'Problemlösung', icon: '🧩' },
+            { id: 'praesentation', name: 'Präsentation', icon: '🎤' },
+            { id: 'zeitmanagement', name: 'Zeitmanagement', icon: '⏰' },
+        ]
+    }
+];
+
+/* ─── KEYWORD → SKILL MAPPING (Fallback when no LLM) ─── */
+const KEYWORD_MAP = {
+    docker: { skills: { docker: 50, cicd: 10 } },
+    container: { skills: { docker: 40 } },
+    kubernetes: { skills: { kubernetes: 50, docker: 10, cloud: 10 } },
+    k8s: { skills: { kubernetes: 50, docker: 10 } },
+    'ci/cd': { skills: { cicd: 50 } },
+    pipeline: { skills: { cicd: 40 } },
+    jenkins: { skills: { cicd: 40 } },
+    'github actions': { skills: { cicd: 45 } },
+    monitoring: { skills: { monitoring: 40 } },
+    grafana: { skills: { monitoring: 45 } },
+    prometheus: { skills: { monitoring: 45 } },
+    aws: { skills: { cloud: 50 } },
+    azure: { skills: { cloud: 50 } },
+    gcloud: { skills: { cloud: 50 } },
+    cloud: { skills: { cloud: 40 } },
+    api: { skills: { api: 40 } },
+    rest: { skills: { api: 45 } },
+    endpoint: { skills: { api: 35 } },
+    datenbank: { skills: { database: 40 } },
+    sql: { skills: { database: 45 } },
+    mysql: { skills: { database: 45 } },
+    postgresql: { skills: { database: 45 } },
+    mongodb: { skills: { database: 40 } },
+    migration: { skills: { database: 30 } },
+    authentifizierung: { skills: { auth: 45 } },
+    login: { skills: { auth: 30 } },
+    oauth: { skills: { auth: 50 } },
+    jwt: { skills: { auth: 45 } },
+    sicherheit: { skills: { auth: 35, hardening: 20 } },
+    server: { skills: { serverlogic: 35, admin: 15 } },
+    backend: { skills: { serverlogic: 30 } },
+    microservice: { skills: { microservices: 45 } },
+    html: { skills: { html_css: 35 } },
+    css: { skills: { html_css: 35 } },
+    scss: { skills: { html_css: 35 } },
+    tailwind: { skills: { html_css: 40, frameworks: 15 } },
+    javascript: { skills: { javascript: 40 } },
+    typescript: { skills: { javascript: 45 } },
+    react: { skills: { frameworks: 45, javascript: 15 } },
+    vue: { skills: { frameworks: 45, javascript: 15 } },
+    angular: { skills: { frameworks: 45, javascript: 15 } },
+    next: { skills: { frameworks: 40 } },
+    responsive: { skills: { responsive: 40 } },
+    'media query': { skills: { responsive: 35 } },
+    barrierefreiheit: { skills: { ux: 45 } },
+    accessibility: { skills: { ux: 45 } },
+    usability: { skills: { ux: 35 } },
+    netzwerk: { skills: { tcp_ip: 30 } },
+    tcp: { skills: { tcp_ip: 40 } },
+    ip: { skills: { tcp_ip: 30 } },
+    firewall: { skills: { firewall: 45 } },
+    vpn: { skills: { firewall: 40 } },
+    dns: { skills: { dns_dhcp: 40 } },
+    dhcp: { skills: { dns_dhcp: 40 } },
+    switch: { skills: { switching: 35 } },
+    router: { skills: { switching: 40 } },
+    vlan: { skills: { switching: 45 } },
+    wlan: { skills: { wlan: 40 } },
+    wifi: { skills: { wlan: 35 } },
+    linux: { skills: { shell: 25, admin: 25 } },
+    bash: { skills: { shell: 45 } },
+    shell: { skills: { shell: 40 } },
+    script: { skills: { shell: 30 } },
+    powershell: { skills: { shell: 35 } },
+    'active directory': { skills: { admin: 45 } },
+    gruppenrichtlinie: { skills: { admin: 40 } },
+    vm: { skills: { virtualisierung: 40 } },
+    virtualbox: { skills: { virtualisierung: 40 } },
+    vmware: { skills: { virtualisierung: 45 } },
+    'hyper-v': { skills: { virtualisierung: 45 } },
+    proxmox: { skills: { virtualisierung: 45 } },
+    backup: { skills: { backup: 45 } },
+    restore: { skills: { backup: 35 } },
+    recovery: { skills: { backup: 35 } },
+    'raid': { skills: { backup: 30 } },
+    hardening: { skills: { hardening: 45 } },
+    verschl: { skills: { hardening: 35 } },
+    dokumentation: { skills: { doku: 40 } },
+    wiki: { skills: { doku: 35 } },
+    readme: { skills: { doku: 30 } },
+    protokoll: { skills: { doku: 30 } },
+    team: { skills: { teamwork: 30 } },
+    meeting: { skills: { teamwork: 25 } },
+    besprechung: { skills: { teamwork: 25 } },
+    pair: { skills: { teamwork: 35 } },
+    'code.review': { skills: { teamwork: 30 } },
+    debugging: { skills: { problemloesung: 40 } },
+    fehler: { skills: { problemloesung: 30 } },
+    troubleshoot: { skills: { problemloesung: 45 } },
+    analyse: { skills: { problemloesung: 30 } },
+    vortrag: { skills: { praesentation: 45 } },
+    'pr\u00e4sentation': { skills: { praesentation: 50 } },
+    schulung: { skills: { praesentation: 35, teamwork: 15 } },
+    zeitplan: { skills: { zeitmanagement: 40 } },
+    deadline: { skills: { zeitmanagement: 35 } },
+    priorisierung: { skills: { zeitmanagement: 40 } },
+    sprint: { skills: { zeitmanagement: 30, teamwork: 10 } },
+    ticket: { skills: { zeitmanagement: 25 } },
+    jira: { skills: { zeitmanagement: 30 } },
+    scrum: { skills: { zeitmanagement: 30, teamwork: 20 } },
+    agile: { skills: { zeitmanagement: 25, teamwork: 15 } },
+    kanban: { skills: { zeitmanagement: 30 } },
+    git: { skills: { cicd: 20, doku: 10 } },
+    deploy: { skills: { cicd: 30, docker: 15 } },
+    depl: { skills: { cicd: 25, docker: 10 } },
+    terraform: { skills: { cloud: 40, cicd: 15 } },
+    ansible: { skills: { admin: 35, cicd: 15 } },
+    nginx: { skills: { serverlogic: 30, admin: 15 } },
+    apache: { skills: { serverlogic: 30, admin: 15 } },
+    node: { skills: { serverlogic: 35, javascript: 15 } },
+    python: { skills: { serverlogic: 30, shell: 15 } },
+    java: { skills: { serverlogic: 35 } },
+    csharp: { skills: { serverlogic: 35 } },
+    php: { skills: { serverlogic: 30 } },
+    webseite: { skills: { html_css: 20, javascript: 10 } },
+    website: { skills: { html_css: 20, javascript: 10 } },
+    webapp: { skills: { frameworks: 25, javascript: 15 } },
+};
+
+/* ─── LEVEL SYSTEM ─── */
+function xpForLevel(lvl) { return Math.floor(100 * Math.pow(1.25, lvl - 1)); }
+function levelFromXp(xp) {
+    var lvl = 1;
+    var needed = 100;
+    while (xp >= needed) { xp -= needed; lvl++; needed = xpForLevel(lvl); }
+    return { level: lvl, currentXp: xp, nextXp: needed };
+}
+function totalLevelFromAllXp(data) {
+    var total = 0;
+    for (var sid in data.skills) total += data.skills[sid].xp;
+    return levelFromXp(total);
+}
+
+/* ─── DATA MANAGEMENT ─── */
+const STORAGE_KEY = 'mwl_skill_tree';
+const SCAN_HISTORY_KEY = 'mwl_skill_scanned';
+
+function loadData() {
+    try {
+        var saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    return createFreshData();
+}
+function createFreshData() {
+    var d = { skills: {}, history: [], lastScan: null };
+    SKILL_BRANCHES.forEach(function(b) {
+        b.skills.forEach(function(s) {
+            d.skills[s.id] = { xp: 0, history: [] };
+        });
+    });
+    return d;
+}
+function saveData(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+
+function getScannedIds() {
+    try {
+        var s = localStorage.getItem(SCAN_HISTORY_KEY);
+        return s ? JSON.parse(s) : [];
+    } catch(e) { return []; }
+}
+function saveScannedIds(arr) { localStorage.setItem(SCAN_HISTORY_KEY, JSON.stringify(arr)); }
+
+function addXp(skillId, amount, source, date) {
+    var d = loadData();
+    if (!d.skills[skillId]) d.skills[skillId] = { xp: 0, history: [] };
+    var before = levelFromXp(d.skills[skillId].xp);
+    d.skills[skillId].xp += amount;
+    d.skills[skillId].history.unshift({ xp: amount, source: source, date: date || new Date().toISOString().slice(0,10) });
+    if (d.skills[skillId].history.length > 100) d.skills[skillId].history = d.skills[skillId].history.slice(0, 100);
+    d.history.unshift({ skill: skillId, xp: amount, source: source, date: date || new Date().toISOString().slice(0,10) });
+    if (d.history.length > 500) d.history = d.history.slice(0, 500);
+    saveData(d);
+    var after = levelFromXp(d.skills[skillId].xp);
+    return { levelUp: after.level > before.level, newLevel: after.level };
+}
+
+/* Skill + Branch lookup */
+function findSkillDef(skillId) {
+    for (var i = 0; i < SKILL_BRANCHES.length; i++) {
+        for (var j = 0; j < SKILL_BRANCHES[i].skills.length; j++) {
+            if (SKILL_BRANCHES[i].skills[j].id === skillId) {
+                return { skill: SKILL_BRANCHES[i].skills[j], branch: SKILL_BRANCHES[i] };
+            }
+        }
+    }
+    return null;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   THREE.JS 3D SKILL-TREE CONSTELLATION
+   ═══════════════════════════════════════════════════════════ */
+var scene, camera, renderer, raycaster, mouse, nodeObjects = [], lineObjects = [];
+var animationId, hoveredObj = null, currentFocus = null;
+var targetCamPos = null, targetCamLook = null, isCamAnimating = false;
+
+function init3D() {
+    var canvas = document.getElementById('canvas3d');
+    scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x030305, 0.008);
+    camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 12, 50);
+    camera.lookAt(0, 0, 0);
+
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight - 56);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x030305, 1);
+
+    raycaster = new THREE.Raycaster();
+    raycaster.params.Points = { threshold: 2 };
+    mouse = new THREE.Vector2(-999, -999);
+
+    /* Ambient starfield */
+    var starGeo = new THREE.BufferGeometry();
+    var starVerts = [];
+    for (var i = 0; i < 800; i++) {
+        starVerts.push((Math.random() - 0.5) * 200, (Math.random() - 0.5) * 120, (Math.random() - 0.5) * 200);
+    }
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVerts, 3));
+    var starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.4 });
+    scene.add(new THREE.Points(starGeo, starMat));
+
+    /* Ambient light */
+    scene.add(new THREE.AmbientLight(0x404060, 0.5));
+    var dirLight = new THREE.DirectionalLight(0xa855f7, 0.3);
+    dirLight.position.set(10, 20, 10);
+    scene.add(dirLight);
+
+    buildConstellations();
+    setupInteraction(canvas);
+    animate();
+}
+
+function buildConstellations() {
+    /* Clear existing */
+    nodeObjects.forEach(function(o) { scene.remove(o); });
+    lineObjects.forEach(function(o) { scene.remove(o); });
+    nodeObjects = [];
+    lineObjects = [];
+
+    var data = loadData();
+    var branchCount = SKILL_BRANCHES.length;
+    var angleStep = (Math.PI * 2) / branchCount;
+    var branchRadius = 22;
+
+    SKILL_BRANCHES.forEach(function(branch, bi) {
+        var angle = angleStep * bi - Math.PI / 2;
+        var cx = Math.cos(angle) * branchRadius;
+        var cz = Math.sin(angle) * branchRadius;
+
+        /* Branch hub node */
+        var branchTotalXp = 0;
+        branch.skills.forEach(function(s) { branchTotalXp += (data.skills[s.id] ? data.skills[s.id].xp : 0); });
+        var branchLvl = levelFromXp(branchTotalXp);
+        var hubSize = 1.2 + Math.min(branchLvl.level * 0.12, 1.5);
+        var col = new THREE.Color(branch.color);
+
+        var hubGeo = new THREE.SphereGeometry(hubSize, 24, 24);
+        var hubMat = new THREE.MeshPhongMaterial({
+            color: col, emissive: col, emissiveIntensity: 0.3 + Math.min(branchLvl.level * 0.03, 0.5),
+            transparent: true, opacity: 0.9
+        });
+        var hub = new THREE.Mesh(hubGeo, hubMat);
+        hub.position.set(cx, 0, cz);
+        hub.userData = { type: 'branch', branchId: branch.id, branchIndex: bi };
+        scene.add(hub);
+        nodeObjects.push(hub);
+
+        /* Glow ring */
+        var glowGeo = new THREE.RingGeometry(hubSize + 0.3, hubSize + 0.6, 32);
+        var glowMat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.15, side: THREE.DoubleSide });
+        var glow = new THREE.Mesh(glowGeo, glowMat);
+        glow.position.copy(hub.position);
+        glow.lookAt(camera.position);
+        glow.userData = { isGlow: true, parentHub: hub };
+        scene.add(glow);
+
+        /* Skill nodes around hub */
+        var skillCount = branch.skills.length;
+        var skillRadius = 7;
+        branch.skills.forEach(function(skill, si) {
+            var sa = angleStep * bi - Math.PI / 2 + ((si / skillCount) - 0.5) * 1.4;
+            var sr = branchRadius + skillRadius;
+            var sx = Math.cos(sa) * sr + (Math.sin(si * 1.3) * 2);
+            var sz = Math.sin(sa) * sr + (Math.cos(si * 1.7) * 2);
+            var sy = (si - skillCount / 2) * 2.2;
+
+            var skillData = data.skills[skill.id] || { xp: 0 };
+            var sLvl = levelFromXp(skillData.xp);
+            var nodeSize = 0.5 + Math.min(sLvl.level * 0.08, 0.8);
+            var intensity = skillData.xp > 0 ? 0.2 + Math.min(sLvl.level * 0.05, 0.6) : 0.05;
+
+            var nGeo = new THREE.SphereGeometry(nodeSize, 16, 16);
+            var nMat = new THREE.MeshPhongMaterial({
+                color: col, emissive: col, emissiveIntensity: intensity,
+                transparent: true, opacity: skillData.xp > 0 ? 0.95 : 0.35
+            });
+            var node = new THREE.Mesh(nGeo, nMat);
+            node.position.set(sx, sy, sz);
+            node.userData = { type: 'skill', skillId: skill.id, branchId: branch.id, branchIndex: bi, skillIndex: si };
+            scene.add(node);
+            nodeObjects.push(node);
+
+            /* Connection line hub → skill */
+            var lineGeo = new THREE.BufferGeometry().setFromPoints([hub.position, node.position]);
+            var lineMat = new THREE.LineBasicMaterial({
+                color: col, transparent: true,
+                opacity: skillData.xp > 0 ? 0.35 : 0.08
+            });
+            var line = new THREE.Line(lineGeo, lineMat);
+            scene.add(line);
+            lineObjects.push(line);
+        });
+
+        /* Lines between adjacent branches (constellation web) */
+        var nextAngle = angleStep * ((bi + 1) % branchCount) - Math.PI / 2;
+        var ncx = Math.cos(nextAngle) * branchRadius;
+        var ncz = Math.sin(nextAngle) * branchRadius;
+        var webGeo = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(cx, 0, cz),
+            new THREE.Vector3(ncx, 0, ncz)
+        ]);
+        var webMat = new THREE.LineBasicMaterial({ color: 0x333344, transparent: true, opacity: 0.12 });
+        scene.add(new THREE.Line(webGeo, webMat));
+    });
+}
+
+/* ─── Camera Controls (simple orbit) ─── */
+var isDragging = false, prevMouse = { x: 0, y: 0 };
+var camTheta = 0, camPhi = Math.PI / 6, camDist = 50;
+
+function updateCameraOrbit() {
+    camera.position.x = camDist * Math.sin(camTheta) * Math.cos(camPhi);
+    camera.position.y = camDist * Math.sin(camPhi);
+    camera.position.z = camDist * Math.cos(camTheta) * Math.cos(camPhi);
+    camera.lookAt(0, 0, 0);
+}
+
+function setupInteraction(canvas) {
+    canvas.addEventListener('pointerdown', function(e) {
+        isDragging = true;
+        prevMouse.x = e.clientX;
+        prevMouse.y = e.clientY;
+    });
+    window.addEventListener('pointermove', function(e) {
+        /* Update raycast mouse */
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -((e.clientY - 56) / (window.innerHeight - 56)) * 2 + 1;
+
+        if (isDragging) {
+            var dx = e.clientX - prevMouse.x;
+            var dy = e.clientY - prevMouse.y;
+            camTheta -= dx * 0.005;
+            camPhi = Math.max(-Math.PI / 3, Math.min(Math.PI / 2.5, camPhi + dy * 0.005));
+            updateCameraOrbit();
+            prevMouse.x = e.clientX;
+            prevMouse.y = e.clientY;
+        }
+    });
+    window.addEventListener('pointerup', function() { isDragging = false; });
+
+    canvas.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        camDist = Math.max(15, Math.min(100, camDist + e.deltaY * 0.05));
+        updateCameraOrbit();
+    }, { passive: false });
+
+    canvas.addEventListener('click', function(e) {
+        if (Math.abs(e.clientX - prevMouse.x) > 5 || Math.abs(e.clientY - prevMouse.y) > 5) return;
+        raycaster.setFromCamera(mouse, camera);
+        var hits = raycaster.intersectObjects(nodeObjects);
+        if (hits.length > 0) {
+            var obj = hits[0].object;
+            if (obj.userData.type === 'skill') {
+                openSkillPanel(obj.userData.skillId);
+            } else if (obj.userData.type === 'branch') {
+                focusBranch(obj.userData.branchIndex);
+            }
+        } else {
+            closeSidePanel();
+        }
+    });
+
+    window.addEventListener('resize', function() {
+        camera.aspect = window.innerWidth / (window.innerHeight - 56);
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight - 56);
+    });
+}
+
+/* ─── Animation Loop ─── */
+var clock = new THREE.Clock();
+function animate() {
+    animationId = requestAnimationFrame(animate);
+    var t = clock.getElapsedTime();
+
+    /* Gentle node pulse */
+    nodeObjects.forEach(function(obj, i) {
+        if (obj.userData.type === 'skill' || obj.userData.type === 'branch') {
+            obj.scale.setScalar(1 + Math.sin(t * 1.5 + i * 0.7) * 0.04);
+        }
+    });
+
+    /* Hover highlight */
+    if (!isDragging) {
+        raycaster.setFromCamera(mouse, camera);
+        var hits = raycaster.intersectObjects(nodeObjects);
+        if (hoveredObj && hoveredObj !== (hits.length > 0 ? hits[0].object : null)) {
+            if (hoveredObj.userData.origScale) hoveredObj.scale.setScalar(hoveredObj.userData.origScale);
+            hoveredObj = null;
+            document.getElementById('canvas3d').style.cursor = 'default';
+        }
+        if (hits.length > 0 && !hits[0].object.userData.isGlow) {
+            hoveredObj = hits[0].object;
+            if (!hoveredObj.userData.origScale) hoveredObj.userData.origScale = 1;
+            hoveredObj.scale.setScalar(1.3);
+            document.getElementById('canvas3d').style.cursor = 'pointer';
+        }
+    }
+
+    renderer.render(scene, camera);
+}
+
+/* ─── Focus on a branch ─── */
+function focusBranch(bi) {
+    var angle = (Math.PI * 2 / SKILL_BRANCHES.length) * bi - Math.PI / 2;
+    camTheta = angle + Math.PI;
+    camDist = 30;
+    camPhi = Math.PI / 8;
+    updateCameraOrbit();
+    highlightBranchHud(SKILL_BRANCHES[bi].id);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOTTOM HUD
+   ═══════════════════════════════════════════════════════════ */
+function buildHud() {
+    var data = loadData();
+    var strip = document.getElementById('hudStrip');
+    strip.innerHTML = '';
+    SKILL_BRANCHES.forEach(function(b, i) {
+        var totalXp = 0;
+        b.skills.forEach(function(s) { totalXp += (data.skills[s.id] ? data.skills[s.id].xp : 0); });
+        var info = levelFromXp(totalXp);
+        var chip = document.createElement('div');
+        chip.className = 'hud-chip';
+        chip.setAttribute('data-branch', b.id);
+        chip.onclick = function() { focusBranch(i); openBranchSkills(b.id); };
+        chip.innerHTML = '<span class="hud-chip-icon">' + b.icon + '</span>'
+            + '<div class="hud-chip-info">'
+            + '<div class="hud-chip-name">' + b.name + '</div>'
+            + '<div class="hud-chip-lvl">Lv.' + info.level + ' · ' + totalXp + ' XP</div>'
+            + '</div>';
+        strip.appendChild(chip);
+    });
+}
+
+function highlightBranchHud(branchId) {
+    document.querySelectorAll('.hud-chip').forEach(function(c) {
+        c.classList.toggle('active', c.getAttribute('data-branch') === branchId);
+    });
+}
+
+function openBranchSkills(branchId) {
+    var branch = SKILL_BRANCHES.find(function(b) { return b.id === branchId; });
+    if (!branch) return;
+    /* Open first skill of that branch */
+    openSkillPanel(branch.skills[0].id);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SIDE PANEL
+   ═══════════════════════════════════════════════════════════ */
+function openSkillPanel(skillId) {
+    var def = findSkillDef(skillId);
+    if (!def) return;
+    var data = loadData();
+    var sd = data.skills[skillId] || { xp: 0, history: [] };
+    var info = levelFromXp(sd.xp);
+
+    document.getElementById('spIcon').textContent = def.skill.icon;
+    document.getElementById('spTitle').textContent = def.skill.name;
+    document.getElementById('spBranch').textContent = def.branch.name;
+    document.getElementById('spBranch').style.color = def.branch.color;
+
+    document.getElementById('spLvl').textContent = info.level;
+    var pct = info.currentXp / info.nextXp;
+    var circ = 276.46;
+    document.getElementById('spRingFill').style.strokeDashoffset = circ - circ * pct;
+    document.getElementById('spRingFill').style.stroke = def.branch.color;
+    document.getElementById('spXpFill').style.width = (pct * 100) + '%';
+    document.getElementById('spXpFill').style.background = 'linear-gradient(90deg,' + def.branch.color + ',#c084fc)';
+    document.getElementById('spXpText').textContent = info.currentXp + ' / ' + info.nextXp + ' XP  (Gesamt: ' + sd.xp + ')';
+
+    var histHtml = '';
+    if (sd.history && sd.history.length > 0) {
+        sd.history.slice(0, 20).forEach(function(h) {
+            histHtml += '<div class="sp-history-item">'
+                + '<div class="sp-history-xp">+' + h.xp + ' XP</div>'
+                + '<div><div class="sp-history-text">' + escHtml(h.source) + '</div>'
+                + '<div class="sp-history-date">' + h.date + '</div></div>'
+                + '</div>';
+        });
+    } else {
+        histHtml = '<div class="sp-empty">Noch keine XP gesammelt.<br>Scanne dein Berichtsheft! 🔍</div>';
+    }
+    document.getElementById('spHistory').innerHTML = histHtml;
+    document.getElementById('sidePanel').classList.add('open');
+}
+
+function closeSidePanel() {
+    document.getElementById('sidePanel').classList.remove('open');
+}
+
+function escHtml(s) {
+    var d = document.createElement('div');
+    d.appendChild(document.createTextNode(s));
+    return d.innerHTML;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   OVERALL LEVEL
+   ═══════════════════════════════════════════════════════════ */
+function updateTotalLevel() {
+    var data = loadData();
+    var total = 0;
+    for (var k in data.skills) total += data.skills[k].xp;
+    var info = levelFromXp(total);
+    document.getElementById('totalLevel').textContent = info.level;
+    document.getElementById('totalXpText').textContent = total + ' XP';
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════════════════ */
+var toastTimer = null;
+function showToast(text, icon) {
+    var toast = document.getElementById('skillToast');
+    document.getElementById('toastText').textContent = text;
+    document.getElementById('toastIcon').textContent = icon || '⚡';
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { toast.classList.remove('show'); }, 3500);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCAN ENGINE — Keyword Fallback + WebLLM
+   ═══════════════════════════════════════════════════════════ */
+function openScanModal() {
+    document.getElementById('scanOverlay').classList.add('open');
+    document.getElementById('scanProgressFill').style.width = '0%';
+    document.getElementById('scanStatus').textContent = 'Bereit zum Scannen';
+    document.getElementById('scanResults').style.display = 'none';
+    document.getElementById('scanResults').innerHTML = '';
+    document.getElementById('btnStartScan').disabled = false;
+    document.getElementById('btnStartScan').textContent = '🚀 Scan starten';
+}
+function closeScanModal() {
+    document.getElementById('scanOverlay').classList.remove('open');
+}
+
+function getBerichtsheftEntries() {
+    try {
+        var raw = localStorage.getItem('berichtsheft_reports');
+        return raw ? JSON.parse(raw) : [];
+    } catch(e) { return []; }
+}
+
+function getTimeTrackerEntries() {
+    try {
+        var raw = localStorage.getItem('tg_pro_data');
+        if (!raw) return [];
+        var d = JSON.parse(raw);
+        return (d.entries || []).filter(function(e) { return e.info && e.info.trim(); });
+    } catch(e) { return []; }
+}
+
+async function startScan() {
+    var btn = document.getElementById('btnStartScan');
+    btn.disabled = true;
+    btn.textContent = '⏳ Scannt…';
+    document.getElementById('btnScan').classList.add('scanning');
+
+    var reports = getBerichtsheftEntries();
+    var ttEntries = getTimeTrackerEntries();
+    var scannedIds = getScannedIds();
+
+    /* Merge texts: Berichtsheft activities + time tracker notes */
+    var entries = [];
+    reports.forEach(function(r) {
+        var id = 'bh_' + r.id;
+        if (scannedIds.indexOf(id) >= 0) return;
+        var text = (r.activities || '');
+        if (r.dailyActivities) {
+            for (var day in r.dailyActivities) text += ' ' + r.dailyActivities[day];
+        }
+        if (r.school) text += ' ' + r.school;
+        if (text.trim()) entries.push({ id: id, text: text.trim(), date: r.dateFrom || r.createdAt || '' });
+    });
+    ttEntries.forEach(function(e) {
+        var id = 'tt_' + e.id;
+        if (scannedIds.indexOf(id) >= 0) return;
+        if (e.info && e.info.trim()) entries.push({ id: id, text: e.info.trim(), date: e.date || '' });
+    });
+
+    if (entries.length === 0) {
+        document.getElementById('scanStatus').textContent = 'Keine neuen Einträge gefunden. Schreibe zuerst etwas ins Berichtsheft!';
+        document.getElementById('scanProgressFill').style.width = '100%';
+        btn.textContent = '✓ Fertig';
+        document.getElementById('btnScan').classList.remove('scanning');
+        return;
+    }
+
+    document.getElementById('scanStatus').textContent = entries.length + ' neue Einträge gefunden. Analysiere…';
+
+    /* Try WebLLM first, fallback to keyword matching */
+    var useWebLLM = false;
+    try {
+        if (typeof WebLLMIntegration !== 'undefined') {
+            var llm = new WebLLMIntegration();
+            if (llm.engine) useWebLLM = true;
+        }
+    } catch(e) {}
+
+    var allResults = {};
+    var newScanned = [];
+
+    for (var i = 0; i < entries.length; i++) {
+        var entry = entries[i];
+        var pct = Math.round(((i + 1) / entries.length) * 100);
+        document.getElementById('scanProgressFill').style.width = pct + '%';
+        document.getElementById('scanStatus').textContent = 'Analysiere Eintrag ' + (i + 1) + '/' + entries.length + '…';
+
+        var skillXps = {};
+
+        if (useWebLLM) {
+            skillXps = await scanWithLLM(entry.text);
+        }
+
+        /* Always run keyword fallback (additive if LLM gave partial results) */
+        var kwResults = scanWithKeywords(entry.text);
+        for (var sk in kwResults) {
+            if (!skillXps[sk]) skillXps[sk] = 0;
+            if (!useWebLLM) skillXps[sk] += kwResults[sk];
+            else skillXps[sk] = Math.max(skillXps[sk], kwResults[sk]); /* take higher */
+        }
+
+        /* Apply XP */
+        for (var sid in skillXps) {
+            var xp = skillXps[sid];
+            if (xp <= 0) continue;
+            var result = addXp(sid, xp, entry.text.substring(0, 120), entry.date);
+            if (!allResults[sid]) allResults[sid] = 0;
+            allResults[sid] += xp;
+        }
+
+        newScanned.push(entry.id);
+
+        /* Small delay for UI */
+        await new Promise(function(r) { setTimeout(r, 50); });
+    }
+
+    /* Save scanned IDs */
+    scannedIds = scannedIds.concat(newScanned);
+    saveScannedIds(scannedIds);
+
+    /* Show results */
+    document.getElementById('scanProgressFill').style.width = '100%';
+    var resDiv = document.getElementById('scanResults');
+    var resHtml = '';
+    var sortedSkills = Object.keys(allResults).sort(function(a, b) { return allResults[b] - allResults[a]; });
+    sortedSkills.forEach(function(sid) {
+        var def = findSkillDef(sid);
+        if (!def) return;
+        resHtml += '<div class="scan-result-item">'
+            + '<span class="scan-result-skill">' + def.skill.icon + ' ' + def.skill.name + '</span>'
+            + '<span class="scan-result-xp">+' + allResults[sid] + ' XP</span>'
+            + '</div>';
+    });
+    if (sortedSkills.length === 0) {
+        resHtml = '<div class="sp-empty">Keine Skills erkannt. Versuche detailliertere Einträge!</div>';
+    }
+    resDiv.innerHTML = resHtml;
+    resDiv.style.display = 'block';
+
+    var totalGained = 0;
+    for (var s in allResults) totalGained += allResults[s];
+    document.getElementById('scanStatus').textContent = '✅ ' + entries.length + ' Einträge gescannt · +' + totalGained + ' XP vergeben';
+    btn.textContent = '✓ Fertig';
+    document.getElementById('btnScan').classList.remove('scanning');
+
+    /* Refresh everything */
+    buildConstellations();
+    buildHud();
+    updateTotalLevel();
+    if (totalGained > 0) showToast('+' + totalGained + ' XP aus Berichtsheft!', '🎯');
+}
+
+/* ─── Keyword-Based Scanner ─── */
+function scanWithKeywords(text) {
+    var lower = text.toLowerCase();
+    var results = {};
+    for (var kw in KEYWORD_MAP) {
+        if (lower.indexOf(kw) >= 0) {
+            var map = KEYWORD_MAP[kw].skills;
+            for (var sid in map) {
+                if (!results[sid]) results[sid] = 0;
+                results[sid] += map[sid];
+            }
+        }
+    }
+    return results;
+}
+
+/* ─── WebLLM Scanner ─── */
+async function scanWithLLM(text) {
+    try {
+        var skillList = [];
+        SKILL_BRANCHES.forEach(function(b) {
+            b.skills.forEach(function(s) {
+                skillList.push(s.id + ':' + s.name);
+            });
+        });
+
+        var prompt = 'Du bist ein Skill-Analyzer f\u00fcr IT-Azubis. Analysiere diesen Berichtsheft-Eintrag und vergib XP (10-80) f\u00fcr relevante Skills.\n\n'
+            + 'Verf\u00fcgbare Skills: ' + skillList.join(', ') + '\n\n'
+            + 'Eintrag: "' + text.substring(0, 500) + '"\n\n'
+            + 'Antworte NUR im Format: skill_id:xp,skill_id:xp (z.B. docker:50,api:30)\n'
+            + 'Vergib nur XP f\u00fcr klar erkennbare Skills.';
+
+        var response = await window._webllmEngine.chat.completions.create({
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 100,
+            temperature: 0.3
+        });
+
+        var answer = response.choices[0].message.content.trim();
+        var results = {};
+        answer.split(',').forEach(function(pair) {
+            var parts = pair.trim().split(':');
+            if (parts.length === 2) {
+                var sid = parts[0].trim();
+                var xp = parseInt(parts[1].trim());
+                if (sid && !isNaN(xp) && xp > 0 && xp <= 100) {
+                    /* Validate skill exists */
+                    if (findSkillDef(sid)) results[sid] = xp;
+                }
+            }
+        });
+        return results;
+    } catch(e) {
+        console.warn('[SkillTree] LLM scan failed, using keywords:', e);
+        return {};
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MANUAL XP ADD
+   ═══════════════════════════════════════════════════════════ */
+function openManualAdd() {
+    var allSkills = [];
+    SKILL_BRANCHES.forEach(function(b) {
+        b.skills.forEach(function(s) {
+            allSkills.push({ id: s.id, name: b.icon + ' ' + s.name + ' (' + b.name + ')' });
+        });
+    });
+
+    var opts = allSkills.map(function(s) { return '<option value="' + s.id + '">' + s.name + '</option>'; }).join('');
+    var overlay = document.createElement('div');
+    overlay.className = 'scan-overlay open';
+    overlay.id = 'manualOverlay';
+    overlay.innerHTML = '<div class="scan-box">'
+        + '<h2>+ Manuell XP vergeben</h2>'
+        + '<p>W\u00e4hle einen Skill und vergib XP f\u00fcr eine T\u00e4tigkeit.</p>'
+        + '<div style="text-align:left;margin-bottom:12px;">'
+        + '<label style="font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:4px;">Skill</label>'
+        + '<select id="manualSkill" style="width:100%;padding:10px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text-main);font-size:0.85rem;">' + opts + '</select>'
+        + '</div>'
+        + '<div style="text-align:left;margin-bottom:12px;">'
+        + '<label style="font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:4px;">XP (10-100)</label>'
+        + '<input id="manualXp" type="number" min="10" max="100" value="30" style="width:100%;padding:10px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text-main);font-size:0.85rem;">'
+        + '</div>'
+        + '<div style="text-align:left;margin-bottom:20px;">'
+        + '<label style="font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:4px;">Beschreibung</label>'
+        + '<input id="manualDesc" type="text" placeholder="z.B. Docker Container konfiguriert" style="width:100%;padding:10px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--text-main);font-size:0.85rem;">'
+        + '</div>'
+        + '<div class="scan-actions">'
+        + '<button class="btn-scan btn-scan-secondary" onclick="document.getElementById(\'manualOverlay\').remove()">Abbrechen</button>'
+        + '<button class="btn-scan btn-scan-primary" onclick="submitManualXp()">✓ Vergeben</button>'
+        + '</div></div>';
+    document.body.appendChild(overlay);
+}
+
+function submitManualXp() {
+    var sid = document.getElementById('manualSkill').value;
+    var xp = parseInt(document.getElementById('manualXp').value);
+    var desc = document.getElementById('manualDesc').value.trim() || 'Manuell vergeben';
+    if (!sid || isNaN(xp) || xp < 1) return;
+    xp = Math.min(100, Math.max(1, xp));
+
+    var result = addXp(sid, xp, desc);
+    var def = findSkillDef(sid);
+    document.getElementById('manualOverlay').remove();
+
+    buildConstellations();
+    buildHud();
+    updateTotalLevel();
+    showToast('+' + xp + ' XP ' + (def ? def.skill.name : sid), def ? def.skill.icon : '⚡');
+    if (result.levelUp) {
+        setTimeout(function() { showToast(def.skill.name + ' ist jetzt Level ' + result.newLevel + '!', '🎉'); }, 2000);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', function() {
+    init3D();
+    buildHud();
+    updateTotalLevel();
+    updateCameraOrbit();
+
+    /* Hide loading */
+    setTimeout(function() {
+        document.getElementById('loadingScreen').classList.add('hide');
+    }, 600);
+
+    /* Hide hint after 8s */
+    setTimeout(function() {
+        var hint = document.getElementById('canvasHint');
+        if (hint) hint.style.opacity = '0';
+    }, 8000);
+
+    /* Try to grab existing WebLLM engine if loaded */
+    try {
+        if (window.opener && window.opener._webllmEngine) {
+            window._webllmEngine = window.opener._webllmEngine;
+        }
+    } catch(e) {}
+});
+</script>
+</body>
+</html>

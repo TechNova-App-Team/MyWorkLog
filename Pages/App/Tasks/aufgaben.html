@@ -1444,6 +1444,16 @@ function addSub(ci, ti, inputEl) {
 function toggleSub(ci, ti, si) {
     categories[ci].tasks[ti].subtasks[si].done = !categories[ci].tasks[ti].subtasks[si].done;
     save();
+    var task = categories[ci].tasks[ti];
+    var subs = task.subtasks || [];
+    if (subs.length > 0 && subs.every(function(s) { return s.done; })) {
+        var states = getStates();
+        if (!states[task.id]) {
+            states[task.id] = true;
+            saveStates(states);
+            checkAchievements(states);
+        }
+    }
     render();
     checkSubAchievement();
 }
