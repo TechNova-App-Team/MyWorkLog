@@ -4316,6 +4316,31 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             .school-check-row .glass-input { max-width: 100%; }
         }
 
+        /* --- EXPORT STATISTICS MODAL --- */
+        .export-modal-box { width:95%; max-width:600px; padding:0; backdrop-filter:blur(30px); border-radius:20px; border:1px solid rgba(var(--primary-rgb),0.25); overflow:hidden; }
+        .export-header { padding:24px 28px 20px; background:linear-gradient(135deg, rgba(var(--primary-rgb),0.1), rgba(var(--primary-rgb),0.04)); border-bottom:1px solid rgba(var(--primary-rgb),0.1); }
+        .export-header h3 { margin:0; font-size:1.2rem; font-weight:800; color:#fff; display:flex; align-items:center; gap:10px; }
+        .export-stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(120px,1fr)); gap:12px; padding:20px 28px; }
+        .export-stat-card { padding:14px; border-radius:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); text-align:center; }
+        .export-stat-value { font-size:1.5rem; font-weight:800; font-family:var(--font-mono); color:var(--primary); }
+        .export-stat-label { font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; margin-top:4px; font-weight:600; }
+        .export-options { padding:0 28px 24px; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+        .export-option-card { padding:20px; border-radius:16px; border:1.5px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.02); cursor:pointer; transition:all 0.3s cubic-bezier(0.4,0,0.2,1); position:relative; overflow:hidden; }
+        .export-option-card::before { content:''; position:absolute; inset:0; opacity:0; transition:opacity 0.3s; }
+        .export-option-card:hover { border-color:rgba(var(--primary-rgb),0.35); transform:translateY(-2px); }
+        .export-option-card:hover::before { opacity:1; }
+        .export-option-card.opt-minimal::before { background:linear-gradient(135deg, rgba(16,185,129,0.06), transparent); }
+        .export-option-card.opt-minimal:hover { border-color:rgba(16,185,129,0.4); }
+        .export-option-card.opt-max::before { background:linear-gradient(135deg, rgba(var(--primary-rgb),0.06), transparent); }
+        .export-option-card.opt-max:hover { border-color:rgba(var(--primary-rgb),0.4); }
+        .export-opt-icon { font-size:2rem; margin-bottom:10px; }
+        .export-opt-title { font-size:0.95rem; font-weight:700; color:#fff; margin-bottom:4px; }
+        .export-opt-desc { font-size:0.75rem; color:var(--text-muted); line-height:1.5; }
+        .export-opt-size { display:inline-block; margin-top:8px; padding:3px 10px; border-radius:8px; font-size:0.7rem; font-weight:700; font-family:var(--font-mono); }
+        .opt-minimal .export-opt-size { background:rgba(16,185,129,0.12); color:#10b981; }
+        .opt-max .export-opt-size { background:rgba(var(--primary-rgb),0.12); color:var(--primary); }
+        @media (max-width:500px) { .export-options { grid-template-columns:1fr; } .export-stats-grid { grid-template-columns:repeat(2,1fr); } }
+
         /* --- PERFORMANCE SPECIFIC STYLES --- */
         .kpi-large {
             text-align: center;
@@ -11318,6 +11343,32 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         </div>
     </div>
 
+    <!-- Export Statistics Modal -->
+    <div class="modal" id="exportStatsModal" style="display:none;">
+        <div class="modal-box export-modal-box" style="position:relative;">
+            <button class="modal-close-x" aria-label="Schließen" onclick="document.getElementById('exportStatsModal').style.display='none'" title="Schließen">×</button>
+            <div class="export-header">
+                <h3>📊 Export & Statistik</h3>
+            </div>
+            <div class="export-stats-grid" id="exportStatsGrid"></div>
+            <div style="padding:0 28px 8px;"><div style="font-size:0.8rem; font-weight:700; color:var(--text-main); letter-spacing:0.3px;">Export-Modus wählen</div></div>
+            <div class="export-options">
+                <div class="export-option-card opt-minimal" onclick="runExportMinimal()">
+                    <div class="export-opt-icon">📦</div>
+                    <div class="export-opt-title">Minimal</div>
+                    <div class="export-opt-desc">Kompaktes JSON-Backup. Nur Daten, kein Schnickschnack. Perfekt für Speicher & Archiv.</div>
+                    <span class="export-opt-size" id="exportSizeMinimal">~0 KB</span>
+                </div>
+                <div class="export-option-card opt-max" onclick="runExportMax()">
+                    <div class="export-opt-icon">🚀</div>
+                    <div class="export-opt-title">MAX Report</div>
+                    <div class="export-opt-desc">Vollständiger HTML-Report mit Diagrammen, Statistiken & schickem UI. Offline lesbar.</div>
+                    <span class="export-opt-size" id="exportSizeMax">~0 KB</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Mood Selector Modal -->
     <div class="modal" id="moodSelectorModal" style="display:none;">
         <div class="modal-box" style="width:90%; max-width:400px; padding:24px; backdrop-filter:blur(20px); border-radius:16px; border:1px solid rgba(168, 85, 247, 0.3); position:relative;">
@@ -16864,6 +16915,27 @@ TIPPS:
                 display: flex;
                 align-items: center;
                 gap: 12px;
+            " onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'" onclick="closeExportMenu(); openExportStatsModal();">
+                <span style="font-size:1.3rem;">📊</span>
+                <div>
+                    <div style="font-weight:600;">Export mit Statistik</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Minimal (JSON) oder MAX Report (HTML mit Diagrammen)</div>
+                </div>
+            </button>
+            <button style="
+                width: 100%;
+                padding: 1rem;
+                background: transparent;
+                border: none;
+                border-bottom: 1px solid var(--border);
+                color: var(--text-main);
+                text-align: left;
+                cursor: pointer;
+                transition: background 0.2s;
+                font-size: 0.95rem;
+                display: flex;
+                align-items: center;
+                gap: 12px;
             " onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'" onclick="closeExportMenu(); exportData('json');">
                 <span style="font-size:1.3rem;">📄</span>
                 <div>
@@ -16929,6 +17001,257 @@ TIPPS:
             window.exportMenuElement = null;
             document.removeEventListener('click', closeExportMenu);
         }
+    }
+
+    // ===== EXPORT STATISTICS & DUAL-MODE EXPORT =====
+    function openExportStatsModal() {
+        const entries = data.entries || [];
+        const workEntries = entries.filter(e => e.type === 'work');
+        const totalHours = workEntries.reduce((s, e) => s + (e.worked || 0), 0);
+        const totalDays = entries.length;
+        const totalDiff = entries.reduce((s, e) => s + (e.diff || 0), 0);
+        const projects = [...new Set(entries.map(e => e.project).filter(Boolean))];
+        const vacDays = entries.filter(e => e.type === 'vacation').length;
+        const sickDays = entries.filter(e => e.type === 'sick').length;
+        const schoolDays = entries.filter(e => e.type === 'school').length;
+        const dateRange = entries.length ? entries[entries.length-1].date + ' → ' + entries[0].date : '—';
+
+        const grid = document.getElementById('exportStatsGrid');
+        grid.innerHTML = `
+            <div class="export-stat-card"><div class="export-stat-value">${totalDays}</div><div class="export-stat-label">Einträge</div></div>
+            <div class="export-stat-card"><div class="export-stat-value">${totalHours.toFixed(0)}h</div><div class="export-stat-label">Arbeitsstunden</div></div>
+            <div class="export-stat-card"><div class="export-stat-value" style="color:${totalDiff >= 0 ? 'var(--success)' : 'var(--danger)'}">${totalDiff >= 0 ? '+' : ''}${totalDiff.toFixed(1)}h</div><div class="export-stat-label">Saldo</div></div>
+            <div class="export-stat-card"><div class="export-stat-value">${projects.length}</div><div class="export-stat-label">Projekte</div></div>
+            <div class="export-stat-card"><div class="export-stat-value">${vacDays}</div><div class="export-stat-label">Urlaub</div></div>
+            <div class="export-stat-card"><div class="export-stat-value">${sickDays}</div><div class="export-stat-label">Krank</div></div>
+            <div class="export-stat-card"><div class="export-stat-value">${schoolDays}</div><div class="export-stat-label">Berufsschule</div></div>
+            <div class="export-stat-card"><div class="export-stat-value" style="font-size:0.85rem;">${dateRange}</div><div class="export-stat-label">Zeitraum</div></div>
+        `;
+
+        // Estimate sizes
+        const minimalData = { entries: data.entries, settings: data.settings };
+        const minSize = new Blob([JSON.stringify(minimalData)]).size;
+        document.getElementById('exportSizeMinimal').textContent = '~' + (minSize / 1024).toFixed(0) + ' KB';
+        // MAX report is ~3-5x bigger (inline HTML+CSS+SVG charts)
+        document.getElementById('exportSizeMax').textContent = '~' + Math.round((minSize * 4) / 1024) + ' KB';
+
+        document.getElementById('exportStatsModal').style.display = 'flex';
+    }
+
+    function runExportMinimal() {
+        const minimalData = {
+            _exportType: 'minimal',
+            _version: 1,
+            _created: new Date().toISOString(),
+            _app: 'MyWorkLog',
+            _entryCount: data.entries.length,
+            entries: data.entries,
+            settings: data.settings
+        };
+        const blob = new Blob([JSON.stringify(minimalData)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'MyWorkLog_Minimal_' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        try { localStorage.setItem('tt_last_export', new Date().toISOString()); } catch(e) {}
+        document.getElementById('exportStatsModal').style.display = 'none';
+        showSmartNotification('📦 Minimal Export', `${data.entries.length} Einträge kompakt exportiert (${(blob.size/1024).toFixed(0)} KB)`, 'success');
+    }
+
+    function runExportMax() {
+        const entries = (data.entries || []).slice().sort((a,b) => new Date(a.date) - new Date(b.date));
+        const workEntries = entries.filter(e => e.type === 'work');
+        const totalHours = workEntries.reduce((s,e) => s + (e.worked||0), 0);
+        const totalDiff = entries.reduce((s,e) => s + (e.diff||0), 0);
+        const projects = [...new Set(entries.map(e => e.project).filter(Boolean))];
+        const vacDays = entries.filter(e => e.type === 'vacation').length;
+        const sickDays = entries.filter(e => e.type === 'sick').length;
+        const schoolDays = entries.filter(e => e.type === 'school').length;
+        const avgPerDay = workEntries.length > 0 ? (totalHours / workEntries.length) : 0;
+
+        // Build weekly aggregation for chart
+        const weekMap = {};
+        entries.forEach(e => {
+            const d = new Date(e.date);
+            const wk = getWeek(d);
+            const yr = d.getFullYear();
+            const key = yr + '-KW' + String(wk).padStart(2,'0');
+            if (!weekMap[key]) weekMap[key] = { worked: 0, expected: 0, diff: 0 };
+            weekMap[key].worked += (e.worked || 0);
+            weekMap[key].expected += (e.expected || 0);
+            weekMap[key].diff += (e.diff || 0);
+        });
+        const weekKeys = Object.keys(weekMap).sort();
+
+        // Build project breakdown
+        const projectMap = {};
+        workEntries.forEach(e => {
+            const p = e.project || 'Ohne Projekt';
+            projectMap[p] = (projectMap[p] || 0) + (e.worked || 0);
+        });
+
+        // Build day distribution (Mo-Fr)
+        const dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+        const dayHours = [0,0,0,0,0,0,0];
+        const dayCounts = [0,0,0,0,0,0,0];
+        workEntries.forEach(e => { const di = new Date(e.date).getDay(); dayHours[di] += e.worked||0; dayCounts[di]++; });
+        const dayAvg = dayHours.map((h,i) => dayCounts[i] ? (h/dayCounts[i]) : 0);
+
+        // Month breakdown
+        const monthMap = {};
+        entries.forEach(e => {
+            const key = e.date.substring(0,7);
+            if (!monthMap[key]) monthMap[key] = { worked:0, expected:0, diff:0, count:0 };
+            monthMap[key].worked += (e.worked||0);
+            monthMap[key].expected += (e.expected||0);
+            monthMap[key].diff += (e.diff||0);
+            monthMap[key].count++;
+        });
+
+        // Type distribution for pie
+        const typeCounts = {};
+        entries.forEach(e => { typeCounts[e.type] = (typeCounts[e.type]||0) + 1; });
+        const typeLabels = { work:'Arbeit', vacation:'Urlaub', sick:'Krank', school:'Berufsschule', holiday:'Feiertag', gleittag:'Gleittag' };
+        const typeColors = { work:'#a855f7', vacation:'#f59e0b', sick:'#ef4444', school:'#3b82f6', holiday:'#10b981', gleittag:'#06b6d4' };
+
+        // SVG bar chart for weekly hours
+        const maxWeekHours = Math.max(...weekKeys.map(k => weekMap[k].worked), 1);
+        const barW = Math.max(12, Math.min(40, 500 / weekKeys.length));
+        const chartW = weekKeys.length * (barW + 4) + 60;
+        const chartH = 180;
+        let weekBars = '';
+        weekKeys.forEach((k, i) => {
+            const h = (weekMap[k].worked / maxWeekHours) * (chartH - 30);
+            const x = 50 + i * (barW + 4);
+            const color = weekMap[k].diff >= 0 ? '#a855f7' : '#ef4444';
+            weekBars += `<rect x="${x}" y="${chartH - h - 20}" width="${barW}" height="${h}" rx="3" fill="${color}" opacity="0.8"/>`;
+            if (i % Math.max(1, Math.floor(weekKeys.length/8)) === 0) {
+                weekBars += `<text x="${x + barW/2}" y="${chartH - 4}" text-anchor="middle" fill="#888" font-size="9">${k.split('-')[1]}</text>`;
+            }
+        });
+        // Y axis labels
+        for (let y = 0; y <= 4; y++) {
+            const val = (maxWeekHours / 4 * y).toFixed(0);
+            const yPos = chartH - 20 - ((chartH - 30) / 4) * y;
+            weekBars += `<text x="45" y="${yPos + 4}" text-anchor="end" fill="#666" font-size="9">${val}h</text>`;
+            weekBars += `<line x1="50" y1="${yPos}" x2="${chartW}" y2="${yPos}" stroke="#333" stroke-dasharray="3"/>`;
+        }
+        const weekChartSVG = `<svg viewBox="0 0 ${chartW} ${chartH}" style="width:100%;height:auto;">${weekBars}</svg>`;
+
+        // SVG for day distribution
+        const maxDayAvg = Math.max(...dayAvg, 1);
+        let dayBars = '';
+        [1,2,3,4,5].forEach((di, idx) => {
+            const h = (dayAvg[di] / maxDayAvg) * 100;
+            const x = 50 + idx * 70;
+            dayBars += `<rect x="${x}" y="${130-h}" width="50" height="${h}" rx="4" fill="#a855f7" opacity="0.75"/>`;
+            dayBars += `<text x="${x+25}" y="148" text-anchor="middle" fill="#999" font-size="11">${dayNames[di]}</text>`;
+            dayBars += `<text x="${x+25}" y="${125-h}" text-anchor="middle" fill="#ccc" font-size="10">${dayAvg[di].toFixed(1)}h</text>`;
+        });
+        const dayChartSVG = `<svg viewBox="0 0 420 155" style="width:100%;max-width:420px;height:auto;">${dayBars}</svg>`;
+
+        // SVG donut for type distribution
+        const total = Object.values(typeCounts).reduce((s,v)=>s+v,0);
+        let angle = 0;
+        let donutPaths = '';
+        let donutLegend = '';
+        Object.entries(typeCounts).forEach(([type, count]) => {
+            const pct = count / total;
+            const a1 = angle * Math.PI / 180;
+            angle += pct * 360;
+            const a2 = angle * Math.PI / 180;
+            const large = pct > 0.5 ? 1 : 0;
+            const r = 60; const cx = 80; const cy = 80;
+            const x1 = cx + r * Math.cos(a1); const y1 = cy + r * Math.sin(a1);
+            const x2 = cx + r * Math.cos(a2); const y2 = cy + r * Math.sin(a2);
+            const ri = 35;
+            const x3 = cx + ri * Math.cos(a2); const y3 = cy + ri * Math.sin(a2);
+            const x4 = cx + ri * Math.cos(a1); const y4 = cy + ri * Math.sin(a1);
+            const color = typeColors[type] || '#888';
+            donutPaths += `<path d="M${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} L${x3},${y3} A${ri},${ri} 0 ${large},0 ${x4},${y4} Z" fill="${color}" opacity="0.85"/>`;
+            donutLegend += `<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#ccc;"><span style="width:12px;height:12px;border-radius:3px;background:${color};display:inline-block;"></span>${typeLabels[type]||type}: ${count} (${(pct*100).toFixed(0)}%)</div>`;
+        });
+        const donutSVG = `<div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;"><svg viewBox="0 0 160 160" style="width:160px;height:160px;">${donutPaths}</svg><div style="display:flex;flex-direction:column;gap:6px;">${donutLegend}</div></div>`;
+
+        // Month table
+        const monthKeys = Object.keys(monthMap).sort();
+        let monthRows = monthKeys.map(k => {
+            const m = monthMap[k];
+            const diffColor = m.diff >= 0 ? '#10b981' : '#ef4444';
+            return `<tr><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;">${k}</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;">${m.worked.toFixed(1)}h</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;">${m.expected.toFixed(1)}h</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;color:${diffColor};font-weight:700;">${m.diff >= 0 ? '+' : ''}${m.diff.toFixed(1)}h</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;">${m.count}</td></tr>`;
+        }).join('');
+
+        // Project table
+        let projRows = Object.entries(projectMap).sort((a,b) => b[1]-a[1]).map(([p, h]) => {
+            const pct = totalHours > 0 ? (h/totalHours*100).toFixed(1) : 0;
+            return `<tr><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;">${p}</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;font-weight:700;">${h.toFixed(1)}h</td><td style="padding:8px 12px;border-bottom:1px solid #2a2a2a;text-align:right;color:var(--text-muted);">${pct}%</td></tr>`;
+        }).join('');
+
+        // Entry table (last 50)
+        const recent = entries.slice(-50).reverse();
+        let entryRows = recent.map(e => {
+            const tColor = typeColors[e.type] || '#888';
+            return `<tr><td style="padding:6px 10px;border-bottom:1px solid #222;font-size:13px;">${e.date}</td><td style="padding:6px 10px;border-bottom:1px solid #222;"><span style="color:${tColor};font-weight:600;font-size:12px;">${typeLabels[e.type]||e.type}</span></td><td style="padding:6px 10px;border-bottom:1px solid #222;text-align:right;font-family:monospace;">${(e.worked||0).toFixed(2)}h</td><td style="padding:6px 10px;border-bottom:1px solid #222;text-align:right;color:${(e.diff||0)>=0?'#10b981':'#ef4444'};font-family:monospace;">${(e.diff||0)>=0?'+':''}${(e.diff||0).toFixed(2)}h</td><td style="padding:6px 10px;border-bottom:1px solid #222;font-size:12px;color:#888;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.project||'—'}</td></tr>`;
+        }).join('');
+
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('de-DE', { day:'2-digit', month:'long', year:'numeric' });
+
+        const html = '<!DOCTYPE html>\n'
+        + '<html lang="de">\n<head>\n<meta charset="UTF-8">\n'
+        + '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+        + '<title>MyWorkLog Report \u2014 ' + dateStr + '<\/title>\n'
+        + '<style>\n'
+        + '  *{margin:0;padding:0;box-sizing:border-box;}\n'
+        + '  body{background:#0f0f0f;color:#e5e5e5;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;padding:24px;max-width:900px;margin:0 auto;}\n'
+        + '  h1{font-size:1.8rem;font-weight:800;margin-bottom:4px;}\n'
+        + '  h2{font-size:1.1rem;font-weight:700;margin:32px 0 16px;color:#a855f7;display:flex;align-items:center;gap:8px;}\n'
+        + '  .subtitle{color:#888;font-size:0.85rem;margin-bottom:32px;}\n'
+        + '  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:32px;}\n'
+        + '  .kpi{padding:18px;border-radius:14px;background:#1a1a1a;border:1px solid #2a2a2a;text-align:center;}\n'
+        + '  .kpi-val{font-size:1.6rem;font-weight:800;font-family:\'JetBrains Mono\',monospace;}\n'
+        + '  .kpi-label{font-size:0.65rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-top:4px;font-weight:600;}\n'
+        + '  .card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:16px;padding:20px;margin-bottom:20px;overflow-x:auto;}\n'
+        + '  table{width:100%;border-collapse:collapse;font-size:14px;}\n'
+        + '  th{text-align:left;padding:10px 12px;border-bottom:2px solid #333;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.8px;color:#888;font-weight:700;}\n'
+        + '  .footer{margin-top:48px;padding-top:24px;border-top:1px solid #2a2a2a;text-align:center;color:#555;font-size:0.8rem;}\n'
+        + '  @media print{body{background:#fff;color:#111;} .kpi{border-color:#ddd;background:#f9f9f9;} .card{border-color:#ddd;background:#fff;} th{border-color:#ccc;color:#555;} td{border-color:#eee !important;}}\n'
+        + '  @media (max-width:500px){.kpi-grid{grid-template-columns:repeat(2,1fr);} body{padding:12px;}}\n'
+        + '<\/style>\n<\/head>\n<body>\n'
+        + '<h1>\ud83d\udcca MyWorkLog Report<\/h1>\n'
+        + '<div class="subtitle">Erstellt am ' + dateStr + ' \u00b7 ' + entries.length + ' Eintr\u00e4ge \u00b7 ' + (entries.length ? entries[entries.length-1].date + ' bis ' + entries[0].date : '\u2014') + '<\/div>\n'
+        + '\n<div class="kpi-grid">\n'
+        + '  <div class="kpi"><div class="kpi-val">' + totalHours.toFixed(0) + 'h<\/div><div class="kpi-label">Arbeitsstunden<\/div><\/div>\n'
+        + '  <div class="kpi"><div class="kpi-val" style="color:' + (totalDiff>=0?'#10b981':'#ef4444') + '">' + (totalDiff>=0?'+':'') + totalDiff.toFixed(1) + 'h<\/div><div class="kpi-label">Gesamt-Saldo<\/div><\/div>\n'
+        + '  <div class="kpi"><div class="kpi-val">' + avgPerDay.toFixed(1) + 'h<\/div><div class="kpi-label">\u00d8 pro Tag<\/div><\/div>\n'
+        + '  <div class="kpi"><div class="kpi-val">' + workEntries.length + '<\/div><div class="kpi-label">Arbeitstage<\/div><\/div>\n'
+        + '  <div class="kpi"><div class="kpi-val">' + vacDays + '<\/div><div class="kpi-label">Urlaubstage<\/div><\/div>\n'
+        + '  <div class="kpi"><div class="kpi-val">' + sickDays + '<\/div><div class="kpi-label">Krankheitstage<\/div><\/div>\n'
+        + '  <div class="kpi"><div class="kpi-val">' + schoolDays + '<\/div><div class="kpi-label">Berufsschule<\/div><\/div>\n'
+        + '  <div class="kpi"><div class="kpi-val">' + projects.length + '<\/div><div class="kpi-label">Projekte<\/div><\/div>\n'
+        + '<\/div>\n\n'
+        + '<h2>\ud83d\udcc8 W\u00f6chentlicher Verlauf<\/h2>\n<div class="card">' + weekChartSVG + '<\/div>\n\n'
+        + '<h2>\ud83d\udcca Verteilung nach Typ<\/h2>\n<div class="card">' + donutSVG + '<\/div>\n\n'
+        + '<h2>\ud83d\udcc5 Wochentag-Verteilung (\u00d8 Stunden Mo\u2013Fr)<\/h2>\n<div class="card">' + dayChartSVG + '<\/div>\n\n'
+        + '<h2>\ud83d\udccb Monats\u00fcbersicht<\/h2>\n<div class="card">\n'
+        + '<table><thead><tr><th>Monat<\/th><th style="text-align:right;">Ist<\/th><th style="text-align:right;">Soll<\/th><th style="text-align:right;">Saldo<\/th><th style="text-align:right;">Eintr\u00e4ge<\/th><\/tr><\/thead>\n'
+        + '<tbody>' + monthRows + '<\/tbody><\/table><\/div>\n\n'
+        + (projRows ? '<h2>\ud83c\udfe2 Projekt-Verteilung<\/h2>\n<div class="card"><table><thead><tr><th>Projekt<\/th><th style="text-align:right;">Stunden<\/th><th style="text-align:right;">Anteil<\/th><\/tr><\/thead><tbody>' + projRows + '<\/tbody><\/table><\/div>\n' : '')
+        + '\n<h2>\ud83d\udcdd Letzte 50 Eintr\u00e4ge<\/h2>\n<div class="card"><table><thead><tr><th>Datum<\/th><th>Typ<\/th><th style="text-align:right;">Stunden<\/th><th style="text-align:right;">Saldo<\/th><th>Projekt<\/th><\/tr><\/thead>'
+        + '<tbody>' + entryRows + '<\/tbody><\/table><\/div>\n\n'
+        + '<div class="footer">MyWorkLog MAX Report \u00b7 Generiert am ' + now.toLocaleString('de-DE') + ' \u00b7 myworklog.de<\/div>\n'
+        + '<\/body>\n<\/html>';
+
+        const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'MyWorkLog_MAX_Report_' + new Date().toISOString().split('T')[0] + '.html';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        try { localStorage.setItem('tt_last_export', new Date().toISOString()); } catch(e) {}
+        document.getElementById('exportStatsModal').style.display = 'none';
+        showSmartNotification('🚀 MAX Report', `HTML-Report mit Diagrammen exportiert (${(blob.size/1024).toFixed(0)} KB)`, 'success');
     }
 
     // ===== ICAL/ICS EXPORT SYSTEM (RFC 5545 COMPLIANT) =====
