@@ -1,427 +1,1499 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Ausbildungshilfe Dashboard: Berichtsheft Generator, Prüfungsvorbereitung & Karriereplanung. IHK-konform mit lokaler KI. Kostenlos, offline & DSGVO-sicher.">
-    <meta name="keywords" content="Ausbildungshilfe, Berichtsheft Generator, Prüfungsvorbereitung, IHK-konform, lokale KI, Fachinformatiker, Ausbildungs-Dashboard, Überblick Ausbildung, Lernhilfe Azubi, Prüfungsvorbereitung kostenlos">
-    <title>Ausbildungshilfe Dashboard</title>
+    <meta name="description" content="Ausbildungshilfe Dashboard: IHK-Karteikarten, Prüfungsvorbereitung & Karriereplanung. Auto-generierte Lernkarten aus deinem Arbeitsalltag.">
+    <title>Ausbildungshilfe — MyWorkLog</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --bg-deep: #030305;
-            --bg-glass: rgba(22, 22, 26, 0.65);
+            --bg-deep: #050507;
+            --bg-card: rgba(18, 18, 24, 0.75);
+            --bg-card-hover: rgba(26, 26, 36, 0.85);
+            --bg-elevated: rgba(30, 30, 42, 0.9);
             --primary: #a855f7;
-            --primary-rgb: 168, 85, 247;
-            --text-main: #f8fafc;
+            --primary-dim: rgba(168, 85, 247, 0.15);
+            --primary-glow: rgba(168, 85, 247, 0.25);
+            --secondary: #6366f1;
+            --success: #10b981;
+            --success-dim: rgba(16, 185, 129, 0.12);
+            --warning: #f59e0b;
+            --warning-dim: rgba(245, 158, 11, 0.12);
+            --danger: #ef4444;
+            --danger-dim: rgba(239, 68, 68, 0.12);
+            --cyan: #06b6d4;
+            --cyan-dim: rgba(6, 182, 212, 0.12);
+            --text: #f1f5f9;
             --text-muted: #94a3b8;
+            --text-dim: #64748b;
             --border: rgba(255, 255, 255, 0.06);
-            --radius: 20px;
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --border-hover: rgba(168, 85, 247, 0.25);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 40px rgba(168, 85, 247, 0.1);
         }
 
         body {
             background: var(--bg-deep);
-            color: var(--text-main);
-            font-family: var(--font-main);
+            color: var(--text);
+            font-family: var(--font);
             min-height: 100vh;
-            padding: 2rem 1rem;
+            overflow-x: hidden;
+            line-height: 1.6;
         }
 
-        .container {
-            max-width: 1200px;
+        .ambient {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            animation: orbFloat 20s ease-in-out infinite;
+        }
+        .orb-1 { width: 600px; height: 600px; background: #a855f7; top: -10%; left: -10%; animation-delay: 0s; }
+        .orb-2 { width: 500px; height: 500px; background: #6366f1; bottom: -15%; right: -10%; animation-delay: -7s; }
+        .orb-3 { width: 400px; height: 400px; background: #06b6d4; top: 40%; right: 30%; animation-delay: -14s; opacity: 0.08; }
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        .shell {
+            position: relative;
+            z-index: 1;
+            max-width: 1320px;
             margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
         }
 
-        /* Header */
-        .header {
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all var(--transition);
+            backdrop-filter: blur(8px);
+            margin-bottom: 2rem;
+        }
+        .back-btn:hover { background: var(--primary-dim); border-color: var(--border-hover); color: var(--primary); }
+        .back-btn svg { width: 16px; height: 16px; }
+
+        .hero {
             text-align: center;
-            margin-bottom: 3rem;
-            animation: fadeIn 0.6s ease;
+            padding: 3rem 1rem 2.5rem;
+            margin-bottom: 2.5rem;
+            position: relative;
         }
-
-        .header h1 {
-            font-size: 2.5rem;
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--primary-dim);
+            border: 1px solid rgba(168,85,247,0.2);
+            color: var(--primary);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 1.2rem;
+        }
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.2rem);
             font-weight: 900;
-            background: linear-gradient(135deg, #a855f7, #8b5cf6);
+            letter-spacing: -1.5px;
+            background: linear-gradient(135deg, #fff 0%, #a855f7 50%, #6366f1 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.8rem;
+            line-height: 1.15;
         }
-
-        .header p {
+        .hero p {
             color: var(--text-muted);
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
+            font-size: 1.05rem;
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
         }
-
-        .header-subtitle {
+        .hero-stats {
             display: flex;
             justify-content: center;
             gap: 2rem;
             flex-wrap: wrap;
-            font-size: 0.9rem;
-            color: var(--text-muted);
         }
-
-        .subtitle-item {
+        .hero-stat {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+        .hero-stat-val { color: var(--text); font-weight: 700; font-size: 1.1rem; }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .section-head h2 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-head h2 .sec-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 12px var(--primary);
+            flex-shrink: 0;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.25rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; }
 
-        /* Grid */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-            animation: fadeIn 0.8s ease 0.2s both;
-        }
-
-        /* Card */
         .card {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(139, 92, 246, 0.05));
+            background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 2rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 1.75rem;
+            transition: all var(--transition);
             position: relative;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            text-decoration: none;
-            color: inherit;
-            cursor: pointer;
+            backdrop-filter: blur(16px);
+        }
+        .card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, rgba(168,85,247,0.03), transparent 60%);
+            pointer-events: none;
+        }
+        .card:hover {
+            border-color: var(--border-hover);
+            background: var(--bg-card-hover);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-4px);
         }
 
-        .card::before {
-            content: '';
+        a.card { text-decoration: none; color: inherit; cursor: pointer; }
+        .card-top-bar {
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), #8b5cf6);
             transform: scaleX(0);
-            transition: transform 0.3s ease;
+            transform-origin: left;
+            transition: transform 0.35s ease;
         }
-
-        .card:hover {
-            border-color: rgba(168, 85, 247, 0.3);
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(139, 92, 246, 0.1));
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(168, 85, 247, 0.15);
-        }
-
-        .card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .card-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        .card-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: #fff;
-        }
-
-        .card-description {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            line-height: 1.6;
-            margin-bottom: 1.5rem;
-            flex: 1;
-        }
+        .card:hover .card-top-bar { transform: scaleX(1); }
 
         .card-tag {
-            display: inline-block;
-            background: rgba(168, 85, 247, 0.15);
-            color: #a855f7;
-            padding: 0.4rem 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
             border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.68rem;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.6px;
             margin-bottom: 1rem;
         }
+        .tag-purple { background: var(--primary-dim); color: var(--primary); }
+        .tag-green { background: var(--success-dim); color: var(--success); }
+        .tag-cyan { background: var(--cyan-dim); color: var(--cyan); }
+        .tag-orange { background: var(--warning-dim); color: var(--warning); }
+        .tag-gray { background: rgba(255,255,255,0.05); color: var(--text-dim); }
 
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+        }
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 750;
+            margin-bottom: 0.4rem;
+            color: #fff;
+        }
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.65;
+            margin-bottom: 1.25rem;
+            flex: 1;
+        }
         .card-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            font-weight: 600;
             color: var(--primary);
+        }
+        .card-arrow {
+            transition: transform var(--transition);
+            font-size: 1.1rem;
+        }
+        .card:hover .card-arrow { transform: translateX(5px); }
+        .card-disabled {
+            opacity: 0.45;
+            cursor: not-allowed !important;
+            pointer-events: none;
+        }
+        .card-disabled:hover { transform: none; box-shadow: none; }
+
+        .flashcard-section {
+            margin-top: 3rem;
+        }
+
+        .fc-kpi-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .fc-kpi {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 1.25rem;
+            text-align: center;
+            backdrop-filter: blur(12px);
+        }
+        .fc-kpi-val {
+            font-size: 2rem;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            letter-spacing: -1px;
+        }
+        .fc-kpi-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 4px;
             font-weight: 600;
         }
 
-        .card-arrow {
-            display: inline-block;
-            transition: transform 0.3s ease;
-            font-size: 1.2rem;
+        .fc-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
-
-        .card:hover .card-arrow {
-            transform: translateX(6px);
-        }
-
-        /* Section Title */
-        .section-title {
-            font-size: 1.8rem;
-            font-weight: 800;
-            margin-bottom: 2rem;
-            margin-top: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border);
-            animation: fadeIn 0.6s ease;
-        }
-
-        .section-title::before {
-            content: '';
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            background: var(--primary);
-            border-radius: 50%;
-            margin-right: 0.8rem;
-            box-shadow: 0 0 10px var(--primary);
-        }
-
-        /* Back Button */
-        .back-button {
+        .fc-btn {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            background: rgba(255, 255, 255, 0.05);
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
             border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 0.8rem 1.5rem;
-            border-radius: 10px;
-            text-decoration: none;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            margin-bottom: 2rem;
+            background: rgba(255,255,255,0.04);
+            color: var(--text);
+            font-size: 0.82rem;
+            font-weight: 600;
             cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font);
+            backdrop-filter: blur(8px);
+        }
+        .fc-btn:hover { background: var(--primary-dim); border-color: var(--border-hover); color: var(--primary); }
+        .fc-btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 4px 15px rgba(168,85,247,0.3);
+        }
+        .fc-btn-primary:hover {
+            box-shadow: 0 6px 25px rgba(168,85,247,0.45);
+            transform: translateY(-1px);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+        .fc-btn-success {
+            background: linear-gradient(135deg, var(--success), #059669);
+            border-color: transparent;
+            color: white;
+        }
+        .fc-btn-danger {
+            background: var(--danger-dim);
+            border-color: rgba(239,68,68,0.2);
+            color: #f87171;
         }
 
-        .back-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--primary);
-            color: var(--primary);
+        .fc-filters {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
         }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 1rem;
+        .fc-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
             color: var(--text-muted);
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .fc-chip:hover { border-color: var(--border-hover); color: var(--text); }
+        .fc-chip.active { background: var(--primary-dim); border-color: var(--primary); color: var(--primary); }
+
+        .fc-deck {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.25rem;
+            margin-top: 1.5rem;
         }
 
-        .empty-state-icon {
-            font-size: 4rem;
+        .fc-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: all var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+        .fc-card:hover {
+            border-color: var(--border-hover);
+            box-shadow: 0 8px 30px rgba(168,85,247,0.1);
+            transform: translateY(-2px);
+        }
+        .fc-card-stripe {
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        .fc-card-stripe.mastered { background: linear-gradient(90deg, var(--success), #059669); }
+        .fc-card-stripe.hard { background: linear-gradient(90deg, var(--danger), #dc2626); }
+        .fc-card-body {
+            padding: 1.25rem;
+        }
+        .fc-card-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+        .fc-card-source {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .fc-card-difficulty {
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .diff-easy { background: var(--success-dim); color: var(--success); }
+        .diff-medium { background: var(--warning-dim); color: var(--warning); }
+        .diff-hard { background: var(--danger-dim); color: #f87171; }
+
+        .fc-card-question {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+        }
+        .fc-card-answer {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: var(--radius-xs);
+            display: none;
+        }
+        .fc-card.revealed .fc-card-answer { display: block; }
+        .fc-card-hint {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            margin-top: 0.75rem;
+            text-align: center;
+            transition: opacity var(--transition);
+        }
+        .fc-card.revealed .fc-card-hint { opacity: 0; }
+
+        .fc-card-actions {
+            display: none;
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid var(--border);
+            gap: 8px;
+        }
+        .fc-card.revealed .fc-card-actions { display: flex; }
+        .fc-rate-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font);
+        }
+        .fc-rate-btn:hover { background: var(--primary-dim); color: var(--primary); border-color: var(--border-hover); }
+        .fc-rate-btn.rate-easy:hover { background: var(--success-dim); color: var(--success); border-color: rgba(16,185,129,0.3); }
+        .fc-rate-btn.rate-hard:hover { background: var(--danger-dim); color: #f87171; border-color: rgba(239,68,68,0.3); }
+
+        .study-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(5,5,7,0.97);
+            backdrop-filter: blur(20px);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .study-overlay.active { display: flex; }
+        .study-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+        }
+        .study-close:hover { background: var(--danger-dim); color: #f87171; border-color: rgba(239,68,68,0.3); }
+        .study-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.4s ease;
+            border-radius: 0 2px 2px 0;
+        }
+        .study-counter {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 2rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .study-flashcard {
+            width: 100%;
+            max-width: 640px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 3rem 2.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            position: relative;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .study-flashcard:hover { border-color: var(--border-hover); box-shadow: var(--shadow-glow); }
+        .study-q {
+            font-size: 1.3rem;
+            font-weight: 750;
+            color: #fff;
+            line-height: 1.5;
             margin-bottom: 1rem;
-            opacity: 0.5;
+        }
+        .study-a {
+            font-size: 1rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            padding: 1.25rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: var(--radius-sm);
+            display: none;
+            width: 100%;
+            text-align: left;
+        }
+        .study-flashcard.flipped .study-a { display: block; }
+        .study-flashcard.flipped .study-hint { display: none; }
+        .study-hint {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-top: 1.5rem;
+        }
+        .study-actions {
+            display: none;
+            gap: 12px;
+            margin-top: 1.5rem;
+            width: 100%;
+            max-width: 640px;
+        }
+        .study-flashcard.flipped ~ .study-actions { display: flex; }
+        .study-rate {
+            flex: 1;
+            padding: 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font);
+        }
+        .study-rate:hover { transform: translateY(-2px); }
+        .study-rate.s-hard { border-color: rgba(239,68,68,0.3); }
+        .study-rate.s-hard:hover { background: var(--danger-dim); color: #f87171; }
+        .study-rate.s-ok { border-color: rgba(245,158,11,0.3); }
+        .study-rate.s-ok:hover { background: var(--warning-dim); color: var(--warning); }
+        .study-rate.s-easy { border-color: rgba(16,185,129,0.3); }
+        .study-rate.s-easy:hover { background: var(--success-dim); color: var(--success); }
+
+        .gen-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10001;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .gen-modal-overlay.active { display: flex; }
+        .gen-modal {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 560px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+        .gen-modal-header {
+            padding: 1.5rem 1.75rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .gen-modal-header h3 {
+            font-size: 1.1rem;
+            font-weight: 750;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .gen-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .gen-modal-body {
+            padding: 1.75rem;
+        }
+        .gen-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .gen-select, .gen-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+            color: var(--text);
+            font-size: 0.88rem;
+            font-family: var(--font);
+            margin-bottom: 1.25rem;
+            transition: border-color var(--transition);
+            appearance: none;
+        }
+        .gen-select:focus, .gen-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(168,85,247,0.15);
+        }
+        .gen-select option { background: #1a1a24; }
+        .gen-textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+            color: var(--text);
+            font-size: 0.88rem;
+            font-family: var(--font);
+            margin-bottom: 1.25rem;
+            resize: vertical;
+            min-height: 80px;
+            line-height: 1.5;
+        }
+        .gen-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(168,85,247,0.15);
+        }
+        .gen-info {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: var(--radius-xs);
+            padding: 10px 12px;
+            margin-bottom: 1.25rem;
+            line-height: 1.6;
+        }
+        .gen-modal-footer {
+            padding: 1.25rem 1.75rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
         }
 
-        /* Responsive */
+        .fc-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .fc-empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-dim);
+        }
+        .fc-empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.35; }
+        .fc-empty h3 { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .fc-empty p { font-size: 0.85rem; max-width: 400px; margin: 0 auto 1.5rem; line-height: 1.6; }
+
+        .manual-entry-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .fc-toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 99999;
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.3s ease;
+            pointer-events: none;
+        }
+        .fc-toast.visible { transform: translateX(-50%) translateY(0); }
+
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8rem;
-            }
-
-            .header p {
-                font-size: 0.95rem;
-            }
-
-            .grid {
-                grid-template-columns: 1fr;
-            }
-
-            .card {
-                padding: 1.5rem;
-            }
-
-            .card-title {
-                font-size: 1.15rem;
-            }
-
-            .section-title {
-                font-size: 1.5rem;
-            }
+            .shell { padding: 1.25rem 1rem 3rem; }
+            .hero { padding: 2rem 0.5rem 1.5rem; }
+            .fc-deck { grid-template-columns: 1fr; }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .fc-kpi-bar { grid-template-columns: 1fr 1fr; }
+            .study-flashcard { padding: 2rem 1.5rem; }
+            .study-q { font-size: 1.1rem; }
+            .manual-entry-grid { grid-template-columns: 1fr; }
         }
 
-        ::-webkit-scrollbar {
-            width: 10px;
+        @media (max-width: 480px) {
+            .fc-kpi-bar { grid-template-columns: 1fr; }
+            .hero-stats { flex-direction: column; align-items: center; gap: 0.75rem; }
         }
 
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 10px;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(168,85,247,0.5); }
 
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, var(--primary), rgba(var(--primary-rgb), 0.7));
-            border-radius: 10px;
-            border: 2px solid rgba(255, 255, 255, 0.05);
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, rgba(var(--primary-rgb), 0.9), var(--primary));
+        .fade-in { animation: fadeSlideIn 0.5s ease both; }
+        .fade-in-d1 { animation-delay: 0.1s; }
+        .fade-in-d2 { animation-delay: 0.2s; }
+        .fade-in-d3 { animation-delay: 0.3s; }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Back Button -->
-        <a href="../../../index.html" class="back-button">
-            ← Zurück zur App
-        </a>
 
-        <!-- Header -->
-        <div class="header">
-            <h1>🎓 Ausbildungshilfe</h1>
-            <p>Dein umfassender Leitfaden durch die IT-Ausbildung</p>
-            <div class="header-subtitle">
-                <span class="subtitle-item">📚 Lerninhalte</span>
-                <span class="subtitle-item">🎯 Karriere-Roadmap</span>
-                <span class="subtitle-item">✨ Prüfungsvorbereitung</span>
+<div class="ambient" aria-hidden="true">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
+</div>
+
+<div class="shell">
+
+    <a href="../../../index.html" class="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Zurück zur App
+    </a>
+
+    <div class="hero fade-in">
+        <div class="hero-badge">🧠 Reverse Learning Engine</div>
+        <h1>Ausbildungshilfe</h1>
+        <p>Dein personalisiertes IHK-Lern-Deck — automatisch generiert aus deinem Arbeitsalltag. Lerne smarter, nicht härter.</p>
+        <div class="hero-stats">
+            <div class="hero-stat"><span class="hero-stat-val" id="statTotalCards">0</span> Karteikarten</div>
+            <div class="hero-stat"><span class="hero-stat-val" id="statMastered">0</span> Gemeistert</div>
+            <div class="hero-stat"><span class="hero-stat-val" id="statDueToday">0</span> Heute fällig</div>
+        </div>
+    </div>
+
+    <section class="flashcard-section fade-in fade-in-d1">
+        <div class="section-head">
+            <h2><span class="sec-dot"></span> 🧠 IHK Karteikarten</h2>
+            <div class="fc-controls">
+                <button class="fc-btn fc-btn-primary" onclick="openGenerateModal()">✨ Karten generieren</button>
+                <button class="fc-btn" onclick="openManualAddModal()">＋ Manuell hinzufügen</button>
+                <button class="fc-btn fc-btn-success" onclick="startStudyMode()">📖 Lernmodus</button>
             </div>
         </div>
 
-        <!-- Fachinformatiker Section -->
-        <h2 class="section-title">IT-Ausbildungsberufe</h2>
-        <div class="grid">
-            <a href="./Fachinformatiker/Fachinformatiker.html" class="card">
-                <span class="card-tag">Anwendungsentwicklung</span>
+        <div class="fc-kpi-bar">
+            <div class="fc-kpi">
+                <div class="fc-kpi-val" style="color:var(--primary);" id="kpiTotal">0</div>
+                <div class="fc-kpi-label">Gesamt</div>
+            </div>
+            <div class="fc-kpi">
+                <div class="fc-kpi-val" style="color:var(--success);" id="kpiMastered">0</div>
+                <div class="fc-kpi-label">Gemeistert</div>
+            </div>
+            <div class="fc-kpi">
+                <div class="fc-kpi-val" style="color:var(--warning);" id="kpiLearning">0</div>
+                <div class="fc-kpi-label">Lernend</div>
+            </div>
+            <div class="fc-kpi">
+                <div class="fc-kpi-val" style="color:var(--danger);" id="kpiHard">0</div>
+                <div class="fc-kpi-label">Schwierig</div>
+            </div>
+            <div class="fc-kpi">
+                <div class="fc-kpi-val" style="color:var(--cyan);" id="kpiNew">0</div>
+                <div class="fc-kpi-label">Neu</div>
+            </div>
+        </div>
+
+        <div class="fc-filters">
+            <button class="fc-chip active" data-filter="all" onclick="filterCards('all', this)">Alle</button>
+            <button class="fc-chip" data-filter="new" onclick="filterCards('new', this)">Neu</button>
+            <button class="fc-chip" data-filter="learning" onclick="filterCards('learning', this)">Lernend</button>
+            <button class="fc-chip" data-filter="mastered" onclick="filterCards('mastered', this)">Gemeistert</button>
+            <button class="fc-chip" data-filter="hard" onclick="filterCards('hard', this)">Schwierig</button>
+        </div>
+
+        <div class="fc-deck" id="flashcardDeck"></div>
+    </section>
+
+    <div style="height:1px;background:var(--border);margin:3rem 0;"></div>
+
+    <section class="fade-in fade-in-d2">
+        <div class="section-head">
+            <h2><span class="sec-dot"></span> 🎓 IT-Ausbildungsberufe</h2>
+        </div>
+        <div class="grid-3">
+            <a href="./Fachinformatiker/Fachinformatiker.html" class="card" style="display:flex;flex-direction:column;">
+                <div class="card-top-bar"></div>
+                <span class="card-tag tag-purple">Anwendungsentwicklung</span>
                 <div class="card-icon">💻</div>
                 <h3 class="card-title">Fachinformatiker</h3>
-                <p class="card-description">
-                    Dein kompletter Leitfaden für die Fachinformatiker-Ausbildung mit Fokus auf Softwareentwicklung, Projektmanagement und IHK-Prüfungsvorbereitung.
-                </p>
-                <div class="card-footer">
-                    <span>Zum Leitfaden</span>
-                    <span class="card-arrow">→</span>
-                </div>
+                <p class="card-desc">Dein kompletter Leitfaden für die Fachinformatiker-Ausbildung mit Fokus auf Softwareentwicklung & IHK-Prüfung.</p>
+                <div class="card-footer"><span>Zum Leitfaden</span><span class="card-arrow">→</span></div>
             </a>
-
-            <div class="card" style="opacity: 0.6; cursor: not-allowed;">
-                <span class="card-tag">Systemintegration</span>
+            <div class="card card-disabled" style="display:flex;flex-direction:column;">
+                <span class="card-tag tag-cyan">Systemintegration</span>
                 <div class="card-icon">🏢</div>
-                <h3 class="card-title">Fachinformatiker - Systemintegration</h3>
-                <p class="card-description">
-                    Spezialisiere dich auf Systemadministration, Netzwerke und IT-Infrastruktur. (Coming Soon)
-                </p>
-                <div class="card-footer">
-                    <span>Bald verfügbar</span>
-                    <span class="card-arrow">🔜</span>
-                </div>
+                <h3 class="card-title">FISI — Systemintegration</h3>
+                <p class="card-desc">Netzwerke, Systemadministration & IT-Infrastruktur.</p>
+                <div class="card-footer"><span>Coming Soon</span><span class="card-arrow">→</span></div>
             </div>
-
-            <div class="card" style="opacity: 0.6; cursor: not-allowed;">
-                <span class="card-tag">In Planung</span>
+            <div class="card card-disabled" style="display:flex;flex-direction:column;">
+                <span class="card-tag tag-orange">In Planung</span>
                 <div class="card-icon">🔒</div>
                 <h3 class="card-title">IT-Systemelektroniker</h3>
-                <p class="card-description">
-                    Lerne Hardware, Netzwerke und IT-Sicherheit auf Systemebene. (Coming Soon)
-                </p>
-                <div class="card-footer">
-                    <span>Bald verfügbar</span>
-                    <span class="card-arrow">🔜</span>
-                </div>
-            </div>
-
-            <div class="card" style="opacity: 0.6; cursor: not-allowed;">
-                <span class="card-tag">In Planung</span>
-                <div class="card-icon">📱</div>
-                <h3 class="card-title">Informatiker (Fachrichtung: Softwareentwicklung)</h3>
-                <p class="card-description">
-                    Die 3-jährige Studienausbildung mit erweiterten Programmierkenntnissen. (Coming Soon)
-                </p>
-                <div class="card-footer">
-                    <span>Bald verfügbar</span>
-                    <span class="card-arrow">🔜</span>
-                </div>
-            </div>
-
-            <div class="card" style="opacity: 0.6; cursor: not-allowed;">
-                <span class="card-tag">In Planung</span>
-                <div class="card-icon">🤖</div>
-                <h3 class="card-title">Informatiker (Fachrichtung: Systemintegration)</h3>
-                <p class="card-description">
-                    Komplexe IT-Systeme entwerfen und realisieren. (Coming Soon)
-                </p>
-                <div class="card-footer">
-                    <span>Bald verfügbar</span>
-                    <span class="card-arrow">🔜</span>
-                </div>
-            </div>
-
-            <div class="card" style="opacity: 0.6; cursor: not-allowed;">
-                <span class="card-tag">In Planung</span>
-                <div class="card-icon">🌐</div>
-                <h3 class="card-title">Kaufmann für IT-Systemmanagement</h3>
-                <p class="card-description">
-                    Kombination aus IT und kaufmännischen Fähigkeiten. (Coming Soon)
-                </p>
-                <div class="card-footer">
-                    <span>Bald verfügbar</span>
-                    <span class="card-arrow">🔜</span>
-                </div>
+                <p class="card-desc">Hardware, Netzwerke & IT-Sicherheit auf Systemebene.</p>
+                <div class="card-footer"><span>Coming Soon</span><span class="card-arrow">→</span></div>
             </div>
         </div>
+    </section>
 
-        <!-- Resources Section -->
-        <h2 class="section-title">Wichtige Ressourcen</h2>
-        <div class="grid">
-            <a href="../../App/berichtsheft.html" class="card">
-                <span class="card-tag">Dokument</span>
+    <section class="fade-in fade-in-d3" style="margin-top:2.5rem;">
+        <div class="section-head">
+            <h2><span class="sec-dot"></span> 📦 Ressourcen & Tools</h2>
+        </div>
+        <div class="grid-3">
+            <a href="../../App/berichtsheft.html" class="card" style="display:flex;flex-direction:column;">
+                <div class="card-top-bar"></div>
+                <span class="card-tag tag-green">Dokument</span>
                 <div class="card-icon">📝</div>
                 <h3 class="card-title">Berichtsheft</h3>
-                <p class="card-description">
-                    Verwalte dein Ausbildungsberichtsheft, tracke deine Aufgaben und dokumentiere deinen Ausbildungsfortschritt.
-                </p>
-                <div class="card-footer">
-                    <span>Öffnen</span>
-                    <span class="card-arrow">→</span>
-                </div>
+                <p class="card-desc">IHK-konformes Berichtsheft mit automatischer Generierung aus deinen Arbeitseinträgen.</p>
+                <div class="card-footer"><span>Öffnen</span><span class="card-arrow">→</span></div>
             </a>
-
-            <a href="../../App/vertrags-manager.html" class="card">
-                <span class="card-tag">Management</span>
+            <a href="../../App/vertrags-manager.html" class="card" style="display:flex;flex-direction:column;">
+                <div class="card-top-bar"></div>
+                <span class="card-tag tag-cyan">Management</span>
                 <div class="card-icon">📋</div>
                 <h3 class="card-title">Vertrags-Manager</h3>
-                <p class="card-description">
-                    Verwalte deine Ausbildungsunterlagen, Verträge und wichtige Dokumente an einem Ort.
-                </p>
-                <div class="card-footer">
-                    <span>Verwalten</span>
-                    <span class="card-arrow">→</span>
-                </div>
+                <p class="card-desc">Ausbildungsvertrag, Gehalt & Urlaubsübersicht an einem Ort.</p>
+                <div class="card-footer"><span>Verwalten</span><span class="card-arrow">→</span></div>
+            </a>
+            <a href="../../App/SkillTree/skill-tree.html" class="card" style="display:flex;flex-direction:column;">
+                <div class="card-top-bar"></div>
+                <span class="card-tag tag-purple">RPG</span>
+                <div class="card-icon">🌳</div>
+                <h3 class="card-title">Skill-Baum</h3>
+                <p class="card-desc">Visualisiere deinen Ausbildungsfortschritt als interaktiven 3D Skill-Tree.</p>
+                <div class="card-footer"><span>Erkunden</span><span class="card-arrow">→</span></div>
             </a>
         </div>
-        </a>
+    </section>
+
+</div>
+
+<div class="study-overlay" id="studyOverlay">
+    <div class="study-progress" id="studyProgress"></div>
+    <button class="study-close" onclick="closeStudyMode()">✕</button>
+    <div class="study-counter" id="studyCounter">Karte 1 von 10</div>
+    <div class="study-flashcard" id="studyCard" onclick="flipStudyCard()">
+        <div class="study-q" id="studyQuestion"></div>
+        <div class="study-a" id="studyAnswer"></div>
+        <div class="study-hint">Klicke um die Antwort aufzudecken</div>
     </div>
+    <div class="study-actions" id="studyActions">
+        <button class="study-rate s-hard" onclick="rateStudyCard('hard')">Schwierig</button>
+        <button class="study-rate s-ok" onclick="rateStudyCard('learning')">Nochmal</button>
+        <button class="study-rate s-easy" onclick="rateStudyCard('mastered')">Gewusst!</button>
+    </div>
+</div>
+
+<div class="gen-modal-overlay" id="generateModal">
+    <div class="gen-modal">
+        <div class="gen-modal-header">
+            <h3>✨ Karteikarten generieren</h3>
+            <button class="gen-modal-close" onclick="closeGenerateModal()">✕</button>
+        </div>
+        <div class="gen-modal-body">
+            <div class="gen-info">
+                <strong>Reverse Learning:</strong> Deine Arbeitseinträge aus MyWorkLog werden automatisch in prüfungsrelevante IHK-Fragen verwandelt. Das lokale LLM analysiert deine Tätigkeiten und erstellt passende Karteikarten.
+            </div>
+
+            <label class="gen-label">Quelle</label>
+            <select class="gen-select" id="genSource">
+                <option value="recent">📅 Letzte 7 Tage (Arbeitseinträge)</option>
+                <option value="month">📅 Letzter Monat</option>
+                <option value="all">📅 Alle Einträge</option>
+                <option value="manual">✍️ Eigenes Thema eingeben</option>
+            </select>
+
+            <div id="genManualWrap" style="display:none;">
+                <label class="gen-label">Thema / Tätigkeit</label>
+                <textarea class="gen-textarea" id="genManualTopic" placeholder="z.B. Subnetting im Firmennetzwerk konfiguriert, VLAN eingerichtet, Active Directory Benutzer angelegt..."></textarea>
+            </div>
+
+            <label class="gen-label">Anzahl Karten</label>
+            <select class="gen-select" id="genCount">
+                <option value="3">3 Karten</option>
+                <option value="5" selected>5 Karten</option>
+                <option value="10">10 Karten</option>
+            </select>
+
+            <label class="gen-label">Schwierigkeit</label>
+            <select class="gen-select" id="genDifficulty">
+                <option value="mixed" selected>Gemischt</option>
+                <option value="easy">Einfach (AP1-Niveau)</option>
+                <option value="medium">Mittel</option>
+                <option value="hard">Schwer (AP2-Niveau)</option>
+            </select>
+        </div>
+        <div class="gen-modal-footer">
+            <button class="fc-btn" onclick="closeGenerateModal()">Abbrechen</button>
+            <button class="fc-btn fc-btn-primary" id="genSubmitBtn" onclick="generateCards()">
+                Generieren
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="gen-modal-overlay" id="manualAddModal">
+    <div class="gen-modal">
+        <div class="gen-modal-header">
+            <h3>＋ Karteikarte erstellen</h3>
+            <button class="gen-modal-close" onclick="closeManualAddModal()">✕</button>
+        </div>
+        <div class="gen-modal-body">
+            <label class="gen-label">Frage</label>
+            <textarea class="gen-textarea" id="manualQuestion" placeholder="z.B. Was ist die Subnetzmaske für ein /24 Netz?"></textarea>
+
+            <label class="gen-label">Antwort</label>
+            <textarea class="gen-textarea" id="manualAnswer" placeholder="z.B. 255.255.255.0 — Ein /24 Netz hat 256 Adressen (254 nutzbar)."></textarea>
+
+            <div class="manual-entry-grid">
+                <div>
+                    <label class="gen-label">Schwierigkeit</label>
+                    <select class="gen-select" id="manualDifficulty" style="margin-bottom:0;">
+                        <option value="easy">Einfach</option>
+                        <option value="medium" selected>Mittel</option>
+                        <option value="hard">Schwer</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="gen-label">Kategorie</label>
+                    <input class="gen-input" id="manualCategory" placeholder="z.B. Netzwerk" style="margin-bottom:0;">
+                </div>
+            </div>
+        </div>
+        <div class="gen-modal-footer">
+            <button class="fc-btn" onclick="closeManualAddModal()">Abbrechen</button>
+            <button class="fc-btn fc-btn-primary" onclick="addManualCard()">＋ Hinzufügen</button>
+        </div>
+    </div>
+</div>
+
+<div class="fc-toast" id="fcToast"></div>
+
+<script>
+const STORAGE_KEY = 'tg_ihk_flashcards';
+const ENTRY_KEY = 'tg_pro_data';
+
+let flashcards = [];
+let currentFilter = 'all';
+let studyQueue = [];
+let studyIndex = 0;
+
+function loadFlashcards() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        flashcards = raw ? JSON.parse(raw) : [];
+    } catch { flashcards = []; }
+}
+
+function saveFlashcards() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(flashcards));
+}
+
+function loadWorkEntries() {
+    try {
+        const raw = localStorage.getItem(ENTRY_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+}
+
+function createCard(question, answer, difficulty, source, category) {
+    return {
+        id: Date.now() + Math.random().toString(36).slice(2, 8),
+        question,
+        answer,
+        difficulty: difficulty || 'medium',
+        status: 'new',
+        source: source || 'manual',
+        category: category || 'Allgemein',
+        created: new Date().toISOString(),
+        lastReview: null,
+        reviewCount: 0,
+        nextReview: new Date().toISOString()
+    };
+}
+
+function updateKPIs() {
+    const total = flashcards.length;
+    const mastered = flashcards.filter(c => c.status === 'mastered').length;
+    const learning = flashcards.filter(c => c.status === 'learning').length;
+    const hard = flashcards.filter(c => c.status === 'hard').length;
+    const newCards = flashcards.filter(c => c.status === 'new').length;
+    const now = new Date().toISOString().slice(0, 10);
+    const dueToday = flashcards.filter(c => c.status !== 'mastered' && (!c.nextReview || c.nextReview.slice(0, 10) <= now)).length;
+
+    document.getElementById('kpiTotal').textContent = total;
+    document.getElementById('kpiMastered').textContent = mastered;
+    document.getElementById('kpiLearning').textContent = learning;
+    document.getElementById('kpiHard').textContent = hard;
+    document.getElementById('kpiNew').textContent = newCards;
+
+    document.getElementById('statTotalCards').textContent = total;
+    document.getElementById('statMastered').textContent = mastered;
+    document.getElementById('statDueToday').textContent = dueToday;
+}
+
+function renderDeck() {
+    const deck = document.getElementById('flashcardDeck');
+    let filtered = flashcards;
+    if (currentFilter !== 'all') {
+        filtered = flashcards.filter(c => c.status === currentFilter);
+    }
+
+    if (filtered.length === 0) {
+        deck.innerHTML = '<div class="fc-empty" style="grid-column: 1/-1;">' +
+            '<div class="fc-empty-icon">🧠</div>' +
+            '<h3>' + (currentFilter === 'all' ? 'Noch keine Karteikarten' : 'Keine Karten in dieser Kategorie') + '</h3>' +
+            '<p>' + (currentFilter === 'all' ? 'Generiere deine ersten IHK-Karten aus deinen Arbeitseinträgen oder erstelle sie manuell.' : 'Lerne weiter — Karten werden hier erscheinen wenn du sie entsprechend bewertest.') + '</p>' +
+            (currentFilter === 'all' ? '<button class="fc-btn fc-btn-primary" onclick="openGenerateModal()">Erste Karten generieren</button>' : '') +
+            '</div>';
+        return;
+    }
+
+    deck.innerHTML = filtered.map(function(card) {
+        var stripeClass = card.status === 'mastered' ? 'mastered' : card.status === 'hard' ? 'hard' : '';
+        var diffClass = card.difficulty === 'easy' ? 'diff-easy' : card.difficulty === 'hard' ? 'diff-hard' : 'diff-medium';
+        var diffLabel = card.difficulty === 'easy' ? 'Einfach' : card.difficulty === 'hard' ? 'Schwer' : 'Mittel';
+        var dateStr = card.created ? new Date(card.created).toLocaleDateString('de-DE', {day:'2-digit', month:'short'}) : '';
+        var safeQ = escapeHtml(card.question);
+        var safeA = escapeHtml(card.answer);
+        var safeCat = escapeHtml(card.category || '');
+
+        return '<div class="fc-card" data-id="' + card.id + '" onclick="toggleCard(this)">' +
+            '<div class="fc-card-stripe ' + stripeClass + '"></div>' +
+            '<div class="fc-card-body">' +
+                '<div class="fc-card-meta">' +
+                    '<span class="fc-card-source">' + dateStr + ' · ' + safeCat + '</span>' +
+                    '<span class="fc-card-difficulty ' + diffClass + '">' + diffLabel + '</span>' +
+                '</div>' +
+                '<div class="fc-card-question">' + safeQ + '</div>' +
+                '<div class="fc-card-answer">' + safeA + '</div>' +
+                '<div class="fc-card-hint">Klicke zum Aufdecken</div>' +
+            '</div>' +
+            '<div class="fc-card-actions">' +
+                '<button class="fc-rate-btn rate-hard" onclick="event.stopPropagation(); rateCard(\'' + card.id + '\', \'hard\')">Schwierig</button>' +
+                '<button class="fc-rate-btn" onclick="event.stopPropagation(); rateCard(\'' + card.id + '\', \'learning\')">Nochmal</button>' +
+                '<button class="fc-rate-btn rate-easy" onclick="event.stopPropagation(); rateCard(\'' + card.id + '\', \'mastered\')">Gewusst</button>' +
+                '<button class="fc-rate-btn" onclick="event.stopPropagation(); deleteCard(\'' + card.id + '\')" style="flex:0 0 auto;padding:8px 10px;">X</button>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+}
+
+function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function toggleCard(el) {
+    el.classList.toggle('revealed');
+}
+
+function filterCards(filter, chipEl) {
+    currentFilter = filter;
+    document.querySelectorAll('.fc-chip').forEach(function(c) { c.classList.remove('active'); });
+    if (chipEl) chipEl.classList.add('active');
+    renderDeck();
+}
+
+function rateCard(id, status) {
+    var card = flashcards.find(function(c) { return c.id === id; });
+    if (!card) return;
+    card.status = status;
+    card.lastReview = new Date().toISOString();
+    card.reviewCount = (card.reviewCount || 0) + 1;
+
+    var now = new Date();
+    if (status === 'mastered') {
+        now.setDate(now.getDate() + 7);
+    } else if (status === 'learning') {
+        now.setDate(now.getDate() + 1);
+    } else {
+        now.setHours(now.getHours() + 4);
+    }
+    card.nextReview = now.toISOString();
+
+    saveFlashcards();
+    updateKPIs();
+    renderDeck();
+    showToast(status === 'mastered' ? 'Gemeistert!' : status === 'hard' ? 'Wird wiederholt' : 'Nochmal üben');
+}
+
+function deleteCard(id) {
+    flashcards = flashcards.filter(function(c) { return c.id !== id; });
+    saveFlashcards();
+    updateKPIs();
+    renderDeck();
+    showToast('Karte gelöscht');
+}
+
+function startStudyMode() {
+    studyQueue = flashcards
+        .filter(function(c) { return c.status !== 'mastered'; })
+        .sort(function(a, b) {
+            var order = { hard: 0, 'new': 1, learning: 2 };
+            return (order[a.status] !== undefined ? order[a.status] : 3) - (order[b.status] !== undefined ? order[b.status] : 3);
+        })
+        .slice(0, 20);
+
+    if (studyQueue.length === 0) {
+        showToast('Keine Karten zum Lernen! Generiere neue.');
+        return;
+    }
+
+    studyIndex = 0;
+    showStudyCard();
+    document.getElementById('studyOverlay').classList.add('active');
+}
+
+function showStudyCard() {
+    if (studyIndex >= studyQueue.length) {
+        closeStudyMode();
+        showToast('Session abgeschlossen!');
+        return;
+    }
+
+    var card = studyQueue[studyIndex];
+    document.getElementById('studyQuestion').textContent = card.question;
+    document.getElementById('studyAnswer').textContent = card.answer;
+    document.getElementById('studyCounter').textContent = 'Karte ' + (studyIndex + 1) + ' von ' + studyQueue.length;
+    document.getElementById('studyProgress').style.width = ((studyIndex + 1) / studyQueue.length * 100) + '%';
+
+    var sc = document.getElementById('studyCard');
+    sc.classList.remove('flipped');
+    document.getElementById('studyActions').style.display = 'none';
+}
+
+function flipStudyCard() {
+    var sc = document.getElementById('studyCard');
+    sc.classList.add('flipped');
+    document.getElementById('studyActions').style.display = 'flex';
+}
+
+function rateStudyCard(status) {
+    var card = studyQueue[studyIndex];
+    rateCard(card.id, status);
+    studyIndex++;
+    showStudyCard();
+}
+
+function closeStudyMode() {
+    document.getElementById('studyOverlay').classList.remove('active');
+}
+
+function openGenerateModal() {
+    document.getElementById('generateModal').classList.add('active');
+    document.getElementById('genSource').onchange = function() {
+        document.getElementById('genManualWrap').style.display = this.value === 'manual' ? 'block' : 'none';
+    };
+}
+function closeGenerateModal() {
+    document.getElementById('generateModal').classList.remove('active');
+}
+
+function openManualAddModal() {
+    document.getElementById('manualAddModal').classList.add('active');
+}
+function closeManualAddModal() {
+    document.getElementById('manualAddModal').classList.remove('active');
+}
+
+function addManualCard() {
+    var q = document.getElementById('manualQuestion').value.trim();
+    var a = document.getElementById('manualAnswer').value.trim();
+    var diff = document.getElementById('manualDifficulty').value;
+    var cat = document.getElementById('manualCategory').value.trim() || 'Manuell';
+
+    if (!q || !a) { showToast('Frage und Antwort sind Pflicht!'); return; }
+
+    flashcards.unshift(createCard(q, a, diff, 'manual', cat));
+    saveFlashcards();
+    updateKPIs();
+    renderDeck();
+    closeManualAddModal();
+
+    document.getElementById('manualQuestion').value = '';
+    document.getElementById('manualAnswer').value = '';
+    document.getElementById('manualCategory').value = '';
+    showToast('Karteikarte erstellt!');
+}
+
+async function generateCards() {
+    var source = document.getElementById('genSource').value;
+    var count = parseInt(document.getElementById('genCount').value);
+    var difficulty = document.getElementById('genDifficulty').value;
+    var btn = document.getElementById('genSubmitBtn');
+
+    var topics = [];
+
+    if (source === 'manual') {
+        var manualTopic = document.getElementById('genManualTopic').value.trim();
+        if (!manualTopic) { showToast('Bitte gib ein Thema ein!'); return; }
+        topics = [manualTopic];
+    } else {
+        var rawEntries = loadWorkEntries();
+        var entries = Array.isArray(rawEntries) ? rawEntries : (rawEntries && typeof rawEntries === 'object' ? Object.values(rawEntries) : []);
+        
+        if (!entries || entries.length === 0) {
+            showToast('Keine Arbeitseinträge gefunden!');
+            return;
+        }
+
+        var now = new Date();
+        var filtered = entries;
+        if (source === 'recent') {
+            var weekAgo = new Date(now);
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            filtered = entries.filter(function(e) { return e && e.date && new Date(e.date) >= weekAgo; });
+        } else if (source === 'month') {
+            var monthAgo = new Date(now);
+            monthAgo.setMonth(monthAgo.getMonth() - 1);
+            filtered = entries.filter(function(e) { return e && e.date && new Date(e.date) >= monthAgo; });
+        }
+
+        if (!filtered || filtered.length === 0) filtered = entries.slice(0, 20);
+        if (!filtered || filtered.length === 0) filtered = [];
+
+        topics = filtered
+            .filter(function(e) { return e && e.info && e.info.trim && e.info.trim().length > 5 && e.type === 'work'; })
+            .map(function(e) {
+                var desc = e.info;
+                desc = desc.replace(/^Live-Tracker\s*\([^)]*\)\s*\|\s*/i, '');
+                return desc.trim();
+            })
+            .filter(function(t) { return t && t.length > 3; });
+
+        if (topics.length === 0) {
+            showToast('Keine verwertbaren Tätigkeitsbeschreibungen gefunden.');
+            return;
+        }
+
+        if (topics.length > 10) {
+            topics = topics.sort(function() { return Math.random() - 0.5; }).slice(0, 10);
+        }
+    }
+
+    var diffText = difficulty === 'easy' ? 'einfache (AP Teil 1 Niveau)' :
+                   difficulty === 'hard' ? 'schwierige (AP Teil 2 Niveau)' :
+                   difficulty === 'medium' ? 'mittelschwere' : 'gemischt schwierige';
+
+    var prompt = 'Du bist ein IHK-Prüfungsexperte für Fachinformatiker. Erstelle genau ' + count + ' ' + diffText + ' prüfungsrelevante Karteikarten basierend auf diesen Arbeitsaktivitäten eines Azubis:\n\n' +
+        topics.map(function(t, i) { return (i + 1) + '. ' + t; }).join('\n') +
+        '\n\nErstelle Fragen die in der IHK Abschlussprüfung (AP1 oder AP2) vorkommen könnten. Jede Karte muss eine klare Frage und eine präzise, fachlich korrekte Antwort haben.\n\nAntworte STRIKT im folgenden JSON-Format (nur das Array, kein anderer Text):\n[{"q":"Frage hier","a":"Antwort hier","d":"easy|medium|hard","c":"Kategorie"}]';
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="fc-spinner"></span> Generiere...';
+
+    try {
+        var result = null;
+
+        var webllm = (window.opener && window.opener.webLLMIntegration) || (window.parent && window.parent.webLLMIntegration) || window.webLLMIntegration;
+
+        if (webllm && webllm.isWebLLMActive && webllm.engine) {
+            try {
+                var response = await webllm.engine.chat.completions.create({
+                    messages: [
+                        { role: 'system', content: 'Du bist ein IHK-Prüfungsexperte für Fachinformatiker. Antworte nur mit validem JSON.' },
+                        { role: 'user', content: prompt }
+                    ],
+                    max_tokens: 1500,
+                    temperature: 0.7
+                });
+                result = response.choices[0].message.content;
+            } catch (llmErr) {
+                console.warn('[Flashcards] WebLLM call failed:', llmErr);
+            }
+        }
+
+        if (!result) {
+            result = generateFallbackCards(topics, count, difficulty);
+        }
+
+        var cards = [];
+        if (typeof result === 'string') {
+            var jsonMatch = result.match(/\[[\s\S]*\]/);
+            if (jsonMatch) {
+                cards = JSON.parse(jsonMatch[0]);
+            }
+        } else if (Array.isArray(result)) {
+            cards = result;
+        }
+
+        if (cards.length === 0) {
+            showToast('Konnte keine Karten parsen. Verwende Fallback...');
+            cards = JSON.parse(generateFallbackCards(topics, count, difficulty));
+        }
+
+        cards.forEach(function(c) {
+            flashcards.unshift(createCard(
+                c.q || c.question,
+                c.a || c.answer,
+                c.d || c.difficulty || 'medium',
+                'AI-generiert',
+                c.c || c.category || 'IHK'
+            ));
+        });
+
+        saveFlashcards();
+        updateKPIs();
+        renderDeck();
+        closeGenerateModal();
+        showToast(cards.length + ' Karteikarten generiert!');
+
+    } catch (err) {
+        console.error('[Flashcards] Generate error:', err);
+        showToast('Fehler: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Generieren';
+    }
+}
+
+function generateFallbackCards(topics, count, difficulty) {
+    var templates = {
+        'Netzwerk': [
+            { q: 'Was ist die Subnetzmaske für ein /24 Netz?', a: '255.255.255.0 — Ein /24 Netz bietet 256 Adressen, davon 254 nutzbar (Netz- und Broadcast-Adresse abziehen).', d: 'easy', c: 'Netzwerk' },
+            { q: 'Welche Schichten hat das OSI-Modell und wofür steht Schicht 3?', a: 'Die 7 OSI-Schichten: Physical, Data Link, Network, Transport, Session, Presentation, Application. Schicht 3 (Network) ist für die logische Adressierung (IP) und das Routing zuständig.', d: 'medium', c: 'Netzwerk' },
+            { q: 'Was ist der Unterschied zwischen einem Hub, Switch und Router?', a: 'Hub: Schicht 1, sendet alles an alle Ports. Switch: Schicht 2, lernt MAC-Adressen und leitet gezielt weiter. Router: Schicht 3, verbindet verschiedene Netzwerke und routet anhand von IP-Adressen.', d: 'easy', c: 'Netzwerk' },
+            { q: 'Erkläre den Unterschied zwischen TCP und UDP.', a: 'TCP: Verbindungsorientiert, zuverlässig, mit Handshake, Reihenfolgegarantie (z.B. HTTP, FTP). UDP: Verbindungslos, schneller, kein Handshake, keine Garantie (z.B. DNS, Streaming, VoIP).', d: 'medium', c: 'Netzwerk' },
+            { q: 'Was ist ein VLAN und welchen Vorteil bietet es?', a: 'Virtual LAN — logische Segmentierung eines physischen Netzwerks auf Schicht 2. Vorteile: Sicherheit durch Trennung, Reduzierung von Broadcast-Domänen, flexible Netzwerkstruktur.', d: 'medium', c: 'Netzwerk' },
+            { q: 'Berechne: Wie viele Hosts sind in einem /28 Subnetz möglich?', a: '2^(32-28) - 2 = 14 nutzbare Hosts. 16 Adressen total, minus Netzwerk- und Broadcast-Adresse.', d: 'hard', c: 'Netzwerk' }
+        ],
+        'Server': [
+            { q: 'Was ist der Unterschied zwischen RAID 1 und RAID 5?', a: 'RAID 1: Spiegelung — Daten werden 1:1 auf zwei Platten geschrieben. 50% Kapazitätsverlust, aber schnelle Recovery. RAID 5: Striping mit verteilter Parität, mind. 3 Platten, eine Platte Kapazitätsverlust, guter Lese-Speed.', d: 'medium', c: 'Server' },
+            { q: 'Was ist Active Directory und wofür wird es eingesetzt?', a: 'AD ist der Verzeichnisdienst von Microsoft für Windows-Domänen. Er verwaltet Benutzer, Computer, Gruppen und Richtlinien (GPOs) zentral. Basis: LDAP-Protokoll.', d: 'medium', c: 'Server' },
+            { q: 'Erkläre den Unterschied zwischen einer VM und einem Container.', a: 'VM: Vollständiger Hypervisor, eigenes Betriebssystem pro VM, schwerer, isolierter. Container: Teilt den Host-Kernel, leichtgewichtig, schnellerer Start, weniger Overhead (z.B. Docker).', d: 'hard', c: 'Server' }
+        ],
+        'Sicherheit': [
+            { q: 'Was sind die drei Schutzziele der Informationssicherheit?', a: 'CIA-Triade: Confidentiality (Vertraulichkeit), Integrity (Integrität), Availability (Verfügbarkeit). Alle drei müssen für ein sicheres System gewährleistet sein.', d: 'easy', c: 'Sicherheit' },
+            { q: 'Was ist der Unterschied zwischen symmetrischer und asymmetrischer Verschlüsselung?', a: 'Symmetrisch: Ein Schlüssel für Ver- & Entschlüsselung (z.B. AES). Schnell, aber Schlüsselaustausch-Problem. Asymmetrisch: Schlüsselpaar (Public/Private), z.B. RSA. Sicherer Austausch, aber langsamer.', d: 'medium', c: 'Sicherheit' },
+            { q: 'Was ist eine Firewall und welche Arten gibt es?', a: 'Firewall filtert Netzwerkverkehr nach Regeln. Arten: Paketfilter (Schicht 3/4), Stateful Inspection (verbindungsorientiert), Application Gateway/Proxy (Schicht 7), Next-Gen Firewall (Deep Packet Inspection + IDS/IPS).', d: 'medium', c: 'Sicherheit' }
+        ],
+        'Programmierung': [
+            { q: 'Was sind die vier Grundprinzipien der objektorientierten Programmierung?', a: 'Abstraktion, Kapselung (Encapsulation), Vererbung (Inheritance) und Polymorphie. Sie bilden das Fundament für modularen, wartbaren Code.', d: 'easy', c: 'Programmierung' },
+            { q: 'Erkläre den Unterschied zwischen Stack und Heap im Arbeitsspeicher.', a: 'Stack: LIFO-Struktur, für lokale Variablen und Funktionsaufrufe, schnell, begrenzt. Heap: Dynamischer Speicher für Objekte/Referenzen, langsamer, muss manuell/per GC freigegeben werden.', d: 'hard', c: 'Programmierung' },
+            { q: 'Was ist eine REST-API und welche HTTP-Methoden werden typisch verwendet?', a: 'REST: Representational State Transfer — Architekturstil für Web-APIs. Methoden: GET (lesen), POST (erstellen), PUT (aktualisieren), PATCH (teilweise aktualisieren), DELETE (löschen).', d: 'medium', c: 'Programmierung' }
+        ],
+        'Allgemein': [
+            { q: 'Was ist der Unterschied zwischen einem Lastenheft und einem Pflichtenheft?', a: 'Lastenheft: Vom Auftraggeber erstellt, beschreibt WAS gewünscht wird (Anforderungen). Pflichtenheft: Vom Auftragnehmer erstellt, beschreibt WIE es umgesetzt wird (technische Lösung).', d: 'easy', c: 'Projektmanagement' },
+            { q: 'Erkläre das Wasserfallmodell und nenne einen Nachteil.', a: 'Sequentielles Vorgehensmodell: Anforderungen - Design - Implementierung - Test - Betrieb. Nachteil: Unflexibel bei Änderungen, da jede Phase abgeschlossen sein muss bevor die nächste beginnt.', d: 'easy', c: 'Projektmanagement' },
+            { q: 'Was ist Scrum und welche Rollen gibt es?', a: 'Agiles Framework mit iterativen Sprints (1-4 Wochen). Rollen: Product Owner (Anforderungen), Scrum Master (Prozess), Development Team (Umsetzung). Artefakte: Product Backlog, Sprint Backlog, Increment.', d: 'medium', c: 'Projektmanagement' },
+            { q: 'Nenne die Phasen eines IT-Projekts nach dem V-Modell.', a: 'Linke Seite (Spezifikation): Anforderungsanalyse - Grobentwurf - Feinentwurf - Implementierung. Rechte Seite (Test): Unittest - Integrationstest - Systemtest - Abnahmetest.', d: 'hard', c: 'Projektmanagement' },
+            { q: 'Was bedeutet DSGVO und welche Grundsätze gelten?', a: 'Datenschutz-Grundverordnung der EU. Grundsätze: Rechtmäßigkeit, Zweckbindung, Datenminimierung, Richtigkeit, Speicherbegrenzung, Integrität & Vertraulichkeit, Rechenschaftspflicht.', d: 'medium', c: 'Recht & DSGVO' }
+        ]
+    };
+
+    var topicLower = topics.join(' ').toLowerCase();
+    var matchedCategories = [];
+    if (topicLower.match(/netz|subnet|vlan|ip|dns|dhcp|switch|router|firewall|tcp|udp|ping|port/)) matchedCategories.push('Netzwerk');
+    if (topicLower.match(/server|active.?directory|backup|raid|vm|virtual|docker|linux|windows.?server|migration/)) matchedCategories.push('Server');
+    if (topicLower.match(/sicher|passwort|verschlüssel|firewall|virus|malware|hack|ssl|tls|zertifikat/)) matchedCategories.push('Sicherheit');
+    if (topicLower.match(/code|programm|develop|html|css|java|python|api|datenbank|sql|git/)) matchedCategories.push('Programmierung');
+    if (matchedCategories.length === 0) matchedCategories.push('Allgemein');
+    matchedCategories.push('Allgemein');
+
+    var pool = [];
+    matchedCategories.forEach(function(cat) {
+        if (templates[cat]) pool = pool.concat(templates[cat]);
+    });
+
+    if (difficulty !== 'mixed') {
+        var diffFiltered = pool.filter(function(c) { return c.d === difficulty; });
+        if (diffFiltered.length >= count) pool = diffFiltered;
+    }
+
+    pool = pool.sort(function() { return Math.random() - 0.5; });
+
+    var existingQs = {};
+    flashcards.forEach(function(c) { existingQs[c.question.toLowerCase()] = true; });
+    pool = pool.filter(function(c) { return !existingQs[c.q.toLowerCase()]; });
+
+    return JSON.stringify(pool.slice(0, count));
+}
+
+function showToast(msg) {
+    var t = document.getElementById('fcToast');
+    t.textContent = msg;
+    t.classList.add('visible');
+    setTimeout(function() { t.classList.remove('visible'); }, 2500);
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeStudyMode();
+        closeGenerateModal();
+        closeManualAddModal();
+    }
+    if (e.key === ' ' && document.getElementById('studyOverlay').classList.contains('active')) {
+        e.preventDefault();
+        flipStudyCard();
+    }
+});
+
+window.addEventListener('DOMContentLoaded', function() {
+    loadFlashcards();
+    updateKPIs();
+    renderDeck();
+});
+</script>
+
 </body>
 </html>
