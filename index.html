@@ -7654,6 +7654,95 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         </div>
     </div>
     
+    <!-- GHOST MODE ANNOUNCEMENT MODAL -->
+    <div id="ghostAnnounceModal" style="position:fixed;inset:0;z-index:999998;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.35s ease;backdrop-filter:blur(12px);">
+        <div style="background:linear-gradient(145deg,#13131a,#1a1a24);width:92%;max-width:560px;padding:0;border-radius:20px;border:2px solid rgba(168,85,247,0.4);box-shadow:0 0 80px rgba(168,85,247,0.15),0 25px 60px rgba(0,0,0,0.6);overflow:hidden;animation:ghostAnnounceIn 0.5s ease-out both;">
+            <!-- Header Banner -->
+            <div style="background:linear-gradient(135deg,#1e1b2e,#2a1f3d);padding:28px 28px 20px;position:relative;overflow:hidden;">
+                <div style="position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(168,85,247,0.15),transparent 50%);pointer-events:none;"></div>
+                <div style="font-size:52px;text-align:center;margin-bottom:12px;filter:drop-shadow(0 0 20px rgba(168,85,247,0.4));animation:ghostFloat 3s ease-in-out infinite;">🙏</div>
+                <h2 style="color:#fff;margin:0;font-size:1.6rem;text-align:center;font-weight:800;letter-spacing:-0.5px;">Neues Feature: <span style="background:linear-gradient(135deg,#a855f7,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Ghost Mode</span></h2>
+                <p style="color:#94a3b8;text-align:center;margin:8px 0 0;font-size:0.85rem;">Der ultimative Boss-Key für Azubis — ab sofort verfügbar!</p>
+            </div>
+
+            <!-- Content -->
+            <div style="padding:24px 28px;">
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    <!-- Feature 1 -->
+                    <div style="display:flex;align-items:flex-start;gap:14px;background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.12);border-radius:12px;padding:14px;">
+                        <div style="min-width:40px;height:40px;background:linear-gradient(135deg,#a855f7,#7c3aed);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">⌨️</div>
+                        <div style="flex:1 1 0; min-width:0;">
+                            <div style="color:#fff;font-weight:700;font-size:0.95rem;margin-bottom:3px;">Strg + Shift + K</div>
+                            <div style="color:#94a3b8;font-size:0.82rem;line-height:1.5;">Drück den Shortcut und dein komplettes UI verwandelt sich <b style='color:#c4b5fd;'>instant</b> in eine langweilige Excel-Tabelle.</div>
+                        </div>
+                    </div>
+                    <!-- Feature 2 -->
+                    <div style="display:flex;align-items:flex-start;gap:14px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.12);border-radius:12px;padding:14px;">
+                        <div style="min-width:40px;height:40px;background:linear-gradient(135deg,#10b981,#059669);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">📈</div>
+                        <div style="flex:1 1 0; min-width:0;">
+                            <div style="color:#fff;font-weight:700;font-size:0.95rem;margin-bottom:3px;">Sieht aus wie Arbeit</div>
+                            <div style="color:#94a3b8;font-size:0.82rem;line-height:1.5;">Fake Excel mit echten Arbeitszeit-Daten, Formelleiste, Ribbon — sogar der <b style='color:#6ee7b7;'>Tab-Titel</b> ändert sich!</div>
+                        </div>
+                    </div>
+                    <!-- Feature 3 -->
+                    <div style="display:flex;align-items:flex-start;gap:14px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.12);border-radius:12px;padding:14px;">
+                        <div style="min-width:40px;height:40px;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">🙏</div>
+                        <div style="flex:1 1 0; min-width:0;">
+                            <div style="color:#fff;font-weight:700;font-size:0.95rem;margin-bottom:3px;">Panik-Button & Command Palette</div>
+                            <div style="color:#94a3b8;font-size:0.82rem;line-height:1.5;">Diskreter 🙏 Button unten rechts oder tippe <kbd style='background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;font-size:0.75rem;border:1px solid rgba(255,255,255,0.15);'>Ghost</kbd> in Ctrl+K. <b style='color:#a5b4fc;'>Escape</b> bringt dich zurück.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Don't show again -->
+                <label style="display:flex;align-items:center;gap:10px;margin-top:20px;cursor:pointer;color:#64748b;font-size:0.82rem;transition:color 0.2s;" onmouseover="this.style.color='#94a3b8'" onmouseout="this.style.color='#64748b'">
+                    <input type="checkbox" id="ghostAnnounceDismiss" style="width:16px;height:16px;accent-color:#a855f7;cursor:pointer;">
+                    Nicht mehr anzeigen — ich hab’s verstanden! ✌️
+                </label>
+
+                <!-- CTA -->
+                <button onclick="dismissGhostAnnounce()" style="width:100%;margin-top:16px;background:linear-gradient(135deg,#a855f7,#7c3aed);color:white;border:none;padding:14px;border-radius:12px;font-weight:700;font-size:1rem;cursor:pointer;transition:all 0.25s;box-shadow:0 4px 20px rgba(168,85,247,0.3);letter-spacing:0.2px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 30px rgba(168,85,247,0.45)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 20px rgba(168,85,247,0.3)'">
+                    Verstanden — Lass mich ghosten! 🙏
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GHOST MODE / BOSS KEY OVERLAY -->
+    <div id="ghostModeOverlay">
+        <div class="ghost-toolbar">
+            <span>Datei</span><span>Start</span><span>Einfügen</span><span>Seitenlayout</span><span>Formeln</span><span>Daten</span><span>Überprüfen</span><span>Ansicht</span>
+            <span class="ghost-title">Arbeitszeiterfassung_2026.xlsx — Microsoft Excel</span>
+        </div>
+        <div class="ghost-ribbon">
+            <button class="ghost-ribbon-btn">📋 Einfügen</button>
+            <div class="ghost-ribbon-sep"></div>
+            <button class="ghost-ribbon-btn"><b>F</b></button>
+            <button class="ghost-ribbon-btn"><i>K</i></button>
+            <button class="ghost-ribbon-btn"><u>U</u></button>
+            <div class="ghost-ribbon-sep"></div>
+            <button class="ghost-ribbon-btn">Σ AutoSumme</button>
+            <button class="ghost-ribbon-btn">↕ Sortieren</button>
+            <div class="ghost-ribbon-sep"></div>
+            <button class="ghost-ribbon-btn">% Prozent</button>
+            <button class="ghost-ribbon-btn">.00 Dezimal</button>
+        </div>
+        <div class="ghost-formula-bar">
+            <span class="ghost-cell-ref">D4</span>
+            <span class="ghost-fx">fx</span>
+            <input class="ghost-formula-input" value="=SUMME(D2:D3)" readonly tabindex="-1">
+        </div>
+        <div class="ghost-sheet-wrap">
+            <table class="ghost-sheet" id="ghostSheetTable"></table>
+        </div>
+        <div class="ghost-statusbar">
+            <span>Bereit</span>
+            <span>Mittelwert: 7,85 &nbsp; Anzahl: 24 &nbsp; Summe: 188,4</span>
+        </div>
+    </div>
+    <!-- Panic Button (only visible on hover, very subtle) -->
+    <button class="ghost-panic-btn visible" id="ghostPanicBtn" onclick="toggleGhostMode()" title="Ghost Mode (Strg+Shift+K)">👻</button>
+
     <!-- COMMAND PALETTE -->
     <div class="cmd-palette-overlay" id="cmdPalette">
         <div class="cmd-palette">
@@ -9805,6 +9894,227 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         .p2p-step-dot { height:4px; flex:1; border-radius:2px; background:rgba(255,255,255,0.08); transition:all 0.4s ease; }
         .p2p-step-dot.active { background:linear-gradient(90deg, #a855f7, #7c3aed); }
         .p2p-step-dot.done { background:#10b981; }
+    </style>
+
+    <!-- GHOST MODE / BOSS KEY STYLES -->
+    <style id="ghost-mode-styles">
+        /* ====== GHOST MODE – Fake Excel Spreadsheet ====== */
+        #ghostModeOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: #f0f0f0;
+            font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+            color: #1a1a1a;
+            flex-direction: column;
+            overflow: hidden;
+            cursor: default;
+            user-select: text;
+        }
+        #ghostModeOverlay.active { display: flex; }
+
+        /* Fake Excel Toolbar */
+        .ghost-toolbar {
+            background: #217346;
+            color: white;
+            padding: 4px 14px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            height: 30px;
+            flex-shrink: 0;
+        }
+        .ghost-toolbar span { opacity: 0.85; cursor: default; }
+        .ghost-toolbar span:hover { opacity: 1; }
+        .ghost-toolbar .ghost-title { font-weight: 600; margin-left: auto; opacity: 0.7; font-size: 11px; }
+
+        /* Fake Ribbon */
+        .ghost-ribbon {
+            background: #fff;
+            border-bottom: 1px solid #d0d0d0;
+            display: flex;
+            align-items: center;
+            padding: 3px 10px;
+            gap: 6px;
+            height: 36px;
+            flex-shrink: 0;
+        }
+        .ghost-ribbon-btn {
+            background: none;
+            border: 1px solid transparent;
+            color: #333;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 2px;
+            cursor: default;
+            font-family: inherit;
+        }
+        .ghost-ribbon-btn:hover { background: #e5e5e5; border-color: #c0c0c0; }
+        .ghost-ribbon-sep { width: 1px; height: 20px; background: #d0d0d0; margin: 0 4px; }
+
+        /* Fake Formula Bar */
+        .ghost-formula-bar {
+            background: #fff;
+            border-bottom: 1px solid #d0d0d0;
+            display: flex;
+            align-items: center;
+            padding: 2px 6px;
+            height: 26px;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .ghost-formula-bar .ghost-cell-ref {
+            background: #fff;
+            border: 1px solid #c0c0c0;
+            padding: 2px 8px;
+            width: 60px;
+            font-size: 11px;
+            text-align: center;
+            margin-right: 6px;
+            color: #333;
+        }
+        .ghost-formula-bar .ghost-fx { color: #999; margin-right: 6px; font-style: italic; font-size: 11px; }
+        .ghost-formula-bar .ghost-formula-input {
+            flex: 1;
+            border: 1px solid #c0c0c0;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-family: inherit;
+            color: #333;
+            background: #fff;
+        }
+
+        /* Spreadsheet Grid */
+        .ghost-sheet-wrap {
+            flex: 1;
+            overflow: auto;
+            background: #fff;
+        }
+        .ghost-sheet {
+            border-collapse: collapse;
+            width: max-content;
+            min-width: 100%;
+            font-size: 12px;
+        }
+        .ghost-sheet th {
+            background: #f3f3f3;
+            border: 1px solid #d0d0d0;
+            padding: 3px 10px;
+            font-weight: 400;
+            color: #444;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            min-width: 80px;
+            text-align: center;
+            font-size: 11px;
+        }
+        .ghost-sheet th.ghost-row-head {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            min-width: 36px;
+            width: 36px;
+            text-align: center;
+        }
+        .ghost-sheet th.ghost-corner {
+            position: sticky;
+            left: 0;
+            top: 0;
+            z-index: 4;
+        }
+        .ghost-sheet td {
+            border: 1px solid #e0e0e0;
+            padding: 3px 8px;
+            color: #1a1a1a;
+            white-space: nowrap;
+            height: 22px;
+        }
+        .ghost-sheet td.ghost-row-num {
+            background: #f3f3f3;
+            border-color: #d0d0d0;
+            text-align: center;
+            color: #444;
+            font-size: 11px;
+            position: sticky;
+            left: 0;
+            z-index: 1;
+        }
+        .ghost-sheet tr:hover td:not(.ghost-row-num) { background: #f5f9ff; }
+        .ghost-sheet td.ghost-selected {
+            outline: 2px solid #217346;
+            outline-offset: -1px;
+            background: #e8f5e9;
+        }
+
+        /* Fake Status Bar */
+        .ghost-statusbar {
+            background: #217346;
+            color: white;
+            padding: 2px 14px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .ghost-statusbar span { opacity: 0.8; }
+
+        /* Panic Button (subtle floating corner button) */
+        .ghost-panic-btn {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            z-index: 999998;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.25);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+        .ghost-panic-btn:hover {
+            opacity: 1;
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            transform: scale(1.1);
+        }
+        .ghost-panic-btn.visible { opacity: 0.4; }
+        [data-theme="light"] .ghost-panic-btn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.08);
+            color: rgba(0, 0, 0, 0.15);
+        }
+        [data-theme="light"] .ghost-panic-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.25);
+            color: #dc2626;
+        }
+
+        /* Ghost Mode active: hide panic button */
+        #ghostModeOverlay.active ~ .ghost-panic-btn { display: none; }
+
+        /* Ghost Announce Modal Animations */
+        @keyframes ghostAnnounceIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.92); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes ghostFloat {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-8px); }
+        }
     </style>
 
     <div class="modal" id="settingsModal">
@@ -23783,6 +24093,8 @@ TIPPS:
         { id: 'impressum',    label: 'Impressum',         icon: '📄', group: 'Extern',     action: () => window.open('./Pages/DE-Gestz/Impressum.html', '_blank') },
         { id: 'dsgvo',        label: 'DSGVO',             icon: '🔒', group: 'Extern',     action: () => window.open('./Pages/DE-Gestz/DSGVO.html', '_blank') },
         { id: 'about',        label: 'About',             icon: '💡', group: 'Extern',     action: () => window.open('./Pages/Info/about.html', '_blank') },
+        // Ghost Mode
+        { id: 'ghost',        label: 'Ghost Mode 👻',     icon: '👻', group: 'Tools',      action: () => toggleGhostMode() },
     ];
 
     let cmdSelectedIdx = 0;
@@ -29775,5 +30087,146 @@ if (document.readyState === 'loading') {
     ⚠️ <span id="breakWarningText">Du arbeitest seit 6h ohne Pause!</span>
 </div>
 
+    </script>
+
+    <!-- GHOST MODE / BOSS KEY SCRIPT -->
+    <script>
+    (function initGhostMode() {
+        let ghostActive = false;
+
+        // ===== GHOST MODE ANNOUNCEMENT =====
+        function showGhostAnnounce() {
+            if (localStorage.getItem('tg_ghost_announced')) return;
+            const m = document.getElementById('ghostAnnounceModal');
+            if (!m) return;
+            m.style.display = 'flex';
+            requestAnimationFrame(() => {
+                m.style.opacity = '1';
+                m.style.pointerEvents = 'auto';
+            });
+        }
+
+        window.dismissGhostAnnounce = function() {
+            const m = document.getElementById('ghostAnnounceModal');
+            if (!m) return;
+            const cb = document.getElementById('ghostAnnounceDismiss');
+            if (cb && cb.checked) {
+                localStorage.setItem('tg_ghost_announced', '1');
+            }
+            m.style.opacity = '0';
+            m.style.pointerEvents = 'none';
+            setTimeout(() => { m.style.display = 'none'; }, 400);
+        };
+
+        // Show announcement on load (one-time)
+        setTimeout(showGhostAnnounce, 1200);
+
+        // Generate fake Excel data that looks like real work tracking
+        function generateGhostData() {
+            const headers = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+            const colLabels = ['Datum', 'Wochentag', 'Abteilung', 'Stunden', 'Beginn', 'Ende', 'Pause (min)', 'Bemerkung'];
+            const days = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+            const depts = ['IT-Abteilung', 'Entwicklung', 'Netzwerk', 'Support', 'Schulung', 'Berufsschule'];
+            const remarks = [
+                'Server-Migration', 'Ticket-Bearbeitung', 'Netzwerk-Doku', 'Firewall-Konfiguration',
+                'Active Directory', 'Windows-Setup', 'Backup-Prüfung', 'User-Support',
+                'Inventarisierung', 'Patch-Management', 'Schulungsunterlagen', 'VLAN-Konfiguration',
+                'Projektmeeting', 'Code-Review', 'Datenbank-Wartung', 'Monitoring einrichten',
+                'IP-Adressvergabe', 'Exchange-Admin', 'Linux-Grundlagen', 'PowerShell-Skripte'
+            ];
+
+            const rows = [];
+            let dateObj = new Date(2026, 2, 2); // Start March 2, 2026
+            for (let i = 0; i < 22; i++) {
+                while (dateObj.getDay() === 0 || dateObj.getDay() === 6) dateObj.setDate(dateObj.getDate() + 1);
+                const d = String(dateObj.getDate()).padStart(2, '0') + '.' + String(dateObj.getMonth() + 1).padStart(2, '0') + '.' + dateObj.getFullYear();
+                const day = days[dateObj.getDay() - 1];
+                const dept = depts[Math.floor(Math.random() * depts.length)];
+                const hrs = (7 + Math.random() * 2).toFixed(1).replace('.', ',');
+                const startH = 7 + Math.floor(Math.random() * 2);
+                const startM = Math.floor(Math.random() * 4) * 15;
+                const begin = String(startH).padStart(2, '0') + ':' + String(startM).padStart(2, '0');
+                const totalMin = parseFloat(hrs.replace(',', '.')) * 60 + 30;
+                const endDate = new Date(2026, 0, 1, startH, startM + totalMin);
+                const end = String(endDate.getHours()).padStart(2, '0') + ':' + String(endDate.getMinutes()).padStart(2, '0');
+                const pause = '30';
+                const remark = remarks[Math.floor(Math.random() * remarks.length)];
+                rows.push([d, day, dept, hrs, begin, end, pause, remark]);
+                dateObj.setDate(dateObj.getDate() + 1);
+            }
+            return { headers, colLabels, rows };
+        }
+
+        function renderGhostSheet() {
+            const table = document.getElementById('ghostSheetTable');
+            if (!table || table.rows.length > 1) return;
+            const { headers, colLabels, rows } = generateGhostData();
+
+            let html = '<thead><tr>';
+            headers.forEach((h, i) => {
+                html += i === 0
+                    ? '<th class="ghost-corner ghost-row-head"></th>'
+                    : '<th>' + h + '</th>';
+            });
+            html += '</tr></thead><tbody>';
+
+            // Column labels row
+            html += '<tr><td class="ghost-row-num">1</td>';
+            colLabels.forEach(l => { html += '<td style="font-weight:600;background:#f8f8f8">' + l + '</td>'; });
+            html += '</tr>';
+
+            rows.forEach((row, idx) => {
+                html += '<tr><td class="ghost-row-num">' + (idx + 2) + '</td>';
+                row.forEach((cell, ci) => {
+                    const cls = (idx === 2 && ci === 3) ? ' class="ghost-selected"' : '';
+                    html += '<td' + cls + '>' + cell + '</td>';
+                });
+                html += '</tr>';
+            });
+
+            // Empty rows to fill screen
+            for (let e = rows.length + 2; e < 40; e++) {
+                html += '<tr><td class="ghost-row-num">' + e + '</td>';
+                for (let c = 0; c < 8; c++) html += '<td></td>';
+                html += '</tr>';
+            }
+
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        // Toggle Ghost Mode
+        window.toggleGhostMode = function() {
+            const overlay = document.getElementById('ghostModeOverlay');
+            if (!overlay) return;
+
+            ghostActive = !ghostActive;
+
+            if (ghostActive) {
+                renderGhostSheet();
+                overlay.classList.add('active');
+                // Change page title to look legit
+                document.title = 'Arbeitszeiterfassung_2026.xlsx - Excel';
+            } else {
+                overlay.classList.remove('active');
+                document.title = 'MyWorkLog – Zeiterfassung';
+            }
+        };
+
+        // Global Keyboard Shortcut: Ctrl+Shift+K
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && e.key === 'K') {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleGhostMode();
+            }
+            // Also allow Escape to exit Ghost Mode
+            if (e.key === 'Escape' && ghostActive) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleGhostMode();
+            }
+        }, true); // capture phase for maximum priority
+    })();
     </script>
 </body>

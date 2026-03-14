@@ -113,6 +113,14 @@ const defaultShortcuts = {
         category: 'Suche',
         keys: ['ctrl', 'f'],
         action: 'openSearch'
+    },
+
+    // GHOST MODE
+    'ghost.toggle': {
+        name: 'Ghost Mode 👻',
+        category: 'Stealth',
+        keys: ['ctrl', 'shift', 'k'],
+        action: 'toggleGhostMode'
     }
 };
 
@@ -155,7 +163,7 @@ class ShortcutManager {
         // Ignoriere Eingaben in Textfeldern (außer bei bestimmten Shortcuts)
         if (['input', 'textarea'].includes(event.target.tagName.toLowerCase())) {
             // Nur spezifische Shortcuts in Eingabefeldern erlauben
-            const allowedInInput = ['data.save', 'search.open'];
+            const allowedInInput = ['data.save', 'search.open', 'ghost.toggle'];
             const matchedShortcut = Object.entries(this.shortcuts).find(([_, sc]) => 
                 this.keysMatch(event, sc.keys)
             );
