@@ -2281,11 +2281,51 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             opacity: 1;
         }
 
-        /* Subtle shimmer on gleitzeit hero card */
+        /* === GLEITZEIT HERO — Premium Card === */
         .gleitzeit-hero {
             position: relative;
             overflow: hidden;
+            background: linear-gradient(160deg,
+                rgba(var(--primary-rgb), 0.06) 0%,
+                rgba(6, 182, 212, 0.03) 40%,
+                transparent 80%) !important;
+            border: 1px solid rgba(var(--primary-rgb), 0.12) !important;
+            box-shadow:
+                inset 0 1px 0 0 rgba(255,255,255,0.04),
+                0 0 0 1px rgba(var(--primary-rgb), 0.05),
+                0 4px 24px -4px rgba(0,0,0,0.35),
+                0 12px 40px -8px rgba(var(--primary-rgb), 0.08);
+            transition: transform 0.5s cubic-bezier(0.22,1,0.36,1), box-shadow 0.5s ease, border-color 0.5s ease;
         }
+        .gleitzeit-hero:hover {
+            transform: translateY(-2px);
+            border-color: rgba(var(--primary-rgb), 0.20) !important;
+            box-shadow:
+                inset 0 1px 0 0 rgba(255,255,255,0.06),
+                0 0 0 1px rgba(var(--primary-rgb), 0.10),
+                0 8px 32px -4px rgba(0,0,0,0.4),
+                0 20px 60px -12px rgba(var(--primary-rgb), 0.14);
+        }
+        /* Animated accent line — top edge only, monochromatic lila-shift */
+        .gleitzeit-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg,
+                transparent,
+                rgba(var(--primary-rgb), 0.5) 20%,
+                rgba(var(--primary-rgb), 0.8) 50%,
+                rgba(var(--primary-rgb), 0.5) 80%,
+                transparent);
+            background-size: 200% 100%;
+            animation: gzBorderShift 8s ease-in-out infinite;
+        }
+        @keyframes gzBorderShift {
+            0%, 100% { background-position: -100% 0; }
+            50% { background-position: 200% 0; }
+        }
+        /* Subtle light sweep — very slow, barely visible */
         .gleitzeit-hero::after {
             content: '';
             position: absolute;
@@ -2293,18 +2333,47 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             width: 200%; height: 200%;
             background: linear-gradient(
                 115deg,
-                transparent 40%,
-                rgba(var(--primary-rgb), 0.03) 45%,
-                rgba(var(--primary-rgb), 0.06) 50%,
-                rgba(var(--primary-rgb), 0.03) 55%,
-                transparent 60%
+                transparent 44%,
+                rgba(255, 255, 255, 0.01) 47%,
+                rgba(255, 255, 255, 0.025) 50%,
+                rgba(255, 255, 255, 0.01) 53%,
+                transparent 56%
             );
-            animation: cardShimmer 6s ease-in-out infinite;
+            animation: cardShimmer 12s ease-in-out infinite;
             pointer-events: none;
         }
         @keyframes cardShimmer {
             0%, 100% { transform: translateX(-100%) rotate(0deg); }
             50% { transform: translateX(100%) rotate(0deg); }
+        }
+        /* Light theme */
+        [data-theme="light"] .gleitzeit-hero {
+            background: linear-gradient(160deg,
+                rgba(var(--primary-rgb), 0.06) 0%,
+                rgba(6, 182, 212, 0.03) 40%,
+                rgba(255,255,255,0.6) 80%) !important;
+            box-shadow:
+                inset 0 1px 0 0 rgba(255,255,255,0.5),
+                0 0 0 1px rgba(var(--primary-rgb), 0.08),
+                0 4px 24px -4px rgba(0,0,0,0.06),
+                0 12px 40px -8px rgba(var(--primary-rgb), 0.06);
+        }
+        [data-theme="light"] .gleitzeit-hero:hover {
+            box-shadow:
+                inset 0 1px 0 0 rgba(255,255,255,0.6),
+                0 0 0 1px rgba(var(--primary-rgb), 0.14),
+                0 8px 32px -4px rgba(0,0,0,0.08),
+                0 20px 60px -12px rgba(var(--primary-rgb), 0.08);
+        }
+        [data-theme="light"] .gleitzeit-hero::after {
+            background: linear-gradient(
+                115deg,
+                transparent 44%,
+                rgba(168, 85, 247, 0.015) 47%,
+                rgba(168, 85, 247, 0.03) 50%,
+                rgba(168, 85, 247, 0.015) 53%,
+                transparent 56%
+            );
         }
 
         /* Main area gains relative z for orbs behind */
@@ -5966,13 +6035,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     </style>
 
     <style>
-        /* --- Hero Gleitzeit Card: Subtle premium glass effect --- */
-        .gleitzeit-hero {
-            position: relative;
-            overflow: hidden;
-            background: linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(6,182,212,0.04) 50%, rgba(16,185,129,0.06) 100%) !important;
-            border: 1px solid rgba(168,85,247,0.12) !important;
-        }
+        /* --- Hero Gleitzeit Card: handled in main style block --- */
 
         /* --- KPI Value Glow Effects --- */
         .kpi-value-positive {
@@ -6011,11 +6074,11 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
         /* --- Streak Pulse Animation --- */
         @keyframes streakPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); }
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
         }
         .streak-active {
-            animation: streakPulse 2s ease-in-out infinite;
+            animation: streakPulse 3s ease-in-out infinite;
             display: inline-block;
         }
 
