@@ -11712,10 +11712,28 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 <button class="btn btn-ghost" onclick="openSettings(); closeMoreActionsModal()">⚙️ Einstellungen</button>
                 <button class="btn btn-ghost" onclick="startFocusMode(); closeMoreActionsModal()">🎯 Focus Mode starten</button>
                 <button class="btn btn-ghost" onclick="openBreakSettingsModal(); closeMoreActionsModal()">🔔 Break Settings</button>
+                <button class="btn btn-ghost" onclick="openSkillCardModal(); closeMoreActionsModal()">🃏 Azubi Skill-Card</button>
                 <button class="btn btn-ghost" onclick="window.webLLMIntegration.clearCache(); closeMoreActionsModal()" title="Löscht den WebLLM Browser-Cache">🗑️ WebLLM Cache leeren</button>
             </div>
             
             <button class="modal-close-x" aria-label="Schließen" onclick="closeMoreActionsModal()" title="Schließen">×</button>
+        </div>
+    </div>
+
+    <!-- Azubi Skill-Card Modal -->
+    <div class="modal" id="skillCardModal" style="display:none;">
+        <div class="modal-box" style="width:90%; max-width:420px; padding:0; backdrop-filter:blur(24px); border-radius:20px; border:1px solid rgba(168,85,247,0.25); position:relative; overflow:hidden; background:rgba(12,12,16,0.95);">
+            <div style="padding:20px 24px 12px; display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0; font-size:1rem; font-weight:700; color:var(--text-main);">🃏 Deine Azubi Skill-Card</h3>
+                <button class="modal-close-x" aria-label="Schließen" onclick="closeSkillCardModal()" title="Schließen">×</button>
+            </div>
+            <div style="padding:8px 24px 20px; display:flex; flex-direction:column; align-items:center; gap:16px;">
+                <canvas id="skillCardCanvas" width="360" height="520" style="border-radius:14px; max-width:100%; height:auto;"></canvas>
+                <div style="display:flex; gap:10px; width:100%;">
+                    <button class="btn btn-primary" onclick="downloadSkillCard()" style="flex:1; background:var(--primary); padding:10px; border-radius:12px; font-weight:600; font-size:0.85rem;">📥 Speichern</button>
+                    <button class="btn btn-primary" id="skillCardShareBtn" onclick="shareSkillCard()" style="flex:1; background:linear-gradient(135deg, #06b6d4, var(--primary)); padding:10px; border-radius:12px; font-weight:600; font-size:0.85rem;">📤 Teilen</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -24952,6 +24970,302 @@ TIPPS:
         }
     }
 
+
+    // ============================================
+    // FEATURE: AZUBI SKILL-CARD (Shareable Canvas)
+    // ============================================
+
+    function openSkillCardModal() {
+        const modal = document.getElementById('skillCardModal');
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+        // Hide share button if Web Share API not available
+        const shareBtn = document.getElementById('skillCardShareBtn');
+        if (shareBtn) shareBtn.style.display = navigator.share ? 'block' : 'none';
+        renderSkillCard();
+    }
+
+    function closeSkillCardModal() {
+        const modal = document.getElementById('skillCardModal');
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+
+    function getSkillCardData() {
+        const streak = calculateStreak();
+        const name = data.settings.name || 'Azubi';
+        const ihk = data.settings.ihk || {};
+
+        // Ausbildungsjahr berechnen
+        let ausbildungsjahr = 1;
+        if (ihk.start) {
+            const startDate = new Date(ihk.start);
+            const now = new Date();
+            const diffYears = (now - startDate) / (1000 * 60 * 60 * 24 * 365.25);
+            ausbildungsjahr = Math.max(1, Math.min(4, Math.ceil(diffYears)));
+        }
+
+        // Gesamtstunden & Tage berechnen
+        let totalHours = 0, totalDays = 0, totalDiff = 0;
+        (data.entries || []).forEach(e => {
+            if (e.type === 'work' || e.type === 'school') {
+                totalHours += e.worked || 0;
+                totalDays++;
+            }
+            totalDiff += e.diff || 0;
+        });
+
+        // Notenschnitt berechnen
+        let gradeAvg = 0;
+        const grades = data.settings.school?.grades || {};
+        const allGrades = Object.values(grades).flat().filter(n => !isNaN(parseFloat(n)) && n >= 1 && n <= 6).map(Number);
+        if (allGrades.length > 0) {
+            gradeAvg = allGrades.reduce((a, b) => a + b, 0) / allGrades.length;
+        }
+
+        // Titel bestimmen
+        let title = 'Rookie';
+        const s = streak.current;
+        const d = totalDays;
+        if (d >= 500 && s >= 20) title = 'Legende';
+        else if (d >= 300 && s >= 15) title = 'Elite Worker';
+        else if (d >= 200 && gradeAvg > 0 && gradeAvg <= 1.5) title = 'Streber-Maschine';
+        else if (s >= 30) title = 'Streak-Monster';
+        else if (d >= 200) title = 'Veteran';
+        else if (s >= 10) title = 'Streak-König';
+        else if (d >= 100 && gradeAvg > 0 && gradeAvg <= 2.0) title = 'Code-Ninja';
+        else if (d >= 100) title = 'Pro Azubi';
+        else if (d >= 50) title = 'Fleißig';
+        else if (d >= 20) title = 'Aufsteiger';
+
+        // OVR (Overall Rating) — 0-99 wie FIFA
+        let ovr = 40; // Basis
+        ovr += Math.min(d / 10, 20); // Max +20 für Tage
+        ovr += Math.min(s * 0.8, 15); // Max +15 für Streak
+        ovr += Math.min(totalHours / 100, 10); // Max +10 für Stunden
+        if (gradeAvg > 0) ovr += Math.max(0, (4 - gradeAvg) * 5); // Max +15 für gute Noten
+        ovr = Math.min(99, Math.round(ovr));
+
+        return { name, title, ausbildungsjahr, streak, totalHours, totalDays, totalDiff, gradeAvg, ovr };
+    }
+
+    function renderSkillCard() {
+        const canvas = document.getElementById('skillCardCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+        const d = getSkillCardData();
+
+        // === BACKGROUND ===
+        const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+        bgGrad.addColorStop(0, '#0c0c10');
+        bgGrad.addColorStop(0.5, '#12101a');
+        bgGrad.addColorStop(1, '#0a0a12');
+        ctx.fillStyle = bgGrad;
+        ctx.beginPath();
+        roundRect(ctx, 0, 0, W, H, 16);
+        ctx.fill();
+
+        // Subtle noise texture overlay
+        for (let i = 0; i < 800; i++) {
+            ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.012})`;
+            ctx.fillRect(Math.random() * W, Math.random() * H, 1, 1);
+        }
+
+        // Top gradient accent line
+        const lineGrad = ctx.createLinearGradient(0, 0, W, 0);
+        lineGrad.addColorStop(0, 'transparent');
+        lineGrad.addColorStop(0.3, '#a855f7');
+        lineGrad.addColorStop(0.5, '#06b6d4');
+        lineGrad.addColorStop(0.7, '#a855f7');
+        lineGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = lineGrad;
+        ctx.fillRect(0, 0, W, 2);
+
+        // Faint glow top-left
+        const glowGrad = ctx.createRadialGradient(60, 80, 0, 60, 80, 180);
+        glowGrad.addColorStop(0, 'rgba(168, 85, 247, 0.08)');
+        glowGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = glowGrad;
+        ctx.fillRect(0, 0, W, H);
+
+        // === HEADER: OVR + Position ===
+        ctx.fillStyle = '#a855f7';
+        ctx.font = '800 52px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(d.ovr.toString(), 28, 68);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.font = '600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.letterSpacing = '2px';
+        ctx.fillText('LJ ' + d.ausbildungsjahr, 30, 86);
+
+        // === AVATAR AREA ===
+        const avatarCx = W / 2, avatarCy = 170, avatarR = 52;
+        // Ring
+        ctx.beginPath();
+        ctx.arc(avatarCx, avatarCy, avatarR + 3, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.3)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Circled initial
+        const initGrad = ctx.createLinearGradient(avatarCx - avatarR, avatarCy - avatarR, avatarCx + avatarR, avatarCy + avatarR);
+        initGrad.addColorStop(0, 'rgba(168, 85, 247, 0.15)');
+        initGrad.addColorStop(1, 'rgba(6, 182, 212, 0.1)');
+        ctx.beginPath();
+        ctx.arc(avatarCx, avatarCy, avatarR, 0, Math.PI * 2);
+        ctx.fillStyle = initGrad;
+        ctx.fill();
+
+        const initials = d.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+        ctx.fillStyle = '#a855f7';
+        ctx.font = '700 36px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(initials, avatarCx, avatarCy + 13);
+
+        // === NAME + TITLE ===
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '700 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(d.name, W / 2, 255);
+
+        ctx.fillStyle = '#a855f7';
+        ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.fillText(d.title.toUpperCase(), W / 2, 275);
+
+        // === DIVIDER ===
+        const divGrad = ctx.createLinearGradient(40, 0, W - 40, 0);
+        divGrad.addColorStop(0, 'transparent');
+        divGrad.addColorStop(0.5, 'rgba(168, 85, 247, 0.2)');
+        divGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = divGrad;
+        ctx.fillRect(40, 292, W - 80, 1);
+
+        // === STAT BARS (FIFA-Style) ===
+        const stats = [
+            { label: 'STR', val: Math.min(99, d.streak.current * 3 + 20), desc: 'Streak' },
+            { label: 'BST', val: Math.min(99, d.streak.best * 2 + 15), desc: 'Best Streak' },
+            { label: 'HRS', val: Math.min(99, Math.round(d.totalHours / 20) + 20), desc: 'Stunden' },
+            { label: 'DAY', val: Math.min(99, Math.round(d.totalDays / 5) + 15), desc: 'Tage' },
+            { label: 'GRD', val: d.gradeAvg > 0 ? Math.min(99, Math.round((6 - d.gradeAvg) * 18)) : 0, desc: 'Noten' },
+            { label: 'OVT', val: Math.min(99, Math.round(Math.abs(d.totalDiff) * 2) + 30), desc: 'Overtime' },
+        ];
+
+        const statStartY = 314;
+        const statH = 28;
+        const barX = 100, barW = 180, barH = 5;
+
+        stats.forEach((s, i) => {
+            const y = statStartY + i * statH;
+
+            // Label
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.font = '700 10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(s.label, 30, y + 4);
+
+            // Value
+            ctx.fillStyle = s.val >= 80 ? '#10b981' : s.val >= 50 ? '#f8fafc' : 'rgba(255,255,255,0.5)';
+            ctx.font = '700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(s.val.toString(), 68, y + 4);
+
+            // Bar bg
+            ctx.fillStyle = 'rgba(255,255,255,0.06)';
+            ctx.beginPath();
+            roundRect(ctx, barX, y - 2, barW, barH, 2);
+            ctx.fill();
+
+            // Bar fill
+            const fillW = (s.val / 99) * barW;
+            const barGrad = ctx.createLinearGradient(barX, 0, barX + fillW, 0);
+            if (s.val >= 80) {
+                barGrad.addColorStop(0, '#10b981');
+                barGrad.addColorStop(1, '#06b6d4');
+            } else if (s.val >= 50) {
+                barGrad.addColorStop(0, '#a855f7');
+                barGrad.addColorStop(1, '#06b6d4');
+            } else {
+                barGrad.addColorStop(0, 'rgba(168,85,247,0.4)');
+                barGrad.addColorStop(1, 'rgba(168,85,247,0.2)');
+            }
+            ctx.fillStyle = barGrad;
+            ctx.beginPath();
+            roundRect(ctx, barX, y - 2, fillW, barH, 2);
+            ctx.fill();
+
+            // Stat description (right side)
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.font = '500 9px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(s.desc, W - 30, y + 4);
+        });
+
+        // === BOTTOM SECTION ===
+        // Separator
+        const div2Grad = ctx.createLinearGradient(40, 0, W - 40, 0);
+        div2Grad.addColorStop(0, 'transparent');
+        div2Grad.addColorStop(0.5, 'rgba(255,255,255,0.06)');
+        div2Grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = div2Grad;
+        ctx.fillRect(40, 488, W - 80, 1);
+
+        // Branding
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.font = '600 9px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('MyWorkLog  ·  myworklog.de', W / 2, 510);
+
+        // Date stamp
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.font = '500 8px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(dateStr, W - 20, 510);
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    }
+
+    function downloadSkillCard() {
+        const canvas = document.getElementById('skillCardCanvas');
+        if (!canvas) return;
+        const link = document.createElement('a');
+        link.download = 'MyWorkLog-SkillCard.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showCustomMessage('📥 Gespeichert', 'Skill-Card als PNG heruntergeladen!', 'success');
+    }
+
+    async function shareSkillCard() {
+        const canvas = document.getElementById('skillCardCanvas');
+        if (!canvas || !navigator.share) return;
+        try {
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const file = new File([blob], 'MyWorkLog-SkillCard.png', { type: 'image/png' });
+            await navigator.share({
+                title: '🃏 Meine Azubi Skill-Card',
+                text: 'Check meine MyWorkLog Skill-Card! 💪',
+                files: [file]
+            });
+        } catch (e) {
+            if (e.name !== 'AbortError') {
+                showCustomMessage('⚠️ Teilen fehlgeschlagen', 'Nutze den Download-Button stattdessen.', 'warning');
+            }
+        }
+    }
 
 
     // ============================================
