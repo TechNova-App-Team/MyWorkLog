@@ -7803,6 +7803,78 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             <span>Mittelwert: 7,85 &nbsp; Anzahl: 24 &nbsp; Summe: 188,4</span>
         </div>
     </div>
+
+    <!-- Ghost Mode: VS Code Skin -->
+    <div id="ghostModeVSCode">
+        <div class="vsc-titlebar">
+            <div class="vsc-titlebar-left">
+                <span class="vsc-menu-item">File</span>
+                <span class="vsc-menu-item">Edit</span>
+                <span class="vsc-menu-item">Selection</span>
+                <span class="vsc-menu-item">View</span>
+                <span class="vsc-menu-item">Go</span>
+                <span class="vsc-menu-item">Run</span>
+                <span class="vsc-menu-item">Terminal</span>
+                <span class="vsc-menu-item">Help</span>
+            </div>
+            <div class="vsc-titlebar-center">server-migration.tsx — MyProject</div>
+            <div class="vsc-titlebar-right">
+                <span class="vsc-win-btn">─</span>
+                <span class="vsc-win-btn">□</span>
+                <span class="vsc-win-btn vsc-close">✕</span>
+            </div>
+        </div>
+        <div class="vsc-main">
+            <div class="vsc-activitybar">
+                <div class="vsc-act-icon vsc-act-active">📄</div>
+                <div class="vsc-act-icon">🔍</div>
+                <div class="vsc-act-icon">🔀</div>
+                <div class="vsc-act-icon">🐛</div>
+                <div class="vsc-act-icon">📦</div>
+                <div class="vsc-act-icon" style="margin-top:auto;">⚙️</div>
+            </div>
+            <div class="vsc-sidebar">
+                <div class="vsc-sidebar-title">EXPLORER</div>
+                <div class="vsc-tree">
+                    <div class="vsc-tree-folder">▾ src</div>
+                    <div class="vsc-tree-file vsc-tree-active">&nbsp;&nbsp;server-migration.tsx</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;api-controller.ts</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;database-service.ts</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;auth-middleware.ts</div>
+                    <div class="vsc-tree-folder">▸ components</div>
+                    <div class="vsc-tree-folder">▸ hooks</div>
+                    <div class="vsc-tree-folder">▸ utils</div>
+                    <div class="vsc-tree-folder">▾ config</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;webpack.config.js</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;tsconfig.json</div>
+                    <div class="vsc-tree-folder">▸ tests</div>
+                    <div class="vsc-tree-folder">▸ node_modules</div>
+                </div>
+            </div>
+            <div class="vsc-editor-area">
+                <div class="vsc-tabs">
+                    <div class="vsc-tab vsc-tab-active"><span class="vsc-tab-icon">TS</span> server-migration.tsx <span class="vsc-tab-close">✕</span></div>
+                    <div class="vsc-tab"><span class="vsc-tab-icon">TS</span> api-controller.ts</div>
+                    <div class="vsc-tab"><span class="vsc-tab-icon">JS</span> webpack.config.js</div>
+                </div>
+                <div class="vsc-editor" id="vscEditorContent"></div>
+            </div>
+        </div>
+        <div class="vsc-statusbar">
+            <div class="vsc-sb-left">
+                <span class="vsc-sb-item vsc-sb-branch">🔀 main</span>
+                <span class="vsc-sb-item">0 ⚠️ 0 ❌</span>
+            </div>
+            <div class="vsc-sb-right">
+                <span class="vsc-sb-item">Ln 42, Col 18</span>
+                <span class="vsc-sb-item">Spaces: 2</span>
+                <span class="vsc-sb-item">UTF-8</span>
+                <span class="vsc-sb-item">TypeScript React</span>
+                <span class="vsc-sb-item">Prettier</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Panic Button (only visible on hover, very subtle) -->
     <button class="ghost-panic-btn visible" id="ghostPanicBtn" onclick="toggleGhostMode()" title="Ghost Mode (Strg+Shift+K)">👻</button>
 
@@ -10178,6 +10250,273 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             0%, 100% { transform: translateY(0); }
             50%      { transform: translateY(-8px); }
         }
+
+        /* ====== GHOST MODE — VS Code Skin ====== */
+        #ghostModeVSCode {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: #1e1e1e;
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            color: #cccccc;
+            flex-direction: column;
+            overflow: hidden;
+            cursor: default;
+            user-select: text;
+        }
+        #ghostModeVSCode.active { display: flex; }
+
+        /* Titlebar */
+        .vsc-titlebar {
+            background: #323233;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            -webkit-app-region: drag;
+        }
+        .vsc-titlebar-left {
+            display: flex;
+            gap: 0;
+            padding-left: 8px;
+        }
+        .vsc-menu-item {
+            padding: 4px 10px;
+            color: rgba(255,255,255,0.75);
+            cursor: default;
+            border-radius: 4px;
+        }
+        .vsc-menu-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .vsc-titlebar-center {
+            flex: 1;
+            text-align: center;
+            color: rgba(255,255,255,0.55);
+            font-size: 12px;
+        }
+        .vsc-titlebar-right {
+            display: flex;
+            gap: 0;
+        }
+        .vsc-win-btn {
+            width: 46px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            cursor: default;
+        }
+        .vsc-win-btn:hover { background: rgba(255,255,255,0.08); }
+        .vsc-win-btn.vsc-close:hover { background: #e81123; color: #fff; }
+
+        /* Main layout */
+        .vsc-main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Activity bar */
+        .vsc-activitybar {
+            width: 48px;
+            background: #333333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 0;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+        .vsc-act-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            opacity: 0.5;
+            cursor: default;
+            border-left: 2px solid transparent;
+        }
+        .vsc-act-icon.vsc-act-active {
+            opacity: 1;
+            border-left-color: #fff;
+        }
+
+        /* Sidebar / Explorer */
+        .vsc-sidebar {
+            width: 240px;
+            background: #252526;
+            border-right: 1px solid #1e1e1e;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        .vsc-sidebar-title {
+            padding: 10px 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.6);
+        }
+        .vsc-tree { font-size: 13px; }
+        .vsc-tree-folder {
+            padding: 3px 20px;
+            color: #ccc;
+            cursor: default;
+        }
+        .vsc-tree-folder:hover { background: rgba(255,255,255,0.04); }
+        .vsc-tree-file {
+            padding: 3px 20px;
+            color: rgba(255,255,255,0.6);
+            cursor: default;
+        }
+        .vsc-tree-file:hover { background: rgba(255,255,255,0.04); }
+        .vsc-tree-file.vsc-tree-active {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+
+        /* Editor area */
+        .vsc-editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .vsc-tabs {
+            display: flex;
+            background: #252526;
+            height: 35px;
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+        .vsc-tab {
+            padding: 0 16px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.45);
+            border-right: 1px solid #1e1e1e;
+            cursor: default;
+            white-space: nowrap;
+            background: #2d2d2d;
+        }
+        .vsc-tab.vsc-tab-active {
+            background: #1e1e1e;
+            color: #fff;
+            border-bottom: 1px solid #1e1e1e;
+        }
+        .vsc-tab-icon {
+            font-size: 10px;
+            font-weight: 700;
+            background: #3178c6;
+            color: #fff;
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
+        .vsc-tab-close {
+            font-size: 10px;
+            opacity: 0;
+            margin-left: 4px;
+        }
+        .vsc-tab:hover .vsc-tab-close { opacity: 0.5; }
+
+        /* Code editor */
+        .vsc-editor {
+            flex: 1;
+            background: #1e1e1e;
+            overflow-y: auto;
+            padding: 8px 0;
+            font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 20px;
+            counter-reset: vsc-line;
+        }
+        .vsc-line {
+            display: flex;
+            min-height: 20px;
+            padding-right: 16px;
+        }
+        .vsc-line:hover { background: rgba(255,255,255,0.02); }
+        .vsc-line-num {
+            width: 56px;
+            text-align: right;
+            padding-right: 16px;
+            color: rgba(255,255,255,0.2);
+            flex-shrink: 0;
+            user-select: none;
+        }
+        .vsc-line-code {
+            white-space: pre;
+            flex: 1;
+            min-width: 0;
+        }
+        /* VS Code active line highlight */
+        .vsc-line.vsc-active-line { background: rgba(255,255,255,0.04); }
+        .vsc-line.vsc-active-line .vsc-line-num { color: rgba(255,255,255,0.5); }
+
+        /* Syntax colors (One Dark inspired) */
+        .vsc-kw { color: #c586c0; }       /* keywords: import, export, const, if */
+        .vsc-fn { color: #dcdcaa; }       /* function names */
+        .vsc-str { color: #ce9178; }      /* strings */
+        .vsc-num { color: #b5cea8; }      /* numbers */
+        .vsc-cmt { color: #6a9955; font-style: italic; }  /* comments */
+        .vsc-type { color: #4ec9b0; }     /* types, interfaces */
+        .vsc-var { color: #9cdcfe; }      /* variables */
+        .vsc-op { color: #d4d4d4; }       /* operators, brackets */
+        .vsc-tag { color: #569cd6; }      /* JSX tags */
+        .vsc-attr { color: #92c5f7; }     /* attributes */
+        .vsc-dec { color: #4fc1ff; }      /* decorators */
+
+        /* Statusbar */
+        .vsc-statusbar {
+            height: 22px;
+            background: #007acc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.85);
+            flex-shrink: 0;
+        }
+        .vsc-sb-left, .vsc-sb-right {
+            display: flex;
+            gap: 0;
+        }
+        .vsc-sb-item {
+            padding: 0 8px;
+            cursor: default;
+        }
+        .vsc-sb-item:hover { background: rgba(255,255,255,0.12); }
+        .vsc-sb-branch { font-weight: 500; }
+
+        /* Typing cursor animation */
+        @keyframes vscCursorBlink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        .vsc-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 16px;
+            background: #aeafad;
+            vertical-align: text-bottom;
+            animation: vscCursorBlink 1s step-end infinite;
+        }
+
+        /* Hide sidebar on mobile for ghost mode */
+        @media (max-width: 768px) {
+            .vsc-sidebar { display: none; }
+            .vsc-activitybar { width: 36px; }
+            .vsc-act-icon { width: 36px; height: 36px; font-size: 16px; }
+        }
     </style>
 
     <div class="modal" id="settingsModal">
@@ -10215,6 +10554,47 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         <div class="settings-section-title">Profil</div>
                         <label class="settings-label">Dein Name</label>
                         <input type="text" id="confName" class="glass-input" placeholder="z.B. Sven" style="max-width:320px;">
+                    </div>
+
+                    <!-- Job / Ausbildungsberuf -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Ausbildungsberuf</div>
+                        <label class="settings-label">Dein Beruf (beeinflusst Ghost Mode Skin)</label>
+                        <select id="confJob" class="glass-input" style="max-width:320px; padding:8px 12px; appearance:auto;" onchange="data.settings.job = this.value; save();">
+                            <option value="">— Bitte wählen —</option>
+                            <optgroup label="IT-Berufe">
+                                <option value="fachinformatiker-anwendung">Fachinformatiker Anwendungsentwicklung</option>
+                                <option value="fachinformatiker-system">Fachinformatiker Systemintegration</option>
+                                <option value="fachinformatiker-daten">Fachinformatiker Daten- & Prozessanalyse</option>
+                                <option value="fachinformatiker-digital">Fachinformatiker Digitale Vernetzung</option>
+                                <option value="it-systemelektroniker">IT-Systemelektroniker</option>
+                                <option value="it-kaufmann">Kaufmann für IT-System-Management</option>
+                                <option value="it-digitalisierung">Kaufmann für Digitalisierungsmanagement</option>
+                            </optgroup>
+                            <optgroup label="Kaufmännische Berufe">
+                                <option value="kaufmann-bueromanagement">Kaufmann/frau für Büromanagement</option>
+                                <option value="kaufmann-grosshandel">Kaufmann/frau im Groß- und Außenhandel</option>
+                                <option value="industriekaufmann">Industriekaufmann/frau</option>
+                                <option value="bankkaufmann">Bankkaufmann/frau</option>
+                                <option value="steuerfachangestellter">Steuerfachangestellte/r</option>
+                                <option value="kaufmann-ecommerce">Kaufmann/frau im E-Commerce</option>
+                            </optgroup>
+                            <optgroup label="Gewerblich-technische Berufe">
+                                <option value="elektroniker">Elektroniker/in</option>
+                                <option value="mechatroniker">Mechatroniker/in</option>
+                                <option value="industriemechaniker">Industriemechaniker/in</option>
+                                <option value="zerspanungsmechaniker">Zerspanungsmechaniker/in</option>
+                                <option value="anlagenmechaniker">Anlagenmechaniker/in</option>
+                            </optgroup>
+                            <optgroup label="Medien & Gestaltung">
+                                <option value="mediengestalter">Mediengestalter/in Digital & Print</option>
+                                <option value="gestaltungstechnischer-assistent">Gestaltungstechnische/r Assistent/in</option>
+                            </optgroup>
+                            <optgroup label="Sonstige">
+                                <option value="sonstige">Anderer Beruf</option>
+                            </optgroup>
+                        </select>
+                        <span class="settings-hint" style="margin-top:6px; display:block;">IT-Berufe → Code-Editor Ghost Mode &nbsp;|&nbsp; Kaufmännisch → Excel Ghost Mode</span>
                     </div>
 
                     <!-- Bundesland -->
@@ -12163,6 +12543,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         if(!data.settings.goals) data.settings.goals = [];
         if(!data.settings.prognosePlan) data.settings.prognosePlan = {};
         if (typeof data.settings.shortcutsEnabled === 'undefined') data.settings.shortcutsEnabled = true;
+        if(!data.settings.job) data.settings.job = '';
         
         if (data.settings.ihk.exam) { 
              data.settings.ihk.end = data.settings.ihk.exam;
@@ -18971,7 +19352,7 @@ TIPPS:
         r.readAsText(e.target.files[0]);
     }
 
-    function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
+    function closeSettings() { saveSettings(); }
     
     function updateShortcutsPanelVisibility() {
         const panel = document.getElementById('shortcutsPanel');
@@ -19297,6 +19678,9 @@ TIPPS:
         switchSettingsTab('profile'); // Standardmäßig auf Profile Tab
         
         document.getElementById('confName').value = data.settings.name;
+        // Job
+        const confJobEl = document.getElementById('confJob');
+        if (confJobEl) confJobEl.value = data.settings.job || '';
         // Bundesland
         const confBundeslandEl = document.getElementById('confBundesland');
         if (confBundeslandEl) confBundeslandEl.value = data.settings.bundesland || '';
@@ -19643,6 +20027,9 @@ TIPPS:
     }
     function saveSettings() {
         data.settings.name = document.getElementById('confName').value;
+        // Job
+        const confJobSaveEl = document.getElementById('confJob');
+        if (confJobSaveEl) data.settings.job = confJobSaveEl.value;
         // Update sidebar avatar with new name
         try { updateSidebarAvatar(); } catch(e) {}
         // Shortcuts setting
@@ -30498,6 +30885,13 @@ if (document.readyState === 'loading') {
         // Show announcement on load (one-time)
         setTimeout(showGhostAnnounce, 1200);
 
+        // Determine which ghost skin to use based on job
+        function getGhostSkin() {
+            const job = (data && data.settings && data.settings.job) || '';
+            const itJobs = ['fachinformatiker-anwendung', 'fachinformatiker-system', 'fachinformatiker-daten', 'fachinformatiker-digital', 'it-systemelektroniker', 'it-kaufmann', 'it-digitalisierung', 'mediengestalter', 'gestaltungstechnischer-assistent'];
+            return itJobs.includes(job) ? 'vscode' : 'excel';
+        }
+
         // Generate fake Excel data that looks like real work tracking
         function generateGhostData() {
             const headers = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -30573,20 +30967,31 @@ if (document.readyState === 'loading') {
         }
 
         // Toggle Ghost Mode
+        let vscTypingInterval = null;
+
         window.toggleGhostMode = function() {
-            const overlay = document.getElementById('ghostModeOverlay');
-            if (!overlay) return;
+            const excelOverlay = document.getElementById('ghostModeOverlay');
+            const vscOverlay = document.getElementById('ghostModeVSCode');
+            if (!excelOverlay || !vscOverlay) return;
 
             ghostActive = !ghostActive;
 
             if (ghostActive) {
-                renderGhostSheet();
-                overlay.classList.add('active');
-                // Change page title to look legit
-                document.title = 'Arbeitszeiterfassung_2026.xlsx - Excel';
+                const skin = getGhostSkin();
+                if (skin === 'vscode') {
+                    renderVSCodeEditor();
+                    vscOverlay.classList.add('active');
+                    document.title = 'server-migration.tsx \u2014 MyProject \u2014 Visual Studio Code';
+                } else {
+                    renderGhostSheet();
+                    excelOverlay.classList.add('active');
+                    document.title = 'Arbeitszeiterfassung_2026.xlsx - Excel';
+                }
             } else {
-                overlay.classList.remove('active');
-                document.title = 'MyWorkLog – Zeiterfassung';
+                excelOverlay.classList.remove('active');
+                vscOverlay.classList.remove('active');
+                document.title = 'MyWorkLog \u2013 Zeiterfassung';
+                if (vscTypingInterval) { clearInterval(vscTypingInterval); vscTypingInterval = null; }
             }
         };
 
@@ -30604,6 +31009,234 @@ if (document.readyState === 'loading') {
                 toggleGhostMode();
             }
         }, true); // capture phase for maximum priority
+
+        // ===== VS CODE GHOST MODE — Fake Code Editor =====
+        let vscCodeLines = [];
+        let vscCurrentLine = 0;
+
+        function generateFakeCode() {
+            return [
+'<span class="vsc-cmt">/**</span>',
+'<span class="vsc-cmt"> * ServerMigrationController — Enterprise Data Pipeline v3.2.1</span>',
+'<span class="vsc-cmt"> * Handles real-time WebSocket streams with automatic failover</span>',
+'<span class="vsc-cmt"> * @author DevOps Team</span>',
+'<span class="vsc-cmt"> */</span>',
+'',
+'<span class="vsc-kw">import</span> <span class="vsc-op">{</span> <span class="vsc-type">Injectable</span><span class="vsc-op">,</span> <span class="vsc-type">OnModuleInit</span> <span class="vsc-op">}</span> <span class="vsc-kw">from</span> <span class="vsc-str">\'@nestjs/common\'</span><span class="vsc-op">;</span>',
+'<span class="vsc-kw">import</span> <span class="vsc-op">{</span> <span class="vsc-type">WebSocketGateway</span><span class="vsc-op">,</span> <span class="vsc-type">SubscribeMessage</span> <span class="vsc-op">}</span> <span class="vsc-kw">from</span> <span class="vsc-str">\'@nestjs/websockets\'</span><span class="vsc-op">;</span>',
+'<span class="vsc-kw">import</span> <span class="vsc-op">{</span> <span class="vsc-type">KafkaProducer</span><span class="vsc-op">,</span> <span class="vsc-type">ConsumerGroup</span> <span class="vsc-op">}</span> <span class="vsc-kw">from</span> <span class="vsc-str">\'@confluentinc/kafka-js\'</span><span class="vsc-op">;</span>',
+'<span class="vsc-kw">import</span> <span class="vsc-op">{</span> <span class="vsc-type">RedisCluster</span> <span class="vsc-op">}</span> <span class="vsc-kw">from</span> <span class="vsc-str">\'ioredis\'</span><span class="vsc-op">;</span>',
+'<span class="vsc-kw">import</span> <span class="vsc-op">{</span> <span class="vsc-fn">createHash</span><span class="vsc-op">,</span> <span class="vsc-fn">randomUUID</span> <span class="vsc-op">}</span> <span class="vsc-kw">from</span> <span class="vsc-str">\'node:crypto\'</span><span class="vsc-op">;</span>',
+'<span class="vsc-kw">import</span> <span class="vsc-kw">type</span> <span class="vsc-op">{</span> <span class="vsc-type">MigrationPayload</span><span class="vsc-op">,</span> <span class="vsc-type">ClusterNode</span><span class="vsc-op">,</span> <span class="vsc-type">HealthCheck</span> <span class="vsc-op">}</span> <span class="vsc-kw">from</span> <span class="vsc-str">\'./types/infrastructure\'</span><span class="vsc-op">;</span>',
+'',
+'<span class="vsc-kw">interface</span> <span class="vsc-type">ReplicationConfig</span> <span class="vsc-op">{</span>',
+'  <span class="vsc-var">primaryEndpoint</span><span class="vsc-op">:</span> <span class="vsc-type">string</span><span class="vsc-op">;</span>',
+'  <span class="vsc-var">replicaNodes</span><span class="vsc-op">:</span> <span class="vsc-type">ClusterNode</span><span class="vsc-op">[];</span>',
+'  <span class="vsc-var">consistencyLevel</span><span class="vsc-op">:</span> <span class="vsc-str">\'strong\'</span> <span class="vsc-op">|</span> <span class="vsc-str">\'eventual\'</span> <span class="vsc-op">|</span> <span class="vsc-str">\'quorum\'</span><span class="vsc-op">;</span>',
+'  <span class="vsc-var">maxRetries</span><span class="vsc-op">:</span> <span class="vsc-type">number</span><span class="vsc-op">;</span>',
+'  <span class="vsc-var">heartbeatMs</span><span class="vsc-op">:</span> <span class="vsc-type">number</span><span class="vsc-op">;</span>',
+'<span class="vsc-op">}</span>',
+'',
+'<span class="vsc-dec">@Injectable</span><span class="vsc-op">()</span>',
+'<span class="vsc-dec">@WebSocketGateway</span><span class="vsc-op">(</span><span class="vsc-num">8443</span><span class="vsc-op">,</span> <span class="vsc-op">{</span> <span class="vsc-var">namespace</span><span class="vsc-op">:</span> <span class="vsc-str">\'/migration\'</span><span class="vsc-op">,</span> <span class="vsc-var">cors</span><span class="vsc-op">:</span> <span class="vsc-kw">true</span> <span class="vsc-op">})</span>',
+'<span class="vsc-kw">export class</span> <span class="vsc-type">ServerMigrationController</span> <span class="vsc-kw">implements</span> <span class="vsc-type">OnModuleInit</span> <span class="vsc-op">{</span>',
+'  <span class="vsc-kw">private readonly</span> <span class="vsc-var">kafka</span><span class="vsc-op">:</span> <span class="vsc-type">KafkaProducer</span><span class="vsc-op">;</span>',
+'  <span class="vsc-kw">private readonly</span> <span class="vsc-var">redis</span><span class="vsc-op">:</span> <span class="vsc-type">RedisCluster</span><span class="vsc-op">;</span>',
+'  <span class="vsc-kw">private</span> <span class="vsc-var">activeNodes</span><span class="vsc-op">:</span> <span class="vsc-type">Map</span><span class="vsc-op">&lt;</span><span class="vsc-type">string</span><span class="vsc-op">,</span> <span class="vsc-type">ClusterNode</span><span class="vsc-op">&gt;</span> <span class="vsc-op">=</span> <span class="vsc-kw">new</span> <span class="vsc-type">Map</span><span class="vsc-op">();</span>',
+'  <span class="vsc-kw">private</span> <span class="vsc-var">migrationLock</span><span class="vsc-op">:</span> <span class="vsc-type">boolean</span> <span class="vsc-op">=</span> <span class="vsc-kw">false</span><span class="vsc-op">;</span>',
+'',
+'  <span class="vsc-kw">constructor</span><span class="vsc-op">(</span>',
+'    <span class="vsc-kw">private readonly</span> <span class="vsc-var">config</span><span class="vsc-op">:</span> <span class="vsc-type">ReplicationConfig</span><span class="vsc-op">,</span>',
+'    <span class="vsc-kw">private readonly</span> <span class="vsc-var">logger</span><span class="vsc-op">:</span> <span class="vsc-type">Logger</span><span class="vsc-op">,</span>',
+'  <span class="vsc-op">) {</span>',
+'    <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">kafka</span> <span class="vsc-op">=</span> <span class="vsc-kw">new</span> <span class="vsc-type">KafkaProducer</span><span class="vsc-op">({</span>',
+'      <span class="vsc-var">brokers</span><span class="vsc-op">:</span> <span class="vsc-op">[</span><span class="vsc-str">\'kafka-01.internal:9092\'</span><span class="vsc-op">,</span> <span class="vsc-str">\'kafka-02.internal:9092\'</span><span class="vsc-op">],</span>',
+'      <span class="vsc-var">clientId</span><span class="vsc-op">:</span> <span class="vsc-str">\'migration-service\'</span><span class="vsc-op">,</span>',
+'      <span class="vsc-var">ssl</span><span class="vsc-op">:</span> <span class="vsc-kw">true</span><span class="vsc-op">,</span>',
+'      <span class="vsc-var">sasl</span><span class="vsc-op">:</span> <span class="vsc-op">{</span> <span class="vsc-var">mechanism</span><span class="vsc-op">:</span> <span class="vsc-str">\'scram-sha-512\'</span><span class="vsc-op">,</span> <span class="vsc-var">username</span><span class="vsc-op">:</span> <span class="vsc-var">process</span><span class="vsc-op">.</span><span class="vsc-var">env</span><span class="vsc-op">.</span><span class="vsc-var">KAFKA_USER</span><span class="vsc-op">,</span> <span class="vsc-var">password</span><span class="vsc-op">:</span> <span class="vsc-var">process</span><span class="vsc-op">.</span><span class="vsc-var">env</span><span class="vsc-op">.</span><span class="vsc-var">KAFKA_PASS</span> <span class="vsc-op">},</span>',
+'    <span class="vsc-op">});</span>',
+'    <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">redis</span> <span class="vsc-op">=</span> <span class="vsc-kw">new</span> <span class="vsc-type">RedisCluster</span><span class="vsc-op">([{</span> <span class="vsc-var">host</span><span class="vsc-op">:</span> <span class="vsc-str">\'redis-sentinel.internal\'</span><span class="vsc-op">,</span> <span class="vsc-var">port</span><span class="vsc-op">:</span> <span class="vsc-num">26379</span> <span class="vsc-op">}]);</span>',
+'  <span class="vsc-op">}</span>',
+'',
+'  <span class="vsc-kw">async</span> <span class="vsc-fn">onModuleInit</span><span class="vsc-op">(): </span><span class="vsc-type">Promise</span><span class="vsc-op">&lt;</span><span class="vsc-type">void</span><span class="vsc-op">&gt; {</span>',
+'    <span class="vsc-kw">await</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-fn">initializeCluster</span><span class="vsc-op">();</span>',
+'    <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-fn">startHealthMonitor</span><span class="vsc-op">();</span>',
+'    <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">logger</span><span class="vsc-op">.</span><span class="vsc-fn">log</span><span class="vsc-op">(</span><span class="vsc-str">\'Migration controller initialized — \'</span> <span class="vsc-op">+</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">config</span><span class="vsc-op">.</span><span class="vsc-var">replicaNodes</span><span class="vsc-op">.</span><span class="vsc-var">length</span> <span class="vsc-op">+</span> <span class="vsc-str">\'nodes\'</span><span class="vsc-op">);</span>',
+'  <span class="vsc-op">}</span>',
+'',
+'  <span class="vsc-kw">private async</span> <span class="vsc-fn">initializeCluster</span><span class="vsc-op">(): </span><span class="vsc-type">Promise</span><span class="vsc-op">&lt;</span><span class="vsc-type">void</span><span class="vsc-op">&gt; {</span>',
+'    <span class="vsc-kw">const</span> <span class="vsc-var">promises</span> <span class="vsc-op">=</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">config</span><span class="vsc-op">.</span><span class="vsc-var">replicaNodes</span><span class="vsc-op">.</span><span class="vsc-fn">map</span><span class="vsc-op">(</span><span class="vsc-kw">async</span> <span class="vsc-op">(</span><span class="vsc-var">node</span><span class="vsc-op">)</span> <span class="vsc-op">=&gt; {</span>',
+'      <span class="vsc-kw">const</span> <span class="vsc-var">health</span> <span class="vsc-op">=</span> <span class="vsc-kw">await</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-fn">checkNodeHealth</span><span class="vsc-op">(</span><span class="vsc-var">node</span><span class="vsc-op">);</span>',
+'      <span class="vsc-kw">if</span> <span class="vsc-op">(</span><span class="vsc-var">health</span><span class="vsc-op">.</span><span class="vsc-var">status</span> <span class="vsc-op">===</span> <span class="vsc-str">\'healthy\'</span><span class="vsc-op">)</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">activeNodes</span><span class="vsc-op">.</span><span class="vsc-fn">set</span><span class="vsc-op">(</span><span class="vsc-var">node</span><span class="vsc-op">.</span><span class="vsc-var">id</span><span class="vsc-op">,</span> <span class="vsc-var">node</span><span class="vsc-op">);</span>',
+'    <span class="vsc-op">});</span>',
+'    <span class="vsc-kw">await</span> <span class="vsc-type">Promise</span><span class="vsc-op">.</span><span class="vsc-fn">allSettled</span><span class="vsc-op">(</span><span class="vsc-var">promises</span><span class="vsc-op">);</span>',
+'  <span class="vsc-op">}</span>',
+'',
+'  <span class="vsc-dec">@SubscribeMessage</span><span class="vsc-op">(</span><span class="vsc-str">\'migrate:start\'</span><span class="vsc-op">)</span>',
+'  <span class="vsc-kw">async</span> <span class="vsc-fn">handleMigration</span><span class="vsc-op">(</span><span class="vsc-var">client</span><span class="vsc-op">:</span> <span class="vsc-type">Socket</span><span class="vsc-op">,</span> <span class="vsc-var">payload</span><span class="vsc-op">:</span> <span class="vsc-type">MigrationPayload</span><span class="vsc-op">): </span><span class="vsc-type">Promise</span><span class="vsc-op">&lt;</span><span class="vsc-type">void</span><span class="vsc-op">&gt; {</span>',
+'    <span class="vsc-kw">if</span> <span class="vsc-op">(</span><span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">migrationLock</span><span class="vsc-op">) {</span>',
+'      <span class="vsc-var">client</span><span class="vsc-op">.</span><span class="vsc-fn">emit</span><span class="vsc-op">(</span><span class="vsc-str">\'migrate:error\'</span><span class="vsc-op">,</span> <span class="vsc-op">{</span> <span class="vsc-var">code</span><span class="vsc-op">:</span> <span class="vsc-str">\'LOCK_ACTIVE\'</span><span class="vsc-op">,</span> <span class="vsc-var">retryAfter</span><span class="vsc-op">:</span> <span class="vsc-num">30000</span> <span class="vsc-op">});</span>',
+'      <span class="vsc-kw">return</span><span class="vsc-op">;</span>',
+'    <span class="vsc-op">}</span>',
+'',
+'    <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">migrationLock</span> <span class="vsc-op">=</span> <span class="vsc-kw">true</span><span class="vsc-op">;</span>',
+'    <span class="vsc-kw">const</span> <span class="vsc-var">traceId</span> <span class="vsc-op">=</span> <span class="vsc-fn">randomUUID</span><span class="vsc-op">();</span>',
+'    <span class="vsc-kw">const</span> <span class="vsc-var">checksum</span> <span class="vsc-op">=</span> <span class="vsc-fn">createHash</span><span class="vsc-op">(</span><span class="vsc-str">\'sha256\'</span><span class="vsc-op">).</span><span class="vsc-fn">update</span><span class="vsc-op">(</span><span class="vsc-type">JSON</span><span class="vsc-op">.</span><span class="vsc-fn">stringify</span><span class="vsc-op">(</span><span class="vsc-var">payload</span><span class="vsc-op">)).</span><span class="vsc-fn">digest</span><span class="vsc-op">(</span><span class="vsc-str">\'hex\'</span><span class="vsc-op">);</span>',
+'',
+'    <span class="vsc-kw">try</span> <span class="vsc-op">{</span>',
+'      <span class="vsc-cmt">// Phase 1: Validate cluster quorum</span>',
+'      <span class="vsc-kw">const</span> <span class="vsc-var">quorum</span> <span class="vsc-op">=</span> <span class="vsc-kw">await</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-fn">validateQuorum</span><span class="vsc-op">();</span>',
+'      <span class="vsc-kw">if</span> <span class="vsc-op">(!</span><span class="vsc-var">quorum</span><span class="vsc-op">.</span><span class="vsc-var">isReady</span><span class="vsc-op">) </span><span class="vsc-kw">throw new</span> <span class="vsc-type">Error</span><span class="vsc-op">(</span><span class="vsc-str">\'Quorum not met: \'</span> <span class="vsc-op">+</span> <span class="vsc-var">quorum</span><span class="vsc-op">.</span><span class="vsc-var">available</span> <span class="vsc-op">+</span> <span class="vsc-str">\'/\'</span> <span class="vsc-op">+</span> <span class="vsc-var">quorum</span><span class="vsc-op">.</span><span class="vsc-var">required</span><span class="vsc-op">);</span>',
+'',
+'      <span class="vsc-cmt">// Phase 2: Distribute shards across replicas</span>',
+'      <span class="vsc-kw">for</span> <span class="vsc-op">(</span><span class="vsc-kw">const</span> <span class="vsc-op">[</span><span class="vsc-var">nodeId</span><span class="vsc-op">,</span> <span class="vsc-var">node</span><span class="vsc-op">]</span> <span class="vsc-kw">of</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">activeNodes</span><span class="vsc-op">) {</span>',
+'        <span class="vsc-kw">const</span> <span class="vsc-var">shardKey</span> <span class="vsc-op">=</span> <span class="vsc-fn">createHash</span><span class="vsc-op">(</span><span class="vsc-str">\'md5\'</span><span class="vsc-op">).</span><span class="vsc-fn">update</span><span class="vsc-op">(</span><span class="vsc-var">nodeId</span> <span class="vsc-op">+</span> <span class="vsc-var">traceId</span><span class="vsc-op">).</span><span class="vsc-fn">digest</span><span class="vsc-op">(</span><span class="vsc-str">\'hex\'</span><span class="vsc-op">).</span><span class="vsc-fn">slice</span><span class="vsc-op">(</span><span class="vsc-num">0</span><span class="vsc-op">,</span> <span class="vsc-num">8</span><span class="vsc-op">);</span>',
+'        <span class="vsc-kw">await</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">kafka</span><span class="vsc-op">.</span><span class="vsc-fn">send</span><span class="vsc-op">({</span>',
+'          <span class="vsc-var">topic</span><span class="vsc-op">:</span> <span class="vsc-str">\'migration.shard.distribute\'</span><span class="vsc-op">,</span>',
+'          <span class="vsc-var">messages</span><span class="vsc-op">:</span> <span class="vsc-op">[{</span> <span class="vsc-var">key</span><span class="vsc-op">:</span> <span class="vsc-var">shardKey</span><span class="vsc-op">,</span> <span class="vsc-var">value</span><span class="vsc-op">:</span> <span class="vsc-type">JSON</span><span class="vsc-op">.</span><span class="vsc-fn">stringify</span><span class="vsc-op">({</span> <span class="vsc-var">traceId</span><span class="vsc-op">,</span> <span class="vsc-var">nodeId</span><span class="vsc-op">,</span> <span class="vsc-var">payload</span><span class="vsc-op">,</span> <span class="vsc-var">checksum</span> <span class="vsc-op">})</span> <span class="vsc-op">}],</span>',
+'        <span class="vsc-op">});</span>',
+'        <span class="vsc-kw">await</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">redis</span><span class="vsc-op">.</span><span class="vsc-fn">hset</span><span class="vsc-op">(</span><span class="vsc-str">\'migration:\'</span> <span class="vsc-op">+</span> <span class="vsc-var">traceId</span><span class="vsc-op">,</span> <span class="vsc-var">nodeId</span><span class="vsc-op">,</span> <span class="vsc-str">\'pending\'</span><span class="vsc-op">);</span>',
+'      <span class="vsc-op">}</span>',
+'',
+'      <span class="vsc-cmt">// Phase 3: Await consensus with exponential backoff</span>',
+'      <span class="vsc-kw">let</span> <span class="vsc-var">retries</span> <span class="vsc-op">=</span> <span class="vsc-num">0</span><span class="vsc-op">;</span>',
+'      <span class="vsc-kw">while</span> <span class="vsc-op">(</span><span class="vsc-var">retries</span> <span class="vsc-op">&lt;</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">config</span><span class="vsc-op">.</span><span class="vsc-var">maxRetries</span><span class="vsc-op">) {</span>',
+'        <span class="vsc-kw">const</span> <span class="vsc-var">states</span> <span class="vsc-op">=</span> <span class="vsc-kw">await</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">redis</span><span class="vsc-op">.</span><span class="vsc-fn">hgetall</span><span class="vsc-op">(</span><span class="vsc-str">\'migration:\'</span> <span class="vsc-op">+</span> <span class="vsc-var">traceId</span><span class="vsc-op">);</span>',
+'        <span class="vsc-kw">const</span> <span class="vsc-var">completed</span> <span class="vsc-op">=</span> <span class="vsc-type">Object</span><span class="vsc-op">.</span><span class="vsc-fn">values</span><span class="vsc-op">(</span><span class="vsc-var">states</span><span class="vsc-op">).</span><span class="vsc-fn">filter</span><span class="vsc-op">(</span><span class="vsc-var">s</span> <span class="vsc-op">=&gt;</span> <span class="vsc-var">s</span> <span class="vsc-op">===</span> <span class="vsc-str">\'done\'</span><span class="vsc-op">).</span><span class="vsc-var">length</span><span class="vsc-op">;</span>',
+'        <span class="vsc-kw">if</span> <span class="vsc-op">(</span><span class="vsc-var">completed</span> <span class="vsc-op">===</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">activeNodes</span><span class="vsc-op">.</span><span class="vsc-var">size</span><span class="vsc-op">) </span><span class="vsc-kw">break</span><span class="vsc-op">;</span>',
+'        <span class="vsc-kw">await</span> <span class="vsc-kw">new</span> <span class="vsc-type">Promise</span><span class="vsc-op">(</span><span class="vsc-var">r</span> <span class="vsc-op">=&gt;</span> <span class="vsc-fn">setTimeout</span><span class="vsc-op">(</span><span class="vsc-var">r</span><span class="vsc-op">,</span> <span class="vsc-type">Math</span><span class="vsc-op">.</span><span class="vsc-fn">min</span><span class="vsc-op">(</span><span class="vsc-num">1000</span> <span class="vsc-op">*</span> <span class="vsc-num">2</span> <span class="vsc-op">**</span> <span class="vsc-var">retries</span><span class="vsc-op">,</span> <span class="vsc-num">30000</span><span class="vsc-op">)));</span>',
+'        <span class="vsc-var">retries</span><span class="vsc-op">++;</span>',
+'      <span class="vsc-op">}</span>',
+'',
+'      <span class="vsc-var">client</span><span class="vsc-op">.</span><span class="vsc-fn">emit</span><span class="vsc-op">(</span><span class="vsc-str">\'migrate:complete\'</span><span class="vsc-op">,</span> <span class="vsc-op">{</span> <span class="vsc-var">traceId</span><span class="vsc-op">,</span> <span class="vsc-var">checksum</span><span class="vsc-op">,</span> <span class="vsc-var">nodesAffected</span><span class="vsc-op">:</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">activeNodes</span><span class="vsc-op">.</span><span class="vsc-var">size</span> <span class="vsc-op">});</span>',
+'    <span class="vsc-op">}</span> <span class="vsc-kw">catch</span> <span class="vsc-op">(</span><span class="vsc-var">err</span><span class="vsc-op">) {</span>',
+'      <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">logger</span><span class="vsc-op">.</span><span class="vsc-fn">error</span><span class="vsc-op">(</span><span class="vsc-str">\'Migration failed [\'</span> <span class="vsc-op">+</span> <span class="vsc-var">traceId</span> <span class="vsc-op">+</span> <span class="vsc-str">\']:\'</span><span class="vsc-op">,</span> <span class="vsc-var">err</span><span class="vsc-op">.</span><span class="vsc-var">stack</span><span class="vsc-op">);</span>',
+'      <span class="vsc-var">client</span><span class="vsc-op">.</span><span class="vsc-fn">emit</span><span class="vsc-op">(</span><span class="vsc-str">\'migrate:error\'</span><span class="vsc-op">,</span> <span class="vsc-op">{</span> <span class="vsc-var">code</span><span class="vsc-op">:</span> <span class="vsc-str">\'MIGRATION_FAILED\'</span><span class="vsc-op">,</span> <span class="vsc-var">traceId</span><span class="vsc-op">,</span> <span class="vsc-var">message</span><span class="vsc-op">:</span> <span class="vsc-var">err</span><span class="vsc-op">.</span><span class="vsc-var">message</span> <span class="vsc-op">});</span>',
+'    <span class="vsc-op">}</span> <span class="vsc-kw">finally</span> <span class="vsc-op">{</span>',
+'      <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">migrationLock</span> <span class="vsc-op">=</span> <span class="vsc-kw">false</span><span class="vsc-op">;</span>',
+'    <span class="vsc-op">}</span>',
+'  <span class="vsc-op">}</span>',
+'',
+'  <span class="vsc-kw">private</span> <span class="vsc-fn">startHealthMonitor</span><span class="vsc-op">(): </span><span class="vsc-type">void</span> <span class="vsc-op">{</span>',
+'    <span class="vsc-fn">setInterval</span><span class="vsc-op">(</span><span class="vsc-kw">async</span> <span class="vsc-op">() =&gt; {</span>',
+'      <span class="vsc-kw">for</span> <span class="vsc-op">(</span><span class="vsc-kw">const</span> <span class="vsc-op">[</span><span class="vsc-var">id</span><span class="vsc-op">,</span> <span class="vsc-var">node</span><span class="vsc-op">]</span> <span class="vsc-kw">of</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">activeNodes</span><span class="vsc-op">) {</span>',
+'        <span class="vsc-kw">const</span> <span class="vsc-var">h</span> <span class="vsc-op">=</span> <span class="vsc-kw">await</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-fn">checkNodeHealth</span><span class="vsc-op">(</span><span class="vsc-var">node</span><span class="vsc-op">).</span><span class="vsc-fn">catch</span><span class="vsc-op">(() =&gt; ({</span> <span class="vsc-var">status</span><span class="vsc-op">:</span> <span class="vsc-str">\'unreachable\'</span> <span class="vsc-op">}));</span>',
+'        <span class="vsc-kw">if</span> <span class="vsc-op">(</span><span class="vsc-var">h</span><span class="vsc-op">.</span><span class="vsc-var">status</span> <span class="vsc-op">!==</span> <span class="vsc-str">\'healthy\'</span><span class="vsc-op">) {</span>',
+'          <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">logger</span><span class="vsc-op">.</span><span class="vsc-fn">warn</span><span class="vsc-op">(</span><span class="vsc-str">\'Node \'</span> <span class="vsc-op">+</span> <span class="vsc-var">id</span> <span class="vsc-op">+</span> <span class="vsc-str">\'degraded — initiating failover\'</span><span class="vsc-op">);</span>',
+'          <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">activeNodes</span><span class="vsc-op">.</span><span class="vsc-fn">delete</span><span class="vsc-op">(</span><span class="vsc-var">id</span><span class="vsc-op">);</span>',
+'        <span class="vsc-op">}</span>',
+'      <span class="vsc-op">}</span>',
+'    <span class="vsc-op">},</span> <span class="vsc-kw">this</span><span class="vsc-op">.</span><span class="vsc-var">config</span><span class="vsc-op">.</span><span class="vsc-var">heartbeatMs</span><span class="vsc-op">);</span>',
+'  <span class="vsc-op">}</span>',
+'<span class="vsc-op">}</span>',
+            ];
+        }
+
+        function renderVSCodeEditor() {
+            var editor = document.getElementById('vscEditorContent');
+            if (!editor) return;
+            // Reset on each activation
+            if (vscTypingInterval) { clearInterval(vscTypingInterval); vscTypingInterval = null; }
+            editor.innerHTML = '';
+            vscCodeLines = generateFakeCode();
+            vscCurrentLine = 0;
+            // Render first batch instantly
+            var initialBatch = Math.min(35, vscCodeLines.length);
+            for (var i = 0; i < initialBatch; i++) {
+                appendVSCLine(editor, i);
+            }
+            vscCurrentLine = initialBatch;
+            // Then slowly type remaining lines
+            if (vscCurrentLine < vscCodeLines.length) {
+                vscTypingInterval = setInterval(function() {
+                    if (vscCurrentLine >= vscCodeLines.length) {
+                        clearInterval(vscTypingInterval);
+                        vscTypingInterval = null;
+                        return;
+                    }
+                    appendVSCLine(editor, vscCurrentLine);
+                    // Remove previous active-line
+                    var prev = editor.querySelector('.vsc-active-line');
+                    if (prev) prev.classList.remove('vsc-active-line');
+                    // Mark current as active
+                    var lines = editor.querySelectorAll('.vsc-line');
+                    if (lines.length) lines[lines.length - 1].classList.add('vsc-active-line');
+                    editor.scrollTop = editor.scrollHeight;
+                    vscCurrentLine++;
+                }, 800 + Math.random() * 1500);
+            }
+        }
+
+        function appendVSCLine(editor, idx) {
+            var div = document.createElement('div');
+            div.className = 'vsc-line';
+            div.innerHTML = '<span class="vsc-line-num">' + (idx + 1) + '</span><span class="vsc-line-code">' + vscCodeLines[idx] + '</span>';
+            editor.appendChild(div);
+        }
+
+    })();
+    </script>
+
+    <!-- AUTO-CAMOUFLAGE / TAB-VERSTECKER -->
+    <script>
+    (function initAutoCamouflage() {
+        const camoDisguises = [
+            { title: 'Stack Overflow - How to center a div vertically', icon: 'https://cdn.sstatic.net/Sites/stackoverflow/Img/favicon.ico' },
+            { title: 'Jira - PROJ-9482 Backend Migration', icon: 'https://jira.atlassian.com/favicon.ico' },
+            { title: 'GitHub - Pull Request #347 Review', icon: 'https://github.githubassets.com/favicons/favicon-dark.png' },
+            { title: 'Outlook - Posteingang (3)', icon: 'https://res.cdn.office.net/assets/mail/pwa/v1/pngs/favicon.ico' },
+            { title: 'Microsoft Teams', icon: 'https://statics.teams.cdn.office.net/hasheddeployments/favicon/favicon-teams.ico' },
+            { title: 'Confluence - Dokumentation Projekt X', icon: 'https://wac-cdn.atlassian.com/assets/img/favicons/confluence/favicon.png' },
+        ];
+
+        let realTitle = '';
+        let realIcon = '';
+        let camoActive = false;
+        let currentDisguise = null;
+
+        function getOriginalFavicon() {
+            const el = document.querySelector('link[rel="icon"]');
+            return el ? el.href : '/favicon.ico';
+        }
+
+        function setFavicon(url) {
+            let link = document.querySelector('link[rel="icon"][type="image/x-icon"]');
+            if (link) link.href = url;
+            let link2 = document.querySelector('link[rel="icon"][type="image/png"]');
+            if (link2) link2.href = url;
+        }
+
+        function activateCamo() {
+            if (camoActive) return;
+            // Don't camouflage during ghost mode — it already has its own title
+            const ghostExcel = document.getElementById('ghostModeOverlay');
+            const ghostVSC = document.getElementById('ghostModeVSCode');
+            if ((ghostExcel && ghostExcel.classList.contains('active')) ||
+                (ghostVSC && ghostVSC.classList.contains('active'))) return;
+
+            realTitle = document.title;
+            realIcon = getOriginalFavicon();
+            currentDisguise = camoDisguises[Math.floor(Math.random() * camoDisguises.length)];
+            document.title = currentDisguise.title;
+            setFavicon(currentDisguise.icon);
+            camoActive = true;
+        }
+
+        function deactivateCamo() {
+            if (!camoActive) return;
+            document.title = realTitle;
+            setFavicon(realIcon);
+            camoActive = false;
+            currentDisguise = null;
+        }
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                activateCamo();
+            } else {
+                deactivateCamo();
+            }
+        });
     })();
     </script>
 </body>
