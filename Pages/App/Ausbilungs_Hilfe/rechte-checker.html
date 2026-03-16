@@ -37,6 +37,7 @@
     <link rel="manifest" href="../../../manifest.json">
     <meta name="theme-color" content="#050507">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <!-- Structured Data: FAQPage -->
@@ -2522,7 +2523,7 @@ Mit freundlichen Grüßen
                 placeholder: 'claude-sonnet-4-20250514'
             },
             gemini: {
-                hint: '💡 Kostenloser API-Key auf <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. <strong>gemini-2.0-flash</strong> ist schnell & gratis!',
+                hint: '💡 Key holen auf <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. <strong>gemini-2.0-flash</strong> ist schnell.<br>⚠️ Free-Tier: 15 Req/Min. Für höhere Limits: <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Billing aktivieren</a> im Google Cloud Projekt.',
                 placeholder: 'gemini-2.0-flash'
             },
             groq: {
@@ -2676,6 +2677,7 @@ ${scenarioCtx}`;
             const model = getLlmModel(cfg);
             const prov = cfg.provider || 'openai';
             let headers, reqBody;
+            console.log('[LLM] Starting query with provider:', prov, 'model:', model);
 
             if (prov === 'claude') {
                 // Anthropic Messages API
@@ -2695,9 +2697,9 @@ ${scenarioCtx}`;
                 // Google Gemini API (key in URL)
                 headers = { 'Content-Type': 'application/json' };
                 reqBody = JSON.stringify({
-                    systemInstruction: { parts: [{ text: buildLlmSystemPrompt() }] },
-                    contents: [{ role: 'user', parts: [{ text: userQuery }] }],
-                    generationConfig: { maxOutputTokens: 1000, temperature: 0.3 }
+                    system_instruction: { parts: [{ text: buildLlmSystemPrompt() }] },
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    generation_config: { max_output_tokens: 1000, temperature: 0.3 }
                 });
             } else {
                 // OpenAI-compatible (OpenAI, Groq, Mistral, DeepSeek, OpenRouter, xAI, Custom)
@@ -2720,18 +2722,51 @@ ${scenarioCtx}`;
                 });
             }
 
-            const resp = await fetch(endpoint, {
+            console.log('[LLM] Fetching:', endpoint.slice(0, 80));
+            let resp = await fetch(endpoint, {
                 method: 'POST',
                 headers,
                 signal: llmAbortController.signal,
                 body: reqBody
             });
+            console.log('[LLM] Got response:', resp.status, resp.statusText);
+
+            // Auto-retry once on 429 after short delay
+            if (resp.status === 429) {
+                console.log('[LLM] 429 rate limit – retrying in 3s...');
+                body.querySelector('.llm-loading')?.insertAdjacentHTML('beforeend', '<br><small style="opacity:.7">Rate-Limit... automatischer Retry in 3s</small>');
+                await new Promise(r => setTimeout(r, 3000));
+                resp = await fetch(endpoint, {
+                    method: 'POST',
+                    headers,
+                    signal: llmAbortController.signal,
+                    body: reqBody
+                });
+                console.log('[LLM] Retry response:', resp.status, resp.statusText);
+            }
 
             if (!resp.ok) {
                 const err = await resp.text();
                 let msg = 'API-Fehler: ' + resp.status;
-                if (resp.status === 401 || resp.status === 403) msg = 'Ungültiger API-Key. Öffne ⚙️ Einstellungen um ihn zu ändern.';
-                else if (resp.status === 429) msg = 'Rate-Limit erreicht. Warte kurz und versuch es nochmal.';
+                console.log('[LLM] Error body:', err);
+                if (resp.status === 401 || resp.status === 403) {
+                    msg = 'Ungültiger API-Key. Öffne ⚙️ Einstellungen um ihn zu ändern.';
+                } else if (resp.status === 429) {
+                    if (prov === 'gemini') {
+                        msg = '⏱️ <strong>Gemini Rate-Limit erreicht (429).</strong><br><br>' +
+                              '<strong>Mögliche Ursachen:</strong><br>' +
+                              '• Free-Tier: Nur 15 Requests/Min – warte kurz und versuch nochmal<br>' +
+                              '• Paid-Tier: Prüfe ob <strong>Billing</strong> im <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Google Cloud Console</a> aktiv ist<br>' +
+                              '• Der API-Key muss zu einem Projekt mit aktivierter Abrechnung gehören<br><br>' +
+                              '💡 <strong>Tipp:</strong> <a href="https://console.groq.com" target="_blank" rel="noopener"><strong>Groq</strong></a> ist kostenlos & hat großzügige Limits.';
+                    } else {
+                        msg = '⏱️ Rate-Limit erreicht. Warte ein paar Sekunden und versuch es nochmal.';
+                    }
+                } else if (resp.status === 400) {
+                    msg = '⚠️ Ungültiges Request-Format. Prüf ob Model & Einstellungen richtig sind. <br><small>Details: ' + err.slice(0, 200) + '</small>';
+                } else if (resp.status >= 500) {
+                    msg = '🔴 Server-Fehler (' + resp.status + '). Anbieter ist gerade überlastet. Versuch später nochmal.';
+                }
                 throw new Error(msg);
             }
 
@@ -2747,9 +2782,23 @@ ${scenarioCtx}`;
             renderLlmResponse(content, userQuery);
         } catch (e) {
             if (e.name === 'AbortError') return;
-            body.innerHTML = `<p style="color:var(--danger)">❌ ${escapeHtml(e.message)}</p>
-                <p style="font-size:0.8rem;color:var(--text-dim);margin-top:8px;">Prüfe deinen API-Key und Anbieter unter 🤖 AI.</p>`;
-            actions.innerHTML = `<button class="llm-action-chip" onclick="openLlmKeyModal()">⚙️ Key ändern</button>`;
+            console.error('[LLM] Query error:', e.message, e);
+            body.innerHTML = `<div style="color:var(--danger)">
+                <p style="margin-bottom:12px;"><strong>❌ ${escapeHtml(e.message)}</strong></p>
+                <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:14px;">🔍 Browser Console (F12) zeigt Details</p>
+                <div style="background:rgba(var(--danger-rgb),0.05);border:1px solid rgba(var(--danger-rgb),0.2);border-radius:8px;padding:12px;font-size:0.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:14px;">
+                    <strong style="color:var(--text);">Tipps zum Troubleshooting:</strong>
+                    <ul style="list-style-type:none;padding:0;margin:8px 0 0 0;">
+                        <li>✓ Prüfe dein API-Key – ist er gültig und hab richtig reinkopiert?</li>
+                        <li>✓ Überprüfe den Provider – stimmt die Auswahl zu deinem Key?</li>
+                        <li>✓ Checke deinen Account-Status (Guthaben, aktiv, nicht gebannt)</li>
+                        <li>✓ Falls Gemini: Nutze Groq statt – kostenlos & zuverlässiger</li>
+                        <li>✓ Versuch es später nochmal – Server könnte kurzzeitig ausfallen</li>
+                    </ul>
+                </div>
+            </div>`;
+            actions.innerHTML = `<button class="llm-action-chip" onclick="openLlmKeyModal()">⚙️ Key ändern</button>
+                <button class="llm-action-chip" onclick="closeLlmResponse()" style="color:var(--text-dim);">✕ Schließen</button>`;
         }
     }
 
