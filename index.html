@@ -7878,6 +7878,25 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <!-- Panic Button (only visible on hover, very subtle) -->
     <button class="ghost-panic-btn visible" id="ghostPanicBtn" onclick="toggleGhostMode()" title="Ghost Mode (Strg+Shift+K)">👻</button>
 
+    <!-- PWA INSTALL BANNER -->
+    <div class="pwa-install-banner" id="pwaInstallBanner">
+        <div class="pwa-install-banner-inner">
+            <div class="pwa-install-icon">📲</div>
+            <div class="pwa-install-text">
+                <strong>MyWorkLog installieren</strong>
+                <span>Als App auf dem Homescreen — schneller, offline, kein Browser nötig</span>
+                <div class="pwa-ios-steps" id="pwaIOSHint" style="display:none;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    Tippe auf <strong style="margin:0 3px;">Teilen</strong> → <strong style="margin:0 3px;">Zum Home-Bildschirm</strong>
+                </div>
+            </div>
+            <div class="pwa-install-actions">
+                <button class="pwa-install-btn pwa-install-btn-primary" id="pwaInstallBtn" onclick="pwaInstallBannerInstall()">Installieren</button>
+                <button class="pwa-install-btn pwa-install-btn-dismiss" onclick="pwaInstallBannerDismiss()">Später</button>
+            </div>
+        </div>
+    </div>
+
     <!-- COMMAND PALETTE -->
     <div class="cmd-palette-overlay" id="cmdPalette">
         <div class="cmd-palette">
@@ -10240,6 +10259,120 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
         /* Ghost Mode active: hide panic button */
         #ghostModeOverlay.active ~ .ghost-panic-btn { display: none; }
+
+        /* ====== PWA INSTALL BANNER ====== */
+        .pwa-install-banner {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 99998;
+            background: linear-gradient(135deg, rgba(30,30,46,0.98), rgba(24,24,37,0.98));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(168,85,247,0.3);
+            padding: 0 0 env(safe-area-inset-bottom, 0);
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+        }
+        .pwa-install-banner.visible {
+            display: block;
+            transform: translateY(0);
+        }
+        .pwa-install-banner-inner {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .pwa-install-icon {
+            flex-shrink: 0;
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 4px 16px rgba(168,85,247,0.35);
+        }
+        .pwa-install-text {
+            flex: 1;
+            min-width: 0;
+        }
+        .pwa-install-text strong {
+            display: block;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .pwa-install-text span {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }
+        .pwa-install-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .pwa-install-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .pwa-install-btn-primary {
+            background: linear-gradient(135deg, #a855f7, #7c3aed);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(168,85,247,0.4);
+        }
+        .pwa-install-btn-primary:hover { transform: scale(1.04); box-shadow: 0 4px 20px rgba(168,85,247,0.5); }
+        .pwa-install-btn-primary:active { transform: scale(0.97); }
+        .pwa-install-btn-dismiss {
+            background: rgba(255,255,255,0.06);
+            color: #94a3b8;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .pwa-install-btn-dismiss:hover { background: rgba(255,255,255,0.1); color:#fff; }
+        [data-theme="light"] .pwa-install-banner {
+            background: linear-gradient(135deg, rgba(255,255,255,0.97), rgba(248,250,252,0.97));
+            border-top: 1px solid rgba(168,85,247,0.2);
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.1);
+        }
+        [data-theme="light"] .pwa-install-text strong { color: #1e293b; }
+        [data-theme="light"] .pwa-install-text span { color: #64748b; }
+        [data-theme="light"] .pwa-install-btn-dismiss { background: rgba(0,0,0,0.04); color:#64748b; border-color:rgba(0,0,0,0.08); }
+        /* iOS-specific hint styling */
+        .pwa-ios-steps {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(168,85,247,0.08);
+            font-size: 0.78rem;
+            color: #c4b5fd;
+        }
+        .pwa-ios-steps svg { flex-shrink:0; }
+        [data-theme="light"] .pwa-ios-steps { background: rgba(168,85,247,0.06); color: #7c3aed; }
+        @media (max-width: 480px) {
+            .pwa-install-banner-inner { padding: 14px 16px; gap:10px; }
+            .pwa-install-icon { width:44px; height:44px; font-size:22px; border-radius:12px; }
+            .pwa-install-actions { flex-direction: column; gap:6px; }
+            .pwa-install-btn { padding: 8px 14px; font-size:0.8rem; text-align:center; }
+        }
 
         /* Ghost Announce Modal Animations */
         @keyframes ghostAnnounceIn {
@@ -29854,6 +29987,7 @@ if ('serviceWorker' in navigator) {
 // ===== INSTALL PROMPT HANDLER (Add to Home Screen) =====
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
     // Prompt speichern für manuellen Trigger via Install-Button
     deferredPrompt = e;
 });
@@ -29863,8 +29997,12 @@ window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
     // Hide PWA section after install
     hidePWAInstallSection();
+    // Hide install banner
+    var bnr = document.getElementById('pwaInstallBanner');
+    if (bnr) { bnr.classList.remove('visible'); setTimeout(function(){ bnr.style.display='none'; }, 500); }
+    localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
     if (typeof showCustomMessage === 'function') {
-        showCustomMessage('🎉 Installiert!', 'TimeTracker wurde zu deinem Startbildschirm hinzugefügt!', 'success');
+        showCustomMessage('🎉 Installiert!', 'MyWorkLog ist jetzt auf deinem Homescreen!', 'success');
     }
 });
 
@@ -29969,18 +30107,84 @@ function checkPWAStatus() {
 
 // ===== PWA AUTO-INSTALL PROMPT (nach 3 Besuchen) =====
 function initAutoInstallPrompt() {
+    // Old visit-count logic kept for compatibility but banner handles UX now
     let visitCount = parseInt(localStorage.getItem('pwa_visit_count') || '0');
     visitCount++;
     localStorage.setItem('pwa_visit_count', visitCount.toString());
+}
 
-    // Zeige Install-Prompt nach 3 Besuchen (nur auf Mobile)
-    if (visitCount === 3 && deferredPrompt && window.innerWidth < 768) {
-        setTimeout(() => {
-            if (typeof showCustomMessage === 'function') {
-                showCustomMessage('📱 TimeTracker installieren?', 'Für schnelleren Zugriff und Offline-Support!', 'info');
-                setTimeout(() => triggerInstallPrompt(), 500);
+// ===== PWA SMART INSTALL BANNER =====
+(function initPWABanner() {
+    const banner = document.getElementById('pwaInstallBanner');
+    if (!banner) return;
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+    const wasDismissed = localStorage.getItem('pwa_banner_dismissed');
+    const dismissedAt = wasDismissed ? parseInt(wasDismissed, 10) : 0;
+    // Show again after 7 days if dismissed
+    const dismissCooldown = 7 * 24 * 60 * 60 * 1000;
+    const cooldownPassed = Date.now() - dismissedAt > dismissCooldown;
+
+    if (isStandalone) return; // Already installed as PWA
+    if (wasDismissed && !cooldownPassed) return; // Dismissed recently
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+    if (isIOS) {
+        // iOS: Can't use beforeinstallprompt, show manual instructions
+        document.getElementById('pwaIOSHint').style.display = 'flex';
+        document.getElementById('pwaInstallBtn').textContent = 'Verstanden';
+        document.getElementById('pwaInstallBtn').onclick = function() { pwaInstallBannerDismiss(); };
+    }
+
+    // Show banner after short delay so it doesn't compete with page load
+    setTimeout(function() {
+        banner.style.display = 'block';
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                banner.classList.add('visible');
+            });
+        });
+    }, isIOS ? 3000 : 2000);
+})();
+
+function pwaInstallBannerInstall() {
+    var banner = document.getElementById('pwaInstallBanner');
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function(result) {
+            if (result.outcome === 'accepted') {
+                localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
+                if (banner) { banner.classList.remove('visible'); setTimeout(function(){ banner.style.display='none'; }, 500); }
             }
-        }, 2000);
+            deferredPrompt = null;
+        });
+    } else {
+        // Fallback: Show manual instructions
+        if (typeof showCustomMessage === 'function') {
+            var ua = navigator.userAgent.toLowerCase();
+            if (ua.indexOf('chrome') > -1) {
+                showCustomMessage('📲 Chrome', 'Tippe auf ⋮ (Menü oben rechts) → "App installieren" oder "Zum Startbildschirm hinzufügen"', 'info');
+            } else if (ua.indexOf('firefox') > -1) {
+                showCustomMessage('📲 Firefox', 'Tippe auf ⋮ (Menü) → "Installieren" oder "Zum Startbildschirm hinzufügen"', 'info');
+            } else if (ua.indexOf('safari') > -1) {
+                showCustomMessage('📲 Safari', 'Tippe auf das Teilen-Symbol (□↑) → "Zum Home-Bildschirm"', 'info');
+            } else {
+                showCustomMessage('📲 Installieren', 'Öffne das Browser-Menü und wähle "Zum Startbildschirm hinzufügen"', 'info');
+            }
+        }
+        pwaInstallBannerDismiss();
+    }
+}
+
+function pwaInstallBannerDismiss() {
+    localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
+    var banner = document.getElementById('pwaInstallBanner');
+    if (banner) {
+        banner.classList.remove('visible');
+        setTimeout(function(){ banner.style.display = 'none'; }, 500);
     }
 }
 
