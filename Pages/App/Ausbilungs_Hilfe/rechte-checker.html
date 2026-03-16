@@ -350,6 +350,7 @@
             max-width: 600px;
             margin: 0 auto 40px;
             position: relative;
+            z-index: 50;
         }
         .search-wrap svg {
             position: absolute; left: 16px; top: 50%;
@@ -375,6 +376,98 @@
         .search-input:focus {
             border-color: rgba(var(--primary-rgb), 0.4);
             box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+        }
+        .search-wrap .search-mode-toggle {
+            position: absolute; right: 12px; top: 50%;
+            transform: translateY(-50%);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            color: var(--text-dim);
+            font-size: 0.68rem; font-weight: 600;
+            padding: 4px 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font);
+            letter-spacing: 0.3px;
+        }
+        .search-wrap .search-mode-toggle:hover,
+        .search-wrap .search-mode-toggle.active {
+            color: var(--primary);
+            border-color: rgba(var(--primary-rgb), 0.4);
+            background: rgba(var(--primary-rgb), 0.08);
+        }
+
+        /* AI Suggestions Dropdown */
+        .ai-suggest {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0; right: 0;
+            background: var(--bg-card-solid);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+            z-index: 100;
+            display: none;
+            overflow: hidden;
+            max-height: 360px;
+            overflow-y: auto;
+        }
+        .ai-suggest.active { display: block; }
+        .ai-suggest-header {
+            padding: 10px 16px 6px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-dim);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .ai-suggest-item {
+            padding: 10px 16px;
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-bottom: 1px solid var(--border);
+        }
+        .ai-suggest-item:last-child { border-bottom: none; }
+        .ai-suggest-item:hover {
+            background: rgba(var(--primary-rgb), 0.06);
+        }
+        .ai-suggest-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .ai-suggest-text {
+            flex: 1; min-width: 0;
+        }
+        .ai-suggest-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .ai-suggest-meta {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            display: flex; gap: 8px; align-items: center;
+        }
+        .ai-suggest-match {
+            font-size: 0.65rem;
+            font-family: var(--font-mono);
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(var(--primary-rgb), 0.1);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .ai-typo-hint {
+            padding: 8px 16px 10px;
+            font-size: 0.78rem;
+            color: var(--warning);
+            display: flex; align-items: center; gap: 6px;
         }
 
         /* ═══════════════════════════════════════
@@ -868,7 +961,9 @@
         <div class="search-wrap fade-in fade-in-d2" role="search" aria-label="Szenarien durchsuchen">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             <label for="searchInput" class="sr-only">Szenario suchen</label>
-            <input type="search" class="search-input" id="searchInput" placeholder="Szenario suchen… z.B. Überstunden, Urlaub, Putzen" autocomplete="off">
+            <input type="search" class="search-input" id="searchInput" placeholder="Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'" autocomplete="off" style="padding-right:72px;">
+            <button class="search-mode-toggle active" id="smartSearchToggle" title="Smart-Suche: Erkennt Tippfehler und natürliche Sprache" onclick="toggleSmartSearch()">🧠 Smart</button>
+            <div class="ai-suggest" id="aiSuggest"></div>
         </div>
 
         <!-- Category Filters -->
@@ -1690,6 +1785,296 @@ Mit freundlichen Grüßen
     ];
 
     // ═══════════════════════════════════════════
+    //  🧠 SMART SEARCH ENGINE (Fuzzy + NLP-lite)
+    //  No LLM, no API, no download. Pure client-side.
+    // ═══════════════════════════════════════════
+
+    // -- Keyword/Synonym Map: maps colloquial words to scenario IDs --
+    const KEYWORD_MAP = {
+        // Arbeitszeit
+        'überstunden':    ['ueberstunden'], 'überstunde': ['ueberstunden'],
+        'länger bleiben': ['ueberstunden'], 'länger arbeiten': ['ueberstunden'],
+        'mehr arbeiten':  ['ueberstunden'], 'nachsitzen': ['ueberstunden'],
+        'wochenende':     ['wochenende'], 'samstag': ['wochenende'], 'sonntag': ['wochenende'],
+        'samstags':       ['wochenende'], 'sonntags': ['wochenende'],
+        'feiertag':       ['wochenende'], 'feiertags': ['wochenende'],
+        'pause':          ['pause'], 'mittagspause': ['pause'], 'essen': ['pause'],
+        'keine pause':    ['pause'], 'durcharbeiten': ['pause'], 'pausen': ['pause'],
+        'raucherpause':   ['pause'], 'essenpause': ['pause'],
+        'nachtarbeit':    ['nachtarbeit'], 'spätschicht': ['nachtarbeit'], 'nachtschicht': ['nachtarbeit'],
+        'abends':         ['nachtarbeit'], 'nachts': ['nachtarbeit'], 'schichtarbeit': ['nachtarbeit'],
+        'spät arbeiten':  ['nachtarbeit'], 'frühschicht': ['nachtarbeit'],
+
+        // Tätigkeiten
+        'putzen':         ['putzen'], 'fegen': ['putzen'], 'aufräumen': ['putzen'],
+        'halle fegen':    ['putzen'], 'klo putzen': ['putzen'], 'toilette': ['putzen'],
+        'sauber machen':  ['putzen'], 'wischen': ['putzen'], 'staubsaugen': ['putzen'],
+        'müll':           ['putzen'], 'reinigen': ['putzen'], 'schrubben': ['putzen'],
+        'kaffee':         ['privatbesorgungen'], 'kaffee holen': ['privatbesorgungen'],
+        'einkaufen':      ['privatbesorgungen'], 'auto waschen': ['privatbesorgungen'],
+        'besorgungen':    ['privatbesorgungen'], 'privat': ['privatbesorgungen'],
+        'brötchen holen':  ['privatbesorgungen'], 'post holen': ['privatbesorgungen'],
+        'eintönig':        ['eintoenig'], 'immer das gleiche': ['eintoenig'],
+        'monoton':         ['eintoenig'], 'langweilig': ['eintoenig'],
+        'nichts neues':    ['eintoenig'], 'abwechslung': ['eintoenig'],
+        'nur kopieren':    ['eintoenig'], 'immer dasselbe': ['eintoenig'],
+
+        // Urlaub
+        'urlaub':          ['urlaub-gestrichen', 'urlaub-bestimmen', 'pruefungsfreistellung'],
+        'urlaub gestrichen': ['urlaub-gestrichen'], 'urlaub weg': ['urlaub-gestrichen'],
+        'urlaub streichen': ['urlaub-gestrichen'], 'urlaub storniert': ['urlaub-gestrichen'],
+        'kein urlaub':     ['urlaub-gestrichen'],
+        'urlaub bestimmen': ['urlaub-bestimmen'], 'urlaub wann chef will': ['urlaub-bestimmen'],
+        'ferien':          ['urlaub-gestrichen', 'urlaub-bestimmen'],
+        'prüfung urlaub':  ['pruefungsfreistellung'], 'prüfung freistellung': ['pruefungsfreistellung'],
+        'prüfung frei':    ['pruefungsfreistellung'], 'klausur': ['pruefungsfreistellung'],
+        'abschlussprüfung': ['pruefungsfreistellung'], 'zwischenprüfung': ['pruefungsfreistellung'],
+
+        // Berufsschule
+        'berufsschule':    ['nach-schule-betrieb', 'schule-nicht-angerechnet'],
+        'schule':          ['nach-schule-betrieb', 'schule-nicht-angerechnet'],
+        'nach schule':     ['nach-schule-betrieb'], 'nach berufsschule': ['nach-schule-betrieb'],
+        'nach der schule': ['nach-schule-betrieb'], 'schule arbeitszeit': ['schule-nicht-angerechnet'],
+        'schule freizeit': ['schule-nicht-angerechnet'], 'schule nicht angerechnet': ['schule-nicht-angerechnet'],
+        'blockunterricht': ['nach-schule-betrieb', 'schule-nicht-angerechnet'],
+        'schulweg':        ['schule-nicht-angerechnet'],
+
+        // Geld
+        'geld':            ['verguetung-niedrig', 'krank-kein-geld', 'arbeitsmaterial'],
+        'gehalt':          ['verguetung-niedrig', 'krank-kein-geld'],
+        'vergütung':       ['verguetung-niedrig'], 'zu wenig geld': ['verguetung-niedrig'],
+        'lohn':            ['verguetung-niedrig', 'krank-kein-geld'],
+        'mindestlohn':     ['verguetung-niedrig'], 'mindestvergütung': ['verguetung-niedrig'],
+        'werkzeug':        ['arbeitsmaterial'], 'arbeitsmaterial': ['arbeitsmaterial'],
+        'material':        ['arbeitsmaterial'], 'selber kaufen': ['arbeitsmaterial'],
+        'bücher':          ['arbeitsmaterial'], 'fachbuch': ['arbeitsmaterial'],
+        'arbeitskleidung': ['arbeitsmaterial'], 'sicherheitsschuhe': ['arbeitsmaterial'],
+        'krank':           ['krank-kein-geld'], 'krankheit': ['krank-kein-geld'],
+        'krank kein geld': ['krank-kein-geld'], 'lohnfortzahlung': ['krank-kein-geld'],
+        'arbeitsunfähig':  ['krank-kein-geld'], 'krankgeschrieben': ['krank-kein-geld'],
+
+        // Kündigung
+        'kündigung':       ['kuendigung-drohung', 'abmahnung', 'aufhebungsvertrag'],
+        'gekkündigt':      ['kuendigung-drohung'], 'rausschmiss': ['kuendigung-drohung'],
+        'fliegen':         ['kuendigung-drohung'], 'rausfliegen': ['kuendigung-drohung'],
+        'feuern':          ['kuendigung-drohung'], 'gefeuert': ['kuendigung-drohung'],
+        'probezeit':       ['kuendigung-drohung'],
+        'abmahnung':       ['abmahnung'], 'abgemahnt': ['abmahnung'],
+        'verwarnung':      ['abmahnung'], 'ermahnung': ['abmahnung'],
+        'aufhebungsvertrag': ['aufhebungsvertrag'], 'unterschreiben': ['aufhebungsvertrag'],
+        'vertrag unterschreiben': ['aufhebungsvertrag'], 'aufhebung': ['aufhebungsvertrag'],
+        'zeugnis':         ['zeugnis'], 'arbeitszeugnis': ['zeugnis'],
+        'ausbildungszeugnis': ['zeugnis'], 'kein zeugnis': ['zeugnis'],
+
+        // Mobbing
+        'mobbing':         ['mobbing', 'diskriminierung'], 'gemobbt': ['mobbing'],
+        'beleidigung':     ['mobbing'], 'beleidigt': ['mobbing'],
+        'schikane':        ['mobbing'], 'anschreien': ['mobbing'],
+        'ausgegrenzt':     ['mobbing'], 'fertig machen': ['mobbing'],
+        'diskriminierung': ['diskriminierung'], 'diskriminiert': ['diskriminierung'],
+        'rassismus':       ['diskriminierung'], 'sexismus': ['diskriminierung'],
+        'herkunft':        ['diskriminierung'], 'frauen': ['diskriminierung'],
+        'behindert':       ['diskriminierung'], 'religion': ['diskriminierung'],
+        'kopftuch':        ['diskriminierung'], 'hautfarbe': ['diskriminierung']
+    };
+
+    // -- Levenshtein Distance (fuzzy matching core) --
+    function levenshtein(a, b) {
+        if (a.length === 0) return b.length;
+        if (b.length === 0) return a.length;
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                const cost = b[i - 1] === a[j - 1] ? 0 : 1;
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j - 1] + cost
+                );
+            }
+        }
+        return matrix[b.length][a.length];
+    }
+
+    // -- German Stemming-lite: strip common suffixes --
+    function stemDE(word) {
+        word = word.toLowerCase()
+            .replace(/ä/g, 'a').replace(/ö/g, 'o').replace(/ü/g, 'u').replace(/ß/g, 'ss');
+        // Strip common German suffixes
+        return word
+            .replace(/(ungen|ung|heit|keit|lich|isch|iert|ieren|tion|ens|eln|ern|est|end|ige|igen)$/, '')
+            .replace(/(en|er|es|em|st|te|ig|el|nd)$/, '')
+            .replace(/(e|s|n|t)$/, '');
+    }
+
+    // -- Normalize: lowercase, trim, handle umlauts --
+    function normalize(str) {
+        return str.toLowerCase().trim()
+            .replace(/["'„“‚‘?!.,;:()\[\]]/g, '')
+            .replace(/\s+/g, ' ');
+    }
+
+    // -- Smart Search: Score each scenario against query --
+    function smartSearch(query) {
+        if (!query || query.length < 2) return null;
+        const q = normalize(query);
+        const qWords = q.split(' ').filter(w => w.length >= 2);
+        const qStems = qWords.map(stemDE);
+        const scores = new Map(); // scenarioId -> { score, matchType }
+
+        // 1) Exact keyword match
+        for (const [keyword, ids] of Object.entries(KEYWORD_MAP)) {
+            if (q.includes(keyword)) {
+                ids.forEach(id => {
+                    const cur = scores.get(id) || { score: 0, matchType: '' };
+                    cur.score += 100 + keyword.length * 5; // longer match = better
+                    cur.matchType = 'Keyword';
+                    scores.set(id, cur);
+                });
+            }
+        }
+
+        // 2) Fuzzy keyword match (handles typos)
+        const fuzzyThreshold = 2; // max edit distance
+        let hadTypoCorrection = false;
+        let correctedWord = '';
+        for (const word of qWords) {
+            if (word.length < 3) continue;
+            for (const [keyword, ids] of Object.entries(KEYWORD_MAP)) {
+                const kwWords = keyword.split(' ');
+                for (const kw of kwWords) {
+                    if (kw.length < 3) continue;
+                    const dist = levenshtein(word, kw);
+                    const maxDist = Math.min(fuzzyThreshold, Math.floor(kw.length / 3));
+                    if (dist > 0 && dist <= maxDist) {
+                        ids.forEach(id => {
+                            const cur = scores.get(id) || { score: 0, matchType: '' };
+                            cur.score += (50 - dist * 15);
+                            cur.matchType = cur.matchType || 'Fuzzy';
+                            scores.set(id, cur);
+                        });
+                        if (!hadTypoCorrection) {
+                            hadTypoCorrection = true;
+                            correctedWord = kw;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3) Stem-based match against scenario text
+        SCENARIOS.forEach(s => {
+            const scenarioText = normalize(
+                s.title + ' ' + s.desc + ' ' + s.verdictShort + ' ' + s.verdictDetail +
+                ' ' + (s.tips || []).join(' ') + ' ' + (s.laws || []).map(l => l.title).join(' ')
+            );
+            const scenarioStems = scenarioText.split(' ').filter(w => w.length >= 3).map(stemDE);
+            let stemHits = 0;
+            for (const qs of qStems) {
+                if (qs.length < 2) continue;
+                for (const ss of scenarioStems) {
+                    if (ss.includes(qs) || qs.includes(ss)) {
+                        stemHits++;
+                        break;
+                    }
+                }
+            }
+            if (stemHits > 0) {
+                const cur = scores.get(s.id) || { score: 0, matchType: '' };
+                cur.score += stemHits * 20;
+                cur.matchType = cur.matchType || 'Textanalyse';
+                scores.set(s.id, cur);
+            }
+        });
+
+        // 4) Direct substring (fallback, low score)
+        SCENARIOS.forEach(s => {
+            const fields = [s.title, s.desc, s.law, s.verdictShort, s.cat].map(f => normalize(f));
+            for (const word of qWords) {
+                if (word.length < 2) continue;
+                for (const field of fields) {
+                    if (field.includes(word)) {
+                        const cur = scores.get(s.id) || { score: 0, matchType: '' };
+                        cur.score += 10;
+                        cur.matchType = cur.matchType || 'Textsuche';
+                        scores.set(s.id, cur);
+                    }
+                }
+            }
+        });
+
+        if (scores.size === 0) return null;
+
+        // Sort by score
+        const results = [...scores.entries()]
+            .map(([id, data]) => ({ id, ...data }))
+            .sort((a, b) => b.score - a.score);
+
+        return {
+            results,
+            typoCorrection: hadTypoCorrection ? correctedWord : null
+        };
+    }
+
+    let smartSearchEnabled = true;
+
+    function toggleSmartSearch() {
+        smartSearchEnabled = !smartSearchEnabled;
+        const btn = document.getElementById('smartSearchToggle');
+        btn.classList.toggle('active', smartSearchEnabled);
+        btn.innerHTML = smartSearchEnabled ? '🧠 Smart' : '🔍 Exakt';
+        const input = document.getElementById('searchInput');
+        input.placeholder = smartSearchEnabled
+            ? "Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'"
+            : "Szenario suchen… z.B. Überstunden, Urlaub, Putzen";
+        // Re-trigger search
+        searchQuery = input.value.trim();
+        renderScenarios();
+        hideAiSuggest();
+    }
+
+    // -- AI Suggest Dropdown --
+    function showAiSuggest(results, typoCorrection) {
+        const box = document.getElementById('aiSuggest');
+        if (!results || results.results.length === 0) {
+            hideAiSuggest();
+            return;
+        }
+        const top = results.results.slice(0, 5);
+        let html = '';
+        if (typoCorrection) {
+            html += `<div class="ai-typo-hint">✨ Meintest du "${escapeHtml(typoCorrection)}"?</div>`;
+        }
+        html += '<div class="ai-suggest-header">🧠 Smart-Ergebnis</div>';
+        top.forEach(r => {
+            const s = SCENARIOS.find(x => x.id === r.id);
+            if (!s) return;
+            html += `<div class="ai-suggest-item" onclick="openDetail('${s.id}'); hideAiSuggest();">
+                <div class="ai-suggest-icon">${getCatEmoji(s.cat)}</div>
+                <div class="ai-suggest-text">
+                    <div class="ai-suggest-title">${escapeHtml(s.title)}</div>
+                    <div class="ai-suggest-meta">
+                        <span>${getCatLabel(s.cat)}</span>
+                        <span class="ai-suggest-match">${r.matchType} • ${r.score}%</span>
+                    </div>
+                </div>
+            </div>`;
+        });
+        box.innerHTML = html;
+        box.classList.add('active');
+    }
+    function hideAiSuggest() {
+        document.getElementById('aiSuggest').classList.remove('active');
+    }
+
+    // Close suggestions on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-wrap')) hideAiSuggest();
+    });
+
+    // ═══════════════════════════════════════════
     //  STATE
     // ═══════════════════════════════════════════
     let activeCat = 'all';
@@ -1711,17 +2096,37 @@ Mit freundlichen Grüßen
     function renderScenarios() {
         const grid = document.getElementById('scenariosGrid');
         const noResults = document.getElementById('noResults');
-        const filtered = SCENARIOS.filter(s => {
-            const matchCat = activeCat === 'all' || s.cat === activeCat;
-            if (!matchCat) return false;
-            if (!searchQuery) return true;
-            const q = searchQuery.toLowerCase();
-            return s.title.toLowerCase().includes(q) ||
-                   s.desc.toLowerCase().includes(q) ||
-                   s.law.toLowerCase().includes(q) ||
-                   s.cat.toLowerCase().includes(q) ||
-                   s.verdictShort.toLowerCase().includes(q);
-        });
+
+        let filtered;
+
+        if (searchQuery && smartSearchEnabled) {
+            // Smart search mode: fuzzy + NLP
+            const result = smartSearch(searchQuery);
+            if (!result || result.results.length === 0) {
+                grid.innerHTML = '';
+                noResults.style.display = 'block';
+                showAiSuggest(null);
+                return;
+            }
+            showAiSuggest(result, result.typoCorrection);
+            const matchedIds = new Set(result.results.map(r => r.id));
+            filtered = result.results
+                .map(r => SCENARIOS.find(s => s.id === r.id))
+                .filter(s => s && (activeCat === 'all' || s.cat === activeCat));
+        } else {
+            hideAiSuggest();
+            filtered = SCENARIOS.filter(s => {
+                const matchCat = activeCat === 'all' || s.cat === activeCat;
+                if (!matchCat) return false;
+                if (!searchQuery) return true;
+                const q = searchQuery.toLowerCase();
+                return s.title.toLowerCase().includes(q) ||
+                       s.desc.toLowerCase().includes(q) ||
+                       s.law.toLowerCase().includes(q) ||
+                       s.cat.toLowerCase().includes(q) ||
+                       s.verdictShort.toLowerCase().includes(q);
+            });
+        }
 
         if (filtered.length === 0) {
             grid.innerHTML = '';
@@ -1788,7 +2193,14 @@ Mit freundlichen Grüßen
             timeout = setTimeout(() => {
                 searchQuery = input.value.trim();
                 renderScenarios();
-            }, 200);
+            }, 250);
+        });
+        // Show suggestions on focus if there's text
+        input.addEventListener('focus', () => {
+            if (input.value.trim() && smartSearchEnabled) {
+                searchQuery = input.value.trim();
+                renderScenarios();
+            }
         });
     }
 
