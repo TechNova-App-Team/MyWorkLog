@@ -6970,6 +6970,90 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 <!-- Skip-to-content für Barrierefreiheit -->
 <a href="#app" class="sr-only" style="position:absolute;top:-100px;left:0;background:#a855f7;color:white;padding:0.5rem 1rem;z-index:99999;border-radius:0 0 8px 0;" onfocus="this.style.top='0'" onblur="this.style.top='-100px'">Zum Inhalt springen</a>
 
+<!-- MAINTENANCE MODE OVERLAY - ENTERPRISE GRADE -->
+<div id="maintenanceMode" style="display: none;" class="maintenance-overlay">
+    <div class="maintenance-container">
+        <canvas id="maintenance-gradient"></canvas>
+        
+        <div class="maintenance-content">
+            <!-- Status Indicator -->
+            <div class="maintenance-status-badge">
+                <span class="status-pulse"></span>
+                <span class="status-text">Wartung läuft...</span>
+            </div>
+            
+            <!-- Main Message -->
+            <div class="maintenance-header">
+                <svg class="maintenance-icon" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-13c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
+                </svg>
+                <h1 class="maintenance-title">Wartungsarbeiten läufen</h1>
+                <p class="maintenance-subtitle">Wir optimieren dein Erlebnis. Bitte komme bald wieder!</p>
+            </div>
+            
+            <!-- Countdown Timer -->
+            <div class="maintenance-timer" id="maintenanceTimer">
+                <div class="timer-box">
+                    <div class="timer-value" id="timerHours">02</div>
+                    <div class="timer-label">Stunden</div>
+                </div>
+                <div class="timer-separator">:</div>
+                <div class="timer-box">
+                    <div class="timer-value" id="timerMinutes">45</div>
+                    <div class="timer-label">Minuten</div>
+                </div>
+                <div class="timer-separator">:</div>
+                <div class="timer-box">
+                    <div class="timer-value" id="timerSeconds">30</div>
+                    <div class="timer-label">Sekunden</div>
+                </div>
+            </div>
+            
+            <!-- Info Box -->
+            <div class="maintenance-info-box">
+                <div class="info-item">
+                    <span class="info-icon">✨</span>
+                    <div>
+                        <h3>Neue Features</h3>
+                        <p>Advanced Analytics, verbessertes Dashboard & KI-Integration</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <span class="info-icon">⚡</span>
+                    <div>
+                        <h3>Performance-Upgrades</h3>
+                        <p>Schnellere Load-Times, optimierte Datenbank & API-Endpoints</p>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <span class="info-icon">🔒</span>
+                    <div>
+                        <h3>Sicherheits-Updates</h3>
+                        <p>Neue Verschlüsselung, Server-Hardening & Compliance-Features</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Email Subscription -->
+            <div class="maintenance-email-box">
+                <label>Benachrichtige mich, wenn wir wieder online sind:</label>
+                <div class="email-input-group">
+                    <input type="email" id="maintenanceEmail" placeholder="deine@email.de" class="email-input">
+                    <button onclick="sendMaintenanceNotification()" class="email-submit-btn">Absenden</button>
+                </div>
+                <p class="email-hint" id="maintenanceEmailHint">Wir werden dir eine E-Mail schicken, sobald MyWorkLog wieder verfügbar ist.</p>
+            </div>
+            
+            <!-- Social Links & Status Page -->
+            <div class="maintenance-footer">
+                <a href="https://status.myworklog.de" target="_blank" class="maintenance-link">📊 Status-Seite</a>
+                <a href="https://twitter.com/myworklog" target="_blank" class="maintenance-link">𝕏 Updates folgen</a>
+                <a href="mailto:support@myworklog.de" class="maintenance-link">📧 Support kontaktieren</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- PROFESSIONAL ENTERPRISE-GRADE INTRO -->
 <div id="pro-intro" style="display: none;">
     <canvas id="gradient-canvas"></canvas>
@@ -7534,11 +7618,13 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         (function() {
             // Check if intro has been seen
             if (localStorage.getItem('pro_intro_seen') === 'true') {
+                // Ghost button wird erst in DOMContentLoaded gezeigt (siehe unten)
                 return;
             }
 
             const intro = document.getElementById('pro-intro');
             intro.style.display = 'block';
+            // Ghost button hat display:none im HTML — kein JS nötig hier
 
             // Animated gradient background
             const canvas = document.getElementById('gradient-canvas');
@@ -7620,6 +7706,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 intro.style.animation = 'fadeOut 0.6s ease forwards';
                 setTimeout(() => {
                     intro.style.display = 'none';
+                    // Ghost Button jetzt einblenden — Element existiert garantiert
+                    window._showGhostButton();
                 }, 600);
             };
 
@@ -7875,8 +7963,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         </div>
     </div>
 
-    <!-- Panic Button (only visible on hover, very subtle) -->
-    <button class="ghost-panic-btn visible" id="ghostPanicBtn" onclick="toggleGhostMode()" title="Ghost Mode (Strg+Shift+K)">👻</button>
+    <!-- Panic Button — HIDDEN by default, only shown via JS after intro -->
+    <button class="ghost-panic-btn" id="ghostPanicBtn" onclick="toggleGhostMode()" title="Ghost Mode (Strg+Shift+K)" style="display:none">👻</button>
 
     <!-- PWA INSTALL BANNER -->
     <div class="pwa-install-banner" id="pwaInstallBanner">
@@ -10220,7 +10308,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         }
         .ghost-statusbar span { opacity: 0.8; }
 
-        /* Panic Button (subtle floating corner button) */
+        /* Panic Button (subtle floating corner button) — starts with display:none in HTML */
         .ghost-panic-btn {
             position: fixed;
             bottom: 16px;
@@ -10239,7 +10327,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             justify-content: center;
             backdrop-filter: blur(8px);
             transition: all 0.3s ease;
-            opacity: 0;
+            opacity: 0.4;
         }
         .ghost-panic-btn:hover {
             opacity: 1;
@@ -10262,6 +10350,353 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
         /* Ghost Mode active: hide panic button */
         #ghostModeOverlay.active ~ .ghost-panic-btn { display: none; }
+
+        /* ====== MAINTENANCE MODE - ENTERPRISE GRADE ====== */
+        .maintenance-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            background: rgba(5, 5, 7, 0.98);
+            backdrop-filter: blur(12px);
+            animation: maintenanceFadeIn 0.5s ease forwards;
+        }
+
+        @keyframes maintenanceFadeIn {
+            from { opacity: 0; } to { opacity: 1; }
+        }
+
+        .maintenance-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #maintenance-gradient {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+        }
+
+        .maintenance-content {
+            position: relative;
+            z-index: 2;
+            max-width: 700px;
+            width: 90%;
+            padding: 3rem;
+            background: rgba(22, 22, 26, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 32px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.1);
+            animation: maintenanceSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes maintenanceSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .maintenance-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            font-size: 0.85rem;
+            color: #a855f7;
+            font-weight: 500;
+        }
+
+        .status-pulse {
+            width: 8px;
+            height: 8px;
+            background: #a855f7;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .maintenance-header {
+            margin-bottom: 3rem;
+        }
+
+        .maintenance-icon {
+            color: #a855f7;
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
+        }
+
+        .maintenance-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .maintenance-subtitle {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            margin: 0;
+        }
+
+        /* Countdown Timer */
+        .maintenance-timer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 2.5rem 0;
+            padding: 2rem;
+            background: rgba(168, 85, 247, 0.05);
+            border-radius: 20px;
+            border: 1px solid rgba(168, 85, 247, 0.15);
+        }
+
+        .timer-box {
+            background: rgba(168, 85, 247, 0.1);
+            padding: 12px 16px;
+            border-radius: 12px;
+            min-width: 70px;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        .timer-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #a855f7;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .timer-separator {
+            font-size: 1.8rem;
+            color: #a855f7;
+            font-weight: 700;
+            margin: 0 4px;
+        }
+
+        /* Info Box */
+        .maintenance-info-box {
+            margin: 2.5rem 0;
+            text-align: left;
+        }
+
+        .info-item {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(168, 85, 247, 0.05);
+            border-left: 3px solid #a855f7;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            background: rgba(168, 85, 247, 0.1);
+            transform: translateX(4px);
+        }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .info-item h3 {
+            margin: 0 0 4px 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .info-item p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: #cbd5e1;
+            line-height: 1.4;
+        }
+
+        /* Email Subscription */
+        .maintenance-email-box {
+            margin: 2.5rem 0;
+            padding: 1.5rem;
+            background: rgba(168, 85, 247, 0.08);
+            border-radius: 16px;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        .maintenance-email-box label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #f8fafc;
+            margin-bottom: 12px;
+        }
+
+        .email-input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .email-input {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(30, 30, 46, 0.6);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 10px;
+            color: #f8fafc;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .email-input:focus {
+            outline: none;
+            border-color: #a855f7;
+            background: rgba(30, 30, 46, 0.8);
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+        }
+
+        .email-input::placeholder {
+            color: #64748b;
+        }
+
+        .email-submit-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .email-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(168, 85, 247, 0.3);
+        }
+
+        .email-submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .email-hint {
+            margin: 0;
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        /* Footer Links */
+        .maintenance-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(168, 85, 247, 0.1);
+        }
+
+        .maintenance-link {
+            padding: 10px 16px;
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            border-radius: 8px;
+            color: #a855f7;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .maintenance-link:hover {
+            background: rgba(168, 85, 247, 0.2);
+            border-color: #a855f7;
+            transform: translateY(-2px);
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .maintenance-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+
+            .maintenance-title {
+                font-size: 1.8rem;
+            }
+
+            .maintenance-subtitle {
+                font-size: 0.95rem;
+            }
+
+            .maintenance-timer {
+                flex-wrap: wrap;
+                padding: 1rem;
+            }
+
+            .timer-box {
+                min-width: 60px;
+                padding: 8px 12px;
+            }
+
+            .timer-value {
+                font-size: 1.4rem;
+            }
+
+            .timer-separator {
+                font-size: 1.4rem;
+            }
+
+            .email-input-group {
+                flex-direction: column;
+            }
+
+            .email-submit-btn {
+                width: 100%;
+            }
+
+            .maintenance-footer {
+                gap: 8px;
+            }
+        }
 
         /* ====== PWA INSTALL BANNER ====== */
         .pwa-install-banner {
@@ -10849,6 +11284,17 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             <button id="btnResetLayout" class="settings-btn" onclick="resetDashboardLayout()" title="Standard-Layout wiederherstellen" style="display:none; background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.2); color:#f87171;">↺ Zurücksetzen</button>
                         </div>
                         <small id="editModeStatus" style="color:var(--text-muted); display:block; margin-top:8px; opacity:0; transition:opacity 0.3s; font-size:0.8rem;">📍 Layout-Bearbeitungsmodus AKTIV</small>
+                    </div>
+
+                    <!-- Tab-Tarnung -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Tab-Tarnung</div>
+                        <p class="settings-hint" style="margin-bottom:10px;">Wenn du den Tab wechselst, sieht er aus wie eine andere Seite (z.B. Stack Overflow, Outlook). Titel & Icon ändern sich automatisch.</p>
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px 0;">
+                            <input type="checkbox" id="confTabCamo" onchange="data.settings.tabCamo = this.checked; save(); updateCamoState();" style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;">
+                            <span style="color:var(--text-main); font-size:0.9rem; font-weight:500;">Tab-Tarnung aktivieren</span>
+                        </label>
+                        <span class="settings-hint" style="display:block; margin-top:4px;">🕵️ Verkleidet deinen Tab wenn du weg-tabbst — Chef sieht nur Stack Overflow o.ä.</span>
                     </div>
 
                     <!-- Recovery -->
@@ -19820,6 +20266,9 @@ TIPPS:
         // Bundesland
         const confBundeslandEl = document.getElementById('confBundesland');
         if (confBundeslandEl) confBundeslandEl.value = data.settings.bundesland || '';
+        // Tab-Tarnung checkbox
+        const confTabCamoEl = document.getElementById('confTabCamo');
+        if (confTabCamoEl) confTabCamoEl.checked = !!data.settings.tabCamo;
         // Shortcuts checkbox
         const confShortcutsEl = document.getElementById('confShortcuts'); 
         if (confShortcutsEl) {
@@ -29379,6 +29828,187 @@ TIPPS:
 
     }
 
+    // ===== MAINTENANCE MODE SYSTEM =====
+    let maintenanceActive = localStorage.getItem('maintenance_active') === 'true';
+    let maintenanceEndTime = parseInt(localStorage.getItem('maintenance_end_time') || '0', 10);
+
+    // Initialize maintenance mode on page load
+    function initMaintenanceMode() {
+        if (maintenanceActive) {
+            showMaintenanceOverlay();
+            startMaintenanceCountdown();
+        }
+    }
+
+    // Show maintenance overlay
+    window.showMaintenanceOverlay = function() {
+        const overlay = document.getElementById('maintenanceMode');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            renderMaintenanceGradient();
+        }
+    };
+
+    // Hide maintenance overlay
+    window.hideMaintenanceOverlay = function() {
+        const overlay = document.getElementById('maintenanceMode');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+        localStorage.removeItem('maintenance_active');
+        localStorage.removeItem('maintenance_end_time');
+        maintenanceActive = false;
+    };
+
+    // Render gradient background for maintenance mode
+    function renderMaintenanceGradient() {
+        const canvas = document.getElementById('maintenance-gradient');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        let time = 0;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas, { once: true });
+
+        function animateGradient() {
+            const gradient = ctx.createRadialGradient(
+                canvas.width * 0.5 + Math.sin(time * 0.0005) * 300,
+                canvas.height * 0.5 + Math.cos(time * 0.0005) * 300,
+                100,
+                canvas.width * 0.5,
+                canvas.height * 0.5,
+                Math.max(canvas.width, canvas.height)
+            );
+
+            gradient.addColorStop(0, 'rgba(168, 85, 247, 0.15)');
+            gradient.addColorStop(0.5, 'rgba(236, 72, 153, 0.08)');
+            gradient.addColorStop(1, 'rgba(5, 5, 7, 0)');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            time += 1;
+            if (canvas.offsetParent !== null) {
+                requestAnimationFrame(animateGradient);
+            }
+        }
+
+        animateGradient();
+    }
+
+    // Start countdown timer
+    function startMaintenanceCountdown() {
+        function updateTimer() {
+            const now = Date.now();
+            const remaining = Math.max(0, maintenanceEndTime - now);
+
+            if (remaining === 0) {
+                // Countdown finished
+                document.getElementById('timerHours').textContent = '00';
+                document.getElementById('timerMinutes').textContent = '00';
+                document.getElementById('timerSeconds').textContent = '00';
+                clearInterval(timerInterval);
+                return;
+            }
+
+            const hours = Math.floor(remaining / 3600000);
+            const minutes = Math.floor((remaining % 3600000) / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+
+            document.getElementById('timerHours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('timerMinutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('timerSeconds').textContent = String(seconds).padStart(2, '0');
+        }
+
+        updateTimer();
+        window.maintenanceTimerInterval = setInterval(updateTimer, 1000);
+    }
+
+    // Stop countdown
+    function stopMaintenanceCountdown() {
+        if (window.maintenanceTimerInterval) {
+            clearInterval(window.maintenanceTimerInterval);
+        }
+    }
+
+    // Toggle maintenance mode (für Admin/Debugging)
+    window.toggleMaintenanceMode = function(durationMin = 60) {
+        maintenanceActive = !maintenanceActive;
+
+        if (maintenanceActive) {
+            maintenanceEndTime = Date.now() + (durationMin * 60 * 1000);
+            localStorage.setItem('maintenance_active', 'true');
+            localStorage.setItem('maintenance_end_time', maintenanceEndTime.toString());
+            showMaintenanceOverlay();
+            startMaintenanceCountdown();
+            console.log('🔧 Maintenance Mode aktiviert! Dauer: ' + durationMin + ' Minuten');
+        } else {
+            hideMaintenanceOverlay();
+            stopMaintenanceCountdown();
+            console.log('✅ Maintenance Mode deaktiviert');
+        }
+    };
+
+    // Send maintenance notification email
+    window.sendMaintenanceNotification = async function() {
+        const emailInput = document.getElementById('maintenanceEmail');
+        const hintEl = document.getElementById('maintenanceEmailHint');
+        const email = emailInput?.value.trim();
+
+        if (!email || !email.includes('@')) {
+            if (hintEl) hintEl.textContent = '❌ Bitte gib eine gültige E-Mail ein';
+            if (hintEl) hintEl.style.color = '#ef4444';
+            return;
+        }
+
+        try {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Wird gesendet...';
+
+            // Simulate sending (in production: send to backend)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            if (hintEl) {
+                hintEl.textContent = '✅ Danke! Wir senden dir eine Benachrichtigung.';
+                hintEl.style.color = '#10b981';
+            }
+            if (emailInput) emailInput.value = '';
+
+            // Store email in localStorage for later
+            const emails = JSON.parse(localStorage.getItem('maintenance_emails') || '[]');
+            if (!emails.includes(email)) {
+                emails.push(email);
+                localStorage.setItem('maintenance_emails', JSON.stringify(emails));
+            }
+
+            setTimeout(() => {
+                if (hintEl) {
+                    hintEl.textContent = 'Wir werden dir eine E-Mail schicken, sobald MyWorkLog wieder verfügbar ist.';
+                    hintEl.style.color = '#94a3b8';
+                }
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Absenden';
+                }
+            }, 2000);
+        } catch (err) {
+            if (hintEl) {
+                hintEl.textContent = '⚠️ Fehler beim Senden. Bitte versuche es später.';
+                hintEl.style.color = '#f59e0b';
+            }
+        }
+    };
+
+    // Initialize maintenance mode on page load
+    document.addEventListener('DOMContentLoaded', initMaintenanceMode, { once: true });
+
 </script>
 <!-- Ensure touch-mobile-optimizations is loaded as a fallback -->
 <script>
@@ -31089,8 +31719,17 @@ if (document.readyState === 'loading') {
             setTimeout(() => { m.style.display = 'none'; }, 400);
         };
 
-        // Show announcement on load (one-time)
-        setTimeout(showGhostAnnounce, 1200);
+        // Show announcement ONLY after intro is done (never during intro!)
+        function tryShowGhostAnnounce() {
+            const intro = document.getElementById('pro-intro');
+            // If intro exists and is visible, wait and retry
+            if (intro && intro.style.display !== 'none') {
+                setTimeout(tryShowGhostAnnounce, 1000);
+                return;
+            }
+            showGhostAnnounce();
+        }
+        setTimeout(tryShowGhostAnnounce, 1200);
 
         // Determine which ghost skin to use based on job
         function getGhostSkin() {
@@ -31172,6 +31811,22 @@ if (document.readyState === 'loading') {
             html += '</tbody>';
             table.innerHTML = html;
         }
+
+        // ===== Ghost Button Display Logic =====
+        // Zentrale Funktion: Ghost Button sichtbar machen (display:none → flex)
+        window._showGhostButton = function() {
+            const btn = document.getElementById('ghostPanicBtn');
+            if (btn) {
+                btn.style.display = 'flex';
+            }
+        };
+
+        // Beim Laden: Ghost Button NUR zeigen wenn Intro bereits gesehen wurde
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('pro_intro_seen') === 'true') {
+                window._showGhostButton();
+            }
+        });
 
         // Toggle Ghost Mode
         let vscTypingInterval = null;
@@ -31397,24 +32052,49 @@ if (document.readyState === 'loading') {
         ];
 
         let realTitle = '';
-        let realIcon = '';
+        let realIcons = [];
         let camoActive = false;
         let currentDisguise = null;
 
-        function getOriginalFavicon() {
-            const el = document.querySelector('link[rel="icon"]');
-            return el ? el.href : '/favicon.ico';
+        function isCamoEnabled() {
+            try {
+                const d = JSON.parse(localStorage.getItem('tg_data') || '{}');
+                return !!(d.settings && d.settings.tabCamo);
+            } catch(e) { return false; }
+        }
+
+        function saveOriginalIcons() {
+            realIcons = [];
+            document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach(el => {
+                realIcons.push({ rel: el.rel, type: el.type, href: el.href, sizes: el.sizes?.value || '' });
+            });
         }
 
         function setFavicon(url) {
-            let link = document.querySelector('link[rel="icon"][type="image/x-icon"]');
-            if (link) link.href = url;
-            let link2 = document.querySelector('link[rel="icon"][type="image/png"]');
-            if (link2) link2.href = url;
+            // Remove ALL existing icon links
+            document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach(el => el.remove());
+            // Create a single fresh link element
+            const link = document.createElement('link');
+            link.rel = 'icon';
+            link.href = url;
+            document.head.appendChild(link);
+        }
+
+        function restoreOriginalIcons() {
+            document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]').forEach(el => el.remove());
+            realIcons.forEach(ico => {
+                const link = document.createElement('link');
+                link.rel = ico.rel;
+                if (ico.type) link.type = ico.type;
+                link.href = ico.href;
+                if (ico.sizes) link.sizes = ico.sizes;
+                document.head.appendChild(link);
+            });
         }
 
         function activateCamo() {
             if (camoActive) return;
+            if (!isCamoEnabled()) return;
             // Don't camouflage during ghost mode — it already has its own title
             const ghostExcel = document.getElementById('ghostModeOverlay');
             const ghostVSC = document.getElementById('ghostModeVSCode');
@@ -31422,7 +32102,7 @@ if (document.readyState === 'loading') {
                 (ghostVSC && ghostVSC.classList.contains('active'))) return;
 
             realTitle = document.title;
-            realIcon = getOriginalFavicon();
+            saveOriginalIcons();
             currentDisguise = camoDisguises[Math.floor(Math.random() * camoDisguises.length)];
             document.title = currentDisguise.title;
             setFavicon(currentDisguise.icon);
@@ -31432,7 +32112,7 @@ if (document.readyState === 'loading') {
         function deactivateCamo() {
             if (!camoActive) return;
             document.title = realTitle;
-            setFavicon(realIcon);
+            restoreOriginalIcons();
             camoActive = false;
             currentDisguise = null;
         }
@@ -31444,6 +32124,12 @@ if (document.readyState === 'loading') {
                 deactivateCamo();
             }
         });
+
+        // Expose for settings toggle
+        window.updateCamoState = function() {
+            // If disabled while active, revert immediately
+            if (!isCamoEnabled() && camoActive) deactivateCamo();
+        };
     })();
     </script>
 </body>
