@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Darf der Chef das? – Azubi-Rechte-Checker</title>
+    <link rel="icon" href="../../../Grafiken/favicon.ico">
+    <link rel="manifest" href="../../../manifest.json">
+    <meta name="theme-color" content="#050507">
+    <style>
+        /* ═══════════════════════════════════════
+           DESIGN TOKENS
+        ═══════════════════════════════════════ */
+        :root {
+            --bg-deep: #050507;
+            --bg-card: rgba(18, 18, 24, 0.75);
+            --bg-card-solid: #12121a;
+            --bg-elevated: rgba(30, 30, 42, 0.6);
+            --primary: #a855f7;
+            --primary-rgb: 168, 85, 247;
+            --secondary: #6366f1;
+            --secondary-rgb: 99, 102, 241;
+            --success: #10b981;
+            --success-rgb: 16, 185, 129;
+            --warning: #f59e0b;
+            --warning-rgb: 245, 158, 11;
+            --danger: #ef4444;
+            --danger-rgb: 239, 68, 68;
+            --cyan: #06b6d4;
+            --cyan-rgb: 6, 182, 212;
+            --orange: #f97316;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --border: rgba(255, 255, 255, 0.06);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --shadow-card: 0 4px 24px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+            --shadow-glow: 0 8px 40px rgba(var(--primary-rgb), 0.15);
+        }
+
+        /* ═══════════════════════════════════════
+           RESET & BASE
+        ═══════════════════════════════════════ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font);
+            background: var(--bg-deep);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* ═══════════════════════════════════════
+           AMBIENT BACKGROUND
+        ═══════════════════════════════════════ */
+        .ambient {
+            position: fixed; inset: 0;
+            pointer-events: none; z-index: 0;
+            overflow: hidden;
+        }
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.15;
+            animation: orbFloat 20s ease-in-out infinite alternate;
+        }
+        .ambient-orb:nth-child(1) {
+            width: 600px; height: 600px;
+            background: var(--primary);
+            top: -10%; left: -5%;
+        }
+        .ambient-orb:nth-child(2) {
+            width: 500px; height: 500px;
+            background: var(--danger);
+            bottom: -10%; right: -5%;
+            animation-delay: -7s;
+            animation-duration: 25s;
+        }
+        .ambient-orb:nth-child(3) {
+            width: 400px; height: 400px;
+            background: var(--warning);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -14s;
+        }
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -20px) scale(1.05); }
+            66% { transform: translate(-20px, 30px) scale(0.95); }
+            100% { transform: translate(10px, 10px) scale(1.02); }
+        }
+
+        /* ═══════════════════════════════════════
+           SHELL / LAYOUT
+        ═══════════════════════════════════════ */
+        .shell {
+            position: relative; z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 20px 80px;
+        }
+
+        /* ═══════════════════════════════════════
+           BACK BUTTON
+        ═══════════════════════════════════════ */
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            color: var(--text-muted);
+            font-size: 0.85rem; font-weight: 500;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            transition: all 0.25s;
+            margin-bottom: 28px;
+        }
+        .back-btn:hover {
+            color: var(--text);
+            background: var(--bg-elevated);
+            transform: translateX(-4px);
+        }
+        .back-btn svg { width: 16px; height: 16px; }
+
+        /* ═══════════════════════════════════════
+           HERO
+        ═══════════════════════════════════════ */
+        .hero {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(var(--danger-rgb), 0.12);
+            color: var(--danger);
+            font-size: 0.8rem; font-weight: 600;
+            padding: 6px 16px;
+            border-radius: 100px;
+            border: 1px solid rgba(var(--danger-rgb), 0.2);
+            margin-bottom: 18px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .hero h1 {
+            font-size: clamp(1.8rem, 5vw, 2.6rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 12px;
+        }
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--danger), var(--warning));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-sub {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            max-width: 600px;
+            margin: 0 auto 28px;
+        }
+        .hero-stats {
+            display: flex; justify-content: center; gap: 32px;
+            flex-wrap: wrap;
+        }
+        .hero-stat {
+            text-align: center;
+        }
+        .hero-stat-num {
+            font-size: 1.5rem; font-weight: 800;
+            font-family: var(--font-mono);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* ═══════════════════════════════════════
+           SEARCH BAR
+        ═══════════════════════════════════════ */
+        .search-wrap {
+            max-width: 600px;
+            margin: 0 auto 40px;
+            position: relative;
+        }
+        .search-wrap svg {
+            position: absolute; left: 16px; top: 50%;
+            transform: translateY(-50%);
+            width: 20px; height: 20px;
+            color: var(--text-dim);
+            pointer-events: none;
+        }
+        .search-input {
+            width: 100%;
+            padding: 14px 16px 14px 48px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: var(--font);
+            backdrop-filter: blur(12px);
+            transition: all 0.3s;
+            outline: none;
+        }
+        .search-input::placeholder { color: var(--text-dim); }
+        .search-input:focus {
+            border-color: rgba(var(--primary-rgb), 0.4);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+        }
+
+        /* ═══════════════════════════════════════
+           CATEGORY FILTER PILLS
+        ═══════════════════════════════════════ */
+        .cat-filters {
+            display: flex; flex-wrap: wrap;
+            justify-content: center; gap: 8px;
+            margin-bottom: 36px;
+        }
+        .cat-pill {
+            padding: 8px 18px;
+            border-radius: 100px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.25s;
+            backdrop-filter: blur(8px);
+            user-select: none;
+        }
+        .cat-pill:hover {
+            border-color: rgba(var(--primary-rgb), 0.3);
+            color: var(--text);
+        }
+        .cat-pill.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.3);
+        }
+
+        /* ═══════════════════════════════════════
+           SCENARIO CARDS GRID
+        ═══════════════════════════════════════ */
+        .scenarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+        .scenario-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(12px);
+            overflow: hidden;
+            position: relative;
+        }
+        .scenario-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--card-accent, var(--primary)), transparent);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s;
+        }
+        .scenario-card:hover::before { transform: scaleX(1); }
+        .scenario-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(var(--primary-rgb), 0.2);
+            box-shadow: var(--shadow-glow);
+        }
+        .scenario-card-inner {
+            padding: 20px;
+        }
+        .scenario-tag {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 10px;
+            border-radius: 100px;
+            margin-bottom: 12px;
+        }
+        .tag-arbeitszeit { background: rgba(var(--cyan-rgb), 0.12); color: var(--cyan); }
+        .tag-taetigkeit { background: rgba(var(--warning-rgb), 0.12); color: var(--warning); }
+        .tag-urlaub { background: rgba(var(--success-rgb), 0.12); color: var(--success); }
+        .tag-schule { background: rgba(var(--secondary-rgb), 0.12); color: var(--secondary); }
+        .tag-geld { background: rgba(var(--orange), 0.12); color: var(--orange); }
+        .tag-kuendigung { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); }
+        .tag-mobbing { background: rgba(168, 85, 247, 0.12); color: #c084fc; }
+
+        .scenario-title {
+            font-size: 1rem; font-weight: 700;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+        .scenario-desc {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .scenario-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 20px;
+            border-top: 1px solid var(--border);
+            background: rgba(0,0,0,0.15);
+        }
+        .scenario-law {
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+        .scenario-severity {
+            display: flex; gap: 3px;
+        }
+        .severity-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+        .severity-dot.active { background: var(--danger); }
+        .severity-dot.active.medium { background: var(--warning); }
+        .severity-dot.active.low { background: var(--success); }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-dim);
+        }
+        .no-results-icon { font-size: 3rem; margin-bottom: 16px; }
+        .no-results h3 { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 8px; }
+
+        /* ═══════════════════════════════════════
+           DETAIL OVERLAY
+        ═══════════════════════════════════════ */
+        .detail-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .detail-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        .detail-modal {
+            background: var(--bg-card-solid);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+            animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes modalSlideUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .detail-header {
+            padding: 28px 28px 0;
+            position: relative;
+        }
+        .detail-close {
+            position: absolute; top: 16px; right: 16px;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.1rem;
+        }
+        .detail-close:hover {
+            background: rgba(var(--danger-rgb), 0.15);
+            color: var(--danger);
+            border-color: rgba(var(--danger-rgb), 0.3);
+        }
+        .detail-category {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 5px 12px;
+            border-radius: 100px;
+            margin-bottom: 14px;
+        }
+        .detail-title {
+            font-size: 1.4rem; font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 8px;
+        }
+        .detail-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        .detail-body {
+            padding: 0 28px 28px;
+        }
+
+        /* Verdict Box */
+        .verdict-box {
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid;
+        }
+        .verdict-box.nein {
+            background: rgba(var(--danger-rgb), 0.08);
+            border-color: rgba(var(--danger-rgb), 0.2);
+        }
+        .verdict-box.jein {
+            background: rgba(var(--warning-rgb), 0.08);
+            border-color: rgba(var(--warning-rgb), 0.2);
+        }
+        .verdict-box.ja {
+            background: rgba(var(--success-rgb), 0.08);
+            border-color: rgba(var(--success-rgb), 0.2);
+        }
+        .verdict-label {
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .verdict-box.nein .verdict-label { color: var(--danger); }
+        .verdict-box.jein .verdict-label { color: var(--warning); }
+        .verdict-box.ja .verdict-label { color: var(--success); }
+        .verdict-text {
+            font-size: 1.05rem; font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .verdict-box.nein .verdict-text { color: var(--danger); }
+        .verdict-box.jein .verdict-text { color: var(--warning); }
+        .verdict-box.ja .verdict-text { color: var(--success); }
+        .verdict-detail {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Law Reference */
+        .law-ref {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex; gap: 14px;
+            align-items: flex-start;
+        }
+        .law-ref-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .law-ref-content { flex: 1; }
+        .law-ref-title {
+            font-size: 0.9rem; font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--primary);
+        }
+        .law-ref-text {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
+
+        /* Tips */
+        .tips-section {
+            margin-bottom: 24px;
+        }
+        .tips-title {
+            font-size: 0.85rem; font-weight: 700;
+            margin-bottom: 12px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .tip-item {
+            display: flex; gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .tip-item:last-child { border-bottom: none; }
+        .tip-num {
+            flex-shrink: 0;
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            background: rgba(var(--primary-rgb), 0.12);
+            color: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 700;
+            font-family: var(--font-mono);
+        }
+
+        /* Email Generator */
+        .email-section { margin-bottom: 10px; }
+        .email-btn {
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(var(--primary-rgb), 0.3);
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1), rgba(var(--secondary-rgb), 0.1));
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: var(--font);
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .email-btn:hover {
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.2), rgba(var(--secondary-rgb), 0.2));
+            border-color: rgba(var(--primary-rgb), 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(var(--primary-rgb), 0.2);
+        }
+        .email-output {
+            margin-top: 16px;
+            display: none;
+        }
+        .email-output.active { display: block; }
+        .email-output-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px;
+        }
+        .email-output-title {
+            font-size: 0.8rem; font-weight: 600;
+            color: var(--text-muted);
+        }
+        .email-copy-btn {
+            padding: 5px 12px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font);
+        }
+        .email-copy-btn:hover {
+            color: var(--success);
+            border-color: rgba(var(--success-rgb), 0.3);
+        }
+        .email-text {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            white-space: pre-wrap;
+            font-family: var(--font);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* ═══════════════════════════════════════
+           DISCLAIMER FOOTER
+        ═══════════════════════════════════════ */
+        .disclaimer {
+            text-align: center;
+            padding: 32px 20px;
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+        }
+        .disclaimer p {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .disclaimer a {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        /* ═══════════════════════════════════════
+           ANIMATIONS
+        ═══════════════════════════════════════ */
+        .fade-in {
+            animation: fadeIn 0.6s ease both;
+        }
+        .fade-in-d1 { animation-delay: 0.1s; }
+        .fade-in-d2 { animation-delay: 0.2s; }
+        .fade-in-d3 { animation-delay: 0.3s; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ═══════════════════════════════════════
+           SCROLLBAR
+        ═══════════════════════════════════════ */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.08);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+        /* ═══════════════════════════════════════
+           RESPONSIVE
+        ═══════════════════════════════════════ */
+        @media (max-width: 680px) {
+            .scenarios-grid {
+                grid-template-columns: 1fr;
+            }
+            .hero h1 { font-size: 1.6rem; }
+            .hero-stats { gap: 20px; }
+            .detail-modal { max-height: 95vh; }
+            .detail-header, .detail-body { padding-left: 20px; padding-right: 20px; }
+            .detail-title { font-size: 1.2rem; }
+            .cat-filters { gap: 6px; }
+            .cat-pill { padding: 6px 14px; font-size: 0.78rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ═══════════════ AMBIENT ═══════════════ -->
+    <div class="ambient">
+        <div class="ambient-orb"></div>
+        <div class="ambient-orb"></div>
+        <div class="ambient-orb"></div>
+    </div>
+
+    <!-- ═══════════════ SHELL ═══════════════ -->
+    <div class="shell">
+        <!-- Back -->
+        <a href="./index.html" class="back-btn fade-in">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+            Zurück zur Ausbildungshilfe
+        </a>
+
+        <!-- Hero -->
+        <div class="hero fade-in fade-in-d1">
+            <div class="hero-badge">⚖️ Azubi-Bodyguard</div>
+            <h1>Darf der Chef <span>das</span>?</h1>
+            <p class="hero-sub">Kenne deine Rechte. Wähl ein Szenario und check sofort die Rechtslage – mit Paragraph, Tipps und fertiger E-Mail-Vorlage.</p>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-num" id="statTotal">0</div>
+                    <div class="hero-stat-label">Szenarien</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-num">7</div>
+                    <div class="hero-stat-label">Kategorien</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-num">BBiG</div>
+                    <div class="hero-stat-label">Rechtsgrundlage</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-wrap fade-in fade-in-d2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" class="search-input" id="searchInput" placeholder="Szenario suchen… z.B. Überstunden, Urlaub, Putzen" autocomplete="off">
+        </div>
+
+        <!-- Category Filters -->
+        <div class="cat-filters fade-in fade-in-d2" id="catFilters">
+            <button class="cat-pill active" data-cat="all">Alle</button>
+            <button class="cat-pill" data-cat="arbeitszeit">⏰ Arbeitszeit</button>
+            <button class="cat-pill" data-cat="taetigkeit">🧹 Tätigkeiten</button>
+            <button class="cat-pill" data-cat="urlaub">🏖️ Urlaub</button>
+            <button class="cat-pill" data-cat="schule">📚 Berufsschule</button>
+            <button class="cat-pill" data-cat="geld">💰 Vergütung</button>
+            <button class="cat-pill" data-cat="kuendigung">📋 Kündigung</button>
+            <button class="cat-pill" data-cat="mobbing">🛡️ Mobbing</button>
+        </div>
+
+        <!-- Scenarios Grid -->
+        <div class="scenarios-grid fade-in fade-in-d3" id="scenariosGrid"></div>
+
+        <!-- No Results -->
+        <div class="no-results" id="noResults" style="display:none;">
+            <div class="no-results-icon">🔍</div>
+            <h3>Kein Szenario gefunden</h3>
+            <p style="color:var(--text-dim); font-size:0.85rem;">Versuch andere Suchbegriffe oder wähle eine andere Kategorie.</p>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="disclaimer fade-in">
+            <p>⚠️ Diese Informationen dienen zur allgemeinen Orientierung und ersetzen keine Rechtsberatung. Bei konkreten Problemen wende dich an deine <strong>Gewerkschaft</strong>, die <strong>IHK/HWK</strong> oder einen <strong>Fachanwalt für Arbeitsrecht</strong>.</p>
+        </div>
+    </div>
+
+    <!-- ═══════════════ DETAIL OVERLAY ═══════════════ -->
+    <div class="detail-overlay" id="detailOverlay">
+        <div class="detail-modal" id="detailModal">
+            <div class="detail-header">
+                <button class="detail-close" onclick="closeDetail()" aria-label="Schließen">✕</button>
+                <div class="detail-category" id="detailCategory"></div>
+                <h2 class="detail-title" id="detailTitle"></h2>
+                <p class="detail-subtitle" id="detailSubtitle"></p>
+            </div>
+            <div class="detail-body" id="detailBody"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ JAVASCRIPT ═══════════════ -->
+    <script>
+    // ═══════════════════════════════════════════
+    //  LEGAL DATABASE – BBiG & Co.
+    // ═══════════════════════════════════════════
+    const SCENARIOS = [
+        // ──────── ARBEITSZEIT ────────
+        {
+            id: 'ueberstunden',
+            cat: 'arbeitszeit',
+            title: '"Du machst heute Überstunden!"',
+            desc: 'Der Chef verlangt, dass du länger bleibst als im Ausbildungsvertrag steht.',
+            law: '§ 8 JArbSchG / § 3 ArbZG',
+            severity: 3,
+            verdict: 'nein',
+            verdictShort: 'Nein, grundsätzlich nicht erlaubt!',
+            verdictDetail: 'Minderjährige Azubis dürfen max. 8 Stunden/Tag und 40 Stunden/Woche arbeiten (§ 8 JArbSchG). Für volljährige Azubis gilt das Arbeitszeitgesetz (max. 8h/Tag, Ausnahme bis 10h bei Ausgleich). Überstunden dürfen nur in absoluten Ausnahmefällen angeordnet werden und müssen vergütet oder durch Freizeit ausgeglichen werden.',
+            laws: [
+                { title: '§ 8 JArbSchG – Dauer der Arbeitszeit', text: 'Jugendliche dürfen nicht mehr als 8 Stunden täglich und nicht mehr als 40 Stunden wöchentlich beschäftigt werden.' },
+                { title: '§ 3 ArbZG – Arbeitszeit der Arbeitnehmer', text: 'Die werktägliche Arbeitszeit der Arbeitnehmer darf 8 Stunden nicht überschreiten. Sie kann auf bis zu 10 Stunden nur verlängert werden, wenn innerhalb von 6 Monaten ein Ausgleich erfolgt.' },
+                { title: '§ 17 Abs. 3 BBiG – Vergütungsanspruch', text: 'Über die vereinbarte Ausbildungszeit hinausgehende Beschäftigung ist besonders zu vergüten oder durch Freizeit auszugleichen.' }
+            ],
+            tips: [
+                'Notiere jede Überstunde schriftlich mit Datum, Uhrzeit und Grund.',
+                'Weise deinen Ausbilder höflich auf die gesetzliche Regelung hin.',
+                'Falls Überstunden regelmäßig verlangt werden: Kontaktiere die IHK/HWK oder deine Gewerkschaft.',
+                'Überstunden müssen entweder bezahlt oder durch Freizeit ausgeglichen werden – niemals „für umsonst".'
+            ],
+            email: {
+                subject: 'Rückfrage zur Arbeitszeit / Überstunden',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+ich möchte mich bezüglich der kürzlich angefallenen Überstunden an Sie wenden.
+
+Gemäß meinem Ausbildungsvertrag beträgt meine reguläre Arbeitszeit [X Stunden/Woche]. In der vergangenen Woche habe ich jedoch insgesamt [Y Stunden] gearbeitet, was über die vereinbarte Zeit hinausgeht.
+
+Nach § 17 Abs. 3 BBiG ist eine über die vereinbarte Ausbildungszeit hinausgehende Beschäftigung besonders zu vergüten oder durch entsprechende Freizeit auszugleichen. [Für minderjährige Auszubildende gilt zudem § 8 JArbSchG, der eine maximale Arbeitszeit von 8 Stunden täglich bzw. 40 Stunden wöchentlich vorsieht.]
+
+Ich bitte Sie daher um Klärung, wie die angefallenen Überstunden ausgeglichen werden. Ich stehe für ein persönliches Gespräch gerne zur Verfügung.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'wochenende',
+            cat: 'arbeitszeit',
+            title: '"Samstag kommst du auch rein!"',
+            desc: 'Du sollst am Wochenende arbeiten, obwohl das nicht im Vertrag steht.',
+            law: '§ 16 JArbSchG / § 9 ArbZG',
+            severity: 3,
+            verdict: 'jein',
+            verdictShort: 'Kommt drauf an – Branche entscheidend!',
+            verdictDetail: 'Für Minderjährige gilt: Samstags und sonntags ist grundsätzlich frei (§ 16–17 JArbSchG). Ausnahmen gelten nur in bestimmten Branchen (Gastronomie, Krankenhaus, Landwirtschaft etc.). Für Volljährige gilt das Arbeitszeitgesetz – Sonntags- und Feiertagsarbeit ist grundsätzlich verboten (§ 9 ArbZG), mit branchenspezifischen Ausnahmen.',
+            laws: [
+                { title: '§ 16 JArbSchG – Samstagsruhe', text: 'An Samstagen dürfen Jugendliche nicht beschäftigt werden. Zulässig ist die Beschäftigung Jugendlicher an Samstagen nur in bestimmten Branchen (z.B. Krankenanstalten, Gaststätten, Verkaufsstellen, Bäckereien etc.).' },
+                { title: '§ 17 JArbSchG – Sonntagsruhe', text: 'An Sonntagen dürfen Jugendliche nicht beschäftigt werden. Ausnahmen gelten für die gleichen Branchen wie bei der Samstagsruhe.' },
+                { title: '§ 9 ArbZG – Sonn- und Feiertagsruhe', text: 'Arbeitnehmer dürfen an Sonn- und gesetzlichen Feiertagen von 0 bis 24 Uhr nicht beschäftigt werden. Ausnahmen sind gesetzlich geregelt.' }
+            ],
+            tips: [
+                'Prüfe deinen Ausbildungsvertrag: Ist Wochenendarbeit dort erwähnt?',
+                'Check, ob deine Branche zu den gesetzlichen Ausnahmen gehört.',
+                'Minderjährige haben Anspruch auf mindestens 2 freie Samstage pro Monat.',
+                'Bei Samstagsarbeit muss ein anderer Werktag derselben Woche frei sein.'
+            ],
+            email: {
+                subject: 'Rückfrage zur Wochenendarbeit',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+bezüglich der geplanten Arbeit am Samstag, [Datum], möchte ich mich erkundigen.
+
+In meinem Ausbildungsvertrag ist eine Arbeitszeit von Montag bis Freitag vereinbart. [Falls minderjährig: Gemäß § 16 JArbSchG dürfen Jugendliche an Samstagen grundsätzlich nicht beschäftigt werden, sofern der Betrieb nicht zu den gesetzlich definierten Ausnahmebranchen gehört.]
+
+Ich möchte sicherstellen, dass die geplante Wochenendarbeit im Einklang mit den gesetzlichen Regelungen steht und der entsprechende Freizeitausgleich gewährt wird.
+
+Könnten wir das in einem kurzen Gespräch klären?
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'pause',
+            cat: 'arbeitszeit',
+            title: '"Pause? Mach einfach durch!"',
+            desc: 'Du bekommst keine richtige Pause oder sollst am Arbeitsplatz essen.',
+            law: '§ 11 JArbSchG / § 4 ArbZG',
+            severity: 2,
+            verdict: 'nein',
+            verdictShort: 'Nein! Du hast Recht auf Pausen!',
+            verdictDetail: 'Pausen sind gesetzlich vorgeschrieben und nicht verhandelbar. Minderjährige: Bei 4,5–6h Arbeit mind. 30 Min., bei über 6h mind. 60 Min. Pause. Volljährige: Bei 6–9h mind. 30 Min., bei über 9h mind. 45 Min. Pausen müssen im Voraus feststehen und dürfen nicht an den Anfang oder das Ende der Arbeitszeit gelegt werden.',
+            laws: [
+                { title: '§ 11 JArbSchG – Ruhepausen', text: 'Jugendlichen müssen im Voraus feststehende Ruhepausen von angemessener Dauer gewährt werden. Die Ruhepausen müssen mindestens betragen: 30 Minuten bei einer Arbeitszeit von mehr als 4,5 Stunden, 60 Minuten bei einer Arbeitszeit von mehr als 6 Stunden.' },
+                { title: '§ 4 ArbZG – Ruhepausen', text: 'Die Arbeit ist durch im Voraus feststehende Ruhepausen von mindestens 30 Minuten bei einer Arbeitszeit von mehr als 6 bis zu 9 Stunden und 45 Minuten bei einer Arbeitszeit von mehr als 9 Stunden insgesamt zu unterbrechen.' }
+            ],
+            tips: [
+                'Du darfst deinen Arbeitsplatz in der Pause verlassen.',
+                'Pausen zählen nicht als Arbeitszeit – sie werden nicht bezahlt, aber du bist auch zu nichts verpflichtet.',
+                'Dokumentiere es, wenn Pausen regelmäßig gestrichen werden.',
+                'Sprich zuerst den Ausbilder an, dann ggf. den Betriebsrat.'
+            ],
+            email: {
+                subject: 'Anliegen bezüglich der Pausenzeiten',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+in letzter Zeit kam es wiederholt vor, dass ich meine gesetzlich vorgeschriebene Pause nicht oder nur eingeschränkt wahrnehmen konnte.
+
+Gemäß § 11 JArbSchG (für Minderjährige) bzw. § 4 ArbZG (für Volljährige) stehen mir bei meiner täglichen Arbeitszeit Ruhepausen von mindestens [30/60] Minuten zu. Diese müssen im Voraus feststehen und tatsächlich gewährt werden.
+
+Ich bitte darum, dass die Pausenregelung künftig eingehalten wird, und schlage vor, feste Pausenzeiten zu vereinbaren.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'nachtarbeit',
+            cat: 'arbeitszeit',
+            title: '"Du übernimmst die Spätschicht!"',
+            desc: 'Du sollst abends oder nachts arbeiten – ist das als Azubi überhaupt erlaubt?',
+            law: '§ 14 JArbSchG',
+            severity: 3,
+            verdict: 'nein',
+            verdictShort: 'Nein! Nachtarbeit für Minderjährige verboten!',
+            verdictDetail: 'Minderjährige Azubis dürfen nur zwischen 6:00 und 20:00 Uhr beschäftigt werden (§ 14 JArbSchG). Ausnahmen gelten für wenige Branchen (Bäckereien ab 5:00, Gaststätten bis 22:00, Schichtbetrieb bis 23:00). Volljährige Azubis unterliegen dem ArbZG – hier ist Nachtarbeit möglich, aber mit besonderen Schutzvorschriften.',
+            laws: [
+                { title: '§ 14 JArbSchG – Nachtruhe', text: 'Jugendliche dürfen nur in der Zeit von 6 bis 20 Uhr beschäftigt werden. Abweichend davon dürfen Jugendliche über 16 Jahre im Gaststättengewerbe bis 22 Uhr, in mehrschichtigen Betrieben bis 23 Uhr und in der Landwirtschaft ab 5 Uhr oder bis 21 Uhr beschäftigt werden.' },
+                { title: '§ 6 ArbZG – Nacht- und Schichtarbeit', text: 'Die werktägliche Arbeitszeit der Nachtarbeitnehmer darf 8 Stunden nicht überschreiten. Nachtarbeitnehmer sind berechtigt, sich regelmäßig arbeitsmedizinisch untersuchen zu lassen.' }
+            ],
+            tips: [
+                'Prüfe, ob du minderjährig oder volljährig bist – die Regeln unterscheiden sich stark.',
+                'Bäckerei-Azubis ab 16 dürfen ab 5 Uhr arbeiten, Gastro-Azubis ab 16 bis 22 Uhr.',
+                'Bei regelmäßiger Nachtschicht: Du hast Anspruch auf arbeitsmedizinische Untersuchung.',
+                'Nachtarbeit muss im Ausbildungsvertrag oder Tarifvertrag geregelt sein.'
+            ],
+            email: {
+                subject: 'Rückfrage zur geplanten Spätschicht/Nachtarbeit',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+mir wurde mitgeteilt, dass ich am [Datum] die Spätschicht/Nachtschicht übernehmen soll.
+
+[Falls minderjährig: ] Gemäß § 14 JArbSchG dürfen Jugendliche grundsätzlich nur zwischen 6:00 und 20:00 Uhr beschäftigt werden. Da ich unter 18 Jahre alt bin, bitte ich um Prüfung, ob diese Einteilung mit den gesetzlichen Vorgaben vereinbar ist.
+
+[Falls volljährig: ] Ich möchte sicherstellen, dass die Nachtarbeit im Rahmen der Regelungen des § 6 ArbZG stattfindet und die vorgeschriebene Ruhezeit eingehalten wird.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+
+        // ──────── TÄTIGKEITEN ────────
+        {
+            id: 'putzen',
+            cat: 'taetigkeit',
+            title: '"Feg mal die Halle!"',
+            desc: 'Du sollst putzen, aufräumen oder Tätigkeiten machen, die nichts mit deiner Ausbildung zu tun haben.',
+            law: '§ 14 BBiG',
+            severity: 2,
+            verdict: 'jein',
+            verdictShort: 'Nur in Maßen – nicht als Daueraufgabe!',
+            verdictDetail: 'Azubis dürfen nur mit Aufgaben betraut werden, die dem Ausbildungszweck dienen (§ 14 BBiG). Gelegentliches Aufräumen des eigenen Arbeitsplatzes ist okay. Regelmäßiges Putzen der gesamten Firma, das nichts mit der Ausbildung zu tun hat, ist eine unzulässige ausbildungsfremde Tätigkeit. Der Ausbilder ist verpflichtet, die Ausbildung nach dem Ausbildungsrahmenplan durchzuführen.',
+            laws: [
+                { title: '§ 14 Abs. 1 Nr. 1 BBiG – Pflichten des Ausbildenden', text: 'Ausbildende haben dafür zu sorgen, dass den Auszubildenden die berufliche Handlungsfähigkeit vermittelt wird, die zum Erreichen des Ausbildungsziels erforderlich ist. Die Ausbildung muss einem sachlich und zeitlich gegliederten Ausbildungsplan folgen.' },
+                { title: '§ 14 Abs. 2 BBiG – Ausbildungsfremde Aufgaben', text: 'Dem Auszubildenden dürfen nur Aufgaben übertragen werden, die dem Ausbildungszweck dienen und seinen körperlichen Kräften angemessen sind.' }
+            ],
+            tips: [
+                'Den eigenen Arbeitsplatz sauber halten: völlig normal und erlaubt.',
+                'Regelmäßig die Halle fegen, Klos putzen, Kaffee kochen: ausbildungsfremd und nicht okay.',
+                'Vergleiche die Aufgaben mit deinem Ausbildungsrahmenplan – steht Putzen drin?',
+                'Dokumentiere wiederholte ausbildungsfremde Tätigkeiten mit Datum und Dauer.'
+            ],
+            email: {
+                subject: 'Ausbildungsinhalte gemäß Ausbildungsrahmenplan',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+in letzter Zeit wurde ich wiederholt mit Tätigkeiten beauftragt, die meiner Einschätzung nach nicht im Ausbildungsrahmenplan meines Ausbildungsberufs vorgesehen sind (z.B. [konkrete Tätigkeit beschreiben]).
+
+Gemäß § 14 BBiG haben Ausbildende dafür zu sorgen, dass den Auszubildenden die berufliche Handlungsfähigkeit vermittelt wird. Aufgaben, die dem Ausbildungszweck nicht dienen, sollten nur in Ausnahmefällen übertragen werden.
+
+Ich möchte meine Ausbildungszeit bestmöglich nutzen und bitte darum, dass die Aufgabenverteilung stärker am Ausbildungsrahmenplan ausgerichtet wird. Gerne können wir dazu ein Gespräch führen.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'privatbesorgungen',
+            cat: 'taetigkeit',
+            title: '"Hol mir mal \'nen Kaffee!"',
+            desc: 'Du sollst private Erledigungen für den Chef machen – Einkäufe, Kaffee holen, Auto waschen.',
+            law: '§ 14 BBiG',
+            severity: 3,
+            verdict: 'nein',
+            verdictShort: 'Nein! Private Besorgungen sind tabu!',
+            verdictDetail: 'Private Erledigungen für den Ausbilder haben absolut nichts mit der Ausbildung zu tun und sind klar ausbildungsfremde Tätigkeiten. Du bist kein persönlicher Assistent. Der Ausbildende ist verpflichtet, dir Kenntnisse und Fertigkeiten zu vermitteln, die zum Erreichen des Ausbildungsziels nötig sind – und dazu gehört definitiv nicht das Auto des Chefs zu waschen.',
+            laws: [
+                { title: '§ 14 BBiG – Pflichten des Ausbildenden', text: 'Dem Auszubildenden dürfen nur Aufgaben übertragen werden, die dem Ausbildungszweck dienen und seinen körperlichen Kräften angemessen sind.' }
+            ],
+            tips: [
+                'Private Besorgungen für den Chef sind immer unzulässig – egal wie nett er fragt.',
+                'Auch "nur mal schnell" Kaffee kochen gehört nicht zu deiner Ausbildung (außer du lernst Koch/Gastro).',
+                'Lehne höflich ab und verweise auf den Ausbildungszweck.',
+                'Wenn der Druck zu groß wird: Melde es der IHK/HWK als Ausbildungsmangel.'
+            ],
+            email: {
+                subject: 'Bitte um Klärung der Aufgabenverteilung',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+ich wende mich an Sie, weil mir in letzter Zeit wiederholt Aufgaben übertragen wurden, die nicht mit meiner Ausbildung in Zusammenhang stehen (z.B. [private Besorgungen, Kaffee holen, etc.]).
+
+Nach § 14 BBiG dürfen Auszubildenden nur Aufgaben übertragen werden, die dem Ausbildungszweck dienen. Private Erledigungen fallen nicht in diesen Bereich.
+
+Ich möchte meine Ausbildungszeit sinnvoll nutzen und bitte darum, dass mir künftig ausschließlich ausbildungsrelevante Aufgaben zugewiesen werden.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'eintoenig',
+            cat: 'taetigkeit',
+            title: '"Mach einfach weiter dasselbe!"',
+            desc: 'Du machst seit Wochen oder Monaten immer die gleiche Arbeit ohne Abwechslung.',
+            law: '§ 14 BBiG',
+            severity: 2,
+            verdict: 'nein',
+            verdictShort: 'Nein! Ausbildung muss vielfältig sein!',
+            verdictDetail: 'Der Ausbilder ist verpflichtet, die Ausbildung nach einem sachlich und zeitlich gegliederten Ausbildungsplan (basierend auf dem Ausbildungsrahmenplan) durchzuführen. Wenn du monatelang die gleiche Tätigkeit machst, wird der Ausbildungsplan nicht eingehalten. Du hast das Recht, alle im Rahmenplan vorgesehenen Bereiche kennenzulernen.',
+            laws: [
+                { title: '§ 14 Abs. 1 Nr. 1 BBiG – Ausbildungsziel', text: 'Ausbildende haben dafür zu sorgen, dass den Auszubildenden die berufliche Handlungsfähigkeit vermittelt wird, die zum Erreichen des Ausbildungsziels erforderlich ist.' },
+                { title: '§ 5 BBiG – Ausbildungsordnung', text: 'Die Ausbildungsordnung hat festzulegen: die sachliche und zeitliche Gliederung der Berufsausbildung (Ausbildungsrahmenplan).' }
+            ],
+            tips: [
+                'Vergleiche deine aktuellen Aufgaben mit dem Ausbildungsrahmenplan deines Berufs.',
+                'Führe dein Berichtsheft gewissenhaft – eintönige Einträge fallen der IHK auf.',
+                'Bitte um ein Gespräch mit dem Ausbilder und zeige den Rahmenplan.',
+                'Falls sich nichts ändert: Kontaktiere die zuständige IHK/HWK. Sie können den Betrieb überprüfen.'
+            ],
+            email: {
+                subject: 'Anregung zur Ausbildungsgestaltung',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+mir ist aufgefallen, dass ich seit [Zeitraum] überwiegend mit [Tätigkeit beschreiben] betraut bin. Beim Abgleich mit dem Ausbildungsrahmenplan meines Berufs stelle ich fest, dass einige Ausbildungsinhalte bisher noch nicht abgedeckt wurden.
+
+Gemäß § 14 BBiG ist die Ausbildung so durchzuführen, dass das Ausbildungsziel in der vorgesehenen Zeit erreicht werden kann. Ich möchte sicherstellen, dass ich alle vorgesehenen Bereiche kennenlernen kann.
+
+Können wir gemeinsam den Ausbildungsplan durchgehen und die nächsten Stationen besprechen?
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+
+        // ──────── URLAUB ────────
+        {
+            id: 'urlaub-gestrichen',
+            cat: 'urlaub',
+            title: '"Dein Urlaub ist gestrichen!"',
+            desc: 'Der Chef zieht deinen bereits genehmigten Urlaub zurück.',
+            law: '§ 19 JArbSchG / § 3 BUrlG',
+            severity: 3,
+            verdict: 'nein',
+            verdictShort: 'Nein! Genehmigter Urlaub ist bindend!',
+            verdictDetail: 'Einmal genehmigter Urlaub kann nur in absoluten Ausnahmefällen widerrufen werden (z.B. Existenzbedrohung des Betriebs). Dein Mindestanspruch als minderjähriger Azubi: 25–30 Werktage/Jahr je nach Alter (§ 19 JArbSchG). Volljährige: mind. 24 Werktage (§ 3 BUrlG). Tarifverträge oder Arbeitsverträge können mehr vorsehen.',
+            laws: [
+                { title: '§ 19 JArbSchG – Urlaub', text: 'Der Arbeitgeber hat Jugendlichen für jedes Kalenderjahr einen bezahlten Erholungsurlaub zu gewähren: mind. 30 Werktage (unter 16 J.), 27 Werktage (unter 17 J.), 25 Werktage (unter 18 J.).' },
+                { title: '§ 3 BUrlG – Dauer des Urlaubs', text: 'Der Urlaub beträgt jährlich mindestens 24 Werktage (bei einer 6-Tage-Woche) bzw. 20 Arbeitstage (bei einer 5-Tage-Woche).' },
+                { title: '§ 7 Abs. 1 BUrlG – Zeitpunkt des Urlaubs', text: 'Bei der zeitlichen Festlegung des Urlaubs sind die Urlaubswünsche des Arbeitnehmers zu berücksichtigen, es sei denn, dringende betriebliche Belange stehen dem entgegen.' }
+            ],
+            tips: [
+                'Lass dir die Urlaubsgenehmigung immer schriftlich geben.',
+                'Ein einmal genehmigter Urlaub ist quasi ein Vertrag – der Chef kann ihn nicht einseitig streichen.',
+                'Entstehen dir durch die Stornierung Kosten (Reise etc.), muss der Arbeitgeber diese erstatten.',
+                'Berufsschulferien sollten für Urlaub genutzt werden können – sprich es rechtzeitig an.'
+            ],
+            email: {
+                subject: 'Rücknahme des genehmigten Urlaubs',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+mir wurde mitgeteilt, dass mein bereits genehmigter Urlaub vom [Datum bis Datum] zurückgenommen werden soll.
+
+Ich möchte darauf hinweisen, dass ein einmal genehmigter Urlaub nur in absoluten Ausnahmefällen widerrufen werden kann. Gemäß § 7 BUrlG sind die Urlaubswünsche des Arbeitnehmers bei der Festlegung zu berücksichtigen.
+
+Ich habe bereits [Reise gebucht / entsprechende Planungen getroffen]. Sollte eine Verschiebung unumgänglich sein, bitte ich um einen schriftlichen Nachweis der dringenden betrieblichen Gründe sowie die Übernahme etwaiger Stornierungskosten.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'urlaub-bestimmen',
+            cat: 'urlaub',
+            title: '"Du nimmst Urlaub, wann ICH sage!"',
+            desc: 'Der Chef bestimmt den gesamten Urlaubszeitpunkt allein und ignoriert deine Wünsche.',
+            law: '§ 7 BUrlG',
+            severity: 2,
+            verdict: 'jein',
+            verdictShort: 'Teilweise – deine Wünsche zählen!',
+            verdictDetail: 'Der Arbeitgeber muss deine Urlaubswünsche berücksichtigen (§ 7 BUrlG), kann aber aus dringenden betrieblichen Gründen ablehnen. Betriebsurlaub (z.B. Weihnachten) ist zulässig, darf aber nicht den gesamten Urlaub aufbrauchen. Mindestens ein Teil muss frei verplanbar sein.',
+            laws: [
+                { title: '§ 7 BUrlG – Zeitpunkt, Übertragung', text: 'Bei der zeitlichen Festlegung des Urlaubs sind die Urlaubswünsche des Arbeitnehmers zu berücksichtigen, es sei denn, dass ihrer Berücksichtigung dringende betriebliche Belange oder Urlaubswünsche anderer Arbeitnehmer entgegenstehen.' }
+            ],
+            tips: [
+                'Reiche deine Urlaubswünsche immer schriftlich ein (E-Mail = Nachweis).',
+                'Betriebsurlaub ist okay, darf aber nicht deinen gesamten Anspruch aufbrauchen.',
+                'Kompromissvorschlag machen, wenn es Konflikte gibt.',
+                'Falls deine Wünsche ohne Begründung abgelehnt werden: Betriebsrat oder IHK einschalten.'
+            ],
+            email: {
+                subject: 'Urlaubsplanung und Berücksichtigung von Urlaubswünschen',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+bezüglich der Urlaubsplanung für [Zeitraum/Jahr] möchte ich meine Wünsche einbringen.
+
+Gemäß § 7 BUrlG sind die Urlaubswünsche der Arbeitnehmer bei der Festlegung des Urlaubs zu berücksichtigen. Ich würde meinen Urlaub gerne im Zeitraum [Wunschzeitraum] nehmen.
+
+Gerne bin ich bereit, mich mit den Kolleginnen und Kollegen abzustimmen, um eine für alle Seiten gute Lösung zu finden.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'pruefungsfreistellung',
+            cat: 'urlaub',
+            title: '"Für die Prüfung nimmst du Urlaub!"',
+            desc: 'Der Chef sagt, du musst für die Prüfung und Prüfungsvorbereitung Urlaub nehmen.',
+            law: '§ 15 BBiG',
+            severity: 3,
+            verdict: 'nein',
+            verdictShort: 'Nein! Freistellung ist Pflicht!',
+            verdictDetail: 'Du hast einen gesetzlichen Anspruch auf Freistellung für Prüfungen UND den Tag davor (§ 15 BBiG). Das ist bezahlte Freistellung – kein Urlaub! Auch die Berufsschulzeit wird voll auf die Arbeitszeit angerechnet. Wer dir das Gegenteil sagt, verstößt gegen das Gesetz.',
+            laws: [
+                { title: '§ 15 Abs. 1 BBiG – Freistellung, Anrechnung', text: 'Ausbildende dürfen Auszubildende vor einem vor 9 Uhr beginnenden Berufsschulunterricht nicht beschäftigen. Sie haben Auszubildende freizustellen für die Teilnahme am Berufsschulunterricht, an Prüfungen und an Ausbildungsmaßnahmen.' },
+                { title: '§ 15 Abs. 2 BBiG – Tag vor der Prüfung', text: 'Ausbildende haben Auszubildende am Tag vor der schriftlichen Abschlussprüfung freizustellen.' }
+            ],
+            tips: [
+                'Du musst keinen Urlaub für Prüfungen oder Berufsschule opfern – niemals!',
+                'Der Tag vor der schriftlichen Abschlussprüfung = bezahlter freier Tag.',
+                'Auch Zwischenprüfungen fallen unter die Freistellungspflicht.',
+                'Halte die Prüfungstermine schriftlich fest und kommuniziere sie rechtzeitig.'
+            ],
+            email: {
+                subject: 'Freistellung für Prüfung gemäß § 15 BBiG',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+am [Datum] findet meine [Zwischen-/Abschluss-]Prüfung statt. Ich möchte darauf hinweisen, dass ich gemäß § 15 BBiG für die Teilnahme an Prüfungen vom Betrieb freizustellen bin.
+
+Zusätzlich steht mir gemäß § 15 Abs. 2 BBiG am Tag vor der schriftlichen Abschlussprüfung ein freier Tag zu.
+
+Es handelt sich dabei um eine bezahlte Freistellung, die nicht auf meinen Urlaubsanspruch angerechnet werden darf.
+
+Ich bitte um Bestätigung der Freistellung für [Datum/Daten].
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+
+        // ──────── BERUFSSCHULE ────────
+        {
+            id: 'nach-schule-betrieb',
+            cat: 'schule',
+            title: '"Nach der Schule kommst du noch rein!"',
+            desc: 'Du sollst nach einem vollen Berufsschultag noch im Betrieb arbeiten.',
+            law: '§ 15 BBiG / § 9 JArbSchG',
+            severity: 3,
+            verdict: 'jein',
+            verdictShort: 'Kommt auf Alter & Schulstunden an!',
+            verdictDetail: 'Minderjährige: Bei mehr als 5 Unterrichtsstunden (à 45 Min.) an einem Tag → für den Tag komplett freigestellt, keine Betriebsarbeit (§ 9 JArbSchG). Volljährige: Berufsschulzeit wird auf die Arbeitszeit angerechnet, aber der Betrieb kann danach theoretisch noch einsetzen. ACHTUNG: Seit 2020 gilt für ALLE Azubis eine verbesserte Anrechnung!',
+            laws: [
+                { title: '§ 15 BBiG – Freistellung, Anrechnung', text: 'Die Berufsschulzeit einschließlich der Pausen und des Schulweges wird auf die Arbeitszeit angerechnet. Ausbildende dürfen Auszubildende vor einem vor 9 Uhr beginnenden Berufsschulunterricht nicht beschäftigen.' },
+                { title: '§ 9 Abs. 1 JArbSchG – Berufsschule', text: 'Der Arbeitgeber hat den Jugendlichen für die Teilnahme am Berufsschulunterricht freizustellen. An einem Berufsschultag mit mehr als 5 Unterrichtsstunden darf der Jugendliche nicht mehr im Betrieb beschäftigt werden.' }
+            ],
+            tips: [
+                'Berufsschulzeit + Pausen + Schulweg = wird auf Arbeitszeit angerechnet.',
+                'Bei Blockunterricht gelten besondere Regeln – informiere dich bei der IHK.',
+                'Vor Berufsschulunterricht, der vor 9 Uhr beginnt, darf dich niemand einsetzen.',
+                'Fahrtzeit zur Berufsschule wird mit angerechnet!'
+            ],
+            email: {
+                subject: 'Freistellung nach dem Berufsschulunterricht',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+am [Datum/Wochentag] habe ich Berufsschule von [Uhrzeit] bis [Uhrzeit], was [X] Unterrichtsstunden entspricht.
+
+[Falls minderjährig: ] Gemäß § 9 Abs. 1 JArbSchG bin ich an Berufsschultagen mit mehr als 5 Unterrichtsstunden von der betrieblichen Ausbildung befreit.
+
+Gemäß § 15 BBiG wird die Berufsschulzeit einschließlich Pausen und Schulweg auf die Arbeitszeit angerechnet. Ich bitte um Verständnis, dass ich an diesem Tag nicht mehr im Betrieb erscheinen kann.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'schule-nicht-angerechnet',
+            cat: 'schule',
+            title: '"Berufsschule ist Freizeit!"',
+            desc: 'Dein Chef sagt, Berufsschulzeit zählt nicht als Arbeitszeit.',
+            law: '§ 15 BBiG',
+            severity: 3,
+            verdict: 'nein',
+            verdictShort: 'Falsch! Berufsschule = Arbeitszeit!',
+            verdictDetail: 'Seit der BBiG-Reform 2020 gilt klar: Berufsschulunterricht wird vollständig auf die Arbeitszeit angerechnet – und zwar für alle Azubis, egal ob minderjährig oder volljährig. Das umfasst Unterrichtszeit, Pausen und den Schulweg.',
+            laws: [
+                { title: '§ 15 BBiG – Anrechnung', text: 'Ausbildende haben Auszubildende für die Teilnahme am Berufsschulunterricht freizustellen. Die Berufsschulzeit wird auf die betriebliche Ausbildungszeit angerechnet.' }
+            ],
+            tips: [
+                'Diese Regelung gilt seit 2020 für ALLE Azubis – minderjährig und volljährig.',
+                'Auch Pausen in der Schule und der Schulweg werden angerechnet.',
+                'Wenn dein Betrieb das anders handhabt, informiere die IHK/HWK.',
+                'Trage die Berufsschulzeiten korrekt in dein Berichtsheft ein.'
+            ],
+            email: {
+                subject: 'Anrechnung der Berufsschulzeit auf die Arbeitszeit',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+mir ist aufgefallen, dass die Berufsschulzeit in meiner Arbeitszeiterfassung nicht bzw. nicht vollständig berücksichtigt wird.
+
+Gemäß § 15 BBiG (in der seit 2020 gültigen Fassung) ist die Berufsschulzeit einschließlich der Pausen auf die betriebliche Ausbildungszeit anzurechnen. Dies gilt für alle Auszubildenden unabhängig vom Alter.
+
+Ich bitte darum, dass die Berufsschulzeiten an meinen Schultagen korrekt als Ausbildungszeit erfasst werden.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+
+        // ──────── VERGÜTUNG ────────
+        {
+            id: 'verguetung-niedrig',
+            cat: 'geld',
+            title: '"Mehr Geld? Sei froh, dass du lernst!"',
+            desc: 'Deine Ausbildungsvergütung ist verdächtig niedrig – gibts da ne Grenze?',
+            law: '§ 17 BBiG',
+            severity: 2,
+            verdict: 'jein',
+            verdictShort: 'Es gibt eine Mindestausbildungsvergütung!',
+            verdictDetail: 'Seit 2020 gibt es eine gesetzliche Mindestausbildungsvergütung (§ 17 BBiG). Für 2026: 1. Lehrjahr ca. 700 €+. Diese wird jährlich angepasst. Tarifvertragliche Regelungen gehen vor und können höher sein. Die Vergütung muss jährlich ansteigen und spätestens am letzten Arbeitstag des Monats gezahlt werden.',
+            laws: [
+                { title: '§ 17 BBiG – Vergütungsanspruch', text: 'Ausbildende haben Auszubildenden eine angemessene Vergütung zu gewähren. Sie muss mit fortschreitender Berufsausbildung, mindestens jährlich, ansteigen. Eine Mindestausbildungsvergütung ist gesetzlich festgelegt.' },
+                { title: '§ 18 BBiG – Bemessung und Fälligkeit', text: 'Die Vergütung ist für den laufenden Kalendermonat zu berechnen und spätestens am letzten Arbeitstag des Monats zu zahlen.' }
+            ],
+            tips: [
+                'Prüfe, ob ein Tarifvertrag für deine Branche gilt – der geht vor und ist oft höher.',
+                'Die Mindestvergütung wird jährlich vom Bundesinstitut für Berufsbildung angepasst.',
+                'Vergütung muss jedes Lehrjahr steigen.',
+                'Zahlung muss spätestens am letzten Arbeitstag des Monats auf deinem Konto sein.'
+            ],
+            email: {
+                subject: 'Rückfrage zur Ausbildungsvergütung',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+ich habe mich über die aktuellen Regelungen zur Ausbildungsvergütung informiert und möchte eine Frage klären.
+
+Gemäß § 17 BBiG steht Auszubildenden eine angemessene Vergütung zu, die mindestens der gesetzlichen Mindestausbildungsvergütung entspricht. Für das aktuelle Jahr und mein [X.] Lehrjahr liegt diese bei [Betrag nachschlagen].
+
+Meine derzeitige Vergütung beträgt [dein Betrag]. Ich würde gerne verstehen, wie sich diese zusammensetzt [und ob ggf. ein Tarifvertrag zur Anwendung kommt].
+
+Können wir dazu ein kurzes Gespräch führen?
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'arbeitsmaterial',
+            cat: 'geld',
+            title: '"Kauf dir das Werkzeug selber!"',
+            desc: 'Du sollst Arbeitsmaterial, Bücher oder Werkzeug aus eigener Tasche bezahlen.',
+            law: '§ 14 BBiG',
+            severity: 2,
+            verdict: 'nein',
+            verdictShort: 'Nein! Ausbildungsmittel sind Chefsache!',
+            verdictDetail: 'Der Ausbildende ist verpflichtet, dir kostenlos die Ausbildungsmittel zur Verfügung zu stellen, die für die Ausbildung und die Ablegung der Prüfungen nötig sind (§ 14 Abs. 1 Nr. 3 BBiG). Das umfasst Werkzeuge, Materialien, Fachbücher und Arbeitskleidung, die der Betrieb vorschreibt.',
+            laws: [
+                { title: '§ 14 Abs. 1 Nr. 3 BBiG – Ausbildungsmittel', text: 'Ausbildende haben den Auszubildenden kostenlos die Ausbildungsmittel, insbesondere Werkzeuge, Werkstoffe und Fachliteratur zur Verfügung zu stellen, die zur Berufsausbildung und zum Ablegen von Zwischen- und Abschlussprüfungen erforderlich sind.' }
+            ],
+            tips: [
+                'Werkzeuge, Fachbücher, Software, Arbeitskleidung: alles Pflicht des Ausbilders.',
+                'Schulbücher für die Berufsschule sind oft Sache des Azubis (landesabhängig).',
+                'Hebe alle Belege auf, falls du etwas vorgestreckt hast – Erstattung verlangen!',
+                'Vorgeschriebene Sicherheitskleidung muss immer der Betrieb stellen.'
+            ],
+            email: {
+                subject: 'Bereitstellung von Ausbildungsmitteln',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+für meine Ausbildung benötige ich [konkretes Material/Werkzeug/Buch beschreiben]. Bisher wurde mir nahegelegt, diese Kosten selbst zu tragen.
+
+Gemäß § 14 Abs. 1 Nr. 3 BBiG sind Ausbildende verpflichtet, Auszubildenden die Ausbildungsmittel kostenlos zur Verfügung zu stellen, die zur Berufsausbildung und zur Ablegung der Prüfungen erforderlich sind.
+
+Ich bitte darum, die benötigten Materialien betriebsseitig bereitzustellen, [bzw. mir die bereits verauslagten Kosten in Höhe von [Betrag] zu erstatten].
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'krank-kein-geld',
+            cat: 'geld',
+            title: '"Krank = kein Geld!"',
+            desc: 'Du bist krank und der Chef sagt, du bekommst dann kein Gehalt.',
+            law: '§ 19 BBiG / § 3 EntgFG',
+            severity: 3,
+            verdict: 'nein',
+            verdictShort: 'Falsch! Entgeltfortzahlung ist Gesetz!',
+            verdictDetail: 'Bei Krankheit hast du Anspruch auf Weiterzahlung deiner Vergütung für bis zu 6 Wochen (§ 19 BBiG in Verbindung mit dem Entgeltfortzahlungsgesetz). Voraussetzung: Du bist länger als 4 Wochen im Betrieb und meldest dich korrekt krank (Arbeitgeber informieren + AU-Bescheinigung).',
+            laws: [
+                { title: '§ 19 Abs. 1 Nr. 2 BBiG – Fortzahlung der Vergütung', text: 'Auszubildenden ist die Vergütung auch zu zahlen für die Zeit der Freistellung gemäß § 15 sowie bei Arbeitsunfähigkeit bis zur Dauer von 6 Wochen.' },
+                { title: '§ 3 EntgFG – Entgeltfortzahlung im Krankheitsfall', text: 'Wird ein Arbeitnehmer durch Arbeitsunfähigkeit infolge Krankheit ohne sein Verschulden an seiner Arbeitsleistung verhindert, so hat er Anspruch auf Entgeltfortzahlung durch den Arbeitgeber für die Dauer von 6 Wochen.' }
+            ],
+            tips: [
+                'Melde dich am ersten Krankheitstag VOR Arbeitsbeginn beim Betrieb.',
+                'Ab dem 3. Krankheitstag (bzw. wie im Vertrag vereinbart) brauchst du eine AU vom Arzt.',
+                'Die 6-Wochen-Regel gilt pro Krankheit, nicht pro Jahr.',
+                'Falls der Betrieb nicht zahlt: Schriftlich auffordern und Frist setzen.'
+            ],
+            email: {
+                subject: 'Entgeltfortzahlung bei Krankheit',
+                body: `Sehr geehrte/r [Name des Ausbilders / Personalabteilung],
+
+ich war vom [Datum] bis [Datum] arbeitsunfähig erkrankt und habe eine entsprechende Arbeitsunfähigkeitsbescheinigung vorgelegt. In meiner Vergütungsabrechnung für [Monat] fehlt jedoch die Fortzahlung für diesen Zeitraum.
+
+Gemäß § 19 BBiG in Verbindung mit § 3 EntgFG habe ich bei Arbeitsunfähigkeit infolge Krankheit Anspruch auf Fortzahlung der Vergütung für die Dauer von bis zu 6 Wochen.
+
+Ich bitte um Prüfung und Nachzahlung des ausstehenden Betrags.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+
+        // ──────── KÜNDIGUNG ────────
+        {
+            id: 'kuendigung-drohung',
+            cat: 'kuendigung',
+            title: '"Noch einmal und du fliegst!"',
+            desc: 'Der Chef droht dir mit Kündigung – welche Regeln gelten?',
+            law: '§ 22 BBiG',
+            severity: 2,
+            verdict: 'jein',
+            verdictShort: 'Nur unter strengen Bedingungen möglich!',
+            verdictDetail: 'Nach der Probezeit kann dein Ausbildungsverhältnis nur aus wichtigem Grund fristlos gekündigt werden (§ 22 BBiG). "Wichtiger Grund" bedeutet: schwere Pflichtverletzung (z.B. Diebstahl, wiederholtes unentschuldigtes Fehlen). Vorher muss in der Regel abgemahnt werden. Eine ordentliche Kündigung durch den Betrieb ist nach der Probezeit nicht möglich!',
+            laws: [
+                { title: '§ 22 Abs. 1 BBiG – Kündigung in der Probezeit', text: 'Während der Probezeit kann das Berufsausbildungsverhältnis jederzeit ohne Einhalten einer Kündigungsfrist und ohne Begründung gekündigt werden.' },
+                { title: '§ 22 Abs. 2 BBiG – Kündigung nach der Probezeit', text: 'Nach der Probezeit kann das Berufsausbildungsverhältnis nur aus einem wichtigen Grund ohne Einhalten einer Kündigungsfrist gekündigt werden. Der Kündigungsgrund muss schriftlich angegeben werden.' },
+                { title: '§ 22 Abs. 3 BBiG – Kündigung durch Azubi', text: 'Auszubildende können mit einer Frist von 4 Wochen kündigen, wenn sie die Berufsausbildung aufgeben oder sich für eine andere Berufstätigkeit ausbilden lassen wollen.' }
+            ],
+            tips: [
+                'In der Probezeit (1–4 Monate) kann ohne Grund gekündigt werden – von beiden Seiten.',
+                'Nach der Probezeit: Es braucht einen „wichtigen Grund" UND vorherige Abmahnung (bei Pflichtverletzungen).',
+                'Die Kündigung muss zwingend schriftlich erfolgen + Grund angeben.',
+                'Du kannst innerhalb von 3 Wochen beim Arbeitsgericht Klage einreichen.'
+            ],
+            email: {
+                subject: 'Bitte um Klärungsgespräch',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+mir wurde angedeutet, dass mein Ausbildungsverhältnis möglicherweise beendet werden soll. Ich nehme das sehr ernst und möchte die Situation klären.
+
+Ich bin bemüht, meine Ausbildung erfolgreich abzuschließen, und würde gerne verstehen, was konkret von mir erwartet wird und wie ich mich verbessern kann.
+
+Können wir zeitnah ein Gespräch führen, um die Situation offen zu besprechen?
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'abmahnung',
+            cat: 'kuendigung',
+            title: '"Du bekommst eine Abmahnung!"',
+            desc: 'Du hast eine Abmahnung erhalten oder es wurde dir eine angedroht.',
+            law: 'Arbeitsrecht / § 22 BBiG',
+            severity: 2,
+            verdict: 'jein',
+            verdictShort: 'Möglich, aber nur bei echtem Fehlverhalten!',
+            verdictDetail: 'Eine Abmahnung muss ein konkretes Fehlverhalten benennen, die verletzte Pflicht aufzeigen und die Konsequenz bei Wiederholung androhen. Pauschale Abmahnungen ("du bist zu langsam") sind unwirksam. Du hast das Recht, eine Gegendarstellung zur Personalakte zu geben. Eine Abmahnung ist oft Voraussetzung für eine spätere Kündigung.',
+            laws: [
+                { title: 'Abmahnungsvoraussetzungen (Arbeitsrecht)', text: 'Eine wirksame Abmahnung muss: (1) das Fehlverhalten konkret beschreiben (Datum, Art, Umstände), (2) die verletzte Pflicht benennen, (3) zur künftigen vertragsgemäßen Leistung auffordern, (4) Konsequenzen bei erneuter Pflichtverletzung androhen.' }
+            ],
+            tips: [
+                'Prüfe, ob die Abmahnung die drei Elemente enthält: Fehlverhalten, Pflicht, Konsequenz.',
+                'Du darfst eine Gegendarstellung schreiben und zur Personalakte nehmen lassen.',
+                'Unterschreibe bei Erhalt nur den EMPFANG, nicht das Einverständnis!',
+                'Lass dich beraten: Gewerkschaft, IHK-Ausbildungsberater oder Fachanwalt.'
+            ],
+            email: {
+                subject: 'Gegendarstellung zur Abmahnung vom [Datum]',
+                body: `Sehr geehrte/r [Name des Ausbilders / Personalabteilung],
+
+ich habe die Abmahnung vom [Datum] erhalten und möchte hiermit eine Gegendarstellung abgeben, die ich bitte, meiner Personalakte beizulegen.
+
+[Hier den Sachverhalt aus deiner Sicht schildern – sachlich und konkret]
+
+Ich weise die in der Abmahnung erhobenen Vorwürfe [vollständig / teilweise] zurück. [Begründung einfügen]
+
+Ich bitte um Aufnahme dieser Gegendarstellung in meine Personalakte gemäß meinem arbeitsrechtlichen Anspruch.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'aufhebungsvertrag',
+            cat: 'kuendigung',
+            title: '"Unterschreib mal hier…"',
+            desc: 'Dir wird ein Aufhebungsvertrag vorgelegt, um das Ausbildungsverhältnis zu beenden.',
+            law: '§ 22 BBiG',
+            severity: 3,
+            verdict: 'nein',
+            verdictShort: 'STOPP – niemals sofort unterschreiben!',
+            verdictDetail: 'Ein Aufhebungsvertrag beendet dein Ausbildungsverhältnis einvernehmlich. ABER: Du bist nicht verpflichtet zu unterschreiben! Achtung: Ein Aufhebungsvertrag kann zu einer Sperrzeit beim Arbeitsamt führen (bis zu 12 Wochen kein ALG). Du verlierst deinen Kündigungsschutz. Lass dich IMMER vorher beraten!',
+            laws: [
+                { title: '§ 22 BBiG – Kündigung', text: 'Das Ausbildungsverhältnis kann nach der Probezeit nur aus wichtigem Grund gekündigt werden. Alternativ kann es durch einen Aufhebungsvertrag einvernehmlich beendet werden – hierzu ist aber die Zustimmung des Azubis erforderlich.' },
+                { title: '§ 159 SGB III – Sperrzeit', text: 'Hat der Arbeitnehmer durch eigenes Verhalten die Arbeitslosigkeit herbeigeführt (z.B. Aufhebungsvertrag), kann eine Sperrzeit von bis zu 12 Wochen beim Arbeitslosengeld verhängt werden.' }
+            ],
+            tips: [
+                'NIEMALS sofort unterschreiben – nimm dir Bedenkzeit (mind. 3 Tage).',
+                'Lass den Vertrag von einem Experten prüfen (Gewerkschaft, IHK, Anwalt).',
+                'Ein Aufhebungsvertrag kann eine Sperrzeit beim ALG auslösen!',
+                'Frag dich: Will ICH das? Du musst nicht unterschreiben, wenn du bleiben willst.',
+                'Falls du minderjährig bist: Deine Erziehungsberechtigten müssen zustimmen.'
+            ],
+            email: {
+                subject: 'Bedenkzeit bezüglich des Aufhebungsvertrags',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+vielen Dank für das Gespräch am [Datum]. Ich habe den vorgeschlagenen Aufhebungsvertrag zur Kenntnis genommen.
+
+Bevor ich eine solche Entscheidung treffen kann, benötige ich ausreichend Bedenkzeit und möchte den Vertrag von einer unabhängigen Stelle prüfen lassen.
+
+Ich bitte um Verständnis, dass ich den Vertrag nicht sofort unterschreiben werde. Ich melde mich bis spätestens [Datum + 1-2 Wochen] mit meiner Rückmeldung.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+
+        // ──────── MOBBING ────────
+        {
+            id: 'mobbing',
+            cat: 'mobbing',
+            title: '"Stell dich nicht so an!"',
+            desc: 'Du wirst am Arbeitsplatz gemobbt, beleidigt oder systematisch ausgegrenzt.',
+            law: 'ArbSchG / § 241 BGB',
+            severity: 3,
+            verdict: 'nein',
+            verdictShort: 'Nein! Mobbing ist nie okay!',
+            verdictDetail: 'Der Arbeitgeber hat eine Fürsorgepflicht und muss dich vor Mobbing schützen (§ 241 BGB). Mobbing kann arbeitsrechtliche, zivilrechtliche und sogar strafrechtliche Konsequenzen haben. Du bist nicht schuld und musst das nicht aushalten. Systematische Beleidigungen, Ausgrenzung und Schikane sind kein "normaler Umgangston".',
+            laws: [
+                { title: '§ 241 Abs. 2 BGB – Fürsorgepflicht', text: 'Das Schuldverhältnis (Arbeitsverhältnis) kann jeden Teil zur Rücksicht auf die Rechte und Interessen des anderen Teils verpflichten. Der Arbeitgeber ist verpflichtet, die Persönlichkeitsrechte des Arbeitnehmers zu schützen.' },
+                { title: '§ 3 ArbSchG – Grundpflichten des Arbeitgebers', text: 'Der Arbeitgeber ist verpflichtet, die erforderlichen Maßnahmen des Arbeitsschutzes zu treffen, unter Berücksichtigung der Umstände, die die Sicherheit und Gesundheit der Beschäftigten beeinflussen.' },
+                { title: '§ 12 AGG – Maßnahmen bei Belästigung', text: 'Der Arbeitgeber ist verpflichtet, die erforderlichen Maßnahmen zum Schutz vor Benachteiligungen zu treffen. Bei Verstößen hat er geeignete Maßnahmen zu ergreifen (Abmahnung, Versetzung, Kündigung des Täters).' }
+            ],
+            tips: [
+                'Führe ein Mobbing-Tagebuch: Datum, Uhrzeit, was passiert ist, wer dabei war.',
+                'Such dir Verbündete: Vertrauensperson, Betriebsrat, JAV (Jugend- und Auszubildendenvertretung).',
+                'Melde dich bei der IHK/HWK – die haben Ausbildungsberater für genau solche Fälle.',
+                'Du kannst dich auch direkt an eine Mobbing-Beratungsstelle wenden.',
+                'Deine Gesundheit geht vor – im Notfall: Arzt aufsuchen und Situation schildern.'
+            ],
+            email: {
+                subject: 'Meldung von Vorfällen am Arbeitsplatz',
+                body: `Sehr geehrte/r [Name der Vertrauensperson / Personalabteilung / Betriebsrat],
+
+ich wende mich an Sie, weil es an meinem Arbeitsplatz wiederholt zu Situationen kommt, die mich stark belasten.
+
+Konkret handelt es sich um folgende Vorfälle:
+- [Datum]: [Beschreibung]
+- [Datum]: [Beschreibung]
+- [Datum]: [Beschreibung]
+
+Diese Vorfälle beeinträchtigen meine Ausbildung und mein Wohlbefinden erheblich. Gemäß § 241 BGB besteht eine Fürsorgepflicht des Arbeitgebers, die Persönlichkeitsrechte der Beschäftigten zu schützen.
+
+Ich bitte um ein vertrauliches Gespräch und darum, dass geeignete Maßnahmen ergriffen werden.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'diskriminierung',
+            cat: 'mobbing',
+            title: '"Frauen können das nicht!"',
+            desc: 'Du wirst wegen Geschlecht, Herkunft, Religion oder anderen Merkmalen diskriminiert.',
+            law: 'AGG',
+            severity: 3,
+            verdict: 'nein',
+            verdictShort: 'Absolut verboten – AGG schützt dich!',
+            verdictDetail: 'Das Allgemeine Gleichbehandlungsgesetz (AGG) schützt dich vor Diskriminierung wegen Rasse/Herkunft, Geschlecht, Religion, Behinderung, Alter oder sexueller Identität. Das gilt für den gesamten Arbeitsalltag. Der Arbeitgeber muss aktiv dagegen vorgehen. Bei Verstößen hast du Beschwerderecht und ggf. Schadensersatzansprüche.',
+            laws: [
+                { title: '§ 1 AGG – Ziel des Gesetzes', text: 'Ziel des Gesetzes ist, Benachteiligungen aus Gründen der Rasse oder wegen der ethnischen Herkunft, des Geschlechts, der Religion oder Weltanschauung, einer Behinderung, des Alters oder der sexuellen Identität zu verhindern oder zu beseitigen.' },
+                { title: '§ 13 AGG – Beschwerderecht', text: 'Die Beschäftigten haben das Recht, sich bei den zuständigen Stellen des Betriebs zu beschweren, wenn sie sich im Zusammenhang mit ihrem Beschäftigungsverhältnis benachteiligt fühlen.' },
+                { title: '§ 15 AGG – Entschädigung und Schadensersatz', text: 'Bei einem Verstoß gegen das Benachteiligungsverbot ist der Arbeitgeber verpflichtet, den hierdurch entstandenen Schaden zu ersetzen. Wegen eines Schadens, der nicht Vermögensschaden ist, kann eine angemessene Entschädigung in Geld verlangt werden.' }
+            ],
+            tips: [
+                'Diskriminierende Äußerungen sofort dokumentieren (Zeugen, Datum, Wortlaut).',
+                'Nutze dein Beschwerderecht nach § 13 AGG – jeder Betrieb muss eine Beschwerdestelle haben.',
+                'Schadensersatzansprüche müssen innerhalb von 2 Monaten geltend gemacht werden!',
+                'Die Antidiskriminierungsstelle des Bundes berät kostenlos: antidiskriminierungsstelle.de'
+            ],
+            email: {
+                subject: 'Beschwerde gemäß § 13 AGG',
+                body: `Sehr geehrte/r [Beschwerdestelle / Betriebsrat / Personalabteilung],
+
+hiermit mache ich von meinem Beschwerderecht nach § 13 AGG Gebrauch.
+
+Am [Datum] kam es zu folgendem Vorfall:
+[Sachverhalt beschreiben]
+
+Ich sehe darin eine Benachteiligung wegen [Merkmal: Geschlecht / Herkunft / Religion / etc.] im Sinne des § 1 AGG.
+
+Ich bitte um Prüfung des Sachverhalts und Ergreifung geeigneter Maßnahmen gemäß § 12 AGG. Ich erwarte eine Rückmeldung innerhalb von [2 Wochen].
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        },
+        {
+            id: 'zeugnis',
+            cat: 'kuendigung',
+            title: '"Ein Zeugnis? Brauchst du doch nicht!"',
+            desc: 'Dein Chef weigert sich, dir ein Ausbildungszeugnis auszustellen.',
+            law: '§ 16 BBiG',
+            severity: 2,
+            verdict: 'nein',
+            verdictShort: 'Doch! Du hast einen Anspruch darauf!',
+            verdictDetail: 'Bei Beendigung des Ausbildungsverhältnisses hat der Ausbildende dir ein Zeugnis auszustellen (§ 16 BBiG). Das ist Pflicht und nicht optional! Das Zeugnis muss Angaben über Art, Dauer und Ziel der Ausbildung sowie die erworbenen Fertigkeiten enthalten. Auf dein Verlangen auch über Führung und Leistung (qualifiziertes Zeugnis).',
+            laws: [
+                { title: '§ 16 BBiG – Zeugnis', text: 'Ausbildende haben den Auszubildenden bei Beendigung des Berufsausbildungsverhältnisses ein schriftliches Zeugnis auszustellen. Es muss Angaben enthalten über Art, Dauer und Ziel der Berufsausbildung sowie über die erworbenen beruflichen Fertigkeiten, Kenntnisse und Fähigkeiten. Auf Verlangen sind auch Angaben über Verhalten und Leistung aufzunehmen.' }
+            ],
+            tips: [
+                'Du hast Anspruch auf ein einfaches Zeugnis (Pflicht) oder qualifiziertes Zeugnis (auf Verlangen).',
+                'Das Zeugnis muss wohlwollend formuliert sein und darf dir nicht schaden.',
+                'Fordere es schriftlich und mit Fristsetzung an, wenn es nicht kommt.',
+                'Kennst du die "Zeugnis-Geheimsprache"? Lass dein Zeugnis von Profis checken.'
+            ],
+            email: {
+                subject: 'Bitte um Ausstellung eines Ausbildungszeugnisses',
+                body: `Sehr geehrte/r [Name des Ausbilders],
+
+mein Ausbildungsverhältnis endet am [Datum] / ist am [Datum] beendet worden. Ich bitte Sie, mir gemäß § 16 BBiG ein qualifiziertes Ausbildungszeugnis auszustellen, das neben Art, Dauer und Ziel der Ausbildung auch Angaben über mein Verhalten und meine Leistung enthält.
+
+Ich bitte um Zusendung bis spätestens [Datum + 2-3 Wochen].
+
+Vielen Dank im Voraus.
+
+Mit freundlichen Grüßen
+[Dein Name]`
+            }
+        }
+    ];
+
+    // ═══════════════════════════════════════════
+    //  STATE
+    // ═══════════════════════════════════════════
+    let activeCat = 'all';
+    let searchQuery = '';
+
+    // ═══════════════════════════════════════════
+    //  INIT
+    // ═══════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('statTotal').textContent = SCENARIOS.length;
+        renderScenarios();
+        initSearch();
+        initFilters();
+    });
+
+    // ═══════════════════════════════════════════
+    //  RENDER SCENARIO CARDS
+    // ═══════════════════════════════════════════
+    function renderScenarios() {
+        const grid = document.getElementById('scenariosGrid');
+        const noResults = document.getElementById('noResults');
+        const filtered = SCENARIOS.filter(s => {
+            const matchCat = activeCat === 'all' || s.cat === activeCat;
+            if (!matchCat) return false;
+            if (!searchQuery) return true;
+            const q = searchQuery.toLowerCase();
+            return s.title.toLowerCase().includes(q) ||
+                   s.desc.toLowerCase().includes(q) ||
+                   s.law.toLowerCase().includes(q) ||
+                   s.cat.toLowerCase().includes(q) ||
+                   s.verdictShort.toLowerCase().includes(q);
+        });
+
+        if (filtered.length === 0) {
+            grid.innerHTML = '';
+            noResults.style.display = 'block';
+            return;
+        }
+        noResults.style.display = 'none';
+
+        grid.innerHTML = filtered.map(s => {
+            const tagClass = 'tag-' + s.cat;
+            const catLabel = getCatLabel(s.cat);
+            const catEmoji = getCatEmoji(s.cat);
+            const severityDots = renderSeverity(s.severity, s.verdict);
+            return `
+                <div class="scenario-card" style="--card-accent: ${getAccentColor(s.cat)}" onclick="openDetail('${s.id}')">
+                    <div class="scenario-card-inner">
+                        <div class="scenario-tag ${tagClass}">${catEmoji} ${catLabel}</div>
+                        <div class="scenario-title">${escapeHtml(s.title)}</div>
+                        <div class="scenario-desc">${escapeHtml(s.desc)}</div>
+                    </div>
+                    <div class="scenario-footer">
+                        <div class="scenario-law">${escapeHtml(s.law)}</div>
+                        <div class="scenario-severity">${severityDots}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function getCatLabel(cat) {
+        const map = { arbeitszeit: 'Arbeitszeit', taetigkeit: 'Tätigkeiten', urlaub: 'Urlaub', schule: 'Berufsschule', geld: 'Vergütung', kuendigung: 'Kündigung', mobbing: 'Mobbing' };
+        return map[cat] || cat;
+    }
+    function getCatEmoji(cat) {
+        const map = { arbeitszeit: '⏰', taetigkeit: '🧹', urlaub: '🏖️', schule: '📚', geld: '💰', kuendigung: '📋', mobbing: '🛡️' };
+        return map[cat] || '📌';
+    }
+    function getAccentColor(cat) {
+        const map = { arbeitszeit: 'var(--cyan)', taetigkeit: 'var(--warning)', urlaub: 'var(--success)', schule: 'var(--secondary)', geld: 'var(--orange)', kuendigung: 'var(--danger)', mobbing: 'var(--primary)' };
+        return map[cat] || 'var(--primary)';
+    }
+    function renderSeverity(level, verdict) {
+        let cls = verdict === 'nein' ? 'active' : verdict === 'jein' ? 'active medium' : 'active low';
+        let dots = '';
+        for (let i = 0; i < 3; i++) {
+            dots += `<div class="severity-dot ${i < level ? cls : ''}"></div>`;
+        }
+        return dots;
+    }
+    function escapeHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    // ═══════════════════════════════════════════
+    //  SEARCH
+    // ═══════════════════════════════════════════
+    function initSearch() {
+        const input = document.getElementById('searchInput');
+        let timeout;
+        input.addEventListener('input', () => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                searchQuery = input.value.trim();
+                renderScenarios();
+            }, 200);
+        });
+    }
+
+    // ═══════════════════════════════════════════
+    //  CATEGORY FILTER
+    // ═══════════════════════════════════════════
+    function initFilters() {
+        document.querySelectorAll('.cat-pill').forEach(pill => {
+            pill.addEventListener('click', () => {
+                document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                activeCat = pill.dataset.cat;
+                renderScenarios();
+            });
+        });
+    }
+
+    // ═══════════════════════════════════════════
+    //  DETAIL OVERLAY
+    // ═══════════════════════════════════════════
+    function openDetail(id) {
+        const s = SCENARIOS.find(x => x.id === id);
+        if (!s) return;
+
+        const overlay = document.getElementById('detailOverlay');
+        const catDiv = document.getElementById('detailCategory');
+        const titleEl = document.getElementById('detailTitle');
+        const subEl = document.getElementById('detailSubtitle');
+        const bodyEl = document.getElementById('detailBody');
+
+        catDiv.className = 'detail-category tag-' + s.cat;
+        catDiv.innerHTML = getCatEmoji(s.cat) + ' ' + getCatLabel(s.cat);
+        titleEl.textContent = s.title;
+        subEl.textContent = s.desc;
+
+        let html = '';
+
+        // Verdict box
+        html += `<div class="verdict-box ${s.verdict}">
+            <div class="verdict-label">${s.verdict === 'nein' ? '❌ Das darf der Chef NICHT' : s.verdict === 'jein' ? '⚠️ Kommt drauf an…' : '✅ Das ist erlaubt'}</div>
+            <div class="verdict-text">${escapeHtml(s.verdictShort)}</div>
+            <div class="verdict-detail">${escapeHtml(s.verdictDetail)}</div>
+        </div>`;
+
+        // Law references
+        if (s.laws && s.laws.length) {
+            s.laws.forEach(law => {
+                html += `<div class="law-ref">
+                    <div class="law-ref-icon">📖</div>
+                    <div class="law-ref-content">
+                        <div class="law-ref-title">${escapeHtml(law.title)}</div>
+                        <div class="law-ref-text">${escapeHtml(law.text)}</div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        // Tips
+        if (s.tips && s.tips.length) {
+            html += `<div class="tips-section">
+                <div class="tips-title">💡 Was du tun kannst</div>`;
+            s.tips.forEach((tip, i) => {
+                html += `<div class="tip-item">
+                    <div class="tip-num">${i + 1}</div>
+                    <div>${escapeHtml(tip)}</div>
+                </div>`;
+            });
+            html += '</div>';
+        }
+
+        // Email generator
+        if (s.email) {
+            html += `<div class="email-section">
+                <button class="email-btn" onclick="toggleEmail('${s.id}')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    E-Mail-Vorlage generieren
+                </button>
+                <div class="email-output" id="emailOutput_${s.id}">
+                    <div class="email-output-header">
+                        <div class="email-output-title">📧 Betreff: ${escapeHtml(s.email.subject)}</div>
+                        <button class="email-copy-btn" onclick="copyEmail('${s.id}')">📋 Kopieren</button>
+                    </div>
+                    <div class="email-text" id="emailText_${s.id}">${escapeHtml(s.email.body)}</div>
+                </div>
+            </div>`;
+        }
+
+        bodyEl.innerHTML = html;
+
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeDetail() {
+        const overlay = document.getElementById('detailOverlay');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Close on overlay click (not modal)
+    document.getElementById('detailOverlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeDetail();
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDetail();
+    });
+
+    // ═══════════════════════════════════════════
+    //  EMAIL TEMPLATE
+    // ═══════════════════════════════════════════
+    function toggleEmail(id) {
+        const el = document.getElementById('emailOutput_' + id);
+        if (el) el.classList.toggle('active');
+    }
+
+    function copyEmail(id) {
+        const s = SCENARIOS.find(x => x.id === id);
+        if (!s || !s.email) return;
+        const text = 'Betreff: ' + s.email.subject + '\n\n' + s.email.body;
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.querySelector('#emailOutput_' + id + ' .email-copy-btn');
+            if (btn) {
+                const original = btn.textContent;
+                btn.textContent = '✅ Kopiert!';
+                btn.style.color = 'var(--success)';
+                setTimeout(() => {
+                    btn.textContent = original;
+                    btn.style.color = '';
+                }, 2000);
+            }
+        });
+    }
+    </script>
+</body>
+</html>
