@@ -377,26 +377,94 @@
             border-color: rgba(var(--primary-rgb), 0.4);
             box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
         }
-        .search-wrap .search-mode-toggle {
+        .search-mode-dropdown {
             position: absolute; right: 12px; top: 50%;
             transform: translateY(-50%);
+        }
+        .search-mode-trigger {
+            display: flex; align-items: center; gap: 6px;
             background: var(--bg-elevated);
             border: 1px solid var(--border);
-            border-radius: var(--radius-xs);
-            color: var(--text-dim);
-            font-size: 0.68rem; font-weight: 600;
-            padding: 4px 10px;
+            border-radius: 100px;
+            padding: 5px 12px 5px 10px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s;
             font-family: var(--font);
-            letter-spacing: 0.3px;
+            font-size: 0.72rem; font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+            user-select: none;
         }
-        .search-wrap .search-mode-toggle:hover,
-        .search-wrap .search-mode-toggle.active {
-            color: var(--primary);
-            border-color: rgba(var(--primary-rgb), 0.4);
-            background: rgba(var(--primary-rgb), 0.08);
+        .search-mode-trigger:hover {
+            border-color: rgba(var(--primary-rgb), 0.3);
+            color: var(--text);
         }
+        .search-mode-trigger .mode-icon { font-size: 0.85rem; line-height: 1; }
+        .search-mode-trigger .mode-chevron {
+            font-size: 0.55rem; opacity: 0.5; transition: transform 0.2s;
+        }
+        .search-mode-trigger.open .mode-chevron { transform: rotate(180deg); }
+        .search-mode-trigger.mode-smart  { color: var(--primary); border-color: rgba(var(--primary-rgb), 0.3); }
+        .search-mode-trigger.mode-exact  { color: var(--cyan); border-color: rgba(var(--cyan-rgb, 6,182,212), 0.3); }
+        .search-mode-trigger.mode-llm    { color: var(--success); border-color: rgba(var(--success-rgb), 0.3); }
+        .search-mode-trigger .ai-status-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            display: inline-block;
+            background: var(--danger);
+        }
+        .search-mode-trigger.has-key .ai-status-dot { background: var(--success); }
+
+        /* Dropdown Menu */
+        .search-mode-menu {
+            position: absolute;
+            top: calc(100% + 6px); right: 0;
+            background: var(--bg-card-solid);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            min-width: 220px;
+            padding: 6px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+            opacity: 0; visibility: hidden;
+            transform: translateY(-8px) scale(0.96);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 200;
+        }
+        .search-mode-menu.open {
+            opacity: 1; visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+        .search-mode-menu-label {
+            font-size: 0.62rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            color: var(--text-dim); padding: 6px 10px 4px;
+        }
+        .search-mode-opt {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 10px;
+            border-radius: var(--radius-xs);
+            cursor: pointer; transition: all 0.15s;
+            border: none; background: none; width: 100%;
+            font-family: var(--font); text-align: left;
+            color: var(--text-muted);
+        }
+        .search-mode-opt:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+        .search-mode-opt.active { background: rgba(var(--primary-rgb), 0.08); color: var(--primary); }
+        .search-mode-opt .opt-icon { font-size: 1rem; width: 22px; text-align: center; flex-shrink: 0; }
+        .search-mode-opt .opt-info { flex: 1; min-width: 0; }
+        .search-mode-opt .opt-title { font-size: 0.8rem; font-weight: 600; }
+        .search-mode-opt .opt-desc { font-size: 0.68rem; color: var(--text-dim); margin-top: 1px; }
+        .search-mode-opt.active .opt-desc { color: rgba(var(--primary-rgb), 0.6); }
+        .search-mode-opt .opt-check {
+            font-size: 0.75rem; opacity: 0; transition: opacity 0.15s;
+        }
+        .search-mode-opt.active .opt-check { opacity: 1; }
+        .search-mode-divider {
+            height: 1px; background: var(--border); margin: 4px 6px;
+        }
+        .search-mode-opt.ai-settings {
+            color: var(--text-dim); font-size: 0.75rem;
+        }
+        .search-mode-opt.ai-settings:hover { color: var(--primary); }
 
         /* AI Suggestions Dropdown */
         .ai-suggest {
@@ -468,6 +536,208 @@
             font-size: 0.78rem;
             color: var(--warning);
             display: flex; align-items: center; gap: 6px;
+        }
+
+        /* ═══════════════════════════════════════
+           LLM API KEY MODAL
+        ═══════════════════════════════════════ */
+        .llm-key-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: none; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .llm-key-overlay.active { display: flex; }
+        .llm-key-modal {
+            background: var(--bg-card-solid);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            max-width: 480px; width: 100%;
+            padding: 28px;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+            animation: modalSlideUp 0.35s cubic-bezier(0.16,1,0.3,1);
+        }
+        .llm-key-modal h3 {
+            font-size: 1.1rem; font-weight: 700;
+            margin-bottom: 6px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .llm-key-modal .llm-key-desc {
+            font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .llm-key-modal label {
+            font-size: 0.78rem; font-weight: 600; color: var(--text-muted);
+            display: block; margin-bottom: 6px;
+        }
+        .llm-key-modal select,
+        .llm-key-modal input[type="text"],
+        .llm-key-modal input[type="password"] {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            color: var(--text); font-size: 0.88rem;
+            font-family: var(--font-mono);
+            outline: none; transition: border-color 0.2s;
+            margin-bottom: 14px;
+        }
+        .llm-key-modal select { font-family: var(--font); }
+        .llm-key-modal input:focus,
+        .llm-key-modal select:focus {
+            border-color: rgba(var(--primary-rgb), 0.4);
+        }
+        .llm-key-actions {
+            display: flex; gap: 8px; margin-top: 6px;
+        }
+        .llm-key-actions button {
+            flex: 1; padding: 10px;
+            border-radius: var(--radius-xs);
+            font-size: 0.85rem; font-weight: 600;
+            font-family: var(--font);
+            cursor: pointer; transition: all 0.2s;
+            border: 1px solid var(--border);
+        }
+        .llm-key-save {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff; border-color: transparent !important;
+        }
+        .llm-key-save:hover { opacity: 0.9; transform: translateY(-1px); }
+        .llm-key-cancel {
+            background: var(--bg-elevated); color: var(--text-muted);
+        }
+        .llm-key-cancel:hover { color: var(--text); }
+        .llm-key-delete {
+            background: rgba(var(--danger-rgb), 0.1);
+            color: var(--danger); border-color: rgba(var(--danger-rgb), 0.2) !important;
+            flex: 0 0 auto; padding: 10px 14px;
+        }
+        .llm-key-delete:hover { background: rgba(var(--danger-rgb), 0.2); }
+        .llm-key-hint {
+            font-size: 0.72rem; color: var(--text-dim); margin-top: 10px;
+            line-height: 1.5;
+        }
+        .llm-key-hint a { color: var(--primary); text-decoration: underline; }
+
+        /* ═══════════════════════════════════════
+           LLM CHAT RESPONSE
+        ═══════════════════════════════════════ */
+        .llm-response-area {
+            max-width: 600px;
+            margin: -24px auto 32px;
+            display: none;
+        }
+        .llm-response-area.active { display: block; }
+        .llm-response-box {
+            background: var(--bg-card);
+            border: 1px solid rgba(var(--success-rgb), 0.15);
+            border-radius: var(--radius);
+            backdrop-filter: blur(12px);
+            overflow: hidden;
+        }
+        .llm-response-header {
+            padding: 12px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            background: rgba(var(--success-rgb), 0.04);
+        }
+        .llm-response-header-left {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.78rem; font-weight: 600; color: var(--success);
+        }
+        .llm-response-close {
+            width: 28px; height: 28px;
+            border-radius: 50%; border: 1px solid var(--border);
+            background: var(--bg-elevated); color: var(--text-dim);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
+        }
+        .llm-response-close:hover { color: var(--danger); border-color: rgba(var(--danger-rgb), 0.3); }
+        .llm-response-body {
+            padding: 16px;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .llm-response-body p { margin-bottom: 10px; }
+        .llm-response-body strong { color: var(--text); }
+        .llm-response-body code {
+            background: var(--bg-elevated);
+            padding: 2px 6px; border-radius: 4px;
+            font-family: var(--font-mono); font-size: 0.82rem;
+        }
+        .llm-response-body ul, .llm-response-body ol {
+            padding-left: 18px; margin-bottom: 10px;
+        }
+        .llm-response-body li { margin-bottom: 4px; }
+        .llm-response-body blockquote {
+            border-left: 3px solid var(--primary);
+            padding: 8px 14px; margin: 10px 0;
+            background: rgba(var(--primary-rgb), 0.04);
+            border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+        }
+        .llm-response-body .llm-email-block {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 14px; margin: 10px 0;
+            white-space: pre-wrap;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            position: relative;
+        }
+        .llm-email-copy {
+            position: absolute; top: 8px; right: 8px;
+            padding: 4px 10px; border-radius: var(--radius-xs);
+            border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-dim);
+            font-size: 0.7rem; font-weight: 600; cursor: pointer;
+            font-family: var(--font); transition: all 0.2s;
+        }
+        .llm-email-copy:hover { color: var(--success); border-color: rgba(var(--success-rgb), 0.3); }
+        .llm-response-actions {
+            padding: 10px 16px;
+            border-top: 1px solid var(--border);
+            display: flex; gap: 8px; flex-wrap: wrap;
+        }
+        .llm-action-chip {
+            padding: 5px 12px;
+            border-radius: 100px;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            font-size: 0.75rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+            font-family: var(--font);
+        }
+        .llm-action-chip:hover {
+            border-color: rgba(var(--primary-rgb), 0.3);
+            color: var(--primary);
+        }
+        .llm-loading {
+            display: flex; align-items: center; gap: 10px;
+            padding: 20px 16px;
+            font-size: 0.85rem; color: var(--text-dim);
+        }
+        .llm-loading-dots {
+            display: flex; gap: 4px;
+        }
+        .llm-loading-dots span {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: llmBounce 1.4s infinite ease-in-out both;
+        }
+        .llm-loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .llm-loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes llmBounce {
+            0%, 80%, 100% { transform: scale(0); opacity:0.3; }
+            40% { transform: scale(1); opacity:1; }
         }
 
         /* ═══════════════════════════════════════
@@ -961,9 +1231,64 @@
         <div class="search-wrap fade-in fade-in-d2" role="search" aria-label="Szenarien durchsuchen">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
             <label for="searchInput" class="sr-only">Szenario suchen</label>
-            <input type="search" class="search-input" id="searchInput" placeholder="Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'" autocomplete="off" style="padding-right:72px;">
-            <button class="search-mode-toggle active" id="smartSearchToggle" title="Smart-Suche: Erkennt Tippfehler und natürliche Sprache" onclick="toggleSmartSearch()">🧠 Smart</button>
+            <input type="search" class="search-input" id="searchInput" placeholder="Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'" autocomplete="off" style="padding-right:118px;">
+            <div class="search-mode-dropdown" id="searchModeDropdown">
+                <button class="search-mode-trigger mode-smart" id="searchModeTrigger" onclick="toggleModeMenu()">
+                    <span class="mode-icon" id="modeIcon">🧠</span>
+                    <span class="mode-label" id="modeLabel">Smart</span>
+                    <span class="mode-chevron">▼</span>
+                </button>
+                <div class="search-mode-menu" id="searchModeMenu">
+                    <div class="search-mode-menu-label">Suchmodus</div>
+                    <button class="search-mode-opt active" data-mode="smart" onclick="setSearchMode('smart')">
+                        <span class="opt-icon">🧠</span>
+                        <div class="opt-info">
+                            <div class="opt-title">Smart-Suche</div>
+                            <div class="opt-desc">Tippfehler-Erkennung & Synonyme</div>
+                        </div>
+                        <span class="opt-check">✓</span>
+                    </button>
+                    <button class="search-mode-opt" data-mode="exact" onclick="setSearchMode('exact')">
+                        <span class="opt-icon">🔍</span>
+                        <div class="opt-info">
+                            <div class="opt-title">Exakte Suche</div>
+                            <div class="opt-desc">Direkter Textabgleich</div>
+                        </div>
+                        <span class="opt-check">✓</span>
+                    </button>
+                    <div class="search-mode-divider"></div>
+                    <div class="search-mode-menu-label">KI-Assistent</div>
+                    <button class="search-mode-opt" data-mode="llm" onclick="setSearchMode('llm')" id="llmModeBtn">
+                        <span class="opt-icon">🤖</span>
+                        <div class="opt-info">
+                            <div class="opt-title">AI-Rechtsberater</div>
+                            <div class="opt-desc" id="llmModeDesc">API-Key benötigt</div>
+                        </div>
+                        <span class="opt-check">✓</span>
+                    </button>
+                    <div class="search-mode-divider"></div>
+                    <button class="search-mode-opt ai-settings" onclick="openLlmKeyModal()">
+                        <span class="opt-icon">⚙️</span>
+                        <div class="opt-info">
+                            <div class="opt-title">AI-Einstellungen</div>
+                            <div class="opt-desc">Anbieter & API-Key konfigurieren</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
             <div class="ai-suggest" id="aiSuggest"></div>
+        </div>
+
+        <!-- LLM Response Area (below search, above filters) -->
+        <div class="llm-response-area" id="llmResponseArea">
+            <div class="llm-response-box">
+                <div class="llm-response-header">
+                    <div class="llm-response-header-left">🤖 AI-Rechtsberater</div>
+                    <button class="llm-response-close" onclick="closeLlmResponse()">✕</button>
+                </div>
+                <div class="llm-response-body" id="llmResponseBody"></div>
+                <div class="llm-response-actions" id="llmResponseActions"></div>
+            </div>
         </div>
 
         <!-- Category Filters -->
@@ -1016,7 +1341,48 @@
         </footer>
     </div>
 
-    <!-- ═══════════════ DETAIL OVERLAY ═══════════════ -->
+    <!-- ═════════════ LLM API KEY MODAL ═════════════ -->
+    <div class="llm-key-overlay" id="llmKeyOverlay">
+        <div class="llm-key-modal">
+            <h3>🤖 AI-Assistent einrichten</h3>
+            <p class="llm-key-desc">Verbinde einen LLM-Anbieter. Dein API-Key bleibt lokal im Browser gespeichert – wird nie an uns gesendet.</p>
+
+            <label for="llmProvider">Anbieter</label>
+            <select id="llmProvider" onchange="updateProviderHints()">
+                <option value="openai">OpenAI (GPT-4o-mini, GPT-4o)</option>
+                <option value="claude">Anthropic Claude (Sonnet, Opus)</option>
+                <option value="gemini">Google Gemini (Flash, Pro)</option>
+                <option value="groq">Groq (Llama 3, Mixtral – kostenlos!)</option>
+                <option value="mistral">Mistral AI (Mistral Large, Small)</option>
+                <option value="deepseek">DeepSeek (Chat, Coder)</option>
+                <option value="openrouter">OpenRouter (viele Modelle)</option>
+                <option value="xai">xAI Grok</option>
+                <option value="custom">Custom (OpenAI-kompatibel)</option>
+            </select>
+
+            <label for="llmApiKey">API-Key</label>
+            <input type="password" id="llmApiKey" placeholder="sk-..." autocomplete="off">
+
+            <div id="llmCustomUrl" style="display:none;">
+                <label for="llmBaseUrl">API Base URL</label>
+                <input type="text" id="llmBaseUrl" placeholder="https://api.example.com/v1">
+            </div>
+
+            <label for="llmModel">Modell</label>
+            <input type="text" id="llmModel" placeholder="gpt-4o-mini">
+
+            <div class="llm-key-actions">
+                <button class="llm-key-cancel" onclick="closeLlmKeyModal()">Abbrechen</button>
+                <button class="llm-key-delete" onclick="deleteLlmKey()" id="llmDeleteBtn" style="display:none;">🗑️</button>
+                <button class="llm-key-save" onclick="saveLlmKey()">🔒 Speichern</button>
+            </div>
+            <div class="llm-key-hint" id="llmProviderHint">
+                💡 <strong>Groq</strong> ist komplett kostenlos! Hol dir einen Key auf <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═════════════ DETAIL OVERLAY ═════════════ -->
     <div class="detail-overlay" id="detailOverlay">
         <div class="detail-modal" id="detailModal">
             <div class="detail-header">
@@ -2019,20 +2385,60 @@ Mit freundlichen Grüßen
     }
 
     let smartSearchEnabled = true;
+    let searchMode = 'smart'; // 'smart' | 'exact' | 'llm'
 
-    function toggleSmartSearch() {
-        smartSearchEnabled = !smartSearchEnabled;
-        const btn = document.getElementById('smartSearchToggle');
-        btn.classList.toggle('active', smartSearchEnabled);
-        btn.innerHTML = smartSearchEnabled ? '🧠 Smart' : '🔍 Exakt';
+    const MODE_CONFIG = {
+        smart: { icon: '🧠', label: 'Smart', cls: 'mode-smart', placeholder: "Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'" },
+        exact: { icon: '🔍', label: 'Exakt', cls: 'mode-exact', placeholder: "Szenario suchen… z.B. Überstunden, Urlaub, Putzen" },
+        llm:   { icon: '🤖', label: 'AI',    cls: 'mode-llm',   placeholder: "Frag den AI-Rechtsberater… z.B. 'Darf mein Chef mir Kündigung androhen wenn ich krank bin?'" }
+    };
+
+    function toggleModeMenu() {
+        const menu = document.getElementById('searchModeMenu');
+        const trigger = document.getElementById('searchModeTrigger');
+        const isOpen = menu.classList.contains('open');
+        menu.classList.toggle('open', !isOpen);
+        trigger.classList.toggle('open', !isOpen);
+    }
+    function closeModeMenu() {
+        document.getElementById('searchModeMenu')?.classList.remove('open');
+        document.getElementById('searchModeTrigger')?.classList.remove('open');
+    }
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#searchModeDropdown')) closeModeMenu();
+    });
+
+    function setSearchMode(mode) {
+        searchMode = mode;
+        smartSearchEnabled = (mode === 'smart');
+        const cfg = MODE_CONFIG[mode];
+        // Update trigger button
+        const trigger = document.getElementById('searchModeTrigger');
+        trigger.className = 'search-mode-trigger ' + cfg.cls;
+        if (mode === 'llm') trigger.classList.toggle('has-key', !!getLlmConfig().apiKey);
+        document.getElementById('modeIcon').textContent = cfg.icon;
+        document.getElementById('modeLabel').textContent = cfg.label;
+        // Update dropdown active state
+        document.querySelectorAll('.search-mode-opt[data-mode]').forEach(b => {
+            b.classList.toggle('active', b.dataset.mode === mode);
+        });
+        closeModeMenu();
+        // LLM mode needs a key
+        if (mode === 'llm') {
+            const hasKey = !!getLlmConfig().apiKey;
+            if (!hasKey) {
+                openLlmKeyModal();
+                setSearchMode('smart');
+                return;
+            }
+        }
         const input = document.getElementById('searchInput');
-        input.placeholder = smartSearchEnabled
-            ? "Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'"
-            : "Szenario suchen… z.B. Überstunden, Urlaub, Putzen";
-        // Re-trigger search
+        input.placeholder = cfg.placeholder;
         searchQuery = input.value.trim();
         renderScenarios();
         hideAiSuggest();
+        closeLlmResponse();
     }
 
     // -- AI Suggest Dropdown --
@@ -2075,6 +2481,347 @@ Mit freundlichen Grüßen
     });
 
     // ═══════════════════════════════════════════
+    //  🤖 LLM INTEGRATION
+    // ═══════════════════════════════════════════
+
+    function getLlmConfig() {
+        try {
+            return JSON.parse(localStorage.getItem('rc_llm_config') || '{}');
+        } catch { return {}; }
+    }
+    function saveLlmConfig(cfg) {
+        localStorage.setItem('rc_llm_config', JSON.stringify(cfg));
+    }
+
+    function openLlmKeyModal() {
+        const cfg = getLlmConfig();
+        document.getElementById('llmProvider').value = cfg.provider || 'openai';
+        document.getElementById('llmApiKey').value = cfg.apiKey || '';
+        document.getElementById('llmModel').value = cfg.model || '';
+        document.getElementById('llmBaseUrl').value = cfg.baseUrl || '';
+        document.getElementById('llmDeleteBtn').style.display = cfg.apiKey ? '' : 'none';
+        updateProviderHints();
+        document.getElementById('llmKeyOverlay').classList.add('active');
+    }
+    function closeLlmKeyModal() {
+        document.getElementById('llmKeyOverlay').classList.remove('active');
+    }
+    function updateProviderHints() {
+        const prov = document.getElementById('llmProvider').value;
+        const hint = document.getElementById('llmProviderHint');
+        const customUrl = document.getElementById('llmCustomUrl');
+        const modelInput = document.getElementById('llmModel');
+        customUrl.style.display = (prov === 'custom') ? 'block' : 'none';
+        const providers = {
+            openai: {
+                hint: '💡 Hol dir einen Key auf <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. <strong>gpt-4o-mini</strong> ist günstig & schnell.',
+                placeholder: 'gpt-4o-mini'
+            },
+            claude: {
+                hint: '💡 Key holen auf <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. <strong>claude-sonnet-4-20250514</strong> empfohlen.',
+                placeholder: 'claude-sonnet-4-20250514'
+            },
+            gemini: {
+                hint: '💡 Kostenloser API-Key auf <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. <strong>gemini-2.0-flash</strong> ist schnell & gratis!',
+                placeholder: 'gemini-2.0-flash'
+            },
+            groq: {
+                hint: '💡 <strong>Groq ist komplett kostenlos!</strong> Key holen auf <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>. Empfohlen: <strong>llama-3.3-70b-versatile</strong>',
+                placeholder: 'llama-3.3-70b-versatile'
+            },
+            mistral: {
+                hint: '💡 Key holen auf <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai</a>. <strong>mistral-large-latest</strong> ist top.',
+                placeholder: 'mistral-large-latest'
+            },
+            deepseek: {
+                hint: '💡 Super günstig! Key auf <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a>. <strong>deepseek-chat</strong> empfohlen.',
+                placeholder: 'deepseek-chat'
+            },
+            openrouter: {
+                hint: '💡 <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a> – viele Modelle, manche kostenlos. Versuche <strong>meta-llama/llama-3.3-70b-instruct</strong>',
+                placeholder: 'meta-llama/llama-3.3-70b-instruct'
+            },
+            xai: {
+                hint: '💡 Key auf <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a>. <strong>grok-3-mini-fast</strong> empfohlen.',
+                placeholder: 'grok-3-mini-fast'
+            },
+            custom: {
+                hint: '💡 Jede OpenAI-kompatible API (z.B. LM Studio, Ollama, vLLM). Trage die Base URL ein.',
+                placeholder: 'z.B. llama3'
+            }
+        };
+        const p = providers[prov] || providers.custom;
+        hint.innerHTML = p.hint;
+        if (!modelInput.value) modelInput.placeholder = p.placeholder;
+    }
+    function saveLlmKey() {
+        const provider = document.getElementById('llmProvider').value;
+        const apiKey = document.getElementById('llmApiKey').value.trim();
+        const model = document.getElementById('llmModel').value.trim();
+        const baseUrl = document.getElementById('llmBaseUrl').value.trim();
+        if (!apiKey) { document.getElementById('llmApiKey').style.borderColor = 'var(--danger)'; return; }
+        saveLlmConfig({ provider, apiKey, model, baseUrl });
+        closeLlmKeyModal();
+        updateLlmBtnState();
+        setSearchMode('llm');
+    }
+    function deleteLlmKey() {
+        localStorage.removeItem('rc_llm_config');
+        closeLlmKeyModal();
+        updateLlmBtnState();
+        setSearchMode('smart');
+    }
+    function updateLlmBtnState() {
+        const cfg = getLlmConfig();
+        const hasKey = !!cfg.apiKey;
+        const trigger = document.getElementById('searchModeTrigger');
+        if (searchMode === 'llm') trigger.classList.toggle('has-key', hasKey);
+        // Update the LLM option description text
+        const desc = document.getElementById('llmModeDesc');
+        if (desc) {
+            if (hasKey) {
+                const provNames = {openai:'OpenAI',claude:'Claude',gemini:'Gemini',groq:'Groq',mistral:'Mistral',deepseek:'DeepSeek',openrouter:'OpenRouter',xai:'Grok',custom:'Custom'};
+                desc.textContent = (provNames[cfg.provider] || cfg.provider) + ' verbunden';
+            } else {
+                desc.textContent = 'API-Key benötigt';
+            }
+        }
+    }
+
+    // Build the system prompt with full scenario context
+    function buildLlmSystemPrompt() {
+        let scenarioCtx = SCENARIOS.map(s => {
+            return `[${s.id}] Kategorie: ${getCatLabel(s.cat)} | Titel: ${s.title} | ${s.desc}\n` +
+                   `Urteil: ${s.verdictShort}\nDetails: ${s.verdictDetail}\n` +
+                   `Gesetze: ${(s.laws||[]).map(l => l.title + ': ' + l.text).join('\n')}\n` +
+                   `Tipps: ${(s.tips||[]).join('; ')}\n` +
+                   `E-Mail Betreff: ${s.email?.subject || '-'}\nE-Mail Vorlage: ${s.email?.body || '-'}`;
+        }).join('\n\n---\n\n');
+
+        return `Du bist der "Azubi-Rechtsberater" auf der Website myworklog.de. Du hilfst Auszubildenden in Deutschland, ihre Rechte zu verstehen.
+
+WICHTIG:
+- Du antwortest immer auf Deutsch, freundlich und verständlich.
+- Du kennst das BBiG (Berufsbildungsgesetz), JArbSchG (Jugendarbeitsschutzgesetz), ArbZG (Arbeitszeitgesetz), BUrlG (Bundesurlaubsgesetz), AGG (Allgemeines Gleichbehandlungsgesetz) und EntgFG (Entgeltfortzahlungsgesetz).
+- Nenne immer den genauen Paragraphen wenn möglich.
+- Wenn der User ein konkretes Problem hat, gib eine klare Einschätzung ("Nein, das darf dein Chef nicht" / "Ja, unter bestimmten Bedingungen" / "Kommt drauf an").
+- Wenn passend, biete an eine höfliche E-Mail-Vorlage zu generieren die der Azubi an den Chef schicken kann.
+- Weise darauf hin dass deine Infos keine Rechtsberatung ersetzen.
+- Formatiere mit Markdown: **fett**, Listen, etc.
+- Halte dich kurz aber vollständig. Maximal 300 Wörter.
+
+Hier ist die vollständige Datenbank der Szenarien die auf der Website existieren. Nutze diese als Wissenbasis und verweise auf passende Szenarien:
+
+${scenarioCtx}`;
+    }
+
+    // Get API endpoint based on provider
+    function getLlmEndpoint(cfg) {
+        const prov = cfg.provider || 'openai';
+        const endpoints = {
+            openai:     'https://api.openai.com/v1/chat/completions',
+            claude:     'https://api.anthropic.com/v1/messages',
+            gemini:     null, // built dynamically
+            groq:       'https://api.groq.com/openai/v1/chat/completions',
+            mistral:    'https://api.mistral.ai/v1/chat/completions',
+            deepseek:   'https://api.deepseek.com/chat/completions',
+            openrouter: 'https://openrouter.ai/api/v1/chat/completions',
+            xai:        'https://api.x.ai/v1/chat/completions'
+        };
+        if (prov === 'gemini') {
+            const model = getLlmModel(cfg);
+            return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${cfg.apiKey}`;
+        }
+        if (prov === 'custom' && cfg.baseUrl) return cfg.baseUrl.replace(/\/$/, '') + '/chat/completions';
+        return endpoints[prov] || endpoints.openai;
+    }
+    function getLlmModel(cfg) {
+        if (cfg.model) return cfg.model;
+        const defaults = {
+            openai: 'gpt-4o-mini',
+            claude: 'claude-sonnet-4-20250514',
+            gemini: 'gemini-2.0-flash',
+            groq:   'llama-3.3-70b-versatile',
+            mistral: 'mistral-large-latest',
+            deepseek: 'deepseek-chat',
+            openrouter: 'meta-llama/llama-3.3-70b-instruct',
+            xai: 'grok-3-mini-fast'
+        };
+        return defaults[cfg.provider] || 'gpt-4o-mini';
+    }
+
+    let llmAbortController = null;
+
+    async function queryLlm(userQuery) {
+        const cfg = getLlmConfig();
+        if (!cfg.apiKey) { openLlmKeyModal(); return; }
+
+        // Show loading
+        const area = document.getElementById('llmResponseArea');
+        const body = document.getElementById('llmResponseBody');
+        const actions = document.getElementById('llmResponseActions');
+        area.classList.add('active');
+        body.innerHTML = `<div class="llm-loading">
+            <div class="llm-loading-dots"><span></span><span></span><span></span></div>
+            Denkt nach…
+        </div>`;
+        actions.innerHTML = '';
+
+        // Abort previous if any
+        if (llmAbortController) llmAbortController.abort();
+        llmAbortController = new AbortController();
+
+        try {
+            const endpoint = getLlmEndpoint(cfg);
+            const model = getLlmModel(cfg);
+            const prov = cfg.provider || 'openai';
+            let headers, reqBody;
+
+            if (prov === 'claude') {
+                // Anthropic Messages API
+                headers = {
+                    'Content-Type': 'application/json',
+                    'x-api-key': cfg.apiKey,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                };
+                reqBody = JSON.stringify({
+                    model,
+                    max_tokens: 1000,
+                    system: buildLlmSystemPrompt(),
+                    messages: [{ role: 'user', content: userQuery }]
+                });
+            } else if (prov === 'gemini') {
+                // Google Gemini API (key in URL)
+                headers = { 'Content-Type': 'application/json' };
+                reqBody = JSON.stringify({
+                    systemInstruction: { parts: [{ text: buildLlmSystemPrompt() }] },
+                    contents: [{ role: 'user', parts: [{ text: userQuery }] }],
+                    generationConfig: { maxOutputTokens: 1000, temperature: 0.3 }
+                });
+            } else {
+                // OpenAI-compatible (OpenAI, Groq, Mistral, DeepSeek, OpenRouter, xAI, Custom)
+                headers = {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + cfg.apiKey
+                };
+                if (prov === 'openrouter') {
+                    headers['HTTP-Referer'] = 'https://myworklog.de';
+                    headers['X-Title'] = 'MyWorkLog Rechte-Checker';
+                }
+                reqBody = JSON.stringify({
+                    model,
+                    messages: [
+                        { role: 'system', content: buildLlmSystemPrompt() },
+                        { role: 'user', content: userQuery }
+                    ],
+                    max_tokens: 1000,
+                    temperature: 0.3
+                });
+            }
+
+            const resp = await fetch(endpoint, {
+                method: 'POST',
+                headers,
+                signal: llmAbortController.signal,
+                body: reqBody
+            });
+
+            if (!resp.ok) {
+                const err = await resp.text();
+                let msg = 'API-Fehler: ' + resp.status;
+                if (resp.status === 401 || resp.status === 403) msg = 'Ungültiger API-Key. Öffne ⚙️ Einstellungen um ihn zu ändern.';
+                else if (resp.status === 429) msg = 'Rate-Limit erreicht. Warte kurz und versuch es nochmal.';
+                throw new Error(msg);
+            }
+
+            const data = await resp.json();
+            let content;
+            if (prov === 'claude') {
+                content = data.content?.[0]?.text || 'Keine Antwort erhalten.';
+            } else if (prov === 'gemini') {
+                content = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Keine Antwort erhalten.';
+            } else {
+                content = data.choices?.[0]?.message?.content || 'Keine Antwort erhalten.';
+            }
+            renderLlmResponse(content, userQuery);
+        } catch (e) {
+            if (e.name === 'AbortError') return;
+            body.innerHTML = `<p style="color:var(--danger)">❌ ${escapeHtml(e.message)}</p>
+                <p style="font-size:0.8rem;color:var(--text-dim);margin-top:8px;">Prüfe deinen API-Key und Anbieter unter 🤖 AI.</p>`;
+            actions.innerHTML = `<button class="llm-action-chip" onclick="openLlmKeyModal()">⚙️ Key ändern</button>`;
+        }
+    }
+
+    function renderLlmResponse(content, originalQuery) {
+        const body = document.getElementById('llmResponseBody');
+        const actions = document.getElementById('llmResponseActions');
+
+        // Simple markdown-to-HTML
+        let html = escapeHtml(content)
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/^[-\*] (.+)/gm, '<li>$1</li>')
+            .replace(/^(\d+)\. (.+)/gm, '<li>$1. $2</li>')
+            .replace(/(<li>.*<\/li>)/gs, (m) => '<ul>' + m + '</ul>')
+            .replace(/<\/ul>\s*<ul>/g, '')
+            .replace(/\n{2,}/g, '</p><p>')
+            .replace(/\n/g, '<br>');
+        html = '<p>' + html + '</p>';
+
+        // Detect email blocks ("Betreff:" or "Sehr geehrte")
+        html = html.replace(/(Betreff:.+?)(<\/p>|$)/gs, (match) => {
+            const id = 'llm_email_' + Date.now();
+            return `<div class="llm-email-block" id="${id}">
+                <button class="llm-email-copy" onclick="copyLlmEmail('${id}')">📋 Kopieren</button>
+                ${match}
+            </div>`;
+        });
+
+        body.innerHTML = html;
+
+        // Find referenced scenarios and add action chips
+        actions.innerHTML = '';
+        SCENARIOS.forEach(s => {
+            if (content.toLowerCase().includes(s.id) ||
+                content.includes(s.law) ||
+                content.toLowerCase().includes(s.title.toLowerCase().slice(1, -1))) {
+                const chip = document.createElement('button');
+                chip.className = 'llm-action-chip';
+                chip.textContent = getCatEmoji(s.cat) + ' ' + s.title.slice(0,30) + '…';
+                chip.addEventListener('click', () => openDetail(s.id));
+                actions.appendChild(chip);
+            }
+        });
+        const emailChip = document.createElement('button');
+        emailChip.className = 'llm-action-chip';
+        emailChip.textContent = '📧 E-Mail generieren';
+        emailChip.addEventListener('click', () => queryLlm('Erstelle eine höfliche E-Mail für folgendes Problem: ' + originalQuery));
+        actions.appendChild(emailChip);
+        const settingsChip = document.createElement('button');
+        settingsChip.className = 'llm-action-chip';
+        settingsChip.textContent = '⚙️ Einstellungen';
+        settingsChip.addEventListener('click', () => openLlmKeyModal());
+        actions.appendChild(settingsChip);
+    }
+
+    function closeLlmResponse() {
+        document.getElementById('llmResponseArea').classList.remove('active');
+        if (llmAbortController) llmAbortController.abort();
+    }
+
+    function copyLlmEmail(elemId) {
+        const el = document.getElementById(elemId);
+        if (!el) return;
+        const text = el.innerText.replace('📋 Kopieren', '').trim();
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = el.querySelector('.llm-email-copy');
+            if (btn) { btn.textContent = '✅ Kopiert!'; setTimeout(() => btn.textContent = '📋 Kopieren', 2000); }
+        });
+    }
+
+    // ═══════════════════════════════════════════
     //  STATE
     // ═══════════════════════════════════════════
     let activeCat = 'all';
@@ -2088,6 +2835,7 @@ Mit freundlichen Grüßen
         renderScenarios();
         initSearch();
         initFilters();
+        updateLlmBtnState();
     });
 
     // ═══════════════════════════════════════════
@@ -2192,8 +2940,17 @@ Mit freundlichen Grüßen
             clearTimeout(timeout);
             timeout = setTimeout(() => {
                 searchQuery = input.value.trim();
-                renderScenarios();
+                if (searchMode !== 'llm') {
+                    renderScenarios();
+                }
             }, 250);
+        });
+        // Enter key triggers LLM query in AI mode
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && searchMode === 'llm' && input.value.trim()) {
+                e.preventDefault();
+                queryLlm(input.value.trim());
+            }
         });
         // Show suggestions on focus if there's text
         input.addEventListener('focus', () => {
