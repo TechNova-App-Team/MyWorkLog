@@ -28048,21 +28048,81 @@ TIPPS:
 
     function buildFeedbackData(message, rating) {
         const emojis = ['—', '😞', '😕', '😐', '😊', '🤩'];
-        const base = {
+        const userName = data.settings.name || 'Anonym';
+        const dateStr = new Date().toLocaleString('de-DE');
+
+        if (feedbackDataMode === 'full') {
+            const stats = gatherAppStats();
+            const reportLines = [
+                message,
+                '',
+                '━━━━━━━━━━━━━━━━━━━━━━━━━━',
+                '📊 VOLLSTÄNDIGER REPORT',
+                '━━━━━━━━━━━━━━━━━━━━━━━━━━',
+                '',
+                '── GESAMTSTATISTIK ──',
+                '📋 Einträge: ' + stats.total_entries,
+                '⏱️ Stunden: ' + stats.total_hours + 'h',
+                '📈 Saldo: ' + stats.total_saldo + 'h',
+                '💼 Arbeitstage: ' + stats.total_work_days,
+                '🎓 Schultage: ' + stats.total_school_days,
+                '🏖️ Urlaub: ' + stats.total_vacation_days,
+                '🤒 Krank: ' + stats.total_sick_days,
+                '🎉 Feiertag: ' + stats.total_holiday_days,
+                '',
+                '── JAHR ' + stats.year + ' ──',
+                '📋 Einträge: ' + stats.year_entries,
+                '⏱️ Stunden: ' + stats.year_hours + 'h',
+                '📈 Saldo: ' + stats.year_saldo + 'h',
+                '',
+                '── PRODUKTIVITÄT ──',
+                '⌀ Stunden/Tag: ' + stats.avg_hours + 'h',
+                '📐 Wöchentl. Soll: ' + stats.weekly_soll + 'h',
+                '🏆 Bester Tag: ' + stats.best_weekday + ' (' + stats.best_weekday_hours + 'h)',
+                '📆 Aktive Monate: ' + stats.active_months,
+                '🔥 Streak: ' + stats.current_streak + ' Tage',
+                '',
+                '── URLAUB ──',
+                '🏖️ Gesamt: ' + stats.vacation_total + ' | ✈️ Verbraucht: ' + stats.vacation_used + ' | ✅ Übrig: ' + stats.vacation_remaining,
+                '',
+                '── APP-ENGAGEMENT ──',
+                '📅 Erster Eintrag: ' + stats.first_entry,
+                '📅 Letzter Eintrag: ' + stats.last_entry,
+                '📆 Tage aktiv: ' + stats.days_using_app,
+                '💬 Feedbacks: ' + stats.feedback_count,
+                '💡 Feature Requests: ' + stats.feature_request_count,
+                '🎨 Theme: ' + stats.theme_color + ' (' + stats.theme_mode + ')',
+                '',
+                '── GERÄT ──',
+                '🖥️ Screen: ' + stats.screen_size + ' @ ' + stats.pixel_ratio + 'x',
+                '📐 Viewport: ' + stats.viewport,
+                '💻 Platform: ' + stats.platform,
+                '🌐 Sprache: ' + stats.language,
+                '🕐 Zeitzone: ' + stats.timezone,
+                '📶 Online: ' + stats.online,
+                '👆 Touch: ' + stats.touch_device,
+            ];
+            return {
+                email: 'sven9micha37@gmail.com',
+                message: reportLines.join('\n'),
+                rating: rating.toString(),
+                rating_emoji: emojis[rating],
+                from_name: userName,
+                date: dateStr,
+                data_mode: 'full',
+                ...stats,
+            };
+        }
+        // Minimal: only rating, message, date, name — no device/stats
+        return {
             email: 'sven9micha37@gmail.com',
             message: message,
             rating: rating.toString(),
             rating_emoji: emojis[rating],
-            from_name: data.settings.name || 'Anonym',
-            date: new Date().toLocaleString('de-DE'),
-            data_mode: feedbackDataMode,
+            from_name: userName,
+            date: dateStr,
+            data_mode: 'minimal',
         };
-        if (feedbackDataMode === 'full') {
-            const stats = gatherAppStats();
-            return { ...base, ...stats };
-        }
-        // Minimal: only rating, message, date, name — no device/stats
-        return base;
     }
 
     function showFeedbackDataPreview() {
