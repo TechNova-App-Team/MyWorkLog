@@ -16,7 +16,7 @@
 <meta name="rating" content="general">
 <meta name="referrer" content="origin-when-cross-origin">
 <meta name="format-detection" content="telephone=no">
-<meta name="generator" content="MyWorkLog v3.3.2">
+<meta name="generator" content="MyWorkLog v3.3.3a">
 
 <!-- ===== CANONICAL & ALTERNATE ===== -->
 <link rel="canonical" href="https://myworklog.de/">
@@ -7268,7 +7268,23 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     var vid=document.getElementById('viBgVid');
     var vidReady=false;
     var vidTarget=0, vidCurrent=0;
-    vid.addEventListener('loadedmetadata',function(){vidReady=true;vidLoop();});
+    
+    // Render first frame immediately
+    vid.addEventListener('loadedmetadata',function(){
+      vidReady=true;
+      vid.currentTime=0;
+      vidCurrent=0;
+      vidLoop();
+    });
+    vid.addEventListener('loadeddata',function(){
+      if(!vidReady){
+        vid.currentTime=0;
+        vidCurrent=0;
+      }
+    });
+    
+    // Ensure video loads
+    vid.load();
     var ticking=false;
 
     /* — Smooth Video Scrub Loop — */
@@ -7339,7 +7355,10 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     intro.addEventListener('scroll',function(){
       if(!ticking){requestAnimationFrame(update);ticking=true}
     },{passive:true});
+    
+    // Initialize immediately and on next frame
     update();
+    requestAnimationFrame(update);
 
     /* — Finish — */
     window.finishIntro=function(){
