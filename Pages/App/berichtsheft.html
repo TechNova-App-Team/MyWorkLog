@@ -204,6 +204,24 @@
             background-clip: text;
             animation: gradientShift 6s ease infinite;
         }
+        .secret-hint {
+            font-size: 0.55rem;
+            opacity: 0.35;
+            font-weight: 500;
+            letter-spacing: 0.8px;
+            margin-left: 8px;
+            display: inline-block;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            cursor: default;
+        }
+        .page-title:hover .secret-hint {
+            opacity: 0.85;
+            transform: scale(1.2) translateX(3px);
+        }
         @keyframes gradientShift {
             0%, 100% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -1948,7 +1966,7 @@
                 <span class="brand-dot"></span>
                 <span>MyWorkLog</span>
             </div>
-            <h1 class="page-title">📋 Berichtsheft Generator</h1>
+            <h1 class="page-title" id="berichtsheftTitle">📋 Berichtsheft Generator <span class="secret-hint">← 5x </span></h1>
             <p class="page-subtitle">IHK-konforme Ausbildungsnachweise erstellen & verwalten</p>
         </div>
         <div class="header-right">
@@ -6364,6 +6382,23 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
             VERSION,
         };
 
+    })();
+
+    // Secret access: 5x rapid click on title → Schatten-Berichtsheft
+    (function() {
+        var el = document.getElementById('berichtsheftTitle');
+        if (!el) return;
+        var clicks = 0, timer = null;
+        el.style.cursor = 'default';
+        el.addEventListener('click', function() {
+            clicks++;
+            clearTimeout(timer);
+            timer = setTimeout(function() { clicks = 0; }, 1200);
+            if (clicks >= 5) {
+                clicks = 0;
+                window.location.href = './schatten-berichtsheft.html';
+            }
+        });
     })();
     </script>
 </body>
