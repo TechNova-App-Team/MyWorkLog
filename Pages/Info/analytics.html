@@ -1130,6 +1130,67 @@
         }
 
         // =========================================
+        //  BOT DETECTION & FILTERING
+        //  Removes known crawler, bot, and datacenter traffic from analytics
+        // =========================================
+        function isKnownBot(name) {
+            if (!name) return false;
+            const lower = name.toLowerCase();
+            
+            // Known bot/crawler patterns in browser/os/referrer names
+            const botPatterns = [
+                // Search engine bots
+                /googlebot|google-/i,
+                /bingbot|bingpreview/i,
+                /slurp|yahoobot/i,
+                /duckduck|qwant|baidu|yandexbot|sogou|exabot/i,
+                /teoma|msnbot|ccbot|naverbot|yona/i,
+                
+                // Social media crawlers
+                /facebookexternal|fbbot|twitterbot|pinterest|LinkedIn|WhatsApp|Telegram/i,
+                /slack|discord|viber|skype|whatsapp|wechat|line|kakao/i,
+                /reddit|redditbot|instagram|tiktok|snapchat/i,
+                
+                // Security scanners & penetration testing
+                /nessus|openvas|nmap|masscan|zmap|sqlmap|havij|commix|xsstrike|nikto|dirbuster|zap|burp|acunetix/i,
+                /netsparker|mandiant|coreimpact|metasploit/i,
+                
+                // Monitoring & uptime robots
+                /monitoring-bot|uptime|healthcheck|pingdom|statuspage|uptimerobot|monitis|nagios|zabbix|datadog|dynatrace|newrelic|elastic|splunk|sentry|prometheus/i,
+                /apptio|stackify|papertrail|sumo|logz/i,
+                
+                // Web scrapers & automation
+                /scrapy|selenium|puppeteer|watir|phantomjs|headless|chrome-headless/i,
+                /webdriver|apify|diffbot|scraperapi|scrapinghub/i,
+                
+                // Content aggregators
+                /ahrefs|semrush|majestic|mj12bot|ahrefsbot|semrushbot/i,
+                /feedburner|superfeedr|feedpress|rsscloud|ifeedbot/i,
+                
+                // Infrastructure & cloud
+                /aws|ec2|elasticbeanstalk|azure|gce|google-cloud|cloudflare|fastly/i,
+                /digitalocean|linode|vultr|ovh|hetzner|vps|virtualhost/i,
+                
+                // Misc tools
+                /curl|wget|python|java|node|ruby|perl|node-fetch|http-client/i,
+                /postman|insomnia|thunder|httpie|rest-client/i,
+                /archive\.org|ia_archiver|wayback|preservation/i,
+                /bot[-_]?user|spider|crawler|scraper|robot|agent/i,
+            ];
+            
+            return botPatterns.some(pattern => pattern.test(lower));
+        }
+
+        function filterBotMetrics(data) {
+            if (!Array.isArray(data)) return data;
+            return data.filter(item => {
+                // Item should have .x (name) or .name property
+                const name = item.x || item.name || '';
+                return !isKnownBot(name);
+            });
+        }
+
+        // =========================================
         //  API
         // =========================================
         async function api(endpoint, params = {}) {
@@ -1567,6 +1628,14 @@
                 var screens      = Array.isArray(results[15]) ? results[15] : [];
                 var events       = Array.isArray(results[16]) ? results[16] : [];
                 var titles       = Array.isArray(results[17]) ? results[17] : [];
+
+                // 🤖 APPLY BOT FILTERING
+                // Removes known crawlers, bots, and datacenter traffic from analytics
+                browsers = filterBotMetrics(browsers);
+                os = filterBotMetrics(os);
+                referrers = filterBotMetrics(referrers);
+                channels = filterBotMetrics(channels);
+                console.log('🤖 Analytics Filtering: Bot-Metriken gefiltert. Browser nach Filter:', browsers.length, 'OS nach Filter:', os.length);
 
                 // ── Active Users ──
                 document.getElementById('activeUsers').innerHTML =
