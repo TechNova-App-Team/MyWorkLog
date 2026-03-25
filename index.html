@@ -12389,6 +12389,19 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
              document.getElementById('mainContent').classList.add('full-width');
         }
 
+        // Respect explicit request to keep sidebar closed when navigating from other pages
+        try {
+            const keepClosed = localStorage.getItem('sidebar_keep_closed');
+            if (keepClosed === 'true') {
+                isSidebarOpen = false;
+                const sb = document.getElementById('sidebar');
+                const main = document.getElementById('mainContent');
+                if (sb) sb.classList.add('hidden');
+                if (main) main.classList.add('full-width');
+                localStorage.removeItem('sidebar_keep_closed');
+            }
+        } catch (e) { /* ignore storage errors */ }
+
 
         applyTheme(data.settings.theme);
         // Apply stored theme mode (dark / light / system)
@@ -30810,9 +30823,9 @@ if (document.readyState === 'loading') {
             <span class="mob-nav-icon">🎯</span>
             <span class="mob-nav-label">Ziele</span>
         </button>
-        <button class="mob-nav-btn" onclick="window.open('Pages/Info/repo-report.html', '_blank')" id="mobNav-repo" title="Projekt-Report öffnen">
-            <span class="mob-nav-icon">🔥</span>
-            <span class="mob-nav-label">Repo</span>
+        <button class="mob-nav-btn" onclick="(function(){ try{ localStorage.setItem('sidebar_keep_closed','true'); }catch(e){} window.location.href='Pages/App/berichtsheft.html'; })()" id="mobNav-berichtsheft" title="Berichtsheft öffnen">
+            <span class="mob-nav-icon">📘</span>
+            <span class="mob-nav-label">Berichtsheft</span>
         </button>
     </div>
 </nav>
