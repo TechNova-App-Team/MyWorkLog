@@ -7364,11 +7364,12 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     window.finishIntro=function(){
       localStorage.setItem('pro_intro_seen','true');
       intro.style.animation='viFadeOut .4s ease forwards';
-      setTimeout(function(){
-        intro.style.display='none';
-        document.body.style.overflow='';
-        if(window._showGhostButton) window._showGhostButton();
-      },400);
+            setTimeout(function(){
+                intro.style.display='none';
+                document.body.style.overflow='';
+                // Show ghost button immediately (banner remains delayed)
+                if (window._showGhostButton) window._showGhostButton();
+            },400);
     };
 
     document.addEventListener('keydown',function(e){
@@ -29931,6 +29932,7 @@ function initAutoInstallPrompt() {
 }
 
 // ===== PWA SMART INSTALL BANNER =====
+// Show PWA install banner only after accumulated visit time (30 minutes)
 (function initPWABanner() {
     const banner = document.getElementById('pwaInstallBanner');
     if (!banner) return;
@@ -29947,24 +29949,83 @@ function initAutoInstallPrompt() {
     if (wasDismissed && !cooldownPassed) return; // Dismissed recently
 
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-    if (isIOS) {
-        // iOS: Can't use beforeinstallprompt, show manual instructions
-        document.getElementById('pwaIOSHint').style.display = 'flex';
-        document.getElementById('pwaInstallBtn').textContent = 'Verstanden';
-        document.getElementById('pwaInstallBtn').onclick = function() { pwaInstallBannerDismiss(); };
+    // Required accumulated time before showing banner: 30 minutes
+    const REQUIRED_MS = 30 * 60 * 1000;
+    const TOTAL_KEY = 'pwa_total_time_ms';
+    const START_KEY = 'pwa_visit_start';
+
+    function getTotalTime() {
+        return parseInt(localStorage.getItem(TOTAL_KEY) || '0', 10);
+    }
+    function setTotalTime(ms) {
+        localStorage.setItem(TOTAL_KEY, Math.max(0, ms).toString());
+    }
+    function startSession() {
+        try { localStorage.setItem(START_KEY, Date.now().toString()); } catch (e) {}
+    }
+    function endSession() {
+        try {
+            const s = parseInt(localStorage.getItem(START_KEY) || '0', 10);
+            if (s && s > 0) {
+                const delta = Date.now() - s;
+                setTotalTime(getTotalTime() + delta);
+                localStorage.removeItem(START_KEY);
+            }
+        } catch (e) {}
     }
 
-    // Show banner after short delay so it doesn't compete with page load
-    setTimeout(function() {
-        banner.style.display = 'block';
-        requestAnimationFrame(function() {
-            requestAnimationFrame(function() {
-                banner.classList.add('visible');
-            });
-        });
-    }, isIOS ? 3000 : 2000);
+    // Visibility handler to account for time when the tab becomes hidden
+    function visibilityHandler() {
+        if (document.visibilityState === 'hidden') {
+            endSession();
+        } else {
+            startSession();
+        }
+    }
+
+    // Check whether we should show banner now or later
+    let showTimeout = null;
+    function maybeShowBanner() {
+        // Ensure we have current session accounted for
+        endSession();
+        const total = getTotalTime();
+        if (total >= REQUIRED_MS) {
+            // Show banner now
+            if (isIOS) {
+                const hint = document.getElementById('pwaIOSHint');
+                if (hint) hint.style.display = 'flex';
+                const btn = document.getElementById('pwaInstallBtn');
+                if (btn) {
+                    btn.textContent = 'Verstanden';
+                    btn.onclick = function() { pwaInstallBannerDismiss(); };
+                }
+            }
+            banner.style.display = 'block';
+            requestAnimationFrame(function() { requestAnimationFrame(function() { banner.classList.add('visible'); }); });
+            // cleanup listeners and timers
+            document.removeEventListener('visibilitychange', visibilityHandler);
+            window.removeEventListener('beforeunload', endSession);
+            if (showTimeout) { clearTimeout(showTimeout); showTimeout = null; }
+        } else {
+            // Schedule to check when remaining time elapses
+            const remaining = REQUIRED_MS - total;
+            if (showTimeout) clearTimeout(showTimeout);
+            // If remaining is very large, it's still safe to setTimeout (browsers may clamp).
+            showTimeout = setTimeout(maybeShowBanner, remaining);
+        }
+        // restart session after measurement
+        startSession();
+    }
+
+    // Start tracking session time
+    startSession();
+    document.addEventListener('visibilitychange', visibilityHandler);
+    window.addEventListener('beforeunload', endSession);
+
+    // Kick off check (do not show immediately; maybeShowBanner will show after 30m)
+    maybeShowBanner();
+
 })();
 
 function pwaInstallBannerInstall() {
@@ -30903,17 +30964,63 @@ if (document.readyState === 'loading') {
             setTimeout(() => { m.style.display = 'none'; }, 400);
         };
 
+        // Expose for other modules
+        window.showGhostAnnounce = showGhostAnnounce;
+
         // Show announcement ONLY after intro is done (never during intro!)
-        function tryShowGhostAnnounce() {
-            const intro = document.getElementById('pro-intro');
-            // If intro exists and is visible, wait and retry
-            if (intro && intro.style.display !== 'none') {
-                setTimeout(tryShowGhostAnnounce, 1000);
-                return;
+        // and only after accumulated visit time reaches 10 minutes.
+        function scheduleGhostAnnounceByTime() {
+            const REQUIRED_MS = 10 * 60 * 1000;
+            const TOTAL_KEY = 'ghost_total_time_ms';
+            const START_KEY = 'ghost_visit_start';
+
+            function getTotal() { return parseInt(localStorage.getItem(TOTAL_KEY) || '0', 10); }
+            function setTotal(ms) { localStorage.setItem(TOTAL_KEY, Math.max(0, ms).toString()); }
+            function startSession() { try { localStorage.setItem(START_KEY, Date.now().toString()); } catch(e){} }
+            function endSession() {
+                try {
+                    const s = parseInt(localStorage.getItem(START_KEY) || '0', 10);
+                    if (s && s > 0) {
+                        const delta = Date.now() - s;
+                        setTotal(getTotal() + delta);
+                        localStorage.removeItem(START_KEY);
+                    }
+                } catch (e) {}
             }
-            showGhostAnnounce();
+
+            function visibilityHandler() { if (document.visibilityState === 'hidden') endSession(); else startSession(); }
+
+            let showTimeout = null;
+            function maybeShow() {
+                const intro = document.getElementById('pro-intro');
+                if (intro && intro.style.display !== 'none') {
+                    // Wait until intro hidden — retry shortly
+                    setTimeout(maybeShow, 1000);
+                    return;
+                }
+                endSession();
+                const total = getTotal();
+                if (total >= REQUIRED_MS) {
+                    showGhostAnnounce();
+                    // cleanup
+                    document.removeEventListener('visibilitychange', visibilityHandler);
+                    window.removeEventListener('beforeunload', endSession);
+                    if (showTimeout) { clearTimeout(showTimeout); showTimeout = null; }
+                } else {
+                    const remaining = REQUIRED_MS - total;
+                    if (showTimeout) clearTimeout(showTimeout);
+                    showTimeout = setTimeout(maybeShow, remaining);
+                }
+                startSession();
+            }
+
+            startSession();
+            document.addEventListener('visibilitychange', visibilityHandler);
+            window.addEventListener('beforeunload', endSession);
+            maybeShow();
         }
-        setTimeout(tryShowGhostAnnounce, 1200);
+
+        scheduleGhostAnnounceByTime();
 
         // Determine which ghost skin to use based on job
         function getGhostSkin() {
@@ -31006,9 +31113,57 @@ if (document.readyState === 'loading') {
         };
 
         // Beim Laden: Ghost Button NUR zeigen wenn Intro bereits gesehen wurde
+        // Neu: Zeige Ghost-Button erst nach kumulierter Besuchszeit (10 Minuten)
+        window.initGhostButtonTimer = function() {
+            const REQUIRED_MS = 10 * 60 * 1000; // 10 Minuten
+            const TOTAL_KEY = 'ghost_total_time_ms';
+            const START_KEY = 'ghost_visit_start';
+
+            function getTotal() { return parseInt(localStorage.getItem(TOTAL_KEY) || '0', 10); }
+            function setTotal(ms) { localStorage.setItem(TOTAL_KEY, Math.max(0, ms).toString()); }
+            function startSession() { try { localStorage.setItem(START_KEY, Date.now().toString()); } catch(e){} }
+            function endSession() {
+                try {
+                    const s = parseInt(localStorage.getItem(START_KEY) || '0', 10);
+                    if (s && s > 0) {
+                        const delta = Date.now() - s;
+                        setTotal(getTotal() + delta);
+                        localStorage.removeItem(START_KEY);
+                    }
+                } catch (e) {}
+            }
+
+            function visibilityHandler() { if (document.visibilityState === 'hidden') endSession(); else startSession(); }
+
+            let showTimeout = null;
+            function maybeShow() {
+                endSession();
+                const total = getTotal();
+                if (total >= REQUIRED_MS) {
+                    window._showGhostButton();
+                    // cleanup
+                    document.removeEventListener('visibilitychange', visibilityHandler);
+                    window.removeEventListener('beforeunload', endSession);
+                    if (showTimeout) { clearTimeout(showTimeout); showTimeout = null; }
+                } else {
+                    const remaining = REQUIRED_MS - total;
+                    if (showTimeout) clearTimeout(showTimeout);
+                    showTimeout = setTimeout(maybeShow, remaining);
+                }
+                startSession();
+            }
+
+            // Start tracking
+            startSession();
+            document.addEventListener('visibilitychange', visibilityHandler);
+            window.addEventListener('beforeunload', endSession);
+            // Initial check
+            maybeShow();
+        };
+
         document.addEventListener('DOMContentLoaded', function() {
             if (localStorage.getItem('pro_intro_seen') === 'true') {
-                window._showGhostButton();
+                    if (window._showGhostButton) window._showGhostButton();
             }
         });
 
