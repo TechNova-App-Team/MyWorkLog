@@ -7915,7 +7915,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 <div class="dashboard-item" data-item-id="quick-actions">
                     <div class="quick-actions">
                         <button onclick="openCorrection('month')">± Saldo korrigieren</button>
-                        <button onclick="openVacationModal()">🌴 Urlaub</button>
+                        <button style="text-decoration:line-through;">NFC</button>
                         <button onclick="checkAndBookHolidays()">🏖️ Feiertage prüfen</button>
                         <button onclick="openMoreActionsModal()">⋯ Mehr Aktionen</button>
                     </div>
@@ -11298,59 +11298,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             <div style="display:flex; gap:10px;">
                 <button class="btn btn-primary" onclick="saveCorrection()" style="flex:1;">Buchen</button>
                 <button class="btn" style="flex:1; background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.4); color:#fff;" onclick="document.getElementById('corrModal').classList.remove('active')">Abbrechen</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- VACATION MODAL -->
-    <div class="modal" id="vacationModal">
-        <div class="modal-box" style="width:700px; display:flex; flex-direction:column; max-height:90vh; padding:2rem;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; padding-bottom:1.5rem; border-bottom:1px solid var(--border);">
-                <h2 style="margin:0;">🌴 Urlaubsverwaltung</h2>
-                <button onclick="closeVacationModal()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">&times;</button>
-            </div>
-            
-            <div style="flex:1; overflow-y:auto; padding-right:1rem;">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:2rem;">
-                    <div>
-                        <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:5px; font-weight:600;">Jahresanspruch (Tage):</label>
-                        <input type="number" id="vacationModalTotal" class="glass-input" value="30">
-                    </div>
-                    <div>
-                        <label style="font-size:0.75rem; color:#666; display:block; margin-bottom:5px; font-weight:600;">Manuell hinzugefügt:</label>
-                        <input type="number" id="vacationModalUsedManual" class="glass-input" value="0">
-                    </div>
-                </div>
-                
-                <div style="background:rgba(var(--primary-rgb), 0.08); padding:12px; border-radius:8px; border-left:4px solid var(--primary); margin-bottom:2rem;">
-                    <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 8px 0;">Aktueller anteiliger Anspruch (basierend auf IHK-Start):</p>
-                    <p style="font-size:1.2rem; font-weight:700; color:var(--primary); margin:0;"><span id="vacationModalProRata">0</span> Tage noch verfügbar</p>
-                </div>
-
-                <div style="background:rgba(var(--primary-rgb), 0.1); padding:15px; border-radius:12px; border:1px solid rgba(var(--primary-rgb), 0.3);">
-                    <h5 style="margin-top:0; color:var(--primary);">📅 Blockbuchung</h5>
-                    
-                    <select id="vacationModalPeriodType" class="glass-select" style="margin-bottom:12px;">
-                        <option value="vacation">🌴 Urlaub</option>
-                        <option value="gleittag">⚡ Gleittag (Überstunden)</option>
-                        <option value="holiday">🏖️ Firmen-Frei/Feiertag</option>
-                    </select>
-                    
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:12px;">
-                        <input type="date" id="vacationModalPeriodStart" class="glass-input" placeholder="Startdatum">
-                        <input type="date" id="vacationModalPeriodEnd" class="glass-input" placeholder="Enddatum">
-                    </div>
-                    
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                        <button class="btn btn-primary" onclick="saveVacationPeriod()" style="background:var(--primary);">✓ Buchen</button>
-                        <button class="btn btn-primary" onclick="deleteVacationPeriod()" style="background:var(--danger);">✕ Löschen</button>
-                    </div>
-                </div>
-            </div>
-
-            <div style="display:flex; gap:10px; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border);">
-                <button class="btn btn-primary" style="flex:1; background:var(--primary);" onclick="saveVacationSettingsFromModal()">💾 Speichern</button>
-                <button class="btn" style="flex:1; background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.4); color:#fff;" onclick="closeVacationModal()">Schließen</button>
             </div>
         </div>
     </div>
@@ -17342,66 +17289,8 @@ TIPPS:
         showCustomMessage('↩️ Wiederhergestellt', 'Eintrag wurde wiederhergestellt.', 'success');
     }
     
-    function openVacationModal() {
-        const modal = document.getElementById('vacationModal');
-        modal.classList.add('active');
-        // Load vacation data when opening
-        const proRata = calculateProRataVacation(data.settings.vacation.total || 30);
-        document.getElementById('vacationModalProRata').innerText = proRata;
-        document.getElementById('vacationModalTotal').value = data.settings.vacation.total || 30;
-        document.getElementById('vacationModalUsedManual').value = data.settings.vacation.usedManual || 0;
-    }
-    
-    function closeVacationModal() {
-        const modal = document.getElementById('vacationModal');
-        modal.classList.remove('active');
-    }
 
-    function saveVacationSettingsFromModal() {
-        const total = parseFloat(document.getElementById('vacationModalTotal').value) || 30;
-        const usedManual = parseFloat(document.getElementById('vacationModalUsedManual').value) || 0;
-        data.settings.vacation.total = total;
-        data.settings.vacation.usedManual = usedManual;
-        recalculateVacationUsed();
-        save();
-        closeVacationModal();
-        showCustomMessage('✅ Erfolg', 'Urlaubsdaten gespeichert', 'success');
-    }
-    
-    function saveVacationPeriod() {
-        const periodType = document.getElementById('vacationModalPeriodType').value;
-        const periodStart = document.getElementById('vacationModalPeriodStart').value;
-        const periodEnd = document.getElementById('vacationModalPeriodEnd').value;
-        
-        if (!periodStart || !periodEnd) {
-            alert('Bitte Start- und Enddatum auswählen');
-            return;
-        }
-        
-        // Directly call bookPeriod with modal values
-        if (typeof bookPeriod === 'function') {
-            bookPeriod(periodStart, periodEnd, periodType);
-        }
-        
-        closeVacationModal();
-    }
-    
-    function deleteVacationPeriod() {
-        const periodStart = document.getElementById('vacationModalPeriodStart').value;
-        const periodEnd = document.getElementById('vacationModalPeriodEnd').value;
-        
-        if (!periodStart || !periodEnd) {
-            alert('Bitte Start- und Enddatum auswählen');
-            return;
-        }
-        
-        // Directly call deletePeriod with modal values
-        if (typeof deletePeriod === 'function') {
-            deletePeriod(periodStart, periodEnd);
-        }
-        
-        closeVacationModal();
-    }
+
 
     function toggleVacationPanel() {
         const vacationPanel = document.getElementById('vacationPanelCard');
