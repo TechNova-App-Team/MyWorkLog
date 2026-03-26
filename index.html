@@ -25095,6 +25095,71 @@ TIPPS:
         return false;
     }
 
+    // ── BASIS: Streak-Länge ─────────────────────────────────────────────
+    function getStreakEmoji(streak) {
+      if (streak === 0)         return '❄️';   // Eingefroren
+      if (streak === 1)         return '🌱';   // Keim
+      if (streak === 2)         return '🕯️';   // Erste Flamme
+      if (streak === 3)         return '⚡';   // Blitz
+      if (streak === 4)         return '💧';   // Tropfen
+      if (streak < 10)          return '🔥';   // Feuer
+      if (streak < 15)          return '✨';   // Funken
+      if (streak < 21)          return '💫';   // Wirbel
+      if (streak < 30)          return '🌟';   // Stern
+      if (streak < 50)          return '🏆';   // Pokal
+      if (streak < 75)          return '💎';   // Diamant
+      if (streak < 100)         return '🌊';   // Welle
+      if (streak < 150)         return '🚀';   // Rakete
+      if (streak < 200)         return '⚔️';   // Schwert
+      if (streak < 365)         return '👑';   // Krone
+      return '🌞';                              // Ein ganzes Jahr
+    }
+
+    // ── RICHTUNG: Wächst / fällt / Comeback ────────────────────────────
+    function getTrendEmoji(isNew, wasLate, isComeback, isPerfectWeek) {
+      if (isPerfectWeek) return '🗓️';
+      if (isComeback)    return '💪';
+      if (wasLate)       return '😅';
+      if (isNew)         return '📈';
+      return '🎯';
+    }
+
+    // ── TAGESZEIT: Wann wurde abgehakt ─────────────────────────────────
+    function getTimeEmoji(hour) {
+      if (hour < 5)  return '🌙';  // Nacht
+      if (hour < 8)  return '🌅';  // Morgenrot
+      if (hour < 12) return '☀️';  // Morgen
+      if (hour < 17) return '🌤️';  // Mittag
+      if (hour < 21) return '🌇';  // Abend
+      return '🌃';                  // Spätabend (Last Minute!)
+    }
+
+    // ── WOCHENTAG ───────────────────────────────────────────────────────
+    function getWeekdayEmoji(day) { // 0=So, 1=Mo, ..., 6=Sa
+      return ['🕊️','😤','⚙️','🐪','⚡','🎉','😎'][day];
+    }
+
+    // ── ZUFALLSVARIATION: Pool je Level ────────────────────────────────
+    const emojiPools = {
+      none:   ['❄️','🧊','☃️','🌨️','🥶'],
+      start:  ['🌱','🐣','🌿','🌾','🍀'],
+      fire:   ['🔥','🌶️','♨️','🧨','💥'],
+      star:   ['🌟','⭐','✨','💫','🌠'],
+      trophy: ['🏆','🥇','🎖️','👑','💎'],
+      rocket: ['🚀','🛸','☄️','🌌','🌠'],
+    };
+
+    function getRandomEmoji(streak) {
+      let pool;
+      if (streak === 0)    pool = emojiPools.none;
+      else if (streak < 5) pool = emojiPools.start;
+      else if (streak < 30) pool = emojiPools.fire;
+      else if (streak < 75) pool = emojiPools.star;
+      else if (streak < 150) pool = emojiPools.trophy;
+      else                   pool = emojiPools.rocket;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
     function updateStreakCounter() {
         const streak = calculateStreak();
         const elCount = document.getElementById('streakCount');
@@ -25113,11 +25178,8 @@ TIPPS:
             console.warn('updateStreakCounter: #streakBest not found');
         }
 
-        // Emoji basiert auf aktueller Streak
-        let emoji = '🔥';
-        if (streak.current === 0) emoji = '❄️';
-        else if (streak.current >= 10) emoji = '🌟';
-        else if (streak.current >= 5) emoji = '✨';
+        // Emoji basiert auf aktueller Streak (mit erweitertem System)
+        let emoji = getStreakEmoji(streak.current);
 
         if (elEmoji) {
             try { 
