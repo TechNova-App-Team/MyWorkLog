@@ -1,4 +1,3 @@
-
 // ═══════════════════════════════════════════════════════
 //  SCHATTEN-BERICHTSHEFT — AES-256-GCM ENCRYPTED VAULT
 // ═══════════════════════════════════════════════════════
@@ -438,7 +437,7 @@ function populateCategoryFilter() {
 }
 
 // ═════════════════════════════════════════
-//  EXPORT — IHK-Beschwerde-Protokoll
+//  EXPORT — IHK-BESCHWERDE-PROTOKOLL
 // ═════════════════════════════════════════
 
 function getExportEntries() {
@@ -709,4 +708,3 @@ try {
 } catch(e) {}
 
 initLockScreen();
-
