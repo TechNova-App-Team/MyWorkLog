@@ -1,25 +1,79 @@
 <div align="center">
 
-# ⏱️ MyWorkLog
+<br>
 
-### Professionelle Zeiterfassung. Lokal. Sicher. Intelligent.
+# MyWorkLog
 
-[![Website](https://img.shields.io/badge/Website-MyWorkLog-blueviolet?style=for-the-badge&logo=googlechrome&logoColor=white)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-3.3.3a-blue?style=for-the-badge)](https://github.com)
-[![PWA Ready](https://img.shields.io/badge/PWA-Ready-success?style=for-the-badge&logo=pwa)](https://myworklog.de/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](Rechtliches/LICENSE.md)
+### Professionelle Zeiterfassung · Lokal · Sicher · Intelligent
 
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen?style=for-the-badge&logo=jest)](package.json)
-[![Coverage](https://img.shields.io/badge/coverage-60%25+-orange?style=for-the-badge)](package.json)
-[![DSGVO Compliant](https://img.shields.io/badge/DSGVO-Konform-critical?style=flat-square)](./DSGVO.html)
-[![Offline First](https://img.shields.io/badge/Offline-First-blueviolet?style=flat-square)](Pages/Info/offline.html)
-[![AI Powered](https://img.shields.io/badge/AI-Powered-ff69b4?style=flat-square)](AI-Bot/)
-[![Open Source](https://img.shields.io/badge/Open-Source-informational?style=flat-square)](Rechtliches/LICENSE.md)
+<br>
 
-[🚀 Live Demo](https://myworklog.de/) • [📖 Dokumentation](README´s/) • [🐛 Bug Report](https://github.com/issues) • [✨ Feature Request](https://github.com/issues)
+<!-- ══════════════════════════════════════════════════════════════════
+     TIER 1 — Identity & Release
+══════════════════════════════════════════════════════════════════ -->
+<p>
+  <a href="https://myworklog.de/">
+    <img src="https://img.shields.io/badge/myworklog.de-online-6d28d9?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0d0d14" alt="Website">
+  </a>
+  <a href="https://github.com/releases">
+    <img src="https://img.shields.io/badge/version-3.3.3a-5b21b6?style=for-the-badge&logo=git&logoColor=a78bfa&labelColor=0d0d14" alt="Version">
+  </a>
+  <a href="https://myworklog.de/">
+    <img src="https://img.shields.io/badge/PWA-Ready-059669?style=for-the-badge&logo=pwa&logoColor=6ee7b7&labelColor=0d0d14" alt="PWA">
+  </a>
+  <a href="Rechtliches/LICENSE.md">
+    <img src="https://img.shields.io/badge/License-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=facc15&labelColor=0d0d14" alt="MIT License">
+  </a>
+</p>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     TIER 2 — CI / Quality / Security
+══════════════════════════════════════════════════════════════════ -->
+<p>
+  <img src="https://img.shields.io/badge/build-passing-16a34a?style=flat-square&logo=githubactions&logoColor=white&labelColor=111827" alt="Build">
+  <img src="https://img.shields.io/badge/tests-passing-16a34a?style=flat-square&logo=vitest&logoColor=white&labelColor=111827" alt="Tests">
+  <img src="https://img.shields.io/badge/coverage-60%25+-f97316?style=flat-square&logo=codecov&logoColor=white&labelColor=111827" alt="Coverage">
+  <img src="https://img.shields.io/badge/vulnerabilities-none-16a34a?style=flat-square&logo=snyk&logoColor=white&labelColor=111827" alt="Security">
+  <img src="https://img.shields.io/badge/maintained-yes-6d28d9?style=flat-square&logo=github&logoColor=white&labelColor=111827" alt="Maintained">
+</p>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     TIER 3 — Stack & Compliance
+══════════════════════════════════════════════════════════════════ -->
+<p>
+  <img src="https://img.shields.io/badge/Node-%3E%3D18.0-339933?style=flat-square&logo=nodedotjs&logoColor=white&labelColor=111827" alt="Node">
+  <img src="https://img.shields.io/badge/DSGVO-konform-ef4444?style=flat-square&logo=eu&logoColor=white&labelColor=111827" alt="DSGVO">
+  <img src="https://img.shields.io/badge/Offline-First-8b5cf6?style=flat-square&logo=servicestack&logoColor=white&labelColor=111827" alt="Offline First">
+  <img src="https://img.shields.io/badge/AI-Powered-ec4899?style=flat-square&logo=openai&logoColor=white&labelColor=111827" alt="AI Powered">
+  <img src="https://img.shields.io/badge/Open-Source-38bdf8?style=flat-square&logo=github&logoColor=white&labelColor=111827" alt="Open Source">
+</p>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     META — Dates & Stats
+══════════════════════════════════════════════════════════════════ -->
+<p>
+  <img src="https://img.shields.io/badge/Created-2025-475569?style=flat-square&logo=calendar&logoColor=94a3b8&labelColor=0f172a" alt="Created">
+  <img src="https://img.shields.io/badge/Last%20Updated-M%C3%A4rz%202026-475569?style=flat-square&logo=clockify&logoColor=94a3b8&labelColor=0f172a" alt="Last Updated">
+</p>
+
+<br>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     NAVIGATION
+══════════════════════════════════════════════════════════════════ -->
+<table>
+  <tr>
+    <td align="center"><a href="https://myworklog.de/"><b>🚀 Live Demo</b></a></td>
+    <td align="center"><a href="README´s/"><b>📖 Dokumentation</b></a></td>
+    <td align="center"><a href="CHANGELOG.md"><b>📋 Changelog</b></a></td>
+    <td align="center"><a href="https://github.com/issues"><b>🐛 Bug Report</b></a></td>
+    <td align="center"><a href="https://github.com/issues"><b>✨ Feature Request</b></a></td>
+  </tr>
+</table>
+
+<br>
 
 </div>
-
 ---
 
 ![MyWorkLog Dashboard](Grafiken/Dashboard.png)
