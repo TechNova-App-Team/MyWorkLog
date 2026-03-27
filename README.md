@@ -65,7 +65,7 @@
   <tr>
     <td align="center"><a href="https://myworklog.de/"><b>🚀 Live Demo</b></a></td>
     <td align="center"><a href="README´s/"><b>📖 Dokumentation</b></a></td>
-    <td align="center"><a href="CHANGELOG.md"><b>📋 Changelog</b></a></td>
+    <td align="center"><a href="README´s/Update/CHANGELOG.md"><b>📋 Changelog</b></a></td>
     <td align="center"><a href="https://github.com/issues"><b>🐛 Bug Report</b></a></td>
     <td align="center"><a href="https://github.com/issues"><b>✨ Feature Request</b></a></td>
   </tr>
