@@ -1153,27 +1153,183 @@
         </div>
     </section>
 
-    <!-- Stats Section -->
-    <section class="section">
-        <div class="stats-grid">
-            <div class="stat-card parallax-element" data-speed="0.1">
-                <div class="stat-number" data-count="200">0</div>
-                <div class="stat-label">Aktive Nutzer</div>
+<!-- Stats Section -->
+<section class="section">
+    <div class="stats-grid">
+        <div class="stat-card parallax-element" data-speed="0.1">
+            <div class="stat-number" id="stat-active-users">0</div>
+            <div class="stat-label">Aktive Nutzer</div>
+        </div>
+
+        <div class="stat-card parallax-element" data-speed="0.15" style="position: relative; z-index: 10; overflow: visible;">
+            <div class="stat-number" id="stat-hours">0</div>
+            <div class="stat-label" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                Erfasste Stunden
+                <button id="hoursInfoBtn" style="
+                    display: inline-flex; align-items: center; justify-content: center;
+                    width: 18px; height: 18px; border-radius: 50%;
+                    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+                    color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 700;
+                    cursor: pointer; flex-shrink: 0; padding: 0; line-height: 1;
+                    font-style: normal; transition: background 0.2s, color 0.2s;
+                    position: relative; z-index: 20;
+                ">i</button>
             </div>
-            <div class="stat-card parallax-element" data-speed="0.15">
-                <div class="stat-number" data-count="8900">0</div>
-                <div class="stat-label">Erfasste Stunden</div>
-            </div>
-            <div class="stat-card parallax-element" data-speed="0.2">
-                <div class="stat-number">96<span style="font-size: 2rem;">%</span></div>
-                <div class="stat-label">Zufriedenheit</div>
-            </div>
-            <div class="stat-card parallax-element" data-speed="0.25">
-                <div class="stat-number">24/7</div>
-                <div class="stat-label">Support</div>
+
+            <div id="hoursTooltip" style="
+                display: none;
+                position: absolute;
+                bottom: calc(100% + 14px);
+                left: 50%;
+                transform: translateX(-50%);
+                width: 270px;
+                background: rgba(10, 10, 18, 0.96);
+                border: 1px solid rgba(168, 85, 247, 0.35);
+                border-radius: 14px;
+                padding: 1rem 1.1rem;
+                z-index: 9999;
+                box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+                text-align: left;
+                pointer-events: none;
+            ">
+                <div style="font-size: 0.82rem; font-weight: 700; color: #fff; margin-bottom: 0.6rem;">📐 Wie wird gerechnet?</div>
+
+                <div style="
+                    background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.25);
+                    border-radius: 8px; padding: 0.5rem 0.8rem; margin-bottom: 0.7rem; text-align: center;
+                ">
+                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #fff;">
+                        <span style="color: #a855f7; font-weight: 700;">Nutzer</span>
+                        &nbsp;×&nbsp;
+                        <span style="color: #06b6d4; font-weight: 700;">45h</span>
+                        &nbsp;+&nbsp;
+                        <span style="color: #06b6d4; font-weight: 700;">800h</span>
+                    </span>
+                </div>
+
+                <div style="font-size: 0.72rem; color: rgba(255,255,255,0.5); line-height: 1.6; margin-bottom: 0.65rem;">
+                    Ein aktiver Nutzer trackt im Schnitt <strong style="color: rgba(255,255,255,0.8);">45 Stunden</strong>
+                    (≈ 1 Arbeitswoche+) in MyWorkLog.<br>
+                    Die <strong style="color: rgba(255,255,255,0.8);">+800h</strong> sind eine konservative Basis für frühe Nutzer &amp; gelöschte Daten.
+                </div>
+
+                <div id="hoursTooltipExample" style="
+                    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+                    color: #10b981; background: rgba(16,185,129,0.08);
+                    border: 1px solid rgba(16,185,129,0.2); border-radius: 6px;
+                    padding: 0.35rem 0.7rem; text-align: center;
+                ">— × 45 + 800 = —</div>
+
+                <div style="
+                    position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+                    border: 7px solid transparent; border-top-color: rgba(168,85,247,0.35);
+                    width: 0; height: 0;
+                "></div>
             </div>
         </div>
-    </section>
+
+        <div class="stat-card parallax-element" data-speed="0.2">
+            <div class="stat-number">96<span style="font-size: 2rem;">%</span></div>
+            <div class="stat-label">Zufriedenheit</div>
+        </div>
+        <div class="stat-card parallax-element" data-speed="0.25">
+            <div class="stat-number">24/7</div>
+            <div class="stat-label">Support</div>
+        </div>
+    </div>
+</section>
+
+<script>
+(function () {
+    const UMAMI_API  = 'https://api.umami.is/v1';
+    const WEBSITE_ID = '1ad00d56-ca9d-4fc7-a252-26ca5bd8acf8';
+    const API_TOKEN  = localStorage.getItem('umami_api_token') || 'api_zPctNoDxbOj59ZEltLxqLXBBEXpWDUwo';
+
+    const FALLBACK_VISITORS = 200;
+    const FALLBACK_HOURS    = 8900;
+
+    function calcHours(v) { return (v * 45) + 800; }
+
+    function animateCount(el, target, duration) {
+        duration = duration || 1800;
+        var start = performance.now();
+        function easeOut(t) { return 1 - Math.pow(2, -10 * t); }
+        function tick(now) {
+            var p = Math.min((now - start) / duration, 1);
+            el.textContent = Math.round(easeOut(p) * target).toLocaleString('de-DE');
+            if (p < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+    }
+
+    async function fetchUmami(endpoint, params) {
+        var url = new URL(UMAMI_API + '/websites/' + WEBSITE_ID + endpoint);
+        if (params) Object.entries(params).forEach(function(kv) { if (kv[1] != null) url.searchParams.set(kv[0], kv[1]); });
+        var res = await fetch(url, { headers: { 'x-umami-api-key': API_TOKEN, 'Accept': 'application/json' } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+    }
+
+    function setTooltipExample(visitors, hours) {
+        var el = document.getElementById('hoursTooltipExample');
+        if (el) el.textContent = visitors.toLocaleString('de-DE') + ' × 45 + 800 = ' + hours.toLocaleString('de-DE') + 'h';
+    }
+
+    async function loadStats() {
+        try {
+            var now = Date.now();
+            var data = await fetchUmami('/stats', { startAt: now - 30 * 24 * 60 * 60 * 1000, endAt: now });
+            var visitors = (data.visitors && data.visitors.value != null) ? data.visitors.value : (data.visitors || FALLBACK_VISITORS);
+            var hours = calcHours(visitors);
+            animateCount(document.getElementById('stat-active-users'), visitors);
+            animateCount(document.getElementById('stat-hours'), hours);
+            setTooltipExample(visitors, hours);
+        } catch (e) {
+            console.warn('[Stats] Fallback:', e.message);
+            animateCount(document.getElementById('stat-active-users'), FALLBACK_VISITORS);
+            animateCount(document.getElementById('stat-hours'), FALLBACK_HOURS);
+            setTooltipExample(FALLBACK_VISITORS, FALLBACK_HOURS);
+        }
+    }
+
+    function initTooltip() {
+        var btn     = document.getElementById('hoursInfoBtn');
+        var tooltip = document.getElementById('hoursTooltip');
+        if (!btn || !tooltip) return;
+
+        var open = false;
+
+        function show() {
+            tooltip.style.display = 'block';
+            open = true;
+        }
+        function hide() {
+            tooltip.style.display = 'none';
+            open = false;
+        }
+
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            open ? hide() : show();
+        });
+
+        btn.addEventListener('mouseenter', function() { show(); });
+        btn.addEventListener('mouseleave', function(e) {
+            // Nur schließen wenn Maus nicht zum Tooltip geht
+            if (!tooltip.contains(e.relatedTarget)) hide();
+        });
+
+        document.addEventListener('click', function() { hide(); });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() { loadStats(); initTooltip(); });
+    } else {
+        loadStats();
+        initTooltip();
+    }
+})();
+</script>
 
     <!-- Features Section -->
     <section class="section" id="features">
