@@ -25118,15 +25118,6 @@ TIPPS:
       return '🌞';                              // Ein ganzes Jahr
     }
 
-    // ── RICHTUNG: Wächst / fällt / Comeback ────────────────────────────
-    function getTrendEmoji(isNew, wasLate, isComeback, isPerfectWeek) {
-      if (isPerfectWeek) return '🗓️';
-      if (isComeback)    return '💪';
-      if (wasLate)       return '😅';
-      if (isNew)         return '📈';
-      return '🎯';
-    }
-
     // ── ZUFALLSVARIATION: Pool je Level ────────────────────────────────
     const emojiPools = {
       none:   ['❄️','🧊','☃️','🌨️','🥶'],
@@ -25137,16 +25128,29 @@ TIPPS:
       rocket: ['🚀','🛸','☄️','🌌','🌠'],
     };
 
-    function getRandomEmoji(streak) {
-      let pool;
-      if (streak === 0)    pool = emojiPools.none;
-      else if (streak < 5) pool = emojiPools.start;
-      else if (streak < 30) pool = emojiPools.fire;
-      else if (streak < 75) pool = emojiPools.star;
-      else if (streak < 150) pool = emojiPools.trophy;
-      else                   pool = emojiPools.rocket;
-      return pool[Math.floor(Math.random() * pool.length)];
-    }
+        // Deterministic daily emoji from the pool for the current streak level.
+        // This way the emoji changes each day (based on the date) but remains
+        // stable during the same day until midnight.
+        function getDailyEmoji(streak, date = new Date()) {
+            let pool;
+            if (streak === 0)      pool = emojiPools.none;
+            else if (streak < 5)   pool = emojiPools.start;
+            else if (streak < 30)  pool = emojiPools.fire;
+            else if (streak < 75)  pool = emojiPools.star;
+            else if (streak < 150) pool = emojiPools.trophy;
+            else                   pool = emojiPools.rocket;
+
+            // Use ISO date (YYYY-MM-DD) so the index changes once per day.
+            const dayKey = date.toISOString().slice(0, 10);
+            // simple string hash (32-bit) -> deterministic per day
+            let h = 0;
+            for (let i = 0; i < dayKey.length; i++) {
+                h = ((h << 5) - h) + dayKey.charCodeAt(i);
+                h |= 0;
+            }
+            const idx = Math.abs(h) % pool.length;
+            return pool[idx];
+        }
 
     function updateStreakCounter() {
         const streak = calculateStreak();
@@ -25166,8 +25170,8 @@ TIPPS:
             console.warn('updateStreakCounter: #streakBest not found');
         }
 
-        // Emoji basiert auf aktueller Streak (mit erweitertem System)
-        let emoji = getStreakEmoji(streak.current);
+        // Emoji basiert auf aktueller Streak — wähle eine tägliche Variation
+        let emoji = getDailyEmoji(streak.current);
 
         if (elEmoji) {
             try { 
