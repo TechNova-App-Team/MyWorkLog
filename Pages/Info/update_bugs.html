@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Issue Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+
+:root {
+  --bg-deep: #030305;
+  --bg-glass: rgba(22, 22, 26, 0.65);
+  --bg-sidebar: rgba(10, 10, 12, 0.95);
+  --primary: #a855f7;
+  --primary-rgb: 168, 85, 247;
+  --primary-dim: rgba(168, 85, 247, 0.1);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --success: #10b981;
+  --danger: #ef4444;
+  --border: rgba(255, 255, 255, 0.06);
+  --font-main: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius: 20px;
+}
+[data-theme="light"] {
+  --bg-deep: #f1f5f9;
+  --bg-glass: rgba(255,255,255,0.85);
+  --bg-sidebar: rgba(255,255,255,0.98);
+  --text-main: #071023;
+  --text-muted: #475569;
+  --border: rgba(7,16,35,0.06);
+  --primary-dim: rgba(168,85,247,0.08);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font-main);background:var(--bg-deep);color:var(--text-main);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% -10%,rgba(var(--primary-rgb),.12) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 90% 100%,rgba(239,68,68,.07) 0%,transparent 55%);pointer-events:none;z-index:0}
+[data-theme="light"] body::before{background:radial-gradient(ellipse 80% 50% at 20% -10%,rgba(var(--primary-rgb),.05) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 90% 100%,rgba(239,68,68,.03) 0%,transparent 55%)}
+
+.layout{display:flex;height:100vh;position:relative;z-index:1}
+
+/* ── SIDEBAR ── */
+.sidebar{width:260px;flex-shrink:0;background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.sidebar::after{content:'';position:absolute;left:0;right:0;top:30%;bottom:30%;background:linear-gradient(180deg,transparent 0%,rgba(var(--primary-rgb),.05) 50%,transparent 100%);pointer-events:none}
+[data-theme="light"] .sidebar{background:linear-gradient(180deg,#fefefe 0%,#f8f9fb 100%)}
+
+.sidebar-header{padding:20px 18px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.brand-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#ec4899);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 20px rgba(var(--primary-rgb),.35);flex-shrink:0}
+.brand{font-weight:700;font-size:15px;background:linear-gradient(135deg,var(--text-main) 0%,var(--primary) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.3px}
+.brand-sub{font-size:10px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:.05em;margin-top:-2px}
+
+.sidebar-nav{flex:1;overflow-y:auto;padding:12px 10px;scrollbar-width:none}
+.sidebar-nav::-webkit-scrollbar{display:none}
+.nav-section{font-size:10px;font-weight:600;letter-spacing:.08em;color:var(--text-muted);opacity:.55;text-transform:uppercase;padding:14px 8px 6px}
+[data-theme="light"] .nav-section{opacity:.5}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;cursor:pointer;transition:all .2s;color:var(--text-muted);font-size:13.5px;font-weight:450;border:1px solid transparent;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--text-main)}
+[data-theme="light"] .nav-item:hover{background:rgba(0,0,0,.035)}
+.nav-item.active{background:rgba(var(--primary-rgb),.1);border-color:rgba(var(--primary-rgb),.15);color:var(--primary)}
+[data-theme="light"] .nav-item.active{background:rgba(var(--primary-rgb),.06);border-color:rgba(var(--primary-rgb),.06)}
+.nav-icon{width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:all .2s}
+[data-theme="light"] .nav-icon{background:rgba(0,0,0,.035);border-color:rgba(0,0,0,.025)}
+.nav-badge{margin-left:auto;background:rgba(var(--primary-rgb),.18);color:var(--primary);font-family:var(--font-mono);font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;border:1px solid rgba(var(--primary-rgb),.2)}
+.nav-badge.red{background:rgba(239,68,68,.15);color:#ef4444;border-color:rgba(239,68,68,.2)}
+.nav-badge.green{background:rgba(16,185,129,.15);color:#10b981;border-color:rgba(16,185,129,.2)}
+.nav-badge.amber{background:rgba(245,158,11,.15);color:#f59e0b;border-color:rgba(245,158,11,.2)}
+
+.sidebar-footer{padding:14px 12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+[data-theme="light"] .sidebar-footer{border-top-color:rgba(0,0,0,.04)}
+.footer-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);flex:1}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 6px var(--success)}
+.theme-toggle{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all .2s;color:var(--text-muted)}
+.theme-toggle:hover{background:rgba(255,255,255,.08);color:var(--text-main)}
+[data-theme="light"] .theme-toggle{background:rgba(0,0,0,.025);border-color:rgba(0,0,0,.06)}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:12px;padding:16px 28px;border-bottom:1px solid var(--border);background:rgba(3,3,5,.6);backdrop-filter:blur(12px);flex-shrink:0}
+[data-theme="light"] .topbar{background:rgba(255,255,255,.7)}
+.topbar-title{font-size:17px;font-weight:700;letter-spacing:-.4px;flex:1;display:flex;align-items:center;gap:8px}
+.topbar-chip{font-size:11px;font-weight:500;color:var(--text-muted);font-family:var(--font-mono);background:rgba(255,255,255,.04);border:1px solid var(--border);padding:2px 8px;border-radius:6px}
+[data-theme="light"] .topbar-chip{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.06)}
+.readonly-badge{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--text-muted);background:rgba(255,255,255,.04);border:1px solid var(--border);padding:5px 12px;border-radius:20px}
+[data-theme="light"] .readonly-badge{background:rgba(0,0,0,.03)}
+.readonly-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--text-muted);opacity:.5}
+
+/* ── CONTENT ── */
+.content{flex:1;overflow-y:auto;padding:28px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.06) transparent}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);padding:20px;backdrop-filter:blur(12px);position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(var(--accent-rgb),.07) 0%,transparent 60%);pointer-events:none}
+.stat-card[data-accent="red"]{--accent-rgb:239,68,68}
+.stat-card[data-accent="amber"]{--accent-rgb:245,158,11}
+.stat-card[data-accent="green"]{--accent-rgb:16,185,129}
+.stat-card[data-accent="purple"]{--accent-rgb:168,85,247}
+.stat-accent-line{position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgb(var(--accent-rgb)),transparent);opacity:.8}
+.stat-icon{width:36px;height:36px;border-radius:10px;background:rgba(var(--accent-rgb),.12);border:1px solid rgba(var(--accent-rgb),.15);display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:14px}
+.stat-value{font-size:28px;font-weight:800;letter-spacing:-1px;color:var(--text-main);font-family:var(--font-mono);line-height:1;margin-bottom:4px}
+.stat-label{font-size:12px;color:var(--text-muted);font-weight:500}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.search-wrap{flex:1;min-width:200px;position:relative}
+.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+.search-input{width:100%;background:var(--bg-glass);border:1px solid var(--border);border-radius:12px;padding:9px 14px 9px 38px;color:var(--text-main);font-size:13px;font-family:var(--font-main);outline:none;transition:all .2s;backdrop-filter:blur(8px)}
+.search-input:focus{border-color:rgba(var(--primary-rgb),.35);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.08)}
+.search-input::placeholder{color:var(--text-muted)}
+[data-theme="light"] .search-input{background:rgba(0,0,0,.025);border-color:rgba(0,0,0,.06)}
+.filter-btn{display:flex;align-items:center;gap:5px;padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-glass);color:var(--text-muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);white-space:nowrap;font-family:var(--font-main)}
+.filter-btn:hover{color:var(--text-main);border-color:rgba(255,255,255,.1)}
+[data-theme="light"] .filter-btn:hover{border-color:rgba(0,0,0,.1)}
+.filter-btn.active{background:rgba(var(--primary-rgb),.1);border-color:rgba(var(--primary-rgb),.25);color:var(--primary)}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;backdrop-filter:blur(12px)}
+.table-head{display:grid;grid-template-columns:44px 1fr 130px 110px 120px 130px;align-items:center;padding:0 20px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)}
+[data-theme="light"] .table-head{background:rgba(0,0,0,.015)}
+.th{padding:12px 8px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);opacity:.7;cursor:pointer;user-select:none;display:flex;align-items:center;gap:4px;transition:color .15s;white-space:nowrap}
+.th:hover{opacity:1;color:var(--text-main)}
+.th.sort-active{color:var(--primary);opacity:1}
+
+.bug-row{display:grid;grid-template-columns:44px 1fr 130px 110px 120px 130px;align-items:center;padding:0 20px;border-bottom:1px solid var(--border);transition:background .15s;cursor:pointer;animation:rowIn .3s ease forwards;opacity:0}
+@keyframes rowIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.bug-row:last-child{border-bottom:none}
+.bug-row:hover{background:rgba(255,255,255,.025)}
+[data-theme="light"] .bug-row:hover{background:rgba(0,0,0,.02)}
+.bug-row>*{padding:14px 8px}
+
+.bug-id{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);font-weight:500}
+.bug-title{font-size:13.5px;font-weight:500;color:var(--text-main);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px}
+.bug-meta{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.bug-tag{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-family:var(--font-mono);font-size:10px}
+[data-theme="light"] .bug-tag{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.06)}
+
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap;border:1px solid}
+.status-pill::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.status-pill.open{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.2)}
+.status-pill.progress{background:rgba(245,158,11,.12);color:#f59e0b;border-color:rgba(245,158,11,.2)}
+.status-pill.done{background:rgba(16,185,129,.12);color:#10b981;border-color:rgba(16,185,129,.2)}
+.status-pill.closed{background:rgba(100,116,139,.1);color:#64748b;border-color:rgba(100,116,139,.15)}
+
+.prio-badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.prio-dot{width:8px;height:8px;border-radius:2px}
+.prio-badge.critical .prio-dot{background:#ef4444;box-shadow:0 0 6px #ef4444}
+.prio-badge.high .prio-dot{background:#f97316}
+.prio-badge.medium .prio-dot{background:#f59e0b}
+.prio-badge.low .prio-dot{background:#3b82f6}
+.prio-badge.critical{color:#ef4444}
+.prio-badge.high{color:#f97316}
+.prio-badge.medium{color:#f59e0b}
+.prio-badge.low{color:#3b82f6}
+
+.cat-chip{font-size:11px;font-weight:500;padding:3px 9px;border-radius:7px;white-space:nowrap;border:1px solid}
+.cat-chip.ui{background:rgba(168,85,247,.1);color:var(--primary);border-color:rgba(168,85,247,.2)}
+.cat-chip.backend{background:rgba(59,130,246,.1);color:#3b82f6;border-color:rgba(59,130,246,.2)}
+.cat-chip.performance{background:rgba(245,158,11,.1);color:#f59e0b;border-color:rgba(245,158,11,.2)}
+.cat-chip.security{background:rgba(239,68,68,.1);color:#ef4444;border-color:rgba(239,68,68,.2)}
+.cat-chip.feature{background:rgba(16,185,129,.1);color:#10b981;border-color:rgba(16,185,129,.2)}
+.cat-chip.data{background:rgba(6,182,212,.1);color:#06b6d4;border-color:rgba(6,182,212,.2)}
+
+.bug-date{font-size:12px;color:var(--text-muted);font-family:var(--font-mono)}
+
+/* ── DETAIL PANEL ── */
+.panel-overlay{position:fixed;inset:0;z-index:90;pointer-events:none;display:flex;justify-content:flex-end}
+.detail-panel{width:440px;height:100vh;background:linear-gradient(160deg,rgba(18,18,24,.99),rgba(8,8,12,.99));border-left:1px solid var(--border);box-shadow:-20px 0 60px rgba(0,0,0,.5);transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden;pointer-events:all}
+[data-theme="light"] .detail-panel{background:linear-gradient(160deg,rgba(255,255,255,.99),rgba(248,249,251,.99));border-color:rgba(0,0,0,.08);box-shadow:-12px 0 40px rgba(0,0,0,.08)}
+.detail-panel.open{transform:translateX(0)}
+.panel-backdrop{position:fixed;inset:0;z-index:89;background:rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(2px)}
+.panel-backdrop.open{opacity:1;pointer-events:all}
+
+.detail-header{padding:22px 22px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px}
+[data-theme="light"] .detail-header{border-color:rgba(0,0,0,.06)}
+.detail-id{font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-bottom:4px}
+.detail-title{font-size:15px;font-weight:700;letter-spacing:-.3px;line-height:1.3}
+.detail-close{margin-left:auto;width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid var(--border);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);flex-shrink:0;transition:all .15s;font-family:var(--font-main)}
+.detail-close:hover{background:rgba(239,68,68,.1);color:#ef4444;border-color:rgba(239,68,68,.2)}
+[data-theme="light"] .detail-close{background:rgba(0,0,0,.03);border-color:rgba(0,0,0,.06)}
+
+.detail-body{flex:1;overflow-y:auto;padding:20px 22px;display:flex;flex-direction:column;gap:20px;scrollbar-width:thin}
+.dl{display:flex;flex-direction:column;gap:6px}
+.dl-label{font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted)}
+.dl-row{display:flex;gap:28px;flex-wrap:wrap}
+.desc-box{font-size:13px;color:var(--text-muted);line-height:1.75;background:rgba(255,255,255,.025);border-radius:10px;padding:14px;border:1px solid var(--border);white-space:pre-wrap}
+[data-theme="light"] .desc-box{background:rgba(0,0,0,.02);border-color:rgba(0,0,0,.06)}
+
+/* ── EMPTY STATE ── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text-muted);gap:12px}
+.empty-icon{font-size:40px;opacity:.5}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.07);border-radius:4px}
+[data-theme="light"] ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.08)}
+
+@media(max-width:900px){
+  .sidebar{display:none}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .table-head,.bug-row{grid-template-columns:44px 1fr 120px 100px}
+  .th:nth-child(5),.bug-row>*:nth-child(5),.th:nth-child(6),.bug-row>*:nth-child(6){display:none}
+  .detail-panel{width:100vw}
+}
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+  ✏️  HIER DEINE ISSUES EINTRAGEN
+  Felder:
+    id        – eindeutige ID (z.B. "#001")
+    title     – Titel des Issues
+    status    – "open" | "progress" | "done" | "closed"
+    priority  – "critical" | "high" | "medium" | "low"
+    category  – "ui" | "backend" | "security" | "performance" | "feature" | "data"
+    tag       – Version/Tag (z.B. "v2.4.1"), optional
+    date      – Datum "DD.MM.YYYY"
+    desc      – Beschreibung (mehrzeilig mit \n möglich), optional
+================================================================ -->
+<script id="issues-data" type="application/json">
+[
+  {
+    "id": "#001",
+    "title": "Delete All Data Button Hinzufügen",
+    "status": "open",
+    "priority": "high",
+    "category": "feature",
+    "tag": "v3.3.3a",
+    "date": "27.03.2026",
+    "desc": "All data clear button in den settings (Privacy first)\nLöscht alle Daten unwiderruflich. Bitte mit Passwort bestätigen. Cloud-User: Daten werden auch aus der Cloud gelöscht. Lokale User: Alle Daten werden gelöscht, aber App bleibt nutzbar."
+  },
+  {
+    "id": "#002",
+    "title": "Statistiken bei der About-Seite einbinden",
+    "status": "open",
+    "priority": "low",
+    "category": "backend",
+    "tag": "v3.3.3a",
+    "date": "27.03.2026",
+    "desc": "🔗 Verknüpfung der About-Seite mit der Analytics-Anbindung\n\nZiel: Anzeige anonymisierter Nutzungsstatistiken:\n• Anzahl der aktiven Nutzer\n• Meistgenutzte Features\n• Durchschnittliche Sitzungsdauer\n\n📊 Stunden-Tracking:\n(i) Info: Bei den Werten handelt es sich um eine Hochrechnung, da MyWorkLog keine personenbezogenen Daten sammelt."  },
+  {
+    "id": "#003",
+    "title": "Dashboard Zeiten Chart",
+    "status": "open",
+    "priority": "medium",
+    "category": "ui",
+    "tag": "v3.3.3a",
+    "date": "27.03.2026",
+    "desc": "Chart auf dem Dashboard geht nicht anpassen"
+  },
+  {
+    "id": "#004",
+    "title": "Streak Emojis",
+    "status": "progress",
+    "priority": "medium",
+    "category": "ui",
+    "tag": "v3.3.3a",
+    "date": "27.03.2026",
+    "desc": "Random Emoji implemintieren weil bis jetzt nur emoji code da aber noch nicht mit der streak verknüpft. [25116]"
+  },
+  {
+    "id": "#005",
+    "title": "LocalStorage Eintrag löschen",
+    "status": "open",
+    "priority": "high",
+    "category": "backend",
+    "tag": "v3.3.3a",
+    "date": "27.03.2026",
+    "desc": "timetracker_updates ; timetracker_maintenance ; timetracker_alerts_v2 ;"
+  },
+  {
+    "id": "#006",
+    "title": "Quantum Computer Seite",
+    "status": "open",
+    "priority": "low",
+    "category": "feature",
+    "tag": "v3.3.3a",
+    "date": "27.03.2026",
+    "desc": "Seite womit man einen Quantencomputer per API ansteuern kann und dadurch sich realtime ergebnisse von Atomen ausgeben lassen.\n\nZiel: Nutzer können Quantenberechnungen durchführen und Ergebnisse in MyWorkLog visualisieren."
+  },
+  {
+    "id": "#007",
+    "title": "Banner",
+    "status": "progress",
+    "priority": "critical",
+    "category": "ui",
+    "tag": "v3.3.3a",
+    "date": "27.03.2026",
+    "desc": "Timer für die Banner gehen nicht, die ms zählen nicht runter und erneuern sich immer wieder wenn man die Seite neu lädt"
+  }
+]
+</script>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-logo">🐛</div>
+      <div>
+        <div class="brand">Issue Tracker</div>
+        <div class="brand-sub" id="sb-version">v1.0.0</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Status</div>
+      <div class="nav-item active" onclick="navFilter(this,'all')">
+        <div class="nav-icon">📋</div>
+        Alle Issues
+        <span class="nav-badge" id="nb-all">0</span>
+      </div>
+      <div class="nav-item" onclick="navFilter(this,'open')">
+        <div class="nav-icon">🔴</div>
+        Offen
+        <span class="nav-badge red" id="nb-open">0</span>
+      </div>
+      <div class="nav-item" onclick="navFilter(this,'progress')">
+        <div class="nav-icon">🟡</div>
+        In Bearbeitung
+        <span class="nav-badge amber" id="nb-progress">0</span>
+      </div>
+      <div class="nav-item" onclick="navFilter(this,'done')">
+        <div class="nav-icon">✅</div>
+        Erledigt
+        <span class="nav-badge green" id="nb-done">0</span>
+      </div>
+      <div class="nav-item" onclick="navFilter(this,'closed')">
+        <div class="nav-icon">⚫</div>
+        Geschlossen
+        <span class="nav-badge" id="nb-closed">0</span>
+      </div>
+
+      <div class="nav-section">Priorität</div>
+      <div class="nav-item" onclick="navPrio(this,'critical')">
+        <div class="nav-icon">🔥</div>
+        Kritisch
+        <span class="nav-badge red" id="nb-critical">0</span>
+      </div>
+      <div class="nav-item" onclick="navPrio(this,'high')">
+        <div class="nav-icon">⬆️</div>
+        Hoch
+        <span class="nav-badge" id="nb-high">0</span>
+      </div>
+      <div class="nav-item" onclick="navPrio(this,'medium')">
+        <div class="nav-icon">➡️</div>
+        Mittel
+        <span class="nav-badge" id="nb-medium">0</span>
+      </div>
+      <div class="nav-item" onclick="navPrio(this,'low')">
+        <div class="nav-icon">⬇️</div>
+        Niedrig
+        <span class="nav-badge" id="nb-low">0</span>
+      </div>
+
+      <div class="nav-section">Kategorie</div>
+      <div class="nav-item" onclick="navCat(this,'ui')">
+        <div class="nav-icon">🎨</div>
+        UI / Frontend
+      </div>
+      <div class="nav-item" onclick="navCat(this,'backend')">
+        <div class="nav-icon">⚙️</div>
+        Backend / API
+      </div>
+      <div class="nav-item" onclick="navCat(this,'security')">
+        <div class="nav-icon">🔒</div>
+        Sicherheit
+      </div>
+      <div class="nav-item" onclick="navCat(this,'performance')">
+        <div class="nav-icon">⚡</div>
+        Performance
+      </div>
+      <div class="nav-item" onclick="navCat(this,'feature')">
+        <div class="nav-icon">✨</div>
+        Feature Request
+      </div>
+      <div class="nav-item" onclick="navCat(this,'data')">
+        <div class="nav-icon">💾</div>
+        Daten
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="footer-status">
+        <span class="status-dot"></span>
+        Read-only
+      </div>
+      <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">🌙</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">
+        Issues
+        <span class="topbar-chip" id="view-chip">Alle</span>
+      </div>
+      <span class="readonly-badge">Nur Ansicht</span>
+    </div>
+
+    <div class="content">
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card" data-accent="red">
+          <div class="stat-accent-line"></div>
+          <div class="stat-icon">🔴</div>
+          <div class="stat-value" id="s-open">0</div>
+          <div class="stat-label">Offen</div>
+        </div>
+        <div class="stat-card" data-accent="amber">
+          <div class="stat-accent-line"></div>
+          <div class="stat-icon">🔧</div>
+          <div class="stat-value" id="s-progress">0</div>
+          <div class="stat-label">In Bearbeitung</div>
+        </div>
+        <div class="stat-card" data-accent="green">
+          <div class="stat-accent-line"></div>
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="s-done">0</div>
+          <div class="stat-label">Erledigt</div>
+        </div>
+        <div class="stat-card" data-accent="purple">
+          <div class="stat-accent-line"></div>
+          <div class="stat-icon">🔥</div>
+          <div class="stat-value" id="s-critical">0</div>
+          <div class="stat-label">Kritisch</div>
+        </div>
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input class="search-input" id="q" placeholder="Issues durchsuchen…" oninput="render()" />
+        </div>
+        <button class="filter-btn active" onclick="setStatus(this,'all')">Alle</button>
+        <button class="filter-btn" onclick="setStatus(this,'open')">Offen</button>
+        <button class="filter-btn" onclick="setStatus(this,'progress')">In Arbeit</button>
+        <button class="filter-btn" onclick="setStatus(this,'done')">Erledigt</button>
+        <button class="filter-btn" onclick="setStatus(this,'closed')">Geschlossen</button>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-wrap">
+        <div class="table-head">
+          <div class="th">#</div>
+          <div class="th sort-active" onclick="sortBy('title')" id="sort-title">Titel <span id="arr-title">↕</span></div>
+          <div class="th" onclick="sortBy('status')" id="sort-status">Status <span id="arr-status">↕</span></div>
+          <div class="th" onclick="sortBy('priority')" id="sort-priority">Priorität <span id="arr-priority">↕</span></div>
+          <div class="th" onclick="sortBy('category')" id="sort-category">Kategorie <span id="arr-category">↕</span></div>
+          <div class="th" onclick="sortBy('date')" id="sort-date">Datum <span id="arr-date">↕</span></div>
+        </div>
+        <div id="list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="panel-backdrop" id="backdrop" onclick="closeDetail()"></div>
+<div class="panel-overlay">
+  <div class="detail-panel" id="panel">
+    <div class="detail-header">
+      <div style="flex:1;min-width:0">
+        <div class="detail-id" id="dp-id">—</div>
+        <div class="detail-title" id="dp-title">—</div>
+      </div>
+      <button class="detail-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="detail-body">
+      <div class="dl-row">
+        <div class="dl">
+          <div class="dl-label">Status</div>
+          <div id="dp-status"></div>
+        </div>
+        <div class="dl">
+          <div class="dl-label">Priorität</div>
+          <div id="dp-priority"></div>
+        </div>
+        <div class="dl">
+          <div class="dl-label">Kategorie</div>
+          <div id="dp-category"></div>
+        </div>
+      </div>
+      <div class="dl-row">
+        <div class="dl">
+          <div class="dl-label">Version / Tag</div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-main)" id="dp-tag">—</div>
+        </div>
+        <div class="dl">
+          <div class="dl-label">Erstellt am</div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-main)" id="dp-date">—</div>
+        </div>
+      </div>
+      <div class="dl">
+        <div class="dl-label">Beschreibung</div>
+        <div class="desc-box" id="dp-desc">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── LOAD DATA ──
+const ISSUES = JSON.parse(document.getElementById('issues-data').textContent);
+
+// ── LABELS ──
+const SL = { open:'Offen', progress:'In Bearbeitung', done:'Erledigt', closed:'Geschlossen' };
+const PL = { critical:'Kritisch', high:'Hoch', medium:'Mittel', low:'Niedrig' };
+const CL = { ui:'UI / Frontend', backend:'Backend / API', security:'Sicherheit', performance:'Performance', feature:'Feature Request', data:'Daten' };
+
+// ── STATE ──
+let filterStatus = 'all';
+let filterPrio   = null;
+let filterCat    = null;
+let sortField    = 'date';
+let sortDir      = -1;
+
+// ── THEME ──
+(function(){
+  const t = localStorage.getItem('bug-theme') || 'dark';
+  document.documentElement.dataset.theme = t;
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('theme-btn').textContent = t === 'light' ? '☀️' : '🌙';
+  });
+})();
+function toggleTheme(){
+  const isLight = document.documentElement.dataset.theme === 'light';
+  document.documentElement.dataset.theme = isLight ? 'dark' : 'light';
+  document.getElementById('theme-btn').textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('bug-theme', document.documentElement.dataset.theme);
+}
+
+// ── NAV ──
+function clearNav(){ document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active')); }
+
+function navFilter(el, s){
+  clearNav(); el.classList.add('active');
+  filterStatus = s; filterPrio = null; filterCat = null;
+  const labels = { all:'Alle', open:'Offen', progress:'In Bearbeitung', done:'Erledigt', closed:'Geschlossen' };
+  document.getElementById('view-chip').textContent = labels[s];
+  syncFilterBtns(s);
+  render();
+}
+function navPrio(el, p){
+  clearNav(); el.classList.add('active');
+  filterPrio = p; filterStatus = 'all'; filterCat = null;
+  document.getElementById('view-chip').textContent = PL[p];
+  syncFilterBtns('all');
+  render();
+}
+function navCat(el, c){
+  clearNav(); el.classList.add('active');
+  filterCat = c; filterStatus = 'all'; filterPrio = null;
+  document.getElementById('view-chip').textContent = CL[c];
+  syncFilterBtns('all');
+  render();
+}
+function setStatus(el, s){
+  filterStatus = s; filterPrio = null; filterCat = null;
+  syncFilterBtns(s);
+  const labels = { all:'Alle', open:'Offen', progress:'In Bearbeitung', done:'Erledigt', closed:'Geschlossen' };
+  document.getElementById('view-chip').textContent = labels[s];
+  // Sync sidebar
+  clearNav();
+  document.querySelectorAll('.nav-item')[s === 'all' ? 0 : ['open','progress','done','closed'].indexOf(s)+1]?.classList.add('active');
+  render();
+}
+function syncFilterBtns(s){
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    if(b.textContent.trim() === ({ all:'Alle', open:'Offen', progress:'In Arbeit', done:'Erledigt', closed:'Geschlossen' })[s]) b.classList.add('active');
+  });
+}
+
+// ── SORT ──
+const PORD = { critical:0, high:1, medium:2, low:3 };
+const SORD = { open:0, progress:1, done:2, closed:3 };
+
+function sortBy(f){
+  if(sortField === f) sortDir *= -1; else { sortField = f; sortDir = -1; }
+  document.querySelectorAll('.th').forEach(t => t.classList.remove('sort-active'));
+  document.getElementById('sort-'+f)?.classList.add('sort-active');
+  ['title','status','priority','category','date'].forEach(k => {
+    const el = document.getElementById('arr-'+k);
+    if(el) el.textContent = k === f ? (sortDir === 1 ? '↑' : '↓') : '↕';
+  });
+  render();
+}
+
+// ── FILTER + SORT ──
+function getList(){
+  let list = [...ISSUES];
+  const q = document.getElementById('q').value.toLowerCase().trim();
+  if(filterStatus !== 'all') list = list.filter(b => b.status === filterStatus);
+  if(filterPrio) list = list.filter(b => b.priority === filterPrio);
+  if(filterCat)  list = list.filter(b => b.category === filterCat);
+  if(q) list = list.filter(b =>
+    b.title.toLowerCase().includes(q) ||
+    (b.desc||'').toLowerCase().includes(q) ||
+    (b.tag||'').toLowerCase().includes(q) ||
+    b.id.toLowerCase().includes(q)
+  );
+  list.sort((a,b) => {
+    let av, bv;
+    if(sortField==='title')    { av=a.title; bv=b.title; }
+    else if(sortField==='status')   { av=SORD[a.status]; bv=SORD[b.status]; }
+    else if(sortField==='priority') { av=PORD[a.priority]; bv=PORD[b.priority]; }
+    else if(sortField==='category') { av=a.category; bv=b.category; }
+    else { av=a.date; bv=b.date; }
+    if(av<bv) return -sortDir; if(av>bv) return sortDir; return 0;
+  });
+  return list;
+}
+
+// ── RENDER ──
+function h(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function statusPill(s){ return `<span class="status-pill ${s}">${SL[s]||s}</span>`; }
+function prioBadge(p){ return `<span class="prio-badge ${p}"><span class="prio-dot"></span>${PL[p]||p}</span>`; }
+function catChip(c){ return `<span class="cat-chip ${c}">${CL[c]||c}</span>`; }
+
+function render(){
+  const list = getList();
+  const el = document.getElementById('list');
+
+  if(!list.length){
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div>Keine Issues gefunden</div></div>`;
+    updateBadges();
+    return;
+  }
+
+  el.innerHTML = list.map((b,i) => `
+    <div class="bug-row" style="animation-delay:${i*30}ms" onclick="openDetail(${ISSUES.indexOf(b)})">
+      <div class="bug-id">${h(b.id)}</div>
+      <div>
+        <div class="bug-title">${h(b.title)}</div>
+        <div class="bug-meta">
+          ${b.tag ? `<span class="bug-tag">${h(b.tag)}</span>` : ''}
+          ${b.desc ? `<span>${h(b.desc.split('\n')[0].slice(0,55))}${b.desc.length>55?'…':''}</span>` : '<span style="opacity:.4">Keine Beschreibung</span>'}
+        </div>
+      </div>
+      <div>${statusPill(b.status)}</div>
+      <div>${prioBadge(b.priority)}</div>
+      <div>${catChip(b.category)}</div>
+      <div class="bug-date">${h(b.date)}</div>
+    </div>
+  `).join('');
+  updateBadges();
+}
+
+function updateBadges(){
+  const c = fn => ISSUES.filter(fn).length;
+  document.getElementById('nb-all').textContent      = ISSUES.length;
+  document.getElementById('nb-open').textContent     = c(b=>b.status==='open');
+  document.getElementById('nb-progress').textContent = c(b=>b.status==='progress');
+  document.getElementById('nb-done').textContent     = c(b=>b.status==='done');
+  document.getElementById('nb-closed').textContent   = c(b=>b.status==='closed');
+  document.getElementById('nb-critical').textContent = c(b=>b.priority==='critical');
+  document.getElementById('nb-high').textContent     = c(b=>b.priority==='high');
+  document.getElementById('nb-medium').textContent   = c(b=>b.priority==='medium');
+  document.getElementById('nb-low').textContent      = c(b=>b.priority==='low');
+
+  document.getElementById('s-open').textContent     = c(b=>b.status==='open');
+  document.getElementById('s-progress').textContent = c(b=>b.status==='progress');
+  document.getElementById('s-done').textContent     = c(b=>b.status==='done');
+  document.getElementById('s-critical').textContent = c(b=>b.priority==='critical');
+
+}
+
+// ── DETAIL ──
+function openDetail(idx){
+  const b = ISSUES[idx];
+  if(!b) return;
+  document.getElementById('dp-id').textContent = b.id;
+  document.getElementById('dp-title').textContent = b.title;
+  document.getElementById('dp-status').innerHTML = statusPill(b.status);
+  document.getElementById('dp-priority').innerHTML = prioBadge(b.priority);
+  document.getElementById('dp-category').innerHTML = catChip(b.category);
+  document.getElementById('dp-tag').textContent = b.tag || '—';
+  document.getElementById('dp-date').textContent = b.date || '—';
+  document.getElementById('dp-desc').textContent = b.desc || 'Keine Beschreibung vorhanden.';
+  document.getElementById('panel').classList.add('open');
+  document.getElementById('backdrop').classList.add('open');
+}
+function closeDetail(){
+  document.getElementById('panel').classList.remove('open');
+  document.getElementById('backdrop').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeDetail(); });
+
+// ── INIT ──
+render();
+</script>
+</body>
+</html>
