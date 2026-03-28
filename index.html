@@ -10613,6 +10613,17 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             Recovery öffnen
                         </button>
                     </div>
+
+                        <!-- Danger Zone / Konto löschen -->
+                        <div class="settings-section" style="border:1px solid rgba(239,68,68,0.06); background:rgba(239,68,68,0.02);">
+                            <div class="settings-section-title">GEFAHRENZONE</div>
+                            <p class="settings-hint" style="margin-bottom:8px;">Vorsicht: Hier kannst du alle lokalen Daten unwiderruflich löschen. Diese Aktion betrifft nur LocalStorage (nicht die Cloud).</p>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <button id="btnDeleteAccount" class="settings-btn" style="border:1px solid rgba(239,68,68,0.9); color:#ef4444; background:transparent; padding:10px 14px; border-radius:10px; font-weight:700;" onclick="confirmAndClearLocalData()">Konto und Daten unwiderruflich löschen</button>
+                                <span title="Momentan werden nur lokale Daten (LocalStorage) gelöscht, Cloud-Daten bleiben unberührt." style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); color:var(--text-muted); font-weight:700;">i</span>
+                            </div>
+                            <small class="settings-hint" style="display:block; margin-top:8px; color:var(--text-muted);">Wir empfehlen vorher ein Backup zu erstellen (Backup / Export).</small>
+                        </div>
                 </div>
                 
                 <!-- Tab: Arbeitszeiten -->
@@ -19542,6 +19553,41 @@ TIPPS:
         loadTeamSettings();
     }
 
+    // ===== Account / LocalStorage Löschung (Danger Zone) =====
+    function clearAppLocalData() {
+        // Vollständiges Leeren des LocalStorage (alle keys)
+        try {
+            localStorage.clear();
+        } catch (e) {
+            console.error('localStorage.clear() failed', e);
+            // Fallback: iterative removal
+            Object.keys(localStorage).forEach(k => localStorage.removeItem(k));
+        }
+    }
+
+    function confirmAndClearLocalData() {
+        // First confirmation
+        const ok = confirm('Achtung — alle lokalen Daten werden gelöscht. Diese Aktion ist unwiderruflich. Fortfahren?');
+        if (!ok) return;
+
+        // Second explicit confirmation: require the user to type LÖSCHEN
+        const txt = prompt('Gib zur Bestätigung LÖSCHEN ein (Großschreibung erforderlich):');
+        if (txt !== 'LÖSCHEN') {
+            showCustomMessage('Abgebrochen', 'Löschvorgang wurde abgebrochen. Die Eingabe stimmte nicht überein.', 'info');
+            return;
+        }
+
+        // perform deletion
+        try {
+            clearAppLocalData();
+            showCustomMessage('✅ Lokal gelöscht', 'Alle lokalen App-Daten wurden entfernt. Die Seite wird neu geladen.', 'success');
+            setTimeout(() => location.reload(), 800);
+        } catch (e) {
+            console.error('clear local data error', e);
+            showCustomMessage('❌ Fehler', 'Beim Löschen der lokalen Daten ist ein Fehler aufgetreten.', 'error');
+        }
+    }
+    
     /* ===== Backups helper functions (for debugging & restore) ===== */
     function renderBackupsList() {
         const container = document.getElementById('backupsList');
