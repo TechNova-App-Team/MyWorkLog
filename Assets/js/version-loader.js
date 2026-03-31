@@ -5,28 +5,40 @@ let APP_CONFIG = {
     status: "loading..."
 };
 
-// Load version from config/version.json
+// Load version from config/version.json (try root path first to avoid 404 from nested pages)
 function loadAppVersion() {
-    const url = `./config/version.json?cb=${Date.now()}`;
-    fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
-        .then(response => {
-            if (!response.ok) throw new Error('Version config not found');
-            return response.json();
-        })
-        .then(config => {
-            APP_CONFIG = config;
-            console.log(`✅ MyWorkLog v${APP_CONFIG.version} loaded`);
-            // If version changed since last visit, try to update service worker and reload
-            try {
-                handleVersionChange(APP_CONFIG.version);
-            } catch (e) { console.warn('Update handler failed', e); }
+    const cb = Date.now();
+    const candidates = [
+        `${window.location.origin}/config/version.json?cb=${cb}`,
+        `/config/version.json?cb=${cb}`,
+        `./config/version.json?cb=${cb}`
+    ];
+
+    // Try candidates sequentially until one succeeds
+    (function tryNext(i) {
+        if (i >= candidates.length) {
+            console.warn('⚠️ Could not load version config from any path, using fallback');
             updateVersionElements();
-        })
-        .catch(err => {
-            console.warn('⚠️ Could not load version config, using fallback');
-            // Fallback aus config/version.json wird oben gesetzt
-            updateVersionElements();
-        });
+            return;
+        }
+
+        const url = candidates[i];
+        fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+            .then(response => {
+                if (!response.ok) throw new Error('Version config not found: ' + url);
+                return response.json();
+            })
+            .then(config => {
+                APP_CONFIG = config;
+                console.log(`✅ MyWorkLog v${APP_CONFIG.version} loaded from ${url}`);
+                try { handleVersionChange(APP_CONFIG.version); } catch (e) { console.warn('Update handler failed', e); }
+                updateVersionElements();
+            })
+            .catch(() => {
+                // try next candidate
+                tryNext(i + 1);
+            });
+    })(0);
 }
 
 // Update all elements with [data-version] attribute
