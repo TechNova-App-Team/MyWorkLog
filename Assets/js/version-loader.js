@@ -16,6 +16,10 @@ function loadAppVersion() {
         .then(config => {
             APP_CONFIG = config;
             console.log(`✅ MyWorkLog v${APP_CONFIG.version} loaded`);
+            // If version changed since last visit, try to update service worker and reload
+            try {
+                handleVersionChange(APP_CONFIG.version);
+            } catch (e) { console.warn('Update handler failed', e); }
             updateVersionElements();
         })
         .catch(err => {
@@ -55,6 +59,55 @@ document.addEventListener('DOMContentLoaded', loadAppVersion);
 window.addEventListener('load', () => {
     if (APP_CONFIG.status === 'loading...') loadAppVersion();
 });
+
+// Handle version changes: notify SW and reload clients so users get newest production build
+function handleVersionChange(newVersion) {
+    try {
+        const last = localStorage.getItem('lastSeenVersion');
+        // First time visit: just store
+        if (!last) {
+            localStorage.setItem('lastSeenVersion', newVersion);
+            return;
+        }
+
+        if (last === newVersion) return;
+
+        // New version detected — attempt a seamless update
+        console.log(`[update] version changed: ${last} → ${newVersion}`);
+
+        // Listen for controller change to reload when new SW takes control
+        if (navigator.serviceWorker) {
+            navigator.serviceWorker.addEventListener('controllerchange', function() {
+                window.location.reload();
+            });
+
+            // Ask waiting worker to activate, or tell active controller to skip waiting
+            if (navigator.serviceWorker.getRegistration) {
+                navigator.serviceWorker.getRegistration().then(reg => {
+                    if (reg && reg.waiting) {
+                        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    } else if (navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                }).catch(() => {
+                    if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+                });
+            } else if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+            }
+        }
+
+        // Also try clearing caches programmatically (best-effort)
+        if ('caches' in window) {
+            caches.keys().then(names => names.forEach(n => caches.delete(n))).catch(() => {});
+        }
+
+        // Persist new version so we don't loop
+        localStorage.setItem('lastSeenVersion', newVersion);
+    } catch (err) {
+        console.warn('handleVersionChange err', err);
+    }
+}
 
 // Expose globally for debugging
 window.getAppVersion = () => APP_CONFIG.version;
