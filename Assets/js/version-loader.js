@@ -7,7 +7,8 @@ let APP_CONFIG = {
 
 // Load version from config/version.json
 function loadAppVersion() {
-    fetch('./config/version.json')
+    const url = `./config/version.json?cb=${Date.now()}`;
+    fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
         .then(response => {
             if (!response.ok) throw new Error('Version config not found');
             return response.json();
