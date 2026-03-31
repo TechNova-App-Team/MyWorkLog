@@ -6,7 +6,6 @@
     <title>Über MyWorkLog – Azubi Zeiterfassung, Berichtsheft & Gleitzeitkonto App</title>
     <meta name="description" content="MyWorkLog ist die kostenlose Zeiterfassungs-App für Azubis. Digitales Berichtsheft, Gleitzeitkonto, Überstundenrechner & Arbeitszeitnachweis – 100% offline, DSGVO-konform.">
     <meta name="keywords" content="Azubi Zeiterfassung, Berichtsheft digital, Gleitzeitkonto App, Ausbildung Arbeitszeitnachweis, Überstundenrechner Azubi, IHK Berichtsheft, Stundenkonto, Ausbildungsnachweis, Zeiterfassung Auszubildende, Arbeitszeit App kostenlos">
-    <script src="../../Assets/js/icons.js"></script>
     <script defer src="../../Assets/js/touch-mobile-optimizations.js"></script>
     <style>
         * {
@@ -1253,9 +1252,13 @@
     function animateCount(el, target, duration) {
         duration = duration || 1800;
         var start = performance.now();
-        function easeOut(t) { return 1 - Math.pow(2, -10 * t); }
+        function easeOut(t) { return (t >= 1) ? 1 : 1 - Math.pow(2, -10 * t); }
         function tick(now) {
             var p = Math.min((now - start) / duration, 1);
+            if (p === 1) {
+                el.textContent = Number(target).toLocaleString('de-DE');
+                return;
+            }
             el.textContent = Math.round(easeOut(p) * target).toLocaleString('de-DE');
             if (p < 1) requestAnimationFrame(tick);
         }
@@ -1279,8 +1282,11 @@
         try {
             var now = Date.now();
             var data = await fetchUmami('/stats', { startAt: now - 30 * 24 * 60 * 60 * 1000, endAt: now });
-            var visitors = (data.visitors && data.visitors.value != null) ? data.visitors.value : (data.visitors || FALLBACK_VISITORS);
+            var visitorsRaw = (data.visitors && data.visitors.value != null) ? data.visitors.value : (data.visitors || FALLBACK_VISITORS);
+            // Normalize visitors to integer (some APIs return floats or strings)
+            var visitors = Math.round(Number(visitorsRaw) || FALLBACK_VISITORS);
             var hours = calcHours(visitors);
+            console.log('[Stats] visitorsRaw=', visitorsRaw, 'visitors=', visitors, 'hours=', hours, data);
             animateCount(document.getElementById('stat-active-users'), visitors);
             animateCount(document.getElementById('stat-hours'), hours);
             setTooltipExample(visitors, hours);
