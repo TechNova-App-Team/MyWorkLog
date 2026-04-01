@@ -2237,8 +2237,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         }
         .card-3d > .card:hover,
         .card-3d > .kpi-grid > .card:hover {
-            box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 30px rgba(var(--primary-rgb), 0.08);
-            border-color: rgba(var(--primary-rgb), 0.15);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+            border-color: rgba(255, 255, 255, 0.1);
         }
         /* Cards with SVG filters: disable 3D to prevent glow clipping */
         .card-3d > .charts-row > .card,
@@ -2269,7 +2269,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             top: 50%; left: 50%;
             width: 80%; height: 80%;
             transform: translate(-50%, -50%);
-            background: radial-gradient(ellipse, rgba(var(--primary-rgb), 0.06), transparent 70%);
+            background: radial-gradient(ellipse, rgba(255, 255, 255, 0.03), transparent 70%);
             border-radius: var(--radius);
             opacity: 0;
             transition: opacity 0.4s ease;
@@ -2631,7 +2631,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             padding: 2rem 1rem; cursor: pointer; transition: transform 0.2s, border-color 0.2s;
         }
-        .kpi-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+        .kpi-card:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.12); }
 
         /* SVG RINGS (Dashboard) */
         .progress-ring { position: relative; width: 110px; height: 110px; }
@@ -2741,8 +2741,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         }
         
         @keyframes barGrow {
-            from { height: 0; opacity: 0; }
-            to { height: 100%; opacity: 0.8; }
+            from { transform: scaleY(0); opacity: 0; }
+            to { transform: scaleY(1); opacity: 0.85; }
         }
         
         @keyframes fadeIn {
@@ -6165,7 +6165,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             background: var(--bg-glass);
         }
         .charts-row .card:hover {
-            border-color: rgba(168, 85, 247, 0.15);
+            border-color: rgba(255, 255, 255, 0.1);
         }
 
 
@@ -15359,10 +15359,10 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             path += `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)} `;
         });
         
-        // Smooth path
+        // Smooth path (bezier curves)
         let smoothPath = '';
-        if (chartStyle.type.includes('smooth')) {
-            smoothPath = '';
+        const isSmooth = chartStyle.type.includes('smooth');
+        if (isSmooth) {
             for (let i = 0; i < vals.length; i++) {
                 const x = getX(i);
                 const y = getY(vals[i]);
@@ -15381,14 +15381,24 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         }
         
         const linePath = smoothPath || path;
-        const colorHex = chartStyle.color.includes('var') ? 'rgb(168, 85, 247)' : chartStyle.color;
+        // Resolve actual hex color (read computed --primary if using theme color)
+        let colorHex;
+        if (chartStyle.color.includes('var')) {
+            const computedPrimary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#a855f7';
+            const hex = computedPrimary.startsWith('#') ? computedPrimary : '#a855f7';
+            const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+            colorHex = `rgb(${r}, ${g}, ${b})`;
+        } else {
+            colorHex = chartStyle.color;
+        }
         const strokeColor = chartStyle.color.includes('var') ? 'var(--primary)' : chartStyle.color;
         
-        // Positive/negative gradient area fill
+        // Positive/negative gradient area fill (only for area/area-smooth types)
         let areaHtml = '';
         let defs = '';
+        const isAreaType = chartStyle.type.includes('area');
         
-        if (chartStyle.type.includes('area') || chartStyle.gradient) {
+        if (isAreaType) {
             // Dual gradient: green above zero, red below
             if (zeroLineY !== null && isRichData) {
                 defs = `<defs>
@@ -15420,6 +15430,11 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             }
         }
         
+        // Glow filter defs for non-area types (line, bar)
+        if (!defs && chartStyle.glow) {
+            defs = `<defs>${`<filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`}</defs>`;
+        }
+        
         // Dots (interactive hit areas)
         let dotsHtml = '';
         const typeEmojis = { work: '💼', school: '📚', vacation: '🌴', gleittag: '⚡', sick: '💊', holiday: '🏖️' };
@@ -15440,19 +15455,51 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         // Multi-colored line path (green when positive, red when negative)
         let multiColorLine = '';
         if (isRichData && vals.some(v => v < 0) && vals.some(v => v >= 0)) {
-            // Segments approach: draw positive and negative separately
-            for (let i = 1; i < vals.length; i++) {
-                const x1 = getX(i - 1), y1 = getY(vals[i - 1]);
-                const x2 = getX(i), y2 = getY(vals[i]);
-                const segColor = (vals[i] >= 0 && vals[i - 1] >= 0) ? 'var(--success)' : 
-                                 (vals[i] < 0 && vals[i - 1] < 0) ? 'var(--danger)' : 'var(--primary)';
-                const segGlow = chartStyle.glow ? `filter: drop-shadow(0 0 4px ${segColor === 'var(--success)' ? '#10b981' : segColor === 'var(--danger)' ? '#ef4444' : colorHex});` : '';
-                multiColorLine += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${segColor}" stroke-width="2.5" stroke-linecap="round" style="${segGlow}" />`;
+            if (isSmooth) {
+                // Smooth multi-color: draw bezier curve segments per section
+                for (let i = 1; i < vals.length; i++) {
+                    const x0 = getX(i - 1), y0 = getY(vals[i - 1]);
+                    const x1 = getX(i), y1 = getY(vals[i]);
+                    const cp1x = (x0 + x1) / 2, cp1y = y0;
+                    const cp2x = (x0 + x1) / 2, cp2y = y1;
+                    const segColor = (vals[i] >= 0 && vals[i - 1] >= 0) ? 'var(--success)' : 
+                                     (vals[i] < 0 && vals[i - 1] < 0) ? 'var(--danger)' : 'var(--primary)';
+                    const segGlow = chartStyle.glow ? `filter: drop-shadow(0 0 4px ${segColor === 'var(--success)' ? '#10b981' : segColor === 'var(--danger)' ? '#ef4444' : colorHex});` : '';
+                    multiColorLine += `<path d="M ${x0.toFixed(1)} ${y0.toFixed(1)} C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="${segColor}" stroke-width="2.5" stroke-linecap="round" style="${segGlow}" />`;
+                }
+            } else {
+                // Straight multi-color: line segments
+                for (let i = 1; i < vals.length; i++) {
+                    const x1 = getX(i - 1), y1 = getY(vals[i - 1]);
+                    const x2 = getX(i), y2 = getY(vals[i]);
+                    const segColor = (vals[i] >= 0 && vals[i - 1] >= 0) ? 'var(--success)' : 
+                                     (vals[i] < 0 && vals[i - 1] < 0) ? 'var(--danger)' : 'var(--primary)';
+                    const segGlow = chartStyle.glow ? `filter: drop-shadow(0 0 4px ${segColor === 'var(--success)' ? '#10b981' : segColor === 'var(--danger)' ? '#ef4444' : colorHex});` : '';
+                    multiColorLine += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${segColor}" stroke-width="2.5" stroke-linecap="round" style="${segGlow}" />`;
+                }
             }
         }
         
+        // ============ BAR CHART MODE ============
+        let barHtml = '';
+        if (chartStyle.type === 'bar') {
+            const barGap = 2;
+            const barWidth = Math.max(2, (chartW / vals.length) - barGap);
+            const baseY = zeroLineY !== null ? zeroLineY : (padTop + chartH);
+            vals.forEach((val, i) => {
+                const x = padLeft + (i / vals.length) * chartW + barGap / 2;
+                const y = getY(val);
+                const barColor = colorHex;
+                const barTop = Math.min(y, baseY);
+                const barH = Math.max(1, Math.abs(y - baseY));
+                const glowStyle = chartStyle.glow ? `filter: drop-shadow(0 0 3px ${barColor});` : '';
+                barHtml += `<rect x="${x.toFixed(1)}" y="${barTop.toFixed(1)}" width="${barWidth.toFixed(1)}" height="${barH.toFixed(1)}" fill="${barColor}" opacity="0.85" rx="2" style="${glowStyle} transform-origin: ${x.toFixed(1)}px ${baseY.toFixed(1)}px; animation: barGrow 0.4s ease-out both; animation-delay: ${i * 12}ms;" data-idx="${i}" />`;
+            });
+        }
+
         // Final line or multi-color
-        const mainLine = multiColorLine || `<path d="${linePath}" class="trend-line" stroke="${strokeColor}" stroke-width="2.5" fill="none" stroke-linecap="round" style="${animStyle} ${glowFilter}" />`;
+        const lineWidth = chartStyle.type === 'line' ? '3' : '2.5';
+        const mainLine = chartStyle.type === 'bar' ? '' : (multiColorLine || `<path d="${linePath}" class="trend-line" stroke="${strokeColor}" stroke-width="${lineWidth}" fill="none" stroke-linecap="round" style="${animStyle} ${glowFilter}" />`);
         
         // Crosshair elements (updated on hover via JS)
         const crosshairHtml = `<line id="trendCrossV" class="trend-crosshair" x1="0" y1="0" x2="0" y2="${h}" style="display:none;" />
@@ -15462,18 +15509,20 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         const lastX = getX(vals.length - 1);
         const lastY = getY(vals[vals.length - 1]);
         const lastColor = vals[vals.length - 1] >= 0 ? '#10b981' : '#ef4444';
-        const currentMarker = `
+        const currentMarker = chartStyle.type === 'bar' ? '' : `
             <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="5" fill="${lastColor}" opacity="0.9" style="animation: trendPulse 2s ease-in-out infinite;" />
             <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="10" fill="${lastColor}" opacity="0.15" style="animation: trendPulse 2s ease-in-out infinite;" />`;
         
+        const svgOverflow = chartStyle.type === 'bar' ? 'overflow:hidden;' : '';
         c.innerHTML = `
-            <svg class="trend-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%; height:100%;" id="trendSvgMain">
+            <svg class="trend-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%; height:100%; ${svgOverflow}" id="trendSvgMain">
                 ${defs}
                 ${gridHtml}
                 ${zeroLineHtml}
-                ${areaHtml}
+                ${chartStyle.type === 'bar' ? '' : areaHtml}
+                ${barHtml}
                 ${mainLine}
-                ${dotsHtml}
+                ${chartStyle.type === 'bar' ? '' : dotsHtml}
                 ${crosshairHtml}
                 ${currentMarker}
             </svg>
@@ -15635,7 +15684,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             rainbow: false
         };
         
-        // Store current style globally for updates
         window.modalChartStyle = JSON.parse(JSON.stringify(currentStyle));
         
         const modal = document.createElement('div');
@@ -15645,68 +15693,74 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         modal.style.animation = 'fadeIn 0.3s ease';
         
         modal.innerHTML = `
-            <div class="modal-box" style="width:650px; max-height:90vh; overflow-y:auto; animation: slideUp 0.3s ease;">
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:1.5rem 2rem; border-bottom:1px solid var(--border); background:linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb), 0.5));">
-                    <h2 style="margin:0; color:#fff;">🎨 Chart-Stil Anpassen</h2>
-                    <button id="closeChartModal" onclick="document.getElementById('chartStyleModal').remove()" style="background:none; border:none; color:#fff; font-size:1.8rem; cursor:pointer; transition:0.2s;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform='rotate(0)'">&times;</button>
+            <div class="modal-box" style="width:580px; max-height:90vh; overflow-y:auto; animation: slideUp 0.3s ease; border-radius:16px; border:1px solid rgba(255,255,255,0.08); box-shadow:0 24px 80px rgba(0,0,0,0.5);">
+                <!-- Header -->
+                <div style="padding:1.75rem 2rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.06);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h2 style="margin:0 0 4px 0; font-size:1.2rem; font-weight:700; color:var(--text-main); letter-spacing:-0.02em;">Chart-Konfiguration</h2>
+                            <p style="margin:0; font-size:0.78rem; color:var(--text-muted); font-weight:400;">Visualisierung und Darstellung anpassen</p>
+                        </div>
+                        <button id="closeChartModal" onclick="document.getElementById('chartStyleModal').remove()" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); color:var(--text-muted); width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:10px; cursor:pointer; font-size:1.2rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='var(--text-muted)'">&times;</button>
+                    </div>
                 </div>
                 
-                <div style="padding:2rem; color:var(--text-main);">
-                    <!-- Chart Type Selection -->
-                    <div style="margin-bottom:2.5rem;">
-                        <label style="display:block; font-weight:700; color:var(--primary); margin-bottom:14px; font-size:1.05rem;">📊 Chart-Typ</label>
-                        <div id="chartTypeButtons" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;"></div>
+                <div style="padding:1.5rem 2rem 2rem;">
+                    <!-- Chart Type -->
+                    <div style="margin-bottom:1.75rem;">
+                        <div style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:10px;">Diagramm-Typ</div>
+                        <div id="chartTypeButtons" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;"></div>
                     </div>
                     
-                    <!-- Farbe Selection -->
-                    <div style="margin-bottom:2.5rem;">
-                        <label style="display:block; font-weight:700; color:var(--primary); margin-bottom:14px; font-size:1.05rem;">🎨 Farbe</label>
-                        <div id="colorButtons" style="display:grid; grid-template-columns: repeat(6, 1fr); gap:12px;"></div>
+                    <!-- Color -->
+                    <div style="margin-bottom:1.75rem;">
+                        <div style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:10px;">Akzentfarbe</div>
+                        <div id="colorButtons" style="display:flex; flex-direction:column;"></div>
                     </div>
                     
                     <!-- Effects -->
-                    <div style="margin-bottom:2.5rem;">
-                        <label style="display:block; font-weight:700; color:var(--primary); margin-bottom:14px; font-size:1.05rem;">✨ Effekte</label>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; padding:1.5rem; background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.2); border-radius:12px;">
-                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px; border-radius:8px; transition:0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.1)'" onmouseout="this.style.background='transparent'">
-                                <input type="checkbox" id="gradientCheck" ${currentStyle.gradient ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer; accent-color:var(--primary);">
-                                <span style="font-weight:500;">Gradient</span>
+                    <div style="margin-bottom:1.75rem;">
+                        <div style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:10px;">Effekte</div>
+                        <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                            <label class="csm-toggle" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); transition:all 0.2s; user-select:none;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=this.querySelector('input').checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)'">
+                                <input type="checkbox" id="gradientCheck" ${currentStyle.gradient ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary); flex-shrink:0;">
+                                <span style="font-size:0.8rem; font-weight:500; white-space:nowrap;">Gradient</span>
                             </label>
-                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px; border-radius:8px; transition:0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.1)'" onmouseout="this.style.background='transparent'">
-                                <input type="checkbox" id="animationCheck" ${currentStyle.animation ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer; accent-color:var(--primary);">
-                                <span style="font-weight:500;">Animation</span>
+                            <label class="csm-toggle" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); transition:all 0.2s; user-select:none;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=this.querySelector('input').checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)'">
+                                <input type="checkbox" id="animationCheck" ${currentStyle.animation ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary); flex-shrink:0;">
+                                <span style="font-size:0.8rem; font-weight:500; white-space:nowrap;">Animation</span>
                             </label>
-                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px; border-radius:8px; transition:0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.1)'" onmouseout="this.style.background='transparent'">
-                                <input type="checkbox" id="glowCheck" ${currentStyle.glow ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer; accent-color:var(--primary);">
-                                <span style="font-weight:500;">Glow</span>
+                            <label class="csm-toggle" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); transition:all 0.2s; user-select:none;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=this.querySelector('input').checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)'">
+                                <input type="checkbox" id="glowCheck" ${currentStyle.glow ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary); flex-shrink:0;">
+                                <span style="font-size:0.8rem; font-weight:500; white-space:nowrap;">Glow</span>
                             </label>
-                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px; border-radius:8px; transition:0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.1)'" onmouseout="this.style.background='transparent'">
-                                <input type="checkbox" id="blurCheck" ${currentStyle.blur ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer; accent-color:var(--primary);">
-                                <span style="font-weight:500;">Blur BG</span>
+                            <label class="csm-toggle" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); transition:all 0.2s; user-select:none;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=this.querySelector('input').checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)'">
+                                <input type="checkbox" id="blurCheck" ${currentStyle.blur ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary); flex-shrink:0;">
+                                <span style="font-size:0.8rem; font-weight:500; white-space:nowrap;">Blur</span>
                             </label>
-                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px; border-radius:8px; transition:0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.1)'" onmouseout="this.style.background='transparent'">
-                                <input type="checkbox" id="dotsCheck" ${currentStyle.dots ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer; accent-color:var(--primary);">
-                                <span style="font-weight:500;">🔵 Dots</span>
+                            <label class="csm-toggle" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); transition:all 0.2s; user-select:none;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=this.querySelector('input').checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)'">
+                                <input type="checkbox" id="dotsCheck" ${currentStyle.dots ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary); flex-shrink:0;">
+                                <span style="font-size:0.8rem; font-weight:500; white-space:nowrap;">Punkte</span>
                             </label>
-                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px; border-radius:8px; transition:0.2s;" onmouseover="this.style.background='rgba(168,85,247,0.1)'" onmouseout="this.style.background='transparent'">
-                                <input type="checkbox" id="rainbowCheck" ${currentStyle.rainbow ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer; accent-color:var(--primary);">
-                                <span style="font-weight:500; background: linear-gradient(90deg, red, orange, yellow, green, cyan, blue, purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🌈 Rainbow</span>
+                            <label class="csm-toggle" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); transition:all 0.2s; user-select:none;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=this.querySelector('input').checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)'">
+                                <input type="checkbox" id="rainbowCheck" ${currentStyle.rainbow ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary); flex-shrink:0;">
+                                <span style="font-size:0.8rem; font-weight:500; white-space:nowrap; background:linear-gradient(90deg,#ef4444,#f59e0b,#10b981,#06b6d4,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Rainbow</span>
                             </label>
                         </div>
                     </div>
                     
                     <!-- Preview -->
-                    <div style="margin-bottom:2rem; padding:1.5rem; background:var(--bg-glass); border:2px solid var(--border); border-radius:12px; transition:0.3s;" onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 20px rgba(168,85,247,0.3)'" onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none'">
-                        <div style="font-weight:600; color:var(--primary); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
-                            👁️ <span>Live Vorschau</span>
+                    <div style="margin-bottom:1.5rem;">
+                        <div style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:10px;">Vorschau</div>
+                        <div style="border:1px solid rgba(255,255,255,0.06); border-radius:12px; overflow:hidden;">
+                            <div id="chartPreview" style="height:150px; background:rgba(0,0,0,0.2); position:relative;"></div>
                         </div>
-                        <div id="chartPreview" style="height:160px; background:rgba(0,0,0,0.3); border-radius:8px; position:relative; overflow:hidden;"></div>
                     </div>
                     
-                    <!-- Action Buttons -->
-                    <div style="display:flex; gap:12px; justify-content:flex-end;">
-                        <button class="btn" id="chartCancelBtn" style="padding:11px 24px; background:rgba(255,255,255,0.08); border:1px solid var(--border); border-radius:8px; cursor:pointer; color:var(--text-main); font-weight:600; transition:0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='translateY(0)'">❌ Abbrechen</button>
-                        <button class="btn btn-primary" id="chartSaveBtn" style="padding:11px 28px; background:linear-gradient(135deg, var(--primary), #8b5cf6); border:none; border-radius:8px; cursor:pointer; color:#fff; font-weight:700; transition:0.3s; box-shadow:0 4px 15px rgba(168, 85, 247, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(168, 85, 247, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(168, 85, 247, 0.3)'">✓ Speichern</button>
+                    <!-- Footer -->
+                    <div style="display:flex; gap:10px; justify-content:flex-end; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.06);">
+                        <button class="btn" id="chartCancelBtn" style="padding:10px 22px; background:transparent; border:1px solid rgba(255,255,255,0.12); border-radius:10px; cursor:pointer; color:var(--text-muted); font-size:0.82rem; font-weight:500; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='transparent'; this.style.color='var(--text-muted)'">Abbrechen</button>
+                        <button class="btn btn-primary" id="chartSaveBtn" style="padding:10px 28px; background:var(--primary); border:none; border-radius:10px; cursor:pointer; color:#fff; font-size:0.82rem; font-weight:600; transition:all 0.2s; box-shadow:0 2px 12px rgba(var(--primary-rgb),0.3);" onmouseover="this.style.filter='brightness(1.15)'; this.style.boxShadow='0 4px 20px rgba(var(--primary-rgb),0.4)'" onmouseout="this.style.filter='brightness(1)'; this.style.boxShadow='0 2px 12px rgba(var(--primary-rgb),0.3)'">Speichern</button>
                     </div>
                 </div>
             </div>
@@ -15714,103 +15768,135 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         
         document.body.appendChild(modal);
         
-        // Setup buttons after DOM is ready
         setupChartModalButtons(currentStyle);
         
-        // Setup checkbox handlers
-        document.getElementById('gradientCheck').addEventListener('change', (e) => {
-            window.modalChartStyle.gradient = e.target.checked;
-            updateChartStylePreview(window.modalChartStyle);
-        });
-        document.getElementById('animationCheck').addEventListener('change', (e) => {
-            window.modalChartStyle.animation = e.target.checked;
-            updateChartStylePreview(window.modalChartStyle);
-        });
-        document.getElementById('glowCheck').addEventListener('change', (e) => {
-            window.modalChartStyle.glow = e.target.checked;
-            updateChartStylePreview(window.modalChartStyle);
-        });
-        document.getElementById('blurCheck').addEventListener('change', (e) => {
-            window.modalChartStyle.blur = e.target.checked;
-            updateChartStylePreview(window.modalChartStyle);
-        });
-        
-        // New effect handlers
-        const dotsCheckbox = document.getElementById('dotsCheck');
-        const rainbowCheckbox = document.getElementById('rainbowCheck');
-        
-        if (dotsCheckbox) {
-            dotsCheckbox.addEventListener('change', (e) => {
-                window.modalChartStyle.dots = e.target.checked;
-                updateChartStylePreview(window.modalChartStyle);
-            });
-        }
-        
-        if (rainbowCheckbox) {
-            rainbowCheckbox.addEventListener('change', (e) => {
-                window.modalChartStyle.rainbow = e.target.checked;
-                if (e.target.checked) {
-                    createConfetti(window.innerWidth / 2, window.innerHeight / 3, 20);
+        // Effect toggle handlers
+        const effectIds = ['gradientCheck', 'animationCheck', 'glowCheck', 'blurCheck', 'dotsCheck', 'rainbowCheck'];
+        const effectKeys = ['gradient', 'animation', 'glow', 'blur', 'dots', 'rainbow'];
+        effectIds.forEach((id, i) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', (e) => {
+                    window.modalChartStyle[effectKeys[i]] = e.target.checked;
+                    // Update toggle visual
+                    const label = e.target.closest('.csm-toggle');
+                    if (label) label.style.background = e.target.checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)';
+                    if (id === 'rainbowCheck' && e.target.checked && typeof createConfetti === 'function') {
+                        createConfetti(window.innerWidth / 2, window.innerHeight / 3, 20);
+                    }
+                    updateChartStylePreview(window.modalChartStyle);
+                });
+                // Set initial active state
+                if (el.checked) {
+                    const label = el.closest('.csm-toggle');
+                    if (label) label.style.background = 'rgba(var(--primary-rgb),0.08)';
                 }
-                updateChartStylePreview(window.modalChartStyle);
-            });
-        }
+            }
+        });
         
-        // Save button handler
         document.getElementById('chartSaveBtn').addEventListener('click', () => {
             saveChartStyle();
-            createExplosion(window.innerWidth / 2, window.innerHeight / 2);
+            if (typeof createExplosion === 'function') createExplosion(window.innerWidth / 2, window.innerHeight / 2);
             document.getElementById('chartStyleModal').remove();
             updateDashboard();
         });
         
-        // Cancel button handler
         document.getElementById('chartCancelBtn').addEventListener('click', () => {
             document.getElementById('chartStyleModal').remove();
         });
         
-        // Close on backdrop click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) modal.remove();
         });
         
-        // Preview laden
         setTimeout(() => updateChartStylePreview(currentStyle), 100);
     }
     
     function setupChartModalButtons(currentStyle) {
         const chartTypes = [
-            {id: 'line', label: '📈 Line Chart'},
-            {id: 'area', label: '📊 Area Chart'},
-            {id: 'area-smooth', label: '🌊 Smooth Area'},
-            {id: 'bar', label: '📦 Bar Chart'}
+            {id: 'line', label: 'Linie', icon: '📈'},
+            {id: 'area', label: 'Fläche', icon: '📊'},
+            {id: 'area-smooth', label: 'Smooth', icon: '🌊'},
+            {id: 'bar', label: 'Balken', icon: '📦'}
         ];
+        
+        // Get current website accent color hex
+        const computedPrimary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#a855f7';
         
         const colors = [
-            {value: 'var(--primary)', label: 'Purple'},
-            {value: '#06b6d4', label: 'Cyan'},
-            {value: '#10b981', label: 'Green'},
-            {value: '#f59e0b', label: 'Amber'},
-            {value: '#ef4444', label: 'Red'},
-            {value: '#8b5cf6', label: 'Indigo'}
+            {value: 'var(--primary)', hex: computedPrimary, label: 'Website-Farbe (' + computedPrimary + ')', isTheme: true},
+            {value: '#a78bfa', hex: '#a78bfa', label: 'Lila-Hell'},
+            {value: '#a855f7', hex: '#a855f7', label: 'Lila'},
+            {value: '#8b5cf6', hex: '#8b5cf6', label: 'Indigo'},
+            {value: '#7c3aed', hex: '#7c3aed', label: 'Violett'},
+            {value: '#6366f1', hex: '#6366f1', label: 'Indigo-Hell'},
+            {value: '#4f46e5', hex: '#4f46e5', label: 'Deep Indigo'},
+            {value: '#0ea5e9', hex: '#0ea5e9', label: 'Sky Blue'},
+            {value: '#00b4d8', hex: '#00b4d8', label: 'Steel Blue'},
+            {value: '#60a5fa', hex: '#60a5fa', label: 'Blau-Hell'},
+            {value: '#3b82f6', hex: '#3b82f6', label: 'Blau'},
+            {value: '#06b6d4', hex: '#06b6d4', label: 'Cyan'},
+            {value: '#22d3ee', hex: '#22d3ee', label: 'Cyan-Hell'},
+            {value: '#00d9ff', hex: '#00d9ff', label: 'Aqua'},
+            {value: '#10b981', hex: '#10b981', label: 'Grün'},
+            {value: '#34d399', hex: '#34d399', label: 'Grün-Hell'},
+            {value: '#06d6a0', hex: '#06d6a0', label: 'Mint'},
+            {value: '#84cc16', hex: '#84cc16', label: 'Limette'},
+            {value: '#fbbf24', hex: '#fbbf24', label: 'Gelb'},
+            {value: '#eab308', hex: '#eab308', label: 'Gelb-Hell'},
+            {value: '#f59e0b', hex: '#f59e0b', label: 'Gelb-Orange'},
+            {value: '#fb923c', hex: '#fb923c', label: 'Orange'},
+            {value: '#f97316', hex: '#f97316', label: 'Orange-Hell'},
+            {value: '#ef4444', hex: '#ef4444', label: 'Rot'},
+            {value: '#f43f5e', hex: '#f43f5e', label: 'Rose'},
+            {value: '#ec4899', hex: '#ec4899', label: 'Pink'},
+            {value: '#d946ef', hex: '#d946ef', label: 'Fuchsia'},
+            {value: '#db2777', hex: '#db2777', label: 'Crimson'},
+            {value: '#be185d', hex: '#be185d', label: 'Magenta-Dunkel'},
+            {value: '#94a3b8', hex: '#94a3b8', label: 'Grau'},
+            {value: '#cbd5e1', hex: '#cbd5e1', label: 'Grau-Hell'},
+            {value: '#64748b', hex: '#64748b', label: 'Grau-Dunkel'},
+            {value: '#475569', hex: '#475569', label: 'Slate'},
+            {value: '#ffffff', hex: '#ffffff', label: 'Weiß'},
         ];
         
-        // Chart Type Buttons
         const chartTypeContainer = document.getElementById('chartTypeButtons');
-        chartTypeContainer.innerHTML = chartTypes.map(type => `
-            <button class="chart-type-btn" data-type="${type.id}" style="padding:14px 16px; border:2px solid ${currentStyle.type === type.id ? 'var(--primary)' : 'var(--border)'}; background:${currentStyle.type === type.id ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.05)'}; border-radius:10px; cursor:pointer; color:var(--text-main); font-weight:600; transition:all 0.3s; box-shadow:${currentStyle.type === type.id ? '0 0 15px rgba(168,85,247,0.3)' : 'none'}" onmouseover="this.style.borderColor='var(--primary)'; this.style.background='rgba(168,85,247,0.1)'" onmouseout="this.style.borderColor='${currentStyle.type === type.id ? 'var(--primary)' : 'var(--border)'}'; this.style.background='${currentStyle.type === type.id ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.05)'}'">
-                ${type.label}
-            </button>
-        `).join('');
+        if (!chartTypeContainer) return;
         
-        // Color Buttons
+        chartTypeContainer.innerHTML = chartTypes.map(type => {
+            const isActive = currentStyle.type === type.id;
+            return `<button class="chart-type-btn" data-type="${type.id}" style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px 8px; border:1px solid ${isActive ? 'var(--primary)' : 'rgba(255,255,255,0.08)'}; background:${isActive ? 'rgba(var(--primary-rgb),0.1)' : 'rgba(255,255,255,0.03)'}; border-radius:10px; cursor:pointer; color:${isActive ? 'var(--primary)' : 'var(--text-muted)'}; font-weight:${isActive ? '600' : '500'}; transition:all 0.2s; font-size:0.78rem;" onmouseover="if(!this.classList.contains('active-type'))this.style.background='rgba(255,255,255,0.06)'" onmouseout="if(!this.classList.contains('active-type'))this.style.background='rgba(255,255,255,0.03)'">
+                <span style="font-size:1.3rem; line-height:1;">${type.icon}</span>
+                <span>${type.label}</span>
+            </button>`;
+        }).join('');
+        
         const colorContainer = document.getElementById('colorButtons');
-        colorContainer.innerHTML = colors.map(color => `
-            <button style="width:100%; height:52px; background:${color.value.includes('var') ? 'var(--primary)' : color.value}; border:3px solid ${currentStyle.color === color.value ? '#fff' : 'transparent'}; border-radius:10px; cursor:pointer; transition:all 0.3s; box-shadow:${currentStyle.color === color.value ? '0 0 15px rgba(168,85,247,0.5)' : 'none'}; transform:${currentStyle.color === color.value ? 'scale(1.05)' : 'scale(1)'}; opacity:${currentStyle.color === color.value ? '1' : '0.8'}" title="${color.label}" onclick="updateChartStyleFromModal('color', '${color.value}')" onmouseover="this.style.opacity='1'; this.style.transform='scale(1.08)'" onmouseout="this.style.opacity='${currentStyle.color === color.value ? '1' : '0.8'}'; this.style.transform='scale(${currentStyle.color === color.value ? '1.05' : '1'})'"></button>
-        `).join('');
+        if (!colorContainer) return;
         
-        // Add click handlers to chart type buttons
-        document.querySelectorAll('.chart-type-btn').forEach(btn => {
+        // Render theme color button first, then grid of all colors
+        const themeColor = colors[0];
+        const isThemeActive = currentStyle.color === 'var(--primary)';
+        const otherColors = colors.slice(1);
+        
+        colorContainer.innerHTML = `
+            <button style="display:flex; align-items:center; gap:8px; padding:8px 14px; background:${isThemeActive ? 'rgba(var(--primary-rgb),0.12)' : 'rgba(255,255,255,0.03)'}; border:1px solid ${isThemeActive ? 'var(--primary)' : 'rgba(255,255,255,0.08)'}; border-radius:10px; cursor:pointer; transition:all 0.2s; margin-bottom:10px; width:100%;" title="${themeColor.label}" onclick="updateChartStyleFromModal('color', 'var(--primary)'); setupChartModalButtons(window.modalChartStyle);" onmouseover="this.style.background='${isThemeActive ? 'rgba(var(--primary-rgb),0.15)' : 'rgba(255,255,255,0.06)'}'" onmouseout="this.style.background='${isThemeActive ? 'rgba(var(--primary-rgb),0.12)' : 'rgba(255,255,255,0.03)'}'">
+                <span style="width:28px; height:28px; border-radius:8px; background:${themeColor.hex}; border:2px solid ${isThemeActive ? '#fff' : 'transparent'}; flex-shrink:0;"></span>
+                <span style="font-size:0.8rem; font-weight:${isThemeActive ? '600' : '500'}; color:${isThemeActive ? 'var(--text-main)' : 'var(--text-muted)'};">🎨 Website-Farbe verwenden</span>
+                ${isThemeActive ? '<span style="margin-left:auto; font-size:0.7rem; color:var(--primary); font-weight:600;">✓ Aktiv</span>' : ''}
+            </button>
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(32px, 1fr)); gap:6px;">
+                ${otherColors.map(color => {
+                    const isActive = currentStyle.color === color.value;
+                    return `<button style="width:32px; height:32px; background:${color.hex}; border:2px solid ${isActive ? '#fff' : 'transparent'}; border-radius:8px; cursor:pointer; transition:all 0.2s; opacity:${isActive ? '1' : '0.7'}; outline:${isActive ? '2px solid ' + color.hex : 'none'}; outline-offset:2px;" title="${color.label}" onclick="updateChartStyleFromModal('color', '${color.value}'); setupChartModalButtons(window.modalChartStyle);" onmouseover="this.style.opacity='1'; this.style.transform='scale(1.15)'" onmouseout="this.style.opacity='${isActive ? '1' : '0.7'}'; this.style.transform='scale(1)'"></button>`;
+                }).join('')}
+            </div>
+        `;
+        
+        // Chart type click handlers
+        const modal = document.getElementById('chartStyleModal');
+        if (!modal) return;
+        modal.querySelectorAll('.chart-type-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const type = btn.getAttribute('data-type');
                 updateChartStyleFromModal('type', type);
@@ -16208,10 +16294,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             );
         });
         
-        // Hover effects
-        element.addEventListener('mouseenter', () => {
-            addGlowEffect(element, effectConfig.color || 'var(--primary)', 300);
-        });
+        // Hover effects removed (no purple glow)
     }
     
     function enhanceChartsWithEffects(config = {}) {
