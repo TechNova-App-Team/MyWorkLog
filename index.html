@@ -10697,6 +10697,18 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                                 <small style="color:var(--text-muted); font-size:0.75rem;">Fr</small>
                             </div>
                         </div>
+                        <p class="settings-hint" style="margin-top:1rem; margin-bottom:0.5rem;">Wochenende (optional)</p>
+                        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; max-width:200px;">
+                            <div style="text-align:center;">
+                                <input type="number" id="h6" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" min="0" step="0.25" placeholder="0">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Sa</small>
+                            </div>
+                            <div style="text-align:center;">
+                                <input type="number" id="h0" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" min="0" step="0.25" placeholder="0">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">So</small>
+                            </div>
+                        </div>
+                        <p class="settings-hint" style="margin-top:0.5rem; font-size:0.7rem;">Auf 0 lassen wenn du nicht am Wochenende arbeitest.</p>
                     </div>
                 </div>
 
@@ -12345,6 +12357,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     window.onload = () => {
         if(localStorage.getItem('tg_pro_data')) data = JSON.parse(localStorage.getItem('tg_pro_data'));
         
+        if(!data.settings) data.settings = {};
+        if(!Array.isArray(data.settings.hours)) data.settings.hours = [0,8.75,8.75,8.75,8.75,4.5,0];
         if(!data.settings.break) data.settings.break = {thresh:6, min:[0, 30, 30, 30, 30, 30, 0]};
         if(!Array.isArray(data.trash)) data.trash = [];
         if (!data.settings.trashAutoEmptyDays && data.settings.trashAutoEmptyDays !== 0) data.settings.trashAutoEmptyDays = 30;
@@ -14272,13 +14286,13 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         let holidays = getGermanHolidays(year).concat(getGermanHolidays(year + 1));
         const existingDates = data.entries.map(e => e.date);
 
-        // Filter: nur Arbeitstage (Mo-Fr), mit Sollstunden, nicht bereits gebucht, max 60 Tage Vorausschau
+        // Filter: nur Arbeitstage (mit Sollstunden), nicht bereits gebucht, max 60 Tage Vorausschau
         const pending = holidays.filter(h => {
             if (existingDates.includes(h.date)) return false;
             const dateObj = new Date(h.date);
             const dayIndex = dateObj.getDay();
             const expected = data.settings.hours[dayIndex] || 0;
-            return expected > 0 && dayIndex >= 1 && dayIndex <= 5 && dateObj.getTime() < now.getTime() + (60 * 86400000);
+            return expected > 0 && dateObj.getTime() < now.getTime() + (60 * 86400000);
         });
 
         if (pending.length === 0) {
@@ -14412,14 +14426,14 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         }, 150);
     }
 
-    // Render mini week progress dots (Mo-Fr)
+    // Render mini week progress dots (Arbeitstage der Woche)
     function renderWeekDots() {
         const container = document.getElementById('weekDotsContainer');
         if (!container) return;
         
         const now = new Date();
         const currentDay = now.getDay(); // 0=So, 1=Mo, ..., 6=Sa
-        const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
+        const allDayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
         
         // Get this week's Monday
         const monday = new Date(now);
@@ -14427,11 +14441,20 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         monday.setDate(monday.getDate() + diff);
         monday.setHours(0, 0, 0, 0);
         
-        let html = '';
-        for (let i = 0; i < 5; i++) {
+        // Build list of work days this week (Mo-So, but only those with hours > 0)
+        const workDays = [];
+        for (let i = 0; i < 7; i++) {
             const day = new Date(monday);
             day.setDate(monday.getDate() + i);
-            const dateStr = toLocalISODate(day);
+            const dayIndex = day.getDay(); // 0=So..6=Sa
+            if ((data.settings.hours[dayIndex] || 0) > 0) {
+                workDays.push({ date: day, name: allDayNames[dayIndex] });
+            }
+        }
+        
+        let html = '';
+        for (let i = 0; i < workDays.length; i++) {
+            const dateStr = toLocalISODate(workDays[i].date);
             
             const hasEntry = data.entries.some(e => e.date === dateStr);
             const isToday = dateStr === toLocalISODate(now);
@@ -14441,8 +14464,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             if (isToday) classes.push('today');
             
             html += `<div style="text-align:center;">
-                <div class="${classes.join(' ')}" title="${dayNames[i]}: ${hasEntry ? 'Eingetragen' : 'Kein Eintrag'}"></div>
-                <div class="week-dot-label">${dayNames[i]}</div>
+                <div class="${classes.join(' ')}" title="${workDays[i].name}: ${hasEntry ? 'Eingetragen' : 'Kein Eintrag'}"></div>
+                <div class="week-dot-label">${workDays[i].name}</div>
             </div>`;
         }
         container.innerHTML = html;
@@ -14999,7 +15022,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             {
                 const d = new Date(now); d.setHours(0,0,0,0); d.setDate(d.getDate() + 1);
                 while (forecastDays < 30) {
-                    if (d.getDay() !== 0 && d.getDay() !== 6) { forecastDays++; forecastEnd.setTime(d.getTime()); }
+                    if ((data.settings.hours[d.getDay()] || 0) > 0) { forecastDays++; forecastEnd.setTime(d.getTime()); }
                     d.setDate(d.getDate() + 1);
                 }
             }
@@ -16457,26 +16480,26 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         return { dayStats, hourlyStats };
     }
     
-    function renderPerformanceView(data, deepData) {
+    function renderPerformanceView(perfData, deepData) {
         
         // KPI Render
         const scoreEl = document.getElementById('kpiPerformance');
-        scoreEl.innerText = `${data.kpiScore.toFixed(0)}%`;
-        scoreEl.style.color = data.kpiScore >= 100 ? 'var(--success)' : (data.kpiScore >= 95 ? '#fbbf24' : 'var(--danger)');
+        scoreEl.innerText = `${perfData.kpiScore.toFixed(0)}%`;
+        scoreEl.style.color = perfData.kpiScore >= 100 ? 'var(--success)' : (perfData.kpiScore >= 95 ? '#fbbf24' : 'var(--danger)');
 
         const avgDiffEl = document.getElementById('kpiAvgMonthlyDiff');
-        avgDiffEl.innerText = `${data.kpiAvgMonthlyDiff >= 0 ? '+' : ''}${data.kpiAvgMonthlyDiff.toFixed(1)}h`;
-        avgDiffEl.style.color = data.kpiAvgMonthlyDiff >= 0 ? 'var(--primary)' : 'var(--danger)';
+        avgDiffEl.innerText = `${perfData.kpiAvgMonthlyDiff >= 0 ? '+' : ''}${perfData.kpiAvgMonthlyDiff.toFixed(1)}h`;
+        avgDiffEl.style.color = perfData.kpiAvgMonthlyDiff >= 0 ? 'var(--primary)' : 'var(--danger)';
         
         // NEU: Deep Metrics
-        document.getElementById('kpiAvgStartTime').innerText = data.deepMetrics.avgStartTime;
-        document.getElementById('kpiAvgFocus').innerText = data.deepMetrics.avgFocusHours + 'h';
+        document.getElementById('kpiAvgStartTime').innerText = perfData.deepMetrics.avgStartTime;
+        document.getElementById('kpiAvgFocus').innerText = perfData.deepMetrics.avgFocusHours + 'h';
         
         // **********************************************
         // NEU GESTALTET: Wöchentlicher Soll/Ist Vergleich
         // **********************************************
         const barContainer = document.getElementById('chartWeeklyPerformance');
-        const weeklyBars = data.weekly;
+        const weeklyBars = perfData.weekly;
         
         // Maximalwert für die Skalierung (entweder höchste Sollzeit oder höchste Istzeit)
         const maxScaleValue = Math.max(1, ...weeklyBars.map(d => Math.max(d.expected, d.actual))); 
@@ -16522,8 +16545,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         // **********************************************
         
         // NEU: Projekt-Verteilung (Donut Chart)
-        const projectData = data.projectData.distribution;
-        const totalWork = data.projectData.totalWorkHours;
+        const projectData = perfData.projectData.distribution;
+        const totalWork = perfData.projectData.totalWorkHours;
         const projectContainer = document.getElementById('chartProjectDistribution');
         const legendEl = document.getElementById('projectDonutLegend');
 
@@ -16567,8 +16590,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         }
 
         // Saldo Trend (unverändert)
-        const monthlyDiffs = data.monthly.map(d => d.diff);
-        const monthlyLabels = data.monthly.map(d => d.label);
+        const monthlyDiffs = perfData.monthly.map(d => d.diff);
+        const monthlyLabels = perfData.monthly.map(d => d.label);
         
         const trendContainer = document.getElementById('chartMonthlyTrend');
         if (monthlyDiffs.length < 2) {
@@ -16613,7 +16636,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         
         // 1. Produktiver Wochentag (Horizontaler Bar Chart)
         const dayChartContainer = document.getElementById('chartProductivityByDay');
-        const dayStats = deepData.dayStats.slice(1, 6); // Nur Mo-Fr (Index 1 bis 5)
+        const dayStats = deepData.dayStats.filter(function(d, i) {
+            return (data.settings.hours[i] || 0) > 0;
+        });
         const dayAverages = dayStats.map(d => ({
             day: d.label,
             avgDiff: d.count > 0 ? d.totalDiff / d.count : 0
@@ -19540,7 +19565,7 @@ TIPPS:
             if(el) el.value = Array.isArray(breakMins) ? breakMins[i] : 30;
         }
         
-        for(let i=1; i<=5; i++) {
+        for(let i=0; i<=6; i++) {
             const el = document.getElementById('h'+i);
             if(el) el.value = data.settings.hours[i];
         }
@@ -19875,6 +19900,7 @@ TIPPS:
 
     function applyDataDefaults(d) {
         if(!d.settings) d.settings = {};
+        if(!Array.isArray(d.settings.hours)) d.settings.hours = [0,8.75,8.75,8.75,8.75,4.5,0];
         if(!d.settings.break) d.settings.break = {thresh:6, min:[0, 15, 30, 30, 30, 30, 0]};
         if(!Array.isArray(d.trash)) d.trash = [];
         if (typeof d.settings.trashAutoEmptyDays === 'undefined') d.settings.trashAutoEmptyDays = 30;
@@ -22879,7 +22905,7 @@ TIPPS:
                 const entry = entryMap[dateStr];
                 const cellDate = new Date(year, month, day);
                 const dayOfWeek = cellDate.getDay();
-                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                const isWeekend = (data.settings.hours[dayOfWeek] || 0) <= 0 && (dayOfWeek === 0 || dayOfWeek === 6);
                 
                 let color = '#475569'; // Grau = kein Eintrag
                 let opacity = '0.3';
@@ -25628,7 +25654,7 @@ TIPPS:
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const cellDate = new Date(year, month, day);
             const dayOfWeek = cellDate.getDay();
-            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const isWeekend = (data.settings.hours[dayOfWeek] || 0) <= 0 && (dayOfWeek === 0 || dayOfWeek === 6);
             const isToday = dateStr === todayStr;
             const entryType = entryMap[dateStr];
 
@@ -25693,6 +25719,11 @@ TIPPS:
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
+    }
+
+    // Prüft ob ein Wochentag (0=So, 6=Sa) ein Arbeitstag ist (Soll-Stunden > 0)
+    function isConfiguredWorkDay(dayOfWeek) {
+        return (data.settings && data.settings.hours && data.settings.hours[dayOfWeek] > 0);
     }
 
     // Normalisiert Datumsstrings in ISO-Format (YYYY-MM-DD)
@@ -26189,7 +26220,7 @@ TIPPS:
             var dd = new Date(today);
             dd.setDate(dd.getDate() - i);
             var dow = dd.getDay();
-            if (dow === 0 || dow === 6) continue;
+            if ((data.settings.hours[dow] || 0) <= 0) continue;
             var iso = dd.toISOString().split('T')[0];
             if (dates.has(iso)) streak++;
             else break;
@@ -28649,7 +28680,7 @@ TIPPS:
             errorUI.innerHTML = `
                 <div style="background: var(--bg-glass); border: 1px solid var(--danger); border-radius: var(--radius); padding: 2rem; margin: 2rem 0; text-align: center;">
                     <h2 style="color: var(--danger); margin-bottom: 1rem;">⚠️ Oops! Etwas ist schief gelaufen</h2>
-                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Die App hat einen Fehler entdeckt. Bitte versuche die Seite zu aktualisieren. Oder Wende dich an den Support.</p>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Die App hat einen Fehler entdeckt. Bitte versuche die Seite zu aktualisieren. Oder Wende dich an den Support (support@myworklog.com).</p>
                     <button onclick="location.reload()" style="background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600;">🔄 Seite aktualisieren</button>
                 </div>
             `;
