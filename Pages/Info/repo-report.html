@@ -1,166 +1,1331 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Repo Tracker Pro - Report</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyWorkLog — Code Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family:'Segoe UI',system-ui,sans-serif; background:#0a0a0f; color:#e2e8f0; min-height:100vh; }
-.container { max-width:1200px; margin:0 auto; padding:2rem; }
-.header { text-align:center; padding:3rem 0; background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(6,182,212,0.1)); border-radius:24px; margin-bottom:2rem; border:1px solid rgba(168,85,247,0.2); }
-.header h1 { font-size:2.5rem; background:linear-gradient(135deg,#a855f7,#06b6d4); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:0.5rem; }
-.header p { color:#94a3b8; font-size:0.9rem; }
-.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.5rem; margin-bottom:2rem; }
-.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem; }
-.grid-2-1 { display:grid; grid-template-columns:2fr 1fr; gap:1.5rem; margin-bottom:2rem; }
-.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem; margin-bottom:2rem; }
-.card { background:rgba(15,15,25,0.8); border:1px solid rgba(255,255,255,0.06); border-radius:16px; padding:1.5rem; backdrop-filter:blur(20px); }
-.card h3 { color:#a855f7; margin-bottom:1rem; font-size:1rem; }
-.kpi { text-align:center; }
-.kpi .value { font-size:2.5rem; font-weight:800; background:linear-gradient(135deg,#a855f7,#06b6d4); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-.kpi .label { color:#64748b; font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
-.chart-box { position:relative; height:300px; }
-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
-th { text-align:left; padding:10px; color:#64748b; border-bottom:1px solid rgba(255,255,255,0.06); font-weight:600; text-transform:uppercase; font-size:0.7rem; letter-spacing:0.5px; }
-td { padding:10px; border-bottom:1px solid rgba(255,255,255,0.03); }
-tr:hover { background:rgba(168,85,247,0.03); }
-.git-stat { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.85rem; }
-.git-stat .lbl { color:#64748b; }
-.git-stat .val { color:#e2e8f0; font-weight:600; }
-.footer { text-align:center; padding:2rem 0; color:#475569; font-size:0.8rem; }
-::-webkit-scrollbar { width:6px; }
-::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:rgba(168,85,247,0.3); border-radius:6px; }
-@media (max-width:768px) { .grid-2,.grid-2-1,.grid-3 { grid-template-columns:1fr; } }
+:root {
+  --bg:       #06060f;
+  --bg2:      #0c0c18;
+  --bg3:      #111120;
+  --glass:    rgba(255,255,255,0.028);
+  --glass2:   rgba(255,255,255,0.05);
+  --border:   rgba(255,255,255,0.065);
+  --border2:  rgba(255,255,255,0.11);
+  --text:     #e4e6f5;
+  --sub:      #636585;
+  --dim:      #2a2c45;
+  --v1:       #a78bfa;
+  --v2:       #7c3aed;
+  --b1:       #38bdf8;
+  --g1:       #34d399;
+  --o1:       #fb923c;
+  --r1:       #f87171;
+  --y1:       #facc15;
+  --p1:       #f472b6;
+  --font:     'Outfit', sans-serif;
+  --mono:     'Fira Code', monospace;
+  --rad:      18px;
+  --radsm:    10px;
+  --glow:     0 0 60px rgba(124,58,237,0.1);
+  --shad:     0 4px 32px rgba(0,0,0,0.45);
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing:-0.01em;
+}
+
+/* ─── BACKGROUND FX ─── */
+.orbs { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
+.orb {
+  position:absolute; border-radius:50%;
+  filter:blur(100px); opacity:0.55;
+}
+.o1 {
+  width:800px; height:800px; top:-350px; right:-200px;
+  background:radial-gradient(circle,rgba(124,58,237,0.18),transparent 65%);
+  animation:driftA 20s ease-in-out infinite alternate;
+}
+.o2 {
+  width:600px; height:600px; bottom:-150px; left:-150px;
+  background:radial-gradient(circle,rgba(56,189,248,0.12),transparent 65%);
+  animation:driftB 25s ease-in-out infinite alternate;
+}
+.o3 {
+  width:400px; height:400px; top:45%; right:15%;
+  background:radial-gradient(circle,rgba(52,211,153,0.08),transparent 65%);
+  animation:driftC 18s ease-in-out infinite alternate;
+}
+@keyframes driftA { to{ transform:translate(-60px,80px) scale(1.1); } }
+@keyframes driftB { to{ transform:translate(50px,-40px) scale(1.15); } }
+@keyframes driftC { to{ transform:translate(-30px,50px) scale(0.9); } }
+
+/* subtle noise */
+body::after {
+  content:''; position:fixed; inset:0; z-index:1; pointer-events:none; opacity:0.4;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* ─── LAYOUT ─── */
+.wrap { position:relative; z-index:2; max-width:1380px; margin:0 auto; padding:0 2.5rem 7rem; }
+
+/* ─── NAV ─── */
+nav {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1.8rem 0 1.6rem;
+  border-bottom:1px solid var(--border);
+}
+.nav-brand {
+  display:flex; align-items:center; gap:0.55rem;
+  font-size:0.7rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--sub);
+}
+.nav-brand .pulse {
+  width:6px; height:6px; border-radius:50%; background:var(--v1);
+  box-shadow:0 0 0 0 rgba(167,139,250,0.6);
+  animation:pulse-anim 2.5s ease infinite;
+}
+@keyframes pulse-anim {
+  0%{ box-shadow:0 0 0 0 rgba(167,139,250,0.5); }
+  70%{ box-shadow:0 0 0 9px rgba(167,139,250,0); }
+  100%{ box-shadow:0 0 0 0 rgba(167,139,250,0); }
+}
+.nav-right {
+  display:flex; gap:2.5rem; font-family:var(--mono); font-size:0.7rem; color:var(--sub);
+}
+
+/* ─── HERO ─── */
+.hero { padding:4.5rem 0 3rem; }
+.hero-label {
+  display:inline-flex; align-items:center; gap:0.5rem; margin-bottom:1.1rem;
+  font-size:0.68rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--v1);
+}
+.hero-label::before { content:''; display:block; width:18px; height:1px; background:var(--v1); }
+h1 {
+  font-size:clamp(2.6rem,5vw,5rem);
+  font-weight:800; line-height:0.93; letter-spacing:-0.04em; margin-bottom:1.1rem;
+}
+h1 .ghost { -webkit-text-stroke:1px rgba(255,255,255,0.12); color:transparent; font-weight:300; }
+.hero-meta {
+  display:flex; flex-wrap:wrap; gap:1.2rem 2rem;
+  font-family:var(--mono); font-size:0.75rem; color:var(--sub);
+}
+.hero-meta span { display:flex; align-items:center; gap:0.35rem; }
+.hero-meta span::before { content:'◈'; color:var(--v1); font-size:0.6rem; }
+
+/* ─── KPI BAND ─── */
+.kpi-band {
+  display:grid; grid-template-columns:repeat(6,1fr);
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:var(--rad); overflow:hidden; margin-bottom:2.5rem;
+}
+.kpi {
+  padding:1.8rem 1.5rem; border-right:1px solid var(--border);
+  position:relative; transition:background 0.2s ease;
+}
+.kpi:last-child { border-right:none; }
+.kpi:hover { background:var(--bg3); }
+.kpi-shimmer {
+  position:absolute; bottom:0; left:0; right:0; height:2px; border-radius:2px 2px 0 0;
+  background:linear-gradient(90deg,var(--v1),var(--b1));
+  transform:scaleX(0); transform-origin:left; transition:transform 0.4s cubic-bezier(.34,1.4,.64,1);
+}
+.kpi:hover .kpi-shimmer { transform:scaleX(1); }
+.kpi-lbl { font-size:0.6rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--sub); margin-bottom:0.5rem; }
+.kpi-v { font-size:2rem; font-weight:800; letter-spacing:-0.025em; line-height:1; }
+.cv1 { color:var(--v1); } .cg1 { color:var(--g1); } .cb1 { color:var(--b1); } .co1 { color:var(--o1); } .cy1 { color:var(--y1); }
+.kpi-sub { font-family:var(--mono); font-size:0.62rem; color:var(--sub); margin-top:0.3rem; }
+
+/* ─── SECTION ─── */
+.sec {
+  font-size:0.6rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--sub);
+  display:flex; align-items:center; gap:0.75rem; margin:3rem 0 1.2rem;
+}
+.sec::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ─── CARD ─── */
+.card {
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:var(--rad); padding:1.75rem;
+  backdrop-filter:blur(30px) saturate(150%);
+  -webkit-backdrop-filter:blur(30px) saturate(150%);
+  box-shadow:var(--shad);
+  transition:border-color 0.3s, box-shadow 0.3s;
+  animation:rise 0.5s cubic-bezier(.22,.9,.38,1) both;
+}
+.card:hover {
+  border-color:rgba(167,139,250,0.2);
+  box-shadow:var(--shad), var(--glow);
+}
+@keyframes rise {
+  from{ opacity:0; transform:translateY(20px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+.card-ttl {
+  font-size:0.6rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase;
+  color:var(--sub); margin-bottom:1.3rem;
+}
+
+/* ─── GRIDS ─── */
+.g2  { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; margin-bottom:1.2rem; }
+.g3  { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.2rem; margin-bottom:1.2rem; }
+.g32 { display:grid; grid-template-columns:2.2fr 1fr; gap:1.2rem; margin-bottom:1.2rem; }
+
+/* ─── CHART ─── */
+.ch { position:relative; }
+.h250 { height:250px; } .h200 { height:195px; } .h300 { height:295px; }
+
+/* ─── LANG TABLE ─── */
+.lang-list { display:flex; flex-direction:column; }
+.lang-row {
+  display:flex; align-items:center; gap:0.75rem; padding:0.55rem 0;
+  border-bottom:1px solid var(--border); font-size:0.82rem;
+}
+.lang-row:last-child { border-bottom:none; }
+.l-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.l-nm { flex:1; font-weight:500; }
+.l-bar { width:80px; height:3px; background:var(--dim); border-radius:2px; overflow:hidden; flex-shrink:0; }
+.l-fill { height:100%; border-radius:2px; }
+.l-pct { font-family:var(--mono); font-size:0.68rem; color:var(--sub); min-width:34px; text-align:right; }
+.l-files { font-family:var(--mono); font-size:0.64rem; color:var(--dim); min-width:44px; text-align:right; }
+
+/* ─── GIT ─── */
+.gr { display:flex; flex-direction:column; }
+.git-row { display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0; border-bottom:1px solid var(--border); }
+.git-row:last-child { border-bottom:none; }
+.gk { font-size:0.68rem; color:var(--sub); letter-spacing:0.04em; }
+.gv { font-weight:600; font-family:var(--mono); font-size:0.82rem; }
+.gv.v1 { color:var(--v1); } .gv.g1 { color:var(--g1); } .gv.y1 { color:var(--y1); } .gv.b1 { color:var(--b1); }
+
+.lc-box {
+  margin-top:1rem; padding:0.9rem 1rem;
+  background:rgba(167,139,250,0.045); border:1px solid rgba(167,139,250,0.12);
+  border-radius:var(--radsm);
+}
+.lc-msg { font-size:0.83rem; font-weight:500; line-height:1.4; margin-bottom:0.45rem; }
+.lc-meta { display:flex; flex-wrap:wrap; gap:0.8rem; font-family:var(--mono); font-size:0.67rem; }
+.lc-author { color:var(--b1); } .lc-hash { color:var(--y1); } .lc-date { color:var(--sub); }
+
+/* ─── AUTHORS ─── */
+.auth-row {
+  display:flex; align-items:center; gap:0.75rem; padding:0.6rem 0;
+  border-bottom:1px solid var(--border);
+}
+.auth-row:last-child { border-bottom:none; }
+.auth-av {
+  width:32px; height:32px; border-radius:9px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.62rem; font-weight:800;
+  background:color-mix(in srgb,var(--c) 12%,transparent);
+  color:var(--c); border:1px solid color-mix(in srgb,var(--c) 22%,transparent);
+}
+.auth-info { flex:1; min-width:0; }
+.auth-name { font-size:0.8rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:5px; }
+.auth-track { height:2px; background:var(--dim); border-radius:2px; overflow:hidden; }
+.auth-fill { height:100%; border-radius:2px; }
+.auth-stat { text-align:right; min-width:48px; }
+.auth-num { font-family:var(--mono); font-size:0.73rem; font-weight:600; line-height:1.3; }
+.auth-pct { font-size:0.6rem; font-family:var(--mono); }
+
+/* ─── SCORE ─── */
+.score-hero {
+  text-align:center; padding:1.2rem 0 0.8rem; margin-bottom:0.5rem;
+}
+.score-big {
+  font-size:4.8rem; font-weight:800; letter-spacing:-0.05em; line-height:1;
+  background:linear-gradient(135deg, var(--v1) 30%, var(--b1) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.score-den { font-size:1.6rem; color:var(--sub); font-weight:300; }
+.score-badge {
+  display:inline-block; margin-top:0.5rem; padding:3px 14px; border-radius:20px;
+  font-size:0.6rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; border:1px solid;
+}
+.fct-list { margin-top:0.75rem; }
+.fct-row { display:flex; align-items:center; gap:0.65rem; padding:0.42rem 0; border-bottom:1px solid var(--border); }
+.fct-row:last-child { border-bottom:none; }
+.fct-nm { flex:1; font-size:0.74rem; color:#8082a8; }
+.fct-track { width:44px; height:2px; background:var(--dim); border-radius:2px; overflow:hidden; flex-shrink:0; }
+.fct-fill { height:100%; background:linear-gradient(90deg,var(--v1),var(--b1)); border-radius:2px; }
+.fct-val { font-family:var(--mono); font-size:0.68rem; color:var(--v1); min-width:24px; text-align:right; }
+
+/* ─── HEATMAP ─── */
+.hmap { display:grid; grid-template-columns:repeat(12,1fr); gap:5px; margin:0.3rem 0; }
+.hcell {
+  aspect-ratio:1; border-radius:7px;
+  background:rgba(167,139,250,var(--a,0.05));
+  cursor:default; position:relative; transition:transform 0.15s;
+}
+.hcell:hover { transform:scale(1.3); z-index:1; }
+.hcell::after {
+  content:attr(title); display:none;
+  position:absolute; bottom:calc(100% + 7px); left:50%; transform:translateX(-50%);
+  background:#0c0c18; color:#e4e6f5; font-size:0.6rem; padding:3px 8px; border-radius:6px;
+  white-space:nowrap; font-family:var(--mono); border:1px solid var(--border); pointer-events:none;
+  white-space:nowrap;
+}
+.hcell:hover::after { display:block; }
+.hmap-lbl { display:flex; justify-content:space-between; font-family:var(--mono); font-size:0.58rem; color:var(--sub); margin-top:5px; }
+
+/* ─── TODO ─── */
+.todo-scroll { max-height:340px; overflow-y:auto; }
+.todo-scroll::-webkit-scrollbar { width:3px; }
+.todo-scroll::-webkit-scrollbar-thumb { background:rgba(167,139,250,0.22); border-radius:2px; }
+.todo-row {
+  display:grid; grid-template-columns:82px 1fr; grid-template-rows:auto auto;
+  gap:1px 0.75rem; padding:0.7rem 0; border-bottom:1px solid var(--border);
+}
+.todo-row:last-child { border-bottom:none; }
+.todo-tag { font-family:var(--mono); font-size:0.68rem; font-weight:700; grid-row:span 2; display:flex; align-items:center; gap:0.3rem; }
+.todo-file { font-family:var(--mono); font-size:0.66rem; color:var(--sub); }
+.todo-txt { font-size:0.74rem; color:#80829a; }
+.empty-note { padding:2rem; text-align:center; color:var(--sub); font-family:var(--mono); font-size:0.78rem; }
+
+/* ─── DONUT LEGEND ─── */
+.dl { display:flex; flex-direction:column; gap:0.65rem; }
+.dl-r { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; }
+.dl-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.dl-lbl { flex:1; color:#80829a; font-size:0.78rem; }
+.dl-val { font-family:var(--mono); font-size:0.7rem; }
+
+/* ─── TABLE ─── */
+.tbl-wrap { overflow-x:auto; max-height:480px; overflow-y:auto; }
+.tbl-wrap::-webkit-scrollbar { width:3px; height:3px; }
+.tbl-wrap::-webkit-scrollbar-thumb { background:rgba(167,139,250,0.2); border-radius:2px; }
+table { width:100%; border-collapse:collapse; font-size:0.79rem; }
+thead { position:sticky; top:0; z-index:2; background:var(--bg2); }
+th {
+  text-align:left; padding:0.75rem 0.75rem;
+  font-size:0.58rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
+  color:var(--sub); border-bottom:1px solid var(--border); white-space:nowrap;
+}
+td { padding:0.55rem 0.75rem; border-bottom:1px solid rgba(255,255,255,0.022); vertical-align:middle; }
+tr:hover td { background:rgba(167,139,250,0.022); }
+.td-path { font-family:var(--mono); font-size:0.7rem; color:#8082a8; }
+.badge { font-size:0.58rem; font-weight:700; padding:2px 7px; border-radius:20px; border:1px solid; white-space:nowrap; }
+.td-n { font-family:var(--mono); font-size:0.72rem; text-align:right; }
+.td-muted { color:var(--sub); }
+.ratio { width:50px; height:3px; background:var(--dim); border-radius:2px; overflow:hidden; }
+.ratio div { height:100%; border-radius:2px; opacity:0.7; }
+
+/* ─── FOOTER ─── */
+footer {
+  margin-top:5rem; padding-top:1.75rem; border-top:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+  font-family:var(--mono); font-size:0.67rem; color:var(--sub);
+}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:1100px) {
+  .kpi-band { grid-template-columns:repeat(3,1fr); }
+  .g3,.g32 { grid-template-columns:1fr; }
+}
+@media(max-width:768px) {
+  .kpi-band { grid-template-columns:repeat(2,1fr); }
+  .g2 { grid-template-columns:1fr; }
+  .nav-right { display:none; }
+  h1 { font-size:2.4rem; }
+  .wrap { padding:0 1.25rem 5rem; }
+}
 </style>
 </head>
 <body>
-<div class="container">
+<div class="orbs"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div></div>
+<div class="wrap">
 
-<!-- Header -->
-<div class="header">
-    <h1>🔥 Repo Tracker Pro</h1>
-    <p>Generiert am 27.03.2026 um 20:18:24 | MyWorkLog</p>
+<!-- NAV -->
+<nav>
+  <div class="nav-brand"><span class="pulse"></span>Repo Intelligence</div>
+  <div class="nav-right"><span>MyWorkLog</span><span>01 Apr 2026, 17:35</span></div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">Codebase Analysis</div>
+  <h1>MyWorkLog<br><span class="ghost">Intelligence</span></h1>
+  <div class="hero-meta">
+    <span>95 files analysed</span>
+    <span>119.285 total lines</span>
+    <span>9.3 MB</span>
+    <span>11 languages detected</span>
+  </div>
 </div>
 
-<!-- KPIs -->
-<div class="grid" style="grid-template-columns:repeat(4,1fr);">
-    <div class="card kpi"><div class="value">117.865</div><div class="label">Zeilen gesamt</div></div>
-    <div class="card kpi"><div class="value">105.909</div><div class="label">Code-Zeilen</div></div>
-    <div class="card kpi"><div class="value">94</div><div class="label">Dateien</div></div>
-    <div class="card kpi"><div class="value">207</div><div class="label">Commits</div></div>
+<!-- KPI -->
+<div class="kpi-band">
+  <div class="kpi"><div class="kpi-lbl">Total Lines</div><div class="kpi-v cv1">119.285</div><div class="kpi-sub">9.3 MB</div><div class="kpi-shimmer"></div></div>
+  <div class="kpi"><div class="kpi-lbl">Code Lines</div><div class="kpi-v">107.355</div><div class="kpi-sub">90.0% of total</div><div class="kpi-shimmer"></div></div>
+  <div class="kpi"><div class="kpi-lbl">Files</div><div class="kpi-v cb1">95</div><div class="kpi-sub">11 languages</div><div class="kpi-shimmer"></div></div>
+  <div class="kpi"><div class="kpi-lbl">Commits</div><div class="kpi-v cg1">227</div><div class="kpi-sub">since 2025-12-25</div><div class="kpi-shimmer"></div></div>
+  <div class="kpi"><div class="kpi-lbl">Score</div><div class="kpi-v" style="color:#a78bfa">87/100</div><div class="kpi-sub">Enterprise Grade</div><div class="kpi-shimmer"></div></div>
+  <div class="kpi"><div class="kpi-lbl">Items</div><div class="kpi-v co1">0</div><div class="kpi-sub">0 todo · 0 bug</div><div class="kpi-shimmer"></div></div>
 </div>
 
-<!-- Charts Row 1 -->
-<div class="grid-2">
-    <div class="card"><h3>🌐 Sprachen-Verteilung</h3><div class="chart-box"><canvas id="langChart"></canvas></div></div>
-    <div class="card"><h3>🔥 Top Dateien (Zeilen)</h3><div class="chart-box"><canvas id="filesChart"></canvas></div></div>
-</div>
-
-<!-- Charts Row 2 -->
-<div class="grid-2-1">
-    <div class="card"><h3>📈 Commit-Timeline (30 Tage)</h3><div class="chart-box"><canvas id="timelineChart"></canvas></div></div>
-    <div class="card"><h3>📊 Commits pro Wochentag</h3><div class="chart-box"><canvas id="weekdayChart"></canvas></div></div>
-</div>
-
-<!-- Git + Complexity + Lines -->
-<div class="grid-3">
-    <!-- Git Stats -->
-    <div class="card">
-        <h3>🌿 Git-Statistiken</h3>
-        <div class="git-stat"><span class="lbl">Branch</span><span class="val" style="color:#10b981;">main</span></div>
-        <div class="git-stat"><span class="lbl">Commits</span><span class="val">207</span></div>
-        <div class="git-stat"><span class="lbl">Branches</span><span class="val">2</span></div>
-        <div class="git-stat"><span class="lbl">Tags</span><span class="val">0</span></div>
-        <div class="git-stat"><span class="lbl">Projektstart</span><span class="val">2025-12-25</span></div>
-        <div class="git-stat"><span class="lbl">Uncommitted</span><span class="val" style="color:#f59e0b;">0</span></div>
-        
-            <div style="margin-top:1rem;padding:1rem;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid rgba(255,255,255,0.04);">
-                <div style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Letzter Commit</div>
-                <div style="font-size:0.85rem;color:#10b981;margin-bottom:4px;">Changelog.md</div>
-                <div style="font-size:0.78rem;color:#64748b;">Sven K &middot; <span style="color:#f59e0b;">80afcf7f</span> &middot; 2026-03-27 20:16:08</div>
-            </div>
-        <div style="margin-top:1rem;"><div style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Top Autoren</div><div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.85rem;"><span style="color:#e2e8f0;">Sven K &lt;kunzsven16@gmail.com&gt;</span><div style="display:flex;align-items:center;gap:10px;"><span style="color:#64748b;">164 commits</span><div style="width:80px;height:6px;border-radius:3px;background:rgba(255,255,255,0.06);overflow:hidden;"><div style="height:100%;width:79%;background:#a855f7;border-radius:3px;"></div></div><span style="color:#a855f7;font-weight:600;min-width:35px;text-align:right;">79%</span></div></div><div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.85rem;"><span style="color:#e2e8f0;">TechNova-App-Team &lt;kunzsven16@gmail.com&gt;</span><div style="display:flex;align-items:center;gap:10px;"><span style="color:#64748b;">43 commits</span><div style="width:80px;height:6px;border-radius:3px;background:rgba(255,255,255,0.06);overflow:hidden;"><div style="height:100%;width:21%;background:#a855f7;border-radius:3px;"></div></div><span style="color:#a855f7;font-weight:600;min-width:35px;text-align:right;">21%</span></div></div></div>
+<!-- DISTRIBUTION -->
+<div class="sec">Distribution</div>
+<div class="g2">
+  <div class="card" style="animation-delay:.04s">
+    <div class="card-ttl">Language Breakdown</div>
+    <div class="ch h250"><canvas id="cLang"></canvas></div>
+  </div>
+  <div class="card" style="animation-delay:.08s">
+    <div class="card-ttl">Lines Composition</div>
+    <div style="display:grid;grid-template-columns:130px 1fr;gap:1.5rem;align-items:center">
+      <div class="ch" style="height:130px"><canvas id="cLines"></canvas></div>
+      <div class="dl">
+        <div class="dl-r"><span class="dl-dot" style="background:#a78bfa"></span><span class="dl-lbl">Code</span><span class="dl-val">107.355</span></div>
+        <div class="dl-r"><span class="dl-dot" style="background:#38bdf8"></span><span class="dl-lbl">Comments</span><span class="dl-val">1.211</span></div>
+        <div class="dl-r"><span class="dl-dot" style="background:#1e2038"></span><span class="dl-lbl">Blank</span><span class="dl-val">10.719</span></div>
+      </div>
     </div>
-    
-    <!-- Complexity -->
-    <div class="card">
-        <h3>🧬 Komplexitaets-Score</h3>
-        <div style="text-align:center;margin:1rem 0;">
-            <div style="font-size:3.2rem;font-weight:800;background:linear-gradient(135deg,#a855f7,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">87/100</div>
-            <div style="margin-top:8px;display:inline-block;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:600;background:rgba(168,85,247,0.2);color:#a855f7;">S-TIER</div>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.82rem;"><span>📏 Massive Codebase (50k+)</span><span style="color:#a855f7;font-weight:600;">+25</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.82rem;"><span>🌐 Polyglot (5+ Sprachen)</span><span style="color:#a855f7;font-weight:600;">+20</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.82rem;"><span>📁 Moderate Structure</span><span style="color:#a855f7;font-weight:600;">+10</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.82rem;"><span>💬 Well Documented (31 READMEs)</span><span style="color:#a855f7;font-weight:600;">+7</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.82rem;"><span>📅 Growing Project (92 Tage)</span><span style="color:#a855f7;font-weight:600;">+10</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.82rem;"><span>📦 Lean Deps (5)</span><span style="color:#a855f7;font-weight:600;">+5</span></div><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.82rem;"><span>🏛️ Pro Community Files (5/5)</span><span style="color:#a855f7;font-weight:600;">+10</span></div>
+    <div style="margin-top:1.4rem">
+      <div class="card-ttl">Top Files by Lines</div>
+      <div class="ch h200"><canvas id="cFiles"></canvas></div>
     </div>
-    
-    <!-- Lines + Hours -->
-    <div class="card">
-        <h3>📏 Zeilen-Aufteilung</h3>
-        <div class="chart-box" style="height:200px;"><canvas id="linesChart"></canvas></div>
-        <div style="margin-top:1rem;">
-            <div style="font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Aktivste Stunden</div>
-            <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:0.85rem;"><span style="color:#f59e0b;">22:00</span><span style="color:#e2e8f0;">36 commits</span></div><div style="display:flex;justify-content:space-between;padding:5px 0;font-size:0.85rem;"><span style="color:#f59e0b;">20:00</span><span style="color:#e2e8f0;">33 commits</span></div><div style="display:flex;justify-content:space-between;padding:5px 0;font-size:0.85rem;"><span style="color:#f59e0b;">18:00</span><span style="color:#e2e8f0;">32 commits</span></div><div style="display:flex;justify-content:space-between;padding:5px 0;font-size:0.85rem;"><span style="color:#f59e0b;">19:00</span><span style="color:#e2e8f0;">23 commits</span></div><div style="display:flex;justify-content:space-between;padding:5px 0;font-size:0.85rem;"><span style="color:#f59e0b;">21:00</span><span style="color:#e2e8f0;">23 commits</span></div><div style="display:flex;justify-content:space-between;padding:5px 0;font-size:0.85rem;"><span style="color:#f59e0b;">23:00</span><span style="color:#e2e8f0;">14 commits</span></div>
-        </div>
-    </div>
+  </div>
 </div>
 
-<!-- TODOs -->
-<div class="card" style="margin-bottom:2rem;">
-    <h3>📌 TODOs &amp; FIXMEs (0)</h3>
-    <div style="max-height:350px;overflow-y:auto;">
-        <p style="color:#475569;">Keine TODOs gefunden</p>
-    </div>
+<!-- ACTIVITY -->
+<div class="sec">Activity Patterns</div>
+<div class="g32">
+  <div class="card" style="animation-delay:.06s">
+    <div class="card-ttl">Commit Timeline — Last 30 Days</div>
+    <div class="ch h250"><canvas id="cTimeline"></canvas></div>
+  </div>
+  <div class="card" style="animation-delay:.1s">
+    <div class="card-ttl">Commits by Weekday</div>
+    <div class="ch h250"><canvas id="cWeekday"></canvas></div>
+  </div>
 </div>
 
-<!-- All Files Table -->
-<div class="card" style="margin-bottom:2rem;">
-    <h3>📄 Alle Dateien (94)</h3>
-    <div style="max-height:500px;overflow-y:auto;">
+<!-- HEATMAP -->
+<div class="card" style="margin-bottom:1.2rem;animation-delay:.12s">
+  <div class="card-ttl">Hourly Commit Heatmap</div>
+  <div class="hmap"><div class="hcell" style="--a:0.25" title="00:00 — 8 commits"></div><div class="hcell" style="--a:0.13" title="01:00 — 3 commits"></div><div class="hcell" style="--a:0.18" title="02:00 — 5 commits"></div><div class="hcell" style="--a:0.06" title="03:00 — 0 commits"></div><div class="hcell" style="--a:0.06" title="04:00 — 0 commits"></div><div class="hcell" style="--a:0.06" title="05:00 — 0 commits"></div><div class="hcell" style="--a:0.06" title="06:00 — 0 commits"></div><div class="hcell" style="--a:0.06" title="07:00 — 0 commits"></div><div class="hcell" style="--a:0.06" title="08:00 — 0 commits"></div><div class="hcell" style="--a:0.06" title="09:00 — 0 commits"></div><div class="hcell" style="--a:0.08" title="10:00 — 1 commits"></div><div class="hcell" style="--a:0.06" title="11:00 — 0 commits"></div><div class="hcell" style="--a:0.08" title="12:00 — 1 commits"></div><div class="hcell" style="--a:0.18" title="13:00 — 5 commits"></div><div class="hcell" style="--a:0.15" title="14:00 — 4 commits"></div><div class="hcell" style="--a:0.18" title="15:00 — 5 commits"></div><div class="hcell" style="--a:0.20" title="16:00 — 6 commits"></div><div class="hcell" style="--a:0.41" title="17:00 — 15 commits"></div><div class="hcell" style="--a:0.89" title="18:00 — 36 commits"></div><div class="hcell" style="--a:0.59" title="19:00 — 23 commits"></div><div class="hcell" style="--a:0.94" title="20:00 — 38 commits"></div><div class="hcell" style="--a:0.69" title="21:00 — 27 commits"></div><div class="hcell" style="--a:0.89" title="22:00 — 36 commits"></div><div class="hcell" style="--a:0.38" title="23:00 — 14 commits"></div></div>
+  <div class="hmap-lbl"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span></div>
+</div>
+
+<!-- INTELLIGENCE -->
+<div class="sec">Project Intelligence</div>
+<div class="g3">
+  <div class="card" style="animation-delay:.06s">
+    <div class="card-ttl">Git Status</div>
+    <div class="gr">
+      <div class="git-row"><span class="gk">Branch</span><span class="gv g1">main</span></div>
+      <div class="git-row"><span class="gk">Commits</span><span class="gv v1">227</span></div>
+      <div class="git-row"><span class="gk">Branches</span><span class="gv">2</span></div>
+      <div class="git-row"><span class="gk">Tags</span><span class="gv">0</span></div>
+      <div class="git-row"><span class="gk">Project Start</span><span class="gv">2025-12-25</span></div>
+      <div class="git-row"><span class="gk">Uncommitted</span><span class="gv y1">2</span></div>
+    </div>
+    <div class="lc-box">
+  <div class="lc-msg">Ghost Banner fix</div>
+  <div class="lc-meta"><span class="lc-author">Sven K</span><span class="lc-hash">1a21139</span><span class="lc-date">2026-04-01</span></div>
+</div>
+  </div>
+  <div class="card" style="animation-delay:.1s">
+    <div class="card-ttl">Complexity Score</div>
+    <div class="score-hero">
+      <div><span class="score-big">87</span><span class="score-den">/100</span></div>
+      <div class="score-badge" style="color:#a78bfa;border-color:#a78bfa30;background:#a78bfa0c">S · Enterprise Grade</div>
+    </div>
+    <div class="fct-list"><div class="fct-row"><span class="fct-name">Massive Codebase (50k+ lines)</span><div class="fct-track"><div class="fct-fill" style="width:100%"></div></div><span class="fct-val">+25</span></div><div class="fct-row"><span class="fct-name">Polyglot Architecture</span><div class="fct-track"><div class="fct-fill" style="width:80%"></div></div><span class="fct-val">+20</span></div><div class="fct-row"><span class="fct-name">Moderate Structure (50+)</span><div class="fct-track"><div class="fct-fill" style="width:40%"></div></div><span class="fct-val">+10</span></div><div class="fct-row"><span class="fct-name">Well Documented</span><div class="fct-track"><div class="fct-fill" style="width:28%"></div></div><span class="fct-val">+7</span></div><div class="fct-row"><span class="fct-name">Growing (97d)</span><div class="fct-track"><div class="fct-fill" style="width:40%"></div></div><span class="fct-val">+10</span></div><div class="fct-row"><span class="fct-name">Lean Deps (5)</span><div class="fct-track"><div class="fct-fill" style="width:20%"></div></div><span class="fct-val">+5</span></div><div class="fct-row"><span class="fct-name">Pro Community Files (3/3)</span><div class="fct-track"><div class="fct-fill" style="width:40%"></div></div><span class="fct-val">+10</span></div></div>
+  </div>
+  <div class="card" style="animation-delay:.14s">
+    <div class="card-ttl">Top Contributors</div>
+    <div class="auth-row">
+  <div class="auth-av" style="--c:#a78bfa">SK</div>
+  <div class="auth-info"><div class="auth-name">Sven K &lt;kunzsven16@gmail.com&gt;</div>
+    <div class="auth-track"><div class="auth-fill" style="width:81.1%;background:#a78bfa"></div></div>
+  </div>
+  <div class="auth-stat"><div class="auth-num">184</div><div class="auth-pct" style="color:#a78bfa">81%</div></div>
+</div><div class="auth-row">
+  <div class="auth-av" style="--c:#38bdf8">T&</div>
+  <div class="auth-info"><div class="auth-name">TechNova-App-Team &lt;kunzsven16@gmail.com&gt;</div>
+    <div class="auth-track"><div class="auth-fill" style="width:18.9%;background:#38bdf8"></div></div>
+  </div>
+  <div class="auth-stat"><div class="auth-num">43</div><div class="auth-pct" style="color:#38bdf8">19%</div></div>
+</div>
+  </div>
+</div>
+
+<!-- TODOS -->
+<div class="sec">Action Items</div>
+<div class="card" style="margin-bottom:1.2rem;animation-delay:.08s">
+  <div class="card-ttl">TODO / FIXME / BUG Scanner — 0 items</div>
+  <div class="todo-scroll"><div class="empty-note">No action items found — clean codebase ✓</div></div>
+</div>
+
+<!-- FILES -->
+<div class="sec">File Explorer</div>
+<div class="card" style="animation-delay:.08s">
+  <div class="card-ttl">All Source Files — 95 files</div>
+  <div class="tbl-wrap">
     <table>
-        <thead><tr><th>Datei</th><th>Sprache</th><th>Zeilen</th><th>Code</th><th>Kommentare</th><th>Groesse</th></tr></thead>
-        <tbody><tr><td>index.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>31.423</td><td>27.856</td><td>328</td><td>1.5 MB</td></tr><tr><td>Grafiken\Offline.webp</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Other</span></td><td>8.684</td><td>8.516</td><td>0</td><td>339.7 KB</td></tr><tr><td>Grafiken\Website.webp</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Other</span></td><td>8.142</td><td>7.897</td><td>0</td><td>365.0 KB</td></tr><tr><td>Grafiken\Bot-engine.webp</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Other</span></td><td>7.727</td><td>7.511</td><td>0</td><td>293.3 KB</td></tr><tr><td>Grafiken\Service.webp</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Other</span></td><td>7.104</td><td>6.986</td><td>0</td><td>254.9 KB</td></tr><tr><td>Pages\App\berichtsheft.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>6.405</td><td>5.761</td><td>32</td><td>322.7 KB</td></tr><tr><td>Grafiken\Bot-Analyzer.webp</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Other</span></td><td>3.173</td><td>3.091</td><td>0</td><td>106.6 KB</td></tr><tr><td>Pages\App\Ausbilungs_Hilfe\rechte-checker.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>3.146</td><td>2.902</td><td>22</td><td>163.4 KB</td></tr><tr><td>Pages\App\Tasks\aufgaben.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>1.885</td><td>1.672</td><td>18</td><td>73.8 KB</td></tr><tr><td>Pages\Info\analytics.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>1.812</td><td>1.585</td><td>16</td><td>86.3 KB</td></tr><tr><td>Pages\Info\about.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>1.782</td><td>1.547</td><td>10</td><td>60.0 KB</td></tr><tr><td>Grafiken\Touch.webp</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Other</span></td><td>1.605</td><td>1.569</td><td>0</td><td>60.9 KB</td></tr><tr><td>Pages\Event\Weihnachten.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>1.528</td><td>1.348</td><td>0</td><td>53.6 KB</td></tr><tr><td>Pages\App\Ausbilungs_Hilfe\index.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>1.507</td><td>1.388</td><td>0</td><td>62.2 KB</td></tr><tr><td>Pages\App\schatten-berichtsheft.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>1.366</td><td>1.215</td><td>22</td><td>66.7 KB</td></tr><tr><td>Pages\App\SkillTree\skill-tree.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>1.342</td><td>1.220</td><td>8</td><td>59.8 KB</td></tr><tr><td>README.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>1.319</td><td>1.028</td><td>0</td><td>44.7 KB</td></tr><tr><td>scripts\repo-tracker.py</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Python</span></td><td>1.196</td><td>957</td><td>73</td><td>60.2 KB</td></tr><tr><td>Pages\App\vertrags-manager.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>1.172</td><td>1.085</td><td>15</td><td>45.2 KB</td></tr><tr><td>Pages\DE-Gestz\DSGVO.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>1.039</td><td>904</td><td>1</td><td>44.4 KB</td></tr><tr><td>Rechtliches\CONTRIBUTING.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>991</td><td>742</td><td>0</td><td>20.7 KB</td></tr><tr><td>Assets\js\NFC\nfc.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>956</td><td>753</td><td>62</td><td>35.1 KB</td></tr><tr><td>AI-Bot\aibot-engine-pro.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>952</td><td>741</td><td>34</td><td>37.1 KB</td></tr><tr><td>Pages\App\Ausbilungs_Hilfe\Fachinformatiker\Fach..</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>950</td><td>830</td><td>0</td><td>32.5 KB</td></tr><tr><td>Assets\js\fahrtkosten.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>851</td><td>690</td><td>40</td><td>30.3 KB</td></tr><tr><td>Rechtliches\PRIVACY.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>851</td><td>635</td><td>0</td><td>22.5 KB</td></tr><tr><td>Email\send.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>849</td><td>783</td><td>49</td><td>46.7 KB</td></tr><tr><td>Pages\quantum-translator.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>821</td><td>702</td><td>13</td><td>28.9 KB</td></tr><tr><td>Assets\js\berichtsheft\schatten-berichtsheft.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>710</td><td>572</td><td>52</td><td>31.7 KB</td></tr><tr><td>Pages\DE-Gestz\Impressum.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>705</td><td>664</td><td>11</td><td>30.9 KB</td></tr><tr><td>Assets\css\fahrtkosten.css</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>CSS</span></td><td>690</td><td>587</td><td>20</td><td>17.6 KB</td></tr><tr><td>Rechtliches\NOTICE.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>669</td><td>529</td><td>0</td><td>31.9 KB</td></tr><tr><td>Rechtliches\SECURITY.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>571</td><td>421</td><td>0</td><td>16.7 KB</td></tr><tr><td>README´s\AI-Bot\WEB-LLM\WEBLLM-COMPLETE-REPORT.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>551</td><td>446</td><td>0</td><td>11.5 KB</td></tr><tr><td>Assets\js\Cloud\supabase-advanced.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>522</td><td>396</td><td>42</td><td>15.7 KB</td></tr><tr><td>AI-Bot\LLM\webllm-integration.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>516</td><td>434</td><td>21</td><td>18.0 KB</td></tr><tr><td>404.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>463</td><td>435</td><td>0</td><td>16.8 KB</td></tr><tr><td>README´s\ADVANCED-ANALYTICS.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>458</td><td>383</td><td>0</td><td>23.5 KB</td></tr><tr><td>Assets\js\Event\New_Year\fireworks.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>435</td><td>322</td><td>35</td><td>17.2 KB</td></tr><tr><td>Assets\js\Cloud\supabase-integration.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>429</td><td>348</td><td>17</td><td>13.3 KB</td></tr><tr><td>AI-Bot\data-analyzer-pro.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>427</td><td>342</td><td>18</td><td>14.0 KB</td></tr><tr><td>Assets\css\Event\New_Year\fireworks.css</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>CSS</span></td><td>427</td><td>380</td><td>13</td><td>10.3 KB</td></tr><tr><td>Assets\js\pinch-zoom.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>427</td><td>319</td><td>38</td><td>13.4 KB</td></tr><tr><td>Pages\App\fahrtkosten.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>410</td><td>365</td><td>17</td><td>19.5 KB</td></tr><tr><td>Assets\js\shortcuts.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>401</td><td>330</td><td>28</td><td>10.8 KB</td></tr><tr><td>README´s\VISUAL-SUMMARY-STEP2.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>397</td><td>331</td><td>0</td><td>11.5 KB</td></tr><tr><td>README´s\ROADMAP-NEXT-STEPS.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>365</td><td>297</td><td>0</td><td>10.3 KB</td></tr><tr><td>README´s\COMPLETION-REPORT-STEP2.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>364</td><td>293</td><td>0</td><td>10.8 KB</td></tr><tr><td>Assets\js\Cloud\supabase-ui.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>358</td><td>284</td><td>29</td><td>10.9 KB</td></tr><tr><td>README´s\AI-Bot\WEB-LLM\WEBLLM-READY.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>342</td><td>262</td><td>0</td><td>7.2 KB</td></tr><tr><td>README´s\AI-Bot\WEB-LLM\WEBLLM-CHECKLIST.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>337</td><td>268</td><td>0</td><td>7.6 KB</td></tr><tr><td>README´s\ICAL\STEP2-ICAL-COMPLETE.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>337</td><td>270</td><td>0</td><td>10.6 KB</td></tr><tr><td>AI-Bot\LLM\webllm-validator.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>321</td><td>273</td><td>4</td><td>10.8 KB</td></tr><tr><td>README´s\INDEX-DOCUMENTATION.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>315</td><td>245</td><td>0</td><td>8.4 KB</td></tr><tr><td>README´s\AI-Bot\WEB-LLM\WEBLLM-DONE.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>274</td><td>210</td><td>0</td><td>7.0 KB</td></tr><tr><td>README´s\FEATURES.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>273</td><td>215</td><td>0</td><td>7.0 KB</td></tr><tr><td>README´s\AI-Bot\WEB-LLM\WEBLLM-IMPLEMENTATION.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>271</td><td>228</td><td>0</td><td>6.8 KB</td></tr><tr><td>README´s\AI-Bot\WEB-LLM\CDN-DIAGNOSTICS.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>242</td><td>185</td><td>0</td><td>5.5 KB</td></tr><tr><td>Pages\Info\offline.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>233</td><td>204</td><td>0</td><td>7.0 KB</td></tr><tr><td>README´s\ICAL\ICAL-EXPORT-SETUP.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>227</td><td>188</td><td>0</td><td>7.7 KB</td></tr><tr><td>service-worker.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>218</td><td>157</td><td>24</td><td>6.0 KB</td></tr><tr><td>README´s\AI-Bot\WEB-LLM\CDN-UPDATE-JANUARY-2026.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>210</td><td>156</td><td>0</td><td>5.1 KB</td></tr><tr><td>Assets\js\service-worker.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>206</td><td>152</td><td>22</td><td>6.0 KB</td></tr><tr><td>README´s\AI-Bot\WEB-LLM\WEBLLM-QUICK-START.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>206</td><td>155</td><td>0</td><td>5.0 KB</td></tr><tr><td>README´s\AI-Bot\INTEGRATION-NOTES.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>191</td><td>144</td><td>0</td><td>5.9 KB</td></tr><tr><td>README´s\TASK-MANAGER-README.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>187</td><td>151</td><td>0</td><td>5.3 KB</td></tr><tr><td>README´s\AI-Bot\WEB-LLM\WEBLLM-INTEGRATION.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>183</td><td>143</td><td>0</td><td>5.0 KB</td></tr><tr><td>Rechtliches\CODE_OF_CONDUCT.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>182</td><td>128</td><td>0</td><td>5.8 KB</td></tr><tr><td>README´s\PWA-README.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>180</td><td>138</td><td>0</td><td>5.3 KB</td></tr><tr><td>Rechtliches\LICENSE.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>171</td><td>123</td><td>0</td><td>5.8 KB</td></tr><tr><td>Pages\Info\repo-report.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>167</td><td>139</td><td>10</td><td>39.9 KB</td></tr><tr><td>manifest.json</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JSON</span></td><td>150</td><td>150</td><td>0</td><td>4.7 KB</td></tr><tr><td>sitemap.xml</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>XML</span></td><td>147</td><td>114</td><td>18</td><td>6.7 KB</td></tr><tr><td>Assets\js\NFC\nfc-test.html</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>HTML</span></td><td>146</td><td>127</td><td>0</td><td>6.0 KB</td></tr><tr><td>Assets\css\Event\Weihnachten\snowflakes.css</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>CSS</span></td><td>141</td><td>122</td><td>1</td><td>2.7 KB</td></tr><tr><td>robots.txt</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Text</span></td><td>137</td><td>109</td><td>0</td><td>4.6 KB</td></tr><tr><td>README´s\Update\CHANGELOG.md</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Markdown</span></td><td>118</td><td>78</td><td>0</td><td>5.5 KB</td></tr><tr><td>Assets\js\Event\Weihnachten\snowflakes.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>108</td><td>74</td><td>14</td><td>3.9 KB</td></tr><tr><td>Grafiken\favicon.svg</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>SVG</span></td><td>106</td><td>80</td><td>13</td><td>4.8 KB</td></tr><tr><td>Grafiken\apple-touch-icon.svg</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>SVG</span></td><td>94</td><td>72</td><td>11</td><td>4.0 KB</td></tr><tr><td>Grafiken\icon-192.svg</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>SVG</span></td><td>94</td><td>72</td><td>11</td><td>4.0 KB</td></tr><tr><td>Assets\js\touch-mobile-optimizations.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>79</td><td>50</td><td>21</td><td>2.8 KB</td></tr><tr><td>AI-Bot\LLM\webllm-config.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>73</td><td>51</td><td>12</td><td>2.2 KB</td></tr><tr><td>Assets\js\version-loader.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>60</td><td>42</td><td>11</td><td>2.0 KB</td></tr><tr><td>.gitignore</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Other</span></td><td>58</td><td>55</td><td>0</td><td>729.0 B</td></tr><tr><td>.github\workflows\static.yml</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>YAML</span></td><td>43</td><td>30</td><td>8</td><td>1.2 KB</td></tr><tr><td>config\humans.txt</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Text</span></td><td>42</td><td>39</td><td>0</td><td>1.3 KB</td></tr><tr><td>package.json</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JSON</span></td><td>30</td><td>30</td><td>0</td><td>710.0 B</td></tr><tr><td>.eslintrc.json</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JSON</span></td><td>27</td><td>27</td><td>0</td><td>530.0 B</td></tr><tr><td>config\version.json</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JSON</span></td><td>22</td><td>22</td><td>0</td><td>697.0 B</td></tr><tr><td>browserconfig.xml</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>XML</span></td><td>21</td><td>21</td><td>0</td><td>637.0 B</td></tr><tr><td>config\supabase-config.js</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>JavaScript</span></td><td>15</td><td>11</td><td>2</td><td>625.0 B</td></tr><tr><td>.well-known\security.txt</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Text</span></td><td>8</td><td>7</td><td>0</td><td>337.0 B</td></tr><tr><td>.nojekyll</td><td><span class='badge-purple' style='display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.72rem;font-weight:600;background:rgba(168,85,247,0.15);color:#a855f7;'>Other</span></td><td>0</td><td>0</td><td>0</td><td>0.0 B</td></tr></tbody>
+      <thead><tr>
+        <th>Path</th><th>Language</th>
+        <th style="text-align:right">Lines</th><th style="text-align:right">Code</th>
+        <th style="text-align:right">Comments</th><th>Ratio</th>
+        <th style="text-align:right">Size</th>
+      </tr></thead>
+      <tbody><tr>
+  <td class="td-path">index.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">31.522</td>
+  <td class="td-n">27.943</td>
+  <td class="td-n">329</td>
+  <td><div class="ratio"><div style="width:89%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">1.5 MB</td>
+</tr><tr>
+  <td class="td-path">Grafiken\Offline.webp</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">Other</span></td>
+  <td class="td-n">8.684</td>
+  <td class="td-n">8.516</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:98%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">339.7 KB</td>
+</tr><tr>
+  <td class="td-path">Grafiken\Website.webp</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">Other</span></td>
+  <td class="td-n">8.142</td>
+  <td class="td-n">7.897</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:97%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">365.0 KB</td>
+</tr><tr>
+  <td class="td-path">Grafiken\Bot-engine.webp</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">Other</span></td>
+  <td class="td-n">7.727</td>
+  <td class="td-n">7.511</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:97%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">293.3 KB</td>
+</tr><tr>
+  <td class="td-path">Grafiken\Service.webp</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">Other</span></td>
+  <td class="td-n">7.104</td>
+  <td class="td-n">6.986</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:98%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">254.9 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\App\berichtsheft.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">6.433</td>
+  <td class="td-n">5.787</td>
+  <td class="td-n">33</td>
+  <td><div class="ratio"><div style="width:90%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">324.3 KB</td>
+</tr><tr>
+  <td class="td-path">Grafiken\Bot-Analyzer.webp</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">Other</span></td>
+  <td class="td-n">3.173</td>
+  <td class="td-n">3.091</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:97%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">106.6 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\App\Ausbilungs_Hilfe\rechte-checker.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">3.146</td>
+  <td class="td-n">2.902</td>
+  <td class="td-n">22</td>
+  <td><div class="ratio"><div style="width:92%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">163.4 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\Info\about.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">1.944</td>
+  <td class="td-n">1.688</td>
+  <td class="td-n">10</td>
+  <td><div class="ratio"><div style="width:87%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">67.2 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\App\Tasks\aufgaben.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">1.885</td>
+  <td class="td-n">1.672</td>
+  <td class="td-n">18</td>
+  <td><div class="ratio"><div style="width:89%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">73.8 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\Info\analytics.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">1.812</td>
+  <td class="td-n">1.585</td>
+  <td class="td-n">16</td>
+  <td><div class="ratio"><div style="width:87%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">86.3 KB</td>
+</tr><tr>
+  <td class="td-path">Grafiken\Touch.webp</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">Other</span></td>
+  <td class="td-n">1.605</td>
+  <td class="td-n">1.569</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:98%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">60.9 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\Event\Weihnachten.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">1.528</td>
+  <td class="td-n">1.348</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:88%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">53.6 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\App\Ausbilungs_Hilfe\index.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">1.507</td>
+  <td class="td-n">1.388</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:92%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">62.2 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\App\schatten-berichtsheft.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">1.366</td>
+  <td class="td-n">1.215</td>
+  <td class="td-n">22</td>
+  <td><div class="ratio"><div style="width:89%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">66.7 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\App\SkillTree\skill-tree.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">1.342</td>
+  <td class="td-n">1.220</td>
+  <td class="td-n">8</td>
+  <td><div class="ratio"><div style="width:91%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">59.8 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\Info\update_bugs.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">1.327</td>
+  <td class="td-n">1.233</td>
+  <td class="td-n">7</td>
+  <td><div class="ratio"><div style="width:93%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">49.9 KB</td>
+</tr><tr>
+  <td class="td-path">README.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">1.319</td>
+  <td class="td-n">1.028</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:78%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">44.7 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\App\vertrags-manager.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">1.172</td>
+  <td class="td-n">1.085</td>
+  <td class="td-n">15</td>
+  <td><div class="ratio"><div style="width:93%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">45.2 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\DE-Gestz\DSGVO.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">1.039</td>
+  <td class="td-n">904</td>
+  <td class="td-n">1</td>
+  <td><div class="ratio"><div style="width:87%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">44.4 KB</td>
+</tr><tr>
+  <td class="td-path">Rechtliches\CONTRIBUTING.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">991</td>
+  <td class="td-n">742</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:75%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">20.7 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\NFC\nfc.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">956</td>
+  <td class="td-n">753</td>
+  <td class="td-n">62</td>
+  <td><div class="ratio"><div style="width:79%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">35.1 KB</td>
+</tr><tr>
+  <td class="td-path">AI-Bot\aibot-engine-pro.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">952</td>
+  <td class="td-n">741</td>
+  <td class="td-n">34</td>
+  <td><div class="ratio"><div style="width:78%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">37.1 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\App\Ausbilungs_Hilfe\Fachinformatiker\Fachin..</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">950</td>
+  <td class="td-n">830</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:87%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">32.5 KB</td>
+</tr><tr>
+  <td class="td-path">scripts\repo-tracker.py</td>
+  <td><span class="badge" style="color:#34d399;background:#34d39918;border-color:#34d39928">Python</span></td>
+  <td class="td-n">934</td>
+  <td class="td-n">867</td>
+  <td class="td-n">1</td>
+  <td><div class="ratio"><div style="width:93%;background:#34d399"></div></div></td>
+  <td class="td-n td-muted">43.8 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\fahrtkosten.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">851</td>
+  <td class="td-n">690</td>
+  <td class="td-n">40</td>
+  <td><div class="ratio"><div style="width:81%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">30.3 KB</td>
+</tr><tr>
+  <td class="td-path">Rechtliches\PRIVACY.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">851</td>
+  <td class="td-n">635</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:75%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">22.5 KB</td>
+</tr><tr>
+  <td class="td-path">Email\send.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">849</td>
+  <td class="td-n">783</td>
+  <td class="td-n">49</td>
+  <td><div class="ratio"><div style="width:92%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">46.7 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\quantum-translator.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">821</td>
+  <td class="td-n">702</td>
+  <td class="td-n">13</td>
+  <td><div class="ratio"><div style="width:86%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">28.9 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\berichtsheft\schatten-berichtsheft.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">710</td>
+  <td class="td-n">572</td>
+  <td class="td-n">52</td>
+  <td><div class="ratio"><div style="width:81%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">31.7 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\DE-Gestz\Impressum.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">705</td>
+  <td class="td-n">664</td>
+  <td class="td-n">11</td>
+  <td><div class="ratio"><div style="width:94%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">30.9 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\css\fahrtkosten.css</td>
+  <td><span class="badge" style="color:#38bdf8;background:#38bdf818;border-color:#38bdf828">CSS</span></td>
+  <td class="td-n">690</td>
+  <td class="td-n">587</td>
+  <td class="td-n">20</td>
+  <td><div class="ratio"><div style="width:85%;background:#38bdf8"></div></div></td>
+  <td class="td-n td-muted">17.6 KB</td>
+</tr><tr>
+  <td class="td-path">Rechtliches\NOTICE.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">669</td>
+  <td class="td-n">529</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:79%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">31.9 KB</td>
+</tr><tr>
+  <td class="td-path">Rechtliches\SECURITY.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">571</td>
+  <td class="td-n">421</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:74%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">16.7 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\AI-Bot\WEB-LLM\WEBLLM-COMPLETE-REPORT.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">551</td>
+  <td class="td-n">446</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:81%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">11.5 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\Cloud\supabase-advanced.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">522</td>
+  <td class="td-n">396</td>
+  <td class="td-n">42</td>
+  <td><div class="ratio"><div style="width:76%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">15.7 KB</td>
+</tr><tr>
+  <td class="td-path">AI-Bot\LLM\webllm-integration.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">516</td>
+  <td class="td-n">434</td>
+  <td class="td-n">21</td>
+  <td><div class="ratio"><div style="width:84%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">18.0 KB</td>
+</tr><tr>
+  <td class="td-path">404.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">463</td>
+  <td class="td-n">435</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:94%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">16.8 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\ADVANCED-ANALYTICS.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">458</td>
+  <td class="td-n">383</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:84%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">23.5 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\Event\New_Year\fireworks.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">435</td>
+  <td class="td-n">322</td>
+  <td class="td-n">35</td>
+  <td><div class="ratio"><div style="width:74%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">17.2 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\Cloud\supabase-integration.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">429</td>
+  <td class="td-n">348</td>
+  <td class="td-n">17</td>
+  <td><div class="ratio"><div style="width:81%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">13.3 KB</td>
+</tr><tr>
+  <td class="td-path">AI-Bot\data-analyzer-pro.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">427</td>
+  <td class="td-n">342</td>
+  <td class="td-n">18</td>
+  <td><div class="ratio"><div style="width:80%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">14.0 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\css\Event\New_Year\fireworks.css</td>
+  <td><span class="badge" style="color:#38bdf8;background:#38bdf818;border-color:#38bdf828">CSS</span></td>
+  <td class="td-n">427</td>
+  <td class="td-n">380</td>
+  <td class="td-n">13</td>
+  <td><div class="ratio"><div style="width:89%;background:#38bdf8"></div></div></td>
+  <td class="td-n td-muted">10.3 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\pinch-zoom.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">427</td>
+  <td class="td-n">319</td>
+  <td class="td-n">38</td>
+  <td><div class="ratio"><div style="width:75%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">13.4 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\App\fahrtkosten.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">410</td>
+  <td class="td-n">365</td>
+  <td class="td-n">17</td>
+  <td><div class="ratio"><div style="width:89%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">19.5 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\shortcuts.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">401</td>
+  <td class="td-n">330</td>
+  <td class="td-n">28</td>
+  <td><div class="ratio"><div style="width:82%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">10.8 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\VISUAL-SUMMARY-STEP2.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">397</td>
+  <td class="td-n">331</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:83%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">11.5 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\ROADMAP-NEXT-STEPS.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">365</td>
+  <td class="td-n">297</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:81%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">10.3 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\COMPLETION-REPORT-STEP2.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">364</td>
+  <td class="td-n">293</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:80%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">10.8 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\Cloud\supabase-ui.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">358</td>
+  <td class="td-n">284</td>
+  <td class="td-n">29</td>
+  <td><div class="ratio"><div style="width:79%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">10.9 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\AI-Bot\WEB-LLM\WEBLLM-READY.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">342</td>
+  <td class="td-n">262</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:77%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">7.2 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\AI-Bot\WEB-LLM\WEBLLM-CHECKLIST.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">337</td>
+  <td class="td-n">268</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:80%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">7.6 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\ICAL\STEP2-ICAL-COMPLETE.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">337</td>
+  <td class="td-n">270</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:80%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">10.6 KB</td>
+</tr><tr>
+  <td class="td-path">AI-Bot\LLM\webllm-validator.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">321</td>
+  <td class="td-n">273</td>
+  <td class="td-n">4</td>
+  <td><div class="ratio"><div style="width:85%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">10.8 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\INDEX-DOCUMENTATION.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">315</td>
+  <td class="td-n">245</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:78%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">8.4 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\AI-Bot\WEB-LLM\WEBLLM-DONE.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">274</td>
+  <td class="td-n">210</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:77%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">7.0 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\FEATURES.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">273</td>
+  <td class="td-n">215</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:79%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">7.0 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\AI-Bot\WEB-LLM\WEBLLM-IMPLEMENTATION.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">271</td>
+  <td class="td-n">228</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:84%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">6.8 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\AI-Bot\WEB-LLM\CDN-DIAGNOSTICS.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">242</td>
+  <td class="td-n">185</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:76%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">5.5 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\Info\offline.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">233</td>
+  <td class="td-n">204</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:88%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">7.0 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\ICAL\ICAL-EXPORT-SETUP.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">227</td>
+  <td class="td-n">188</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:83%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">7.7 KB</td>
+</tr><tr>
+  <td class="td-path">service-worker.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">218</td>
+  <td class="td-n">157</td>
+  <td class="td-n">24</td>
+  <td><div class="ratio"><div style="width:72%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">6.0 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\AI-Bot\WEB-LLM\CDN-UPDATE-JANUARY-2026.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">210</td>
+  <td class="td-n">156</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:74%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">5.1 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\service-worker.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">206</td>
+  <td class="td-n">152</td>
+  <td class="td-n">22</td>
+  <td><div class="ratio"><div style="width:74%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">6.0 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\AI-Bot\WEB-LLM\WEBLLM-QUICK-START.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">206</td>
+  <td class="td-n">155</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:75%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">5.0 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\AI-Bot\INTEGRATION-NOTES.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">191</td>
+  <td class="td-n">144</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:75%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">5.9 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\TASK-MANAGER-README.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">187</td>
+  <td class="td-n">151</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:81%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">5.3 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\AI-Bot\WEB-LLM\WEBLLM-INTEGRATION.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">183</td>
+  <td class="td-n">143</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:78%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">5.0 KB</td>
+</tr><tr>
+  <td class="td-path">Rechtliches\CODE_OF_CONDUCT.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">182</td>
+  <td class="td-n">128</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:70%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">5.8 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\PWA-README.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">180</td>
+  <td class="td-n">138</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:77%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">5.3 KB</td>
+</tr><tr>
+  <td class="td-path">Rechtliches\LICENSE.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">171</td>
+  <td class="td-n">123</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:72%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">5.8 KB</td>
+</tr><tr>
+  <td class="td-path">Pages\Info\repo-report.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">167</td>
+  <td class="td-n">139</td>
+  <td class="td-n">10</td>
+  <td><div class="ratio"><div style="width:83%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">41.6 KB</td>
+</tr><tr>
+  <td class="td-path">manifest.json</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JSON</span></td>
+  <td class="td-n">150</td>
+  <td class="td-n">150</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:100%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">4.7 KB</td>
+</tr><tr>
+  <td class="td-path">sitemap.xml</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">XML</span></td>
+  <td class="td-n">147</td>
+  <td class="td-n">114</td>
+  <td class="td-n">18</td>
+  <td><div class="ratio"><div style="width:78%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">6.7 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\NFC\nfc-test.html</td>
+  <td><span class="badge" style="color:#f87171;background:#f8717118;border-color:#f8717128">HTML</span></td>
+  <td class="td-n">146</td>
+  <td class="td-n">127</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:87%;background:#f87171"></div></div></td>
+  <td class="td-n td-muted">6.0 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\css\Event\Weihnachten\snowflakes.css</td>
+  <td><span class="badge" style="color:#38bdf8;background:#38bdf818;border-color:#38bdf828">CSS</span></td>
+  <td class="td-n">141</td>
+  <td class="td-n">122</td>
+  <td class="td-n">1</td>
+  <td><div class="ratio"><div style="width:87%;background:#38bdf8"></div></div></td>
+  <td class="td-n td-muted">2.7 KB</td>
+</tr><tr>
+  <td class="td-path">robots.txt</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">Text</span></td>
+  <td class="td-n">137</td>
+  <td class="td-n">109</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:80%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">4.6 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\version-loader.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">126</td>
+  <td class="td-n">91</td>
+  <td class="td-n">19</td>
+  <td><div class="ratio"><div style="width:72%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">4.7 KB</td>
+</tr><tr>
+  <td class="td-path">README´s\Update\CHANGELOG.md</td>
+  <td><span class="badge" style="color:#94a3b8;background:#94a3b818;border-color:#94a3b828">Markdown</span></td>
+  <td class="td-n">118</td>
+  <td class="td-n">78</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:66%;background:#94a3b8"></div></div></td>
+  <td class="td-n td-muted">5.5 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\Event\Weihnachten\snowflakes.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">108</td>
+  <td class="td-n">74</td>
+  <td class="td-n">14</td>
+  <td><div class="ratio"><div style="width:69%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">3.9 KB</td>
+</tr><tr>
+  <td class="td-path">Grafiken\favicon.svg</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">SVG</span></td>
+  <td class="td-n">106</td>
+  <td class="td-n">80</td>
+  <td class="td-n">13</td>
+  <td><div class="ratio"><div style="width:75%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">4.8 KB</td>
+</tr><tr>
+  <td class="td-path">Grafiken\apple-touch-icon.svg</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">SVG</span></td>
+  <td class="td-n">94</td>
+  <td class="td-n">72</td>
+  <td class="td-n">11</td>
+  <td><div class="ratio"><div style="width:77%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">4.0 KB</td>
+</tr><tr>
+  <td class="td-path">Grafiken\icon-192.svg</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">SVG</span></td>
+  <td class="td-n">94</td>
+  <td class="td-n">72</td>
+  <td class="td-n">11</td>
+  <td><div class="ratio"><div style="width:77%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">4.0 KB</td>
+</tr><tr>
+  <td class="td-path">Assets\js\touch-mobile-optimizations.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">79</td>
+  <td class="td-n">50</td>
+  <td class="td-n">21</td>
+  <td><div class="ratio"><div style="width:63%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">2.8 KB</td>
+</tr><tr>
+  <td class="td-path">AI-Bot\LLM\webllm-config.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">73</td>
+  <td class="td-n">51</td>
+  <td class="td-n">12</td>
+  <td><div class="ratio"><div style="width:70%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">2.2 KB</td>
+</tr><tr>
+  <td class="td-path">.gitignore</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">Other</span></td>
+  <td class="td-n">58</td>
+  <td class="td-n">55</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:95%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">729.0 B</td>
+</tr><tr>
+  <td class="td-path">.github\workflows\static.yml</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">YAML</span></td>
+  <td class="td-n">43</td>
+  <td class="td-n">30</td>
+  <td class="td-n">8</td>
+  <td><div class="ratio"><div style="width:70%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">1.2 KB</td>
+</tr><tr>
+  <td class="td-path">config\humans.txt</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">Text</span></td>
+  <td class="td-n">42</td>
+  <td class="td-n">39</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:93%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">1.3 KB</td>
+</tr><tr>
+  <td class="td-path">package.json</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JSON</span></td>
+  <td class="td-n">30</td>
+  <td class="td-n">30</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:100%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">710.0 B</td>
+</tr><tr>
+  <td class="td-path">.eslintrc.json</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JSON</span></td>
+  <td class="td-n">27</td>
+  <td class="td-n">27</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:100%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">530.0 B</td>
+</tr><tr>
+  <td class="td-path">config\version.json</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JSON</span></td>
+  <td class="td-n">22</td>
+  <td class="td-n">22</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:100%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">697.0 B</td>
+</tr><tr>
+  <td class="td-path">browserconfig.xml</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">XML</span></td>
+  <td class="td-n">21</td>
+  <td class="td-n">21</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:100%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">637.0 B</td>
+</tr><tr>
+  <td class="td-path">config\supabase-config.js</td>
+  <td><span class="badge" style="color:#facc15;background:#facc1518;border-color:#facc1528">JavaScript</span></td>
+  <td class="td-n">15</td>
+  <td class="td-n">11</td>
+  <td class="td-n">2</td>
+  <td><div class="ratio"><div style="width:73%;background:#facc15"></div></div></td>
+  <td class="td-n td-muted">625.0 B</td>
+</tr><tr>
+  <td class="td-path">.well-known\security.txt</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">Text</span></td>
+  <td class="td-n">8</td>
+  <td class="td-n">7</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:88%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">337.0 B</td>
+</tr><tr>
+  <td class="td-path">.nojekyll</td>
+  <td><span class="badge" style="color:#a78bfa;background:#a78bfa18;border-color:#a78bfa28">Other</span></td>
+  <td class="td-n">0</td>
+  <td class="td-n">0</td>
+  <td class="td-n">0</td>
+  <td><div class="ratio"><div style="width:0%;background:#a78bfa"></div></div></td>
+  <td class="td-n td-muted">0.0 B</td>
+</tr></tbody>
     </table>
-    </div>
+  </div>
 </div>
 
-<div class="footer">🔥 Generated by Repo Tracker Pro v2.0 | 2026</div>
-
+<footer>
+  <span>Repo Tracker Pro v3.0 — Enterprise Intelligence</span>
+  <span>Generated 01 Apr 2026, 17:35 · © 2026</span>
+</footer>
 </div>
 
 <script>
-const D = {"langLabels": ["HTML", "Other", "Markdown", "JavaScript", "CSS", "Python", "JSON", "SVG"], "langValues": [52732, 35625, 8392, 6341, 1089, 957, 229, 224], "langColors": ["#a855f7", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#3b82f6", "#8b5cf6"], "filesLabels": ["index.html", "Grafiken\\Offline.webp", "Grafiken\\Website.webp", "Grafiken\\Bot-engine.webp", "Grafiken\\Service.webp", "Pages\\App\\berichtsheft...", "Grafiken\\Bot-Analyzer.w..", "Pages\\App\\Ausbilungs_Hi..", "Pages\\App\\Tasks\\aufgabe..", "Pages\\Info\\analytics.html", "Pages\\Info\\about.html", "Grafiken\\Touch.webp", "Pages\\Event\\Weihnachten..", "Pages\\App\\Ausbilungs_Hi..", "Pages\\App\\schatten-beri..", "Pages\\App\\SkillTree\\ski..", "README.md", "scripts\\repo-tracker.py", "Pages\\App\\vertrags-mana..", "Pages\\DE-Gestz\\DSGVO.html"], "filesValues": [31423, 8684, 8142, 7727, 7104, 6405, 3173, 3146, 1885, 1812, 1782, 1605, 1528, 1507, 1366, 1342, 1319, 1196, 1172, 1039], "timelineLabels": ["02-26", "02-27", "02-28", "03-01", "03-02", "03-03", "03-04", "03-05", "03-06", "03-07", "03-08", "03-09", "03-10", "03-11", "03-12", "03-13", "03-14", "03-15", "03-16", "03-17", "03-18", "03-19", "03-20", "03-21", "03-22", "03-23", "03-24", "03-25", "03-26", "03-27"], "timelineValues": [0, 0, 0, 6, 0, 1, 3, 2, 1, 2, 0, 7, 11, 0, 2, 2, 3, 3, 9, 4, 3, 0, 0, 0, 0, 0, 0, 4, 3, 4], "wdLabels": ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"], "wdValues": [34, 36, 12, 56, 36, 15, 18], "codeLines": 105909, "commentLines": 1266, "blankLines": 10690};
-const defaults = { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } } };
+const D = {"ll": ["HTML", "Other", "Markdown", "JavaScript", "CSS", "Python", "JSON", "SVG", "Text"], "lv": [54219, 35625, 8392, 6390, 1089, 867, 229, 224, 155], "lc": ["#a78bfa", "#38bdf8", "#34d399", "#fb923c", "#f472b6", "#e879f9", "#4ade80", "#facc15", "#60a5fa"], "fl": ["index.html", "Grafiken\\Offline.webp", "Grafiken\\Website.webp", "Grafiken\\Bot-engine.webp", "Grafiken\\Service.webp", "Pages\\App\\berichtsheft.h..", "Grafiken\\Bot-Analyzer.webp", "Pages\\App\\Ausbilungs_Hil..", "Pages\\Info\\about.html", "Pages\\App\\Tasks\\aufgaben..", "Pages\\Info\\analytics.html", "Grafiken\\Touch.webp", "Pages\\Event\\Weihnachten...", "Pages\\App\\Ausbilungs_Hil.."], "fv": [31522, 8684, 8142, 7727, 7104, 6433, 3173, 3146, 1944, 1885, 1812, 1605, 1528, 1507], "tl": ["03-03", "03-04", "03-05", "03-06", "03-07", "03-08", "03-09", "03-10", "03-11", "03-12", "03-13", "03-14", "03-15", "03-16", "03-17", "03-18", "03-19", "03-20", "03-21", "03-22", "03-23", "03-24", "03-25", "03-26", "03-27", "03-28", "03-29", "03-30", "03-31", "04-01"], "tv": [1, 3, 2, 1, 2, 0, 7, 11, 0, 2, 2, 3, 3, 9, 4, 3, 0, 0, 0, 0, 0, 0, 4, 3, 5, 8, 0, 1, 8, 2], "wl": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], "wv": [35, 44, 14, 56, 37, 23, 18], "code": 107355, "cmt": 1211, "blank": 10719};
+const MN = "'Fira Code',monospace";
+const TIP = {
+  backgroundColor:'#0c0c18', borderColor:'rgba(167,139,250,0.18)', borderWidth:1,
+  titleColor:'#e4e6f5', bodyColor:'#636585', padding:10, cornerRadius:9,
+  titleFont:{family:MN,size:11}, bodyFont:{family:MN,size:10}
+};
+const GR = { color:'rgba(255,255,255,0.04)' };
+const TK = { color:'#636585', font:{family:MN,size:9} };
+const BASE = {
+  responsive:true, maintainAspectRatio:false,
+  animation:{duration:900,easing:'easeOutQuart'},
+  plugins:{tooltip:TIP, legend:{labels:{color:'#636585',font:{family:MN,size:10},boxWidth:8,padding:12}}}
+};
 
-new Chart(document.getElementById('langChart'), {
-    type: 'doughnut',
-    data: { labels: D.langLabels, datasets: [{ data: D.langValues, backgroundColor: D.langColors, borderWidth: 0 }] },
-    options: { ...defaults, cutout: '65%' }
+// Language donut
+new Chart(document.getElementById('cLang'),{
+  type:'doughnut',
+  data:{ labels:D.ll, datasets:[{
+    data:D.lv,
+    backgroundColor:D.lc.map(c=>c+'20'),
+    borderColor:D.lc, borderWidth:1.5, hoverBorderWidth:2.5, hoverOffset:5,
+  }]},
+  options:{...BASE, cutout:'70%', plugins:{...BASE.plugins, legend:{position:'right',labels:{color:'#636585',font:{family:MN,size:10},boxWidth:7,padding:9}}}}
 });
 
-new Chart(document.getElementById('filesChart'), {
-    type: 'bar',
-    data: { labels: D.filesLabels, datasets: [{ data: D.filesValues, backgroundColor: 'rgba(168,85,247,0.6)', borderRadius: 6 }] },
-    options: { ...defaults, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b' } }, y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } } } }
+// Lines donut
+new Chart(document.getElementById('cLines'),{
+  type:'doughnut',
+  data:{ labels:['Code','Comments','Blank'], datasets:[{
+    data:[D.code,D.cmt,D.blank],
+    backgroundColor:['#a78bfa20','#38bdf820','#1a1c30'],
+    borderColor:['#a78bfa','#38bdf8','#252740'], borderWidth:1.5,
+  }]},
+  options:{...BASE, cutout:'74%', plugins:{...BASE.plugins, legend:{display:false}}}
 });
 
-new Chart(document.getElementById('timelineChart'), {
-    type: 'line',
-    data: { labels: D.timelineLabels, datasets: [{ data: D.timelineValues, borderColor: '#a855f7', backgroundColor: 'rgba(168,85,247,0.1)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#a855f7' }] },
-    options: { ...defaults, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b', maxTicksLimit: 10 } }, y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#64748b' }, beginAtZero: true } } }
+// Files bar
+new Chart(document.getElementById('cFiles'),{
+  type:'bar',
+  data:{ labels:D.fl, datasets:[{
+    data:D.fv,
+    backgroundColor:'rgba(167,139,250,0.16)', borderColor:'#a78bfa80',
+    borderWidth:1, borderRadius:5, borderSkipped:false,
+  }]},
+  options:{...BASE, indexAxis:'y', plugins:{...BASE.plugins,legend:{display:false}},
+    scales:{ x:{grid:GR,ticks:TK}, y:{grid:{display:false},ticks:{...TK,font:{family:MN,size:8}}} }
+  }
 });
 
-new Chart(document.getElementById('weekdayChart'), {
-    type: 'polarArea',
-    data: { labels: D.wdLabels, datasets: [{ data: D.wdValues, backgroundColor: ['#a855f780','#06b6d480','#10b98180','#f59e0b80','#ef444480','#ec489980','#3b82f680'] }] },
-    options: { ...defaults, scales: { r: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { display: false } } } }
+// Timeline
+new Chart(document.getElementById('cTimeline'),{
+  type:'line',
+  data:{ labels:D.tl, datasets:[{
+    data:D.tv, borderColor:'#a78bfa',
+    backgroundColor:(ctx)=>{ const g=ctx.chart.ctx.createLinearGradient(0,0,0,250); g.addColorStop(0,'rgba(167,139,250,0.3)'); g.addColorStop(1,'rgba(167,139,250,0)'); return g; },
+    fill:true, tension:0.45, pointRadius:0, pointHoverRadius:5,
+    pointBackgroundColor:'#a78bfa', pointBorderColor:'#06060f', pointBorderWidth:2, borderWidth:2,
+  }]},
+  options:{...BASE, plugins:{...BASE.plugins,legend:{display:false}},
+    scales:{ x:{grid:GR,ticks:{...TK,maxTicksLimit:10}}, y:{grid:GR,ticks:TK,beginAtZero:true} }
+  }
 });
 
-new Chart(document.getElementById('linesChart'), {
-    type: 'doughnut',
-    data: { labels: ['Code', 'Kommentare', 'Leerzeilen'], datasets: [{ data: [D.codeLines, D.commentLines, D.blankLines], backgroundColor: ['#a855f7', '#f59e0b', '#334155'], borderWidth: 0 }] },
-    options: { ...defaults, cutout: '70%' }
+// Weekday
+new Chart(document.getElementById('cWeekday'),{
+  type:'bar',
+  data:{ labels:D.wl, datasets:[{
+    data:D.wv,
+    backgroundColor:['#a78bfa28','#38bdf828','#34d39928','#fb923c28','#f472b628','#e879f928','#facc1528'],
+    borderColor:['#a78bfa','#38bdf8','#34d399','#fb923c','#f472b6','#e879f9','#facc15'],
+    borderWidth:1.5, borderRadius:8, borderSkipped:false,
+  }]},
+  options:{...BASE, plugins:{...BASE.plugins,legend:{display:false}},
+    scales:{ x:{grid:{display:false},ticks:TK}, y:{grid:GR,ticks:TK,beginAtZero:true} }
+  }
 });
 </script>
 </body>
