@@ -1391,7 +1391,14 @@ function buildTaskHTML(t, ti, ci, states) {
    ═══════════════════════════════════════════════════ */
 function toggleTask(id, ci) {
     var states = getStates();
-    states[id] = !states[id];
+    var newState = !states[id];
+    states[id] = newState;
+    // Sync subtasks: check/uncheck all subtasks when parent is toggled
+    var task = (categories[ci].tasks || []).find(function(t) { return t.id === id; });
+    if (task && task.subtasks && task.subtasks.length > 0) {
+        task.subtasks.forEach(function(s) { s.done = newState; });
+        save();
+    }
     saveStates(states);
     render();
     checkAchievements(states);
@@ -1446,12 +1453,19 @@ function toggleSub(ci, ti, si) {
     save();
     var task = categories[ci].tasks[ti];
     var subs = task.subtasks || [];
+    var states = getStates();
     if (subs.length > 0 && subs.every(function(s) { return s.done; })) {
-        var states = getStates();
+        // All subtasks done → check parent
         if (!states[task.id]) {
             states[task.id] = true;
             saveStates(states);
             checkAchievements(states);
+        }
+    } else {
+        // Not all subtasks done → uncheck parent
+        if (states[task.id]) {
+            states[task.id] = false;
+            saveStates(states);
         }
     }
     render();
