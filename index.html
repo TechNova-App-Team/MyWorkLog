@@ -7890,7 +7890,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         <div class="card gleitzeit-hero" style="display:flex; flex-direction:column; justify-content:center;">
                             <div class="ring-lbl">GLEITZEIT KONTO</div>
                             <div style="font-size:2.8rem; font-weight:800; color:var(--primary); margin:10px 0; font-family:var(--font-mono); letter-spacing:-2px;" id="valTotal" class="counter-animate">+0.0h</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted);">Prognose: <span id="valProjected" class="projection-badge">0h</span></div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">Prognose <span style="font-size:0.7rem; opacity:0.7;">(~6 Wochen)</span>: <span id="valProjected" class="projection-badge" style="cursor:help;">0h</span></div>
                             <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:6px; font-size:0.8rem;">
                                 <span id="streakEmoji" class="streak-active" style="font-size:1rem;">🔥</span>
                                 <span style="color:var(--text-muted);">Streak:</span>
@@ -14967,26 +14967,52 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         const avg = countDays > 0 ? totalWorked/countDays : 0;
         document.getElementById('valAvg').innerText = avg.toFixed(1) + 'h';
 
-        // Gleitzeit-Prognose: basiert auf Trend im aktuellen Jahr
-        // Nur aktuelle-Jahr-Einträge für den Durchschnitts-Drift verwenden
-        const currentYearEntries = data.entries.filter(e => new Date(e.date).getFullYear() === now.getFullYear());
-        const currentYearDiff = currentYearEntries.reduce((s, e) => s + e.diff, 0);
-        const currentYearDays = currentYearEntries.filter(e => 
+        // Gleitzeit-Prognose: Trend-basiert mit Mindestdatenmenge
+        // Nutzt alle verfügbaren Daten (mehr Daten = präzisere Prognose)
+        const allWorkEntries = data.entries.filter(e => 
             e.type === 'work' || e.type === 'school' || e.type === 'vacation' || 
             e.type === 'sick' || e.type === 'holiday' || e.type === 'gleittag'
-        ).length;
-        const avgDiffPerWorkDay = currentYearDays > 0 ? currentYearDiff / currentYearDays : 0;
-        // Tatsächliche verbleibende Arbeitstage (Mo-Fr) von morgen bis 31.12.
-        let remainingWorkDays = 0;
-        {
-            const d = new Date(now); d.setHours(0,0,0,0); d.setDate(d.getDate() + 1);
-            const eoy = new Date(now.getFullYear(), 11, 31);
-            while (d <= eoy) { if (d.getDay() !== 0 && d.getDay() !== 6) remainingWorkDays++; d.setDate(d.getDate() + 1); }
-        }
-        const projected = total + (avgDiffPerWorkDay * remainingWorkDays);
+        );
+        const totalWorkDays = allWorkEntries.length;
         const projEl = document.getElementById('valProjected');
-        projEl.innerText = (projected>=0?'+':'') + projected.toFixed(0) + 'h';
-        projEl.className = 'projection-badge ' + (projected >= 0 ? 'positive' : 'negative');
+
+        // Mindestens 20 Arbeitstage (~1 Monat) für eine sinnvolle Prognose
+        if (totalWorkDays < 20) {
+            projEl.innerText = '—';
+            projEl.className = 'projection-badge';
+            projEl.title = `Zu wenig Daten (${totalWorkDays} Tage). Mind. 20 Arbeitstage nötig für eine Prognose.`;
+        } else {
+            // Gewichteter Durchschnitt: letzte 60 Tage zählen doppelt (aktueller Trend wichtiger)
+            const cutoff60 = new Date(now); cutoff60.setDate(cutoff60.getDate() - 60);
+            let weightedDiffSum = 0, weightSum = 0;
+            allWorkEntries.forEach(e => {
+                const d = new Date(e.date);
+                const weight = d >= cutoff60 ? 2 : 1;
+                weightedDiffSum += e.diff * weight;
+                weightSum += weight;
+            });
+            const avgDiffPerWorkDay = weightSum > 0 ? weightedDiffSum / weightSum : 0;
+
+            // Prognose-Zeitraum: nächste 30 Arbeitstage (~6 Wochen)
+            let forecastDays = 0;
+            const forecastEnd = new Date(now);
+            {
+                const d = new Date(now); d.setHours(0,0,0,0); d.setDate(d.getDate() + 1);
+                while (forecastDays < 30) {
+                    if (d.getDay() !== 0 && d.getDay() !== 6) { forecastDays++; forecastEnd.setTime(d.getTime()); }
+                    d.setDate(d.getDate() + 1);
+                }
+            }
+            const projected = total + (avgDiffPerWorkDay * 30);
+            projEl.innerText = (projected>=0?'+':'') + projected.toFixed(1) + 'h';
+            projEl.className = 'projection-badge ' + (projected >= 0 ? 'positive' : 'negative');
+
+            // Konfidenz-Label basierend auf Datenmenge
+            const confidence = totalWorkDays >= 60 ? '●●●' : totalWorkDays >= 40 ? '●●○' : '●○○';
+            const confLabel = totalWorkDays >= 60 ? 'Hoch' : totalWorkDays >= 40 ? 'Mittel' : 'Niedrig';
+            const endStr = forecastEnd.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+            projEl.title = `Prognose bis ${endStr} (30 Arbeitstage)\nGenauigkeit: ${confLabel} ${confidence} (${totalWorkDays} Tage Datenbasis)\nØ ${avgDiffPerWorkDay >= 0 ? '+' : ''}${(avgDiffPerWorkDay * 60).toFixed(0)} min/Tag`;
+        }
 
         const totalVacation = parseFloat(data.settings.vacation.total);
         const usedVacation = data.settings.vacation.used;
