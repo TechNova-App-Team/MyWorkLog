@@ -1938,6 +1938,22 @@
         .ais-api-status.connected .ais-api-status-dot { background: #4ade80; box-shadow: 0 0 6px rgba(74,222,128,0.5); }
         .ais-api-status.disconnected .ais-api-status-dot { background: var(--text-muted); }
 
+        /* Custom Prompt */
+        .ais-custom-prompt {
+            width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border); border-radius: 12px; color: var(--text-main);
+            font-size: 0.85rem; font-family: inherit; resize: vertical; min-height: 70px;
+            transition: border-color 0.2s, box-shadow 0.2s; line-height: 1.5;
+        }
+        .ais-custom-prompt:focus {
+            border-color: var(--primary); outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+        }
+        .ais-custom-prompt::placeholder { color: var(--text-muted); }
+        .ais-prompt-hint {
+            font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; line-height: 1.4;
+        }
+
         @media (max-width: 600px) {
             .ai-studio { width: 100%; border-left: none; }
             .ai-studio-fab { bottom: 16px; right: 16px; width: 52px; height: 52px; }
@@ -2400,6 +2416,13 @@ Beispiel:
                         <input type="checkbox" id="aisVariation" checked style="accent-color:var(--primary);width:18px;height:18px;">
                         <span style="font-size:0.85rem;color:var(--text-main);font-weight:600;">Maximale Variation (keine Wiederholungen)</span>
                     </label>
+                </div>
+
+                <!-- Custom Prompt -->
+                <div class="ais-section">
+                    <div class="ais-section-label">Eigene Anweisungen (optional)</div>
+                    <textarea class="ais-custom-prompt" id="aisCustomPrompt" rows="3" placeholder="z.B. &quot;Fokus auf Netzwerktechnik und Firewall-Konfiguration&quot; oder &quot;Ich habe diese Woche an einem Webshop-Projekt gearbeitet&quot;..."></textarea>
+                    <div class="ais-prompt-hint">Beschreibe, was die KI in dein Berichtsheft schreiben soll — Themen, Projekte, Technologien etc.</div>
                 </div>
 
                 <!-- Engine Selection (Local / Gemini API) -->
@@ -6090,7 +6113,10 @@ REGELN:
 - Saison: ${getCurrentSeason()} — berücksichtige saisonale Besonderheiten wenn passend
 ${options.department ? `- Abteilung: ${options.department}` : ''}
 ${options.includeSchool ? '- Baue an EINEM Tag Berufsschule ein mit konkreten Unterrichtsthemen' : '- Keine Berufsschule, nur Betriebstage'}
-
+${options.customPrompt ? `
+BENUTZER-ANWEISUNGEN (WICHTIG — befolge diese speziellen Vorgaben):
+${options.customPrompt}
+` : ''}
 BERUF: ${profName}
 ${prof ? `TOOLS/TECHNOLOGIEN: ${(prof.tools || []).join(', ')}` : ''}
 
@@ -6217,6 +6243,7 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                 const department = document.getElementById('aisDepartment')?.value || '';
                 const includeSchool = document.getElementById('aisIncludeSchool')?.checked ?? true;
                 const maxVariation = document.getElementById('aisVariation')?.checked ?? true;
+                const customPrompt = document.getElementById('aisCustomPrompt')?.value?.trim() || '';
 
                 localStorage.setItem(STORAGE_KEYS.trainingYear, yearNum);
 
@@ -6228,6 +6255,7 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                     maxVariation,
                     department,
                     calendarWeek,
+                    customPrompt,
                 };
 
                 let week;
