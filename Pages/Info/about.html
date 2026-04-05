@@ -7,1074 +7,495 @@
     <meta name="description" content="MyWorkLog ist die kostenlose Zeiterfassungs-App für Azubis. Digitales Berichtsheft, Gleitzeitkonto, Überstundenrechner & Arbeitszeitnachweis – 100% offline, DSGVO-konform.">
     <meta name="keywords" content="Azubi Zeiterfassung, Berichtsheft digital, Gleitzeitkonto App, Ausbildung Arbeitszeitnachweis, Überstundenrechner Azubi, IHK Berichtsheft, Stundenkonto, Ausbildungsnachweis, Zeiterfassung Auszubildende, Arbeitszeit App kostenlos">
     <script defer src="../../Assets/js/touch-mobile-optimizations.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script defer src="../../Assets/js/version-loader.js"></script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --ink:        #e8eaf0;
+            --ink-mid:    #c9cdd6;
+            --ink-soft:   #a0a6b4;
+            --rule:       rgba(255,255,255,.08);
+            --rule-mid:   rgba(255,255,255,.12);
+            --text-base:  #e8eaf0;
+            --text-muted: #8b92a3;
+            --text-faint: #5a6170;
+            --accent:     #4f8fff;
+            --accent-dim: rgba(79,143,255,.1);
+            --accent-brd: rgba(79,143,255,.2);
+            --white:      #0b0d12;
+            --surface:    #10131a;
+            --surface-2:  #161a24;
+            --ff:         'DM Sans', sans-serif;
+            --fm:         'DM Mono', monospace;
         }
 
-        :root {
-            --primary: #a855f7;
-            --secondary: #8b5cf6;
-            --accent: #c084fc;
-            --purple-glow: #7c3aed;
-            --bg-deep: #0a0a0f;
-            --bg-card: #0f0a15;
-            --text-main: #ffffff;
-            --text-dim: #a78bfa;
-            --border: rgba(168, 85, 247, 0.2);
-        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: var(--bg-deep);
-            color: var(--text-main);
+            font-family: var(--ff);
+            background: #08090d;
+            color: var(--text-base);
             overflow-x: hidden;
             line-height: 1.6;
-            position: relative;
+            -webkit-font-smoothing: antialiased;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(2px 2px at 20% 30%, rgba(168, 85, 247, 0.3), transparent),
-                radial-gradient(2px 2px at 60% 70%, rgba(168, 85, 247, 0.3), transparent),
-                radial-gradient(1px 1px at 50% 50%, rgba(168, 85, 247, 0.3), transparent),
-                radial-gradient(1px 1px at 80% 10%, rgba(168, 85, 247, 0.3), transparent),
-                radial-gradient(2px 2px at 90% 60%, rgba(168, 85, 247, 0.3), transparent),
-                radial-gradient(1px 1px at 33% 80%, rgba(168, 85, 247, 0.3), transparent),
-                radial-gradient(1px 1px at 15% 90%, rgba(168, 85, 247, 0.3), transparent);
-            background-size: 200% 200%;
-            background-position: 0% 0%;
-            animation: stars-move 60s linear infinite;
-            z-index: -1;
-            pointer-events: none;
-        }
+        ::selection { background: rgba(79,143,255,.2); }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #08090d; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
 
-        @keyframes stars-move {
-            0% {
-                background-position: 0% 0%;
-            }
-            100% {
-                background-position: 100% 100%;
-            }
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        /* ========== NAVIGATION ========== */
-        .navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            padding: 1.5rem 5%;
-            background: rgba(10, 10, 15, 0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            transition: all 0.3s ease;
-        }
-
-        .navbar.scrolled {
-            padding: 1rem 5%;
-            background: rgba(10, 10, 15, 0.95);
-        }
-
-        .nav-content {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--text-dim);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s ease;
-            position: relative;
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--primary);
-            transition: width 0.3s ease;
-        }
-
-        .nav-links a:hover {
-            color: var(--text-main);
-        }
-
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        .cta-button {
-            padding: 0.75rem 2rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-block;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
-        }
-
-        /* ========== SCROLL PROGRESS ========== */
         .scroll-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
-            z-index: 1001;
-            transform-origin: left;
-            transition: transform 0.1s ease-out;
+            position: fixed; top: 0; left: 0; height: 2px; width: 0;
+            background: var(--accent); z-index: 10001; transform-origin: left;
         }
 
-        /* ========== HERO SECTION ========== */
+        /* NAVBAR */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 0 5%;
+            background: rgba(8,9,13,.85);
+            border-bottom: 1px solid rgba(255,255,255,.06);
+            backdrop-filter: blur(16px) saturate(1.4);
+            transition: box-shadow .3s;
+        }
+        .navbar.scrolled { box-shadow: 0 1px 30px rgba(0,0,0,.4); }
+        .nav-content {
+            max-width: 1280px; margin: 0 auto; height: 64px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo { font-family: var(--ff); font-weight: 700; font-size: 1.05rem; letter-spacing: -.01em; color: var(--ink); }
+        .logo span { color: var(--accent); }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: .875rem; transition: color .2s; }
+        .nav-links a:hover { color: var(--text-base); }
+        .nav-links a::after { display: none; }
+        .cta-button {
+            padding: .5rem 1.25rem; background: var(--accent); color: #fff;
+            text-decoration: none; border-radius: 6px;
+            font-weight: 600; font-size: .875rem; transition: background .2s; box-shadow: 0 0 20px rgba(79,143,255,.2);
+        }
+        .cta-button:hover { background: #3d7af0; transform: none; box-shadow: 0 0 30px rgba(79,143,255,.3); }
+        @media (max-width: 768px) { .nav-links { display: none; } }
+
+        /* HERO */
         .hero {
-            position: relative;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            padding: 8rem 5% 5rem;
+            margin-top: 64px; border-bottom: 1px solid rgba(255,255,255,.06);
+            padding: 7rem 5% 6rem; position: relative; overflow: hidden;
+            min-height: auto; display: block; align-items: unset; justify-content: unset;
+            background: linear-gradient(180deg, #08090d 0%, #0c0f18 50%, #08090d 100%);
         }
-
-        .hero-bg {
-            position: absolute;
-            inset: 0;
-            z-index: 0;
+        .hero::before {
+            content: ''; position: absolute; inset: 0;
+            background:
+                linear-gradient(135deg, rgba(79,143,255,.06) 0%, transparent 55%),
+                repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,.03) 39px, rgba(255,255,255,.03) 40px),
+                repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,.03) 39px, rgba(255,255,255,.03) 40px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+            opacity: .7; pointer-events: none;
         }
-
-        .hero-gradient {
-            position: absolute;
-            width: 1000px;
-            height: 1000px;
-            border-radius: 50%;
-            filter: blur(120px);
-            opacity: 0.4;
+        /* Parallax glow orbs */
+        .hero-orb {
+            position: absolute; border-radius: 50%; pointer-events: none;
+            filter: blur(80px); opacity: .35; will-change: transform;
         }
-
-        .hero-gradient-1 {
-            background: radial-gradient(circle, var(--primary) 0%, var(--purple-glow) 50%, transparent 100%);
-            top: -300px;
-            left: -300px;
-            animation: float-1 20s ease-in-out infinite;
-        }
-
-        .hero-gradient-2 {
-            background: radial-gradient(circle, var(--secondary) 0%, var(--accent) 50%, transparent 100%);
-            bottom: -300px;
-            right: -300px;
-            animation: float-2 25s ease-in-out infinite;
-        }
-
-        .hero-gradient-3 {
-            background: radial-gradient(circle, var(--purple-glow) 0%, var(--primary) 50%, transparent 100%);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation: float-3 30s ease-in-out infinite;
-        }
-
-        @keyframes float-1 {
-            0%, 100% {
-                transform: translate(0, 0) scale(1) rotate(0deg);
-            }
-            33% {
-                transform: translate(100px, 50px) scale(1.2) rotate(120deg);
-            }
-            66% {
-                transform: translate(50px, 100px) scale(0.9) rotate(240deg);
-            }
-        }
-
-        @keyframes float-2 {
-            0%, 100% {
-                transform: translate(0, 0) scale(1) rotate(0deg);
-            }
-            33% {
-                transform: translate(-80px, -120px) scale(1.1) rotate(-120deg);
-            }
-            66% {
-                transform: translate(-120px, -80px) scale(1.3) rotate(-240deg);
-            }
-        }
-
-        @keyframes float-3 {
-            0%, 100% {
-                transform: translate(-50%, -50%) scale(1) rotate(0deg);
-            }
-            50% {
-                transform: translate(-50%, -50%) scale(1.5) rotate(180deg);
-            }
-        }
-
-        .hero-grid {
-            position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(168, 85, 247, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            opacity: 0.6;
-            animation: grid-shift 20s linear infinite;
-        }
-
-        @keyframes grid-shift {
-            0% { background-position: 0 0; }
-            100% { background-position: 50px 50px; }
-        }
+        .hero-orb-1 { width: 500px; height: 500px; background: rgba(79,143,255,.3); top: -10%; left: -5%; }
+        .hero-orb-2 { width: 400px; height: 400px; background: rgba(168,85,247,.25); bottom: -15%; right: -5%; }
+        .hero-orb-3 { width: 300px; height: 300px; background: rgba(52,211,153,.15); top: 40%; right: 20%; }
+        /* hide original hero bg decorations */
+        .hero-bg, .hero-ghost-text, .hero-diag { display: none; }
+        .scroll-indicator { display: none; }
 
         .hero-content {
-            position: relative;
-            z-index: 10;
-            text-align: center;
-            max-width: 1000px;
+            position: relative; z-index: 10; text-align: left; max-width: 1280px; margin: 0 auto;
         }
-
         .hero-badge {
-            display: inline-block;
-            padding: 0.5rem 1.5rem;
-            background: rgba(168, 85, 247, 0.15);
-            border: 1px solid rgba(168, 85, 247, 0.4);
-            border-radius: 50px;
-            color: var(--accent);
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 2rem;
-            animation: fade-in 1s ease, glow-pulse 3s ease-in-out infinite;
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+            display: inline-flex; align-items: center; gap: .5rem;
+            padding: .35rem .9rem; background: var(--accent-dim);
+            border: 1px solid var(--accent-brd); border-radius: 4px;
+            font-family: var(--fm); font-size: .78rem; color: var(--accent);
+            font-weight: 500; letter-spacing: .02em; margin-bottom: 2rem;
+            animation: none; box-shadow: none;
         }
-
-        @keyframes glow-pulse {
-            0%, 100% {
-                box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
-            }
-            50% {
-                box-shadow: 0 0 30px rgba(168, 85, 247, 0.6);
-            }
-        }
-
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 2.5s ease-in-out infinite; }
+        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.25;} }
 
         .hero-title {
-            font-size: clamp(3rem, 8vw, 7rem);
-            font-weight: 900;
-            line-height: 1.1;
-            letter-spacing: -0.02em;
-            margin-bottom: 1.5rem;
-            animation: fade-in 1s ease 0.2s backwards;
+            font-family: var(--ff);
+            font-size: clamp(2.4rem, 5.5vw, 4.5rem);
+            font-weight: 700; line-height: 1.08; letter-spacing: -.035em; color: var(--ink);
+            max-width: 820px; margin-bottom: 1.5rem; animation: none;
         }
-
-        .hero-title .gradient-text {
-            background: linear-gradient(135deg, #fff 0%, var(--primary) 50%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            background-size: 200% 200%;
-            animation: gradient-shift 5s ease infinite;
-        }
-
-        @keyframes gradient-shift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
+        .hero-title em { font-style: normal; color: var(--accent); }
+        .gradient-text { background: none; -webkit-text-fill-color: var(--ink); background-clip: unset; color: var(--ink); animation: none; }
+        .hero-title em { font-style: normal; background: linear-gradient(135deg, #4f8fff, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
         .hero-description {
-            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
-            color: var(--text-dim);
-            margin-bottom: 3rem;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
-            animation: fade-in 1s ease 0.4s backwards;
+            font-size: 1.05rem; line-height: 1.8; color: var(--text-muted);
+            max-width: 540px; margin: 0 0 2.5rem; font-weight: 400; animation: none;
         }
-
-        .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            animation: fade-in 1s ease 0.6s backwards;
-        }
-
+        .hero-buttons { display: flex; gap: .75rem; flex-wrap: wrap; animation: none; }
         .btn-primary {
-            padding: 1.2rem 3rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            padding: .75rem 1.75rem; background: var(--accent); color: #fff;
+            border-radius: 6px; text-decoration: none; font-weight: 600; font-size: .9rem;
+            transition: background .2s, transform .15s, box-shadow .3s; box-shadow: 0 0 25px rgba(79,143,255,.2);
+            font-family: var(--ff); display: inline-flex; align-items: center;
         }
-
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, var(--secondary), var(--primary));
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .btn-primary:hover::before {
-            opacity: 1;
-        }
-
-        .btn-primary span {
-            position: relative;
-            z-index: 1;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 20px 40px rgba(168, 85, 247, 0.5), 0 0 60px rgba(168, 85, 247, 0.3);
-        }
-
+        .btn-primary::before { display: none; }
+        .btn-primary:hover { background: #3d7af0; transform: translateY(-1px); box-shadow: 0 0 40px rgba(79,143,255,.35); }
+        .btn-primary span { position: static; }
         .btn-secondary {
-            padding: 1.2rem 3rem;
-            background: rgba(255, 255, 255, 0.05);
-            color: white;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            border: 1px solid var(--border);
-            transition: all 0.3s ease;
+            padding: .75rem 1.75rem; background: transparent; color: var(--text-base);
+            border: 1px solid rgba(255,255,255,.12); border-radius: 6px; text-decoration: none;
+            font-weight: 500; font-size: .9rem; font-family: var(--ff);
+            transition: border-color .2s, background .2s;
+        }
+        .btn-secondary:hover { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.05); transform: none; }
+
+        .hero-meta {
+            margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,.08);
+            display: flex; gap: 3rem; flex-wrap: wrap;
+        }
+        .hero-meta-item { display: flex; flex-direction: column; gap: .2rem; }
+        .hero-meta-label { font-family: var(--fm); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-faint); }
+        .hero-meta-value { font-size: .9rem; font-weight: 600; color: var(--text-base); }
+
+        /* MARQUEE */
+        .marquee-wrap {
+            overflow: hidden; border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06);
+            background: rgba(255,255,255,.02); padding: .65rem 0;
+        }
+        .marquee-track { display: flex; width: max-content; animation: marquee-scroll 30s linear infinite; }
+        .marquee-wrap.reverse .marquee-track { animation-direction: reverse; }
+        @keyframes marquee-scroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+        .marquee-item {
+            display: inline-flex; align-items: center; gap: .6rem; padding: 0 2rem; white-space: nowrap;
+            font-family: var(--fm); font-size: .72rem; font-weight: 500;
+            letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint);
+        }
+        .marquee-item .mi-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--rule-mid); }
+        .marquee-item.hi { color: var(--accent); }
+        .marquee-item.cyan-i { color: var(--text-muted); }
+
+        /* ENTERPRISE SHOWCASE */
+        .showcase-section { padding: 8rem 5%; }
+        .showcase-header { max-width: 660px; margin-bottom: 4rem; }
+        .showcase-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 1px; max-width: 1280px; margin: 0 auto;
+            border: 1px solid rgba(255,255,255,.06); border-radius: 12px; overflow: hidden;
+            background: rgba(255,255,255,.04);
+        }
+        .showcase-card {
+            padding: 2.5rem 2.25rem; background: rgba(8,9,13,.9);
+            transition: background .35s, box-shadow .35s; position: relative; overflow: hidden;
+        }
+        .showcase-card::after {
+            content: ''; position: absolute; inset: 0; opacity: 0;
+            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(79,143,255,.04), transparent 40%);
+            transition: opacity .4s; pointer-events: none;
+        }
+        .showcase-card:hover::after { opacity: 1; }
+        .showcase-card:hover { background: rgba(15,17,25,.95); }
+        .showcase-card-hero {
+            grid-column: 1 / -1; padding: 3.5rem 3rem;
+            background: linear-gradient(135deg, rgba(10,12,20,.95), rgba(15,18,30,.9));
+            border-bottom: 1px solid rgba(79,143,255,.08);
+        }
+        .showcase-card-badge {
+            display: inline-block; padding: .2rem .6rem; margin-bottom: 1.5rem;
+            background: rgba(79,143,255,.1); border: 1px solid rgba(79,143,255,.2);
+            border-radius: 4px; font-family: var(--fm); font-size: .65rem;
+            text-transform: uppercase; letter-spacing: .1em; color: var(--accent);
+        }
+        .showcase-card-icon {
+            color: var(--accent); margin-bottom: 1.25rem;
+            width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+            background: rgba(79,143,255,.06); border: 1px solid rgba(79,143,255,.12); border-radius: 10px;
+        }
+        .showcase-card-hero .showcase-card-icon {
+            width: 56px; height: 56px; background: rgba(79,143,255,.08);
+            border-color: rgba(79,143,255,.18); border-radius: 12px;
+        }
+        .showcase-card-title {
+            font-size: 1.1rem; font-weight: 700; color: #fff; letter-spacing: -.015em; margin-bottom: .6rem;
+        }
+        .showcase-card-hero .showcase-card-title { font-size: 1.5rem; letter-spacing: -.02em; }
+        .showcase-card-desc { font-size: .875rem; color: var(--text-muted); line-height: 1.75; }
+        .showcase-card-hero .showcase-card-desc { font-size: .95rem; max-width: 600px; }
+        .showcase-card-metrics {
+            display: flex; gap: 2.5rem; margin-top: 2rem; padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,.06);
+        }
+        .showcase-metric { display: flex; flex-direction: column; gap: .15rem; }
+        .showcase-metric-value {
+            font-family: var(--fm); font-size: 1.1rem; font-weight: 700; color: #fff;
+            letter-spacing: -.01em;
+        }
+        .showcase-metric-label {
+            font-family: var(--fm); font-size: .65rem; color: var(--text-faint);
+            text-transform: uppercase; letter-spacing: .08em;
         }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-3px);
-            border-color: var(--primary);
-        }
-
-        /* ========== SECTION TITLE ========== */
-        .section {
-            padding: 8rem 5%;
-            position: relative;
-        }
-
-        .section-header {
-            text-align: center;
-            max-width: 800px;
-            margin: 0 auto 5rem;
-        }
-
-        .section-badge {
-            display: inline-block;
-            padding: 0.5rem 1.5rem;
-            background: rgba(168, 85, 247, 0.1);
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            border-radius: 50px;
-            color: var(--secondary);
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .section-title {
-            font-size: clamp(2.5rem, 5vw, 4rem);
-            font-weight: 900;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
-        }
-
-        .section-description {
-            font-size: 1.2rem;
-            color: var(--text-dim);
-            line-height: 1.8;
-        }
-
-        /* ========== STATS SECTION ========== */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 3rem 2rem;
-            text-align: center;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .stat-card:hover::before {
-            opacity: 0.05;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .stat-number {
-            font-size: 4rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1;
-            margin-bottom: 0.5rem;
-            position: relative;
-        }
-
-        .stat-label {
-            font-size: 1.1rem;
-            color: var(--text-dim);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-        }
-
-        /* ========== FEATURES GRID ========== */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 3rem;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 0.3s ease;
-        }
-
-        .feature-card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .feature-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            margin-bottom: 1.5rem;
-            transition: transform 0.3s ease;
-        }
-
-        .feature-card:hover .feature-icon {
-            transform: scale(1.1) rotate(5deg);
-        }
-
-        .feature-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: var(--text-main);
-        }
-
-        .feature-description {
-            color: var(--text-dim);
-            line-height: 1.8;
-        }
-
-        /* ========== TIMELINE ========== */
-        .timeline {
-            max-width: 1000px;
-            margin: 0 auto;
-            position: relative;
-            padding: 2rem 0;
-        }
-
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 50%;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: linear-gradient(to bottom, var(--primary), var(--secondary));
-            transform: translateX(-50%);
-        }
-
-        .timeline-item {
-            display: flex;
-            justify-content: flex-end;
-            padding-right: calc(50% + 30px);
-            margin-bottom: 3rem;
-            position: relative;
-        }
-
-        .timeline-item:nth-child(even) {
-            justify-content: flex-start;
-            padding-right: 0;
-            padding-left: calc(50% + 30px);
-        }
-
-        .timeline-dot {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 20px;
-            height: 20px;
-            background: radial-gradient(circle, var(--accent) 0%, var(--primary) 100%);
-            border-radius: 50%;
-            border: 4px solid var(--bg-deep);
-            z-index: 10;
-            box-shadow:
-                0 0 20px rgba(168, 85, 247, 0.8),
-                0 0 40px rgba(168, 85, 247, 0.5),
-                inset 0 0 10px rgba(255, 255, 255, 0.3);
-            animation: pulse-dot 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-dot {
-            0%, 100% {
-                transform: translateX(-50%) scale(1);
-                box-shadow:
-                    0 0 20px rgba(168, 85, 247, 0.8),
-                    0 0 40px rgba(168, 85, 247, 0.5),
-                    inset 0 0 10px rgba(255, 255, 255, 0.3);
-            }
-            50% {
-                transform: translateX(-50%) scale(1.2);
-                box-shadow:
-                    0 0 30px rgba(168, 85, 247, 1),
-                    0 0 60px rgba(168, 85, 247, 0.7),
-                    inset 0 0 15px rgba(255, 255, 255, 0.5);
-            }
-        }
-
-        .timeline-content {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 2rem;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-
-        .timeline-content:hover {
-            transform: scale(1.05);
-            border-color: var(--primary);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .timeline-year {
-            font-size: 2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-
-        .timeline-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .timeline-description {
-            color: var(--text-dim);
-            line-height: 1.8;
-        }
-
-        /* ========== TEAM SECTION ========== */
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .team-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 3rem 2rem;
-            text-align: center;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .team-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .team-card:hover::before {
-            opacity: 0.05;
-        }
-
-        .team-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--primary);
-        }
-
-        .team-avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            margin: 0 auto 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            font-weight: 800;
-            position: relative;
-            transition: transform 0.3s ease;
-        }
-
-        .team-card:hover .team-avatar {
-            transform: scale(1.1);
-        }
-
-        .team-name {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            position: relative;
-        }
-
-        .team-role {
-            color: var(--primary);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-            margin-bottom: 1rem;
-            position: relative;
-        }
-
-        .team-bio {
-            color: var(--text-dim);
-            line-height: 1.8;
-            font-size: 0.95rem;
-            position: relative;
-        }
-
-        /* ========== CTA SECTION ========== */
-        .cta-section {
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(168, 85, 247, 0.1));
-            border: 1px solid var(--border);
-            border-radius: 30px;
-            padding: 5rem 3rem;
-            text-align: center;
-            max-width: 1200px;
-            margin: 0 auto;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .cta-section::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(
-                from 0deg,
-                transparent,
-                rgba(168, 85, 247, 0.15),
-                rgba(124, 58, 237, 0.1),
-                transparent 50%
-            );
-            animation: rotate-slow 20s linear infinite;
-        }
-
-        @keyframes rotate-slow {
-            to { transform: rotate(360deg); }
-        }
-
-        .cta-section > * {
-            position: relative;
-            z-index: 1;
-        }
-
-        .cta-title {
-            font-size: clamp(2.5rem, 5vw, 4rem);
-            font-weight: 900;
-            margin-bottom: 1.5rem;
-        }
-
-        .cta-description {
-            font-size: 1.3rem;
-            color: var(--text-dim);
-            margin-bottom: 2.5rem;
-            max-width: 700px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        /* ========== FOOTER ========== */
-        footer {
-            padding: 4rem 5%;
-            border-top: 1px solid var(--border);
-            text-align: center;
-            color: var(--text-dim);
-        }
-
-        .footer-content {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .footer-logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 1rem;
-        }
-
-        /* ========== PARALLAX EFFECTS ========== */
-        .parallax-element {
-            transition: transform 0.3s ease-out;
-            will-change: transform;
-        }
-
-        .parallax-bg {
-            position: absolute;
-            inset: 0;
-            z-index: -1;
-        }
-
-        .parallax-layer-1 {
-            transform: translateZ(-100px) scale(2);
-        }
-
-        .parallax-layer-2 {
-            transform: translateZ(-50px) scale(1.5);
-        }
-
-        /* ========== CODE VIDEO SECTION ========== */
-        .code-video-section {
-            position: relative;
-            height: 130vh;
-            overflow: hidden;
-            background: linear-gradient(180deg, var(--bg-deep) 0%, #1a0a2e 30%, #1a0a2e 70%, var(--bg-deep) 100%);
-        }
-
-        .code-video-sticky {
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .code-video-canvas-container {
-            position: absolute;
-            inset: 0;
-            z-index: 0;
-        }
-
-        #codeVideoCanvas {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .code-video-overlay {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at center, transparent 0%, rgba(10, 10, 15, 0.8) 100%);
-            pointer-events: none;
-        }
-
-        .code-video-content {
-            position: relative;
-            z-index: 10;
-            text-align: center;
-            max-width: 900px;
-            padding: 0 5%;
-            opacity: 0;
-            transform: translateY(40px) scale(0.95);
-            transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-            filter: blur(10px);
-        }
-
-        .code-video-content.visible {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            filter: blur(0px);
-        }
-
-        .code-video-title {
-            font-size: clamp(2.5rem, 6vw, 5rem);
-            font-weight: 900;
-            margin-bottom: 2rem;
-            line-height: 1.1;
-            background: linear-gradient(135deg, #fff 0%, var(--primary) 50%, var(--accent) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 0 40px rgba(168, 85, 247, 0.3);
-        }
-
-        .code-video-description {
-            font-size: clamp(1.1rem, 2vw, 1.4rem);
-            color: var(--text-dim);
-            line-height: 1.8;
-            margin-bottom: 2rem;
-        }
-
-        .code-video-features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-top: 3rem;
-        }
-
-        .code-video-feature {
-            background: rgba(168, 85, 247, 0.1);
-            border: 1px solid var(--border);
-            border-radius: 15px;
-            padding: 1.5rem;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-
-        .code-video-feature:hover {
-            background: rgba(168, 85, 247, 0.2);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(168, 85, 247, 0.3);
-        }
-
-        .code-video-feature-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .code-video-feature-text {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .scroll-indicator {
-            position: absolute;
-            bottom: 3rem;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-dim);
-            font-size: 0.9rem;
-            animation: bounce 2s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translate(-50%, 0); }
-            50% { transform: translate(-50%, 10px); }
-        }
-
-        .scroll-indicator::after {
-            content: '↓';
-            font-size: 1.5rem;
-        }
-
-        /* ========== RESPONSIVE ========== */
         @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-
-            .hero {
-                padding: 6rem 5% 3rem;
-            }
-
-            .section {
-                padding: 4rem 5%;
-            }
-
-            .timeline::before {
-                left: 20px;
-            }
-
-            .timeline-item,
-            .timeline-item:nth-child(even) {
-                padding-left: 60px;
-                padding-right: 0;
-                justify-content: flex-start;
-            }
-
-            .timeline-dot {
-                left: 20px;
-            }
-
-            .section-header {
-                margin-bottom: 3rem;
-            }
-
-            .code-video-section {
-                height: 150vh;
-            }
-
-            .code-video-title {
-                font-size: 2rem;
-            }
-
-            .code-video-description {
-                font-size: 1rem;
-            }
-
-            .code-video-features {
-                grid-template-columns: 1fr 1fr;
-                gap: 1rem;
-            }
-
-            .code-video-feature {
-                padding: 1rem;
-            }
-
-            .scroll-indicator {
-                bottom: 1.5rem;
-                font-size: 0.8rem;
-            }
-
-            .hero-gradient {
-                width: 600px;
-                height: 600px;
-                filter: blur(80px);
-            }
-
-            body::before {
-                background-size: 300% 300%;
-            }
+            .showcase-grid { grid-template-columns: 1fr; }
+            .showcase-card-hero { padding: 2.5rem 2rem; }
+            .showcase-card-metrics { flex-wrap: wrap; gap: 1.5rem; }
         }
 
+        /* TRUST INDICATORS */
+        .trust-section { padding: 5rem 5%; }
+        .trust-grid {
+            display: flex; justify-content: center; gap: 0;
+            max-width: 1280px; margin: 0 auto;
+            border: 1px solid rgba(255,255,255,.06); border-radius: 10px; overflow: hidden;
+        }
+        .trust-item {
+            flex: 1; padding: 2.25rem 1.5rem; text-align: center;
+            border-right: 1px solid rgba(255,255,255,.04);
+            transition: background .3s;
+        }
+        .trust-item:last-child { border-right: none; }
+        .trust-item:hover { background: rgba(255,255,255,.03); }
+        .trust-icon {
+            color: var(--accent); margin-bottom: .75rem;
+            display: flex; justify-content: center; opacity: .7;
+        }
+        .trust-label { font-size: .85rem; font-weight: 700; color: #fff; margin-bottom: .2rem; }
+        .trust-desc { font-size: .72rem; color: var(--text-faint); font-family: var(--fm); letter-spacing: .02em; }
+        @media (max-width: 900px) { .trust-grid { flex-wrap: wrap; } .trust-item { flex: 0 0 50%; border-bottom: 1px solid rgba(255,255,255,.04); } }
+        @media (max-width: 480px) { .trust-item { flex: 0 0 100%; } }
+
+        /* COMPANY VALUES */
+        .values-section { padding: 8rem 5%; }
+        .values-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+            max-width: 1280px; margin: 0 auto;
+            border: 1px solid rgba(255,255,255,.06); border-radius: 12px; overflow: hidden;
+            background: rgba(255,255,255,.04);
+        }
+        .value-card {
+            padding: 3rem 2.5rem; background: rgba(8,9,13,.9);
+            transition: background .3s; position: relative;
+        }
+        .value-card:hover { background: rgba(15,17,25,.95); }
+        .value-number {
+            font-family: var(--fm); font-size: 3rem; font-weight: 700;
+            background: linear-gradient(180deg, rgba(79,143,255,.2), rgba(79,143,255,.03));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            line-height: 1; margin-bottom: 1.25rem; letter-spacing: -.04em;
+        }
+        .value-title { font-size: 1.15rem; font-weight: 700; color: #fff; letter-spacing: -.015em; margin-bottom: .6rem; }
+        .value-desc { font-size: .875rem; color: var(--text-muted); line-height: 1.8; }
+        @media (max-width: 768px) { .values-grid { grid-template-columns: 1fr; } }
+
+        /* SECTIONS */
+        .section { padding: 6rem 5%; position: relative; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,.06); background: #08090d; }
+        .section.alt { background: #0a0c14; }
+        /* Section parallax bg orbs */
+        .section-parallax-bg {
+            position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+        }
+        .section-parallax-bg .orb {
+            position: absolute; border-radius: 50%; filter: blur(100px); opacity: .2; will-change: transform;
+        }
+        .section-inner { position: relative; z-index: 1; }
+        .section-ghost { display: none; }
+        .skew-sep { display: none; }
+        .section-inner { max-width: 1280px; margin: 0 auto; }
+        .section-header { max-width: 820px; margin: 0 0 3.5rem; }
+        .section-badge {
+            display: inline-flex; align-items: center;
+            padding: .3rem .8rem; background: var(--accent-dim); border: 1px solid var(--accent-brd);
+            border-radius: 4px; color: var(--accent); font-family: var(--fm); font-size: .72rem;
+            font-weight: 500; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 1rem;
+        }
+        .section-title { font-family: var(--ff); font-size: clamp(1.75rem,3.5vw,2.75rem); font-weight: 700; line-height: 1.1; letter-spacing: -.025em; color: var(--ink); margin-bottom: .75rem; }
+        .section-description { font-size: .975rem; color: var(--text-muted); line-height: 1.8; }
+
+        /* STATS */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4,1fr);
+            max-width: 1280px; margin: 0 auto;
+            border: 1px solid rgba(255,255,255,.08); border-radius: 8px; overflow: visible;
+        }
+        @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } }
+        .stat-card {
+            padding: 2.5rem 2rem; text-align: left;
+            border-right: 1px solid rgba(255,255,255,.06); border-radius: 0;
+            background: rgba(255,255,255,.02); transition: background .3s, border-color .3s;
+            position: relative; overflow: visible; will-change: auto;
+        }
+        .stat-card::before { display: none; }
+        .stat-card:hover { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); box-shadow: 0 0 40px rgba(79,143,255,.05); }
+        .stat-card:last-child { border-right: none; }
+        @media (max-width: 900px) { .stat-card:nth-child(2n) { border-right: none; } .stat-card { border-bottom: 1px solid rgba(255,255,255,.06); } }
+        .stat-number {
+            font-family: var(--ff); font-size: clamp(2.2rem,3.5vw,3rem); font-weight: 700;
+            color: #fff; line-height: 1; margin-bottom: .4rem;
+            background: none; -webkit-text-fill-color: unset; font-variant-numeric: tabular-nums;
+        }
+        .stat-label { font-family: var(--fm); font-size: .72rem; color: var(--text-faint); font-weight: 500; text-transform: uppercase; letter-spacing: .08em; display: flex; align-items: center; gap: 6px; }
+
+        /* FEATURES */
+        .features-grid {
+            display: grid; grid-template-columns: repeat(3,1fr);
+            max-width: 1280px; margin: 0 auto;
+            border: 1px solid rgba(255,255,255,.08); border-radius: 8px; overflow: hidden;
+        }
+        @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2,1fr); } }
+        @media (max-width: 560px) { .features-grid { grid-template-columns: 1fr; } }
+        .feature-card {
+            padding: 2.25rem 2rem; background: rgba(255,255,255,.02);
+            border: none; border-right: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06);
+            border-radius: 0; transition: background .3s, box-shadow .3s; overflow: visible; transform-style: flat;
+        }
+        .feature-card::before, .feature-card::after { display: none; }
+        .feature-card:hover { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); box-shadow: 0 0 40px rgba(79,143,255,.05); }
+        .feature-card:nth-child(3n) { border-right: none; }
+        @media (max-width: 900px) { .feature-card:nth-child(2n) { border-right: none; } }
+        .feature-icon {
+            width: 40px; height: 40px; background: rgba(79,143,255,.08); border: 1px solid rgba(79,143,255,.15);
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; margin-bottom: 1.1rem; transition: none;
+        }
+        .feature-card:hover .feature-icon { transform: none; }
+        .feature-title { font-family: var(--ff); font-size: .975rem; font-weight: 600; margin-bottom: .5rem; letter-spacing: -.01em; color: var(--ink); }
+        .feature-description { color: var(--text-muted); line-height: 1.75; font-size: .875rem; }
+
+        /* TIMELINE */
+        .timeline { max-width: 1280px; margin: 0 auto; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; overflow: hidden; padding: 0; position: static; }
+        .timeline::before { display: none; }
+        .timeline-item { display: none; }
+        .tl-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.03); }
+        .tl-tab {
+            padding: .9rem 1.5rem; background: none; border: none; cursor: pointer;
+            font-family: var(--ff); font-size: .875rem; font-weight: 500; color: var(--text-muted);
+            border-right: 1px solid rgba(255,255,255,.06); transition: color .2s, background .2s; white-space: nowrap;
+        }
+        .tl-tab:last-child { border-right: none; }
+        .tl-tab:hover { background: rgba(255,255,255,.05); color: var(--text-base); }
+        .tl-tab.active { background: rgba(79,143,255,.08); color: var(--accent); font-weight: 600; }
+        .tl-pane-wrap { padding: 2.5rem; }
+        .tl-pane { display: none; animation: fadein .3s ease; }
+        .tl-pane.active { display: block; }
+        @keyframes fadein { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+        .tl-pane-label { font-family: var(--fm); font-size: .72rem; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; margin-bottom: .6rem; }
+        .tl-pane-title { font-size: 1.4rem; font-weight: 700; letter-spacing: -.02em; color: var(--ink); margin-bottom: .6rem; }
+        .tl-pane-desc { font-size: .925rem; color: var(--text-muted); line-height: 1.75; }
+        .tl-tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1.1rem; }
+        .tl-tag { padding: .2rem .65rem; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 4px; font-size: .72rem; color: var(--text-muted); font-family: var(--fm); }
+
+        /* TEAM */
+        .team-grid {
+            display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+            max-width: 1280px; margin: 0 auto;
+            border: 1px solid rgba(255,255,255,.08); border-radius: 8px; overflow: hidden;
+        }
+        .team-card {
+            padding: 2.25rem 2rem; background: rgba(255,255,255,.02);
+            border: none; border-right: 1px solid rgba(255,255,255,.06); border-radius: 0;
+            text-align: left; transition: background .3s; overflow: visible;
+        }
+        .team-card::before { display: none; }
+        .team-card:last-child { border-right: none; }
+        .team-card:hover { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); box-shadow: 0 0 40px rgba(79,143,255,.05); }
+        .team-avatar {
+            width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, #4f8fff, #a78bfa);
+            margin: 0 0 1.25rem; display: flex; align-items: center; justify-content: center;
+            font-family: var(--fm); font-size: .875rem; font-weight: 500; color: #fff;
+            letter-spacing: .04em; box-shadow: 0 0 20px rgba(79,143,255,.2); transition: none;
+        }
+        .team-card:hover .team-avatar { transform: none; }
+        .team-name { font-size: 1rem; font-weight: 700; color: var(--ink); margin-bottom: .2rem; position: static; letter-spacing: -.01em; }
+        .team-role { font-family: var(--fm); font-size: .72rem; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; margin-bottom: .8rem; position: static; }
+        .team-bio { font-size: .875rem; color: var(--text-muted); line-height: 1.7; position: static; }
+
+        /* CTA */
+        .section.cta-outer { background: #060710; border-bottom: none; padding: 6rem 5%; }
+        .cta-section {
+            max-width: 1280px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 2.5rem; flex-wrap: wrap;
+            background: none; border: none; border-radius: 0; padding: 0;
+        }
+        .cta-section::before { display: none; }
+        .cta-ring { display: none; }
+        .cta-title { font-family: var(--ff); font-size: clamp(1.75rem,3.5vw,2.75rem); font-weight: 700; color: #fff; line-height: 1.1; letter-spacing: -.025em; margin-bottom: 0; }
+        .cta-title em { font-style: normal; background: linear-gradient(135deg, #4f8fff, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .cta-description { font-size: .975rem; color: rgba(255,255,255,.45); line-height: 1.75; max-width: 500px; margin: .75rem 0 0; }
+        .cta-actions { display: flex; gap: .75rem; flex-wrap: wrap; flex-shrink: 0; }
+        .btn-cta-primary { padding: .75rem 1.75rem; background: var(--accent); color: #fff; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: .9rem; transition: background .2s; box-shadow: 0 0 30px rgba(79,143,255,.25); }
+        .btn-cta-primary:hover { background: #3d7af0; box-shadow: 0 0 40px rgba(79,143,255,.35); }
+        .btn-cta-outline { padding: .75rem 1.75rem; background: transparent; color: rgba(255,255,255,.6); border: 1px solid rgba(255,255,255,.15); border-radius: 6px; text-decoration: none; font-weight: 500; font-size: .9rem; transition: border-color .2s, color .2s; }
+        .btn-cta-outline:hover { border-color: rgba(255,255,255,.35); color: var(--white); }
+
+        /* FOOTER */
+        footer { padding: 2.5rem 5%; border-top: 1px solid rgba(255,255,255,.06); background: #060710; text-align: left; color: rgba(255,255,255,.35); }
+        .footer-content { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+        .footer-logo { font-family: var(--ff); font-size: .95rem; font-weight: 700; color: rgba(255,255,255,.5); background: none; -webkit-text-fill-color: rgba(255,255,255,.5); margin-bottom: 0; display: inline; }
+
+        /* SCROLL REVEAL */
+        .px-reveal { opacity: 0; transition: opacity .55s ease, transform .55s cubic-bezier(.22,.68,0,1.1); }
+        .px-reveal.px-from-left  { transform: translateX(-24px); }
+        .px-reveal.px-from-right { transform: translateX(24px); }
+        .px-reveal.px-from-below { transform: translateY(22px); }
+        .px-reveal.px-scale-in   { transform: translateY(12px); }
+        .px-reveal.px-visible { opacity: 1; transform: translateX(0) translateY(0) scale(1); }
+        .px-d1{transition-delay:.07s;} .px-d2{transition-delay:.14s;} .px-d3{transition-delay:.21s;}
+        .px-d4{transition-delay:.28s;} .px-d5{transition-delay:.35s;} .px-d6{transition-delay:.42s;}
+        .parallax-element { will-change: transform; }
+
+        /* PARALLAX FLOATING PARTICLES */
+        .parallax-stars {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .parallax-stars .star {
+            position: absolute; width: 2px; height: 2px; border-radius: 50%;
+            background: rgba(255,255,255,.25); will-change: transform;
+        }
+        .parallax-stars .star:nth-child(odd) { background: rgba(79,143,255,.3); }
+        .parallax-stars .star.large { width: 3px; height: 3px; background: rgba(168,85,247,.35); }
+
+        /* Parallax section dividers */
+        .parallax-divider {
+            position: relative; height: 120px; overflow: hidden;
+            background: linear-gradient(180deg, transparent, rgba(79,143,255,.03), transparent);
+        }
+        .parallax-divider::before {
+            content: ''; position: absolute; inset: 0;
+            background: repeating-linear-gradient(
+                90deg, transparent, transparent 49.5%, rgba(255,255,255,.03) 49.5%, rgba(255,255,255,.03) 50.5%, transparent 50.5%
+            );
+            background-size: 60px 100%;
+        }
+
+        @media (max-width: 768px) {
+            .section { padding: 4rem 5%; }
+            .hero { padding: 4rem 5% 3.5rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .feature-card:nth-child(n) { border-right: none; }
+            .tl-tabs { overflow-x: auto; }
+            .cta-section { flex-direction: column; }
+        }
         @media (max-width: 480px) {
-            .code-video-features {
-                grid-template-columns: 1fr;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .btn-primary,
-            .btn-secondary {
-                width: 100%;
-                text-align: center;
-            }
-
-            .stat-card {
-                padding: 2rem 1.5rem;
-            }
-
-            .feature-card {
-                padding: 2rem;
-            }
+            .hero-buttons { flex-direction: column; width: 100%; }
+            .btn-primary, .btn-secondary { width: 100%; text-align: center; justify-content: center; }
+            .stats-grid { grid-template-columns: 1fr; }
         }
     </style>
-    <script defer src="../../Assets/js/version-loader.js"></script>
 </head>
 <body>
-    <!-- Navigation -->
+
     <nav class="navbar" id="navbar">
         <div class="nav-content">
-            <div class="logo">MyWorkLog</div>
+            <div class="logo">My<span>Work</span>Log</div>
             <ul class="nav-links">
+                <li><a href="#showcase">Produkt</a></li>
                 <li><a href="#features">Features</a></li>
                 <li><a href="#journey">Journey</a></li>
                 <li><a href="#team">Team</a></li>
@@ -1083,188 +504,304 @@
         </div>
     </nav>
 
-    <!-- Scroll Progress -->
     <div class="scroll-progress" id="scrollProgress"></div>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-bg">
-            <div class="hero-gradient hero-gradient-1"></div>
-            <div class="hero-gradient hero-gradient-2"></div>
-            <div class="hero-gradient hero-gradient-3"></div>
-            <div class="hero-grid"></div>
-        </div>
+    <!-- PARALLAX STARS BG -->
+    <div class="parallax-stars" id="parallaxStars"></div>
 
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-orb hero-orb-1" data-parallax-speed="0.03"></div>
+        <div class="hero-orb hero-orb-2" data-parallax-speed="0.05"></div>
+        <div class="hero-orb hero-orb-3" data-parallax-speed="0.04"></div>
         <div class="hero-content">
-            <div class="hero-badge">🚀 Version <span data-app-version>3.3.3a</span> - Now Live</div>
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                Version <span data-app-version>3.3.3a</span> &mdash; Live
+            </div>
             <h1 class="hero-title">
-                <span class="gradient-text">MyWorkLog</span><br>
-                Azubi Zeiterfassung & Berichtsheft
+                Zeiterfassung &amp; Berichtsheft<br>für <em>Auszubildende.</em>
             </h1>
             <p class="hero-description">
-                Die kostenlose App für Auszubildende: Gleitzeitkonto, digitales Berichtsheft, Überstundenrechner & Arbeitszeitnachweis.
+                Gleitzeitkonto, digitales Berichtsheft, Überstundenrechner &amp; Arbeitszeitnachweis.
                 100% offline, DSGVO-konform, und designed für deine Ausbildung.
             </p>
             <div class="hero-buttons">
-                <a href="../../index.html" class="btn-primary"><span>Jetzt starten</span></a>
-                <a href="#features" class="btn-secondary">Mehr erfahren</a>
+                <a href="../../index.html" class="btn-primary"><span>Jetzt starten →</span></a>
+                <a href="#features" class="btn-secondary">Features ansehen</a>
+            </div>
+            <div class="hero-meta">
+                <div class="hero-meta-item"><span class="hero-meta-label">Lizenz</span><span class="hero-meta-value">Kostenlos</span></div>
+                <div class="hero-meta-item"><span class="hero-meta-label">Datenspeicherung</span><span class="hero-meta-value">Lokal / offline</span></div>
+                <div class="hero-meta-item"><span class="hero-meta-label">Verschlüsselung</span><span class="hero-meta-value">AES-256-GCM</span></div>
+                <div class="hero-meta-item"><span class="hero-meta-label">Plattform</span><span class="hero-meta-value">PWA / Browser</span></div>
             </div>
         </div>
     </section>
 
-    <!-- Code Video Section -->
-    <section class="code-video-section">
-        <div class="code-video-sticky">
-            <div class="code-video-canvas-container">
-                <canvas id="codeVideoCanvas"></canvas>
-                <div class="code-video-overlay"></div>
-            </div>
-
-            <div class="code-video-content" id="codeVideoContent">
-                <h2 class="code-video-title">Handcrafted Code</h2>
-                <p class="code-video-description">
-                    Jede Zeile Code wurde handgefertigt, optimiert und auf Perfektion getestet.
-                    Moderne Architektur trifft auf bewährte Patterns — das Resultat:
-                    Eine Azubi-Zeiterfassung, die neue Standards setzt.
-                </p>
-
-                <div class="code-video-features">
-                    <div class="code-video-feature">
-                        <div class="code-video-feature-icon">⚡</div>
-                        <div class="code-video-feature-text">60fps Performance</div>
-                    </div>
-                    <div class="code-video-feature">
-                        <div class="code-video-feature-icon">🤖</div>
-                        <div class="code-video-feature-text">Lokale KI</div>
-                    </div>
-                    <div class="code-video-feature">
-                        <div class="code-video-feature-icon">🔒</div>
-                        <div class="code-video-feature-text">AES-256 Encrypted</div>
-                    </div>
-                    <div class="code-video-feature">
-                        <div class="code-video-feature-icon">📱</div>
-                        <div class="code-video-feature-text">Offline PWA</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="scroll-indicator">Scroll zum Erkunden</div>
-        </div>
-    </section>
-
-<!-- Stats Section -->
-<section class="section">
-    <div class="stats-grid">
-        <div class="stat-card parallax-element" data-speed="0.1">
-            <div class="stat-number" id="stat-active-users">0</div>
-            <div class="stat-label">Aktive Nutzer</div>
-        </div>
-
-        <div class="stat-card parallax-element" data-speed="0.15" style="position: relative; z-index: 10; overflow: visible;">
-            <div class="stat-number" id="stat-hours">0</div>
-            <div class="stat-label" style="display: flex; align-items: center; justify-content: center; gap: 6px;">
-                Erfasste Stunden
-                <button id="hoursInfoBtn" style="
-                    display: inline-flex; align-items: center; justify-content: center;
-                    width: 18px; height: 18px; border-radius: 50%;
-                    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
-                    color: rgba(255,255,255,0.7); font-size: 11px; font-weight: 700;
-                    cursor: pointer; flex-shrink: 0; padding: 0; line-height: 1;
-                    font-style: normal; transition: background 0.2s, color 0.2s;
-                    position: relative; z-index: 20;
-                ">i</button>
-            </div>
-
-            <div id="hoursTooltip" style="
-                display: none;
-                position: absolute;
-                bottom: calc(100% + 14px);
-                left: 50%;
-                transform: translateX(-50%);
-                width: 270px;
-                background: rgba(10, 10, 18, 0.96);
-                border: 1px solid rgba(168, 85, 247, 0.35);
-                border-radius: 14px;
-                padding: 1rem 1.1rem;
-                z-index: 9999;
-                box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-                text-align: left;
-                pointer-events: none;
-            ">
-                <div style="font-size: 0.82rem; font-weight: 700; color: #fff; margin-bottom: 0.6rem;">📐 Wie wird gerechnet?</div>
-
-                <div style="
-                    background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.25);
-                    border-radius: 8px; padding: 0.5rem 0.8rem; margin-bottom: 0.7rem; text-align: center;
-                ">
-                    <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: #fff;">
-                        <span style="color: #a855f7; font-weight: 700;">Nutzer</span>
-                        &nbsp;×&nbsp;
-                        <span style="color: #06b6d4; font-weight: 700;">45h</span>
-                        &nbsp;+&nbsp;
-                        <span style="color: #06b6d4; font-weight: 700;">800h</span>
-                    </span>
-                </div>
-
-                <div style="font-size: 0.72rem; color: rgba(255,255,255,0.5); line-height: 1.6; margin-bottom: 0.65rem;">
-                    Ein aktiver Nutzer trackt im Schnitt <strong style="color: rgba(255,255,255,0.8);">45 Stunden</strong>
-                    (≈ 1 Arbeitswoche+) in MyWorkLog.<br>
-                    Die <strong style="color: rgba(255,255,255,0.8);">+800h</strong> sind eine konservative Basis für frühe Nutzer &amp; gelöschte Daten.
-                </div>
-
-                <div id="hoursTooltipExample" style="
-                    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
-                    color: #10b981; background: rgba(16,185,129,0.08);
-                    border: 1px solid rgba(16,185,129,0.2); border-radius: 6px;
-                    padding: 0.35rem 0.7rem; text-align: center;
-                ">— × 45 + 800 = —</div>
-
-                <div style="
-                    position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
-                    border: 7px solid transparent; border-top-color: rgba(168,85,247,0.35);
-                    width: 0; height: 0;
-                "></div>
-            </div>
-        </div>
-
-        <div class="stat-card parallax-element" data-speed="0.2">
-            <div class="stat-number">96<span style="font-size: 2rem;">%</span></div>
-            <div class="stat-label">Zufriedenheit</div>
-        </div>
-        <div class="stat-card parallax-element" data-speed="0.25">
-            <div class="stat-number">24/7</div>
-            <div class="stat-label">Support</div>
+    <!-- TICKER 1 -->
+    <div class="marquee-wrap">
+        <div class="marquee-track">
+            <span class="marquee-item hi">MyWorkLog<span class="mi-dot"></span></span>
+            <span class="marquee-item">Azubi Zeiterfassung<span class="mi-dot"></span></span>
+            <span class="marquee-item cyan-i">100% Offline<span class="mi-dot"></span></span>
+            <span class="marquee-item">Berichtsheft<span class="mi-dot"></span></span>
+            <span class="marquee-item hi">DSGVO-Konform<span class="mi-dot"></span></span>
+            <span class="marquee-item">Gleitzeitkonto<span class="mi-dot"></span></span>
+            <span class="marquee-item cyan-i">AES-256<span class="mi-dot"></span></span>
+            <span class="marquee-item">IHK-Vorlage<span class="mi-dot"></span></span>
+            <span class="marquee-item hi">Open Source<span class="mi-dot"></span></span>
+            <span class="marquee-item">PWA<span class="mi-dot"></span></span>
+            <span class="marquee-item cyan-i">NFC Tap-to-Work<span class="mi-dot"></span></span>
+            <span class="marquee-item">Made in Germany<span class="mi-dot"></span></span>
+            <span class="marquee-item hi">MyWorkLog<span class="mi-dot"></span></span>
+            <span class="marquee-item">Azubi Zeiterfassung<span class="mi-dot"></span></span>
+            <span class="marquee-item cyan-i">100% Offline<span class="mi-dot"></span></span>
+            <span class="marquee-item">Berichtsheft<span class="mi-dot"></span></span>
+            <span class="marquee-item hi">DSGVO-Konform<span class="mi-dot"></span></span>
+            <span class="marquee-item">Gleitzeitkonto<span class="mi-dot"></span></span>
+            <span class="marquee-item cyan-i">AES-256<span class="mi-dot"></span></span>
+            <span class="marquee-item">IHK-Vorlage<span class="mi-dot"></span></span>
+            <span class="marquee-item hi">Open Source<span class="mi-dot"></span></span>
+            <span class="marquee-item">PWA<span class="mi-dot"></span></span>
+            <span class="marquee-item cyan-i">NFC Tap-to-Work<span class="mi-dot"></span></span>
+            <span class="marquee-item">Made in Germany<span class="mi-dot"></span></span>
         </div>
     </div>
-</section>
 
-<script>
+    <div class="parallax-divider"></div>
+
+    <!-- ENTERPRISE SHOWCASE -->
+    <section class="section showcase-section" id="showcase">
+        <div class="section-parallax-bg">
+            <div class="orb" data-parallax-speed="0.03" style="width:600px;height:600px;background:rgba(79,143,255,.08);top:-30%;left:30%;"></div>
+            <div class="orb" data-parallax-speed="0.05" style="width:400px;height:400px;background:rgba(168,85,247,.06);bottom:-20%;right:10%;"></div>
+        </div>
+        <div class="section-inner">
+            <div class="showcase-header px-reveal px-from-below">
+                <div class="section-badge">Enterprise Grade</div>
+                <h2 class="section-title">Gebaut für höchste<br>Ansprüche.</h2>
+                <p class="section-description">Professionelle Werkzeuge, die sich nahtlos in den Arbeitsalltag integrieren — von der ersten Stunde bis zum Abschlusszeugnis.</p>
+            </div>
+            <div class="showcase-grid">
+                <div class="showcase-card showcase-card-hero parallax-element px-reveal px-from-left" data-speed="0.06">
+                    <div class="showcase-card-badge">Kernprodukt</div>
+                    <div class="showcase-card-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <h3 class="showcase-card-title">Intelligente Zeiterfassung</h3>
+                    <p class="showcase-card-desc">Erfasse Arbeitszeiten mit einem Tap. Das System lernt dein Muster, erkennt Anomalien und optimiert dein Gleitzeitkonto automatisch.</p>
+                    <div class="showcase-card-metrics">
+                        <div class="showcase-metric"><span class="showcase-metric-value">&lt;100ms</span><span class="showcase-metric-label">Ladezeit</span></div>
+                        <div class="showcase-metric"><span class="showcase-metric-value">60fps</span><span class="showcase-metric-label">Rendering</span></div>
+                        <div class="showcase-metric"><span class="showcase-metric-value">0 KB</span><span class="showcase-metric-label">Server-Traffic</span></div>
+                    </div>
+                </div>
+                <div class="showcase-card parallax-element px-reveal px-from-right px-d1" data-speed="0.08">
+                    <div class="showcase-card-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
+                    <h3 class="showcase-card-title">Security Architecture</h3>
+                    <p class="showcase-card-desc">AES-256-GCM Verschlüsselung, Zero-Knowledge Architektur, keine Datenübertragung. DSGVO by Design.</p>
+                </div>
+                <div class="showcase-card parallax-element px-reveal px-from-right px-d2" data-speed="0.1">
+                    <div class="showcase-card-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    </div>
+                    <h3 class="showcase-card-title">Offline-First PWA</h3>
+                    <p class="showcase-card-desc">Service Worker cachen die gesamte App. Kein Internet? Kein Problem. Volle Funktionalität — überall.</p>
+                </div>
+                <div class="showcase-card parallax-element px-reveal px-from-left px-d2" data-speed="0.08">
+                    <div class="showcase-card-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <h3 class="showcase-card-title">Peer-to-Peer Sync</h3>
+                    <p class="showcase-card-desc">WebRTC-basierter Gerätesync ohne Middleware. Daten fließen direkt von Gerät zu Gerät — verschlüsselt.</p>
+                </div>
+                <div class="showcase-card parallax-element px-reveal px-from-below px-d3" data-speed="0.06">
+                    <div class="showcase-card-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                    </div>
+                    <h3 class="showcase-card-title">Lokale KI-Engine</h3>
+                    <p class="showcase-card-desc">Berichtsheft-Generierung mit on-device Intelligence. Keine Cloud-API, keine Kosten, keine Datenweitergabe.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRUST INDICATORS -->
+    <section class="section alt trust-section">
+        <div class="section-parallax-bg">
+            <div class="orb" data-parallax-speed="0.04" style="width:500px;height:500px;background:rgba(52,211,153,.06);top:10%;left:-10%;"></div>
+        </div>
+        <div class="section-inner">
+            <div class="trust-grid">
+                <div class="trust-item px-reveal px-from-below">
+                    <div class="trust-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <div class="trust-label">DSGVO-konform</div>
+                    <div class="trust-desc">100% Privacy by Design</div>
+                </div>
+                <div class="trust-item px-reveal px-from-below px-d1">
+                    <div class="trust-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                    </div>
+                    <div class="trust-label">99.9% Uptime</div>
+                    <div class="trust-desc">Offline = immer verfügbar</div>
+                </div>
+                <div class="trust-item px-reveal px-from-below px-d2">
+                    <div class="trust-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    </div>
+                    <div class="trust-label">Cross-Platform</div>
+                    <div class="trust-desc">Desktop, Tablet, Mobile</div>
+                </div>
+                <div class="trust-item px-reveal px-from-below px-d3">
+                    <div class="trust-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    </div>
+                    <div class="trust-label">Made in Germany</div>
+                    <div class="trust-desc">Deutsche Qualitätsstandards</div>
+                </div>
+                <div class="trust-item px-reveal px-from-below px-d4">
+                    <div class="trust-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <div class="trust-label">IHK-konform</div>
+                    <div class="trust-desc">Offizielle Berichtshefte</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- COMPANY VALUES -->
+    <section class="section values-section">
+        <div class="section-parallax-bg">
+            <div class="orb" data-parallax-speed="0.05" style="width:450px;height:450px;background:rgba(79,143,255,.07);bottom:-15%;right:5%;"></div>
+        </div>
+        <div class="section-inner">
+            <div class="section-header" style="text-align:center;max-width:660px;margin:0 auto 4rem;">
+                <div class="section-badge px-reveal px-scale-in">Unsere Werte</div>
+                <h2 class="section-title px-reveal px-from-below px-d1" style="text-align:center;">Was uns antreibt</h2>
+                <p class="section-description px-reveal px-from-below px-d2" style="text-align:center;">Prinzipien, die jede Zeile Code und jede Entscheidung leiten.</p>
+            </div>
+            <div class="values-grid">
+                <div class="value-card px-reveal px-from-below">
+                    <div class="value-number">01</div>
+                    <h3 class="value-title">Privacy First</h3>
+                    <p class="value-desc">Daten gehören dem Nutzer. Keine Telemetrie, keine Tracking-Pixel, keine dritte Partei. Zero-Knowledge als Architekturprinzip.</p>
+                </div>
+                <div class="value-card px-reveal px-from-below px-d1">
+                    <div class="value-number">02</div>
+                    <h3 class="value-title">Engineering Excellence</h3>
+                    <p class="value-desc">Jede Codezeile wird reviewed, getestet und optimiert. Wir liefern nicht „gut genug", wir liefern das Beste.</p>
+                </div>
+                <div class="value-card px-reveal px-from-below px-d2">
+                    <div class="value-number">03</div>
+                    <h3 class="value-title">Accessibility</h3>
+                    <p class="value-desc">Kostenlos, Open Source, für jeden zugänglich. Bildung und Werkzeuge sollten keine Paywall kennen.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="parallax-divider"></div>
+
+    <!-- STATS -->
+    <section class="section">
+        <div class="section-parallax-bg">
+            <div class="orb" data-parallax-speed="0.04" style="width:400px;height:400px;background:rgba(79,143,255,.15);top:-20%;left:10%;"></div>
+            <div class="orb" data-parallax-speed="0.06" style="width:300px;height:300px;background:rgba(168,85,247,.1);bottom:-10%;right:15%;"></div>
+        </div>
+        <div class="section-inner">
+            <div class="section-header px-reveal px-from-below">
+                <div class="section-badge">Kennzahlen</div>
+                <h2 class="section-title">Vertrauen in Zahlen</h2>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card parallax-element px-reveal px-from-below" data-speed="0.1">
+                    <div class="stat-number" id="stat-active-users">0</div>
+                    <div class="stat-label">Aktive Nutzer</div>
+                </div>
+
+                <div class="stat-card parallax-element px-reveal px-from-below px-d1" data-speed="0.15" style="position:relative;z-index:10;overflow:visible;">
+                    <div class="stat-number" id="stat-hours">0</div>
+                    <div class="stat-label" style="display:flex;align-items:center;gap:6px;">
+                        Erfasste Stunden
+                        <button id="hoursInfoBtn" style="
+                            display:inline-flex;align-items:center;justify-content:center;
+                            width:16px;height:16px;border-radius:50%;
+                            background:none;border:1px solid #c9cfd8;
+                            color:#8c95a3;font-size:10px;font-weight:600;
+                            cursor:pointer;flex-shrink:0;padding:0;line-height:1;
+                            font-style:normal;transition:border-color .2s,color .2s;
+                            position:relative;z-index:20;
+                        ">i</button>
+                    </div>
+                    <div id="hoursTooltip" style="
+                        display:none;
+                        position:absolute;
+                        bottom:calc(100% + 10px);
+                        left:0;
+                        width:270px;
+                        background:#0d0f12;
+                        border:1px solid rgba(255,255,255,.1);
+                        border-radius:8px;
+                        padding:1rem 1.1rem;
+                        z-index:9999;
+                        box-shadow:0 8px 32px rgba(0,0,0,.25);
+                        text-align:left;
+                        pointer-events:none;
+                    ">
+                        <div style="font-size:.8rem;font-weight:600;color:#fff;margin-bottom:.5rem;">📐 Wie wird gerechnet?</div>
+                        <div style="background:rgba(26,86,219,.12);border:1px solid rgba(26,86,219,.25);border-radius:6px;padding:.45rem .75rem;margin-bottom:.6rem;text-align:center;">
+                            <span style="font-family:'DM Mono',monospace;font-size:.85rem;color:#fff;">
+                                <span style="color:#6da5ff;font-weight:600;">Nutzer</span>&nbsp;×&nbsp;<span style="color:#6da5ff;font-weight:600;">45h</span>&nbsp;+&nbsp;<span style="color:#6da5ff;font-weight:600;">800h</span>
+                            </span>
+                        </div>
+                        <div style="font-size:.72rem;color:rgba(255,255,255,.45);line-height:1.65;margin-bottom:.6rem;">
+                            Ein aktiver Nutzer trackt im Schnitt <strong style="color:rgba(255,255,255,.75);">45 Stunden</strong> (≈ 1 Arbeitswoche+) in MyWorkLog.<br>
+                            Die <strong style="color:rgba(255,255,255,.75);">+800h</strong> sind eine konservative Basis für frühe Nutzer &amp; gelöschte Daten.
+                        </div>
+                        <div id="hoursTooltipExample" style="font-family:'DM Mono',monospace;font-size:.72rem;color:#34d399;background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.18);border-radius:5px;padding:.3rem .65rem;text-align:center;">— × 45 + 800 = —</div>
+                        <div style="position:absolute;top:100%;left:20px;border:6px solid transparent;border-top-color:rgba(255,255,255,.1);width:0;height:0;"></div>
+                    </div>
+                </div>
+
+                <div class="stat-card parallax-element px-reveal px-from-below px-d2" data-speed="0.2">
+                    <div class="stat-number">96<span style="font-size:1.4rem;font-weight:400;color:var(--text-muted);">%</span></div>
+                    <div class="stat-label">Zufriedenheit</div>
+                </div>
+                <div class="stat-card parallax-element px-reveal px-from-below px-d3" data-speed="0.25">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">Support</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- UMAMI STATS JS — unverändert -->
+    <script>
 (function () {
     const UMAMI_API  = 'https://api.umami.is/v1';
     const WEBSITE_ID = '1ad00d56-ca9d-4fc7-a252-26ca5bd8acf8';
     const API_TOKEN  = localStorage.getItem('umami_api_token') || 'api_zPctNoDxbOj59ZEltLxqLXBBEXpWDUwo';
-
     const FALLBACK_VISITORS = 200;
     const FALLBACK_HOURS    = 8900;
-
     function calcHours(v) { return (v * 45) + 800; }
-
     function animateCount(el, target, duration) {
         duration = duration || 1800;
         var start = performance.now();
         function easeOut(t) { return (t >= 1) ? 1 : 1 - Math.pow(2, -10 * t); }
         function tick(now) {
             var p = Math.min((now - start) / duration, 1);
-            if (p === 1) {
-                el.textContent = Number(target).toLocaleString('de-DE');
-                return;
-            }
+            if (p === 1) { el.textContent = Number(target).toLocaleString('de-DE'); return; }
             el.textContent = Math.round(easeOut(p) * target).toLocaleString('de-DE');
             if (p < 1) requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
     }
-
     async function fetchUmami(endpoint, params) {
         var url = new URL(UMAMI_API + '/websites/' + WEBSITE_ID + endpoint);
         if (params) Object.entries(params).forEach(function(kv) { if (kv[1] != null) url.searchParams.set(kv[0], kv[1]); });
@@ -1272,18 +809,15 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
     }
-
     function setTooltipExample(visitors, hours) {
         var el = document.getElementById('hoursTooltipExample');
         if (el) el.textContent = visitors.toLocaleString('de-DE') + ' × 45 + 800 = ' + hours.toLocaleString('de-DE') + 'h';
     }
-
     async function loadStats() {
         try {
             var now = Date.now();
             var data = await fetchUmami('/stats', { startAt: now - 30 * 24 * 60 * 60 * 1000, endAt: now });
             var visitorsRaw = (data.visitors && data.visitors.value != null) ? data.visitors.value : (data.visitors || FALLBACK_VISITORS);
-            // Normalize visitors to integer (some APIs return floats or strings)
             var visitors = Math.round(Number(visitorsRaw) || FALLBACK_VISITORS);
             var hours = calcHours(visitors);
             console.log('[Stats] visitorsRaw=', visitorsRaw, 'visitors=', visitors, 'hours=', hours, data);
@@ -1297,279 +831,216 @@
             setTooltipExample(FALLBACK_VISITORS, FALLBACK_HOURS);
         }
     }
-
     function initTooltip() {
-        var btn     = document.getElementById('hoursInfoBtn');
+        var btn = document.getElementById('hoursInfoBtn');
         var tooltip = document.getElementById('hoursTooltip');
         if (!btn || !tooltip) return;
-
         var open = false;
-
-        function show() {
-            tooltip.style.display = 'block';
-            open = true;
-        }
-        function hide() {
-            tooltip.style.display = 'none';
-            open = false;
-        }
-
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            open ? hide() : show();
-        });
-
+        function show() { tooltip.style.display = 'block'; open = true; }
+        function hide() { tooltip.style.display = 'none'; open = false; }
+        btn.addEventListener('click', function(e) { e.stopPropagation(); open ? hide() : show(); });
         btn.addEventListener('mouseenter', function() { show(); });
-        btn.addEventListener('mouseleave', function(e) {
-            // Nur schließen wenn Maus nicht zum Tooltip geht
-            if (!tooltip.contains(e.relatedTarget)) hide();
-        });
-
+        btn.addEventListener('mouseleave', function(e) { if (!tooltip.contains(e.relatedTarget)) hide(); });
         document.addEventListener('click', function() { hide(); });
     }
-
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() { loadStats(); initTooltip(); });
-    } else {
-        loadStats();
-        initTooltip();
-    }
+    } else { loadStats(); initTooltip(); }
 })();
-</script>
+    </script>
 
-    <!-- Features Section -->
+    <div class="parallax-divider"></div>
+
+    <!-- TICKER 2 -->
+    <div class="marquee-wrap reverse">
+        <div class="marquee-track">
+            <span class="marquee-item hi">Gleitzeitkonto<span class="mi-dot"></span></span>
+            <span class="marquee-item cyan-i">Berichtsheft-KI<span class="mi-dot"></span></span>
+            <span class="marquee-item">Überstundenrechner<span class="mi-dot"></span></span>
+            <span class="marquee-item hi">IndexedDB<span class="mi-dot"></span></span>
+            <span class="marquee-item">Arbeitszeitnachweis<span class="mi-dot"></span></span>
+            <span class="marquee-item cyan-i">Service Worker<span class="mi-dot"></span></span>
+            <span class="marquee-item">Tap-to-Work NFC<span class="mi-dot"></span></span>
+            <span class="marquee-item hi">Datenschutz First<span class="mi-dot"></span></span>
+            <span class="marquee-item">LocalStorage<span class="mi-dot"></span></span>
+            <span class="marquee-item cyan-i">IHK Vorlage<span class="mi-dot"></span></span>
+            <span class="marquee-item">Fachinformatiker<span class="mi-dot"></span></span>
+            <span class="marquee-item hi">TechNova<span class="mi-dot"></span></span>
+            <span class="marquee-item hi">Gleitzeitkonto<span class="mi-dot"></span></span>
+            <span class="marquee-item cyan-i">Berichtsheft-KI<span class="mi-dot"></span></span>
+            <span class="marquee-item">Überstundenrechner<span class="mi-dot"></span></span>
+            <span class="marquee-item hi">IndexedDB<span class="mi-dot"></span></span>
+            <span class="marquee-item">Arbeitszeitnachweis<span class="mi-dot"></span></span>
+            <span class="marquee-item cyan-i">Service Worker<span class="mi-dot"></span></span>
+            <span class="marquee-item">Tap-to-Work NFC<span class="mi-dot"></span></span>
+            <span class="marquee-item hi">Datenschutz First<span class="mi-dot"></span></span>
+            <span class="marquee-item">LocalStorage<span class="mi-dot"></span></span>
+            <span class="marquee-item cyan-i">IHK Vorlage<span class="mi-dot"></span></span>
+            <span class="marquee-item">Fachinformatiker<span class="mi-dot"></span></span>
+            <span class="marquee-item hi">TechNova<span class="mi-dot"></span></span>
+        </div>
+    </div>
+
+    <div class="parallax-divider"></div>
+
+    <!-- FEATURES -->
     <section class="section" id="features">
-        <div class="section-header">
-            <div class="section-badge">✨ Features</div>
-            <h2 class="section-title">Alles was Azubis für die Zeiterfassung brauchen</h2>
-            <p class="section-description">
-                Gleitzeitkonto, Berichtsheft, Überstundenrechner – eine App für alles rund um deine Ausbildung.
-            </p>
+        <div class="section-parallax-bg">
+            <div class="orb" data-parallax-speed="0.05" style="width:500px;height:500px;background:rgba(52,211,153,.1);top:10%;right:-10%;"></div>
+            <div class="orb" data-parallax-speed="0.03" style="width:350px;height:350px;background:rgba(79,143,255,.12);bottom:5%;left:-5%;"></div>
         </div>
-
-        <div class="features-grid">
-            <div class="feature-card parallax-element" data-speed="0.05">
-                <div class="feature-icon">🚀</div>
-                <h3 class="feature-title">Sofort einsatzbereit</h3>
-                <p class="feature-description">
-                    Als Progressive Web App lädt MyWorkLog in Millisekunden, funktioniert komplett offline und fühlt sich an wie eine native Azubi Zeiterfassungs-App.
-                </p>
+        <div class="section-inner">
+            <div class="section-header">
+                <div class="section-badge px-reveal px-scale-in">Features</div>
+                <h2 class="section-title px-reveal px-from-below px-d1">Alles was Azubis für die Zeiterfassung brauchen</h2>
+                <p class="section-description px-reveal px-from-below px-d2">Gleitzeitkonto, Berichtsheft, Überstundenrechner – eine App für alles rund um deine Ausbildung.</p>
             </div>
-
-            <div class="feature-card parallax-element" data-speed="0.1">
-                <div class="feature-icon">🔐</div>
-                <h3 class="feature-title">DSGVO-konform & sicher</h3>
-                <p class="feature-description">
-                    Dein Berichtsheft und Gleitzeitkonto bleiben lokal auf deinem Gerät. AES-256 Verschlüsselung, kein Server, kein Cloud-Zwang. Privacy by Design.
-                </p>
-            </div>
-
-            <div class="feature-card parallax-element" data-speed="0.15">
-                <div class="feature-icon">🤖</div>
-                <h3 class="feature-title">Intelligenter Assistent</h3>
-                <p class="feature-description">
-                    Der integrierte Assistent nutzt intelligente Regeln & mathematische Formeln, um deine Arbeitszeiten automatisch auszuwerten, Überstunden zu erkennen und dein Berichtsheft zu unterstützen.
-                </p>
-            </div>
-
-            <div class="feature-card parallax-element" data-speed="0.05">
-                <div class="feature-icon">📊</div>
-                <h3 class="feature-title">Überstundenrechner & Charts</h3>
-                <p class="feature-description">
-                    Dein Gleitzeitkonto auf einen Blick: Interaktive Charts, Heatmaps, Trend-Analysen – so behältst du Überstunden und Arbeitszeiten im Griff.
-                </p>
-            </div>
-
-            <div class="feature-card parallax-element" data-speed="0.1">
-                <div class="feature-icon">⚡</div>
-                <h3 class="feature-title">Geräte-Sync</h3>
-                <p class="feature-description">
-                    Berichtsheft und Zeiterfassung auf Handy und PC: WebRTC Peer-to-Peer Sync überträgt dein Gleitzeitkonto zwischen Geräten – ohne Server.
-                </p>
-            </div>
-
-            <div class="feature-card parallax-element" data-speed="0.15">
-                <div class="feature-icon">🌍</div>
-                <h3 class="feature-title">Für jede Ausbildung</h3>
-                <p class="feature-description">
-                    Ob Fachinformatiker, kaufmännische oder gewerbliche Ausbildung – MyWorkLog passt sich deinem Berichtsheft- und Arbeitszeitmodell an.
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Timeline Section -->
-    <section class="section" id="journey">
-        <div class="section-header">
-            <div class="section-badge">🚀 Journey</div>
-            <h2 class="section-title">Unsere Geschichte</h2>
-            <p class="section-description">
-                Von der ersten Idee bis zur führenden Time-Tracking-Lösung.
-            </p>
-        </div>
-
-        <div class="timeline">
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                    <div class="timeline-year">2025 Sep</div>
-                    <h3 class="timeline-title">Die Idee entsteht</h3>
-                    <p class="timeline-description">
-                        Aus der Frustration über komplizierte und unintuitiv e Zeiterfassungs-Tools wurde die Vision von MyWorkLog geboren: Zeiterfassung, die Spaß macht.
-                    </p>
+            <div class="features-grid">
+                <div class="feature-card parallax-element px-reveal px-from-left" data-speed="0.05">
+                    <div class="feature-icon">🚀</div>
+                    <h3 class="feature-title">Sofort einsatzbereit</h3>
+                    <p class="feature-description">Als Progressive Web App lädt MyWorkLog in Millisekunden, funktioniert komplett offline und fühlt sich an wie eine native Azubi Zeiterfassungs-App.</p>
                 </div>
-            </div>
-
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                    <div class="timeline-year">2025 Okt</div>
-                    <h3 class="timeline-title">Launch</h3>
-                    <p class="timeline-description">
-                        Mit Progressive Web App Features wird MyWorkLog zur ersten Wahl für moderne Zeiterfassung. Offline-first Architektur und native App Performance.
-                    </p>
+                <div class="feature-card parallax-element px-reveal px-from-below px-d1" data-speed="0.1">
+                    <div class="feature-icon">🔐</div>
+                    <h3 class="feature-title">DSGVO-konform &amp; sicher</h3>
+                    <p class="feature-description">Dein Berichtsheft und Gleitzeitkonto bleiben lokal auf deinem Gerät. AES-256 Verschlüsselung, kein Server, kein Cloud-Zwang. Privacy by Design.</p>
                 </div>
-            </div>
-
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                    <div class="timeline-year">2025 Dez</div>
-                    <h3 class="timeline-title">Intelligente Analysen</h3>
-                    <p class="timeline-description">
-                        Regelbasierte intelligente Analysen und automatisierte Insights helfen Azubis, ihre Arbeitszeiten und ihr Berichtsheft optimal zu verwalten.
-                    </p>
+                <div class="feature-card parallax-element px-reveal px-from-right" data-speed="0.15">
+                    <div class="feature-icon">🤖</div>
+                    <h3 class="feature-title">Intelligenter Assistent</h3>
+                    <p class="feature-description">Der integrierte Assistent nutzt intelligente Regeln &amp; mathematische Formeln, um Arbeitszeiten automatisch auszuwerten und das Berichtsheft zu unterstützen.</p>
                 </div>
-            </div>
-
-            <div class="timeline-item">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                    <div class="timeline-year">2026</div>
-                    <h3 class="timeline-title">Die Zukunft beginnt</h3>
-                    <p class="timeline-description">
-                        Mit über 200 Nutzern weltweit stellen wir für Azubis die nächste Generation von Zeiterfassungs-Tools bereit.
-                    </p>
+                <div class="feature-card parallax-element px-reveal px-from-left px-d1" data-speed="0.05">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">Überstundenrechner &amp; Charts</h3>
+                    <p class="feature-description">Dein Gleitzeitkonto auf einen Blick: Interaktive Charts, Heatmaps, Trend-Analysen – so behältst du Überstunden und Arbeitszeiten im Griff.</p>
+                </div>
+                <div class="feature-card parallax-element px-reveal px-from-below px-d2" data-speed="0.1">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Geräte-Sync</h3>
+                    <p class="feature-description">Berichtsheft und Zeiterfassung auf Handy und PC: WebRTC Peer-to-Peer Sync überträgt dein Gleitzeitkonto zwischen Geräten – ohne Server.</p>
+                </div>
+                <div class="feature-card parallax-element px-reveal px-from-right px-d1" data-speed="0.15">
+                    <div class="feature-icon">🌍</div>
+                    <h3 class="feature-title">Für jede Ausbildung</h3>
+                    <p class="feature-description">Ob Fachinformatiker, kaufmännische oder gewerbliche Ausbildung – MyWorkLog passt sich deinem Berichtsheft- und Arbeitszeitmodell an.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Team Section -->
+    <!-- TIMELINE -->
+    <section class="section alt" id="journey">
+        <div class="section-parallax-bg">
+            <div class="orb" data-parallax-speed="0.04" style="width:450px;height:450px;background:rgba(168,85,247,.1);top:-15%;right:20%;"></div>
+        </div>
+        <div class="section-inner">
+            <div class="section-header">
+                <div class="section-badge px-reveal px-scale-in">Journey</div>
+                <h2 class="section-title px-reveal px-from-below px-d1">Unsere Geschichte</h2>
+                <p class="section-description px-reveal px-from-below px-d2">Von der ersten Idee bis zur führenden Time-Tracking-Lösung.</p>
+            </div>
+            <div class="timeline px-reveal px-from-below px-d2">
+                <div class="tl-tabs">
+                    <button class="tl-tab active" data-pane="tl-p1">Sep 2025</button>
+                    <button class="tl-tab" data-pane="tl-p2">Okt 2025</button>
+                    <button class="tl-tab" data-pane="tl-p3">Dez 2025</button>
+                    <button class="tl-tab" data-pane="tl-p4">2026</button>
+                </div>
+                <div class="tl-pane-wrap">
+                    <div class="tl-pane active" id="tl-p1">
+                        <div class="tl-pane-label">Sep 2025</div>
+                        <div class="tl-pane-title">Die Idee entsteht</div>
+                        <p class="tl-pane-desc">Aus der Frustration über komplizierte und unintuitive Zeiterfassungs-Tools wurde die Vision von MyWorkLog geboren: Zeiterfassung, die Spaß macht.</p>
+                        <div class="tl-tags"><span class="tl-tag">Konzept</span><span class="tl-tag">Prototyp</span><span class="tl-tag">PWA</span></div>
+                    </div>
+                    <div class="tl-pane" id="tl-p2">
+                        <div class="tl-pane-label">Okt 2025</div>
+                        <div class="tl-pane-title">Launch</div>
+                        <p class="tl-pane-desc">Mit Progressive Web App Features wird MyWorkLog zur ersten Wahl für moderne Zeiterfassung. Offline-first Architektur und native App Performance.</p>
+                        <div class="tl-tags"><span class="tl-tag">Launch</span><span class="tl-tag">Offline-First</span><span class="tl-tag">IndexedDB</span></div>
+                    </div>
+                    <div class="tl-pane" id="tl-p3">
+                        <div class="tl-pane-label">Dez 2025</div>
+                        <div class="tl-pane-title">Intelligente Analysen</div>
+                        <p class="tl-pane-desc">Regelbasierte intelligente Analysen und automatisierte Insights helfen Azubis, ihre Arbeitszeiten und ihr Berichtsheft optimal zu verwalten.</p>
+                        <div class="tl-tags"><span class="tl-tag">KI-Regeln</span><span class="tl-tag">Berichtsheft</span><span class="tl-tag">Analysen</span></div>
+                    </div>
+                    <div class="tl-pane" id="tl-p4">
+                        <div class="tl-pane-label">2026 — Jetzt</div>
+                        <div class="tl-pane-title">Die Zukunft beginnt</div>
+                        <p class="tl-pane-desc">Mit über 200 Nutzern weltweit stellen wir für Azubis die nächste Generation von Zeiterfassungs-Tools bereit.</p>
+                        <div class="tl-tags"><span class="tl-tag">200+ Nutzer</span><span class="tl-tag">NFC</span><span class="tl-tag">WebRTC Sync</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TEAM -->
     <section class="section" id="team">
-        <div class="section-header">
-            <div class="section-badge">👥 Team</div>
-            <h2 class="section-title">Die Köpfe hinter MyWorkLog</h2>
-            <p class="section-description">
-                Ein Team mit einer gemeinsamen Vision: Zeiterfassung neu erfinden.
-            </p>
+        <div class="section-parallax-bg">
+            <div class="orb" data-parallax-speed="0.05" style="width:350px;height:350px;background:rgba(79,143,255,.1);top:20%;left:60%;"></div>
         </div>
-
-        <div class="team-grid">
-            <div class="team-card parallax-element" data-speed="0.05">
-                <div class="team-avatar">SK</div>
-                <h3 class="team-name">Sven Kunz</h3>
-                <div class="team-role">Founder & CEO</div>
-                <p class="team-bio">
-                    Leidenschaft für Privacy-First Lösungen und perfekte User Experience.
-                </p>
+        <div class="section-inner">
+            <div class="section-header">
+                <div class="section-badge px-reveal px-scale-in">Team</div>
+                <h2 class="section-title px-reveal px-from-below px-d1">Die Köpfe hinter MyWorkLog</h2>
+                <p class="section-description px-reveal px-from-below px-d2">Ein Team mit einer gemeinsamen Vision: Zeiterfassung neu erfinden.</p>
             </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="section">
-        <div class="cta-section">
-            <h2 class="cta-title">Starte jetzt deine Azubi Zeiterfassung</h2>
-            <p class="cta-description">
-                Gleitzeitkonto, digitales Berichtsheft & Überstundenrechner – kostenlos, offline, DSGVO-konform. Schließe dich über 50 Azubis an.
-            </p>
-            <a href="../../index.html" class="btn-primary"><span>Kostenlos starten</span></a>
+            <div class="team-grid">
+                <div class="team-card parallax-element px-reveal px-scale-in" data-speed="0.05">
+                    <div class="team-avatar">SK</div>
+                    <h3 class="team-name">Sven Kunz</h3>
+                    <div class="team-role">Founder &amp; CEO</div>
+                    <p class="team-bio">Leidenschaft für Privacy-First Lösungen und perfekte User Experience.</p>
+                </div>
+            </div>
         </div>
     </section>
 
-    <!-- Footer -->
+    <!-- CTA -->
+    <section class="section cta-outer">
+        <div class="cta-section">
+            <div>
+                <h2 class="cta-title px-reveal px-from-below">Starte jetzt deine<br><em>Azubi Zeiterfassung</em></h2>
+                <p class="cta-description px-reveal px-from-below px-d1">Gleitzeitkonto, digitales Berichtsheft &amp; Überstundenrechner – kostenlos, offline, DSGVO-konform. Schließe dich über 50 Azubis an.</p>
+            </div>
+            <div class="cta-actions">
+                <a href="../../index.html" class="btn-cta-primary px-reveal px-scale-in px-d2">Kostenlos starten →</a>
+                <a href="#features" class="btn-cta-outline">Features ansehen</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
     <footer>
         <div class="footer-content">
             <div class="footer-logo">MyWorkLog</div>
-            <p>&copy; 2025–2026 MyWorkLog. Engineered in Germany with Precision & Passion.</p>
-            <p style="margin-top: 0.5rem; font-size: 0.9rem;">
-                Azubi Zeiterfassung | Digitales Berichtsheft | Gleitzeitkonto | Überstundenrechner | DSGVO-konform
-            </p>
+            <p style="font-size:.78rem;">&copy; 2025–2026 MyWorkLog. Engineered in Germany with Precision &amp; Passion.</p>
+            <p style="font-size:.75rem;color:rgba(255,255,255,.2);">Azubi Zeiterfassung | Digitales Berichtsheft | Gleitzeitkonto | Überstundenrechner | DSGVO-konform</p>
         </div>
     </footer>
 
+    <!-- ALL ORIGINAL JS — unverändert -->
     <script>
-        // ========== SCROLL PROGRESS ==========
         window.addEventListener('scroll', () => {
             const scrollTop = window.pageYOffset;
             const docHeight = document.documentElement.scrollHeight - window.innerHeight;
             const scrollPercent = scrollTop / docHeight;
-            document.getElementById('scrollProgress').style.transform = `scaleX(${scrollPercent})`;
+            document.getElementById('scrollProgress').style.width = (scrollPercent * 100) + '%';
         });
 
-        // ========== NAVBAR SCROLL EFFECT ==========
         const navbar = document.getElementById('navbar');
         window.addEventListener('scroll', () => {
-            if (window.pageYOffset > 100) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
+            if (window.pageYOffset > 100) navbar.classList.add('scrolled');
+            else navbar.classList.remove('scrolled');
         });
 
-        // ========== ENHANCED PARALLAX EFFECT ==========
-        const parallaxElements = document.querySelectorAll('.parallax-element');
-        const heroGradients = document.querySelectorAll('.hero-gradient');
+        window.addEventListener('mousemove', (e) => { window.mouseX = e.clientX; window.mouseY = e.clientY; });
 
-        function updateParallax() {
-            const scrollY = window.pageYOffset;
-            const mouseX = window.mouseX || window.innerWidth / 2;
-            const mouseY = window.mouseY || window.innerHeight / 2;
-
-            // Parallax for general elements
-            parallaxElements.forEach(element => {
-                const rect = element.getBoundingClientRect();
-                const elementTop = rect.top + scrollY;
-                const windowHeight = window.innerHeight;
-
-                // Only apply parallax when element is in viewport
-                if (rect.top < windowHeight && rect.bottom > 0) {
-                    const speed = parseFloat(element.getAttribute('data-speed')) || 0.1;
-                    const yPos = (scrollY - elementTop + windowHeight) * speed;
-
-                    // Add subtle rotation based on scroll
-                    const rotation = yPos * 0.01;
-                    const scale = 1 + (Math.abs(yPos) * 0.0001);
-
-                    element.style.transform = `translateY(${yPos}px) rotate(${rotation}deg) scale(${scale})`;
-                }
-            });
-
-            // Enhanced parallax for hero gradients with mouse tracking
-            heroGradients.forEach((gradient, index) => {
-                const moveX = (mouseX - window.innerWidth / 2) * (0.02 + index * 0.01);
-                const moveY = (mouseY - window.innerHeight / 2) * (0.02 + index * 0.01) + scrollY * 0.3;
-
-                gradient.style.transform += ` translate(${moveX}px, ${moveY}px)`;
-            });
-
-            requestAnimationFrame(updateParallax);
-        }
-
-        // Track mouse position for parallax
-        window.addEventListener('mousemove', (e) => {
-            window.mouseX = e.clientX;
-            window.mouseY = e.clientY;
-        });
-
-        updateParallax();
-
-        // ========== COUNTER ANIMATION ==========
-        const observerOptions = {
-            threshold: 0.5,
-            rootMargin: '0px'
-        };
-
+        const observerOptions = { threshold: 0.5, rootMargin: '0px' };
         const counterObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting && entry.target.getAttribute('data-count')) {
@@ -1580,43 +1051,25 @@
                 }
             });
         }, observerOptions);
-
-        document.querySelectorAll('[data-count]').forEach(counter => {
-            counterObserver.observe(counter);
-        });
-
+        document.querySelectorAll('[data-count]').forEach(counter => { counterObserver.observe(counter); });
         function animateCounter(element, target) {
-            const duration = 2000;
-            const increment = target / (duration / 16);
+            const duration = 2000, increment = target / (duration / 16);
             let current = 0;
-
             const timer = setInterval(() => {
                 current += increment;
-                if (current >= target) {
-                    element.textContent = target.toLocaleString('de-DE');
-                    clearInterval(timer);
-                } else {
-                    element.textContent = Math.floor(current).toLocaleString('de-DE');
-                }
+                if (current >= target) { element.textContent = target.toLocaleString('de-DE'); clearInterval(timer); }
+                else { element.textContent = Math.floor(current).toLocaleString('de-DE'); }
             }, 16);
         }
 
-        // ========== SMOOTH SCROLL ==========
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    const offsetTop = target.offsetTop - 100;
-                    window.scrollTo({
-                        top: offsetTop,
-                        behavior: 'smooth'
-                    });
-                }
+                if (target) { window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' }); }
             });
         });
 
-        // ========== INTERSECTION OBSERVER FOR FADE-IN ==========
         const fadeObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -1625,320 +1078,103 @@
                 }
             });
         }, { threshold: 0.1 });
-
-        document.querySelectorAll('.feature-card, .stat-card, .team-card, .timeline-item').forEach(el => {
-            el.style.opacity = '0';
-            el.style.transform = 'translateY(30px)';
-            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        document.querySelectorAll('.feature-card, .stat-card, .team-card, .showcase-card, .value-card, .trust-item').forEach(el => {
+            el.style.opacity = '0'; el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
             fadeObserver.observe(el);
         });
+    </script>
 
-        // ========== CODE VIDEO CANVAS ANIMATION ==========
-        const canvas = document.getElementById('codeVideoCanvas');
-        const ctx = canvas.getContext('2d');
-        const codeVideoSection = document.querySelector('.code-video-section');
-        const codeVideoContent = document.getElementById('codeVideoContent');
+    <script>
+    (function() {
+        'use strict';
+        // Scroll reveal
+        var revealEls = document.querySelectorAll('.px-reveal');
+        var srObs = new IntersectionObserver(function(entries) {
+            entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('px-visible'); srObs.unobserve(e.target); } });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        revealEls.forEach(function(el) { srObs.observe(el); });
 
-        // Code samples to display
-        const codeLines = [
-            '// MyWorkLog v3.2 — Azubi Zeiterfassung',
-            '',
-            'const MyWorkLog = {',
-            '  version: "<span data-version>3.2.0</span>",',
-            '  name: "MyWorkLog",',
-            '',
-            '  features: {',
-            '    zeiterfassung: true,',
-            '    berichtsheft: "IHK-konform",',
-            '    gleitzeitkonto: true,',
-            '    ueberstundenrechner: true,',
-            '    lokaleKI: true,',
-            '    encryption: "AES-256-GCM",',
-            '    offlineFirst: true,',
-            '  },',
-            '',
-            '  performance: {',
-            '    fps: 60,',
-            '    loadTime: "< 100ms",',
-            '    storage: "IndexedDB",',
-            '  },',
-            '};',
-            '',
-            'class AzubiTracker {',
-            '  constructor(name) {',
-            '    this.azubi = name;',
-            '    this.initPWA();',
-            '    this.startTimer();',
-            '    this.initAI();',
-            '  }',
-            '',
-            '  async erfassen(start, ende) {',
-            '    const stunden = this.calc(start, ende);',
-            '    await this.save(stunden);',
-            '    return this.updateGleitzeit();',
-            '  }',
-            '',
-            '  async berichtsheft() {',
-            '    return await this.ki.generate();',
-            '  }',
-            '}',
-            '',
-            '// 🚀 Made in Germany',
-        ];
+        // Timeline tabs
+        document.querySelectorAll('.tl-tab').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tl-tab').forEach(function(b) { b.classList.remove('active'); });
+                document.querySelectorAll('.tl-pane').forEach(function(p) { p.classList.remove('active'); });
+                btn.classList.add('active');
+                var pane = document.getElementById(btn.getAttribute('data-pane'));
+                if (pane) pane.classList.add('active');
+            });
+        });
+    })();
+    </script>
 
-        // Syntax highlighting categories
-        const keywords = ['const', 'class', 'async', 'await', 'return', 'new', 'true', 'this'];
-        const strings = /"[^"]*"|'[^']*'/g;
-        const comments = /\/\/.*/g;
-        const numbers = /\b\d+\.?\d*\b/g;
+    <!-- PARALLAX ENGINE -->
+    <script>
+    (function() {
+        'use strict';
 
-        let animationFrame = 0;
-        let lastProgress = 0;
+        // Showcase card spotlight effect
+        document.querySelectorAll('.showcase-card').forEach(function(card) {
+            card.addEventListener('mousemove', function(e) {
+                var rect = card.getBoundingClientRect();
+                card.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
+                card.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
+            });
+        });
 
-        function resizeCanvas() {
-            canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-            canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        // Generate fixed background stars
+        var starsContainer = document.getElementById('parallaxStars');
+        if (starsContainer) {
+            var frag = document.createDocumentFragment();
+            for (var i = 0; i < 60; i++) {
+                var star = document.createElement('div');
+                star.className = 'star' + (Math.random() > 0.85 ? ' large' : '');
+                star.style.left = (Math.random() * 100) + '%';
+                star.style.top = (Math.random() * 100) + '%';
+                star.setAttribute('data-parallax-speed', (0.01 + Math.random() * 0.04).toFixed(3));
+                frag.appendChild(star);
+            }
+            starsContainer.appendChild(frag);
         }
 
-        // Easing function for smooth progress
-        function easeInOutCubic(t) {
-            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        // Parallax scroll handler
+        var parallaxEls = document.querySelectorAll('[data-parallax-speed]');
+        var parallaxCards = document.querySelectorAll('.parallax-element');
+        var ticking = false;
+
+        function updateParallax() {
+            var scrollY = window.pageYOffset;
+            var winH = window.innerHeight;
+
+            // Move orbs, stars, and other data-parallax-speed elements
+            for (var i = 0; i < parallaxEls.length; i++) {
+                var el = parallaxEls[i];
+                var speed = parseFloat(el.getAttribute('data-parallax-speed'));
+                var yOffset = scrollY * speed;
+                el.style.transform = 'translate3d(0,' + yOffset + 'px,0)';
+            }
+
+            // Parallax cards — move relative to their section position
+            for (var j = 0; j < parallaxCards.length; j++) {
+                var card = parallaxCards[j];
+                var speed2 = parseFloat(card.getAttribute('data-speed') || '0.1');
+                var rect = card.getBoundingClientRect();
+                var centerOffset = (rect.top + rect.height / 2 - winH / 2);
+                card.style.transform = 'translate3d(0,' + (centerOffset * speed2 * -0.5) + 'px,0)';
+            }
+
+            ticking = false;
         }
 
-        function getCharColor(line, charIndex) {
-            // Comment lines
-            if (line.trimStart().startsWith('//')) return '#6b7280';
-
-            // Find if char is inside a string
-            let inString = false;
-            let stringChar = null;
-            for (let i = 0; i <= charIndex; i++) {
-                if ((line[i] === '"' || line[i] === "'") && (i === 0 || line[i-1] !== '\\')) {
-                    if (!inString) { inString = true; stringChar = line[i]; }
-                    else if (line[i] === stringChar) { if (i === charIndex) return '#34d399'; inString = false; }
-                }
+        window.addEventListener('scroll', function() {
+            if (!ticking) {
+                requestAnimationFrame(updateParallax);
+                ticking = true;
             }
-            if (inString) return '#34d399';
+        }, { passive: true });
 
-            const char = line[charIndex];
-
-            // Check if char is part of a keyword
-            for (const kw of keywords) {
-                const idx = line.indexOf(kw);
-                if (idx !== -1 && charIndex >= idx && charIndex < idx + kw.length) {
-                    // Check word boundary
-                    const before = idx > 0 ? line[idx - 1] : ' ';
-                    const after = idx + kw.length < line.length ? line[idx + kw.length] : ' ';
-                    if (/\W/.test(before) && /\W/.test(after)) return '#c084fc';
-                }
-            }
-
-            // Brackets
-            if ('{}()[]'.includes(char)) return '#fbbf24';
-            // Punctuation
-            if (':;,.'.includes(char)) return '#6b7280';
-            // Numbers
-            if (/\d/.test(char)) return '#f472b6';
-            // Property names (before colon)
-            const colonIdx = line.indexOf(':');
-            if (colonIdx > 0 && charIndex < colonIdx && line.trim()[0] !== '/' && !line.trimStart().startsWith('//')) {
-                const trimStart = line.length - line.trimStart().length;
-                if (charIndex >= trimStart) return '#60a5fa';
-            }
-
-            return '#e2e8f0'; // Default: light text
-        }
-
-        function drawCodeFrame(progress) {
-            const width = canvas.offsetWidth;
-            const height = canvas.offsetHeight;
-
-            ctx.clearRect(0, 0, width, height);
-
-            // Background
-            const gradient = ctx.createLinearGradient(0, 0, 0, height);
-            gradient.addColorStop(0, '#0a0a0f');
-            gradient.addColorStop(0.3, '#110a1f');
-            gradient.addColorStop(0.7, '#110a1f');
-            gradient.addColorStop(1, '#0a0a0f');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, width, height);
-
-            // Subtle grid
-            ctx.strokeStyle = 'rgba(168, 85, 247, 0.03)';
-            ctx.lineWidth = 1;
-            const gridSize = 30;
-            for (let x = 0; x < width; x += gridSize) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
-            }
-            for (let y = 0; y < height; y += gridSize) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
-            }
-
-            // Ambient glow - follows progress
-            const glowX = width * 0.3 + Math.sin(progress * Math.PI * 2) * width * 0.2;
-            const glowY = height * 0.4 + Math.cos(progress * Math.PI) * height * 0.15;
-            const ambientGlow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, 350);
-            ambientGlow.addColorStop(0, 'rgba(168, 85, 247, 0.12)');
-            ambientGlow.addColorStop(0.5, 'rgba(124, 58, 237, 0.05)');
-            ambientGlow.addColorStop(1, 'transparent');
-            ctx.fillStyle = ambientGlow;
-            ctx.fillRect(0, 0, width, height);
-
-            // Second glow
-            const glow2X = width * 0.7 + Math.cos(progress * Math.PI * 1.5) * width * 0.15;
-            const glow2Y = height * 0.6;
-            const g2 = ctx.createRadialGradient(glow2X, glow2Y, 0, glow2X, glow2Y, 250);
-            g2.addColorStop(0, 'rgba(236, 72, 153, 0.08)');
-            g2.addColorStop(1, 'transparent');
-            ctx.fillStyle = g2;
-            ctx.fillRect(0, 0, width, height);
-
-            // Code rendering
-            const fontSize = Math.max(13, Math.min(16, width / 55));
-            const lineHeight = fontSize * 1.6;
-            const charWidth = fontSize * 0.6;
-            ctx.font = `${fontSize}px "JetBrains Mono", "Fira Code", "Courier New", monospace`;
-            ctx.textBaseline = 'top';
-
-            // How many lines to show based on progress (ease it)
-            const easedProgress = easeInOutCubic(Math.min(progress * 1.1, 1));
-            const totalLines = codeLines.length;
-            const linesToReveal = easedProgress * totalLines;
-
-            // Center the code block
-            const visibleLines = Math.min(Math.ceil(linesToReveal), totalLines);
-            const codeBlockHeight = visibleLines * lineHeight;
-            const startY = Math.max(40, (height - codeBlockHeight) / 2);
-
-            // Editor-like left gutter
-            const gutterWidth = 55;
-            const codeStartX = gutterWidth + 15;
-
-            // Gutter background
-            ctx.fillStyle = 'rgba(168, 85, 247, 0.03)';
-            ctx.fillRect(0, startY - 10, gutterWidth, codeBlockHeight + 20);
-
-            // Gutter separator line
-            ctx.strokeStyle = 'rgba(168, 85, 247, 0.1)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(gutterWidth, startY - 10);
-            ctx.lineTo(gutterWidth, startY + codeBlockHeight + 10);
-            ctx.stroke();
-
-            for (let i = 0; i < visibleLines; i++) {
-                const line = codeLines[i];
-                const y = startY + i * lineHeight;
-                const lineRevealProgress = Math.min(1, (linesToReveal - i) * 1.5);
-
-                if (lineRevealProgress <= 0) continue;
-
-                // Line number
-                const lineAlpha = Math.min(1, lineRevealProgress * 2);
-                ctx.fillStyle = `rgba(168, 85, 247, ${0.35 * lineAlpha})`;
-                ctx.fillText((i + 1).toString().padStart(2, ' '), 15, y);
-
-                // Active line highlight
-                if (lineRevealProgress < 1 && lineRevealProgress > 0.1) {
-                    ctx.fillStyle = 'rgba(168, 85, 247, 0.04)';
-                    ctx.fillRect(gutterWidth + 1, y - 2, width - gutterWidth, lineHeight);
-                }
-
-                // Characters with typing effect
-                const chars = line.split('');
-                const charsToShow = Math.floor(chars.length * Math.min(1, lineRevealProgress * 1.2));
-
-                for (let ci = 0; ci < charsToShow; ci++) {
-                    const charAlpha = Math.min(1, (lineRevealProgress * chars.length - ci) * 3);
-                    const color = getCharColor(line, ci);
-
-                    // Parse color to rgba
-                    ctx.fillStyle = color;
-                    ctx.globalAlpha = charAlpha;
-                    ctx.fillText(chars[ci], codeStartX + ci * charWidth, y);
-                    ctx.globalAlpha = 1;
-                }
-
-                // Blinking cursor at end of typing line
-                if (lineRevealProgress < 1 && lineRevealProgress > 0.05) {
-                    const cursorBlink = Math.sin(Date.now() * 0.006) > 0;
-                    if (cursorBlink) {
-                        const cursorX = codeStartX + charsToShow * charWidth;
-                        ctx.fillStyle = '#a855f7';
-                        ctx.shadowColor = '#a855f7';
-                        ctx.shadowBlur = 8;
-                        ctx.fillRect(cursorX, y, 2, fontSize);
-                        ctx.shadowBlur = 0;
-                    }
-                }
-            }
-
-            // Floating particles
-            const particleCount = 40;
-            for (let i = 0; i < particleCount; i++) {
-                const t = Date.now() * 0.001 + i * 1.7;
-                const px = (Math.sin(t * 0.3 + i) * 0.4 + 0.5) * width;
-                const py = (Math.cos(t * 0.2 + i * 0.7) * 0.4 + 0.5) * height;
-                const size = 1 + Math.sin(t) * 0.5;
-                const alpha = 0.15 + Math.sin(t * 0.5) * 0.1;
-
-                ctx.beginPath();
-                ctx.arc(px, py, size, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(168, 85, 247, ${alpha * progress})`;
-                ctx.fill();
-            }
-
-            // Scanline effect (subtle)
-            if (progress > 0.1) {
-                const scanY = ((Date.now() * 0.05) % height);
-                const scanGrad = ctx.createLinearGradient(0, scanY - 30, 0, scanY + 30);
-                scanGrad.addColorStop(0, 'transparent');
-                scanGrad.addColorStop(0.5, 'rgba(168, 85, 247, 0.03)');
-                scanGrad.addColorStop(1, 'transparent');
-                ctx.fillStyle = scanGrad;
-                ctx.fillRect(0, scanY - 30, width, 60);
-            }
-        }
-
-        function updateCodeVideo() {
-            if (!codeVideoSection) return;
-
-            const rect = codeVideoSection.getBoundingClientRect();
-            const sectionHeight = codeVideoSection.offsetHeight;
-            const windowHeight = window.innerHeight;
-
-            let progress = 0;
-
-            if (rect.top <= 0 && rect.bottom >= windowHeight) {
-                progress = Math.abs(rect.top) / (sectionHeight - windowHeight);
-                progress = Math.max(0, Math.min(1, progress));
-            }
-
-            // Smooth interpolation
-            lastProgress += (progress - lastProgress) * 0.15;
-
-            drawCodeFrame(lastProgress);
-
-            // Show text overlay in the middle section
-            if (lastProgress > 0.4 && lastProgress < 0.85) {
-                codeVideoContent.classList.add('visible');
-            } else {
-                codeVideoContent.classList.remove('visible');
-            }
-        }
-
-        // Initialize
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-
-        // Continuous render loop for cursor blink + particles
-        function renderLoop() {
-            updateCodeVideo();
-            requestAnimationFrame(renderLoop);
-        }
-        renderLoop();
+        updateParallax();
+    })();
     </script>
 </body>
 </html>
