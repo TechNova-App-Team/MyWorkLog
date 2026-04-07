@@ -19,7 +19,7 @@
 
 function startVoiceInput() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        showCustomMessage('âŒ Stimmeingabe nicht unterstÃ¼tzt', 'Dein Browser unterstÃ¼tzt keine Spracherkennung. Verwende Chrome oder Edge.', 'error');
+        showCustomMessage('❌ Stimmeingabe nicht unterstützt', 'Dein Browser unterstützt keine Spracherkennung. Verwende Chrome oder Edge.', 'error');
         return;
     }
 
@@ -30,11 +30,11 @@ function startVoiceInput() {
     recognition.interimResults = false;
 
     recognition.onstart = function() {
-        document.getElementById('voiceBtn').textContent = 'ðŸŽ¤ HÃ¶rt zu...';
+        document.getElementById('voiceBtn').textContent = '🎤 Hört zu...';
         document.getElementById('voiceBtn').style.background = 'rgba(239,68,68,0.2)';
         document.getElementById('voiceBtn').style.borderColor = 'rgba(239,68,68,0.3)';
         document.getElementById('voiceBtn').style.color = '#ef4444';
-        showCustomMessage('ðŸŽ¤ Stimmeingabe aktiv', 'Sprich deinen Eintrag (z.B. "Arbeit von 9 bis 17 Projekt Alpha")', 'info');
+        showCustomMessage('🎤 Stimmeingabe aktiv', 'Sprich deinen Eintrag (z.B. "Arbeit von 9 bis 17 Projekt Alpha")', 'info');
     };
 
     recognition.onresult = function(event) {
@@ -43,7 +43,7 @@ function startVoiceInput() {
     };
 
     recognition.onerror = function(event) {
-        showCustomMessage('âŒ Fehler bei Stimmeingabe', 'Versuche es nochmal oder gib manuell ein.', 'error');
+        showCustomMessage('❌ Fehler bei Stimmeingabe', 'Versuche es nochmal oder gib manuell ein.', 'error');
         resetVoiceBtn();
     };
 
@@ -55,7 +55,7 @@ function startVoiceInput() {
 }
 
 function resetVoiceBtn() {
-    document.getElementById('voiceBtn').textContent = 'ðŸŽ¤ Stimmeingabe';
+    document.getElementById('voiceBtn').textContent = '🎤 Stimmeingabe';
     document.getElementById('voiceBtn').style.background = 'rgba(59,130,246,0.2)';
     document.getElementById('voiceBtn').style.borderColor = 'rgba(59,130,246,0.3)';
     document.getElementById('voiceBtn').style.color = '#3b82f6';
@@ -106,7 +106,7 @@ function parseVoiceCommand(transcript) {
         notes = notesMatch[1].trim();
     }
 
-    // Felder fÃ¼llen
+    // Felder füllen
     document.getElementById('inpType').value = type;
     if (start) document.getElementById('inpStart').value = start;
     if (end) document.getElementById('inpEnd').value = end;
@@ -119,7 +119,7 @@ function parseVoiceCommand(transcript) {
     // Save draft
     if (window.saveDraft) window.saveDraft();
 
-    showCustomMessage('âœ… Stimmeingabe verarbeitet', `Typ: ${type}, Start: ${start}, Ende: ${end}, Projekt: ${project}`, 'success');
+    showCustomMessage('✅ Stimmeingabe verarbeitet', `Typ: ${type}, Start: ${start}, Ende: ${end}, Projekt: ${project}`, 'success');
 }
 
 // ============================================
@@ -131,35 +131,35 @@ let focusTimeLeft = 25 * 60; // 25 Minuten
 let focusRunning = false;
 
 const focusQuotes = [
-    "Erfolg ist die Summe kleiner Anstrengungen, die Tag fÃ¼r Tag wiederholt werden.",
-    "Disziplin ist der BrÃ¼ckenpfeiler zwischen Zielen und deren Verwirklichung.",
+    "Erfolg ist die Summe kleiner Anstrengungen, die Tag für Tag wiederholt werden.",
+    "Disziplin ist der Brückenpfeiler zwischen Zielen und deren Verwirklichung.",
     "Fokussierte Arbeit bringt Ergebnisse, Ablenkung bringt nur Ausreden.",
-    "Jeder Experte war einmal ein AnfÃ¤nger. Bleib dran!",
+    "Jeder Experte war einmal ein Anfänger. Bleib dran!",
     "Zeit ist das wertvollste, was wir haben. Nutze sie weise.",
-    "Konzentration ist der SchlÃ¼ssel zur ProduktivitÃ¤t.",
+    "Konzentration ist der Schlüssel zur Produktivität.",
     "Ein Tag voller Fokus ist besser als eine Woche voller Chaos.",
     "Deine Zukunft wird von dem geformt, was du heute tust.",
     "Bleib hungrig, bleib fokussiert, bleib diszipliniert.",
-    "Jeder Moment zÃ¤hlt â€“ nutze ihn fÃ¼r etwas GroÃŸes."
+    "Jeder Moment zählt – nutze ihn für etwas Großes."
 ];
 
 function startFocusMode() {
     const overlay = document.getElementById('focusModeOverlay');
     overlay.style.display = 'flex';
     
-    // ZufÃ¤lliges Zitat
+    // Zufälliges Zitat
     const randomQuote = focusQuotes[Math.floor(Math.random() * focusQuotes.length)];
     document.getElementById('focusQuote').textContent = `"${randomQuote}"`;
     
     // Vollbild versuchen
     if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(err => {
-            console.warn('Vollbild nicht mÃ¶glich:', err);
+            console.warn('Vollbild nicht möglich:', err);
         });
     }
     
     updateFocusTimerDisplay();
-    showCustomMessage('ðŸŽ¯ Focus Mode aktiviert', '25-Minuten-Timer gestartet. Bleib fokussiert!', 'info');
+    showCustomMessage('🎯 Focus Mode aktiviert', '25-Minuten-Timer gestartet. Bleib fokussiert!', 'info');
 }
 
 function startFocusTimer() {
@@ -176,10 +176,10 @@ function startFocusTimer() {
         if (focusTimeLeft <= 0) {
             clearInterval(focusTimerInterval);
             focusRunning = false;
-            showCustomMessage('ðŸŽ‰ Focus Session beendet!', 'Gut gemacht! Nimm eine Pause.', 'success');
+            showCustomMessage('🎉 Focus Session beendet!', 'Gut gemacht! Nimm eine Pause.', 'success');
             // Optional: Notification
             if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification('Focus Session beendet!', { body: 'Zeit fÃ¼r eine Pause!' });
+                new Notification('Focus Session beendet!', { body: 'Zeit für eine Pause!' });
             }
         }
     }, 1000);
@@ -217,7 +217,7 @@ function exitFocusMode() {
         document.exitFullscreen().catch(err => console.warn('Vollbild beenden fehlgeschlagen:', err));
     }
     
-    showCustomMessage('ðŸ‘‹ Focus Mode beendet', 'ZurÃ¼ck zur normalen Ansicht.', 'info');
+    showCustomMessage('👋 Focus Mode beendet', 'Zurück zur normalen Ansicht.', 'info');
 }
 
 // ============================================
@@ -268,7 +268,7 @@ function setMood(emoji) {
         if (entry) {
             entry.mood = emoji;
             save();
-            showCustomMessage('âœ… Stimmung gespeichert', `Deine Stimmung: ${emoji}`, 'success');
+            showCustomMessage('✅ Stimmung gespeichert', `Deine Stimmung: ${emoji}`, 'success');
         }
     }
     closeMoodSelector();
@@ -285,16 +285,16 @@ function closeMoodSelector() {
 
 function getMoodDescription(emoji) {
     const descriptions = {
-        'ðŸ˜„': 'Sehr glÃ¼cklich',
-        'ðŸ˜Š': 'GlÃ¼cklich',
-        'ðŸ™‚': 'Zufrieden',
-        'ðŸ˜': 'Neutral',
-        'ðŸ˜•': 'Unzufrieden',
-        'ðŸ˜ž': 'Traurig',
-        'ðŸ˜ ': 'WÃ¼tend',
-        'ðŸ¤’': 'Krank',
-        'ðŸ˜´': 'MÃ¼de',
-        'ðŸ¤¯': 'ÃœberwÃ¤ltigt'
+        '😄': 'Sehr glücklich',
+        '😊': 'Glücklich',
+        '🙂': 'Zufrieden',
+        '😐': 'Neutral',
+        '😕': 'Unzufrieden',
+        '😞': 'Traurig',
+        '😠': 'Wütend',
+        '🤒': 'Krank',
+        '😴': 'Müde',
+        '🤯': 'Überwältigt'
     };
     return descriptions[emoji] || 'Unbekannt';
 }
@@ -308,7 +308,7 @@ function renderMoodOverview() {
     const recentEntries = data.entries.filter(e => e.mood && new Date(e.date) >= thirtyDaysAgo);
 
     if (recentEntries.length === 0) {
-        moodContainer.innerHTML = '<div style="color:var(--text-muted); font-style:italic;">Noch keine Stimmungen erfasst. Speichere EintrÃ¤ge und wÃ¤hle eine Stimmung!</div>';
+        moodContainer.innerHTML = '<div style="color:var(--text-muted); font-style:italic;">Noch keine Stimmungen erfasst. Speichere Einträge und wähle eine Stimmung!</div>';
         return;
     }
 
@@ -331,7 +331,7 @@ function renderMoodOverview() {
 
         html += `<div style="display:flex; flex-direction:column; align-items:center; padding:4px; border-radius:6px; background:${avgMood ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)'}; min-width:32px;">
             <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:2px;">${date.getDate()}</div>
-            <div style="font-size:1.2rem;">${avgMood || 'â€“'}</div>
+            <div style="font-size:1.2rem;">${avgMood || '–'}</div>
         </div>`;
     }
 
@@ -339,19 +339,19 @@ function renderMoodOverview() {
 }
 
 // ============================================
-// AI INSIGHTS FEATURE (NEU: CHEF-MÃ„SSIG!)
+// AI INSIGHTS FEATURE (NEU: CHEF-MÄSSIG!)
 // ============================================
 
 function generateInsights() {
     const insightsEl = document.getElementById('insightsContentModal');
-    insightsEl.innerHTML = '<p>Analysiere Daten... ðŸ¤”</p>';
+    insightsEl.innerHTML = '<p>Analysiere Daten... 🤔</p>';
 
     setTimeout(() => {
         const insights = analyzeDataForInsights();
         let html = '';
 
         if (insights.length === 0) {
-            html = '<p>Keine Insights verfÃ¼gbar. Mehr Daten sammeln!</p>';
+            html = '<p>Keine Insights verfügbar. Mehr Daten sammeln!</p>';
         } else {
             html = insights.map(insight => `<div style="margin-bottom:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px;"><strong>${insight.icon}</strong> ${insight.text}</div>`).join('');
         }
@@ -372,25 +372,25 @@ function analyzeDataForInsights() {
 
     if (recentEntries.length === 0) return insights;
 
-    // 1. Ãœberstunden Check
+    // 1. Überstunden Check
     const totalHours = recentEntries.reduce((sum, e) => sum + e.worked, 0);
     const avgDaily = totalHours / 30;
     if (avgDaily > 8) {
         insights.push({
-            icon: 'âš ï¸',
-            text: `Du arbeitest durchschnittlich ${avgDaily.toFixed(1)}h pro Tag. Ãœberlege, Pausen einzulegen oder Urlaub zu planen.`
+            icon: '⚠️',
+            text: `Du arbeitest durchschnittlich ${avgDaily.toFixed(1)}h pro Tag. Überlege, Pausen einzulegen oder Urlaub zu planen.`
         });
     }
 
     // 2. Stimmungs-Analyse
     const moodEntries = recentEntries.filter(e => e.mood);
     if (moodEntries.length > 5) {
-        const badMoods = moodEntries.filter(e => ['ðŸ˜ž', 'ðŸ˜ ', 'ðŸ¤’', 'ðŸ˜´', 'ðŸ¤¯'].includes(e.mood)).length;
+        const badMoods = moodEntries.filter(e => ['😞', '😠', '🤒', '😴', '🤯'].includes(e.mood)).length;
         const moodRatio = badMoods / moodEntries.length;
         if (moodRatio > 0.5) {
             insights.push({
-                icon: 'ðŸ˜Ÿ',
-                text: `Deine Stimmung war in ${Math.round(moodRatio * 100)}% der FÃ¤lle negativ. Vielleicht mehr Pausen oder Hobbys?`
+                icon: '😟',
+                text: `Deine Stimmung war in ${Math.round(moodRatio * 100)}% der Fälle negativ. Vielleicht mehr Pausen oder Hobbys?`
             });
         }
     }
@@ -402,7 +402,7 @@ function analyzeDataForInsights() {
     });
     if (weekendEntries.length > 2) {
         insights.push({
-            icon: 'ðŸ–ï¸',
+            icon: '🏖️',
             text: `Du hast ${weekendEntries.length} Mal am Wochenende gearbeitet. Work-Life-Balance ist wichtig!`
         });
     }
@@ -411,12 +411,12 @@ function analyzeDataForInsights() {
     const recentDiffs = recentEntries.slice(-10).reduce((sum, e) => sum + e.diff, 0);
     if (recentDiffs < -10) {
         insights.push({
-            icon: 'ðŸ“‰',
-            text: `Dein Saldo sinkt. Plane Ãœberstunden oder korrigiere EintrÃ¤ge.`
+            icon: '📉',
+            text: `Dein Saldo sinkt. Plane Überstunden oder korrigiere Einträge.`
         });
     } else if (recentDiffs > 10) {
         insights.push({
-            icon: 'ðŸ“ˆ',
+            icon: '📈',
             text: `Super! Du baust Plusstunden auf. Belohne dich mit einer Pause.`
         });
     }
@@ -425,16 +425,16 @@ function analyzeDataForInsights() {
     const longShifts = recentEntries.filter(e => e.shiftWarning);
     if (longShifts.length > 0) {
         insights.push({
-            icon: 'â°',
-            text: `Du hattest ${longShifts.length} Schichten Ã¼ber 10h. Achte auf Gesundheit!`
+            icon: '⏰',
+            text: `Du hattest ${longShifts.length} Schichten über 10h. Achte auf Gesundheit!`
         });
     }
 
     // Fallback, wenn keine Insights
     if (insights.length === 0) {
         insights.push({
-            icon: 'âœ…',
-            text: 'Alles im grÃ¼nen Bereich! Halte so weiter.'
+            icon: '✅',
+            text: 'Alles im grünen Bereich! Halte so weiter.'
         });
     }
 
@@ -469,12 +469,12 @@ function saveBreakSettings() {
     }
     
     closeBreakSettingsModal();
-    showCustomMessage('âœ… Einstellungen gespeichert', `Break Reminders ${enabled ? 'aktiviert' : 'deaktiviert'} mit ${interval}h Intervall.`, 'success');
+    showCustomMessage('✅ Einstellungen gespeichert', `Break Reminders ${enabled ? 'aktiviert' : 'deaktiviert'} mit ${interval}h Intervall.`, 'success');
 }
 
 function enableBreakReminders() {
     if (!('Notification' in window) || Notification.permission !== 'granted') {
-        showCustomMessage('âŒ Notifications nicht erlaubt', 'Erlaube Notifications fÃ¼r Break Reminders.', 'error');
+        showCustomMessage('❌ Notifications nicht erlaubt', 'Erlaube Notifications für Break Reminders.', 'error');
         return;
     }
     
@@ -484,7 +484,7 @@ function enableBreakReminders() {
     const intervalMs = breakIntervalHours * 60 * 60 * 1000;
     breakReminderInterval = setInterval(() => {
         if (document.hidden) {
-            new Notification('â° Zeit fÃ¼r eine Pause!', {
+            new Notification('⏰ Zeit für eine Pause!', {
                 body: `Du arbeitest schon ${breakIntervalHours} Stunden durch. Steh auf, streck dich!`,
                 icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiNhODU1ZjciLz4KPHBhdGggZD0iTTEyIDEySDE2VjE2SDEyVjEyWk0xNiAyMEgxNloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo='
             });
@@ -581,7 +581,7 @@ if ('serviceWorker' in navigator) {
                 }
             }
 
-            // Handle service worker updates â†’ Advanced Update Manager
+            // Handle service worker updates → Advanced Update Manager
             registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
                 newWorker.addEventListener('statechange', () => {
@@ -607,7 +607,7 @@ if ('serviceWorker' in navigator) {
 let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
-    // Prompt speichern fÃ¼r manuellen Trigger via Install-Button
+    // Prompt speichern für manuellen Trigger via Install-Button
     deferredPrompt = e;
 });
 
@@ -621,7 +621,7 @@ window.addEventListener('appinstalled', () => {
     if (bnr) { bnr.classList.remove('visible'); setTimeout(function(){ bnr.style.display='none'; }, 500); }
     localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
     if (typeof showCustomMessage === 'function') {
-        showCustomMessage('ðŸŽ‰ Installiert!', 'MyWorkLog ist jetzt auf deinem Homescreen!', 'success');
+        showCustomMessage('🎉 Installiert!', 'MyWorkLog ist jetzt auf deinem Homescreen!', 'success');
     }
 });
 
@@ -632,7 +632,7 @@ async function triggerInstallPrompt() {
         // If no prompt available, user may have declined or already installed
         localStorage.setItem('pwa_install_dismissed', 'true');
         hidePWAInstallSection();
-        showCustomMessage('â„¹ï¸ Info', 'PWA ist bereits installiert oder auf diesem GerÃ¤t nicht verfÃ¼gbar.', 'info');
+        showCustomMessage('ℹ️ Info', 'PWA ist bereits installiert oder auf diesem Gerät nicht verfügbar.', 'info');
         return;
     }
 
@@ -673,54 +673,54 @@ function checkPWAStatus() {
     const statusEl = document.getElementById('pwaStatus');
     if (!statusEl) return;
 
-    let status = 'ðŸ” PWA Status:\n\n';
+    let status = '🔍 PWA Status:\n\n';
 
-    status += 'ðŸ“‚ Resolved base path: ' + (window._pwaBasePath || './') + '\n\n';
+    status += '📂 Resolved base path: ' + (window._pwaBasePath || './') + '\n\n';
 
     if ('serviceWorker' in navigator) {
-        status += 'âœ… Service Worker: UnterstÃ¼tzt\n';
+        status += '✅ Service Worker: Unterstützt\n';
         navigator.serviceWorker.getRegistrations().then(registrations => {
             if (registrations.length > 0) {
-                status += '   â†’ ' + registrations.length + ' aktiv\n';
+                status += '   → ' + registrations.length + ' aktiv\n';
             } else {
-                status += '   â†’ Wird gerade aktiviert...\n';
+                status += '   → Wird gerade aktiviert...\n';
             }
         });
     } else {
-        status += 'âŒ Service Worker: Nicht unterstÃ¼tzt\n';
+        status += '❌ Service Worker: Nicht unterstützt\n';
     }
 
-    status += navigator.serviceWorker ? 'âœ… Manifest: Vorhanden\n' : 'âŒ Manifest: Fehlt\n';
+    status += navigator.serviceWorker ? '✅ Manifest: Vorhanden\n' : '❌ Manifest: Fehlt\n';
 
     if (window.navigator.standalone === true) {
-        status += 'âœ… Installiert: Ja (als App lÃ¤ufig)\n';
+        status += '✅ Installiert: Ja (als App läufig)\n';
     } else if (deferredPrompt) {
-        status += 'â³ Installierbar: Ja (verwende den Button oben!)\n';
+        status += '⏳ Installierbar: Ja (verwende den Button oben!)\n';
     } else {
-        status += 'â„¹ï¸  Installation: Nicht mÃ¶glich (oder bereits installiert)\n';
+        status += 'ℹ️  Installation: Nicht möglich (oder bereits installiert)\n';
     }
 
-    status += navigator.onLine ? 'âœ… Online: Ja\n' : 'âŒ Online: Nein (Offline-Modus)\n';
+    status += navigator.onLine ? '✅ Online: Ja\n' : '❌ Online: Nein (Offline-Modus)\n';
 
     try {
         const test = '__test__';
         localStorage.setItem(test, test);
         localStorage.removeItem(test);
-        status += 'âœ… localStorage: VerfÃ¼gbar\n';
+        status += '✅ localStorage: Verfügbar\n';
     } catch {
-        status += 'âŒ localStorage: Nicht verfÃ¼gbar\n';
+        status += '❌ localStorage: Nicht verfügbar\n';
     }
 
     if (window.indexedDB) {
-        status += 'âœ… IndexedDB: VerfÃ¼gbar\n';
+        status += '✅ IndexedDB: Verfügbar\n';
     } else {
-        status += 'âŒ IndexedDB: Nicht verfÃ¼gbar\n';
+        status += '❌ IndexedDB: Nicht verfügbar\n';
     }
 
-    statusEl.innerHTML = '<strong>ðŸ“± PWA Status:</strong><br>' + status.replace(/\n/g, '<br>');
+    statusEl.innerHTML = '<strong>📱 PWA Status:</strong><br>' + status.replace(/\n/g, '<br>');
     
     if (typeof showCustomMessage === 'function') {
-        showCustomMessage('ðŸ“± PWA Status', status, 'info');
+        showCustomMessage('📱 PWA Status', status, 'info');
     }
 }
 
@@ -845,13 +845,13 @@ function pwaInstallBannerInstall() {
         if (typeof showCustomMessage === 'function') {
             var ua = navigator.userAgent.toLowerCase();
             if (ua.indexOf('chrome') > -1) {
-                showCustomMessage('ðŸ“² Chrome', 'Tippe auf â‹® (MenÃ¼ oben rechts) â†’ "App installieren" oder "Zum Startbildschirm hinzufÃ¼gen"', 'info');
+                showCustomMessage('📲 Chrome', 'Tippe auf ⋮ (Menü oben rechts) → "App installieren" oder "Zum Startbildschirm hinzufügen"', 'info');
             } else if (ua.indexOf('firefox') > -1) {
-                showCustomMessage('ðŸ“² Firefox', 'Tippe auf â‹® (MenÃ¼) â†’ "Installieren" oder "Zum Startbildschirm hinzufÃ¼gen"', 'info');
+                showCustomMessage('📲 Firefox', 'Tippe auf ⋮ (Menü) → "Installieren" oder "Zum Startbildschirm hinzufügen"', 'info');
             } else if (ua.indexOf('safari') > -1) {
-                showCustomMessage('ðŸ“² Safari', 'Tippe auf das Teilen-Symbol (â–¡â†‘) â†’ "Zum Home-Bildschirm"', 'info');
+                showCustomMessage('📲 Safari', 'Tippe auf das Teilen-Symbol (□↑) → "Zum Home-Bildschirm"', 'info');
             } else {
-                showCustomMessage('ðŸ“² Installieren', 'Ã–ffne das Browser-MenÃ¼ und wÃ¤hle "Zum Startbildschirm hinzufÃ¼gen"', 'info');
+                showCustomMessage('📲 Installieren', 'Öffne das Browser-Menü und wähle "Zum Startbildschirm hinzufügen"', 'info');
             }
         }
         pwaInstallBannerDismiss();
@@ -898,12 +898,12 @@ const OfflineDataManager = {
 
             console.log(`[PWA] Verarbeite ${queue.length} ausstehende Offline-Aktionen...`);
             
-            // Hier kÃ¶nnen Daten zu Server synced werden
-            // FÃ¼r jetzt: einfach aus Queue entfernen und speichern als synced
+            // Hier können Daten zu Server synced werden
+            // Für jetzt: einfach aus Queue entfernen und speichern als synced
             localStorage.setItem(this.SYNC_KEY, new Date().toISOString());
             localStorage.removeItem(this.QUEUE_KEY);
             
-            showCustomMessage('âœ… Synchronisiert', `${queue.length} Offline-Aktion(en) erfolgreich verarbeitet!`, 'success');
+            showCustomMessage('✅ Synchronisiert', `${queue.length} Offline-Aktion(en) erfolgreich verarbeitet!`, 'success');
         } catch (e) {
             console.warn('[PWA] Fehler beim Verarbeiten von Offline-Aktionen:', e);
         }
@@ -922,17 +922,17 @@ const OfflineDataManager = {
 
 // Synce bei Online werden
 window.addEventListener('online', () => {
-    console.log('[PWA] Online wieder hergestellt â€” synchronisiere Daten...');
+    console.log('[PWA] Online wieder hergestellt — synchronisiere Daten...');
     OfflineDataManager.processPendingActions();
     if (typeof showCustomMessage === 'function') {
-        showCustomMessage('ðŸŒ Online!', 'Deaktiviere Daten werden synchronisiert...', 'success');
+        showCustomMessage('🌐 Online!', 'Deaktiviere Daten werden synchronisiert...', 'success');
     }
 });
 
 // Benachrichtige wenn Offline wird
 window.addEventListener('offline', () => {
     if (typeof showCustomMessage === 'function') {
-        showCustomMessage('âš ï¸ Offline-Modus', 'Du bist keine Verbindung! Deine Daten werden lokal gespeichert.', 'warning');
+        showCustomMessage('⚠️ Offline-Modus', 'Du bist keine Verbindung! Deine Daten werden lokal gespeichert.', 'warning');
     }
 });
 
@@ -947,7 +947,7 @@ function detectLocalhostAndWarn() {
             banner.id = 'localhostWarningBanner';
             banner.style.cssText = 'position:fixed; top:12px; left:12px; right:12px; z-index:9999; background:linear-gradient(90deg,#f59e0b,var(--primary)); color:#fff; padding:12px 14px; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.35); font-weight:700; display:flex; align-items:center; gap:12px;';
             banner.innerHTML = `
-                <div style="flex:1; font-size:0.95rem;">âš ï¸ Hinweis: Du greifst diese Seite Ã¼ber <code>${host}</code> auf. FÃ¼r die Installation auf MobilgerÃ¤ten verwende die LANâ€‘IP deines Rechners (z.B. <code>http://192.168.1.25:5500</code>), sonst kann die App nach der Installation 404 anzeigen.</div>
+                <div style="flex:1; font-size:0.95rem;">⚠️ Hinweis: Du greifst diese Seite über <code>${host}</code> auf. Für die Installation auf Mobilgeräten verwende die LAN‑IP deines Rechners (z.B. <code>http://192.168.1.25:5500</code>), sonst kann die App nach der Installation 404 anzeigen.</div>
                 <div style="display:flex; gap:8px;">
                     <button id="dismissLocalhostWarning" class="btn" style="padding:8px 12px; background:rgba(0,0,0,0.06); border-radius:8px;">Verstanden</button>
                 </div>
@@ -1018,7 +1018,7 @@ const networkMonitor = (() => {
             s.lastCheck = Date.now();
             if (!s.online) onStatusChange(true);
             s.quality = ms < 100 ? 'excellent' : ms < 300 ? 'good' : ms < 800 ? 'moderate' : 'poor';
-            log('ping', ms + 'ms â€” ' + s.quality);
+            log('ping', ms + 'ms — ' + s.quality);
         } catch(e) {
             s.latency = null;
             s.lastCheck = Date.now();
@@ -1050,7 +1050,7 @@ const networkMonitor = (() => {
         ui();
         if (typeof showCustomMessage === 'function') {
             if (on && wasOff) showCustomMessage('Verbindung hergestellt', 'Du bist wieder online.', 'success');
-            else if (!on) showCustomMessage('Verbindung verloren', 'Offline-Modus aktiv â€” Daten werden lokal gespeichert.', 'warning');
+            else if (!on) showCustomMessage('Verbindung verloren', 'Offline-Modus aktiv — Daten werden lokal gespeichert.', 'warning');
         }
     }
 
@@ -1199,7 +1199,7 @@ const updateManager = (() => {
         dismissed = false;
         localStorage.removeItem('mwl_upd_dismissed');
         const b = document.getElementById('updateBanner');
-        if (b) { b.classList.add('visible'); console.log('âœ… Update-Banner Test angezeigt'); }
+        if (b) { b.classList.add('visible'); console.log('✅ Update-Banner Test angezeigt'); }
     }
 
     return { init, notifyUpdate, dismiss, apply, test };
@@ -1242,7 +1242,7 @@ function initWebLLMButtonVisibility() {
     });
     
     if (!isWebLLMSupported) {
-        console.warn('[WebLLM] Browser nicht unterstÃ¼tzt - Button wird nicht angezeigt');
+        console.warn('[WebLLM] Browser nicht unterstützt - Button wird nicht angezeigt');
         return;
     }
     
