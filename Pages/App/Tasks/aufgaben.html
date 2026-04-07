@@ -909,6 +909,153 @@
 
         /* Hidden input for import */
         .hidden-input { display: none; }
+
+        /* ── WEEK VIEW ── */
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            margin-top: 16px;
+        }
+
+        .week-day-column {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 8px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .week-day-column.holiday {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .week-day-header {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .week-day-header.today {
+            color: var(--primary);
+        }
+
+        .week-day-date {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        .week-tasks-drop-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 2px;
+            min-height: 100px;
+        }
+
+        .week-tasks-drop-zone.drag-over {
+            background: var(--primary-dim);
+            border: 2px dashed var(--primary);
+            border-radius: var(--radius-xs);
+        }
+
+        .week-task-item {
+            background: var(--bg-input);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-xs);
+            padding: 6px 8px;
+            font-size: 12px;
+            cursor: move;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .week-task-item:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--primary);
+        }
+
+        .week-task-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+
+        .week-task-check {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-strong);
+            border-radius: 4px;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .week-task-check:hover {
+            border-color: var(--primary);
+        }
+
+        .week-task-item.done .week-task-check {
+            background: var(--success);
+            border-color: var(--success);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 6l2.5 2.5L10 3' stroke='white' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .week-task-label {
+            flex: 1;
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .week-task-item.done .week-task-label {
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .week-task-cat-icon {
+            font-size: 14px;
+            opacity: 0.7;
+            flex-shrink: 0;
+        }
+
+        .week-task-item .icon-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .week-task-item:hover .icon-btn {
+            opacity: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .week-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .week-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -925,6 +1072,7 @@
             </div>
         </div>
         <div class="header-actions">
+            <button class="btn" onclick="toggleViewMode()" id="view-mode-btn" title="Ansicht wechseln">📅 Wochenansicht</button>
             <button class="btn" onclick="resetTodayTasks()">&#8634; Reset heute</button>
             <button class="btn-primary btn" onclick="openAddCategory()">&#65291; Kategorie</button>
             <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Theme wechseln">&#127769;</button>
@@ -1153,7 +1301,9 @@ const SK = {
     achiev: 'mwl_tasks_achievements',
     streak: 'mwl_tasks_streak',
     theme: 'mwl_tasks_theme',
-    lastReset: 'mwl_tasks_lastReset'
+    lastReset: 'mwl_tasks_lastReset',
+    viewMode: 'mwl_tasks_viewMode',
+    weekAssignments: 'mwl_tasks_weekAssignments'
 };
 
 let categories = [];
@@ -1164,6 +1314,8 @@ let searchQuery = '';
 let editingTaskRef = null;
 let editingCatRef = null;
 let selectedEmoji = EMOJIS[0];
+let viewMode = 'auto'; // 'auto' or 'manual'
+let weekAssignments = {}; // { taskId: dayOfWeek }
 
 /* ═══════════════════════════════════════════════════
    LOAD / SAVE
@@ -1172,12 +1324,16 @@ function load() {
     try { categories = JSON.parse(localStorage.getItem(SK.cats)) || []; } catch(e) { categories = []; }
     try { achievements = JSON.parse(localStorage.getItem(SK.achiev)) || {}; } catch(e) { achievements = {}; }
     try { streakData = JSON.parse(localStorage.getItem(SK.streak)) || { streak:0, lastDate:null, best:0 }; } catch(e) { streakData = { streak:0, lastDate:null, best:0 }; }
+    viewMode = localStorage.getItem(SK.viewMode) || 'auto';
+    try { weekAssignments = JSON.parse(localStorage.getItem(SK.weekAssignments)) || {}; } catch(e) { weekAssignments = {}; }
 }
 
 function save() {
     localStorage.setItem(SK.cats, JSON.stringify(categories));
     localStorage.setItem(SK.achiev, JSON.stringify(achievements));
     localStorage.setItem(SK.streak, JSON.stringify(streakData));
+    localStorage.setItem(SK.viewMode, viewMode);
+    localStorage.setItem(SK.weekAssignments, JSON.stringify(weekAssignments));
 }
 
 function getStates() { try { return JSON.parse(localStorage.getItem(SK.states)) || {}; } catch(e) { return {}; } }
@@ -1259,6 +1415,16 @@ function matchesSearch(txt) {
    RENDER
    ═══════════════════════════════════════════════════ */
 function render() {
+    if (viewMode === 'manual') {
+        renderWeekView();
+    } else {
+        renderAutoView();
+    }
+    updateKPIs();
+    updateAchievements();
+}
+
+function renderAutoView() {
     var container = document.getElementById('sections-container');
     var empty = document.getElementById('empty-state');
     container.innerHTML = '';
@@ -1278,9 +1444,198 @@ function render() {
             });
         }
     }
+}
 
-    updateKPIs();
-    updateAchievements();
+/* ═══════════════════════════════════════════════════
+   WEEK VIEW (MANUAL MODE)
+   ═══════════════════════════════════════════════════ */
+function toggleViewMode() {
+    viewMode = viewMode === 'auto' ? 'manual' : 'auto';
+    save();
+    var btn = document.getElementById('view-mode-btn');
+    btn.textContent = viewMode === 'manual' ? '📋 Heute' : '📅 Wochenansicht';
+    render();
+}
+
+function renderWeekView() {
+    var container = document.getElementById('sections-container');
+    var empty = document.getElementById('empty-state');
+    empty.style.display = 'none';
+    container.innerHTML = '';
+
+    // Add info banner
+    var infoBanner = document.createElement('div');
+    infoBanner.style.cssText = 'background: var(--primary-dim); border: 1px solid rgba(var(--primary-rgb),0.3); border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 12px; font-size: 12px; color: var(--text-main); display: flex; align-items: center; gap: 8px;';
+    infoBanner.innerHTML = '<span style="font-size: 16px;">ℹ️</span><div><strong>Wochenansicht:</strong> Alle Aufgaben für die ganze Woche. Per Drag & Drop zwischen Tagen verschieben. ✏️ zum Bearbeiten/Löschen.</div>';
+    container.appendChild(infoBanner);
+
+    var weekGrid = document.createElement('div');
+    weekGrid.className = 'week-grid';
+
+    var today = new Date();
+    var currentDay = today.getDay();
+
+    // Build 7 day columns (Monday to Sunday)
+    for (var i = 0; i < 7; i++) {
+        var dayCol = document.createElement('div');
+        dayCol.className = 'week-day-column';
+        dayCol.dataset.day = i;
+
+        var isHoliday = false;
+        if (isHoliday) {
+            dayCol.classList.add('holiday');
+        }
+
+        // Header
+        var header = document.createElement('div');
+        header.className = 'week-day-header';
+        if (i === currentDay) {
+            header.classList.add('today');
+        }
+        header.innerHTML = DAY_NAMES[i] + '<div class="week-day-date">' + getWeekDate(i) + '</div>';
+        dayCol.appendChild(header);
+
+        // Drop zone for tasks
+        var dropZone = document.createElement('div');
+        dropZone.className = 'week-tasks-drop-zone';
+        dropZone.dataset.day = i;
+        
+        // Add all tasks that belong to this day
+        categories.forEach(function(cat) {
+            var catTasks = cat.tasks || [];
+            catTasks.forEach(function(task) {
+                // Check if task should appear on this day
+                var assignedDay = weekAssignments[task.id];
+                var shouldShowTask = false;
+
+                if (assignedDay !== undefined) {
+                    // Manual assignment takes priority
+                    shouldShowTask = parseInt(assignedDay) === i;
+                } else {
+                    // Check task's day settings
+                    if (!task.days || task.days.length === 0) {
+                        // No day restriction = show every day
+                        shouldShowTask = true;
+                    } else {
+                        // Show only on specified days
+                        shouldShowTask = task.days.indexOf(i) !== -1;
+                    }
+                }
+
+                if (shouldShowTask) {
+                    dropZone.appendChild(buildWeekTaskItem(task, cat, i));
+                }
+            });
+        });
+
+        // Setup drag & drop
+        setupDropZone(dropZone);
+        
+        dayCol.appendChild(dropZone);
+        weekGrid.appendChild(dayCol);
+    }
+
+    container.appendChild(weekGrid);
+}
+
+function getWeekDate(dayOfWeek) {
+    var today = new Date();
+    var currentDay = today.getDay();
+    var diff = dayOfWeek - currentDay;
+    var targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + diff);
+    return targetDate.getDate() + '.' + (targetDate.getMonth() + 1) + '.';
+}
+
+function buildWeekTaskItem(task, cat, dayOfWeek) {
+    var states = getStates();
+    var done = states[task.id] || false;
+
+    var div = document.createElement('div');
+    div.className = 'week-task-item' + (done ? ' done' : '');
+    div.dataset.taskId = task.id;
+    div.draggable = true;
+
+    var check = document.createElement('div');
+    check.className = 'week-task-check';
+    check.onclick = function(e) {
+        e.stopPropagation();
+        toggleTaskState(task.id);
+    };
+
+    var icon = document.createElement('div');
+    icon.className = 'week-task-cat-icon';
+    icon.textContent = cat.icon;
+    icon.title = cat.name;
+
+    var label = document.createElement('div');
+    label.className = 'week-task-label';
+    label.textContent = task.name;
+
+    // Edit button
+    var editBtn = document.createElement('button');
+    editBtn.className = 'icon-btn';
+    editBtn.textContent = '✏️';
+    editBtn.style.fontSize = '12px';
+    editBtn.style.padding = '2px 4px';
+    editBtn.onclick = function(e) {
+        e.stopPropagation();
+        var ci = categories.indexOf(cat);
+        var ti = cat.tasks.indexOf(task);
+        openTaskEdit(ci, ti);
+    };
+
+    div.appendChild(check);
+    div.appendChild(icon);
+    div.appendChild(label);
+    div.appendChild(editBtn);
+
+    // Drag events
+    div.addEventListener('dragstart', function(e) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', task.id);
+        div.classList.add('dragging');
+    });
+
+    div.addEventListener('dragend', function(e) {
+        div.classList.remove('dragging');
+    });
+
+    return div;
+}
+
+function setupDropZone(dropZone) {
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', function(e) {
+        if (e.target === dropZone) {
+            dropZone.classList.remove('drag-over');
+        }
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        
+        var taskId = e.dataTransfer.getData('text/plain');
+        var targetDay = parseInt(dropZone.dataset.day);
+        
+        // Update assignment
+        weekAssignments[taskId] = targetDay;
+        save();
+        renderWeekView();
+    });
+}
+
+function toggleTaskState(taskId) {
+    var states = getStates();
+    states[taskId] = !states[taskId];
+    saveStates(states);
+    renderWeekView();
 }
 
 function buildSection(cat, ci, animIdx) {
