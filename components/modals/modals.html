@@ -1,0 +1,2731 @@
+            <div class="ap-container">
+
+                <!-- Tab Navigation -->
+                <div class="ap-tab-bar" id="apTabBar">
+                    <button class="ap-tab active" data-ap-tab="overview" onclick="apSwitchTab('overview')">
+                        <span class="ap-tab-icon">🏠</span>Übersicht
+                    </button>
+                    <button class="ap-tab" data-ap-tab="saldo" onclick="apSwitchTab('saldo')">
+                        <span class="ap-tab-icon">📈</span>Saldo Trend
+                    </button>
+                    <button class="ap-tab" data-ap-tab="heatmap" onclick="apSwitchTab('heatmap')">
+                        <span class="ap-tab-icon">🔥</span>Aktivitäts-Heatmap
+                    </button>
+                    <button class="ap-tab" data-ap-tab="weekly" onclick="apSwitchTab('weekly')">
+                        <span class="ap-tab-icon">📊</span>Wochen Soll/Ist
+                    </button>
+                    <button class="ap-tab" data-ap-tab="monthly" onclick="apSwitchTab('monthly')">
+                        <span class="ap-tab-icon">📅</span>Monats-Breakdown
+                    </button>
+                    <button class="ap-tab" data-ap-tab="projects" onclick="apSwitchTab('projects')">
+                        <span class="ap-tab-icon">🎯</span>Projekte
+                    </button>
+                    <button class="ap-tab" data-ap-tab="weekday" onclick="apSwitchTab('weekday')">
+                        <span class="ap-tab-icon">🕐</span>Wochentag-Radar
+                    </button>
+                    <button class="ap-tab" data-ap-tab="distribution" onclick="apSwitchTab('distribution')">
+                        <span class="ap-tab-icon">🍩</span>Verteilung
+                    </button>
+                    <button class="ap-tab" data-ap-tab="3d" onclick="apSwitchTab('3d')">
+                        <span class="ap-tab-icon">🏛️</span>3D City
+                    </button>
+                    <button class="ap-tab" data-ap-tab="galaxy" onclick="apSwitchTab('galaxy')">
+                        <span class="ap-tab-icon">🌌</span>Galaxy
+                    </button>
+                </div>
+
+                <!-- Panels -->
+                <div class="ap-panels">
+
+                    <!-- OVERVIEW -->
+                    <div class="ap-panel active" id="apPanel-overview">
+                        <div class="ap-kpi-row" id="apKpiRow"></div>
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">📈</span>Saldo Verlauf (30 Tage)</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartOverviewSaldo"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🍩</span>Eintragstypen</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartOverviewTypes"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">🔥</span>Aktivität (letztes Jahr)</div>
+                            <div id="apMiniHeatmap" style="overflow-x:auto;"></div>
+                        </div>
+                    </div>
+
+                    <!-- SALDO TREND -->
+                    <div class="ap-panel" id="apPanel-saldo">
+                        <div class="ap-period-bar" id="apSaldoPeriod"></div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📈</span>Kumulierter Saldo</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartSaldo"></canvas></div>
+                        </div>
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">📊</span>Tägliche Differenz</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartDailyDiff"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🎯</span>Saldo-Histogramm</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartSaldoHist"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HEATMAP -->
+                    <div class="ap-panel" id="apPanel-heatmap">
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">🔥</span>Arbeitsaktivität — GitHub Style Heatmap</div>
+                            <div id="apHeatmapFull"></div>
+                        </div>
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">⏰</span>Stunden pro Tag</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartHoursPerDay"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🏆</span>Streaks & Records</div>
+                                <div id="apStreakStats" style="padding:0.5rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WEEKLY -->
+                    <div class="ap-panel" id="apPanel-weekly">
+                        <div class="ap-period-bar" id="apWeeklyPeriod"></div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📊</span>Soll vs. Ist — Wochenvergleich</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartWeekly"></canvas></div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📉</span>Wöchentlicher Saldo</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartWeeklySaldo"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- MONTHLY -->
+                    <div class="ap-panel" id="apPanel-monthly">
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📅</span>Monatliche Stunden nach Typ</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartMonthlyStack"></canvas></div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📈</span>Monatlicher Trend — Durchschnittliche Tagesleistung</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartMonthlyAvg"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- PROJECTS -->
+                    <div class="ap-panel" id="apPanel-projects">
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🎯</span>Projekt-Verteilung</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartProjects"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">📊</span>Top Projekte — Stunden</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartProjectBar"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📈</span>Projekt-Timeline</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartProjectTimeline"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- WEEKDAY RADAR -->
+                    <div class="ap-panel" id="apPanel-weekday">
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🕐</span>Produktivität nach Wochentag</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartRadar"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">⏱️</span>Durchschnittliche Arbeitszeit</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartWeekdayBar"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">😊</span>Stimmung nach Wochentag</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartMoodWeekday"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- DISTRIBUTION -->
+                    <div class="ap-panel" id="apPanel-distribution">
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🍩</span>Eintragstypen — Doughnut</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartTypeDoughnut"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🌀</span>Eintragstypen — Polar</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartTypePolar"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📊</span>Stunden-Verteilung (Histogramm)</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartHoursHist"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- 3D CITY VISUALIZATION -->
+                    <div class="ap-panel" id="apPanel-3d">
+                        <div class="ap-card" style="padding:0; overflow:hidden; border-radius:20px;">
+                            <div class="ap3d-header">
+                                <div class="ap3d-title">🏛️ 3D Work-City — Deine Arbeitstage als Skyline</div>
+                                <div class="ap3d-controls">
+                                    <button class="ap-period-btn active" onclick="ap3dSetRange(90, this)">90 Tage</button>
+                                    <button class="ap-period-btn" onclick="ap3dSetRange(180, this)">180 Tage</button>
+                                    <button class="ap-period-btn" onclick="ap3dSetRange(365, this)">1 Jahr</button>
+                                    <button class="ap-period-btn" onclick="ap3dSetRange(0, this)">Alle</button>
+                                    <button class="ap-period-btn" onclick="ap3dToggleAutoRotate(this)" id="ap3dAutoRotBtn">↻ Auto</button>
+                                </div>
+                            </div>
+                            <div id="ap3dContainer" class="ap3d-viewport"></div>
+                            <div class="ap3d-legend">
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#22c55e;"></span>Übersollt (&ge;100%)</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:var(--primary);"></span>Normal (70-99%)</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#f59e0b;"></span>Niedrig (40-69%)</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#ef4444;"></span>Minimal (&lt;40%)</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#06b6d4;"></span>Schule</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#3b82f6;"></span>Urlaub/Feiertag</span>
+                            </div>
+                            <div class="ap3d-hint">🖱️ Drehen: Linke Maustaste • Zoomen: Scrollrad • Verschieben: Rechte Maustaste</div>
+                        </div>
+                        <div class="ap-grid-3" style="margin-top:1.25rem;" id="ap3dStats"></div>
+                    </div>
+
+                    <!-- GALAXY VISUALIZATION -->
+                    <div class="ap-panel" id="apPanel-galaxy">
+                        <div class="ap-card" style="padding:0; overflow:hidden; border-radius:20px; position:relative;">
+                            <div class="apgx-header">
+                                <div class="apgx-title">🌌 Work Galaxy — Dein Universum aus Arbeitstagen</div>
+                                <div class="apgx-controls">
+                                    <button class="ap-period-btn active" onclick="apGxSetRange(90, this)">90d</button>
+                                    <button class="ap-period-btn" onclick="apGxSetRange(180, this)">180d</button>
+                                    <button class="ap-period-btn" onclick="apGxSetRange(365, this)">1J</button>
+                                    <button class="ap-period-btn" onclick="apGxSetRange(0, this)">All</button>
+                                    <button class="ap-period-btn" onclick="apGxToggleBloom(this)" id="apGxBloomBtn">✨ Bloom</button>
+                                    <button class="ap-period-btn" onclick="apGxToggleAutoRotate(this)" id="apGxAutoRotBtn">↻ Orbit</button>
+                                </div>
+                            </div>
+                            <div id="apGxContainer" class="apgx-viewport"></div>
+                            <div id="apGxInfoOverlay" class="apgx-info-overlay"></div>
+                            <div class="apgx-legend">
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#22c55e; box-shadow:0 0 6px #22c55e;"></span>Superstar (&ge;100%)</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:var(--primary); box-shadow:0 0 6px var(--primary);"></span>Nebula (70-99%)</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#f59e0b; box-shadow:0 0 6px #f59e0b;"></span>Dwarf (40-69%)</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#ef4444; box-shadow:0 0 6px #ef4444;"></span>Red Giant (&lt;40%)</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#06b6d4; box-shadow:0 0 6px #06b6d4;"></span>Schule</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#3b82f6; box-shadow:0 0 6px #3b82f6;"></span>Urlaub/Feiertag</span>
+                            </div>
+                            <div class="apgx-hint">🖱️ Orbit: Maus ziehen • Zoom: Scrollrad • Pan: Rechtsklick • Hover: Stern-Info</div>
+                        </div>
+                        <div class="ap-grid-3" style="margin-top:1.25rem;" id="apGxStats"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tooltip -->
+            <div class="ap-tooltip" id="apTooltip"></div>
+        </div>
+
+    </main>
+
+    <!-- Focus Mode Overlay (NEU: KRASS MODERN!) -->
+    <div id="focusModeOverlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--bg-deep); z-index:9999; display:none; flex-direction:column; justify-content:center; align-items:center; color:var(--text-main); font-family:var(--font-main);">
+        <div style="text-align:center; max-width:600px; padding:2rem;">
+            <h1 style="font-size:3rem; margin-bottom:1rem; color:var(--primary);">🎯 FOKUS MODUS</h1>
+            <p id="focusQuote" style="font-size:1.5rem; margin-bottom:2rem; font-style:italic;">"Erfolg ist die Summe kleiner Anstrengungen, die Tag für Tag wiederholt werden."</p>
+            <div style="font-size:4rem; font-weight:800; margin-bottom:1rem; font-family:var(--font-mono);" id="focusTimer">25:00</div>
+            <div style="display:flex; gap:1rem; justify-content:center;">
+                <button id="focusStartBtn" class="btn btn-primary" onclick="startFocusTimer()">▶ Start</button>
+                <button id="focusPauseBtn" class="btn" style="background:#d97706;" onclick="pauseFocusTimer()" disabled>⏸️ Pause</button>
+                <button id="focusResetBtn" class="btn" onclick="resetFocusTimer()">🔄 Reset</button>
+                <button class="btn" style="background:#ef4444;" onclick="exitFocusMode()">❌ Exit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DSGVO/Privacy Modal -->
+    <div class="modal" id="privacyModal" style="display:none;">
+        <div class="modal-box" style="width:90%; max-width:600px; max-height:85vh; display:flex; flex-direction:column; backdrop-filter:blur(20px); border-radius:24px; border:1px solid rgba(var(--primary-rgb), 0.3); position:relative;">
+            <!-- Close Button oben rechts - IMMER sichtbar -->
+            <button onclick="closePrivacyModal()" style="position:absolute; top:12px; right:12px; background:none; border:none; color:var(--text-main); font-size:1.8rem; cursor:pointer; width:40px; height:40px; display:flex; align-items:center; justify-content:center; transition:0.2s; z-index:10;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">×</button>
+            
+            <!-- Scrollable Content -->
+            <div style="overflow-y:auto; padding:32px; padding-top:16px;">
+                <div style="text-align:center; margin-bottom:24px;">
+                    <div style="font-size:3rem; margin-bottom:12px;">🔐</div>
+                    <h2 style="color:var(--text-main); font-size:1.8rem; font-weight:700; margin:0 0 8px 0;">Deine Daten sind sicher</h2>
+                    <p style="color:var(--text-muted); margin:0; font-size:0.95rem;">Transparenz über deine Privatsphäre</p>
+                </div>
+
+                <div style="background:rgba(16, 185, 129, 0.08); border:1px solid rgba(16, 185, 129, 0.3); border-radius:16px; padding:16px; margin-bottom:20px;">
+                    <p style="color:var(--text-main); font-weight:600; margin:0 0 10px 0; font-size:0.95rem;">✅ Das ist wichtig:</p>
+                    <ul style="color:var(--text-muted); font-size:0.9rem; list-style:none; padding:0; margin:0; line-height:1.8;">
+                        <li>🔒 <strong>Keine externen Server:</strong> Alle Daten werden nur in deinem Browser gespeichert (LocalStorage)</li>
+                        <li>🚫 <strong>Keine Cookies:</strong> Wir setzen keine Tracking- oder Werbe-Cookies</li>
+                        <li>👤 <strong>"Keine" Datensammlung:</strong> Wir tracken dich nicht und sammeln keine persönlichen Daten — es werden nur Seitenaufrufe erfasst. Mehr dazu: <a href="./Pages/DE-Gestz/DSGVO.html" class="external-link" target="_blank" rel="noopener noreferrer" aria-label="DSGVO — Informationen zur Datenerfassung (öffnet in neuem Tab)" title="Öffnet in neuem Tab">DSGVO</a>.</li>
+                        <li>📊 <strong>Keine Third-Party-Analytics:</strong> Kein External-Tracking, keine Ad-Netzwerke oder Daten-Broker — nur interne Analytics für dich (<a href="./Pages/Info/analytics.html" class="external-link" target="_blank">Dein Dashboard</a>)</li>
+                        <li>🔄 <strong>Nur du:</strong> Du bestimmst was mit deinen Daten passiert - nur du hast Zugriff</li>
+                    </ul>
+                </div>
+
+                <div style="background:rgba(59, 130, 246, 0.08); border:1px solid rgba(59, 130, 246, 0.3); border-radius:16px; padding:16px; margin-bottom:20px;">
+                    <p style="color:var(--text-main); font-weight:600; margin:0 0 10px 0; font-size:0.95rem;">📱 Deine Kontrolle:</p>
+                    <ul style="color:var(--text-muted); font-size:0.9rem; list-style:none; padding:0; margin:0; line-height:1.8;">
+                        <li>💾 <strong>Export:</strong> Du kannst jederzeit deine Daten als JSON/CSV exportieren</li>
+                        <li>📂 <strong>Import:</strong> Deine Daten können jederzeit importiert werden</li>
+                        <li>🗑️ <strong>Löschen:</strong> Nutze die Browser Dev Tools (LocalStorage), um alles zu löschen</li>
+                        <li>🔄 <strong>Offline:</strong> Keine Internetverbindung nötig - alles funktioniert offline!</li>
+                    </ul>
+                </div>
+
+                <div style="background:rgba(255, 255, 255, 0.04); border-left:4px solid var(--primary); border-radius:8px; padding:12px; margin-bottom:24px;">
+                    <p style="color:var(--text-muted); font-size:0.85rem; margin:0; line-height:1.6;">
+                        <strong style="color:var(--text-main);">Fragen?</strong> MyWorkLog ist Open Source auf GitHub. 
+                        Der gesamte Code ist transparent einsehbar und überprüfbar.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Sticky Footer Button - IMMER sichtbar -->
+            <div style="border-top:1px solid rgba(var(--primary-rgb), 0.2); padding:16px 32px; background:rgba(0,0,0,0.3); flex-shrink:0;">
+                <button class="btn btn-primary" onclick="closePrivacyModal()" style="width:100%; background:var(--primary); padding:14px 32px; font-weight:600; border:none; border-radius:12px; color:white; cursor:pointer; font-size:1rem;">
+                    ✅ Verstanden & weiter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- P2P Sync Wizard Modal -->
+    <div class="modal" id="p2pWizardModal">
+        <div class="modal-box" style="width:95%; max-width:580px; padding:0; max-height:90vh; overflow:hidden; border-radius:20px; border:1px solid rgba(var(--primary-rgb),0.3); background:linear-gradient(145deg, #0f0a18 0%, #1a1025 50%, #0f0a18 100%);">
+            
+            <!-- Wizard Header -->
+            <div style="padding:1.5rem 2rem 1rem; border-bottom:1px solid rgba(var(--primary-rgb),0.15); position:relative; overflow:hidden;">
+                <div style="position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg, transparent, var(--primary), #7c3aed, transparent);"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h3 style="margin:0; font-size:1.2rem; font-weight:700; color:#fff;">🔗 P2P Sync</h3>
+                        <p style="margin:4px 0 0; font-size:0.75rem; color:var(--text-muted);" id="p2pWizardSubtitle">Wähle eine Rolle</p>
+                    </div>
+                    <button onclick="closeP2PWizard()" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; width:36px; height:36px; border-radius:10px; cursor:pointer; font-size:1.2rem; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">&times;</button>
+                </div>
+                <!-- Step Indicator -->
+                <div style="display:flex; gap:6px; margin-top:1rem;" id="p2pStepIndicator">
+                    <div class="p2p-step-dot active" id="p2pStep1Dot"></div>
+                    <div class="p2p-step-dot" id="p2pStep2Dot"></div>
+                    <div class="p2p-step-dot" id="p2pStep3Dot"></div>
+                </div>
+            </div>
+
+            <!-- Wizard Body -->
+            <div style="padding:1.5rem 2rem; overflow-y:auto; max-height:calc(90vh - 120px);" id="p2pWizardBody">
+                
+                <!-- Step 1: Choose Role -->
+                <div id="p2pWizStep1">
+                    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem; line-height:1.6;">
+                        Verbinde zwei Geräte direkt miteinander — ohne Server, ohne Cloud. Alles bleibt verschlüsselt zwischen dir und deinem Gerät.
+                    </p>
+                    <div style="display:grid; gap:12px;">
+                        <button onclick="p2pStartHost()" style="background:linear-gradient(135deg, rgba(var(--primary-rgb),0.15) 0%, rgba(124,58,237,0.1) 100%); border:1px solid rgba(var(--primary-rgb),0.3); border-radius:14px; padding:1.25rem; text-align:left; cursor:pointer; transition:all 0.3s; color:#fff;" onmouseover="this.style.borderColor='rgba(var(--primary-rgb),0.6)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(var(--primary-rgb),0.3)';this.style.transform='none'">
+                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                                <span style="font-size:1.5rem;">📤</span>
+                                <span style="font-weight:700; font-size:1rem;">Daten senden</span>
+                            </div>
+                            <p style="margin:0; font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
+                                Erstellt einen Einladungscode. Das andere Gerät bekommt deine Einträge.
+                            </p>
+                        </button>
+                        <button onclick="p2pStartClient()" style="background:linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.08) 100%); border:1px solid rgba(16,185,129,0.3); border-radius:14px; padding:1.25rem; text-align:left; cursor:pointer; transition:all 0.3s; color:#fff;" onmouseover="this.style.borderColor='rgba(16,185,129,0.6)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(16,185,129,0.3)';this.style.transform='none'">
+                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+                                <span style="font-size:1.5rem;">📥</span>
+                                <span style="font-weight:700; font-size:1rem;">Daten empfangen</span>
+                            </div>
+                            <p style="margin:0; font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
+                                Gib den Einladungscode vom anderen Gerät ein, um die Daten zu empfangen.
+                            </p>
+                        </button>
+                    </div>
+                    <div style="margin-top:1.5rem; padding:1rem; background:rgba(var(--primary-rgb),0.06); border-radius:10px; border:1px solid rgba(var(--primary-rgb),0.1);">
+                        <p style="margin:0; font-size:0.75rem; color:var(--text-muted); line-height:1.5;">
+                            🔒 <strong style="color:var(--primary);">100% Serverless</strong> — WebRTC P2P-Verbindung direkt zwischen deinen Geräten. Keine Daten verlassen deine Kontrolle. Die Codes werden nur zur Verbindungsherstellung genutzt.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Step 2a: Host - Show Offer Code -->
+                <div id="p2pWizStep2Host" style="display:none;">
+                    <div style="text-align:center; margin-bottom:1.25rem;">
+                        <div id="p2pHostSpinner" style="margin:0 auto 1rem;">
+                            <div style="width:48px; height:48px; border:3px solid rgba(var(--primary-rgb),0.2); border-top-color:var(--primary); border-radius:50%; animation:p2pSpin 0.8s linear infinite; margin:0 auto;"></div>
+                            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.75rem;">Generiere sicheren Verbindungscode...</p>
+                        </div>
+                        <div id="p2pHostReady" style="display:none;">
+                            <div style="font-size:2.5rem; margin-bottom:0.5rem;">📡</div>
+                            <p style="color:var(--primary); font-weight:600; font-size:0.95rem; margin-bottom:0.25rem;">Einladungscode bereit!</p>
+                            <p style="color:var(--text-muted); font-size:0.8rem;">Kopiere diesen Code und öffne ihn auf dem anderen Gerät.</p>
+                        </div>
+                    </div>
+                    
+                    <div id="p2pOfferCodeBox" style="display:none;">
+                        <div style="position:relative;">
+                            <textarea id="p2pOfferCode" readonly style="width:100%; height:100px; background:rgba(0,0,0,0.4); border:1px solid rgba(var(--primary-rgb),0.2); border-radius:10px; color:var(--primary); font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all;"></textarea>
+                            <button onclick="p2pCopyOffer()" style="position:absolute; top:8px; right:8px; background:rgba(var(--primary-rgb),0.2); border:1px solid rgba(var(--primary-rgb),0.3); color:#fff; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:600; transition:all 0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb),0.4)'" onmouseout="this.style.background='rgba(var(--primary-rgb),0.2)'">📋 Kopieren</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:1.25rem; padding:1rem; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.15); border-radius:10px;">
+                        <p style="margin:0 0 0.75rem; font-size:0.85rem; font-weight:600; color:#fbbf24;">⏳ Warte auf Antwort-Code</p>
+                        <p style="margin:0 0 0.75rem; font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
+                            Nachdem das andere Gerät deinen Code eingegeben hat, erhältst du dort einen <strong style="color:#fff;">Antwort-Code</strong>. Füge ihn hier ein:
+                        </p>
+                        <textarea id="p2pAnswerInput" placeholder="Antwort-Code hier einfügen..." style="width:100%; height:80px; background:rgba(0,0,0,0.3); border:1px solid rgba(16,185,129,0.2); border-radius:10px; color:#10b981; font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all;"></textarea>
+                        <button onclick="p2pHostProcessAnswer()" id="p2pHostConnectBtn" style="width:100%; margin-top:10px; background:linear-gradient(135deg, #10b981, #059669); border:none; color:#fff; padding:12px; border-radius:10px; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">🔗 Verbindung herstellen</button>
+                        <div id="p2pHostConnecting" style="display:none; margin-top:12px; text-align:center;">
+                            <div style="display:inline-flex; align-items:center; gap:10px; padding:10px 20px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:10px;">
+                                <div style="width:16px; height:16px; border:2px solid rgba(16,185,129,0.3); border-top-color:#10b981; border-radius:50%; animation:p2pSpin 0.8s linear infinite;"></div>
+                                <span id="p2pHostConnectStatus" style="font-size:0.8rem; color:#10b981;">Verbinde...</span>
+                            </div>
+                            <div style="margin-top:8px; height:3px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden;">
+                                <div id="p2pHostConnectBar" style="height:100%; width:0%; background:linear-gradient(90deg, #10b981, var(--primary)); border-radius:2px; transition:width 0.5s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2b: Client - Paste Offer & Show Answer -->
+                <div id="p2pWizStep2Client" style="display:none;">
+                    <div style="text-align:center; margin-bottom:1rem;">
+                        <div style="font-size:2.5rem; margin-bottom:0.5rem;">📥</div>
+                        <p style="color:#10b981; font-weight:600; font-size:0.95rem;">Einladungscode eingeben</p>
+                        <p style="color:var(--text-muted); font-size:0.8rem;">Füge den Code vom sendenden Gerät ein:</p>
+                    </div>
+
+                    <textarea id="p2pOfferInput" placeholder="Einladungscode hier einfügen..." style="width:100%; height:100px; background:rgba(0,0,0,0.3); border:1px solid rgba(var(--primary-rgb),0.2); border-radius:10px; color:var(--primary); font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all; margin-bottom:12px;"></textarea>
+                    <button onclick="p2pClientProcessOffer()" id="p2pClientConnectBtn" style="width:100%; background:linear-gradient(135deg, var(--primary), #7c3aed); border:none; color:#fff; padding:12px; border-radius:10px; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">🔗 Code verarbeiten</button>
+
+                    <!-- Answer display (hidden initially) -->
+                    <div id="p2pAnswerCodeBox" style="display:none; margin-top:1.25rem;">
+                        <div style="padding:1rem; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.2); border-radius:10px;">
+                            <p style="margin:0 0 0.75rem; font-size:0.85rem; font-weight:600; color:#10b981;">✅ Antwort-Code generiert!</p>
+                            <p style="margin:0 0 0.75rem; font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
+                                Kopiere diesen Code und füge ihn auf dem <strong style="color:#fff;">sendenden Gerät</strong> ein:
+                            </p>
+                            <div style="position:relative;">
+                                <textarea id="p2pAnswerCode" readonly style="width:100%; height:80px; background:rgba(0,0,0,0.4); border:1px solid rgba(16,185,129,0.2); border-radius:10px; color:#10b981; font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all;"></textarea>
+                                <button onclick="p2pCopyAnswer()" style="position:absolute; top:8px; right:8px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.3); color:#fff; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:600; transition:all 0.2s;" onmouseover="this.style.background='rgba(16,185,129,0.4)'" onmouseout="this.style.background='rgba(16,185,129,0.2)'">📋 Kopieren</button>
+                            </div>
+                            <div style="margin-top:1rem; text-align:center;">
+                                <div style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:rgba(251,191,36,0.08); border-radius:8px;">
+                                    <div style="width:8px; height:8px; border-radius:50%; background:#fbbf24; animation:p2pPulse 1.5s infinite;"></div>
+                                    <span style="font-size:0.8rem; color:#fbbf24;">Warte auf Verbindung...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Connected! -->
+                <div id="p2pWizStep3" style="display:none;">
+                    <div style="text-align:center; padding:1rem 0;">
+                        <div style="font-size:3rem; margin-bottom:0.75rem;" id="p2pConnAnim">🎉</div>
+                        <h3 style="color:#10b981; margin:0 0 0.5rem; font-size:1.2rem; font-weight:700;">Verbunden!</h3>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">P2P-Verbindung hergestellt. Daten werden synchronisiert.</p>
+                    </div>
+
+                    <!-- Sync Progress -->
+                    <div id="p2pSyncProgress" style="margin-bottom:1.25rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-size:0.8rem; color:var(--text-muted);">Sync-Fortschritt</span>
+                            <span id="p2pSyncPercent" style="font-size:0.8rem; font-weight:700; color:var(--primary);">0%</span>
+                        </div>
+                        <div style="height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden;">
+                            <div id="p2pSyncBar" style="height:100%; width:0%; background:linear-gradient(90deg, var(--primary), #10b981); border-radius:3px; transition:width 0.4s ease;"></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:6px;">
+                            <span id="p2pSyncStatus" style="font-size:0.75rem; color:var(--text-muted);">Starte...</span>
+                            <span id="p2pSyncSpeed" style="font-size:0.75rem; color:var(--text-muted);"></span>
+                        </div>
+                    </div>
+
+                    <!-- Sync Stats -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:1.25rem;">
+                        <div style="background:rgba(var(--primary-rgb),0.08); border:1px solid rgba(var(--primary-rgb),0.15); border-radius:10px; padding:12px; text-align:center;">
+                            <div id="p2pStatSent" style="font-size:1.2rem; font-weight:800; color:var(--primary);">0</div>
+                            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Gesendet</div>
+                        </div>
+                        <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.15); border-radius:10px; padding:12px; text-align:center;">
+                            <div id="p2pStatReceived" style="font-size:1.2rem; font-weight:800; color:#10b981;">0</div>
+                            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Empfangen</div>
+                        </div>
+                        <div style="background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.15); border-radius:10px; padding:12px; text-align:center;">
+                            <div id="p2pStatMerged" style="font-size:1.2rem; font-weight:800; color:#fbbf24;">0</div>
+                            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Gemergt</div>
+                        </div>
+                    </div>
+
+                    <!-- Sync Log -->
+                    <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:12px; max-height:150px; overflow-y:auto;" id="p2pSyncLog">
+                        <div style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;" id="p2pLogContent">
+                            <div>⏳ Initialisiere Sync...</div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:1.25rem;">
+                        <button onclick="p2pManualSync()" style="background:rgba(var(--primary-rgb),0.15); border:1px solid rgba(var(--primary-rgb),0.3); color:#fff; padding:10px; border-radius:10px; cursor:pointer; font-weight:600; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb),0.25)'" onmouseout="this.style.background='rgba(var(--primary-rgb),0.15)'">🔄 Nochmal syncen</button>
+                        <button onclick="p2pDisconnect()" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#f87171; padding:10px; border-radius:10px; cursor:pointer; font-weight:600; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.2)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">❌ Trennen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes p2pSpin { to { transform: rotate(360deg); } }
+        @keyframes p2pPulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+        .p2p-step-dot { height:4px; flex:1; border-radius:2px; background:rgba(255,255,255,0.08); transition:all 0.4s ease; }
+        .p2p-step-dot.active { background:linear-gradient(90deg, var(--primary), #7c3aed); }
+        .p2p-step-dot.done { background:#10b981; }
+    </style>
+
+    <!-- GHOST MODE / BOSS KEY STYLES -->
+    <style id="ghost-mode-styles">
+        /* ====== GHOST MODE – Fake Excel Spreadsheet ====== */
+        #ghostModeOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: #f0f0f0;
+            font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+            color: #1a1a1a;
+            flex-direction: column;
+            overflow: hidden;
+            cursor: default;
+            user-select: text;
+        }
+        #ghostModeOverlay.active { display: flex; }
+
+        /* Fake Excel Toolbar */
+        .ghost-toolbar {
+            background: #217346;
+            color: white;
+            padding: 4px 14px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            height: 30px;
+            flex-shrink: 0;
+        }
+        .ghost-toolbar span { opacity: 0.85; cursor: default; }
+        .ghost-toolbar span:hover { opacity: 1; }
+        .ghost-toolbar .ghost-title { font-weight: 600; margin-left: auto; opacity: 0.7; font-size: 11px; }
+
+        /* Fake Ribbon */
+        .ghost-ribbon {
+            background: #fff;
+            border-bottom: 1px solid #d0d0d0;
+            display: flex;
+            align-items: center;
+            padding: 3px 10px;
+            gap: 6px;
+            height: 36px;
+            flex-shrink: 0;
+        }
+        .ghost-ribbon-btn {
+            background: none;
+            border: 1px solid transparent;
+            color: #333;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 2px;
+            cursor: default;
+            font-family: inherit;
+        }
+        .ghost-ribbon-btn:hover { background: #e5e5e5; border-color: #c0c0c0; }
+        .ghost-ribbon-sep { width: 1px; height: 20px; background: #d0d0d0; margin: 0 4px; }
+
+        /* Fake Formula Bar */
+        .ghost-formula-bar {
+            background: #fff;
+            border-bottom: 1px solid #d0d0d0;
+            display: flex;
+            align-items: center;
+            padding: 2px 6px;
+            height: 26px;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .ghost-formula-bar .ghost-cell-ref {
+            background: #fff;
+            border: 1px solid #c0c0c0;
+            padding: 2px 8px;
+            width: 60px;
+            font-size: 11px;
+            text-align: center;
+            margin-right: 6px;
+            color: #333;
+        }
+        .ghost-formula-bar .ghost-fx { color: #999; margin-right: 6px; font-style: italic; font-size: 11px; }
+        .ghost-formula-bar .ghost-formula-input {
+            flex: 1;
+            border: 1px solid #c0c0c0;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-family: inherit;
+            color: #333;
+            background: #fff;
+        }
+
+        /* Spreadsheet Grid */
+        .ghost-sheet-wrap {
+            flex: 1;
+            overflow: auto;
+            background: #fff;
+        }
+        .ghost-sheet {
+            border-collapse: collapse;
+            width: max-content;
+            min-width: 100%;
+            font-size: 12px;
+        }
+        .ghost-sheet th {
+            background: #f3f3f3;
+            border: 1px solid #d0d0d0;
+            padding: 3px 10px;
+            font-weight: 400;
+            color: #444;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            min-width: 80px;
+            text-align: center;
+            font-size: 11px;
+        }
+        .ghost-sheet th.ghost-row-head {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            min-width: 36px;
+            width: 36px;
+            text-align: center;
+        }
+        .ghost-sheet th.ghost-corner {
+            position: sticky;
+            left: 0;
+            top: 0;
+            z-index: 4;
+        }
+        .ghost-sheet td {
+            border: 1px solid #e0e0e0;
+            padding: 3px 8px;
+            color: #1a1a1a;
+            white-space: nowrap;
+            height: 22px;
+        }
+        .ghost-sheet td.ghost-row-num {
+            background: #f3f3f3;
+            border-color: #d0d0d0;
+            text-align: center;
+            color: #444;
+            font-size: 11px;
+            position: sticky;
+            left: 0;
+            z-index: 1;
+        }
+        .ghost-sheet tr:hover td:not(.ghost-row-num) { background: #f5f9ff; }
+        .ghost-sheet td.ghost-selected {
+            outline: 2px solid #217346;
+            outline-offset: -1px;
+            background: #e8f5e9;
+        }
+
+        /* Fake Status Bar */
+        .ghost-statusbar {
+            background: #217346;
+            color: white;
+            padding: 2px 14px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .ghost-statusbar span { opacity: 0.8; }
+
+        /* Panic Button (subtle floating corner button) — starts with display:none in HTML */
+        .ghost-panic-btn {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            z-index: 999998;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.25);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            opacity: 0.4;
+        }
+        .ghost-panic-btn:hover {
+            opacity: 1;
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            transform: scale(1.1);
+        }
+        .ghost-panic-btn.visible { opacity: 0.4; }
+        [data-theme="light"] .ghost-panic-btn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.08);
+            color: rgba(0, 0, 0, 0.15);
+        }
+        [data-theme="light"] .ghost-panic-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.25);
+            color: #dc2626;
+        }
+
+        /* Ghost Mode active: hide panic button */
+        #ghostModeOverlay.active ~ .ghost-panic-btn { display: none; }
+
+        /* ====== PWA INSTALL BANNER ====== */
+        .pwa-install-banner {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 99998;
+            background: linear-gradient(135deg, rgba(30,30,46,0.98), rgba(24,24,37,0.98));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(var(--primary-rgb),0.3);
+            padding: 0 0 env(safe-area-inset-bottom, 0);
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+        }
+        .pwa-install-banner.visible {
+            display: block;
+            transform: translateY(0);
+        }
+        .pwa-install-banner-inner {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .pwa-install-icon {
+            flex-shrink: 0;
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 4px 16px rgba(var(--primary-rgb),0.35);
+        }
+        .pwa-install-text {
+            flex: 1;
+            min-width: 0;
+        }
+        .pwa-install-text strong {
+            display: block;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .pwa-install-text span {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }
+        .pwa-install-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .pwa-install-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .pwa-install-btn-primary {
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(var(--primary-rgb),0.4);
+        }
+        .pwa-install-btn-primary:hover { transform: scale(1.04); box-shadow: 0 4px 20px rgba(var(--primary-rgb),0.5); }
+        .pwa-install-btn-primary:active { transform: scale(0.97); }
+        .pwa-install-btn-dismiss {
+            background: rgba(255,255,255,0.06);
+            color: #94a3b8;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .pwa-install-btn-dismiss:hover { background: rgba(255,255,255,0.1); color:#fff; }
+        [data-theme="light"] .pwa-install-banner {
+            background: linear-gradient(135deg, rgba(255,255,255,0.97), rgba(248,250,252,0.97));
+            border-top: 1px solid rgba(var(--primary-rgb),0.2);
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.1);
+        }
+        [data-theme="light"] .pwa-install-text strong { color: #1e293b; }
+        [data-theme="light"] .pwa-install-text span { color: #64748b; }
+        [data-theme="light"] .pwa-install-btn-dismiss { background: rgba(0,0,0,0.04); color:#64748b; border-color:rgba(0,0,0,0.08); }
+        /* iOS-specific hint styling */
+        .pwa-ios-steps {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(var(--primary-rgb),0.08);
+            font-size: 0.78rem;
+            color: #c4b5fd;
+        }
+        .pwa-ios-steps svg { flex-shrink:0; }
+        [data-theme="light"] .pwa-ios-steps { background: rgba(var(--primary-rgb),0.06); color: #7c3aed; }
+        @media (max-width: 480px) {
+            .pwa-install-banner-inner { padding: 14px 16px; gap:10px; }
+            .pwa-install-icon { width:44px; height:44px; font-size:22px; border-radius:12px; }
+            .pwa-install-actions { flex-direction: column; gap:6px; }
+            .pwa-install-btn { padding: 8px 14px; font-size:0.8rem; text-align:center; }
+        }
+
+        /* Ghost Announce Modal Animations */
+        @keyframes ghostAnnounceIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.92); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes ghostFloat {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-8px); }
+        }
+
+        /* ====== GHOST MODE — VS Code Skin ====== */
+        #ghostModeVSCode {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: #1e1e1e;
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            color: #cccccc;
+            flex-direction: column;
+            overflow: hidden;
+            cursor: default;
+            user-select: text;
+        }
+        #ghostModeVSCode.active { display: flex; }
+
+        /* Titlebar */
+        .vsc-titlebar {
+            background: #323233;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            -webkit-app-region: drag;
+        }
+        .vsc-titlebar-left {
+            display: flex;
+            gap: 0;
+            padding-left: 8px;
+        }
+        .vsc-menu-item {
+            padding: 4px 10px;
+            color: rgba(255,255,255,0.75);
+            cursor: default;
+            border-radius: 4px;
+        }
+        .vsc-menu-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .vsc-titlebar-center {
+            flex: 1;
+            text-align: center;
+            color: rgba(255,255,255,0.55);
+            font-size: 12px;
+        }
+        .vsc-titlebar-right {
+            display: flex;
+            gap: 0;
+        }
+        .vsc-win-btn {
+            width: 46px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            cursor: default;
+        }
+        .vsc-win-btn:hover { background: rgba(255,255,255,0.08); }
+        .vsc-win-btn.vsc-close:hover { background: #e81123; color: #fff; }
+
+        /* Main layout */
+        .vsc-main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Activity bar */
+        .vsc-activitybar {
+            width: 48px;
+            background: #333333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 0;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+        .vsc-act-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            opacity: 0.5;
+            cursor: default;
+            border-left: 2px solid transparent;
+        }
+        .vsc-act-icon.vsc-act-active {
+            opacity: 1;
+            border-left-color: #fff;
+        }
+
+        /* Sidebar / Explorer */
+        .vsc-sidebar {
+            width: 240px;
+            background: #252526;
+            border-right: 1px solid #1e1e1e;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        .vsc-sidebar-title {
+            padding: 10px 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.6);
+        }
+        .vsc-tree { font-size: 13px; }
+        .vsc-tree-folder {
+            padding: 3px 20px;
+            color: #ccc;
+            cursor: default;
+        }
+        .vsc-tree-folder:hover { background: rgba(255,255,255,0.04); }
+        .vsc-tree-file {
+            padding: 3px 20px;
+            color: rgba(255,255,255,0.6);
+            cursor: default;
+        }
+        .vsc-tree-file:hover { background: rgba(255,255,255,0.04); }
+        .vsc-tree-file.vsc-tree-active {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+
+        /* Editor area */
+        .vsc-editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .vsc-tabs {
+            display: flex;
+            background: #252526;
+            height: 35px;
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+        .vsc-tab {
+            padding: 0 16px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.45);
+            border-right: 1px solid #1e1e1e;
+            cursor: default;
+            white-space: nowrap;
+            background: #2d2d2d;
+        }
+        .vsc-tab.vsc-tab-active {
+            background: #1e1e1e;
+            color: #fff;
+            border-bottom: 1px solid #1e1e1e;
+        }
+        .vsc-tab-icon {
+            font-size: 10px;
+            font-weight: 700;
+            background: #3178c6;
+            color: #fff;
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
+        .vsc-tab-close {
+            font-size: 10px;
+            opacity: 0;
+            margin-left: 4px;
+        }
+        .vsc-tab:hover .vsc-tab-close { opacity: 0.5; }
+
+        /* Code editor */
+        .vsc-editor {
+            flex: 1;
+            background: #1e1e1e;
+            overflow-y: auto;
+            padding: 8px 0;
+            font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 20px;
+            counter-reset: vsc-line;
+        }
+        .vsc-line {
+            display: flex;
+            min-height: 20px;
+            padding-right: 16px;
+        }
+        .vsc-line:hover { background: rgba(255,255,255,0.02); }
+        .vsc-line-num {
+            width: 56px;
+            text-align: right;
+            padding-right: 16px;
+            color: rgba(255,255,255,0.2);
+            flex-shrink: 0;
+            user-select: none;
+        }
+        .vsc-line-code {
+            white-space: pre;
+            flex: 1;
+            min-width: 0;
+        }
+        /* VS Code active line highlight */
+        .vsc-line.vsc-active-line { background: rgba(255,255,255,0.04); }
+        .vsc-line.vsc-active-line .vsc-line-num { color: rgba(255,255,255,0.5); }
+
+        /* Syntax colors (One Dark inspired) */
+        .vsc-kw { color: #c586c0; }       /* keywords: import, export, const, if */
+        .vsc-fn { color: #dcdcaa; }       /* function names */
+        .vsc-str { color: #ce9178; }      /* strings */
+        .vsc-num { color: #b5cea8; }      /* numbers */
+        .vsc-cmt { color: #6a9955; font-style: italic; }  /* comments */
+        .vsc-type { color: #4ec9b0; }     /* types, interfaces */
+        .vsc-var { color: #9cdcfe; }      /* variables */
+        .vsc-op { color: #d4d4d4; }       /* operators, brackets */
+        .vsc-tag { color: #569cd6; }      /* JSX tags */
+        .vsc-attr { color: #92c5f7; }     /* attributes */
+        .vsc-dec { color: #4fc1ff; }      /* decorators */
+
+        /* Statusbar */
+        .vsc-statusbar {
+            height: 22px;
+            background: #007acc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.85);
+            flex-shrink: 0;
+        }
+        .vsc-sb-left, .vsc-sb-right {
+            display: flex;
+            gap: 0;
+        }
+        .vsc-sb-item {
+            padding: 0 8px;
+            cursor: default;
+        }
+        .vsc-sb-item:hover { background: rgba(255,255,255,0.12); }
+        .vsc-sb-branch { font-weight: 500; }
+
+        /* Typing cursor animation */
+        @keyframes vscCursorBlink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        .vsc-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 16px;
+            background: #aeafad;
+            vertical-align: text-bottom;
+            animation: vscCursorBlink 1s step-end infinite;
+        }
+
+        /* Hide sidebar on mobile for ghost mode */
+        @media (max-width: 768px) {
+            .vsc-sidebar { display: none; }
+            .vsc-activitybar { width: 36px; }
+            .vsc-act-icon { width: 36px; height: 36px; font-size: 16px; }
+        }
+    </style>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-box" style="display:flex; flex-direction:column; height:90vh; max-height:90vh; width:900px; padding:0;">
+            
+            <!-- Header -->
+            <div class="settings-header">
+                <h2 class="settings-header-title">
+                    <span class="settings-header-icon">⚙️</span>
+                    Einstellungen
+                </h2>
+                <button onclick="closeSettings()" class="settings-close-btn" title="Schließen">&times;</button>
+            </div>
+            
+            <!-- Tab Navigation -->
+            <div class="settings-nav">
+                <button class="settings-tab active" onclick="switchSettingsTab('profile')">👤 Profil</button>
+                <button class="settings-tab" onclick="switchSettingsTab('work')">⏱️ Arbeitszeiten</button>
+                <button class="settings-tab" onclick="switchSettingsTab('school')">🏫 Berufsschule</button>
+                <button class="settings-tab" onclick="switchSettingsTab('custom')">✨ Custom</button>
+                <button class="settings-tab" onclick="switchSettingsTab('shortcuts')">⌨️ Shortcuts</button>
+                <button class="settings-tab" onclick="switchSettingsTab('team')">🤝 Team</button>
+                <button class="settings-tab" onclick="switchSettingsTab('graphics')">🎨 Grafiken</button>
+                <button class="settings-tab" onclick="switchSettingsTab('cloud')">☁️ Cloud</button>
+            </div>
+            
+            <!-- Content Area -->
+            <div style="flex:1; overflow-y:auto; padding:1.5rem; display:flex; flex-direction:column;">
+                
+                <!-- Tab: Profil -->
+                <div id="settings-tab-profile" class="settings-tab-content">
+                    
+                    <!-- Name -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Profil</div>
+                        <label class="settings-label">Dein Name</label>
+                        <input type="text" id="confName" class="glass-input" placeholder="z.B. Sven" style="max-width:320px;">
+                    </div>
+
+                    <!-- Job / Ausbildungsberuf -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Ausbildungsberuf</div>
+                        <label class="settings-label">Dein Beruf (beeinflusst Ghost Mode Skin)</label>
+                        <select id="confJob" class="glass-input" style="max-width:320px; padding:8px 12px; appearance:auto;" onchange="data.settings.job = this.value; save();">
+                            <option value="">— Bitte wählen —</option>
+                            <optgroup label="IT-Berufe">
+                                <option value="fachinformatiker-anwendung">Fachinformatiker Anwendungsentwicklung</option>
+                                <option value="fachinformatiker-system">Fachinformatiker Systemintegration</option>
+                                <option value="fachinformatiker-daten">Fachinformatiker Daten- & Prozessanalyse</option>
+                                <option value="fachinformatiker-digital">Fachinformatiker Digitale Vernetzung</option>
+                                <option value="it-systemelektroniker">IT-Systemelektroniker</option>
+                                <option value="it-kaufmann">Kaufmann für IT-System-Management</option>
+                                <option value="it-digitalisierung">Kaufmann für Digitalisierungsmanagement</option>
+                            </optgroup>
+                            <optgroup label="Kaufmännische Berufe">
+                                <option value="kaufmann-bueromanagement">Kaufmann/frau für Büromanagement</option>
+                                <option value="kaufmann-grosshandel">Kaufmann/frau im Groß- und Außenhandel</option>
+                                <option value="industriekaufmann">Industriekaufmann/frau</option>
+                                <option value="bankkaufmann">Bankkaufmann/frau</option>
+                                <option value="steuerfachangestellter">Steuerfachangestellte/r</option>
+                                <option value="kaufmann-ecommerce">Kaufmann/frau im E-Commerce</option>
+                            </optgroup>
+                            <optgroup label="Gewerblich-technische Berufe">
+                                <option value="elektroniker">Elektroniker/in</option>
+                                <option value="mechatroniker">Mechatroniker/in</option>
+                                <option value="industriemechaniker">Industriemechaniker/in</option>
+                                <option value="zerspanungsmechaniker">Zerspanungsmechaniker/in</option>
+                                <option value="anlagenmechaniker">Anlagenmechaniker/in</option>
+                            </optgroup>
+                            <optgroup label="Medien & Gestaltung">
+                                <option value="mediengestalter">Mediengestalter/in Digital & Print</option>
+                                <option value="gestaltungstechnischer-assistent">Gestaltungstechnische/r Assistent/in</option>
+                            </optgroup>
+                            <optgroup label="Sonstige">
+                                <option value="sonstige">Anderer Beruf</option>
+                            </optgroup>
+                        </select>
+                        <span class="settings-hint" style="margin-top:6px; display:block;">IT-Berufe → Code-Editor Ghost Mode &nbsp;|&nbsp; Kaufmännisch → Excel Ghost Mode</span>
+                    </div>
+
+                    <!-- Bundesland -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Bundesland</div>
+                        <label class="settings-label">Dein Bundesland (für Feiertage)</label>
+                        <select id="confBundesland" class="glass-input" style="max-width:320px; padding:8px 12px; appearance:auto;" onchange="data.settings.bundesland = this.value; save();">
+                            <option value="">— Bitte wählen —</option>
+                            <option value="BW">Baden-Württemberg</option>
+                            <option value="BY">Bayern</option>
+                            <option value="BE">Berlin</option>
+                            <option value="BB">Brandenburg</option>
+                            <option value="HB">Bremen</option>
+                            <option value="HH">Hamburg</option>
+                            <option value="HE">Hessen</option>
+                            <option value="MV">Mecklenburg-Vorpommern</option>
+                            <option value="NI">Niedersachsen</option>
+                            <option value="NW">Nordrhein-Westfalen</option>
+                            <option value="RP">Rheinland-Pfalz</option>
+                            <option value="SL">Saarland</option>
+                            <option value="SN">Sachsen</option>
+                            <option value="ST">Sachsen-Anhalt</option>
+                            <option value="SH">Schleswig-Holstein</option>
+                            <option value="TH">Thüringen</option>
+                        </select>
+                    </div>
+
+                    <!-- Accent Color -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Akzentfarbe</div>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(38px, 1fr)); gap:10px; margin-bottom:1.25rem;">
+                            <div class="color-dot" style="background:#a78bfa" onclick="setThemeColor('#a78bfa')" title="Lila-Hell"></div>
+                            <div class="color-dot" style="background:#a855f7" onclick="setThemeColor('#a855f7')" title="Lila"></div>
+                            <div class="color-dot" style="background:#8b5cf6" onclick="setThemeColor('#8b5cf6')" title="Indigo"></div>
+                            <div class="color-dot" style="background:#7c3aed" onclick="setThemeColor('#7c3aed')" title="Violett"></div>
+                            <div class="color-dot" style="background:#6366f1" onclick="setThemeColor('#6366f1')" title="Indigo-Hell"></div>
+                            <div class="color-dot" style="background:#4f46e5" onclick="setThemeColor('#4f46e5')" title="Deep Indigo"></div>
+                            <div class="color-dot" style="background:#0ea5e9" onclick="setThemeColor('#0ea5e9')" title="Sky Blue"></div>
+                            <div class="color-dot" style="background:#00b4d8" onclick="setThemeColor('#00b4d8')" title="Steel Blue"></div>
+                            <div class="color-dot" style="background:#60a5fa" onclick="setThemeColor('#60a5fa')" title="Blau-Hell"></div>
+                            <div class="color-dot" style="background:#3b82f6" onclick="setThemeColor('#3b82f6')" title="Blau"></div>
+                            <div class="color-dot" style="background:#06b6d4" onclick="setThemeColor('#06b6d4')" title="Cyan"></div>
+                            <div class="color-dot" style="background:#22d3ee" onclick="setThemeColor('#22d3ee')" title="Cyan-Hell"></div>
+                            <div class="color-dot" style="background:#00d9ff" onclick="setThemeColor('#00d9ff')" title="Aqua"></div>
+                            <div class="color-dot" style="background:#10b981" onclick="setThemeColor('#10b981')" title="Grün"></div>
+                            <div class="color-dot" style="background:#34d399" onclick="setThemeColor('#34d399')" title="Grün-Hell"></div>
+                            <div class="color-dot" style="background:#06d6a0" onclick="setThemeColor('#06d6a0')" title="Mint"></div>
+                            <div class="color-dot" style="background:#84cc16" onclick="setThemeColor('#84cc16')" title="Limette"></div>
+                            <div class="color-dot" style="background:#fbbf24" onclick="setThemeColor('#fbbf24')" title="Gelb"></div>
+                            <div class="color-dot" style="background:#eab308" onclick="setThemeColor('#eab308')" title="Gelb-Hell"></div>
+                            <div class="color-dot" style="background:#f59e0b" onclick="setThemeColor('#f59e0b')" title="Gelb-Orange"></div>
+                            <div class="color-dot" style="background:#fb923c" onclick="setThemeColor('#fb923c')" title="Orange"></div>
+                            <div class="color-dot" style="background:#f97316" onclick="setThemeColor('#f97316')" title="Orange-Hell"></div>
+                            <div class="color-dot" style="background:#ef4444" onclick="setThemeColor('#ef4444')" title="Rot"></div>
+                            <div class="color-dot" style="background:#f43f5e" onclick="setThemeColor('#f43f5e')" title="Rose"></div>
+                            <div class="color-dot" style="background:#ec4899" onclick="setThemeColor('#ec4899')" title="Pink"></div>
+                            <div class="color-dot" style="background:#d946ef" onclick="setThemeColor('#d946ef')" title="Fuchsia"></div>
+                            <div class="color-dot" style="background:#db2777" onclick="setThemeColor('#db2777')" title="Crimson"></div>
+                            <div class="color-dot" style="background:#be185d" onclick="setThemeColor('#be185d')" title="Magenta-Dunkel"></div>
+                            <div class="color-dot" style="background:#94a3b8" onclick="setThemeColor('#94a3b8')" title="Grau"></div>
+                            <div class="color-dot" style="background:#64748b" onclick="setThemeColor('#64748b')" title="Grau-Dunkel"></div>
+                            <div class="color-dot" style="background:#475569" onclick="setThemeColor('#475569')" title="Slate"></div>
+                            <div class="color-dot" style="background:#9ca3af" onclick="setThemeColor('#9ca3af')" title="Silber"></div>
+                            <div class="color-dot" style="background:#78716c" onclick="setThemeColor('#78716c')" title="Stone"></div>
+                        </div>
+
+                        <hr class="settings-divider">
+
+                        <!-- Theme Mode -->
+                        <label class="settings-label">Design-Modus</label>
+                        <div style="display:flex; gap:16px; align-items:center; margin-bottom:1.25rem;">
+                            <label style="display:flex; gap:6px; align-items:center; color:var(--text-main); font-size:0.85rem; cursor:pointer;"><input type="radio" name="themeMode" value="system" onchange="setThemeMode('system')"> System</label>
+                            <label style="display:flex; gap:6px; align-items:center; color:var(--text-main); font-size:0.85rem; cursor:pointer;"><input type="radio" name="themeMode" value="dark" onchange="setThemeMode('dark')"> Dunkel</label>
+                            <label style="display:flex; gap:6px; align-items:center; color:var(--text-main); font-size:0.85rem; cursor:pointer;"><input type="radio" name="themeMode" value="light" onchange="setThemeMode('light')"> Hell</label>
+                        </div>
+
+                        <hr class="settings-divider">
+
+                        <!-- Custom Color Editor -->
+                        <label class="settings-label">Eigene Farbe</label>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1.25rem; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px; gap:1rem;">
+                                <input type="color" id="customColorPicker" onchange="updateColorFromPicker()" style="width:100px; height:100px; border:2px solid rgba(255,255,255,0.1); border-radius:14px; cursor:pointer; background:var(--primary);">
+                                <span class="settings-hint" style="text-align:center; margin:0;">Klick zum Wählen</span>
+                            </div>
+                            <div style="display:flex; flex-direction:column; gap:12px;">
+                                <div style="padding:1rem; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px;">
+                                    <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:6px; display:block; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Hex-Code</label>
+                                    <input type="text" id="customColorHex" class="glass-input" placeholder="a855f7" oninput="updateColorPickerFromHex()" style="font-family:var(--font-mono); font-size:0.95rem; font-weight:600; text-transform:uppercase;">
+                                </div>
+                                <div style="padding:1rem; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px;">
+                                    <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:6px; display:block; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Vorschau</label>
+                                    <div id="colorPreview" style="width:100%; height:48px; background:var(--primary); border-radius:10px; border:1px solid rgba(255,255,255,0.06); transition:all 0.3s ease;"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:1rem;">
+                            <button class="settings-btn settings-btn-primary" onclick="applyCustomColor()">💾 Speichern</button>
+                            <button class="settings-btn" onclick="resetColorPicker()">↺ Reset</button>
+                        </div>
+                    </div>
+
+                    <!-- PWA Installation -->
+                    <div class="settings-section" id="pwaInstallSection">
+                        <div class="settings-section-title">App Installation (PWA)</div>
+                        <p class="settings-hint" style="margin-bottom:1rem;">Installiere TimeTracker als App für schnelleren Zugriff und Offline-Support.</p>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                            <button class="settings-btn settings-btn-primary" onclick="triggerInstallPrompt();">📲 Installieren</button>
+                            <button class="settings-btn" onclick="checkPWAStatus();">🔍 Status prüfen</button>
+                        </div>
+                        <small id="pwaStatus" style="color:var(--text-muted); display:block; margin-top:8px; font-size:0.8rem;"></small>
+                    </div>
+
+                    <!-- Dashboard Layout -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Dashboard Layout</div>
+                        <p class="settings-hint" style="margin-bottom:1rem;">Reihenfolge anpassen, Widgets hinzufügen oder entfernen.</p>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button id="btnEditLayout" class="settings-btn settings-btn-primary" onclick="toggleDashboardEditMode()" title="Layout anpassen">🔧 Layout editieren</button>
+                            <button id="btnNewManageWidgets" class="settings-btn" onclick="openNewWidgetManager()" title="Widgets verwalten">📦 Widgets verwalten</button>
+                            <button id="btnResetLayout" class="settings-btn" onclick="resetDashboardLayout()" title="Standard-Layout wiederherstellen" style="display:none; background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.2); color:#f87171;">↺ Zurücksetzen</button>
+                        </div>
+                        <small id="editModeStatus" style="color:var(--text-muted); display:block; margin-top:8px; opacity:0; transition:opacity 0.3s; font-size:0.8rem;">📍 Layout-Bearbeitungsmodus AKTIV</small>
+                    </div>
+
+                    <!-- Tab-Tarnung -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Tab-Tarnung</div>
+                        <p class="settings-hint" style="margin-bottom:10px;">Wenn du den Tab wechselst, sieht er aus wie eine andere Seite (z.B. Stack Overflow, Outlook). Titel & Icon ändern sich automatisch.</p>
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px 0;">
+                            <input type="checkbox" id="confTabCamo" onchange="data.settings.tabCamo = this.checked; save(); updateCamoState();" style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;">
+                            <span style="color:var(--text-main); font-size:0.9rem; font-weight:500;">Tab-Tarnung aktivieren</span>
+                        </label>
+                        <span class="settings-hint" style="display:block; margin-top:4px;">🕵️ Verkleidet deinen Tab wenn du weg-tabbst — Chef sieht nur Stack Overflow o.ä.</span>
+                    </div>
+
+                    <!-- Recovery -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Recovery Center</div>
+                        <p class="settings-hint" style="margin-bottom:1rem;">Backups verwalten, Daten wiederherstellen & sicher importieren.</p>
+                        <button class="settings-btn settings-btn-primary" onclick="openRecoveryModal()" style="display:inline-flex; align-items:center; gap:8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+                            Recovery öffnen
+                        </button>
+                    </div>
+
+                        <!-- Danger Zone / Konto löschen -->
+                        <div class="settings-section" style="border:1px solid rgba(239,68,68,0.06); background:rgba(239,68,68,0.02);">
+                            <div class="settings-section-title">GEFAHRENZONE</div>
+                            <p class="settings-hint" style="margin-bottom:8px;">Vorsicht: Hier kannst du alle lokalen Daten unwiderruflich löschen. Diese Aktion betrifft nur LocalStorage (nicht die Cloud).</p>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <button id="btnDeleteAccount" class="settings-btn" style="border:1px solid rgba(239,68,68,0.9); color:#ef4444; background:transparent; padding:10px 14px; border-radius:10px; font-weight:700;" onclick="confirmAndClearLocalData()">Konto und Daten unwiderruflich löschen</button>
+                                <span title="Momentan werden nur lokale Daten (LocalStorage) gelöscht, Cloud-Daten bleiben unberührt." style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); color:var(--text-muted); font-weight:700;">i</span>
+                            </div>
+                            <small class="settings-hint" style="display:block; margin-top:8px; color:var(--text-muted);">Wir empfehlen vorher ein Backup zu erstellen (Backup / Export).</small>
+                        </div>
+                </div>
+                
+                <!-- Tab: Arbeitszeiten -->
+                <div id="settings-tab-work" class="settings-tab-content" style="display:none;">
+                    
+                    <!-- Break Threshold -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Automatische Pause</div>
+                        <label class="settings-label">Pause ab (Stunden)</label>
+                        <input type="number" id="confBreakThresh" class="glass-input" style="max-width:160px;" value="6">
+                    </div>
+
+                    <!-- Break Minutes per Day -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Pausenzeiten pro Wochentag</div>
+                        <p class="settings-hint" style="margin-bottom:1rem;">Minuten pro Tag</p>
+                        <div style="display:grid; grid-template-columns: repeat(7, 1fr); gap:8px;">
+                            <div style="text-align:center;">
+                                <input type="number" id="breakMin_0" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Sonntag">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">So</small>
+                            </div>
+                            <div style="text-align:center;">
+                                <input type="number" id="breakMin_1" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Montag">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Mo</small>
+                            </div>
+                            <div style="text-align:center;">
+                                <input type="number" id="breakMin_2" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Dienstag">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Di</small>
+                            </div>
+                            <div style="text-align:center;">
+                                <input type="number" id="breakMin_3" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Mittwoch">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Mi</small>
+                            </div>
+                            <div style="text-align:center;">
+                                <input type="number" id="breakMin_4" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Donnerstag">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Do</small>
+                            </div>
+                            <div style="text-align:center;">
+                                <input type="number" id="breakMin_5" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Freitag">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Fr</small>
+                            </div>
+                            <div style="text-align:center;">
+                                <input type="number" id="breakMin_6" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" title="Samstag">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Sa</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Target Hours -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Soll-Stunden pro Tag</div>
+                        <p class="settings-hint" style="margin-bottom:1rem;">Montag bis Freitag</p>
+                        <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:8px;">
+                            <div style="text-align:center;">
+                                <input type="number" id="h1" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Mo</small>
+                            </div>
+                            <div style="text-align:center;">
+                                <input type="number" id="h2" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Di</small>
+                            </div>
+                            <div style="text-align:center;">
+                                <input type="number" id="h3" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Mi</small>
+                            </div>
+                            <div style="text-align:center;">
+                                <input type="number" id="h4" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Do</small>
+                            </div>
+                            <div style="text-align:center;">
+                                <input type="number" id="h5" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Fr</small>
+                            </div>
+                        </div>
+                        <p class="settings-hint" style="margin-top:1rem; margin-bottom:0.5rem;">Wochenende (optional)</p>
+                        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px; max-width:200px;">
+                            <div style="text-align:center;">
+                                <input type="number" id="h6" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" min="0" step="0.25" placeholder="0">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">Sa</small>
+                            </div>
+                            <div style="text-align:center;">
+                                <input type="number" id="h0" class="glass-input" style="padding:10px; text-align:center; margin-bottom:4px;" min="0" step="0.25" placeholder="0">
+                                <small style="color:var(--text-muted); font-size:0.75rem;">So</small>
+                            </div>
+                        </div>
+                        <p class="settings-hint" style="margin-top:0.5rem; font-size:0.7rem;">Auf 0 lassen wenn du nicht am Wochenende arbeitest.</p>
+                    </div>
+                </div>
+
+                <!-- Tab: Berufsschule -->
+                <div id="settings-tab-school" class="settings-tab-content" style="display:none;">
+                    
+                    <!-- Hero Header -->
+                    <div class="school-settings-hero">
+                        <div class="school-settings-hero-icon">🏫</div>
+                        <div>
+                            <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:#fff;">Berufsschule</h3>
+                            <p style="margin:4px 0 0; font-size:0.8rem; color:var(--text-muted); line-height:1.4;">Schultage konfigurieren — abgelehnte Vorschläge kommen nicht wieder.</p>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Day Chips -->
+                    <div class="school-settings-section">
+                        <div class="school-settings-label">📅 Wöchentliche Schultage</div>
+                        <div class="school-day-chips">
+                            <label class="school-day-chip" data-day="1">
+                                <input type="checkbox" id="sch_week_1"><span>Mo</span>
+                            </label>
+                            <label class="school-day-chip" data-day="2">
+                                <input type="checkbox" id="sch_week_2"><span>Di</span>
+                            </label>
+                            <label class="school-day-chip" data-day="3">
+                                <input type="checkbox" id="sch_week_3"><span>Mi</span>
+                            </label>
+                            <label class="school-day-chip" data-day="4">
+                                <input type="checkbox" id="sch_week_4"><span>Do</span>
+                            </label>
+                            <label class="school-day-chip" data-day="5">
+                                <input type="checkbox" id="sch_week_5"><span>Fr</span>
+                            </label>
+                            <label class="school-day-chip" data-day="6">
+                                <input type="checkbox" id="sch_week_6"><span>Sa</span>
+                            </label>
+                            <label class="school-day-chip" data-day="0">
+                                <input type="checkbox" id="sch_week_0"><span>So</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Biweekly Rules -->
+                    <div class="school-settings-section">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div class="school-settings-label">🔁 Turnus-Regeln</div>
+                            <button class="school-settings-add-btn" onclick="addBiweeklyRule()">
+                                <span>+</span> Regel
+                            </button>
+                        </div>
+                        <div id="biweeklyRulesList" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;"></div>
+                        <p class="school-settings-hint" style="margin-top:8px;">Für z.B. alle 2 Wochen: Wochentag + Intervall + Startdatum festlegen.</p>
+                    </div>
+
+                    <!-- Quick Check -->
+                    <div class="school-settings-section">
+                        <div class="school-settings-label">🔍 Datum prüfen</div>
+                        <div class="school-check-row">
+                            <input type="date" id="checkVocDate" class="glass-input">
+                            <button class="school-settings-check-btn" onclick="checkDateVocFromInput()">Prüfen</button>
+                            <button class="school-settings-check-btn school-settings-check-today" onclick="checkTodayVocSchool()">Heute</button>
+                        </div>
+                    </div>
+
+                    <div class="school-settings-footer">
+                        <span>💡</span> Feiertage & Urlaub werden automatisch berücksichtigt.
+                    </div>
+                </div>
+
+                <!-- Tab: Shortcuts -->
+                <div id="settings-tab-shortcuts" class="settings-tab-content" style="display:none;">
+                    
+                    <!-- Toggle -->
+                    <div class="settings-section" style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div class="settings-section-title" style="margin-bottom:4px;">Tastenkürzel</div>
+                            <span class="settings-hint">Schneller navigieren mit S/P/E und Ctrl+Enter</span>
+                        </div>
+                        <label style="position:relative; display:inline-block; width:52px; height:28px; flex-shrink:0;">
+                            <input type="checkbox" id="confShortcuts" style="opacity:0; width:0; height:0;" />
+                            <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:rgba(255,255,255,0.06); transition:0.4s; border-radius:14px; border:1px solid rgba(255,255,255,0.1);"></span>
+                            <span style="position:absolute; cursor:pointer; height:22px; width:22px; left:3px; bottom:3px; background-color:rgba(255,255,255,0.5); transition:0.4s; border-radius:11px;"></span>
+                            <style>
+                                #confShortcuts:checked + span { background-color: rgba(var(--primary-rgb), 0.3); border-color: rgba(var(--primary-rgb), 0.5); }
+                                #confShortcuts:checked + span + span { transform:translateX(24px); background-color:#fff; }
+                            </style>
+                        </label>
+                    </div>
+                    
+                    <!-- Shortcuts Panel -->
+                    <div id="shortcutsPanel" style="transition:opacity 0.3s ease;">
+                        <div class="settings-info">
+                            Passe deine Tastenkürzel an. Klicke auf einen Shortcut, um ihn zu ändern.
+                        </div>
+
+                        <div id="shortcutsContainer" style="display:grid; gap:8px; margin-bottom:1.25rem;"></div>
+
+                        <div id="shortcutConflictWarning" style="display:none; background:rgba(239, 68, 68, 0.1); border:1px solid rgba(239, 68, 68, 0.2); border-radius:10px; padding:1rem; margin-bottom:1.25rem; border-left:3px solid #ef4444;">
+                            <p style="margin:0; color:#ef4444; font-weight:600; font-size:0.85rem;">⚠️ Shortcut-Konflikt erkannt!</p>
+                            <p id="conflictMessage" style="margin:0.5rem 0 0 0; color:var(--text-muted); font-size:0.85rem;"></p>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <button class="settings-btn settings-btn-primary" onclick="saveAllShortcuts()">💾 Speichern</button>
+                            <button class="settings-btn" onclick="resetShortcutsToDefaults()">↺ Standard</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Custom -->
+                <div id="settings-tab-custom" class="settings-tab-content" style="display:none;">
+                    
+                    <div class="settings-info">
+                        <strong>✨ Eigene Eintrag-Typen</strong> — z.B. 🏋️ Fitness, 🎓 Training, 🤝 Meetings<br>
+                        <strong>📋 Custom Fields</strong> — z.B. Projekt, Client, Billable<br>
+                        <strong>⚡ Workflow Rules</strong> — Automatische Validierung & Auto-Fill
+                    </div>
+
+                    <!-- Entry Types -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Eintrag-Typen</div>
+                        <div id="customTypesContainer"></div>
+                    </div>
+
+                    <!-- Custom Fields -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Custom Fields</div>
+                        <div id="customFieldsContainer"></div>
+                    </div>
+
+                    <!-- Workflow Rules -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Workflow Rules</div>
+                        <div style="text-align:center; padding:1rem;">
+                            <p class="settings-hint" style="margin:0;">ℹ️ Workflow Rules sind noch in Entwicklung. Automatische Validierung & Auto-Fill pro Eintrag-Typ.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Team -->
+                <div id="settings-tab-team" class="settings-tab-content" style="display:none;">
+                    
+                    <div class="settings-info">
+                        Team-Features für Echtzeit-Zusammenarbeit, gemeinsame Dashboards und Live-Notifications.
+                    </div>
+
+                    <!-- P2P Sync -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">P2P Geräte-Sync (WebRTC)</div>
+                        
+                        <!-- Connection Status -->
+                        <div style="margin-bottom:1rem; padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.06);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div id="p2pStatusDot" style="width:10px; height:10px; border-radius:50%; background:#6b7280; transition:all 0.3s;"></div>
+                                    <div>
+                                        <span id="p2pStatus" style="font-weight:600; color:var(--text-muted); font-size:0.85rem;">Nicht verbunden</span>
+                                        <div id="p2pDeviceInfo" style="font-size:0.7rem; color:var(--text-muted); margin-top:2px; display:none;"></div>
+                                    </div>
+                                </div>
+                                <span id="connectedPeers" style="color:var(--text-muted); font-size:0.75rem; background:rgba(255,255,255,0.05); padding:3px 10px; border-radius:6px;">Offline</span>
+                            </div>
+                            <!-- Last Sync Info -->
+                            <div id="p2pLastSync" style="display:none; font-size:0.7rem; color:var(--text-muted); padding-top:8px; border-top:1px solid rgba(255,255,255,0.05);">
+                                Letzter Sync: <span id="p2pLastSyncTime">—</span>
+                            </div>
+                        </div>
+
+                        <!-- Main Action Button -->
+                        <button class="settings-btn" onclick="openP2PWizard()" style="width:100%; padding:14px; font-size:0.95rem; font-weight:600; background:linear-gradient(135deg, rgba(var(--primary-rgb),0.15), rgba(124,58,237,0.1)); border:1px solid rgba(var(--primary-rgb),0.3); border-radius:12px; margin-bottom:1rem; transition:all 0.3s;" onmouseover="this.style.borderColor='rgba(var(--primary-rgb),0.5)'" onmouseout="this.style.borderColor='rgba(var(--primary-rgb),0.3)'">
+                            🔗 Geräte verbinden
+                        </button>
+
+                        <!-- Quick Actions (visible when connected) -->
+                        <div id="p2pQuickActions" style="display:none; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1rem;">
+                            <button class="settings-btn" onclick="p2pManualSync()" style="padding:10px;">🔄 Sync</button>
+                            <button class="settings-btn" onclick="p2pDisconnect()" style="padding:10px; color:#f87171;">❌ Trennen</button>
+                        </div>
+                    </div>
+
+                    <!-- Sync Settings -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Sync-Einstellungen</div>
+                        
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                            <input type="checkbox" id="p2pAutoSync" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
+                            <label style="color:var(--text-main); font-size:0.85rem; cursor:pointer;">Auto-Sync bei Verbindung</label>
+                        </div>
+
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                            <input type="checkbox" id="p2pOfflineQueue" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
+                            <label style="color:var(--text-main); font-size:0.85rem; cursor:pointer;">Offline-Queue (bei Verbindungsverlust)</label>
+                        </div>
+
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" id="p2pEncryption" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
+                            <label style="color:var(--text-main); font-size:0.85rem; cursor:pointer;">🔒 Ende-zu-Ende Verschlüsselung</label>
+                        </div>
+
+                        <div class="settings-hint" style="margin-top:1rem;">
+                            P2P = direkte Verbindung via WebRTC. Keine zentralen Server, kein Tracking. 3-Schritt Handshake: Einladen → Antworten → Verbunden.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab: Grafiken -->
+                <div id="settings-tab-graphics" class="settings-tab-content" style="display:none;">
+                    
+                    <div class="settings-info" style="margin-bottom:1.25rem;">
+                        Klick auf eine Grafik um sie vollständig zu sehen. Visuelle Erklärungen zur App-Architektur.
+                    </div>
+                    
+                        <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Touch.webp', 'Touch Optimization')">
+                            <picture>
+                                <source srcset="./Grafiken/Touch.webp" type="image/webp">
+                                <img loading="lazy" decoding="async" src="./Grafiken/Touch.png" alt="Mobile und Touch-Optimierung für Smartphones und Tablets in MyWorkLog">
+                            </picture>
+                            <div class="card-info">
+                                <h5>📱 Touch Optimization</h5>
+                                <p>Mobile & Touch-Optimierungen</p>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Bot-engine.webp', 'AI Bot Engine')">
+                            <picture>
+                                <source srcset="./Grafiken/Bot-engine.webp" type="image/webp">
+                                <img loading="lazy" decoding="async" src="./Grafiken/Bot-engine.png" alt="AI Bot Engine für intelligente Zeiterfassungsanalyse und Auswertung">
+                            </picture>
+                            <div class="card-info">
+                                <h5>🤖 Bot Engine</h5>
+                                <p>AI-Bot Architektur</p>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Bot-Analyzer.webp', 'Data Analyzer')">
+                            <picture>
+                                <source srcset="./Grafiken/Bot-Analyzer.webp" type="image/webp">
+                                <img loading="lazy" decoding="async" src="./Grafiken/Bot-Analyzer.png" alt="Datenanalyse und automatische Auswertung von Arbeitsstunden und Gleitzeit">
+                            </picture>
+                            <div class="card-info">
+                                <h5>📊 Data Analyzer</h5>
+                                <p>Datenanalyse & Auswertung</p>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Service.webp', 'Service Worker')">
+                            <picture>
+                                <source srcset="./Grafiken/Service.webp" type="image/webp">
+                                <img loading="lazy" decoding="async" src="./Grafiken/Service.png" alt="Progressive Web App PWA und Service Worker für Offline-Unterstützung">
+                            </picture>
+                            <div class="card-info">
+                                <h5>⚙️ Service Worker</h5>
+                                <p>PWA & Offline-Funktionalität</p>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Offline.webp', 'Offline Mode')">
+                            <picture>
+                                <source srcset="./Grafiken/Offline.webp" type="image/webp">
+                                <img loading="lazy" decoding="async" src="./Grafiken/Offline.png" alt="Offline-Funktionalität und lokale Datenspeicherung im LocalStorage">
+                            </picture>
+                            <div class="card-info">
+                                <h5>📡 Offline Mode</h5>
+                                <p>Offline-Funktionalität</p>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Website.webp', 'Website Architektur')">
+                            <picture>
+                                <source srcset="./Grafiken/Website.webp" type="image/webp">
+                                <img loading="lazy" decoding="async" src="./Grafiken/Website.png" alt="MyWorkLog Website Architektur und technische Infrastruktur mit Cloud-Integration">
+                            </picture>
+                            <div class="card-info">
+                                <h5>🌐 Website</h5>
+                                <p>Website-Architektur</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Tab: Cloud -->
+                <div id="settings-tab-cloud" class="settings-tab-content" style="display:none;">
+                    
+                    <div class="settings-info">
+                        Synchronisiere deine Arbeitszeiten mit Supabase Cloud. Deine Daten sind sicher verschlüsselt und jederzeit verfügbar.
+                    </div>
+                    
+                    <!-- Cloud Status -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Status</div>
+                        <div id="cloudSyncStatus" style="color:var(--text-muted); font-size:0.85rem; line-height:1.8;">
+                            <p style="margin:0;">Wird geladen...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Cloud Buttons -->
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <button id="cloudSyncLoginBtn" class="settings-btn settings-btn-primary" style="width:100%; display:none;" onclick="openCloudLoginModal()">
+                            ☁️ Cloud Login
+                        </button>
+                        
+                        <button id="cloudSyncLogoutBtn" class="settings-btn" style="width:100%; display:none;" onclick="handleCloudLogout()">
+                            🚪 Logout
+                        </button>
+                        
+                        <button id="cloudSyncUploadBtn" class="settings-btn" style="width:100%; opacity:0.5;" disabled onclick="handleCloudUpload()">
+                            ⬆️ In Cloud hochladen
+                        </button>
+                        
+                        <button id="cloudSyncDownloadBtn" class="settings-btn" style="width:100%; opacity:0.5;" disabled onclick="handleCloudDownload()">
+                            ⬇️ Von Cloud wiederherstellen
+                        </button>
+                    </div>
+                    
+                    <div class="settings-hint" style="margin-top:1.25rem;">
+                        ℹ️ Daten werden <strong>nicht</strong> automatisch synchronisiert. Nutze die Buttons zum manuellen Hoch- oder Runterladen.
+                    </div>
+
+                    <!-- ═══════════ API STATUS MONITOR ═══════════ -->
+                    <div class="settings-section" style="margin-top:1.5rem; padding:0; overflow:hidden;">
+                        
+                        <!-- Header -->
+                        <div style="padding:1.25rem 1.25rem 0.75rem; display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div id="apiStatusDot" style="width:10px; height:10px; border-radius:50%; background:#10b981; box-shadow:0 0 8px rgba(16,185,129,0.5); animation:pulse-dot 2s infinite;"></div>
+                                <div>
+                                    <div style="font-size:0.9rem; font-weight:700; color:#fff;">API Status</div>
+                                    <div id="apiStatusText" style="font-size:0.72rem; color:rgba(255,255,255,0.4); margin-top:1px;">Alle Systeme operational</div>
+                                </div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <button onclick="refreshApiStatus()" style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); color:rgba(255,255,255,0.5); padding:5px 10px; border-radius:8px; font-size:0.7rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.color='#fff'" onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.color='rgba(255,255,255,0.5)'">↻ Refresh</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Time Range Tabs -->
+                        <div style="display:flex; gap:0; padding:0 1.25rem; margin-bottom:0.75rem;">
+                            <button class="api-range-tab active" data-range="1h" onclick="setApiRange('1h',this)">1h</button>
+                            <button class="api-range-tab" data-range="24h" onclick="setApiRange('24h',this)">24h</button>
+                            <button class="api-range-tab" data-range="7d" onclick="setApiRange('7d',this)">7 Tage</button>
+                            <button class="api-range-tab" data-range="30d" onclick="setApiRange('30d',this)">30 Tage</button>
+                        </div>
+
+                        <!-- Uptime Bar (like BetterUptime/Instatus) -->
+                        <div style="padding:0 1.25rem 0.75rem;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                                <span style="font-size:0.68rem; color:rgba(255,255,255,0.3);">Uptime</span>
+                                <span id="apiUptimePercent" style="font-size:0.68rem; color:#10b981; font-weight:700; font-family:var(--font-mono);">100%</span>
+                            </div>
+                            <div id="apiUptimeBar" style="display:flex; gap:1.5px; height:28px; border-radius:6px; overflow:hidden;">
+                                <!-- Uptime segments rendered by JS -->
+                            </div>
+                            <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                                <span id="apiRangeStart" style="font-size:0.62rem; color:rgba(255,255,255,0.2);">—</span>
+                                <span id="apiRangeEnd" style="font-size:0.62rem; color:rgba(255,255,255,0.2);">Jetzt</span>
+                            </div>
+                        </div>
+
+                        <!-- Status Code Breakdown -->
+                        <div style="padding:0 1.25rem 1rem;">
+                            <div style="font-size:0.68rem; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; font-weight:600;">Status Codes</div>
+                            <div id="apiStatusCodes" style="display:flex; flex-wrap:wrap; gap:6px;">
+                                <!-- Status code pills rendered by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Endpoint Health -->
+                        <div style="padding:0 1.25rem 1rem;">
+                            <div style="font-size:0.68rem; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; font-weight:600;">Endpoints</div>
+                            <div id="apiEndpointList" style="display:flex; flex-direction:column; gap:4px;">
+                                <!-- Endpoint rows rendered by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Recent Requests Log -->
+                        <div style="padding:0 1.25rem 1rem;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                <div style="font-size:0.68rem; color:rgba(255,255,255,0.3); text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Letzte Requests</div>
+                                <span id="apiTotalRequests" style="font-size:0.65rem; color:rgba(255,255,255,0.25); font-family:var(--font-mono);">0 total</span>
+                            </div>
+                            <div id="apiRequestLog" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:2px;">
+                                <!-- Request log rows rendered by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div style="padding:0.75rem 1.25rem; background:rgba(255,255,255,0.015); border-top:1px solid rgba(255,255,255,0.04); display:flex; justify-content:space-between; align-items:center;">
+                            <span id="apiLastChecked" style="font-size:0.65rem; color:rgba(255,255,255,0.2);">Zuletzt geprüft: —</span>
+                            <span style="font-size:0.62rem; color:rgba(255,255,255,0.15);">Supabase Edge Logs</span>
+                        </div>
+                    </div>
+                    <!-- ═══════════ END API STATUS MONITOR ═══════════ -->
+
+                </div>
+                
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Cloud Login Modal -->
+    <div id="cloud-login-modal" class="cloud-login-modal" style="display: none;">
+        <div class="cloud-login-overlay" id="cloud-login-overlay"></div>
+        <div class="cloud-login-box">
+            <button id="cloud-modal-close" class="cloud-modal-close" title="Schließen">&times;</button>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <h2 style="margin: 0 0 8px 0; font-size: 22px; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 28px;">☁️</span> Cloud Sync
+                </h2>
+                <p style="margin: 0; font-size: 14px; color: var(--text-muted); line-height: 1.5;">
+                    Melde dich mit deiner E-Mail an, um deine Arbeitszeiten zu synchronisieren
+                </p>
+            </div>
+
+            <form id="cloud-login-form" style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="cloud-email-input" style="font-size: 13px; font-weight: 600; color: var(--text-main);">
+                        📧 E-Mail-Adresse
+                    </label>
+                    <input 
+                        type="email" 
+                        id="cloud-email-input" 
+                        placeholder="deine@email.de" 
+                        required
+                        style="padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; background: transparent; color: var(--text-main); font-family: inherit;"
+                    >
+                </div>
+
+                <button type="submit" id="cloud-login-submit" style="padding: 12px 16px; background: linear-gradient(135deg, var(--primary), #764ba2); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span class="cloud-submit-text">🔗 Magic Link senden</span>
+                    <span class="cloud-loading" style="display: none;">⏳</span>
+                </button>
+
+                <div id="cloud-login-message" style="display: none; padding: 12px; border-radius: 8px; font-size: 13px; text-align: center; font-weight: 500;"></div>
+            </form>
+
+            <!-- Divider -->
+            <div style="display: flex; align-items: center; gap: 12px; margin: 18px 0;">
+                <div style="flex:1; height:1px; background: var(--border);"></div>
+                <span style="font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">oder</span>
+                <div style="flex:1; height:1px; background: var(--border);"></div>
+            </div>
+
+            <!-- Discord OAuth -->
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="cloud-login-discord" style="flex:1; min-width: 0; padding: 12px 16px; background: #5865F2; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg width="18" height="14" viewBox="0 0 71 55" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M60.1 4.9A58.5 58.5 0 0045.4.2a.2.2 0 00-.2.1 40.8 40.8 0 00-1.8 3.7 54 54 0 00-16.2 0A37.3 37.3 0 0025.4.3a.2.2 0 00-.2-.1A58.4 58.4 0 0010.5 4.9a.2.2 0 00-.1.1C1.5 18.7-.9 32.2.3 45.5v.2a58.9 58.9 0 0017.7 9 .2.2 0 00.3-.1 42 42 0 003.6-5.9.2.2 0 00-.1-.3 38.8 38.8 0 01-5.5-2.6.2.2 0 01 0-.4l1.1-.9a.2.2 0 01.2 0 42 42 0 0035.6 0 .2.2 0 01.2 0l1.1.9a.2.2 0 010 .4 36.4 36.4 0 01-5.5 2.6.2.2 0 00-.1.3 47.2 47.2 0 003.6 5.9.2.2 0 00.3.1A58.7 58.7 0 0070.5 45.7v-.2c1.4-15-2.3-28.4-9.9-40.1a.2.2 0 00-.1-.1h-.4zM23.7 37.3c-3.5 0-6.3-3.2-6.3-7.1 0-3.9 2.8-7.1 6.3-7.1 3.6 0 6.4 3.2 6.3 7.1 0 3.9-2.8 7.1-6.3 7.1zm23.3 0c-3.5 0-6.3-3.2-6.3-7.1 0-3.9 2.8-7.1 6.3-7.1 3.6 0 6.4 3.2 6.3 7.1 0 3.9-2.7 7.1-6.3 7.1z" fill="white"/></svg>
+                    Discord
+                </button>
+                <button id="cloud-login-github" style="flex:1; min-width: 0; padding: 12px 16px; background: #24292f; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 98 96" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0112.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z" fill="white"/></svg>
+                    GitHub
+                </button>
+                <button id="cloud-login-google" style="flex:1; min-width: 0; padding: 12px 16px; background: #fff; color: #3c4043; border: 1px solid #dadce0; border-radius: 10px; font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 010-9.18l-7.98-6.19a24.09 24.09 0 000 21.56l7.98-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                    Google
+                </button>
+            </div>
+
+            <div style="margin-top: 16px; padding: 12px 14px; background: rgba(var(--primary-rgb), 0.08); border-left: 4px solid var(--primary); border-radius: 8px; font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+                <strong style="color: var(--primary);">ℹ️ Wie es funktioniert:</strong><br>
+                Wähle eine Login-Methode — deine Daten werden sicher in der Cloud synchronisiert.
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="recoveryModal">
+        <div class="modal-box recovery-modal-box">
+            <!-- Header -->
+            <div class="recovery-header">
+                <div class="recovery-header-content">
+                    <div class="recovery-icon-wrap">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
+                    </div>
+                    <div>
+                        <h2 class="recovery-title">Recovery Center</h2>
+                        <p class="recovery-subtitle">Backup · Wiederherstellen · Merge</p>
+                    </div>
+                </div>
+                <button class="recovery-close-btn" onclick="closeRecoveryModal()" aria-label="Schließen">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <!-- Status Cards -->
+            <div class="recovery-body">
+                <div class="recovery-status-grid" id="recoveryStatusGrid">
+                    <div class="recovery-stat-card">
+                        <div class="recovery-stat-icon" style="background:rgba(var(--primary-rgb),0.15); color:var(--primary);">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        </div>
+                        <div class="recovery-stat-info">
+                            <span class="recovery-stat-value" id="recoveryBackupCount">0</span>
+                            <span class="recovery-stat-label">Backups</span>
+                        </div>
+                    </div>
+                    <div class="recovery-stat-card">
+                        <div class="recovery-stat-icon" style="background:rgba(6,182,212,0.15); color:#06b6d4;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                        <div class="recovery-stat-info">
+                            <span class="recovery-stat-value" id="recoveryLastBackup">—</span>
+                            <span class="recovery-stat-label">Letztes Backup</span>
+                        </div>
+                    </div>
+                    <div class="recovery-stat-card">
+                        <div class="recovery-stat-icon" style="background:rgba(16,185,129,0.15); color:#10b981;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                        </div>
+                        <div class="recovery-stat-info">
+                            <span class="recovery-stat-value" id="recoveryEntryCount">0</span>
+                            <span class="recovery-stat-label">Einträge</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="recovery-section">
+                    <div class="recovery-section-header">
+                        <h3 class="recovery-section-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            Quick Actions
+                        </h3>
+                    </div>
+                    <div class="recovery-actions-grid">
+                        <button class="recovery-action-card" onclick="loadLocalData()">
+                            <div class="recovery-action-icon" style="background:linear-gradient(135deg, rgba(var(--primary-rgb),0.2), rgba(var(--primary-rgb),0.05));">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                            </div>
+                            <span class="recovery-action-label">Load localStorage</span>
+                            <span class="recovery-action-desc">Daten neu laden</span>
+                        </button>
+                        <button class="recovery-action-card" onclick="downloadAllBackups()">
+                            <div class="recovery-action-icon" style="background:linear-gradient(135deg, rgba(6,182,212,0.2), rgba(6,182,212,0.05));">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            </div>
+                            <span class="recovery-action-label">Download All</span>
+                            <span class="recovery-action-desc">Alle als JSON</span>
+                        </button>
+                        <button class="recovery-action-card" onclick="clearOldBackups()">
+                            <div class="recovery-action-icon" style="background:linear-gradient(135deg, rgba(239,68,68,0.2), rgba(239,68,68,0.05));">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </div>
+                            <span class="recovery-action-label">Clear Backups</span>
+                            <span class="recovery-action-desc">Alle löschen</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Backup List -->
+                <div class="recovery-section">
+                    <div class="recovery-section-header">
+                        <h3 class="recovery-section-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                            Gespeicherte Backups
+                        </h3>
+                        <span class="recovery-badge" id="recoveryBadgeCount">0</span>
+                    </div>
+                    <div id="recoveryBackupsList" class="recovery-backups-list"></div>
+                </div>
+
+                <!-- Import Zone -->
+                <div class="recovery-section">
+                    <div class="recovery-section-header">
+                        <h3 class="recovery-section-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            Backup importieren
+                        </h3>
+                    </div>
+                    <div class="recovery-import-zone" id="recoveryDropZone" onclick="document.getElementById('recoveryImportFile').click()">
+                        <input type="file" id="recoveryImportFile" style="display:none;" accept=".json" onchange="handleRecoveryImport(event)">
+                        <div class="recovery-import-icon">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        </div>
+                        <span class="recovery-import-text">JSON-Datei hierhin ziehen oder klicken</span>
+                        <span class="recovery-import-hint">Unterstützt V2-Full-Backups & Legacy-Importe</span>
+                    </div>
+                    <div class="recovery-import-actions" id="recoveryImportActions" style="display:none;">
+                        <div class="recovery-import-ready">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            <span id="recoveryImportInfo">Datei bereit</span>
+                        </div>
+                        <button class="recovery-apply-btn" onclick="finalizeRecoveryImport()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            Import & Apply
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Footer Info -->
+                <div class="recovery-footer-info">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>Alle Daten bleiben lokal — nichts verlässt dein Gerät.</span>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="recovery-modal-footer">
+                <button class="recovery-close-footer-btn" onclick="closeRecoveryModal()">Schließen</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="corrModal">
+        <div class="modal-box" style="width:500px; padding:2rem;">
+            <h3 style="margin-top:0; margin-bottom:1rem;">Korrektur buchen</h3>
+            <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">Manuelle Buchung auf das Gleitzeitkonto.</p>
+            <select id="corrSelect" class="glass-select" style="margin-bottom:15px;"></select>
+            <input type="number" id="corrVal" class="glass-input" placeholder="Stunden (+/-)" step="0.1" style="margin-bottom:2rem;">
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-primary" onclick="saveCorrection()" style="flex:1;">Buchen</button>
+                <button class="btn" style="flex:1; background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.4); color:#fff;" onclick="document.getElementById('corrModal').classList.remove('active')">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM MODAL SYSTEM (Glassmorphism) -->
+    <div class="modal" id="customMessageModal">
+        <div class="modal-box" style="width:500px; padding:2rem;">
+            <h3 id="customMessageTitle" style="margin-top:0; margin-bottom:1rem;">Nachricht</h3>
+            <p id="customMessageContent" style="color:var(--text-muted); margin-bottom:2rem; font-size:0.95rem; line-height:1.5;"></p>
+            
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button id="customMessageBtnCancel" class="btn" style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.4); color:#fff; display:none;" onclick="closeCustomModal(false)">Abbrechen</button>
+                <button id="customMessageBtnConfirm" class="btn btn-primary" onclick="closeCustomModal(true)">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALERTS PANEL (PREMIUM) -->
+    <div id="alertsPanel" style="position:fixed;right:0;top:0;width:420px;height:100vh;background:rgba(14,15,20,0.95);backdrop-filter:blur(40px) saturate(1.5);border-left:1px solid rgba(255,255,255,0.06);z-index:1000;transform:translateX(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;display:flex;flex-direction:column;">
+        <!-- Header -->
+        <div style="padding:1.75rem 1.5rem 1.25rem;flex-shrink:0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+                <div style="display:flex;align-items:center;gap:0.75rem;">
+                    <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(var(--primary-rgb),0.15));display:flex;align-items:center;justify-content:center;font-size:1.1rem;">🔔</div>
+                    <div>
+                        <h3 style="margin:0;font-size:1.05rem;font-weight:700;color:#fff;letter-spacing:-0.3px;">Alerts</h3>
+                        <p style="margin:0;font-size:0.7rem;color:rgba(255,255,255,0.35);font-weight:500;">Intelligente Benachrichtigungen</p>
+                    </div>
+                </div>
+                <button onclick="toggleAlertsPanel()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;" onmouseover="this.style.background='rgba(239,68,68,0.15)';this.style.color='#ef4444';this.style.borderColor='rgba(239,68,68,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='rgba(255,255,255,0.5)';this.style.borderColor='rgba(255,255,255,0.08)'">×</button>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button onclick="filterAlerts('all')" class="alert-filter-btn active">Alle</button>
+                <button onclick="filterAlerts('warning')" class="alert-filter-btn">⚠️ Warnungen</button>
+                <button onclick="filterAlerts('success')" class="alert-filter-btn">✅ Erfolge</button>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06) 20%,rgba(255,255,255,0.06) 80%,transparent);margin:0 1.5rem;"></div>
+        
+        <!-- Alert Settings -->
+        <div style="padding:1.25rem 1.5rem;flex-shrink:0;">
+            <h4 style="font-size:0.7rem;color:rgba(255,255,255,0.35);margin:0 0 1rem 0;text-transform:uppercase;letter-spacing:1.2px;font-weight:600;">Einstellungen</h4>
+            
+            <div style="display:flex;flex-direction:column;gap:6px;">
+                <div class="alert-setting-row">
+                    <label><input type="checkbox" id="alertSaldoPositive" checked onchange="saveAlertSettings()"><span>Saldo > +20h</span></label>
+                </div>
+                <div class="alert-setting-row">
+                    <label><input type="checkbox" id="alertSaldoNegative" checked onchange="saveAlertSettings()"><span>Saldo < -5h</span></label>
+                </div>
+                <div class="alert-setting-row">
+                    <label><input type="checkbox" id="alertShiftMax" checked onchange="saveAlertSettings()"><span>Schicht > 10h</span></label>
+                </div>
+                <div class="alert-setting-row">
+                    <label><input type="checkbox" id="alertVacationLow" checked onchange="saveAlertSettings()"><span>Urlaub fast aufgebraucht</span></label>
+                </div>
+                <div class="alert-setting-row">
+                    <label><input type="checkbox" id="alertExportReminder" onchange="saveAlertSettings()"><span>Backup-Erinnerung (7 Tage)</span></label>
+                </div>
+            </div>
+
+            <!-- Backup Section -->
+            <div id="alertExportSection" style="margin-top:1rem;padding:1rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+                    <div>
+                        <div style="font-size:0.7rem;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Letztes Backup</div>
+                        <div id="lastExportInfo" style="font-weight:600;font-size:0.9rem;color:#fff;margin-top:4px;">—</div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <button class="btn" onclick="exportData('json'); setTimeout(updateAlertExportInfo, 800);" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);padding:10px;font-size:0.8rem;border-radius:8px;color:rgba(255,255,255,0.7);font-weight:600;transition:all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.08)';this.style.borderColor='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.08)'">💾 Standard</button>
+                    <button class="btn" onclick="document.getElementById('encryptedBackupModal').classList.add('active');" style="background:linear-gradient(135deg,rgba(16,185,129,0.25),rgba(6,182,212,0.2));color:#10b981;padding:10px;font-size:0.8rem;border:1px solid rgba(16,185,129,0.25);border-radius:8px;font-weight:600;transition:all 0.2s ease;" onmouseover="this.style.background='linear-gradient(135deg,rgba(16,185,129,0.35),rgba(6,182,212,0.3))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(16,185,129,0.25),rgba(6,182,212,0.2))'">🔒 Verschlüsselt</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06) 20%,rgba(255,255,255,0.06) 80%,transparent);margin:0 1.5rem;"></div>
+        
+        <!-- Alerts List -->
+        <div style="flex:1;overflow-y:auto;padding:1.25rem 1.5rem;">
+            <h4 style="font-size:0.7rem;color:rgba(255,255,255,0.35);margin:0 0 1rem 0;text-transform:uppercase;letter-spacing:1.2px;font-weight:600;">Aktive Alerts</h4>
+            <div id="alertsList" style="display:flex;flex-direction:column;gap:10px;">
+                <!-- Werden dynamisch gefüllt -->
+            </div>
+        </div>
+        
+        <!-- Clear Button -->
+        <div style="padding:1rem 1.5rem;border-top:1px solid rgba(255,255,255,0.05);flex-shrink:0;">
+            <button class="btn" onclick="clearAllAlerts()" style="width:100%;padding:10px;background:rgba(239,68,68,0.08);color:rgba(239,68,68,0.7);border:1px solid rgba(239,68,68,0.15);border-radius:10px;font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s ease;" onmouseover="this.style.background='rgba(239,68,68,0.15)';this.style.color='#ef4444';this.style.borderColor='rgba(239,68,68,0.3)'" onmouseout="this.style.background='rgba(239,68,68,0.08)';this.style.color='rgba(239,68,68,0.7)';this.style.borderColor='rgba(239,68,68,0.15)'">
+                🗑️ Alle Alerts löschen
+            </button>
+        </div>
+    </div>
+    
+    <!-- ALERTS OVERLAY -->
+    <div id="alertsOverlay" onclick="toggleAlertsPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);z-index:999;transition:opacity 0.3s ease;"></div>
+
+    <!-- ENCRYPTED BACKUP EXPORT MODAL (KRASS SICHER!) -->
+    <div class="modal" id="encryptedBackupModal">
+        <div class="modal-box" style="width:650px; padding:0; overflow:hidden; display:flex; flex-direction:column; max-height:90vh;">
+            <!-- Header mit Gradient -->
+            <div style="background:linear-gradient(135deg, #10b981, #06b6d4); padding:2rem; position:relative; overflow:hidden; flex-shrink:0;">
+                <div style="position:absolute; top:0; right:-40px; width:180px; height:180px; background:radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); border-radius:50%;"></div>
+                
+                <div style="position:relative; z-index:1;">
+                    <h2 style="margin:0 0 0.5rem 0; font-size:1.4rem; color:#fff;">🔒 Verschlüsseltes Backup</h2>
+                    <p style="margin:0; color:rgba(255,255,255,0.85); font-size:0.9rem;">AES-256-GCM Verschlüsselung mit starkem Passwort</p>
+                </div>
+            </div>
+            
+            <!-- Content (scrollable) -->
+            <div style="padding:2rem; flex:1; overflow-y:auto;">
+                <!-- Security Info -->
+                <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:12px; padding:1rem; margin-bottom:1.5rem; display:flex; gap:12px;">
+                    <div style="font-size:1.2rem; flex-shrink:0;">🛡️</div>
+                    <div style="font-size:0.9rem; color:var(--text-muted);">
+                        <strong style="color:#10b981;">600.000 PBKDF2 Iterationen</strong><br>
+                        Deine Daten werden mit Military-Grade Verschlüsselung geschützt. Selbst mit Supercomputer unmöglich zu knacken.
+                    </div>
+                </div>
+                
+                <!-- Passwort Eingabe -->
+                <div style="margin-bottom:1.5rem;">
+                    <label style="display:block; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:600; letter-spacing:0.5px;">🔐 Passwort</label>
+                    <input type="password" id="encryptPasswordInput" class="glass-input" placeholder="Mindestens 8 Zeichen" style="font-size:0.95rem;" onkeyup="updatePasswordStrengthIndicator('encryptPasswordInput', 'encryptPasswordStrength')">
+                    
+                    <!-- Strength Indicator -->
+                    <div style="margin-top:0.75rem; display:flex; gap:8px; align-items:center;">
+                        <div style="height:6px; flex:1; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                            <div id="encryptPasswordStrength" style="width:0%; height:100%; background:#ef4444; transition:width 0.3s ease; border-radius:3px;"></div>
+                        </div>
+                        <span id="encryptPasswordStrengthLabel" style="font-size:0.75rem; color:var(--text-muted); min-width:70px; text-align:right;">Sehr schwach</span>
+                    </div>
+                    
+                    <p style="margin:0.5rem 0 0 0; font-size:0.8rem; color:var(--text-muted);">💡 Tipp: Nutze Großbuchstaben, Zahlen & Symbole!</p>
+                </div>
+                
+                <!-- Passwort Bestätigung -->
+                <div style="margin-bottom:1.5rem;">
+                    <label style="display:block; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:600; letter-spacing:0.5px;">✓ Passwort bestätigen</label>
+                    <input type="password" id="encryptPasswordConfirmInput" class="glass-input" placeholder="Passwort wiederholen" style="font-size:0.95rem;" onkeypress="if(event.key==='Enter') exportEncryptedBackup();">
+                </div>
+                
+                <!-- Validation Message -->
+                <div id="passwordValidationMsg" style="display:none; padding:0.75rem; border-radius:8px; margin-bottom:1rem; font-size:0.85rem; font-weight:500;"></div>
+                
+                <!-- Security Checklist -->
+                <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px; padding:1rem; margin-bottom:1.5rem;">
+                    <div style="font-size:0.85rem; font-weight:600; margin-bottom:0.75rem; color:var(--text-main);">✔️ Sicherheits-Checkliste:</div>
+                    <ul style="margin:0; padding-left:20px; font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
+                        <li>Speichere Backup an <strong>sicherer Stelle</strong> (USB-Stick, verschlüsselte Cloud)</li>
+                        <li>Passwort <strong>nicht</strong> im Backup speichern (separate Notes)</li>
+                        <li>Regelmäßig <strong>neue Backups</strong> erstellen (wöchentlich empfohlen)</li>
+                        <li>Teste <strong>Wiederherstellung</strong> ab und zu</li>
+                        <li>Alte Backups nach 6 Monaten <strong>löschen</strong></li>
+                    </ul>
+                </div>
+                
+                <!-- Technical Details (Optional) -->
+                <details style="cursor:pointer;">
+                    <summary style="font-size:0.85rem; color:var(--text-muted); user-select:none; display:flex; align-items:center; gap:6px;">
+                        <span>🔧</span> Technische Details anzeigen
+                    </summary>
+                    <div style="margin-top:0.75rem; font-size:0.8rem; color:var(--text-muted); font-family:var(--font-mono); line-height:1.5; padding:0.75rem; background:rgba(0,0,0,0.3); border-radius:8px;">
+                        <div>Algorithmus: <strong>AES-256-GCM</strong></div>
+                        <div>Key Derivation: <strong>PBKDF2-SHA256</strong></div>
+                        <div>Iterations: <strong>600.000</strong> (OWASP 2023)</div>
+                        <div>Salt Length: <strong>32 Bytes</strong></div>
+                        <div>IV Length: <strong>12 Bytes</strong></div>
+                        <div>Authentication Tag: <strong>128 Bits</strong></div>
+                    </div>
+                </details>
+            </div>
+            
+            <!-- Footer with Big Download Button -->
+            <div style="padding:1.5rem; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; flex-shrink:0;">
+                <button class="btn" onclick="document.getElementById('encryptedBackupModal').classList.remove('active');" style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.4); color:#fff; padding:12px 24px; border-radius:10px;">Abbrechen</button>
+                <button id="encryptExportBtn" class="btn btn-primary" onclick="exportEncryptedBackup();" style="background:linear-gradient(135deg, #10b981, #06b6d4); padding:12px 32px; border-radius:10px; font-size:1rem; font-weight:700; box-shadow: 0 8px 20px rgba(16,185,129,0.3); transition: all 0.2s ease;" onmouseover="this.style.boxShadow='0 12px 30px rgba(16,185,129,0.5); transform: translateY(-2px);'" onmouseout="this.style.boxShadow='0 8px 20px rgba(16,185,129,0.3); transform: translateY(0);'">⬇️ Verschlüsselt herunterladen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ICAL/ICS EXPORT MODAL -->
+    <div class="modal" id="iCalExportModal">
+        <div class="modal-box" style="width:600px; padding:0; overflow:hidden; display:flex; flex-direction:column; max-height:90vh;">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg, #f59e0b, #ec4899); padding:2rem; position:relative; overflow:hidden; flex-shrink:0;">
+                <div style="position:absolute; top:0; right:-40px; width:180px; height:180px; background:radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); border-radius:50%;"></div>
+                
+                <div style="position:relative; z-index:1;">
+                    <h2 style="margin:0 0 0.5rem 0; font-size:1.4rem; color:#fff;">🗓️ iCalendar Export</h2>
+                    <p style="margin:0; color:rgba(255,255,255,0.85); font-size:0.9rem;">Kompatibel mit Google Calendar, Outlook & Apple Calendar</p>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div style="padding:2rem; flex:1; overflow-y:auto;">
+                <!-- Info Box -->
+                <div style="background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.2); border-radius:12px; padding:1rem; margin-bottom:1.5rem; display:flex; gap:12px;">
+                    <div style="font-size:1.2rem; flex-shrink:0;">📅</div>
+                    <div style="font-size:0.9rem; color:var(--text-muted);">
+                        <strong style="color:#f59e0b;">RFC 5545 Standard</strong><br>
+                        Exportiere deine Zeiteinträge als .ics Datei und importiere sie in deinen Lieblings-Kalender!
+                    </div>
+                </div>
+
+                <!-- Date Range Selection -->
+                <div style="margin-bottom:1.5rem;">
+                    <label style="display:block; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:600; letter-spacing:0.5px;">📆 Zeitraum</label>
+                    <select id="iCalDateRange" class="glass-input" style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:#fff; font-size:0.95rem; cursor:pointer;">
+                        <option value="today">Heute</option>
+                        <option value="week">Diese Woche</option>
+                        <option value="month" selected>Dieser Monat</option>
+                        <option value="year">Dieses Jahr</option>
+                        <option value="all">Alle Einträge</option>
+                    </select>
+                </div>
+
+                <!-- Type Filter -->
+                <div style="margin-bottom:1.5rem;">
+                    <label style="display:block; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:600; letter-spacing:0.5px;">🏷️ Eintrag-Typ</label>
+                    <select id="iCalTypeFilter" class="glass-input" style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:#fff; font-size:0.95rem; cursor:pointer;">
+                        <option value="all" selected>Alle Typen</option>
+                        <option value="work">⏱️ Arbeit</option>
+                        <option value="school">🎓 Schule</option>
+                        <option value="vacation">🏖️ Urlaub</option>
+                        <option value="gleittag">⚡ Gleittag</option>
+                        <option value="sick">🤒 Krankheit</option>
+                        <option value="holiday">🎉 Feiertag</option>
+                    </select>
+                </div>
+
+                <!-- Include Alarms -->
+                <div style="margin-bottom:1.5rem;">
+                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:12px; background:rgba(255,255,255,0.02); border-radius:10px; border:1px solid var(--border);">
+                        <input type="checkbox" id="iCalIncludeAlarms" checked style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                        <div>
+                            <div style="color:var(--text-main); font-weight:500;">🔔 Erinnerungen einbeziehen</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">15 Minuten vor jedem Eintrag</div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Compatibility Info -->
+                <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px; padding:1rem;">
+                    <div style="font-size:0.85rem; font-weight:600; margin-bottom:0.75rem; color:var(--text-main);">✔️ Unterstützte Kalender:</div>
+                    <ul style="margin:0; padding-left:20px; font-size:0.85rem; color:var(--text-muted); line-height:1.8;">
+                        <li>📍 Google Calendar</li>
+                        <li>📍 Microsoft Outlook</li>
+                        <li>📍 Apple Calendar (iCal)</li>
+                        <li>📍 Mozilla Thunderbird</li>
+                        <li>📍 Nextcloud Calendar</li>
+                        <li>📍 Jede RFC 5545 kompatible App</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div style="padding:1.5rem; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; flex-shrink:0;">
+                <button class="btn" onclick="document.getElementById('iCalExportModal').classList.remove('active');" style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.4); color:#fff; padding:12px 24px; border-radius:10px;">Abbrechen</button>
+                <button class="btn btn-primary" onclick="generateAndDownloadICalFile();" style="background:linear-gradient(135deg, #f59e0b, #ec4899); padding:12px 32px; border-radius:10px; font-size:1rem; font-weight:700; box-shadow: 0 8px 20px rgba(245,158,11,0.3); transition: all 0.2s ease;" onmouseover="this.style.boxShadow='0 12px 30px rgba(245,158,11,0.5); transform: translateY(-2px);'" onmouseout="this.style.boxShadow='0 8px 20px rgba(245,158,11,0.3); transform: translateY(0);'">📥 Exportieren</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ENCRYPTED BACKUP IMPORT MODAL -->
+    <div class="modal" id="importEncryptedBackupModal">
+        <div class="modal-box" style="width:650px; padding:0; overflow:hidden;">
+            <!-- Header -->
+            <div style="background:linear-gradient(135deg, #06b6d4, var(--primary)); padding:2rem; position:relative; overflow:hidden;">
+                <div style="position:absolute; top:0; right:-40px; width:180px; height:180px; background:radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); border-radius:50%;"></div>
+                
+                <div style="position:relative; z-index:1;">
+                    <h2 style="margin:0 0 0.5rem 0; font-size:1.4rem; color:#fff;">🔓 Backup wiederherstellen</h2>
+                    <p style="margin:0; color:rgba(255,255,255,0.85); font-size:0.9rem;">Entschlüssele dein verschlüsseltes Backup</p>
+                </div>
+            </div>
+            
+            <!-- Content -->
+            <div style="padding:2rem; max-height:70vh; overflow-y:auto;">
+                <!-- File Info -->
+                <div style="background:rgba(var(--primary-rgb),0.08); border:1px solid rgba(var(--primary-rgb),0.2); border-radius:12px; padding:1rem; margin-bottom:1.5rem;">
+                    <div style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">📄 <strong>Backup-Datei</strong></div>
+                    <div style="font-size:0.9rem; color:var(--text-main); word-break:break-all;" id="importEncryptedFileName">—</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;" id="importEncryptedFileSize">—</div>
+                </div>
+                
+                <!-- Passwort Eingabe -->
+                <div style="margin-bottom:1.5rem;">
+                    <label style="display:block; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:600; letter-spacing:0.5px;">🔐 Backup-Passwort</label>
+                    <input type="password" id="importEncryptPasswordInput" class="glass-input" placeholder="Gib das Passwort ein..." style="font-size:0.95rem;">
+                </div>
+                
+                <!-- Warning -->
+                <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:12px; padding:1rem; margin-bottom:1.5rem; display:flex; gap:12px;">
+                    <div style="font-size:1.2rem; flex-shrink:0;">⚠️</div>
+                    <div style="font-size:0.9rem; color:var(--text-muted);">
+                        <strong style="color:#ef4444;">ACHTUNG:</strong> Deine aktuellen Daten werden <strong>vollständig ersetzt</strong>. Bitte stelle sicher, dass du die aktuellen Daten nicht mehr brauchst.
+                    </div>
+                </div>
+                
+                <!-- Info -->
+                <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px; padding:1rem;">
+                    <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">
+                        <div>✓ Nur der <strong>korrekte Passwort</strong> kann Backup entschlüsseln</div>
+                        <div style="margin-top:0.5rem;">✓ Fehlerhafte Datei oder Passwort = Import schlägt fehl</div>
+                        <div style="margin-top:0.5rem;">✓ Integrität wird automatisch verifiziert</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div style="padding:1.5rem; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end;">
+                <button class="btn" onclick="document.getElementById('importEncryptedBackupModal').classList.remove('active'); window.pendingEncryptedBackupFile = null;" style="background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.4); color:#fff;">Abbrechen</button>
+                <button id="importEncryptDecryptBtn" class="btn btn-primary" onclick="finalizeImportEncryptedBackup();" style="background:linear-gradient(135deg, #06b6d4, var(--primary));">🔓 Backup wiederherstellen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOUR CONFETTI CONTAINER -->
+    <div class="tour-confetti" id="tourConfetti"></div>
+
+    <!-- QUICK HELP MODAL (Kompakt) -->
+    <div class="modal" id="quickHelpModal">
+        <div class="modal-box" style="width:520px; padding:1.25rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="margin:0;">❓ Schnell-Hilfe</h3>
+                <button onclick="closeQuickHelp()" style="background:none; border:none; color:#fff; font-size:1.25rem; cursor:pointer;">&times;</button>
+            </div>
+
+            <div style="line-height:1.6; color:var(--text-muted);">
+                <p style="margin:0 0 8px 0;">Kurze Übersicht wichtiger Aktionen:</p>
+                <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
+                    <li><strong>S</strong> : Timer starten</li>
+                    <li><strong>P</strong> : Timer pausieren</li>
+                    <li><strong>E</strong> : Timer stoppen</li>
+                    <li><strong>Ctrl/Cmd+Enter</strong> : Formular speichern</li>
+                </ul>
+
+                <p style="margin:0 0 8px 0;">Schnellaktionen:</p>
+                <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
+                    <li>„Jetzt“-Buttons neben Start/Ende fügen die aktuelle Uhrzeit (HH:MM) ein.</li>
+                    <li>Entwürfe werden automatisch gespeichert; im Formular kannst du sie wiederherstellen oder löschen.</li>
+                </ul>
+
+                <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+                    <button class="btn" onclick="startOnboardingTour()">Tour starten</button>
+                    <button class="btn btn-primary" onclick="closeQuickHelp()">Schließen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADVANCED EDIT ENTRY MODAL -->
+    <div class="modal" id="editEntryModal">
+        <div class="modal-box edit-modal-advanced">
+            <!-- Header -->
+            <div class="edit-modal-header">
+                <div class="edit-modal-header-content">
+                    <div class="edit-modal-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="edit-modal-title">Eintrag bearbeiten</h3>
+                        <p class="edit-modal-subtitle" id="editModalSubtitle">Vollständige Nachbearbeitung</p>
+                    </div>
+                </div>
+                <button class="edit-modal-close" onclick="closeEditModal()" aria-label="Schließen">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <!-- Body -->
+            <div class="edit-modal-body">
+                <!-- Row 1: Datum & Typ -->
+                <div class="edit-row">
+                    <div class="edit-field">
+                        <label class="edit-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            Datum
+                        </label>
+                        <input type="date" id="editInpDate" class="edit-input">
+                    </div>
+                    <div class="edit-field">
+                        <label class="edit-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                            Typ
+                        </label>
+                        <select id="editInpType" class="edit-select" onchange="editTypeChanged()">
+                            <option value="work">💼 Arbeit</option>
+                            <option value="school">📚 Berufsschule</option>
+                            <option value="vacation">🌴 Urlaub</option>
+                            <option value="gleittag">⚡ Gleittag</option>
+                            <option value="sick">💊 Krank</option>
+                            <option value="holiday">🎉 Feiertag</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Zeit-Sektion (nur für Arbeit sichtbar) -->
+                <div class="edit-section" id="editTimeSection">
+                    <div class="edit-section-header">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Arbeitszeit
+                    </div>
+                    <div class="edit-time-grid">
+                        <div class="edit-field">
+                            <label class="edit-label">Beginn</label>
+                            <input type="time" id="editInpStart" class="edit-input edit-time" onchange="recalcEditWorked()">
+                        </div>
+                        <div class="edit-field">
+                            <label class="edit-label">Ende</label>
+                            <input type="time" id="editInpEnd" class="edit-input edit-time" onchange="recalcEditWorked()">
+                        </div>
+                        <div class="edit-field">
+                            <label class="edit-label">Pause (Min)</label>
+                            <input type="number" id="editInpBreak" class="edit-input" min="0" step="5" placeholder="30" onchange="recalcEditWorked()">
+                        </div>
+                    </div>
+                    <!-- Berechnete Arbeitszeit -->
+                    <div class="edit-calc-row">
+                        <div class="edit-calc-item">
+                            <span class="edit-calc-label">Brutto:</span>
+                            <span class="edit-calc-value" id="editCalcGross">—</span>
+                        </div>
+                        <div class="edit-calc-item">
+                            <span class="edit-calc-label">Pause:</span>
+                            <span class="edit-calc-value" id="editCalcBreak">—</span>
+                        </div>
+                        <div class="edit-calc-item highlight">
+                            <span class="edit-calc-label">Netto:</span>
+                            <span class="edit-calc-value" id="editCalcNet">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manuelle Stunden (Alternative/Override) -->
+                <div class="edit-row">
+                    <div class="edit-field full">
+                        <label class="edit-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            Geleistete Stunden (Dezimal)
+                            <span class="edit-hint">— überschreibt Zeit-Berechnung</span>
+                        </label>
+                        <input type="number" id="editInpHours" class="edit-input" step="0.25" placeholder="z.B. 8.5" onchange="editHoursManualChanged()">
+                    </div>
+                </div>
+
+                <!-- Projekt -->
+                <div class="edit-row">
+                    <div class="edit-field full">
+                        <label class="edit-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                            Projekt / Kunde
+                        </label>
+                        <input type="text" id="editInpProject" class="edit-input" list="editProjectList" placeholder="Projekt auswählen oder eingeben">
+                        <datalist id="editProjectList"></datalist>
+                    </div>
+                </div>
+
+                <!-- Notizen -->
+                <div class="edit-row">
+                    <div class="edit-field full">
+                        <label class="edit-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                            Notizen / Info
+                        </label>
+                        <textarea id="editInpNotes" class="edit-textarea" placeholder="z.B. Bugfix in Modul X, Meeting mit Kunde..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Erweiterte Optionen (kollabierbar) -->
+                <details class="edit-advanced-section">
+                    <summary class="edit-advanced-toggle">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                        Erweiterte Optionen
+                    </summary>
+                    <div class="edit-advanced-content">
+                        <div class="edit-row">
+                            <div class="edit-field">
+                                <label class="edit-label">Soll-Stunden</label>
+                                <input type="number" id="editInpExpected" class="edit-input" step="0.25" placeholder="Auto">
+                            </div>
+                            <div class="edit-field">
+                                <label class="edit-label">Saldo (Auto)</label>
+                                <input type="text" id="editInpDiff" class="edit-input" readonly style="opacity:0.6;">
+                            </div>
+                        </div>
+                        <div class="edit-row">
+                            <div class="edit-field full">
+                                <label class="edit-label">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg>
+                                    Mood
+                                </label>
+                                <select id="editInpMood" class="edit-select">
+                                    <option value="">— Kein Mood —</option>
+                                    <option value="energized">⚡ Energized</option>
+                                    <option value="focused">🎯 Focused</option>
+                                    <option value="productive">🚀 Productive</option>
+                                    <option value="creative">💡 Creative</option>
+                                    <option value="neutral">😐 Neutral</option>
+                                    <option value="tired">😴 Tired</option>
+                                    <option value="stressed">😰 Stressed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Footer -->
+            <div class="edit-modal-footer">
+                <div class="edit-footer-info" id="editFooterInfo">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span id="editInfoText">Änderungen werden sofort gespeichert</span>
+                </div>
+                <div class="edit-footer-actions">
+                    <button class="edit-btn edit-btn-ghost" onclick="closeEditModal()">Abbrechen</button>
+                    <button class="edit-btn edit-btn-primary" onclick="saveEditEntry()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        Speichern
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WEATHER MODAL -->
+    <div class="weather-modal" id="weatherModal" onclick="if(event.target === this) closeWeatherModal()">
+        <div class="weather-modal-box">
+            <div class="weather-header">
+                <div class="weather-header-left">
+                    <span class="weather-header-icon" id="weatherHeaderIcon">🌤️</span>
+                    <div>
+                        <div class="weather-location" id="weatherLocation">Standort wird ermittelt...</div>
+                        <div class="weather-date" id="weatherDate"></div>
+                    </div>
+                </div>
+                <button class="weather-close" onclick="closeWeatherModal()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div id="weatherContent">
+                <div class="weather-loading">
+                    <div class="weather-loading-spinner"></div>
+                    <div>Wetter wird geladen...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRASH / PAPERKORB MODAL -->
+    <div class="modal" id="trashModal" style="display:none;">
+        <div class="modal-box" style="width:90%; max-width:920px; padding:1.25rem 1.5rem; background:var(--bg-glass); backdrop-filter: blur(20px); border:1px solid rgba(var(--primary-rgb),0.12); border-radius:18px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="margin:0; color:var(--primary);">🗑️ Papierkorb</h3>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button class="btn btn-ghost" onclick="closeTrashModal()">Schließen</button>
+                    <button class="btn btn-danger" onclick="emptyTrashConfirm()">Papierkorb leeren</button>
+                </div>
+            </div>
+
+                <div style="display:flex; gap:12px; margin-top:1rem; margin-bottom:12px; align-items:center;">
+                <div style="display:flex; gap:8px; align-items:center; padding:8px 12px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px;">
+                    <div style="font-weight:700; color:var(--text-main);">Gesamt:</div>
+                    <div id="trashCountHeader" style="font-weight:700; color:var(--primary);">0</div>
+                </div>
+                <div style="flex:1; color:var(--text-muted);">Auto‑Leerung nach (Tagen)</div>
+                <input id="trashAutoDaysInput" type="number" value="30" min="0" style="width:120px; padding:8px; border-radius:8px; background:transparent; border:1px solid var(--border); color:var(--text-main);" />
+                <button class="btn" onclick="saveTrashAutoDays()">Speichern</button>
+            </div>
+
+            <div id="trashList" style="display:flex; flex-direction:column; gap:10px; max-height:56vh; overflow:auto; padding-right:6px;">
+                <!-- Items filled by JS -->
+            </div>
+            <button class="modal-close-x" aria-label="Schließen" onclick="closeTrashModal()" title="Schließen">×</button>
+
+            <div style="display:flex; justify-content:space-between; margin-top:1rem;">
+                <div>
+                    <input type="checkbox" id="trashSelectAll" onchange="trashSelectAll(this)" /> <label for="trashSelectAll">Alle auswählen</label>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn" onclick="trashBulkRestore()">Wiederherstellen (Markierte)</button>
+                    <button class="btn btn-danger" onclick="trashBulkDeleteConfirm()">Löschen (Markierte)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Break Settings Modal -->
+    <div class="modal" id="breakSettingsModal" style="display:none;">
+        <div class="modal-box" style="width:90%; max-width:400px; padding:24px; backdrop-filter:blur(20px); border-radius:16px; border:1px solid rgba(var(--primary-rgb), 0.3); position:relative;">
+            <h3 style="margin:0 0 20px 0; color:var(--primary);">🔔 Break Reminder Einstellungen</h3>
+            
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                    <input type="checkbox" id="breakEnabledCheckbox" onchange="toggleBreakEnabled()" />
+                    <span>Break Reminders aktivieren</span>
+                </label>
+                
+                <div>
+                    <label for="breakIntervalSlider" style="display:block; margin-bottom:8px;">Intervall: <span id="intervalValue">2</span> Stunden</label>
+                    <input type="range" id="breakIntervalSlider" min="1" max="4" value="2" step="0.5" style="width:100%;" oninput="updateIntervalDisplay()" disabled />
+                </div>
+                
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button class="btn" onclick="closeBreakSettingsModal()">Abbrechen</button>
+                    <button class="btn btn-primary" onclick="saveBreakSettings()">Speichern</button>
+                </div>
+            </div>
+            
+            <button class="modal-close-x" aria-label="Schließen" onclick="closeBreakSettingsModal()" title="Schließen">×</button>
+        </div>
+    </div>
+
+    <!-- More Actions Modal -->
+    <div class="modal" id="moreActionsModal" style="display:none;">
+        <div class="modal-box" style="width:90%; max-width:350px; padding:24px; backdrop-filter:blur(20px); border-radius:16px; border:1px solid rgba(var(--primary-rgb), 0.3); position:relative;">
+            <h3 style="margin:0 0 20px 0; color:var(--primary);">⋯ Weitere Aktionen</h3>
+            
+            <div style="display:grid; grid-template-columns: 1fr; gap:12px;">
+                <button class="btn btn-ghost" onclick="openBreakSettingsModal(); closeMoreActionsModal()">🔔 Break Settings</button>
+                <button class="btn btn-ghost" onclick="window.webLLMIntegration.clearCache(); closeMoreActionsModal()" title="Löscht den WebLLM Browser-Cache">🗑️ WebLLM Cache leeren</button>
+            </div>
+            
+            <button class="modal-close-x" aria-label="Schließen" onclick="closeMoreActionsModal()" title="Schließen">×</button>
+        </div>
+    </div>
+
+    <!-- Azubi Skill-Card Modal -->
+    <div class="modal" id="skillCardModal" style="display:none;">
+        <div class="modal-box" style="width:90%; max-width:420px; padding:0; backdrop-filter:blur(24px); border-radius:20px; border:1px solid rgba(var(--primary-rgb),0.25); position:relative; overflow:hidden; background:rgba(12,12,16,0.95);">
+            <div style="padding:20px 24px 12px; display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0; font-size:1rem; font-weight:700; color:var(--text-main);">🃏 Deine Azubi Skill-Card</h3>
+                <button class="modal-close-x" aria-label="Schließen" onclick="closeSkillCardModal()" title="Schließen">×</button>
+            </div>
+            <div style="padding:8px 24px 20px; display:flex; flex-direction:column; align-items:center; gap:16px;">
+                <canvas id="skillCardCanvas" width="360" height="520" style="border-radius:14px; max-width:100%; height:auto;"></canvas>
+                <div style="display:flex; gap:10px; width:100%;">
+                    <button class="btn btn-primary" onclick="downloadSkillCard()" style="flex:1; background:var(--primary); padding:10px; border-radius:12px; font-weight:600; font-size:0.85rem;">📥 Speichern</button>
+                    <button class="btn btn-primary" id="skillCardShareBtn" onclick="shareSkillCard()" style="flex:1; background:linear-gradient(135deg, #06b6d4, var(--primary)); padding:10px; border-radius:12px; font-weight:600; font-size:0.85rem;">📤 Teilen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Statistics Modal -->
+    <div class="modal" id="exportStatsModal" style="display:none;">
+        <div class="modal-box export-modal-box" style="position:relative;">
+            <button class="modal-close-x" aria-label="Schließen" onclick="document.getElementById('exportStatsModal').style.display='none'" title="Schließen">×</button>
+            <div class="export-header">
+                <h3>📊 Export & Statistik</h3>
+            </div>
+            <div class="export-stats-grid" id="exportStatsGrid"></div>
+            <div style="padding:0 28px 8px;"><div style="font-size:0.8rem; font-weight:700; color:var(--text-main); letter-spacing:0.3px;">Export-Modus wählen</div></div>
+            <div class="export-options">
+                <div class="export-option-card opt-minimal" onclick="runExportMinimal()">
+                    <div class="export-opt-icon">📦</div>
+                    <div class="export-opt-title">Minimal</div>
+                    <div class="export-opt-desc">Kompaktes JSON-Backup. Nur Daten, kein Schnickschnack. Perfekt für Speicher & Archiv.</div>
+                    <span class="export-opt-size" id="exportSizeMinimal">~0 KB</span>
+                </div>
+                <div class="export-option-card opt-max" onclick="runExportMax()">
+                    <div class="export-opt-icon">🚀</div>
+                    <div class="export-opt-title">MAX Report</div>
+                    <div class="export-opt-desc">Vollständiger HTML-Report mit Diagrammen, Statistiken & schickem UI. Offline lesbar.</div>
+                    <span class="export-opt-size" id="exportSizeMax">~0 KB</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mood Selector Modal -->
+    <div class="modal" id="moodSelectorModal" style="display:none;">
+        <div class="modal-box" style="width:90%; max-width:400px; padding:24px; backdrop-filter:blur(20px); border-radius:16px; border:1px solid rgba(var(--primary-rgb), 0.3); position:relative;">
+            <h4 style="margin:0 0 20px 0; color:var(--primary); text-align:center; font-size:1.1rem;">Wie war deine Stimmung nach diesem Eintrag?</h4>
+            
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); gap:12px; justify-items:center;">
+                <button class="mood-btn" onclick="setMood('😄')" title="Sehr glücklich">😄</button>
+                <button class="mood-btn" onclick="setMood('😊')" title="Glücklich">😊</button>
+                <button class="mood-btn" onclick="setMood('🙂')" title="Zufrieden">🙂</button>
+                <button class="mood-btn" onclick="setMood('😐')" title="Neutral">😐</button>
+                <button class="mood-btn" onclick="setMood('😕')" title="Unzufrieden">😕</button>
+                <button class="mood-btn" onclick="setMood('😞')" title="Traurig">😞</button>
+                <button class="mood-btn" onclick="setMood('😠')" title="Wütend">😠</button>
+                <button class="mood-btn" onclick="setMood('🤒')" title="Krank">🤒</button>
+                <button class="mood-btn" onclick="setMood('😴')" title="Müde">😴</button>
+                <button class="mood-btn" onclick="setMood('🤯')" title="Überwältigt">🤯</button>
+            </div>
+            
+            <div style="text-align:center; margin-top:20px;">
+                <button class="btn btn-ghost" onclick="skipMood()" style="font-size:0.9rem;">Überspringen</button>
+            </div>
+        </div>
+    </div>
+

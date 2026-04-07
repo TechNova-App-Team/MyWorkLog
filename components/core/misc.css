@@ -1,0 +1,244 @@
+        /* --- ONBOARDING TOUR STYLES - SPOTLIGHT EDITION --- */
+        .tour-confetti { position:fixed;inset:0;pointer-events:none;z-index:10002; }
+        @keyframes confettiFall { 0%{transform:translateY(-10vh) rotate(0);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }
+        .confetti-piece {
+            position:absolute;width:10px;height:10px;top:-10px;
+            animation:confettiFall var(--fall-dur,3s) var(--fall-del,0s) linear forwards;
+        }
+
+
+
+        /* ===== NETWORK STATUS INDICATOR ===== */
+        .net-status {
+            position: fixed;
+            bottom: 10px;
+            left: 8px;
+            z-index: 1500;
+            display: none;
+            flex-direction: column;
+            align-items: flex-start;
+            font-family: var(--font-main);
+            opacity: 0.4;
+            transition: opacity 0.3s ease;
+        }
+        .net-status:hover,
+        .net-status.expanded {
+            opacity: 1;
+        }
+        .net-status-pill {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            padding: 6px;
+            background: rgba(10, 10, 14, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            user-select: none;
+            overflow: hidden;
+        }
+        .net-status:hover .net-status-pill,
+        .net-status.expanded .net-status-pill {
+            gap: 8px;
+            padding: 7px 13px;
+            background: rgba(10, 10, 14, 0.88);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 10px;
+        }
+        .net-status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+        .net-status-dot.online { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+        .net-status-dot.offline { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.5); animation: netPulse 1.5s infinite; }
+        .net-status-dot.reconnecting { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.5); animation: netPulse 1s infinite; }
+        @keyframes netPulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+        .net-status-label,
+        .net-status-latency {
+            max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+            transition: max-width 0.35s ease, opacity 0.25s ease;
+        }
+        .net-status-label { font-size: 11.5px; font-weight: 600; color: #cbd5e1; letter-spacing: 0.2px; }
+        .net-status-latency { font-size: 10.5px; font-weight: 500; color: #64748b; font-family: var(--font-mono); }
+        .net-status:hover .net-status-label,
+        .net-status.expanded .net-status-label,
+        .net-status:hover .net-status-latency,
+        .net-status.expanded .net-status-latency {
+            max-width: 80px; opacity: 1;
+        }
+        .net-queue-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: #f59e0b; color: #000;
+            font-size: 9px; font-weight: 800;
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid rgba(10,10,14,0.88);
+        }
+        .net-status-panel {
+            margin-top: 6px;
+            background: rgba(10, 10, 16, 0.94);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            width: 272px;
+            max-height: 0; overflow: hidden; opacity: 0;
+            padding: 0 14px;
+            transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.35s ease;
+        }
+        .net-status-panel.open { max-height: 420px; opacity: 1; padding: 14px; }
+        .net-panel-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .net-panel-row:last-child { border-bottom: none; }
+        .net-panel-key { font-size: 11.5px; color: #94a3b8; font-weight: 500; }
+        .net-panel-val { font-size: 11.5px; color: #e2e8f0; font-weight: 600; font-family: var(--font-mono); }
+        .net-panel-title { font-size: 12.5px; font-weight: 700; color: #f1f5f9; margin-bottom: 8px; padding-bottom: 7px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; }
+        .net-quality-bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,0.06); margin-top: 8px; overflow: hidden; }
+        .net-quality-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease, background 0.3s; }
+
+
+        /* ===== UPDATE TOAST ===== */
+        .upd-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            left: auto;
+            z-index: 2500;
+            opacity: 0;
+            transform: translateY(12px) scale(0.98);
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .upd-toast.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+        .upd-toast-card {
+            width: 320px;
+            padding: 16px;
+            background: #18181b;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(255,255,255,0.05) inset;
+            font-family: var(--font-main);
+        }
+        .upd-toast-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .upd-toast-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .upd-toast-icon svg { width: 18px; height: 18px; stroke: #fff; fill: none; }
+        .upd-toast-body { flex: 1; min-width: 0; padding-top: 1px; }
+        .upd-toast-title {
+            font-size: 13px;
+            font-weight: 650;
+            color: #fafafa;
+            margin: 0;
+            line-height: 1.3;
+        }
+        .upd-toast-desc {
+            font-size: 12px;
+            color: #71717a;
+            margin: 3px 0 0;
+            line-height: 1.35;
+        }
+        .upd-toast-close {
+            background: none; border: none; color: #52525b; cursor: pointer;
+            padding: 2px; margin: -2px -2px 0 0; line-height: 1; font-size: 16px;
+            transition: color 0.15s;
+        }
+        .upd-toast-close:hover { color: #a1a1aa; }
+        .upd-toast-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .upd-toast-btn {
+            padding: 8px 0;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+            border: none;
+            font-family: var(--font-main);
+        }
+        .upd-toast-btn-secondary {
+            background: #27272a;
+            color: #a1a1aa;
+        }
+        .upd-toast-btn-secondary:hover {
+            background: #303033;
+            color: #d4d4d8;
+        }
+        .upd-toast-btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+        .upd-toast-btn-primary:hover {
+            background: #9333ea;
+        }
+
+        @media (max-width: 600px) {
+            .net-status { bottom: 6px; left: 6px; }
+            .net-status-panel { width: 250px; }
+            .upd-toast { bottom: 12px; right: 12px; left: 12px; }
+            .upd-toast-card { width: auto; }
+            #toastContainer { right: 10px; left: 10px; top: 12px; }
+            #toastContainer .tt-toast { min-width: unset; max-width: unset; }
+        }
+
+
+        /* --- Break Warning Banner --- */
+        .break-warning-banner {
+            display: none;
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(245,158,11,0.95) 0%, rgba(239,68,68,0.95) 100%);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            z-index: 160;
+            box-shadow: 0 8px 32px rgba(239,68,68,0.3);
+            backdrop-filter: blur(10px);
+            animation: breakPulse 2s ease-in-out infinite;
+            cursor: pointer;
+            text-align: center;
+            max-width: 90vw;
+        }
+        .break-warning-banner.visible {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @keyframes breakPulse {
+            0%, 100% { box-shadow: 0 8px 32px rgba(239,68,68,0.3); }
+            50% { box-shadow: 0 8px 40px rgba(239,68,68,0.5); }
+        }
+        @media (min-width: 768px) {
+            .break-warning-banner {
+                bottom: 30px;
+            }
+        }

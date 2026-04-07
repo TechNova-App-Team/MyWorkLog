@@ -1,0 +1,1284 @@
+(function(){
+        try {
+            if (!window.initializeTouchOptimizations) {
+                var s = document.createElement('script');
+                s.src = './Assets/js/touch-mobile-optimizations.js';
+                s.defer = true;
+                s.onload = function(){ if (window.initializeTouchOptimizations) window.initializeTouchOptimizations(); };
+                document.head.appendChild(s);
+            } else {
+                // already available
+                window.initializeTouchOptimizations && window.initializeTouchOptimizations();
+            }
+        } catch(e) { console.warn('Touch init failed', e); }
+    })();
+
+// ============================================
+// VOICE INPUT FEATURE (NEU: RICHTIG MODERN!)
+// ============================================
+
+function startVoiceInput() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        showCustomMessage('âŒ Stimmeingabe nicht unterstÃ¼tzt', 'Dein Browser unterstÃ¼tzt keine Spracherkennung. Verwende Chrome oder Edge.', 'error');
+        return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'de-DE'; // Deutsch
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = function() {
+        document.getElementById('voiceBtn').textContent = 'ðŸŽ¤ HÃ¶rt zu...';
+        document.getElementById('voiceBtn').style.background = 'rgba(239,68,68,0.2)';
+        document.getElementById('voiceBtn').style.borderColor = 'rgba(239,68,68,0.3)';
+        document.getElementById('voiceBtn').style.color = '#ef4444';
+        showCustomMessage('ðŸŽ¤ Stimmeingabe aktiv', 'Sprich deinen Eintrag (z.B. "Arbeit von 9 bis 17 Projekt Alpha")', 'info');
+    };
+
+    recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        parseVoiceCommand(transcript);
+    };
+
+    recognition.onerror = function(event) {
+        showCustomMessage('âŒ Fehler bei Stimmeingabe', 'Versuche es nochmal oder gib manuell ein.', 'error');
+        resetVoiceBtn();
+    };
+
+    recognition.onend = function() {
+        resetVoiceBtn();
+    };
+
+    recognition.start();
+}
+
+function resetVoiceBtn() {
+    document.getElementById('voiceBtn').textContent = 'ðŸŽ¤ Stimmeingabe';
+    document.getElementById('voiceBtn').style.background = 'rgba(59,130,246,0.2)';
+    document.getElementById('voiceBtn').style.borderColor = 'rgba(59,130,246,0.3)';
+    document.getElementById('voiceBtn').style.color = '#3b82f6';
+}
+
+function parseVoiceCommand(transcript) {
+    console.log('Voice transcript:', transcript);
+
+    // Beispiel Parsing: "arbeit von 9 bis 17 projekt alpha notizen bugfix"
+    let type = 'work';
+    let start = '';
+    let end = '';
+    let project = '';
+    let notes = '';
+
+    // Type erkennen
+    if (transcript.includes('schule') || transcript.includes('berufsschule')) {
+        type = 'school';
+    } else if (transcript.includes('urlaub') || transcript.includes('vacation')) {
+        type = 'vacation';
+    } else if (transcript.includes('krank')) {
+        type = 'sick';
+    }
+
+    // Zeiten extrahieren (einfach: suche nach Zahlen)
+    const timeRegex = /(\d{1,2})[:\.]?(\d{2})?/g;
+    const times = [];
+    let match;
+    while ((match = timeRegex.exec(transcript)) !== null) {
+        const hour = parseInt(match[1]);
+        const min = match[2] ? parseInt(match[2]) : 0;
+        times.push(`${hour.toString().padStart(2,'0')}:${min.toString().padStart(2,'0')}`);
+    }
+    if (times.length >= 2) {
+        start = times[0];
+        end = times[1];
+    }
+
+    // Projekt: nach "projekt" oder "kunde"
+    const projectMatch = transcript.match(/(?:projekt|kunde)\s+(.+?)(?:\s+notizen|$)/i);
+    if (projectMatch) {
+        project = projectMatch[1].trim();
+    }
+
+    // Notizen: nach "notizen"
+    const notesMatch = transcript.match(/notizen\s+(.+)/i);
+    if (notesMatch) {
+        notes = notesMatch[1].trim();
+    }
+
+    // Felder fÃ¼llen
+    document.getElementById('inpType').value = type;
+    if (start) document.getElementById('inpStart').value = start;
+    if (end) document.getElementById('inpEnd').value = end;
+    if (project) document.getElementById('inpProject').value = project;
+    if (notes) document.getElementById('inpNotes').value = notes;
+
+    // Toggle time inputs if needed
+    toggleTimeInputs();
+
+    // Save draft
+    if (window.saveDraft) window.saveDraft();
+
+    showCustomMessage('âœ… Stimmeingabe verarbeitet', `Typ: ${type}, Start: ${start}, Ende: ${end}, Projekt: ${project}`, 'success');
+}
+
+// ============================================
+// FOCUS MODE FEATURE (NEU: KRASS MODERN!)
+// ============================================
+
+let focusTimerInterval;
+let focusTimeLeft = 25 * 60; // 25 Minuten
+let focusRunning = false;
+
+const focusQuotes = [
+    "Erfolg ist die Summe kleiner Anstrengungen, die Tag fÃ¼r Tag wiederholt werden.",
+    "Disziplin ist der BrÃ¼ckenpfeiler zwischen Zielen und deren Verwirklichung.",
+    "Fokussierte Arbeit bringt Ergebnisse, Ablenkung bringt nur Ausreden.",
+    "Jeder Experte war einmal ein AnfÃ¤nger. Bleib dran!",
+    "Zeit ist das wertvollste, was wir haben. Nutze sie weise.",
+    "Konzentration ist der SchlÃ¼ssel zur ProduktivitÃ¤t.",
+    "Ein Tag voller Fokus ist besser als eine Woche voller Chaos.",
+    "Deine Zukunft wird von dem geformt, was du heute tust.",
+    "Bleib hungrig, bleib fokussiert, bleib diszipliniert.",
+    "Jeder Moment zÃ¤hlt â€“ nutze ihn fÃ¼r etwas GroÃŸes."
+];
+
+function startFocusMode() {
+    const overlay = document.getElementById('focusModeOverlay');
+    overlay.style.display = 'flex';
+    
+    // ZufÃ¤lliges Zitat
+    const randomQuote = focusQuotes[Math.floor(Math.random() * focusQuotes.length)];
+    document.getElementById('focusQuote').textContent = `"${randomQuote}"`;
+    
+    // Vollbild versuchen
+    if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(err => {
+            console.warn('Vollbild nicht mÃ¶glich:', err);
+        });
+    }
+    
+    updateFocusTimerDisplay();
+    showCustomMessage('ðŸŽ¯ Focus Mode aktiviert', '25-Minuten-Timer gestartet. Bleib fokussiert!', 'info');
+}
+
+function startFocusTimer() {
+    uEvent('focus-timer-start');
+    if (focusRunning) return;
+    focusRunning = true;
+    document.getElementById('focusStartBtn').disabled = true;
+    document.getElementById('focusPauseBtn').disabled = false;
+    
+    focusTimerInterval = setInterval(() => {
+        focusTimeLeft--;
+        updateFocusTimerDisplay();
+        
+        if (focusTimeLeft <= 0) {
+            clearInterval(focusTimerInterval);
+            focusRunning = false;
+            showCustomMessage('ðŸŽ‰ Focus Session beendet!', 'Gut gemacht! Nimm eine Pause.', 'success');
+            // Optional: Notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Focus Session beendet!', { body: 'Zeit fÃ¼r eine Pause!' });
+            }
+        }
+    }, 1000);
+}
+
+function pauseFocusTimer() {
+    clearInterval(focusTimerInterval);
+    focusRunning = false;
+    document.getElementById('focusStartBtn').disabled = false;
+    document.getElementById('focusPauseBtn').disabled = true;
+}
+
+function resetFocusTimer() {
+    clearInterval(focusTimerInterval);
+    focusRunning = false;
+    focusTimeLeft = 25 * 60;
+    updateFocusTimerDisplay();
+    document.getElementById('focusStartBtn').disabled = false;
+    document.getElementById('focusPauseBtn').disabled = true;
+}
+
+function updateFocusTimerDisplay() {
+    const minutes = Math.floor(focusTimeLeft / 60);
+    const seconds = focusTimeLeft % 60;
+    document.getElementById('focusTimer').textContent = `${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+}
+
+function exitFocusMode() {
+    clearInterval(focusTimerInterval);
+    focusRunning = false;
+    document.getElementById('focusModeOverlay').style.display = 'none';
+    
+    // Vollbild beenden
+    if (document.exitFullscreen) {
+        document.exitFullscreen().catch(err => console.warn('Vollbild beenden fehlgeschlagen:', err));
+    }
+    
+    showCustomMessage('ðŸ‘‹ Focus Mode beendet', 'ZurÃ¼ck zur normalen Ansicht.', 'info');
+}
+
+// ============================================
+// BREAK REMINDERS FEATURE (NEU: KRASS MODERN!)
+// ============================================
+
+let breakReminderInterval;
+let breakRemindersEnabled = false;
+let breakIntervalHours = 2;
+
+function openBreakSettingsModal() {
+    const modal = document.getElementById('breakSettingsModal');
+    modal.style.display = 'flex';
+    
+    // Load current settings
+    document.getElementById('breakEnabledCheckbox').checked = breakRemindersEnabled;
+    document.getElementById('breakIntervalSlider').value = breakIntervalHours;
+    updateIntervalDisplay();
+    toggleBreakEnabled(); // Enable/disable slider
+}
+
+function closeBreakSettingsModal() {
+    document.getElementById('breakSettingsModal').style.display = 'none';
+}
+
+function openMoreActionsModal() {
+    document.getElementById('moreActionsModal').style.display = 'flex';
+}
+
+function closeMoreActionsModal() {
+    document.getElementById('moreActionsModal').style.display = 'none';
+}
+
+// ============================================
+// MOOD TRACKER FEATURE (NEU: CRAZY!)
+// ============================================
+
+let currentMoodEntryId = null;
+
+function openMoodSelector(entryId) {
+    currentMoodEntryId = entryId;
+    document.getElementById('moodSelectorModal').style.display = 'flex';
+}
+
+function setMood(emoji) {
+    if (currentMoodEntryId) {
+        const entry = data.entries.find(e => e.id === currentMoodEntryId);
+        if (entry) {
+            entry.mood = emoji;
+            save();
+            showCustomMessage('âœ… Stimmung gespeichert', `Deine Stimmung: ${emoji}`, 'success');
+        }
+    }
+    closeMoodSelector();
+}
+
+function skipMood() {
+    closeMoodSelector();
+}
+
+function closeMoodSelector() {
+    document.getElementById('moodSelectorModal').style.display = 'none';
+    currentMoodEntryId = null;
+}
+
+function getMoodDescription(emoji) {
+    const descriptions = {
+        'ðŸ˜„': 'Sehr glÃ¼cklich',
+        'ðŸ˜Š': 'GlÃ¼cklich',
+        'ðŸ™‚': 'Zufrieden',
+        'ðŸ˜': 'Neutral',
+        'ðŸ˜•': 'Unzufrieden',
+        'ðŸ˜ž': 'Traurig',
+        'ðŸ˜ ': 'WÃ¼tend',
+        'ðŸ¤’': 'Krank',
+        'ðŸ˜´': 'MÃ¼de',
+        'ðŸ¤¯': 'ÃœberwÃ¤ltigt'
+    };
+    return descriptions[emoji] || 'Unbekannt';
+}
+
+function renderMoodOverview() {
+    const moodContainer = document.getElementById('moodOverview');
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // Filter entries with mood from last 30 days
+    const recentEntries = data.entries.filter(e => e.mood && new Date(e.date) >= thirtyDaysAgo);
+
+    if (recentEntries.length === 0) {
+        moodContainer.innerHTML = '<div style="color:var(--text-muted); font-style:italic;">Noch keine Stimmungen erfasst. Speichere EintrÃ¤ge und wÃ¤hle eine Stimmung!</div>';
+        return;
+    }
+
+    // Group by date
+    const moodByDate = {};
+    recentEntries.forEach(e => {
+        const date = e.date;
+        if (!moodByDate[date]) moodByDate[date] = [];
+        moodByDate[date].push(e.mood);
+    });
+
+    // Create HTML: Show last 30 days, with mood if available
+    let html = '';
+    for (let i = 29; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        const moods = moodByDate[dateStr] || [];
+        const avgMood = moods.length > 0 ? moods[Math.floor(moods.length / 2)] : null; // Median mood
+
+        html += `<div style="display:flex; flex-direction:column; align-items:center; padding:4px; border-radius:6px; background:${avgMood ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)'}; min-width:32px;">
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:2px;">${date.getDate()}</div>
+            <div style="font-size:1.2rem;">${avgMood || 'â€“'}</div>
+        </div>`;
+    }
+
+    moodContainer.innerHTML = html;
+}
+
+// ============================================
+// AI INSIGHTS FEATURE (NEU: CHEF-MÃ„SSIG!)
+// ============================================
+
+function generateInsights() {
+    const insightsEl = document.getElementById('insightsContentModal');
+    insightsEl.innerHTML = '<p>Analysiere Daten... ðŸ¤”</p>';
+
+    setTimeout(() => {
+        const insights = analyzeDataForInsights();
+        let html = '';
+
+        if (insights.length === 0) {
+            html = '<p>Keine Insights verfÃ¼gbar. Mehr Daten sammeln!</p>';
+        } else {
+            html = insights.map(insight => `<div style="margin-bottom:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px;"><strong>${insight.icon}</strong> ${insight.text}</div>`).join('');
+        }
+
+        insightsEl.innerHTML = html;
+    }, 1000); // Simuliere Denkzeit
+}
+
+function analyzeDataForInsights() {
+    const insights = [];
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Filter recent entries
+    const recentEntries = data.entries.filter(e => new Date(e.date) >= monthAgo);
+    const weekEntries = data.entries.filter(e => new Date(e.date) >= weekAgo);
+
+    if (recentEntries.length === 0) return insights;
+
+    // 1. Ãœberstunden Check
+    const totalHours = recentEntries.reduce((sum, e) => sum + e.worked, 0);
+    const avgDaily = totalHours / 30;
+    if (avgDaily > 8) {
+        insights.push({
+            icon: 'âš ï¸',
+            text: `Du arbeitest durchschnittlich ${avgDaily.toFixed(1)}h pro Tag. Ãœberlege, Pausen einzulegen oder Urlaub zu planen.`
+        });
+    }
+
+    // 2. Stimmungs-Analyse
+    const moodEntries = recentEntries.filter(e => e.mood);
+    if (moodEntries.length > 5) {
+        const badMoods = moodEntries.filter(e => ['ðŸ˜ž', 'ðŸ˜ ', 'ðŸ¤’', 'ðŸ˜´', 'ðŸ¤¯'].includes(e.mood)).length;
+        const moodRatio = badMoods / moodEntries.length;
+        if (moodRatio > 0.5) {
+            insights.push({
+                icon: 'ðŸ˜Ÿ',
+                text: `Deine Stimmung war in ${Math.round(moodRatio * 100)}% der FÃ¤lle negativ. Vielleicht mehr Pausen oder Hobbys?`
+            });
+        }
+    }
+
+    // 3. Wochenend-Arbeit
+    const weekendEntries = weekEntries.filter(e => {
+        const day = new Date(e.date).getDay();
+        return day === 0 || day === 6;
+    });
+    if (weekendEntries.length > 2) {
+        insights.push({
+            icon: 'ðŸ–ï¸',
+            text: `Du hast ${weekendEntries.length} Mal am Wochenende gearbeitet. Work-Life-Balance ist wichtig!`
+        });
+    }
+
+    // 4. Saldo-Trend
+    const recentDiffs = recentEntries.slice(-10).reduce((sum, e) => sum + e.diff, 0);
+    if (recentDiffs < -10) {
+        insights.push({
+            icon: 'ðŸ“‰',
+            text: `Dein Saldo sinkt. Plane Ãœberstunden oder korrigiere EintrÃ¤ge.`
+        });
+    } else if (recentDiffs > 10) {
+        insights.push({
+            icon: 'ðŸ“ˆ',
+            text: `Super! Du baust Plusstunden auf. Belohne dich mit einer Pause.`
+        });
+    }
+
+    // 5. Max-Schichten
+    const longShifts = recentEntries.filter(e => e.shiftWarning);
+    if (longShifts.length > 0) {
+        insights.push({
+            icon: 'â°',
+            text: `Du hattest ${longShifts.length} Schichten Ã¼ber 10h. Achte auf Gesundheit!`
+        });
+    }
+
+    // Fallback, wenn keine Insights
+    if (insights.length === 0) {
+        insights.push({
+            icon: 'âœ…',
+            text: 'Alles im grÃ¼nen Bereich! Halte so weiter.'
+        });
+    }
+
+    return insights.slice(0, 3); // Max 3 Insights
+}
+
+function toggleBreakEnabled() {
+    const enabled = document.getElementById('breakEnabledCheckbox').checked;
+    document.getElementById('breakIntervalSlider').disabled = !enabled;
+}
+
+function updateIntervalDisplay() {
+    const value = document.getElementById('breakIntervalSlider').value;
+    document.getElementById('intervalValue').textContent = value;
+}
+
+function saveBreakSettings() {
+    const enabled = document.getElementById('breakEnabledCheckbox').checked;
+    const interval = parseFloat(document.getElementById('breakIntervalSlider').value);
+    
+    breakIntervalHours = interval;
+    localStorage.setItem('breakIntervalHours', interval.toString());
+    
+    if (enabled && !breakRemindersEnabled) {
+        enableBreakReminders();
+    } else if (!enabled && breakRemindersEnabled) {
+        disableBreakReminders();
+    } else if (enabled) {
+        // Restart with new interval
+        disableBreakReminders();
+        enableBreakReminders();
+    }
+    
+    closeBreakSettingsModal();
+    showCustomMessage('âœ… Einstellungen gespeichert', `Break Reminders ${enabled ? 'aktiviert' : 'deaktiviert'} mit ${interval}h Intervall.`, 'success');
+}
+
+function enableBreakReminders() {
+    if (!('Notification' in window) || Notification.permission !== 'granted') {
+        showCustomMessage('âŒ Notifications nicht erlaubt', 'Erlaube Notifications fÃ¼r Break Reminders.', 'error');
+        return;
+    }
+    
+    breakRemindersEnabled = true;
+    localStorage.setItem('breakRemindersEnabled', 'true');
+    
+    const intervalMs = breakIntervalHours * 60 * 60 * 1000;
+    breakReminderInterval = setInterval(() => {
+        if (document.hidden) {
+            new Notification('â° Zeit fÃ¼r eine Pause!', {
+                body: `Du arbeitest schon ${breakIntervalHours} Stunden durch. Steh auf, streck dich!`,
+                icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiNhODU1ZjciLz4KPHBhdGggZD0iTTEyIDEySDE2VjE2SDEyVjEyWk0xNiAyMEgxNloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo='
+            });
+        }
+    }, intervalMs);
+}
+
+function disableBreakReminders() {
+    breakRemindersEnabled = false;
+    localStorage.setItem('breakRemindersEnabled', 'false');
+    clearInterval(breakReminderInterval);
+}
+
+// Load settings on init
+breakRemindersEnabled = localStorage.getItem('breakRemindersEnabled') === 'true';
+breakIntervalHours = parseFloat(localStorage.getItem('breakIntervalHours')) || 2;
+
+if (breakRemindersEnabled && Notification.permission === 'granted') {
+    enableBreakReminders();
+}
+
+// ===== PWA SERVICE WORKER REGISTRATION =====
+function setupPWABasePath() {
+    // Return a trailing-slash base path derived from the current location
+    try {
+        let p = location.pathname;
+        if (!p.endsWith('/')) {
+            p = p.substring(0, p.lastIndexOf('/') + 1);
+        }
+        // Ensure root path is '/'
+        if (!p) p = '/';
+
+        // Set the manifest link to the computed path (helps GitHub Pages and local servers)
+        const manifestLink = document.querySelector('link[rel="manifest"]');
+        if (manifestLink) {
+            manifestLink.href = p + 'manifest.json';
+        }
+
+        // Expose for debugging/status
+        window._pwaBasePath = p;
+        return p;
+    } catch (e) {
+        console.warn('setupPWABasePath error', e);
+        window._pwaBasePath = './';
+        return './';
+    }
+}
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+        try {
+            // Dynamisch den Scope basierend auf der aktuellen URL setzen
+            // GitHub Pages auf /MyWorkLog/ ist unter /MyWorkLog/
+            // Lokal: / 
+            const currentPath = window.location.pathname;
+            console.log('[PWA] Current pathname:', currentPath);
+            
+            let scope = '/';
+            if (currentPath.includes('/MyWorkLog/')) {
+                scope = '/MyWorkLog/';
+            }
+            
+            // Service Worker im Root
+            const swUrl = './service-worker.js';
+            
+            console.log('[PWA] Registering service worker at', swUrl, 'scope:', scope);
+            const manifestLink = document.querySelector('link[rel="manifest"]');
+            console.log('[PWA] Resolved manifest link:', manifestLink ? manifestLink.href : 'none');
+
+            // Pre-fetch the service worker script to get a clearer error when the fetch fails
+            try {
+                const swResp = await fetch(swUrl, { method: 'GET', cache: 'no-store' });
+                console.log('[PWA] Pre-fetch SW script', swUrl, 'status', swResp.status, 'ok', swResp.ok);
+                if (!swResp.ok) throw new Error('SW fetch failed with status ' + swResp.status);
+            } catch (prefetchErr) {
+                console.error('[PWA] Pre-fetch service worker failed for', swUrl, prefetchErr);
+                throw prefetchErr;
+            }
+
+            const registration = await navigator.serviceWorker.register(swUrl, {
+                scope: scope,
+                updateViaCache: 'none'
+            });
+
+            // Check for updates periodically
+            setInterval(() => {
+                registration.update();
+            }, 60000); // Check every minute
+
+            // Check for already-waiting worker from previous update
+            if (registration.waiting) {
+                if (typeof updateManager !== 'undefined') {
+                    updateManager.notifyUpdate(registration.waiting);
+                }
+            }
+
+            // Handle service worker updates â†’ Advanced Update Manager
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        if (typeof updateManager !== 'undefined') {
+                            updateManager.notifyUpdate(newWorker);
+                        }
+                    }
+                });
+            });
+        } catch (error) {
+            console.error('[PWA] Service Worker registration failed:', error);
+        }
+    });
+
+    // Listen for controller change (update applied)
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('[PWA] Service Worker controller changed');
+    });
+}
+
+// ===== INSTALL PROMPT HANDLER (Add to Home Screen) =====
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    // Prompt speichern fÃ¼r manuellen Trigger via Install-Button
+    deferredPrompt = e;
+});
+
+window.addEventListener('appinstalled', () => {
+    console.log('[PWA] App installed successfully');
+    deferredPrompt = null;
+    // Hide PWA section after install
+    hidePWAInstallSection();
+    // Hide install banner
+    var bnr = document.getElementById('pwaInstallBanner');
+    if (bnr) { bnr.classList.remove('visible'); setTimeout(function(){ bnr.style.display='none'; }, 500); }
+    localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
+    if (typeof showCustomMessage === 'function') {
+        showCustomMessage('ðŸŽ‰ Installiert!', 'MyWorkLog ist jetzt auf deinem Homescreen!', 'success');
+    }
+});
+
+// Function to trigger install (call from UI)
+async function triggerInstallPrompt() {
+    if (!deferredPrompt) {
+        console.log('[PWA] Install prompt not available');
+        // If no prompt available, user may have declined or already installed
+        localStorage.setItem('pwa_install_dismissed', 'true');
+        hidePWAInstallSection();
+        showCustomMessage('â„¹ï¸ Info', 'PWA ist bereits installiert oder auf diesem GerÃ¤t nicht verfÃ¼gbar.', 'info');
+        return;
+    }
+
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`[PWA] User response to install prompt: ${outcome}`);
+    if (outcome === 'dismissed') {
+        localStorage.setItem('pwa_install_dismissed', 'true');
+        hidePWAInstallSection();
+    }
+    deferredPrompt = null;
+}
+
+// PWA Install Section Auto-Hide Logic
+function hidePWAInstallSection() {
+    const section = document.getElementById('pwaInstallSection');
+    if (section) section.style.display = 'none';
+}
+
+function checkAndHidePWASection() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+    const isDismissed = localStorage.getItem('pwa_install_dismissed') === 'true';
+    
+    if (isStandalone || isDismissed) {
+        hidePWAInstallSection();
+    }
+}
+
+// Run on load
+checkAndHidePWASection();
+
+// Expose install function globally
+window.triggerInstallPrompt = triggerInstallPrompt;
+
+// ===== PWA STATUS CHECK FUNCTION =====
+function checkPWAStatus() {
+    const statusEl = document.getElementById('pwaStatus');
+    if (!statusEl) return;
+
+    let status = 'ðŸ” PWA Status:\n\n';
+
+    status += 'ðŸ“‚ Resolved base path: ' + (window._pwaBasePath || './') + '\n\n';
+
+    if ('serviceWorker' in navigator) {
+        status += 'âœ… Service Worker: UnterstÃ¼tzt\n';
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+            if (registrations.length > 0) {
+                status += '   â†’ ' + registrations.length + ' aktiv\n';
+            } else {
+                status += '   â†’ Wird gerade aktiviert...\n';
+            }
+        });
+    } else {
+        status += 'âŒ Service Worker: Nicht unterstÃ¼tzt\n';
+    }
+
+    status += navigator.serviceWorker ? 'âœ… Manifest: Vorhanden\n' : 'âŒ Manifest: Fehlt\n';
+
+    if (window.navigator.standalone === true) {
+        status += 'âœ… Installiert: Ja (als App lÃ¤ufig)\n';
+    } else if (deferredPrompt) {
+        status += 'â³ Installierbar: Ja (verwende den Button oben!)\n';
+    } else {
+        status += 'â„¹ï¸  Installation: Nicht mÃ¶glich (oder bereits installiert)\n';
+    }
+
+    status += navigator.onLine ? 'âœ… Online: Ja\n' : 'âŒ Online: Nein (Offline-Modus)\n';
+
+    try {
+        const test = '__test__';
+        localStorage.setItem(test, test);
+        localStorage.removeItem(test);
+        status += 'âœ… localStorage: VerfÃ¼gbar\n';
+    } catch {
+        status += 'âŒ localStorage: Nicht verfÃ¼gbar\n';
+    }
+
+    if (window.indexedDB) {
+        status += 'âœ… IndexedDB: VerfÃ¼gbar\n';
+    } else {
+        status += 'âŒ IndexedDB: Nicht verfÃ¼gbar\n';
+    }
+
+    statusEl.innerHTML = '<strong>ðŸ“± PWA Status:</strong><br>' + status.replace(/\n/g, '<br>');
+    
+    if (typeof showCustomMessage === 'function') {
+        showCustomMessage('ðŸ“± PWA Status', status, 'info');
+    }
+}
+
+// ===== PWA AUTO-INSTALL PROMPT (nach 3 Besuchen) =====
+function initAutoInstallPrompt() {
+    // Old visit-count logic kept for compatibility but banner handles UX now
+    let visitCount = parseInt(localStorage.getItem('pwa_visit_count') || '0');
+    visitCount++;
+    localStorage.setItem('pwa_visit_count', visitCount.toString());
+}
+
+// ===== PWA SMART INSTALL BANNER =====
+// Show PWA install banner only after accumulated visit time (30 minutes)
+(function initPWABanner() {
+    const banner = document.getElementById('pwaInstallBanner');
+    if (!banner) return;
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+    const wasDismissed = localStorage.getItem('pwa_banner_dismissed');
+    const dismissedAt = wasDismissed ? parseInt(wasDismissed, 10) : 0;
+    // Show again after 7 days if dismissed
+    const dismissCooldown = 7 * 24 * 60 * 60 * 1000;
+    const cooldownPassed = Date.now() - dismissedAt > dismissCooldown;
+
+    if (isStandalone) return; // Already installed as PWA
+    if (wasDismissed && !cooldownPassed) return; // Dismissed recently
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    // Required accumulated time before showing banner: 30 minutes
+    const REQUIRED_MS = 30 * 60 * 1000;
+    const TOTAL_KEY = 'pwa_total_time_ms';
+    const START_KEY = 'pwa_visit_start';
+
+    function getTotalTime() {
+        return parseInt(localStorage.getItem(TOTAL_KEY) || '0', 10);
+    }
+    function setTotalTime(ms) {
+        localStorage.setItem(TOTAL_KEY, Math.max(0, ms).toString());
+    }
+    function startSession() {
+        try { localStorage.setItem(START_KEY, Date.now().toString()); } catch (e) {}
+    }
+    function endSession() {
+        try {
+            const s = parseInt(localStorage.getItem(START_KEY) || '0', 10);
+            if (s && s > 0) {
+                const delta = Date.now() - s;
+                setTotalTime(getTotalTime() + delta);
+                localStorage.removeItem(START_KEY);
+            }
+        } catch (e) {}
+    }
+
+    // Visibility handler to account for time when the tab becomes hidden
+    function visibilityHandler() {
+        if (document.visibilityState === 'hidden') {
+            endSession();
+        } else {
+            startSession();
+        }
+    }
+
+    // Check whether we should show banner now or later
+    let showTimeout = null;
+    function maybeShowBanner() {
+        // Ensure we have current session accounted for
+        endSession();
+        const total = getTotalTime();
+        if (total >= REQUIRED_MS) {
+            // Show banner now
+            if (isIOS) {
+                const hint = document.getElementById('pwaIOSHint');
+                if (hint) hint.style.display = 'flex';
+                const btn = document.getElementById('pwaInstallBtn');
+                if (btn) {
+                    btn.textContent = 'Verstanden';
+                    btn.onclick = function() { pwaInstallBannerDismiss(); };
+                }
+            }
+            banner.style.display = 'block';
+            requestAnimationFrame(function() { requestAnimationFrame(function() { banner.classList.add('visible'); }); });
+            // cleanup listeners and timers
+            document.removeEventListener('visibilitychange', visibilityHandler);
+            window.removeEventListener('beforeunload', endSession);
+            if (showTimeout) { clearTimeout(showTimeout); showTimeout = null; }
+        } else {
+            // Schedule to check when remaining time elapses
+            const remaining = REQUIRED_MS - total;
+            if (showTimeout) clearTimeout(showTimeout);
+            // If remaining is very large, it's still safe to setTimeout (browsers may clamp).
+            showTimeout = setTimeout(maybeShowBanner, remaining);
+        }
+        // restart session after measurement
+        startSession();
+    }
+
+    // Start tracking session time
+    startSession();
+    document.addEventListener('visibilitychange', visibilityHandler);
+    window.addEventListener('beforeunload', endSession);
+
+    // Kick off check (do not show immediately; maybeShowBanner will show after 30m)
+    maybeShowBanner();
+
+})();
+
+function pwaInstallBannerInstall() {
+    var banner = document.getElementById('pwaInstallBanner');
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function(result) {
+            if (result.outcome === 'accepted') {
+                localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
+                if (banner) { banner.classList.remove('visible'); setTimeout(function(){ banner.style.display='none'; }, 500); }
+            }
+            deferredPrompt = null;
+        });
+    } else {
+        // Fallback: Show manual instructions
+        if (typeof showCustomMessage === 'function') {
+            var ua = navigator.userAgent.toLowerCase();
+            if (ua.indexOf('chrome') > -1) {
+                showCustomMessage('ðŸ“² Chrome', 'Tippe auf â‹® (MenÃ¼ oben rechts) â†’ "App installieren" oder "Zum Startbildschirm hinzufÃ¼gen"', 'info');
+            } else if (ua.indexOf('firefox') > -1) {
+                showCustomMessage('ðŸ“² Firefox', 'Tippe auf â‹® (MenÃ¼) â†’ "Installieren" oder "Zum Startbildschirm hinzufÃ¼gen"', 'info');
+            } else if (ua.indexOf('safari') > -1) {
+                showCustomMessage('ðŸ“² Safari', 'Tippe auf das Teilen-Symbol (â–¡â†‘) â†’ "Zum Home-Bildschirm"', 'info');
+            } else {
+                showCustomMessage('ðŸ“² Installieren', 'Ã–ffne das Browser-MenÃ¼ und wÃ¤hle "Zum Startbildschirm hinzufÃ¼gen"', 'info');
+            }
+        }
+        pwaInstallBannerDismiss();
+    }
+}
+
+function pwaInstallBannerDismiss() {
+    localStorage.setItem('pwa_banner_dismissed', Date.now().toString());
+    var banner = document.getElementById('pwaInstallBanner');
+    if (banner) {
+        banner.classList.remove('visible');
+        setTimeout(function(){ banner.style.display = 'none'; }, 500);
+    }
+}
+
+// ===== PWA OFFLINE-DATEN TRACKING =====
+const OfflineDataManager = {
+    QUEUE_KEY: 'pwa_offline_queue',
+    SYNC_KEY: 'pwa_last_sync',
+
+    // Speichere Aktion wenn offline
+    queueAction(action) {
+        if (navigator.onLine) return; // Nur wenn offline
+        try {
+            const queue = JSON.parse(localStorage.getItem(this.QUEUE_KEY) || '[]');
+            queue.push({
+                type: action.type,
+                data: action.data,
+                timestamp: Date.now()
+            });
+            localStorage.setItem(this.QUEUE_KEY, JSON.stringify(queue));
+            console.log('[PWA] Aktion in Offline-Queue gespeichert:', action.type);
+        } catch (e) {
+            console.warn('[PWA] Fehler beim Speichern in Offline-Queue:', e);
+        }
+    },
+
+    // Verarbeite gecachte Aktionen wenn online
+    async processPendingActions() {
+        if (!navigator.onLine) return;
+        try {
+            const queue = JSON.parse(localStorage.getItem(this.QUEUE_KEY) || '[]');
+            if (queue.length === 0) return;
+
+            console.log(`[PWA] Verarbeite ${queue.length} ausstehende Offline-Aktionen...`);
+            
+            // Hier kÃ¶nnen Daten zu Server synced werden
+            // FÃ¼r jetzt: einfach aus Queue entfernen und speichern als synced
+            localStorage.setItem(this.SYNC_KEY, new Date().toISOString());
+            localStorage.removeItem(this.QUEUE_KEY);
+            
+            showCustomMessage('âœ… Synchronisiert', `${queue.length} Offline-Aktion(en) erfolgreich verarbeitet!`, 'success');
+        } catch (e) {
+            console.warn('[PWA] Fehler beim Verarbeiten von Offline-Aktionen:', e);
+        }
+    },
+
+    // Get pending action count
+    getPendingCount() {
+        try {
+            const queue = JSON.parse(localStorage.getItem(this.QUEUE_KEY) || '[]');
+            return queue.length;
+        } catch {
+            return 0;
+        }
+    }
+};
+
+// Synce bei Online werden
+window.addEventListener('online', () => {
+    console.log('[PWA] Online wieder hergestellt â€” synchronisiere Daten...');
+    OfflineDataManager.processPendingActions();
+    if (typeof showCustomMessage === 'function') {
+        showCustomMessage('ðŸŒ Online!', 'Deaktiviere Daten werden synchronisiert...', 'success');
+    }
+});
+
+// Benachrichtige wenn Offline wird
+window.addEventListener('offline', () => {
+    if (typeof showCustomMessage === 'function') {
+        showCustomMessage('âš ï¸ Offline-Modus', 'Du bist keine Verbindung! Deine Daten werden lokal gespeichert.', 'warning');
+    }
+});
+
+// Run on load
+initAutoInstallPrompt();
+
+function detectLocalhostAndWarn() {
+    try {
+        const host = location.hostname;
+        if ((host === '127.0.0.1' || host === 'localhost') && !localStorage.getItem('dismissedLocalhostWarning')) {
+            const banner = document.createElement('div');
+            banner.id = 'localhostWarningBanner';
+            banner.style.cssText = 'position:fixed; top:12px; left:12px; right:12px; z-index:9999; background:linear-gradient(90deg,#f59e0b,var(--primary)); color:#fff; padding:12px 14px; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.35); font-weight:700; display:flex; align-items:center; gap:12px;';
+            banner.innerHTML = `
+                <div style="flex:1; font-size:0.95rem;">âš ï¸ Hinweis: Du greifst diese Seite Ã¼ber <code>${host}</code> auf. FÃ¼r die Installation auf MobilgerÃ¤ten verwende die LANâ€‘IP deines Rechners (z.B. <code>http://192.168.1.25:5500</code>), sonst kann die App nach der Installation 404 anzeigen.</div>
+                <div style="display:flex; gap:8px;">
+                    <button id="dismissLocalhostWarning" class="btn" style="padding:8px 12px; background:rgba(0,0,0,0.06); border-radius:8px;">Verstanden</button>
+                </div>
+            `;
+            document.body.appendChild(banner);
+            document.getElementById('dismissLocalhostWarning').onclick = () => {
+                localStorage.setItem('dismissedLocalhostWarning', '1');
+                banner.remove();
+            };
+        }
+    } catch (e) {
+        console.warn('detectLocalhostAndWarn error', e);
+    }
+}
+
+window.checkPWAStatus = checkPWAStatus;
+
+
+// ===== ADVANCED NETWORK MONITOR =====
+const networkMonitor = (() => {
+    const PING_URL = './manifest.json';
+    const INTERVAL_ON = 30000;
+    const INTERVAL_OFF = 5000;
+    const MAX_LOG = 100;
+
+    const s = {
+        online: navigator.onLine,
+        latency: null,
+        quality: 'unknown',
+        connType: null,
+        downlink: null,
+        onlineSince: navigator.onLine ? Date.now() : null,
+        lastCheck: null,
+        timer: null,
+        retries: 0,
+        queue: [],
+        log: [],
+        panelOpen: false
+    };
+
+    function init() {
+        window.addEventListener('online', () => onStatusChange(true));
+        window.addEventListener('offline', () => onStatusChange(false));
+        if (navigator.connection) {
+            readConnInfo();
+            navigator.connection.addEventListener('change', readConnInfo);
+        }
+        try { s.queue = JSON.parse(localStorage.getItem('mwl_offline_queue') || '[]'); } catch(e) { s.queue = []; }
+        checkNow();
+        startInterval();
+        ui();
+        // Only expand if offline (otherwise stay as tiny dot)
+        const w = document.getElementById('netStatus');
+        if (w && !s.online) w.classList.add('expanded');
+    }
+
+    function startInterval() {
+        if (s.timer) clearInterval(s.timer);
+        s.timer = setInterval(checkNow, s.online ? INTERVAL_ON : INTERVAL_OFF);
+    }
+
+    async function checkNow() {
+        const t0 = performance.now();
+        try {
+            await fetch(PING_URL, { method: 'HEAD', cache: 'no-store', signal: AbortSignal.timeout(5000) });
+            const ms = Math.round(performance.now() - t0);
+            s.latency = ms;
+            s.lastCheck = Date.now();
+            if (!s.online) onStatusChange(true);
+            s.quality = ms < 100 ? 'excellent' : ms < 300 ? 'good' : ms < 800 ? 'moderate' : 'poor';
+            log('ping', ms + 'ms â€” ' + s.quality);
+        } catch(e) {
+            s.latency = null;
+            s.lastCheck = Date.now();
+            if (s.online && !navigator.onLine) onStatusChange(false);
+            s.quality = s.online ? 'unknown' : 'offline';
+            log('fail', e.message || 'timeout');
+        }
+        ui();
+    }
+
+    function onStatusChange(on) {
+        const wasOff = !s.online;
+        s.online = on;
+        const wrapper = document.getElementById('netStatus');
+        if (on) {
+            s.onlineSince = Date.now();
+            s.retries = 0;
+            log('online', 'Verbindung hergestellt');
+            if (s.queue.length > 0) flushQueue();
+            // Briefly show expanded, then auto-collapse after 3s
+            if (wrapper) { wrapper.classList.add('expanded'); setTimeout(() => { if (s.online && !s.panelOpen) wrapper.classList.remove('expanded'); }, 3000); }
+        } else {
+            s.onlineSince = null;
+            log('offline', 'Verbindung verloren');
+            scheduleRetry();
+            if (wrapper) wrapper.classList.add('expanded');
+        }
+        startInterval();
+        ui();
+        if (typeof showCustomMessage === 'function') {
+            if (on && wasOff) showCustomMessage('Verbindung hergestellt', 'Du bist wieder online.', 'success');
+            else if (!on) showCustomMessage('Verbindung verloren', 'Offline-Modus aktiv â€” Daten werden lokal gespeichert.', 'warning');
+        }
+    }
+
+    function scheduleRetry() {
+        if (s.retries >= 50) return;
+        s.retries++;
+        const delay = Math.min(2000 * Math.pow(2, s.retries - 1), 60000);
+        setTimeout(() => { if (!s.online) checkNow(); }, delay);
+    }
+
+    function readConnInfo() {
+        const c = navigator.connection;
+        if (!c) return;
+        s.connType = c.effectiveType || c.type || null;
+        s.downlink = c.downlink || null;
+        ui();
+    }
+
+    function log(type, msg) {
+        s.log.unshift({ t: Date.now(), type, msg });
+        if (s.log.length > MAX_LOG) s.log.length = MAX_LOG;
+    }
+
+    function enqueue(action) {
+        s.queue.push({ ...action, ts: Date.now() });
+        localStorage.setItem('mwl_offline_queue', JSON.stringify(s.queue));
+        ui();
+    }
+
+    function flushQueue() {
+        log('queue', s.queue.length + ' Aktionen verarbeitet');
+        s.queue = [];
+        localStorage.removeItem('mwl_offline_queue');
+        ui();
+    }
+
+    function fmtDur(ms) {
+        const sec = Math.floor(ms / 1000);
+        if (sec < 60) return sec + 's';
+        const min = Math.floor(sec / 60);
+        if (min < 60) return min + 'min';
+        return Math.floor(min / 60) + 'h ' + (min % 60) + 'min';
+    }
+
+    function ui() {
+        const dot = document.getElementById('netDot');
+        if (!dot) return;
+        dot.className = 'net-status-dot ' + (s.online ? 'online' : 'offline');
+
+        const lbl = document.getElementById('netLabel');
+        if (lbl) lbl.textContent = s.online ? 'Online' : 'Offline';
+
+        const lat = document.getElementById('netLatency');
+        if (lat) lat.textContent = (s.latency !== null && s.online) ? s.latency + 'ms' : '';
+
+        const badge = document.getElementById('netQueueBadge');
+        if (badge) { badge.style.display = s.queue.length > 0 ? 'flex' : 'none'; badge.textContent = s.queue.length; }
+
+        // Panel
+        const el = (id) => document.getElementById(id);
+        const npS = el('npStatus'); if (npS) { npS.textContent = s.online ? 'Online' : 'Offline'; npS.style.color = s.online ? '#10b981' : '#ef4444'; }
+        const npL = el('npLatency'); if (npL) npL.textContent = s.latency !== null ? s.latency + 'ms' : '\u2014';
+        const npC = el('npConnection'); if (npC) { const m = {'4g':'LTE/4G','3g':'3G','2g':'2G','slow-2g':'Langsam','wifi':'WLAN'}; npC.textContent = m[s.connType] || s.connType || '\u2014'; }
+        const npD = el('npDownlink'); if (npD) npD.textContent = s.downlink ? s.downlink + ' Mbps' : '\u2014';
+        const npU = el('npUptime'); if (npU) npU.textContent = s.onlineSince ? fmtDur(Date.now() - s.onlineSince) : '\u2014';
+        const npT = el('npLastCheck'); if (npT) npT.textContent = s.lastCheck ? new Date(s.lastCheck).toLocaleTimeString('de-DE') : '\u2014';
+        const npQ = el('npQuality');
+        if (npQ) {
+            const lab = {excellent:'Exzellent',good:'Gut',moderate:'Mittel',poor:'Schlecht',offline:'Offline',unknown:'\u2014'};
+            const col = {excellent:'#10b981',good:'#22d3ee',moderate:'#f59e0b',poor:'#ef4444',offline:'#ef4444',unknown:'#64748b'};
+            npQ.textContent = lab[s.quality] || '\u2014';
+            npQ.style.color = col[s.quality] || '#64748b';
+        }
+        const bar = el('npQualityBar');
+        if (bar) {
+            const w = {excellent:'100%',good:'75%',moderate:'50%',poor:'25%',offline:'0%',unknown:'0%'};
+            const c = {excellent:'#10b981',good:'#22d3ee',moderate:'#f59e0b',poor:'#ef4444',offline:'#ef4444',unknown:'#64748b'};
+            bar.style.width = w[s.quality] || '0%';
+            bar.style.background = c[s.quality] || '#64748b';
+        }
+        const qRow = el('npQueueRow'), qVal = el('npQueue');
+        if (qRow && qVal) { qRow.style.display = s.queue.length > 0 ? 'flex' : 'none'; qVal.textContent = s.queue.length + ' ausstehend'; }
+    }
+
+    function togglePanel() {
+        s.panelOpen = !s.panelOpen;
+        const p = document.getElementById('netPanel');
+        if (p) p.classList.toggle('open', s.panelOpen);
+        const w = document.getElementById('netStatus');
+        if (w) w.classList.toggle('expanded', s.panelOpen || !s.online);
+    }
+
+    function showLog() {
+        if (s.log.length === 0) { if (typeof showCustomMessage === 'function') showCustomMessage('Netzwerk-Verlauf', 'Noch keine Eintr\u00e4ge.', 'info'); return; }
+        const ico = {ping:'\u25cf',fail:'\u25cb',online:'\u25b2',offline:'\u25bc',queue:'\u25c6'};
+        const rows = s.log.slice(0, 30).map(e => {
+            const t = new Date(e.t).toLocaleTimeString('de-DE');
+            return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:11.5px;"><span style="color:#64748b;font-family:var(--font-mono);min-width:62px;">' + t + '</span><span style="color:#94a3b8;">' + (ico[e.type]||'\u00b7') + '</span><span style="color:#e2e8f0;">' + e.msg + '</span></div>';
+        }).join('');
+        const ov = document.createElement('div');
+        ov.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:20px;';
+        ov.onclick = (ev) => { if (ev.target === ov) ov.remove(); };
+        ov.innerHTML = '<div style="background:rgba(10,10,16,0.96);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:18px;max-width:380px;width:100%;max-height:65vh;overflow-y:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-weight:700;font-size:13px;color:#f1f5f9;">Netzwerk-Verlauf</span><span style="cursor:pointer;color:#64748b;font-size:18px;" onclick="this.closest(\x27[style*=fixed]\x27).remove()">&times;</span></div>' + rows + '</div>';
+        document.body.appendChild(ov);
+    }
+
+    return { init, checkNow, togglePanel, showLog, enqueue, getState: () => ({...s}) };
+})();
+
+// ===== ADVANCED UPDATE MANAGER =====
+const updateManager = (() => {
+    let newWorker = null;
+    let dismissed = false;
+
+    function init() {
+        // Check for already-waiting service worker on page load
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(reg => {
+                if (reg.waiting) notifyUpdate(reg.waiting);
+            });
+        }
+    }
+
+    function notifyUpdate(worker) {
+        newWorker = worker;
+        dismissed = false;
+        const last = localStorage.getItem('mwl_upd_dismissed');
+        if (last && (Date.now() - parseInt(last)) < 300000) return;
+        const b = document.getElementById('updateBanner');
+        if (b) b.classList.add('visible');
+    }
+
+    function dismiss() {
+        const b = document.getElementById('updateBanner');
+        if (b) b.classList.remove('visible');
+        dismissed = true;
+        localStorage.setItem('mwl_upd_dismissed', Date.now().toString());
+    }
+
+    function apply() {
+        if (newWorker) newWorker.postMessage({ type: 'SKIP_WAITING' });
+        location.reload();
+    }
+
+    function test() {
+        dismissed = false;
+        localStorage.removeItem('mwl_upd_dismissed');
+        const b = document.getElementById('updateBanner');
+        if (b) { b.classList.add('visible'); console.log('âœ… Update-Banner Test angezeigt'); }
+    }
+
+    return { init, notifyUpdate, dismiss, apply, test };
+})();
+
+// Initialize monitors with retry logic
+function initMonitors() {
+    if (typeof networkMonitor === 'undefined' || typeof updateManager === 'undefined') {
+        return setTimeout(initMonitors, 100);
+    }
+    try {
+        networkMonitor.init();
+        updateManager.init();
+        console.log('[Init] Network Monitor + Update Manager started');
+    } catch(e) {
+        console.warn('[Init] Error:', e.message);
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMonitors);
+} else {
+    initMonitors();
+}
+
+// ===== WEBLLM FEATURE DETECTION =====
+function initWebLLMButtonVisibility() {
+    const isWebLLMSupported = 
+        typeof window.indexedDB !== 'undefined' &&
+        typeof window.Worker !== 'undefined' &&
+        typeof WebAssembly !== 'undefined' &&
+        navigator.hardwareConcurrency >= 2;  // Mindestens 2 CPU-Kerne
+    
+    console.log('[WebLLM] Browser Support:', {
+        IndexedDB: typeof window.indexedDB !== 'undefined',
+        WebWorker: typeof window.Worker !== 'undefined',
+        WebAssembly: typeof WebAssembly !== 'undefined',
+        CPUCores: navigator.hardwareConcurrency,
+        Supported: isWebLLMSupported
+    });
+    
+    if (!isWebLLMSupported) {
+        console.warn('[WebLLM] Browser nicht unterstÃ¼tzt - Button wird nicht angezeigt');
+        return;
+    }
+    
+    const checkAndShowButton = () => {
+        const button = document.getElementById('webllm-toggle-btn');
+        const aiBotView = document.getElementById('view-aibot');
+        
+        if (!button) return;
+        
+        const isAiBotActive = aiBotView && aiBotView.classList.contains('active');
+        
+        if (isAiBotActive) {
+            button.style.display = 'block';
+        } else {
+            button.style.display = 'none';
+        }
+    };
+    
+    setTimeout(checkAndShowButton, 100);
+    
+    const observer = new MutationObserver(() => {
+        checkAndShowButton();
+    });
+    
+    const viewContainer = document.querySelector('[id^="view-"]');
+    if (viewContainer && viewContainer.parentElement) {
+        observer.observe(viewContainer.parentElement, { 
+            subtree: true,
+            attributes: true, 
+            attributeFilter: ['class'] 
+        });
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initWebLLMButtonVisibility);
+} else {
+    initWebLLMButtonVisibility();
+}

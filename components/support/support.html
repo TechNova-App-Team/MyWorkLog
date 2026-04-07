@@ -1,0 +1,722 @@
+        <div id="view-support" class="view-section">
+
+        <!-- ══════════════════════════════════════════════════════
+             SUPPORT PAGE — PARALLAX UI
+             Styles scoped to #view-support to avoid leaking.
+        ══════════════════════════════════════════════════════ -->
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+            /* ── layout wrapper ── */
+            #view-support {
+                padding: 0 !important;
+                position: relative;
+                overflow: hidden;
+            }
+
+            /* ── parallax sections ── */
+            #sp-hero {
+                position: relative;
+                padding: 4rem 2.2rem 3.5rem;
+                overflow: hidden;
+                min-height: 340px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+            }
+
+            /* animated blobs */
+            .sp-blob {
+                position: absolute;
+                border-radius: 50%;
+                filter: blur(80px);
+                pointer-events: none;
+                will-change: transform;
+            }
+            .sp-blob-1 {
+                width: 500px; height: 500px;
+                background: radial-gradient(circle, rgba(var(--primary-rgb),.32), transparent 68%);
+                top: -180px; left: -160px;
+                animation: sp-drift1 18s ease-in-out infinite;
+            }
+            .sp-blob-2 {
+                width: 360px; height: 360px;
+                background: radial-gradient(circle, rgba(139,92,246,.22), transparent 68%);
+                bottom: -120px; right: -80px;
+                animation: sp-drift2 24s ease-in-out infinite;
+            }
+            .sp-blob-3 {
+                width: 260px; height: 260px;
+                background: radial-gradient(circle, rgba(192,132,252,.18), transparent 68%);
+                top: 30%; right: 10%;
+                animation: sp-drift3 30s ease-in-out infinite;
+            }
+            @keyframes sp-drift1 {
+                0%,100% { transform: translate(0,0) scale(1); }
+                40%      { transform: translate(60px,40px) scale(1.12); }
+                70%      { transform: translate(30px,80px) scale(.92); }
+            }
+            @keyframes sp-drift2 {
+                0%,100% { transform: translate(0,0) scale(1); }
+                35%      { transform: translate(-50px,-30px) scale(1.18); }
+                70%      { transform: translate(-25px,-70px) scale(1.04); }
+            }
+            @keyframes sp-drift3 {
+                0%,100% { transform: translate(-50%,-50%) scale(1); }
+                50%      { transform: translate(-50%,-50%) scale(1.35); }
+            }
+
+            /* grid overlay */
+            .sp-grid {
+                position: absolute; inset: 0;
+                background-image:
+                    linear-gradient(rgba(var(--primary-rgb),.04) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(var(--primary-rgb),.04) 1px, transparent 1px);
+                background-size: 52px 52px;
+                pointer-events: none;
+                will-change: transform;
+            }
+
+            /* geo floating lines */
+            .sp-geo-line {
+                position: absolute;
+                height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb),.14), transparent);
+                pointer-events: none;
+                animation: sp-line-drift linear infinite;
+            }
+            @keyframes sp-line-drift {
+                0%   { transform: translateX(-110%); opacity: 0; }
+                8%   { opacity: 1; }
+                92%  { opacity: 1; }
+                100% { transform: translateX(110vw); opacity: 0; }
+            }
+
+            /* ── hero eyebrow ── */
+            .sp-eyebrow {
+                display: inline-flex; align-items: center; gap: .45rem;
+                padding: .35rem 1.1rem;
+                background: rgba(var(--primary-rgb),.1);
+                border: 1px solid rgba(var(--primary-rgb),.3);
+                border-radius: 40px;
+                color: #c084fc;
+                font-size: .72rem; font-weight: 700;
+                letter-spacing: .1em; text-transform: uppercase;
+                margin-bottom: 1.5rem;
+                position: relative; z-index: 2;
+                animation: sp-reveal .7s ease both;
+            }
+            .sp-eyebrow-dot {
+                width: 6px; height: 6px; border-radius: 50%;
+                background: var(--primary);
+                animation: sp-dot-pulse 2s ease-in-out infinite;
+                flex-shrink: 0;
+            }
+            @keyframes sp-dot-pulse {
+                0%,100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb),.6); }
+                50%      { box-shadow: 0 0 0 5px rgba(var(--primary-rgb),0); }
+            }
+
+            /* ── hero title ── */
+            .sp-hero-title {
+                font-family: 'DM Serif Display', serif;
+                font-size: clamp(2rem, 5.5vw, 3.2rem);
+                line-height: 1.1; letter-spacing: -.028em;
+                margin-bottom: .8rem;
+                position: relative; z-index: 2;
+                animation: sp-reveal .8s .08s ease both;
+            }
+            .sp-hero-title em {
+                font-style: italic;
+                background: linear-gradient(135deg, #c084fc 0%, var(--primary) 55%, #f0c060 100%);
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            }
+            .sp-hero-sub {
+                font-size: .93rem; line-height: 1.75;
+                color: var(--text-muted); max-width: 500px;
+                position: relative; z-index: 2;
+                animation: sp-reveal .9s .16s ease both;
+            }
+            @keyframes sp-reveal {
+                from { opacity: 0; transform: translateY(24px); }
+                to   { opacity: 1; transform: translateY(0); }
+            }
+
+            /* ── scroll reveal ── */
+            .sp-sr {
+                opacity: 0; transform: translateY(32px);
+                transition: opacity .65s ease, transform .65s ease;
+            }
+            .sp-sr.sp-visible { opacity: 1; transform: translateY(0); }
+            .sp-sr-d1 { transition-delay: .08s; }
+            .sp-sr-d2 { transition-delay: .16s; }
+            .sp-sr-d3 { transition-delay: .24s; }
+            .sp-sr-d4 { transition-delay: .32s; }
+
+            /* ── section padding ── */
+            .sp-section {
+                padding: 2.8rem 2.2rem;
+                position: relative;
+            }
+            .sp-section-alt {
+                background: linear-gradient(180deg, rgba(var(--primary-rgb),.03) 0%, transparent 100%);
+                border-top: 1px solid rgba(var(--primary-rgb),.1);
+                border-bottom: 1px solid rgba(var(--primary-rgb),.1);
+            }
+
+            /* ── section label ── */
+            .sp-label {
+                display: inline-block;
+                padding: .25rem .9rem;
+                background: rgba(var(--primary-rgb),.08);
+                border: 1px solid rgba(var(--primary-rgb),.2);
+                border-radius: 40px;
+                color: #c084fc; font-size: .68rem; font-weight: 700;
+                letter-spacing: .1em; text-transform: uppercase;
+                margin-bottom: .9rem;
+            }
+            .sp-section-title {
+                font-family: 'DM Serif Display', serif;
+                font-size: clamp(1.5rem, 3.5vw, 2rem);
+                line-height: 1.15; letter-spacing: -.022em;
+                margin-bottom: .6rem;
+            }
+            .sp-section-title em {
+                font-style: italic;
+                background: linear-gradient(135deg, var(--primary), #c084fc);
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            }
+            .sp-section-desc {
+                color: var(--text-muted); font-size: .875rem; line-height: 1.75;
+                max-width: 480px; margin-bottom: 2rem;
+            }
+
+            /* ── running divider ── */
+            .sp-divider {
+                position: relative; height: 2px; overflow: hidden; margin: 0;
+            }
+            .sp-divider-line {
+                position: absolute; width: 200%; height: 1px; top: 50%;
+                background: linear-gradient(90deg, transparent 0%, rgba(var(--primary-rgb),.12) 15%, var(--primary) 50%, rgba(var(--primary-rgb),.12) 85%, transparent 100%);
+                animation: sp-divider-scroll 7s linear infinite;
+            }
+            @keyframes sp-divider-scroll {
+                0%   { transform: translateX(0); }
+                100% { transform: translateX(-50%); }
+            }
+
+            /* ── DONATE GRID ── */
+            .sp-donate-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+                gap: 10px; margin-bottom: 1.5rem;
+            }
+            .sp-donate-btn {
+                display: flex; flex-direction: column; align-items: center;
+                padding: 1rem .5rem;
+                background: rgba(0,112,201,.07);
+                border: 1px solid rgba(0,112,201,.22);
+                border-radius: 14px;
+                color: #4da6ff; font-weight: 700; font-size: .92rem;
+                cursor: pointer; transition: all .22s;
+                font-family: var(--font-main);
+                position: relative; overflow: hidden;
+            }
+            .sp-donate-btn::before {
+                content: '';
+                position: absolute; inset: 0;
+                background: radial-gradient(circle at 50% 0%, rgba(0,112,201,.12), transparent 65%);
+                opacity: 0; transition: opacity .3s;
+            }
+            .sp-donate-btn:hover::before { opacity: 1; }
+            .sp-donate-btn:hover {
+                border-color: rgba(0,112,201,.5);
+                background: rgba(0,112,201,.13);
+                transform: translateY(-3px);
+                box-shadow: 0 8px 24px rgba(0,112,201,.15);
+            }
+            .sp-donate-btn.sp-donate-featured {
+                background: rgba(0,112,201,.13);
+                border-color: rgba(0,112,201,.42);
+                box-shadow: 0 0 0 1px rgba(0,112,201,.12), 0 4px 16px rgba(0,112,201,.1);
+            }
+            .sp-donate-badge {
+                font-size: .6rem; color: #4da6ff; opacity: .75;
+                font-weight: 600; letter-spacing: .05em; margin-top: .2rem;
+            }
+            .sp-donate-custom {
+                background: rgba(255,255,255,.03);
+                border-color: rgba(255,255,255,.1);
+                color: var(--text-muted); font-size: .85rem;
+            }
+            .sp-donate-custom:hover {
+                border-color: rgba(var(--primary-rgb),.35);
+                background: rgba(var(--primary-rgb),.07);
+                color: var(--text-main);
+            }
+
+            /* ── CONTRIBUTE GRID ── */
+            .sp-contrib-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 12px;
+            }
+            .sp-contrib-card {
+                padding: 1.4rem 1.1rem;
+                border-radius: 16px;
+                border: 1px solid rgba(255,255,255,.07);
+                background: rgba(255,255,255,.025);
+                text-align: center; text-decoration: none; color: inherit;
+                display: block; cursor: pointer;
+                transition: all .28s cubic-bezier(.22,.68,0,1.2);
+                position: relative; overflow: hidden;
+            }
+            .sp-contrib-card::after {
+                content: '';
+                position: absolute; inset: 0;
+                background: radial-gradient(circle at 50% 0%, rgba(var(--primary-rgb),.1), transparent 60%);
+                opacity: 0; transition: opacity .3s;
+            }
+            .sp-contrib-card:hover::after { opacity: 1; }
+            .sp-contrib-card:hover {
+                border-color: rgba(var(--primary-rgb),.4);
+                transform: translateY(-5px);
+                box-shadow: 0 12px 32px rgba(var(--primary-rgb),.12);
+            }
+            .sp-contrib-icon { font-size: 1.9rem; margin-bottom: .6rem; display: block; }
+            .sp-contrib-title { font-weight: 700; font-size: .88rem; margin-bottom: .25rem; }
+            .sp-contrib-desc { color: var(--text-muted); font-size: .75rem; line-height: 1.5; }
+
+            /* ── STATS GRID (parallax card) ── */
+            .sp-stats-panel {
+                background: linear-gradient(135deg, rgba(var(--primary-rgb),.08), rgba(139,92,246,.05));
+                border: 1px solid rgba(var(--primary-rgb),.18);
+                border-radius: 20px;
+                padding: 1.8rem;
+                position: relative; overflow: hidden;
+            }
+            .sp-stats-panel::before {
+                content: '';
+                position: absolute; top: -40%; right: -15%;
+                width: 300px; height: 300px;
+                background: radial-gradient(circle, rgba(var(--primary-rgb),.08), transparent);
+                border-radius: 50%; pointer-events: none;
+            }
+            #supportStatsGrid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+                gap: 12px;
+            }
+
+            /* ── FEEDBACK PANEL ── */
+            .sp-feedback-panel {
+                background: rgba(255,255,255,.025);
+                border: 1px solid rgba(255,255,255,.07);
+                border-radius: 20px;
+                padding: 2rem 1.8rem;
+            }
+            .sp-feedback-panel:focus-within {
+                border-color: rgba(var(--primary-rgb),.3);
+                box-shadow: 0 0 0 3px rgba(var(--primary-rgb),.06);
+            }
+            .sp-emoji-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.2rem; }
+            .sp-emoji-btn {
+                padding: 10px 16px; border-radius: 12px;
+                background: rgba(255,255,255,.03);
+                border: 1px solid rgba(255,255,255,.07);
+                font-size: 1.35rem; cursor: pointer;
+                transition: transform .2s, box-shadow .2s;
+                font-family: var(--font-main);
+            }
+            .sp-emoji-btn:hover { transform: scale(1.18); box-shadow: 0 4px 16px rgba(var(--primary-rgb),.2); }
+
+            /* ── CHANGELOG ── */
+            .sp-changelog-wrap {
+                background: rgba(255,255,255,.02);
+                border: 1px solid rgba(255,255,255,.06);
+                border-radius: 20px;
+                padding: 1.8rem;
+            }
+            #supportChangelog { display: flex; flex-direction: column; gap: 10px; }
+
+            /* ── FLOATING CARD (parallax depth) ── */
+            .sp-float-card {
+                background: linear-gradient(135deg, rgba(var(--primary-rgb),.12), rgba(10,8,20,.95));
+                border: 1px solid rgba(var(--primary-rgb),.25);
+                border-radius: 18px;
+                padding: 1.4rem 1.6rem;
+                position: relative;
+                animation: sp-float-anim 6s ease-in-out infinite;
+                backdrop-filter: blur(12px);
+            }
+            @keyframes sp-float-anim {
+                0%,100% { transform: translateY(0) rotate(-.3deg); }
+                50%      { transform: translateY(-8px) rotate(.3deg); }
+            }
+            .sp-float-metric {
+                font-family: 'DM Serif Display', serif;
+                font-size: 2.4rem; line-height: 1;
+                background: linear-gradient(135deg, var(--primary), #c084fc);
+                -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            }
+            .sp-float-label { font-size: .72rem; color: var(--text-muted); font-weight: 600; letter-spacing: .07em; text-transform: uppercase; margin-top: .3rem; }
+
+            /* ── SPLIT LAYOUT ── */
+            .sp-split {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2.5rem;
+                align-items: center;
+            }
+            @media (max-width: 720px) {
+                .sp-split { grid-template-columns: 1fr; }
+            }
+            .sp-float-stack {
+                display: flex; flex-direction: column; gap: 1rem;
+            }
+            .sp-float-row { display: flex; gap: 1rem; }
+            .sp-float-row .sp-float-card { flex: 1; }
+
+            /* ── FOOTER strip ── */
+            .sp-footer {
+                border-top: 1px solid rgba(255,255,255,.06);
+                padding: 1.8rem 2.2rem;
+                display: flex; flex-wrap: wrap;
+                align-items: center; justify-content: space-between; gap: 1rem;
+            }
+            .sp-footer-links { display: flex; gap: 1.4rem; flex-wrap: wrap; }
+            .sp-footer-links a {
+                color: var(--text-muted); text-decoration: none;
+                font-size: .78rem; transition: color .22s;
+            }
+            .sp-footer-links a:hover { color: var(--primary); }
+        </style>
+
+        <!-- ══ PARALLAX HERO ══════════════════════════════ -->
+        <div id="sp-hero">
+            <div class="sp-blob sp-blob-1" id="sp-blob1"></div>
+            <div class="sp-blob sp-blob-2" id="sp-blob2"></div>
+            <div class="sp-blob sp-blob-3" id="sp-blob3"></div>
+            <div class="sp-grid" id="sp-grid"></div>
+            <div id="sp-geo-container"></div>
+
+            <div class="sp-eyebrow">
+                <span class="sp-eyebrow-dot"></span>
+                Support & Community
+            </div>
+            <h1 class="sp-hero-title">
+                Danke, dass du<br><em>MyWorkLog</em> nutzt.
+            </h1>
+            <p class="sp-hero-sub">
+                Dieses Projekt lebt durch dein Feedback, deine Unterstützung
+                und die Community. Alles, was du hier tust, hilft direkt.
+            </p>
+        </div>
+
+        <!-- ══ DIVIDER ════════════════════════════════════ -->
+        <div class="sp-divider"><div class="sp-divider-line"></div></div>
+
+        <!-- ══ STATS FLOAT (parallax depth) ══════════════ -->
+        <div class="sp-section">
+            <div class="sp-split">
+                <div>
+                    <span class="sp-label sp-sr">Deine Zahlen</span>
+                    <h2 class="sp-section-title sp-sr sp-sr-d1">Dein persönlicher <em>Fortschritt</em></h2>
+                    <p class="sp-section-desc sp-sr sp-sr-d2">Alles, was du mit MyWorkLog festgehalten hast — live aus deinem localStorage.</p>
+                </div>
+                <div class="sp-stats-panel sp-sr sp-sr-d3">
+                    <div style="font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:1rem; display:flex; align-items:center; gap:.5rem;">
+                        <span>📊</span> MyWorkLog Statistiken
+                    </div>
+                    <div id="supportStatsGrid"><!-- filled by JS --></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ DIVIDER ════════════════════════════════════ -->
+        <div class="sp-divider sp-section-alt"><div class="sp-divider-line"></div></div>
+
+        <!-- ══ DONATE ════════════════════════════════════ -->
+        <div class="sp-section sp-section-alt">
+            <span class="sp-label sp-sr">Unterstützung</span>
+            <h2 class="sp-section-title sp-sr sp-sr-d1">Kauf uns einen <em>Kaffee</em> ☕</h2>
+            <p class="sp-section-desc sp-sr sp-sr-d2">MyWorkLog ist kostenlos & Open Source. Jede Spende fließt direkt in neue Features und Server-Kosten.</p>
+
+            <div class="sp-split sp-sr sp-sr-d3">
+                <div>
+                    <div class="sp-donate-grid">
+                        <button class="sp-donate-btn" onclick="supportDonate(3)">
+                            ☕<br>3 €
+                        </button>
+                        <button class="sp-donate-btn sp-donate-featured" onclick="supportDonate(5)">
+                            ☕☕<br>5 €
+                            <span class="sp-donate-badge">Beliebt</span>
+                        </button>
+                        <button class="sp-donate-btn" onclick="supportDonate(10)">
+                            ☕☕☕<br>10 €
+                        </button>
+                        <button class="sp-donate-btn sp-donate-custom" onclick="supportDonateCustom()">
+                            ✨ Eigener<br>Betrag
+                        </button>
+                    </div>
+                    <p style="font-size:.72rem; color:var(--text-muted); text-align:center;">Sicher via PayPal — 100 % fließen in MyWorkLog</p>
+                </div>
+
+                <div class="sp-float-stack">
+                    <div class="sp-float-row">
+                        <div class="sp-float-card">
+                            <div class="sp-float-metric">100%</div>
+                            <div class="sp-float-label">Open Source</div>
+                        </div>
+                        <div class="sp-float-card">
+                            <div class="sp-float-metric">0€</div>
+                            <div class="sp-float-label">Abo-Kosten</div>
+                        </div>
+                    </div>
+                    <div class="sp-float-card" style="animation-delay:.8s;">
+                        <div style="font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--text-muted); margin-bottom:.5rem;">Wofür deine Spende:</div>
+                        <div style="display:flex; flex-direction:column; gap:.4rem;">
+                            <div style="display:flex; align-items:center; gap:.6rem; font-size:.82rem;">
+                                <span style="color:var(--primary);">→</span> Serverkosten & Hosting
+                            </div>
+                            <div style="display:flex; align-items:center; gap:.6rem; font-size:.82rem;">
+                                <span style="color:var(--primary);">→</span> Neue Features entwickeln
+                            </div>
+                            <div style="display:flex; align-items:center; gap:.6rem; font-size:.82rem;">
+                                <span style="color:var(--primary);">→</span> App kostenlos halten
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ DIVIDER ════════════════════════════════════ -->
+        <div class="sp-divider"><div class="sp-divider-line"></div></div>
+
+        <!-- ══ CONTRIBUTE ════════════════════════════════ -->
+        <div class="sp-section">
+            <span class="sp-label sp-sr">Mitmachen</span>
+            <h2 class="sp-section-title sp-sr sp-sr-d1">So kannst du <em>beitragen</em></h2>
+            <p class="sp-section-desc sp-sr sp-sr-d2">Kein Geld nötig — auch Zeit, Ideen und Weitersagen helfen enorm.</p>
+
+            <div class="sp-contrib-grid sp-sr sp-sr-d2">
+                <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener noreferrer" class="sp-contrib-card">
+                    <span class="sp-contrib-icon">💻</span>
+                    <div class="sp-contrib-title">Code beitragen</div>
+                    <div class="sp-contrib-desc">Fork & Pull Request auf GitHub</div>
+                </a>
+                <a href="https://github.com/TechNova-App-Team/MyWorkLog/issues" target="_blank" rel="noopener noreferrer" class="sp-contrib-card">
+                    <span class="sp-contrib-icon">🐛</span>
+                    <div class="sp-contrib-title">Bugs melden</div>
+                    <div class="sp-contrib-desc">GitHub Issues öffnen</div>
+                </a>
+                <div class="sp-contrib-card" onclick="supportFeatureRequest()">
+                    <span class="sp-contrib-icon">💡</span>
+                    <div class="sp-contrib-title">Feature-Wunsch</div>
+                    <div class="sp-contrib-desc">Ideen einreichen</div>
+                </div>
+                <div class="sp-contrib-card" onclick="supportShare()">
+                    <span class="sp-contrib-icon">📣</span>
+                    <div class="sp-contrib-title">Teilen</div>
+                    <div class="sp-contrib-desc">Erzähl's weiter!</div>
+                </div>
+                <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener noreferrer" class="sp-contrib-card" style="border-color:rgba(var(--primary-rgb),.2); background:rgba(var(--primary-rgb),.05);">
+                    <span class="sp-contrib-icon">⭐</span>
+                    <div class="sp-contrib-title">Star auf GitHub</div>
+                    <div class="sp-contrib-desc">README & Guides</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- ══ DIVIDER ════════════════════════════════════ -->
+        <div class="sp-divider sp-section-alt"><div class="sp-divider-line"></div></div>
+
+        <!-- ══ FEEDBACK ══════════════════════════════════ -->
+        <div class="sp-section sp-section-alt">
+            <span class="sp-label sp-sr">Feedback</span>
+            <h2 class="sp-section-title sp-sr sp-sr-d1">Wie fandest du <em>MyWorkLog?</em></h2>
+            <p class="sp-section-desc sp-sr sp-sr-d2">Dein Feedback hilft uns, besser zu werden — ehrlich und direkt.</p>
+
+            <div class="sp-feedback-panel sp-sr sp-sr-d2">
+                <div class="sp-emoji-row">
+                    <button class="sp-emoji-btn" onclick="supportRate(5)" title="Fantastisch!">🤩</button>
+                    <button class="sp-emoji-btn" onclick="supportRate(4)" title="Gut!">😊</button>
+                    <button class="sp-emoji-btn" onclick="supportRate(3)" title="Okay">😐</button>
+                    <button class="sp-emoji-btn" onclick="supportRate(2)" title="Nicht so gut">😕</button>
+                    <button class="sp-emoji-btn" onclick="supportRate(1)" title="Schlecht">😞</button>
+                </div>
+
+                <textarea id="supportFeedbackText"
+                    placeholder="Was können wir besser machen? (Emoji Optional)"
+                    style="width:100%; min-height:80px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:12px; color:var(--text-main); font-family:var(--font-main); font-size:.85rem; resize:vertical; outline:none; transition:border-color .2s;"
+                    onfocus="this.style.borderColor='rgba(var(--primary-rgb),.4)'"
+                    onblur="this.style.borderColor='rgba(255,255,255,.08)'"></textarea>
+
+                <!-- DSGVO Toggle -->
+                <div style="margin-top:12px; padding:12px 14px; background:rgba(var(--primary-rgb),.04); border:1px solid rgba(var(--primary-rgb),.12); border-radius:12px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                        <span style="font-size:.78rem; color:var(--text-muted);">📊 Mitgesendete Daten:</span>
+                        <div style="display:flex; gap:6px;">
+                            <button id="feedbackModeMinimal" onclick="setFeedbackDataMode('minimal')" class="btn"
+                                style="padding:4px 12px; font-size:.72rem; border-radius:8px; background:rgba(16,185,129,.15); border:1px solid rgba(16,185,129,.3); color:#10b981; font-weight:600;">🔒 Minimal</button>
+                            <button id="feedbackModeFull" onclick="setFeedbackDataMode('full')" class="btn"
+                                style="padding:4px 12px; font-size:.72rem; border-radius:8px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); color:var(--text-muted); font-weight:600;">📊 Vollständig</button>
+                        </div>
+                    </div>
+                    <div id="feedbackDataModeInfo" style="font-size:.7rem; color:var(--text-muted); margin-top:8px; line-height:1.5;">
+                        🔒 <strong>Minimal:</strong> Nur Rating, Nachricht & Datum werden gesendet. Keine Gerätedaten.
+                    </div>
+                    <div style="margin-top:8px;">
+                        <a href="/Email/send.html" target="_blank" style="font-size:.7rem; color:var(--primary); text-decoration:underline; opacity:.7;">👁️ Vorschau: Feedback-Email-Template</a>
+                    </div>
+                </div>
+
+                <div style="margin-top:10px; display:flex; align-items:flex-start; gap:8px;">
+                    <input type="checkbox" id="feedbackDSGVOConsent"
+                        style="margin-top:3px; accent-color:var(--primary); min-width:16px; min-height:16px; cursor:pointer;">
+                    <label for="feedbackDSGVOConsent" style="font-size:.72rem; color:var(--text-muted); line-height:1.5; cursor:pointer;">
+                        Ich stimme zu, dass mein Feedback über <strong>EmailJS</strong> an den Entwickler gesendet wird.
+                        <a href="Pages/DE-Gestz/DSGVO.html" target="_blank" style="color:var(--primary); text-decoration:underline;">Datenschutzerklärung</a>
+                    </label>
+                </div>
+                <div style="display:flex; justify-content:flex-end; margin-top:10px;">
+                    <button class="btn btn-primary" onclick="supportSendFeedback()" style="padding:10px 28px; font-size:.85rem;">📨 Feedback senden</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ DIVIDER ════════════════════════════════════ -->
+        <div class="sp-divider"><div class="sp-divider-line"></div></div>
+
+        <!-- ══ CHANGELOG ═════════════════════════════════ -->
+        <div class="sp-section">
+            <span class="sp-label sp-sr">Changelog</span>
+            <h2 class="sp-section-title sp-sr sp-sr-d1">Letzte <em>Updates</em></h2>
+            <p class="sp-section-desc sp-sr sp-sr-d2">Was sich zuletzt getan hat — immer transparent.</p>
+
+            <div class="sp-changelog-wrap sp-sr sp-sr-d2">
+                <div id="supportChangelog">
+                    <div style="display:flex; gap:12px; align-items:flex-start; padding:10px; border-radius:10px; background:rgba(16,185,129,.05); border-left:3px solid var(--success);">
+                        <div style="font-size:.7rem; color:var(--text-muted); min-width:70px; font-family:var(--font-mono); padding-top:2px;">Feb 2026</div>
+                        <div>
+                            <div style="font-weight:600; font-size:.88rem; color:var(--text-main);">Wochenansicht Tab</div>
+                            <div style="font-size:.78rem; color:var(--text-muted); margin-top:2px;">Neuer dedizierter Wochen-Tab mit Tagesübersicht, Balkendiagramm & 8-Wochen-Trend</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:12px; align-items:flex-start; padding:10px; border-radius:10px; background:rgba(var(--primary-rgb),.05); border-left:3px solid var(--primary);">
+                        <div style="font-size:.7rem; color:var(--text-muted); min-width:70px; font-family:var(--font-mono); padding-top:2px;">Feb 2026</div>
+                        <div>
+                            <div style="font-weight:600; font-size:.88rem; color:var(--text-main);">Monatsvergleich Upgrade</div>
+                            <div style="font-size:.78rem; color:var(--text-muted); margin-top:2px;">Kalender, kompakter Monatsvergleich-Block & verbesserte Wochenanalyse</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:12px; align-items:flex-start; padding:10px; border-radius:10px; background:rgba(59,130,246,.05); border-left:3px solid var(--school);">
+                        <div style="font-size:.7rem; color:var(--text-muted); min-width:70px; font-family:var(--font-mono); padding-top:2px;">Jan 2026</div>
+                        <div>
+                            <div style="font-weight:600; font-size:.88rem; color:var(--text-main);">Mobile Bottom Navigation</div>
+                            <div style="font-size:.78rem; color:var(--text-muted); margin-top:2px;">Sticky Bottom-Bar für schnelle Navigation auf dem Handy</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:12px; align-items:flex-start; padding:10px; border-radius:10px; background:rgba(245,158,11,.05); border-left:3px solid var(--holiday);">
+                        <div style="font-size:.7rem; color:var(--text-muted); min-width:70px; font-family:var(--font-mono); padding-top:2px;">Jan 2026</div>
+                        <div>
+                            <div style="font-weight:600; font-size:.88rem; color:var(--text-main);">Schnelleintrag-Vorlagen</div>
+                            <div style="font-size:.78rem; color:var(--text-muted); margin-top:2px;">1-Klick Vorlagen für Arbeitstag, Schultag & mehr</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ FOOTER STRIP ═══════════════════════════════ -->
+        <div class="sp-footer">
+            <span style="font-size:.78rem; color:var(--text-muted); opacity:.6;">MyWorkLog — Made with ❤️ for Azubis</span>
+            <div class="sp-footer-links">
+                <a href="./Pages/DE-Gestz/Impressum.html" target="_blank" rel="noopener noreferrer">Impressum</a>
+                <a href="./Pages/DE-Gestz/DSGVO.html" target="_blank" rel="noopener noreferrer">Datenschutz</a>
+                <a href="./Pages/Info/about.html" target="_blank" rel="noopener noreferrer">Über uns</a>
+                <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener noreferrer">GitHub</a>
+            </div>
+        </div>
+
+        <!-- ══ PARALLAX & REVEAL JS ════════════════════════ -->
+        <script>
+        (function() {
+            /* ── init geo lines ── */
+            var geoContainer = document.getElementById('sp-geo-container');
+            if (geoContainer) {
+                for (var i = 0; i < 6; i++) {
+                    var line = document.createElement('div');
+                    line.className = 'sp-geo-line';
+                    var top = 5 + Math.random() * 88;
+                    var w   = 180 + Math.random() * 420;
+                    var dur = 9 + Math.random() * 14;
+                    var del = -(Math.random() * dur);
+                    line.style.cssText = 'top:' + top + '%;width:' + w + 'px;animation-duration:' + dur + 's;animation-delay:' + del + 's';
+                    geoContainer.appendChild(line);
+                }
+            }
+
+            /* ── scroll parallax bound to .main container ── */
+            var mainScroll = document.querySelector('.main');
+            var blob1 = document.getElementById('sp-blob1');
+            var blob2 = document.getElementById('sp-blob2');
+            var blob3 = document.getElementById('sp-blob3');
+            var grid  = document.getElementById('sp-grid');
+
+            function onSupportScroll() {
+                var viewEl = document.getElementById('view-support');
+                if (!viewEl || !viewEl.classList.contains('active')) return;
+                var y = mainScroll ? mainScroll.scrollTop : 0;
+                if (blob1) blob1.style.transform = 'translateY(' + (y * .13) + 'px)';
+                if (blob2) blob2.style.transform = 'translateY(' + (-y * .09) + 'px)';
+                if (blob3) blob3.style.transform = 'translateY(' + (y * .06) + 'px)';
+                if (grid)  grid.style.transform  = 'translateY(' + (y * .035) + 'px)';
+            }
+
+            if (mainScroll) {
+                mainScroll.addEventListener('scroll', onSupportScroll, { passive: true });
+            }
+
+            /* ── scroll reveal via IntersectionObserver ── */
+            var srObserver = new IntersectionObserver(function(entries) {
+                entries.forEach(function(e) {
+                    if (e.isIntersecting) {
+                        e.target.classList.add('sp-visible');
+                        srObserver.unobserve(e.target);
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+            /* observe when tab becomes active */
+            function observeSupportItems() {
+                document.querySelectorAll('#view-support .sp-sr').forEach(function(el) {
+                    srObserver.observe(el);
+                });
+            }
+
+            /* watch for tab activation via MutationObserver */
+            var viewSupport = document.getElementById('view-support');
+            if (viewSupport) {
+                new MutationObserver(function(muts) {
+                    muts.forEach(function(m) {
+                        if (m.type === 'attributes' && m.attributeName === 'class') {
+                            if (viewSupport.classList.contains('active')) {
+                                setTimeout(observeSupportItems, 80);
+                            }
+                        }
+                    });
+                }).observe(viewSupport, { attributes: true });
+
+                /* also check if already active on load */
+                if (viewSupport.classList.contains('active')) {
+                    setTimeout(observeSupportItems, 80);
+                }
+            }
+        })();
+        </script>
+
+        </div>

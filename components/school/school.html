@@ -1,0 +1,135 @@
+        <div id="view-school" class="view-section">
+            <!-- HERO HEADER -->
+            <div class="school-hero">
+                <div class="school-hero-bg"></div>
+                <div class="school-hero-content">
+                    <div class="school-hero-icon">📚</div>
+                    <div>
+                        <h2 style="margin:0;font-size:1.6rem;font-weight:800;color:#fff;">Berufsschule & Noten-Audit</h2>
+                        <p style="margin:.4rem 0 0;color:rgba(255,255,255,0.5);font-size:.9rem;">Dein akademischer Fortschritt auf einen Blick — Fächer, Noten, Trends & Insights.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI DASHBOARD -->
+            <div class="school-kpi-dashboard">
+                <!-- Big Ring Card -->
+                <div class="school-ring-card">
+                    <div class="school-progress-ring">
+                        <svg width="160" height="160" viewBox="0 0 100 100">
+                            <circle class="ring-school-bg" cx="50" cy="50" r="44"></circle>
+                            <circle id="ringSchoolAvg" class="ring-school-val" cx="50" cy="50" r="44" stroke-dasharray="276" stroke-dashoffset="276"></circle>
+                        </svg>
+                        <div class="school-overall-note" id="schoolOverallAvg">---</div>
+                    </div>
+                    <div style="font-size:.75rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;">Gesamtdurchschnitt</div>
+                    <div class="school-ring-badge" id="schoolGradeBadge">Keine Daten</div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="school-kpi-cards">
+                    <div class="school-kpi-card school-kpi-best" id="kpiBestNote">
+                        <div class="school-kpi-icon">🏆</div>
+                        <div class="school-kpi-info">
+                            <span class="school-kpi-label">BESTE NOTE</span>
+                            <span class="school-kpi-value" id="schoolBestNote">---</span>
+                            <span class="school-kpi-sub" id="schoolBestSubject"></span>
+                        </div>
+                    </div>
+                    <div class="school-kpi-card school-kpi-worst" id="kpiWorstNote">
+                        <div class="school-kpi-icon">⚠️</div>
+                        <div class="school-kpi-info">
+                            <span class="school-kpi-label">SCHWÄCHSTE NOTE</span>
+                            <span class="school-kpi-value" id="schoolWorstNote">---</span>
+                            <span class="school-kpi-sub" id="schoolWorstSubject"></span>
+                        </div>
+                    </div>
+                    <div class="school-kpi-card school-kpi-count">
+                        <div class="school-kpi-icon">📋</div>
+                        <div class="school-kpi-info">
+                            <span class="school-kpi-label">NOTEN ERFASST</span>
+                            <span class="school-kpi-value" id="schoolSubjectCount">0</span>
+                            <span class="school-kpi-sub" id="schoolSubjectTotal">in 0 Fächern</span>
+                        </div>
+                    </div>
+                    <div class="school-kpi-card school-kpi-trend">
+                        <div class="school-kpi-icon" id="schoolTrendIcon">➜</div>
+                        <div class="school-kpi-info">
+                            <span class="school-kpi-label">TREND</span>
+                            <span class="school-kpi-value" id="schoolTrendText" style="font-size:1rem;">Keine Daten</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRADE INPUT SECTION -->
+            <div class="card school-input-card">
+                <div class="school-section-header">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="school-section-icon">✏️</div>
+                        <div>
+                            <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:#fff;">Noten erfassen</h3>
+                            <p style="margin:.2rem 0 0;font-size:.8rem;color:rgba(255,255,255,0.4);">Fächer hinzufügen & Bewertungen eintragen</p>
+                        </div>
+                    </div>
+                    <button class="school-add-btn" onclick="addSchoolSubjectInput()">
+                        <span>+</span> Fach hinzufügen
+                    </button>
+                </div>
+                
+                <div id="schoolGradesInputGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:1.5rem;">
+                </div>
+                
+                <div style="display:flex; justify-content:flex-end; margin-top:1.5rem;">
+                    <button class="btn btn-primary school-save-btn" onclick="saveSchoolGrades()">
+                        <span style="font-size:1.1rem;">💾</span> Noten speichern & berechnen
+                    </button>
+                </div>
+            </div>
+
+            <!-- GRADES OVERVIEW -->
+            <div class="card school-overview-card">
+                <div class="school-section-header" style="margin-bottom:1.5rem;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div class="school-section-icon" style="background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(59,130,246,0.2));">📊</div>
+                        <div>
+                            <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:#fff;">Fächer-Übersicht</h3>
+                            <p style="margin:.2rem 0 0;font-size:.8rem;color:rgba(255,255,255,0.4);">Alle Fächer mit Durchschnittsnoten & Verlauf</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="schoolGradesList" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:14px;">
+                    <div class="school-empty-state">
+                        <div style="font-size:3rem;margin-bottom:1rem;opacity:0.3;">📚</div>
+                        <div style="font-weight:600;color:rgba(255,255,255,0.5);margin-bottom:.5rem;">Noch keine Noten vorhanden</div>
+                        <div style="font-size:.85rem;color:rgba(255,255,255,0.3);">Füge oben ein Fach hinzu und trage deine ersten Noten ein!</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TIPS SECTION -->
+            <div class="school-tips-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;">
+                    <span style="font-size:1.3rem;">💡</span>
+                    <span style="font-weight:700;color:rgba(255,255,255,0.8);font-size:.9rem;">Pro-Tipps zur Notenverwaltung</span>
+                </div>
+                <div class="school-tips-grid">
+                    <div class="school-tip-item">
+                        <span class="school-tip-check">✓</span>
+                        <span>Erfasse alle Fächer mit fortlaufenden Noten für einen genauen Durchschnitt</span>
+                    </div>
+                    <div class="school-tip-item">
+                        <span class="school-tip-check">✓</span>
+                        <span>Der Gesamtdurchschnitt wird automatisch aus allen Noten berechnet</span>
+                    </div>
+                    <div class="school-tip-item">
+                        <span class="school-tip-check">✓</span>
+                        <span>Erkenne Stärken & Schwächen auf einen Blick über die Farbcodierung</span>
+                    </div>
+                    <div class="school-tip-item">
+                        <span class="school-tip-check">✓</span>
+                        <span>Behalte den Trend im Auge — verbessere dich Schritt für Schritt!</span>
+                    </div>
+                </div>
+            </div>
+        </div>

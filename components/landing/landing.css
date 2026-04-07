@@ -1,0 +1,131 @@
+/* === BASE === */
+    #pro-intro{position:fixed;inset:0;z-index:99999;background:#080810;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;color:#fff;scrollbar-width:none;-ms-overflow-style:none}
+    #pro-intro::-webkit-scrollbar{display:none}
+    #pro-intro *{box-sizing:border-box;margin:0;padding:0}
+    .vi-scroll{position:relative;height:700vh}
+    .vi-stick{position:sticky;top:0;width:100%;height:100vh;overflow:hidden}
+
+    /* === VIDEO === */
+    .vi-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+    .vi-dim{position:absolute;inset:0;z-index:1;background:rgba(8,8,16,0.70)}
+
+    /* === SECTIONS — dramatic entrance === */
+    .vi-s{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;opacity:0;transform:scale(1.06) translateY(18px);filter:blur(6px);pointer-events:none;transition:opacity .3s cubic-bezier(.4,0,.2,1),transform .4s cubic-bezier(.22,1,.36,1),filter .3s ease}
+    .vi-s.on{opacity:1;transform:scale(1) translateY(0);filter:blur(0);pointer-events:auto}
+
+    /* SLAM variant — big impact entrance */
+    .vi-s-slam.on{animation:viSlam .45s cubic-bezier(.15,.85,.35,1.15)}
+    @keyframes viSlam{0%{transform:scale(1.4);opacity:0;filter:blur(16px)}50%{transform:scale(.98);filter:blur(0)}100%{transform:scale(1);opacity:1;filter:blur(0)}}
+
+    /* === PROGRESS === */
+    .vi-prog{position:absolute;bottom:0;left:0;right:0;height:2px;z-index:50;background:rgba(255,255,255,0.05)}
+    .vi-prog-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--primary),#ec4899);transition:width .08s linear}
+
+    /* === SKIP === */
+    .vi-skip{position:absolute;top:1.2rem;right:1.2rem;z-index:50;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.3);font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:system-ui;transition:all .2s}
+    .vi-skip:hover{color:#fff;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2)}
+
+    /* ===== S1: BRAND SLAM ===== */
+    .vi-logo{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(4rem,14vw,9rem);font-weight:900;letter-spacing:-.05em;text-align:center;color:#fff;text-shadow:0 0 60px rgba(var(--primary-rgb),0.25)}
+    .vi-sub-row{display:flex;align-items:center;gap:2px;margin-top:.6rem;min-height:1.5em}
+    .vi-typed{font-size:clamp(.95rem,2.2vw,1.3rem);color:rgba(255,255,255,0.4);letter-spacing:.12em;font-weight:400}
+    .vi-caret{color:var(--primary);font-weight:200;font-size:clamp(1rem,2.4vw,1.4rem);animation:viBlink 1s step-end infinite}
+    .vi-ver{margin-top:.8rem;font-size:.7rem;color:rgba(255,255,255,0.15);letter-spacing:.15em}
+    @keyframes viBlink{50%{opacity:0}}
+
+    /* ===== S2: CODE EDITOR ===== */
+    .vi-box{background:rgba(10,10,18,0.92);border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden;max-width:540px;width:92%;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+    .vi-box-bar{padding:.6rem .9rem;display:flex;align-items:center;gap:7px;border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.015)}
+    .vi-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .vi-box-tab{margin-left:auto;font-size:.65rem;color:rgba(255,255,255,0.2);letter-spacing:.06em}
+    .vi-box-body{padding:1.2rem 1.1rem .9rem;font-size:clamp(.76rem,1.3vw,.88rem);line-height:1.85}
+    .vi-code{font-family:'SF Mono','Fira Code','Cascadia Code',monospace}
+
+    /* Code lines — stagger slide from left */
+    .vi-cl{opacity:0;transform:translateX(-12px);transition:opacity .22s ease,transform .25s ease}
+    .vi-s.on .vi-cl{opacity:1;transform:translateX(0)}
+    .vi-ln{color:rgba(255,255,255,0.12);user-select:none;display:inline-block;width:2.2ch;text-align:right;margin-right:.8ch}
+    .vi-kw{color:#c084fc}
+    .vi-str{color:#34d399}
+    .vi-num{color:#fbbf24}
+    .vi-bool{color:#60a5fa}
+    .vi-blink{color:var(--primary);animation:viBlink 1s step-end infinite}
+
+    /* ===== S3: STATS ===== */
+    .vi-stats{display:flex;gap:2.5rem;flex-wrap:wrap;justify-content:center;padding:0 1.5rem}
+    .vi-stat{display:flex;flex-direction:column;align-items:center;gap:.25rem;opacity:0;transform:translateY(35px) scale(.92);transition:opacity .35s ease,transform .4s cubic-bezier(.22,1,.36,1)}
+    .vi-s.on .vi-stat{opacity:1;transform:translateY(0) scale(1)}
+    .vi-stat-row{display:flex;align-items:baseline}
+    .vi-stat-num{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(2.8rem,8vw,5rem);font-weight:900;letter-spacing:-.03em;background:linear-gradient(135deg,#fff 30%,rgba(var(--primary-rgb),0.8));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .vi-stat-suf{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:900;background:linear-gradient(135deg,var(--primary),#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .vi-stat-lbl{font-size:.75rem;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:.14em}
+    .vi-stat-tag{font-size:.72rem;color:rgba(255,255,255,0.18);margin-top:.1rem;font-style:italic}
+
+    /* ===== S4: GHOST MODE ===== */
+    .vi-ghost{display:flex;flex-direction:column;align-items:center;gap:1.3rem;padding:0 1rem}
+    .vi-ghost-q,.vi-ghost-p{opacity:0;transform:translateY(25px);transition:opacity .4s ease,transform .4s ease}
+    .vi-s.on .vi-ghost-q,.vi-s.on .vi-ghost-p{opacity:1;transform:translateY(0)}
+    .vi-ghost-q{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(1.6rem,5vw,2.8rem);font-weight:800;letter-spacing:-.02em;text-align:center}
+    .vi-ghost-demo{opacity:0;transform:translateY(30px) scale(.95);transition:opacity .4s ease,transform .5s cubic-bezier(.22,1,.36,1)}
+    .vi-s.on .vi-ghost-demo{opacity:1;transform:translateY(0) scale(1)}
+    .vi-ghost-fake{background:#1a1a2e;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+    .vi-ghost-top{padding:.5rem .8rem;font-size:.6rem;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.05);font-family:system-ui}
+    .vi-ghost-grid{display:grid;grid-template-columns:2.5rem 1fr 1fr 1fr 1fr;font-size:.65rem;color:rgba(255,255,255,0.45);font-family:system-ui}
+    .vi-gh{padding:.3rem .5rem;background:rgba(255,255,255,0.03);font-weight:600;color:rgba(255,255,255,0.25);text-align:center;border-bottom:1px solid rgba(255,255,255,0.04)}
+    .vi-gr{padding:.3rem .4rem;background:rgba(255,255,255,0.02);color:rgba(255,255,255,0.2);text-align:center;font-weight:600;border-right:1px solid rgba(255,255,255,0.04)}
+    .vi-gc{padding:.3rem .5rem;border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.02)}
+    .vi-ghost-p{font-size:clamp(.85rem,2vw,1.1rem);color:rgba(255,255,255,0.5);text-align:center;letter-spacing:.04em}
+
+    /* ===== S5: FEATURE PILLS ===== */
+    .vi-feat{display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:600px;width:92%}
+    .vi-feat-title{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(1.4rem,4vw,2.2rem);font-weight:800;letter-spacing:-.02em;opacity:0;transform:translateY(20px);transition:opacity .3s ease,transform .35s ease}
+    .vi-s.on .vi-feat-title{opacity:1;transform:translateY(0)}
+    .vi-pills{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
+    .vi-pill{padding:.5rem 1rem;font-size:clamp(.68rem,1.2vw,.8rem);background:rgba(var(--primary-rgb),0.08);border:1px solid rgba(var(--primary-rgb),0.15);border-radius:100px;color:rgba(255,255,255,0.7);white-space:nowrap;opacity:0;transform:translateY(22px) scale(.9);transition:opacity .3s ease,transform .35s cubic-bezier(.22,1,.36,1)}
+    .vi-s.on .vi-pill{opacity:1;transform:translateY(0) scale(1)}
+    .vi-pill:hover{background:rgba(var(--primary-rgb),0.15);border-color:rgba(var(--primary-rgb),0.3);color:#fff}
+
+    /* ===== S6: TERMINAL ===== */
+    .vi-term{line-height:1.9}
+    .vi-tl{opacity:0;transform:translateX(-10px);transition:opacity .2s ease,transform .25s ease}
+    .vi-s.on .vi-tl{opacity:1;transform:translateX(0)}
+    .vi-pr{color:var(--primary);font-weight:700}
+    .vi-out{color:rgba(255,255,255,0.45)}
+    .vi-g{color:#22c55e;font-weight:700}
+
+    /* ===== S7: CTA ===== */
+    .vi-end{text-align:center}
+    .vi-end-t{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(3.5rem,12vw,7rem);font-weight:900;letter-spacing:-.04em;margin-bottom:3rem;text-shadow:0 0 60px rgba(var(--primary-rgb),0.2)}
+
+    /* — PREMIUM SOLID CTA BUTTON — */
+    .vi-btn{position:relative;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;display:inline-flex;align-items:center;justify-content:space-between;padding:1rem 1.2rem 1rem 2rem;font-size:1.15rem;font-weight:700;letter-spacing:.02em;color:#fff;background:linear-gradient(135deg,var(--primary),#ec4899);border:none;border-radius:18px;cursor:pointer;overflow:hidden;transition:transform .25s cubic-bezier(.22,1,.36,1),box-shadow .25s ease;box-shadow:0 0 0 0px rgba(var(--primary-rgb),0.6),0 10px 35px rgba(var(--primary-rgb),0.35);}
+    /* Shine overlay */
+    .vi-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);transform:translateX(-100%);animation:viShineSlide 3s infinite;pointer-events:none}
+    @keyframes viShineSlide{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+    /* Text content */
+    .vi-btn-text{position:relative;z-index:1;white-space:nowrap;flex:1}
+    /* Arrow badge right side */
+    .vi-btn-arrow{position:relative;z-index:1;margin-left:1.5rem;width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .25s cubic-bezier(.22,1,.36,1),background .25s ease}
+    .vi-btn-arrow svg{width:20px;height:20px;stroke:currentColor}
+    /* Hover state */
+    .vi-btn:hover{transform:translateY(-4px);box-shadow:0 0 20px rgba(var(--primary-rgb),0.8),0 16px 50px rgba(var(--primary-rgb),0.4)}
+    .vi-btn:hover .vi-btn-arrow{transform:translateX(3px);background:rgba(255,255,255,0.35)}
+    .vi-btn:active{transform:scale(.96)}
+    /* Pulse animation */
+    .vi-btn{animation:viButtonPulse 2.5s ease-in-out infinite}
+    @keyframes viButtonPulse{0%,100%{box-shadow:0 0 0 0px rgba(var(--primary-rgb),0.6),0 10px 35px rgba(var(--primary-rgb),0.35)}50%{box-shadow:0 0 25px 5px rgba(var(--primary-rgb),0.4),0 16px 50px rgba(var(--primary-rgb),0.45)}}
+    /* Glow beneath */
+    .vi-end::after{content:'';display:block;width:320px;height:32px;margin:2rem auto 0;border-radius:50%;background:radial-gradient(ellipse,rgba(var(--primary-rgb),0.45) 0%,transparent 65%);filter:blur(12px);animation:viGlowPulse 2.5s ease-in-out infinite}
+    @keyframes viGlowPulse{0%,100%{opacity:.5}50%{opacity:.9}}
+
+    @keyframes viFadeOut{to{opacity:0}}
+
+    /* === MOBILE === */
+    @media(max-width:600px){
+      .vi-stats{flex-direction:column;gap:1.8rem}
+      .vi-pills{gap:.4rem}
+      .vi-pill{padding:.4rem .8rem}
+      .vi-ghost-grid{font-size:.55rem}
+      .vi-skip{top:.6rem;right:.6rem;width:32px;height:32px;font-size:.85rem}
+      .vi-box{width:95%;border-radius:10px}
+    }

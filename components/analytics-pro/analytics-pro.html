@@ -1,0 +1,237 @@
+        <div id="view-analytics-pro" class="view-section">
+            <div class="ap-container">
+
+                <!-- Tab Navigation -->
+                <div class="ap-tab-bar" id="apTabBar">
+                    <button class="ap-tab active" data-ap-tab="overview" onclick="apSwitchTab('overview')">
+                        <span class="ap-tab-icon">🏠</span>Übersicht
+                    </button>
+                    <button class="ap-tab" data-ap-tab="saldo" onclick="apSwitchTab('saldo')">
+                        <span class="ap-tab-icon">📈</span>Saldo Trend
+                    </button>
+                    <button class="ap-tab" data-ap-tab="heatmap" onclick="apSwitchTab('heatmap')">
+                        <span class="ap-tab-icon">🔥</span>Aktivitäts-Heatmap
+                    </button>
+                    <button class="ap-tab" data-ap-tab="weekly" onclick="apSwitchTab('weekly')">
+                        <span class="ap-tab-icon">📊</span>Wochen Soll/Ist
+                    </button>
+                    <button class="ap-tab" data-ap-tab="monthly" onclick="apSwitchTab('monthly')">
+                        <span class="ap-tab-icon">📅</span>Monats-Breakdown
+                    </button>
+                    <button class="ap-tab" data-ap-tab="projects" onclick="apSwitchTab('projects')">
+                        <span class="ap-tab-icon">🎯</span>Projekte
+                    </button>
+                    <button class="ap-tab" data-ap-tab="weekday" onclick="apSwitchTab('weekday')">
+                        <span class="ap-tab-icon">🕐</span>Wochentag-Radar
+                    </button>
+                    <button class="ap-tab" data-ap-tab="distribution" onclick="apSwitchTab('distribution')">
+                        <span class="ap-tab-icon">🍩</span>Verteilung
+                    </button>
+                    <button class="ap-tab" data-ap-tab="3d" onclick="apSwitchTab('3d')">
+                        <span class="ap-tab-icon">🏛️</span>3D City
+                    </button>
+                    <button class="ap-tab" data-ap-tab="galaxy" onclick="apSwitchTab('galaxy')">
+                        <span class="ap-tab-icon">🌌</span>Galaxy
+                    </button>
+                </div>
+
+                <!-- Panels -->
+                <div class="ap-panels">
+
+                    <!-- OVERVIEW -->
+                    <div class="ap-panel active" id="apPanel-overview">
+                        <div class="ap-kpi-row" id="apKpiRow"></div>
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">📈</span>Saldo Verlauf (30 Tage)</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartOverviewSaldo"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🍩</span>Eintragstypen</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartOverviewTypes"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">🔥</span>Aktivität (letztes Jahr)</div>
+                            <div id="apMiniHeatmap" style="overflow-x:auto;"></div>
+                        </div>
+                    </div>
+
+                    <!-- SALDO TREND -->
+                    <div class="ap-panel" id="apPanel-saldo">
+                        <div class="ap-period-bar" id="apSaldoPeriod"></div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📈</span>Kumulierter Saldo</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartSaldo"></canvas></div>
+                        </div>
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">📊</span>Tägliche Differenz</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartDailyDiff"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🎯</span>Saldo-Histogramm</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartSaldoHist"></canvas></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HEATMAP -->
+                    <div class="ap-panel" id="apPanel-heatmap">
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">🔥</span>Arbeitsaktivität — GitHub Style Heatmap</div>
+                            <div id="apHeatmapFull"></div>
+                        </div>
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">⏰</span>Stunden pro Tag</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartHoursPerDay"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🏆</span>Streaks & Records</div>
+                                <div id="apStreakStats" style="padding:0.5rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WEEKLY -->
+                    <div class="ap-panel" id="apPanel-weekly">
+                        <div class="ap-period-bar" id="apWeeklyPeriod"></div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📊</span>Soll vs. Ist — Wochenvergleich</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartWeekly"></canvas></div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📉</span>Wöchentlicher Saldo</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartWeeklySaldo"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- MONTHLY -->
+                    <div class="ap-panel" id="apPanel-monthly">
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📅</span>Monatliche Stunden nach Typ</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartMonthlyStack"></canvas></div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📈</span>Monatlicher Trend — Durchschnittliche Tagesleistung</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartMonthlyAvg"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- PROJECTS -->
+                    <div class="ap-panel" id="apPanel-projects">
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🎯</span>Projekt-Verteilung</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartProjects"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">📊</span>Top Projekte — Stunden</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartProjectBar"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📈</span>Projekt-Timeline</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartProjectTimeline"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- WEEKDAY RADAR -->
+                    <div class="ap-panel" id="apPanel-weekday">
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🕐</span>Produktivität nach Wochentag</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartRadar"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">⏱️</span>Durchschnittliche Arbeitszeit</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartWeekdayBar"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">😊</span>Stimmung nach Wochentag</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartMoodWeekday"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- DISTRIBUTION -->
+                    <div class="ap-panel" id="apPanel-distribution">
+                        <div class="ap-grid-2">
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🍩</span>Eintragstypen — Doughnut</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartTypeDoughnut"></canvas></div>
+                            </div>
+                            <div class="ap-card">
+                                <div class="ap-card-title"><span class="ap-card-icon">🌀</span>Eintragstypen — Polar</div>
+                                <div class="ap-chart-wrap"><canvas id="apChartTypePolar"></canvas></div>
+                            </div>
+                        </div>
+                        <div class="ap-card">
+                            <div class="ap-card-title"><span class="ap-card-icon">📊</span>Stunden-Verteilung (Histogramm)</div>
+                            <div class="ap-chart-wrap"><canvas id="apChartHoursHist"></canvas></div>
+                        </div>
+                    </div>
+
+                    <!-- 3D CITY VISUALIZATION -->
+                    <div class="ap-panel" id="apPanel-3d">
+                        <div class="ap-card" style="padding:0; overflow:hidden; border-radius:20px;">
+                            <div class="ap3d-header">
+                                <div class="ap3d-title">🏛️ 3D Work-City — Deine Arbeitstage als Skyline</div>
+                                <div class="ap3d-controls">
+                                    <button class="ap-period-btn active" onclick="ap3dSetRange(90, this)">90 Tage</button>
+                                    <button class="ap-period-btn" onclick="ap3dSetRange(180, this)">180 Tage</button>
+                                    <button class="ap-period-btn" onclick="ap3dSetRange(365, this)">1 Jahr</button>
+                                    <button class="ap-period-btn" onclick="ap3dSetRange(0, this)">Alle</button>
+                                    <button class="ap-period-btn" onclick="ap3dToggleAutoRotate(this)" id="ap3dAutoRotBtn">↻ Auto</button>
+                                </div>
+                            </div>
+                            <div id="ap3dContainer" class="ap3d-viewport"></div>
+                            <div class="ap3d-legend">
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#22c55e;"></span>Übersollt (&ge;100%)</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:var(--primary);"></span>Normal (70-99%)</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#f59e0b;"></span>Niedrig (40-69%)</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#ef4444;"></span>Minimal (&lt;40%)</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#06b6d4;"></span>Schule</span>
+                                <span class="ap3d-legend-item"><span class="ap3d-legend-dot" style="background:#3b82f6;"></span>Urlaub/Feiertag</span>
+                            </div>
+                            <div class="ap3d-hint">🖱️ Drehen: Linke Maustaste • Zoomen: Scrollrad • Verschieben: Rechte Maustaste</div>
+                        </div>
+                        <div class="ap-grid-3" style="margin-top:1.25rem;" id="ap3dStats"></div>
+                    </div>
+
+                    <!-- GALAXY VISUALIZATION -->
+                    <div class="ap-panel" id="apPanel-galaxy">
+                        <div class="ap-card" style="padding:0; overflow:hidden; border-radius:20px; position:relative;">
+                            <div class="apgx-header">
+                                <div class="apgx-title">🌌 Work Galaxy — Dein Universum aus Arbeitstagen</div>
+                                <div class="apgx-controls">
+                                    <button class="ap-period-btn active" onclick="apGxSetRange(90, this)">90d</button>
+                                    <button class="ap-period-btn" onclick="apGxSetRange(180, this)">180d</button>
+                                    <button class="ap-period-btn" onclick="apGxSetRange(365, this)">1J</button>
+                                    <button class="ap-period-btn" onclick="apGxSetRange(0, this)">All</button>
+                                    <button class="ap-period-btn" onclick="apGxToggleBloom(this)" id="apGxBloomBtn">✨ Bloom</button>
+                                    <button class="ap-period-btn" onclick="apGxToggleAutoRotate(this)" id="apGxAutoRotBtn">↻ Orbit</button>
+                                </div>
+                            </div>
+                            <div id="apGxContainer" class="apgx-viewport"></div>
+                            <div id="apGxInfoOverlay" class="apgx-info-overlay"></div>
+                            <div class="apgx-legend">
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#22c55e; box-shadow:0 0 6px #22c55e;"></span>Superstar (&ge;100%)</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:var(--primary); box-shadow:0 0 6px var(--primary);"></span>Nebula (70-99%)</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#f59e0b; box-shadow:0 0 6px #f59e0b;"></span>Dwarf (40-69%)</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#ef4444; box-shadow:0 0 6px #ef4444;"></span>Red Giant (&lt;40%)</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#06b6d4; box-shadow:0 0 6px #06b6d4;"></span>Schule</span>
+                                <span class="apgx-legend-item"><span class="apgx-legend-dot" style="background:#3b82f6; box-shadow:0 0 6px #3b82f6;"></span>Urlaub/Feiertag</span>
+                            </div>
+                            <div class="apgx-hint">🖱️ Orbit: Maus ziehen • Zoom: Scrollrad • Pan: Rechtsklick • Hover: Stern-Info</div>
+                        </div>
+                        <div class="ap-grid-3" style="margin-top:1.25rem;" id="apGxStats"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tooltip -->
+            <div class="ap-tooltip" id="apTooltip"></div>
+        </div>

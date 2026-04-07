@@ -1,0 +1,37 @@
+        <div id="view-history" class="view-section">
+<div class="card">
+                <div class="filter-header">
+                    <h2 style="font-size:1.5rem;">Daten-Analyse & Historie</h2>
+                    <span id="historyCount">0 Einträge</span>
+                </div>
+                
+                <div class="filter-grid">
+                    <input type="date" id="historyFilterStart" class="glass-input" placeholder="Startdatum" onchange="renderHistoryView()">
+                    <input type="date" id="historyFilterEnd" class="glass-input" placeholder="Enddatum" onchange="renderHistoryView()">
+
+                    <select type="date" id="historyFilterType" class="glass-select" onchange="renderHistoryView()">
+                        <option value="all">Alle Typen</option>
+                        <option value="work">💼 Arbeit</option>
+                        <option value="school">📚 Berufsschule</option>
+                        <option value="vacation">🌴 Urlaub</option>
+                        <option value="gleittag">⚡ Gleittag</option>
+                        <option value="sick">💊 Krank</option>
+                        <option value="holiday">🏖️ Feiertag</option>
+                    </select>
+
+                    <input type="number" id="historyFilterMinHours" class="glass-input" step="0.5" placeholder="Min. Stunden" oninput="renderHistoryView()">
+                    
+                    <input type="text" id="historyFilterSearch" class="glass-input" placeholder="Suche (Info/Projekt)" oninput="renderHistoryView()" style="grid-column: 1 / span 4;">
+                </div>
+
+                <div style="display:flex; gap:15px; margin-bottom: 1.5rem;">
+                    <button class="btn btn-primary" onclick="exportHistoryData('csv')" style="flex:1;">CSV Export (Gefiltert)</button>
+                    <button class="btn btn-primary" onclick="exportHistoryData('json')" style="flex:1; background:var(--school);">JSON Export (Gefiltert)</button>
+                    <button class="btn" onclick="openTrashModal()" style="background:rgba(255,255,255,0.05); border:1px solid var(--border);">🗑️ Papierkorb <span id="trashCountBadge" style="background:rgba(255,255,255,0.03); padding:4px 8px; border-radius:999px; margin-left:8px; font-size:0.85rem; color:var(--text-muted);">0</span></button>
+                </div>
+
+                <div id="entryListFull">
+                    <p style="color:var(--text-muted); text-align:center;">Lade Historie...</p>
+                </div>
+            </div>
+        </div>

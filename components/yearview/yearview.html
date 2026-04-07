@@ -1,0 +1,102 @@
+        <div id="view-yearview" class="view-section">
+            <h2 style="margin-bottom:0.5rem;">📆 Jahresübersicht & Intelligente Insights</h2>
+            <p style="color:var(--text-muted); margin-bottom:2rem;">Deine komplette Arbeitsleistung auf einen Blick. Sieh deine Produktivitätsmuster und erhalte personalisierte Empfehlungen.</p>
+            
+            <!-- JAHR-SELECTOR -->
+            <div class="card" style="margin-bottom:2rem; display:flex; gap:15px; align-items:center;">
+                <label style="font-weight:600;">Wähle ein Jahr:</label>
+                <select id="yearSelector" class="glass-select" onchange="onYearSelectorChange()" style="flex:1; max-width:200px;">
+                    <option>2025</option>
+                </select>
+            </div>
+            
+            <!-- JAHRES-STATISTIK HEADER -->
+            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom:2rem;">
+                <div class="card" style="border-left: 5px solid var(--primary);">
+                    <div class="audit-label">Gesamte Arbeitszeit</div>
+                    <div style="font-size:2rem; font-weight:800; color:var(--primary); margin:10px 0; font-family:var(--font-mono);" id="yearTotalWorked">0h</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">In diesem Jahr</div>
+                </div>
+                <div class="card" style="border-left: 5px solid var(--success);">
+                    <div class="audit-label">Durchschnittlich pro Tag</div>
+                    <div style="font-size:2rem; font-weight:800; color:var(--success); margin:10px 0; font-family:var(--font-mono);" id="yearAvgDaily">0h</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">An Arbeitstagen</div>
+                </div>
+                <div class="card" style="border-left: 5px solid #06b6d4;">
+                    <div class="audit-label">Saldo am Jahresende</div>
+                    <div style="font-size:2rem; font-weight:800; color:#06b6d4; margin:10px 0; font-family:var(--font-mono);" id="yearEndSaldo">+0h</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Prognose Dezember</div>
+                </div>
+                <div class="card" style="border-left: 5px solid var(--holiday);">
+                    <div class="audit-label">Produktivste Woche</div>
+                    <div style="font-size:2rem; font-weight:800; color:var(--holiday); margin:10px 0; font-family:var(--font-mono);" id="yearBestWeek">KW --</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); font-family:var(--font-mono);" id="yearBestWeekValue">+0h</div>
+                </div>
+                <div class="card" style="border-left: 5px solid #3b82f6;">
+                    <div class="audit-label">🌴 Urlaubstage</div>
+                    <div style="font-size:2rem; font-weight:800; color:#3b82f6; margin:10px 0; font-family:var(--font-mono);" id="yearVacationDays">0</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">In diesem Jahr</div>
+                </div>
+                <div class="card" style="border-left: 5px solid #f59e0b;">
+                    <div class="audit-label">🏖️ Feiertage</div>
+                    <div style="font-size:2rem; font-weight:800; color:#f59e0b; margin:10px 0; font-family:var(--font-mono);" id="yearHolidayDays">0</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">In diesem Jahr</div>
+                </div>
+            </div>
+            
+            <!-- JAHRES-HEATMAP -->
+            <div class="card" style="margin-bottom:2rem;">
+                <h3 style="font-size:1.1rem; margin-bottom:1.5rem;">🔥 Produktivitäts-Heatmap</h3>
+                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">Jedes Quadrat = 1 Tag. 
+                    <strong style="color:#3b82f6;">Blau = 🌴 Urlaub</strong> | 
+                    <strong style="color:#f59e0b;">Orange = 🏖️ Feiertag</strong> | 
+                    <strong style="color:#ec4899;">Pink = 🤒 Krankheit</strong> | 
+                    <strong style="color:#10b981;">Grün = Positiv</strong> | 
+                    <strong style="color:#ef4444;">Rot = Negativ</strong> | 
+                    Grau = kein Eintrag</p>
+                
+                <div style="overflow-x: auto; padding-bottom: 1rem;">
+                    <div id="yearHeatmap" style="display:inline-block; min-width:100%;"></div>
+                </div>
+                
+                <div style="display:flex; gap:2rem; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border); flex-wrap:wrap; font-size:0.85rem;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:20px; height:20px; background:#ef4444; border-radius:4px;"></div>
+                        <span>Saldo negativ (-)</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:20px; height:20px; background:#fbbf24; border-radius:4px;"></div>
+                        <span>Leicht positiv (0-1h)</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:20px; height:20px; background:var(--success); border-radius:4px;"></div>
+                        <span>Positiv (1-3h)</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:20px; height:20px; background:var(--primary); border-radius:4px;"></div>
+                        <span>Sehr positiv (3h+)</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:20px; height:20px; background:#475569; border-radius:4px;"></div>
+                        <span>Kein Eintrag</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- INTELLIGENTE INSIGHTS -->
+            <div class="card" style="margin-bottom:2rem;">
+                <h3 style="font-size:1.1rem; margin-bottom:1.5rem; color:var(--primary);">💡 KI-Insights & Empfehlungen</h3>
+                <div id="yearInsights" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:1.5rem;">
+                    <!-- Werden dynamisch gefüllt -->
+                </div>
+            </div>
+            
+            <!-- MONATS-VERGLEICH -->
+            <div class="card">
+                <h3 style="font-size:1.1rem; margin-bottom:1.5rem;">📊 Monatlicher Vergleich</h3>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:1rem;" id="yearMonthlyComparison">
+                    <!-- Werden dynamisch gefüllt -->
+                </div>
+            </div>
+
+        </div>

@@ -1,0 +1,128 @@
+        <div id="view-performance" class="view-section">
+            <h2 style="margin-bottom:1.5rem;">📈 Performance Analyse & Muster</h2>
+
+            <div class="kpi-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.5rem;">
+                <div class="card kpi-large">
+                    <div class="kpi-large-label">Soll-Erfüllungsgrad (90 Tage)</div>
+                    <div class="kpi-large-value" id="kpiPerformance">0%</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Ziel: 100%</div>
+                </div>
+                <div class="card kpi-large" style="border-left: 3px solid #06b6d4;">
+                    <div class="kpi-large-label">Ø Arbeitsbeginn</div>
+                    <div class="kpi-large-value" id="kpiAvgStartTime" style="color:#06b6d4;">---</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Dein bestes Startfenster</div>
+                </div>
+                <div class="card kpi-large" style="border-left: 3px solid #f59e0b;">
+                    <div class="kpi-large-label">Ø Längste Fokusphase</div>
+                    <div class="kpi-large-value" id="kpiAvgFocus" style="color:#f59e0b;">0.0h</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Zwischen Pausen & Start/Ende</div>
+                </div>
+                 <div class="card kpi-large">
+                    <div class="kpi-large-label">Ø Saldo Monatlich (1 Jahr)</div>
+                    <div class="kpi-large-value" id="kpiAvgMonthlyDiff" style="color:var(--primary);">+0h</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">Zeigt den monatlichen Trend</div>
+                </div>
+            </div>
+
+            <div class="charts-row" style="grid-template-columns: 1fr;">
+                <div class="card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Wöchentlicher Soll-Ist-Vergleich</div>
+                            <div class="chart-sub">Deine geleistete Zeit vs. Soll-Zeit der letzten 8 Wochen</div>
+                        </div>
+                        <div class="donut-legend">
+                            <div class="legend-item"><div class="dot" style="background:var(--work-color)"></div> Geleistet</div>
+                            <div class="legend-item"><div class="dot" style="background:var(--expected-color)"></div> Soll</div>
+                        </div>
+                    </div>
+                    <div class="stacked-bar-chart" id="chartWeeklyPerformance">
+                        </div>
+                </div>
+            </div>
+            
+            <div class="charts-row" style="grid-template-columns: 1fr 1fr;">
+                 <div class="card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Projekt-Verteilung</div>
+                            <div class="chart-sub">Aufteilung der gesamten Arbeitszeit</div>
+                        </div>
+                    </div>
+                    <div class="donut-container" id="chartProjectDistribution">
+                    </div>
+                    <div class="donut-legend" id="projectDonutLegend">
+                    </div>
+                </div>
+                
+                 <div class="card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Saldo-Entwicklung pro Monat</div>
+                            <div class="chart-sub">Kumulierte Saldo-Veränderung pro Monat (12 Monate)</div>
+                        </div>
+                    </div>
+                    <div class="trend-container" id="chartMonthlyTrend">
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-row" style="grid-template-columns: 1fr;">
+                 <div class="card chart-deep-row">
+                     <div style="padding-right: 1.5rem; border-right: 1px solid var(--border);">
+                        <div class="chart-header">
+                            <div>
+                                <div class="chart-title">Ø Produktivität pro Wochentag</div>
+                                <div class="chart-sub">Durchschnittlicher Saldo Mo - Fr</div>
+                            </div>
+                        </div>
+                        <div class="horizontal-bar-container" id="chartProductivityByDay" style="max-height: 300px; overflow-y: auto;">
+                            </div>
+                    </div>
+                     
+                    <div style="padding-left: 1.5rem;">
+                         <div class="chart-header">
+                            <div>
+                                <div class="chart-title">Tages-Heatmap</div>
+                                <div class="chart-sub">Durchschnittliche geleistete Zeit pro Stunde (8:00 - 23:00)</div>
+                            </div>
+                        </div>
+                        <div id="chartProductivityHeatmap">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom:1.5rem;">Compliance & Ruhezeiten-Audit</h3>
+                <div class="audit-grid" style="grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                    <div class="card audit-card" id="auditMaxHours">
+                        <div class="audit-label">10h Max-Arbeitszeit</div>
+                        <div class="audit-value" id="auditMaxHoursValue">OK</div>
+                    </div>
+                    <div class="card audit-card" id="auditRestTime">
+                        <div class="audit-label">11h Ruhezeit (Letzte Schicht)</div>
+                        <div class="audit-value" id="auditRestTimeValue">OK</div>
+                    </div>
+                     <div class="card audit-card" id="auditBreakMin">
+                        <div class="audit-label">Pausen-Compliance (Letzte Schicht)</div>
+                        <div class="audit-value" id="auditBreakMinValue">OK</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mood Overview -->
+            <div class="charts-row" style="grid-template-columns: 1fr;">
+                <div class="card">
+                    <div class="chart-header">
+                        <div>
+                            <div class="chart-title">Stimmungs-Übersicht</div>
+                            <div class="chart-sub">Deine Stimmung über die letzten 30 Tage</div>
+                        </div>
+                    </div>
+                    <div id="moodOverview" style="display:flex; flex-wrap:wrap; gap:8px; padding:1rem;">
+                        <!-- Mood entries will be filled by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>

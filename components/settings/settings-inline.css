@@ -1,0 +1,606 @@
+@keyframes p2pSpin { to { transform: rotate(360deg); } }
+        @keyframes p2pPulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+        .p2p-step-dot { height:4px; flex:1; border-radius:2px; background:rgba(255,255,255,0.08); transition:all 0.4s ease; }
+        .p2p-step-dot.active { background:linear-gradient(90deg, var(--primary), #7c3aed); }
+        .p2p-step-dot.done { background:#10b981; }
+    
+
+    <style id="ghost-mode-styles">
+        /* ====== GHOST MODE – Fake Excel Spreadsheet ====== */
+        #ghostModeOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: #f0f0f0;
+            font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+            color: #1a1a1a;
+            flex-direction: column;
+            overflow: hidden;
+            cursor: default;
+            user-select: text;
+        }
+        #ghostModeOverlay.active { display: flex; }
+
+        /* Fake Excel Toolbar */
+        .ghost-toolbar {
+            background: #217346;
+            color: white;
+            padding: 4px 14px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            height: 30px;
+            flex-shrink: 0;
+        }
+        .ghost-toolbar span { opacity: 0.85; cursor: default; }
+        .ghost-toolbar span:hover { opacity: 1; }
+        .ghost-toolbar .ghost-title { font-weight: 600; margin-left: auto; opacity: 0.7; font-size: 11px; }
+
+        /* Fake Ribbon */
+        .ghost-ribbon {
+            background: #fff;
+            border-bottom: 1px solid #d0d0d0;
+            display: flex;
+            align-items: center;
+            padding: 3px 10px;
+            gap: 6px;
+            height: 36px;
+            flex-shrink: 0;
+        }
+        .ghost-ribbon-btn {
+            background: none;
+            border: 1px solid transparent;
+            color: #333;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 2px;
+            cursor: default;
+            font-family: inherit;
+        }
+        .ghost-ribbon-btn:hover { background: #e5e5e5; border-color: #c0c0c0; }
+        .ghost-ribbon-sep { width: 1px; height: 20px; background: #d0d0d0; margin: 0 4px; }
+
+        /* Fake Formula Bar */
+        .ghost-formula-bar {
+            background: #fff;
+            border-bottom: 1px solid #d0d0d0;
+            display: flex;
+            align-items: center;
+            padding: 2px 6px;
+            height: 26px;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+        .ghost-formula-bar .ghost-cell-ref {
+            background: #fff;
+            border: 1px solid #c0c0c0;
+            padding: 2px 8px;
+            width: 60px;
+            font-size: 11px;
+            text-align: center;
+            margin-right: 6px;
+            color: #333;
+        }
+        .ghost-formula-bar .ghost-fx { color: #999; margin-right: 6px; font-style: italic; font-size: 11px; }
+        .ghost-formula-bar .ghost-formula-input {
+            flex: 1;
+            border: 1px solid #c0c0c0;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-family: inherit;
+            color: #333;
+            background: #fff;
+        }
+
+        /* Spreadsheet Grid */
+        .ghost-sheet-wrap {
+            flex: 1;
+            overflow: auto;
+            background: #fff;
+        }
+        .ghost-sheet {
+            border-collapse: collapse;
+            width: max-content;
+            min-width: 100%;
+            font-size: 12px;
+        }
+        .ghost-sheet th {
+            background: #f3f3f3;
+            border: 1px solid #d0d0d0;
+            padding: 3px 10px;
+            font-weight: 400;
+            color: #444;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            min-width: 80px;
+            text-align: center;
+            font-size: 11px;
+        }
+        .ghost-sheet th.ghost-row-head {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            min-width: 36px;
+            width: 36px;
+            text-align: center;
+        }
+        .ghost-sheet th.ghost-corner {
+            position: sticky;
+            left: 0;
+            top: 0;
+            z-index: 4;
+        }
+        .ghost-sheet td {
+            border: 1px solid #e0e0e0;
+            padding: 3px 8px;
+            color: #1a1a1a;
+            white-space: nowrap;
+            height: 22px;
+        }
+        .ghost-sheet td.ghost-row-num {
+            background: #f3f3f3;
+            border-color: #d0d0d0;
+            text-align: center;
+            color: #444;
+            font-size: 11px;
+            position: sticky;
+            left: 0;
+            z-index: 1;
+        }
+        .ghost-sheet tr:hover td:not(.ghost-row-num) { background: #f5f9ff; }
+        .ghost-sheet td.ghost-selected {
+            outline: 2px solid #217346;
+            outline-offset: -1px;
+            background: #e8f5e9;
+        }
+
+        /* Fake Status Bar */
+        .ghost-statusbar {
+            background: #217346;
+            color: white;
+            padding: 2px 14px;
+            font-size: 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .ghost-statusbar span { opacity: 0.8; }
+
+        /* Panic Button (subtle floating corner button) — starts with display:none in HTML */
+        .ghost-panic-btn {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            z-index: 999998;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.25);
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            opacity: 0.4;
+        }
+        .ghost-panic-btn:hover {
+            opacity: 1;
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            transform: scale(1.1);
+        }
+        .ghost-panic-btn.visible { opacity: 0.4; }
+        [data-theme="light"] .ghost-panic-btn {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.08);
+            color: rgba(0, 0, 0, 0.15);
+        }
+        [data-theme="light"] .ghost-panic-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.25);
+            color: #dc2626;
+        }
+
+        /* Ghost Mode active: hide panic button */
+        #ghostModeOverlay.active ~ .ghost-panic-btn { display: none; }
+
+        /* ====== PWA INSTALL BANNER ====== */
+        .pwa-install-banner {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 99998;
+            background: linear-gradient(135deg, rgba(30,30,46,0.98), rgba(24,24,37,0.98));
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(var(--primary-rgb),0.3);
+            padding: 0 0 env(safe-area-inset-bottom, 0);
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+        }
+        .pwa-install-banner.visible {
+            display: block;
+            transform: translateY(0);
+        }
+        .pwa-install-banner-inner {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .pwa-install-icon {
+            flex-shrink: 0;
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 4px 16px rgba(var(--primary-rgb),0.35);
+        }
+        .pwa-install-text {
+            flex: 1;
+            min-width: 0;
+        }
+        .pwa-install-text strong {
+            display: block;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .pwa-install-text span {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }
+        .pwa-install-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .pwa-install-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .pwa-install-btn-primary {
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(var(--primary-rgb),0.4);
+        }
+        .pwa-install-btn-primary:hover { transform: scale(1.04); box-shadow: 0 4px 20px rgba(var(--primary-rgb),0.5); }
+        .pwa-install-btn-primary:active { transform: scale(0.97); }
+        .pwa-install-btn-dismiss {
+            background: rgba(255,255,255,0.06);
+            color: #94a3b8;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .pwa-install-btn-dismiss:hover { background: rgba(255,255,255,0.1); color:#fff; }
+        [data-theme="light"] .pwa-install-banner {
+            background: linear-gradient(135deg, rgba(255,255,255,0.97), rgba(248,250,252,0.97));
+            border-top: 1px solid rgba(var(--primary-rgb),0.2);
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.1);
+        }
+        [data-theme="light"] .pwa-install-text strong { color: #1e293b; }
+        [data-theme="light"] .pwa-install-text span { color: #64748b; }
+        [data-theme="light"] .pwa-install-btn-dismiss { background: rgba(0,0,0,0.04); color:#64748b; border-color:rgba(0,0,0,0.08); }
+        /* iOS-specific hint styling */
+        .pwa-ios-steps {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: rgba(var(--primary-rgb),0.08);
+            font-size: 0.78rem;
+            color: #c4b5fd;
+        }
+        .pwa-ios-steps svg { flex-shrink:0; }
+        [data-theme="light"] .pwa-ios-steps { background: rgba(var(--primary-rgb),0.06); color: #7c3aed; }
+        @media (max-width: 480px) {
+            .pwa-install-banner-inner { padding: 14px 16px; gap:10px; }
+            .pwa-install-icon { width:44px; height:44px; font-size:22px; border-radius:12px; }
+            .pwa-install-actions { flex-direction: column; gap:6px; }
+            .pwa-install-btn { padding: 8px 14px; font-size:0.8rem; text-align:center; }
+        }
+
+        /* Ghost Announce Modal Animations */
+        @keyframes ghostAnnounceIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.92); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes ghostFloat {
+            0%, 100% { transform: translateY(0); }
+            50%      { transform: translateY(-8px); }
+        }
+
+        /* ====== GHOST MODE — VS Code Skin ====== */
+        #ghostModeVSCode {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: #1e1e1e;
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            color: #cccccc;
+            flex-direction: column;
+            overflow: hidden;
+            cursor: default;
+            user-select: text;
+        }
+        #ghostModeVSCode.active { display: flex; }
+
+        /* Titlebar */
+        .vsc-titlebar {
+            background: #323233;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            -webkit-app-region: drag;
+        }
+        .vsc-titlebar-left {
+            display: flex;
+            gap: 0;
+            padding-left: 8px;
+        }
+        .vsc-menu-item {
+            padding: 4px 10px;
+            color: rgba(255,255,255,0.75);
+            cursor: default;
+            border-radius: 4px;
+        }
+        .vsc-menu-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .vsc-titlebar-center {
+            flex: 1;
+            text-align: center;
+            color: rgba(255,255,255,0.55);
+            font-size: 12px;
+        }
+        .vsc-titlebar-right {
+            display: flex;
+            gap: 0;
+        }
+        .vsc-win-btn {
+            width: 46px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            cursor: default;
+        }
+        .vsc-win-btn:hover { background: rgba(255,255,255,0.08); }
+        .vsc-win-btn.vsc-close:hover { background: #e81123; color: #fff; }
+
+        /* Main layout */
+        .vsc-main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Activity bar */
+        .vsc-activitybar {
+            width: 48px;
+            background: #333333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 0;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+        .vsc-act-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            opacity: 0.5;
+            cursor: default;
+            border-left: 2px solid transparent;
+        }
+        .vsc-act-icon.vsc-act-active {
+            opacity: 1;
+            border-left-color: #fff;
+        }
+
+        /* Sidebar / Explorer */
+        .vsc-sidebar {
+            width: 240px;
+            background: #252526;
+            border-right: 1px solid #1e1e1e;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        .vsc-sidebar-title {
+            padding: 10px 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.6);
+        }
+        .vsc-tree { font-size: 13px; }
+        .vsc-tree-folder {
+            padding: 3px 20px;
+            color: #ccc;
+            cursor: default;
+        }
+        .vsc-tree-folder:hover { background: rgba(255,255,255,0.04); }
+        .vsc-tree-file {
+            padding: 3px 20px;
+            color: rgba(255,255,255,0.6);
+            cursor: default;
+        }
+        .vsc-tree-file:hover { background: rgba(255,255,255,0.04); }
+        .vsc-tree-file.vsc-tree-active {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+
+        /* Editor area */
+        .vsc-editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .vsc-tabs {
+            display: flex;
+            background: #252526;
+            height: 35px;
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+        .vsc-tab {
+            padding: 0 16px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.45);
+            border-right: 1px solid #1e1e1e;
+            cursor: default;
+            white-space: nowrap;
+            background: #2d2d2d;
+        }
+        .vsc-tab.vsc-tab-active {
+            background: #1e1e1e;
+            color: #fff;
+            border-bottom: 1px solid #1e1e1e;
+        }
+        .vsc-tab-icon {
+            font-size: 10px;
+            font-weight: 700;
+            background: #3178c6;
+            color: #fff;
+            padding: 1px 4px;
+            border-radius: 2px;
+        }
+        .vsc-tab-close {
+            font-size: 10px;
+            opacity: 0;
+            margin-left: 4px;
+        }
+        .vsc-tab:hover .vsc-tab-close { opacity: 0.5; }
+
+        /* Code editor */
+        .vsc-editor {
+            flex: 1;
+            background: #1e1e1e;
+            overflow-y: auto;
+            padding: 8px 0;
+            font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 20px;
+            counter-reset: vsc-line;
+        }
+        .vsc-line {
+            display: flex;
+            min-height: 20px;
+            padding-right: 16px;
+        }
+        .vsc-line:hover { background: rgba(255,255,255,0.02); }
+        .vsc-line-num {
+            width: 56px;
+            text-align: right;
+            padding-right: 16px;
+            color: rgba(255,255,255,0.2);
+            flex-shrink: 0;
+            user-select: none;
+        }
+        .vsc-line-code {
+            white-space: pre;
+            flex: 1;
+            min-width: 0;
+        }
+        /* VS Code active line highlight */
+        .vsc-line.vsc-active-line { background: rgba(255,255,255,0.04); }
+        .vsc-line.vsc-active-line .vsc-line-num { color: rgba(255,255,255,0.5); }
+
+        /* Syntax colors (One Dark inspired) */
+        .vsc-kw { color: #c586c0; }       /* keywords: import, export, const, if */
+        .vsc-fn { color: #dcdcaa; }       /* function names */
+        .vsc-str { color: #ce9178; }      /* strings */
+        .vsc-num { color: #b5cea8; }      /* numbers */
+        .vsc-cmt { color: #6a9955; font-style: italic; }  /* comments */
+        .vsc-type { color: #4ec9b0; }     /* types, interfaces */
+        .vsc-var { color: #9cdcfe; }      /* variables */
+        .vsc-op { color: #d4d4d4; }       /* operators, brackets */
+        .vsc-tag { color: #569cd6; }      /* JSX tags */
+        .vsc-attr { color: #92c5f7; }     /* attributes */
+        .vsc-dec { color: #4fc1ff; }      /* decorators */
+
+        /* Statusbar */
+        .vsc-statusbar {
+            height: 22px;
+            background: #007acc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.85);
+            flex-shrink: 0;
+        }
+        .vsc-sb-left, .vsc-sb-right {
+            display: flex;
+            gap: 0;
+        }
+        .vsc-sb-item {
+            padding: 0 8px;
+            cursor: default;
+        }
+        .vsc-sb-item:hover { background: rgba(255,255,255,0.12); }
+        .vsc-sb-branch { font-weight: 500; }
+
+        /* Typing cursor animation */
+        @keyframes vscCursorBlink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        .vsc-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 16px;
+            background: #aeafad;
+            vertical-align: text-bottom;
+            animation: vscCursorBlink 1s step-end infinite;
+        }
+
+        /* Hide sidebar on mobile for ghost mode */
+        @media (max-width: 768px) {
+            .vsc-sidebar { display: none; }
+            .vsc-activitybar { width: 36px; }
+            .vsc-act-icon { width: 36px; height: 36px; font-size: 16px; }
+        }

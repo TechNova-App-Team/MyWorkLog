@@ -1,0 +1,430 @@
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- NEUES WIDGET MANAGER MODAL - SCHÖNES DESIGN -->
+    <div id="newWidgetManagerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 200; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
+        <div style="background: var(--bg-glass); border: 1px solid var(--border); border-radius: 20px; padding: 30px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; color: var(--text-main); box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+            <button onclick="closeNewWidgetManager()" style="position: absolute; top: 15px; right: 15px; background: transparent; color: var(--text-muted); border: none; font-size: 24px; cursor: pointer; padding: 5px; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='transparent'; this.style.color='var(--text-muted)'">×</button>
+            <h2 style="color: var(--primary); margin-top: 0; margin-bottom: 20px; font-size: 1.5rem;">📦 Widget Manager</h2>
+            <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 0.95rem;">Füge neue Widgets zu deinem Dashboard hinzu oder entferne vorhandene. Jedes Widget kann individuell konfiguriert werden.</p>
+            
+            <div style="margin: 25px 0;">
+                <h3 style="color: var(--text-main); margin-bottom: 15px; font-size: 1.1rem;">Verfügbare Widgets</h3>
+                <div id="newAvailableWidgets" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    <!-- Widgets werden hier geladen -->
+                </div>
+            </div>
+            
+            <div style="margin: 25px 0;">
+                <h3 style="color: var(--text-main); margin-bottom: 15px; font-size: 1.1rem;">Aktuelle Dashboard-Widgets</h3>
+                <div id="newCurrentWidgets" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    <!-- Widgets werden hier geladen -->
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
+                <button onclick="addRandomWidget()" style="background: var(--success); color: white; border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">➕ Zufälliges Widget hinzufügen</button>
+                <button onclick="closeNewWidgetManager()" style="background: var(--bg-sidebar); color: var(--text-main); border: 1px solid var(--border); padding: 12px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='var(--bg-sidebar)'">Schließen</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- GHOST MODE ANNOUNCEMENT MODAL -->
+    <div id="ghostAnnounceModal" style="position:fixed;inset:0;z-index:999998;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.35s ease;backdrop-filter:blur(12px);">
+        <div style="background:linear-gradient(145deg,#13131a,#1a1a24);width:92%;max-width:560px;padding:0;border-radius:20px;border:2px solid rgba(var(--primary-rgb),0.4);box-shadow:0 0 80px rgba(var(--primary-rgb),0.15),0 25px 60px rgba(0,0,0,0.6);overflow:hidden;animation:ghostAnnounceIn 0.5s ease-out both;">
+            <!-- Header Banner -->
+            <div style="background:linear-gradient(135deg,#1e1b2e,#2a1f3d);padding:28px 28px 20px;position:relative;overflow:hidden;">
+                <div style="position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(var(--primary-rgb),0.15),transparent 50%);pointer-events:none;"></div>
+                <div style="font-size:52px;text-align:center;margin-bottom:12px;filter:drop-shadow(0 0 20px rgba(var(--primary-rgb),0.4));animation:ghostFloat 3s ease-in-out infinite;">🙏</div>
+                <h2 style="color:#fff;margin:0;font-size:1.6rem;text-align:center;font-weight:800;letter-spacing:-0.5px;">Neues Feature: <span style="background:linear-gradient(135deg,var(--primary),#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Ghost Mode</span></h2>
+                <p style="color:#94a3b8;text-align:center;margin:8px 0 0;font-size:0.85rem;">Der ultimative Boss-Key für Azubis — ab sofort verfügbar!</p>
+            </div>
+
+            <!-- Content -->
+            <div style="padding:24px 28px;">
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                    <!-- Feature 1 -->
+                    <div style="display:flex;align-items:flex-start;gap:14px;background:rgba(var(--primary-rgb),0.06);border:1px solid rgba(var(--primary-rgb),0.12);border-radius:12px;padding:14px;">
+                        <div style="min-width:40px;height:40px;background:linear-gradient(135deg,var(--primary),#7c3aed);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">⌨️</div>
+                        <div style="flex:1 1 0; min-width:0;">
+                            <div style="color:#fff;font-weight:700;font-size:0.95rem;margin-bottom:3px;">Strg + Shift + K</div>
+                            <div style="color:#94a3b8;font-size:0.82rem;line-height:1.5;">Drück den Shortcut und dein komplettes UI verwandelt sich <b style='color:#c4b5fd;'>instant</b> in eine langweilige Excel-Tabelle.</div>
+                        </div>
+                    </div>
+                    <!-- Feature 2 -->
+                    <div style="display:flex;align-items:flex-start;gap:14px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.12);border-radius:12px;padding:14px;">
+                        <div style="min-width:40px;height:40px;background:linear-gradient(135deg,#10b981,#059669);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">📈</div>
+                        <div style="flex:1 1 0; min-width:0;">
+                            <div style="color:#fff;font-weight:700;font-size:0.95rem;margin-bottom:3px;">Sieht aus wie Arbeit</div>
+                            <div style="color:#94a3b8;font-size:0.82rem;line-height:1.5;">Fake Excel mit echten Arbeitszeit-Daten, Formelleiste, Ribbon — sogar der <b style='color:#6ee7b7;'>Tab-Titel</b> ändert sich!</div>
+                        </div>
+                    </div>
+                    <!-- Feature 3 -->
+                    <div style="display:flex;align-items:flex-start;gap:14px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.12);border-radius:12px;padding:14px;">
+                        <div style="min-width:40px;height:40px;background:linear-gradient(135deg,#6366f1,#4f46e5);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">🙏</div>
+                        <div style="flex:1 1 0; min-width:0;">
+                            <div style="color:#fff;font-weight:700;font-size:0.95rem;margin-bottom:3px;">Panik-Button & Command Palette</div>
+                            <div style="color:#94a3b8;font-size:0.82rem;line-height:1.5;">Diskreter 🙏 Button unten rechts oder tippe <kbd style='background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;font-size:0.75rem;border:1px solid rgba(255,255,255,0.15);'>Ghost</kbd> in Ctrl+K. <b style='color:#a5b4fc;'>Escape</b> bringt dich zurück.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Don't show again -->
+                <label style="display:flex;align-items:center;gap:10px;margin-top:20px;cursor:pointer;color:#64748b;font-size:0.82rem;transition:color 0.2s;" onmouseover="this.style.color='#94a3b8'" onmouseout="this.style.color='#64748b'">
+                    <input type="checkbox" id="ghostAnnounceDismiss" style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;">
+                    Nicht mehr anzeigen — ich hab’s verstanden! ✌️
+                </label>
+
+                <!-- CTA -->
+                <button onclick="dismissGhostAnnounce()" style="width:100%;margin-top:16px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:white;border:none;padding:14px;border-radius:12px;font-weight:700;font-size:1rem;cursor:pointer;transition:all 0.25s;box-shadow:0 4px 20px rgba(var(--primary-rgb),0.3);letter-spacing:0.2px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 30px rgba(var(--primary-rgb),0.45)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 20px rgba(var(--primary-rgb),0.3)'">
+                    Verstanden — Lass mich ghosten! 🙏
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GHOST MODE / BOSS KEY OVERLAY -->
+    <div id="ghostModeOverlay">
+        <div class="ghost-toolbar">
+            <span>Datei</span><span>Start</span><span>Einfügen</span><span>Seitenlayout</span><span>Formeln</span><span>Daten</span><span>Überprüfen</span><span>Ansicht</span>
+            <span class="ghost-title">Arbeitszeiterfassung_2026.xlsx — Microsoft Excel</span>
+        </div>
+        <div class="ghost-ribbon">
+            <button class="ghost-ribbon-btn">📋 Einfügen</button>
+            <div class="ghost-ribbon-sep"></div>
+            <button class="ghost-ribbon-btn"><b>F</b></button>
+            <button class="ghost-ribbon-btn"><i>K</i></button>
+            <button class="ghost-ribbon-btn"><u>U</u></button>
+            <div class="ghost-ribbon-sep"></div>
+            <button class="ghost-ribbon-btn">Σ AutoSumme</button>
+            <button class="ghost-ribbon-btn">↕ Sortieren</button>
+            <div class="ghost-ribbon-sep"></div>
+            <button class="ghost-ribbon-btn">% Prozent</button>
+            <button class="ghost-ribbon-btn">.00 Dezimal</button>
+        </div>
+        <div class="ghost-formula-bar">
+            <span class="ghost-cell-ref">D4</span>
+            <span class="ghost-fx">fx</span>
+            <input class="ghost-formula-input" value="=SUMME(D2:D3)" readonly tabindex="-1">
+        </div>
+        <div class="ghost-sheet-wrap">
+            <table class="ghost-sheet" id="ghostSheetTable"></table>
+        </div>
+        <div class="ghost-statusbar">
+            <span>Bereit</span>
+            <span>Mittelwert: 7,85 &nbsp; Anzahl: 24 &nbsp; Summe: 188,4</span>
+        </div>
+    </div>
+
+    <!-- Ghost Mode: VS Code Skin -->
+    <div id="ghostModeVSCode">
+        <div class="vsc-titlebar">
+            <div class="vsc-titlebar-left">
+                <span class="vsc-menu-item">File</span>
+                <span class="vsc-menu-item">Edit</span>
+                <span class="vsc-menu-item">Selection</span>
+                <span class="vsc-menu-item">View</span>
+                <span class="vsc-menu-item">Go</span>
+                <span class="vsc-menu-item">Run</span>
+                <span class="vsc-menu-item">Terminal</span>
+                <span class="vsc-menu-item">Help</span>
+            </div>
+            <div class="vsc-titlebar-center">server-migration.tsx — MyProject</div>
+            <div class="vsc-titlebar-right">
+                <span class="vsc-win-btn">─</span>
+                <span class="vsc-win-btn">□</span>
+                <span class="vsc-win-btn vsc-close">✕</span>
+            </div>
+        </div>
+        <div class="vsc-main">
+            <div class="vsc-activitybar">
+                <div class="vsc-act-icon vsc-act-active">📄</div>
+                <div class="vsc-act-icon">🔍</div>
+                <div class="vsc-act-icon">🔀</div>
+                <div class="vsc-act-icon">🐛</div>
+                <div class="vsc-act-icon">📦</div>
+                <div class="vsc-act-icon" style="margin-top:auto;">⚙️</div>
+            </div>
+            <div class="vsc-sidebar">
+                <div class="vsc-sidebar-title">EXPLORER</div>
+                <div class="vsc-tree">
+                    <div class="vsc-tree-folder">▾ src</div>
+                    <div class="vsc-tree-file vsc-tree-active">&nbsp;&nbsp;server-migration.tsx</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;api-controller.ts</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;database-service.ts</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;auth-middleware.ts</div>
+                    <div class="vsc-tree-folder">▸ components</div>
+                    <div class="vsc-tree-folder">▸ hooks</div>
+                    <div class="vsc-tree-folder">▸ utils</div>
+                    <div class="vsc-tree-folder">▾ config</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;webpack.config.js</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;tsconfig.json</div>
+                    <div class="vsc-tree-folder">▸ tests</div>
+                    <div class="vsc-tree-folder">▸ node_modules</div>
+                </div>
+            </div>
+            <div class="vsc-editor-area">
+                <div class="vsc-tabs">
+                    <div class="vsc-tab vsc-tab-active"><span class="vsc-tab-icon">TS</span> server-migration.tsx <span class="vsc-tab-close">✕</span></div>
+                    <div class="vsc-tab"><span class="vsc-tab-icon">TS</span> api-controller.ts</div>
+                    <div class="vsc-tab"><span class="vsc-tab-icon">JS</span> webpack.config.js</div>
+                </div>
+                <div class="vsc-editor" id="vscEditorContent"></div>
+            </div>
+        </div>
+        <div class="vsc-statusbar">
+            <div class="vsc-sb-left">
+                <span class="vsc-sb-item vsc-sb-branch">🔀 main</span>
+                <span class="vsc-sb-item">0 ⚠️ 0 ❌</span>
+            </div>
+            <div class="vsc-sb-right">
+                <span class="vsc-sb-item">Ln 42, Col 18</span>
+                <span class="vsc-sb-item">Spaces: 2</span>
+                <span class="vsc-sb-item">UTF-8</span>
+                <span class="vsc-sb-item">TypeScript React</span>
+                <span class="vsc-sb-item">Prettier</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panic Button — HIDDEN by default, only shown via JS after intro -->
+    <button class="ghost-panic-btn" id="ghostPanicBtn" onclick="toggleGhostMode()" title="Ghost Mode (Strg+Shift+K)" style="display:none">👻</button>
+
+    <!-- PWA INSTALL BANNER -->
+    <div class="pwa-install-banner" id="pwaInstallBanner">
+        <div class="pwa-install-banner-inner">
+            <div class="pwa-install-icon">📲</div>
+            <div class="pwa-install-text">
+                <strong>MyWorkLog installieren</strong>
+                <span>Als App auf dem Homescreen — schneller, offline, kein Browser nötig</span>
+                <div class="pwa-ios-steps" id="pwaIOSHint" style="display:none;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    Tippe auf <strong style="margin:0 3px;">Teilen</strong> → <strong style="margin:0 3px;">Zum Home-Bildschirm</strong>
+                </div>
+            </div>
+            <div class="pwa-install-actions">
+                <button class="pwa-install-btn pwa-install-btn-primary" id="pwaInstallBtn" onclick="pwaInstallBannerInstall()">Installieren</button>
+                <button class="pwa-install-btn pwa-install-btn-dismiss" onclick="pwaInstallBannerDismiss()">Später</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMMAND PALETTE -->
+    <div class="cmd-palette-overlay" id="cmdPalette">
+        <div class="cmd-palette">
+            <div class="cmd-palette-input-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="cmd-palette-input" id="cmdPaletteInput" type="text" placeholder="Seite suchen, navigieren…" autocomplete="off" spellcheck="false">
+                <button class="cmd-palette-close-btn" onclick="closeCmdPalette()" title="Schließen" aria-label="Suche schließen">✕</button>
+            </div>
+            <div class="cmd-palette-results" id="cmdPaletteResults"></div>
+            <div class="cmd-palette-footer">
+                <span><kbd>↑</kbd><kbd>↓</kbd> navigieren</span>
+                <span><kbd>↵</kbd> öffnen</span>
+                <span><kbd>esc</kbd> schließen</span>
+            </div>
+        </div>
+    </div>
+
+    <nav class="sidebar" id="sidebar">
+        <!-- Ambient glow orb -->
+        <div class="sidebar-ambient"></div>
+        <!-- Mouse hover beam -->
+        <div class="sidebar-hover-beam" id="sidebarHoverBeam"></div>
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <div class="brand-logo">⚡</div>
+            <div class="brand">MyWorkLog</div>
+            <div class="sidebar-header-actions">
+                <button class="sidebar-header-btn" onclick="openCmdPalette()" title="Suche">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Command Bar Trigger -->
+        <div class="sidebar-search" onclick="openCmdPalette()" title="Suche (⌘K)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Suche…
+            <kbd>Ctrl K</kbd>
+        </div>
+
+        <!-- Scrollable Navigation Area -->
+        <div class="sidebar-scroll-wrapper">
+        <div class="sidebar-scroll">
+            <!-- Dynamic Nav Items (Dashboard, Performance, etc.) -->
+            <div id="sidebarNavList"></div>
+
+            <!-- Ausbildung & Lernen -->
+            <div class="nav-section" data-section="education" onclick="toggleNavSection(this)">
+                Ausbildung & Lernen
+                <span class="nav-section-chevron">▾</span>
+            </div>
+            <div class="nav-section-group" data-group="education">
+                <a href="./Pages/App/Ausbilungs_Hilfe/index.html" class="nav-item nav-external" style="text-decoration:none;" aria-label="Ausbildungshilfe — Leitfäden & Ressourcen">
+                    <span class="nav-icon">🎓</span> Ausbildungshilfe
+                </a>
+                <a href="./Pages/App/berichtsheft.html" class="nav-item nav-external" style="text-decoration:none;" aria-label="Berichtsheft Generator — IHK-konforme Ausbildungsnachweise">
+                    <span class="nav-icon">📋</span> Berichtsheft
+                </a>
+                <div class="nav-item" onclick="showUntisImportModal()">
+                    <span class="nav-icon">📚</span> Untis
+                </div>
+                <a href="./Pages/App/vertrags-manager.html" class="nav-item nav-external" style="text-decoration:none;" aria-label="Vertrags-Manager — Gehalt & Urlaubsübersicht">
+                    <span class="nav-icon">💼</span> Vertrags-Mgr
+                </a>
+                <a href="./Pages/App/Ausbilungs_Hilfe/rechte-checker.html" class="nav-item nav-external" style="text-decoration:none;" aria-label="Darf der Chef das? — Azubi-Rechte-Checker">
+                    <span class="nav-icon">⚖️</span> Rechte-Checker
+                </a>
+            </div>
+
+            <!-- Aufgaben & KI -->
+            <div class="nav-section" data-section="tasks-ai" onclick="toggleNavSection(this)">
+                Aufgaben & KI
+                <span class="nav-section-chevron">▾</span>
+            </div>
+            <div class="nav-section-group" data-group="tasks-ai">
+                <a href="./Pages/App/Tasks/aufgaben.html" class="nav-item nav-external" style="text-decoration:none;" aria-label="Aufgaben Manager — Tages-Planung mit Wiederholen & Reminders">
+                    <span class="nav-icon">✅</span> Aufgaben
+                </a>
+                <a href="./Pages/App/SkillTree/skill-tree.html" class="nav-item nav-external" style="text-decoration:none;" aria-label="RPG Skill-Baum — 3D Skill-Visualisierung mit KI">
+                    <span class="nav-icon">🌳</span> Skill-Baum
+                </a>
+                <div class="nav-item" id="nav-aibot" onclick="switchTab('aibot')">
+                    <span class="nav-icon">🤖</span> AI-Bot
+                </div>
+            </div>
+
+            <div class="nav-separator"></div>
+
+            <!-- Tools & Werkzeuge -->
+            <div class="nav-section" data-section="tools" onclick="toggleNavSection(this)">
+                Tools & Werkzeuge
+                <span class="nav-section-chevron">▾</span>
+            </div>
+            <div class="nav-section-group" data-group="tools">
+                <div class="nav-item" id="nav-alerts" onclick="toggleAlertsPanel()" style="position:relative;">
+                    <span class="nav-icon">🔔</span> Alerts
+                    <div id="alertBadge" class="nav-badge" style="display:none;"></div>
+                </div>
+                <div class="nav-item" onclick="startOnboardingTour()">
+                    <span class="nav-icon">🧭</span> Anleitung
+                </div>
+                <div class="nav-item" onclick="showBackupMenu()">
+                    <span class="nav-icon">📥</span> Import
+                </div>
+                <div class="nav-item" onclick="showExportMenu()">
+                    <span class="nav-icon">💾</span> Backup
+                </div>
+                <div class="nav-item" onclick="openSettings()">
+                    <span class="nav-icon">⚙️</span> Einstellungen
+                </div>
+            </div>
+            <input type="file" id="fileImp" hidden onchange="importData(event)">
+            <input type="file" id="fileImpEncrypted" hidden accept=".encrypted.json,application/json" onchange="importEncryptedBackup(event)">
+
+            <!-- Hilfe & Rechtliches -->
+            <div class="nav-section" data-section="legal" onclick="toggleNavSection(this)">
+                Hilfe & Rechtliches
+                <span class="nav-section-chevron">▾</span>
+            </div>
+            <div class="nav-section-group" data-group="legal">
+                <div class="nav-item" id="nav-support" onclick="switchTab('support')">
+                    <span class="nav-icon">☕</span> Unterstützung
+                </div>
+                <div class="nav-item nav-external" onclick="window.open('Pages/Info/update_bugs.html', '_blank')">
+                    <span class="nav-icon">🗂️</span> Updates and Bugs
+                </div>
+                <div class="nav-item nav-external" onclick="window.open('Pages/Info/repo-report.html', '_blank')">
+                    <span class="nav-icon">🔥</span> Repo-Analyse
+                </div>
+                <a href="./Pages/Info/analytics.html" class="nav-item nav-external" style="text-decoration:none;" target="_blank" rel="noopener noreferrer" aria-label="Analytics">
+                    <span class="nav-icon">📊</span> Analytics
+                </a>
+                <a href="./Pages/DE-Gestz/Impressum.html" class="nav-item nav-external" style="text-decoration:none;" target="_blank" rel="noopener noreferrer" aria-label="Impressum">
+                    <span class="nav-icon">📄</span> Impressum
+                </a>
+                <a href="./Pages/DE-Gestz/DSGVO.html" class="nav-item nav-external" style="text-decoration:none;" target="_blank" rel="noopener noreferrer" aria-label="DSGVO">
+                    <span class="nav-icon">🔒</span> DSGVO
+                </a>
+                <a href="./Pages/Info/about.html" class="nav-item nav-external" style="text-decoration:none;" target="_blank" rel="noopener noreferrer" aria-label="About">
+                    <span class="nav-icon">💡</span> About
+                </a>
+            </div>
+        </div>
+        </div><!-- /sidebar-scroll-wrapper -->
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer" id="sidebarFooter" onclick="toggleProfilePopover(event)" style="cursor:pointer;" title="Profil & Einstellungen">
+            <div class="sidebar-footer-avatar" id="sidebarAvatar">SK</div>
+            <div class="sidebar-footer-info">
+                <div class="sidebar-footer-version" data-app-version>v3.3.4b</div>
+                <div class="sidebar-footer-label" id="sidebarNetLabel">© MyWorkLog</div>
+            </div>
+            <!-- Profile Popover -->
+            <div class="profile-popover" id="profilePopover">
+                <div class="profile-popover-header">
+                    <div class="profile-popover-avatar" id="popoverAvatar">SK</div>
+                    <div class="profile-popover-user">
+                        <div class="profile-popover-name" id="popoverName">Benutzer</div>
+                        <div class="profile-popover-status">
+                            <span class="profile-popover-status-dot"></span>
+                            <span id="popoverStatus">Online</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-popover-items">
+                    <button class="profile-popover-item" onclick="event.stopPropagation(); closeProfilePopover(); openSettings();">
+                        <span class="profile-popover-item-icon">⚙️</span>
+                        <span class="profile-popover-item-label">Einstellungen</span>
+                        <span class="profile-popover-item-shortcut">Ctrl+,</span>
+                    </button>
+                    <button class="profile-popover-item" onclick="event.stopPropagation(); closeProfilePopover(); toggleAlertsPanel();">
+                        <span class="profile-popover-item-icon">🔔</span>
+                        <span class="profile-popover-item-label">Benachrichtigungen</span>
+                    </button>
+                    <button class="profile-popover-item" onclick="event.stopPropagation(); closeProfilePopover(); showExportMenu();">
+                        <span class="profile-popover-item-icon">💾</span>
+                        <span class="profile-popover-item-label">Backup / Export</span>
+                    </button>
+                    <button class="profile-popover-item" onclick="event.stopPropagation(); closeProfilePopover(); showBackupMenu();">
+                        <span class="profile-popover-item-icon">📥</span>
+                        <span class="profile-popover-item-label">Import</span>
+                    </button>
+                    <div class="profile-popover-divider"></div>
+                    <div class="profile-popover-theme-row">
+                        <button class="profile-popover-theme-btn" id="ppThemeDark" onclick="event.stopPropagation(); setThemeMode('dark'); updatePopoverThemeBtns();" title="Dunkel">🌙 Dunkel</button>
+                        <button class="profile-popover-theme-btn" id="ppThemeLight" onclick="event.stopPropagation(); setThemeMode('light'); updatePopoverThemeBtns();" title="Hell">☀️ Hell</button>
+                        <button class="profile-popover-theme-btn" id="ppThemeSystem" onclick="event.stopPropagation(); setThemeMode('system'); updatePopoverThemeBtns();" title="System">💻 Auto</button>
+                    </div>
+                    <div class="profile-popover-divider"></div>
+                    <button class="profile-popover-item" onclick="event.stopPropagation(); closeProfilePopover(); if(typeof startOnboardingTour==='function') startOnboardingTour();">
+                        <span class="profile-popover-item-icon">🧭</span>
+                        <span class="profile-popover-item-label">App-Tour starten</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Ambient Background Orbs -->
+    <div class="ambient-orbs" id="ambientOrbs" aria-hidden="true">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+        <div class="ambient-orb orb-3"></div>
+    </div>
+
+    <main class="main" id="mainContent">
+        
+        <button id="mobileMenuToggle" onclick="toggleSidebar()">☰</button>
+        
+        <header class="header">
+            <div>
+                <div class="greeting" id="userGreeting">Willkommen</div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <h1 class="page-title">Übersicht</h1>
+                    <button class="help-slim" title="Hilfe" onclick="openQuickHelp('global')">?</button>
+                </div>
+            </div>
+            <div class="date-badge" id="currentDate">loading...</div>
+        </header>
+
