@@ -3,7 +3,7 @@
 // VERSION BUMP: Force cache invalidation
 
 const CACHE_NAME = 'timetracker-v1.12.1';
-const RUNTIME_CACHE = 'timetracker-runtime-v1.12.1';
+const RUNTIME_CACHE = 'timetracker-runtime-v1.13.1';
 const SW_DEBUG = false;
 const OFFLINE_PAGE = './Pages/Info/offline.html';
 
