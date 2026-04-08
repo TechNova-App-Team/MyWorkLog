@@ -65,6 +65,20 @@
             setTimeout(() => toast.remove(), 240);
         };
 
+        // Swipe-to-dismiss (touch)
+        let _uSwX = 0, _uSwD = 0, _uSwActive = false;
+        toast.addEventListener('touchstart', (e) => { _uSwX = e.touches[0].clientX; _uSwD = 0; _uSwActive = false; toast.style.transition = 'none'; }, { passive: true });
+        toast.addEventListener('touchmove', (e) => {
+            const dx = e.touches[0].clientX - _uSwX;
+            if (!_uSwActive && Math.abs(dx) > 8) _uSwActive = true;
+            if (_uSwActive) { _uSwD = dx; toast.style.transform = `translateX(calc(-50% + ${dx}px))`; toast.style.opacity = Math.max(0.2, 1 - Math.abs(dx) / 250); }
+        }, { passive: true });
+        toast.addEventListener('touchend', () => {
+            if (_uSwActive && Math.abs(_uSwD) > 80) { removeToast(); }
+            else { toast.style.transition = 'transform 0.3s ease, opacity 0.2s ease'; toast.style.transform = 'translateX(-50%)'; toast.style.opacity = '1'; }
+            _uSwActive = false;
+        });
+
         // Undo on click
         toast.querySelector('#undoBtn').addEventListener('click', () => {
             undoDelete();

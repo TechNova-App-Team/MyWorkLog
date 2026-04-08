@@ -310,6 +310,41 @@
         });
         toast.addEventListener('click', () => _dismissToast(toast));
 
+        // Swipe-to-dismiss (touch)
+        let _swStartX = 0, _swStartY = 0, _swDeltaX = 0, _swSwiping = false;
+        toast.addEventListener('touchstart', (e) => {
+            _swStartX = e.touches[0].clientX;
+            _swStartY = e.touches[0].clientY;
+            _swDeltaX = 0;
+            _swSwiping = false;
+            toast.style.transition = 'none';
+        }, { passive: true });
+        toast.addEventListener('touchmove', (e) => {
+            const dx = e.touches[0].clientX - _swStartX;
+            const dy = e.touches[0].clientY - _swStartY;
+            if (!_swSwiping && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) _swSwiping = true;
+            if (_swSwiping) {
+                _swDeltaX = dx;
+                toast.style.transform = `translateX(${dx}px)`;
+                toast.style.opacity = Math.max(0.2, 1 - Math.abs(dx) / 250);
+            }
+        }, { passive: true });
+        toast.addEventListener('touchend', () => {
+            if (_swSwiping && Math.abs(_swDeltaX) > 80) {
+                const dir = _swDeltaX > 0 ? '120%' : '-120%';
+                toast.style.transition = 'transform 0.3s ease, opacity 0.25s ease';
+                toast.style.transform = `translateX(${dir})`;
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+                toast._dismissing = true;
+            } else {
+                toast.style.transition = 'transform 0.3s cubic-bezier(0.32,0.72,0,1), opacity 0.2s ease';
+                toast.style.transform = 'translateX(0)';
+                toast.style.opacity = '1';
+            }
+            _swSwiping = false;
+        });
+
         // Pause progress on hover
         let paused = false;
         toast.addEventListener('mouseenter', () => { paused = true; });

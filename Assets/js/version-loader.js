@@ -1,6 +1,6 @@
 // ===== GLOBAL VERSION LOADER =====
 let APP_CONFIG = {
-    version: "3.3.4b",
+    version: "3.5.1",
     name: "MyWorkLog",
     status: "loading..."
 };
