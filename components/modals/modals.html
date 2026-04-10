@@ -254,51 +254,94 @@
 
     <!-- DSGVO/Privacy Modal -->
     <div class="modal" id="privacyModal" style="display:none;">
-        <div class="modal-box" style="width:90%; max-width:600px; max-height:85vh; display:flex; flex-direction:column; backdrop-filter:blur(20px); border-radius:24px; border:1px solid rgba(var(--primary-rgb), 0.3); position:relative;">
-            <!-- Close Button oben rechts - IMMER sichtbar -->
-            <button onclick="closePrivacyModal()" style="position:absolute; top:12px; right:12px; background:none; border:none; color:var(--text-main); font-size:1.8rem; cursor:pointer; width:40px; height:40px; display:flex; align-items:center; justify-content:center; transition:0.2s; z-index:10;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">×</button>
-            
+        <div class="modal-box privacy-modal-box">
+
+            <button onclick="closePrivacyModal()" class="privacy-close-btn">×</button>
+
             <!-- Scrollable Content -->
-            <div style="overflow-y:auto; padding:32px; padding-top:16px;">
-                <div style="text-align:center; margin-bottom:24px;">
-                    <div style="font-size:3rem; margin-bottom:12px;">🔐</div>
-                    <h2 style="color:var(--text-main); font-size:1.8rem; font-weight:700; margin:0 0 8px 0;">Deine Daten sind sicher</h2>
-                    <p style="color:var(--text-muted); margin:0; font-size:0.95rem;">Transparenz über deine Privatsphäre</p>
+            <div class="privacy-scroll">
+                <!-- Header -->
+                <div class="privacy-header">
+                    <div class="privacy-shield-wrap">
+                        <div class="privacy-shield-ring"></div>
+                        <div class="privacy-shield-icon">🔐</div>
+                    </div>
+                    <h2 class="privacy-title">Deine Daten sind sicher</h2>
+                    <p class="privacy-subtitle">Transparenz über deine Privatsphäre</p>
+                    <div class="privacy-status-badge">
+                        <span class="privacy-status-dot"></span>
+                        Lokal &amp; Verschlüsselt
+                    </div>
                 </div>
 
-                <div style="background:rgba(16, 185, 129, 0.08); border:1px solid rgba(16, 185, 129, 0.3); border-radius:16px; padding:16px; margin-bottom:20px;">
-                    <p style="color:var(--text-main); font-weight:600; margin:0 0 10px 0; font-size:0.95rem;">✅ Das ist wichtig:</p>
-                    <ul style="color:var(--text-muted); font-size:0.9rem; list-style:none; padding:0; margin:0; line-height:1.8;">
-                        <li>🔒 <strong>Keine externen Server:</strong> Alle Daten werden nur in deinem Browser gespeichert (LocalStorage)</li>
-                        <li>🚫 <strong>Keine Cookies:</strong> Wir setzen keine Tracking- oder Werbe-Cookies</li>
-                        <li>👤 <strong>"Keine" Datensammlung:</strong> Wir tracken dich nicht und sammeln keine persönlichen Daten — es werden nur Seitenaufrufe erfasst. Mehr dazu: <a href="./Pages/DE-Gestz/DSGVO.html" class="external-link" target="_blank" rel="noopener noreferrer" aria-label="DSGVO — Informationen zur Datenerfassung (öffnet in neuem Tab)" title="Öffnet in neuem Tab">DSGVO</a>.</li>
-                        <li>📊 <strong>Keine Third-Party-Analytics:</strong> Kein External-Tracking, keine Ad-Netzwerke oder Daten-Broker — nur interne Analytics für dich (<a href="./Pages/Info/analytics.html" class="external-link" target="_blank">Dein Dashboard</a>)</li>
-                        <li>🔄 <strong>Nur du:</strong> Du bestimmst was mit deinen Daten passiert - nur du hast Zugriff</li>
+                <!-- Section: Wichtiges -->
+                <div class="privacy-section privacy-section-green">
+                    <div class="privacy-section-header">
+                        <span>✅</span>
+                        <span>Das ist wichtig</span>
+                    </div>
+                    <ul class="privacy-list">
+                        <li class="privacy-list-item">
+                            <span class="privacy-item-icon privacy-item-icon-green">🔒</span>
+                            <div><strong>Keine externen Server</strong><span>Alle Daten bleiben nur in deinem Browser (LocalStorage)</span></div>
+                        </li>
+                        <li class="privacy-list-item">
+                            <span class="privacy-item-icon privacy-item-icon-green">🚫</span>
+                            <div><strong>Keine Cookies</strong><span>Kein Tracking oder Werbe-Cookies</span></div>
+                        </li>
+                        <li class="privacy-list-item">
+                            <span class="privacy-item-icon privacy-item-icon-green">👤</span>
+                            <div><strong>Keine Datensammlung</strong><span>Nur Seitenaufrufe erfasst — <a href="./Pages/DE-Gestz/DSGVO.html" class="privacy-link" target="_blank" rel="noopener noreferrer">DSGVO</a></span></div>
+                        </li>
+                        <li class="privacy-list-item">
+                            <span class="privacy-item-icon privacy-item-icon-green">📊</span>
+                            <div><strong>Keine Third-Party-Analytics</strong><span>Nur <a href="./Pages/Info/analytics.html" class="privacy-link" target="_blank">dein eigenes Dashboard</a></span></div>
+                        </li>
+                        <li class="privacy-list-item">
+                            <span class="privacy-item-icon privacy-item-icon-green">🔄</span>
+                            <div><strong>Nur du</strong><span>Du allein hast Zugriff auf deine Daten</span></div>
+                        </li>
                     </ul>
                 </div>
 
-                <div style="background:rgba(59, 130, 246, 0.08); border:1px solid rgba(59, 130, 246, 0.3); border-radius:16px; padding:16px; margin-bottom:20px;">
-                    <p style="color:var(--text-main); font-weight:600; margin:0 0 10px 0; font-size:0.95rem;">📱 Deine Kontrolle:</p>
-                    <ul style="color:var(--text-muted); font-size:0.9rem; list-style:none; padding:0; margin:0; line-height:1.8;">
-                        <li>💾 <strong>Export:</strong> Du kannst jederzeit deine Daten als JSON/CSV exportieren</li>
-                        <li>📂 <strong>Import:</strong> Deine Daten können jederzeit importiert werden</li>
-                        <li>🗑️ <strong>Löschen:</strong> Nutze die Browser Dev Tools (LocalStorage), um alles zu löschen</li>
-                        <li>🔄 <strong>Offline:</strong> Keine Internetverbindung nötig - alles funktioniert offline!</li>
+                <!-- Section: Deine Kontrolle -->
+                <div class="privacy-section privacy-section-blue">
+                    <div class="privacy-section-header">
+                        <span>📱</span>
+                        <span>Deine Kontrolle</span>
+                    </div>
+                    <ul class="privacy-list">
+                        <li class="privacy-list-item">
+                            <span class="privacy-item-icon privacy-item-icon-blue">💾</span>
+                            <div><strong>Export</strong><span>Jederzeit als JSON/CSV exportieren</span></div>
+                        </li>
+                        <li class="privacy-list-item">
+                            <span class="privacy-item-icon privacy-item-icon-blue">📂</span>
+                            <div><strong>Import</strong><span>Daten jederzeit wieder importieren</span></div>
+                        </li>
+                        <li class="privacy-list-item">
+                            <span class="privacy-item-icon privacy-item-icon-blue">🗑️</span>
+                            <div><strong>Löschen</strong><span>Browser Dev Tools → LocalStorage</span></div>
+                        </li>
+                        <li class="privacy-list-item">
+                            <span class="privacy-item-icon privacy-item-icon-blue">📶</span>
+                            <div><strong>Offline</strong><span>Alles funktioniert ohne Internetverbindung</span></div>
+                        </li>
                     </ul>
                 </div>
 
-                <div style="background:rgba(255, 255, 255, 0.04); border-left:4px solid var(--primary); border-radius:8px; padding:12px; margin-bottom:24px;">
-                    <p style="color:var(--text-muted); font-size:0.85rem; margin:0; line-height:1.6;">
-                        <strong style="color:var(--text-main);">Fragen?</strong> MyWorkLog ist Open Source auf GitHub. 
-                        Der gesamte Code ist transparent einsehbar und überprüfbar.
-                    </p>
+                <!-- Open Source Note -->
+                <div class="privacy-note">
+                    <div class="privacy-note-icon">⚡</div>
+                    <p><strong>Open Source.</strong> MyWorkLog ist auf GitHub verfügbar — der gesamte Code ist transparent einsehbar und überprüfbar.</p>
                 </div>
             </div>
-            
-            <!-- Sticky Footer Button - IMMER sichtbar -->
-            <div style="border-top:1px solid rgba(var(--primary-rgb), 0.2); padding:16px 32px; background:rgba(0,0,0,0.3); flex-shrink:0;">
-                <button class="btn btn-primary" onclick="closePrivacyModal()" style="width:100%; background:var(--primary); padding:14px 32px; font-weight:600; border:none; border-radius:12px; color:white; cursor:pointer; font-size:1rem;">
-                    ✅ Verstanden & weiter
+
+            <!-- Sticky Footer -->
+            <div class="privacy-footer">
+                <button class="privacy-confirm-btn" onclick="closePrivacyModal()">
+                    <span class="privacy-confirm-icon">✓</span>
+                    Verstanden &amp; weiter
                 </button>
             </div>
         </div>
