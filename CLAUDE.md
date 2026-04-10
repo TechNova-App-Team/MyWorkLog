@@ -26,6 +26,8 @@ Kein Build. Rohe Dateien via `<script src>` in index.html (Reihenfolge wichtig!)
 
 **Tests:** `npm test` | `npm run test:watch` | `npm run test:coverage` | `npm run lint`
 
+**UI** Nutze Sehr hochmodernen Style der Firmen Vibe ist, nutzte für Ui immer das plugin /frontend-design. Das design soll auch für handys optimiert sein und dark theme.
+
 ## Schlüsseldateien
 
 core.js=save/load/Timer, settings.js=Theme/Export, dashboard.js=KPIs/Charts, version.json=Version, service-worker.js=Cache, aibot-engine-pro.js=NLP
@@ -33,7 +35,3 @@ core.js=save/load/Timer, settings.js=Theme/Export, dashboard.js=KPIs/Charts, ver
 ## Sicherheit
 
 IMMER safeHTML()/esc() für User-Input. Kein innerHTML mit ungefiltertem Content. CSP beachten. DOMPurify 3.2.4 eingebunden.
-
-## Deploy
-
-Push main → GitHub Actions (static.yml) → Pages. Browser: Chrome90+/FF88+/Safari14+/Edge90+

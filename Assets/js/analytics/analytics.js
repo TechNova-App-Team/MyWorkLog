@@ -383,74 +383,165 @@ function aggregateWeekly(dailyData) {
 }
 
 // =========================================
-//  RENDER: Bar Charts
+//  CHART HELPERS
 // =========================================
-function renderBarChartDual(containerId, pageviews, sessions) {
-    const el = document.getElementById(containerId);
-    if (!pageviews || !pageviews.length) {
-        el.innerHTML = '<p style="color:var(--text-muted);text-align:center;width:100%;">Keine Daten</p>';
-        return;
-    }
-
-    const allVals = [...pageviews.map(d => d.y), ...(sessions || []).map(d => d.y)];
-    const maxVal = Math.max(...allVals, 1);
-    const dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
-    const monthNames = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-
-    el.innerHTML = pageviews.map((pv, i) => {
-        const sv = (sessions && sessions[i]) ? sessions[i].y : 0;
-        const pvH = Math.max(2, (pv.y / maxVal) * 160);
-        const svH = Math.max(2, (sv / maxVal) * 160);
-        const d = new Date(pv.x);
-        let label;
-        if (currentRange <= 1) label = d.getHours() + ':00';
-        else if (currentRange >= 30 && currentRange <= 90) {
-            // Weekly: show "KW" + week range
-            var endD = new Date(d); endD.setDate(endD.getDate() + 6);
-            label = d.getDate() + '.' + (d.getMonth()+1) + '–' + endD.getDate() + '.' + (endD.getMonth()+1);
-        }
-        else if (currentRange <= 90) label = d.getDate() + '.' + (d.getMonth()+1);
-        else label = monthNames[d.getMonth()];
-
-        return '<div class="bar-item">' +
-            '<div class="bar-value">' + fmt(pv.y) + '</div>' +
-            '<div style="display:flex;gap:2px;align-items:flex-end;">' +
-                '<div class="bar pageview" style="height:' + pvH + 'px;width:18px;" title="Pageviews: ' + pv.y + '"></div>' +
-                '<div class="bar session" style="height:' + svH + 'px;width:18px;" title="Sessions: ' + sv + '"></div>' +
-            '</div>' +
-            '<div class="bar-label">' + label + '</div>' +
-        '</div>';
-    }).join('');
+function _chartGrad(id, hex, alphaLow, alphaHigh) {
+    return '<defs><linearGradient id="' + id + '" x1="0" y1="1" x2="0" y2="0">' +
+        '<stop offset="0%" stop-color="' + hex + '" stop-opacity="' + alphaLow + '"/>' +
+        '<stop offset="100%" stop-color="' + hex + '" stop-opacity="' + alphaHigh + '"/>' +
+    '</linearGradient></defs>';
 }
 
-function renderBarChartSingle(containerId, data, color) {
-    const el = document.getElementById(containerId);
-    if (!data || !data.length) {
-        el.innerHTML = '<p style="color:var(--text-muted);text-align:center;width:100%;">Keine Daten</p>';
+function _chartLabel(x, i, n) {
+    var d   = new Date(x);
+    var mon = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+    var lbl;
+    if (currentRange <= 1)        lbl = d.getHours() + 'h';
+    else if (currentRange >= 365) lbl = mon[d.getMonth()];
+    else                          lbl = d.getDate() + '.' + (d.getMonth() + 1) + '.';
+    var skip = n > 16 ? Math.ceil(n / 12) : 1;
+    return (i % skip === 0) ? lbl : '';
+}
+
+// Inline SVG text — avoids all CSS-fill browser quirks
+function _svgText(x, y, txt, anchor, size, fillColor, bold) {
+    return '<text x="' + x + '" y="' + y + '"' +
+        ' text-anchor="' + (anchor || 'middle') + '"' +
+        ' font-family="IBM Plex Mono,monospace"' +
+        ' font-size="' + (size || 9) + '"' +
+        (bold ? ' font-weight="700"' : '') +
+        ' fill="' + fillColor + '"' +
+        ' pointer-events="none">' + txt + '</text>';
+}
+
+// =========================================
+//  RENDER: Dual Bar Chart (Pageviews + Sessions)
+// =========================================
+function renderBarChartDual(containerId, pageviews, sessions) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    if (!pageviews || !pageviews.length) {
+        el.innerHTML = '<p class="ch-empty">Keine Daten verfügbar</p>';
         return;
     }
 
-    color = color || 'visitor';
-    const maxVal = Math.max(...data.map(d => d.y), 1);
-    const monthNames = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+    var W   = Math.max(el.offsetWidth || 480, 160);
+    var VAL = 16;   // top padding for value labels
+    var CH  = 126;  // bar area height
+    var LBL = 20;   // bottom area for date labels
+    var TH  = VAL + CH + LBL;  // total SVG height
+    var BASE = VAL + CH;        // y-coordinate of baseline (bottom of bars)
+    var n   = pageviews.length;
 
-    el.innerHTML = data.map(function(item) {
-        const h = Math.max(2, (item.y / maxVal) * 160);
-        const d = new Date(item.x);
-        let label;
-        if (currentRange <= 1) label = d.getHours() + ':00';
-        else if (currentRange >= 30 && currentRange <= 90) {
-            var endD = new Date(d); endD.setDate(endD.getDate() + 6);
-            label = d.getDate() + '.' + (d.getMonth()+1) + '–' + endD.getDate() + '.' + (endD.getMonth()+1);
+    var maxVal = 1;
+    pageviews.forEach(function(d) { if (d.y > maxVal) maxVal = d.y; });
+    if (sessions) sessions.forEach(function(d) { if (d.y > maxVal) maxVal = d.y; });
+
+    var slotW = W / n;
+    var bW    = Math.max(2, Math.min(14, slotW * 0.33));
+    var bGap  = Math.max(1, slotW * 0.05);
+    var uid   = containerId.replace(/[^a-z0-9]/gi, '');
+    var showVals = n <= 20; // only show value numbers if not too crowded
+
+    var out = _chartGrad('gPV' + uid, '#a78bfa', 0.22, 0.90);
+    out    += _chartGrad('gSS' + uid, '#22d3ee', 0.10, 0.50);
+
+    // grid lines
+    [0.25, 0.5, 0.75, 1].forEach(function(p) {
+        var gy = +(BASE - CH * p).toFixed(1);
+        out += '<line x1="0" y1="' + gy + '" x2="' + W + '" y2="' + gy +
+               '" stroke="rgba(255,255,255,' + (p === 1 ? '0.07' : '0.025') + ')" stroke-width="1"/>';
+    });
+
+    pageviews.forEach(function(pv, i) {
+        var sv  = (sessions && sessions[i]) ? sessions[i].y : 0;
+        var pvH = Math.max(2, (pv.y / maxVal) * CH);
+        var svH = Math.max(2, (sv  / maxVal) * CH);
+        var cx  = parseFloat((i * slotW + slotW / 2).toFixed(1));
+        var pvX = (cx - bW - bGap / 2).toFixed(1);
+        var svX = (cx + bGap / 2).toFixed(1);
+        var pvY = (BASE - pvH).toFixed(1);
+        var svY = (BASE - svH).toFixed(1);
+        var bWs = bW.toFixed(1);
+
+        // PV bar
+        out += '<rect x="' + pvX + '" y="' + pvY + '" width="' + bWs + '" height="' + pvH.toFixed(1) +
+               '" rx="2" fill="url(#gPV' + uid + ')" style="cursor:crosshair;transition:filter .15s">' +
+               '<title>Pageviews: ' + fmt(pv.y) + '</title></rect>';
+        // SS bar
+        out += '<rect x="' + svX + '" y="' + svY + '" width="' + bWs + '" height="' + svH.toFixed(1) +
+               '" rx="2" fill="url(#gSS' + uid + ')" opacity="0.7" style="cursor:crosshair">' +
+               '<title>Sessions: ' + fmt(sv) + '</title></rect>';
+
+        // Value label above PV bar (skip if bar is very short)
+        if (showVals && pvH > 12) {
+            out += _svgText(cx, parseFloat(pvY) - 3, fmt(pv.y), 'middle', 8, 'rgba(232,230,240,0.65)');
         }
-        else if (currentRange <= 90) label = d.getDate() + '.' + (d.getMonth()+1);
-        else label = monthNames[d.getMonth()];
-        return '<div class="bar-item">' +
-            '<div class="bar-value">' + fmt(item.y) + '</div>' +
-            '<div class="bar ' + color + '" style="height:' + h + 'px;"></div>' +
-            '<div class="bar-label">' + label + '</div>' +
-        '</div>';
-    }).join('');
+
+        // Date label below
+        var lbl = _chartLabel(pv.x, i, n);
+        if (lbl) out += _svgText(cx, TH - 3, lbl, 'middle', 8, 'rgba(232,230,240,0.35)');
+    });
+
+    el.innerHTML = '<svg width="' + W + '" height="' + TH + '" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible;">' + out + '</svg>';
+}
+
+// =========================================
+//  RENDER: Single Bar Chart (Sessions / Visitors)
+// =========================================
+function renderBarChartSingle(containerId, data) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    if (!data || !data.length) {
+        el.innerHTML = '<p class="ch-empty">Keine Daten verfügbar</p>';
+        return;
+    }
+
+    var W   = Math.max(el.offsetWidth || 480, 160);
+    var VAL = 16;
+    var CH  = 126;
+    var LBL = 20;
+    var TH  = VAL + CH + LBL;
+    var BASE = VAL + CH;
+    var n   = data.length;
+
+    var maxVal = 1;
+    data.forEach(function(d) { if (d.y > maxVal) maxVal = d.y; });
+
+    var slotW    = W / n;
+    var bW       = Math.max(3, Math.min(22, slotW * 0.62));
+    var uid      = containerId.replace(/[^a-z0-9]/gi, '');
+    var showVals = n <= 20;
+
+    var out = _chartGrad('gVIS' + uid, '#34d399', 0.22, 0.88);
+
+    [0.25, 0.5, 0.75, 1].forEach(function(p) {
+        var gy = +(BASE - CH * p).toFixed(1);
+        out += '<line x1="0" y1="' + gy + '" x2="' + W + '" y2="' + gy +
+               '" stroke="rgba(255,255,255,' + (p === 1 ? '0.07' : '0.025') + ')" stroke-width="1"/>';
+    });
+
+    data.forEach(function(item, i) {
+        var h  = Math.max(2, (item.y / maxVal) * CH);
+        var cx = parseFloat((i * slotW + slotW / 2).toFixed(1));
+        var bx = (cx - bW / 2).toFixed(1);
+        var by = (BASE - h).toFixed(1);
+
+        out += '<rect x="' + bx + '" y="' + by + '" width="' + bW.toFixed(1) + '" height="' + h.toFixed(1) +
+               '" rx="2" fill="url(#gVIS' + uid + ')" style="cursor:crosshair;transition:filter .15s">' +
+               '<title>' + fmt(item.y) + '</title></rect>';
+
+        // Value label above bar
+        if (showVals && h > 12) {
+            out += _svgText(cx, parseFloat(by) - 3, fmt(item.y), 'middle', 8, 'rgba(232,230,240,0.65)');
+        }
+
+        // Date label below
+        var lbl = _chartLabel(item.x, i, n);
+        if (lbl) out += _svgText(cx, TH - 3, lbl, 'middle', 8, 'rgba(232,230,240,0.35)');
+    });
+
+    el.innerHTML = '<svg width="' + W + '" height="' + TH + '" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible;">' + out + '</svg>';
 }
 
 // =========================================
@@ -542,44 +633,88 @@ function renderSimpleTableNoRank(tableId, data, labelFn, colorClass) {
 
 // =========================================
 //  RENDER: Donut Chart (Devices)
+//  Uses stroke-dasharray on SVG circles — bulletproof across all browsers
 // =========================================
 function renderDevicesDonut(data) {
     var el = document.getElementById('devicesDonut');
-    if (!data || !data.length) {
-        el.innerHTML = '<p style="color:var(--text-muted);">Keine Daten</p>';
+    if (!el) return;
+
+    // Normalize + filter
+    var items = (data || []).filter(function(d) { return d && d.x && typeof d.y === 'number' && d.y > 0; });
+
+    if (!items.length) {
+        el.innerHTML = '<p class="ch-empty">Keine Gerätedaten</p>';
         return;
     }
 
-    var total = data.reduce(function(s, d) { return s + d.y; }, 0);
-    var cumulativePct = 0;
-    var gradientParts = [];
-    var colors = [];
+    var total = items.reduce(function(s, d) { return s + d.y; }, 0);
+    if (total === 0) { el.innerHTML = '<p class="ch-empty">Keine Gerätedaten</p>'; return; }
 
-    data.forEach(function(d) {
-        var color = DEVICE_COLORS[d.x] || 'var(--text-muted)';
-        colors.push(color);
-        var pct = (d.y / total) * 100;
-        gradientParts.push(color + ' ' + cumulativePct + '% ' + (cumulativePct + pct) + '%');
-        cumulativePct += pct;
+    var PALETTE  = { desktop: '#a78bfa', mobile: '#34d399', tablet: '#fbbf24', laptop: '#22d3ee' };
+    var FALLBACK = ['#a78bfa', '#34d399', '#fbbf24', '#22d3ee', '#f87171'];
+    var ICONS    = { desktop: '🖥️', mobile: '📱', tablet: '📱', laptop: '💻' };
+
+    // SVG donut geometry
+    var SZ    = 160;                      // SVG canvas size
+    var CX    = SZ / 2;                   // center x
+    var CY    = SZ / 2;                   // center y
+    var R     = 58;                       // ring radius (midline)
+    var SW    = 20;                       // stroke-width = ring thickness
+    var CIRC  = 2 * Math.PI * R;         // full circumference ≈ 364.4 px
+    var GAP   = items.length > 1 ? 5 : 0; // gap in pixels between segments
+
+    // Background track
+    var circles = '<circle cx="' + CX + '" cy="' + CY + '" r="' + R + '"' +
+        ' fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="' + SW + '"/>';
+
+    var rows = '';
+    var cumOffset = 0; // pixels consumed so far along circumference
+
+    items.forEach(function(d, idx) {
+        var color  = PALETTE[d.x] || FALLBACK[idx % FALLBACK.length];
+        var pct    = d.y / total;
+        var segLen = Math.max(3, pct * CIRC - GAP); // visible length minus gap
+        var pctStr = (pct * 100).toFixed(1);
+        var icon   = ICONS[d.x] || '●';
+
+        // stroke-dasharray: [visible dash] [invisible gap filling the rest]
+        // stroke-dashoffset: negative = shift start of pattern forward along path
+        // rotate(-90) = start from 12 o'clock
+        circles += '<circle cx="' + CX + '" cy="' + CY + '" r="' + R + '"' +
+            ' fill="none"' +
+            ' stroke="' + color + '"' +
+            ' stroke-width="' + SW + '"' +
+            ' stroke-dasharray="' + segLen.toFixed(2) + ' ' + (CIRC + 1).toFixed(2) + '"' +
+            ' stroke-dashoffset="-' + cumOffset.toFixed(2) + '"' +
+            ' transform="rotate(-90 ' + CX + ' ' + CY + ')"' +
+            ' style="cursor:pointer;transition:opacity .2s">' +
+            '<title>' + (d.x || '?') + ': ' + fmt(d.y) + ' (' + pctStr + '%)</title>' +
+            '</circle>';
+
+        rows += '<div class="dl-row">' +
+            '<span class="dl-dot" style="background:' + color + '"></span>' +
+            '<span class="dl-name">' + icon + ' ' + (d.x || '?') + '</span>' +
+            '<span class="dl-pct">' + pctStr + '%</span>' +
+            '<span class="dl-cnt">' + fmt(d.y) + '</span>' +
+        '</div>';
+
+        cumOffset += pct * CIRC; // advance by full share (gap appears between segments)
     });
 
-    var legendHtml = data.map(function(d, i) {
-        var pct = ((d.y / total) * 100).toFixed(1);
-        var icon = DEVICE_ICONS[d.x] || '❓';
-        return '<div class="legend-item">' +
-            '<div class="legend-dot" style="background:' + colors[i] + '"></div>' +
-            icon + ' ' + d.x +
-            '<span class="legend-value">' + fmt(d.y) + ' (' + pct + '%)</span>' +
-        '</div>';
-    }).join('');
+    // Center text — inline attributes, no CSS classes needed
+    var centerText =
+        '<text x="' + CX + '" y="' + (CY - 4) + '"' +
+        ' text-anchor="middle" font-family="IBM Plex Mono,monospace"' +
+        ' font-size="18" font-weight="700" fill="rgba(232,230,240,0.92)">' + fmt(total) + '</text>' +
+        '<text x="' + CX + '" y="' + (CY + 13) + '"' +
+        ' text-anchor="middle" font-family="IBM Plex Mono,monospace"' +
+        ' font-size="7" fill="rgba(232,230,240,0.32)" letter-spacing="1.5">BESUCHER</text>';
 
-    el.innerHTML = '<div class="donut" style="background: conic-gradient(' + gradientParts.join(',') + ');">' +
-        '<div class="donut-center">' +
-            '<div class="value">' + fmt(total) + '</div>' +
-            '<div class="label">Besucher</div>' +
-        '</div>' +
-    '</div>' +
-    '<div class="donut-legend">' + legendHtml + '</div>';
+    var svg = '<svg width="' + SZ + '" height="' + SZ + '" viewBox="0 0 ' + SZ + ' ' + SZ +
+              '" xmlns="http://www.w3.org/2000/svg" style="display:block;">' +
+              circles + centerText + '</svg>';
+
+    el.innerHTML = '<div class="dnt-ring">' + svg + '</div><div class="dnt-list">' + rows + '</div>';
 }
 
 // =========================================

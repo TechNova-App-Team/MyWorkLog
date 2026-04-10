@@ -2,8 +2,8 @@
 // Cache-First Strategy für Assets, Network-First für API/Data
 // VERSION BUMP: Force cache invalidation
 
-const CACHE_NAME = 'timetracker-v1.13.4';
-const RUNTIME_CACHE = 'timetracker-runtime-v1.13.4';
+const CACHE_NAME = 'timetracker-v1.13.5';
+const RUNTIME_CACHE = 'timetracker-runtime-v1.13.5';
 const SW_DEBUG = false;
 const OFFLINE_PAGE = './Pages/Info/offline.html';
 
