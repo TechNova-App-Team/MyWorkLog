@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
   ╭─────────────────────────────────────────╮
-  │  REPO TRACKER PRO  v3.0                 │
+  │  REPO TRACKER PRO  v1.3                 │
   │  Enterprise Codebase Intelligence       │
   ╰─────────────────────────────────────────╯
 """
