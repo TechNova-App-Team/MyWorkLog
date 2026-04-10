@@ -2096,10 +2096,19 @@ function resetTodayTasks() {
     categories.forEach(function(cat) {
         if (!isCatVisibleToday(cat)) return;
         (cat.tasks || []).forEach(function(t) {
-            if (isTaskVisibleToday(t)) delete states[t.id];
+            if (isTaskVisibleToday(t)) {
+                delete states[t.id];
+                // Reset all subtasks of this task
+                if (t.subtasks && t.subtasks.length > 0) {
+                    t.subtasks.forEach(function(s) {
+                        s.done = false;
+                    });
+                }
+            }
         });
     });
     saveStates(states);
+    save();
     render();
 }
 
