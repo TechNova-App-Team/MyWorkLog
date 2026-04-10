@@ -29,8 +29,7 @@
                     'Deutsch/Kommunikation': [],
                 }
             },
-            goals: [],
-            prognosePlan: {}
+            goals: []
         } 
     };
     let timer = { id:null, start:0, paused:0, running:false, log:[], breakTime: 0 };

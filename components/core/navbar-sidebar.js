@@ -178,7 +178,6 @@
             {id:'weekview', label:'Wochenansicht', icon:'📆', visible:true},
             {id:'school', label:'Berufsschule', icon:'🏫', visible:true},
             {id:'ihk', label:'IHK', icon:'🎓', visible:true},
-            {id:'prognose', label:'Prognose', icon:'🔮', visible:true},
             {id:'goals', label:'Ziele', icon:'🎯', visible:true},
             {id:'analytics-pro', label:'Analytics Pro', icon:'📊', visible:true},
         ];
@@ -196,15 +195,21 @@
             data.settings.navVersion = NAV_VERSION;
             save();
         } else {
-            // Fehlende neue Items hinzufügen
-            let changed = false;
+            // Entferne alte/entfernte Nav-Einträge und füge fehlende hinzu
+            const allowedNavIds = defaultNavItems.map(item => item.id);
+            const filteredNav = data.settings.nav.filter(item => allowedNavIds.includes(item.id));
+            let changed = filteredNav.length !== data.settings.nav.length;
+            data.settings.nav = filteredNav;
             defaultNavItems.forEach(defaultItem => {
                 if (!data.settings.nav.find(item => item.id === defaultItem.id)) {
                     data.settings.nav.push(defaultItem);
                     changed = true;
                 }
             });
-            if (changed) save();
+            if (changed) {
+                data.settings.navVersion = NAV_VERSION;
+                save();
+            }
         }
 
         navList.innerHTML = '';
@@ -391,7 +396,6 @@
         { id: 'yearview',     label: 'Jahresansicht',     icon: '📅', group: 'Navigation', action: () => switchTab('yearview') },
         { id: 'monthcompare', label: 'Monatvergleich',    icon: '📊', group: 'Navigation', action: () => switchTab('monthcompare') },
         { id: 'weekview',     label: 'Wochenansicht',     icon: '📆', group: 'Navigation', action: () => switchTab('weekview') },
-        { id: 'prognose',     label: 'Prognose',          icon: '🔮', group: 'Navigation', action: () => switchTab('prognose') },
         { id: 'school',       label: 'Berufsschule',      icon: '🏫', group: 'Navigation', action: () => switchTab('school') },
         { id: 'aibot',        label: 'AI-Bot',            icon: '🤖', group: 'Navigation', action: () => switchTab('aibot') },
         { id: 'support',      label: 'Unterstützung',     icon: '☕', group: 'Navigation', action: () => switchTab('support') },

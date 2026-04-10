@@ -16,14 +16,13 @@
         const mobBtn = document.getElementById('mobNav-' + tabId);
         if (mobBtn) mobBtn.classList.add('active');
         
-        const titles = { 
-            'dashboard': 'Übersicht', 
-            'history': 'Daten-Analyse & Historie', 
-            'performance': 'Performance Analyse', 
-            'ihk': 'IHK / Karriere', 
-            'school': 'Berufsschule Audit', 
+        const titles = {
+            'dashboard': 'Übersicht',
+            'history': 'Daten-Analyse & Historie',
+            'performance': 'Performance Analyse',
+            'ihk': 'IHK / Karriere',
+            'school': 'Berufsschule Audit',
             'goals': 'Ziele & Fokus',
-            'prognose': 'Saldo Prognose & Zukunftsplanung',
             'yearview': 'Jahresübersicht & Insights',
             'monthcompare': 'Monats-Vergleich & Detailanalyse',
             'weekview': 'Wochenansicht',
@@ -54,9 +53,6 @@
         }
         if (tabId === 'history') {
             renderHistoryView();
-        }
-        if (tabId === 'prognose') { // NEU
-            renderPrognoseView();
         }
         if (tabId === 'yearview') {
             renderYearView();

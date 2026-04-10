@@ -368,7 +368,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <link rel="stylesheet" href="./components/core/webllm.css">
     <link rel="stylesheet" href="./components/dashboard/dashboard.css">
     <link rel="stylesheet" href="./components/performance/performance.css">
-    <link rel="stylesheet" href="./components/prognose/prognose.css">
     <link rel="stylesheet" href="./components/ihk/ihk.css">
     <link rel="stylesheet" href="./components/school/school.css">
     <link rel="stylesheet" href="./components/goals/goals.css">
@@ -1479,90 +1478,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             </div>
         </div>
         
-        <div id="view-prognose" class="view-section">
-            <h2 style="margin-bottom:0.5rem; color:#06b6d4;">🔮 Saldo Prognose & Intelligente Zukunftsplanung</h2>
-            <p style="color:var(--text-muted); margin-bottom:2rem;">Plane deine Arbeitszeit für die nächsten 4 Wochen und sieh die Auswirkung auf dein Gleitzeitkonto in Echtzeit.</p>
-            
-            <!-- MODERNE KPI-KARTEN MIT ANIMATIONEN -->
-            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom:2rem;">
-                <div class="card" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(6, 182, 212, 0.05) 100%); border: 2px solid rgba(6, 182, 212, 0.3); border-left: 5px solid #06b6d4; position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: radial-gradient(circle, rgba(6, 182, 212, 0.2) 0%, transparent 70%); border-radius: 50%;"></div>
-                    <div class="kpi-large-label">🔵 SALDO HEUTE</div>
-                    <div class="kpi-large-value" id="prognoseStartSaldo" style="color:#06b6d4; font-size:3rem; margin:15px 0;">+0h</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">Dein aktueller Stand im Gleitzeitkonto. Dies ist der Ausgangspunkt für die Planung.</div>
-                </div>
-                
-                <div class="card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%); border: 2px solid rgba(16, 185, 129, 0.3); border-left: 5px solid var(--success); position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%); border-radius: 50%;"></div>
-                    <div class="kpi-large-label">🎯 ZIEL-SALDO</div>
-                    <div class="kpi-large-value" id="prognoseEndSaldo" style="color:var(--success); font-size:3rem; margin:15px 0;">+0h</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">Dein voraussichtlicher Saldo nach 4 Wochen. Basierend auf deinem Plan.</div>
-                </div>
-                
-                <div class="card" style="background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.15) 0%, rgba(var(--primary-rgb), 0.05) 100%); border: 2px solid rgba(var(--primary-rgb), 0.3); border-left: 5px solid var(--primary); position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: radial-gradient(circle, rgba(var(--primary-rgb), 0.2) 0%, transparent 70%); border-radius: 50%;"></div>
-                    <div class="kpi-large-label">📊 VERÄNDERUNG</div>
-                    <div class="kpi-large-value" id="prognoseDelta" style="color:var(--primary); font-size:3rem; margin:15px 0;">+0h</div>
-                    <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.6;">Saldo-Differenz zwischen Start und Ziel. Wende den Plan an, um zu buchen.</div>
-                </div>
-            </div>
-            
-            <!-- INTELLIGENTE PLANER-INTERFACE -->
-            <div class="card" style="background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); border: 2px solid var(--border); margin-bottom:2rem;">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:2rem;">
-                    <div>
-                        <h3 style="font-size:1.1rem; margin-bottom:1rem; color:var(--text-main);">📅 Planungs-Kalender (Nächste 4 Wochen)</h3>
-                        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Klicke auf einen Tag, um seinen Status zu ändern. Die Saldo-Prognose aktualisiert sich in Echtzeit.</p>
-                    </div>
-                    <div>
-                        <h4 style="font-size:0.9rem; margin-bottom:1rem; color:var(--primary);">⚡ Schnell-Aktionen</h4>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                            <select id="prognosePlanSelect" class="glass-select" style="padding:12px; border-radius:10px; background:rgba(0,0,0,0.2);" onchange="highlightSelectAction()">
-                                <option value="">-- Modus wählen --</option>
-                                <option value="work">💼 Arbeit</option>
-                                <option value="school">📚 Schule</option>
-                                <option value="vacation">🌴 Urlaub</option>
-                                <option value="gleittag">⚡ Gleittag</option>
-                                <option value="sick">💊 Krank</option>
-                                <option value="reset">❌ Zurücksetzen</option>
-                            </select>
-                            <button class="btn" style="background:var(--primary); border:none; padding:12px; border-radius:10px; cursor:pointer; color:#fff; font-weight:600;" onclick="resetPrognosePlan()">↺ Plan Zurücksetzen</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="prognose-grid" id="prognoseCalendar" style="border: 2px solid rgba(255,255,255,0.05); border-radius:16px; padding:20px; background:rgba(0,0,0,0.2);">
-                </div>
-            </div>
-            
-            <!-- PROGNOSE-DETAILS & INFORMATIONEN -->
-            <div class="card" style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem; margin-bottom:2rem;">
-                <div>
-                    <h4 style="color:var(--primary); margin-bottom:1rem; font-size:0.95rem;">📈 Prognose-Statistiken</h4>
-                    <div id="prognoseStats" style="display:flex; flex-direction:column; gap:12px;">
-                        <!-- Werden dynamisch gefüllt -->
-                    </div>
-                </div>
-                <div>
-                    <h4 style="color:var(--success); margin-bottom:1rem; font-size:0.95rem;">💡 Tipps & Hinweise</h4>
-                    <div style="font-size:0.85rem; line-height:1.8; color:var(--text-muted);">
-                        <p>✓ Klicke auf einen Tag um seinen Status zu wechseln</p>
-                        <p>✓ Die Prognose berechnet sich automatisch neu</p>
-                        <p>✓ Der \"Plan anwenden\"-Button bucht die Änderungen als echte Einträge</p>
-                        <p>✓ Arbeitstage beeinflussen den Saldo nicht (nur Freistellungen)</p>
-                        <p>✓ Du kannst den Plan jederzeit zurücksetzen</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- AKTIONS-BUTTONS -->
-            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; margin-top:2rem;">
-                <button class="btn btn-primary" onclick="applyPrognosePlan()" style="background:var(--success); padding:15px; border-radius:12px; font-size:0.95rem; font-weight:600;">✓ Plan anwenden & buchen</button>
-                <button class="btn btn-primary" onclick="downloadPrognoseReport()" style="background:#06b6d4; padding:15px; border-radius:12px; font-size:0.95rem; font-weight:600;">📥 Plan als Bericht exportieren</button>
-                <button class="btn btn-primary" onclick="showPrognoseHelp()" style="background:var(--primary); padding:15px; border-radius:12px; font-size:0.95rem; font-weight:600;">❓ Hilfe & Erklärung</button>
-            </div>
-
-        </div>
 
         <div id="view-ihk" class="view-section">
             <!-- HERO HEADER -->
@@ -5815,7 +5730,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <script src="./components/core/weather.js"></script>
     <script src="./components/core/dashboard-ui.js"></script>
     <script src="./components/core/charts.js"></script>
-    <script src="./components/core/prognose.js"></script>
     <script src="./components/core/history-export.js"></script>
     <script src="./components/core/export-advanced.js"></script>
     <script src="./components/core/custom-types-fields.js"></script>
@@ -5840,7 +5754,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <script src="./components/core/init-app.js"></script>
     <script src="./components/dashboard/dashboard.js"></script>
     <script src="./components/performance/performance.js"></script>
-    <script src="./components/prognose/prognose.js"></script>
     <script src="./components/ihk/ihk.js"></script>
     <script src="./components/school/school.js"></script>
     <script src="./components/goals/goals.js"></script>

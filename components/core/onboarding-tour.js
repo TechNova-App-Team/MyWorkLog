@@ -51,14 +51,6 @@
             position: 'bottom'
         },
         {
-            icon: '🔮',
-            title: 'Prognose & Planung',
-            text: 'Plane die nächsten 4 Wochen. Klicke auf einen Tag, um ihn als Urlaub, Schule oder Krank zu markieren — der Saldo aktualisiert sich live.',
-            target: '#view-prognose',
-            tab: 'prognose',
-            position: 'bottom'
-        },
-        {
             icon: '📆',
             title: 'Jahresübersicht',
             text: 'Die Heatmap zeigt dir das ganze Jahr. Grün = produktive Tage, Rot = weniger produktive Tage. Dazu gibt es KI-Insights über deine Muster.',
@@ -169,7 +161,7 @@
         {
             icon: '☰',
             title: 'Menü & Einstellungen',
-            text: 'Tippe oben links auf das Menü-Icon (☰) für weitere Bereiche: Prognose, IHK, Berichtsheft, Export, Backup und Einstellungen.',
+            text: 'Tippe oben links auf das Menü-Icon (☰) für weitere Bereiche: IHK, Berichtsheft, Export, Backup und Einstellungen.',
             target: null,
             tab: 'dashboard',
             position: 'center',

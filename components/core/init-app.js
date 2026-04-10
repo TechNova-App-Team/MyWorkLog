@@ -47,7 +47,6 @@
         }
         
         if(!data.settings.goals) data.settings.goals = [];
-        if(!data.settings.prognosePlan) data.settings.prognosePlan = {};
         if (typeof data.settings.shortcutsEnabled === 'undefined') data.settings.shortcutsEnabled = true;
         if(!data.settings.job) data.settings.job = '';
         
@@ -128,10 +127,6 @@
         if (document.getElementById('view-goals').classList.contains('active')) {
              renderGoalsView();
         }
-        if (document.getElementById('view-prognose').classList.contains('active')) {
-             renderPrognoseView();
-        }
-        
         if (document.getElementById('view-ihk').classList.contains('active')) {
              renderIHKView();
         }

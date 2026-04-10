@@ -604,7 +604,6 @@
         if(!d.settings.ihk) d.settings.ihk = {start: '', end: '', exam_zwischen: '', note_zwischen: '', note_abschluss: ''};
         if(!d.settings.school) d.settings.school = { grades: { 'Kernprozesse': [], 'Wirtschaftslehre': [], 'IT-Systeme': [], 'Deutsch/Kommunikation': [] } };
         if(!d.settings.goals) d.settings.goals = [];
-        if(!d.settings.prognosePlan) d.settings.prognosePlan = {};
         if (typeof d.settings.shortcutsEnabled === 'undefined') d.settings.shortcutsEnabled = true;
         if(!Array.isArray(d.entries)) d.entries = [];
         if(!Array.isArray(d.customEntryTypes)) d.customEntryTypes = [];
