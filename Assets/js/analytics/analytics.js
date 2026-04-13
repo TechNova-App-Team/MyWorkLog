@@ -480,7 +480,7 @@ function renderBarChartDual(containerId, pageviews, sessions) {
 
         // Date label below
         var lbl = _chartLabel(pv.x, i, n);
-        if (lbl) out += _svgText(cx, TH - 3, lbl, 'middle', 8, 'rgba(232,230,240,0.35)');
+        if (lbl) out += _svgText(cx, TH - 3, lbl, 'middle', 8, 'rgba(232,230,240,0.60)');
     });
 
     el.innerHTML = '<svg width="' + W + '" height="' + TH + '" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible;">' + out + '</svg>';
@@ -538,7 +538,7 @@ function renderBarChartSingle(containerId, data) {
 
         // Date label below
         var lbl = _chartLabel(item.x, i, n);
-        if (lbl) out += _svgText(cx, TH - 3, lbl, 'middle', 8, 'rgba(232,230,240,0.35)');
+        if (lbl) out += _svgText(cx, TH - 3, lbl, 'middle', 8, 'rgba(232,230,240,0.60)');
     });
 
     el.innerHTML = '<svg width="' + W + '" height="' + TH + '" xmlns="http://www.w3.org/2000/svg" style="display:block;overflow:visible;">' + out + '</svg>';
