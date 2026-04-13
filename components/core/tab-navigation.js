@@ -46,7 +46,7 @@
             renderIHKView();
         }
         if (tabId === 'school') {
-            renderSchoolView();
+            renderSchoolGradesInputs();
         }
         if (tabId === 'goals') {
             renderGoalsView();
