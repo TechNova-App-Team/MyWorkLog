@@ -1,5 +1,42 @@
-// ═══ CORE: NAVBAR-SIDEBAR ═══
-    // ===== NAVBAR CUSTOMIZATION: render based on settings and allow drag/drop =====
+// ═══ CORE: NAVBAR-SIDEBAR ====
+    function getIconSvgById(id) {
+        const icons = {
+            dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h6v8H3z"/><path d="M9 8h6v13H9z"/><path d="M15 3h6v18h-6z"/></svg>',
+            performance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h3v4H3z"/><path d="M10 12h3v9h-3z"/><path d="M17 7h3v14h-3z"/></svg>',
+            history: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>',
+            newEntry: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
+            widgets: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>',
+            fahrtkosten: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="9" rx="2"/><path d="M6 16v3"/><path d="M18 16v3"/><path d="M3 11h18"/></svg>',
+            yearview: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16"/><path d="M10 3v4"/><path d="M14 3v4"/></svg>',
+            monthcompare: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M9 5v4"/><path d="M15 5v4"/></svg>',
+            weekview: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 5v4"/><path d="M16 5v4"/></svg>',
+            school: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M4 9v7a8 8 0 0016 0V9"/></svg>',
+            ihk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L3 7l9 4 9-4-9-4z"/><path d="M3 7v6c0 5 4 9 9 9s9-4 9-9V7"/></svg>',
+            goals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><path d="M12 5v2"/><path d="M12 17v2"/><path d="M5 12h2"/><path d="M17 12h2"/></svg>',
+            'analytics-pro': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M8 15v4"/><path d="M12 11v8"/><path d="M16 7v12"/></svg>',
+            settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 007 10.6a1.65 1.65 0 001.51-1V9a2 2 0 014 0v.09A1.65 1.65 0 0014 10.6a1.65 1.65 0 001.49 1 1.65 1.65 0 001.51-1V8a2 2 0 014 0v1.6a1.65 1.65 0 001.49 1z"/></svg>',
+            alerts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>',
+            onboarding: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M16 8l-8 4 4 4 8-4-4-4z"/></svg>',
+            import: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>',
+            backup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v6h6"/></svg>',
+            untis: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20V5H6.5A2.5 2.5 0 004 7.5z"/><path d="M20 5v14"/></svg>',
+            support: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15v-3a8 8 0 0116 0v3"/><path d="M4 15h1a3 3 0 003 3v-5"/><path d="M20 15h-1a3 3 0 01-3 3v-5"/></svg>',
+            'repo-analysis': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M8 15v4"/><path d="M12 11v8"/><path d="M16 7v12"/></svg>',
+            report: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M9 7h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>',
+            archflow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l-4-4 4-4"/><path d="M17 7l4 4-4 4"/><path d="M3 13h18"/></svg>',
+            analytics: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M8 15v4"/><path d="M12 10v9"/><path d="M16 6v13"/></svg>',
+            impressum: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6"/></svg>',
+            dsgvo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3.5 9.74-7 11-3.5-1.26-7-6-7-11V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>',
+            about: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>',
+            berichtsheft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h-1.5a2 2 0 00-4 0H8a2 2 0 00-2 2v14a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2z"/><path d="M9 4h6"/></svg>',
+            aufgaben: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>',
+            skilltree: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v7"/><path d="M7 10l5 5 5-5"/><path d="M12 20v-6"/></svg>',
+            ausbildung: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L3 7l9 4 9-4-9-4z"/><path d="M4 9v6a8 8 0 0016 0V9"/></svg>',
+            vertrag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
+            rights: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3.5 9.74-7 11-3.5-1.26-7-6-7-11V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>'
+        };
+        return icons[id] || '';
+    }    // ===== NAVBAR CUSTOMIZATION: render based on settings and allow drag/drop =====
     function renderNavbar() {
         const nav = document.getElementById('mainNav');
         if (!nav) return;
@@ -8,10 +45,10 @@
         if (!Array.isArray(data.settings.nav)) {
             // Default nav items (id, label, icon, visible)
             data.settings.nav = [
-                {id:'dashboard', label:'Dashboard', icon:'🏠', visible:true},
-                {id:'newEntry', label:'Neu', icon:'➕', visible:true},
-                {id:'widgets', label:'Widgets', icon:'📦', visible:true},
-                {id:'settings', label:'Einstellungen', icon:'⚙️', visible:true}
+                {id:'dashboard', label:'Dashboard', icon:getIconSvgById('dashboard'), visible:true},
+                {id:'newEntry', label:'Neu', icon:getIconSvgById('newEntry'), visible:true},
+                {id:'widgets', label:'Widgets', icon:getIconSvgById('widgets'), visible:true},
+                {id:'settings', label:'Einstellungen', icon:getIconSvgById('settings'), visible:true}
             ];
             save();
         }
@@ -23,7 +60,8 @@
             a.className = 'nav-item';
             a.setAttribute('draggable', 'true');
             a.dataset.navId = item.id;
-            a.innerHTML = `<span class="nav-icon">${item.icon}</span><span class="nav-label">${item.label}</span>`;
+            const navIconHtml = item.icon && item.icon.trim().startsWith('<svg') ? item.icon : getIconSvgById(item.id) || item.icon;
+            a.innerHTML = `<span class="nav-icon">${navIconHtml}</span><span class="nav-label">${item.label}</span>`;
 
             // Drag handlers
             a.addEventListener('dragstart', (e) => {
@@ -169,17 +207,17 @@
 
         // Default nav items - RICHTIG SORTIERT nach Benutzervorgabe
         const defaultNavItems = [
-            {id:'dashboard', label:'Dashboard', icon:'📈', visible:true},
-            {id:'performance', label:'Performance', icon:'📊', visible:true},
-            {id:'history', label:'Verlauf', icon:'📉', visible:true},
-            {id:'fahrtkosten', label:'Fahrtkosten', icon:'🚗', visible:true, external:'./Pages/App/fahrtkosten.html'},
-            {id:'yearview', label:'Jahresansicht', icon:'📅', visible:true},
-            {id:'monthcompare', label:'Monatsansicht', icon:'📊', visible:true},
-            {id:'weekview', label:'Wochenansicht', icon:'📆', visible:true},
-            {id:'school', label:'Berufsschule', icon:'🏫', visible:true},
-            {id:'ihk', label:'IHK', icon:'🎓', visible:true},
-            {id:'goals', label:'Ziele', icon:'🎯', visible:true},
-            {id:'analytics-pro', label:'Analytics Pro', icon:'📊', visible:true},
+            {id:'dashboard', label:'Dashboard', icon:getIconSvgById('dashboard'), visible:true},
+            {id:'performance', label:'Performance', icon:getIconSvgById('performance'), visible:true},
+            {id:'history', label:'Verlauf', icon:getIconSvgById('history'), visible:true},
+            {id:'fahrtkosten', label:'Fahrtkosten', icon:getIconSvgById('fahrtkosten'), visible:true, external:'./Pages/App/fahrtkosten.html'},
+            {id:'yearview', label:'Jahresansicht', icon:getIconSvgById('yearview'), visible:true},
+            {id:'monthcompare', label:'Monatsansicht', icon:getIconSvgById('monthcompare'), visible:true},
+            {id:'weekview', label:'Wochenansicht', icon:getIconSvgById('weekview'), visible:true},
+            {id:'school', label:'Berufsschule', icon:getIconSvgById('school'), visible:true},
+            {id:'ihk', label:'IHK', icon:getIconSvgById('ihk'), visible:true},
+            {id:'goals', label:'Ziele', icon:getIconSvgById('goals'), visible:true},
+            {id:'analytics-pro', label:'Analytics Pro', icon:getIconSvgById('analytics-pro'), visible:true},
         ];
 
         // Nav-Version: bei Änderung der Reihenfolge/Items hochzählen → erzwingt Reset
@@ -218,7 +256,8 @@
             el.className = 'nav-item';
             el.draggable = true;
             el.dataset.navId = item.id;
-            el.innerHTML = `<span class="nav-icon">${item.icon}</span> <span class="nav-label">${item.label}</span>`;
+            const sidebarIconHtml = item.icon && item.icon.trim().startsWith('<svg') ? item.icon : getIconSvgById(item.id) || item.icon;
+            el.innerHTML = `<span class="nav-icon">${sidebarIconHtml}</span> <span class="nav-label">${item.label}</span>`;
             if (!item.visible) el.style.opacity = '0.4';
 
             el.addEventListener('click', () => {
@@ -390,36 +429,36 @@
     // ===== COMMAND PALETTE (Ctrl+K / ⌘K) =====
     const CMD_PALETTE_ITEMS = [
         // Navigation
-        { id: 'dashboard',    label: 'Dashboard',         icon: '📈', group: 'Navigation', action: () => switchTab('dashboard') },
-        { id: 'performance',  label: 'Performance',       icon: '📊', group: 'Navigation', action: () => switchTab('performance') },
-        { id: 'history',      label: 'Verlauf',           icon: '📉', group: 'Navigation', action: () => switchTab('history') },
-        { id: 'yearview',     label: 'Jahresansicht',     icon: '📅', group: 'Navigation', action: () => switchTab('yearview') },
-        { id: 'monthcompare', label: 'Monatvergleich',    icon: '📊', group: 'Navigation', action: () => switchTab('monthcompare') },
-        { id: 'weekview',     label: 'Wochenansicht',     icon: '📆', group: 'Navigation', action: () => switchTab('weekview') },
-        { id: 'school',       label: 'Berufsschule',      icon: '🏫', group: 'Navigation', action: () => switchTab('school') },
-        { id: 'aibot',        label: 'AI-Bot',            icon: '🤖', group: 'Navigation', action: () => switchTab('aibot') },
-        { id: 'support',      label: 'Unterstützung',     icon: '☕', group: 'Navigation', action: () => switchTab('support') },
-        { id: 'analytics-pro', label: 'Analytics Pro',     icon: '📊', group: 'Navigation', action: () => switchTab('analytics-pro') },
+        { id: 'dashboard',    label: 'Dashboard',         icon: getIconSvgById('dashboard'), group: 'Navigation', action: () => switchTab('dashboard') },
+        { id: 'performance',  label: 'Performance',       icon: getIconSvgById('performance'), group: 'Navigation', action: () => switchTab('performance') },
+        { id: 'history',      label: 'Verlauf',           icon: getIconSvgById('history'), group: 'Navigation', action: () => switchTab('history') },
+        { id: 'yearview',     label: 'Jahresansicht',     icon: getIconSvgById('yearview'), group: 'Navigation', action: () => switchTab('yearview') },
+        { id: 'monthcompare', label: 'Monatvergleich',    icon: getIconSvgById('monthcompare'), group: 'Navigation', action: () => switchTab('monthcompare') },
+        { id: 'weekview',     label: 'Wochenansicht',     icon: getIconSvgById('weekview'), group: 'Navigation', action: () => switchTab('weekview') },
+        { id: 'school',       label: 'Berufsschule',      icon: getIconSvgById('school'), group: 'Navigation', action: () => switchTab('school') },
+        { id: 'aibot',        label: 'AI-Bot',            icon: getIconSvgById('aibot'), group: 'Navigation', action: () => switchTab('aibot') },
+        { id: 'support',      label: 'Unterstützung',     icon: getIconSvgById('support'), group: 'Navigation', action: () => switchTab('support') },
+        { id: 'analytics-pro', label: 'Analytics Pro',     icon: getIconSvgById('analytics-pro'), group: 'Navigation', action: () => switchTab('analytics-pro') },
         // Tools
-        { id: 'settings',     label: 'Einstellungen',     icon: '⚙️', group: 'Tools',      action: () => openSettings() },
-        { id: 'alerts',       label: 'Alerts',            icon: '🔔', group: 'Tools',      action: () => toggleAlertsPanel() },
-        { id: 'backup',       label: 'Backup / Export',   icon: '💾', group: 'Tools',      action: () => showExportMenu() },
-        { id: 'import',       label: 'Import',            icon: '📥', group: 'Tools',      action: () => showBackupMenu() },
-        { id: 'onboarding',   label: 'Anleitung / Tour',  icon: '🧭', group: 'Tools',      action: () => startOnboardingTour() },
-        { id: 'untis',        label: 'Untis Import',      icon: '📚', group: 'Tools',      action: () => showUntisImportModal() },
+        { id: 'settings',     label: 'Einstellungen',     icon: getIconSvgById('settings'), group: 'Tools',      action: () => openSettings() },
+        { id: 'alerts',       label: 'Alerts',            icon: getIconSvgById('alerts'), group: 'Tools',      action: () => toggleAlertsPanel() },
+        { id: 'backup',       label: 'Backup / Export',   icon: getIconSvgById('backup'), group: 'Tools',      action: () => showExportMenu() },
+        { id: 'import',       label: 'Import',            icon: getIconSvgById('import'), group: 'Tools',      action: () => showBackupMenu() },
+        { id: 'onboarding',   label: 'Anleitung / Tour',  icon: getIconSvgById('onboarding'), group: 'Tools',      action: () => startOnboardingTour() },
+        { id: 'untis',        label: 'Untis Import',      icon: getIconSvgById('untis'), group: 'Tools',      action: () => showUntisImportModal() },
         // Extern
-        { id: 'berichtsheft', label: 'Berichtsheft',      icon: '📋', group: 'Extern',     action: () => { window.location.href = './Pages/App/berichtsheft.html'; } },
-        { id: 'aufgaben',     label: 'Aufgaben Manager', icon: '✅', group: 'Extern',     action: () => { window.location.href = './Pages/App/Tasks/aufgaben.html'; } },
-        { id: 'skilltree',    label: 'Skill-Baum',       icon: '🌳', group: 'Extern',     action: () => { window.location.href = './Pages/App/SkillTree/skill-tree.html'; } },
-        { id: 'ausbildung',   label: 'Ausbildungshilfe',  icon: '🎓', group: 'Extern',     action: () => { window.location.href = './Pages/App/Ausbilungs_Hilfe/index.html'; } },
-        { id: 'vertrag',      label: 'Vertrags-Manager',  icon: '💼', group: 'Extern',     action: () => { window.location.href = './Pages/App/vertrags-manager.html'; } },
-        { id: 'repo',         label: 'Repo-Analyse',      icon: '🔥', group: 'Extern',     action: () => window.open('Pages/Info/repo-report.html', '_blank') },
-        { id: 'analytics',    label: 'Analytics',         icon: '📊', group: 'Extern',     action: () => window.open('./Pages/Info/analytics.html', '_blank') },
-        { id: 'impressum',    label: 'Impressum',         icon: '📄', group: 'Extern',     action: () => window.open('./Pages/DE-Gestz/Impressum.html', '_blank') },
-        { id: 'dsgvo',        label: 'DSGVO',             icon: '🔒', group: 'Extern',     action: () => window.open('./Pages/DE-Gestz/DSGVO.html', '_blank') },
-        { id: 'about',        label: 'About',             icon: '💡', group: 'Extern',     action: () => window.open('./Pages/Info/about.html', '_blank') },
+        { id: 'berichtsheft', label: 'Berichtsheft',      icon: getIconSvgById('berichtsheft'), group: 'Extern',     action: () => { window.location.href = './Pages/App/berichtsheft.html'; } },
+        { id: 'aufgaben',     label: 'Aufgaben Manager', icon: getIconSvgById('aufgaben'), group: 'Extern',     action: () => { window.location.href = './Pages/App/Tasks/aufgaben.html'; } },
+        { id: 'skilltree',    label: 'Skill-Baum',       icon: getIconSvgById('skilltree'), group: 'Extern',     action: () => { window.location.href = './Pages/App/SkillTree/skill-tree.html'; } },
+        { id: 'ausbildung',   label: 'Ausbildungshilfe',  icon: getIconSvgById('ausbildung'), group: 'Extern',     action: () => { window.location.href = './Pages/App/Ausbilungs_Hilfe/index.html'; } },
+        { id: 'vertrag',      label: 'Vertrags-Manager',  icon: getIconSvgById('vertrag'), group: 'Extern',     action: () => { window.location.href = './Pages/App/vertrags-manager.html'; } },
+        { id: 'repo',         label: 'Repo-Analyse',      icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('Pages/Info/repo-report.html', '_blank') },
+        { id: 'analytics',    label: 'Analytics',         icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('./Pages/Info/analytics.html', '_blank') },
+        { id: 'impressum',    label: 'Impressum',         icon: getIconSvgById('impressum'), group: 'Extern',     action: () => window.open('./Pages/DE-Gestz/Impressum.html', '_blank') },
+        { id: 'dsgvo',        label: 'DSGVO',             icon: getIconSvgById('dsgvo'), group: 'Extern',     action: () => window.open('./Pages/DE-Gestz/DSGVO.html', '_blank') },
+        { id: 'about',        label: 'About',             icon: getIconSvgById('about'), group: 'Extern',     action: () => window.open('./Pages/Info/about.html', '_blank') },
         // Ghost Mode
-        { id: 'ghost',        label: 'Ghost Mode 👻',     icon: '👻', group: 'Tools',      action: () => toggleGhostMode() },
+        { id: 'ghost',        label: 'Ghost Mode',        icon: getIconSvgById('about'), group: 'Tools',      action: () => toggleGhostMode() },
     ];
 
     let cmdSelectedIdx = 0;
