@@ -1,59 +1,797 @@
-        /* Goals View */
-        .goal-kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+        /* ═══════════════════════════════════════════════════════════
+           GOALS / ZIELE — MISSION CONTROL v2
+           Dark Enterprise · Cyberpunk Command · Ultra Dashboard
+           ══════════════════════════════════════════════════════════ */
+
+        /* ── Goals Color Tokens ── */
+        #view-goals {
+            --gc-bg:             #060711;
+            --gc-surface:        rgba(10, 12, 22, 0.96);
+            --gc-surface-hover:  rgba(14, 16, 28, 0.98);
+            --gc-border:         rgba(255, 255, 255, 0.06);
+            --gc-border-glow:    rgba(139, 92, 246, 0.28);
+            --gc-accent:         #8b5cf6;
+            --gc-accent-bright:  #c4b5fd;
+            --gc-accent-dim:     rgba(139, 92, 246, 0.12);
+            --gc-amber:          #f59e0b;
+            --gc-amber-dim:      rgba(245, 158, 11, 0.12);
+            --gc-emerald:        #10b981;
+            --gc-emerald-dim:    rgba(16, 185, 129, 0.12);
+            --gc-cyan:           #06b6d4;
+            --gc-cyan-dim:       rgba(6, 182, 212, 0.10);
+            --gc-rose:           #f43f5e;
+            --gc-rose-dim:       rgba(244, 63, 94, 0.10);
+            --gc-text:           #f1f5f9;
+            --gc-text-secondary: rgba(241, 245, 249, 0.64);
+            --gc-text-tertiary:  rgba(241, 245, 249, 0.32);
+            --gc-mono:           'IBM Plex Mono', 'JetBrains Mono', monospace;
+            --gc-sans:           'DM Sans', 'Inter', var(--font-main, system-ui);
+            font-family: var(--gc-sans);
+            color: var(--gc-text);
         }
-        .goal-focus-card {
-            padding: 1.5rem;
-            border-left: 5px solid var(--primary);
-        }
-        .goal-focus-value {
-            font-size: 2.5rem;
-            font-weight: 800;
-            font-family: var(--font-mono);
-            margin-top: 10px;
-        }
-        
-        .goal-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
-        .goal-card {
-            background: rgba(255,255,255,0.05);
-            padding: 1.5rem;
-            border-radius: 16px;
-            border-left: 4px solid var(--primary);
+
+        /* ═══════════════════════════════════════════
+           HERO HEADER — COMMAND CENTER
+           ═══════════════════════════════════════════ */
+        #view-goals .gc-hero {
             position: relative;
-            transition: all 0.2s;
+            background: var(--gc-surface);
+            border: 1px solid var(--gc-border);
+            border-radius: 20px;
+            padding: 2.25rem 2.5rem 2rem;
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+            isolation: isolate;
         }
-        .goal-card.achieved {
-             border: 2px solid gold;
-             box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
-             opacity: 1 !important;
+
+        /* Radial glow */
+        #view-goals .gc-hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 55% at 75% -10%, rgba(139, 92, 246, 0.18) 0%, transparent 65%),
+                radial-gradient(ellipse 45% 65% at 10% 110%, rgba(6, 182, 212, 0.10) 0%, transparent 55%);
+            pointer-events: none;
+            z-index: 0;
         }
-        .goal-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
-        .goal-status {
+
+        /* Grid texture overlay */
+        #view-goals .gc-hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 44px 44px;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+            -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        #view-goals .gc-hero-inner {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        /* ── Status Chips ── */
+        #view-goals .gc-status-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+        }
+
+        #view-goals .gc-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-family: var(--gc-mono);
+            font-size: 0.58rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            padding: 3px 9px;
+            border-radius: 4px;
+            line-height: 1.4;
+        }
+
+        #view-goals .gc-chip-live {
+            color: var(--gc-emerald);
+            background: var(--gc-emerald-dim);
+            border: 1px solid rgba(16, 185, 129, 0.28);
+        }
+
+        #view-goals .gc-chip-dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: var(--gc-emerald);
+            box-shadow: 0 0 6px var(--gc-emerald);
+            animation: gc-blink 2s ease-in-out infinite;
+        }
+
+        @keyframes gc-blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        #view-goals .gc-chip-path {
+            color: var(--gc-accent);
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+
+        #view-goals .gc-chip-sep {
+            color: var(--gc-text-tertiary);
+            font-size: 0.6rem;
+            user-select: none;
+        }
+
+        #view-goals .gc-chip-sub {
+            color: var(--gc-text-tertiary);
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+
+        /* ── Title Block ── */
+        #view-goals .gc-hero-title {
+            font-family: var(--gc-sans);
+            font-size: clamp(1.7rem, 3.2vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: -0.045em;
+            line-height: 1.08;
+            margin: 0 0 0.6rem;
+        }
+
+        #view-goals .gc-hero-title-glow {
+            background: linear-gradient(135deg, var(--gc-accent-bright) 0%, #e0d4ff 50%, var(--gc-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        #view-goals .gc-hero-desc {
+            font-size: 0.88rem;
+            color: var(--gc-text-secondary);
+            margin: 0;
+            max-width: 420px;
+            line-height: 1.45;
+        }
+
+        /* ── Hero Ring ── */
+        #view-goals .gc-hero-ring-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        #view-goals .gc-ring-container {
+            position: relative;
+            width: 140px; height: 140px;
+        }
+
+        #view-goals .gc-ring-svg {
+            width: 140px; height: 140px;
+            transform: rotate(-90deg);
+        }
+
+        #view-goals .gc-ring-track {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.06);
+            stroke-width: 7;
+        }
+
+        #view-goals .gc-ring-glow-bg {
+            fill: none;
+            stroke: rgba(139, 92, 246, 0.08);
+            stroke-width: 16;
+            filter: blur(4px);
+        }
+
+        #view-goals .gc-ring-fill {
+            fill: none;
+            stroke: url(#gcRingGradient);
+            stroke-width: 7;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+            filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.4));
+        }
+
+        #view-goals .gc-ring-pct-text {
+            transform: rotate(90deg);
+            transform-origin: 60px 60px;
+            font-family: var(--gc-mono);
+            font-size: 20px;
+            font-weight: 700;
+            fill: var(--gc-accent-bright);
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+
+        #view-goals .gc-ring-sub-text {
+            transform: rotate(90deg);
+            transform-origin: 60px 60px;
+            font-family: var(--gc-mono);
+            font-size: 6px;
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            fill: var(--gc-text-tertiary);
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+
+        #view-goals .gc-ring-caption {
+            font-family: var(--gc-mono);
+            font-size: 0.6rem;
+            color: var(--gc-text-tertiary);
+            letter-spacing: 0.06em;
+        }
+
+        /* ═══════════════════════════════════════════
+           KPI ROW — 3 Cards
+           ═══════════════════════════════════════════ */
+        #view-goals .gc-kpi-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        #view-goals .gc-kpi {
+            background: var(--gc-surface);
+            border: 1px solid var(--gc-border);
+            border-radius: 16px;
+            padding: 1.5rem 1.6rem 1.3rem;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.35s, transform 0.3s, box-shadow 0.35s;
+        }
+
+        #view-goals .gc-kpi:hover {
+            border-color: var(--gc-border-glow);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 40px rgba(139, 92, 246, 0.10);
+        }
+
+        /* Top gradient stripe */
+        #view-goals .gc-kpi::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 5%, var(--gc-accent) 50%, transparent 95%);
+            opacity: 0.5;
+        }
+
+        #view-goals .gc-kpi-highlight::before {
+            opacity: 1;
+            background: linear-gradient(90deg, transparent 5%, var(--gc-accent-bright) 50%, transparent 95%);
+        }
+
+        #view-goals .gc-kpi-label {
+            font-family: var(--gc-mono);
+            font-size: 0.56rem;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            color: var(--gc-text-tertiary);
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        #view-goals .gc-kpi-value {
+            font-family: var(--gc-mono);
+            font-size: 2.6rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.05em;
+        }
+
+        #view-goals .gc-kpi-value-purple { color: var(--gc-accent-bright); }
+        #view-goals .gc-kpi-value-amber  { color: var(--gc-amber); }
+        #view-goals .gc-kpi-value-emerald { color: var(--gc-emerald); }
+
+        #view-goals .gc-kpi-sub {
+            font-size: 0.72rem;
+            color: var(--gc-text-tertiary);
+            font-family: var(--gc-mono);
+            letter-spacing: 0.03em;
+            margin-bottom: 1rem;
+        }
+
+        #view-goals .gc-kpi-bar {
+            height: 3px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #view-goals .gc-kpi-bar-inner {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        #view-goals .gc-bar-purple {
+            background: linear-gradient(90deg, rgba(139,92,246,0.5), var(--gc-accent));
+            box-shadow: 0 0 8px rgba(139, 92, 246, 0.35);
+        }
+        #view-goals .gc-bar-amber {
+            background: linear-gradient(90deg, rgba(245,158,11,0.5), var(--gc-amber));
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
+        }
+        #view-goals .gc-bar-emerald {
+            background: linear-gradient(90deg, rgba(16,185,129,0.5), var(--gc-emerald));
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.35);
+        }
+
+        /* ═══════════════════════════════════════════
+           SHARED PANEL STYLES
+           ═══════════════════════════════════════════ */
+        #view-goals .gc-panel {
+            background: var(--gc-surface);
+            border: 1px solid var(--gc-border);
+            border-radius: 16px;
+            margin-bottom: 1.25rem;
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+
+        #view-goals .gc-panel:hover {
+            border-color: var(--gc-border-glow);
+        }
+
+        #view-goals .gc-panel-head {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 1.25rem 1.6rem;
+            border-bottom: 1px solid var(--gc-border);
+        }
+
+        #view-goals .gc-panel-icon {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 5px;
+            flex-shrink: 0;
         }
-        .goal-delete-btn {
+
+        #view-goals .gc-panel-icon-purple {
+            background: var(--gc-accent-dim);
+            color: var(--gc-accent);
+            border: 1px solid rgba(139, 92, 246, 0.18);
+        }
+
+        #view-goals .gc-panel-icon-cyan {
+            background: var(--gc-cyan-dim);
+            color: var(--gc-cyan);
+            border: 1px solid rgba(6, 182, 212, 0.18);
+        }
+
+        #view-goals .gc-panel-label {
+            font-family: var(--gc-mono);
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            color: var(--gc-text-secondary);
+            flex: 1;
+        }
+
+        #view-goals .gc-panel-badge {
+            font-family: var(--gc-mono);
+            font-size: 0.52rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: var(--gc-emerald);
+            background: var(--gc-emerald-dim);
+            border: 1px solid rgba(16, 185, 129, 0.22);
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        #view-goals .gc-panel-body {
+            padding: 1.5rem 1.6rem;
+        }
+
+        /* ═══════════════════════════════════════════
+           WEEKLY TARGETS
+           ═══════════════════════════════════════════ */
+        #view-goals .gc-weekly-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        #view-goals .gc-weekly-item-label {
+            font-family: var(--gc-mono);
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            color: var(--gc-text-tertiary);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        #view-goals .gc-weekly-values {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.6rem;
+        }
+
+        #view-goals .gc-weekly-current {
+            font-family: var(--gc-sans);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gc-text);
+        }
+
+        #view-goals .gc-weekly-pct {
+            font-family: var(--gc-mono);
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: var(--gc-text-tertiary);
+        }
+
+        #view-goals .gc-bar-track {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        #view-goals .gc-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        #view-goals .gc-fill-accent {
+            background: linear-gradient(90deg, var(--gc-accent), var(--gc-accent-bright));
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.35);
+        }
+
+        #view-goals .gc-fill-cyan {
+            background: linear-gradient(90deg, var(--gc-cyan), #67e8f9);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.35);
+        }
+
+        /* ═══════════════════════════════════════════
+           GOAL CREATION FORM
+           ═══════════════════════════════════════════ */
+        #view-goals .gc-form-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 0.8fr;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        #view-goals .gc-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        #view-goals .gc-field-label {
+            font-family: var(--gc-mono);
+            font-size: 0.56rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            color: var(--gc-text-tertiary);
+            text-transform: uppercase;
+        }
+
+        #view-goals .gc-input,
+        #view-goals .gc-select {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 10px;
+            color: var(--gc-text);
+            font-family: var(--gc-sans);
+            font-size: 0.88rem;
+            padding: 0.7rem 1rem;
+            outline: none;
+            transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+            width: 100%;
+            box-sizing: border-box;
+            -webkit-appearance: none;
+            appearance: none;
+            color-scheme: dark;
+        }
+
+        #view-goals .gc-input:focus,
+        #view-goals .gc-select:focus {
+            border-color: rgba(139, 92, 246, 0.45);
+            background: rgba(139, 92, 246, 0.06);
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.10);
+        }
+
+        #view-goals .gc-input::placeholder { color: var(--gc-text-tertiary); }
+
+        #view-goals .gc-form-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        #view-goals .gc-btn-create {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.55rem;
+            background: linear-gradient(135deg, rgba(139,92,246,0.16) 0%, rgba(139,92,246,0.08) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.32);
+            border-radius: 10px;
+            color: var(--gc-accent-bright);
+            font-family: var(--gc-mono);
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            padding: 0.7rem 1.6rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #view-goals .gc-btn-create:hover {
+            background: linear-gradient(135deg, rgba(139,92,246,0.24) 0%, rgba(139,92,246,0.12) 100%);
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.18);
+        }
+
+        #view-goals .gc-btn-create:active { transform: translateY(0); }
+
+        #view-goals .gc-btn-create svg {
+            width: 14px; height: 14px;
+            fill: currentColor;
+            opacity: 0.75;
+        }
+
+        /* ═══════════════════════════════════════════
+           SECTION HEADINGS
+           ═══════════════════════════════════════════ */
+        #view-goals .gc-section-heading {
+            font-family: var(--gc-mono);
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            color: var(--gc-text-tertiary);
+            margin: 2.5rem 0 1rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid var(--gc-border);
+            text-transform: uppercase;
+        }
+
+        /* ═══════════════════════════════════════════
+           ACTIVE GOAL CARDS
+           ═══════════════════════════════════════════ */
+        #view-goals .gc-goals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 1rem;
+        }
+
+        #view-goals .goal-card {
+            background: var(--gc-surface);
+            border: 1px solid var(--gc-border);
+            border-left: 3px solid var(--gc-accent);
+            border-radius: 14px;
+            padding: 1.4rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        #view-goals .goal-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.2), transparent);
+        }
+
+        #view-goals .goal-card:hover {
+            border-color: var(--gc-border-glow);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(139, 92, 246, 0.08);
+        }
+
+        #view-goals .goal-card.achieved {
+            border-color: rgba(245, 158, 11, 0.3);
+            border-left-color: var(--gc-amber);
+            background: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, var(--gc-surface) 60%);
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.12);
+        }
+
+        #view-goals .goal-card.achieved::after {
+            background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.35), transparent);
+        }
+
+        #view-goals .goal-delete-btn {
             background: none;
             border: none;
-            color: var(--danger);
+            color: var(--gc-rose);
             cursor: pointer;
-            font-size: 1rem;
-            opacity: 0.5;
-            transition: 0.2s;
+            font-size: 1.2rem;
+            opacity: 0;
+            transition: opacity 0.2s;
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 10px; right: 12px;
+            line-height: 1;
+            padding: 4px;
         }
-        .goal-delete-btn:hover { opacity: 1; }
 
-        .progress-ring-goal { width: 60px; height: 60px; margin-bottom: 10px; }
-        .progress-ring-goal circle { stroke-width: 4; }
+        #view-goals .goal-card:hover .goal-delete-btn { opacity: 0.5; }
+        #view-goals .goal-delete-btn:hover { opacity: 1 !important; }
 
+        #view-goals .progress-ring-goal {
+            width: 60px; height: 60px;
+            margin-bottom: 0.8rem;
+        }
+
+        #view-goals .progress-ring-goal circle {
+            stroke-width: 4;
+            fill: transparent;
+            transition: stroke-dashoffset 1s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        #view-goals .goal-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gc-text);
+            margin-bottom: 0.6rem;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        #view-goals .goal-status {
+            font-size: 0.72rem;
+            color: var(--gc-text-secondary);
+            font-family: var(--gc-mono);
+            letter-spacing: 0.03em;
+            margin-top: 0.5rem;
+        }
+
+        /* ═══════════════════════════════════════════
+           ACHIEVEMENTS / TROPHIES
+           ═══════════════════════════════════════════ */
+        #view-goals .gc-trophy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 1rem;
+        }
+
+        #view-goals .gc-trophy {
+            background: var(--gc-surface);
+            border: 1px solid var(--gc-border);
+            border-radius: 14px;
+            padding: 1.5rem 1.25rem;
+            text-align: center;
+            transition: all 0.35s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #view-goals .gc-trophy::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #view-goals .gc-trophy-unlocked::before { opacity: 1; }
+
+        #view-goals .gc-trophy-unlocked {
+            background: linear-gradient(180deg, rgba(255, 215, 0, 0.04) 0%, var(--gc-surface) 50%);
+        }
+
+        #view-goals .gc-trophy-unlocked:hover {
+            border-color: rgba(255, 215, 0, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 16px 40px rgba(255, 215, 0, 0.08);
+        }
+
+        #view-goals .gc-trophy-locked {
+            opacity: 0.38;
+        }
+
+        #view-goals .gc-trophy-emoji {
+            font-size: 2.8rem;
+            margin-bottom: 0.7rem;
+            display: block;
+            line-height: 1;
+        }
+
+        #view-goals .gc-trophy-locked .gc-trophy-emoji {
+            filter: grayscale(1) brightness(0.7);
+        }
+
+        #view-goals .gc-trophy-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gc-text);
+            margin-bottom: 0.35rem;
+        }
+
+        #view-goals .gc-trophy-info {
+            font-size: 0.68rem;
+            font-family: var(--gc-mono);
+            color: var(--gc-text-tertiary);
+            letter-spacing: 0.03em;
+        }
+
+        /* ═══════════════════════════════════════════
+           RESPONSIVE
+           ═══════════════════════════════════════════ */
+        @media (max-width: 1024px) {
+            #view-goals .gc-kpi-row {
+                grid-template-columns: 1fr 1fr;
+            }
+            #view-goals .gc-kpi-row .gc-kpi:last-child {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #view-goals .gc-hero {
+                padding: 1.5rem 1.25rem;
+            }
+            #view-goals .gc-hero-inner {
+                grid-template-columns: 1fr;
+            }
+            #view-goals .gc-hero-ring-col {
+                flex-direction: row;
+                gap: 1.2rem;
+            }
+            #view-goals .gc-ring-container {
+                width: 100px; height: 100px;
+            }
+            #view-goals .gc-ring-svg {
+                width: 100px; height: 100px;
+            }
+            #view-goals .gc-weekly-cols {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            #view-goals .gc-kpi-row {
+                grid-template-columns: 1fr;
+            }
+            #view-goals .gc-kpi-row .gc-kpi:last-child {
+                grid-column: span 1;
+            }
+            #view-goals .gc-form-grid {
+                grid-template-columns: 1fr;
+            }
+            #view-goals .gc-form-footer {
+                justify-content: stretch;
+            }
+            #view-goals .gc-btn-create {
+                width: 100%;
+                justify-content: center;
+            }
+            #view-goals .gc-goals-grid {
+                grid-template-columns: 1fr;
+            }
+            #view-goals .gc-trophy-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            #view-goals .gc-status-bar {
+                flex-wrap: wrap;
+            }
+        }

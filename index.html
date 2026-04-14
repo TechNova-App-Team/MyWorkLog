@@ -1896,85 +1896,166 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         </div>
         
         <div id="view-goals" class="view-section">
-<h2 style="margin-bottom:1.5rem;">🏆 Ziele & Fokus</h2>
-            <p style="color:var(--text-muted); margin-bottom:2rem;">Verfolge deine Langzeit-Ziele und definiere eigene Meilensteine.</p>
-            
-            <h4 style="color:var(--primary); margin-bottom:10px; font-size:0.8rem;">AKTUELLE BASIS-KENNZAHLEN</h4>
-            <div class="goal-kpi-grid">
-                <div class="card goal-focus-card" style="border-left-color: var(--goal-saldo);">
-                    <div class="audit-label">Gesamt Saldo</div>
-                    <div class="goal-focus-value" id="goalKpiTotalDiff">+0.0h</div>
-                </div>
-                <div class="card goal-focus-card" style="border-left-color: var(--goal-work);">
-                    <div class="audit-label">Gesamt Gearbeitet</div>
-                    <div class="goal-focus-value" id="goalKpiTotalWorked">0.0h</div>
-                </div>
-                 <div class="card goal-focus-card" style="border-left-color: var(--goal-weeks);">
-                    <div class="audit-label">Wochen im Plus</div>
-                    <div class="goal-focus-value" id="goalKpiPositiveWeeks">0</div>
-                </div>
-            </div>
 
-            <h4 style="color:var(--primary); margin-bottom:10px; margin-top:2rem; font-size:0.8rem;">WOCHENZIELE & FOKUS</h4>
-            <div class="card" style="background:linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.05) 100%); border:1px solid rgba(16,185,129,0.2); margin-bottom:2rem;">
-                <div style="display:grid; gap:14px;">
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- HERO HEADER                                 -->
+            <!-- ═══════════════════════════════════════════ -->
+            <div class="gc-hero">
+                <div class="gc-hero-inner">
                     <div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.85rem;">
-                            <span style="color:var(--text-main);">Mindeststunden</span>
-                            <span style="color:var(--text-muted);" id="weeklyHoursTarget">0 / 40h</span>
+                        <div class="gc-status-bar">
+                            <span class="gc-chip gc-chip-live">
+                                <span class="gc-chip-dot"></span>
+                                TRACKING
+                            </span>
+                            <span class="gc-chip gc-chip-path">ZIEL-SYSTEM</span>
+                            <span class="gc-chip gc-chip-sep">/</span>
+                            <span class="gc-chip gc-chip-sub">Langzeitstrategie & Meilensteine</span>
                         </div>
-                        <div style="height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden;">
-                            <div id="weeklyHoursBar" style="height:100%; background:linear-gradient(90deg, var(--primary), var(--success)); width:0%; border-radius:4px; transition:width 0.3s ease;"></div>
-                        </div>
+                        <h1 class="gc-hero-title">Ziele & <span class="gc-hero-title-glow">Fokus</span></h1>
+                        <p class="gc-hero-desc">Definiere ambitionierte Ziele, verfolge deinen Fortschritt in Echtzeit und schalte Erfolge frei.</p>
                     </div>
-                    <div>
-                        <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:0.85rem;">
-                            <span style="color:var(--text-main);">Arbeitstage</span>
-                            <span style="color:var(--text-muted);" id="weeklyDaysTarget">0 / 5 Tage</span>
+                    <div class="gc-hero-ring-col">
+                        <div class="gc-ring-container">
+                            <svg class="gc-ring-svg" viewBox="0 0 120 120">
+                                <defs>
+                                    <linearGradient id="gcRingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#8b5cf6"/>
+                                        <stop offset="100%" stop-color="#06b6d4"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle class="gc-ring-track" cx="60" cy="60" r="52"/>
+                                <circle class="gc-ring-glow-bg" cx="60" cy="60" r="52"/>
+                                <circle id="ringGoalsProgress" class="gc-ring-fill" cx="60" cy="60" r="52"
+                                    stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+                                <text x="60" y="54" class="gc-ring-pct-text" id="goalsProgress">0%</text>
+                                <text x="60" y="72" class="gc-ring-sub-text">ZIELERFOLG</text>
+                            </svg>
                         </div>
-                        <div style="height:8px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden;">
-                            <div id="weeklyDaysBar" style="height:100%; background:linear-gradient(90deg, #3b82f6, var(--success)); width:0%; border-radius:4px; transition:width 0.3s ease;"></div>
-                        </div>
+                        <span class="gc-ring-caption">Aktive Ziele</span>
                     </div>
                 </div>
             </div>
 
-            <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem;">ZIEL DEFINITION & ERSTELLUNG</h4>
-            <div class="card" style="margin-bottom: 2rem;">
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px;">
-                    <input type="text" id="goalTitle" class="glass-input" placeholder="Zielname (z.B. 100h Überstunden)">
-                    
-                    <select id="goalType" class="glass-select">
-                        <option value="TOTAL_WORKED_HOURS">Gesamt Gearbeitet (h)</option>
-                        <option value="TOTAL_DIFF_HOURS">Gesamt Saldo (h)</option>
-                        <option value="POSITIVE_WEEKS">Wochen im Plus (Anzahl)</option>
-                        <option value="PERFECT_SHIFTS">Schichten mit Diff < 0.1 (Anzahl)</option>
-                    </select>
-
-                    <input type="number" id="goalTarget" class="glass-input" placeholder="Zielwert (z.B. 100)">
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- KPI ROW                                     -->
+            <!-- ═══════════════════════════════════════════ -->
+            <div class="gc-kpi-row">
+                <div class="gc-kpi gc-kpi-highlight">
+                    <div class="gc-kpi-label">Gesamt Saldo</div>
+                    <div class="gc-kpi-value gc-kpi-value-purple" id="goalKpiTotalDiff">+0.0h</div>
+                    <div class="gc-kpi-sub">Zeitsaldo-Bilanz</div>
+                    <div class="gc-kpi-bar"><div class="gc-kpi-bar-inner gc-bar-purple" id="gcBarSaldo" style="width:0%"></div></div>
                 </div>
-                <div style="display:flex; justify-content:flex-end; margin-top:15px;">
-                    <button class="btn btn-primary" onclick="addCustomGoal()" style="width: 300px;">Ziel hinzufügen</button>
+                <div class="gc-kpi">
+                    <div class="gc-kpi-label">Stunden Gearbeitet</div>
+                    <div class="gc-kpi-value gc-kpi-value-amber" id="goalKpiTotalWorked">0.0h</div>
+                    <div class="gc-kpi-sub">Kumulativ</div>
+                    <div class="gc-kpi-bar"><div class="gc-kpi-bar-inner gc-bar-amber" id="gcBarWorked" style="width:0%"></div></div>
+                </div>
+                <div class="gc-kpi">
+                    <div class="gc-kpi-label">Wochen im Plus</div>
+                    <div class="gc-kpi-value gc-kpi-value-emerald" id="goalKpiPositiveWeeks">0</div>
+                    <div class="gc-kpi-sub">Positive Bilanz</div>
+                    <div class="gc-kpi-bar"><div class="gc-kpi-bar-inner gc-bar-emerald" style="width:100%"></div></div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- WEEKLY TARGETS                              -->
+            <!-- ═══════════════════════════════════════════ -->
+            <div class="gc-panel">
+                <div class="gc-panel-head">
+                    <div class="gc-panel-icon gc-panel-icon-cyan">⏱</div>
+                    <span class="gc-panel-label">WOCHENZIELE & FOKUS</span>
+                    <span class="gc-panel-badge">AKTIV</span>
+                </div>
+                <div class="gc-panel-body">
+                    <div class="gc-weekly-cols">
+                        <div>
+                            <div class="gc-weekly-item-label">Mindeststunden</div>
+                            <div class="gc-weekly-values">
+                                <span class="gc-weekly-current" id="weeklyHoursTarget">0 / 40h</span>
+                                <span class="gc-weekly-pct" id="weeklyHoursPct">0%</span>
+                            </div>
+                            <div class="gc-bar-track">
+                                <div class="gc-bar-fill gc-fill-accent" id="weeklyHoursBar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="gc-weekly-item-label">Arbeitstage</div>
+                            <div class="gc-weekly-values">
+                                <span class="gc-weekly-current" id="weeklyDaysTarget">0 / 5 Tage</span>
+                                <span class="gc-weekly-pct" id="weeklyDaysPct">0%</span>
+                            </div>
+                            <div class="gc-bar-track">
+                                <div class="gc-bar-fill gc-fill-cyan" id="weeklyDaysBar" style="width:0%"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem;">AKTIVE ZIELE</h4>
-            <div class="goal-grid" id="goalsList">
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- GOAL CREATION                               -->
+            <!-- ═══════════════════════════════════════════ -->
+            <div class="gc-panel">
+                <div class="gc-panel-head">
+                    <div class="gc-panel-icon gc-panel-icon-purple">+</div>
+                    <span class="gc-panel-label">NEUES ZIEL DEFINIEREN</span>
                 </div>
-
-            <h4 style="color:var(--text-muted); margin-bottom:10px; font-size:0.8rem; margin-top: 3rem;">FREIGESCHALTETE TROPHÄEN (PLATZHALTER)</h4>
-            <div class="goal-grid" id="trophiesList" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
-                 <div class="goal-card" style="border-left-color: #ffd700;">
-                    <div style="font-size: 2rem;">👑</div>
-                    <div class="goal-title">Marathon-Start</div>
-                    <div class="goal-status" style="color: #ffd700;">(50h erreicht)</div>
-                </div>
-                 <div class="goal-card" style="border-left-color: #c0c0c0; opacity: 0.5;">
-                    <div style="font-size: 2rem;">🏅</div>
-                    <div class="goal-title">Perfektionist</div>
-                    <div class="goal-status">Noch nicht erreicht</div>
+                <div class="gc-panel-body">
+                    <div class="gc-form-grid">
+                        <div class="gc-field">
+                            <label class="gc-field-label">Zielname</label>
+                            <input type="text" id="goalTitle" class="gc-input" placeholder="z.B. 100h Überstunden">
+                        </div>
+                        <div class="gc-field">
+                            <label class="gc-field-label">Zieltyp</label>
+                            <select id="goalType" class="gc-select">
+                                <option value="TOTAL_WORKED_HOURS">Gesamt Gearbeitet (h)</option>
+                                <option value="TOTAL_DIFF_HOURS">Gesamt Saldo (h)</option>
+                                <option value="POSITIVE_WEEKS">Wochen im Plus (Anzahl)</option>
+                                <option value="PERFECT_SHIFTS">Perfekte Schichten (Anzahl)</option>
+                            </select>
+                        </div>
+                        <div class="gc-field">
+                            <label class="gc-field-label">Zielwert</label>
+                            <input type="number" id="goalTarget" class="gc-input" placeholder="z.B. 100">
+                        </div>
+                    </div>
+                    <div class="gc-form-footer">
+                        <button class="gc-btn-create" onclick="addCustomGoal()">
+                            <svg viewBox="0 0 16 16"><path d="M8 1a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2H9v5a1 1 0 1 1-2 0V9H2a1 1 0 0 1 0-2h5V2a1 1 0 0 1 1-1z"/></svg>
+                            Ziel erstellen
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- ACTIVE GOALS                                -->
+            <!-- ═══════════════════════════════════════════ -->
+            <h3 class="gc-section-heading">Aktive Ziele</h3>
+            <div class="gc-goals-grid" id="goalsList"></div>
+
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- TROPHIES                                    -->
+            <!-- ═══════════════════════════════════════════ -->
+            <h3 class="gc-section-heading">Freigeschaltete Erfolge</h3>
+            <div class="gc-trophy-grid" id="trophiesList">
+                <div class="gc-trophy gc-trophy-unlocked">
+                    <span class="gc-trophy-emoji">👑</span>
+                    <div class="gc-trophy-name">Marathon-Start</div>
+                    <div class="gc-trophy-info" style="color: #fbbf24;">50h erreicht</div>
+                </div>
+                <div class="gc-trophy gc-trophy-locked">
+                    <span class="gc-trophy-emoji">🏅</span>
+                    <div class="gc-trophy-name">Perfektionist</div>
+                    <div class="gc-trophy-info">Noch nicht erreicht</div>
+                </div>
+            </div>
+
         </div>
 
         <div id="view-yearview" class="view-section">

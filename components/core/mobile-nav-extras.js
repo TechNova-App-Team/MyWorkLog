@@ -296,7 +296,7 @@
     }
 
     // Zeige Spinner beim Start
-    showLoadingSpinner('⏳ TimeTracker wird geladen...');
+    showLoadingSpinner('⏳ MyWorkLog wird geladen...');
 
     // Verstecke Spinner wenn alles geladen ist
     if (document.readyState === 'loading') {
