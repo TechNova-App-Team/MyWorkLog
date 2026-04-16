@@ -1041,14 +1041,24 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         </header>
 
         <div id="view-dashboard" class="view-section active">
-            <div id="dashboardEditControls" style="display:flex; gap:10px; margin-bottom:1.5rem; opacity:0; pointer-events:none; transition:opacity 0.3s;">
-                <button id="dashboardCancelBtn" class="btn" style="padding:8px 16px; font-size:0.9rem; background:#d97706; display:none;" onclick="cancelDashboardEditMode()" title="Änderungen verwerfen">✕ Abbrechen</button>
+
+            <!-- Edit Mode Controls -->
+            <div id="dashboardEditControls" style="display:flex; gap:10px; margin-bottom:1.25rem; opacity:0; pointer-events:none; transition:opacity 0.3s;">
+                <button id="dashboardCancelBtn" class="btn" style="padding:8px 16px; font-size:0.85rem; background:rgba(217,119,6,0.15); border:1px solid rgba(217,119,6,0.3); color:#f59e0b; display:none;" onclick="cancelDashboardEditMode()" title="Änderungen verwerfen">✕ Abbrechen</button>
             </div>
+
             <div id="dashboardContainer" class="dashboard-grid">
-                <!-- KPI Cards (Woche, Monat, Gleitzeit, Ø Täglich) -->
-                <div class="dashboard-item card-3d" data-item-id="kpi-cards">
+
+                <!-- ═══ KPI OVERVIEW ═══ -->
+                <div class="dashboard-item" data-item-id="kpi-cards">
                     <div class="kpi-grid" id="dashboardGrid">
-                        <div class="card kpi-card" onclick="openCorrection('week')">
+
+                        <!-- KPI: Woche -->
+                        <div class="card kpi-card kpi-card--ring" onclick="openCorrection('week')">
+                            <div class="kpi-card__header">
+                                <span class="kpi-card__tag">Woche</span>
+                                <span class="kpi-card__indicator"></span>
+                            </div>
                             <div class="progress-ring">
                                 <svg width="100" height="100">
                                     <circle class="ring-bg" cx="50" cy="50" r="44"></circle>
@@ -1056,11 +1066,17 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                                 </svg>
                                 <div class="ring-center">
                                     <div class="ring-num" id="valWeek">0</div>
-                                    <div class="ring-lbl">Woche</div>
+                                    <div class="ring-lbl">Stunden</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="card kpi-card" onclick="openCorrection('month')">
+
+                        <!-- KPI: Monat -->
+                        <div class="card kpi-card kpi-card--ring" onclick="openCorrection('month')">
+                            <div class="kpi-card__header">
+                                <span class="kpi-card__tag">Monat</span>
+                                <span class="kpi-card__indicator"></span>
+                            </div>
                             <div class="progress-ring">
                                 <svg width="100" height="100">
                                     <circle class="ring-bg" cx="50" cy="50" r="44"></circle>
@@ -1068,99 +1084,133 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                                 </svg>
                                 <div class="ring-center">
                                     <div class="ring-num" id="valMonth">0</div>
-                                    <div class="ring-lbl">Monat</div>
+                                    <div class="ring-lbl">Stunden</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="card gleitzeit-hero" style="display:flex; flex-direction:column; justify-content:center;">
-                            <div class="ring-lbl">GLEITZEIT KONTO</div>
-                            <div style="font-size:2.8rem; font-weight:800; color:var(--primary); margin:10px 0; font-family:var(--font-mono); letter-spacing:-2px;" id="valTotal" class="counter-animate">+0.0h</div>
-                            <div style="font-size:0.8rem; color:var(--text-muted);">Prognose <span style="font-size:0.7rem; opacity:0.7;">(~6 Wochen)</span>: <span id="valProjected" class="projection-badge" style="cursor:help;">0h</span></div>
-                            <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:6px; font-size:0.8rem;">
-                                <span id="streakEmoji" class="streak-active" style="font-size:1rem;">🔥</span>
-                                <span style="color:var(--text-muted);">Streak:</span>
-                                <span id="streakCount" style="color:var(--success); font-weight:800;">0</span>
-                                <span style="font-size:0.7rem; color:var(--text-muted);" id="streakBest">Best: 0</span>
+
+                        <!-- KPI: Gleitzeit Hero -->
+                        <div class="card gleitzeit-hero">
+                            <div class="gleitzeit-hero__accent"></div>
+                            <div class="kpi-card__header">
+                                <span class="kpi-card__tag kpi-card__tag--accent">Gleitzeit</span>
+                            </div>
+                            <div class="gleitzeit-hero__value" id="valTotal">+0.0h</div>
+                            <div class="gleitzeit-hero__meta">
+                                <span class="gleitzeit-hero__label">Prognose <span class="gleitzeit-hero__sub">(~6 Wochen)</span></span>
+                                <span id="valProjected" class="projection-badge" style="cursor:help;">0h</span>
+                            </div>
+                            <div class="gleitzeit-hero__streak">
+                                <span id="streakEmoji" class="streak-active">🔥</span>
+                                <span class="gleitzeit-hero__streak-label">Streak:</span>
+                                <span id="streakCount" class="gleitzeit-hero__streak-count">0</span>
+                                <span id="streakBest" class="gleitzeit-hero__streak-best">Best: 0</span>
                             </div>
                         </div>
-                        <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
-                            <div class="ring-lbl">Ø TÄGLICH</div>
-                            <div style="font-size:2rem; font-weight:800; color:var(--text-main); margin:5px 0; font-family:var(--font-mono);" id="valAvg" class="counter-animate">0.0h</div>
-                            <div style="margin-top:auto; width:100%;">
-                                <div class="ring-lbl" style="margin-bottom:5px; display:flex; justify-content:space-between;">
-                                    <span>Urlaubstage</span>
-                                    <span id="valVacationUsed" style="font-family:var(--font-mono); font-weight:600;">0 / 30</span>
+
+                        <!-- KPI: Durchschnitt + Urlaub -->
+                        <div class="card kpi-card kpi-card--stats">
+                            <div class="kpi-card__header">
+                                <span class="kpi-card__tag">Durchschnitt</span>
+                            </div>
+                            <div class="kpi-stats__value" id="valAvg">0.0h</div>
+                            <div class="kpi-stats__label">pro Tag</div>
+                            <div class="kpi-stats__divider"></div>
+                            <div class="kpi-stats__vacation">
+                                <div class="kpi-stats__vacation-header">
+                                    <span class="kpi-stats__vacation-label">Urlaubstage</span>
+                                    <span id="valVacationUsed" class="kpi-stats__vacation-count">0 / 30</span>
                                 </div>
-                                <div style="height:5px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;"><div id="vacationProgressBar" style="width:0%; background:var(--success); height:100%; border-radius:3px;"></div></div>
-                                <div id="weekDotsContainer" class="week-dots" style="margin-top:10px;"></div>
+                                <div class="kpi-stats__vacation-track">
+                                    <div id="vacationProgressBar" class="kpi-stats__vacation-fill"></div>
+                                </div>
                             </div>
+                            <div id="weekDotsContainer" class="week-dots"></div>
                         </div>
+
                     </div>
                 </div>
 
-                <!-- Quick Actions (Command Bar) -->
+                <!-- ═══ COMMAND BAR ═══ -->
                 <div class="dashboard-item" data-item-id="quick-actions">
                     <div class="quick-actions" id="cmdBar">
                         <button onclick="openCorrection('month')">
-                            <span class="cmd-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M3 6h18M3 18h18"/></svg></span>
+                            <span class="cmd-icon">
+                                <svg viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
+                            </span>
                             <span class="cmd-label">Saldo</span>
                         </button>
                         <div class="cmd-sep"></div>
                         <button onclick="checkAndBookHolidays()" id="cmdHolidayCheck">
-                            <span class="cmd-icon"><svg viewBox="0 0 24 24"><path d="M14.5 2c1.4 0 2.5 1.1 2.5 2.5S15.9 7 14.5 7 12 5.9 12 4.5 13.1 2 14.5 2z"/><path d="M18 14l-4-4-4 4"/><path d="M6 22V9"/><path d="M18 22V9"/><path d="M2 22h20"/></svg></span>
+                            <span class="cmd-icon">
+                                <svg viewBox="0 0 24 24"><path d="M14.5 2c1.4 0 2.5 1.1 2.5 2.5S15.9 7 14.5 7 12 5.9 12 4.5 13.1 2 14.5 2z"/><path d="M18 14l-4-4-4 4"/><path d="M6 22V9"/><path d="M18 22V9"/><path d="M2 22h20"/></svg>
+                            </span>
                             <span class="cmd-label">Feiertage</span>
                         </button>
                         <button disabled>
-                            <span class="cmd-icon"><svg viewBox="0 0 24 24"><path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 018 4"/><path d="M5 19.5C5.5 18 6 15 6 12"/><path d="M21 12c0 1.5-.5 3-1.5 4.5"/><path d="M12 2c2 2 3 5 3 10"/><path d="M12 2c-2 2-3 5-3 10"/><path d="M18 22l4-4-4-4"/><path d="M22 18h-7"/></svg></span>
+                            <span class="cmd-icon">
+                                <svg viewBox="0 0 24 24"><path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 018 4"/><path d="M5 19.5C5.5 18 6 15 6 12"/><path d="M21 12c0 1.5-.5 3-1.5 4.5"/><path d="M12 2c2 2 3 5 3 10"/><path d="M12 2c-2 2-3 5-3 10"/><path d="M18 22l4-4-4-4"/><path d="M22 18h-7"/></svg>
+                            </span>
                             <span class="cmd-label">NFC</span>
                         </button>
                         <button onclick="window.location.href='Pages/App/berichtsheft.html'">
-                            <span class="cmd-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
+                            <span class="cmd-icon">
+                                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                            </span>
                             <span class="cmd-label">Berichtsheft</span>
                         </button>
                         <button onclick="openSkillCardModal()">
-                            <span class="cmd-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 7v1"/><path d="M12 7v1"/><path d="M16 7v1"/><path d="M8 15h8"/><path d="M8 11h4"/></svg></span>
+                            <span class="cmd-icon">
+                                <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 7v1"/><path d="M12 7v1"/><path d="M16 7v1"/><path d="M8 15h8"/><path d="M8 11h4"/></svg>
+                            </span>
                             <span class="cmd-label">Skill-Card</span>
                         </button>
                         <button onclick="startFocusMode()">
-                            <span class="cmd-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
+                            <span class="cmd-icon">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                            </span>
                             <span class="cmd-label">Focus</span>
                         </button>
                         <div class="cmd-sep"></div>
                         <button onclick="openSettings()">
-                            <span class="cmd-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+                            <span class="cmd-icon">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                            </span>
                             <span class="cmd-label">Settings</span>
                         </button>
                         <button onclick="openMoreActionsModal()">
-                            <span class="cmd-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></span>
+                            <span class="cmd-icon">
+                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                            </span>
                             <span class="cmd-label">Mehr</span>
                         </button>
                     </div>
                 </div>
 
-
-
-                <!-- Charts Row (Saldo Trend + Verteilung) -->
-                <div class="dashboard-item card-3d" data-item-id="charts">
+                <!-- ═══ CHARTS ROW ═══ -->
+                <div class="dashboard-item" data-item-id="charts">
                     <div class="charts-row">
-                        <div class="card" style="overflow:visible; position:relative;">
+
+                        <!-- Saldo Trend -->
+                        <div class="card chart-card" style="overflow:visible; position:relative;">
                             <div class="chart-header">
                                 <div>
-                                    <div class="chart-title">📊 Saldo Trend</div>
+                                    <div class="chart-title">Saldo Trend</div>
                                     <div class="chart-sub" id="trendSubtitle">Entwicklung der letzten 30 Tage</div>
                                 </div>
-                                <div style="display:flex; gap:6px; align-items:center;">
+                                <div style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
                                     <div class="trend-period-selector" id="trendPeriodSelector">
-                                        <button class="trend-period-btn" data-period="7" onclick="setTrendPeriod(7)">7T</button>
+                                        <button class="trend-period-btn" data-period="7"  onclick="setTrendPeriod(7)">7T</button>
                                         <button class="trend-period-btn" data-period="14" onclick="setTrendPeriod(14)">14T</button>
                                         <button class="trend-period-btn active" data-period="30" onclick="setTrendPeriod(30)">30T</button>
                                         <button class="trend-period-btn" data-period="90" onclick="setTrendPeriod(90)">90T</button>
-                                        <button class="trend-period-btn" data-period="0" onclick="setTrendPeriod(0)">Alle</button>
+                                        <button class="trend-period-btn" data-period="0"  onclick="setTrendPeriod(0)">Alle</button>
                                     </div>
-                                    <button class="btn btn-ghost" style="padding:2px 6px; font-size:0.65rem; border:none; cursor:pointer; border-radius:4px; background:rgba(255,255,255,0.02); opacity:0.4; transition:all 0.3s;" onclick="openChartStyleModal()" title="Chart-Stil anpassen" onmouseover="this.style.opacity='0.8'; this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.opacity='0.4'; this.style.background='rgba(255,255,255,0.02)'">🎨</button>
+                                    <button class="btn btn-ghost chart-config-btn" onclick="openChartStyleModal()" title="Chart-Stil anpassen">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                                    </button>
                                 </div>
                             </div>
-                            <!-- Trend Stats Summary -->
                             <div class="trend-stats-bar" id="trendStatsBar">
                                 <div class="trend-stat">
                                     <span class="trend-stat-label">Aktuell</span>
@@ -1187,33 +1237,33 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                                     <span class="trend-stat-value" id="trendStatVolatility">—</span>
                                 </div>
                             </div>
-                            <!-- Chart + Tooltip -->
                             <div class="trend-container-wrapper">
                                 <div class="trend-y-axis" id="trendYAxis"></div>
-                                <div class="trend-container" id="trendChart" style="cursor:crosshair;">
-                                </div>
+                                <div class="trend-container" id="trendChart" style="cursor:crosshair;"></div>
                             </div>
                             <div class="trend-x-axis" id="trendXAxis"></div>
-                            <!-- Hover Tooltip -->
                             <div class="trend-tooltip" id="trendTooltip" style="display:none;"></div>
                         </div>
 
-                        <div class="card">
+                        <!-- Verteilung Donut -->
+                        <div class="card chart-card">
                             <div class="chart-header">
                                 <div>
                                     <div class="chart-title">Verteilung</div>
                                     <div class="chart-sub">Arbeitszeit-Aufteilung</div>
                                 </div>
-                                <button class="btn btn-ghost" style="padding:2px 6px; font-size:0.65rem; border:none; cursor:pointer; border-radius:4px; background:rgba(255,255,255,0.02); opacity:0.4; transition:all 0.3s;" onclick="openDonutStyleModal()" title="Donut-Stil anpassen" onmouseover="this.style.opacity='0.8'; this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.opacity='0.4'; this.style.background='rgba(255,255,255,0.02)'">🎨</button>
+                                <button class="btn btn-ghost chart-config-btn" onclick="openDonutStyleModal()" title="Donut-Stil anpassen">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                                </button>
                             </div>
                             <div class="donut-container" id="donutChartContainer" style="cursor:pointer;" onclick="openDonutStyleModal()">
                                 <svg id="donutSvg" width="150" height="150" viewBox="0 0 100 100" style="transform: rotate(-90deg);">
-                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.05)" stroke-width="12"></circle>
-                                    <circle id="donutSick" cx="50" cy="50" r="40" fill="transparent" stroke="var(--danger)" stroke-width="12" stroke-dasharray="0 251"></circle>
-                                    <circle id="donutVac" cx="50" cy="50" r="40" fill="transparent" stroke="var(--success)" stroke-width="12" stroke-dasharray="0 251"></circle>
-                                    <circle id="donutSchool" cx="50" cy="50" r="40" fill="transparent" stroke="var(--school)" stroke-width="12" stroke-dasharray="0 251"></circle>
+                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.04)" stroke-width="12"></circle>
+                                    <circle id="donutSick"    cx="50" cy="50" r="40" fill="transparent" stroke="var(--danger)"  stroke-width="12" stroke-dasharray="0 251"></circle>
+                                    <circle id="donutVac"     cx="50" cy="50" r="40" fill="transparent" stroke="var(--success)" stroke-width="12" stroke-dasharray="0 251"></circle>
+                                    <circle id="donutSchool"  cx="50" cy="50" r="40" fill="transparent" stroke="var(--school)"  stroke-width="12" stroke-dasharray="0 251"></circle>
                                     <circle id="donutHoliday" cx="50" cy="50" r="40" fill="transparent" stroke="var(--holiday)" stroke-width="12" stroke-dasharray="0 251"></circle>
-                                    <circle id="donutWork" cx="50" cy="50" r="40" fill="transparent" stroke="var(--primary)" stroke-width="12" stroke-dasharray="0 251"></circle>
+                                    <circle id="donutWork"    cx="50" cy="50" r="40" fill="transparent" stroke="var(--primary)" stroke-width="12" stroke-dasharray="0 251"></circle>
                                 </svg>
                             </div>
                             <div class="donut-legend">
@@ -1224,83 +1274,84 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                                 <div class="legend-item"><div class="dot" style="background:var(--holiday)"></div> Feiertag</div>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
-                <!-- Entry Form -->
-                <div class="dashboard-item card-3d" data-item-id="entry-form">
+                <!-- ═══ ENTRY FORM + TIMER ═══ -->
+                <div class="dashboard-item" data-item-id="entry-form">
                     <div class="card input-wrapper">
-                        <div style="display:flex; flex-direction:column; gap:1.25rem;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <h3 style="font-size:1.1rem; margin:0;">Eintrag erfassen</h3>
+                        <div class="entry-form">
+                            <div class="entry-form__header">
+                                <h3 class="entry-form__title">Eintrag erfassen</h3>
                                 <button class="help-slim" title="Hilfe" onclick="openQuickHelp('entry')">?</button>
                             </div>
-                            <div style="display:flex; gap:15px;">
+
+                            <div class="entry-form__row">
                                 <input type="date" id="inpDate" class="glass-input">
-                                <select type="date" id="inpType" class="glass-select" onchange="toggleTimeInputs()">
-                                    <option value="work">💼 Arbeit</option>
-                                    <option value="school">📚 Berufsschule</option>
-                                    <option value="vacation">🌴 Urlaub</option>
-                                    <option value="gleittag">⚡ Gleittag (Überstunden)</option>
-                                    <option value="sick">💊 Krank</option>
+                                <select id="inpType" class="glass-select" onchange="toggleTimeInputs()">
+                                    <option value="work">Arbeit</option>
+                                    <option value="school">Berufsschule</option>
+                                    <option value="vacation">Urlaub</option>
+                                    <option value="gleittag">Gleittag</option>
+                                    <option value="sick">Krank</option>
                                 </select>
                             </div>
-                            
-                            <div style="display:flex; gap:10px; align-items:center;">
-                                <div style="display:flex; gap:8px; align-items:center;">
-                                    <input type="time" id="inpStart" class="glass-input" placeholder="Start">
-                                    <button id="btnNowStart" class="btn btn-ghost" style="padding:8px 10px; font-size:0.8rem;">Jetzt</button>
-                                </div>
-                                <div style="display:flex; gap:8px; align-items:center;">
-                                    <input type="time" id="inpEnd" class="glass-input" placeholder="Ende">
-                                    <button id="btnNowEnd" class="btn btn-ghost" style="padding:8px 10px; font-size:0.8rem;">Jetzt</button>
-                                </div>
-                            </div>
-                            
-                            <input type="number" id="inpHours" class="glass-input" step="0.25" placeholder="Stunden manuell...">
-                            
-                            <input type="text" id="inpProject" class="glass-input" placeholder="Projekt / Kunde (z.B. Alpha-Migration)">
-                            
-                            <input type="text" id="inpNotes" class="glass-input" placeholder="Notizen (z.B. Bugfix in Modul X)">
 
-                            <div style="display:flex; gap:15px; margin-top:auto;">
-                                <button id="voiceBtn" class="btn btn-ghost" style="background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); flex: 0 0 auto; padding: 10px 16px;" onclick="startVoiceInput()">🎤 Stimmeingabe</button>
-                                <button id="mainBtn" class="btn btn-primary" onclick="handleEntry()">Eintrag speichern</button>
-                                <button id="cancelBtn" class="btn" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); display:none; flex:1; color:#fff;" onclick="resetEdit()">Abbrechen</button>
+                            <div class="entry-form__time-row">
+                                <div class="entry-form__time-group">
+                                    <input type="time" id="inpStart" class="glass-input" placeholder="Start">
+                                    <button id="btnNowStart" class="btn btn-ghost entry-form__now-btn">Jetzt</button>
+                                </div>
+                                <div class="entry-form__time-group">
+                                    <input type="time" id="inpEnd" class="glass-input" placeholder="Ende">
+                                    <button id="btnNowEnd" class="btn btn-ghost entry-form__now-btn">Jetzt</button>
+                                </div>
                             </div>
-                            <div id="draftNotice" style="display:none; margin-top:10px; gap:8px; align-items:center;">
+
+                            <input type="number" id="inpHours"   class="glass-input" step="0.25" placeholder="Stunden manuell...">
+                            <input type="text"   id="inpProject" class="glass-input" placeholder="Projekt / Kunde (z.B. Alpha-Migration)">
+                            <input type="text"   id="inpNotes"   class="glass-input" placeholder="Notizen (z.B. Bugfix in Modul X)">
+
+                            <div class="entry-form__actions">
+                                <button id="voiceBtn" class="btn btn-ghost entry-form__voice-btn" onclick="startVoiceInput()">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                                    Stimme
+                                </button>
+                                <button id="mainBtn" class="btn btn-primary entry-form__submit" onclick="handleEntry()">Eintrag speichern</button>
+                                <button id="cancelBtn" class="btn entry-form__cancel" onclick="resetEdit()">Abbrechen</button>
+                            </div>
+
+                            <div id="draftNotice" style="display:none; margin-top:8px; gap:8px; align-items:center;">
                                 <span id="draftBadge" class="tag" style="display:none;">Entwurf gespeichert</span>
-                                <button class="btn btn-ghost" onclick="restoreDraft()" id="btnRestoreDraft" style="display:none">Wiederherstellen</button>
-                                <button class="btn" onclick="deleteDraft()" id="btnDeleteDraft" style="display:none; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff;">Entwurf löschen</button>
+                                <button class="btn btn-ghost" onclick="restoreDraft()" id="btnRestoreDraft" style="display:none;">Wiederherstellen</button>
+                                <button class="btn" onclick="deleteDraft()" id="btnDeleteDraft" style="display:none; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:#fff;">Entwurf löschen</button>
                             </div>
-                            
                         </div>
 
+                        <!-- Timer -->
                         <div class="timer-box" id="timerBox">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <span style="color:var(--text-muted); font-size:0.8rem; text-transform:uppercase; letter-spacing:1px;">Live Tracker</span>
-                                    <button class="help-slim" title="Hilfe" onclick="openQuickHelp('timer')">?</button>
-                                </div>
+                            <div class="timer-box__header">
+                                <span class="timer-box__label">Live Tracker</span>
+                                <button class="help-slim" title="Hilfe" onclick="openQuickHelp('timer')">?</button>
+                            </div>
                             <div class="timer-display" id="timerDisplay">00:00:00</div>
-                            
                             <div class="timer-log">
                                 <div class="timer-log-status" id="timerStatus">STOP</div>
-                                <div class="timer-log-bar" id="timerLogBar">
-                                    </div>
+                                <div class="timer-log-bar" id="timerLogBar"></div>
                             </div>
-                            
                             <div class="btn-icon-row">
-                                <button class="btn btn-ghost" onclick="timerAction('start')" style="color:var(--success)">▶ Start</button>
-                                <button class="btn btn-ghost" onclick="timerAction('pause')" style="color:#fbbf24">II Pause</button>
-                                <button class="btn btn-ghost" onclick="timerAction('stop')" style="color:var(--danger)">■ Stop</button>
+                                <button class="btn btn-ghost timer-btn timer-btn--start" onclick="timerAction('start')">▶ Start</button>
+                                <button class="btn btn-ghost timer-btn timer-btn--pause" onclick="timerAction('pause')">II Pause</button>
+                                <button class="btn btn-ghost timer-btn timer-btn--stop"  onclick="timerAction('stop')">■ Stop</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Last Activities -->
-                <div class="dashboard-item card-3d" data-item-id="last-activities">
-                    <div class="card">
+                <!-- ═══ LETZTE AKTIVITÄTEN ═══ -->
+                <div class="dashboard-item" data-item-id="last-activities">
+                    <div class="card activities-card">
                         <div class="list-header">Letzte Aktivitäten</div>
                         <div id="entryListShort"></div>
                     </div>
