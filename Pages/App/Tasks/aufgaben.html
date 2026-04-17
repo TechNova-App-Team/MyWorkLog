@@ -911,21 +911,97 @@
         .hidden-input { display: none; }
 
         /* ── WEEK VIEW ── */
+        .week-nav-tabs {
+            display: flex;
+            gap: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 8px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .week-nav-tabs::-webkit-scrollbar {
+            height: 2px;
+        }
+
+        .week-nav-tabs::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+        }
+
+        .week-nav-tab {
+            flex: 0 0 auto;
+            padding: 10px 16px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        .week-nav-tab:hover {
+            color: var(--text-main);
+            background: rgba(var(--primary-rgb), 0.05);
+        }
+
+        .week-nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .week-grid-wrapper {
+            position: relative;
+            height: 500px;
+            overflow: hidden;
+            border-radius: var(--radius-sm);
+            background: var(--bg-deep);
+        }
+
         .week-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
-            margin-top: 8px;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .week-day-column {
+            position: absolute;
+            width: 100%;
+            height: 100%;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            padding: 4px;
-            min-height: 400px;
+            padding: 8px 6px;
             display: flex;
             flex-direction: column;
+            overflow-y: auto;
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                        opacity 0.4s ease;
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .week-day-column.active {
+            transform: translateY(0) !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            z-index: 2 !important;
+        }
+
+        .week-day-column.prev {
+            transform: translateY(-100%);
+            opacity: 0;
+            z-index: 0;
         }
 
         .week-day-column.holiday {
@@ -1045,16 +1121,30 @@
             opacity: 1;
         }
 
-        @media (max-width: 1024px) {
-            .week-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
+        /* Swipe-Hinweis */
+        .week-swipe-hint {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(var(--primary-rgb), 0.2);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            pointer-events: none;
+            animation: swipe-bounce 2s ease-in-out infinite;
+            z-index: 10;
         }
 
-        @media (max-width: 640px) {
-            .week-grid {
-                grid-template-columns: 1fr;
-            }
+        @keyframes swipe-bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.8; }
+            50% { transform: translateX(-50%) translateY(-6px); opacity: 1; }
+        }
+
+        .week-swipe-hint.hidden {
+            display: none;
         }
     </style>
 </head>
@@ -1457,6 +1547,52 @@ function toggleViewMode() {
     render();
 }
 
+var currentWeekDayIndex = 0;
+var weekSwipeStartY = 0;
+var prevWeekDayIndex = 0;
+
+function switchDay(diff) {
+    var nextIndex = currentWeekDayIndex + (diff > 0 ? 1 : -1);
+    if (nextIndex < 0) nextIndex = 6;
+    if (nextIndex > 6) nextIndex = 0;
+
+    var wrapper = document.getElementById('week-grid-wrapper');
+    if (!wrapper) return;
+
+    var cols = wrapper.querySelectorAll('.week-day-column');
+    cols.forEach(function(col) {
+        col.classList.remove('active', 'prev');
+    });
+
+    cols[nextIndex].classList.add('active');
+    if (diff < 0) {
+        cols[nextIndex].classList.add('prev');
+    }
+
+    prevWeekDayIndex = currentWeekDayIndex;
+    currentWeekDayIndex = nextIndex;
+
+    // Update nav tabs
+    var tabs = document.querySelectorAll('.week-nav-tab');
+    tabs.forEach(function(tab) {
+        tab.classList.remove('active');
+    });
+    if (tabs[nextIndex]) {
+        tabs[nextIndex].classList.add('active');
+        tabs[nextIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+
+    // Hide swipe hint
+    var hint = document.querySelector('.week-swipe-hint');
+    if (hint) hint.classList.add('hidden');
+}
+
+function switchToDay(dayIndex) {
+    if (dayIndex === currentWeekDayIndex) return;
+    var diff = dayIndex > currentWeekDayIndex ? 1 : -1;
+    switchDay(diff);
+}
+
 function renderWeekView() {
     var container = document.getElementById('sections-container');
     var empty = document.getElementById('empty-state');
@@ -1469,17 +1605,49 @@ function renderWeekView() {
     infoBanner.innerHTML = '<span style="font-size: 14px;">ℹ️</span><div><strong>Wochenansicht:</strong> Drag & Drop zum Verschieben • ✏️ zum Bearbeiten</div>';
     container.appendChild(infoBanner);
 
-    var weekGrid = document.createElement('div');
-    weekGrid.className = 'week-grid';
+    // Day nav tabs
+    var navTabs = document.createElement('div');
+    navTabs.className = 'week-nav-tabs';
+    navTabs.id = 'week-nav-tabs';
 
     var today = new Date();
     var currentDay = today.getDay();
+    currentWeekDayIndex = currentDay;
+
+    for (var i = 0; i < 7; i++) {
+        var tab = document.createElement('div');
+        tab.className = 'week-nav-tab';
+        if (i === currentDay) tab.classList.add('active');
+        tab.dataset.day = i;
+        tab.textContent = DAY_NAMES[i];
+        tab.onclick = function(e) {
+            switchToDay(parseInt(e.target.dataset.day));
+        };
+        navTabs.appendChild(tab);
+    }
+    container.appendChild(navTabs);
+
+    var wrapper = document.createElement('div');
+    wrapper.className = 'week-grid-wrapper';
+    wrapper.id = 'week-grid-wrapper';
+
+    var weekGrid = document.createElement('div');
+    weekGrid.className = 'week-grid';
+    weekGrid.id = 'week-grid-scroll';
+
+    var today = new Date();
+    var currentDay = today.getDay();
+    currentWeekDayIndex = currentDay;
 
     // Build 7 day columns (Monday to Sunday)
     for (var i = 0; i < 7; i++) {
         var dayCol = document.createElement('div');
         dayCol.className = 'week-day-column';
         dayCol.dataset.day = i;
+
+        if (i === currentDay) {
+            dayCol.classList.add('active');
+        }
 
         var isHoliday = false;
         if (isHoliday) {
@@ -1499,7 +1667,7 @@ function renderWeekView() {
         var dropZone = document.createElement('div');
         dropZone.className = 'week-tasks-drop-zone';
         dropZone.dataset.day = i;
-        
+
         // Add all tasks that belong to this day
         categories.forEach(function(cat) {
             var catTasks = cat.tasks || [];
@@ -1530,12 +1698,23 @@ function renderWeekView() {
 
         // Setup drag & drop
         setupDropZone(dropZone);
-        
+
         dayCol.appendChild(dropZone);
         weekGrid.appendChild(dayCol);
     }
 
-    container.appendChild(weekGrid);
+    wrapper.appendChild(weekGrid);
+
+    // Swipe hint
+    var hint = document.createElement('div');
+    hint.className = 'week-swipe-hint';
+    hint.textContent = '⬆️ wischen für nächsten Tag';
+    wrapper.appendChild(hint);
+
+    container.appendChild(wrapper);
+
+    // Setup Swipe Events
+    setupWeekSwipe(wrapper, hint);
 }
 
 function getWeekDate(dayOfWeek) {
@@ -1602,6 +1781,43 @@ function buildWeekTaskItem(task, cat, dayOfWeek) {
     });
 
     return div;
+}
+
+function setupWeekSwipe(wrapper, hint) {
+    var isMouseDown = false;
+    var startY = 0;
+
+    // Touch events
+    wrapper.addEventListener('touchstart', function(e) {
+        startY = e.touches[0].clientY;
+    }, false);
+
+    wrapper.addEventListener('touchend', function(e) {
+        var endY = e.changedTouches[0].clientY;
+        var diff = startY - endY;
+        if (Math.abs(diff) > 25) {
+            switchDay(diff);
+        }
+    }, false);
+
+    // Mouse events
+    wrapper.addEventListener('mousedown', function(e) {
+        isMouseDown = true;
+        startY = e.clientY;
+    }, false);
+
+    document.addEventListener('mouseup', function() {
+        isMouseDown = false;
+    }, false);
+
+    wrapper.addEventListener('mousemove', function(e) {
+        if (!isMouseDown) return;
+        var diff = startY - e.clientY;
+        if (Math.abs(diff) > 40) {
+            switchDay(diff);
+            isMouseDown = false;
+        }
+    }, false);
 }
 
 function setupDropZone(dropZone) {
