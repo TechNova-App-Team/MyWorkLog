@@ -1411,21 +1411,41 @@
     //  Custom GLSL shaders, volumetric nebula, differential
     //  rotation, cosmic dust lanes, cinematic post-processing
     // ════════════════════════════════════════════
-    var apGxState = { scene:null, camera:null, renderer:null, controls:null, composer:null, animId:null, range:90, stars:[], raycaster:null, mouse:null, hoveredStar:null, bloomEnabled:true, nebulaPlanes:[], coreMeshes:[], dustLanes:[] };
+    (function() {
+        var _s = {}; try { _s = JSON.parse(localStorage.getItem('tg_galaxy_settings') || '{}'); } catch(e){}
+        window._apGxInitSettings = { range: _s.range || 90, bloom: _s.bloom !== false, orbit: !!_s.orbit };
+    })();
+    var apGxState = { scene:null, camera:null, renderer:null, controls:null, composer:null, animId:null, range:window._apGxInitSettings.range, stars:[], raycaster:null, mouse:null, hoveredStar:null, bloomEnabled:window._apGxInitSettings.bloom, nebulaPlanes:[], coreMeshes:[], dustLanes:[] };
 
+    function apGxSaveSettings() {
+        try { localStorage.setItem('tg_galaxy_settings', JSON.stringify({ range: apGxState.range, bloom: apGxState.bloomEnabled, orbit: !!(apGxState.controls && apGxState.controls.autoRotate) })); } catch(e){}
+    }
+    function apGxRestoreButtonStates() {
+        var s = window._apGxInitSettings;
+        document.querySelectorAll('.apgx-controls .ap-period-btn').forEach(function(b) {
+            if (b.id === 'apGxBloomBtn') { b.classList.toggle('active', s.bloom !== false); }
+            else if (b.id === 'apGxAutoRotBtn') { b.classList.toggle('active', !!s.orbit); }
+            else {
+                var d = parseInt(b.getAttribute('onclick').match(/apGxSetRange\((\d+)/)?.[1] || '-1');
+                b.classList.toggle('active', d === s.range || (d === -1 && s.range === 0));
+            }
+        });
+    }
     function apGxSetRange(days, btn) {
         apGxState.range = days;
         var btns = document.querySelectorAll('.apgx-controls .ap-period-btn');
         btns.forEach(function(b){ if(b.id!=='apGxBloomBtn'&&b.id!=='apGxAutoRotBtn') b.classList.remove('active'); });
         if(btn&&btn.id!=='apGxBloomBtn'&&btn.id!=='apGxAutoRotBtn') btn.classList.add('active');
+        apGxSaveSettings();
         apRenderGalaxy();
     }
     function apGxToggleAutoRotate(btn) {
-        if(apGxState.controls){ apGxState.controls.autoRotate=!apGxState.controls.autoRotate; btn.classList.toggle('active'); }
+        if(apGxState.controls){ apGxState.controls.autoRotate=!apGxState.controls.autoRotate; btn.classList.toggle('active'); apGxSaveSettings(); }
     }
     function apGxToggleBloom(btn) {
         apGxState.bloomEnabled = !apGxState.bloomEnabled;
         btn.classList.toggle('active');
+        apGxSaveSettings();
     }
     function apGxCleanup() {
         if(apGxState.animId){ cancelAnimationFrame(apGxState.animId); apGxState.animId=null; }
@@ -1644,6 +1664,7 @@
 
     function apRenderGalaxy() {
         if(typeof THREE==='undefined'){ var c=document.getElementById('apGxContainer'); if(c) c.innerHTML='<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">⏳</div>Three.js wird geladen…</div>'; return; }
+        apGxRestoreButtonStates();
         apGxCleanup();
 
         var entries = apEntries();
@@ -1693,7 +1714,7 @@
         controls.dampingFactor = 0.04;
         controls.minDistance = 8;
         controls.maxDistance = 200;
-        controls.autoRotate = false;
+        controls.autoRotate = !!window._apGxInitSettings.orbit;
         controls.autoRotateSpeed = 0.3;
         controls.maxPolarAngle = Math.PI * 0.85;
         controls.minPolarAngle = Math.PI * 0.15;
@@ -2238,7 +2259,7 @@
             blending: THREE.AdditiveBlending,
             vertexColors: true
         });
-        scene.add(new THREE.Points(emGeo, emMat));
+        // emission nebula removed (too visually noisy)
 
         // ════════════════════════════════════
         // FINE INTERSTELLAR DUST — Soft ambient haze

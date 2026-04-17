@@ -652,7 +652,7 @@
         renderer.setSize(w, h);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 0.7;
+        renderer.toneMappingExposure = 0.45;
         renderer.outputEncoding = THREE.sRGBEncoding;
         renderer.setClearColor(isLight ? 0xf0f0f5 : 0x000003, 1);
         container.appendChild(renderer.domElement);
@@ -665,30 +665,12 @@
         controls.dampingFactor = 0.04;
         controls.minDistance = 8;
         controls.maxDistance = 200;
-        controls.autoRotate = false;
+        controls.autoRotate = !!window._apGxInitSettings.orbit;
         controls.autoRotateSpeed = 0.3;
         controls.maxPolarAngle = Math.PI * 0.85;
         controls.minPolarAngle = Math.PI * 0.15;
 
-        // ════════════════════════════════════
-        // 1. VOLUMETRIC RAY-MARCHED NEBULA
-        // Large inverted sphere, camera inside
-        // ════════════════════════════════════
-        var nebulaGeo = new THREE.SphereGeometry(120, 16, 12);
-        var nebulaMat = new THREE.ShaderMaterial({
-            uniforms: {
-                uTime: { value: 0 },
-                uCamPos: { value: camera.position.clone() }
-            },
-            vertexShader: volumetricVertexShader,
-            fragmentShader: volumetricFragmentShader,
-            transparent: true,
-            depthWrite: false,
-            side: THREE.BackSide,
-            blending: THREE.AdditiveBlending
-        });
-        var nebulaMesh = new THREE.Mesh(nebulaGeo, nebulaMat);
-        scene.add(nebulaMesh);
+        var nebulaMat = { uniforms: { uTime: { value: 0 }, uCamPos: { value: { copy: function(){} } } } };
         apGxState.volumetricNebula = nebulaMat;
 
         // ════════════════════════════════════
@@ -707,70 +689,25 @@
         });
         bhGroup.add(new THREE.Mesh(bhGeo, bhMat));
 
-        // Accretion disk — high-segment ring
-        var diskGeo = new THREE.RingGeometry(2.2, 9.0, 128, 8);
-        var diskMat = new THREE.ShaderMaterial({
-            uniforms: { uTime: { value: 0 } },
-            vertexShader: accretionVertexShader,
-            fragmentShader: accretionFragmentShader,
-            transparent: true,
-            depthWrite: false,
-            side: THREE.DoubleSide,
-            blending: THREE.AdditiveBlending
-        });
-        var diskMesh = new THREE.Mesh(diskGeo, diskMat);
-        diskMesh.rotation.x = -Math.PI / 2; // Lay flat
-        diskMesh.rotation.z = 0.15; // Slight tilt
-        bhGroup.add(diskMesh);
-
-        // Secondary thin inner disk (brighter, faster)
-        var innerDiskGeo = new THREE.RingGeometry(1.8, 3.5, 96, 4);
-        var innerDiskMat = new THREE.ShaderMaterial({
-            uniforms: { uTime: { value: 0 } },
-            vertexShader: accretionVertexShader,
-            fragmentShader: [
-                'uniform float uTime;',
-                'varying vec3 vPos;',
-                'void main(){',
-                '  float r = length(vPos.xz);',
-                '  float angle = atan(vPos.z, vPos.x);',
-                '  float spiral = sin(angle * 12.0 - r * 25.0 + uTime * 8.0) * 0.3 + 0.7;',
-                '  float temp = 1.0 - smoothstep(1.8, 3.5, r);',
-                '  vec3 col = mix(vec3(0.7, 0.3, 0.05), vec3(0.9, 0.85, 0.75), temp * temp);',
-                '  float edge = smoothstep(3.5, 2.8, r) * smoothstep(1.8, 2.2, r);',
-                '  gl_FragColor = vec4(col * spiral * 0.6, edge * spiral * 0.6);',
-                '}'
-            ].join('\n'),
-            transparent: true,
-            depthWrite: false,
-            side: THREE.DoubleSide,
-            blending: THREE.AdditiveBlending
-        });
-        var innerDisk = new THREE.Mesh(innerDiskGeo, innerDiskMat);
-        innerDisk.rotation.x = -Math.PI / 2;
-        innerDisk.rotation.z = 0.15;
-        bhGroup.add(innerDisk);
-
-        // Glow shells around black hole
-        var bhGlows = [
-            { r: 0.55, g: 0.15, b: 0.95, size: 4.0, opacity: 0.04 },
-            { r: 0.45, g: 0.10, b: 0.90, size: 7.0, opacity: 0.018 },
-            { r: 0.35, g: 0.05, b: 0.85, size: 12.0, opacity: 0.008 },
-            { r: 0.30, g: 0.02, b: 0.80, size: 18.0, opacity: 0.003 }
-        ];
-        bhGlows.forEach(function(gc) {
-            var gGeo = new THREE.SphereGeometry(gc.size, 24, 24);
-            var gMat = new THREE.MeshBasicMaterial({
-                color: new THREE.Color(gc.r, gc.g, gc.b),
-                transparent: true, opacity: gc.opacity,
-                side: THREE.BackSide, depthWrite: false,
-                blending: THREE.AdditiveBlending
-            });
-            bhGroup.add(new THREE.Mesh(gGeo, gMat));
-        });
+        // Soft ambient glow — single canvas sprite, no rings or disks
+        var bhGlowCanvas = document.createElement('canvas');
+        bhGlowCanvas.width = 128; bhGlowCanvas.height = 128;
+        var bhGCtx = bhGlowCanvas.getContext('2d');
+        var bhGrad = bhGCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        bhGrad.addColorStop(0,   'rgba(168,85,247,0.12)');
+        bhGrad.addColorStop(0.4, 'rgba(120,60,200,0.05)');
+        bhGrad.addColorStop(1,   'rgba(0,0,0,0)');
+        bhGCtx.fillStyle = bhGrad;
+        bhGCtx.fillRect(0, 0, 128, 128);
+        var bhGlowTex = new THREE.CanvasTexture(bhGlowCanvas);
+        var bhGlowSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: bhGlowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+        bhGlowSprite.scale.set(14, 14, 1);
+        bhGroup.add(bhGlowSprite);
+        var diskMat = null;
+        var innerDiskMat = null;
 
         // Core light
-        var coreLight = new THREE.PointLight(0xa855f7, 1.8, 80, 2);
+        var coreLight = new THREE.PointLight(0xa855f7, 0.8, 60, 2);
         bhGroup.add(coreLight);
 
         scene.add(bhGroup);
@@ -820,7 +757,7 @@
         // ════════════════════════════════════
         // 5. BACKGROUND STAR FIELD (12000 stars)
         // ════════════════════════════════════
-        var bgCount = 12000;
+        var bgCount = 5000;
         var bgGeo = new THREE.BufferGeometry();
         var bgPositions = new Float32Array(bgCount * 3);
         var bgColors = new Float32Array(bgCount * 3);
@@ -898,7 +835,7 @@
         // 6. SPIRAL ARM PARTICLES (15000)
         // Enhanced with warp-speed mode
         // ════════════════════════════════════
-        var spiralCount = 15000;
+        var spiralCount = 7000;
         var spiralGeo = new THREE.BufferGeometry();
         var spiralPositions = new Float32Array(spiralCount * 3);
         var spiralColors = new Float32Array(spiralCount * 3);
@@ -921,7 +858,7 @@
             var distFC = baseRadius / 50;
             var cNoise = Math.random() * 0.2;
             if (distFC < 0.3) {
-                spiralColors[sp * 3] = 1.0 - cNoise; spiralColors[sp * 3 + 1] = 0.85 - cNoise; spiralColors[sp * 3 + 2] = 0.6;
+                spiralColors[sp * 3] = 0.55 + cNoise * 0.3; spiralColors[sp * 3 + 1] = 0.2 + cNoise; spiralColors[sp * 3 + 2] = 0.9 + cNoise * 0.1;
             } else if (distFC < 0.6) {
                 spiralColors[sp * 3] = 0.6 + cNoise; spiralColors[sp * 3 + 1] = 0.25; spiralColors[sp * 3 + 2] = 0.85 + cNoise * 0.5;
             } else {
@@ -1257,15 +1194,25 @@
                 scene.add(sprite);
                 stars.push(sprite);
 
-                // Superstar ring + companions
+                // Superstar corona glow + companions
                 if (category === 'superstar') {
-                    var orbitGeo = new THREE.RingGeometry(starSize * 2.0, starSize * 2.2, 64);
-                    var orbitMat = new THREE.MeshBasicMaterial({ color: cm.hex, transparent: true, opacity: 0.12, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
-                    var orbitRing = new THREE.Mesh(orbitGeo, orbitMat);
-                    orbitRing.position.copy(sprite.position);
-                    orbitRing.rotation.x = Math.random() * Math.PI;
-                    orbitRing.rotation.z = Math.random() * Math.PI;
-                    scene.add(orbitRing);
+                    // Soft radial corona — no ring meshes, pure sprite glow
+                    var coronaCanvas = document.createElement('canvas');
+                    coronaCanvas.width = 128; coronaCanvas.height = 128;
+                    var cCtx = coronaCanvas.getContext('2d');
+                    var cr = ((cm.hex >> 16) & 255), cg = ((cm.hex >> 8) & 255), cb = (cm.hex & 255);
+                    var cGrad = cCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
+                    cGrad.addColorStop(0,   'rgba(' + cr + ',' + cg + ',' + cb + ',0.18)');
+                    cGrad.addColorStop(0.35,'rgba(' + cr + ',' + cg + ',' + cb + ',0.07)');
+                    cGrad.addColorStop(0.7, 'rgba(' + cr + ',' + cg + ',' + cb + ',0.02)');
+                    cGrad.addColorStop(1,   'rgba(0,0,0,0)');
+                    cCtx.fillStyle = cGrad;
+                    cCtx.fillRect(0, 0, 128, 128);
+                    var coronaTex = new THREE.CanvasTexture(coronaCanvas);
+                    var coronaSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: coronaTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+                    coronaSprite.scale.set(starSize * 8, starSize * 8, 1);
+                    coronaSprite.position.copy(sprite.position);
+                    scene.add(coronaSprite);
 
                     for (var cp = 0; cp < 3; cp++) {
                         var cpAngle = cp * (Math.PI * 2 / 3);
@@ -1333,11 +1280,11 @@
             composer = new THREE.EffectComposer(renderer);
             composer.addPass(new THREE.RenderPass(scene, camera));
 
-            // 1) Bloom — enhanced for accretion disk glow
-            var bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(w, h), 1.6, 0.7, 0.15);
-            bloomPass.threshold = 0.25;
-            bloomPass.strength = 1.0;
-            bloomPass.radius = 0.5;
+            // 1) Bloom — subtle glow, not blinding
+            var bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(w, h), 1.0, 0.4, 0.6);
+            bloomPass.threshold = 0.6;
+            bloomPass.strength = 0.45;
+            bloomPass.radius = 0.3;
             composer.addPass(bloomPass);
 
             // 2) God Rays — volumetric light from core
@@ -1371,33 +1318,7 @@
             composer.addPass(lensingPass);
             apGxState.lensingPass = lensingPass;
 
-            // 4) Chromatic Aberration
-            var chromaticShader = {
-                uniforms: {
-                    tDiffuse: { value: null },
-                    uIntensity: { value: 0.004 },
-                    uResolution: { value: new THREE.Vector2(w, h) }
-                },
-                vertexShader: postVertexShader,
-                fragmentShader: [
-                    'uniform sampler2D tDiffuse;',
-                    'uniform float uIntensity;',
-                    'varying vec2 vUv;',
-                    'void main(){',
-                    '  vec2 dir = vUv - vec2(0.5);',
-                    '  float dist = length(dir);',
-                    '  float aberration = uIntensity * dist * dist;',
-                    '  vec2 offset = dir * aberration;',
-                    '  float r = texture2D(tDiffuse, vUv + offset).r;',
-                    '  float g = texture2D(tDiffuse, vUv).g;',
-                    '  float b = texture2D(tDiffuse, vUv - offset).b;',
-                    '  gl_FragColor = vec4(r, g, b, 1.0);',
-                    '}'
-                ].join('\n')
-            };
-            composer.addPass(new THREE.ShaderPass(chromaticShader));
-
-            // 5) Vignette
+            // 4) Vignette
             var vignetteShader = {
                 uniforms: {
                     tDiffuse: { value: null },
@@ -1422,34 +1343,7 @@
             };
             composer.addPass(new THREE.ShaderPass(vignetteShader));
 
-            // 6) Film Grain
-            var grainShader = {
-                uniforms: {
-                    tDiffuse: { value: null },
-                    uTime: { value: 0 },
-                    uIntensity: { value: 0.035 }
-                },
-                vertexShader: postVertexShader,
-                fragmentShader: [
-                    'uniform sampler2D tDiffuse;',
-                    'uniform float uTime;',
-                    'uniform float uIntensity;',
-                    'varying vec2 vUv;',
-                    'float rand(vec2 co){ return fract(sin(dot(co, vec2(12.9898,78.233))) * 43758.5453); }',
-                    'void main(){',
-                    '  vec4 color = texture2D(tDiffuse, vUv);',
-                    '  float noise = rand(vUv + vec2(uTime)) * 2.0 - 1.0;',
-                    '  float luminance = dot(color.rgb, vec3(0.299, 0.587, 0.114));',
-                    '  float grainAmount = uIntensity * (1.0 - luminance * 0.5);',
-                    '  color.rgb += vec3(noise * grainAmount);',
-                    '  gl_FragColor = color;',
-                    '}'
-                ].join('\n')
-            };
-            var grainPass = new THREE.ShaderPass(grainShader);
-            composer.addPass(grainPass);
-
-            apGxState.grainPass = grainPass;
+            apGxState.grainPass = null;
             apGxState.bloomPass = bloomPass;
         }
 
@@ -1466,8 +1360,6 @@
         apGxState.emMat = emMat;
         apGxState.hazeMat = hazeMat;
         apGxState.bhMat = bhMat;
-        apGxState.diskMat = diskMat;
-        apGxState.innerDiskMat = innerDiskMat;
         apGxState.raycaster = new THREE.Raycaster();
         apGxState.raycaster.params.Points = { threshold: 1 };
         apGxState.mouse = new THREE.Vector2();
@@ -1484,6 +1376,8 @@
         // ════════════════════════════════════
         var clock = new THREE.Clock();
         var warpLerp = 0;
+        var _coreVec = new THREE.Vector3();
+        var _lensVec = new THREE.Vector3();
 
         function animate() {
             apGxState.animId = requestAnimationFrame(animate);
@@ -1502,8 +1396,6 @@
             emMat.uniforms.uTime.value = elapsed;
             hazeMat.uniforms.uTime.value = elapsed;
             bhMat.uniforms.uTime.value = elapsed;
-            diskMat.uniforms.uTime.value = elapsed;
-            innerDiskMat.uniforms.uTime.value = elapsed;
             jetMat.uniforms.uTime.value = elapsed;
 
             // Volumetric nebula
@@ -1515,20 +1407,19 @@
 
             // God rays: update light position in screen space
             if (apGxState.godRayPass) {
-                var coreScreenPos = new THREE.Vector3(0, 0, 0);
-                coreScreenPos.project(camera);
+                _coreVec.set(0, 0, 0).project(camera);
                 apGxState.godRayPass.uniforms.uLightPos.value.set(
-                    coreScreenPos.x * 0.5 + 0.5,
-                    coreScreenPos.y * 0.5 + 0.5
+                    _coreVec.x * 0.5 + 0.5,
+                    _coreVec.y * 0.5 + 0.5
                 );
             }
 
             // Gravitational lensing: update center in screen space
             if (apGxState.lensingPass) {
-                var lensPos = new THREE.Vector3(0, 0, 0).project(camera);
+                _lensVec.set(0, 0, 0).project(camera);
                 apGxState.lensingPass.uniforms.uCenter.value.set(
-                    lensPos.x * 0.5 + 0.5,
-                    lensPos.y * 0.5 + 0.5
+                    _lensVec.x * 0.5 + 0.5,
+                    _lensVec.y * 0.5 + 0.5
                 );
                 // Stronger lensing when closer
                 var camDist = camera.position.length();
@@ -1538,12 +1429,7 @@
             // Black hole group pulse
             var pulse = 1 + Math.sin(elapsed * 1.2) * 0.04 + Math.sin(elapsed * 2.8) * 0.02;
             bhGroup.scale.set(pulse, pulse, pulse);
-            coreLight.intensity = 1.8 + Math.sin(elapsed * 1.5) * 0.3 + Math.sin(elapsed * 3.7) * 0.12;
-
-            // Accretion disk slow rotation
-            diskMesh.rotation.z = 0.15 + elapsed * 0.1;
-            innerDisk.rotation.z = 0.15 + elapsed * 0.25;
-
+            coreLight.intensity = 0.8 + Math.sin(elapsed * 1.5) * 0.12 + Math.sin(elapsed * 3.7) * 0.05;
 
 
             // Star twinkle
