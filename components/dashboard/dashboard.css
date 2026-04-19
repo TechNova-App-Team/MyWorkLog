@@ -1077,20 +1077,384 @@
         }
 
 
-        /* ─── ACTIVITIES ─────────────────────────────────────────────── */
-        .activities-card {
-            padding: 20px;
-            min-height: 80px;
+        /* ─── ACTIVITIES: FULL-WIDTH CAROUSEL ────────────────────────── */
+        .activities-container {
+            position: relative;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            border-radius: 16px;
+            padding: 16px;
+            transition:
+                background var(--dur-normal) var(--ease-out),
+                border-color var(--dur-normal) var(--ease-out);
+            overflow: hidden;
         }
-        .list-header {
+        .activities-container:hover {
+            background: var(--bg-surface-hover);
+            border-color: var(--border-interactive);
+        }
+
+        /* Header with Navigation */
+        .activities-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            gap: 10px;
+        }
+        .activities-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+            margin: 0;
+        }
+        .activities-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .carousel-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: rgba(var(--primary-rgb), 0.10);
+            border: 1px solid rgba(var(--primary-rgb), 0.18);
+            border-radius: 8px;
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--dur-fast) var(--ease-out);
+        }
+        .carousel-btn:hover {
+            background: rgba(var(--primary-rgb), 0.20);
+            border-color: rgba(var(--primary-rgb), 0.30);
+            transform: scale(1.08);
+        }
+        .carousel-btn:active {
+            transform: scale(0.95);
+        }
+        .carousel-counter {
             font-size: 0.7rem;
             font-weight: 700;
             color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            padding-bottom: 10px;
+            font-family: var(--font-mono);
+            padding: 4px 8px;
+            background: rgba(var(--primary-rgb), 0.06);
+            border-radius: 6px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        /* Carousel Wrapper & Track */
+        .carousel-wrapper {
+            position: relative;
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            border-radius: 12px;
             margin-bottom: 12px;
-            border-bottom: 1px solid var(--border-subtle);
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            cursor: grab;
+        }
+        .carousel-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+        .carousel-wrapper:active {
+            cursor: grabbing;
+        }
+        .carousel-track {
+            display: flex;
+            width: max-content;
+        }
+
+        /* Activity Slide (Full Width) */
+        .activity-item {
+            flex: 0 0 var(--carousel-width, 100%);
+            width: var(--carousel-width, 100%);
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.04), rgba(var(--primary-rgb), 0.01));
+            border: 1px solid rgba(var(--primary-rgb), 0.10);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .activity-item.type-school {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.04), rgba(59, 130, 246, 0.01));
+            border-color: rgba(59, 130, 246, 0.10);
+        }
+        .activity-item.type-vacation {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.04), rgba(16, 185, 129, 0.01));
+            border-color: rgba(16, 185, 129, 0.10);
+        }
+        .activity-item.type-sick {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.04), rgba(239, 68, 68, 0.01));
+            border-color: rgba(239, 68, 68, 0.10);
+        }
+        .activity-item.type-gleittag {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.04), rgba(245, 158, 11, 0.01));
+            border-color: rgba(245, 158, 11, 0.10);
+        }
+
+        /* Activity Header */
+        .activity-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .activity-icon {
+            font-size: 1.8rem;
+            display: block;
+        }
+        .activity-header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+        .activity-type-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(var(--primary-rgb), 0.12);
+            border: 1px solid rgba(var(--primary-rgb), 0.18);
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            width: fit-content;
+        }
+        .activity-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-weight: 500;
+        }
+
+        /* Activity Content */
+        .activity-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .activity-main {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+        .activity-details {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 0.95rem;
+        }
+        .activity-hours {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 1.1rem;
+            padding: 6px 12px;
+            background: rgba(var(--primary-rgb), 0.08);
+            border-radius: 8px;
+            border: 1px solid rgba(var(--primary-rgb), 0.16);
+            width: fit-content;
+            color: var(--primary);
+        }
+        .activity-project {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.9rem;
+            color: var(--text-main);
+            width: fit-content;
+            max-width: 100%;
+            white-space: normal;
+            overflow-wrap: break-word;
+        }
+        .activity-note {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            font-style: italic;
+            padding: 10px 12px;
+            background: rgba(var(--primary-rgb), 0.06);
+            border-left: 3px solid rgba(var(--primary-rgb), 0.25);
+            border-radius: 6px;
+            line-height: 1.4;
+        }
+
+        /* Carousel Dots */
+        .carousel-dots {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .carousel-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(var(--primary-rgb), 0.20);
+            cursor: pointer;
+            transition: all var(--dur-fast) var(--ease-out);
+            border: 1px solid rgba(var(--primary-rgb), 0.10);
+        }
+        .carousel-dot.active {
+            width: 20px;
+            border-radius: 3px;
+            background: var(--primary);
+            box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.35);
+        }
+
+        /* Empty State */
+        .activities-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--text-muted);
+        }
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            opacity: 0.6;
+        }
+        .empty-text {
+            font-size: 1rem;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        /* ─── RESPONSIVE: TABLET ─────────────────────────────────────── */
+        @media (max-width: 768px) {
+            .activities-container {
+                padding: 12px;
+            }
+            .activities-header {
+                margin-bottom: 12px;
+            }
+            .activity-item {
+                padding: 16px;
+                gap: 12px;
+            }
+            .activity-main {
+                font-size: 1.2rem;
+            }
+            .activity-hours {
+                font-size: 1rem;
+                padding: 5px 10px;
+            }
+            .activity-project {
+                font-size: 0.85rem;
+                padding: 5px 10px;
+            }
+        }
+
+        /* ─── RESPONSIVE: MOBILE ─────────────────────────────────────── */
+        @media (max-width: 480px) {
+            .activities-container {
+                padding: 10px;
+                border-radius: 14px;
+            }
+            .activities-header {
+                margin-bottom: 10px;
+            }
+            .activities-title {
+                font-size: 0.9rem;
+                font-weight: 700;
+            }
+            .activities-nav {
+                gap: 6px;
+            }
+            .carousel-btn {
+                width: 30px;
+                height: 30px;
+                font-size: 1.1rem;
+                border-radius: 7px;
+            }
+            .carousel-counter {
+                font-size: 0.65rem;
+                padding: 3px 7px;
+                min-width: 48px;
+            }
+            .carousel-wrapper {
+                margin-bottom: 10px;
+                border-radius: 10px;
+            }
+            .activity-item {
+                padding: 16px;
+                gap: 12px;
+                border-radius: 10px;
+            }
+            .activity-card-header {
+                gap: 10px;
+            }
+            .activity-icon {
+                font-size: 1.6rem;
+            }
+            .activity-type-label {
+                padding: 3px 8px;
+                font-size: 0.65rem;
+            }
+            .activity-time {
+                font-size: 0.7rem;
+            }
+            .activity-main {
+                font-size: 1.3rem;
+                font-weight: 700;
+            }
+            .activity-details {
+                gap: 10px;
+                font-size: 0.9rem;
+            }
+            .activity-hours {
+                font-size: 1rem;
+                padding: 5px 10px;
+                gap: 6px;
+            }
+            .activity-project {
+                font-size: 0.85rem;
+                padding: 5px 10px;
+            }
+            .activity-note {
+                font-size: 0.85rem;
+                padding: 8px 10px;
+            }
+            .carousel-dots {
+                gap: 5px;
+            }
+            .carousel-dot {
+                width: 5px;
+                height: 5px;
+            }
+            .carousel-dot.active {
+                width: 18px;
+            }
         }
 
 

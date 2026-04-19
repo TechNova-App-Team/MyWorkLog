@@ -42,41 +42,149 @@
         return d.toLocaleDateString('de-DE');
     }
 
-    function renderLists() {
-        const typeEmoji = {work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'💊', holiday:'🏖️'};
-        const createRow = (e) => `
-            <div class="entry-row type-${e.type}">
-                <div>
-                    <div class="entry-date">${typeEmoji[e.type] || '📋'} ${new Date(e.date).toLocaleDateString('de-DE')}</div>
-                    <div class="entry-meta">${e.isPeriod ? esc(e.label) : esc(e.info)} (${e.worked.toFixed(2)}h) ${e.shiftWarning ? '<span style="color:var(--danger); font-weight:700;">⚠ SCHICHT MAX!</span>' : ''}</div>
-                    <div class="entry-relative-time">${getRelativeTime(e.date)}</div>
-                </div>
-                <div style="display:flex; align-items:center; gap:15px;">
-                    <span class="tag">${e.type === 'school' ? 'SCHULE' : (e.type === 'holiday' ? 'FEIERTAG' : e.type.toUpperCase())}</span>
-                    ${e.project ? `<span class="tag project-tag">${esc(e.project)}</span>` : ''}
-                    <div style="font-weight:700; width:60px; text-align:right; color:${e.diff>=0?'var(--success)':'var(--danger)'}">
-                        ${e.diff>=0?'+':''}${e.diff.toFixed(2)}
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn-icon" onclick="editEntry(${e.id})" title="Bearbeiten">✏️</button>
-                        <button class="btn-icon danger" onclick="delEntry(${e.id})" title="Löschen">🗑️</button>
-                    </div>
-                </div>
-            </div>
-        `;
+    // ═══ ACTIVITY CAROUSEL STATE ═══
+    window.activityCarousel = {
+        currentIndex: 0,
+        total: 0
+    };
 
-        const entryListEl = document.getElementById('entryListShort');
-        if (!entryListEl) {
-            console.warn('renderLists: #entryListShort element not found, skipping render');
-            return;
+    function renderLists() {
+        const typeIcons = {work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'};
+        const typeLabels = {work:'Arbeit', school:'Schule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'};
+
+        function formatRelativeTime(dateStr) {
+            const d = new Date(dateStr + 'T00:00:00');
+            const now = new Date();
+            const diffMs = now - d;
+            const diffHours = Math.floor(diffMs / (1000*60*60));
+            const diffDays = Math.floor(diffMs / (1000*60*60*24));
+
+            if (diffHours < 1) return 'gerade eben';
+            if (diffHours < 24) return `vor ${diffHours}h`;
+            if (diffDays === 0) return 'heute';
+            if (diffDays === 1) return 'gestern';
+            if (diffDays < 7) return `vor ${diffDays}d`;
+            return d.toLocaleDateString('de-DE', {month:'short', day:'numeric'});
         }
+
+        const createActivitySlide = (e) => {
+            const icon = typeIcons[e.type] || '📋';
+            const label = typeLabels[e.type] || e.type;
+            const relTime = formatRelativeTime(e.date);
+            const dateDisplay = new Date(e.date).toLocaleDateString('de-DE', {weekday:'long', month:'long', day:'numeric'});
+            const notes = e.isPeriod ? (e.label || '') : (e.info || '');
+
+            return `
+                <div class="activity-item type-${e.type}" data-entry-id="${e.id}">
+                    <div class="activity-card-header">
+                        <span class="activity-icon">${icon}</span>
+                        <div class="activity-header-info">
+                            <span class="activity-type-label">${label}</span>
+                            <span class="activity-time">${relTime}</span>
+                        </div>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-main">${dateDisplay}</div>
+                        <div class="activity-details">
+                            <span class="activity-hours">⏱️ ${e.worked.toFixed(2)}h</span>
+                            ${e.project ? `<span class="activity-project">📌 ${esc(e.project)}</span>` : ''}
+                            ${notes ? `<div class="activity-note">"${esc(notes)}"</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const trackEl = document.getElementById('entryListShort');
+        const emptyEl = document.getElementById('activitiesEmpty');
+        const counterEl = document.getElementById('carouselCounter');
+        const dotsEl = document.getElementById('carouselDots');
+
+        if (!trackEl) return console.warn('renderLists: #entryListShort not found');
 
         const entries = Array.isArray(data.entries) ? data.entries : [];
-        if (!entries.length) {
-            entryListEl.innerHTML = '<div style="color:#555; padding:12px;">Noch keine Einträge</div>';
+        window.activityCarousel.entries = entries.slice(0, 15);
+        window.activityCarousel.total = window.activityCarousel.entries.length;
+        window.activityCarousel.currentIndex = 0;
+
+        if (!window.activityCarousel.total) {
+            trackEl.style.display = 'none';
+            if (emptyEl) emptyEl.style.display = 'flex';
+            if (counterEl) counterEl.innerText = '0 / 0';
+            if (dotsEl) dotsEl.innerHTML = '';
         } else {
-            entryListEl.innerHTML = safeHTML(entries.slice(0, 5).map(createRow).join(''));
+            trackEl.style.display = 'flex';
+            if (emptyEl) emptyEl.style.display = 'none';
+            trackEl.innerHTML = safeHTML(window.activityCarousel.entries.map(createActivitySlide).join(''));
+
+            // Set each slide width to match wrapper
+            setTimeout(() => {
+                const wrapper = document.querySelector('.carousel-wrapper');
+                if (!wrapper) return;
+                const w = wrapper.offsetWidth;
+                document.querySelectorAll('.activity-item').forEach(el => {
+                    el.style.width = w + 'px';
+                    el.style.minWidth = w + 'px';
+                });
+                updateCarouselDots();
+                updateCarouselCounter();
+
+                // Track scroll to update dots/counter
+                wrapper.addEventListener('scroll', onCarouselScroll, { passive: true });
+            }, 50);
         }
+    }
+
+    function onCarouselScroll() {
+        const wrapper = document.querySelector('.carousel-wrapper');
+        if (!wrapper) return;
+        const w = wrapper.offsetWidth;
+        if (!w) return;
+        const idx = Math.round(wrapper.scrollLeft / w);
+        if (idx !== window.activityCarousel.currentIndex) {
+            window.activityCarousel.currentIndex = idx;
+            updateCarouselCounter();
+            updateCarouselDots();
+        }
+    }
+
+    function updateCarouselCounter() {
+        const counter = document.getElementById('carouselCounter');
+        if (counter) {
+            const total = window.activityCarousel.total;
+            const current = window.activityCarousel.currentIndex + 1;
+            counter.innerText = total ? `${current} / ${total}` : '0 / 0';
+        }
+    }
+
+    function updateCarouselDots() {
+        const dotsEl = document.getElementById('carouselDots');
+        if (!dotsEl) return;
+        const total = window.activityCarousel.total;
+        let html = '';
+        for (let i = 0; i < total; i++) {
+            const active = i === window.activityCarousel.currentIndex ? 'active' : '';
+            html += `<div class="carousel-dot ${active}" onclick="activityCarouselGoTo(${i})"></div>`;
+        }
+        dotsEl.innerHTML = html;
+    }
+
+    function activityCarouselNext() {
+        const wrapper = document.querySelector('.carousel-wrapper');
+        if (!wrapper) return;
+        wrapper.scrollBy({ left: wrapper.offsetWidth, behavior: 'smooth' });
+    }
+
+    function activityCarouselPrev() {
+        const wrapper = document.querySelector('.carousel-wrapper');
+        if (!wrapper) return;
+        wrapper.scrollBy({ left: -wrapper.offsetWidth, behavior: 'smooth' });
+    }
+
+    function activityCarouselGoTo(index) {
+        const wrapper = document.querySelector('.carousel-wrapper');
+        if (!wrapper) return;
+        wrapper.scrollTo({ left: index * wrapper.offsetWidth, behavior: 'smooth' });
     }
     
     // --- GLOBAL TREND STATE ---
