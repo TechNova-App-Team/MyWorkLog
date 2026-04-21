@@ -42,10 +42,11 @@
         return d.toLocaleDateString('de-DE');
     }
 
-    // ═══ ACTIVITY CAROUSEL STATE ═══
-    window.activityCarousel = {
-        currentIndex: 0,
-        total: 0
+    // ═══ ACTIVITY DAY TABS STATE ═══
+    window.activityDayTabs = {
+        selectedDate: null,
+        allDates: [],
+        entriesByDate: {}
     };
 
     function renderLists() {
@@ -58,7 +59,6 @@
             const diffMs = now - d;
             const diffHours = Math.floor(diffMs / (1000*60*60));
             const diffDays = Math.floor(diffMs / (1000*60*60*24));
-
             if (diffHours < 1) return 'gerade eben';
             if (diffHours < 24) return `vor ${diffHours}h`;
             if (diffDays === 0) return 'heute';
@@ -67,11 +67,10 @@
             return d.toLocaleDateString('de-DE', {month:'short', day:'numeric'});
         }
 
-        const createActivitySlide = (e) => {
+        const createActivityCard = (e) => {
             const icon = typeIcons[e.type] || '📋';
             const label = typeLabels[e.type] || e.type;
             const relTime = formatRelativeTime(e.date);
-            const dateDisplay = new Date(e.date).toLocaleDateString('de-DE', {weekday:'long', month:'long', day:'numeric'});
             const notes = e.isPeriod ? (e.label || '') : (e.info || '');
 
             return `
@@ -84,11 +83,11 @@
                         </div>
                     </div>
                     <div class="activity-content">
-                        <div class="activity-main">${dateDisplay}</div>
+                        <div class="activity-main">${e.isPeriod ? esc(e.label || 'Periode') : esc(e.info || 'Arbeitszeit')}</div>
                         <div class="activity-details">
                             <span class="activity-hours">⏱️ ${e.worked.toFixed(2)}h</span>
                             ${e.project ? `<span class="activity-project">📌 ${esc(e.project)}</span>` : ''}
-                            ${notes ? `<div class="activity-note">"${esc(notes)}"</div>` : ''}
+                            ${notes && !e.isPeriod ? `<div class="activity-note">"${esc(notes)}"</div>` : ''}
                         </div>
                     </div>
                 </div>
@@ -97,96 +96,206 @@
 
         const trackEl = document.getElementById('entryListShort');
         const emptyEl = document.getElementById('activitiesEmpty');
-        const counterEl = document.getElementById('carouselCounter');
-        const dotsEl = document.getElementById('carouselDots');
+        const dayTabsEl = document.getElementById('dayTabsList');
 
-        if (!trackEl) return console.warn('renderLists: #entryListShort not found');
+        if (!trackEl || !dayTabsEl) return console.warn('renderLists: required elements not found');
 
-        const entries = Array.isArray(data.entries) ? data.entries : [];
-        window.activityCarousel.entries = entries.slice(0, 15);
-        window.activityCarousel.total = window.activityCarousel.entries.length;
-        window.activityCarousel.currentIndex = 0;
+        const entries = Array.isArray(data.entries) ? data.entries.slice(0, 30) : [];
 
-        if (!window.activityCarousel.total) {
+        if (!entries.length) {
             trackEl.style.display = 'none';
             if (emptyEl) emptyEl.style.display = 'flex';
-            if (counterEl) counterEl.innerText = '0 / 0';
-            if (dotsEl) dotsEl.innerHTML = '';
-        } else {
-            trackEl.style.display = 'flex';
-            if (emptyEl) emptyEl.style.display = 'none';
-            trackEl.innerHTML = safeHTML(window.activityCarousel.entries.map(createActivitySlide).join(''));
+            dayTabsEl.innerHTML = '';
+            return;
+        }
 
-            // Set each slide width to match wrapper
-            setTimeout(() => {
-                const wrapper = document.querySelector('.carousel-wrapper');
-                if (!wrapper) return;
-                const w = wrapper.offsetWidth;
-                document.querySelectorAll('.activity-item').forEach(el => {
-                    el.style.width = w + 'px';
-                    el.style.minWidth = w + 'px';
+        // Group entries by date
+        const entriesByDate = {};
+        const uniqueDates = [];
+        entries.forEach(e => {
+            if (!entriesByDate[e.date]) {
+                entriesByDate[e.date] = [];
+                uniqueDates.push(e.date);
+            }
+            entriesByDate[e.date].push(e);
+        });
+
+        window.activityDayTabs.allDates = uniqueDates;
+        window.activityDayTabs.entriesByDate = entriesByDate;
+        window.activityDayTabs.selectedDate = uniqueDates[0] || null;
+
+        if (emptyEl) emptyEl.style.display = 'none';
+        trackEl.style.display = 'flex';
+
+        // Render day tabs
+        const dayTabsHtml = uniqueDates.map((date, idx) => {
+            const dateObj = new Date(date + 'T00:00:00');
+            const dayName = dateObj.toLocaleDateString('de-DE', {weekday:'short'}).toUpperCase();
+            const dayNum = dateObj.getDate();
+            const isActive = idx === 0 ? 'active' : '';
+            return `
+                <div class="day-tab ${isActive}" onclick="switchActivityDay('${date}')">
+                    <div class="day-tab-label">${dayName}</div>
+                    <div class="day-tab-date">${dayNum}</div>
+                </div>
+            `;
+        }).join('');
+        dayTabsEl.innerHTML = dayTabsHtml;
+
+        // Render activities for first date
+        const firstDateActivities = entriesByDate[uniqueDates[0]] || [];
+        trackEl.innerHTML = safeHTML(firstDateActivities.map(createActivityCard).join(''));
+    }
+
+    function switchActivityDay(date) {
+        window.activityDayTabs.selectedDate = date;
+        const trackEl = document.getElementById('entryListShort');
+        const dayTabsEl = document.getElementById('dayTabsList');
+
+        if (!trackEl || !dayTabsEl) return;
+
+        // Update active tab
+        document.querySelectorAll('.day-tab').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.innerText.toLowerCase().includes(new Date(date + 'T00:00:00').getDate())) {
+                // Find the correct tab
+                const dateObj = new Date(date + 'T00:00:00');
+                const dayNum = dateObj.getDate();
+                if (tab.querySelector('.day-tab-date').innerText == dayNum) {
+                    tab.classList.add('active');
+                }
+            }
+        });
+
+        // Update activities
+        const typeIcons = {work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'};
+        const typeLabels = {work:'Arbeit', school:'Schule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'};
+
+        const createActivityCard = (e) => {
+            const icon = typeIcons[e.type] || '📋';
+            const label = typeLabels[e.type] || e.type;
+            const formatRelativeTime = (dateStr) => {
+                const d = new Date(dateStr + 'T00:00:00');
+                const now = new Date();
+                const diffDays = Math.floor((now - d) / (1000*60*60*24));
+                if (diffDays === 0) return 'heute';
+                if (diffDays === 1) return 'gestern';
+                return d.toLocaleDateString('de-DE', {month:'short', day:'numeric'});
+            };
+            const relTime = formatRelativeTime(e.date);
+            const notes = e.isPeriod ? (e.label || '') : (e.info || '');
+
+            return `
+                <div class="activity-item type-${e.type}" data-entry-id="${e.id}">
+                    <div class="activity-card-header">
+                        <span class="activity-icon">${icon}</span>
+                        <div class="activity-header-info">
+                            <span class="activity-type-label">${label}</span>
+                            <span class="activity-time">${relTime}</span>
+                        </div>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-main">${e.isPeriod ? esc(e.label || 'Periode') : esc(e.info || 'Arbeitszeit')}</div>
+                        <div class="activity-details">
+                            <span class="activity-hours">⏱️ ${e.worked.toFixed(2)}h</span>
+                            ${e.project ? `<span class="activity-project">📌 ${esc(e.project)}</span>` : ''}
+                            ${notes && !e.isPeriod ? `<div class="activity-note">"${esc(notes)}"</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const activities = window.activityDayTabs.entriesByDate[date] || [];
+        trackEl.innerHTML = safeHTML(activities.map(createActivityCard).join(''));
+
+        // Initialize swipe & wheel listeners
+        setTimeout(() => {
+            initActivityScrollListeners();
+        }, 50);
+    }
+
+    // ═══ SWIPE & WHEEL SUPPORT ═══
+    window.activitySwipeState = {
+        touchStartY: 0,
+        touchStartX: 0,
+        isSwiping: false
+    };
+
+    function initActivityScrollListeners() {
+        const trackEl = document.getElementById('entryListShort');
+        const dayTabsEl = document.getElementById('dayTabsList');
+        if (!trackEl || !dayTabsEl) return;
+
+        // Wheel scroll support - smooth mouse wheel scrolling
+        trackEl.addEventListener('wheel', (e) => {
+            if (trackEl.scrollHeight > trackEl.clientHeight) {
+                e.preventDefault();
+                trackEl.scrollBy({
+                    top: e.deltaY * 0.8,
+                    behavior: 'smooth'
                 });
-                updateCarouselDots();
-                updateCarouselCounter();
+            }
+        }, { passive: false });
 
-                // Track scroll to update dots/counter
-                wrapper.addEventListener('scroll', onCarouselScroll, { passive: true });
-            }, 50);
-        }
+        // Day tabs wheel scroll
+        dayTabsEl.addEventListener('wheel', (e) => {
+            if (dayTabsEl.scrollWidth > dayTabsEl.clientWidth) {
+                e.preventDefault();
+                dayTabsEl.scrollBy({
+                    left: e.deltaY * 0.6,
+                    behavior: 'smooth'
+                });
+            }
+        }, { passive: false });
+
+        // Touch swipe support for day tabs (horizontal)
+        dayTabsEl.addEventListener('touchstart', (e) => {
+            window.activitySwipeState.touchStartX = e.touches[0].clientX;
+            window.activitySwipeState.touchStartY = e.touches[0].clientY;
+            window.activitySwipeState.isSwiping = true;
+            dayTabsEl.classList.add('grabbing');
+        }, { passive: true });
+
+        dayTabsEl.addEventListener('touchmove', (e) => {
+            if (!window.activitySwipeState.isSwiping) return;
+            const diffX = window.activitySwipeState.touchStartX - e.touches[0].clientX;
+            if (Math.abs(diffX) > 5) {
+                dayTabsEl.scrollBy({
+                    left: diffX * 0.3,
+                    behavior: 'auto'
+                });
+            }
+        }, { passive: true });
+
+        dayTabsEl.addEventListener('touchend', () => {
+            window.activitySwipeState.isSwiping = false;
+            dayTabsEl.classList.remove('grabbing');
+        }, { passive: true });
+
+        // Touch swipe support for activities (vertical scroll)
+        trackEl.addEventListener('touchstart', (e) => {
+            window.activitySwipeState.touchStartY = e.touches[0].clientY;
+            window.activitySwipeState.touchStartX = e.touches[0].clientX;
+            trackEl.classList.add('grabbing');
+        }, { passive: true });
+
+        trackEl.addEventListener('touchmove', (e) => {
+            const diffY = window.activitySwipeState.touchStartY - e.touches[0].clientY;
+            const diffX = window.activitySwipeState.touchStartX - e.touches[0].clientX;
+            if (Math.abs(diffY) > Math.abs(diffX)) {
+                trackEl.scrollBy({
+                    top: diffY * 0.5,
+                    behavior: 'auto'
+                });
+            }
+        }, { passive: true });
+
+        trackEl.addEventListener('touchend', () => {
+            trackEl.classList.remove('grabbing');
+        }, { passive: true });
     }
 
-    function onCarouselScroll() {
-        const wrapper = document.querySelector('.carousel-wrapper');
-        if (!wrapper) return;
-        const w = wrapper.offsetWidth;
-        if (!w) return;
-        const idx = Math.round(wrapper.scrollLeft / w);
-        if (idx !== window.activityCarousel.currentIndex) {
-            window.activityCarousel.currentIndex = idx;
-            updateCarouselCounter();
-            updateCarouselDots();
-        }
-    }
-
-    function updateCarouselCounter() {
-        const counter = document.getElementById('carouselCounter');
-        if (counter) {
-            const total = window.activityCarousel.total;
-            const current = window.activityCarousel.currentIndex + 1;
-            counter.innerText = total ? `${current} / ${total}` : '0 / 0';
-        }
-    }
-
-    function updateCarouselDots() {
-        const dotsEl = document.getElementById('carouselDots');
-        if (!dotsEl) return;
-        const total = window.activityCarousel.total;
-        let html = '';
-        for (let i = 0; i < total; i++) {
-            const active = i === window.activityCarousel.currentIndex ? 'active' : '';
-            html += `<div class="carousel-dot ${active}" onclick="activityCarouselGoTo(${i})"></div>`;
-        }
-        dotsEl.innerHTML = html;
-    }
-
-    function activityCarouselNext() {
-        const wrapper = document.querySelector('.carousel-wrapper');
-        if (!wrapper) return;
-        wrapper.scrollBy({ left: wrapper.offsetWidth, behavior: 'smooth' });
-    }
-
-    function activityCarouselPrev() {
-        const wrapper = document.querySelector('.carousel-wrapper');
-        if (!wrapper) return;
-        wrapper.scrollBy({ left: -wrapper.offsetWidth, behavior: 'smooth' });
-    }
-
-    function activityCarouselGoTo(index) {
-        const wrapper = document.querySelector('.carousel-wrapper');
-        if (!wrapper) return;
-        wrapper.scrollTo({ left: index * wrapper.offsetWidth, behavior: 'smooth' });
-    }
-    
     // --- GLOBAL TREND STATE ---
     window._trendPeriod = 30;
     window._trendDataFull = [];
