@@ -569,10 +569,10 @@ if ('serviceWorker' in navigator) {
                 updateViaCache: 'none'
             });
 
-            // Check for updates periodically
+            // Check for updates periodically (15 min für aktive Entwicklung)
             setInterval(() => {
                 registration.update();
-            }, 60000); // Check every minute
+            }, 900000); // Check every 15 minutes
 
             // Check for already-waiting worker from previous update
             if (registration.waiting) {

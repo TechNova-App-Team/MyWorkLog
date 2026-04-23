@@ -1,16 +1,25 @@
 // ===== SERVICE WORKER FOR PWA =====
-// Cache-First Strategy für Assets, Network-First für API/Data
-// VERSION BUMP: Force cache invalidation
+// Stale-While-Revalidate + Cache-First mit aggressiver Cache-Invalidation
+// Mobile-optimiert: Updates ohne Hard Refresh
 
-const CACHE_NAME = 'timetracker-v1.15.3';
-const RUNTIME_CACHE = 'timetracker-runtime-v1.15.3';
-const SW_DEBUG = false;
+const CACHE_NAME = 'timetracker-v3.5.2';
+const RUNTIME_CACHE = 'timetracker-runtime-v3.5.2';
+const VERSION_CACHE = 'timetracker-version-v1';
+const SW_DEBUG = true;
 const OFFLINE_PAGE = './Pages/Info/offline.html';
+const FETCH_TIMEOUT = 8000; // 8s timeout für Netzwerk
+const CACHE_MAX_AGE = 86400000; // 1 Tag
 
-// Listen for SKIP_WAITING message from Update Manager
+// Listen for SKIP_WAITING message + Update checks
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  if (event.data?.type === 'CLEAR_OLD_CACHES') {
+    cleanOldCaches();
+  }
+  if (event.data?.type === 'CHECK_UPDATE') {
+    checkForUpdates();
   }
 });
 
@@ -26,28 +35,46 @@ const ASSETS_TO_CACHE = [
 
 // ===== INSTALL EVENT =====
 self.addEventListener('install', event => {
+  if(SW_DEBUG) console.log('[SW] Installing version:', CACHE_NAME);
+
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS_TO_CACHE).catch(err => {
-        if(SW_DEBUG) console.warn('[SW] Cache partial fail:', err);
-        return Promise.resolve();
-      });
-    }).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        // Versuche alle Assets zu cachen, Fehler sind OK (z.B. offline während Install)
+        return cache.addAll(ASSETS_TO_CACHE)
+          .catch(err => {
+            if(SW_DEBUG) console.warn('[SW] Partial cache fail (OK):', err.message);
+            // Cache mindestens index.html
+            return fetch('./index.html').then(r => {
+              if(r.ok) return cache.put('./index.html', r);
+            }).catch(() => {});
+          });
+      })
+      .then(() => {
+        // Sofort aktivieren für schnellere Updates auf Mobile
+        return self.skipWaiting();
+      })
   );
 });
 
 // ===== ACTIVATE EVENT =====
 self.addEventListener('activate', event => {
+  if(SW_DEBUG) console.log('[SW] Activating, cleaning old caches');
+
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME && cacheName !== RUNTIME_CACHE) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    cleanOldCaches()
+      .then(() => self.clients.claim())
+      .then(() => {
+        // Benachrichtige Clients über Update
+        return self.clients.matchAll({ type: 'window' }).then(clients => {
+          clients.forEach(client => {
+            client.postMessage({
+              type: 'SW_ACTIVATED',
+              version: CACHE_NAME
+            });
+          });
+        });
+      })
   );
 });
 
@@ -56,76 +83,101 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Externe URLs (CDN, externe APIs) → Network-First
+  // Skip für non-GET Requests
+  if (request.method !== 'GET') return;
+
+  // Externe URLs (CDN, externe APIs) → Stale-While-Revalidate
   if (url.origin !== location.origin) {
-    return event.respondWith(networkFirst(request));
+    return event.respondWith(staleWhileRevalidate(request));
   }
 
-  // HTML → Network-First (für Updates)
+  // HTML/Navigation → Network-First mit Timeout (kritisch für Mobile)
   if (request.mode === 'navigate') {
-    return event.respondWith(networkFirst(request));
+    return event.respondWith(networkFirstWithTimeout(request, FETCH_TIMEOUT));
   }
 
-  // Cloud/Config JS → Network-First (OAuth etc. muss aktuell sein)
+  // Cloud/Config JS → Network-First (OAuth/Auth muss aktuell sein)
   if (url.pathname.includes('/Cloud/') || url.pathname.includes('/config/')) {
-    return event.respondWith(networkFirst(request));
+    return event.respondWith(networkFirstWithTimeout(request, 6000));
   }
 
-  // Statische Assets (CSS, JS, bilder) → Cache-First
+  // Statische Assets → Stale-While-Revalidate (schnell + aktuell)
   if (isStaticAsset(request.url)) {
-    return event.respondWith(cacheFirst(request));
+    return event.respondWith(staleWhileRevalidate(request));
   }
 
-  // Standard: Cache mit Network Fallback
-  event.respondWith(cacheFirst(request));
+  // Standard: Stale-While-Revalidate
+  event.respondWith(staleWhileRevalidate(request));
 });
 
 // ===== CACHE STRATEGIES =====
 
-// Cache-First: Schneller, aber möglicherweise veraltet
-async function cacheFirst(request) {
+// Stale-While-Revalidate: Beste für PWA - schnell UND aktuell
+async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE_NAME);
   const cached = await cache.match(request);
-  
-  if (cached) {
+
+  // Sofort gecachte Version zurückgeben (Schnelligkeit für Mobile)
+  if (cached && isCacheFresh(cached)) {
+    // Im Hintergrund neu fetchen
+    updateCacheInBackground(request, cache).catch(() => {});
     return cached;
   }
 
+  // Fallback: Versuche Netzwerk, dann Cache
   try {
-    const response = await fetch(request);
-    
-    if (response.ok && request.method === 'GET' && isCacheableRequest(request)) {
+    const response = await fetchWithTimeout(request, FETCH_TIMEOUT);
+    if (response.ok && isCacheableRequest(request)) {
       const cloned = response.clone();
       cache.put(request, cloned).catch(() => {});
     }
-    
     return response;
   } catch (err) {
+    // Selbst wenn Cache alt ist, nutzen wir ihn lieber als offline zu gehen
+    if (cached) return cached;
     return getOfflineResponse(request);
   }
 }
 
-async function networkFirst(request) {
+// Network-First mit Timeout für kritische Dateien
+async function networkFirstWithTimeout(request, timeout) {
   try {
-    const response = await fetch(request);
-    
-    if (response.ok && request.method === 'GET' && isCacheableRequest(request)) {
+    const response = await fetchWithTimeout(request, timeout);
+
+    if (response.ok && isCacheableRequest(request)) {
       const cache = await caches.open(RUNTIME_CACHE);
       const cloned = response.clone();
       cache.put(request, cloned).catch(() => {});
     }
-    
+
     return response;
   } catch (err) {
-    
+    if(SW_DEBUG) console.warn('[SW] Network timeout/fail, using cache:', request.url);
+
     const cache = await caches.open(RUNTIME_CACHE);
     const cached = await cache.match(request);
-    
-    if (cached) {
-      return cached;
-    }
+
+    if (cached) return cached;
+
+    // Fallback zu CACHE_NAME für wichtige Dateien
+    const mainCache = await caches.open(CACHE_NAME);
+    const mainCached = await mainCache.match(request);
+    if (mainCached) return mainCached;
 
     return getOfflineResponse(request);
+  }
+}
+
+// Background Cache Update
+async function updateCacheInBackground(request, cache) {
+  try {
+    const response = await fetchWithTimeout(request, FETCH_TIMEOUT);
+    if (response.ok && isCacheableRequest(request)) {
+      const cloned = response.clone();
+      await cache.put(request, cloned);
+    }
+  } catch (err) {
+    if(SW_DEBUG) console.log('[SW] Background update failed (OK):', request.url);
   }
 }
 
