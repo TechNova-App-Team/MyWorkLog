@@ -21,6 +21,9 @@ self.addEventListener('message', (event) => {
   if (event.data?.type === 'CHECK_UPDATE') {
     checkForUpdates();
   }
+  if (event.data?.type === 'CLEAR_CACHE') {
+    caches.keys().then(names => names.forEach(n => caches.delete(n)));
+  }
 });
 
 const ASSETS_TO_CACHE = [
@@ -186,7 +189,7 @@ async function getOfflineResponse(request) {
   // Für Navigation (HTML): Offline-Page
   if (request.mode === 'navigate') {
     const cache = await caches.open(CACHE_NAME);
-    return cache.match(OFFLINE_PAGE) || new Response('Offline', { status: 503 });
+    return (await cache.match(OFFLINE_PAGE)) || new Response('Offline', { status: 503 });
   }
 
   // Für andere Requests: Generic Offline Response
@@ -214,20 +217,50 @@ function isCacheableRequest(request) {
   }
 }
 
-// ===== MESSAGE HANDLING (für Client-Communication) =====
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+// Prüft ob gecachte Response noch frisch genug ist
+function isCacheFresh(response) {
+  if (!response) return false;
+  const dateHeader = response.headers.get('date');
+  if (!dateHeader) return true;
+  return Date.now() - new Date(dateHeader).getTime() < CACHE_MAX_AGE;
+}
 
-  if (event.data && event.data.type === 'CLEAR_CACHE') {
-    caches.keys().then(cacheNames => {
-      cacheNames.forEach(cacheName => {
-        caches.delete(cacheName);
-      });
-    });
+// Fetch mit Timeout-Abbruch
+function fetchWithTimeout(request, timeout) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('SW fetch timeout')), timeout);
+    fetch(request).then(
+      res => { clearTimeout(timer); resolve(res); },
+      err => { clearTimeout(timer); reject(err); }
+    );
+  });
+}
+
+// Löscht alle veralteten Caches außer den aktuellen drei
+async function cleanOldCaches() {
+  const current = [CACHE_NAME, RUNTIME_CACHE, VERSION_CACHE];
+  const all = await caches.keys();
+  return Promise.all(
+    all.filter(n => !current.includes(n)).map(n => {
+      if (SW_DEBUG) console.log('[SW] Deleting old cache:', n);
+      return caches.delete(n);
+    })
+  );
+}
+
+// Prüft version.json auf Updates und benachrichtigt Clients
+async function checkForUpdates() {
+  try {
+    const response = await fetch('./version.json?sw=' + Date.now());
+    if (response.ok) {
+      const data = await response.json();
+      const clients = await self.clients.matchAll({ type: 'window' });
+      clients.forEach(c => c.postMessage({ type: 'VERSION_INFO', version: data }));
+    }
+  } catch (err) {
+    if (SW_DEBUG) console.log('[SW] Update check failed:', err.message);
   }
-});
+}
 
 // ===== PUSH NOTIFICATIONS (Optional) =====
 self.addEventListener('push', event => {
