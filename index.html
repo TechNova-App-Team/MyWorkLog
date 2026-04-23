@@ -84,7 +84,7 @@
 <meta name="twitter:title" content="MyWorkLog – Kostenlose Azubi Zeiterfassung & Berichtsheft">
 <meta name="twitter:description" content="Digitales Berichtsheft, Gleitzeitkonto, Überstundenrechner & KI-Assistent. Offline-first, DSGVO-konform. Für Fachinformatiker & kaufmännische Auszubildende.">
 <meta name="twitter:image" content="https://myworklog.de/Grafiken/Meta.png">
-<meta name="twitter:image:alt" content="MyWorkLog Dashboard – Timer, Analytics & AI-Bot für Auszubildende">
+<meta name="twitter:image:alt" content="MyWorkLog Dashboard – Timer, Analytics & Zeiterfassung für Auszubildende">
 
 <!-- ===== JSON-LD Structured Data — Google Rich Results ===== -->
 <script type="application/ld+json">
@@ -135,7 +135,6 @@
         "Live Timer mit Echtzeit-Anzeige",
         "Digitales IHK Berichtsheft",
         "Gleitzeitkonto & Überstundenrechner",
-        "KI-gestützter Assistent (AI-Bot)",
         "Lokales LLM (on-device via WebGPU)",
         "Cloud Sync via Supabase",
         "PWA – Offline-first & installierbar",
@@ -355,18 +354,10 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 <!-- Deine Config (ZULETZT, optional - in .gitignore für Sicherheit) -->
 <script defer src="./config/supabase-config.js"></script>
 
-<!-- AI-Bot Engine Scripts -->
-<script src="./AI-Bot/data-analyzer-pro.js"></script>
-<script src="./AI-Bot/aibot-engine-pro.js"></script>
-<!-- WebLLM Integration (Cache-buster: v0.2.80 / Jan 3 2026) -->
-<script defer src="./AI-Bot/LLM/webllm-config.js?v=0.2.80"></script>
-<script defer src="./AI-Bot/LLM/webllm-integration.js?v=0.2.80"></script>
-<script defer src="./AI-Bot/LLM/webllm-validator.js?v=0.2.80"></script>
 
     <!-- ═══ Component CSS (externalized) ═══ -->
     <link rel="stylesheet" href="./components/core/core.css">
     <link rel="stylesheet" href="./components/core/alerts.css">
-    <link rel="stylesheet" href="./components/core/webllm.css">
     <link rel="stylesheet" href="./components/dashboard/dashboard.css">
     <link rel="stylesheet" href="./components/performance/performance.css">
     <link rel="stylesheet" href="./components/ihk/ihk.css">
@@ -374,7 +365,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <link rel="stylesheet" href="./components/goals/goals.css">
     <link rel="stylesheet" href="./components/weekview/weekview.css">
     <link rel="stylesheet" href="./components/history/history.css">
-    <link rel="stylesheet" href="./components/aibot/aibot.css">
+
     <link rel="stylesheet" href="./components/analytics-pro/analytics-pro.css">
     <link rel="stylesheet" href="./components/modals/modals.css">
     <link rel="stylesheet" href="./components/settings/settings.css">
@@ -482,7 +473,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             <div class="vi-cl" style="transition-delay:.28s"><span class="vi-ln"> 4</span> &nbsp;&nbsp;lines: <span class="vi-num">31_200</span>,</div>
             <div class="vi-cl" style="transition-delay:.37s"><span class="vi-ln"> 5</span> &nbsp;&nbsp;features: <span class="vi-num">120</span>,</div>
             <div class="vi-cl" style="transition-delay:.46s"><span class="vi-ln"> 6</span> &nbsp;&nbsp;frameworks: <span class="vi-num">0</span>,</div>
-            <div class="vi-cl" style="transition-delay:.55s"><span class="vi-ln"> 7</span> &nbsp;&nbsp;ai: <span class="vi-str">'WebLLM on-device'</span>,</div>
             <div class="vi-cl" style="transition-delay:.64s"><span class="vi-ln"> 8</span> &nbsp;&nbsp;ghostMode: <span class="vi-bool">true</span>,</div>
             <div class="vi-cl" style="transition-delay:.73s"><span class="vi-ln"> 9</span> &nbsp;&nbsp;offline: <span class="vi-bool">true</span>,</div>
             <div class="vi-cl" style="transition-delay:.82s"><span class="vi-ln">10</span> &nbsp;&nbsp;encryption: <span class="vi-str">'AES-256-GCM'</span></div>
@@ -606,51 +596,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <script src="./components/landing/landing.js"></script>
 </div>
 
-    <!-- AI-Bot Info Modal -->
-    <div id="aiBotInfoModal" data-nosnippet style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:99999; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.3s;">
-        <div style="background:#1a1a20; width:90%; max-width:600px; padding:2rem; border-radius:16px; border:2px solid var(--primary); max-height:80vh; overflow-y:auto;">
-            <div style="text-align:right; margin-bottom:1.5rem;">
-                <button onclick="hideAIBotModal()" style="background:none; border:none; color:#fff; font-size:2rem; cursor:pointer; padding:0;">✕</button>
-            </div>
-            
-            <h2 style="color:var(--primary); margin-top:0; font-size:1.5rem;">🔒 Datenschutz Info</h2>
-            
-            <div style="color:#94a3b8; line-height:1.8; font-size:0.95rem;">
-                <h3 style="color:#fff; margin-top:1.5rem;">📊 Was macht dieser Bot?</h3>
-                <p>Der AI-Bot wertet deine Zeiterfassungsdaten aus und hilft dir mit intelligenten Analysen und Tipps.</p>
-                
-                <h3 style="color:#fff; margin-top:1.5rem;">🛡️ WICHTIG: Dein Datenschutz</h3>
-                <p><strong style="color:var(--primary);">Dieser Bot läuft 100% im Browser!</strong></p>
-                <ul style="margin:0.5rem 0; padding-left:1.5rem;">
-                    <li>❌ Kein Server-Upload</li>
-                    <li>❌ Keine Cloud</li>
-                    <li>❌ Keine externen APIs</li>
-                    <li>✅ Nur JavaScript-Algorithmus lokal</li>
-                </ul>
-                
-                <h3 style="color:#fff; margin-top:1.5rem;">⚙️ Wie es funktioniert:</h3>
-                <ul style="margin:0.5rem 0; padding-left:1.5rem;">
-                    <li>Deine Daten bleiben auf DEINEM Gerät</li>
-                    <li>Kein ML-Modell, kein KI-Training</li>
-                    <li>Nur mathematische Formeln & Regeln</li>
-                    <li>Komplett transparent</li>
-                </ul>
-                
-                <div style="background:rgba(16,185,129,0.1); border-left:3px solid #10b981; padding:1rem; margin-top:1.5rem; border-radius:8px;">
-                    <p style="margin:0; color:#10b981;"><strong>✅ GARANTIE:</strong> Niemand außer dir sieht deine Daten. 100% offline. Dein Vertrauen ist uns wichtig!</p>
-                </div>
-            </div>
-            
-            <div style="margin-top:2rem; display:flex; gap:1rem;">
-                <label style="display:flex; align-items:center; gap:0.5rem; color:#94a3b8; flex:1;">
-                    <input type="checkbox" id="dontShowAIBotModal2" style="width:18px; height:18px; cursor:pointer;">
-                    Nicht mehr anzeigen
-                </label>
-            </div>
-            
-            <button onclick="hideAIBotModal()" style="width:100%; background:var(--primary); color:white; border:none; padding:1rem; border-radius:10px; font-weight:600; font-size:1rem; cursor:pointer; margin-top:1.5rem; transition:all 0.2s;" onmouseover="this.style.background='var(--primary)'" onmouseout="this.style.background='var(--primary)'">Verstanden! 👍</button>
-        </div>
-    </div>
 
     <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
@@ -886,9 +831,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 <a href="./Pages/App/SkillTree/skill-tree.html" class="nav-item nav-external" style="text-decoration:none;" aria-label="RPG Skill-Baum — 3D Skill-Visualisierung mit KI">
                     <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="3" r="1.5" fill="currentColor"/><line x1="12" y1="4.5" x2="12" y2="8"/><circle cx="7" cy="10" r="1.2" fill="currentColor"/><circle cx="17" cy="10" r="1.2" fill="currentColor"/><line x1="12" y1="8" x2="7" y2="10"/><line x1="12" y1="8" x2="17" y2="10"/><line x1="7" y1="11.5" x2="7" y2="15"/><line x1="17" y1="11.5" x2="17" y2="15"/><circle cx="5" cy="17" r="1" fill="currentColor"/><circle cx="12" cy="17" r="1" fill="currentColor"/><circle cx="19" cy="17" r="1" fill="currentColor"/></svg></span> Skill-Baum (FISI!)
                 </a>
-                <div class="nav-item" id="nav-aibot" onclick="switchTab('aibot')">
-                    <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="14" height="10" rx="2"/><line x1="4" y1="10" x2="3" y2="10"/><line x1="20" y1="10" x2="21" y2="10"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/><path d="M9 15h6"/></svg></span> AI-Bot
-                </div>
             </div>
 
             <div class="nav-separator"></div>
@@ -2497,88 +2439,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             </div>
         </div>
 
-        <!-- Support Section -->
-        <div id="view-aibot" class="view-section">
-            <div class="view-header">
-                <div style="display:flex; align-items:flex-start; justify-content:space-between;">
-                    <div>
-                        <h2 class="view-title">AI Assistant</h2>
-                        <p style="color:var(--text-muted); margin-top:8px;">Intelligente Unterstützung für deine Zeiterfassung</p>
-                    </div>
-                    <button id="webllm-toggle-btn" style="display:none; padding:10px 16px; background:rgba(var(--primary-rgb),0.1); border:2px solid var(--primary); color:var(--text-main); border-radius:8px; font-weight:600; font-size:0.95rem; cursor:pointer; transition:all 0.3s ease; white-space:nowrap;" onclick="window.webLLMIntegration.toggleMode()" title="Klick um WebLLM zu aktivieren" onmouseover="this.style.background='rgba(var(--primary-rgb),0.2)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(var(--primary-rgb),0.3)'" onmouseout="this.style.background='rgba(var(--primary-rgb),0.1)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">🤖 Lokaler Bot</button>
-                </div>
-                <button onclick="localStorage.removeItem('aiBotModalDismissed'); document.getElementById('aiBotInfoModal').style.display='flex'; document.getElementById('aiBotInfoModal').style.opacity='1'; document.getElementById('aiBotInfoModal').style.pointerEvents='auto';" style="position:absolute; top:1.5rem; right:1.5rem; background:rgba(var(--primary-rgb),0.15); border:1px solid rgba(var(--primary-rgb),0.3); color:var(--text-main); padding:0.5rem 1rem; border-radius:8px; cursor:pointer; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb),0.25)'" onmouseout="this.style.background='rgba(var(--primary-rgb),0.15)'">🔒 Info anzeigen</button>
-            </div>
-
-            <!-- AI-Bot Interface -->
-            <div style="display:grid; grid-template-columns:1fr 280px; gap:2rem; margin-top:2rem;">
-                <!-- Chat Container -->
-                <div style="background:linear-gradient(135deg, rgba(10,10,12,0.8), rgba(20,20,25,0.9)); border:1px solid rgba(var(--primary-rgb),0.1); border-radius:20px; padding:1.5rem; display:flex; flex-direction:column; height:600px; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-                    <!-- Chat Header with Export Buttons -->
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.8rem; border-bottom:1px solid rgba(var(--primary-rgb),0.1);">
-                        <h3 style="color:var(--text-main); margin:0; font-size:0.9rem; font-weight:600;">💬 Conversation</h3>
-                        <div style="display:flex; gap:0.5rem;">
-                            <button onclick="exportConversationTXT()" title="Als TXT exportieren" style="background:transparent; border:1px solid rgba(var(--primary-rgb),0.2); color:var(--text-muted); padding:0.4rem 0.7rem; border-radius:6px; font-size:0.75rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(var(--primary-rgb),0.4)'; this.style.color='var(--text-main)'" onmouseout="this.style.borderColor='rgba(var(--primary-rgb),0.2)'; this.style.color='var(--text-muted)'">📄 TXT</button>
-                            <button onclick="exportConversationPDF()" title="Als PDF exportieren" style="background:transparent; border:1px solid rgba(var(--primary-rgb),0.2); color:var(--text-muted); padding:0.4rem 0.7rem; border-radius:6px; font-size:0.75rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(var(--primary-rgb),0.4)'; this.style.color='var(--text-main)'" onmouseout="this.style.borderColor='rgba(var(--primary-rgb),0.2)'; this.style.color='var(--text-muted)'">📕 PDF</button>
-                            <button onclick="clearConversation()" title="Chat löschen" style="background:transparent; border:1px solid rgba(239,68,68,0.2); color:var(--text-muted); padding:0.4rem 0.7rem; border-radius:6px; font-size:0.75rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.borderColor='rgba(239,68,68,0.4)'; this.style.color='rgba(239,68,68,0.8)'" onmouseout="this.style.borderColor='rgba(239,68,68,0.2)'; this.style.color='var(--text-muted)'">🗑️ Clear</button>
-                        </div>
-                    </div>
-                    
-                    <div id="aiBotChat" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:1rem; margin-bottom:1.5rem; padding-right:0.5rem;">
-                    </div>
-                    
-                    <!-- Input -->
-                    <div style="display:flex; gap:0.75rem; align-items:center;">
-                        <input type="text" id="aiBotInput" placeholder="Frage stellen..." style="flex:1; background:rgba(255,255,255,0.05); border:1px solid rgba(var(--primary-rgb),0.2); padding:0.9rem 1.2rem; border-radius:12px; color:var(--text-main); font-family:var(--font-main); font-size:0.95rem; transition:all 0.2s;" onkeypress="if(event.key==='Enter') sendAIBotMessage()" onfocus="this.style.borderColor='rgba(var(--primary-rgb),0.5)'; this.style.background='rgba(255,255,255,0.08)'; this.style.boxShadow='0 0 16px rgba(var(--primary-rgb),0.15)'" onblur="this.style.borderColor='rgba(var(--primary-rgb),0.2)'; this.style.background='rgba(255,255,255,0.05)'; this.style.boxShadow='none'">
-                        <button onclick="sendAIBotMessage()" style="background:linear-gradient(135deg, var(--primary), #7c3aed); color:white; border:none; padding:0.9rem 1.3rem; border-radius:12px; cursor:pointer; font-weight:600; transition:all 0.2s; font-size:1.1rem;" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 6px 20px rgba(var(--primary-rgb),0.4)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'">→</button>
-                    </div>
-                </div>
-
-                <!-- Suggestions Sidebar -->
-                <div style="display:flex; flex-direction:column; gap:0.8rem; max-height:600px; overflow-y:auto;">
-                    <h3 style="color:var(--text-muted); font-size:0.8rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin:0;">💡 Vorschläge</h3>
-                    
-                    <!-- Top Row: Quick Stats -->
-                    <div onclick="setAIBotQuestion('Wie viel habe ich diese Woche gearbeitet?')" style="background:linear-gradient(135deg, rgba(6,182,212,0.12), rgba(6,182,212,0.05)); border:1px solid rgba(6,182,212,0.25); padding:0.9rem; border-radius:10px; cursor:pointer; transition:all 0.3s ease;" onmouseover="this.style.background='linear-gradient(135deg, rgba(6,182,212,0.2), rgba(6,182,212,0.1))'; this.style.borderColor='rgba(6,182,212,0.5)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(6,182,212,0.2)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(6,182,212,0.12), rgba(6,182,212,0.05))'; this.style.borderColor='rgba(6,182,212,0.25)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                        <p style="color:var(--text-main); margin:0; font-size:0.85rem; font-weight:500;">📊 Woche</p>
-                        <p style="margin-top:2px; font-size:0.7rem; color:var(--text-muted);">Diese Woche</p>
-                    </div>
-                    
-                    <div onclick="setAIBotQuestion('Jahresbericht 2025')" style="background:linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.05)); border:1px solid rgba(245,158,11,0.25); padding:0.9rem; border-radius:10px; cursor:pointer; transition:all 0.3s ease;" onmouseover="this.style.background='linear-gradient(135deg, rgba(245,158,11,0.2), rgba(245,158,11,0.1))'; this.style.borderColor='rgba(245,158,11,0.5)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(245,158,11,0.2)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.05))'; this.style.borderColor='rgba(245,158,11,0.25)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                        <p style="color:var(--text-main); margin:0; font-size:0.85rem; font-weight:500;">📅 Jahresübersicht</p>
-                        <p style="margin-top:2px; font-size:0.7rem; color:var(--text-muted);">Ganzes Jahr</p>
-                    </div>
-
-                    <div onclick="setAIBotQuestion('Wie stehe ich bei meinen Zielen?')" style="background:linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.05)); border:1px solid rgba(34,197,94,0.25); padding:0.9rem; border-radius:10px; cursor:pointer; transition:all 0.3s ease;" onmouseover="this.style.background='linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1))'; this.style.borderColor='rgba(34,197,94,0.5)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(34,197,94,0.2)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,197,94,0.05))'; this.style.borderColor='rgba(34,197,94,0.25)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                        <p style="color:var(--text-main); margin:0; font-size:0.85rem; font-weight:500;">🏆 Meine Ziele</p>
-                        <p style="margin-top:2px; font-size:0.7rem; color:var(--text-muted);">Fortschritt</p>
-                    </div>
-
-                    <div onclick="setAIBotQuestion('Vergleich mit letztem Jahr')" style="background:linear-gradient(135deg, rgba(var(--primary-rgb),0.12), rgba(var(--primary-rgb),0.05)); border:1px solid rgba(var(--primary-rgb),0.25); padding:0.9rem; border-radius:10px; cursor:pointer; transition:all 0.3s ease;" onmouseover="this.style.background='linear-gradient(135deg, rgba(var(--primary-rgb),0.2), rgba(var(--primary-rgb),0.1))'; this.style.borderColor='rgba(var(--primary-rgb),0.5)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(var(--primary-rgb),0.2)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(var(--primary-rgb),0.12), rgba(var(--primary-rgb),0.05))'; this.style.borderColor='rgba(var(--primary-rgb),0.25)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                        <p style="color:var(--text-main); margin:0; font-size:0.85rem; font-weight:500;">📈 Vergleich</p>
-                        <p style="margin-top:2px; font-size:0.7rem; color:var(--text-muted);">vs Vorjahr</p>
-                    </div>
-
-                    <div onclick="setAIBotQuestion('Gib mir personalisierte Einsichten')" style="background:linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.05)); border:1px solid rgba(59,130,246,0.25); padding:0.9rem; border-radius:10px; cursor:pointer; transition:all 0.3s ease;" onmouseover="this.style.background='linear-gradient(135deg, rgba(59,130,246,0.2), rgba(59,130,246,0.1))'; this.style.borderColor='rgba(59,130,246,0.5)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(59,130,246,0.2)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.05))'; this.style.borderColor='rgba(59,130,246,0.25)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                        <p style="color:var(--text-main); margin:0; font-size:0.85rem; font-weight:500;">💡 Einsichten</p>
-                        <p style="margin-top:2px; font-size:0.7rem; color:var(--text-muted);">Personalisiert</p>
-                    </div>
-
-                    <div onclick="setAIBotQuestion('Analysiere meine Arbeitsgewohnheiten')" style="background:linear-gradient(135deg, rgba(139,92,246,0.12), rgba(139,92,246,0.05)); border:1px solid rgba(139,92,246,0.25); padding:0.9rem; border-radius:10px; cursor:pointer; transition:all 0.3s ease;" onmouseover="this.style.background='linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.1))'; this.style.borderColor='rgba(139,92,246,0.5)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(139,92,246,0.2)'" onmouseout="this.style.background='linear-gradient(135deg, rgba(139,92,246,0.12), rgba(139,92,246,0.05))'; this.style.borderColor='rgba(139,92,246,0.25)'; this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                        <p style="color:var(--text-main); margin:0; font-size:0.85rem; font-weight:500;">🔍 Analyse</p>
-                        <p style="margin-top:2px; font-size:0.7rem; color:var(--text-muted);">Tiefe Einsichten</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Info -->
-            <div style="margin-top:2.5rem; padding:1.2rem; background:rgba(var(--primary-rgb),0.08); border:1px solid rgba(var(--primary-rgb),0.15); border-radius:12px;">
-                <p style="color:var(--text-muted); margin:0 0 1rem 0; font-size:0.9rem; line-height:1.6;">
-                    In Entwicklung: Erweiterte Analysen und intelligente Empfehlungen kommen bald.
-                </p>
-                <button onclick="localStorage.removeItem('aiBotModalDismissed'); const m = document.getElementById('aiBotInfoModal'); if(m) { m.style.display='flex'; m.style.opacity='1'; m.style.pointerEvents='auto'; }" style="width:100%; background:rgba(var(--primary-rgb),0.2); color:var(--primary); border:1px solid rgba(var(--primary-rgb),0.3); padding:0.7rem; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb),0.3)'; this.style.borderColor='rgba(var(--primary-rgb),0.5)'" onmouseout="this.style.background='rgba(var(--primary-rgb),0.2)'; this.style.borderColor='rgba(var(--primary-rgb),0.3)'">🔒 Datenschutz Info anzeigen</button>
-            </div>
-        </div>
 
         <div id="view-support" class="view-section">
 
@@ -4994,27 +4854,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             </div>
                         </div>
                         
-                        <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Bot-engine.webp', 'AI Bot Engine')">
-                            <picture>
-                                <source srcset="./Grafiken/Bot-engine.webp" type="image/webp">
-                                <img loading="lazy" decoding="async" src="./Grafiken/Bot-engine.png" alt="AI Bot Engine für intelligente Zeiterfassungsanalyse und Auswertung">
-                            </picture>
-                            <div class="card-info">
-                                <h5>🤖 Bot Engine</h5>
-                                <p>AI-Bot Architektur</p>
-                            </div>
-                        </div>
-                        
-                        <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Bot-Analyzer.webp', 'Data Analyzer')">
-                            <picture>
-                                <source srcset="./Grafiken/Bot-Analyzer.webp" type="image/webp">
-                                <img loading="lazy" decoding="async" src="./Grafiken/Bot-Analyzer.png" alt="Datenanalyse und automatische Auswertung von Arbeitsstunden und Gleitzeit">
-                            </picture>
-                            <div class="card-info">
-                                <h5>📊 Data Analyzer</h5>
-                                <p>Datenanalyse & Auswertung</p>
-                            </div>
-                        </div>
                         
                         <div class="settings-graphic-card" onclick="openGraphicModal('./Grafiken/Service.webp', 'Service Worker')">
                             <picture>
@@ -6001,7 +5840,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             
             <div style="display:grid; grid-template-columns: 1fr; gap:12px;">
                 <button class="btn btn-ghost" onclick="openBreakSettingsModal(); closeMoreActionsModal()">🔔 Break Settings</button>
-                <button class="btn btn-ghost" onclick="window.webLLMIntegration.clearCache(); closeMoreActionsModal()" title="Löscht den WebLLM Browser-Cache">🗑️ WebLLM Cache leeren</button>
             </div>
             
             <button class="modal-close-x" aria-label="Schließen" onclick="closeMoreActionsModal()" title="Schließen">×</button>
@@ -6130,7 +5968,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <script src="./components/monthcompare/monthcompare.js"></script>
     <script src="./components/weekview/weekview.js"></script>
     <script src="./components/history/history.js"></script>
-    <script src="./components/aibot/aibot.js"></script>
+
     <script src="./components/support/support.js"></script>
     <script src="./components/analytics-pro/analytics-pro.js"></script>
     <script src="./components/modals/modals.js"></script>
