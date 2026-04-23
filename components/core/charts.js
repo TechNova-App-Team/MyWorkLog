@@ -72,6 +72,11 @@
             const label = typeLabels[e.type] || e.type;
             const relTime = formatRelativeTime(e.date);
             const notes = e.isPeriod ? (e.label || '') : (e.info || '');
+            const dayIndex = new Date(e.date).getDay();
+            const expected = e.expected !== undefined ? e.expected : (data.settings?.hours?.[dayIndex] || 8);
+            const diffHours = e.diff !== undefined ? e.diff : ((e.worked || 0) - expected);
+            const diffSign = diffHours >= 0 ? '+' : '';
+            const diffColor = diffHours > 0 ? '#10b981' : (diffHours < 0 ? '#ef4444' : '#6b7280');
 
             return `
                 <div class="activity-item type-${e.type}" data-entry-id="${e.id}">
@@ -81,6 +86,7 @@
                             <span class="activity-type-label">${label}</span>
                             <span class="activity-time">${relTime}</span>
                         </div>
+                        <div style="font-weight:600; color:${diffColor}; font-size:0.9rem; min-width:50px; text-align:right;">${diffSign}${diffHours.toFixed(1)}h</div>
                     </div>
                     <div class="activity-content">
                         <div class="activity-main">${e.isPeriod ? esc(e.label || 'Periode') : esc(e.info || 'Arbeitszeit')}</div>
@@ -184,6 +190,11 @@
             };
             const relTime = formatRelativeTime(e.date);
             const notes = e.isPeriod ? (e.label || '') : (e.info || '');
+            const dayIndex = new Date(e.date).getDay();
+            const expected = e.expected !== undefined ? e.expected : (data.settings?.hours?.[dayIndex] || 8);
+            const diffHours = e.diff !== undefined ? e.diff : ((e.worked || 0) - expected);
+            const diffSign = diffHours >= 0 ? '+' : '';
+            const diffColor = diffHours > 0 ? '#10b981' : (diffHours < 0 ? '#ef4444' : '#6b7280');
 
             return `
                 <div class="activity-item type-${e.type}" data-entry-id="${e.id}">
@@ -193,6 +204,7 @@
                             <span class="activity-type-label">${label}</span>
                             <span class="activity-time">${relTime}</span>
                         </div>
+                        <div style="font-weight:600; color:${diffColor}; font-size:0.9rem; min-width:50px; text-align:right;">${diffSign}${diffHours.toFixed(1)}h</div>
                     </div>
                     <div class="activity-content">
                         <div class="activity-main">${e.isPeriod ? esc(e.label || 'Periode') : esc(e.info || 'Arbeitszeit')}</div>

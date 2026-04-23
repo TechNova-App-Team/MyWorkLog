@@ -339,21 +339,29 @@
     function updateLastActivities() {
         const container = document.getElementById('lastActivitiesList');
         if (!container) return;
-        
+
         const recentEntries = data.entries
             .sort((a, b) => new Date(b.date) - new Date(a.date))
             .slice(0, 5);
-        
-        container.innerHTML = recentEntries.length === 0 
+
+        container.innerHTML = recentEntries.length === 0
             ? '<div style="color:var(--text-muted); text-align:center; padding:1rem;">Noch keine Einträge</div>'
-            : recentEntries.map(entry => `
-                <div style="padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
-                    <div style="font-weight:600; color:var(--text-main);">${entry.project || 'Kein Projekt'}</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">
-                        ${new Date(entry.date).toLocaleDateString('de-DE')} • ${entry.worked.toFixed(1)}h • ${entry.type}
+            : recentEntries.map(entry => {
+                const diffHours = entry.diff !== undefined ? entry.diff : (entry.worked - (data.settings?.hours?.[new Date(entry.date).getDay()] || 0));
+                const diffSign = diffHours >= 0 ? '+' : '';
+                const diffColor = diffHours > 0 ? '#10b981' : (diffHours < 0 ? '#ef4444' : '#6b7280');
+                return `
+                    <div style="padding:0.5rem; border-bottom:1px solid rgba(255,255,255,0.05);">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="font-weight:600; color:var(--text-main);">${entry.project || 'Kein Projekt'}</div>
+                            <div style="font-weight:600; color:${diffColor}; font-size:0.9rem;">${diffSign}${diffHours.toFixed(1)}h</div>
+                        </div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">
+                            ${new Date(entry.date).toLocaleDateString('de-DE')} • ${entry.worked.toFixed(1)}h • ${entry.type}
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
     }
 
     function updateMoodStats() {
