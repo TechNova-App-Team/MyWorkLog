@@ -1064,6 +1064,83 @@
         }
     }
 
+    // ═══ MODERN STACKED BAR CHART ═══
+    function renderDonutModern(work, vac, sick, school, holiday) {
+        const categories = [
+            { id: 'donutWork', val: work, type: 'work', labelId: 'work-label' },
+            { id: 'donutSchool', val: school, type: 'school', labelId: 'school-label' },
+            { id: 'donutVac', val: vac, type: 'vacation', labelId: 'vac-label' },
+            { id: 'donutSick', val: sick, type: 'sick', labelId: 'sick-label' },
+            { id: 'donutHoliday', val: holiday, type: 'holiday', labelId: 'holiday-label' }
+        ];
+
+        const total = work + vac + sick + school + holiday || 1;
+
+        // Update center info
+        const mainCat = categories.reduce((a, b) => a.val > b.val ? a : b);
+        const centerEl = document.getElementById('donutCenterValue');
+        const centerLabel = document.getElementById('donutCenterLabel');
+        if (centerEl) centerEl.textContent = mainCat.val.toFixed(1);
+        if (centerLabel) {
+            const labels = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', sick: 'Krank', holiday: 'Feiertag' };
+            centerLabel.textContent = labels[mainCat.type];
+        }
+
+        // Animate stacked bar segments
+        categories.forEach((cat, index) => {
+            const el = document.getElementById(cat.id);
+            if (!el) return;
+
+            const percentage = (cat.val / total) * 100;
+            const delay = index * 80;
+            const labelEl = document.getElementById(cat.labelId);
+
+            el.style.flex = '0 0 0%';
+
+            setTimeout(() => {
+                el.style.flex = `0 0 ${percentage}%`;
+                if (labelEl && percentage > 8) labelEl.textContent = percentage.toFixed(0) + '%';
+            }, delay);
+
+            el.dataset.value = cat.val.toFixed(1);
+            el.dataset.percent = percentage.toFixed(1);
+            el.dataset.type = cat.type;
+        });
+
+        // Update legend cards
+        categories.forEach(cat => {
+            const valEl = document.getElementById(`val-${cat.type}`);
+            const pctEl = document.getElementById(`pct-${cat.type}`);
+            if (valEl) valEl.textContent = cat.val.toFixed(1) + 'h';
+            if (pctEl) pctEl.textContent = ((cat.val / total) * 100).toFixed(1) + '%';
+        });
+    }
+
+    // Interactive segment highlighting for stacked bar
+    function highlightDonutSegment(type) {
+        const segments = document.querySelectorAll('.donut-segment');
+        segments.forEach(seg => {
+            if (seg.dataset.type === type) {
+                seg.style.filter = 'brightness(1.2) drop-shadow(0 2px 8px rgba(0,0,0,0.3))';
+                seg.style.transform = 'scaleY(1.3)';
+                seg.style.transformOrigin = 'center';
+                seg.style.zIndex = '10';
+            } else {
+                seg.style.opacity = '0.5';
+            }
+        });
+    }
+
+    function clearDonutHighlight() {
+        const segments = document.querySelectorAll('.donut-segment');
+        segments.forEach(seg => {
+            seg.style.filter = '';
+            seg.style.opacity = '1';
+            seg.style.transform = 'scaleY(1)';
+            seg.style.zIndex = 'auto';
+        });
+    }
+
     // ========== MEGA ADVANCED EFFECTS ENGINE ==========
     
     function createParticleEffect(x, y, color = 'var(--primary)', count = 8) {

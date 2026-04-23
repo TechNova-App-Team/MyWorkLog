@@ -645,114 +645,172 @@
         setTimeout(() => updateChartStylePreview(currentStyle), 100);
     }
 
-    function openDonutStyleModal() {
-        const saved = localStorage.getItem('tt_donut_style');
-        const currentStyle = saved ? JSON.parse(saved) : {
-            strokeWidth: 12,
-            glow: true,
-            gradient: false,
-            rainbow: false,
-            animated: true
+    // ═══ NEW: Modern Donut Settings Modal ═══
+    function openDonutSettingsModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.id = 'donutSettingsModal';
+        modal.style.zIndex = '5000';
+        modal.style.animation = 'fadeIn 0.3s ease';
+
+        modal.innerHTML = `
+            <div class="modal-box" style="width:480px; max-height:85vh; overflow-y:auto; animation: slideUp 0.3s ease; background:linear-gradient(135deg, rgba(var(--primary-rgb), 0.05) 0%, transparent 100%);">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:1.75rem 2rem; border-bottom:1px solid var(--border-subtle); background:linear-gradient(135deg, rgba(var(--primary-rgb), 0.08), rgba(var(--primary-rgb), 0.02));">
+                    <div>
+                        <h2 style="margin:0; color:var(--text-main); font-size:1.35rem;">🍩 Donut-Einstellungen</h2>
+                        <p style="margin:4px 0 0; font-size:0.8rem; color:var(--text-muted);">Passe die Visualisierung deiner Arbeitszeit-Verteilung an</p>
+                    </div>
+                    <button onclick="document.getElementById('donutSettingsModal').remove()" style="background:none; border:none; color:var(--text-main); font-size:2rem; cursor:pointer; transition:all 0.2s; padding:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:8px;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.transform='rotate(90deg)'" onmouseout="this.style.background='none'; this.style.transform='rotate(0)'" title="Schließen">×</button>
+                </div>
+
+                <div style="padding:2rem; color:var(--text-main);">
+                    <!-- Display Mode -->
+                    <div style="margin-bottom:2.5rem;">
+                        <label style="display:block; font-weight:700; color:var(--primary); margin-bottom:1rem; font-size:1rem; display:flex; align-items:center; gap:8px;">📊 Anzeigemodus</label>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                            <button class="setting-option-btn active" data-mode="percentage" style="padding:12px; border:2px solid var(--primary); border-radius:10px; background:rgba(var(--primary-rgb), 0.1); color:var(--text-main); font-weight:600; cursor:pointer; transition:all 0.2s;" onclick="toggleDonutDisplayMode('percentage', this)">
+                                📈 Prozente
+                            </button>
+                            <button class="setting-option-btn" data-mode="hours" style="padding:12px; border:2px solid var(--border-default); border-radius:10px; background:transparent; color:var(--text-muted); font-weight:600; cursor:pointer; transition:all 0.2s;" onclick="toggleDonutDisplayMode('hours', this)">
+                                ⏱️ Stunden
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Animation Setting -->
+                    <div style="margin-bottom:2.5rem;">
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:12px; background:rgba(var(--primary-rgb), 0.05); border-radius:10px; border:1px solid var(--border-subtle); transition:all 0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb), 0.08)'" onmouseout="this.style.background='rgba(var(--primary-rgb), 0.05)'">
+                            <input type="checkbox" id="donutAnimCheck" checked style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                            <span style="flex:1;">
+                                <div style="font-weight:600; color:var(--text-main);">✨ Smooth Animationen</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Sanfte Übergänge beim Laden</div>
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Glow Effect -->
+                    <div style="margin-bottom:2.5rem;">
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:12px; background:rgba(var(--primary-rgb), 0.05); border-radius:10px; border:1px solid var(--border-subtle); transition:all 0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb), 0.08)'" onmouseout="this.style.background='rgba(var(--primary-rgb), 0.05)'">
+                            <input type="checkbox" id="donutGlowCheck" checked style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                            <span style="flex:1;">
+                                <div style="font-weight:600; color:var(--text-main);">💫 Glow Effekt</div>
+                                <div style="font-size:0.75rem; color:var(--text-muted);">Leuchtender Schatten um Segmente</div>
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Divider -->
+                    <div style="height:1px; background:var(--border-subtle); margin:2rem 0;"></div>
+
+                    <!-- Reset Button -->
+                    <button onclick="resetDonutSettings()" style="width:100%; padding:12px; background:rgba(255,255,255,0.04); border:1px solid var(--border-default); border-radius:10px; color:var(--text-main); font-weight:600; cursor:pointer; transition:all 0.2s; margin-bottom:1rem;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+                        🔄 Auf Standard zurücksetzen
+                    </button>
+
+                    <!-- Action Buttons -->
+                    <div style="display:flex; gap:10px; justify-content:flex-end;">
+                        <button onclick="document.getElementById('donutSettingsModal').remove()" style="padding:11px 24px; background:rgba(255,255,255,0.06); border:1px solid var(--border-default); border-radius:10px; cursor:pointer; color:var(--text-main); font-weight:600; transition:all 0.2s; border-radius:10px;" onmouseover="this.style.background='rgba(255,255,255,0.10)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.transform='translateY(0)'">Schließen</button>
+                        <button onclick="saveDonutSettings(); document.getElementById('donutSettingsModal').remove();" style="padding:11px 28px; background:linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb), 0.8)); border:none; border-radius:10px; cursor:pointer; color:#fff; font-weight:700; transition:all 0.2s; box-shadow:0 4px 15px rgba(var(--primary-rgb), 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(var(--primary-rgb), 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(var(--primary-rgb), 0.3)'">✓ Speichern</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+    }
+
+    function toggleDonutDisplayMode(mode, button) {
+        document.querySelectorAll('.setting-option-btn').forEach(b => {
+            b.style.borderColor = 'var(--border-default)';
+            b.style.background = 'transparent';
+            b.style.color = 'var(--text-muted)';
+        });
+        button.style.borderColor = 'var(--primary)';
+        button.style.background = 'rgba(var(--primary-rgb), 0.1)';
+        button.style.color = 'var(--text-main)';
+        localStorage.setItem('tt_donut_mode', mode);
+    }
+
+    function saveDonutSettings() {
+        const settings = {
+            animated: document.getElementById('donutAnimCheck').checked,
+            glow: document.getElementById('donutGlowCheck').checked,
+            mode: localStorage.getItem('tt_donut_mode') || 'percentage'
         };
-        
-        window.modalDonutStyle = JSON.parse(JSON.stringify(currentStyle));
-        
+        localStorage.setItem('tt_donut_settings', JSON.stringify(settings));
+        updateDashboard();
+    }
+
+    function resetDonutSettings() {
+        document.getElementById('donutAnimCheck').checked = true;
+        document.getElementById('donutGlowCheck').checked = true;
+        localStorage.removeItem('tt_donut_settings');
+        localStorage.removeItem('tt_donut_mode');
+    }
+
+    function openDonutStyleModal() {
+        const saved = localStorage.getItem('tt_bar_chart_settings');
+        const currentSettings = saved ? JSON.parse(saved) : {
+            barHeight: 32,
+            showLabels: true,
+            showAnimation: true,
+            borderRadius: 8
+        };
+
+        window.modalBarSettings = { ...currentSettings };
+
         const modal = document.createElement('div');
         modal.className = 'modal active';
         modal.id = 'donutStyleModal';
         modal.style.zIndex = '5000';
         modal.style.animation = 'fadeIn 0.3s ease';
-        
-        modal.innerHTML = `
-            <div class="modal-box" style="width:550px; max-height:90vh; overflow-y:auto; animation: slideUp 0.3s ease;">
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:1.5rem 2rem; border-bottom:1px solid var(--border); background:linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb), 0.5));">
-                    <h2 style="margin:0; color:#fff;">🍩 Donut-Stil Anpassen</h2>
-                    <button id="closeDonutModal" onclick="document.getElementById('donutStyleModal').remove()" style="background:none; border:none; color:#fff; font-size:1.8rem; cursor:pointer; transition:0.2s;" onmouseover="this.style.transform='rotate(90deg)'" onmouseout="this.style.transform='rotate(0)'">×</button>
-                </div>
-                
-                <div style="padding:2rem; color:var(--text-main);">
-                    <!-- Stroke Width Slider -->
-                    <div style="margin-bottom:2.5rem;">
-                        <label style="display:block; font-weight:700; color:var(--primary); margin-bottom:14px; font-size:1.05rem;">📏 Dicke</label>
-                        <div style="display:flex; gap:1rem; align-items:center;">
-                            <input type="range" id="strokeWidthSlider" min="4" max="20" value="${currentStyle.strokeWidth}" style="flex:1; height:6px; border-radius:3px; background:rgba(var(--primary-rgb),0.2); outline:none; -webkit-appearance:none;" oninput="window.modalDonutStyle.strokeWidth = parseInt(this.value); document.getElementById('strokeWidthValue').textContent = this.value; updateDonutStylePreview(window.modalDonutStyle);">
-                            <span id="strokeWidthValue" style="min-width:40px; text-align:center; font-weight:600; color:var(--primary); font-family:var(--font-mono);">${currentStyle.strokeWidth}</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Effects -->
-                    <div style="margin-bottom:2.5rem;">
-                        <label style="display:block; font-weight:700; color:var(--primary); margin-bottom:14px; font-size:1.05rem;">✨ Effekte</label>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; padding:1.5rem; background:rgba(var(--primary-rgb),0.08); border:1px solid rgba(var(--primary-rgb),0.2); border-radius:12px;">
-                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px; border-radius:8px; transition:0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb),0.1)'" onmouseout="this.style.background='transparent'">
-                                <input type="checkbox" id="donutGlowCheck" ${currentStyle.glow ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer; accent-color:var(--primary);">
-                                <span style="font-weight:500;">Glow</span>
-                            </label>
-                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px; border-radius:8px; transition:0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb),0.1)'" onmouseout="this.style.background='transparent'">
-                                <input type="checkbox" id="donutAnimatedCheck" ${currentStyle.animated ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer; accent-color:var(--primary);">
-                                <span style="font-weight:500;">Animated</span>
-                            </label>
-                            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px; border-radius:8px; transition:0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb),0.1)'" onmouseout="this.style.background='transparent'">
-                                <input type="checkbox" id="donutRainbowCheck" ${currentStyle.rainbow ? 'checked' : ''} style="width:20px; height:20px; cursor:pointer; accent-color:var(--primary);">
-                                <span style="font-weight:500; background: linear-gradient(90deg, red, orange, yellow, green, cyan, blue, purple); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🌈 Rainbow</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <!-- Preview -->
-                    <div style="margin-bottom:2rem; padding:1.5rem; background:var(--bg-glass); border:2px solid var(--border); border-radius:12px; transition:0.3s; text-align:center;" onmouseover="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 20px rgba(var(--primary-rgb),0.3)'" onmouseout="this.style.borderColor='var(--border)'; this.style.boxShadow='none'">
-                        <div style="font-weight:600; color:var(--primary); margin-bottom:12px; display:flex; align-items:center; justify-content:center; gap:8px;">
-                            👁️ <span>Live Vorschau</span>
-                        </div>
-                        <div id="donutPreview" style="height:180px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.3); border-radius:8px; position:relative; overflow:hidden;"></div>
-                    </div>
-                    
-                    <!-- Action Buttons -->
-                    <div style="display:flex; gap:12px; justify-content:flex-end;">
-                        <button class="btn" id="donutCancelBtn" style="padding:11px 24px; background:rgba(255,255,255,0.08); border:1px solid var(--border); border-radius:8px; cursor:pointer; color:var(--text-main); font-weight:600; transition:0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.12)'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'; this.style.transform='translateY(0)'">❌ Abbrechen</button>
-                        <button class="btn btn-primary" id="donutSaveBtn" style="padding:11px 28px; background:linear-gradient(135deg, var(--primary), #8b5cf6); border:none; border-radius:8px; cursor:pointer; color:#fff; font-weight:700; transition:0.3s; box-shadow:0 4px 15px rgba(var(--primary-rgb), 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(var(--primary-rgb), 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(var(--primary-rgb), 0.3)'">✓ Speichern</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
+
+        modal.innerHTML = `<div class="modal-box" style="width:420px;animation:slideUp .3s;background:linear-gradient(135deg,rgba(var(--primary-rgb),.06) 0%,rgba(var(--primary-rgb),.02) 100%);border:1px solid var(--border-default);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div style="padding:1.5rem 2rem;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(90deg,rgba(var(--primary-rgb),.1) 0%,transparent 100%)"><h2 style="margin:0;font-size:1.3rem;font-weight:900;color:var(--text-main)">📊 Balkendiagramm</h2><button onclick="document.getElementById('donutStyleModal').remove()" style="background:none;border:none;color:var(--text-muted);font-size:1.4rem;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .2s" onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.color='var(--text-main)'" onmouseout="this.style.background='none';this.style.color='var(--text-muted)'">✕</button></div><div style="padding:2rem;display:flex;flex-direction:column;gap:1.5rem"><div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem"><span style="font-weight:700;font-size:.95rem;color:var(--text-main)">📏 Höhe: <span id="barHeightValue" style="color:var(--primary);font-family:var(--font-mono)">${currentSettings.barHeight}px</span></span></div><input type="range" id="barHeightSlider" min="20" max="50" value="${currentSettings.barHeight}" style="width:100%;height:7px;border-radius:4px;background:linear-gradient(to right,rgba(var(--primary-rgb),.2),rgba(var(--primary-rgb),.4));outline:none;-webkit-appearance:none;cursor:pointer" oninput="window.modalBarSettings.barHeight=parseInt(this.value);document.getElementById('barHeightValue').textContent=this.value+'px';applyBarChartSettings()"><style>input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--primary);cursor:pointer;box-shadow:0 0 8px rgba(var(--primary-rgb),.4)}input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--primary);cursor:pointer;border:none;box-shadow:0 0 8px rgba(var(--primary-rgb),.4)}</style></div><label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:13px 14px;background:rgba(var(--primary-rgb),.04);border:1.5px solid rgba(var(--primary-rgb),.12);border-radius:12px;transition:all .2s" onmouseover="this.style.background='rgba(var(--primary-rgb),.08)';this.style.borderColor='rgba(var(--primary-rgb),.25)'" onmouseout="this.style.background='rgba(var(--primary-rgb),.04)';this.style.borderColor='rgba(var(--primary-rgb),.12)'"><span style="font-size:1.6rem">📝</span><div style="flex:1"><div style="font-weight:700;color:var(--text-main);font-size:.95rem">Prozent anzeigen</div><div style="font-size:.7rem;color:var(--text-muted)">Im Balken</div></div><input type="checkbox" id="showLabelsCheck" ${currentSettings.showLabels ? 'checked' : ''} style="width:20px;height:20px;cursor:pointer;accent-color:var(--primary)"></label><label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:13px 14px;background:rgba(var(--primary-rgb),.04);border:1.5px solid rgba(var(--primary-rgb),.12);border-radius:12px;transition:all .2s" onmouseover="this.style.background='rgba(var(--primary-rgb),.08)';this.style.borderColor='rgba(var(--primary-rgb),.25)'" onmouseout="this.style.background='rgba(var(--primary-rgb),.04)';this.style.borderColor='rgba(var(--primary-rgb),.12)'"><span style="font-size:1.6rem">⚡</span><div style="flex:1"><div style="font-weight:700;color:var(--text-main);font-size:.95rem">Sanfte Animation</div><div style="font-size:.7rem;color:var(--text-muted)">Beim Laden</div></div><input type="checkbox" id="showAnimationCheck" ${currentSettings.showAnimation ? 'checked' : ''} style="width:20px;height:20px;cursor:pointer;accent-color:var(--primary)"></label><div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem"><span style="font-weight:700;font-size:.95rem;color:var(--text-main)">🔘 Ecken: <span id="borderRadiusValue" style="color:var(--primary);font-family:var(--font-mono)">${currentSettings.borderRadius}px</span></span></div><input type="range" id="borderRadiusSlider" min="0" max="20" value="${currentSettings.borderRadius}" style="width:100%;height:7px;border-radius:4px;background:linear-gradient(to right,rgba(var(--primary-rgb),.2),rgba(var(--primary-rgb),.4));outline:none;-webkit-appearance:none;cursor:pointer" oninput="window.modalBarSettings.borderRadius=parseInt(this.value);document.getElementById('borderRadiusValue').textContent=this.value+'px';applyBarChartSettings()"></div><div style="display:flex;gap:10px;justify-content:flex-end;padding-top:1.5rem;border-top:1px solid var(--border-subtle);margin-top:.5rem"><button id="donutCancelBtn" onclick="document.getElementById('donutStyleModal').remove()" style="padding:10px 20px;background:rgba(255,255,255,.05);border:1px solid var(--border-default);border-radius:8px;color:var(--text-main);font-weight:600;cursor:pointer;transition:all .2s;font-size:.95rem" onmouseover="this.style.background='rgba(255,255,255,.10)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,255,255,.05)';this.style.transform='translateY(0)'">Abbrechen</button><button id="donutSaveBtn" style="padding:10px 24px;background:linear-gradient(135deg,var(--primary),rgba(var(--primary-rgb),.8));border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;transition:all .2s;font-size:.95rem;box-shadow:0 4px 12px rgba(var(--primary-rgb),.3)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(var(--primary-rgb),.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 12px rgba(var(--primary-rgb),.3)'">Speichern</button></div></div>`;
+
         document.body.appendChild(modal);
-        
+
         // Setup checkbox handlers
-        document.getElementById('donutGlowCheck').addEventListener('change', (e) => {
-            window.modalDonutStyle.glow = e.target.checked;
-            updateDonutStylePreview(window.modalDonutStyle);
+        document.getElementById('showLabelsCheck').addEventListener('change', (e) => {
+            window.modalBarSettings.showLabels = e.target.checked;
+            applyBarChartSettings();
         });
-        document.getElementById('donutAnimatedCheck').addEventListener('change', (e) => {
-            window.modalDonutStyle.animated = e.target.checked;
-            updateDonutStylePreview(window.modalDonutStyle);
+        document.getElementById('showAnimationCheck').addEventListener('change', (e) => {
+            window.modalBarSettings.showAnimation = e.target.checked;
         });
-        document.getElementById('donutRainbowCheck').addEventListener('change', (e) => {
-            window.modalDonutStyle.rainbow = e.target.checked;
-            if (e.target.checked) createConfetti(window.innerWidth / 2, window.innerHeight / 3, 20);
-            updateDonutStylePreview(window.modalDonutStyle);
-        });
-        
+
         // Save button handler
         document.getElementById('donutSaveBtn').addEventListener('click', () => {
-            saveDonutStyle();
+            localStorage.setItem('tt_bar_chart_settings', JSON.stringify(window.modalBarSettings));
             createExplosion(window.innerWidth / 2, window.innerHeight / 2);
             document.getElementById('donutStyleModal').remove();
             updateDashboard();
         });
-        
+
         // Cancel button handler
         document.getElementById('donutCancelBtn').addEventListener('click', () => {
             document.getElementById('donutStyleModal').remove();
         });
-        
+
         // Close on backdrop click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) modal.remove();
         });
-        
-        // Preview laden
-        setTimeout(() => updateDonutStylePreview(currentStyle), 100);
+    }
+
+    function applyBarChartSettings() {
+        if (!window.modalBarSettings) return;
+        const container = document.getElementById('donutChartContainer');
+        if (container) container.style.height = window.modalBarSettings.barHeight + 'px';
+
+        const labels = document.querySelectorAll('.segment-label');
+        labels.forEach(label => {
+            label.style.display = window.modalBarSettings.showLabels ? 'block' : 'none';
+        });
     }
 
     function cancelDashboardEditMode() {

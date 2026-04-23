@@ -4,7 +4,7 @@
 
 const CACHE_NAME = 'timetracker-v3.5.2';
 const RUNTIME_CACHE = 'timetracker-runtime-v3.5.2';
-const VERSION_CACHE = 'timetracker-version-v1';
+const VERSION_CACHE = 'timetracker-version-v1.1.1';
 const SW_DEBUG = true;
 const OFFLINE_PAGE = './Pages/Info/offline.html';
 const FETCH_TIMEOUT = 8000; // 8s timeout für Netzwerk

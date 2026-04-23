@@ -1,9 +1,21 @@
 // ═══ CORE: DASHBOARD-UI ═══
     // --- UI UPDATES (Dashboard) ---
     function updateUI() {
+        // Load bar chart settings
+        const barSettings = JSON.parse(localStorage.getItem('tt_bar_chart_settings') || '{"barHeight":32,"showLabels":true,"showAnimation":true,"borderRadius":8}');
+        const chartContainer = document.getElementById('donutChartContainer');
+        if (chartContainer) {
+            chartContainer.style.height = barSettings.barHeight + 'px';
+            chartContainer.style.borderRadius = barSettings.borderRadius + 'px';
+        }
+        const labels = document.querySelectorAll('.segment-label');
+        labels.forEach(label => {
+            label.style.display = barSettings.showLabels ? 'block' : 'none';
+        });
+
         // Weather-based greeting (calls updateGreetingWeather)
         updateGreetingWeather();
-        
+
         const trashBadge = document.getElementById('trashCountBadge');
         if (trashBadge) trashBadge.textContent = (Array.isArray(data.trash) ? data.trash.length : 0);
         
@@ -123,7 +135,7 @@
 
         renderLists();
         renderTrend(trendData, 'trendChart', true, null, ascEntries);
-        renderDonut(workSum, vacSum, sickSum, schoolSum, holidaySum);
+        renderDonutModern(workSum, vacSum, sickSum, schoolSum, holidaySum);
         
         // Update NEW Features
         if (typeof updateDailySummary === 'function') updateDailySummary();

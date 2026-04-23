@@ -1185,33 +1185,97 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             <div class="trend-tooltip" id="trendTooltip" style="display:none;"></div>
                         </div>
 
-                        <!-- Verteilung Donut -->
-                        <div class="card chart-card">
+                        <!-- ═══ MODERNE VERTEILUNG DONUT ═══ -->
+                        <div class="card chart-card donut-redesign">
                             <div class="chart-header">
                                 <div>
-                                    <div class="chart-title">Verteilung</div>
-                                    <div class="chart-sub">Arbeitszeit-Aufteilung</div>
+                                    <div class="chart-title">Arbeitszeit-Verteilung</div>
+                                    <div class="chart-sub" id="donutSubtitle">Wöchentliche Aufteilung</div>
                                 </div>
                                 <button class="btn btn-ghost chart-config-btn" onclick="openDonutStyleModal()" title="Donut-Stil anpassen">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                                 </button>
                             </div>
-                            <div class="donut-container" id="donutChartContainer" style="cursor:pointer;" onclick="openDonutStyleModal()">
-                                <svg id="donutSvg" width="150" height="150" viewBox="0 0 100 100" style="transform: rotate(-90deg);">
-                                    <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.04)" stroke-width="12"></circle>
-                                    <circle id="donutSick"    cx="50" cy="50" r="40" fill="transparent" stroke="var(--danger)"  stroke-width="12" stroke-dasharray="0 251"></circle>
-                                    <circle id="donutVac"     cx="50" cy="50" r="40" fill="transparent" stroke="var(--success)" stroke-width="12" stroke-dasharray="0 251"></circle>
-                                    <circle id="donutSchool"  cx="50" cy="50" r="40" fill="transparent" stroke="var(--school)"  stroke-width="12" stroke-dasharray="0 251"></circle>
-                                    <circle id="donutHoliday" cx="50" cy="50" r="40" fill="transparent" stroke="var(--holiday)" stroke-width="12" stroke-dasharray="0 251"></circle>
-                                    <circle id="donutWork"    cx="50" cy="50" r="40" fill="transparent" stroke="var(--primary)" stroke-width="12" stroke-dasharray="0 251"></circle>
-                                </svg>
+
+                            <!-- MODERN STACKED BAR CHART - Alle Kategorien sichtbar! -->
+                            <div class="donut-wrapper" id="donutWrapper" style="flex-direction: column; height: auto; padding: 1rem 0;">
+                                <div class="donut-center-info" id="donutCenterInfo" style="position: static; transform: none; margin-bottom: 1rem; text-align: center;">
+                                    <div class="center-value" id="donutCenterValue" style="font-size: 1.5rem;">—</div>
+                                    <div class="center-label" id="donutCenterLabel">Gesamt</div>
+                                </div>
+
+                                <!-- Stacked Progress Bar -->
+                                <div id="donutChartContainer" style="width: 100%; height: 32px; background: rgba(255,255,255,0.04); border-radius: 8px; overflow: hidden; display: flex; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                                    <div id="donutWork" class="donut-segment" style="background: var(--primary); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('work')" onmouseout="clearDonutHighlight()" title="Arbeit">
+                                        <div class="segment-label" style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
+                                            <span id="work-label">—</span>
+                                        </div>
+                                    </div>
+                                    <div id="donutSchool" class="donut-segment" style="background: var(--school); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('school')" onmouseout="clearDonutHighlight()" title="Schule">
+                                        <div class="segment-label" style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
+                                            <span id="school-label">—</span>
+                                        </div>
+                                    </div>
+                                    <div id="donutVac" class="donut-segment" style="background: var(--success); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('vac')" onmouseout="clearDonutHighlight()" title="Urlaub">
+                                        <div class="segment-label" style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
+                                            <span id="vac-label">—</span>
+                                        </div>
+                                    </div>
+                                    <div id="donutSick" class="donut-segment" style="background: var(--danger); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('sick')" onmouseout="clearDonutHighlight()" title="Krank">
+                                        <div class="segment-label" style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
+                                            <span id="sick-label">—</span>
+                                        </div>
+                                    </div>
+                                    <div id="donutHoliday" class="donut-segment" style="background: var(--holiday); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('holiday')" onmouseout="clearDonutHighlight()" title="Feiertag">
+                                        <div class="segment-label" style="position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
+                                            <span id="holiday-label">—</span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="donut-legend">
-                                <div class="legend-item"><div class="dot" style="background:var(--primary)"></div> Arbeit</div>
-                                <div class="legend-item"><div class="dot" style="background:var(--school)"></div> Schule</div>
-                                <div class="legend-item"><div class="dot" style="background:var(--success)"></div> Urlaub</div>
-                                <div class="legend-item"><div class="dot" style="background:var(--danger)"></div> Krank</div>
-                                <div class="legend-item"><div class="dot" style="background:var(--holiday)"></div> Feiertag</div>
+
+                            <!-- NEW: Modern Data Cards Legend -->
+                            <div class="donut-legend-grid" id="donutLegendGrid">
+                                <div class="legend-card" data-type="work" onmouseover="highlightDonutSegment('work')" onmouseout="clearDonutHighlight()">
+                                    <div class="legend-card__accent" style="background: var(--primary);"></div>
+                                    <div class="legend-card__content">
+                                        <div class="legend-card__label">Arbeit</div>
+                                        <div class="legend-card__value" id="val-work">—</div>
+                                        <div class="legend-card__percent" id="pct-work">0%</div>
+                                    </div>
+                                </div>
+                                <div class="legend-card" data-type="school" onmouseover="highlightDonutSegment('school')" onmouseout="clearDonutHighlight()">
+                                    <div class="legend-card__accent" style="background: var(--school);"></div>
+                                    <div class="legend-card__content">
+                                        <div class="legend-card__label">Schule</div>
+                                        <div class="legend-card__value" id="val-school">—</div>
+                                        <div class="legend-card__percent" id="pct-school">0%</div>
+                                    </div>
+                                </div>
+                                <div class="legend-card" data-type="vacation" onmouseover="highlightDonutSegment('vac')" onmouseout="clearDonutHighlight()">
+                                    <div class="legend-card__accent" style="background: var(--success);"></div>
+                                    <div class="legend-card__content">
+                                        <div class="legend-card__label">Urlaub</div>
+                                        <div class="legend-card__value" id="val-vacation">—</div>
+                                        <div class="legend-card__percent" id="pct-vacation">0%</div>
+                                    </div>
+                                </div>
+                                <div class="legend-card" data-type="sick" onmouseover="highlightDonutSegment('sick')" onmouseout="clearDonutHighlight()">
+                                    <div class="legend-card__accent" style="background: var(--danger);"></div>
+                                    <div class="legend-card__content">
+                                        <div class="legend-card__label">Krank</div>
+                                        <div class="legend-card__value" id="val-sick">—</div>
+                                        <div class="legend-card__percent" id="pct-sick">0%</div>
+                                    </div>
+                                </div>
+                                <div class="legend-card" data-type="holiday" onmouseover="highlightDonutSegment('holiday')" onmouseout="clearDonutHighlight()">
+                                    <div class="legend-card__accent" style="background: var(--holiday);"></div>
+                                    <div class="legend-card__content">
+                                        <div class="legend-card__label">Feiertag</div>
+                                        <div class="legend-card__value" id="val-holiday">—</div>
+                                        <div class="legend-card__percent" id="pct-holiday">0%</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
