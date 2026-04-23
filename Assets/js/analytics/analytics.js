@@ -970,7 +970,8 @@ async function loadAll() {
         hideSkeletons();
         if (err.message.indexOf('401') !== -1 || err.message.indexOf('403') !== -1) {
             document.getElementById('configNotice').style.display = 'block';
-            alert('❌ Ungültiger API Token!\n\nBitte neuen Token erstellen unter:\nUmami Cloud → Settings → API Keys');
+        } else if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+            document.getElementById('adblockNotice').style.display = 'block';
         } else {
             alert('❌ Fehler beim Laden!\n\n' + err.message);
         }

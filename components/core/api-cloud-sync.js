@@ -2,18 +2,47 @@
     // ============================================
     // API STATUS MONITOR (Edge Logs Style)
     // ============================================
-    
+
+    // AdBlocker detection via network fetch — cached 60s
+    // pagead2.googlesyndication.com is in every major block list (uBlock, AdBlock, etc.)
+    // mode:'no-cors' → CORS kein Problem, opaque response = kein Fehler = nicht geblockt
+    let _adblockCache = { result: null, ts: 0 };
+    async function detectAdBlocker() {
+        if (_adblockCache.result !== null && Date.now() - _adblockCache.ts < 60000) {
+            return _adblockCache.result;
+        }
+        let detected = false;
+        try {
+            const controller = new AbortController();
+            const tid = setTimeout(() => controller.abort(), 2000);
+            await fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', {
+                method: 'HEAD',
+                mode: 'no-cors',
+                cache: 'no-store',
+                signal: controller.signal
+            });
+            clearTimeout(tid);
+            detected = false; // Request kam durch → kein AdBlocker
+        } catch(e) {
+            // AbortError = Timeout (langsames Netz), kein AdBlocker-Indiz
+            detected = e.name !== 'AbortError';
+        }
+        _adblockCache = { result: detected, ts: Date.now() };
+        return detected;
+    }
+
     const apiStatusMonitor = {
         logs: JSON.parse(localStorage.getItem('api_status_logs') || '[]'),
         currentRange: '24h',
-        
+
         // Record an API call result
-        record(method, path, status, timestamp) {
+        record(method, path, status, timestamp, adblocked) {
             const entry = {
                 method: (method || 'GET').toUpperCase(),
                 path: path || '/',
                 status: parseInt(status) || 0,
-                ts: timestamp || Date.now()
+                ts: timestamp || Date.now(),
+                adblocked: adblocked === true
             };
             this.logs.push(entry);
             // Keep max 2000 entries (roughly 30 days of moderate usage)
@@ -96,15 +125,60 @@
             // Overall status
             const statusDot = document.getElementById('apiStatusDot');
             const statusText = document.getElementById('apiStatusText');
+            const diagBanner = document.getElementById('apiDiagBanner');
             const recentLogs = this.getFilteredLogs('1h');
             const recent5xx = recentLogs.filter(l => l.status >= 500).length;
+            const recent503 = recentLogs.filter(l => l.status === 503).length;
             const recent4xx = recentLogs.filter(l => l.status >= 400 && l.status < 500).length;
-            
+            const recentAdblocked = recentLogs.filter(l => l.adblocked === true).length;
+            const recentNetErr = recentLogs.filter(l => l.status === 0 && !l.adblocked).length;
+
+            // Diagnose banner
+            if (diagBanner) {
+                if (recent503 > 0) {
+                    diagBanner.style.display = 'block';
+                    diagBanner.innerHTML = `<div class="api-diag-banner server503">
+                        <span class="api-diag-icon">🔴</span>
+                        <div><div class="api-diag-title">Service Unavailable — HTTP 503</div>
+                        Der Server antwortet, ist aber überlastet oder im Wartungsmodus. Das ist ein echtes Server-Problem, kein AdBlocker. Warte einige Minuten und versuche es erneut.</div>
+                    </div>`;
+                } else if (recentAdblocked > 0 && recent5xx === 0) {
+                    diagBanner.style.display = 'block';
+                    diagBanner.innerHTML = `<div class="api-diag-banner adblock">
+                        <span class="api-diag-icon">🛡️</span>
+                        <div><div class="api-diag-title">AdBlocker blockiert API-Zugriff</div>
+                        Die API ist wahrscheinlich online, aber dein AdBlocker verhindert den Zugriff. Deaktiviere den AdBlocker für diese Seite oder füge myworklog.de zur Whitelist hinzu.</div>
+                    </div>`;
+                } else if (recentNetErr > 0 && recent5xx === 0 && recentAdblocked === 0) {
+                    diagBanner.style.display = 'block';
+                    diagBanner.innerHTML = `<div class="api-diag-banner neterr">
+                        <span class="api-diag-icon">📡</span>
+                        <div><div class="api-diag-title">Verbindungsfehler</div>
+                        Kein AdBlocker erkannt — prüfe deine Netzwerkverbindung oder ob die API-URL korrekt konfiguriert ist.</div>
+                    </div>`;
+                } else {
+                    diagBanner.style.display = 'none';
+                    diagBanner.innerHTML = '';
+                }
+            }
+
             if (recent5xx > 0) {
                 statusDot.style.background = '#ef4444';
                 statusDot.style.boxShadow = '0 0 8px rgba(239,68,68,0.5)';
-                statusText.textContent = `${recent5xx} Server-Fehler in der letzten Stunde`;
+                statusText.textContent = recent503 > 0
+                    ? `Service Unavailable (503) — Server offline`
+                    : `${recent5xx} Server-Fehler in der letzten Stunde`;
                 statusText.style.color = '#ef4444';
+            } else if (recentAdblocked > 0) {
+                statusDot.style.background = '#f59e0b';
+                statusDot.style.boxShadow = '0 0 8px rgba(245,158,11,0.5)';
+                statusText.textContent = 'AdBlocker blockiert API-Zugriff';
+                statusText.style.color = '#f59e0b';
+            } else if (recentNetErr > 0) {
+                statusDot.style.background = '#f59e0b';
+                statusDot.style.boxShadow = '0 0 8px rgba(245,158,11,0.5)';
+                statusText.textContent = 'Verbindungsfehler — Netzwerk prüfen';
+                statusText.style.color = '#f59e0b';
             } else if (recent4xx > 2) {
                 statusDot.style.background = '#f59e0b';
                 statusDot.style.boxShadow = '0 0 8px rgba(245,158,11,0.5)';
@@ -125,27 +199,31 @@
             // --- Status Code Breakdown ---
             const codesEl = document.getElementById('apiStatusCodes');
             const codeCounts = {};
+            let adblockCount = 0, netErrCount = 0;
             logs.forEach(l => {
-                const code = l.status || 0;
+                if (l.adblocked) { adblockCount++; return; }
+                if (l.status === 0) { netErrCount++; return; }
+                const code = l.status;
                 codeCounts[code] = (codeCounts[code] || 0) + 1;
             });
-            
-            if (Object.keys(codeCounts).length === 0) {
+
+            if (Object.keys(codeCounts).length === 0 && adblockCount === 0 && netErrCount === 0) {
                 codesEl.innerHTML = '<span style="font-size:0.72rem; color:rgba(255,255,255,0.2);">Noch keine Requests aufgezeichnet</span>';
             } else {
-                // Sort: 5xx first, then 4xx, 3xx, 2xx
                 const sorted = Object.entries(codeCounts).sort((a, b) => {
                     const ca = Math.floor(parseInt(a[0]) / 100);
                     const cb = Math.floor(parseInt(b[0]) / 100);
-                    if (cb !== ca) return cb - ca; // 5xx > 4xx > 3xx > 2xx
+                    if (cb !== ca) return cb - ca;
                     return parseInt(b[0]) - parseInt(a[0]);
                 });
-                
-                codesEl.innerHTML = sorted.map(([code, count]) => {
+                let pillsHTML = sorted.map(([code, count]) => {
                     const cat = Math.floor(parseInt(code) / 100);
                     const cls = cat >= 5 ? 's5xx' : cat >= 4 ? 's4xx' : cat >= 3 ? 's3xx' : 's2xx';
                     return `<span class="api-status-pill ${cls}">${code} <span style="opacity:0.7; font-weight:500;">×${count}</span></span>`;
                 }).join('');
+                if (adblockCount > 0) pillsHTML += `<span class="api-status-pill s-adblock">BLOCKED <span style="opacity:0.7; font-weight:500;">×${adblockCount}</span></span>`;
+                if (netErrCount > 0) pillsHTML += `<span class="api-status-pill s-neterr">ERR <span style="opacity:0.7; font-weight:500;">×${netErrCount}</span></span>`;
+                codesEl.innerHTML = pillsHTML;
             }
             
             // --- Endpoint Health ---
@@ -196,17 +274,21 @@
             if (logs.length === 0) {
                 logEl.innerHTML = '<div style="padding:20px; text-align:center; color:rgba(255,255,255,0.15); font-size:0.75rem;">Noch keine API Requests aufgezeichnet.<br><span style="font-size:0.68rem;">Requests werden automatisch beim Sync erfasst.</span></div>';
             } else {
-                const displayLogs = logs.slice(0, 50); // Show last 50
+                const displayLogs = logs.slice(0, 50);
                 logEl.innerHTML = displayLogs.map(l => {
+                    const isAdblocked = l.adblocked === true;
+                    const isNetErr = !isAdblocked && l.status === 0;
                     const cat = Math.floor(l.status / 100);
-                    const statusCls = cat >= 5 ? 'c5' : cat >= 4 ? 'c4' : cat >= 3 ? 'c3' : 'c2';
+                    const statusCls = isAdblocked ? 'c-adblock' : isNetErr ? 'c-neterr' : cat >= 5 ? 'c5' : cat >= 4 ? 'c4' : cat >= 3 ? 'c3' : 'c2';
+                    const statusLabel = isAdblocked ? 'BLK' : isNetErr ? 'ERR' : l.status;
                     const methodCls = l.method === 'GET' ? 'get' : l.method === 'POST' ? 'post' : l.method === 'HEAD' ? 'head' : l.method === 'PUT' ? 'put' : l.method === 'DELETE' ? 'del' : 'opt';
                     const timeAgo = formatTimeAgo(l.ts);
-                    
+                    const pathLabel = isAdblocked ? l.path + ' 🛡️' : isNetErr ? l.path + ' 📡' : l.path;
+
                     return `<div class="api-log-row">
-                        <span class="api-log-status ${statusCls}">${l.status}</span>
+                        <span class="api-log-status ${statusCls}">${statusLabel}</span>
                         <span class="api-method-badge ${methodCls}">${l.method}</span>
-                        <span class="api-log-path" title="${l.path}">${l.path}</span>
+                        <span class="api-log-path" title="${l.path}">${pathLabel}</span>
                         <span class="api-log-time">${timeAgo}</span>
                     </div>`;
                 }).join('');
@@ -249,11 +331,12 @@
             const startTime = Date.now();
             fetch(check.url, { method: check.method === 'HEAD' ? 'HEAD' : 'GET', mode: 'cors', headers: { 'apikey': typeof SUPABASE_CONFIG !== 'undefined' ? SUPABASE_CONFIG.ANON_KEY : '' } })
                 .then(resp => {
-                    apiStatusMonitor.record(check.method, check.path, resp.status, startTime);
+                    apiStatusMonitor.record(check.method, check.path, resp.status, startTime, false);
                     apiStatusMonitor.render();
                 })
-                .catch(() => {
-                    apiStatusMonitor.record(check.method, check.path, 0, startTime);
+                .catch(async () => {
+                    const isAdBlocked = await detectAdBlocker();
+                    apiStatusMonitor.record(check.method, check.path, 0, startTime, isAdBlocked);
                     apiStatusMonitor.render();
                 });
         });
@@ -287,8 +370,9 @@
                         clearTimeout(apiStatusMonitor._renderTimer);
                         apiStatusMonitor._renderTimer = setTimeout(() => apiStatusMonitor.render(), 500);
                         return resp;
-                    }).catch(err => {
-                        apiStatusMonitor.record(method, path, 0, ts);
+                    }).catch(async err => {
+                        const isAdBlocked = await detectAdBlocker();
+                        apiStatusMonitor.record(method, path, 0, ts, isAdBlocked);
                         clearTimeout(apiStatusMonitor._renderTimer);
                         apiStatusMonitor._renderTimer = setTimeout(() => apiStatusMonitor.render(), 500);
                         throw err;
