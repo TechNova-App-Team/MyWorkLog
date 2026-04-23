@@ -15,6 +15,9 @@
         // Tab-Tarnung checkbox
         const confTabCamoEl = document.getElementById('confTabCamo');
         if (confTabCamoEl) confTabCamoEl.checked = !!data.settings.tabCamo;
+        // Stimmungs-Feedback checkbox
+        const confMoodEl = document.getElementById('confMoodSelector');
+        if (confMoodEl) confMoodEl.checked = (data.settings.moodSelectorEnabled !== false);
         // Shortcuts checkbox
         const confShortcutsEl = document.getElementById('confShortcuts'); 
         if (confShortcutsEl) {

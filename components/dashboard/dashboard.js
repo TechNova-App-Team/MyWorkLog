@@ -1,5 +1,16 @@
 // ═══ DASHBOARD MODULE ═══
 
+    function shakeInputError(...ids) {
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('input-error');
+            void el.offsetWidth; // reflow to restart animation
+            el.classList.add('input-error');
+            setTimeout(() => el.classList.remove('input-error'), 600);
+        });
+    }
+
     function handleEntry() {
         uEvent('entry-save-attempt');
         const dateStr = document.getElementById('inpDate').value;
@@ -12,7 +23,7 @@
         const project = document.getElementById('inpProject').value.trim(); 
         const notes = document.getElementById('inpNotes').value.trim();
 
-        if(!dateStr) return showCustomMessage('❌ Fehler', 'Bitte wähle ein Datum aus.', 'error');
+        if(!dateStr) { shakeInputError('inpDate'); return; }
         
         const date = new Date(dateStr);
         let worked = 0;
@@ -95,7 +106,7 @@
                  saveTimerState();
                  displayTimerTime(0);
 
-            } else return showCustomMessage('❌ Fehler', 'Bitte gebe Zeit, Stunden oder Timer-Daten ein.', 'error');
+            } else { shakeInputError('inpStart', 'inpEnd', 'inpHours'); return; }
             
             diff = worked - expected;
 
@@ -170,8 +181,8 @@
         save();
         uEvent('entry-saved', { type: type, isEdit: !!editId });
         
-        // NEU: Mood Selector nach Eintrag
-        if (!editId) { // Nur bei neuen Einträgen
+        // Mood Selector nach Eintrag (nur wenn aktiviert)
+        if (!editId && data.settings.moodSelectorEnabled !== false) {
             openMoodSelector(entry.id);
         }
         
