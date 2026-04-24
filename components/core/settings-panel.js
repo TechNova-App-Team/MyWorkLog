@@ -227,16 +227,22 @@
         document.querySelectorAll('.settings-tab-content').forEach(el => el.style.display = 'none');
         // Alle Tab-Buttons deaktivieren
         document.querySelectorAll('.settings-tab').forEach(el => el.classList.remove('active'));
-        
+
         // Aktiven Tab zeigen
         const contentEl = document.getElementById('settings-tab-' + tabName);
         if (contentEl) {
             contentEl.style.display = 'block';
         }
-        
-        // Aktiven Button markieren
-        event.target.classList.add('active');
-        
+
+        // Aktiven Button markieren - finde Button mit onclick für diesen Tab
+        const tabBtn = document.querySelector(`.settings-tab[onclick*="'${tabName}'"]`);
+        if (tabBtn) {
+            tabBtn.classList.add('active');
+        } else if (event && event.target) {
+            // Fallback für Event-basierte Aufrufe
+            event.target.classList.add('active');
+        }
+
         // Spezielle Rendering für bestimmte Tabs
         if (tabName === 'shortcuts') {
             renderShortcutsPanel();

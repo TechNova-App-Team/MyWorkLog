@@ -111,12 +111,27 @@ class SupabaseCloudSyncUI {
      */
     bindAuthCallbacks() {
         const self = this;
-        
+
         // Überschreibe den onAuthStateChanged Callback
         this.sync.onAuthStateChanged = function(isLoggedIn, user) {
             if (isLoggedIn) {
                 self.showSyncContainer(user);
                 self.closeLoginModal();
+
+                const showCloudAfterOAuth = localStorage.getItem('_showCloudTabAfterOAuth');
+
+                // Nach erfolgreichem Login: Navigiere zum Cloud-Tab
+                setTimeout(() => {
+                    // Wenn OAuth: Öffne Settings und navigiere zum Cloud-Tab
+                    if (showCloudAfterOAuth) {
+                        localStorage.removeItem('_showCloudTabAfterOAuth');
+                        if (window.openSettings) window.openSettings();
+                    }
+                    // Navigiere zum Cloud-Tab
+                    if (window.switchSettingsTab) {
+                        window.switchSettingsTab('cloud');
+                    }
+                }, 100);
             } else {
                 self.hideSyncContainer();
             }
@@ -220,12 +235,13 @@ class SupabaseCloudSyncUI {
         try {
             discordBtn.disabled = true;
             discordBtn.innerHTML = '⏳ Discord...';
-
+            localStorage.setItem('_showCloudTabAfterOAuth', 'true');
             await this.sync.loginWithDiscord();
         } catch (error) {
             this.showMessage(`❌ Discord Login fehlgeschlagen: ${error.message}`, 'error');
             discordBtn.disabled = false;
             discordBtn.innerHTML = originalText;
+            localStorage.removeItem('_showCloudTabAfterOAuth');
         }
     }
 
@@ -239,12 +255,13 @@ class SupabaseCloudSyncUI {
         try {
             githubBtn.disabled = true;
             githubBtn.innerHTML = '⏳ GitHub...';
-
+            localStorage.setItem('_showCloudTabAfterOAuth', 'true');
             await this.sync.loginWithGitHub();
         } catch (error) {
             this.showMessage(`❌ GitHub Login fehlgeschlagen: ${error.message}`, 'error');
             githubBtn.disabled = false;
             githubBtn.innerHTML = originalText;
+            localStorage.removeItem('_showCloudTabAfterOAuth');
         }
     }
 
@@ -258,12 +275,13 @@ class SupabaseCloudSyncUI {
         try {
             googleBtn.disabled = true;
             googleBtn.innerHTML = '⏳ Google...';
-
+            localStorage.setItem('_showCloudTabAfterOAuth', 'true');
             await this.sync.loginWithGoogle();
         } catch (error) {
             this.showMessage(`❌ Google Login fehlgeschlagen: ${error.message}`, 'error');
             googleBtn.disabled = false;
             googleBtn.innerHTML = originalText;
+            localStorage.removeItem('_showCloudTabAfterOAuth');
         }
     }
 
