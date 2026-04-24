@@ -1,10 +1,17 @@
 // ═══ CORE: MOBILE-NAV-EXTRAS ═══
     function mobNavSwitch(tabId) {
-        // Close sidebar if open
+        // Close sidebar on mobile (don't toggle, ensure it's closed)
         const sidebar = document.getElementById('sidebar');
-        if (sidebar && sidebar.classList.contains('active')) {
-            toggleSidebar();
+        const overlay = document.querySelector('.sidebar-overlay');
+        if (sidebar) {
+            sidebar.classList.remove('active');
+            sidebar.classList.add('hidden');
+            isSidebarOpen = false;
         }
+        if (overlay) {
+            overlay.classList.remove('active');
+        }
+        document.body.style.overflow = '';
 
         // Switch tab using existing system
         if (typeof switchTab === 'function') {
