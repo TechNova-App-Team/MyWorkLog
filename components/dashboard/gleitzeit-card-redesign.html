@@ -1,0 +1,457 @@
+<!-- ═══ GLEITZEIT CARD REDESIGN ═══ -->
+<div class="gz-card-v2">
+    <!-- Animated Background Gradient -->
+    <div class="gz-bg-gradient"></div>
+
+    <!-- Main Container -->
+    <div class="gz-container">
+
+        <!-- Header Section -->
+        <div class="gz-header-section">
+            <div class="gz-label">GLEITZEIT</div>
+            <div class="gz-pulse-modern"></div>
+        </div>
+
+        <!-- Main Value with Visual Indicator -->
+        <div class="gz-main-section">
+            <div class="gz-balance-visual">
+                <svg class="gz-scale-icon" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet">
+                    <!-- Scale Base -->
+                    <line x1="20" y1="50" x2="80" y2="50" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+                    <!-- Pivot -->
+                    <circle cx="50" cy="50" r="3" fill="currentColor" opacity="0.5"/>
+                    <!-- Left Pan -->
+                    <rect x="15" y="45" width="20" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
+                    <line x1="25" y1="45" x2="25" y2="30" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+                    <!-- Right Pan (Tilted by value) -->
+                    <g transform="rotate(-12 50 50)">
+                        <rect x="65" y="45" width="20" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
+                        <line x1="75" y1="45" x2="75" y2="25" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="gz-value-wrapper">
+                <div class="gz-value-label">Aktueller Saldo</div>
+                <div class="gz-value-display" id="valTotal">+17.35h</div>
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="gz-divider-modern"></div>
+
+        <!-- Forecast Section -->
+        <div class="gz-forecast-section">
+            <div class="gz-forecast-header">
+                <span class="gz-forecast-icon">📊</span>
+                <span class="gz-forecast-label">Prognose</span>
+                <span class="gz-forecast-timeframe">6W</span>
+            </div>
+            <div class="gz-forecast-value" id="valProjected">+20.2h</div>
+            <div class="gz-forecast-bar">
+                <div class="gz-forecast-fill" style="width: 65%;"></div>
+            </div>
+        </div>
+
+        <!-- Streak Section -->
+        <div class="gz-streak-section">
+            <div class="gz-streak-item gz-streak-current">
+                <div class="gz-streak-label">🔥 Aktuelle Serie</div>
+                <div class="gz-streak-value" id="streakCount">0</div>
+                <div class="gz-streak-subtext">Tage</div>
+            </div>
+            <div class="gz-streak-item gz-streak-best">
+                <div class="gz-streak-label">🏆 Bester Rekord</div>
+                <div class="gz-streak-value" id="streakBest">169</div>
+                <div class="gz-streak-subtext">Tage</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ─── GLEITZEIT CARD V2 ─────────────────────────────────────────── */
+    .gz-card-v2 {
+        position: relative;
+        background: linear-gradient(135deg,
+            rgba(var(--primary-rgb), 0.08) 0%,
+            rgba(var(--primary-rgb), 0.04) 50%,
+            rgba(var(--primary-rgb), 0.02) 100%);
+        border: 1px solid rgba(var(--primary-rgb), 0.12);
+        border-radius: 16px;
+        overflow: hidden;
+        padding: 1.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        min-height: 380px;
+    }
+
+    .gz-card-v2:hover {
+        border-color: rgba(var(--primary-rgb), 0.25);
+        background: linear-gradient(135deg,
+            rgba(var(--primary-rgb), 0.12) 0%,
+            rgba(var(--primary-rgb), 0.06) 50%,
+            rgba(var(--primary-rgb), 0.03) 100%);
+        box-shadow: 0 8px 32px rgba(var(--primary-rgb), 0.08);
+    }
+
+    /* Animated Background */
+    .gz-bg-gradient {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 100% 0%,
+            rgba(var(--primary-rgb), 0.1) 0%,
+            transparent 50%);
+        animation: gz-gradient-shift 8s ease-in-out infinite;
+        pointer-events: none;
+    }
+
+    @keyframes gz-gradient-shift {
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(20px, 20px); }
+    }
+
+    .gz-container {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    /* ─── HEADER ──────────────────────────────────────────────────── */
+    .gz-header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .gz-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        text-shadow: 0 0 20px rgba(var(--primary-rgb), 0.1);
+    }
+
+    .gz-pulse-modern {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--primary);
+        box-shadow: 0 0 12px var(--primary), 0 0 24px rgba(var(--primary-rgb), 0.4);
+        animation: gz-pulse-modern 2.5s ease-in-out infinite;
+    }
+
+    @keyframes gz-pulse-modern {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 1;
+            box-shadow: 0 0 12px var(--primary), 0 0 24px rgba(var(--primary-rgb), 0.4);
+        }
+        50% {
+            transform: scale(1.3);
+            opacity: 0.6;
+            box-shadow: 0 0 20px var(--primary), 0 0 40px rgba(var(--primary-rgb), 0.2);
+        }
+    }
+
+    /* ─── MAIN VALUE SECTION ──────────────────────────────────────── */
+    .gz-main-section {
+        display: grid;
+        grid-template-columns: 100px 1fr;
+        gap: 1.5rem;
+        align-items: center;
+        padding: 1.25rem;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(var(--primary-rgb), 0.08);
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .gz-main-section::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg,
+            transparent 0%,
+            rgba(var(--primary-rgb), 0.05) 100%);
+        pointer-events: none;
+    }
+
+    .gz-balance-visual {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        color: var(--primary);
+    }
+
+    .gz-scale-icon {
+        width: 80px;
+        height: 48px;
+        opacity: 0.8;
+        filter: drop-shadow(0 4px 8px rgba(var(--primary-rgb), 0.15));
+        animation: gz-scale-tilt 3s ease-in-out infinite;
+    }
+
+    @keyframes gz-scale-tilt {
+        0%, 100% { transform: rotate(-5deg); }
+        50% { transform: rotate(5deg); }
+    }
+
+    .gz-value-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .gz-value-label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        letter-spacing: 0.02em;
+    }
+
+    .gz-value-display {
+        font-size: 2.2rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg,
+            var(--primary) 0%,
+            rgba(var(--primary-rgb), 0.7) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-family: 'JetBrains Mono', monospace;
+        text-shadow: 0 0 20px rgba(var(--primary-rgb), 0.2);
+    }
+
+    /* ─── DIVIDER ─────────────────────────────────────────────────── */
+    .gz-divider-modern {
+        height: 1px;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(var(--primary-rgb), 0.2) 50%,
+            transparent 100%);
+    }
+
+    /* ─── FORECAST SECTION ────────────────────────────────────────── */
+    .gz-forecast-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        padding: 1rem;
+        background: rgba(var(--primary-rgb), 0.03);
+        border: 1px solid rgba(var(--primary-rgb), 0.06);
+        border-radius: 10px;
+        position: relative;
+    }
+
+    .gz-forecast-section::after {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(var(--primary-rgb), 0.3) 50%,
+            transparent 100%);
+    }
+
+    .gz-forecast-header {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.85rem;
+    }
+
+    .gz-forecast-icon {
+        font-size: 1.1rem;
+    }
+
+    .gz-forecast-label {
+        font-weight: 600;
+        color: var(--text-main);
+        flex: 1;
+    }
+
+    .gz-forecast-timeframe {
+        font-size: 0.75rem;
+        font-weight: 700;
+        background: rgba(var(--primary-rgb), 0.12);
+        color: var(--primary);
+        padding: 2px 8px;
+        border-radius: 4px;
+        letter-spacing: 0.05em;
+    }
+
+    .gz-forecast-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .gz-forecast-bar {
+        height: 6px;
+        background: rgba(var(--primary-rgb), 0.08);
+        border-radius: 3px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .gz-forecast-fill {
+        height: 100%;
+        background: linear-gradient(90deg,
+            var(--primary) 0%,
+            rgba(var(--primary-rgb), 0.6) 100%);
+        border-radius: 3px;
+        animation: gz-fill-grow 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.4);
+    }
+
+    @keyframes gz-fill-grow {
+        from { width: 0%; }
+    }
+
+    /* ─── STREAK SECTION ──────────────────────────────────────────── */
+    .gz-streak-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .gz-streak-item {
+        padding: 1rem;
+        border-radius: 10px;
+        border: 1px solid rgba(var(--primary-rgb), 0.1);
+        background: rgba(var(--primary-rgb), 0.02);
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .gz-streak-item::before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(var(--primary-rgb), 0.2) 50%,
+            transparent 100%);
+    }
+
+    .gz-streak-item:hover {
+        border-color: rgba(var(--primary-rgb), 0.2);
+        background: rgba(var(--primary-rgb), 0.06);
+        transform: translateY(-2px);
+    }
+
+    .gz-streak-current {
+        position: relative;
+    }
+
+    .gz-streak-best {
+        position: relative;
+    }
+
+    .gz-streak-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        letter-spacing: 0.02em;
+    }
+
+    .gz-streak-value {
+        font-size: 1.8rem;
+        font-weight: 900;
+        font-family: 'JetBrains Mono', monospace;
+        background: linear-gradient(135deg,
+            var(--primary) 0%,
+            rgba(var(--primary-rgb), 0.8) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+    }
+
+    .gz-streak-subtext {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+        .gz-card-v2 {
+            padding: 1.25rem;
+            min-height: auto;
+        }
+
+        .gz-main-section {
+            grid-template-columns: 1fr;
+            padding: 1rem;
+            gap: 1rem;
+        }
+
+        .gz-balance-visual {
+            order: -1;
+        }
+
+        .gz-value-display {
+            font-size: 1.8rem;
+        }
+
+        .gz-forecast-bar {
+            height: 5px;
+        }
+
+        .gz-streak-section {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ─── DARK MODE OPTIMIZATION ──────────────────────────────────── */
+    @media (prefers-color-scheme: dark) {
+        .gz-card-v2 {
+            background: linear-gradient(135deg,
+                rgba(var(--primary-rgb), 0.05) 0%,
+                rgba(var(--primary-rgb), 0.02) 50%,
+                rgba(var(--primary-rgb), 0.01) 100%);
+        }
+
+        .gz-main-section {
+            background: rgba(var(--primary-rgb), 0.01);
+            border-color: rgba(var(--primary-rgb), 0.08);
+        }
+    }
+
+    /* ─── ACCESSIBILITY ──────────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+        .gz-card-v2:hover {
+            box-shadow: none;
+        }
+
+        .gz-pulse-modern,
+        .gz-scale-tilt,
+        .gz-gradient-shift,
+        .gz-fill-grow {
+            animation: none !important;
+        }
+    }
+</style>

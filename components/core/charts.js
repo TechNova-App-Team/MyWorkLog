@@ -590,9 +590,9 @@
         vals.forEach((val, i) => {
             const x = getX(i);
             const y = getY(val);
-            const dotColor = val >= 0 ? 'var(--success)' : 'var(--danger)';
-            // Visible dot (small, colored by +/-)
-            dotsHtml += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${dotColor}" opacity="0.7" class="trend-dot-hover" data-idx="${i}" style="transition: all 0.15s ease;" />`;
+            const dotColor = chartStyle.type.includes('bar') ? colorHex : strokeColor;
+            // Visible dot (small, colored by chart style)
+            dotsHtml += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${dotColor}" opacity="0.8" class="trend-dot-hover" data-idx="${i}" style="transition: all 0.15s ease;" />`;
             // Invisible larger hit area
             dotsHtml += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="12" fill="transparent" data-idx="${i}" style="cursor:pointer;" />`;
         });
@@ -601,30 +601,26 @@
         const animStyle = chartStyle.animation ? 'animation: drawLine 2s ease-in-out forwards;' : '';
         const glowFilter = chartStyle.glow ? `filter: drop-shadow(0 0 6px ${colorHex}) drop-shadow(0 0 3px ${colorHex});` : '';
         
-        // Multi-colored line path (green when positive, red when negative)
+        // Multi-colored line path - use chart color throughout
         let multiColorLine = '';
         if (isRichData && vals.some(v => v < 0) && vals.some(v => v >= 0)) {
             if (isSmooth) {
-                // Smooth multi-color: draw bezier curve segments per section
+                // Smooth bezier curve segments using chart color
                 for (let i = 1; i < vals.length; i++) {
                     const x0 = getX(i - 1), y0 = getY(vals[i - 1]);
                     const x1 = getX(i), y1 = getY(vals[i]);
                     const cp1x = (x0 + x1) / 2, cp1y = y0;
                     const cp2x = (x0 + x1) / 2, cp2y = y1;
-                    const segColor = (vals[i] >= 0 && vals[i - 1] >= 0) ? 'var(--success)' : 
-                                     (vals[i] < 0 && vals[i - 1] < 0) ? 'var(--danger)' : 'var(--primary)';
-                    const segGlow = chartStyle.glow ? `filter: drop-shadow(0 0 4px ${segColor === 'var(--success)' ? '#10b981' : segColor === 'var(--danger)' ? '#ef4444' : colorHex});` : '';
-                    multiColorLine += `<path d="M ${x0.toFixed(1)} ${y0.toFixed(1)} C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="${segColor}" stroke-width="2.5" stroke-linecap="round" style="${segGlow}" />`;
+                    const segGlow = chartStyle.glow ? `filter: drop-shadow(0 0 4px ${colorHex});` : '';
+                    multiColorLine += `<path d="M ${x0.toFixed(1)} ${y0.toFixed(1)} C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="${strokeColor}" stroke-width="2.5" stroke-linecap="round" style="${segGlow}" />`;
                 }
             } else {
-                // Straight multi-color: line segments
+                // Straight line segments using chart color
                 for (let i = 1; i < vals.length; i++) {
                     const x1 = getX(i - 1), y1 = getY(vals[i - 1]);
                     const x2 = getX(i), y2 = getY(vals[i]);
-                    const segColor = (vals[i] >= 0 && vals[i - 1] >= 0) ? 'var(--success)' : 
-                                     (vals[i] < 0 && vals[i - 1] < 0) ? 'var(--danger)' : 'var(--primary)';
-                    const segGlow = chartStyle.glow ? `filter: drop-shadow(0 0 4px ${segColor === 'var(--success)' ? '#10b981' : segColor === 'var(--danger)' ? '#ef4444' : colorHex});` : '';
-                    multiColorLine += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${segColor}" stroke-width="2.5" stroke-linecap="round" style="${segGlow}" />`;
+                    const segGlow = chartStyle.glow ? `filter: drop-shadow(0 0 4px ${colorHex});` : '';
+                    multiColorLine += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${strokeColor}" stroke-width="2.5" stroke-linecap="round" style="${segGlow}" />`;
                 }
             }
         }

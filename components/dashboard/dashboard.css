@@ -172,12 +172,7 @@
             color: var(--primary);
         }
         .kpi-card__indicator {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--success);
-            box-shadow: 0 0 5px rgba(16, 185, 129, 0.35);
-            animation: indicatorPulse 4s ease-in-out infinite;
+            display: none !important;
         }
         @keyframes indicatorPulse {
             0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(16, 185, 129, 0.4); }
@@ -233,115 +228,364 @@
         }
 
 
-        /* ─── GLEITZEIT HERO ─────────────────────────────────────────── */
-        .gleitzeit-hero {
+        /* ═══ GLEITZEIT CARD V2 — MODERN REDESIGN ═══ */
+        .card.gz-card-v2 {
+            position: relative !important;
+            background: linear-gradient(135deg,
+                rgba(var(--primary-rgb), 0.08) 0%,
+                rgba(var(--primary-rgb), 0.04) 50%,
+                rgba(var(--primary-rgb), 0.02) 100%) !important;
+            border: 1px solid rgba(var(--primary-rgb), 0.12) !important;
+            border-radius: 16px !important;
+            overflow: hidden !important;
+            padding: 1.25rem !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.6rem !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            box-shadow: none !important;
+            margin-bottom: 0 !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            min-height: auto !important;
+        }
+
+        .card.gz-card-v2:hover {
+            border-color: rgba(var(--primary-rgb), 0.25) !important;
+            background: linear-gradient(135deg,
+                rgba(var(--primary-rgb), 0.12) 0%,
+                rgba(var(--primary-rgb), 0.06) 50%,
+                rgba(var(--primary-rgb), 0.03) 100%) !important;
+            box-shadow: 0 8px 32px rgba(var(--primary-rgb), 0.08) !important;
+        }
+
+        .gz-bg-gradient {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 100% 0%,
+                rgba(var(--primary-rgb), 0.1) 0%,
+                transparent 50%);
+            animation: gz-gradient-shift 8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes gz-gradient-shift {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(20px, 20px); }
+        }
+
+        .gz-container {
             position: relative;
-            overflow: hidden;
+            z-index: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            padding: 22px 20px !important;
-            background: linear-gradient(
-                140deg,
-                rgba(var(--primary-rgb), 0.05) 0%,
-                rgba(var(--primary-rgb), 0.02) 45%,
-                transparent 100%
-            ) !important;
-            border-color: rgba(var(--primary-rgb), 0.10) !important;
-            transition:
-                transform var(--dur-normal) var(--ease-out),
-                box-shadow var(--dur-normal) var(--ease-out),
-                border-color var(--dur-normal) var(--ease-out);
-        }
-        .gleitzeit-hero:hover {
-            transform: translateY(-2px);
-            border-color: rgba(var(--primary-rgb), 0.20) !important;
-            box-shadow: var(--shadow-lg), var(--shadow-glow-primary);
+            gap: 1.25rem;
         }
 
-        /* Animated accent line at top */
-        .gleitzeit-hero::before {
+        .gz-header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .gz-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            text-shadow: 0 0 20px rgba(var(--primary-rgb), 0.1);
+        }
+
+        .gz-pulse-modern {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 12px var(--primary), 0 0 24px rgba(var(--primary-rgb), 0.4);
+            animation: gz-pulse-modern 2.5s ease-in-out infinite;
+        }
+
+        @keyframes gz-pulse-modern {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+                box-shadow: 0 0 12px var(--primary), 0 0 24px rgba(var(--primary-rgb), 0.4);
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 0.6;
+                box-shadow: 0 0 20px var(--primary), 0 0 40px rgba(var(--primary-rgb), 0.2);
+            }
+        }
+
+        .gz-main-section {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 1.5rem;
+            align-items: center;
+            padding: 1.25rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(var(--primary-rgb), 0.08);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gz-main-section::before {
             content: '';
             position: absolute;
-            top: 0;
+            inset: 0;
+            background: linear-gradient(135deg,
+                transparent 0%,
+                rgba(var(--primary-rgb), 0.05) 100%);
+            pointer-events: none;
+        }
+
+        .gz-balance-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            color: var(--primary);
+        }
+
+        .gz-scale-icon {
+            width: 80px;
+            height: 48px;
+            opacity: 0.8;
+            filter: drop-shadow(0 4px 8px rgba(var(--primary-rgb), 0.15));
+            animation: gz-scale-tilt 3s ease-in-out infinite;
+        }
+
+        @keyframes gz-scale-tilt {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .gz-value-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .gz-value-label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+        }
+
+        .gz-value-display {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg,
+                var(--primary) 0%,
+                rgba(var(--primary-rgb), 0.7) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-family: 'JetBrains Mono', monospace;
+            text-shadow: 0 0 20px rgba(var(--primary-rgb), 0.2);
+        }
+
+        .gz-divider-modern {
+            height: 0.5px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(var(--primary-rgb), 0.15) 50%,
+                transparent 100%);
+            margin: 0.4rem 0;
+        }
+
+        .gz-forecast-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: rgba(var(--primary-rgb), 0.03);
+            border: 1px solid rgba(var(--primary-rgb), 0.06);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .gz-forecast-section::after {
+            content: '';
+            position: absolute;
+            top: -1px;
             left: 0;
             right: 0;
-            height: 2px;
-            background: linear-gradient(
-                90deg,
+            height: 1px;
+            background: linear-gradient(90deg,
                 transparent 0%,
-                rgba(var(--primary-rgb), 0.35) 25%,
-                rgba(var(--primary-rgb), 0.70) 50%,
-                rgba(var(--primary-rgb), 0.35) 75%,
-                transparent 100%
-            );
-            background-size: 200% 100%;
-            animation: heroAccentSlide 8s ease-in-out infinite;
-            border-radius: 1px;
-        }
-        @keyframes heroAccentSlide {
-            0%, 100% { background-position: -100% 0; }
-            50%       { background-position: 200% 0; }
+                rgba(var(--primary-rgb), 0.3) 50%,
+                transparent 100%);
         }
 
-        [data-theme="light"] .gleitzeit-hero {
-            background: linear-gradient(
-                140deg,
-                rgba(var(--primary-rgb), 0.04) 0%,
-                rgba(255, 255, 255, 0.70) 100%
-            ) !important;
-        }
-        [data-theme="light"] .gleitzeit-hero__streak {
-            border-top-color: rgba(0, 0, 0, 0.07);
+        .gz-forecast-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
         }
 
-        .gleitzeit-hero__accent { display: none; }
+        .gz-forecast-icon {
+            font-size: 0.95rem;
+        }
 
-        .gleitzeit-hero__value {
-            font-size: 3rem;
-            font-weight: 800;
+        .gz-forecast-label {
+            font-weight: 600;
+            color: var(--text-main);
+            flex: 1;
+        }
+
+        .gz-forecast-timeframe {
+            font-size: 0.65rem;
+            font-weight: 700;
+            background: rgba(var(--primary-rgb), 0.12);
             color: var(--primary);
-            margin: 6px 0;
-            font-family: var(--font-mono);
-            letter-spacing: -0.04em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+        }
+
+        .gz-forecast-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .gz-forecast-bar {
+            height: 4px;
+            background: rgba(var(--primary-rgb), 0.08);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .gz-forecast-fill {
+            height: 100%;
+            background: linear-gradient(90deg,
+                var(--primary) 0%,
+                rgba(var(--primary-rgb), 0.6) 100%);
+            border-radius: 2px;
+            animation: gz-fill-grow 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.3);
+        }
+
+        @keyframes gz-fill-grow {
+            from { width: 0%; }
+        }
+
+        .gz-streak-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .gz-streak-item {
+            padding: 0.7rem;
+            border-radius: 10px;
+            border: 1px solid rgba(var(--primary-rgb), 0.1);
+            background: rgba(var(--primary-rgb), 0.02);
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .gz-streak-item::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(var(--primary-rgb), 0.2) 50%,
+                transparent 100%);
+        }
+
+        .gz-streak-item:hover {
+            border-color: rgba(var(--primary-rgb), 0.2);
+            background: rgba(var(--primary-rgb), 0.06);
+            transform: translateY(-2px);
+        }
+
+        .gz-streak-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+        }
+
+        .gz-streak-value {
+            font-size: 1.4rem;
+            font-weight: 900;
+            font-family: 'JetBrains Mono', monospace;
+            background: linear-gradient(135deg,
+                var(--primary) 0%,
+                rgba(var(--primary-rgb), 0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             line-height: 1;
         }
-        .gleitzeit-hero__meta {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            flex-wrap: wrap;
-        }
-        .gleitzeit-hero__label { font-weight: 400; }
-        .gleitzeit-hero__sub {
-            font-size: 0.66rem;
-            opacity: 0.55;
-        }
-        .gleitzeit-hero__streak {
-            margin-top: 14px;
-            padding-top: 14px;
-            border-top: 1px solid var(--border-subtle);
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 0.76rem;
-        }
-        .gleitzeit-hero__streak-label {
+
+        .gz-streak-subtext {
+            font-size: 0.6rem;
             color: var(--text-muted);
             font-weight: 500;
         }
-        .gleitzeit-hero__streak-count {
-            color: var(--success);
-            font-weight: 800;
-            font-family: var(--font-mono);
+
+        /* ─── Mobile ─── */
+        @media (max-width: 640px) {
+            .gz-card-v2 {
+                padding: 1.25rem;
+                min-height: auto;
+            }
+
+            .gz-main-section {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+                gap: 1rem;
+            }
+
+            .gz-balance-visual {
+                order: -1;
+            }
+
+            .gz-value-display {
+                font-size: 1.8rem;
+            }
+
+            .gz-forecast-bar {
+                height: 5px;
+            }
+
+            .gz-streak-section {
+                grid-template-columns: 1fr;
+            }
         }
-        .gleitzeit-hero__streak-best {
-            font-size: 0.66rem;
-            color: var(--text-muted);
-            opacity: 0.65;
-            font-family: var(--font-mono);
+
+        /* ─── Accessibility ─── */
+        @media (prefers-reduced-motion: reduce) {
+            .gz-card-v2:hover {
+                box-shadow: none;
+            }
+
+            .gz-pulse-modern,
+            .gz-scale-tilt,
+            .gz-gradient-shift,
+            .gz-fill-grow {
+                animation: none !important;
+            }
         }
 
 
@@ -2368,7 +2612,6 @@
         /* ─── ACCESSIBILITY ──────────────────────────────────────────── */
         @media (prefers-reduced-motion: reduce) {
             .dashboard-item { animation: none !important; }
-            .gleitzeit-hero::before { animation: none !important; }
             .kpi-card__indicator { animation: none !important; }
             .streak-active { animation: none !important; }
             .greeting-emoji { animation: none !important; }
@@ -2419,7 +2662,7 @@
             .kpi-grid {
                 grid-template-columns: 1fr;
             }
-            .gleitzeit-hero__value {
+            .gleitzeit-hero-value {
                 font-size: 2.4rem;
             }
             .trend-stats-bar {
@@ -2437,4 +2680,33 @@
             .weather-details {
                 grid-template-columns: repeat(2, 1fr);
             }
+        }
+
+        /* ═══ GLEITZEIT CARD V2 — FINAL NUCLEAR OVERRIDE ═══ */
+        .card.gz-card-v2,
+        div.card.gz-card-v2,
+        .kpi-grid .card.gz-card-v2 {
+            position: relative !important;
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.08) 0%, rgba(var(--primary-rgb), 0.04) 50%, rgba(var(--primary-rgb), 0.02) 100%) !important;
+            border: 1px solid rgba(var(--primary-rgb), 0.12) !important;
+            border-radius: 16px !important;
+            overflow: hidden !important;
+            padding: 1.25rem !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.6rem !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            box-shadow: none !important;
+            margin-bottom: 0 !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            min-height: auto !important;
+        }
+
+        .card.gz-card-v2:hover,
+        div.card.gz-card-v2:hover,
+        .kpi-grid .card.gz-card-v2:hover {
+            border-color: rgba(var(--primary-rgb), 0.25) !important;
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.12) 0%, rgba(var(--primary-rgb), 0.06) 50%, rgba(var(--primary-rgb), 0.03) 100%) !important;
+            box-shadow: 0 12px 48px rgba(var(--primary-rgb), 0.12) !important;
         }
