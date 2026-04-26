@@ -709,7 +709,7 @@
     <div class="parallax-divider"></div>
 
     <!-- STATS -->
-    <section class="section">
+    <section class="section" style="overflow:visible;">
         <div class="section-parallax-bg">
             <div class="orb" data-parallax-speed="0.04" style="width:400px;height:400px;background:rgba(79,143,255,.15);top:-20%;left:10%;"></div>
             <div class="orb" data-parallax-speed="0.06" style="width:300px;height:300px;background:rgba(168,85,247,.1);bottom:-10%;right:15%;"></div>
@@ -769,9 +769,82 @@
                     </div>
                 </div>
 
-                <div class="stat-card parallax-element px-reveal px-from-below px-d2" data-speed="0.2">
-                    <div class="stat-number">96<span style="font-size:1.4rem;font-weight:400;color:var(--text-muted);">%</span></div>
-                    <div class="stat-label">Zufriedenheit</div>
+                <div class="stat-card parallax-element px-reveal px-from-below px-d2" data-speed="0.2" style="position:relative;z-index:10;overflow:visible;">
+                    <div class="stat-number"><span id="stat-satisfaction">0</span><span id="sat-pct" style="font-size:1.4rem;font-weight:400;color:var(--text-muted);">%</span></div>
+                    <div class="stat-label" style="display:flex;align-items:center;gap:6px;">
+                        Zufriedenheit
+                        <button id="satisfactionInfoBtn" style="
+                            display:inline-flex;align-items:center;justify-content:center;
+                            width:16px;height:16px;border-radius:50%;
+                            background:none;border:1px solid #c9cfd8;
+                            color:#8c95a3;font-size:10px;font-weight:600;
+                            cursor:pointer;flex-shrink:0;padding:0;line-height:1;
+                            font-style:normal;transition:border-color .2s,color .2s;
+                            position:relative;z-index:20;
+                        ">i</button>
+                    </div>
+                    <div id="satisfactionTooltip" style="
+                        display:none;
+                        position:absolute;
+                        top:calc(100% + 10px);
+                        left:0;
+                        width:295px;
+                        background:#0d0f12;
+                        border:1px solid rgba(255,255,255,.1);
+                        border-radius:10px;
+                        padding:1.1rem 1.1rem .9rem;
+                        z-index:9999;
+                        box-shadow:0 12px 40px rgba(0,0,0,.45);
+                        text-align:left;
+                        pointer-events:none;
+                    ">
+                        <div style="font-size:.8rem;font-weight:600;color:#fff;margin-bottom:.85rem;letter-spacing:-.01em;">📊 Wie wird die Zufriedenheit berechnet?</div>
+
+                        <!-- Metrik 1 -->
+                        <div style="margin-bottom:.7rem;">
+                            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.25rem;">
+                                <span style="font-size:.71rem;color:rgba(255,255,255,.6);font-weight:500;">1. Retention &amp; Bounce</span>
+                                <span id="sat-score-bounce" style="font-family:'DM Mono',monospace;font-size:.76rem;color:#4f8fff;font-weight:700;">—</span>
+                            </div>
+                            <div style="height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:.2rem;">
+                                <div id="sat-bar-bounce" style="height:100%;background:linear-gradient(90deg,#4f8fff,#93c5fd);border-radius:2px;width:0%;transition:width 1s ease .05s;"></div>
+                            </div>
+                            <span id="sat-detail-bounce" style="font-size:.64rem;color:rgba(255,255,255,.3);">Bounce Rate · Ø Verweildauer</span>
+                        </div>
+
+                        <!-- Metrik 2 -->
+                        <div style="margin-bottom:.7rem;">
+                            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.25rem;">
+                                <span style="font-size:.71rem;color:rgba(255,255,255,.6);font-weight:500;">2. Loyalitäts-Rate</span>
+                                <span id="sat-score-loyalty" style="font-family:'DM Mono',monospace;font-size:.76rem;color:#a78bfa;font-weight:700;">—</span>
+                            </div>
+                            <div style="height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:.2rem;">
+                                <div id="sat-bar-loyalty" style="height:100%;background:linear-gradient(90deg,#a78bfa,#c4b5fd);border-radius:2px;width:0%;transition:width 1s ease .15s;"></div>
+                            </div>
+                            <span id="sat-detail-loyalty" style="font-size:.64rem;color:rgba(255,255,255,.3);">Sessions ÷ Besucher</span>
+                        </div>
+
+                        <!-- Metrik 3 -->
+                        <div style="margin-bottom:.85rem;">
+                            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.25rem;">
+                                <span style="font-size:.71rem;color:rgba(255,255,255,.6);font-weight:500;">3. Aktion pro Session</span>
+                                <span id="sat-score-pages" style="font-family:'DM Mono',monospace;font-size:.76rem;color:#34d399;font-weight:700;">—</span>
+                            </div>
+                            <div style="height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:.2rem;">
+                                <div id="sat-bar-pages" style="height:100%;background:linear-gradient(90deg,#34d399,#6ee7b7);border-radius:2px;width:0%;transition:width 1s ease .25s;"></div>
+                            </div>
+                            <span id="sat-detail-pages" style="font-size:.64rem;color:rgba(255,255,255,.3);">Seiten pro Session</span>
+                        </div>
+
+                        <!-- Formel -->
+                        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:.45rem .75rem;text-align:center;">
+                            <span style="font-family:'DM Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.35);">
+                                <span style="color:#4f8fff;">40%</span> Bounce &nbsp;+&nbsp; <span style="color:#a78bfa;">40%</span> Loyal. &nbsp;+&nbsp; <span style="color:#34d399;">20%</span> Aktionen
+                            </span>
+                        </div>
+
+                        <div style="position:absolute;bottom:100%;left:24px;border:6px solid transparent;border-bottom-color:rgba(255,255,255,.1);width:0;height:0;"></div>
+                    </div>
                 </div>
                 <div class="stat-card parallax-element px-reveal px-from-below px-d3" data-speed="0.25">
                     <div class="stat-number">24/7</div>
@@ -781,16 +854,20 @@
         </div>
     </section>
 
-    <!-- UMAMI STATS JS — unverändert -->
+    <!-- UMAMI STATS JS -->
     <script>
 (function () {
-    const UMAMI_API  = 'https://api.umami.is/v1';
-    const WEBSITE_ID = '1ad00d56-ca9d-4fc7-a252-26ca5bd8acf8';
-    const API_TOKEN  = localStorage.getItem('umami_api_token') || 'api_zPctNoDxbOj59ZEltLxqLXBBEXpWDUwo';
-    const FALLBACK_VISITORS = 200;
-    const FALLBACK_HOURS    = 8900;
+    var UMAMI_API  = 'https://api.umami.is/v1';
+    var WEBSITE_ID = '1ad00d56-ca9d-4fc7-a252-26ca5bd8acf8';
+    var API_TOKEN  = localStorage.getItem('umami_api_token') || 'api_zPctNoDxbOj59ZEltLxqLXBBEXpWDUwo';
+    var FALLBACK_VISITORS = 200;
+    var FALLBACK_HOURS    = 8900;
+    var FALLBACK_SAT = { score: 86, bounce: 72, loyalty: 94, pages: 100, bounceRaw: '~47% Bounce · 6m 12s', loyaltyRaw: '1.75 Sess./Besucher', ppsRaw: '5.4 Seiten/Session' };
+
     function calcHours(v) { return (v * 45) + 800; }
+
     function animateCount(el, target, duration) {
+        if (!el) return;
         duration = duration || 1800;
         var start = performance.now();
         function easeOut(t) { return (t >= 1) ? 1 : 1 - Math.pow(2, -10 * t); }
@@ -802,6 +879,7 @@
         }
         requestAnimationFrame(tick);
     }
+
     async function fetchUmami(endpoint, params) {
         var url = new URL(UMAMI_API + '/websites/' + WEBSITE_ID + endpoint);
         if (params) Object.entries(params).forEach(function(kv) { if (kv[1] != null) url.searchParams.set(kv[0], kv[1]); });
@@ -809,10 +887,90 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
     }
+
     function setTooltipExample(visitors, hours) {
         var el = document.getElementById('hoursTooltipExample');
         if (el) el.textContent = visitors.toLocaleString('de-DE') + ' × 45 + 800 = ' + hours.toLocaleString('de-DE') + 'h';
     }
+
+    function exV(v) { return (typeof v === 'object' && v !== null) ? (v.value || 0) : (v || 0); }
+
+    function fmtDur(s) {
+        var m = Math.floor(s / 60), sec = Math.round(s % 60);
+        return m > 0 ? m + 'm ' + sec + 's' : sec + 's';
+    }
+
+    function calcSatisfaction(data) {
+        var pageviews = exV(data.pageviews);
+        var visitors  = exV(data.visitors);
+        var visits    = exV(data.visits);
+        var bounces   = exV(data.bounces);
+        var totaltime = exV(data.totaltime);
+
+        if (visits <= 0 || visitors <= 0) return FALLBACK_SAT;
+
+        var bounceRate   = (bounces / visits) * 100;
+        var avgDuration  = totaltime / visits;
+        var loyaltyRatio = visits / visitors;
+        var pps          = pageviews / visits;
+
+        // Metrik 1: Retention & Bounce (40% Gewicht)
+        // Basis: (100 - BounceRate), Bonus: hohe Verweildauer bis +30 Punkte
+        var bounceScore = Math.min((100 - bounceRate) + Math.min(avgDuration / 600, 1) * 30, 100);
+
+        // Metrik 2: Loyalitäts-Rate (40% Gewicht)
+        // 1.5 Sessions/Besucher = 80%, linear bis max 100%
+        var loyaltyScore = Math.min((loyaltyRatio / 1.5) * 80, 100);
+
+        // Metrik 3: Aktion pro Session (20% Gewicht)
+        // 4+ Seiten/Session = 100%
+        var pagesScore = Math.min((pps / 4) * 100, 100);
+
+        var combined = bounceScore * 0.4 + loyaltyScore * 0.4 + pagesScore * 0.2;
+
+        return {
+            score:      Math.round(combined),
+            bounce:     Math.round(bounceScore),
+            loyalty:    Math.round(loyaltyScore),
+            pages:      Math.round(pagesScore),
+            bounceRaw:  bounceRate.toFixed(1) + '% Bounce · Ø ' + fmtDur(avgDuration),
+            loyaltyRaw: loyaltyRatio.toFixed(2) + ' Sess./Besucher',
+            ppsRaw:     pps.toFixed(1) + ' Seiten/Session'
+        };
+    }
+
+    function updateSatisfactionUI(sat) {
+        var satEl = document.getElementById('stat-satisfaction');
+        if (!satEl) return;
+
+        var start = performance.now();
+        var target = sat.score;
+        function easeOut(t) { return (t >= 1) ? 1 : 1 - Math.pow(2, -10 * t); }
+        function tick(now) {
+            var p = Math.min((now - start) / 1800, 1);
+            satEl.textContent = Math.round(easeOut(p) * target);
+            if (p < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+
+        function setText(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; }
+        function setBar(id, pct) {
+            var el = document.getElementById(id);
+            if (el) setTimeout(function() { el.style.width = pct + '%'; }, 120);
+        }
+
+        setText('sat-score-bounce',  sat.bounce  + '%');
+        setText('sat-score-loyalty', sat.loyalty + '%');
+        setText('sat-score-pages',   sat.pages   + '%');
+        setText('sat-detail-bounce',  sat.bounceRaw);
+        setText('sat-detail-loyalty', sat.loyaltyRaw);
+        setText('sat-detail-pages',   sat.ppsRaw);
+
+        setBar('sat-bar-bounce',  sat.bounce);
+        setBar('sat-bar-loyalty', sat.loyalty);
+        setBar('sat-bar-pages',   sat.pages);
+    }
+
     async function loadStats() {
         try {
             var now = Date.now();
@@ -820,17 +978,19 @@
             var visitorsRaw = (data.visitors && data.visitors.value != null) ? data.visitors.value : (data.visitors || FALLBACK_VISITORS);
             var visitors = Math.round(Number(visitorsRaw) || FALLBACK_VISITORS);
             var hours = calcHours(visitors);
-            console.log('[Stats] visitorsRaw=', visitorsRaw, 'visitors=', visitors, 'hours=', hours, data);
             animateCount(document.getElementById('stat-active-users'), visitors);
             animateCount(document.getElementById('stat-hours'), hours);
             setTooltipExample(visitors, hours);
+            updateSatisfactionUI(calcSatisfaction(data));
         } catch (e) {
             console.warn('[Stats] Fallback:', e.message);
             animateCount(document.getElementById('stat-active-users'), FALLBACK_VISITORS);
             animateCount(document.getElementById('stat-hours'), FALLBACK_HOURS);
             setTooltipExample(FALLBACK_VISITORS, FALLBACK_HOURS);
+            updateSatisfactionUI(FALLBACK_SAT);
         }
     }
+
     function initTooltip() {
         var btn = document.getElementById('hoursInfoBtn');
         var tooltip = document.getElementById('hoursTooltip');
@@ -843,9 +1003,23 @@
         btn.addEventListener('mouseleave', function(e) { if (!tooltip.contains(e.relatedTarget)) hide(); });
         document.addEventListener('click', function() { hide(); });
     }
+
+    function initSatisfactionTooltip() {
+        var btn = document.getElementById('satisfactionInfoBtn');
+        var tooltip = document.getElementById('satisfactionTooltip');
+        if (!btn || !tooltip) return;
+        var open = false;
+        function show() { tooltip.style.display = 'block'; open = true; }
+        function hide() { tooltip.style.display = 'none'; open = false; }
+        btn.addEventListener('click', function(e) { e.stopPropagation(); open ? hide() : show(); });
+        btn.addEventListener('mouseenter', function() { show(); });
+        btn.addEventListener('mouseleave', function(e) { if (!tooltip.contains(e.relatedTarget)) hide(); });
+        document.addEventListener('click', function() { hide(); });
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { loadStats(); initTooltip(); });
-    } else { loadStats(); initTooltip(); }
+        document.addEventListener('DOMContentLoaded', function() { loadStats(); initTooltip(); initSatisfactionTooltip(); });
+    } else { loadStats(); initTooltip(); initSatisfactionTooltip(); }
 })();
     </script>
 
