@@ -425,7 +425,9 @@ function renderBarChartDual(containerId, pageviews, sessions) {
         return;
     }
 
-    var W   = Math.max(el.offsetWidth || 480, 160);
+    var vw = window.innerWidth;
+    var fallbackW = vw <= 768 ? Math.max(vw - 64, 260) : 480;
+    var W   = Math.max(el.offsetWidth || fallbackW, 160);
     var VAL = 16;   // top padding for value labels
     var CH  = 126;  // bar area height
     var LBL = 20;   // bottom area for date labels
@@ -497,7 +499,9 @@ function renderBarChartSingle(containerId, data) {
         return;
     }
 
-    var W   = Math.max(el.offsetWidth || 480, 160);
+    var vw = window.innerWidth;
+    var fallbackW = vw <= 768 ? Math.max(vw - 64, 260) : 480;
+    var W   = Math.max(el.offsetWidth || fallbackW, 160);
     var VAL = 16;
     var CH  = 126;
     var LBL = 20;
@@ -758,22 +762,20 @@ function showSkeletons() {
     document.getElementById('mainKpis').style.display = 'none';
     document.getElementById('mainKpisSkeletons').style.display = 'grid';
     document.getElementById('pageviewsChart').parentElement.parentElement.style.display = 'none';
-    document.getElementById('visitorsChart').parentElement.parentElement.style.display = 'none';
     document.getElementById('pageviewsChartSkeleton').parentElement.parentElement.style.display = 'grid';
-    document.getElementById('visitorsChartSkeleton').parentElement.parentElement.style.display = 'grid';
     document.getElementById('tableSkeletonContainer').style.display = 'block';
-    document.querySelector('.section-card:has(#topPagesTable)').style.display = 'none';
+    var tabCard = document.getElementById('topPagesTable').closest('.section-card');
+    if (tabCard) tabCard.style.display = 'none';
 }
 
 function hideSkeletons() {
     document.getElementById('mainKpis').style.display = 'grid';
     document.getElementById('mainKpisSkeletons').style.display = 'none';
     document.getElementById('pageviewsChart').parentElement.parentElement.style.display = 'grid';
-    document.getElementById('visitorsChart').parentElement.parentElement.style.display = 'grid';
     document.getElementById('pageviewsChartSkeleton').parentElement.parentElement.style.display = 'none';
-    document.getElementById('visitorsChartSkeleton').parentElement.parentElement.style.display = 'none';
     document.getElementById('tableSkeletonContainer').style.display = 'none';
-    document.querySelector('.section-card:has(#topPagesTable)').style.display = 'block';
+    var tabCard = document.getElementById('topPagesTable').closest('.section-card');
+    if (tabCard) tabCard.style.display = 'block';
 }
 
 // =========================================
