@@ -882,6 +882,18 @@
             margin-bottom: 14px;
             gap: 8px;
         }
+        .donut-redesign .chart-header {
+            position: relative;
+            padding-top: 0;
+        }
+        .chart-header-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-header-top .chart-title {
+            margin: 0;
+        }
         .chart-title {
             font-size: 0.88rem;
             font-weight: 600;
@@ -896,57 +908,121 @@
         }
 
         .chart-config-btn {
-            padding: 5px 6px !important;
-            border: 1px solid var(--border-default) !important;
-            border-radius: 7px !important;
-            background: var(--bg-inset) !important;
+            padding: 4px !important;
+            border: none !important;
+            border-radius: 50% !important;
+            background: transparent !important;
             color: var(--text-muted) !important;
             cursor: pointer !important;
-            opacity: 0.55;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: all var(--dur-fast) var(--ease-out) !important;
             flex-shrink: 0;
+            position: relative;
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
         }
         .chart-config-btn:hover {
-            opacity: 1 !important;
-            background: rgba(var(--primary-rgb), 0.08) !important;
-            border-color: rgba(var(--primary-rgb), 0.18) !important;
             color: var(--primary) !important;
+            transform: scale(1.08);
+            text-shadow: 0 0 12px rgba(var(--primary-rgb), 0.35);
+        }
+        .chart-config-btn:active {
+            transform: scale(0.96);
+        }
+
+        .donut-redesign .donut-settings-btn {
+            position: absolute !important;
+            top: 0 !important;
+            right: 0 !important;
+            width: 16px !important;
+            height: 16px !important;
+            min-width: 16px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            background: none !important;
+            border: none !important;
+            display: block !important;
+            align-items: unset !important;
+            justify-content: unset !important;
+            flex-direction: unset !important;
+        }
+        .donut-redesign .donut-settings-btn svg {
+            width: 16px !important;
+            height: 16px !important;
+            display: block !important;
+        }
+
+        @media (max-width: 640px) {
+            .chart-config-btn {
+                width: 36px;
+                height: 36px;
+                min-width: 36px;
+            }
         }
 
 
         /* ─── TREND CHART ────────────────────────────────────────────── */
         .trend-period-selector {
             display: flex;
-            gap: 1px;
-            background: var(--bg-inset);
-            border-radius: 8px;
-            padding: 2px;
-            border: 1px solid var(--border-subtle);
+            gap: 6px;
+            background: transparent;
+            border-radius: 0;
+            padding: 0;
+            border: none;
         }
         .trend-period-btn {
-            padding: 3px 8px;
-            font-size: 0.6rem;
+            padding: 4px 10px;
+            font-size: 0.65rem;
             border: none;
             background: transparent;
             color: var(--text-muted);
             cursor: pointer;
             border-radius: 6px;
-            transition: all var(--dur-fast) var(--ease-out);
+            transition: all 200ms cubic-bezier(0.2, 0.6, 0.2, 1);
             font-weight: 600;
             font-family: var(--font-mono);
-            letter-spacing: 0.01em;
+            letter-spacing: 0.02em;
+            position: relative;
+            text-transform: uppercase;
         }
         .trend-period-btn:hover {
-            background: rgba(255, 255, 255, 0.06);
             color: var(--text-main);
+            background: rgba(var(--primary-rgb), 0.06);
+            transform: translateY(-1px);
         }
         [data-theme="light"] .trend-period-btn:hover {
-            background: rgba(0, 0, 0, 0.06);
+            background: rgba(var(--primary-rgb), 0.08);
         }
         .trend-period-btn.active {
+            color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.12);
+            box-shadow: inset 0 0 0 1px rgba(var(--primary-rgb), 0.2);
+            font-weight: 700;
+        }
+        .trend-period-btn.active::before {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 2px;
             background: var(--primary);
-            color: #fff;
-            box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.28);
+            border-radius: 1px;
+            box-shadow: 0 0 6px rgba(var(--primary-rgb), 0.4);
+        }
+
+        @media (max-width: 640px) {
+            .trend-period-selector {
+                gap: 4px;
+            }
+            .trend-period-btn {
+                padding: 3px 7px;
+                font-size: 0.6rem;
+            }
         }
 
         .trend-stats-bar {
