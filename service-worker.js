@@ -13,7 +13,7 @@
 
 'use strict';
 
-const SW_VERSION  = 'v5.0.0';
+const SW_VERSION  = 'v5.0.1';
 const CACHE_NAME  = `tt-offline-${SW_VERSION}`;
 const OFFLINE_URL = './Pages/Info/offline.html';
 const DEBUG       = true;
