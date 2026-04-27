@@ -1402,9 +1402,17 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 <div class="dashboard-item" data-item-id="last-activities">
                     <div class="card activities-card-new">
                         <div class="activities-header-new">
-                            <div>
-                                <div class="activities-title-new">📊 Letzte Aktivitäten</div>
-                                <div class="activities-meta">Deine geleistete Zeit & Einträge</div>
+                            <div class="activities-header-content">
+                                <div class="activities-title-container">
+                                    <svg class="activities-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                        <polyline points="17 6 23 6 23 12"></polyline>
+                                    </svg>
+                                    <div>
+                                        <div class="activities-title-new">Letzte Aktivitäten</div>
+                                        <div class="activities-meta">Deine Arbeitszeiteinträge (14 Tage)</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1419,8 +1427,12 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         <!-- Empty State -->
                         <div class="activities-empty" id="activitiesEmpty">
                             <div class="empty-state">
-                                <div class="empty-icon">📭</div>
+                                <svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                </svg>
                                 <div class="empty-text">Keine Aktivitäten vorhanden</div>
+                                <div class="empty-subtext">Starten Sie mit einer neuen Arbeitszeiteintrag</div>
                             </div>
                         </div>
                     </div>
@@ -2511,41 +2523,114 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         </div>
 
         <div id="view-history" class="view-section">
-<div class="card">
-                <div class="filter-header">
-                    <h2 style="font-size:1.5rem;">Daten-Analyse & Historie</h2>
-                    <span id="historyCount">0 Einträge</span>
+
+            <!-- ── TOPBAR ── -->
+            <div class="hl-topbar">
+                <div class="hl-topbar-left">
+                    <div class="hl-logo-dot"></div>
+                    <div>
+                        <h1 class="hl-title">Verlauf</h1>
+                        <p class="hl-subtitle">Arbeitszeiteinträge · Analyse &amp; Verwaltung</p>
+                    </div>
                 </div>
-                
-                <div class="filter-grid">
-                    <input type="date" id="historyFilterStart" class="glass-input" placeholder="Startdatum" onchange="renderHistoryView()">
-                    <input type="date" id="historyFilterEnd" class="glass-input" placeholder="Enddatum" onchange="renderHistoryView()">
-
-                    <select type="date" id="historyFilterType" class="glass-select" onchange="renderHistoryView()">
-                        <option value="all">Alle Typen</option>
-                        <option value="work">💼 Arbeit</option>
-                        <option value="school">📚 Berufsschule</option>
-                        <option value="vacation">🌴 Urlaub</option>
-                        <option value="gleittag">⚡ Gleittag</option>
-                        <option value="sick">💊 Krank</option>
-                        <option value="holiday">🏖️ Feiertag</option>
-                    </select>
-
-                    <input type="number" id="historyFilterMinHours" class="glass-input" step="0.5" placeholder="Min. Stunden" oninput="renderHistoryView()">
-                    
-                    <input type="text" id="historyFilterSearch" class="glass-input" placeholder="Suche (Info/Projekt)" oninput="renderHistoryView()" style="grid-column: 1 / span 4;">
-                </div>
-
-                <div style="display:flex; gap:15px; margin-bottom: 1.5rem;">
-                    <button class="btn btn-primary" onclick="exportHistoryData('csv')" style="flex:1;">CSV Export (Gefiltert)</button>
-                    <button class="btn btn-primary" onclick="exportHistoryData('json')" style="flex:1; background:var(--school);">JSON Export (Gefiltert)</button>
-                    <button class="btn" onclick="openTrashModal()" style="background:rgba(255,255,255,0.05); border:1px solid var(--border);">🗑️ Papierkorb <span id="trashCountBadge" style="background:rgba(255,255,255,0.03); padding:4px 8px; border-radius:999px; margin-left:8px; font-size:0.85rem; color:var(--text-muted);">0</span></button>
-                </div>
-
-                <div id="entryListFull">
-                    <p style="color:var(--text-muted); text-align:center;">Lade Historie...</p>
+                <div class="hl-topbar-right">
+                    <button class="hl-btn hl-btn-ghost" onclick="exportHistoryData('csv')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        CSV
+                    </button>
+                    <button class="hl-btn hl-btn-ghost" onclick="exportHistoryData('json')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        JSON
+                    </button>
+                    <button class="hl-btn hl-btn-danger" onclick="openTrashModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                        Papierkorb
+                        <span class="hl-badge" id="trashCountBadge">0</span>
+                    </button>
                 </div>
             </div>
+
+            <!-- ── STATS STRIP ── -->
+            <div class="hl-stats">
+                <div class="hl-stat-card">
+                    <span class="hl-stat-num" id="historyCount">0</span>
+                    <span class="hl-stat-lbl">Einträge gefunden</span>
+                </div>
+                <div class="hl-stat-card">
+                    <span class="hl-stat-num" id="hlStatHours">0h</span>
+                    <span class="hl-stat-lbl">Gesamt gearbeitet</span>
+                </div>
+                <div class="hl-stat-card">
+                    <span class="hl-stat-num" id="hlStatSaldo">+0h</span>
+                    <span class="hl-stat-lbl">Saldo (gefiltert)</span>
+                </div>
+                <div class="hl-stat-card">
+                    <span class="hl-stat-num" id="hlStatAvg">0h</span>
+                    <span class="hl-stat-lbl">Ø pro Tag</span>
+                </div>
+            </div>
+
+            <!-- ── FILTER PANEL ── -->
+            <div class="hl-filter-panel">
+                <!-- Type Pills -->
+                <div class="hl-type-pills">
+                    <button class="hl-pill active" onclick="hlSetType('all', this)">Alle</button>
+                    <button class="hl-pill hl-pill-work"      onclick="hlSetType('work', this)">💼 Arbeit</button>
+                    <button class="hl-pill hl-pill-school"    onclick="hlSetType('school', this)">📚 Schule</button>
+                    <button class="hl-pill hl-pill-vacation"  onclick="hlSetType('vacation', this)">🌴 Urlaub</button>
+                    <button class="hl-pill hl-pill-gleittag"  onclick="hlSetType('gleittag', this)">⚡ Gleittag</button>
+                    <button class="hl-pill hl-pill-sick"      onclick="hlSetType('sick', this)">🤒 Krank</button>
+                    <button class="hl-pill hl-pill-holiday"   onclick="hlSetType('holiday', this)">🎉 Feiertag</button>
+                </div>
+
+                <!-- Hidden real select (driven by pills) -->
+                <select id="historyFilterType" style="display:none" onchange="renderHistoryView()">
+                    <option value="all">Alle</option>
+                    <option value="work">Arbeit</option>
+                    <option value="school">Berufsschule</option>
+                    <option value="vacation">Urlaub</option>
+                    <option value="gleittag">Gleittag</option>
+                    <option value="sick">Krank</option>
+                    <option value="holiday">Feiertag</option>
+                </select>
+
+                <!-- Date + Search row -->
+                <div class="hl-filter-row">
+                    <div class="hl-filter-field">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <input type="date" id="historyFilterStart" class="hl-input" onchange="renderHistoryView()">
+                    </div>
+                    <span class="hl-filter-sep">→</span>
+                    <div class="hl-filter-field">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <input type="date" id="historyFilterEnd" class="hl-input" onchange="renderHistoryView()">
+                    </div>
+                    <div class="hl-filter-field hl-filter-hours">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <input type="number" id="historyFilterMinHours" class="hl-input" step="0.5" placeholder="Min. h" oninput="renderHistoryView()">
+                    </div>
+                    <div class="hl-filter-field hl-filter-search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="historyFilterSearch" class="hl-input" placeholder="Suche Notizen, Projekte…" oninput="renderHistoryView()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── TABLE HEADER ── -->
+            <div class="hl-table-head">
+                <span>Datum</span>
+                <span>Notiz / Info</span>
+                <span>Typ</span>
+                <span>Projekt</span>
+                <span style="text-align:right">Saldo</span>
+                <span></span>
+            </div>
+
+            <!-- ── ENTRY LIST ── -->
+            <div id="entryListFull">
+                <p class="hl-empty">Lade Einträge…</p>
+            </div>
+
         </div>
 
 

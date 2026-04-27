@@ -180,3 +180,15 @@
             }
         }
     });
+
+    // Activity item click → navigate to history and highlight
+    document.addEventListener('click', (e) => {
+        const item = e.target.closest('.activity-item');
+        if (item) {
+            const entryId = item.getAttribute('data-entry-id');
+            if (entryId) {
+                e.stopPropagation();
+                window.goToHistoryAndHighlight(entryId);
+            }
+        }
+    });

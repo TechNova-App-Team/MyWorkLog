@@ -79,7 +79,7 @@
             const diffColor = diffHours > 0 ? '#10b981' : (diffHours < 0 ? '#ef4444' : '#6b7280');
 
             return `
-                <div class="activity-item type-${e.type}" data-entry-id="${e.id}">
+                <div class="activity-item type-${e.type}" data-entry-id="${e.id}" style="cursor: pointer;">
                     <div class="activity-card-header">
                         <span class="activity-icon">${icon}</span>
                         <div class="activity-header-info">
@@ -106,7 +106,13 @@
 
         if (!trackEl || !dayTabsEl) return console.warn('renderLists: required elements not found');
 
-        const entries = Array.isArray(data.entries) ? data.entries.slice(0, 30) : [];
+        // Limit to last 14 days AND max 10 entries
+        const now = new Date();
+        const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+        const allEntries = Array.isArray(data.entries)
+            ? data.entries.filter(e => new Date(e.date + 'T00:00:00') >= twoWeeksAgo)
+            : [];
+        const entries = allEntries.slice(0, 10);
 
         if (!entries.length) {
             trackEl.style.display = 'none';
@@ -150,7 +156,7 @@
 
         // Render activities for first date
         const firstDateActivities = entriesByDate[uniqueDates[0]] || [];
-        trackEl.innerHTML = safeHTML(firstDateActivities.map(createActivityCard).join(''));
+        trackEl.innerHTML = firstDateActivities.map(createActivityCard).join('');
     }
 
     function switchActivityDay(date) {
@@ -197,7 +203,7 @@
             const diffColor = diffHours > 0 ? '#10b981' : (diffHours < 0 ? '#ef4444' : '#6b7280');
 
             return `
-                <div class="activity-item type-${e.type}" data-entry-id="${e.id}">
+                <div class="activity-item type-${e.type}" data-entry-id="${e.id}" style="cursor: pointer;">
                     <div class="activity-card-header">
                         <span class="activity-icon">${icon}</span>
                         <div class="activity-header-info">
@@ -219,7 +225,7 @@
         };
 
         const activities = window.activityDayTabs.entriesByDate[date] || [];
-        trackEl.innerHTML = safeHTML(activities.map(createActivityCard).join(''));
+        trackEl.innerHTML = activities.map(createActivityCard).join('');
 
         // Initialize swipe & wheel listeners
         setTimeout(() => {
