@@ -3,8 +3,38 @@
 const NFC_SESSION_KEY  = 'nfc_session';
 const NFC_CHIP_KEY     = 'nfc_chip_written';
 const NFC_LOG_KEY      = 'nfc_scan_log';
+const NFC_BROWSER_KEY  = 'nfc_browser_pref';
 const NFC_DEBOUNCE_MS  = 30 * 1000; // 30s Doppel-Bounce-Fenster
 const NFC_MAX_LOG      = 30;
+
+const NFC_BROWSER_PACKAGES = {
+    chrome:  'com.android.chrome',
+    firefox: 'org.mozilla.firefox',
+    samsung: 'com.sec.android.app.sbrowser',
+};
+
+function nfcGetWriteUrl() {
+    const base    = window.location.origin + window.location.pathname + '?nfc=1';
+    const pref    = localStorage.getItem(NFC_BROWSER_KEY) || 'default';
+    const pkg     = NFC_BROWSER_PACKAGES[pref];
+
+    if (!pkg) return base; // 'default' → normales https://
+
+    // Android Intent-URL: öffnet immer den gewählten Browser
+    const host    = window.location.hostname + window.location.pathname;
+    const fallback = encodeURIComponent(base);
+    return `intent://${host}?nfc=1#Intent;scheme=https;package=${pkg};S.browser_fallback_url=${fallback};end`;
+}
+
+function nfcSaveBrowserPref(val) {
+    localStorage.setItem(NFC_BROWSER_KEY, val);
+}
+
+function nfcRestoreBrowserPref() {
+    const pref = localStorage.getItem(NFC_BROWSER_KEY) || 'default';
+    const radio = document.querySelector(`input[name="nfcBrowser"][value="${pref}"]`);
+    if (radio) radio.checked = true;
+}
 
 // ─── Modal-Steuerung ───────────────────────────────────────────────────────
 
@@ -12,6 +42,7 @@ function openNFCModal() {
     const modal = document.getElementById('nfcModal');
     if (!modal) return;
     modal.classList.add('active');
+    nfcRestoreBrowserPref();
     nfcDetectPlatform();
     nfcUpdateStatusView();
 }
@@ -65,7 +96,7 @@ async function nfcWriteChip() {
         const ac   = new AbortController();
         window._nfcWriter = ac;
 
-        const nfcUrl = window.location.origin + window.location.pathname + '?nfc=1';
+        const nfcUrl = nfcGetWriteUrl();
         await ndef.write(
             { records: [{ recordType: 'url', data: nfcUrl }] },
             { signal: ac.signal, overwrite: true }
@@ -253,17 +284,21 @@ function handleNFCScan() {
 function _doCheckIn(now, today, session) {
     timerAction('start');
 
-    session.lastScan   = now;
-    session.lastAction = 'checkin';
-    session.lastDate   = today;
+    const startVal = new Date().toTimeString().slice(0, 5); // HH:MM
+    const timeStr  = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+    // Start-Zeit in der Session sichern — überlebt den Seiten-Reload beim Ausstempeln
+    session.lastScan    = now;
+    session.lastAction  = 'checkin';
+    session.lastDate    = today;
+    session.checkInTime = startVal;
+    session.checkInDate = today;
     _saveSession(session);
 
-    const timeStr   = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     const dateInput = document.getElementById('inpDate');
     const startInp  = document.getElementById('inpStart');
-
     if (dateInput) dateInput.value = today;
-    if (startInp)  startInp.value  = new Date().toTimeString().slice(0, 5);
+    if (startInp)  startInp.value  = startVal;
 
     nfcAddLog('CHECK_IN', `Eingestempelt um ${timeStr}`);
     nfcFlash('checkin', '▶', 'Eingestempelt', timeStr);
@@ -273,26 +308,47 @@ function _doCheckIn(now, today, session) {
 }
 
 function _doCheckOut(now, today, session) {
-    const timeStr  = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    const endInput = document.getElementById('inpEnd');
+    const endVal  = new Date().toTimeString().slice(0, 5);
+    const timeStr = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 
-    // Timer pausieren (nicht stoppen, damit kein Bestätigungs-Dialog aufgeht)
-    timerAction('pause');
-    if (endInput) endInput.value = new Date().toTimeString().slice(0, 5);
-
+    // Session aktualisieren
     session.lastScan   = now;
     session.lastAction = 'checkout';
     session.lastDate   = today;
     _saveSession(session);
+
+    // Timer ohne Dialog stoppen
+    if (timer.running) {
+        timer.running = false;
+        timer.paused += Date.now() - timer.start;
+        document.getElementById('timerBox')?.classList.remove('timer-active');
+        saveTimerState();
+    }
+
+    // Formular mit gespeicherten Check-In-Daten befüllen
+    const dateInput = document.getElementById('inpDate');
+    const startInp  = document.getElementById('inpStart');
+    const endInput  = document.getElementById('inpEnd');
+    const typeInput = document.getElementById('inpType');
+
+    if (dateInput) dateInput.value = session.checkInDate || today;
+    if (startInp)  startInp.value  = session.checkInTime || '';
+    if (endInput)  endInput.value  = endVal;
+    if (typeInput) typeInput.value = 'work';
 
     nfcAddLog('CHECK_OUT', `Ausgestempelt um ${timeStr}`);
     nfcFlash('checkout', '■', 'Ausgestempelt', timeStr);
 
     if ('vibrate' in navigator) navigator.vibrate([180]);
 
+    // Timer zurücksetzen und Eintrag automatisch speichern
     setTimeout(() => {
-        _nfcToast('■ NFC Check-Out', `${timeStr} — Bitte Eintrag speichern!`, 'info');
-    }, 2200);
+        // Timer auf null → handleEntry() nutzt die Start/End-Felder statt Timer-Daten
+        timer = { id: null, start: 0, paused: 0, running: false, log: [], breakTime: 0 };
+        saveTimerState();
+
+        if (typeof handleEntry === 'function') handleEntry();
+    }, 600);
 }
 
 // ─── Randfälle simulieren ─────────────────────────────────────────────────
