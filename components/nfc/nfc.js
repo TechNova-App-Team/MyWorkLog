@@ -68,7 +68,7 @@ async function nfcWriteChip() {
         const nfcUrl = window.location.origin + window.location.pathname + '?nfc=1';
         await ndef.write(
             { records: [{ recordType: 'url', data: nfcUrl }] },
-            { signal: ac.signal }
+            { signal: ac.signal, overwrite: true }
         );
 
         if (scanZone) {
@@ -90,11 +90,32 @@ async function nfcWriteChip() {
     } catch (err) {
         btn.disabled = false;
         if (scanZone) scanZone.classList.remove('scanning');
+
         if (err.name === 'AbortError') {
             nfcSetWriteStatus('', 'Abgebrochen.');
-        } else {
-            nfcSetWriteStatus('error-text', 'Fehler: ' + err.message);
+            return;
         }
+
+        // Sprechende Fehlermeldungen statt rohem Browser-Text
+        let msg = '';
+        const raw = (err.message || '').toLowerCase();
+
+        if (raw.includes('io error') || raw.includes('null')) {
+            msg = 'Chip nicht erkannt — Handy langsam und mittig auf den Chip halten bis er vibriert';
+        } else if (raw.includes('not allowed') || err.name === 'NotAllowedError') {
+            msg = 'NFC-Berechtigung verweigert — bitte in den Browser-Einstellungen erlauben';
+        } else if (raw.includes('not supported') || err.name === 'NotSupportedError') {
+            msg = 'Chip-Format nicht unterstützt — nur NDEF-Chips (z.B. NTAG213/215) funktionieren';
+        } else if (raw.includes('network') || err.name === 'NetworkError') {
+            msg = 'Verbindung zum Chip verloren — nochmal versuchen und Handy ruhig halten';
+        } else {
+            msg = 'Fehler: ' + err.message;
+        }
+
+        nfcSetWriteStatus('error-text', msg);
+        nfcAddLog('ERR', err.name + ': ' + err.message);
+        // Button nach 2s wieder aktivieren damit der User es nochmal probieren kann
+        setTimeout(() => { btn.disabled = false; }, 2000);
     }
 }
 
