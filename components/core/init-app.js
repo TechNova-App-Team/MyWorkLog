@@ -151,6 +151,9 @@
 
         // Warn user if accessing via localhost/127.0.0.1 on mobile devices (helps avoid mobile PWA 404 issue)
         try { detectLocalhostAndWarn(); } catch(e) { console.warn('detectLocalhostAndWarn failed', e); }
+
+        // NFC: URL-Parameter prüfen (?nfc=1 kommt vom NFC-Chip-Scan)
+        try { if (typeof checkNFCUrlParam === 'function') checkNFCUrlParam(); } catch(e) { console.warn('NFC init failed', e); }
     };
 
     function showPrivacyModal() {
