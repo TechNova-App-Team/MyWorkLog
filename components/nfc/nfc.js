@@ -33,6 +33,18 @@ function nfcShowView(viewId) {
     document.querySelectorAll('.nfc-view').forEach(v => v.classList.remove('active'));
     const v = document.getElementById(viewId);
     if (v) v.classList.add('active');
+
+    // Setup-View immer sauber zurücksetzen
+    if (viewId === 'nfcViewSetup') {
+        const btn      = document.getElementById('nfcWriteBtn');
+        const scanZone = document.getElementById('nfcScanZone');
+        const status   = document.getElementById('nfcWriteStatus');
+        if (btn)      { btn.disabled = false; }
+        if (scanZone) { scanZone.className = 'nfc-scan-zone'; }
+        if (status)   { status.className = 'nfc-write-status-text'; status.textContent = 'Bereit zum Programmieren'; }
+        // Laufenden Schreibvorgang abbrechen falls noch aktiv
+        if (window._nfcWriter) { window._nfcWriter.abort(); window._nfcWriter = null; }
+    }
 }
 
 // ─── Platform-Erkennung ───────────────────────────────────────────────────
@@ -79,14 +91,12 @@ async function nfcWriteChip() {
             scanZone.classList.remove('scanning');
             scanZone.classList.add('success');
         }
+        btn.disabled = false;
         nfcSetWriteStatus('success-text', 'Chip erfolgreich programmiert!');
         localStorage.setItem(NFC_CHIP_KEY, Date.now().toString());
         nfcAddLog('WRITE', 'Chip programmiert — ' + nfcUrl);
 
         setTimeout(() => {
-            if (scanZone) {
-                scanZone.classList.remove('success');
-            }
             nfcShowView('nfcViewStatus');
             nfcUpdateStatusView();
         }, 2000);
