@@ -3,37 +3,11 @@
 const NFC_SESSION_KEY  = 'nfc_session';
 const NFC_CHIP_KEY     = 'nfc_chip_written';
 const NFC_LOG_KEY      = 'nfc_scan_log';
-const NFC_BROWSER_KEY  = 'nfc_browser_pref';
 const NFC_DEBOUNCE_MS  = 30 * 1000; // 30s Doppel-Bounce-Fenster
 const NFC_MAX_LOG      = 30;
 
-const NFC_BROWSER_PACKAGES = {
-    chrome:  'com.android.chrome',
-    firefox: 'org.mozilla.firefox',
-    samsung: 'com.sec.android.app.sbrowser',
-};
-
 function nfcGetWriteUrl() {
-    const base    = window.location.origin + window.location.pathname + '?nfc=1';
-    const pref    = localStorage.getItem(NFC_BROWSER_KEY) || 'default';
-    const pkg     = NFC_BROWSER_PACKAGES[pref];
-
-    if (!pkg) return base; // 'default' → normales https://
-
-    // Android Intent-URL: öffnet immer den gewählten Browser
-    const host    = window.location.hostname + window.location.pathname;
-    const fallback = encodeURIComponent(base);
-    return `intent://${host}?nfc=1#Intent;scheme=https;package=${pkg};S.browser_fallback_url=${fallback};end`;
-}
-
-function nfcSaveBrowserPref(val) {
-    localStorage.setItem(NFC_BROWSER_KEY, val);
-}
-
-function nfcRestoreBrowserPref() {
-    const pref = localStorage.getItem(NFC_BROWSER_KEY) || 'default';
-    const radio = document.querySelector(`input[name="nfcBrowser"][value="${pref}"]`);
-    if (radio) radio.checked = true;
+    return window.location.origin + window.location.pathname + '?nfc=1';
 }
 
 // ─── Modal-Steuerung ───────────────────────────────────────────────────────
@@ -42,7 +16,6 @@ function openNFCModal() {
     const modal = document.getElementById('nfcModal');
     if (!modal) return;
     modal.classList.add('active');
-    nfcRestoreBrowserPref();
     nfcDetectPlatform();
     nfcUpdateStatusView();
 }
