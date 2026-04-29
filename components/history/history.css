@@ -133,6 +133,71 @@
     gap: 12px;
 }
 
+@media (max-width: 768px) {
+    .hl-filter-panel {
+        padding: 12px 14px;
+        gap: 10px;
+    }
+
+    .hl-type-pills {
+        gap: 5px;
+    }
+
+    .hl-pill {
+        padding: 4px 10px;
+        font-size: 0.7rem;
+    }
+
+    .hl-filter-field {
+        padding: 0 8px;
+        min-height: 36px;
+    }
+
+    .hl-input {
+        padding: 6px 0;
+        font-size: 0.75rem;
+    }
+
+    .hl-filter-hours {
+        width: 90px;
+    }
+
+    .hl-filter-search {
+        min-width: 0;
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 600px) {
+    .hl-topbar {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .hl-topbar-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .hl-title {
+        font-size: 1.2rem;
+    }
+
+    .hl-topbar-right {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .hl-btn {
+        padding: 6px 12px;
+        font-size: 0.72rem;
+        flex: 1;
+        min-width: 120px;
+    }
+}
+
 /* Type Pills */
 .hl-type-pills {
     display: flex;
@@ -237,7 +302,7 @@
 /* ─── Entry Row ─── */
 .entry-row {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     gap: 0;
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.07);
@@ -265,7 +330,7 @@
     align-items: center;
     gap: 12px;
     padding: 16px 20px;
-    min-width: 160px;
+    min-width: auto;
     border-right: 1px solid rgba(255,255,255,0.05);
     flex-shrink: 0;
 }
@@ -314,6 +379,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    justify-content: center;
 }
 .er-info {
     font-size: 0.92rem;
@@ -420,11 +486,46 @@
     justify-content: center;
     cursor: pointer;
     font-size: 0.82rem;
-    transition: background 0.15s, border-color 0.15s;
+    transition: all 0.15s ease;
     padding: 0;
+    flex-shrink: 0;
+    color: rgba(255,255,255,0.7);
 }
-.btn-icon:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.18); }
-.btn-icon.danger:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.25); }
+
+.btn-icon svg {
+    transition: stroke 0.15s ease, transform 0.15s ease;
+}
+
+.btn-icon:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.95);
+    transform: scale(1.05);
+}
+
+.btn-icon:hover svg {
+    transform: scale(1.08);
+}
+
+.btn-icon:active {
+    transform: scale(0.95);
+}
+
+.btn-icon.danger {
+    background: rgba(239,68,68,0.08);
+    border-color: rgba(239,68,68,0.15);
+    color: rgba(239,68,68,0.7);
+}
+
+.btn-icon.danger:hover {
+    background: rgba(239,68,68,0.15);
+    border-color: rgba(239,68,68,0.3);
+    color: #ef4444;
+}
+
+.btn-icon.danger:hover svg {
+    transform: scale(1.08);
+}
 
 /* Legacy compat */
 .entry-date { font-size: 0.9rem; font-weight: 600; color: var(--text-main); font-family: var(--font-mono); }
@@ -454,18 +555,115 @@
     transition: none !important;
 }
 
-/* ─── Responsive ─── */
-@media (max-width: 900px) {
-    .hl-stats { grid-template-columns: repeat(2, 1fr); }
-    .hl-table-head { display: none; }
-    .entry-row {
-        grid-template-columns: 1fr auto;
-        grid-template-rows: auto auto;
+/* ─── Responsive: Tablets & Landscape ─── */
+@media (max-width: 1024px) {
+    .er-left {
+        padding: 14px 16px;
     }
-    .entry-row .entry-date { font-size: 0.78rem; }
-    .entry-type-badge, .project-tag { display: none; }
-    .entry-btns { opacity: 1; }
+    .er-mid {
+        padding: 14px 16px;
+    }
+    .er-right {
+        padding: 14px 16px;
+        gap: 10px;
+    }
+    .er-hours {
+        font-size: 1.15rem;
+    }
 }
+
+/* ─── Responsive: Mobile Optimized ─── */
+@media (max-width: 768px) {
+    .entry-row {
+        flex-direction: column;
+        min-height: auto;
+        gap: 0;
+    }
+
+    /* Header row: Icon + Date + Hours + Actions */
+    .er-left {
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        padding: 12px 16px;
+        min-width: auto;
+        flex: 1;
+        gap: 10px;
+    }
+
+    .er-date-col {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .er-date {
+        font-size: 0.85rem;
+    }
+
+    .er-weekday {
+        font-size: 0.6rem;
+    }
+
+    /* Info row (takes full width) */
+    .er-mid {
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        padding: 12px 16px;
+        gap: 8px;
+    }
+
+    .er-info {
+        font-size: 0.85rem;
+    }
+
+    .er-tags {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .er-badge, .er-project {
+        font-size: 0.6rem;
+        padding: 2px 8px;
+    }
+
+    .er-project {
+        max-width: 100px;
+    }
+
+    /* Action bar: Hours + Diff + Buttons (always visible) */
+    .er-right {
+        border-left: none;
+        padding: 12px 16px;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Flex group for hours display */
+    .er-hours {
+        font-size: 1.1rem;
+        order: 1;
+    }
+
+    .er-diff {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        order: 2;
+    }
+
+    /* Make buttons ALWAYS visible on mobile */
+    .er-actions {
+        opacity: 1 !important;
+        order: 3;
+        gap: 5px;
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 0.75rem;
+        padding: 0;
+    }
+}
+
 @media (max-width: 600px) {
     .hl-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
     .hl-stat-num { font-size: 1.2rem; }
@@ -474,6 +672,35 @@
     .hl-filter-row { flex-direction: column; align-items: stretch; }
     .hl-filter-search { min-width: 0; }
     #entryListFull { max-height: 55vh; }
+
+    /* Ultra-compact mobile layout */
+    .entry-row {
+        min-height: auto;
+    }
+
+    .er-left {
+        padding: 10px 12px;
+    }
+
+    .er-mid {
+        padding: 10px 12px;
+    }
+
+    .er-right {
+        padding: 10px 12px;
+    }
+
+    .er-icon-wrap {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 0.7rem;
+    }
 }
 
 /* ─── Legacy compat ─── */
