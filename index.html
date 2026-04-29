@@ -6424,59 +6424,38 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <!-- AUTO-CAMOUFLAGE / TAB-VERSTECKER -->
     <script src="./components/core/camo.js"></script>
 
-    <!-- MOBILE ACCORDION: Big normal view + buttons on click -->
+    <!-- MOBILE: Normal Desktop-Size view + Accordion für Buttons -->
     <style>
         @media (max-width: 768px) {
-            /* MOBILE: Show EVERYTHING big like Desktop, buttons hidden by default */
-            .entry-row {
-                cursor: pointer !important;
-            }
-
-            /* Buttons HIDDEN unless expanded */
-            .entry-row .er-actions {
-                opacity: 0 !important;
-                pointer-events: none !important;
-            }
-
-            /* When expanded: show buttons with separator */
-            .entry-row.expanded .er-actions {
+            .entry-row { cursor: pointer; }
+            .entry-row .er-actions { display: none; }
+            .entry-row.mob-open .er-actions {
+                display: flex !important;
                 opacity: 1 !important;
-                pointer-events: auto !important;
-                border-top: 1px solid rgba(255,255,255,0.05) !important;
-                padding-top: 12px !important;
-                margin-top: 12px !important;
-                width: 100% !important;
+                width: 100%;
+                justify-content: flex-end;
+                padding-top: 8px;
+                margin-top: 8px;
+                border-top: 1px solid rgba(255,255,255,0.07);
             }
-
-            .entry-row.expanded {
-                flex-direction: column !important;
-            }
+            .entry-row.mob-open { flex-wrap: wrap; }
         }
     </style>
-
-    <!-- ACCORDION JS -->
     <script>
-        function setupHistoryAccordion() {
-            document.querySelectorAll('.entry-row').forEach(row => {
+        function attachMobAccordion() {
+            if (window.innerWidth > 768) return;
+            document.querySelectorAll('.entry-row').forEach(function(row) {
                 row.addEventListener('click', function(e) {
-                    if (window.innerWidth > 768) return; // Only on mobile
-                    if (e.target.closest('.btn-icon')) return; // Don't toggle if clicking button
-
-                    e.stopPropagation();
-                    this.classList.toggle('expanded');
+                    if (e.target.closest('.btn-icon')) return;
+                    this.classList.toggle('mob-open');
                 });
             });
         }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(setupHistoryAccordion, 500);
-        });
-
-        // Re-setup when history renders
-        const originalRender = window.renderHistoryView;
+        const _origRender = window.renderHistoryView;
         window.renderHistoryView = function() {
-            originalRender.apply(this, arguments);
-            setTimeout(setupHistoryAccordion, 100);
+            _origRender.apply(this, arguments);
+            attachMobAccordion();
         };
+        document.addEventListener('DOMContentLoaded', function() { setTimeout(attachMobAccordion, 600); });
     </script>
 </body>
