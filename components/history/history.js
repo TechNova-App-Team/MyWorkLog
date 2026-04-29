@@ -57,6 +57,7 @@
                     <div class="er-tags">
                         <span class="er-badge type-${e.type}">${label}</span>
                         ${e.project ? `<span class="er-project">${esc(e.project)}</span>` : ''}
+                        ${e.mood ? `<span class="er-mood">${e.mood}</span>` : ''}
                         ${e.shiftWarning ? '<span class="er-warn">⚠ MAX</span>' : ''}
                     </div>
                 </div>
@@ -72,7 +73,6 @@
                         </button>
                     </div>
                 </div>
-                ${e.mood ? `<div class="er-mood-row">${e.mood}</div>` : ''}
             </div>`;
         };
 
