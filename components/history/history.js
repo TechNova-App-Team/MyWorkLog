@@ -65,6 +65,9 @@
                     <div class="er-hours">${e.worked.toFixed(1)}<span class="er-h-unit">h</span></div>
                     <div class="er-diff" style="color:${diffColor};background:${diffBg}">${diffStr}</div>
                     <div class="er-actions">
+                        <button class="btn-icon" onclick="openEntryDetail(${e.id})" title="Details">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        </button>
                         <button class="btn-icon" onclick="editEntry(${e.id})" title="Bearbeiten">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </button>
@@ -111,6 +114,53 @@
     function editEntry(id) {
         openEditModal(id);
     }
+
+    function openEntryDetail(id) {
+        const e = data.entries.find(x => x.id === id);
+        if (!e) return;
+
+        const typeLabels = {work:'Arbeit', school:'Berufsschule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'};
+        const typeIcons  = {work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'};
+        const typeBg     = {work:'rgba(168,85,247,0.15)', school:'rgba(6,182,212,0.15)', vacation:'rgba(16,185,129,0.15)', gleittag:'rgba(245,158,11,0.15)', sick:'rgba(239,68,68,0.15)', holiday:'rgba(236,72,153,0.15)'};
+
+        const weekday  = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {weekday:'long'});
+        const dateStr  = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const diffStr  = (e.diff >= 0 ? '+' : '') + e.diff.toFixed(2) + 'h';
+        const diffColor= e.diff >= 0 ? '#34d399' : '#f87171';
+
+        const icon = document.getElementById('edTypeIcon');
+        icon.textContent = typeIcons[e.type] || '📋';
+        icon.style.background = typeBg[e.type] || 'rgba(255,255,255,0.08)';
+        document.getElementById('edTypeLabel').textContent = typeLabels[e.type] || e.type;
+        document.getElementById('edDateLine').textContent  = weekday + ' · ' + dateStr;
+        document.getElementById('edHours').textContent = e.worked.toFixed(1) + 'h';
+        const diffEl = document.getElementById('edDiff');
+        diffEl.textContent = diffStr;
+        diffEl.style.color = diffColor;
+
+        const rows = [];
+        if (e.info)    rows.push(['Notiz', esc(e.info)]);
+        if (e.project) rows.push(['Projekt', esc(e.project)]);
+        if (e.mood)    rows.push(['Stimmung', e.mood]);
+        if (e.shiftWarning) rows.push(['Warnung', '⚠️ Über 10h']);
+
+        document.getElementById('edRows').innerHTML = rows.length
+            ? rows.map(([k,v]) => `<div class="ed-row"><span class="ed-row-key">${k}</span><span class="ed-row-val">${v}</span></div>`).join('')
+            : '<div class="ed-row"><span class="ed-row-key" style="color:var(--text-muted)">Keine weiteren Infos</span></div>';
+
+        document.getElementById('edEditBtn').onclick   = () => { closeEntryDetail(); editEntry(id); };
+        document.getElementById('edDeleteBtn').onclick = () => { closeEntryDetail(); delEntry(id); };
+
+        document.getElementById('entryDetailBackdrop').classList.add('active');
+        document.getElementById('entryDetailSheet').classList.add('active');
+    }
+
+    function closeEntryDetail() {
+        document.getElementById('entryDetailBackdrop').classList.remove('active');
+        document.getElementById('entryDetailSheet').classList.remove('active');
+    }
+    window.openEntryDetail  = openEntryDetail;
+    window.closeEntryDetail = closeEntryDetail;
 
     function closeTrashModal() {
         const modal = document.getElementById('trashModal');

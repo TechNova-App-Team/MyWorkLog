@@ -6424,28 +6424,116 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <!-- AUTO-CAMOUFLAGE / TAB-VERSTECKER -->
     <script src="./components/core/camo.js"></script>
 
-    <!-- MOBILE: Normal Desktop-Size view + Accordion für Buttons -->
+    <!-- ENTRY DETAIL BOTTOM SHEET -->
+    <div class="ed-backdrop" id="entryDetailBackdrop" onclick="closeEntryDetail()"></div>
+    <div class="ed-sheet" id="entryDetailSheet">
+        <div class="ed-handle"></div>
+        <div class="ed-header">
+            <div class="ed-type-icon" id="edTypeIcon">💼</div>
+            <div class="ed-header-text">
+                <div class="ed-type-label" id="edTypeLabel">Arbeit</div>
+                <div class="ed-date-line" id="edDateLine">—</div>
+            </div>
+            <button class="ed-close-btn" onclick="closeEntryDetail()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="ed-hero">
+            <div class="ed-stat-card">
+                <div class="ed-stat-val" id="edHours">—</div>
+                <div class="ed-stat-lbl">Stunden</div>
+            </div>
+            <div class="ed-stat-card">
+                <div class="ed-stat-val" id="edDiff">—</div>
+                <div class="ed-stat-lbl">Saldo</div>
+            </div>
+        </div>
+        <div class="ed-rows" id="edRows"></div>
+        <div class="ed-footer">
+            <button class="ed-btn ed-btn-edit" id="edEditBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Bearbeiten
+            </button>
+            <button class="ed-btn ed-btn-delete" id="edDeleteBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Löschen
+            </button>
+        </div>
+    </div>
+
+    <!-- MOBILE ACCORDION: Tap = nur Icon+Datum + Buttons sichtbar, kein Springen -->
     <style>
         @media (max-width: 768px) {
-            .entry-row { cursor: pointer; }
-            .entry-row .er-actions { display: none; }
+            .entry-row {
+                cursor: pointer;
+                position: relative;
+            }
+
+            /* Kompakteres Icon + Datum */
+            .er-left {
+                padding: 12px 4px 12px 10px !important;
+                gap: 8px !important;
+                min-width: auto !important;
+            }
+            .er-icon-wrap {
+                width: 34px !important;
+                height: 34px !important;
+                font-size: 1rem !important;
+            }
+            .er-date {
+                font-size: 0.82rem !important;
+            }
+            .er-weekday {
+                font-size: 0.62rem !important;
+            }
+
+            /* Kompaktere Stunden/Diff Anzeige */
+            .er-right {
+                padding: 12px 10px !important;
+                gap: 6px !important;
+            }
+            .er-hours {
+                font-size: 0.95rem !important;
+            }
+            .er-diff {
+                font-size: 0.7rem !important;
+                padding: 3px 7px !important;
+            }
+
+            /* Buttons komplett weg im Normalzustand */
+            .entry-row .er-actions {
+                display: none !important;
+            }
+
+            /* Beim Klick: Alles außer Icon+Datum unsichtbar, aber Größe bleibt! */
+            .entry-row.mob-open .er-mid {
+                visibility: hidden;
+            }
+            .entry-row.mob-open .er-hours,
+            .entry-row.mob-open .er-h-unit,
+            .entry-row.mob-open .er-diff {
+                visibility: hidden;
+            }
+
+            /* Buttons absolut positioniert rechts — kein Layout-Shift */
             .entry-row.mob-open .er-actions {
                 display: flex !important;
+                position: absolute;
+                right: 16px;
+                top: 50%;
+                transform: translateY(-50%);
+                gap: 8px;
                 opacity: 1 !important;
-                width: 100%;
-                justify-content: flex-end;
-                padding-top: 8px;
-                margin-top: 8px;
-                border-top: 1px solid rgba(255,255,255,0.07);
             }
-            .entry-row.mob-open { flex-wrap: wrap; }
         }
     </style>
     <script>
         function attachMobAccordion() {
-            if (window.innerWidth > 768) return;
             document.querySelectorAll('.entry-row').forEach(function(row) {
+                if (row._mobAccordion) return; // nicht doppelt
+                row._mobAccordion = true;
                 row.addEventListener('click', function(e) {
+                    if (window.innerWidth > 768) return;
                     if (e.target.closest('.btn-icon')) return;
                     this.classList.toggle('mob-open');
                 });
