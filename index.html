@@ -6424,81 +6424,73 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <!-- AUTO-CAMOUFLAGE / TAB-VERSTECKER -->
     <script src="./components/core/camo.js"></script>
 
-    <!-- MOBILE ACCORDION: Expanded on click -->
+    <!-- MOBILE ACCORDION: Normal height + expandable on click -->
     <style>
         @media (max-width: 768px) {
-            /* COLLAPSED STATE (default on mobile) */
-            .entry-row {
-                cursor: pointer !important;
-                flex-wrap: wrap !important;
-            }
-
-            /* Hide buttons & extra info by default */
-            .entry-row .er-actions {
-                display: none !important;
-            }
-
+            /* MOBILE: Show as normal Desktop height, hide details & buttons */
             .entry-row .er-mid {
                 display: none !important;
             }
 
-            /* EXPANDED STATE - show everything */
+            .entry-row .er-actions {
+                display: none !important;
+            }
+
+            /* EXPANDED: Show everything like Desktop -->
             .entry-row.expanded .er-mid {
                 display: flex !important;
                 width: 100% !important;
+                flex-direction: column !important;
+                gap: 6px !important;
+                border-top: 1px solid rgba(255,255,255,0.05) !important;
+                padding-top: 16px !important;
+                margin-top: 16px !important;
             }
 
             .entry-row.expanded .er-actions {
                 display: flex !important;
                 opacity: 1 !important;
+                width: 100% !important;
+                border-top: 1px solid rgba(255,255,255,0.05) !important;
+                padding-top: 16px !important;
+                margin-top: 16px !important;
+                justify-content: flex-end !important;
             }
 
             .entry-row.expanded {
                 flex-direction: column !important;
             }
 
-            .entry-row.expanded .er-right {
-                width: 100% !important;
-                border-left: none !important;
-                border-top: 1px solid rgba(255,255,255,0.05) !important;
+            /* Make entry clickable */
+            .entry-row {
+                cursor: pointer !important;
             }
         }
     </style>
 
     <!-- ACCORDION JS -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                document.querySelectorAll('.entry-row').forEach(row => {
-                    row.addEventListener('click', function(e) {
-                        if (window.innerWidth <= 768) {
-                            e.stopPropagation();
-                            this.classList.toggle('expanded');
-                        }
-                    });
-                });
-            }, 500);
-        });
-
-        // Re-attach when history is re-rendered
-        function attachEntryRowListeners() {
-            if (window.innerWidth > 768) return;
+        function setupHistoryAccordion() {
             document.querySelectorAll('.entry-row').forEach(row => {
-                row.removeEventListener('click', handleEntryRowClick);
-                row.addEventListener('click', handleEntryRowClick);
+                row.addEventListener('click', function(e) {
+                    if (window.innerWidth > 768) return; // Only on mobile
+                    if (e.target.closest('.btn-icon')) return; // Don't toggle if clicking button
+
+                    e.stopPropagation();
+                    this.classList.toggle('expanded');
+                });
             });
         }
 
-        function handleEntryRowClick(e) {
-            e.stopPropagation();
-            this.classList.toggle('expanded');
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(setupHistoryAccordion, 500);
+        });
 
-        // Hook into renderHistoryView to re-attach listeners
-        const originalRenderHistoryView = window.renderHistoryView;
+        // Re-setup when history renders
+        const originalRender = window.renderHistoryView;
         window.renderHistoryView = function() {
-            originalRenderHistoryView.apply(this, arguments);
-            attachEntryRowListeners();
+            originalRender.apply(this, arguments);
+            setTimeout(setupHistoryAccordion, 100);
         };
     </script>
 </body>
