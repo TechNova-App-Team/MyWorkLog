@@ -282,12 +282,7 @@
         if (!overlay) {
             overlay = document.createElement('div');
             overlay.className = 'loading-overlay';
-            overlay.innerHTML = `
-                <div class="loading-spinner-container">
-                    <div class="loading-spinner"></div>
-                    <h2>${message}</h2>
-                </div>
-            `;
+            overlay.innerHTML = `<h2 class="shimmer-text">${message}</h2>`;
             document.body.appendChild(overlay);
         }
         overlay.classList.remove('hidden');
@@ -303,7 +298,7 @@
     }
 
     // Zeige Spinner beim Start
-    showLoadingSpinner('⏳ MyWorkLog wird geladen...');
+    showLoadingSpinner('MyWorkLog wird geladen...');
 
     // Verstecke Spinner wenn alles geladen ist
     if (document.readyState === 'loading') {
