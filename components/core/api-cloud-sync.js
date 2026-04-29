@@ -477,72 +477,87 @@
         if (window.cloudSyncUI && typeof window.cloudSyncUI.openLoginModal === 'function') {
             window.cloudSyncUI.openLoginModal();
         } else {
-            showCustomMessage('⚠️ Cloud Sync nicht bereit', 'Bitte lade die Seite neu!', 'warning');
+            console.warn('[Cloud] cloudSyncUI nicht bereit — Seite neu laden');
         }
     }
     
     async function handleCloudLogout() {
         if (!window.cloudSync) return;
-        
-        showCustomConfirm('🚪 Logout?', 'Du wirst von der Cloud abgemeldet. Deine lokalen Daten bleiben erhalten.', 
-            async () => {
-                try {
-                    await window.cloudSync.logout();
-                    showCustomMessage('✅ Abgemeldet', 'Du bist jetzt von der Cloud getrennt.', 'success');
-                } catch (error) {
-                    showCustomMessage('❌ Fehler', 'Logout fehlgeschlagen: ' + error.message, 'error');
-                }
-            }
-        );
+
+        const logoutBtn = document.getElementById('cloudSyncLogoutBtn');
+        const originalHTML = logoutBtn ? logoutBtn.innerHTML : '';
+
+        try {
+            await window.cloudSync.logout();
+            if (logoutBtn) cloudBtnSuccess(logoutBtn, originalHTML);
+        } catch (error) {
+            console.error('[Logout] Fehler:', error);
+            if (logoutBtn) cloudBtnError(logoutBtn, originalHTML);
+        }
     }
     
+    function cloudBtnSuccess(btn, originalHTML) {
+        btn.disabled = true;
+        btn.innerHTML = '✅ Erfolgreich';
+        btn.classList.add('cloud-btn-success');
+        setTimeout(() => {
+            btn.classList.remove('cloud-btn-success');
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }, 2200);
+    }
+
+    function cloudBtnError(btn, originalHTML) {
+        btn.disabled = true;
+        btn.innerHTML = '❌ Fehler';
+        btn.classList.add('cloud-btn-error');
+        setTimeout(() => {
+            btn.classList.remove('cloud-btn-error');
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+        }, 2200);
+    }
+
     async function handleCloudUpload() {
         const uploadBtn = document.getElementById('cloudSyncUploadBtn');
         if (!uploadBtn || !window.cloudSync) {
             console.warn('[Upload] Button oder cloudSync nicht verfügbar');
             return;
         }
-        
-        const originalText = uploadBtn.textContent;
+
+        const originalHTML = uploadBtn.innerHTML;
         uploadBtn.disabled = true;
-        uploadBtn.textContent = '⏳ Lädt...';
-        
+        uploadBtn.innerHTML = '⏳ Lädt...';
+
         try {
             console.log('[Upload] Starte Upload...');
             await window.cloudSync.uploadToCloud();
-            showCustomMessage('✅ Hochgeladen', 'Deine Daten wurden erfolgreich in die Cloud synchronisiert!', 'success');
+            cloudBtnSuccess(uploadBtn, originalHTML);
         } catch (error) {
             console.error('[Upload] Fehler:', error);
-            showCustomMessage('❌ Upload Fehler', error.message, 'error');
-        } finally {
-            uploadBtn.disabled = false;
-            uploadBtn.textContent = originalText;
+            cloudBtnError(uploadBtn, originalHTML);
         }
     }
-    
+
     async function handleCloudDownload() {
         const downloadBtn = document.getElementById('cloudSyncDownloadBtn');
         if (!downloadBtn || !window.cloudSync) {
             console.warn('[Download] Button oder cloudSync nicht verfügbar');
             return;
         }
-        
-        const originalText = downloadBtn.textContent;
+
+        const originalHTML = downloadBtn.innerHTML;
         downloadBtn.disabled = true;
-        downloadBtn.textContent = '⏳ Lädt...';
-        
+        downloadBtn.innerHTML = '⏳ Lädt...';
+
         try {
             console.log('[Download] Starte Download...');
-            const result = await window.cloudSync.downloadFromCloud();
-            showCustomMessage('✅ Restored', `${result.itemsLoaded} Einträge von der Cloud geladen!`, 'success');
-            // Reload der Seite um neue Daten anzuzeigen
-            setTimeout(() => location.reload(), 1500);
+            await window.cloudSync.downloadFromCloud();
+            cloudBtnSuccess(downloadBtn, originalHTML);
+            setTimeout(() => location.reload(), 2400);
         } catch (error) {
             console.error('[Download] Fehler:', error);
-            showCustomMessage('❌ Download Fehler', error.message, 'error');
-        } finally {
-            downloadBtn.disabled = false;
-            downloadBtn.textContent = originalText;
+            cloudBtnError(downloadBtn, originalHTML);
         }
     }
     

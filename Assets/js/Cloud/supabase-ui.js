@@ -319,14 +319,11 @@ class SupabaseCloudSyncUI {
      * Handler für Logout Button Click
      */
     async handleLogoutClick() {
-        if (confirm('Wirklich abmelden?')) {
-            try {
-                await this.sync.logout();
-                this.hideSyncContainer();
-            } catch (error) {
-                console.error('Logout error:', error);
-                alert('Fehler beim Abmelden: ' + error.message);
-            }
+        try {
+            await this.sync.logout();
+            this.hideSyncContainer();
+        } catch (error) {
+            console.error('Logout error:', error);
         }
     }
 
