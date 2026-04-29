@@ -6424,46 +6424,32 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <!-- AUTO-CAMOUFLAGE / TAB-VERSTECKER -->
     <script src="./components/core/camo.js"></script>
 
-    <!-- MOBILE ACCORDION: Normal height + expandable on click -->
+    <!-- MOBILE ACCORDION: Big normal view + buttons on click -->
     <style>
         @media (max-width: 768px) {
-            /* MOBILE: Show as normal Desktop height, hide details & buttons */
-            .entry-row .er-mid {
-                display: none !important;
+            /* MOBILE: Show EVERYTHING big like Desktop, buttons hidden by default */
+            .entry-row {
+                cursor: pointer !important;
             }
 
+            /* Buttons HIDDEN unless expanded */
             .entry-row .er-actions {
-                display: none !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
             }
 
-            /* EXPANDED: Show everything like Desktop -->
-            .entry-row.expanded .er-mid {
-                display: flex !important;
-                width: 100% !important;
-                flex-direction: column !important;
-                gap: 6px !important;
-                border-top: 1px solid rgba(255,255,255,0.05) !important;
-                padding-top: 16px !important;
-                margin-top: 16px !important;
-            }
-
+            /* When expanded: show buttons with separator */
             .entry-row.expanded .er-actions {
-                display: flex !important;
                 opacity: 1 !important;
-                width: 100% !important;
+                pointer-events: auto !important;
                 border-top: 1px solid rgba(255,255,255,0.05) !important;
-                padding-top: 16px !important;
-                margin-top: 16px !important;
-                justify-content: flex-end !important;
+                padding-top: 12px !important;
+                margin-top: 12px !important;
+                width: 100% !important;
             }
 
             .entry-row.expanded {
                 flex-direction: column !important;
-            }
-
-            /* Make entry clickable */
-            .entry-row {
-                cursor: pointer !important;
             }
         }
     </style>
