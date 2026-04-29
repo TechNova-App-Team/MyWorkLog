@@ -6424,75 +6424,99 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <!-- AUTO-CAMOUFLAGE / TAB-VERSTECKER -->
     <script src="./components/core/camo.js"></script>
 
-    <!-- MOBILE OPTIMIZER: ENTRY ROW FIX -->
+    <!-- MOBILE ACCORDION: Expanded on click -->
     <style>
         @media (max-width: 768px) {
-            /* Make buttons ALWAYS visible */
-            .er-actions {
-                opacity: 1 !important;
+            /* COLLAPSED STATE (default) */
+            .entry-row {
+                cursor: pointer !important;
             }
 
-            /* Make buttons smaller so everything fits */
-            .btn-icon {
-                width: 28px !important;
-                height: 28px !important;
-                min-width: 28px !important;
-                min-height: 28px !important;
-                font-size: 0.6rem !important;
+            /* Hide details by default on mobile */
+            .entry-row .er-mid,
+            .entry-row .er-actions {
+                display: none !important;
             }
 
-            /* Compact the right section */
-            .er-right {
-                gap: 4px !important;
-                padding: 12px 8px !important;
-            }
-
-            .er-hours {
-                font-size: 0.95rem !important;
-                white-space: nowrap !important;
-            }
-
-            .er-diff {
-                font-size: 0.65rem !important;
-                padding: 2px 5px !important;
-                white-space: nowrap !important;
-            }
-
-            /* Compact tags so they don't push everything */
-            .er-tags {
-                gap: 3px !important;
-            }
-
-            .er-badge, .er-project {
-                font-size: 0.6rem !important;
-                padding: 1px 5px !important;
-            }
-
-            /* Minimize left section */
-            .er-left {
-                padding: 10px 8px !important;
+            /* Show compact header only */
+            .entry-row {
                 gap: 8px !important;
-                min-width: auto !important;
+                padding: 12px !important;
             }
 
-            .er-icon-wrap {
-                width: 32px !important;
-                height: 32px !important;
-                flex-shrink: 0 !important;
+            /* EXPANDED STATE */
+            .entry-row.expanded .er-mid {
+                display: flex !important;
+                width: 100% !important;
+                border-top: 1px solid rgba(255,255,255,0.05) !important;
+                padding-top: 12px !important;
+                margin-top: 12px !important;
             }
 
-            .er-date {
-                font-size: 0.8rem !important;
+            .entry-row.expanded .er-actions {
+                display: flex !important;
+                width: 100% !important;
+                border-top: 1px solid rgba(255,255,255,0.05) !important;
+                padding: 12px 0 0 0 !important;
+                margin-top: 12px !important;
+                justify-content: flex-end !important;
+                gap: 8px !important;
             }
 
-            /* Compact mid section */
-            .er-mid {
-                padding: 10px 8px !important;
+            .entry-row.expanded .er-right {
+                width: 100% !important;
+                border-top: 1px solid rgba(255,255,255,0.05) !important;
+                border-left: none !important;
+                padding-top: 12px !important;
+                margin-top: 12px !important;
             }
 
-            .er-info {
-                font-size: 0.8rem !important;
+            .entry-row.expanded {
+                flex-direction: column !important;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .entry-row {
+                padding: 10px !important;
             }
         }
     </style>
+
+    <!-- ACCORDION JS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                document.querySelectorAll('.entry-row').forEach(row => {
+                    row.addEventListener('click', function(e) {
+                        if (window.innerWidth <= 768) {
+                            e.stopPropagation();
+                            this.classList.toggle('expanded');
+                        }
+                    });
+                });
+            }, 500);
+        });
+
+        // Re-attach when history is re-rendered
+        function attachEntryRowListeners() {
+            if (window.innerWidth > 768) return;
+            document.querySelectorAll('.entry-row').forEach(row => {
+                row.removeEventListener('click', handleEntryRowClick);
+                row.addEventListener('click', handleEntryRowClick);
+            });
+        }
+
+        function handleEntryRowClick(e) {
+            e.stopPropagation();
+            this.classList.toggle('expanded');
+        }
+
+        // Hook into renderHistoryView to re-attach listeners
+        const originalRenderHistoryView = window.renderHistoryView;
+        window.renderHistoryView = function() {
+            originalRenderHistoryView.apply(this, arguments);
+            attachEntryRowListeners();
+        };
+    </script>
 </body>
