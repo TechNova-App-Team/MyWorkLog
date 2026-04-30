@@ -89,8 +89,13 @@
 ---
 
 <div align="center">
-  <a href="scripts/Repo_to_diagramm/archflow.html" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.4rem;border-radius:12px;background:#1f2937;color:#f8fafc;font-weight:600;text-decoration:none;border:1px solid rgba(248,250,252,.16);box-shadow:0 8px 20px rgba(15,23,42,.12);transition:background .2s,border-color .2s;">
-    <span>Detailliertes Architektur-Layout</span>
+  <a href="scripts/Repo_to_diagramm/archflow.html" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.4rem;border-radius:12px;background:#1f2937;color:#f8fafc;font-weight:600;text-decoration:none;border:1px solid rgba(248,250,252,.16);box-shadow:0 8px 20px rgba(15,23,42,.12);transition:background .2s;margin: 5px;">
+    <span>Detailliertes Architektur-Layout Codebase</span>
+    <span style="font-size:1rem;line-height:1;color:#93c5fd;">→</span>
+  </a>
+
+  <a href="archflow" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.4rem;border-radius:12px;background:#1f2937;color:#f8fafc;font-weight:600;text-decoration:none;border:1px solid rgba(248,250,252,.16);box-shadow:0 8px 20px rgba(15,23,42,.12);transition:background .2s;margin: 5px;">
+    <span>MyWorkLog Live</span>
     <span style="font-size:1rem;line-height:1;color:#93c5fd;">→</span>
   </a>
 </div>
