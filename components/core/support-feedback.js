@@ -53,7 +53,85 @@
         const labels = ['', 'Schlecht', 'Nicht so gut', 'Okay', 'Gut', 'Fantastisch'];
         data.supportRating = rating;
         save();
-        showCustomMessage(`${emojis[rating]} ${labels[rating]}!`, 'Danke für dein Feedback! Du hilfst uns, MyWorkLog besser zu machen.', 'success');
+
+        // Haptic feedback (vibration)
+        if (navigator.vibrate) {
+            navigator.vibrate(20);
+        }
+
+        // Find and animate the clicked button
+        const btn = document.querySelector(`[onclick="supportRate(${rating})"]`);
+        if (btn) {
+            btn.style.transition = 'none';
+            btn.style.transform = 'scale(1.2)';
+            btn.style.filter = 'drop-shadow(0 0 16px rgba(16, 185, 129, 0.8))';
+            setTimeout(() => {
+                btn.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                btn.style.transform = 'scale(1)';
+                btn.style.filter = 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.4))';
+                setTimeout(() => {
+                    btn.style.transition = 'filter 1.5s ease';
+                    btn.style.filter = 'drop-shadow(0 0 0px rgba(16, 185, 129, 0))';
+                }, 400);
+            }, 0);
+        }
+
+        // Show modern feedback toast
+        showFeedbackToast(emojis[rating], labels[rating]);
+    }
+
+    function showFeedbackToast(emoji, label) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(var(--bg-sidebar-rgb, 15, 15, 20), 0.95);
+            backdrop-filter: blur(20px);
+            padding: 16px 24px;
+            border-radius: 14px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 90%;
+            animation: slideUpFeedback 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        `;
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUpFeedback {
+                from { transform: translateX(-50%) translateY(120px); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+            @keyframes slideDownFeedback {
+                from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                to { transform: translateX(-50%) translateY(120px); opacity: 0; }
+            }
+        `;
+        if (!document.querySelector('style[data-feedback-toast]')) {
+            style.setAttribute('data-feedback-toast', '');
+            document.head.appendChild(style);
+        }
+
+        toast.innerHTML = `
+            <span style="font-size: 1.4rem; display: inline-block;">${emoji}</span>
+            <div style="flex: 1;">
+                <div style="color: var(--text-main); font-weight: 600; font-size: 0.95rem;">${label}!</div>
+                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2px;">Bewertung gespeichert • Jetzt senden</div>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+
+        const removeToast = () => {
+            toast.style.animation = 'slideDownFeedback 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        };
+
+        setTimeout(removeToast, 3500);
     }
 
     function gatherAppStats() {
