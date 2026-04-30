@@ -16,7 +16,7 @@
     <img src="https://img.shields.io/badge/myworklog.de-online-6d28d9?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0d0d14" alt="Website">
   </a>
   <a href="https://github.com/releases">
-    <img src="https://img.shields.io/badge/version-3.3.3a-5b21b6?style=for-the-badge&logo=git&logoColor=a78bfa&labelColor=0d0d14" alt="Version">
+    <img src="https://img.shields.io/badge/version-3.5.3-5b21b6?style=for-the-badge&logo=git&logoColor=a78bfa&labelColor=0d0d14" alt="Version">
   </a>
   <a href="https://myworklog.de/">
     <img src="https://img.shields.io/badge/PWA-Ready-059669?style=for-the-badge&logo=pwa&logoColor=6ee7b7&labelColor=0d0d14" alt="PWA">
@@ -41,7 +41,7 @@
      TIER 3 — Stack & Compliance
 ══════════════════════════════════════════════════════════════════ -->
 <p>
-  <img src="https://img.shields.io/badge/Node-%3E%3D18.0-339933?style=flat-square&logo=nodedotjs&logoColor=white&labelColor=111827" alt="Node">
+  <img src="https://img.shields.io/badge/Vanilla-JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=white&labelColor=111827" alt="Vanilla JS">
   <img src="https://img.shields.io/badge/DSGVO-konform-ef4444?style=flat-square&logo=eu&logoColor=white&labelColor=111827" alt="DSGVO">
   <img src="https://img.shields.io/badge/Offline-First-8b5cf6?style=flat-square&logo=servicestack&logoColor=white&labelColor=111827" alt="Offline First">
   <img src="https://img.shields.io/badge/AI-Powered-ec4899?style=flat-square&logo=openai&logoColor=white&labelColor=111827" alt="AI Powered">
@@ -89,7 +89,7 @@
 ---
 
 <div align="center">
-  <a href="archflow.html" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.4rem;border-radius:12px;background:#1f2937;color:#f8fafc;font-weight:600;text-decoration:none;border:1px solid rgba(248,250,252,.16);box-shadow:0 8px 20px rgba(15,23,42,.12);transition:background .2s,border-color .2s;">
+  <a href="scripts/Repo_to_diagramm/archflow.html" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.4rem;border-radius:12px;background:#1f2937;color:#f8fafc;font-weight:600;text-decoration:none;border:1px solid rgba(248,250,252,.16);box-shadow:0 8px 20px rgba(15,23,42,.12);transition:background .2s,border-color .2s;">
     <span>Detailliertes Architektur-Layout</span>
     <span style="font-size:1rem;line-height:1;color:#93c5fd;">→</span>
   </a>
@@ -489,24 +489,17 @@ Optional: Synchronisiere deine Zeiterfassungsdaten über die Cloud! Deine Eintr�
 3. Bestätige Installation
 4. App läuft jetzt offline!
 
-### Option 3: Development Setup
+### Option 3: Lokal Entwickeln
 
 ```bash
 # Repository klonen
 git clone https://github.com/TechNova-App-Team/MyWorkLog.git
 cd MyWorkLog
 
-# Dependencies installieren
-npm install
-
-# Tests ausführen
-npm test
-
-# Development Mode (Auto-Reload Tests)
-npm run dev
-
-# Linting
-npm run lint
+# index.html im Browser öffnen oder
+# mit lokalem Web-Server servieren:
+# python -m http.server 8000
+# Dann: http://localhost:8000
 ```
 
 ---
@@ -681,11 +674,6 @@ graph LR
     "EmailJS": "v4",            // Feedback-Versand
     "WebLLM": "v0.2.80"         // Lokales LLM (on-device)
   },
-  "devDependencies": {
-    "Jest": "v29.7.0",          // Testing Framework
-    "ESLint": "v8.56.0",        // Code Linting
-    "@testing-library/jest-dom": "v6.1.5"
-  }
 }
 ```
 
@@ -704,65 +692,36 @@ graph LR
 
 ### 📋 Voraussetzungen
 
-```bash
-Node.js >= 18.x
-npm >= 9.x
-Moderner Browser (Chrome 90+, Firefox 88+, Safari 14+)
+#### 🚀 Für Nutzer (zum Verwenden der App)
+```
+✅ Moderner Browser (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
+✅ Internetverbindung (initial)
+✅ Keine Installation, kein Node.js, kein Build nötig! 🎉
 ```
 
-### 🚀 Setup
+#### 👨‍💻 Für Entwickler (zum Code ändern)
+```
+✅ Git zum Klonen des Repos
+✅ Ein Text-Editor oder IDE (VS Code, etc.)
+✅ Ein lokaler Web-Server (optional, für besseres Testing)
+✅ Kein Node.js, npm oder Build-Tools nötig!
+```
+
+**Die App ist 100% Vanilla JavaScript** – du kannst `index.html` direkt öffnen oder auf jedem Web-Server hosten.
+
+### 🚀 Development Setup
 
 ```bash
-# 1. Repository klonen
+# Repository klonen
 git clone https://github.com/TechNova-App-Team/MyWorkLog.git
 cd MyWorkLog
 
-# 2. Dependencies installieren
-npm install
-
-# 3. Entwicklungsumgebung starten
-npm run dev
-
-# 4. Tests im Watch-Mode
-npm run test:watch
+# index.html öffnen im Browser
+# Keine Dependencies oder Build-Steps nötig!
 ```
 
-### 📜 npm Scripts
 
-| Script | Beschreibung | Verwendung |
-|--------|--------------|------------|
-| `npm test` | Führt Jest-Tests aus | CI/CD & Lokal |
-| `npm run test:watch` | Tests mit Auto-Reload | Development |
-| `npm run test:coverage` | Coverage-Report generieren | Quality Check |
-| `npm run lint` | ESLint Code-Check | Pre-Commit |
-| `npm run lint --fix` | Auto-Fix Linting-Fehler | Code Cleanup |
-| `npm run dev` | Development-Mode (Watch) | Live Development |
-| `npm run build` | Build-Verification | Release |
 
-### 🧪 Test-Struktur
-
-```bash
-tests/
-├── timer.test.js              # Timer-Logik (15 Tests)
-├── backup.test.js             # Export/Import (18 Tests)
-├── calendar.test.js           # Kalender-Funktionen (16 Tests)
-└── multiProfile.test.js       # Multi-Profile (24 Tests)
-
-Total: 73 Tests | Coverage: 60%+ Threshold
-```
-
-### 🔄 CI/CD Pipeline
-
-```yaml
-# .github/workflows/ci-cd.yml
-Jobs:
-  ✅ Lint          → ESLint Check
-  ✅ Test          → Jest (Node 18.x, 20.x)
-  ✅ Coverage      → Codecov Upload
-  ✅ Build         → Verification
-  ✅ Lighthouse    → Performance/PWA/Accessibility
-  ✅ Security      → npm audit + OWASP Dependency Check
-```
 
 ### 📝 Code Style Guide
 
@@ -785,65 +744,6 @@ function calc(w,e){return w-e;}
 - LocalStorage-Zugriffe immer mit Fallback
 
 ---
-
-## 🧪 Testing
-
-### 📊 Test-Metriken
-
-```
-╔════════════════════════════════════╗
-║  Test Suite Statistics             ║
-╠════════════════════════════════════╣
-║  Test Files:          4            ║
-║  Total Tests:         73           ║
-║  Passed:              73 ✅        ║
-║  Failed:              0  ❌        ║
-║  Coverage:            60%+         ║
-║  Execution Time:      ~2.5s        ║
-╚════════════════════════════════════╝
-```
-
-### 🎯 Coverage-Ziele
-
-| Kategorie | Threshold | Aktuell |
-|-----------|-----------|---------|
-| Statements | 60% | ✅ 62% |
-| Branches | 60% | ✅ 61% |
-| Functions | 60% | ✅ 65% |
-| Lines | 60% | ✅ 63% |
-
-### 🧪 Test-Beispiele
-
-```javascript
-// timer.test.js
-describe('Timer', () => {
-  test('should start timer correctly', () => {
-    const timer = new Timer();
-    timer.start();
-    expect(timer.isRunning()).toBe(true);
-  });
-
-  test('should calculate worked hours correctly', () => {
-    expect(calculateHours('08:00', '17:30')).toBe(9.5);
-  });
-});
-```
-
-**Testen:**
-```bash
-# Alle Tests
-npm test
-
-# Bestimmte Test-Datei
-npm test -- timer.test.js
-
-# Watch Mode (Auto-Reload)
-npm run test:watch
-
-# Coverage Report
-npm run test:coverage
-# → Öffne coverage/lcov-report/index.html
-```
 
 ---
 
