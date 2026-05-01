@@ -924,15 +924,15 @@ const OfflineDataManager = {
 window.addEventListener('online', () => {
     console.log('[PWA] Online wieder hergestellt — synchronisiere Daten...');
     OfflineDataManager.processPendingActions();
-    if (typeof showCustomMessage === 'function') {
-        showCustomMessage('🌐 Online!', 'Deaktiviere Daten werden synchronisiert...', 'success');
+    if (window.location.pathname.includes('offline.html')) {
+        location.href = '/';
     }
 });
 
-// Benachrichtige wenn Offline wird
+// Wenn Offline wird: zur offline.html umleiten
 window.addEventListener('offline', () => {
-    if (typeof showCustomMessage === 'function') {
-        showCustomMessage('⚠️ Offline-Modus', 'Du bist keine Verbindung! Deine Daten werden lokal gespeichert.', 'warning');
+    if (!window.location.pathname.includes('offline.html')) {
+        location.href = '/Pages/Info/offline.html';
     }
 });
 

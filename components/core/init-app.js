@@ -1,6 +1,12 @@
 // ═══ CORE: INIT-APP ═══
     // --- INIT ---
     window.onload = () => {
+        // Check offline on startup
+        if (!navigator.onLine && !window.location.pathname.includes('offline.html')) {
+            window.location.href = '/Pages/Info/offline.html';
+            return;
+        }
+
         if(localStorage.getItem('tg_pro_data')) data = JSON.parse(localStorage.getItem('tg_pro_data'));
         
         if(!data.settings) data.settings = {};
