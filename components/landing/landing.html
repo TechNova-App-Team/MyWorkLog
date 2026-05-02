@@ -356,13 +356,14 @@
     var vid=document.getElementById('viBgVid');
     var vidReady=false;
     var vidTarget=0, vidCurrent=0;
-    
+    var vidRafId=null, vidLastTs=0;
+    var VID_INTERVAL=33;
+
     // Render first frame immediately
     vid.addEventListener('loadedmetadata',function(){
       vidReady=true;
       vid.currentTime=0;
       vidCurrent=0;
-      vidLoop();
     });
     vid.addEventListener('loadeddata',function(){
       if(!vidReady){
@@ -370,20 +371,30 @@
         vidCurrent=0;
       }
     });
-    
+
     // Ensure video loads
     vid.load();
     var ticking=false;
 
-    /* — Smooth Video Scrub Loop — */
-    function vidLoop(){
-      if(!vidReady||!vid.duration) return;
+    /* — Smooth Video Scrub Loop — stops when settled, rate-limited to ~30fps — */
+    function vidLoop(ts){
+      if(!vidReady||!vid.duration){vidRafId=null;return;}
       var diff=vidTarget-vidCurrent;
-      if(Math.abs(diff)>0.01){
-        vidCurrent+= diff*0.12;
+      if(Math.abs(diff)>0.001){
+        if(ts-vidLastTs>=VID_INTERVAL){
+          vidCurrent+=diff*0.18;
+          vid.currentTime=vidCurrent;
+          vidLastTs=ts;
+        }
+        vidRafId=requestAnimationFrame(vidLoop);
+      } else {
+        vidCurrent=vidTarget;
         vid.currentTime=vidCurrent;
+        vidRafId=null;
       }
-      requestAnimationFrame(vidLoop);
+    }
+    function startVidLoop(){
+      if(!vidRafId) vidRafId=requestAnimationFrame(vidLoop);
     }
 
     /* — S1 Typewriter — */
@@ -416,18 +427,24 @@
       });
     }
 
-    /* — Scroll Engine — */
+    /* — Scroll Engine — cache offsetHeight to avoid reflow per scroll event — */
+    var scrollMax=0;
+    function cacheScrollMax(){
+      var el=intro.querySelector('.vi-scroll');
+      scrollMax=el?Math.max(1,el.offsetHeight-intro.clientHeight):1;
+    }
+    cacheScrollMax();
+    window.addEventListener('resize',cacheScrollMax,{passive:true});
+
     function getP(){
-      var st=intro.scrollTop;
-      var mx=intro.querySelector('.vi-scroll').offsetHeight-intro.clientHeight;
-      return mx<=0?0:Math.min(1,Math.max(0,st/mx));
+      return Math.min(1,Math.max(0,intro.scrollTop/scrollMax));
     }
 
     function update(){
       ticking=false;
       var p=getP();
       progBar.style.width=(p*100)+'%';
-      if(vidReady&&vid.duration){vidTarget=p*vid.duration;}
+      if(vidReady&&vid.duration){vidTarget=p*vid.duration;startVidLoop();}
       for(var i=0;i<sections.length;i++){
         var s=parseFloat(sections[i].dataset.s);
         var e=parseFloat(sections[i].dataset.e);
@@ -444,8 +461,7 @@
       if(!ticking){requestAnimationFrame(update);ticking=true}
     },{passive:true});
     
-    // Initialize immediately and on next frame
-    update();
+    // Initialize on next frame (layout must be ready)
     requestAnimationFrame(update);
 
     /* — Finish — */
