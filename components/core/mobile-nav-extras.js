@@ -1,6 +1,10 @@
 // ═══ CORE: MOBILE-NAV-EXTRAS ═══
+
+    // Tabs that live in the "Mehr" sheet (not shown in main nav strip)
+    const _MOB_MORE_TABS = ['yearview','goals','school','ihk','monthcompare','weekview','aibot','analytics-pro','aufgaben','berichtsheft'];
+
     function mobNavSwitch(tabId) {
-        // Close sidebar on mobile (don't toggle, ensure it's closed)
+        // Close sidebar on mobile
         const sidebar = document.getElementById('sidebar');
         const overlay = document.querySelector('.sidebar-overlay');
         if (sidebar) {
@@ -8,21 +12,147 @@
             sidebar.classList.add('hidden');
             isSidebarOpen = false;
         }
-        if (overlay) {
-            overlay.classList.remove('active');
-        }
+        if (overlay) overlay.classList.remove('active');
         document.body.style.overflow = '';
 
         // Switch tab using existing system
-        if (typeof switchTab === 'function') {
-            switchTab(tabId);
-        }
+        if (typeof switchTab === 'function') switchTab(tabId);
 
-        // Update active states
-        document.querySelectorAll('.mob-nav-btn').forEach(btn => btn.classList.remove('active'));
+        // Update active states on main nav buttons
+        document.querySelectorAll('.mob-nav-btn:not(.mob-nav-hidden-sync)').forEach(btn => btn.classList.remove('active'));
         const activeBtn = document.getElementById(`mobNav-${tabId}`);
         if (activeBtn) activeBtn.classList.add('active');
+
+        // If it's a "mehr" tab, highlight the "mehr" button instead
+        const moreBtn = document.getElementById('mobNav-more');
+        if (moreBtn) {
+            if (_MOB_MORE_TABS.includes(tabId)) {
+                moreBtn.classList.add('active', 'more-active');
+            } else {
+                moreBtn.classList.remove('more-active');
+            }
+        }
+
+        // Animate sliding indicator
+        _updateMobNavIndicator(tabId);
     }
+
+    // ── Sliding pill indicator ──
+    function _updateMobNavIndicator(activeTabId) {
+        const inner = document.getElementById('mobNavInner');
+        const indicator = document.getElementById('mobNavIndicator');
+        if (!inner || !indicator) return;
+
+        // Find the visible active button (not a hidden sync stub)
+        let targetBtn = null;
+        if (!_MOB_MORE_TABS.includes(activeTabId)) {
+            targetBtn = document.getElementById('mobNav-' + activeTabId);
+        }
+        if (!targetBtn || targetBtn.classList.contains('mob-nav-hidden-sync')) {
+            targetBtn = document.getElementById('mobNav-more');
+        }
+        if (!targetBtn) { indicator.style.opacity = '0'; return; }
+
+        const innerRect = inner.getBoundingClientRect();
+        const btnRect = targetBtn.getBoundingClientRect();
+        const left = btnRect.left - innerRect.left;
+        const width = btnRect.width;
+
+        indicator.style.left = left + 'px';
+        indicator.style.width = width + 'px';
+        indicator.style.opacity = '1';
+    }
+
+    // ── More sheet ──
+    function mobNavShowMore() {
+        const overlay = document.getElementById('mobMoreOverlay');
+        const sheet = document.getElementById('mobMoreSheet');
+        const moreBtn = document.getElementById('mobNav-more');
+        if (overlay) overlay.classList.add('open');
+        if (sheet) sheet.classList.add('open');
+        if (moreBtn) moreBtn.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function mobNavHideMore() {
+        const overlay = document.getElementById('mobMoreOverlay');
+        const sheet = document.getElementById('mobMoreSheet');
+        if (overlay) {
+            overlay.classList.remove('open');
+            setTimeout(() => { if (overlay && !overlay.classList.contains('open')) overlay.style.display = ''; }, 20);
+        }
+        if (sheet) sheet.classList.remove('open');
+        document.body.style.overflow = '';
+        // Re-check active state for more button
+        const moreBtn = document.getElementById('mobNav-more');
+        if (moreBtn) {
+            const activeTab = document.querySelector('.view-section.active');
+            const activeId = activeTab ? activeTab.id.replace('view-', '') : '';
+            if (!_MOB_MORE_TABS.includes(activeId)) {
+                moreBtn.classList.remove('active');
+            }
+        }
+    }
+
+    // ── Nav hide/show ──
+    function mobNavToggleHide() {
+        const nav = document.getElementById('mobileBottomNav');
+        if (!nav) return;
+        if (nav.classList.contains('nav-hidden')) {
+            mobNavShowNav();
+        } else {
+            mobNavHideNav();
+        }
+    }
+
+    function mobNavHideNav() {
+        const nav = document.getElementById('mobileBottomNav');
+        const restore = document.getElementById('mobNavRestoreBtn');
+        if (nav) nav.classList.add('nav-hidden');
+        if (restore) restore.classList.add('visible');
+        try { sessionStorage.setItem('mob_nav_hidden', '1'); } catch(e) {}
+    }
+
+    function mobNavShowNav() {
+        const nav = document.getElementById('mobileBottomNav');
+        const restore = document.getElementById('mobNavRestoreBtn');
+        if (nav) nav.classList.remove('nav-hidden');
+        if (restore) restore.classList.remove('visible');
+        try { sessionStorage.removeItem('mob_nav_hidden'); } catch(e) {}
+    }
+
+    // Init on DOM ready
+    (function initMobNav() {
+        function _init() {
+            // Restore hidden state from sessionStorage
+            try {
+                if (sessionStorage.getItem('mob_nav_hidden') === '1') mobNavHideNav();
+            } catch(e) {}
+
+            // Initial indicator position
+            const activeBtn = document.querySelector('.mobile-bottom-nav-inner .mob-nav-btn.active');
+            if (activeBtn) {
+                const tabId = activeBtn.id ? activeBtn.id.replace('mobNav-', '') : '';
+                if (tabId) _updateMobNavIndicator(tabId);
+            }
+
+            // Swipe-down to hide the nav
+            let touchStartY = 0;
+            const nav = document.getElementById('mobileBottomNav');
+            if (nav) {
+                nav.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
+                nav.addEventListener('touchend', e => {
+                    const diff = e.changedTouches[0].clientY - touchStartY;
+                    if (diff > 40) mobNavHideNav();
+                }, { passive: true });
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', _init);
+        } else {
+            _init();
+        }
+    })();
 
     // Sync bottom nav with sidebar tab switches
     const _origSwitchTab = typeof switchTab === 'function' ? switchTab : null;

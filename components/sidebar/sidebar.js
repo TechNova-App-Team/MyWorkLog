@@ -77,3 +77,63 @@
         renderOnboardingStep();
     }
 
+    // ═══ SIDEBAR COLLAPSE — Icon-Only Mode ═══
+    (function initSidebarCollapse() {
+        try {
+            const collapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+            if (collapsed && window.innerWidth >= 1024) _applySidebarCollapse(true, false);
+        } catch(e) {}
+        // Ctrl+B shortcut
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b' && window.innerWidth >= 1024) {
+                e.preventDefault();
+                toggleSidebarCollapse();
+            }
+        });
+        // Reset on resize below 1024
+        window.addEventListener('resize', function() {
+            if (window.innerWidth < 1024) {
+                const s = document.getElementById('sidebar');
+                const m = document.getElementById('mainContent');
+                if (s) s.classList.remove('collapsed');
+                if (m) m.classList.remove('sidebar-icon-only');
+                document.body.classList.remove('sidebar-collapsed');
+            }
+        });
+    })();
+
+    function toggleSidebarCollapse() {
+        if (window.innerWidth < 1024) return;
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) return;
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        _applySidebarCollapse(!isCollapsed, true);
+    }
+
+    function _applySidebarCollapse(collapse, save) {
+        const sidebar = document.getElementById('sidebar');
+        const main = document.getElementById('mainContent');
+        const floatBtn = document.getElementById('sidebarExpandFloat');
+        if (!sidebar) return;
+
+        if (collapse) {
+            sidebar.classList.add('collapsed');
+            if (main) main.classList.add('sidebar-icon-only');
+            if (floatBtn) { floatBtn.style.cssText = 'display:flex;opacity:1;pointer-events:auto;'; }
+            document.body.classList.add('sidebar-collapsed');
+            // Add title attrs for tooltips
+            document.querySelectorAll('#sidebarNavList .nav-item').forEach(el => {
+                const label = el.querySelector('.nav-label');
+                if (label && !el.getAttribute('title')) el.setAttribute('title', label.textContent.trim());
+            });
+        } else {
+            sidebar.classList.remove('collapsed');
+            if (main) main.classList.remove('sidebar-icon-only');
+            if (floatBtn) { floatBtn.style.cssText = ''; }
+            document.body.classList.remove('sidebar-collapsed');
+        }
+        if (save) {
+            try { localStorage.setItem('sidebar_collapsed', collapse ? 'true' : 'false'); } catch(e) {}
+        }
+    }
+
