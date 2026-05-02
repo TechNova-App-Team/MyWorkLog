@@ -7,7 +7,8 @@ const NFC_DEBOUNCE_MS  = 30 * 1000; // 30s Doppel-Bounce-Fenster
 const NFC_MAX_LOG      = 30;
 
 function nfcGetWriteUrl() {
-    return window.location.origin + window.location.pathname + '?nfc=1';
+    // Immer kanonische HTTPS-URL — nie intent:// oder dynamisches origin
+    return 'https://myworklog.de/?nfc=1';
 }
 
 // ─── Modal-Steuerung ───────────────────────────────────────────────────────
@@ -82,6 +83,7 @@ async function nfcWriteChip() {
         window._nfcWriter = ac;
 
         const nfcUrl = nfcGetWriteUrl();
+        console.log('[NFC] Schreibe URL auf Chip:', nfcUrl);
         await ndef.write(
             { records: [{ recordType: 'url', data: nfcUrl }] },
             { signal: ac.signal, overwrite: true }
