@@ -310,11 +310,10 @@ function uEvent(eventName, eventData) {
     }
 }
 </script>
-<!-- EmailJS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>emailjs.init('dLaRbQLynU5R8A0ti');</script>
-<!-- DOMPurify - XSS Sanitizer -->
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
+<!-- EmailJS SDK (defer: nicht beim Start benötigt) -->
+<script defer src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" id="emailjs-sdk"></script>
+<!-- DOMPurify - XSS Sanitizer (defer: safeHTML hat Null-Check) -->
+<script defer src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
 <script>
 /** Safe innerHTML helper – sanitizes HTML before DOM injection */
 function safeHTML(html) { return typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(html, { USE_PROFILES: { html: true }, ADD_ATTR: ['onclick', 'onchange', 'oninput', 'onmouseover', 'onmouseout', 'onkeydown'] }) : html; }
@@ -332,8 +331,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 })();
 </script>
 
-<!-- Supabase JavaScript Client (MUSS zuerst laden!) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase JavaScript Client (defer: order wird eingehalten, lädt vor supabase-integration) -->
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- Supabase Integration (NACH Supabase JS) -->
 <script defer src="./Assets/js/Cloud/supabase-integration.js"></script>
 <script defer src="./Assets/js/Cloud/supabase-ui.js"></script>

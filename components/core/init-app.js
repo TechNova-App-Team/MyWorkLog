@@ -1,6 +1,9 @@
 // ═══ CORE: INIT-APP ═══
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
+        // EmailJS init (deferred SDK ist jetzt geladen)
+        try { if (typeof emailjs !== 'undefined') emailjs.init('dLaRbQLynU5R8A0ti'); } catch(e) {}
+
         // Check offline on startup
         if (!navigator.onLine && !window.location.pathname.includes('offline.html')) {
             window.location.href = '/Pages/Info/offline.html';
