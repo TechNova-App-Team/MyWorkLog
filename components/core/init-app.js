@@ -1,6 +1,6 @@
 // ═══ CORE: INIT-APP ═══
     // --- INIT ---
-    window.onload = () => {
+    document.addEventListener('DOMContentLoaded', () => {
         // Check offline on startup
         if (!navigator.onLine && !window.location.pathname.includes('offline.html')) {
             window.location.href = '/Pages/Info/offline.html';
@@ -160,7 +160,7 @@
 
         // NFC: URL-Parameter prüfen (?nfc=1 kommt vom NFC-Chip-Scan)
         try { if (typeof checkNFCUrlParam === 'function') checkNFCUrlParam(); } catch(e) { console.warn('NFC init failed', e); }
-    };
+    });
 
     function showPrivacyModal() {
         const modal = document.getElementById('privacyModal');

@@ -283,7 +283,11 @@ function exportConversationPDF() {
     }
     
     if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
-        showCustomMessage('⚠️ Bibliothek wird geladen', 'PDF-Export ist noch nicht verfügbar. Bitte warte einen Moment!', 'warning');
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+        s.onload = function() { exportConversationToPDF(); };
+        s.onerror = function() { showCustomMessage('❌ Fehler', 'PDF-Bibliothek konnte nicht geladen werden.', 'error'); };
+        document.head.appendChild(s);
         return;
     }
     

@@ -56,6 +56,16 @@
         })()
     };
 
+    // === SIMPLEPEER LAZY-LOADER ===
+    function _loadSimplePeer(callback) {
+        if (typeof SimplePeer !== 'undefined') { callback(); return; }
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js';
+        s.onload = callback;
+        s.onerror = function() { console.error('[P2P] SimplePeer konnte nicht geladen werden'); };
+        document.head.appendChild(s);
+    }
+
     // === COMPRESSION UTILITIES ===
     async function p2pCompress(obj) {
         try {
@@ -317,6 +327,11 @@
         // Destroy old peer if exists
         if (p2pSync.peer) { try { p2pSync.peer.destroy(); } catch(e){} p2pSync.peer = null; }
 
+        if (typeof SimplePeer === 'undefined') {
+            _loadSimplePeer(function() { p2pStartHost(); });
+            return;
+        }
+
         console.log('🏗️ P2P Host: Erstelle Offer mit trickle:false...');
 
         const peer = new SimplePeer({
@@ -383,6 +398,11 @@
 
     // === STEP 2: CLIENT - Process Offer & Generate Answer ===
     async function p2pClientProcessOffer() {
+        if (typeof SimplePeer === 'undefined') {
+            _loadSimplePeer(function() { p2pClientProcessOffer(); });
+            return;
+        }
+
         const input = document.getElementById('p2pOfferInput').value.trim();
         if (!input) {
             showCustomMessage('❌ Fehler', 'Bitte füge den Einladungscode ein.', 'error');

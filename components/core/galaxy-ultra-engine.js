@@ -14,6 +14,41 @@
         return;
     }
 
+    // ── Three.js Lazy-Loader ──
+    var _threeLoading = false;
+    var _threeCallbacks = [];
+    function _loadThreeJS(callback) {
+        if (typeof THREE !== 'undefined') { callback(); return; }
+        _threeCallbacks.push(callback);
+        if (_threeLoading) return;
+        _threeLoading = true;
+        var urls = [
+            'https://cdn.jsdelivr.net/npm/three@0.145.0/build/three.min.js',
+            'https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/controls/OrbitControls.js',
+            'https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/postprocessing/EffectComposer.js',
+            'https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/postprocessing/RenderPass.js',
+            'https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/postprocessing/UnrealBloomPass.js',
+            'https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/postprocessing/ShaderPass.js',
+            'https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/shaders/CopyShader.js',
+            'https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/shaders/LuminosityHighPassShader.js'
+        ];
+        var i = 0;
+        function next() {
+            if (i >= urls.length) {
+                _threeLoading = false;
+                _threeCallbacks.forEach(function(cb) { cb(); });
+                _threeCallbacks = [];
+                return;
+            }
+            var s = document.createElement('script');
+            s.src = urls[i++];
+            s.onload = next;
+            s.onerror = function() { console.error('[Galaxy] Three.js Ladefehler: ' + urls[i-1]); };
+            document.head.appendChild(s);
+        }
+        next();
+    }
+
     // ── Extended state ──
     apGxState.volumetricNebula = null;
     apGxState.accretionDisk = null;
@@ -604,6 +639,7 @@
         if (typeof THREE === 'undefined') {
             var c = document.getElementById('apGxContainer');
             if (c) c.innerHTML = '<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">⏳</div>Three.js wird geladen…</div>';
+            _loadThreeJS(function() { apRenderGalaxy(); });
             return;
         }
         apGxCleanup();
