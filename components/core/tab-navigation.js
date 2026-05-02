@@ -29,6 +29,7 @@
             'aibot': 'AI-Bot Assistent',
             'support': 'Unterstützung',
             'analytics-pro': 'Analytics Pro',
+            'aufgaben': 'Aufgaben',
         };
         document.querySelector('.page-title').textContent = titles[tabId];
 

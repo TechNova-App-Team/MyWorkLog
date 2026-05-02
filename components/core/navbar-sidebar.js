@@ -218,10 +218,11 @@
             {id:'ihk', label:'IHK', icon:getIconSvgById('ihk'), visible:true},
             {id:'goals', label:'Ziele', icon:getIconSvgById('goals'), visible:true},
             {id:'analytics-pro', label:'Analytics Pro', icon:getIconSvgById('analytics-pro'), visible:true},
+            {id:'aufgaben', label:'Aufgaben', icon:getIconSvgById('aufgaben'), visible:true},
         ];
 
         // Nav-Version: bei Änderung der Reihenfolge/Items hochzählen → erzwingt Reset
-        const NAV_VERSION = 3;
+        const NAV_VERSION = 4;
         const navNeedsReset = !Array.isArray(data.settings.nav) || data.settings.navVersion !== NAV_VERSION;
         if (navNeedsReset) {
             // Bestehende visibility-Einstellungen übernehmen, aber neue Reihenfolge erzwingen
@@ -439,6 +440,7 @@
         { id: 'aibot',        label: 'AI-Bot',            icon: getIconSvgById('aibot'), group: 'Navigation', action: () => switchTab('aibot') },
         { id: 'support',      label: 'Unterstützung',     icon: getIconSvgById('support'), group: 'Navigation', action: () => switchTab('support') },
         { id: 'analytics-pro', label: 'Analytics Pro',     icon: getIconSvgById('analytics-pro'), group: 'Navigation', action: () => switchTab('analytics-pro') },
+        { id: 'aufgaben-tab', label: 'Aufgaben (Dashboard)',     icon: getIconSvgById('aufgaben'), group: 'Navigation', action: () => switchTab('aufgaben') },
         // Tools
         { id: 'settings',     label: 'Einstellungen',     icon: getIconSvgById('settings'), group: 'Tools',      action: () => openSettings() },
         { id: 'alerts',       label: 'Alerts',            icon: getIconSvgById('alerts'), group: 'Tools',      action: () => toggleAlertsPanel() },
