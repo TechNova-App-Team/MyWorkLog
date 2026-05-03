@@ -538,18 +538,30 @@ if ('serviceWorker' in navigator) {
         try {
             // Dynamisch den Scope basierend auf der aktuellen URL setzen
             // GitHub Pages auf /MyWorkLog/ ist unter /MyWorkLog/
-            // Lokal: / 
+            // Lokal: /
             const currentPath = window.location.pathname;
             console.log('[PWA] Current pathname:', currentPath);
-            
+
             let scope = '/';
             if (currentPath.includes('/MyWorkLog/')) {
                 scope = '/MyWorkLog/';
             }
-            
-            // Service Worker im Root
-            const swUrl = './service-worker.js';
-            
+
+            // Cache-Buster: version.json laden für Query-Parameter
+            let versionCacheBuster = Date.now().toString().slice(-6); // Fallback
+            try {
+                const versionResp = await fetch('./config/version.json', { cache: 'no-store' });
+                if (versionResp.ok) {
+                    const versionData = await versionResp.json();
+                    versionCacheBuster = versionData.version || versionCacheBuster;
+                }
+            } catch (e) {
+                console.warn('[PWA] Could not fetch version.json:', e);
+            }
+
+            // Service Worker im Root mit Cache-Buster (Query-Parameter erzwingt neuen Download)
+            const swUrl = `./service-worker.js?v=${versionCacheBuster}`;
+
             console.log('[PWA] Registering service worker at', swUrl, 'scope:', scope);
             const manifestLink = document.querySelector('link[rel="manifest"]');
             console.log('[PWA] Resolved manifest link:', manifestLink ? manifestLink.href : 'none');
