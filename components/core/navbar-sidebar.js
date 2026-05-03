@@ -218,7 +218,7 @@
             {id:'ihk', label:'IHK', icon:getIconSvgById('ihk'), visible:true},
             {id:'goals', label:'Ziele', icon:getIconSvgById('goals'), visible:true},
             {id:'analytics-pro', label:'Analytics Pro', icon:getIconSvgById('analytics-pro'), visible:true},
-            {id:'aufgaben', label:'Aufgaben', icon:getIconSvgById('aufgaben'), visible:true},
+            {id:'aufgaben', label:'Aufgaben', icon:getIconSvgById('aufgaben'), visible:true, external:'./Pages/App/Tasks/aufgaben.html'},
         ];
 
         // Nav-Version: bei Änderung der Reihenfolge/Items hochzählen → erzwingt Reset
@@ -253,6 +253,11 @@
 
         navList.innerHTML = '';
         data.settings.nav.forEach(item => {
+            // Fix aufgaben to be external
+            if (item.id === 'aufgaben' && !item.external) {
+                item.external = './Pages/App/Tasks/aufgaben.html';
+            }
+
             const el = document.createElement('div');
             el.className = 'nav-item';
             el.draggable = true;

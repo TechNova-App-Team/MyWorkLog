@@ -1,7 +1,7 @@
 // ═══ CORE: MOBILE-NAV-EXTRAS ═══
 
     // Tabs that live in the "Mehr" sheet (not shown in main nav strip)
-    const _MOB_MORE_TABS = ['yearview','goals','school','ihk','monthcompare','weekview','aibot','analytics-pro','aufgaben','berichtsheft'];
+    const _MOB_MORE_TABS = ['yearview','goals','school','ihk','monthcompare','weekview','aibot','analytics-pro','berichtsheft'];
 
     function mobNavSwitch(tabId) {
         // Close sidebar on mobile
