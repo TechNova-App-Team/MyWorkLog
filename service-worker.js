@@ -11,7 +11,7 @@
 
 'use strict';
 
-const SW_VERSION  = 'v5.1.0';
+const SW_VERSION  = 'v5.2.1';
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
 const OFFLINE_URL = './Pages/Info/offline.html';
 const DEBUG       = false;
@@ -24,19 +24,17 @@ const CACHEABLE_EXTS = new Set(['js', 'css', 'html', 'png', 'svg', 'jpg',
                                  'jpeg', 'webp', 'ico', 'woff', 'woff2',
                                  'json', 'mp4', 'txt']);
 
-// CDN-Domains NICHT cachen (haben eigene HTTP-Cache-Header)
-const CDN_ORIGINS = [
-  'cdn.jsdelivr.net',
-  'cdnjs.cloudflare.com',
-  'fonts.googleapis.com',
-  'fonts.gstatic.com',
+// Analytics/Tracking-Domains NICHT cachen (dynamische Responses)
+// Versioned CDN-Libraries (jsdelivr, cdnjs) werden gecacht — sie ändern sich nie
+const NO_CACHE_ORIGINS = [
   'cloud.umami.is',
   'api-gateway.umami.dev',
+  'fonts.googleapis.com',   // dynamische Font-CSS, nicht cachen
 ];
 
 function isCacheable(url) {
   const u = new URL(url);
-  if (CDN_ORIGINS.some(d => u.hostname.includes(d))) return false;
+  if (NO_CACHE_ORIGINS.some(d => u.hostname.includes(d))) return false;
   const ext = u.pathname.split('.').pop().toLowerCase();
   return CACHEABLE_EXTS.has(ext);
 }
@@ -84,8 +82,8 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(request)
         .then(response => {
-          // Neue HTML-Version im Hintergrund cachen
-          if (response.ok) {
+          // Neue HTML-Version im Hintergrund cachen (nur vollständige Antworten, kein 206)
+          if (response.status === 200) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then(c => c.put(request, clone));
           }
@@ -110,7 +108,7 @@ self.addEventListener('fetch', event => {
       const cached = await cache.match(request);
 
       const fetchPromise = fetch(request).then(response => {
-        if (response.ok) cache.put(request, response.clone());
+        if (response.status === 200) cache.put(request, response.clone());
         return response;
       }).catch(() => null);
 

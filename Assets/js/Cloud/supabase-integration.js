@@ -292,10 +292,11 @@ class SupabaseCloudSync {
         }
 
         try {
-            // Sammle alle LocalStorage-Daten
+            // Sammle alle LocalStorage-Daten (Auth-Tokens ausschließen)
             const allData = {};
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
+                if (key.startsWith('sb-') || key.startsWith('supabase')) continue;
                 allData[key] = localStorage.getItem(key);
             }
 
@@ -372,8 +373,9 @@ class SupabaseCloudSync {
             if (data && data.all_data && typeof data.all_data === 'object') {
                 console.log('[Cloud] Lade', Object.keys(data.all_data).length, 'Keys in LocalStorage');
                 
-                // Leere nicht alte Keys - nur neue hinzufügen
+                // Auth-Tokens niemals überschreiben — nur App-Daten wiederherstellen
                 Object.entries(data.all_data).forEach(([key, value]) => {
+                    if (key.startsWith('sb-') || key.startsWith('supabase')) return;
                     localStorage.setItem(key, value);
                 });
 

@@ -4,6 +4,25 @@
     // ██  Chart.js powered, real-time data from MyWorkLog          ██
     // ════════════════════════════════════════════════════════════════
 
+    // Chart.js lazy-loader (only loaded when Analytics Pro is opened)
+    var _chartJSLoading = false;
+    var _chartJSCallbacks = [];
+    function _loadChartJS(callback) {
+        if (typeof Chart !== 'undefined') { callback(); return; }
+        _chartJSCallbacks.push(callback);
+        if (_chartJSLoading) return;
+        _chartJSLoading = true;
+        var s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/chart.js@3.9.1';
+        s.onload = function() {
+            _chartJSLoading = false;
+            var cbs = _chartJSCallbacks.splice(0);
+            cbs.forEach(function(cb) { cb(); });
+        };
+        s.onerror = function() { console.error('[AnalyticsPro] Chart.js konnte nicht geladen werden'); };
+        document.head.appendChild(s);
+    }
+
     // Chart instance registry (destroy before recreate)
     const apCharts = {};
 
@@ -34,6 +53,12 @@
     let apCurrentPeriod = { saldo: 90, weekly: 12 };
 
     function apRenderPanel(tabId) {
+        // Only 3D and Galaxy use Three.js — all other tabs need Chart.js
+        var needsChart = tabId !== '3d' && tabId !== 'galaxy';
+        if (needsChart && typeof Chart === 'undefined') {
+            _loadChartJS(function() { apRenderPanel(tabId); });
+            return;
+        }
         switch (tabId) {
             case 'overview':   apRenderOverview(); break;
             case 'saldo':      apRenderSaldo(); break;

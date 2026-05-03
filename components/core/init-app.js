@@ -163,6 +163,7 @@
 
         // NFC: URL-Parameter prüfen (?nfc=1 kommt vom NFC-Chip-Scan)
         try { if (typeof checkNFCUrlParam === 'function') checkNFCUrlParam(); } catch(e) { console.warn('NFC init failed', e); }
+
     });
 
     function showPrivacyModal() {

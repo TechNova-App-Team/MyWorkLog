@@ -39,6 +39,229 @@
         }
 
 
+        /* ─── PERFORMANCE UPDATE BANNER ─────────────────────────────── */
+        .upb-banner {
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            border-radius: 14px;
+            border: 1px solid rgba(168, 85, 247, 0.18);
+            background: linear-gradient(135deg,
+                rgba(168, 85, 247, 0.07) 0%,
+                rgba(99, 102, 241, 0.05) 50%,
+                rgba(20, 184, 166, 0.04) 100%
+            );
+            backdrop-filter: blur(12px);
+            animation: upbSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            box-shadow:
+                0 0 0 1px rgba(168, 85, 247, 0.08),
+                0 4px 20px rgba(168, 85, 247, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        @keyframes upbSlideIn {
+            from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0)     scale(1);    }
+        }
+
+        .upb-shimmer {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                105deg,
+                transparent 40%,
+                rgba(168, 85, 247, 0.06) 50%,
+                transparent 60%
+            );
+            background-size: 200% 100%;
+            animation: upbShimmer 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes upbShimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .upb-content {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 11px 14px;
+        }
+
+        .upb-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .upb-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
+            border-radius: 8px;
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+        }
+
+        .upb-text {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .upb-label {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #c084fc;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .upb-msg {
+            font-size: 12.5px;
+            color: rgba(255, 255, 255, 0.62);
+            font-weight: 450;
+            line-height: 1.4;
+        }
+
+        .upb-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .upb-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 11px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.18s ease;
+            white-space: nowrap;
+            letter-spacing: -0.01em;
+        }
+
+        .upb-btn--bug {
+            background: rgba(251, 146, 60, 0.12);
+            border: 1px solid rgba(251, 146, 60, 0.22);
+            color: #fb923c;
+        }
+
+        .upb-btn--bug:hover {
+            background: rgba(251, 146, 60, 0.2);
+            border-color: rgba(251, 146, 60, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .upb-btn--support {
+            background: rgba(168, 85, 247, 0.12);
+            border: 1px solid rgba(168, 85, 247, 0.22);
+            color: #c084fc;
+        }
+
+        .upb-btn--support:hover {
+            background: rgba(168, 85, 247, 0.2);
+            border-color: rgba(168, 85, 247, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .upb-close {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border: none;
+            border-radius: 7px;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.35);
+            cursor: pointer;
+            transition: all 0.18s ease;
+            flex-shrink: 0;
+        }
+
+        .upb-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .upb-banner.upb-hiding {
+            animation: upbSlideOut 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+        }
+
+        @keyframes upbSlideOut {
+            from { opacity: 1; transform: translateY(0)    scale(1);    max-height: 80px; margin-bottom: 1rem; }
+            to   { opacity: 0; transform: translateY(-8px) scale(0.97); max-height: 0;   margin-bottom: 0;   padding: 0; }
+        }
+
+        @media (max-width: 600px) {
+            .upb-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+                padding: 10px 12px;
+            }
+
+            .upb-close {
+                position: absolute;
+                top: 10px;
+                right: 12px;
+            }
+
+            .upb-msg { display: none; }
+
+            .upb-actions {
+                width: 100%;
+            }
+
+            .upb-btn {
+                flex: 1;
+                justify-content: center;
+            }
+        }
+
+        [data-theme="light"] .upb-banner {
+            background: linear-gradient(135deg,
+                rgba(168, 85, 247, 0.05) 0%,
+                rgba(99, 102, 241, 0.03) 100%
+            );
+            border-color: rgba(168, 85, 247, 0.15);
+            box-shadow: 0 2px 12px rgba(168, 85, 247, 0.06);
+        }
+
+        [data-theme="light"] .upb-msg {
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        [data-theme="light"] .upb-close {
+            background: rgba(0, 0, 0, 0.04);
+            color: rgba(0, 0, 0, 0.35);
+        }
+
+        [data-theme="light"] .upb-close:hover {
+            background: rgba(0, 0, 0, 0.08);
+            color: rgba(0, 0, 0, 0.65);
+        }
+
         /* ─── DASHBOARD GRID LAYOUT ──────────────────────────────────── */
         .main { position: relative; z-index: 1; }
 

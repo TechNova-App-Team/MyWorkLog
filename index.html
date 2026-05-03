@@ -282,7 +282,7 @@
 
 <!-- Preload External CDN Resources (für bessere Performance) -->
 <link rel="preload" as="script" href="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
-<link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1">
+<!-- Chart.js: lazy-loaded on demand by analytics-pro-engine -->
 
 
 
@@ -293,8 +293,7 @@
 <script defer src="./Assets/js/pinch-zoom.js"></script>
 <!-- External CDN Scripts (nur was beim Start wirklich gebraucht wird) -->
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1"></script>
-<!-- Three.js, SimplePeer, jsPDF, html2canvas: lazy-loaded on demand -->
+<!-- Three.js, SimplePeer, jsPDF, html2canvas, Chart.js: lazy-loaded on demand -->
 <!-- Umami Analytics - Privacy Focused -->
 <script defer src="https://cloud.umami.is/script.js" data-website-id="1ad00d56-ca9d-4fc7-a252-26ca5bd8acf8"></script>
 <script>
@@ -331,8 +330,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 })();
 </script>
 
-<!-- Supabase JavaScript Client (defer: order wird eingehalten, lädt vor supabase-integration) -->
-<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase JS: lazy-loaded by supabase-config.js only when session exists -->
 <!-- Supabase Integration (NACH Supabase JS) -->
 <script defer src="./Assets/js/Cloud/supabase-integration.js"></script>
 <script defer src="./Assets/js/Cloud/supabase-ui.js"></script>
@@ -966,6 +964,60 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         </header>
 
         <div id="view-dashboard" class="view-section active">
+
+            <!-- ═══ PERFORMANCE UPDATE BANNER ═══ -->
+            <div id="updatePerfBanner" class="upb-banner" role="alert" aria-live="polite">
+                <div class="upb-shimmer"></div>
+                <div class="upb-content">
+                    <div class="upb-left">
+                        <span class="upb-icon" aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        </span>
+                        <div class="upb-text">
+                            <span class="upb-label">Performance-Update</span>
+                            <span class="upb-msg">Ladezeiten wurden optimiert. Falls etwas nicht mehr funktioniert, bitte melden.</span>
+                        </div>
+                    </div>
+                    <div class="upb-actions">
+                        <button class="upb-btn upb-btn--bug" onclick="openSupportFeedback()" title="Bug melden">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            Bug melden
+                        </button>
+                        <button class="upb-close" onclick="dismissUpdatePerfBanner()" aria-label="Banner schließen" title="Schließen">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                var UPB_ACTIVE = true; // ← false = Banner verstecken
+                (function() {
+                    var _UPB_KEY = 'tg_upb_v353';
+                    var banner = document.getElementById('updatePerfBanner');
+                    if (!banner) return;
+                    if (!UPB_ACTIVE || localStorage.getItem(_UPB_KEY) === 'dismissed') banner.style.display = 'none';
+                })();
+                function openSupportFeedback() {
+                    switchTab('support');
+                    setTimeout(function() {
+                        var el = document.getElementById('supportFeedbackSection');
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 280);
+                    if (typeof uEvent === 'function') uEvent('upb_bug_report_click');
+                }
+                function dismissUpdatePerfBanner() {
+                    var banner = document.getElementById('updatePerfBanner');
+                    if (!banner) return;
+                    localStorage.setItem('tg_upb_v353', 'dismissed');
+                    banner.classList.add('upb-hiding');
+                    banner.addEventListener('animationend', function() {
+                        banner.style.display = 'none';
+                        banner.classList.remove('upb-hiding');
+                    }, { once: true });
+                    if (typeof uEvent === 'function') uEvent('upb_dismissed');
+                }
+            </script>
 
             <!-- Edit Mode Controls -->
             <div id="dashboardEditControls" style="display:flex; gap:10px; margin-bottom:1.25rem; opacity:0; pointer-events:none; transition:opacity 0.3s;">
@@ -3144,7 +3196,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         <div class="sp-divider sp-section-alt"><div class="sp-divider-line"></div></div>
 
         <!-- ══ FEEDBACK ══════════════════════════════════ -->
-        <div class="sp-section sp-section-alt">
+        <div id="supportFeedbackSection" class="sp-section sp-section-alt">
             <span class="sp-label sp-sr">Feedback</span>
             <h2 class="sp-section-title sp-sr sp-sr-d1">Wie fandest du <em>MyWorkLog?</em></h2>
             <p class="sp-section-desc sp-sr sp-sr-d2">Dein Feedback hilft uns, besser zu werden — ehrlich und direkt.</p>
