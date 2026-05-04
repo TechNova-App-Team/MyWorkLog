@@ -6,9 +6,11 @@ Deutsche PWA für Azubi-Zeiterfassung. Vanilla HTML/CSS/JS, kein Framework/Bundl
 
 Kein Build. Rohe Dateien via `<script src>` in index.html (Reihenfolge wichtig!). Alle JS-Funktionen global. package.json nur devDeps (jest/eslint).
 
-**Struktur:** index.html=SPA(~5500Z), components/{name}/{css,html,js}, Assets/{css,js}, Pages/=Standalone, config/, AI-Bot/
+**Struktur:** index.html=SPA(~5500Z), components/{name}/{css,html,js}, Assets/{css,js}, pages/{name}/index.html=Standalone Clean URLs, config/, AI-Bot/
 
 **Script-Reihenfolge:** CDN-Libs → Utilities → AI-Bot → Component CSS/HTML → Component JS: core→dashboard→...→settings→sidebar→extra
+
+**Clean URLs:** Standalone Pages nutzen `/pages/{name}/` statt `/Pages/{name}.html` für besseres SEO & GitHub Pages Kompatibilität
 
 ## Konventionen
 
