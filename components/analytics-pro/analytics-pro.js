@@ -1,7 +1,7 @@
 // ═══ ANALYTICS-PRO MODULE ═══
 
     function renderAnalyticsPro() {
-        apRenderOverview();
+        _loadChartJS(function() { apRenderOverview(); });
     }
 
     function apSwitchTab(tabId) {

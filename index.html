@@ -1,6 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="de" dir="ltr" prefix="og: https://ogp.me/ns#">
 <head>
+<script>if(location.pathname==='/index.html')location.replace(location.href.replace('/index.html','/')+''+location.search+location.hash);</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
 <title>MyWorkLog</title>
@@ -845,7 +846,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 <div class="nav-item" id="nav-support" onclick="switchTab('support')">
                     <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9a3 3 0 013-3h12a3 3 0 013 3v6a3 3 0 01-3 3h-2l-4 3v-3H6a3 3 0 01-3-3V9z"/><circle cx="8" cy="11" r="1" fill="currentColor"/><circle cx="12" cy="11" r="1" fill="currentColor"/><circle cx="16" cy="11" r="1" fill="currentColor"/></svg></span> Unterstützung
                 </div>
-                <div class="nav-item nav-external" onclick="window.open('Pages/Info/update_bugs.html', '_blank')">
+                <div class="nav-item nav-external" onclick="window.open('./pages/update_bugs/', '_blank')">
                     <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M5 13a7 7 0 0111-6.1"/><path d="M19 11a7 7 0 01-11 6.1"/></svg></span> Updates and Bugs
                 </div>
                 <div class="nav-item-dropdown">
@@ -962,22 +963,25 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
         <div id="view-dashboard" class="view-section active">
 
-            <!-- ═══ PERFORMANCE UPDATE BANNER ═══ -->
-            <div id="updatePerfBanner" class="upb-banner" role="alert" aria-live="polite">
+            <!-- ═══ INFRASTRUCTURE UPDATE BANNER ═══ -->
+            <div id="updatePerfBanner" class="upb-banner upb-banner--warn" role="alert" aria-live="polite">
                 <div class="upb-shimmer"></div>
                 <div class="upb-content">
                     <div class="upb-left">
                         <span class="upb-icon" aria-hidden="true">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><path d="m9.5 14.5 1.5 1.5 3-3"/></svg>
                         </span>
                         <div class="upb-text">
-                            <span class="upb-label">Performance-Update</span>
-                            <span class="upb-msg">Ladezeiten wurden optimiert. Falls etwas nicht mehr funktioniert, bitte melden.</span>
+                            <span class="upb-label">Cloudflare Migration</span>
+                            <div class="upb-notes upb-msg">
+                                <span class="upb-note"><span class="upb-note-dot upb-note-dot--amber"></span>Updates erscheinen auf myworklog.de bis zu 2–4h später als auf GitHub.</span>
+                                <span class="upb-note"><span class="upb-note-dot upb-note-dot--red"></span>Die Website kann in den nächsten Tagen vorübergehend nicht erreichbar sein.</span>
+                            </div>
                         </div>
                     </div>
                     <div class="upb-actions">
                         <button class="upb-btn upb-btn--bug" onclick="openSupportFeedback()" title="Bug melden">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h10M6 12h12M8 18h10"/></svg>
                             Bug melden
                         </button>
                         <button class="upb-close" onclick="dismissUpdatePerfBanner()" aria-label="Banner schließen" title="Schließen">
@@ -990,7 +994,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             <script>
                 var UPB_ACTIVE = true; // ← false = Banner verstecken
                 (function() {
-                    var _UPB_KEY = 'tg_upb_v353';
+                    var _UPB_KEY = 'tg_upb_cf1';
                     var banner = document.getElementById('updatePerfBanner');
                     if (!banner) return;
                     if (!UPB_ACTIVE || localStorage.getItem(_UPB_KEY) === 'dismissed') banner.style.display = 'none';
@@ -1006,7 +1010,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 function dismissUpdatePerfBanner() {
                     var banner = document.getElementById('updatePerfBanner');
                     if (!banner) return;
-                    localStorage.setItem('tg_upb_v353', 'dismissed');
+                    localStorage.setItem('tg_upb_cf1', 'dismissed');
                     banner.classList.add('upb-hiding');
                     banner.addEventListener('animationend', function() {
                         banner.style.display = 'none';

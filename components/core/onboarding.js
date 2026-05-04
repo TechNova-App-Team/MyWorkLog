@@ -944,7 +944,7 @@ window.addEventListener('online', () => {
 // Wenn Offline wird: zur offline.html umleiten
 window.addEventListener('offline', () => {
     if (!window.location.pathname.includes('offline.html')) {
-        location.href = '/Pages/Info/offline.html';
+        location.href = '/pages/offline/';
     }
 });
 
@@ -1189,8 +1189,13 @@ const updateManager = (() => {
     function notifyUpdate(worker) {
         newWorker = worker;
         dismissed = false;
+        // Skip banner if we just applied an update (prevent spam after reload)
+        if (localStorage.getItem('mwl_upd_applying')) {
+            localStorage.removeItem('mwl_upd_applying');
+            return;
+        }
         const last = localStorage.getItem('mwl_upd_dismissed');
-        if (last && (Date.now() - parseInt(last)) < 300000) return;
+        if (last && (Date.now() - parseInt(last)) < 600000) return; // 10 min instead of 5
         const b = document.getElementById('updateBanner');
         if (b) b.classList.add('visible');
     }
@@ -1203,6 +1208,7 @@ const updateManager = (() => {
     }
 
     function apply() {
+        localStorage.setItem('mwl_upd_applying', 'true');
         if (newWorker) newWorker.postMessage({ type: 'SKIP_WAITING' });
         location.reload();
     }

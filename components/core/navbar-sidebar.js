@@ -210,7 +210,7 @@
             {id:'dashboard', label:'Dashboard', icon:getIconSvgById('dashboard'), visible:true},
             {id:'performance', label:'Performance', icon:getIconSvgById('performance'), visible:true},
             {id:'history', label:'Verlauf', icon:getIconSvgById('history'), visible:true},
-            {id:'fahrtkosten', label:'Fahrtkosten', icon:getIconSvgById('fahrtkosten'), visible:true, external:'./Pages/App/fahrtkosten.html'},
+            {id:'fahrtkosten', label:'Fahrtkosten', icon:getIconSvgById('fahrtkosten'), visible:true, external:'./pages/fahrtkosten/'},
             {id:'yearview', label:'Jahresansicht', icon:getIconSvgById('yearview'), visible:true},
             {id:'monthcompare', label:'Monatsansicht', icon:getIconSvgById('monthcompare'), visible:true},
             {id:'weekview', label:'Wochenansicht', icon:getIconSvgById('weekview'), visible:true},
@@ -218,7 +218,7 @@
             {id:'ihk', label:'IHK', icon:getIconSvgById('ihk'), visible:true},
             {id:'goals', label:'Ziele', icon:getIconSvgById('goals'), visible:true},
             {id:'analytics-pro', label:'Analytics Pro', icon:getIconSvgById('analytics-pro'), visible:true},
-            {id:'aufgaben', label:'Aufgaben', icon:getIconSvgById('aufgaben'), visible:true, external:'./Pages/App/Tasks/aufgaben.html'},
+            {id:'aufgaben', label:'Aufgaben', icon:getIconSvgById('aufgaben'), visible:true, external:'./pages/aufgaben/'},
         ];
 
         // Nav-Version: bei Änderung der Reihenfolge/Items hochzählen → erzwingt Reset
@@ -255,7 +255,7 @@
         data.settings.nav.forEach(item => {
             // Fix aufgaben to be external
             if (item.id === 'aufgaben' && !item.external) {
-                item.external = './Pages/App/Tasks/aufgaben.html';
+                item.external = './pages/aufgaben/';
             }
 
             const el = document.createElement('div');
@@ -454,16 +454,16 @@
         { id: 'onboarding',   label: 'Anleitung / Tour',  icon: getIconSvgById('onboarding'), group: 'Tools',      action: () => startOnboardingTour() },
         { id: 'untis',        label: 'Untis Import',      icon: getIconSvgById('untis'), group: 'Tools',      action: () => showUntisImportModal() },
         // Extern
-        { id: 'berichtsheft', label: 'Berichtsheft',      icon: getIconSvgById('berichtsheft'), group: 'Extern',     action: () => { window.location.href = './Pages/App/berichtsheft.html'; } },
-        { id: 'aufgaben',     label: 'Aufgaben Manager', icon: getIconSvgById('aufgaben'), group: 'Extern',     action: () => { window.location.href = './Pages/App/Tasks/aufgaben.html'; } },
-        { id: 'skilltree',    label: 'Skill-Baum',       icon: getIconSvgById('skilltree'), group: 'Extern',     action: () => { window.location.href = './Pages/App/SkillTree/skill-tree.html'; } },
-        { id: 'ausbildung',   label: 'Ausbildungshilfe',  icon: getIconSvgById('ausbildung'), group: 'Extern',     action: () => { window.location.href = './Pages/App/Ausbilungs_Hilfe/index.html'; } },
-        { id: 'vertrag',      label: 'Vertrags-Manager',  icon: getIconSvgById('vertrag'), group: 'Extern',     action: () => { window.location.href = './Pages/App/vertrags-manager.html'; } },
+        { id: 'berichtsheft', label: 'Berichtsheft',      icon: getIconSvgById('berichtsheft'), group: 'Extern',     action: () => { window.location.href = './pages/berichtsheft/'; } },
+        { id: 'aufgaben',     label: 'Aufgaben Manager', icon: getIconSvgById('aufgaben'), group: 'Extern',     action: () => { window.location.href = './pages/aufgaben/'; } },
+        { id: 'skilltree',    label: 'Skill-Baum',       icon: getIconSvgById('skilltree'), group: 'Extern',     action: () => { window.location.href = './pages/skill-tree/'; } },
+        { id: 'ausbildung',   label: 'Ausbildungshilfe',  icon: getIconSvgById('ausbildung'), group: 'Extern',     action: () => { window.location.href = './pages/rechte-checker/'; } },
+        { id: 'vertrag',      label: 'Vertrags-Manager',  icon: getIconSvgById('vertrag'), group: 'Extern',     action: () => { window.location.href = './pages/vertrags-manager/'; } },
         { id: 'repo',         label: 'Repo-Analyse',      icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('Pages/Info/repo-report.html', '_blank') },
-        { id: 'analytics',    label: 'Analytics',         icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('./Pages/Info/analytics.html', '_blank') },
-        { id: 'impressum',    label: 'Impressum',         icon: getIconSvgById('impressum'), group: 'Extern',     action: () => window.open('./Pages/DE-Gestz/Impressum.html', '_blank') },
-        { id: 'dsgvo',        label: 'DSGVO',             icon: getIconSvgById('dsgvo'), group: 'Extern',     action: () => window.open('./Pages/DE-Gestz/DSGVO.html', '_blank') },
-        { id: 'about',        label: 'About',             icon: getIconSvgById('about'), group: 'Extern',     action: () => window.open('./Pages/Info/about.html', '_blank') },
+        { id: 'analytics',    label: 'Analytics',         icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('./pages/analytics/', '_blank') },
+        { id: 'impressum',    label: 'Impressum',         icon: getIconSvgById('impressum'), group: 'Extern',     action: () => window.open('./pages/Impressum/', '_blank') },
+        { id: 'dsgvo',        label: 'DSGVO',             icon: getIconSvgById('dsgvo'), group: 'Extern',     action: () => window.open('./pages/DSGVO/', '_blank') },
+        { id: 'about',        label: 'About',             icon: getIconSvgById('about'), group: 'Extern',     action: () => window.open('./pages/about/', '_blank') },
         // Ghost Mode
         { id: 'ghost',        label: 'Ghost Mode',        icon: getIconSvgById('about'), group: 'Tools',      action: () => toggleGhostMode() },
     ];
