@@ -60,11 +60,7 @@
                     info = `${start} - ${end} | ${info}`;
                 }
                 worked = hoursDiff;
-                
-                const endTime = d2.getTime();
-                const endOfShift = new Date(endTime);
-                endOfShift.setMinutes(endOfShift.getMinutes() + breakMinutes);
-                shiftEnd = endOfShift.toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+                shiftEnd = end;
                 shiftWarning = worked > 10.0;
 
             } else if (direct) {
@@ -153,8 +149,11 @@
             info, 
             isPeriod: false,
             breakMins: breakMinutes,
-            shiftStart: shiftStart, // NEU
+            shiftStart: shiftStart,
             shiftEnd: shiftEnd,
+            start: shiftStart,
+            end: shiftEnd,
+            endIsRaw: true,
             shiftWarning: shiftWarning,
             project: project, // NEU: Projekt/Kunde
             timestamp: Date.now(), // P2P: Versionskontrolle für Smart Sync

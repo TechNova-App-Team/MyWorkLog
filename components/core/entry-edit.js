@@ -19,8 +19,30 @@
         document.getElementById('editInpNotes').value = entry.info || '';
 
         // Time fields
-        document.getElementById('editInpStart').value = entry.shiftStart || entry.start || '';
-        document.getElementById('editInpEnd').value = entry.shiftEnd || entry.end || '';
+        // Zuverlässigste Quelle für Start/Ende: Info-String ("HH:MM - HH:MM")
+        // wurde immer korrekt gesetzt, bevor der shiftEnd-Bug die gespeicherten Felder korrumpierte.
+        let displayStart = entry.shiftStart || entry.start || '';
+        let displayEnd = entry.endIsRaw ? (entry.end || entry.shiftEnd || '') : '';
+
+        if (!displayEnd) {
+            const timeMatch = (entry.info || '').match(/^(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/);
+            if (timeMatch) {
+                displayStart = displayStart || timeMatch[1];
+                displayEnd = timeMatch[2];
+            } else if (entry.shiftEnd) {
+                // Letzter Fallback: breakMins abziehen
+                if (entry.breakMins > 0) {
+                    const [h, m] = entry.shiftEnd.split(':').map(Number);
+                    const totalMins = h * 60 + m - entry.breakMins;
+                    displayEnd = `${String(Math.floor(totalMins / 60)).padStart(2, '0')}:${String(totalMins % 60).padStart(2, '0')}`;
+                } else {
+                    displayEnd = entry.shiftEnd;
+                }
+            }
+        }
+
+        document.getElementById('editInpStart').value = displayStart;
+        document.getElementById('editInpEnd').value = displayEnd;
         document.getElementById('editInpBreak').value = entry.breakMins || '';
 
         // Advanced fields
@@ -186,7 +208,7 @@
 
         // Time data
         if (newStart) entry.shiftStart = entry.start = newStart;
-        if (newEnd) entry.shiftEnd = entry.end = newEnd;
+        if (newEnd) { entry.shiftEnd = entry.end = newEnd; entry.endIsRaw = true; }
         entry.breakMins = newBreak;
 
         // Calculate expected if not manually set
