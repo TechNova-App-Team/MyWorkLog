@@ -944,7 +944,7 @@ window.addEventListener('online', () => {
 // Wenn Offline wird: zur offline.html umleiten
 window.addEventListener('offline', () => {
     if (!window.location.pathname.includes('offline.html')) {
-        location.href = '/pages/offline/';
+        location.href = '/offline/';
     }
 });
 

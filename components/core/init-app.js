@@ -6,7 +6,7 @@
 
         // Check offline on startup
         if (!navigator.onLine && !window.location.pathname.includes('offline.html')) {
-            window.location.href = '/pages/offline/';
+            window.location.href = '/offline/';
             return;
         }
 
