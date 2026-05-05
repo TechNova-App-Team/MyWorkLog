@@ -11,7 +11,7 @@ function loadAppVersion() {
     const candidates = [
         `${window.location.origin}/config/version.json?cb=${cb}`,
         `/config/version.json?cb=${cb}`,
-        `./config/version.json?cb=${cb}`
+        `/config/version.json?cb=${cb}`
     ];
 
     // Try candidates sequentially until one succeeds

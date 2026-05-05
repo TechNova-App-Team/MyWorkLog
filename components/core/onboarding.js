@@ -2,7 +2,7 @@
         try {
             if (!window.initializeTouchOptimizations) {
                 var s = document.createElement('script');
-                s.src = './Assets/js/touch-mobile-optimizations.js';
+                s.src = '/Assets/js/touch-mobile-optimizations.js';
                 s.defer = true;
                 s.onload = function(){ if (window.initializeTouchOptimizations) window.initializeTouchOptimizations(); };
                 document.head.appendChild(s);
@@ -550,7 +550,7 @@ if ('serviceWorker' in navigator) {
             // Cache-Buster: version.json laden für Query-Parameter
             let versionCacheBuster = Date.now().toString().slice(-6); // Fallback
             try {
-                const versionResp = await fetch('./config/version.json', { cache: 'no-store' });
+                const versionResp = await fetch('/config/version.json', { cache: 'no-store' });
                 if (versionResp.ok) {
                     const versionData = await versionResp.json();
                     versionCacheBuster = versionData.version || versionCacheBuster;
