@@ -1,6 +1,6 @@
 # MyWorkLog — Projekt-Kontext
 
-Deutsche PWA für Azubi-Zeiterfassung. Vanilla HTML/CSS/JS, kein Framework/Bundler/Module. GitHub Pages → myworklog.de. v3.3.4b
+Deutsche PWA für Azubi-Zeiterfassung. Vanilla HTML/CSS/JS, kein Framework/Bundler/Module. GitHub Pages → myworklog.de. v3.5.3
 
 ## Architektur
 
@@ -37,3 +37,16 @@ core.js=save/load/Timer, settings.js=Theme/Export, dashboard.js=KPIs/Charts, ver
 ## Sicherheit
 
 IMMER safeHTML()/esc() für User-Input. Kein innerHTML mit ungefiltertem Content. CSP beachten. DOMPurify 3.2.4 eingebunden.
+
+## Deployment & Pfad-Architektur (CRITICAL!)
+
+**Host:** GitHub Pages + Cloudflare (URL Rewrites).
+- Cloudflare versteckt `/pages/` Ordner und `.html` Endungen
+- Alle Asset-Links MÜSSEN absolute Root-Pfade sein (`/Assets/...`, `/components/...`, `/Grafiken/...`, `/config/...`)
+- Relative Pfade (`./` oder `../`) brechen sofort, wenn URL umgeleitet wird (z.B. `/aufgaben/` wird intern zu `/pages/aufgaben/`, relative Pfade suchen dort nach Assets → 404)
+- **Richtig:** `<link rel="stylesheet" href="/Assets/css/core.css">` — Slash = von Domain-Root aus
+- **Falsch:** `<link rel="stylesheet" href="./Assets/css/core.css">` — wird zu `/pages/aufgaben/Assets/...` → 404
+
+**Page-Links verwenden Clean URLs:** `/impressum/` statt `/impressum.html` oder `/pages/impressum.html`
+
+**Bei 404-Fehlern auf Live:** Erst Cloudflare Cache löschen ("Purge Everything"), dann prüfen ob Pfade mit `/` anfangen.
