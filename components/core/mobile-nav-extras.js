@@ -260,13 +260,27 @@
             todayWorked += timerHours;
         }
 
-        // Laufende Schicht einrechnen (Start-Zeit eingegeben aber noch nicht gespeichert)
+        // Laufende Schicht einrechnen (Start-Zeit aus Draft, noch nicht gespeichert)
         if (todayWorked === 0) {
             try {
-                const startInput = document.getElementById('inpStart');
-                const dateInput = document.getElementById('inpDate');
-                if (startInput && startInput.value && dateInput && dateInput.value === today) {
-                    const [sh, sm] = startInput.value.split(':').map(Number);
+                let draftStart = null;
+                let draftDate = null;
+                // Primär: direkt aus localStorage lesen (zuverlässig, auch wenn DOM-Input leer)
+                const draftRaw = localStorage.getItem('tt_entry_draft');
+                if (draftRaw) {
+                    const draft = JSON.parse(draftRaw);
+                    draftStart = draft.start || null;
+                    draftDate = draft.date || draft.dateStr || null;
+                }
+                // Fallback: DOM-Input (z.B. wenn Draft noch nicht gespeichert)
+                if (!draftStart) {
+                    const startInput = document.getElementById('inpStart');
+                    const dateInput = document.getElementById('inpDate');
+                    if (startInput && startInput.value) draftStart = startInput.value;
+                    if (dateInput && dateInput.value) draftDate = dateInput.value;
+                }
+                if (draftStart && draftDate === today) {
+                    const [sh, sm] = draftStart.split(':').map(Number);
                     const shiftStartMs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), sh, sm).getTime();
                     if (shiftStartMs < now.getTime()) {
                         const elapsedHours = (now.getTime() - shiftStartMs) / 3.6e6;
