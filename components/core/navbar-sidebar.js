@@ -349,6 +349,8 @@
                 }
             });
         } catch(e) {}
+        // Remove CLS pre-apply so sections can expand/collapse normally
+        document.documentElement.removeAttribute('data-sb-pre-sec');
     })();
 
     // ===== SIDEBAR INTERACTIONS — Hover beam + Scroll fade =====

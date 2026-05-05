@@ -2,6 +2,29 @@
 <html lang="de" dir="ltr" prefix="og: https://ogp.me/ns#">
 <head>
 <script>if(location.pathname==='/index.html')location.replace(location.href.replace('/index.html','/')+''+location.search+location.hash);</script>
+<script>(function(){
+  // 1. Sidebar collapse pre-apply
+  try{if(localStorage.getItem('sidebar_collapsed')==='true'&&window.innerWidth>=1024){document.documentElement.setAttribute('data-sb-pre-col','');}}catch(e){}
+  // 2. Dashboard widget order pre-apply
+  try{
+    var tgd=JSON.parse(localStorage.getItem('tg_pro_data')||'null');
+    var wl=(tgd&&tgd.settings&&Array.isArray(tgd.settings.widgetLayout))?tgd.settings.widgetLayout:JSON.parse(localStorage.getItem('tt_dashboard_layout')||'null');
+    if(Array.isArray(wl)&&wl.length){
+      var wR=wl.map(function(id,i){return '#dashboardContainer [data-item-id="'+id+'"]{order:'+i+'}'}).join('');
+      var wS=document.createElement('style');wS.id='cls-dash-order';wS.textContent=wR;document.head.appendChild(wS);
+    }
+  }catch(e){}
+  // 3. Nav section collapsed pre-apply
+  try{
+    var ss=JSON.parse(localStorage.getItem('sidebar_sections')||'{}');
+    var cg=Object.keys(ss).filter(function(k){return ss[k]===false;});
+    if(cg.length){
+      var sR=cg.map(function(k){return 'html[data-sb-pre-sec] .nav-section-group[data-group="'+k+'"]{max-height:0!important;opacity:0!important}'}).join('');
+      var sS=document.createElement('style');sS.id='cls-nav-sec';sS.textContent=sR;document.head.appendChild(sS);
+      document.documentElement.setAttribute('data-sb-pre-sec','');
+    }
+  }catch(e){}
+})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
 <title>MyWorkLog</title>
@@ -958,7 +981,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                     <button class="help-slim" title="Hilfe" onclick="openQuickHelp('global')">?</button>
                 </div>
             </div>
-            <div class="date-badge" id="currentDate">loading...</div>
+            <div class="date-badge" id="currentDate"></div>
         </header>
 
         <div id="view-dashboard" class="view-section active">

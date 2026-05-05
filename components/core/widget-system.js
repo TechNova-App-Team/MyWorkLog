@@ -3,6 +3,12 @@
     // Tracks whether the dashboard layout has unsaved changes while in edit mode
     let dashboardLayoutDirty = false;
 
+    function _dashItemsSortedByOrder(dashboard, exclude) {
+        return Array.from(dashboard.querySelectorAll('.dashboard-item'))
+            .filter(el => el !== exclude)
+            .sort((a, b) => (parseInt(a.style.order) || 0) - (parseInt(b.style.order) || 0));
+    }
+
     function enableWidgetDragDrop() {
         const dashboard = document.getElementById('dashboardContainer');
         if (!dashboard) return;
@@ -18,38 +24,39 @@
 
         dashboard.addEventListener('dragover', e => {
             e.preventDefault();
-            const afterEl = getDragAfterElementVertical(dashboard, e.clientY);
             const dragging = dashboard.querySelector('.dragging');
             if (!dragging) return;
-            if (!afterEl) dashboard.appendChild(dragging);
-            else dashboard.insertBefore(dragging, afterEl);
+            const afterEl = getDragAfterElementVertical(dashboard, e.clientY);
+            // Update CSS order values instead of moving DOM nodes (avoids triggering layout recalc CLS)
+            const others = _dashItemsSortedByOrder(dashboard, dragging);
+            const insertIdx = afterEl ? others.indexOf(afterEl) : others.length;
+            others.splice(insertIdx, 0, dragging);
+            others.forEach((el, i) => { el.style.order = i; });
         });
 
         dashboard.addEventListener('drop', () => {
-            // Mark layout as dirty and show a subtle status instead of a toast for every drop
             dashboardLayoutDirty = true;
             const statusEl = document.getElementById('editModeStatus');
             if (statusEl) {
                 statusEl.textContent = '📍 Layout geändert (nicht gespeichert)';
                 statusEl.style.opacity = '1';
             }
-            // Do NOT auto-save here to avoid noisy toasts – saving happens when exiting edit mode
         });
     }
 
     function saveWidgetLayout(notify = true) {
         const dashboard = document.getElementById('dashboardContainer');
         if (!dashboard) return;
-        const order = [];
-        dashboard.querySelectorAll('.dashboard-item').forEach(el => {
-            const id = el.getAttribute('data-item-id');
-            if (id) order.push(id);
-        });
+        // Sort by CSS visual order, not DOM order
+        const items = Array.from(dashboard.querySelectorAll('.dashboard-item'));
+        items.sort((a, b) => (parseInt(a.style.order) || 0) - (parseInt(b.style.order) || 0));
+        const order = items.map(el => el.getAttribute('data-item-id')).filter(Boolean);
         data.settings.widgetLayout = order;
-        // Also keep legacy dashboard layout in localStorage for compatibility
         localStorage.setItem('tt_dashboard_layout', JSON.stringify(order));
+        // Remove pre-applied CLS order style now that inline styles take over
+        const preStyle = document.getElementById('cls-dash-order');
+        if (preStyle) preStyle.remove();
         save();
-        // Clear dirty flag and reset status text
         dashboardLayoutDirty = false;
         const statusEl = document.getElementById('editModeStatus');
         if (statusEl) { statusEl.textContent = '📍 Layout-Bearbeitungsmodus AKTIV'; statusEl.style.opacity = '1'; }
@@ -60,11 +67,14 @@
         const dashboard = document.getElementById('dashboardContainer');
         if (!dashboard || !Array.isArray(data.settings.widgetLayout)) return;
         const desired = data.settings.widgetLayout;
-        const mapping = {};
-        dashboard.querySelectorAll('.dashboard-item').forEach(el => mapping[el.getAttribute('data-item-id')] = el);
-        desired.forEach(id => {
-            if (mapping[id]) dashboard.appendChild(mapping[id]);
+        // Use CSS order instead of DOM reordering to avoid CLS on initial load
+        dashboard.querySelectorAll('.dashboard-item').forEach(el => {
+            const idx = desired.indexOf(el.getAttribute('data-item-id'));
+            el.style.order = idx >= 0 ? idx : 999;
         });
+        // Remove pre-applied CLS order style now that inline styles take over
+        const preStyle = document.getElementById('cls-dash-order');
+        if (preStyle) preStyle.remove();
     }
 
     // Render nav editor inside Settings -> Custom
@@ -158,6 +168,9 @@
         widgetElement.className = 'dashboard-item';
         widgetElement.setAttribute('data-item-id', widgetId);
         widgetElement.innerHTML = widget.html;
+        // Place new widgets after all existing items
+        const existingItems = dashboardContainer.querySelectorAll('.dashboard-item');
+        widgetElement.style.order = existingItems.length;
 
         dashboardContainer.appendChild(widgetElement);
         console.log('Widget added to DOM');

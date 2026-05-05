@@ -115,10 +115,11 @@
         if (savedLog) timer.log = JSON.parse(savedLog);
         renderTimerLogBar(); 
 
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long'});
-        }, 1000);
+        function _updateDate() {
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long'});
+        }
+        _updateDate();
+        setInterval(_updateDate, 1000);
         document.getElementById('inpDate').valueAsDate = new Date();
 
         if (document.getElementById('schoolGradesInputGrid')) {
