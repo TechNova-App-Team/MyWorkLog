@@ -150,23 +150,29 @@
             if (e.target.id === 'btnNowStart') {
                 const now = new Date();
                 const v = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
-                const el = document.getElementById('inpStart'); 
+                const el = document.getElementById('inpStart');
                 if (el) {
                     el.value = v;
-                    el.dispatchEvent(new Event('input', { bubbles: true })); // Trigger input event
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
                     saveDraft();
-                    if (typeof showCustomMessage === 'function') showCustomMessage('✅ Start gesetzt', `Start: ${v}`, 'success');
+                    el.classList.remove('glass-input--time-set');
+                    void el.offsetWidth;
+                    el.classList.add('glass-input--time-set');
+                    el.addEventListener('animationend', () => el.classList.remove('glass-input--time-set'), { once: true });
                 }
             }
             if (e.target.id === 'btnNowEnd') {
                 const now = new Date();
                 const v = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
-                const el = document.getElementById('inpEnd'); 
+                const el = document.getElementById('inpEnd');
                 if (el) {
                     el.value = v;
-                    el.dispatchEvent(new Event('input', { bubbles: true })); // Trigger input event
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
                     saveDraft();
-                    if (typeof showCustomMessage === 'function') showCustomMessage('✅ Ende gesetzt', `Ende: ${v}`, 'success');
+                    el.classList.remove('glass-input--time-set');
+                    void el.offsetWidth;
+                    el.classList.add('glass-input--time-set');
+                    el.addEventListener('animationend', () => el.classList.remove('glass-input--time-set'), { once: true });
                 }
             }
         });

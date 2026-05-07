@@ -157,6 +157,8 @@
         // Render activities for first date
         const firstDateActivities = entriesByDate[uniqueDates[0]] || [];
         trackEl.innerHTML = firstDateActivities.map(createActivityCard).join('');
+
+        setTimeout(() => { initActivityScrollListeners(); }, 50);
     }
 
     function switchActivityDay(date) {
@@ -226,11 +228,6 @@
 
         const activities = window.activityDayTabs.entriesByDate[date] || [];
         trackEl.innerHTML = activities.map(createActivityCard).join('');
-
-        // Initialize swipe & wheel listeners
-        setTimeout(() => {
-            initActivityScrollListeners();
-        }, 50);
     }
 
     // ═══ SWIPE & WHEEL SUPPORT ═══
@@ -239,8 +236,12 @@
         touchStartX: 0,
         isSwiping: false
     };
+    window._activityScrollListenersInit = false;
 
     function initActivityScrollListeners() {
+        if (window._activityScrollListenersInit) return;
+        window._activityScrollListenersInit = true;
+
         const trackEl = document.getElementById('entryListShort');
         const dayTabsEl = document.getElementById('dayTabsList');
         if (!trackEl || !dayTabsEl) return;
