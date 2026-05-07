@@ -17,23 +17,21 @@
 // VOICE INPUT FEATURE (NEU: RICHTIG MODERN!)
 // ============================================
 
-function startVoiceInput() {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        showCustomMessage('❌ Stimmeingabe nicht unterstützt', 'Dein Browser unterstützt keine Spracherkennung. Verwende Chrome oder Edge.', 'error');
-        return;
-    }
+const VOICE_BTN_HTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Stimme';
 
+function _startRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    recognition.lang = 'de-DE'; // Deutsch
+    recognition.lang = 'de-DE';
     recognition.continuous = false;
     recognition.interimResults = false;
 
     recognition.onstart = function() {
-        document.getElementById('voiceBtn').textContent = '🎤 Hört zu...';
-        document.getElementById('voiceBtn').style.background = 'rgba(239,68,68,0.2)';
-        document.getElementById('voiceBtn').style.borderColor = 'rgba(239,68,68,0.3)';
-        document.getElementById('voiceBtn').style.color = '#ef4444';
+        const btn = document.getElementById('voiceBtn');
+        btn.innerHTML = '🎤 Hört zu...';
+        btn.style.background = 'rgba(239,68,68,0.2)';
+        btn.style.borderColor = 'rgba(239,68,68,0.3)';
+        btn.style.color = '#ef4444';
         showCustomMessage('🎤 Stimmeingabe aktiv', 'Sprich deinen Eintrag (z.B. "Arbeit von 9 bis 17 Projekt Alpha")', 'info');
     };
 
@@ -43,7 +41,11 @@ function startVoiceInput() {
     };
 
     recognition.onerror = function(event) {
-        showCustomMessage('❌ Fehler bei Stimmeingabe', 'Versuche es nochmal oder gib manuell ein.', 'error');
+        if (event.error === 'not-allowed') {
+            showCustomMessage('❌ Mikrofon verweigert', 'Bitte Mikrofon-Zugriff in den Browser-Einstellungen erlauben und erneut versuchen.', 'error');
+        } else {
+            showCustomMessage('❌ Fehler bei Stimmeingabe', 'Versuche es nochmal oder gib manuell ein.', 'error');
+        }
         resetVoiceBtn();
     };
 
@@ -54,11 +56,38 @@ function startVoiceInput() {
     recognition.start();
 }
 
+function startVoiceInput() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        showCustomMessage('❌ Stimmeingabe nicht unterstützt', 'Dein Browser unterstützt keine Spracherkennung. Verwende Chrome oder Edge.', 'error');
+        return;
+    }
+
+    // PWA fix: getUserMedia triggert den Berechtigungs-Dialog im PWA-Standalone-Modus
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function(stream) {
+                stream.getTracks().forEach(function(t) { t.stop(); });
+                _startRecognition();
+            })
+            .catch(function(err) {
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    showCustomMessage('❌ Mikrofon verweigert', 'Bitte Mikrofon-Zugriff in den Browser-Einstellungen erlauben.', 'error');
+                } else {
+                    showCustomMessage('❌ Mikrofon-Fehler', 'Mikrofon konnte nicht gestartet werden.', 'error');
+                }
+            });
+    } else {
+        _startRecognition();
+    }
+}
+
 function resetVoiceBtn() {
-    document.getElementById('voiceBtn').textContent = '🎤 Stimmeingabe';
-    document.getElementById('voiceBtn').style.background = 'rgba(59,130,246,0.2)';
-    document.getElementById('voiceBtn').style.borderColor = 'rgba(59,130,246,0.3)';
-    document.getElementById('voiceBtn').style.color = '#3b82f6';
+    const btn = document.getElementById('voiceBtn');
+    if (!btn) return;
+    btn.innerHTML = VOICE_BTN_HTML;
+    btn.style.background = '';
+    btn.style.borderColor = '';
+    btn.style.color = '';
 }
 
 function parseVoiceCommand(transcript) {
