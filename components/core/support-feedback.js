@@ -35,19 +35,6 @@
         return streak;
     }
 
-    function supportDonate(amount) {
-        // Open real PayPal donation link
-        const paypalUrl = `https://www.paypal.com/donate?business=sven9micha37%40gmail.com&amount=${amount}&currency_code=EUR&item_name=MyWorkLog+Unterst%C3%BCtzung`;
-        window.open(paypalUrl, '_blank', 'noopener,noreferrer');
-    }
-
-    function supportDonateCustom() {
-        const amount = prompt('Wie viel möchtest du spenden? (€)');
-        if (amount && !isNaN(amount) && Number(amount) > 0) {
-            supportDonate(Number(amount));
-        }
-    }
-
     function supportRate(rating) {
         const emojis = ['', '😞', '😕', '😐', '😊', '🤩'];
         const labels = ['', 'Schlecht', 'Nicht so gut', 'Okay', 'Gut', 'Fantastisch'];
