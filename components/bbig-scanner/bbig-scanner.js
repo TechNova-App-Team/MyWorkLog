@@ -253,69 +253,70 @@ function bbigDismissAll(scannerId) {
 }
 
 function attachScanner(inputId, scannerId) {
-    const input = document.getElementById(inputId);
+    var input = document.getElementById(inputId);
     if (!input) return;
 
-    // Inject scanner element after input
+    // Inject scanner element after input (only once)
     if (!document.getElementById(scannerId)) {
-        const scanner = createScannerEl(scannerId);
+        var scanner = createScannerEl(scannerId);
         input.parentNode.insertBefore(scanner, input.nextSibling);
     }
 
-    let debounceTimer;
-    input.addEventListener('input', function() {
+    var debounceTimer;
+    // Event-Delegation auf document — überlebt DOM-Swaps
+    document.addEventListener('input', function(e) {
+        if (e.target.id !== inputId) return;
         clearTimeout(debounceTimer);
-        // Reset dismissed alerts on new typing session (only if field was cleared)
-        if (this.value.length === 0) {
-            [...DISMISSED_ALERTS].forEach(key => {
+        var val = e.target.value;
+        if (val.length === 0) {
+            [...DISMISSED_ALERTS].forEach(function(key) {
                 if (key.startsWith(scannerId + ':')) DISMISSED_ALERTS.delete(key);
             });
+            var el = document.getElementById(scannerId);
+            if (el) el.classList.remove('bbig-scanner--active');
+            return;
         }
-        debounceTimer = setTimeout(() => scanText(this.value, scannerId), 250);
+        debounceTimer = setTimeout(function() { scanText(val, scannerId); }, 250);
     });
 }
 
-function initBbigScanner() {
-    // Nur auf der Hauptseite ausführen, nicht im Berichtsheft
-    if (document.getElementById('inpNotes')) initBbigMainApp();
-}
+// ── Expose globals (inline-onclick braucht diese im window-Scope) ──
+window.bbigDismissRule = bbigDismissRule;
+window.bbigDismissAll = bbigDismissAll;
 
-// ── BERICHTSHEFT: Zentraler Scanner der alle Felder überwacht ──
-// Wird von pages/berichtsheft/index.html aufgerufen
-function initBbigBerichtsheft() {
-    const SCANNER_ID = 'bbigScannerBericht';
+// ── Berichtsheft: Zentraler Scanner ──
+// Wird von pages/berichtsheft/index.html nach Laden aufgerufen
+window.initBbigBerichtsheft = function() {
+    var SCANNER_ID = 'bbigScannerBericht';
 
-    // Erstelle zentralen Scanner-Block falls noch nicht vorhanden
     function ensureCentralScanner() {
         if (document.getElementById(SCANNER_ID)) return;
-        const anchor = document.getElementById('weeklyFieldGroup')
-            || document.getElementById('reportActivities')?.parentElement
+        var anchor = document.getElementById('weeklyFieldGroup')
+            || (document.getElementById('reportActivities') && document.getElementById('reportActivities').parentElement)
             || document.querySelector('.form-group');
         if (!anchor) return;
-        const scanner = createScannerEl(SCANNER_ID);
-        scanner.style.marginBottom = '0';
+        var scanner = createScannerEl(SCANNER_ID);
         anchor.parentNode.insertBefore(scanner, anchor.nextSibling);
     }
 
-    // Sammle Text aus allen aktiven Feldern
     function collectAllText() {
-        const parts = [];
-        const weekly = document.getElementById('reportActivities');
+        var parts = [];
+        var weekly = document.getElementById('reportActivities');
         if (weekly && weekly.value.trim()) parts.push(weekly.value);
-        document.querySelectorAll('.daily-textarea').forEach(ta => {
+        document.querySelectorAll('.daily-textarea').forEach(function(ta) {
             if (ta.value.trim()) parts.push(ta.value);
         });
         return parts.join('\n');
     }
 
-    let debounce;
+    var debounce;
     function onAnyInput() {
         clearTimeout(debounce);
-        debounce = setTimeout(() => {
+        debounce = setTimeout(function() {
             ensureCentralScanner();
-            const text = collectAllText();
+            var text = collectAllText();
             if (!text.trim()) {
-                const el = document.getElementById(SCANNER_ID);
+                var el = document.getElementById(SCANNER_ID);
                 if (el) el.classList.remove('bbig-scanner--active');
                 return;
             }
@@ -323,52 +324,43 @@ function initBbigBerichtsheft() {
         }, 300);
     }
 
-    // Attach zu reportActivities
-    const reportActivities = document.getElementById('reportActivities');
-    if (reportActivities) reportActivities.addEventListener('input', onAnyInput);
-
-    // Attach zu dynamisch generierten .daily-textarea (MutationObserver)
-    const observer = new MutationObserver(() => {
-        document.querySelectorAll('.daily-textarea:not([data-bbig])').forEach(ta => {
-            ta.setAttribute('data-bbig', '1');
-            ta.addEventListener('input', onAnyInput);
-        });
+    // Event-Delegation auf document — fängt reportActivities + alle .daily-textarea
+    document.addEventListener('input', function(e) {
+        var t = e.target;
+        if (t.id === 'reportActivities' || t.classList.contains('daily-textarea')) {
+            onAnyInput();
+        }
     });
-    const dailyRoot = document.getElementById('dailyFieldsContainer')
-        || document.querySelector('.daily-fields-wrap')
-        || document.body;
-    observer.observe(dailyRoot, { childList: true, subtree: true });
+};
 
-    // Auch direkt bestehende scannen
-    document.querySelectorAll('.daily-textarea').forEach(ta => {
-        ta.setAttribute('data-bbig', '1');
-        ta.addEventListener('input', onAnyInput);
-    });
-}
-
-// Expose globals
-window.bbigDismissRule = bbigDismissRule;
-window.bbigDismissAll = bbigDismissAll;
-window.initBbigBerichtsheft = initBbigBerichtsheft;
-
-// Auto-init für Hauptseite (inpNotes + editInpNotes)
-function initBbigMainApp() {
+// ── Hauptseite: direkt nach DOM-Ready init ──
+function initMainApp() {
     attachScanner('inpNotes', 'bbigScannerDash');
     attachScanner('editInpNotes', 'bbigScannerEdit');
 
-    const origOpenEditModal = window.openEditModal;
-    if (typeof origOpenEditModal === 'function') {
+    // Edit-Modal: Scanner neu anhängen wenn Modal öffnet
+    var orig = window.openEditModal;
+    if (typeof orig === 'function') {
         window.openEditModal = function(id) {
-            origOpenEditModal(id);
-            setTimeout(() => attachScanner('editInpNotes', 'bbigScannerEdit'), 50);
+            orig(id);
+            setTimeout(function() { attachScanner('editInpNotes', 'bbigScannerEdit'); }, 60);
         };
     }
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initBbigScanner);
-} else {
-    initBbigScanner();
+function onReady(fn) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fn);
+    } else {
+        fn();
+    }
 }
+
+// Nur auf der Hauptseite (inpNotes vorhanden) auto-starten
+onReady(function() {
+    if (document.getElementById('inpNotes')) {
+        initMainApp();
+    }
+});
 
 })();
