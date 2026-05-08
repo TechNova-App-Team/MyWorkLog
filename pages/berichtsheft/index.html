@@ -3074,8 +3074,8 @@ Beispiel:
                             <span class="ais-engine-toggle-label">Gemini AI aktiv</span>
                             <span class="ais-engine-toggle-badge ais-engine-badge-gemini" id="aisEngineBadge">Gemini</span>
                         </label>
-                        <details style="margin-top:10px;">
-                            <summary style="font-size:0.7rem;color:var(--text-dim);cursor:pointer;user-select:none;">Eigener API Key (nur für höheres Limit)</summary>
+                        <details style="margin-top:10px;" id="aisOwnKeySection">
+                            <summary style="font-size:0.7rem;color:var(--text-dim);cursor:pointer;user-select:none;">Eigener API Key (nur lokale Entwicklung)</summary>
                             <div class="ais-api-key-row visible" id="aisApiKeyRow" style="margin-top:8px;">
                                 <div class="ais-api-key-input-wrap">
                                     <input type="password" class="ais-api-key-input" id="aisApiKeyInput" placeholder="Eigener Gemini Key..." autocomplete="off">
@@ -7495,14 +7495,23 @@ Beispiel:
         }
 
         function _restoreApiSettings() {
-            // Gemini via proxy is ON by default — only "local only" mode needs restoring
             state.useGemini = true;
+            const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
             const savedKey = localStorage.getItem(STORAGE_KEYS.apiKey);
-            const savedLocalOnly = localStorage.getItem(STORAGE_KEYS.useGemini) === '0'; // '0' = local only
-            if (savedKey) {
-                state.apiKey = savedKey;
-                const input = document.getElementById('aisApiKeyInput');
-                if (input) input.placeholder = '••••••••' + savedKey.slice(-4);
+            const savedLocalOnly = localStorage.getItem(STORAGE_KEYS.useGemini) === '0';
+
+            if (isLocal) {
+                if (savedKey) {
+                    state.apiKey = savedKey;
+                    const input = document.getElementById('aisApiKeyInput');
+                    if (input) input.placeholder = '••••••••' + savedKey.slice(-4);
+                }
+            } else {
+                // Production: clear any stored key, hide the field entirely
+                state.apiKey = '';
+                localStorage.removeItem(STORAGE_KEYS.apiKey);
+                const ownKeySection = document.getElementById('aisOwnKeySection');
+                if (ownKeySection) ownKeySection.style.display = 'none';
             }
             if (savedLocalOnly) {
                 state.useGemini = false;
@@ -7565,11 +7574,16 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                 },
             };
 
-            // Proxy only works on production (Cloudflare). Locally → direct API or skip.
+            // SECURITY: Production always uses Cloudflare proxy — key never exposed in browser.
+            // Local dev only: direct API with own key (proxy not available on localhost).
             const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-            const useProxy = !state.apiKey && !isLocal;
-            if (isLocal && !state.apiKey) throw new Error('Lokal kein Proxy — bitte eigenen API Key eintragen.');
-            const url = useProxy ? GEMINI_PROXY : `${GEMINI_DIRECT}?key=${state.apiKey}`;
+            let url;
+            if (isLocal) {
+                if (!state.apiKey) throw new Error('Lokal: eigenen API Key unter "Erweiterte Optionen" eintragen.');
+                url = `${GEMINI_DIRECT}?key=${state.apiKey}`;
+            } else {
+                url = GEMINI_PROXY; // key bleibt in Cloudflare Secrets, nie im Browser
+            }
 
             const response = await fetch(url, {
                 method: 'POST',
