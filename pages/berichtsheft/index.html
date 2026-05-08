@@ -7592,17 +7592,15 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
             });
 
             if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                const errMsg = errData?.error?.message || response.statusText;
-                if (response.status === 403 && useProxy) {
-                    throw new Error('Proxy nicht erreichbar. Trage deinen eigenen API Key ein.');
-                }
-                if (response.status === 429) {
-                    throw new Error('Tageslimit erreicht — bitte morgen nochmal versuchen oder eigenen Key eintragen.');
-                }
-                if (response.status === 400 && errMsg.includes('API key')) {
-                    throw new Error('Ungültiger API Key. Bitte prüfe deinen Key.');
-                }
+                const rawText = await response.text().catch(() => '(kein Body)');
+                console.error(`[AIStudio] Worker ${response.status} – Raw response:`, rawText);
+                let errMsg = response.statusText || String(response.status);
+                try {
+                    const errData = JSON.parse(rawText);
+                    errMsg = errData?.error?.message || errData?.message || errMsg;
+                } catch (_) {}
+                if (response.status === 429) throw new Error('Tageslimit erreicht — bitte morgen nochmal versuchen.');
+                if (response.status === 403) throw new Error('Proxy nicht erreichbar (403). Worker-URL oder CORS prüfen.');
                 throw new Error(`Gemini Fehler (${response.status}): ${errMsg}`);
             }
 
