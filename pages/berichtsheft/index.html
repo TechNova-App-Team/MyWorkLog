@@ -1378,6 +1378,513 @@
             padding: 2px 4px; border-radius: 3px;
         }
 
+        /* ═══════════════════════════════════════════════════════════
+           PDF EXPORT MODAL — IHK STUDIO
+           ═══════════════════════════════════════════════════════════ */
+        .pdf-modal-overlay {
+            position: fixed; inset: 0; z-index: 9000;
+            background: rgba(0,0,0,0.88);
+            backdrop-filter: blur(16px) saturate(0.5);
+            display: flex; align-items: center; justify-content: center;
+            padding: 16px; opacity: 0; pointer-events: none;
+            transition: opacity 0.28s cubic-bezier(0.16,1,0.3,1);
+        }
+        .pdf-modal-overlay.active { opacity: 1; pointer-events: all; }
+        .pdf-modal-container {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; width: 100%; max-width: 1020px; max-height: 93vh;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+            transform: translateY(16px) scale(0.97);
+            transition: transform 0.32s cubic-bezier(0.16,1,0.3,1);
+        }
+        .pdf-modal-overlay.active .pdf-modal-container { transform: translateY(0) scale(1); }
+        .pdf-modal-header {
+            display: flex; align-items: center; gap: 14px;
+            padding: 18px 22px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(139,92,246,0.04) 0%, transparent 60%);
+        }
+        .pdf-modal-title-icon {
+            width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(0,52,120,0.2));
+            border: 1px solid rgba(139,92,246,0.2);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--primary);
+        }
+        .pdf-modal-title-area { flex: 1; min-width: 0; }
+        .pdf-modal-title {
+            font-family: var(--font-display); font-weight: 700; font-size: 1.1rem;
+            letter-spacing: -0.02em; color: var(--text-main);
+        }
+        .pdf-modal-subtitle { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+        .pdf-modal-step-badges {
+            display: flex; gap: 6px; align-items: center;
+        }
+        .pdf-step-badge {
+            font-size: 0.7rem; padding: 3px 10px; border-radius: 20px;
+            font-weight: 600; letter-spacing: 0.03em; font-family: var(--font-mono);
+            border: 1px solid var(--border); color: var(--text-dim);
+            background: transparent;
+        }
+        .pdf-step-badge.active {
+            background: var(--primary-dim); border-color: rgba(139,92,246,0.3);
+            color: var(--primary-light);
+        }
+        .pdf-modal-close {
+            width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; line-height: 1; transition: all 0.15s;
+        }
+        .pdf-modal-close:hover {
+            background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.3); color: var(--danger);
+        }
+        .pdf-modal-body {
+            display: grid; grid-template-columns: 320px 1fr;
+            flex: 1; overflow: hidden; min-height: 0;
+        }
+        /* LEFT CONFIG */
+        .pdf-config-panel {
+            border-right: 1px solid var(--border); overflow-y: auto;
+            padding: 18px 16px; display: flex; flex-direction: column; gap: 18px;
+            scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.07) transparent;
+        }
+        .pdf-cfg-section { display: flex; flex-direction: column; gap: 10px; }
+        .pdf-cfg-label {
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--text-dim);
+            padding-bottom: 7px; border-bottom: 1px solid var(--border);
+        }
+        .pdf-cfg-input, .pdf-cfg-select {
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 8px; padding: 8px 11px;
+            color: var(--text-main); font-size: 0.84rem;
+            font-family: var(--font-main); outline: none; width: 100%;
+            transition: border-color 0.15s;
+        }
+        .pdf-cfg-input:focus, .pdf-cfg-select:focus { border-color: var(--border-active); }
+        .pdf-cfg-input::placeholder { color: var(--text-dim); }
+        .pdf-cfg-select { cursor: pointer; }
+        .pdf-field-label {
+            font-size: 0.75rem; color: var(--text-secondary); font-weight: 500;
+            margin-bottom: 4px; display: block;
+        }
+        .pdf-field-group { display: flex; flex-direction: column; }
+
+        /* STYLE PICKER */
+        .pdf-style-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; }
+        .pdf-style-card {
+            border: 1.5px solid var(--border); border-radius: 10px;
+            padding: 0 0 8px; cursor: pointer; overflow: hidden;
+            transition: all 0.18s; background: transparent; text-align: center;
+        }
+        .pdf-style-card:hover { border-color: var(--border-hover); transform: translateY(-1px); }
+        .pdf-style-card.selected { border-color: var(--primary); }
+        .pdf-style-thumb {
+            width: 100%; height: 44px; position: relative; overflow: hidden;
+        }
+        .pdf-style-thumb.ihk {
+            background: linear-gradient(160deg, #003478 60%, #0052a3);
+        }
+        .pdf-style-thumb.ihk::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 12px;
+            background: white; border-top: 2px solid #ffd700;
+        }
+        .pdf-style-thumb.ihk::before {
+            content: 'IHK'; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+            font-size: 9px; font-weight: 900; color: rgba(255,255,255,0.8);
+            letter-spacing: 0.15em; font-family: Arial, sans-serif;
+        }
+        .pdf-style-thumb.modern {
+            background: #0d0b1a;
+        }
+        .pdf-style-thumb.modern::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, #a855f7, #06b6d4);
+        }
+        .pdf-style-thumb.modern::after {
+            content: 'MW'; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            font-size: 11px; font-weight: 900; color: rgba(168,85,247,0.4);
+            font-family: Arial, sans-serif;
+        }
+        .pdf-style-thumb.clean {
+            background: #f5f5f5; border-bottom: 2px solid #1a1a1a;
+        }
+        .pdf-style-thumb.clean::before {
+            content: 'Akt.Nachr.'; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+            font-size: 6px; color: #555; letter-spacing: 0.05em; white-space: nowrap;
+            font-family: Arial, sans-serif;
+        }
+        .pdf-style-name {
+            font-size: 0.71rem; font-weight: 600; color: var(--text-secondary);
+            margin-top: 7px; display: block;
+        }
+        .pdf-style-card.selected .pdf-style-name { color: var(--primary-light); }
+        .pdf-style-card.selected .pdf-style-thumb { outline: 2px solid rgba(139,92,246,0.5); outline-offset: -2px; }
+
+        /* TOGGLES */
+        .pdf-toggle-list { display: flex; flex-direction: column; gap: 6px; }
+        .pdf-toggle-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 11px; border-radius: 8px;
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            cursor: pointer; transition: border-color 0.15s; user-select: none;
+        }
+        .pdf-toggle-row:hover { border-color: var(--border-hover); }
+        .pdf-toggle-text { flex: 1; }
+        .pdf-toggle-label { font-size: 0.82rem; color: var(--text-secondary); font-weight: 500; }
+        .pdf-toggle-sub { font-size: 0.68rem; color: var(--text-dim); margin-top: 1px; }
+        .pdf-sw {
+            width: 34px; height: 18px; border-radius: 9px; flex-shrink: 0;
+            background: rgba(255,255,255,0.08); border: 1px solid var(--border);
+            position: relative; transition: all 0.2s; cursor: pointer;
+        }
+        .pdf-sw::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 12px; height: 12px; border-radius: 50%;
+            background: var(--text-dim); transition: all 0.2s;
+        }
+        .pdf-toggle-row.on .pdf-sw { background: var(--primary); border-color: var(--primary); }
+        .pdf-toggle-row.on .pdf-sw::after { transform: translateX(16px); background: white; }
+
+        /* EXPORT BUTTONS */
+        .pdf-export-section { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+        .pdf-export-primary {
+            display: flex; align-items: center; justify-content: center; gap: 9px;
+            padding: 13px; border-radius: 10px; border: none; cursor: pointer;
+            font-size: 0.9rem; font-weight: 700; font-family: var(--font-main);
+            background: linear-gradient(135deg, var(--primary) 0%, #6d28d9 100%);
+            color: white; box-shadow: 0 4px 16px rgba(139,92,246,0.35);
+            transition: all 0.2s;
+        }
+        .pdf-export-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(139,92,246,0.45); }
+        .pdf-export-primary:active { transform: translateY(0); }
+        .pdf-export-secondary {
+            display: flex; align-items: center; justify-content: center; gap: 9px;
+            padding: 11px; border-radius: 10px; cursor: pointer;
+            font-size: 0.84rem; font-weight: 600; font-family: var(--font-main);
+            background: var(--bg-elevated); color: var(--text-secondary);
+            border: 1px solid var(--border); transition: all 0.15s;
+        }
+        .pdf-export-secondary:hover { border-color: var(--border-hover); color: var(--text-main); }
+        .pdf-export-multi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .pdf-export-multi-btn {
+            display: flex; align-items: center; justify-content: center; gap: 7px;
+            padding: 10px 8px; border-radius: 8px; cursor: pointer;
+            font-size: 0.78rem; font-weight: 600; font-family: var(--font-main);
+            background: var(--bg-elevated); color: var(--text-secondary);
+            border: 1px solid var(--border); transition: all 0.15s;
+        }
+        .pdf-export-multi-btn:hover { border-color: var(--primary); color: var(--primary-light); background: var(--primary-dim); }
+
+        /* RIGHT PREVIEW */
+        .pdf-preview-panel {
+            background: #1e1e2a; display: flex; flex-direction: column; overflow: hidden;
+        }
+        .pdf-preview-topbar {
+            display: flex; align-items: center; gap: 12px; padding: 10px 18px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.25); flex-shrink: 0;
+        }
+        .pdf-preview-topbar-dots { display: flex; gap: 5px; }
+        .pdf-topbar-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .pdf-topbar-dot:nth-child(1) { background: #ff5f57; }
+        .pdf-topbar-dot:nth-child(2) { background: #ffbd2e; }
+        .pdf-topbar-dot:nth-child(3) { background: #28c840; }
+        .pdf-preview-topbar-label {
+            flex: 1; text-align: center; font-size: 0.7rem;
+            color: rgba(255,255,255,0.3); font-family: var(--font-mono);
+        }
+        .pdf-preview-topbar-badge {
+            font-size: 0.65rem; padding: 2px 8px; border-radius: 4px;
+            background: rgba(139,92,246,0.15); color: #a78bfa;
+            font-family: var(--font-mono); border: 1px solid rgba(139,92,246,0.2);
+        }
+        .pdf-preview-scroll {
+            flex: 1; overflow-y: auto; padding: 20px;
+            display: flex; justify-content: center; align-items: flex-start;
+            scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent;
+        }
+
+        /* THE PDF DOCUMENT */
+        .pdf-doc {
+            width: 100%; max-width: 460px; background: white; color: #1a1a1a;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+            border-radius: 2px; overflow: hidden; font-family: Arial, sans-serif;
+            transform-origin: top center;
+        }
+
+        /* IHK CLASSIC */
+        .pdf-doc.style-ihk .doc-header {
+            background: #003478; color: white; padding: 18px 20px 14px;
+            position: relative; overflow: hidden;
+        }
+        .pdf-doc.style-ihk .doc-header::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #ffd700 0%, #ffaa00 50%, #ffd700 100%);
+        }
+        .pdf-doc.style-ihk .doc-header::after {
+            content: ''; position: absolute; top: -30px; right: -20px;
+            width: 100px; height: 100px; border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+        }
+        .doc-header-org {
+            font-size: 6.5px; letter-spacing: 0.18em; text-transform: uppercase;
+            opacity: 0.65; margin-bottom: 4px;
+        }
+        .doc-header-title {
+            font-size: 16px; font-weight: 900; letter-spacing: 0.04em;
+            line-height: 1.1;
+        }
+        .doc-header-sub {
+            font-size: 7.5px; letter-spacing: 0.06em; opacity: 0.6; margin-top: 3px;
+        }
+        .doc-kw-badge {
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+            text-align: right;
+        }
+        .doc-kw-num {
+            font-size: 28px; font-weight: 900;
+            color: rgba(255,255,255,0.12); line-height: 1;
+        }
+        .doc-kw-label {
+            font-size: 6px; text-transform: uppercase; letter-spacing: 0.12em;
+            opacity: 0.4; margin-top: 1px;
+        }
+        .doc-gold-bar {
+            height: 3px; background: linear-gradient(90deg, #ffd700, #ffaa00 50%, #ffd700);
+        }
+        .pdf-doc.style-ihk .doc-info-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 0; margin: 14px 16px 0;
+            border: 1px solid #d0d8e8; border-radius: 4px; overflow: hidden;
+        }
+        .doc-info-cell {
+            padding: 8px 9px; background: white; position: relative;
+        }
+        .doc-info-cell:not(:last-child) { border-right: 1px solid #d0d8e8; }
+        .doc-info-key {
+            font-size: 5.5px; text-transform: uppercase; letter-spacing: 0.12em;
+            color: #003478; font-weight: 700; margin-bottom: 3px;
+        }
+        .doc-info-val {
+            font-size: 8px; color: #1a1a2e; font-weight: 700; line-height: 1.3;
+        }
+        .pdf-doc.style-ihk .doc-section { margin: 12px 16px 0; }
+        .pdf-doc.style-ihk .doc-section-head {
+            background: #003478; color: white; padding: 5px 10px;
+            font-size: 7px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .pdf-doc.style-ihk .doc-table { width: 100%; border-collapse: collapse; border: 1px solid #d0d8e8; }
+        .pdf-doc.style-ihk .doc-table th {
+            background: #eef2f8; padding: 5px 8px; font-size: 6px;
+            text-transform: uppercase; letter-spacing: 0.08em; color: #003478;
+            text-align: left; border-bottom: 1px solid #d0d8e8;
+        }
+        .pdf-doc.style-ihk .doc-table td {
+            padding: 7px 8px; font-size: 7px; color: #1a1a2e;
+            border-bottom: 1px solid #eef2f8; vertical-align: top; line-height: 1.55;
+        }
+        .pdf-doc.style-ihk .doc-table tr:nth-child(even) td { background: #fafbff; }
+        .doc-day-label { font-weight: 700; white-space: nowrap; width: 50px; }
+        .doc-hours-label { width: 28px; text-align: right; color: #888; }
+        .pdf-doc.style-ihk .doc-day-label { color: #003478; }
+        .pdf-doc.style-ihk .doc-school { margin: 12px 16px 0; }
+        .pdf-doc.style-ihk .doc-school-head {
+            background: #005bab; color: white; padding: 5px 10px;
+            font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+        }
+        .pdf-doc.style-ihk .doc-school-body {
+            border: 1px solid #d0d8e8; border-top: none;
+            padding: 9px 10px; font-size: 7px; color: #333; line-height: 1.6;
+        }
+        .pdf-doc.style-ihk .doc-sig {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 16px; margin: 14px 16px 16px; padding-top: 12px;
+            border-top: 2px solid #003478;
+        }
+        .doc-sig-line { border-bottom: 1px solid #888; height: 22px; margin-bottom: 4px; }
+        .doc-sig-label { font-size: 5.5px; text-transform: uppercase; letter-spacing: 0.08em; color: #888; }
+        .doc-footer { padding: 7px 16px; text-align: center; font-size: 5.5px; border-top: 1px solid #e5e7eb; color: #aaa; }
+
+        /* MODERN STYLE */
+        .pdf-doc.style-modern { background: #0d0b1a; color: #e4e4e7; }
+        .pdf-doc.style-modern .doc-header {
+            background: #0d0b1a; padding: 18px 20px 14px;
+            position: relative; overflow: hidden; border-bottom: 1px solid rgba(168,85,247,0.15);
+        }
+        .pdf-doc.style-modern .doc-header::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, #a855f7, #06b6d4);
+        }
+        .pdf-doc.style-modern .doc-header-org { color: rgba(168,85,247,0.65); }
+        .pdf-doc.style-modern .doc-header-title { color: white; font-size: 15px; }
+        .pdf-doc.style-modern .doc-header-sub { color: rgba(255,255,255,0.4); }
+        .pdf-doc.style-modern .doc-kw-num { color: rgba(168,85,247,0.12); }
+        .pdf-doc.style-modern .doc-kw-label { color: rgba(168,85,247,0.4); }
+        .pdf-doc.style-modern .doc-gold-bar { background: linear-gradient(90deg, #a855f7, #06b6d4); height: 1px; }
+        .pdf-doc.style-modern .doc-info-grid {
+            display: grid; grid-template-columns: repeat(4,1fr);
+            gap: 6px; margin: 14px 16px 0;
+        }
+        .pdf-doc.style-modern .doc-info-cell {
+            background: #1a1535; padding: 7px 8px;
+            border-radius: 5px; border: 1px solid rgba(168,85,247,0.12);
+        }
+        .pdf-doc.style-modern .doc-info-key { color: rgba(168,85,247,0.7); }
+        .pdf-doc.style-modern .doc-info-val { color: #e4e4e7; }
+        .pdf-doc.style-modern .doc-info-cell:not(:last-child) { border-right: none; }
+        .pdf-doc.style-modern .doc-section { margin: 12px 16px 0; }
+        .pdf-doc.style-modern .doc-section-head {
+            background: transparent; color: #a78bfa; padding: 0 0 5px;
+            border-bottom: 1px solid rgba(168,85,247,0.2);
+            font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+            margin-bottom: 6px;
+        }
+        .pdf-doc.style-modern .doc-table { width: 100%; border-collapse: collapse; }
+        .pdf-doc.style-modern .doc-table th {
+            font-size: 6px; text-transform: uppercase; letter-spacing: 0.1em;
+            color: rgba(168,85,247,0.5); text-align: left; padding: 3px 7px;
+        }
+        .pdf-doc.style-modern .doc-table td {
+            padding: 6px 7px; font-size: 7px; color: #b0b0c0;
+            border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; line-height: 1.55;
+        }
+        .pdf-doc.style-modern .doc-day-label { color: #a78bfa; }
+        .pdf-doc.style-modern .doc-hours-label { color: #67e8f9; }
+        .pdf-doc.style-modern .doc-school { margin: 12px 16px 0; }
+        .pdf-doc.style-modern .doc-school-head {
+            font-size: 7px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.1em; color: #67e8f9;
+            padding: 0 0 5px; border-bottom: 1px solid rgba(103,232,249,0.15);
+            margin-bottom: 6px;
+        }
+        .pdf-doc.style-modern .doc-school-body {
+            font-size: 7px; color: #a0a0b0; line-height: 1.6; padding: 8px 0;
+            border-top: none;
+        }
+        .pdf-doc.style-modern .doc-sig {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+            margin: 14px 16px 16px; padding-top: 12px;
+            border-top: 1px solid rgba(168,85,247,0.2);
+        }
+        .pdf-doc.style-modern .doc-sig-line { border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .pdf-doc.style-modern .doc-sig-label { color: rgba(255,255,255,0.25); }
+        .pdf-doc.style-modern .doc-footer { border-top-color: rgba(255,255,255,0.06); color: rgba(255,255,255,0.2); }
+
+        /* CLEAN/AMTLICH */
+        .pdf-doc.style-clean { background: white; color: #1a1a1a; }
+        .pdf-doc.style-clean .doc-header {
+            background: #f8f9fa; padding: 18px 20px 14px;
+            border-bottom: 3px solid #1a1a1a; position: relative;
+        }
+        .pdf-doc.style-clean .doc-header-org { color: #888; }
+        .pdf-doc.style-clean .doc-header-title { color: #1a1a1a; font-size: 15px; font-weight: 900; }
+        .pdf-doc.style-clean .doc-header-sub { color: #888; }
+        .pdf-doc.style-clean .doc-kw-num { color: rgba(0,0,0,0.07); }
+        .pdf-doc.style-clean .doc-kw-label { color: #bbb; }
+        .pdf-doc.style-clean .doc-gold-bar { display: none; }
+        .pdf-doc.style-clean .doc-info-grid {
+            display: grid; grid-template-columns: repeat(4,1fr);
+            gap: 0; margin: 14px 16px 0;
+            border: 1px solid #e5e7eb; overflow: hidden; border-radius: 2px;
+        }
+        .pdf-doc.style-clean .doc-info-cell:not(:last-child) { border-right: 1px solid #e5e7eb; }
+        .pdf-doc.style-clean .doc-info-key { color: #666; }
+        .pdf-doc.style-clean .doc-info-val { color: #1a1a1a; }
+        .pdf-doc.style-clean .doc-section { margin: 12px 16px 0; }
+        .pdf-doc.style-clean .doc-section-head {
+            background: #f5f5f5; color: #1a1a1a; padding: 5px 10px;
+            font-size: 7px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.1em; border: 1px solid #e5e7eb;
+        }
+        .pdf-doc.style-clean .doc-table { width: 100%; border-collapse: collapse; border: 1px solid #e5e7eb; border-top: none; }
+        .pdf-doc.style-clean .doc-table th {
+            background: white; padding: 5px 8px; font-size: 6px;
+            text-transform: uppercase; letter-spacing: 0.08em; color: #666;
+            text-align: left; border-bottom: 1px solid #e5e7eb;
+        }
+        .pdf-doc.style-clean .doc-table td {
+            padding: 7px 8px; font-size: 7px; color: #333;
+            border-bottom: 1px solid #f3f4f6; vertical-align: top; line-height: 1.55;
+        }
+        .pdf-doc.style-clean .doc-day-label { color: #1a1a1a; }
+        .pdf-doc.style-clean .doc-hours-label { color: #888; }
+        .pdf-doc.style-clean .doc-school { margin: 12px 16px 0; }
+        .pdf-doc.style-clean .doc-school-head {
+            background: #f5f5f5; color: #1a1a1a; padding: 5px 10px;
+            font-size: 7px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.1em; border: 1px solid #e5e7eb;
+        }
+        .pdf-doc.style-clean .doc-school-body {
+            border: 1px solid #e5e7eb; border-top: none;
+            padding: 8px 10px; font-size: 7px; color: #444; line-height: 1.6;
+        }
+        .pdf-doc.style-clean .doc-sig {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+            margin: 14px 16px 16px; padding-top: 12px; border-top: 2px solid #1a1a1a;
+        }
+        .pdf-doc.style-clean .doc-sig-line { border-bottom: 1px solid #555; }
+        .pdf-doc.style-clean .doc-sig-label { color: #888; }
+        .pdf-doc.style-clean .doc-footer { border-top-color: #e5e7eb; }
+
+        /* AI STUDIO GENERATION IMPROVEMENTS */
+        .ais-style-selector { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; }
+        .ais-style-opt {
+            border: 1.5px solid var(--border); border-radius: 10px;
+            padding: 10px 6px; cursor: pointer; text-align: center;
+            transition: all 0.15s; background: transparent; user-select: none;
+        }
+        .ais-style-opt:hover { border-color: var(--border-hover); background: var(--bg-hover); }
+        .ais-style-opt.sel { border-color: var(--primary); background: var(--primary-dim); }
+        .ais-style-opt-icon { font-size: 1.2rem; margin-bottom: 4px; display: block; }
+        .ais-style-opt-name { font-size: 0.71rem; font-weight: 700; color: var(--text-secondary); display: block; }
+        .ais-style-opt-desc { font-size: 0.62rem; color: var(--text-dim); margin-top: 2px; display: block; }
+        .ais-style-opt.sel .ais-style-opt-name { color: var(--primary-light); }
+
+        .ais-theme-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .ais-theme-chip {
+            padding: 5px 11px; border-radius: 20px; font-size: 0.74rem;
+            border: 1px solid var(--border); background: var(--bg-elevated);
+            color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+        }
+        .ais-theme-chip:hover { border-color: var(--primary); color: var(--primary-light); background: var(--primary-dim); }
+        .ais-theme-chip.act { border-color: var(--primary); background: var(--primary-dim); color: var(--primary-light); }
+
+        .ais-human-toggle {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 8px;
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            cursor: pointer; transition: all 0.15s; user-select: none;
+        }
+        .ais-human-toggle:hover { border-color: var(--border-hover); }
+        .ais-human-toggle.on { border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.05); }
+        .ais-human-toggle-text { flex: 1; }
+        .ais-human-toggle-title { font-size: 0.83rem; color: var(--text-main); font-weight: 500; }
+        .ais-human-toggle-sub { font-size: 0.7rem; color: var(--text-dim); margin-top: 1px; }
+        .ais-human-sw {
+            width: 34px; height: 18px; border-radius: 9px;
+            background: rgba(255,255,255,0.08); border: 1px solid var(--border);
+            position: relative; transition: all 0.2s; flex-shrink: 0;
+        }
+        .ais-human-sw::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 12px; height: 12px; border-radius: 50%;
+            background: var(--text-dim); transition: all 0.2s;
+        }
+        .ais-human-toggle.on .ais-human-sw { background: var(--success); border-color: var(--success); }
+        .ais-human-toggle.on .ais-human-sw::after { transform: translateX(16px); background: white; }
+
+        @media (max-width: 720px) {
+            .pdf-modal-body { grid-template-columns: 1fr; }
+            .pdf-preview-panel { display: none; }
+            .pdf-modal-container { border-radius: 16px; max-height: 96vh; }
+            .pdf-modal-step-badges { display: none; }
+        }
+
         /* ═══════════════════════════════════════════════
            PRINT STYLES
            ═══════════════════════════════════════════════ */
@@ -1744,13 +2251,9 @@
                 <svg class="icon"><use href="#i-refresh"/></svg>
                 <span>TimeTracker Import</span>
             </button>
-            <button class="btn btn-secondary" onclick="exportSummaryPDF()">
-                <svg class="icon"><use href="#i-chart"/></svg>
-                <span>Jahresbericht</span>
-            </button>
-            <button class="btn btn-secondary" onclick="exportAllPDF()">
+            <button class="btn btn-secondary" onclick="openPDFModal(null)">
                 <svg class="icon"><use href="#i-file"/></svg>
-                <span>Alle exportieren</span>
+                <span>PDF Exportieren</span>
                 <span class="kbd-hint"><span class="kbd">E</span></span>
             </button>
             <button class="btn btn-secondary" onclick="showTemplates()">
@@ -1995,6 +2498,149 @@ Beispiel:
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+    <!-- ===== PDF EXPORT MODAL — IHK STUDIO ===== -->
+    <div class="pdf-modal-overlay" id="pdfModal">
+        <div class="pdf-modal-container">
+            <!-- Header -->
+            <div class="pdf-modal-header">
+                <div class="pdf-modal-title-icon">
+                    <svg class="icon icon-lg"><use href="#i-file"/></svg>
+                </div>
+                <div class="pdf-modal-title-area">
+                    <div class="pdf-modal-title">PDF Export — IHK Studio</div>
+                    <div class="pdf-modal-subtitle" id="pdfModalSubtitle">Ausbildungsnachweis konfigurieren &amp; exportieren</div>
+                </div>
+                <div class="pdf-modal-step-badges">
+                    <span class="pdf-step-badge active">Konfigurieren</span>
+                    <span style="color:var(--text-dim);font-size:0.7rem;">→</span>
+                    <span class="pdf-step-badge active">Vorschau</span>
+                    <span style="color:var(--text-dim);font-size:0.7rem;">→</span>
+                    <span class="pdf-step-badge">Export</span>
+                </div>
+                <button class="pdf-modal-close" onclick="closePDFModal()">&times;</button>
+            </div>
+            <!-- Body: Config + Preview -->
+            <div class="pdf-modal-body">
+                <!-- LEFT: Config Panel -->
+                <div class="pdf-config-panel">
+
+                    <!-- Personal Info -->
+                    <div class="pdf-cfg-section">
+                        <div class="pdf-cfg-label">Persönliche Daten</div>
+                        <div class="pdf-field-group">
+                            <label class="pdf-field-label">Name des/der Auszubildenden</label>
+                            <input class="pdf-cfg-input" id="pdfAzubiName" placeholder="z.B. Max Mustermann" oninput="updatePDFPreview()">
+                        </div>
+                        <div class="pdf-field-group">
+                            <label class="pdf-field-label">Ausbildungsbetrieb</label>
+                            <input class="pdf-cfg-input" id="pdfBetrieb" placeholder="z.B. Musterfirma GmbH" oninput="updatePDFPreview()">
+                        </div>
+                        <div class="pdf-field-group">
+                            <label class="pdf-field-label">Ausbilder/in</label>
+                            <input class="pdf-cfg-input" id="pdfAusbilder" placeholder="z.B. Maria Musterfrau" oninput="updatePDFPreview()">
+                        </div>
+                        <div class="pdf-field-group">
+                            <label class="pdf-field-label">Ausbildungsberuf / Abteilung</label>
+                            <input class="pdf-cfg-input" id="pdfBeruf" placeholder="z.B. Fachinformatiker/in AE" oninput="updatePDFPreview()">
+                        </div>
+                    </div>
+
+                    <!-- Vorlage -->
+                    <div class="pdf-cfg-section">
+                        <div class="pdf-cfg-label">Dokumenten-Vorlage</div>
+                        <div class="pdf-style-grid">
+                            <div class="pdf-style-card selected" data-style="ihk" onclick="selectPDFStyle('ihk',this)">
+                                <div class="pdf-style-thumb ihk"></div>
+                                <span class="pdf-style-name">IHK Classic</span>
+                            </div>
+                            <div class="pdf-style-card" data-style="modern" onclick="selectPDFStyle('modern',this)">
+                                <div class="pdf-style-thumb modern"></div>
+                                <span class="pdf-style-name">Modern Dark</span>
+                            </div>
+                            <div class="pdf-style-card" data-style="clean" onclick="selectPDFStyle('clean',this)">
+                                <div class="pdf-style-thumb clean"></div>
+                                <span class="pdf-style-name">Amtlich/Clean</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Optionen -->
+                    <div class="pdf-cfg-section">
+                        <div class="pdf-cfg-label">Optionen</div>
+                        <div class="pdf-toggle-list">
+                            <div class="pdf-toggle-row on" id="pdfOptSig" onclick="togglePDFOpt(this)">
+                                <div class="pdf-toggle-text">
+                                    <div class="pdf-toggle-label">Unterschriftenfeld</div>
+                                    <div class="pdf-toggle-sub">Azubi + Ausbilder Signatur</div>
+                                </div>
+                                <div class="pdf-sw"></div>
+                            </div>
+                            <div class="pdf-toggle-row on" id="pdfOptSchool" onclick="togglePDFOpt(this)">
+                                <div class="pdf-toggle-text">
+                                    <div class="pdf-toggle-label">Berufsschule einschließen</div>
+                                    <div class="pdf-toggle-sub">Wenn Daten vorhanden</div>
+                                </div>
+                                <div class="pdf-sw"></div>
+                            </div>
+                            <div class="pdf-toggle-row on" id="pdfOptFooter" onclick="togglePDFOpt(this)">
+                                <div class="pdf-toggle-text">
+                                    <div class="pdf-toggle-label">Fußzeile anzeigen</div>
+                                    <div class="pdf-toggle-sub">App-Name + Erstelldatum</div>
+                                </div>
+                                <div class="pdf-sw"></div>
+                            </div>
+                            <div class="pdf-toggle-row" id="pdfOptHours" onclick="togglePDFOpt(this)">
+                                <div class="pdf-toggle-text">
+                                    <div class="pdf-toggle-label">Stunden-Spalte zeigen</div>
+                                    <div class="pdf-toggle-sub">Std. pro Tag sichtbar</div>
+                                </div>
+                                <div class="pdf-sw"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Actions -->
+                    <div class="pdf-cfg-section">
+                        <div class="pdf-cfg-label">Exportieren</div>
+                        <div class="pdf-export-section">
+                            <button class="pdf-export-primary" id="pdfExportBtn" onclick="executePDFExport()">
+                                <svg class="icon"><use href="#i-file"/></svg>
+                                Als PDF herunterladen
+                            </button>
+                            <div class="pdf-export-multi-row">
+                                <button class="pdf-export-multi-btn" onclick="window.print()">
+                                    <svg class="icon icon-sm"><use href="#i-file"/></svg> Drucken
+                                </button>
+                                <button class="pdf-export-multi-btn" id="pdfExportAllBtn" onclick="executePDFExportAll()">
+                                    <svg class="icon icon-sm"><use href="#i-copy"/></svg> Alle KWs
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT: Preview Panel -->
+                <div class="pdf-preview-panel">
+                    <div class="pdf-preview-topbar">
+                        <div class="pdf-preview-topbar-dots">
+                            <div class="pdf-topbar-dot"></div>
+                            <div class="pdf-topbar-dot"></div>
+                            <div class="pdf-topbar-dot"></div>
+                        </div>
+                        <div class="pdf-preview-topbar-label">Ausbildungsnachweis — Live Vorschau</div>
+                        <div class="pdf-preview-topbar-badge" id="pdfPreviewBadge">IHK Format</div>
+                    </div>
+                    <div class="pdf-preview-scroll">
+                        <div class="pdf-doc style-ihk" id="pdfDocPreview">
+                            <!-- Rendered by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== AI STUDIO — Enterprise Berichtsheft Generator ===== -->
     <button class="ai-studio-fab" id="aiStudioFab" onclick="AIStudio.toggle()" title="AI Studio — Berichtsheft Generator">
         <svg class="icon"><use href="#i-sparkles"/></svg>
@@ -2088,9 +2734,57 @@ Beispiel:
                     </div>
                 </div>
 
+                <!-- Schreibstil -->
+                <div class="ais-section">
+                    <div class="ais-section-label">Schreibstil</div>
+                    <div class="ais-style-selector" id="aisStyleSelector">
+                        <div class="ais-style-opt sel" data-style="ihk" onclick="AIStudio.selectStyle('ihk',this)">
+                            <span class="ais-style-opt-icon">📋</span>
+                            <span class="ais-style-opt-name">IHK Präzise</span>
+                            <span class="ais-style-opt-desc">Formell, kurz, konform</span>
+                        </div>
+                        <div class="ais-style-opt" data-style="detailed" onclick="AIStudio.selectStyle('detailed',this)">
+                            <span class="ais-style-opt-icon">📝</span>
+                            <span class="ais-style-opt-name">Ausführlich</span>
+                            <span class="ais-style-opt-desc">Detailliert, strukturiert</span>
+                        </div>
+                        <div class="ais-style-opt" data-style="human" onclick="AIStudio.selectStyle('human',this)">
+                            <span class="ais-style-opt-icon">🙋</span>
+                            <span class="ais-style-opt-name">Menschlich</span>
+                            <span class="ais-style-opt-desc">Natürlich, authentisch</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Thema der Woche -->
+                <div class="ais-section">
+                    <div class="ais-section-label">Thema der Woche <span style="color:var(--text-dim);font-weight:400;">(optional)</span></div>
+                    <div class="ais-theme-chips" id="aisThemeChips">
+                        <div class="ais-theme-chip" data-theme="normal" onclick="AIStudio.toggleTheme('normal',this)">📅 Normaler Arbeitstag</div>
+                        <div class="ais-theme-chip" data-theme="projekt" onclick="AIStudio.toggleTheme('projekt',this)">🚀 Projekt-Sprint</div>
+                        <div class="ais-theme-chip" data-theme="schule" onclick="AIStudio.toggleTheme('schule',this)">🏫 Schulwoche</div>
+                        <div class="ais-theme-chip" data-theme="kunde" onclick="AIStudio.toggleTheme('kunde',this)">🤝 Kundentermin</div>
+                        <div class="ais-theme-chip" data-theme="einarbeitung" onclick="AIStudio.toggleTheme('einarbeitung',this)">📚 Einarbeitung</div>
+                        <div class="ais-theme-chip" data-theme="messe" onclick="AIStudio.toggleTheme('messe',this)">🏛️ Messe/Event</div>
+                        <div class="ais-theme-chip" data-theme="pruefung" onclick="AIStudio.toggleTheme('pruefung',this)">📖 Prüfungsvorbereitung</div>
+                        <div class="ais-theme-chip" data-theme="wartung" onclick="AIStudio.toggleTheme('wartung',this)">🔧 Wartung/Support</div>
+                    </div>
+                </div>
+
+                <!-- Menschlicher Stil Toggle -->
+                <div class="ais-section">
+                    <div class="ais-human-toggle" id="aisHumanToggle" onclick="AIStudio.toggleHuman(this)">
+                        <div class="ais-human-toggle-text">
+                            <div class="ais-human-toggle-title">✨ Lebendiger Stil aktivieren</div>
+                            <div class="ais-human-toggle-sub">Kleine Variationen — klingt echter, weniger generisch</div>
+                        </div>
+                        <div class="ais-human-sw"></div>
+                    </div>
+                </div>
+
                 <!-- Options -->
                 <div class="ais-section">
-                    <div class="ais-section-label">Optionen</div>
+                    <div class="ais-section-label">Weitere Optionen</div>
                     <label class="ais-option-label">
                         <input type="checkbox" id="aisIncludeSchool" checked>
                         <span>Berufsschultag einbauen</span>
@@ -2103,9 +2797,11 @@ Beispiel:
 
                 <!-- Custom Prompt -->
                 <div class="ais-section">
-                    <div class="ais-section-label">Eigene Anweisungen (optional)</div>
-                    <textarea class="ais-custom-prompt" id="aisCustomPrompt" rows="3" placeholder="z.B. &quot;Fokus auf Netzwerktechnik und Firewall-Konfiguration&quot; oder &quot;Ich habe diese Woche an einem Webshop-Projekt gearbeitet&quot;..."></textarea>
-                    <div class="ais-prompt-hint">Beschreibe, was die KI in dein Berichtsheft schreiben soll — Themen, Projekte, Technologien etc.</div>
+                    <div class="ais-section-label">Was ist diese Woche passiert? <span style="color:var(--text-dim);font-weight:400;">(optional)</span></div>
+                    <textarea class="ais-custom-prompt" id="aisCustomPrompt" rows="3" placeholder="Einfach drauflosschreiben — z.B. &quot;Diese Woche hab ich eine REST-API gebaut, hatte Meeting mit dem Kunden und Berufsschule am Donnerstag&quot;...
+
+Die KI versteht natürliche Sprache!"></textarea>
+                    <div class="ais-prompt-hint">💡 Kein bestimmtes Format nötig — schreib einfach was du gemacht hast</div>
                 </div>
 
                 <!-- Engine Selection -->
@@ -3077,12 +3773,11 @@ Beispiel:
 
         function bulkExportPDF() {
             if (selectedIds.size === 0) return;
-
-            let delay = 0;
-            selectedIds.forEach(id => {
-                setTimeout(() => exportReportPDF(id), delay);
-                delay += 500;
-            });
+            // Open modal for first selected, rest will export directly after confirmation
+            const ids = [...selectedIds];
+            _pdfCurrentId = ids[0];
+            openPDFModal(ids[0]);
+            // After user clicks export in modal, executePDFExportAll handles the rest
         }
 
         // ═══════════════════════════════════════
@@ -3148,11 +3843,210 @@ Beispiel:
             }
         }
 
-        // ═══════════════════════════════════════
-        // PDF EXPORT (Enhanced)
-        // ═══════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
+        // PDF EXPORT MODAL — IHK STUDIO
+        // ═══════════════════════════════════════════════════════════
 
+        let _pdfCurrentId = null;
+        let _pdfCurrentStyle = 'ihk';
+        let _pdfActiveTheme = null;
+
+        const PDF_LABELS = {
+            ihk: 'IHK Classic',
+            modern: 'Modern Dark',
+            clean: 'Amtlich/Clean'
+        };
+
+        const DAYS_MAP = {
+            monday: 'Montag', tuesday: 'Dienstag', wednesday: 'Mittwoch',
+            thursday: 'Donnerstag', friday: 'Freitag'
+        };
+        const DAYS_ORDER = ['monday','tuesday','wednesday','thursday','friday'];
+
+        function openPDFModal(id) {
+            _pdfCurrentId = id || null;
+            const overlay = document.getElementById('pdfModal');
+            const subtitle = document.getElementById('pdfModalSubtitle');
+
+            // Load saved personal info
+            const saved = JSON.parse(localStorage.getItem('pdf_personal_cfg') || '{}');
+            document.getElementById('pdfAzubiName').value = saved.name || '';
+            document.getElementById('pdfBetrieb').value = saved.betrieb || '';
+            document.getElementById('pdfAusbilder').value = saved.ausbilder || '';
+            document.getElementById('pdfBeruf').value = saved.beruf || '';
+
+            if (id) {
+                const r = reports.find(x => x.id === id);
+                if (r) {
+                    subtitle.textContent = `KW ${r.week} · ${r.year}. Ausbildungsjahr · ${formatDate(r.dateFrom)} – ${formatDate(r.dateTo)}`;
+                    // Pre-fill department if beruf empty
+                    if (!saved.beruf && r.department) document.getElementById('pdfBeruf').value = r.department;
+                }
+                // Hide "Alle KWs" button, show single export
+                document.getElementById('pdfExportAllBtn').style.display = 'none';
+                document.getElementById('pdfExportBtn').textContent = '';
+                document.getElementById('pdfExportBtn').innerHTML = '<svg class="icon"><use href="#i-file"/></svg> Als PDF herunterladen';
+            } else {
+                subtitle.textContent = 'Alle Berichte als Jahresbericht exportieren';
+                document.getElementById('pdfExportAllBtn').style.display = '';
+            }
+
+            updatePDFPreview();
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePDFModal() {
+            document.getElementById('pdfModal').classList.remove('active');
+            document.body.style.overflow = '';
+            // Save personal info
+            const cfg = {
+                name: document.getElementById('pdfAzubiName').value,
+                betrieb: document.getElementById('pdfBetrieb').value,
+                ausbilder: document.getElementById('pdfAusbilder').value,
+                beruf: document.getElementById('pdfBeruf').value
+            };
+            localStorage.setItem('pdf_personal_cfg', JSON.stringify(cfg));
+        }
+
+        function selectPDFStyle(style, el) {
+            _pdfCurrentStyle = style;
+            document.querySelectorAll('.pdf-style-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById('pdfPreviewBadge').textContent = PDF_LABELS[style] + ' Format';
+            const doc = document.getElementById('pdfDocPreview');
+            doc.className = 'pdf-doc style-' + style;
+            updatePDFPreview();
+        }
+
+        function togglePDFOpt(el) {
+            el.classList.toggle('on');
+            updatePDFPreview();
+        }
+
+        function updatePDFPreview() {
+            const report = _pdfCurrentId ? reports.find(r => r.id === _pdfCurrentId) : reports[0];
+            if (!report) {
+                document.getElementById('pdfDocPreview').innerHTML = '<div style="padding:30px;text-align:center;font-size:9px;color:#888;font-family:Arial">Kein Bericht ausgewählt</div>';
+                return;
+            }
+
+            const name = escapeHtml(document.getElementById('pdfAzubiName').value) || 'Max Mustermann';
+            const betrieb = escapeHtml(document.getElementById('pdfBetrieb').value) || 'Ausbildungsbetrieb';
+            const ausbilder = escapeHtml(document.getElementById('pdfAusbilder').value) || 'Ausbilder/in';
+            const beruf = escapeHtml(document.getElementById('pdfBeruf').value) || escapeHtml(report.department || '') || 'Ausbildungsberuf';
+
+            const showSig = document.getElementById('pdfOptSig')?.classList.contains('on');
+            const showSchool = document.getElementById('pdfOptSchool')?.classList.contains('on');
+            const showFooter = document.getElementById('pdfOptFooter')?.classList.contains('on');
+            const showHours = document.getElementById('pdfOptHours')?.classList.contains('on');
+
+            const statusLabel = { incomplete: 'Entwurf', complete: 'Vollständig', signed: 'Unterschrieben' }[report.status] || 'Entwurf';
+
+            // Build activities rows
+            let activityRows = '';
+            if (report.mode === 'daily' && report.dailyActivities) {
+                DAYS_ORDER.forEach(key => {
+                    const text = report.dailyActivities[key];
+                    if (!text) return;
+                    const hrs = report.dailyHours ? report.dailyHours[key] : null;
+                    const firstLine = text.split('\n')[0].replace(/^[•\-]\s*/, '').substring(0, 65);
+                    activityRows += `<tr>
+                        <td class="doc-day-label">${DAYS_MAP[key]}</td>
+                        <td>${escapeHtml(firstLine)}${text.split('\n').length > 1 ? '…' : ''}</td>
+                        ${showHours ? `<td class="doc-hours-label">${hrs ? hrs + 'h' : ''}</td>` : ''}
+                    </tr>`;
+                });
+            } else if (report.activities) {
+                const lines = report.activities.split('\n').slice(0, 5);
+                lines.forEach((line, i) => {
+                    const day = DAYS_ORDER[i];
+                    const dayName = DAYS_MAP[day] || `Tag ${i+1}`;
+                    activityRows += `<tr>
+                        <td class="doc-day-label">${dayName}</td>
+                        <td>${escapeHtml(line.replace(/^[•\-]\s*/, '').substring(0, 65))}</td>
+                        ${showHours ? '<td class="doc-hours-label"></td>' : ''}
+                    </tr>`;
+                });
+            }
+
+            const schoolHtml = showSchool && report.school ? `
+                <div class="doc-school">
+                    <div class="doc-school-head">Berufsschule</div>
+                    <div class="doc-school-body">${escapeHtml(report.school.split('\n')[0].substring(0, 120))}${report.school.length > 120 ? '…' : ''}</div>
+                </div>` : '';
+
+            const sigHtml = showSig ? `
+                <div class="doc-sig">
+                    <div><div class="doc-sig-line"></div><div class="doc-sig-label">Auszubildende/r — Datum &amp; Unterschrift</div></div>
+                    <div><div class="doc-sig-line"></div><div class="doc-sig-label">Ausbilder/in — Datum &amp; Unterschrift</div></div>
+                </div>` : '';
+
+            const footerHtml = showFooter ? `
+                <div class="doc-footer">MyWorkLog · Erstellt am ${new Date().toLocaleDateString('de-DE')} · Ausbildungsnachweis gem. §14 BBiG</div>` : '';
+
+            document.getElementById('pdfDocPreview').innerHTML = `
+                <div class="doc-header">
+                    <div class="doc-header-org">Industrie- und Handelskammer</div>
+                    <div class="doc-header-title">AUSBILDUNGSNACHWEIS</div>
+                    <div class="doc-header-sub">Wöchentlicher Bericht gem. §14 BBiG · ${statusLabel}</div>
+                    <div class="doc-kw-badge">
+                        <div class="doc-kw-num">KW${report.week}</div>
+                        <div class="doc-kw-label">Kalenderwoche</div>
+                    </div>
+                </div>
+                <div class="doc-gold-bar"></div>
+                <div class="doc-info-grid">
+                    <div class="doc-info-cell"><div class="doc-info-key">Auszubildende/r</div><div class="doc-info-val">${name}</div></div>
+                    <div class="doc-info-cell"><div class="doc-info-key">Ausbildungsbetrieb</div><div class="doc-info-val">${betrieb}</div></div>
+                    <div class="doc-info-cell"><div class="doc-info-key">Zeitraum</div><div class="doc-info-val">${formatDate(report.dateFrom)} – ${formatDate(report.dateTo)}</div></div>
+                    <div class="doc-info-cell"><div class="doc-info-key">Beruf / Abteilung</div><div class="doc-info-val">${beruf}</div></div>
+                </div>
+                <div class="doc-section" style="margin-top:12px;">
+                    <div class="doc-section-head">Ausgeführte Tätigkeiten / Betrieb</div>
+                    <table class="doc-table">
+                        <thead><tr>
+                            <th>Tag</th><th>Tätigkeit</th>${showHours ? '<th>Std.</th>' : ''}
+                        </tr></thead>
+                        <tbody>${activityRows || '<tr><td colspan="3" style="color:#aaa;font-style:italic;padding:10px 8px;font-size:7px;">Keine Tätigkeiten eingetragen</td></tr>'}</tbody>
+                    </table>
+                </div>
+                ${schoolHtml}
+                ${sigHtml}
+                ${footerHtml}
+            `;
+        }
+
+        function executePDFExport() {
+            if (_pdfCurrentId) {
+                exportReportPDFCore(_pdfCurrentId);
+            } else {
+                exportSummaryPDF();
+            }
+        }
+
+        function executePDFExportAll() {
+            if (reports.length === 0) {
+                showToast('Keine Berichte vorhanden.', 'info');
+                return;
+            }
+            let delay = 0;
+            const sorted = [...reports].sort((a,b) => a.year !== b.year ? a.year - b.year : a.week - b.week);
+            sorted.forEach((r, i) => {
+                setTimeout(() => exportReportPDFCore(r.id), delay);
+                delay += 450;
+            });
+            showToast(`${sorted.length} Berichte werden exportiert...`, 'info');
+        }
+
+        // MAIN EXPORT FUNCTION — opens modal
         function exportReportPDF(id) {
+            openPDFModal(id);
+        }
+
+        // CORE PDF GENERATION (called after modal confirmation)
+        function exportReportPDFCore(id) {
+
             const report = reports.find(r => r.id === id);
             if (!report) return;
 
@@ -3165,13 +4059,33 @@ Beispiel:
             const doc = new jsPDF('p', 'mm', 'a4');
             const pageHeight = doc.internal.pageSize.getHeight();
             const pageWidth = doc.internal.pageSize.getWidth();
-            
+
+            // Read modal config
+            const pdfStyle = _pdfCurrentStyle || 'ihk';
+            const azubiName = document.getElementById('pdfAzubiName')?.value || '';
+            const pdfBetrieb = document.getElementById('pdfBetrieb')?.value || '';
+            const pdfAusbilder = document.getElementById('pdfAusbilder')?.value || '';
+            const pdfBeruf = document.getElementById('pdfBeruf')?.value || report.department || '';
+            const showSigOption = document.getElementById('pdfOptSig')?.classList.contains('on') !== false;
+            const showSchoolOption = document.getElementById('pdfOptSchool')?.classList.contains('on') !== false;
+            const showFooterOption = document.getElementById('pdfOptFooter')?.classList.contains('on') !== false;
+            const showHoursOption = document.getElementById('pdfOptHours')?.classList.contains('on') || false;
+
+            // Style colors
+            const STYLES = {
+                ihk: { headerBg: [0, 52, 120], headerText: [255,255,255], accentR: 255, accentG: 215, accentB: 0, bodyBg: [255,255,255], bodyText: [26,26,46], labelColor: [0,52,120], borderColor: [208,216,232], rowBg: [238,242,248], altRow: [250,251,255], sectionBg: [0,52,120], sectionText: [255,255,255] },
+                modern: { headerBg: [13,11,26], headerText: [255,255,255], accentR: 168, accentG: 85, accentB: 247, bodyBg: [26,21,53], bodyText: [196,196,200], labelColor: [168,85,247], borderColor: [60,50,100], rowBg: [22,18,40], altRow: [30,25,60], sectionBg: [35,28,75], sectionText: [200,180,255] },
+                clean: { headerBg: [248,249,250], headerText: [26,26,26], accentR: 26, accentG: 26, accentB: 26, bodyBg: [255,255,255], bodyText: [51,51,51], labelColor: [102,102,102], borderColor: [229,231,235], rowBg: [249,249,249], altRow: [255,255,255], sectionBg: [245,245,245], sectionText: [26,26,26] }
+            };
+            const S = STYLES[pdfStyle] || STYLES.ihk;
+
+            const statusLabel = { incomplete: 'Entwurf', complete: 'Vollständig', signed: 'Unterschrieben' }[report.status] || 'Entwurf';
+
             // ═══════════════════════════════════════════════════════
-            // MODERN HEADER WITH GRADIENT & BRANDING
+            // HEADER
             // ═══════════════════════════════════════════════════════
-            // Dark background panel (glassmorphism effect)
-            doc.setFillColor(13, 11, 26); // #0d0b1a
-            doc.rect(0, 0, pageWidth, 50, 'F');
+            doc.setFillColor(...S.headerBg);
+            doc.rect(0, 0, pageWidth, 45, 'F');
             
             // Gradient accent line (purple→cyan simulation with segments)
             doc.setFillColor(168, 85, 247); // #a855f7
@@ -3179,251 +4093,216 @@ Beispiel:
             doc.setFillColor(6, 182, 212); // #06b6d4
             doc.rect(pageWidth / 2, 0, pageWidth / 2, 4, 'F');
             
-            // MW Logo/Branding (text-based modern design)
-            doc.setFontSize(11);
-            doc.setTextColor(168, 85, 247);
+            // Accent bar at top of header
+            doc.setFillColor(S.accentR, S.accentG, S.accentB);
+            doc.rect(0, 0, pageWidth, 2.5, 'F');
+
+            // Header text
+            doc.setFontSize(7.5);
+            doc.setTextColor(...S.headerText);
+            doc.setFont(undefined, 'normal');
+            const orgText = pdfStyle === 'ihk' ? 'INDUSTRIE- UND HANDELSKAMMER' : pdfStyle === 'modern' ? 'MYWORKLOG AUSBILDUNGSPORTAL' : 'AUSBILDUNGSBETRIEB';
+            doc.text(orgText, 16, 14);
+
+            doc.setFontSize(20);
             doc.setFont(undefined, 'bold');
-            doc.text('MW', 18, 16);
-            
-            // Title
-            doc.setFontSize(24);
-            doc.setTextColor(255, 255, 255);
+            doc.text('AUSBILDUNGSNACHWEIS', 16, 24);
+
+            doc.setFontSize(8.5);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(S.headerText[0], S.headerText[1], S.headerText[2]);
+            if (pdfStyle !== 'clean') doc.setTextColor(Math.round(S.headerText[0]*0.6+100), Math.round(S.headerText[1]*0.6+100), Math.round(S.headerText[2]*0.6+100));
+            doc.text(`${statusLabel}  ·  ${report.year}. Ausbildungsjahr  ·  gem. §14 BBiG`, 16, 34);
+
+            // KW badge (top right)
+            doc.setFontSize(28);
             doc.setFont(undefined, 'bold');
-            doc.text('Ausbildungsnachweis', pageWidth / 2, 20, { align: 'center' });
-            
-            // Subtitle with elegant separator
-            doc.setFontSize(10);
-            doc.setTextColor(168, 200, 255, 0.7);
-            doc.text(`Kalenderwoche ${report.week}  •  ${report.year}. Ausbildungsjahr`, pageWidth / 2, 30, { align: 'center' });
-            
-            // ═══════════════════════════════════════════════════════
-            // PROFESSIONAL INFO GRID
-            // ═══════════════════════════════════════════════════════
-            let y = 60;
-            
-            // Info cards background
-            doc.setFillColor(245, 243, 255); // Very light lav
-            doc.roundedRect(15, y - 2, 180, 34, 3, 3, 'F');
-            
-            // Subtle border
-            doc.setDrawColor(168, 85, 247);
-            doc.setLineWidth(0.3);
-            doc.roundedRect(15, y - 2, 180, 34, 3, 3, 'S');
-            
-            const statusLabel = { 'incomplete': 'Entwurf', 'complete': 'Verarbeitet', 'signed': 'Signiert' }[report.status];
-            const statusColor = { 'incomplete': [239, 68, 68], 'complete': [34, 197, 94], 'signed': [59, 130, 246] }[report.status];
-            
-            doc.setFontSize(8);
-            doc.setTextColor(120, 114, 150);
-            doc.text('Zeitraum', 22, y + 4);
-            doc.text('Abteilung', 80, y + 4);
-            doc.text('Gesamtstundenvolumen', 140, y + 4);
-            
-            doc.setFontSize(11);
-            doc.setTextColor(30, 30, 50);
-            doc.setFont(undefined, 'bold');
-            doc.text(`${formatDate(report.dateFrom)} - ${formatDate(report.dateTo)}`, 22, y + 14);
-            doc.text(report.department || '-', 80, y + 14);
-            doc.text(`${report.hours || 0} Std.`, 140, y + 14);
-            
-            // Status badge (colored dot + text)
-            doc.setFillColor(...statusColor);
-            doc.circle(160, y + 24, 1.5, 'F');
-            doc.setFontSize(9);
-            doc.setTextColor(...statusColor);
-            doc.setFont(undefined, 'bold');
-            doc.text(statusLabel, 165, y + 26);
-            
-            // ═══════════════════════════════════════════════════════
-            // SECTION: DAILY ACTIVITIES
-            // ═══════════════════════════════════════════════════════
-            y = 100;
-            
-            if (report.mode === 'daily' && report.dailyActivities) {
-                // Section title with gradient accent
-                doc.setFillColor(168, 85, 247);
-                doc.rect(15, y - 2, 2, 8, 'F');
-                doc.setFontSize(13);
-                doc.setTextColor(40, 30, 60);
+            doc.setTextColor(S.accentR, S.accentG, S.accentB);
+            const kwOpacity = pdfStyle === 'ihk' ? 0.18 : 0.12;
+            doc.setTextColor(
+                Math.round(S.headerText[0] * kwOpacity + S.headerBg[0] * (1-kwOpacity)),
+                Math.round(S.headerText[1] * kwOpacity + S.headerBg[1] * (1-kwOpacity)),
+                Math.round(S.headerText[2] * kwOpacity + S.headerBg[2] * (1-kwOpacity))
+            );
+            doc.text(`KW${report.week}`, pageWidth - 18, 30, { align: 'right' });
+
+            // Info Grid — 4 cells below header
+            let y = 52;
+            const infoFields = [
+                { label: 'Auszubildende/r', value: azubiName || '—' },
+                { label: 'Ausbildungsbetrieb', value: pdfBetrieb || '—' },
+                { label: 'Zeitraum', value: `${formatDate(report.dateFrom)} – ${formatDate(report.dateTo)}` },
+                { label: 'Beruf / Abteilung', value: pdfBeruf || report.department || '—' },
+            ];
+
+            const cellW = (pageWidth - 30) / 4;
+            doc.setFillColor(...S.rowBg);
+            doc.rect(15, y, pageWidth - 30, 16, 'F');
+            doc.setDrawColor(...S.borderColor);
+            doc.setLineWidth(0.2);
+            doc.rect(15, y, pageWidth - 30, 16, 'S');
+
+            infoFields.forEach((f, i) => {
+                const cx = 15 + i * cellW;
+                if (i > 0) {
+                    doc.line(cx, y, cx, y + 16);
+                }
+                doc.setFontSize(5.5);
                 doc.setFont(undefined, 'bold');
-                doc.text('Wöchentliche Tätigkeiten', 22, y + 3);
-                
-                y += 12;
-                
-                const dayNames = { 
-                    monday: 'Montag', 
-                    tuesday: 'Dienstag', 
-                    wednesday: 'Mittwoch', 
-                    thursday: 'Donnerstag', 
-                    friday: 'Freitag' 
-                };
-                const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-                const dayColors = [
-                    [168, 85, 247], // Purple Mon
-                    [139, 92, 246], // Purple Tue
-                    [110, 102, 219], // Indigo Wed
-                    [59, 130, 246], // Blue Thu
-                    [6, 182, 212]   // Cyan Fri
-                ];
-                
-                days.forEach((dayKey, idx) => {
+                doc.setTextColor(...S.labelColor);
+                doc.text(f.label.toUpperCase(), cx + 3, y + 5);
+                doc.setFontSize(8);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(...S.bodyText);
+                const truncated = f.value.length > 22 ? f.value.substring(0, 20) + '…' : f.value;
+                doc.text(truncated, cx + 3, y + 12);
+            });
+
+            y += 22;
+
+            // ═══ ACTIVITIES SECTION ═══
+            // Section header bar
+            doc.setFillColor(...S.sectionBg);
+            doc.rect(15, y, pageWidth - 30, 7, 'F');
+            doc.setFontSize(6.5);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...S.sectionText);
+            doc.text('AUSGEFÜHRTE TÄTIGKEITEN — BETRIEB', 19, y + 4.5);
+            y += 9;
+
+            // Table header
+            doc.setFillColor(...S.altRow);
+            doc.rect(15, y, pageWidth - 30, 6, 'F');
+            doc.setDrawColor(...S.borderColor);
+            doc.rect(15, y, pageWidth - 30, 6, 'S');
+            doc.setFontSize(5.5);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(...S.labelColor);
+            doc.text('TAG', 19, y + 4);
+            doc.text('TÄTIGKEIT', 42, y + 4);
+            if (showHoursOption) doc.text('STD.', pageWidth - 20, y + 4, { align: 'right' });
+            y += 7;
+
+            const DAYS_FULL = { monday: 'Montag', tuesday: 'Dienstag', wednesday: 'Mittwoch', thursday: 'Donnerstag', friday: 'Freitag' };
+            const DAYS_ORD = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+            let rowAlt = false;
+
+            if (report.mode === 'daily' && report.dailyActivities) {
+                DAYS_ORD.forEach(dayKey => {
                     const text = report.dailyActivities[dayKey];
                     if (!text) return;
-                    
-                    if (y > 250) { doc.addPage(); y = 20; }
-                    
                     const hrs = report.dailyHours ? report.dailyHours[dayKey] : null;
-                    
-                    // Day card background (light with colored left border)
-                    doc.setFillColor(248, 247, 255);
-                    doc.rect(15, y - 1, 180, 1, 'F'); // Top accent line
-                    
-                    doc.setDrawColor(248, 250, 250);
-                    doc.setLineWidth(0.3);
-                    doc.roundedRect(15, y, 180, 5, 1, 1, 'S');
-                    
-                    // Day name
-                    doc.setFontSize(10);
-                    doc.setTextColor(...dayColors[idx]);
+                    const lines = doc.splitTextToSize(text, pageWidth - 65);
+                    const rowH = Math.max(8, lines.length * 4.5 + 3);
+
+                    if (y + rowH > pageHeight - 45) { doc.addPage(); y = 15; }
+
+                    if (rowAlt) { doc.setFillColor(...S.rowBg); doc.rect(15, y, pageWidth - 30, rowH, 'F'); }
+                    doc.setDrawColor(...S.borderColor);
+                    doc.setLineWidth(0.15);
+                    doc.rect(15, y, pageWidth - 30, rowH, 'S');
+                    doc.line(39, y, 39, y + rowH);
+
+                    doc.setFontSize(7.5);
                     doc.setFont(undefined, 'bold');
-                    doc.text(dayNames[dayKey], 20, y + 3.5);
-                    
-                    // Hours on right
-                    if (hrs) {
-                        doc.setFontSize(8);
-                        doc.setTextColor(120, 114, 150);
-                        doc.text(`${hrs} Std.`, 175, y + 3.5);
-                    }
-                    
-                    y += 7;
-                    
-                    // Activity text
-                    doc.setFontSize(9.5);
-                    doc.setTextColor(40, 30, 60);
+                    doc.setTextColor(...S.labelColor);
+                    doc.text(DAYS_FULL[dayKey] || dayKey, 18, y + rowH / 2 + 1.5, { baseline: 'middle' });
+
                     doc.setFont(undefined, 'normal');
-                    const lines = doc.splitTextToSize(text, 170);
-                    lines.forEach((line, idx) => {
-                        if (y > 270) { doc.addPage(); y = 20; }
-                        doc.text(line, 20, y);
-                        y += 4.5;
+                    doc.setTextColor(...S.bodyText);
+                    lines.forEach((line, li) => {
+                        doc.text(line, 42, y + 5 + li * 4.5);
                     });
-                    y += 2;
+
+                    if (showHoursOption && hrs) {
+                        doc.setFontSize(7);
+                        doc.setTextColor(...S.labelColor);
+                        doc.text(`${hrs}h`, pageWidth - 18, y + rowH / 2 + 1.5, { align: 'right', baseline: 'middle' });
+                    }
+
+                    y += rowH;
+                    rowAlt = !rowAlt;
                 });
-            } else {
-                // Single activity mode
-                doc.setFillColor(168, 85, 247);
-                doc.rect(15, y - 2, 2, 8, 'F');
-                doc.setFontSize(13);
-                doc.setTextColor(40, 30, 60);
-                doc.setFont(undefined, 'bold');
-                doc.text('Ausgeführte Tätigkeiten', 22, y + 3);
-                
-                y += 12;
-                
-                doc.setFillColor(248, 247, 255);
-                doc.roundedRect(15, y - 1, 180, 5, 1, 1, 'F');
-                
-                doc.setFontSize(10);
-                doc.setTextColor(40, 30, 60);
-                doc.setFont(undefined, 'normal');
-                const activitiesLines = doc.splitTextToSize(report.activities, 170);
-                activitiesLines.forEach(line => {
-                    if (y > 270) { doc.addPage(); y = 20; }
-                    doc.text(line, 20, y);
-                    y += 5;
+            } else if (report.activities) {
+                const lines = doc.splitTextToSize(report.activities, pageWidth - 65);
+                lines.forEach(line => {
+                    if (y > pageHeight - 45) { doc.addPage(); y = 15; }
+                    if (rowAlt) { doc.setFillColor(...S.rowBg); doc.rect(15, y, pageWidth - 30, 5.5, 'F'); }
+                    doc.setFont(undefined, 'normal');
+                    doc.setFontSize(8.5);
+                    doc.setTextColor(...S.bodyText);
+                    doc.text(line, 42, y + 4);
+                    y += 5.5;
+                    rowAlt = !rowAlt;
                 });
             }
-            
-            // ═══════════════════════════════════════════════════════
-            // SECTION: SCHOOL NOTES
-            // ═══════════════════════════════════════════════════════
-            if (report.school) {
-                y += 8;
-                if (y > 245) { doc.addPage(); y = 20; }
-                
-                doc.setFillColor(6, 182, 212);
-                doc.rect(15, y - 2, 2, 8, 'F');
-                doc.setFontSize(13);
-                doc.setTextColor(40, 30, 60);
+
+            // ═══ SCHOOL SECTION ═══
+            if (showSchoolOption && report.school) {
+                y += 6;
+                if (y > pageHeight - 50) { doc.addPage(); y = 15; }
+
+                doc.setFillColor(...S.sectionBg);
+                doc.rect(15, y, pageWidth - 30, 7, 'F');
+                doc.setFontSize(6.5);
                 doc.setFont(undefined, 'bold');
-                doc.text('Berufsschule', 22, y + 3);
-                
-                y += 12;
-                
-                doc.setFillColor(245, 254, 255);
-                doc.roundedRect(15, y - 1, 180, 5, 1, 1, 'F');
-                
-                doc.setFontSize(9.5);
-                doc.setTextColor(40, 30, 60);
+                doc.setTextColor(...S.sectionText);
+                doc.text('BERUFSSCHULE', 19, y + 4.5);
+                y += 9;
+
+                const schoolLines = doc.splitTextToSize(report.school, pageWidth - 36);
+                doc.setFontSize(8.5);
                 doc.setFont(undefined, 'normal');
-                const schoolLines = doc.splitTextToSize(report.school, 170);
-                schoolLines.forEach(line => {
-                    if (y > 270) { doc.addPage(); y = 20; }
-                    doc.text(line, 20, y);
-                    y += 5;
+                doc.setTextColor(...S.bodyText);
+                doc.setFillColor(...S.altRow);
+                doc.rect(15, y, pageWidth - 30, Math.max(14, schoolLines.length * 5 + 6), 'F');
+                doc.setDrawColor(...S.borderColor);
+                doc.rect(15, y, pageWidth - 30, Math.max(14, schoolLines.length * 5 + 6), 'S');
+                schoolLines.forEach((line, li) => {
+                    if (y > pageHeight - 50) { doc.addPage(); y = 15; }
+                    doc.text(line, 18, y + 5 + li * 5);
                 });
+                y += Math.max(14, schoolLines.length * 5 + 6);
             }
-            
-            // ═══════════════════════════════════════════════════════
-            // PROFESSIONAL SIGNATURE SECTION
-            // ═══════════════════════════════════════════════════════
-            const sigY = pageHeight - 38;
-            
-            // Divider
-            doc.setDrawColor(168, 85, 247);
-            doc.setLineWidth(0.5);
-            doc.line(15, sigY, 195, sigY);
-            
-            // Signature blocks
-            doc.setFontSize(8);
-            doc.setTextColor(120, 114, 150);
-            doc.setFont(undefined, 'normal');
-            doc.text('Auszubildende/r', 20, sigY + 8);
-            doc.text('Datum: _____________    Unterschrift: ___________________________', 20, sigY + 13);
-            
-            doc.text('Ausbilder/in', 120, sigY + 8);
-            doc.text('Datum: _____________    Unterschrift: ___________________________', 120, sigY + 13);
-            
-            // ═══════════════════════════════════════════════════════
-            // ELEGANT FOOTER
-            // ═══════════════════════════════════════════════════════
-            doc.setFontSize(7);
-            doc.setTextColor(168, 85, 247);
-            doc.setFont(undefined, 'normal');
-            doc.text('MyWorkLog • Professionelle Ausbildungsdokumentation', pageWidth / 2, pageHeight - 6, { align: 'center' });
-            
-            doc.setTextColor(200, 200, 200);
-            doc.setFontSize(6);
-            doc.text(`Erstellt: ${new Date().toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth / 2, pageHeight - 3, { align: 'center' });
-            
+
+            // ═══ SIGNATURE ═══
+            if (showSigOption) {
+                const sigY = Math.max(y + 10, pageHeight - 42);
+                doc.setDrawColor(...S.sectionBg);
+                doc.setLineWidth(0.8);
+                doc.line(15, sigY, pageWidth - 15, sigY);
+
+                doc.setFontSize(7);
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(...S.labelColor);
+                doc.text(`${azubiName || 'Auszubildende/r'}`, 18, sigY + 7);
+                doc.text('Datum: _________    Unterschrift: ______________________', 18, sigY + 13);
+
+                doc.text(`${pdfAusbilder || 'Ausbilder/in'}`, pageWidth / 2 + 4, sigY + 7);
+                doc.text('Datum: _________    Unterschrift: ______________________', pageWidth / 2 + 4, sigY + 13);
+            }
+
+            // ═══ FOOTER ═══
+            if (showFooterOption) {
+                doc.setFontSize(6);
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(
+                    Math.round(S.bodyText[0] * 0.4 + S.bodyBg[0] * 0.6),
+                    Math.round(S.bodyText[1] * 0.4 + S.bodyBg[1] * 0.6),
+                    Math.round(S.bodyText[2] * 0.4 + S.bodyBg[2] * 0.6)
+                );
+                doc.text(`MyWorkLog · Ausbildungsnachweis KW${report.week}/${report.year} · Erstellt: ${new Date().toLocaleDateString('de-DE')} · §14 BBiG`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+            }
+
             doc.save(`Ausbildungsnachweis_KW${report.week}_${report.year}.pdf`);
-            showToast('Ausbildungsnachweis als PDF exportiert!', 'success');
+            showToast('Ausbildungsnachweis als PDF exportiert! ✓', 'success');
         }
 
         function exportAllPDF() {
-            if (reports.length === 0) {
-                showToast('Keine Berichte vorhanden.', 'info');
-                return;
-            }
-
-            let exported = 0;
-            const sorted = [...reports].sort((a, b) => {
-                if (a.year !== b.year) return a.year - b.year;
-                return a.week - b.week;
-            });
-
-            sorted.forEach((report, i) => {
-                setTimeout(() => {
-                    exportReportPDF(report.id);
-                    exported++;
-                    if (exported === sorted.length) {
-                        showToast(`${exported} Berichte als separate PDFs exportiert!`, 'success');
-                    }
-                }, i * 400);
-            });
+            openPDFModal(null);
         }
 
-        // NEW: Export comprehensive summary as single PDF
+        // Legacy: Export comprehensive summary as single PDF
         function exportSummaryPDF() {
             if (reports.length === 0) {
                 showToast('Keine Berichte vorhanden.', 'info');
@@ -4376,6 +5255,10 @@ Beispiel:
             const inModal = document.querySelector('.modal.active');
 
             if (e.key === 'Escape') {
+                if (document.getElementById('pdfModal')?.classList.contains('active')) {
+                    closePDFModal();
+                    return;
+                }
                 if (inModal) {
                     closeReportModal();
                     closeViewModal();
@@ -4403,7 +5286,7 @@ Beispiel:
                     break;
                 case 'e':
                     e.preventDefault();
-                    exportAllPDF();
+                    openPDFModal(null);
                     break;
                 case 't':
                     e.preventDefault();
@@ -4421,6 +5304,12 @@ Beispiel:
         // ═══════════════════════════════════════
         // EVENT LISTENERS
         // ═══════════════════════════════════════
+
+        // Close PDF modal on overlay click
+        document.addEventListener('click', (e) => {
+            const overlay = document.getElementById('pdfModal');
+            if (overlay && e.target === overlay) closePDFModal();
+        });
 
         document.addEventListener('DOMContentLoaded', () => {
             // Character counter + quality meter
@@ -4522,6 +5411,9 @@ Beispiel:
             isGenerating: false,
             apiKey: '',
             useGemini: false,
+            writeStyle: 'ihk',
+            activeTheme: null,
+            humanStyle: false,
         };
 
         // ═══════════════════════════════════════
@@ -5074,6 +5966,124 @@ Beispiel:
         // ENTRY GENERATION — Core Engine
         // ═══════════════════════════════════════
 
+        // Theme-specific activity pools for thematic generation
+        const THEME_ACTIVITIES = {
+            projekt: [
+                'Sprint-Ziele besprochen und Aufgaben im Team aufgeteilt',
+                'Projekt-Status im Daily Stand-up präsentiert',
+                'Technische Konzeption für neues Feature erarbeitet',
+                'Aufwandsschätzung für anstehende Aufgaben erstellt',
+                'Retrospektive durchgeführt und Verbesserungspotenzial identifiziert',
+                'Projekt-Dokumentation aktualisiert und strukturiert',
+                'Feature-Branch erstellt und erste Implementierung begonnen',
+                'Review-Meeting mit Ausbilder zu Projektfortschritt abgehalten',
+            ],
+            kunde: [
+                'Kundengespräch vorbereitet und Präsentation erstellt',
+                'Anforderungen des Kunden aufgenommen und dokumentiert',
+                'Kundenmeeting durchgeführt und Protokoll verfasst',
+                'Feedback des Kunden ausgewertet und in Maßnahmen überführt',
+                'Angebotserstellung für Kundenauftrag unterstützt',
+                'Rückfragen des Kunden schriftlich beantwortet',
+                'Kundendaten im CRM-System aktualisiert',
+                'Auftragsbestätigung geprüft und weiterverarbeitet',
+            ],
+            einarbeitung: [
+                'Neue Technologie studiert und erste Beispiele umgesetzt',
+                'Onboarding-Unterlagen durchgearbeitet und Fragen notiert',
+                'Einführungsgespräch mit Teamkollegen geführt',
+                'Interne Prozesse und Abläufe kennengelernt',
+                'Dokumentation zum Themenbereich durchgelesen',
+                'Tutorial absolviert und Erkenntnisse festgehalten',
+                'Fragen aus der Einarbeitung mit Ausbilder geklärt',
+                'Eigene Notizen und Lernpfad erstellt',
+            ],
+            messe: [
+                'Messestand vorbereitet und Präsentationsmaterial zusammengestellt',
+                'Produktvorstellung geübt und Argumentation erarbeitet',
+                'Fachgespräche auf der Messe geführt und Kontakte geknüpft',
+                'Impressionen und Erkenntnisse von der Messe dokumentiert',
+                'Nachbereitungsmail an Messekontakte verfasst',
+                'Mitbewerber-Angebote auf der Messe beobachtet und analysiert',
+                'Team-Briefing nach Messetag durchgeführt',
+                'Messebericht für das Management erstellt',
+            ],
+            pruefung: [
+                'Prüfungsrelevante Themen wiederholt und Lücken identifiziert',
+                'Karteikarten zu wichtigen Fachbegriffen erstellt',
+                'Übungsaufgaben aus vergangenen Prüfungen bearbeitet',
+                'Lerngruppe organisiert und gemeinsam geübt',
+                'Prüfungsstoff mit Ausbilder besprochen und Fragen geklärt',
+                'Zusammenfassung zu komplexem Thema angefertigt',
+                'Zeitplan für Prüfungsvorbereitung erstellt',
+                'Mündliche Prüfungsszenarien geübt',
+            ],
+            wartung: [
+                'Routinecheck durchgeführt und Ergebnisse protokolliert',
+                'Wartungsplan abgearbeitet und Abweichungen dokumentiert',
+                'Support-Ticket bearbeitet und Problem gelöst',
+                'Systeme auf Aktualität überprüft und Updates eingespielt',
+                'Fehleranalyse durchgeführt und Ursache identifiziert',
+                'Präventivmaßnahmen umgesetzt um Ausfälle zu vermeiden',
+                'Wartungsprotokoll erstellt und archiviert',
+                'Kollegen bei dringendem Problem unterstützt',
+            ],
+            schule: [
+                'Berufsschulunterricht aufmerksam verfolgt und Mitschriften erstellt',
+                'Gruppenarbeit im Unterricht aktiv mitgestaltet',
+                'Fachaufgaben selbstständig bearbeitet und abgegeben',
+                'Unterrichtsstoff mit eigenem Vorwissen verknüpft',
+                'Nach dem Unterricht Lernmaterial organisiert',
+                'Prüfungsvorbereitung für nächste Berufsschule begonnen',
+            ],
+        };
+
+        // Human-style sentence wrappers (add personal voice)
+        const HUMAN_PREFIXES = [
+            '', '', '', // Empty = no prefix (keep default, weighted more)
+            'Heute habe ich ',
+            'Im Laufe des Tages ',
+            'Zusammen mit einem Kollegen ',
+            'Eigenständig ',
+            'Nach einer kurzen Einweisung ',
+            'Auf Anweisung des Ausbilders ',
+        ];
+        const HUMAN_SUFFIXES = [
+            '', '', '', '', // Empty = no suffix (weighted more)
+            ' — hat gut geklappt',
+            ' und dabei einiges gelernt',
+            ' (erstmals eigenständig)',
+            ' nach kurzer Rücksprache',
+            ' und das Ergebnis besprochen',
+        ];
+
+        function applyWriteStyle(entries, writeStyle, humanStyle) {
+            if (writeStyle === 'detailed') {
+                // Add context to some entries
+                return entries.map(e => {
+                    if (Math.random() > 0.5 && e.length < 90) {
+                        const contexts = [' und Ergebnis dokumentiert', ' gemäß Ausbildungsplan', ' im Rahmen des laufenden Projekts', ' unter Anleitung des Ausbilders'];
+                        return e + pickRandom(contexts);
+                    }
+                    return e;
+                });
+            }
+            if (humanStyle || writeStyle === 'human') {
+                return entries.map(e => {
+                    // Remove bullet prefix temporarily
+                    const core = e.replace(/^[•\-]\s*/, '');
+                    const prefix = pickRandom(HUMAN_PREFIXES);
+                    const suffix = pickRandom(HUMAN_SUFFIXES);
+                    if (prefix || suffix) {
+                        const modified = prefix + core.toLowerCase() + suffix;
+                        return '• ' + modified.charAt(0).toUpperCase() + modified.slice(1);
+                    }
+                    return e;
+                });
+            }
+            return entries; // ihk = default
+        }
+
         function generateDayEntries(professionId, options = {}) {
             const {
                 yearNum = 2,
@@ -5083,6 +6093,10 @@ Beispiel:
                 season = getCurrentSeason(),
                 excludePhrases = [],
                 department = '',
+                writeStyle = 'ihk',
+                activeTheme = null,
+                humanStyle = false,
+                customPrompt = '',
             } = options;
 
             const prof = PROFESSIONS[professionId];
@@ -5094,7 +6108,9 @@ Beispiel:
                 'complex': { min: 5, max: 7 }
             }[complexity] || { min: 4, max: 5 };
 
-            const numEntries = entryCount.min + Math.floor(Math.random() * (entryCount.max - entryCount.min + 1));
+            // Detailed style = more entries
+            const extraEntries = writeStyle === 'detailed' ? 1 : 0;
+            const numEntries = entryCount.min + Math.floor(Math.random() * (entryCount.max - entryCount.min + 1)) + extraEntries;
 
             if (isSchoolDay) {
                 return generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases);
@@ -5144,7 +6160,16 @@ Beispiel:
                 }
             }
 
-            // 4. Add universal activity (40% chance)
+            // 4. Add theme activity (if activeTheme set, 60% chance)
+            if (activeTheme && THEME_ACTIVITIES[activeTheme] && Math.random() > 0.4) {
+                const themeAct = pickRandom(THEME_ACTIVITIES[activeTheme], excludePhrases);
+                if (themeAct && !entries.some(e => e.includes(themeAct.substring(0, 20)))) {
+                    entries.unshift('• ' + themeAct); // Put theme activity first
+                    excludePhrases.push(themeAct);
+                }
+            }
+
+            // 5. Add universal activity (40% chance)
             if (entries.length < numEntries + 1 && Math.random() > 0.6) {
                 const universal = pickRandom(UNIVERSAL_ACTIVITIES_EXTENDED, excludePhrases);
                 if (universal) {
@@ -5153,8 +6178,10 @@ Beispiel:
                 }
             }
 
+            const finalEntries = applyWriteStyle(entries.slice(0, numEntries), writeStyle, humanStyle);
+
             return {
-                entries: entries.slice(0, numEntries),
+                entries: finalEntries,
                 hours: isSchoolDay ? 0 : 8,
                 isSchoolDay: false,
                 excludePhrases
@@ -5218,6 +6245,10 @@ Beispiel:
                 maxVariation = true,
                 department = '',
                 calendarWeek = null,
+                writeStyle = 'ihk',
+                activeTheme = null,
+                humanStyle = false,
+                customPrompt = '',
             } = options;
 
             const DAY_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
@@ -5255,6 +6286,10 @@ Beispiel:
                     season,
                     excludePhrases: allExcludePhrases,
                     department: week.department,
+                    writeStyle,
+                    activeTheme,
+                    humanStyle,
+                    customPrompt,
                 });
 
                 const day = {
@@ -5746,6 +6781,31 @@ Beispiel:
             if (btnText) btnText.innerHTML = useGemini && state.apiKey ? '<svg class="icon"><use href="#i-sparkles"/></svg> Mit Gemini AI generieren' : '<svg class="icon"><use href="#i-zap"/></svg> Komplette Woche generieren';
         }
 
+        // NEW: Style selection (IHK, detailed, human)
+        function selectStyle(style, el) {
+            state.writeStyle = style;
+            document.querySelectorAll('.ais-style-opt').forEach(c => c.classList.remove('sel'));
+            el.classList.add('sel');
+        }
+
+        // NEW: Toggle weekly theme chip
+        function toggleTheme(theme, el) {
+            if (el.classList.contains('act')) {
+                el.classList.remove('act');
+                state.activeTheme = null;
+            } else {
+                document.querySelectorAll('.ais-theme-chip').forEach(c => c.classList.remove('act'));
+                el.classList.add('act');
+                state.activeTheme = theme;
+            }
+        }
+
+        // NEW: Toggle "human/natural" style
+        function toggleHuman(el) {
+            el.classList.toggle('on');
+            state.humanStyle = el.classList.contains('on');
+        }
+
         function saveApiKey() {
             const input = document.getElementById('aisApiKeyInput');
             const key = input?.value?.trim();
@@ -5951,6 +7011,9 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                     department,
                     calendarWeek,
                     customPrompt,
+                    writeStyle: state.writeStyle || 'ihk',
+                    activeTheme: state.activeTheme || null,
+                    humanStyle: state.humanStyle || false,
                 };
 
                 let week;
@@ -6102,6 +7165,9 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
             insertDay,
             loadFromHistory,
             deleteFromHistory,
+            selectStyle,
+            toggleTheme,
+            toggleHuman,
             VERSION,
         };
 
