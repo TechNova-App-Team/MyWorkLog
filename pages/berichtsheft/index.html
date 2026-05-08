@@ -3065,28 +3065,27 @@ Beispiel:
                     </div>
                     <!-- Engine Selection -->
                     <div class="ais-engine-section">
-                        <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:8px;">
-                            ✨ <strong style="color:var(--primary-light)">Gemini AI</strong> ist standardmäßig aktiv (kostenlos für alle)
+                        <div style="background:var(--primary-dim);border:1px solid var(--primary);border-radius:8px;padding:8px 10px;margin-bottom:10px;">
+                            <div style="font-size:0.75rem;font-weight:700;color:var(--primary-light);">✨ Gemini AI — kein Setup nötig</div>
+                            <div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px;">Läuft automatisch für alle Nutzer. Kein eigener API Key erforderlich.</div>
                         </div>
                         <label class="ais-engine-toggle">
-                            <input type="checkbox" id="aisUseLocalOnly" onchange="AIStudio.toggleLocalOnly(this.checked)" style="accent-color:var(--accent);width:16px;height:16px;">
-                            <span class="ais-engine-toggle-label">Nur lokale Engine (kein Internet)</span>
+                            <input type="checkbox" id="aisUseLocalOnly" checked onchange="AIStudio.toggleLocalOnly(!this.checked)" style="accent-color:var(--accent);width:16px;height:16px;">
+                            <span class="ais-engine-toggle-label">Gemini AI aktiv</span>
                             <span class="ais-engine-toggle-badge ais-engine-badge-gemini" id="aisEngineBadge">Gemini</span>
                         </label>
-                        <div style="margin-top:10px;font-size:0.72rem;color:var(--text-dim);">Eigener API Key (höheres Limit):</div>
-                        <div class="ais-api-key-row visible" id="aisApiKeyRow" style="margin-top:6px;">
-                            <div class="ais-api-key-input-wrap">
-                                <input type="password" class="ais-api-key-input" id="aisApiKeyInput" placeholder="Eigener Gemini Key (optional)..." autocomplete="off">
-                                <button class="ais-api-save-btn" onclick="AIStudio.saveApiKey()">Speichern</button>
+                        <details style="margin-top:10px;">
+                            <summary style="font-size:0.7rem;color:var(--text-dim);cursor:pointer;user-select:none;">Eigener API Key (nur für höheres Limit)</summary>
+                            <div class="ais-api-key-row visible" id="aisApiKeyRow" style="margin-top:8px;">
+                                <div class="ais-api-key-input-wrap">
+                                    <input type="password" class="ais-api-key-input" id="aisApiKeyInput" placeholder="Eigener Gemini Key..." autocomplete="off">
+                                    <button class="ais-api-save-btn" onclick="AIStudio.saveApiKey()">Speichern</button>
+                                </div>
+                                <div class="ais-api-hint" style="margin-top:4px;">
+                                    <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">&rarr; aistudio.google.com/apikey</a>
+                                </div>
                             </div>
-                            <div class="ais-api-status" id="aisApiStatus" style="display:none;">
-                                <div class="ais-api-status-dot"></div>
-                                <span></span>
-                            </div>
-                            <div class="ais-api-hint">
-                                <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">&rarr; Kostenlos: aistudio.google.com/apikey</a>
-                            </div>
-                        </div>
+                        </details>
                     </div>
                 </div>
 
@@ -7498,7 +7497,7 @@ Beispiel:
             if (savedLocalOnly) {
                 state.useGemini = false;
                 const cb = document.getElementById('aisUseLocalOnly');
-                if (cb) cb.checked = true;
+                if (cb) cb.checked = false; // unchecked = Gemini aus
                 toggleLocalOnly(true);
             }
         }
