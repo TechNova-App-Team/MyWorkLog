@@ -6670,6 +6670,7 @@ Beispiel:
                 department: department || (PROFESSIONS[professionId]?.departments ? pickRandom(PROFESSIONS[professionId].departments) : ''),
                 season,
                 timestamp: Date.now(),
+                source: 'local',
                 days: [],
                 totalHours: 0,
             };
@@ -6828,8 +6829,17 @@ Beispiel:
                 return;
             }
 
-            // Show toolbar
-            if (toolbar) toolbar.style.display = 'flex';
+            // Show toolbar + source badge
+            if (toolbar) {
+                toolbar.style.display = 'flex';
+                const score = document.getElementById('aisPreviewScore');
+                if (score) {
+                    const isGemini = week.source === 'gemini';
+                    score.innerHTML = isGemini
+                        ? `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(6,182,212,0.2));border:1px solid rgba(139,92,246,0.4);font-size:0.7rem;font-weight:700;color:#a78bfa;">✨ Gemini AI</span>`
+                        : `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid var(--border-light);font-size:0.7rem;font-weight:700;color:var(--text-dim);">⚡ Lokal</span>`;
+                }
+            }
 
             // Render day cards
             content.innerHTML = week.days.map((day, i) => `
@@ -7555,8 +7565,10 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                 },
             };
 
-            // Use shared proxy by default; fall back to direct with user's own key
-            const useProxy = !state.apiKey; // no user key → use proxy
+            // Proxy only works on production (Cloudflare). Locally → direct API or skip.
+            const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            const useProxy = !state.apiKey && !isLocal;
+            if (isLocal && !state.apiKey) throw new Error('Lokal kein Proxy — bitte eigenen API Key eintragen.');
             const url = useProxy ? GEMINI_PROXY : `${GEMINI_DIRECT}?key=${state.apiKey}`;
 
             const response = await fetch(url, {
@@ -7730,7 +7742,7 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                 switchTab('preview');
                 renderPreview(week);
 
-                showToast(`${week.days.length} Tage generiert${usedGemini ? ' mit Gemini AI' : ''}!`, 'success');
+                showToast(usedGemini ? `✨ ${week.days.length} Tage mit Gemini AI generiert!` : `⚡ ${week.days.length} Tage lokal generiert`, 'success');
             } catch(e) {
                 console.error('[AIStudio] Generation error:', e);
                 showToast('Fehler bei der Generierung: ' + e.message, 'error');
