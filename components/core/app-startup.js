@@ -206,6 +206,7 @@
         // Initial UI render
         recalculateVacationUsed();
         updateUI();
+        checkSetupHint();
         
         console.log('✅ App initialized with Smart Alerts enabled');
         
@@ -217,3 +218,22 @@
             initializeAllWidgets();
         }, 200);
     }
+
+    function checkSetupHint() {
+        const banner = document.getElementById('setupHintBanner');
+        if (!banner) return;
+        if (localStorage.getItem('mwl_setup_hint_dismissed')) return;
+        if (!data || data.entries.length > 0) return;
+        banner.style.display = 'flex';
+    }
+
+    function dismissSetupHint() {
+        localStorage.setItem('mwl_setup_hint_dismissed', '1');
+        const banner = document.getElementById('setupHintBanner');
+        if (!banner) return;
+        banner.classList.add('dismissing');
+        setTimeout(() => { banner.style.display = 'none'; banner.classList.remove('dismissing'); }, 290);
+    }
+
+    window.checkSetupHint = checkSetupHint;
+    window.dismissSetupHint = dismissSetupHint;
