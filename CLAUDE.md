@@ -1,6 +1,6 @@
 # MyWorkLog — Projekt-Kontext
 
-Deutsche PWA für Azubi-Zeiterfassung. Vanilla HTML/CSS/JS, kein Framework/Bundler/Module. GitHub Pages → myworklog.de. v3.5.3
+Deutsche PWA für Azubi-Zeiterfassung. Vanilla HTML/CSS/JS, kein Framework/Bundler/Module. Cloudflare Pages → myworklog.de. v3.5.3
 
 ## Architektur
 
@@ -10,7 +10,7 @@ Kein Build. Rohe Dateien via `<script src>` in index.html (Reihenfolge wichtig!)
 
 **Script-Reihenfolge:** CDN-Libs → Utilities → AI-Bot → Component CSS/HTML → Component JS: core→dashboard→...→settings→sidebar→extra
 
-**Clean URLs:** Standalone Pages nutzen `/pages/{name}/` statt `/Pages/{name}.html` für besseres SEO & GitHub Pages Kompatibilität
+**Clean URLs:** Standalone Pages nutzen `/pages/{name}/` statt `/Pages/{name}.html` für besseres SEO & Cloudflare Pages Kompatibilität
 
 ## Konventionen
 
@@ -40,8 +40,8 @@ IMMER safeHTML()/esc() für User-Input. Kein innerHTML mit ungefiltertem Content
 
 ## Deployment & Pfad-Architektur (CRITICAL!)
 
-**Host:** GitHub Pages + Cloudflare (URL Rewrites).
-- Cloudflare versteckt `/pages/` Ordner und `.html` Endungen
+**Host:** Cloudflare Pages (myworklog.pages.dev / myworklog.de). KEIN GitHub Pages mehr.
+- Cloudflare Pages versteckt `/pages/` Ordner und `.html` Endungen via `_redirects`
 - Alle Asset-Links MÜSSEN absolute Root-Pfade sein (`/Assets/...`, `/components/...`, `/Grafiken/...`, `/config/...`)
 - Relative Pfade (`./` oder `../`) brechen sofort, wenn URL umgeleitet wird (z.B. `/aufgaben/` wird intern zu `/pages/aufgaben/`, relative Pfade suchen dort nach Assets → 404)
 - **Richtig:** `<link rel="stylesheet" href="/Assets/css/core.css">` — Slash = von Domain-Root aus
@@ -50,3 +50,13 @@ IMMER safeHTML()/esc() für User-Input. Kein innerHTML mit ungefiltertem Content
 **Page-Links verwenden Clean URLs:** `/impressum/` statt `/impressum.html` oder `/pages/impressum.html`
 
 **Bei 404-Fehlern auf Live:** Erst Cloudflare Cache löschen ("Purge Everything"), dann prüfen ob Pfade mit `/` anfangen.
+
+## Gemini Proxy (Backend)
+
+**Worker:** `gemini-proxy` auf `gemini-proxy.myworklog.workers.dev`
+- Gemini API-Key liegt AUSSCHLIESSLICH in Cloudflare Worker Secrets (`GEMINI_API_KEY`) — nie im Frontend
+- Frontend ruft direkt die Worker-URL auf (NICHT `/api/gemini`), um Routing-Konflikte zwischen Cloudflare Pages und Workers auf derselben Domain zu vermeiden
+- **Fetch-URL im Frontend:** `https://gemini-proxy.myworklog.workers.dev`
+- CORS erlaubt: `localhost`, `127.0.0.1`, `myworklog.de`
+- Rate Limiting: Cloudflare WAF Regel — 30 Requests / 10 Minuten pro IP (kein KV, kein Write-Limit)
+- Localhost-Dev: eigener API-Key nötig (direkt an Google API), kein Proxy
