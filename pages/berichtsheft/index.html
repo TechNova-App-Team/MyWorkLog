@@ -7562,6 +7562,49 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
             return systemPrompt;
         }
 
+        function _repairJSON(str) {
+            // Fix literal control chars (newline, tab, CR) inside quoted strings
+            let fixed = '';
+            let inStr = false;
+            let escaped = false;
+            for (let i = 0; i < str.length; i++) {
+                const ch = str[i];
+                if (escaped) { fixed += ch; escaped = false; continue; }
+                if (ch === '\\' && inStr) { fixed += ch; escaped = true; continue; }
+                if (ch === '"') { inStr = !inStr; fixed += ch; continue; }
+                if (inStr) {
+                    if (ch === '\n') { fixed += '\\n'; continue; }
+                    if (ch === '\r') { fixed += '\\r'; continue; }
+                    if (ch === '\t') { fixed += '\\t'; continue; }
+                }
+                fixed += ch;
+            }
+            str = fixed;
+
+            // Remove trailing commas before ] or }
+            str = str.replace(/,(\s*[}\]])/g, '$1');
+
+            // Complete truncated JSON: track unclosed brackets/braces
+            const opens = [];
+            inStr = false;
+            escaped = false;
+            for (const ch of str) {
+                if (escaped) { escaped = false; continue; }
+                if (ch === '\\') { escaped = true; continue; }
+                if (ch === '"') { inStr = !inStr; continue; }
+                if (!inStr) {
+                    if (ch === '[' || ch === '{') opens.push(ch);
+                    else if (ch === ']' || ch === '}') opens.pop();
+                }
+            }
+            if (inStr) str += '"';
+            for (let i = opens.length - 1; i >= 0; i--) {
+                str += opens[i] === '[' ? ']' : '}';
+            }
+
+            return str;
+        }
+
         async function generateWithGemini(professionId, options) {
             const prompt = _buildGeminiPrompt(professionId, options);
             const requestBody = {
@@ -7569,7 +7612,7 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                 generationConfig: {
                     temperature: 0.9,
                     topP: 0.95,
-                    maxOutputTokens: 2048,
+                    maxOutputTokens: 4096,
                     responseMimeType: 'application/json',
                 },
             };
@@ -7614,7 +7657,18 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                 jsonStr = jsonStr.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
             }
 
-            const daysData = JSON.parse(jsonStr);
+            let daysData;
+            try {
+                daysData = JSON.parse(jsonStr);
+            } catch (parseErr) {
+                console.warn('[AIStudio] JSON.parse fehlgeschlagen, versuche Reparatur…', parseErr.message);
+                try {
+                    daysData = JSON.parse(_repairJSON(jsonStr));
+                } catch (repairErr) {
+                    console.error('[AIStudio] JSON nicht reparierbar:', repairErr.message, '\nRaw:', jsonStr.slice(0, 300));
+                    throw new Error('Gemini hat ungültiges JSON zurückgegeben. Bitte nochmals versuchen.');
+                }
+            }
             if (!Array.isArray(daysData) || daysData.length === 0) {
                 throw new Error('Unerwartetes Antwort-Format von Gemini.');
             }
