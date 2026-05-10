@@ -279,6 +279,7 @@
 
             navList.appendChild(el);
         });
+        navList.style.minHeight = '';
 
         // Allow reordering
         navList.addEventListener('dragover', e => {

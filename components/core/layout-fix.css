@@ -65,9 +65,10 @@
     width: 100% !important;
 }
 
-/* ── HEADER: less vertical waste ── */
+/* ── HEADER: less vertical waste, reserved height prevents late-content CLS ── */
 .header {
     margin-bottom: 0.75rem !important;
+    min-height: 80px !important;
 }
 
 /* ── BODY: no overflow, flex layout ── */
@@ -122,8 +123,25 @@ body {
     }
 }
 
-/* ── CLS FIX: date-badge reserved width to prevent text-change reflow ── */
+/* ── CLS FIX: remove main transition — prevents animated margin shifts registering as CLS ── */
+.main {
+    transition: none !important;
+}
+
+/* ── CLS FIX: pre-apply full-width for <1024px — matches what init-app.js does on DOMContentLoaded ── */
+html[data-pre-fw] .sidebar {
+    display: none !important;
+}
+html[data-pre-fw] .main {
+    margin-left: 0 !important;
+    width: 100% !important;
+}
+
+/* ── CLS FIX: date-badge reserved dimensions to prevent layout shift ── */
 .date-badge {
     min-width: 190px;
+    min-height: 38px;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
 }

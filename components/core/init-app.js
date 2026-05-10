@@ -1,6 +1,9 @@
 // ═══ CORE: INIT-APP ═══
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
+        // Release the CLS pre-apply lock on #mainContent — CSS classes are now in their final state
+        try { var _clsMP = document.getElementById('cls-main-pos'); if (_clsMP) _clsMP.remove(); } catch(e) {}
+
         // EmailJS init (deferred SDK ist jetzt geladen)
         try { if (typeof emailjs !== 'undefined') emailjs.init('dLaRbQLynU5R8A0ti'); } catch(e) {}
 
@@ -70,6 +73,8 @@
              document.getElementById('sidebar').classList.add('hidden');
              document.getElementById('mainContent').classList.add('full-width');
         }
+        // Remove pre-apply attr — CSS class now takes over
+        document.documentElement.removeAttribute('data-pre-fw');
 
         // Respect explicit request to keep sidebar closed when navigating from other pages
         try {
@@ -90,6 +95,11 @@
         if (!data.settings.themeMode) data.settings.themeMode = 'dark';
         setThemeMode(data.settings.themeMode);
         updateUI();
+        // Re-enable sidebar collapse transition after initial layout settles
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            const m = document.getElementById('mainContent');
+            if (m) m.style.transition = 'margin-left 0.3s ease-in-out';
+        }));
 
         // Auto-Leerung des Papierkorbs beim Start und einmal täglich
         try { autoEmptyTrash(); } catch(e) { console.warn('autoEmptyTrash error', e); }

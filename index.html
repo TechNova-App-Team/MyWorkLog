@@ -19,10 +19,18 @@
     var ss=JSON.parse(localStorage.getItem('sidebar_sections')||'{}');
     var cg=Object.keys(ss).filter(function(k){return ss[k]===false;});
     if(cg.length){
-      var sR=cg.map(function(k){return 'html[data-sb-pre-sec] .nav-section-group[data-group="'+k+'"]{max-height:0!important;opacity:0!important}'}).join('');
+      var sR=cg.map(function(k){return 'html[data-sb-pre-sec] .nav-section-group[data-group="'+k+'"]{max-height:0!important;opacity:0!important;transition:none!important}'}).join('');
       var sS=document.createElement('style');sS.id='cls-nav-sec';sS.textContent=sR;document.head.appendChild(sS);
       document.documentElement.setAttribute('data-sb-pre-sec','');
     }
+  }catch(e){}
+  // 4. Pre-apply full-width for mobile/tablet (<1024px) — prevents margin-left shift when init-app.js adds full-width class
+  try{if(window.innerWidth<1024){document.documentElement.setAttribute('data-pre-fw','');}}catch(e){}
+  // 5. Lock #mainContent position before JS runs — prevents sidebar IIFE from causing a layout shift
+  try{
+    var _sbC2=localStorage.getItem('sidebar_collapsed')==='true';
+    var _ml2=window.innerWidth>=1024?(_sbC2?64:220):0;
+    if(_ml2>0){var _mS3=document.createElement('style');_mS3.id='cls-main-pos';_mS3.textContent='#mainContent{margin-left:'+_ml2+'px!important;width:calc(100% - '+_ml2+'px)!important}';document.head.appendChild(_mS3);}
   }catch(e){}
 })();</script>
 <meta charset="UTF-8">
@@ -809,6 +817,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         <div class="sidebar-scroll">
             <!-- Dynamic Nav Items (Dashboard, Performance, etc.) -->
             <div id="sidebarNavList"></div>
+<script>(function(){try{var d=JSON.parse(localStorage.getItem('tg_pro_data')||'null');var n=d&&d.settings&&Array.isArray(d.settings.nav)?d.settings.nav:null;var c=n?n.filter(function(i){return i.visible!==false;}).length:12;document.getElementById('sidebarNavList').style.minHeight=(c*48)+'px';}catch(e){document.getElementById('sidebarNavList').style.minHeight='576px';}})();</script>
 
             <!-- Ausbildung & Lernen -->
             <div class="nav-section" data-section="education" onclick="toggleNavSection(this)">
@@ -981,6 +990,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 </div>
             </div>
             <div class="date-badge" id="currentDate"></div>
+<script>document.getElementById('currentDate').textContent=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long'});</script>
         </header>
 
         <div id="view-dashboard" class="view-section active">
