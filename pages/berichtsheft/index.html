@@ -7628,9 +7628,12 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                 url = GEMINI_PROXY; // key bleibt in Cloudflare Secrets, nie im Browser
             }
 
+            const fetchHeaders = { 'Content-Type': 'application/json' };
+            if (!isLocal) fetchHeaders['X-MyWorkLog-Token'] = 'FISI-Berichtsheft-2026';
+
             const response = await fetch(url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: fetchHeaders,
                 body: JSON.stringify(requestBody),
             });
 
