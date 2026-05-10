@@ -1,653 +1,1123 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <script defer src="../../../Assets/js/berichtsheft/schatten-berichtsheft.js"></script>
-    <title>Schatten-Berichtsheft - Vertrauliches Protokoll</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>Schatten-Berichtsheft — Classified Vault</title>
     <style>
+        /* ══════════════════════════════════════════════
+           DESIGN TOKENS — BLACK SITE
+           ══════════════════════════════════════════════ */
         :root {
-            --bg-deep: #030305;
-            --bg-glass: rgba(22, 22, 26, 0.65);
-            --bg-glass-heavy: rgba(16, 16, 20, 0.85);
-            --primary: #a855f7;
-            --primary-rgb: 168, 85, 247;
-            --primary-dim: rgba(168, 85, 247, 0.1);
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --success: #10b981;
-            --success-rgb: 16, 185, 129;
-            --danger: #ef4444;
-            --danger-rgb: 239, 68, 68;
-            --warning: #f59e0b;
-            --warning-rgb: 245, 158, 11;
-            --info: #3b82f6;
-            --cyan: #06b6d4;
-            --border: rgba(255, 255, 255, 0.06);
-            --border-hover: rgba(255, 255, 255, 0.12);
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
-            --radius: 16px;
-            --radius-sm: 10px;
+            --bg-0: #030508;
+            --bg-1: #07090f;
+            --bg-card: rgba(9, 12, 22, 0.96);
+            --bg-card-solid: #090c16;
+            --bg-glass: rgba(10, 14, 26, 0.82);
+
+            --red: #ff2d55;
+            --red-rgb: 255, 45, 85;
+            --red-dim: rgba(255, 45, 85, 0.09);
+
+            --amber: #ffb347;
+            --amber-rgb: 255, 179, 71;
+            --amber-dim: rgba(255, 179, 71, 0.09);
+
+            --blue: #4dabf7;
+            --blue-rgb: 77, 171, 247;
+
+            --teal: #20c997;
+            --teal-rgb: 32, 201, 151;
+
+            --violet: #a855f7;
+            --violet-rgb: 168, 85, 247;
+
+            --muted-rgb: 100, 116, 139;
+
+            --text-0: #f1f5f9;
+            --text-1: #cbd5e1;
+            --text-2: #64748b;
+            --text-3: #334155;
+
+            --border: rgba(255, 255, 255, 0.055);
+            --border-hover: rgba(255, 255, 255, 0.11);
+
+            --font-display: 'Big Shoulders Display', sans-serif;
+            --font-body: 'Outfit', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+
+            --r-xs: 6px;
+            --r-sm: 10px;
+            --r-md: 14px;
+            --r-lg: 20px;
+            --r-xl: 28px;
+
+            --shadow-md: 0 8px 32px rgba(0,0,0,0.55);
+            --shadow-lg: 0 24px 64px rgba(0,0,0,0.65);
         }
-        [data-theme="light"] {
-            --bg-deep: #f8fafc;
-            --bg-glass: rgba(255,255,255,0.85);
-            --bg-glass-heavy: rgba(255,255,255,0.92);
-            --text-main: #071023;
-            --text-muted: #475569;
-            --border: rgba(7, 16, 35, 0.06);
-            --border-hover: rgba(7, 16, 35, 0.12);
-            --primary-dim: rgba(168, 85, 247, 0.08);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
         body {
-            font-family: var(--font-main);
-            background: var(--bg-deep);
-            color: var(--text-main);
+            font-family: var(--font-body);
+            background: var(--bg-0);
+            color: var(--text-0);
             min-height: 100vh;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* ====== ANIMATED BACKGROUND ====== */
-        .bg-mesh { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+
+        /* ══ BACKGROUND SYSTEM ══ */
+        .bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+
+        .bg-grid {
+            position: absolute; inset: 0;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.038) 1px, transparent 1px);
+            background-size: 34px 34px;
+            mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, black 20%, transparent 100%);
+        }
+
         .bg-orb {
-            position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.25;
-            animation: orbFloat 20s ease-in-out infinite alternate;
+            position: absolute; border-radius: 50%; pointer-events: none;
+            filter: blur(90px);
         }
-        .bg-orb:nth-child(1) { width: 500px; height: 500px; background: rgba(var(--primary-rgb), 0.3); top: -10%; left: -5%; }
-        .bg-orb:nth-child(2) { width: 400px; height: 400px; background: rgba(var(--danger-rgb), 0.15); bottom: -15%; right: -5%; animation-delay: -7s; }
-        .bg-orb:nth-child(3) { width: 300px; height: 300px; background: rgba(var(--warning-rgb), 0.1); top: 40%; right: 30%; animation-delay: -12s; }
-        @keyframes orbFloat {
-            0% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -20px) scale(1.05); }
-            66% { transform: translate(-20px, 30px) scale(0.95); }
-            100% { transform: translate(10px, -10px) scale(1.02); }
+        .bg-orb-1 {
+            width: 640px; height: 640px;
+            background: radial-gradient(circle, rgba(255,45,85,0.1) 0%, transparent 65%);
+            top: -18%; left: -8%;
+            animation: orbA 26s ease-in-out infinite alternate;
+        }
+        .bg-orb-2 {
+            width: 520px; height: 520px;
+            background: radial-gradient(circle, rgba(168,85,247,0.07) 0%, transparent 65%);
+            bottom: -12%; right: -4%;
+            animation: orbB 32s ease-in-out infinite alternate;
+        }
+        .bg-orb-3 {
+            width: 400px; height: 400px;
+            background: radial-gradient(circle, rgba(255,179,71,0.055) 0%, transparent 65%);
+            top: 45%; right: 22%;
+            animation: orbC 21s ease-in-out infinite alternate;
+        }
+        @keyframes orbA { from { transform: translate(0,0); } to { transform: translate(45px,32px); } }
+        @keyframes orbB { from { transform: translate(0,0); } to { transform: translate(-35px,-42px); } }
+        @keyframes orbC { from { transform: translate(0,0); } to { transform: translate(22px,-28px); } }
+
+        .bg-scan {
+            position: absolute; inset: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent 0px, transparent 3px,
+                rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+            );
         }
 
-        /* ====== LOCK SCREEN ====== */
+        .bg-topline {
+            position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--red) 40%, var(--violet) 70%, transparent 100%);
+            animation: sweepLine 5s ease-in-out infinite;
+        }
+        @keyframes sweepLine {
+            0% { opacity: 0; transform: scaleX(0); transform-origin: left; }
+            25% { opacity: 1; }
+            70% { opacity: 1; transform: scaleX(1); transform-origin: left; }
+            100% { opacity: 0; transform: scaleX(0); transform-origin: right; }
+        }
+
+        /* ══════════════════════════════════════════════
+           LOCK SCREEN
+           ══════════════════════════════════════════════ */
         #lockScreen {
             position: fixed; inset: 0; z-index: 1000;
             display: flex; align-items: center; justify-content: center;
-            background: var(--bg-deep);
-            transition: opacity 0.5s, visibility 0.5s;
+            background: var(--bg-0);
+            transition: opacity 0.6s cubic-bezier(0.16,1,0.3,1), visibility 0.6s;
         }
         #lockScreen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        .lock-wrap {
+            position: relative;
+            width: 100%; max-width: 480px;
+            padding: 2rem 1.5rem;
+        }
+
+        .classified-stamp {
+            position: absolute;
+            top: 1.25rem; right: 1.25rem;
+            opacity: 0.35; transform: rotate(-14deg);
+            pointer-events: none; user-select: none;
+        }
+
         .lock-card {
-            background: var(--bg-glass-heavy); border: 1px solid var(--border);
-            border-radius: 24px; padding: 3rem 2.5rem; max-width: 440px; width: 90%;
-            text-align: center; position: relative; overflow: hidden;
-            box-shadow: 0 32px 64px rgba(0,0,0,0.4);
-        }
-        .lock-card::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-            background: linear-gradient(90deg, var(--danger), var(--primary), var(--warning));
-        }
-        .lock-icon { font-size: 4rem; margin-bottom: 1rem; filter: drop-shadow(0 8px 24px rgba(var(--danger-rgb), 0.3)); }
-        .lock-title {
-            font-size: 1.4rem; font-weight: 800; margin-bottom: 0.4rem;
-            background: linear-gradient(135deg, var(--danger), var(--primary));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-        }
-        .lock-sub { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.6; }
-        .lock-input-group { position: relative; margin-bottom: 1rem; }
-        .lock-input {
-            width: 100%; padding: 14px 50px 14px 16px; border-radius: 12px; border: 1px solid var(--border);
-            background: rgba(255,255,255,0.03); color: var(--text-main); font-size: 1rem; font-family: var(--font-mono);
-            outline: none; transition: border-color 0.3s, box-shadow 0.3s; letter-spacing: 2px;
-        }
-        .lock-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15); }
-        .lock-input::placeholder { letter-spacing: 0; color: var(--text-muted); opacity: 0.5; font-family: var(--font-main); }
-        .lock-toggle-pw {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem;
-            padding: 4px; opacity: 0.6; transition: opacity 0.2s;
-        }
-        .lock-toggle-pw:hover { opacity: 1; }
-        .lock-strength {
-            height: 4px; border-radius: 2px; margin-bottom: 1rem; overflow: hidden;
-            background: rgba(255,255,255,0.05); transition: all 0.3s;
-        }
-        .lock-strength-bar { height: 100%; border-radius: 2px; width: 0; transition: width 0.4s, background 0.4s; }
-        .lock-btn {
-            width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700;
-            cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden;
-        }
-        .lock-btn-primary {
-            background: linear-gradient(135deg, var(--danger), var(--primary));
-            color: #fff; box-shadow: 0 4px 24px rgba(var(--danger-rgb), 0.3);
-        }
-        .lock-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(var(--danger-rgb), 0.4); }
-        .lock-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .lock-btn-secondary {
-            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
-            color: var(--text-muted); margin-top: 0.75rem;
-        }
-        .lock-btn-secondary:hover { background: rgba(255,255,255,0.08); color: var(--text-main); }
-        .lock-error { color: var(--danger); font-size: 0.8rem; margin-top: 0.5rem; min-height: 1.2rem; }
-        .lock-hint { color: var(--text-muted); font-size: 0.72rem; margin-top: 1.2rem; opacity: 0.6; line-height: 1.6; }
-        .first-time-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
-        .first-time-section .lock-sub { margin-bottom: 0.75rem; }
-
-        /* ====== MAIN APP ====== */
-        #mainApp { display: none; position: relative; z-index: 1; }
-        #mainApp.visible { display: block; animation: fadeSlideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
-        @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
-
-        .app-container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
-
-        /* ====== HEADER ====== */
-        .app-header {
-            background: var(--bg-glass-heavy); border: 1px solid var(--border); border-radius: 20px;
-            padding: 1.5rem 2rem; margin-bottom: 1.5rem; position: relative; overflow: hidden;
-        }
-        .app-header::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-            background: linear-gradient(90deg, var(--danger), var(--primary), var(--warning));
-        }
-        .header-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-        .header-brand { display: flex; align-items: center; gap: 12px; }
-        .header-brand-icon { font-size: 2rem; filter: drop-shadow(0 4px 16px rgba(var(--danger-rgb), 0.4)); }
-        .header-brand h1 {
-            font-size: 1.3rem; font-weight: 800;
-            background: linear-gradient(135deg, var(--danger), var(--primary));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-        }
-        .header-brand small { display: block; color: var(--text-muted); font-size: 0.75rem; font-weight: 400; margin-top: 2px; }
-        .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-
-        /* ====== BUTTONS ====== */
-        .btn {
-            display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: var(--radius-sm);
-            border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--text-main);
-            font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.25s; text-decoration: none;
-            font-family: var(--font-main); white-space: nowrap;
-        }
-        .btn:hover { background: rgba(255,255,255,0.08); border-color: var(--border-hover); transform: translateY(-1px); }
-        .btn-danger { background: rgba(var(--danger-rgb), 0.12); border-color: rgba(var(--danger-rgb), 0.25); color: var(--danger); }
-        .btn-danger:hover { background: rgba(var(--danger-rgb), 0.2); border-color: rgba(var(--danger-rgb), 0.4); }
-        .btn-primary { background: rgba(var(--primary-rgb), 0.12); border-color: rgba(var(--primary-rgb), 0.25); color: var(--primary); }
-        .btn-primary:hover { background: rgba(var(--primary-rgb), 0.2); border-color: rgba(var(--primary-rgb), 0.4); }
-        .btn-success { background: rgba(var(--success-rgb), 0.12); border-color: rgba(var(--success-rgb), 0.25); color: var(--success); }
-        .btn-success:hover { background: rgba(var(--success-rgb), 0.2); border-color: rgba(var(--success-rgb), 0.4); }
-        .btn-warning { background: rgba(var(--warning-rgb), 0.12); border-color: rgba(var(--warning-rgb), 0.25); color: var(--warning); }
-        .btn-warning:hover { background: rgba(var(--warning-rgb), 0.2); border-color: rgba(var(--warning-rgb), 0.4); }
-        .btn-sm { padding: 7px 12px; font-size: 0.76rem; }
-        .btn-icon { padding: 8px; min-width: 36px; justify-content: center; }
-
-        /* ====== STATS STRIP ====== */
-        .stats-strip {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 10px; margin-bottom: 1.5rem;
-        }
-        .stat-card {
-            background: var(--bg-glass-heavy); border: 1px solid var(--border); border-radius: var(--radius-sm);
-            padding: 1rem; text-align: center;
-        }
-        .stat-card .stat-num { font-size: 1.6rem; font-weight: 800; font-family: var(--font-mono); }
-        .stat-card .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
-
-        /* ====== TOOLBAR ====== */
-        .toolbar {
-            display: flex; justify-content: space-between; align-items: center; gap: 10px;
-            margin-bottom: 1rem; flex-wrap: wrap;
-        }
-        .toolbar-left, .toolbar-right { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .search-box {
-            display: flex; align-items: center; gap: 8px;
-            background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-sm);
-            padding: 0 12px; transition: border-color 0.3s;
-        }
-        .search-box:focus-within { border-color: var(--primary); }
-        .search-box input {
-            background: none; border: none; color: var(--text-main); font-size: 0.85rem;
-            padding: 10px 4px; outline: none; width: 180px; font-family: var(--font-main);
-        }
-        .search-box input::placeholder { color: var(--text-muted); opacity: 0.5; }
-        .filter-select {
-            background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-sm);
-            color: var(--text-main); padding: 10px 12px; font-size: 0.82rem; outline: none;
-            cursor: pointer; font-family: var(--font-main);
-        }
-        .filter-select option { background: #111; color: #fff; }
-
-        /* ====== ENTRIES ====== */
-        .entries-list { display: flex; flex-direction: column; gap: 10px; }
-        .entry-card {
-            background: var(--bg-glass-heavy); border: 1px solid var(--border); border-radius: var(--radius);
-            padding: 1.25rem 1.5rem; transition: all 0.3s; cursor: default;
+            background: var(--bg-glass);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: var(--r-xl);
+            padding: 2.5rem 2.25rem 2rem;
+            backdrop-filter: blur(48px);
+            -webkit-backdrop-filter: blur(48px);
+            box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,45,85,0.04);
             position: relative; overflow: hidden;
         }
-        .entry-card:hover { border-color: var(--border-hover); transform: translateY(-1px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .lock-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--red) 35%, var(--violet) 65%, transparent 100%);
+        }
+        .lock-card::after {
+            content: '';
+            position: absolute; bottom: -30px; right: -30px;
+            width: 120px; height: 120px;
+            background: radial-gradient(circle, rgba(255,45,85,0.06) 0%, transparent 70%);
+            border-radius: 50%; pointer-events: none;
+        }
+
+        /* Animated SVG lock icon */
+        .lock-icon-wrap {
+            display: flex; justify-content: center;
+            margin-bottom: 1.75rem; position: relative;
+        }
+        .lock-svg { width: 108px; height: 108px; }
+
+        .svg-ring-outer { animation: spinRing1 22s linear infinite; transform-origin: 54px 54px; }
+        .svg-ring-inner { animation: spinRing2 14s linear infinite reverse; transform-origin: 54px 54px; }
+        @keyframes spinRing1 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spinRing2 { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .svg-lock-body { animation: lockPulse 3s ease-in-out infinite alternate; }
+        @keyframes lockPulse {
+            from { filter: drop-shadow(0 0 5px rgba(255,45,85,0.35)); }
+            to   { filter: drop-shadow(0 0 18px rgba(255,45,85,0.75)); }
+        }
+
+        /* Lock text */
+        .lock-title {
+            font-family: var(--font-display);
+            font-size: 1.9rem; font-weight: 900;
+            letter-spacing: 0.04em; line-height: 1;
+            text-align: center; margin-bottom: 0.4rem;
+            background: linear-gradient(135deg, var(--text-0) 45%, rgba(255,45,85,0.9) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .lock-sub {
+            text-align: center; color: var(--text-2);
+            font-size: 0.82rem; line-height: 1.6;
+            margin-bottom: 1.5rem; font-weight: 400;
+        }
+
+        .enc-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: rgba(255,45,85,0.07); border: 1px solid rgba(255,45,85,0.15);
+            border-radius: var(--r-xs); padding: 5px 12px;
+            font-family: var(--font-mono); font-size: 0.67rem;
+            color: var(--red); letter-spacing: 0.06em;
+            margin-bottom: 1.75rem;
+        }
+        .enc-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--red);
+            animation: dotPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes dotPulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(255,45,85,0.4); }
+            50% { opacity: 0.55; box-shadow: 0 0 0 5px rgba(255,45,85,0); }
+        }
+
+        #unlockSection, #setupSection { display: none; }
+
+        .lock-label {
+            display: block; font-size: 0.69rem; font-weight: 700;
+            color: var(--text-2); text-transform: uppercase;
+            letter-spacing: 0.09em; margin-bottom: 0.5rem;
+        }
+        .lock-input-group { position: relative; margin-bottom: 0.75rem; }
+        .lock-input {
+            width: 100%; padding: 13px 46px 13px 15px;
+            background: rgba(255,255,255,0.028);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: var(--r-sm); color: var(--text-0);
+            font-family: var(--font-mono); font-size: 0.92rem;
+            letter-spacing: 3px; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .lock-input:focus {
+            border-color: rgba(255,45,85,0.4);
+            box-shadow: 0 0 0 3px rgba(255,45,85,0.08);
+        }
+        .lock-input::placeholder { letter-spacing: 0; font-family: var(--font-body); color: var(--text-3); font-size: 0.84rem; }
+
+        .lock-toggle-pw {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: var(--text-2);
+            cursor: pointer; font-size: 1rem; padding: 6px;
+            opacity: 0.45; transition: opacity 0.2s; line-height: 1;
+        }
+        .lock-toggle-pw:hover { opacity: 1; }
+
+        .lock-strength {
+            height: 3px; background: rgba(255,255,255,0.05);
+            border-radius: 2px; margin-bottom: 1.25rem; overflow: hidden;
+        }
+        .lock-strength-bar {
+            height: 100%; border-radius: 2px; width: 0;
+            transition: width 0.4s ease, background 0.4s ease;
+        }
+
+        .lock-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 14px;
+            border: none; border-radius: var(--r-sm);
+            font-family: var(--font-body); font-size: 0.9rem; font-weight: 700;
+            cursor: pointer; letter-spacing: 0.04em;
+            transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+            position: relative; overflow: hidden;
+        }
+        .lock-btn-primary {
+            background: linear-gradient(135deg, #ff2d55 0%, #c0226b 60%, #a855f7 100%);
+            color: #fff; box-shadow: 0 4px 20px rgba(255,45,85,0.28);
+        }
+        .lock-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255,45,85,0.42); }
+        .lock-btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+        .lock-btn-secondary {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-2); margin-top: 0.75rem; font-size: 0.82rem;
+        }
+        .lock-btn-secondary:hover { border-color: var(--border-hover); color: var(--text-1); background: rgba(255,255,255,0.03); }
+
+        .lock-error { color: var(--red); font-size: 0.77rem; min-height: 1.2rem; margin-top: 0.5rem; font-weight: 500; }
+
+        .lock-hint {
+            margin-top: 1.5rem; padding-top: 1.25rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-2); font-size: 0.68rem;
+            text-align: center; font-family: var(--font-mono);
+            line-height: 1.7; opacity: 0.65;
+        }
+
+        .first-time-section { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+        .setup-alert-label {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.78rem; color: var(--amber); font-weight: 700;
+            margin-bottom: 1rem; letter-spacing: 0.02em;
+        }
+        .setup-warning-box {
+            background: rgba(255,179,71,0.06); border: 1px solid rgba(255,179,71,0.15);
+            border-radius: var(--r-sm); padding: 11px 14px;
+            font-size: 0.78rem; color: rgba(255,179,71,0.8);
+            line-height: 1.55; margin-bottom: 1.25rem;
+        }
+
+        /* ══════════════════════════════════════════════
+           MAIN APP
+           ══════════════════════════════════════════════ */
+        #mainApp { display: none; position: relative; z-index: 1; }
+        #mainApp.visible {
+            display: block;
+            animation: appEnter 0.65s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        @keyframes appEnter {
+            from { opacity: 0; transform: translateY(22px); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        /* Full-width sticky header outside container */
+        .app-header {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(3,5,8,0.88);
+            backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .header-inner {
+            max-width: 960px; margin: 0 auto;
+            padding: 0 1.5rem;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem; height: 62px; flex-wrap: wrap;
+        }
+        .header-brand { display: flex; align-items: center; gap: 11px; }
+        .header-logo { width: 34px; height: 34px; flex-shrink: 0; }
+        .header-text h1 {
+            font-family: var(--font-display);
+            font-size: 1.1rem; font-weight: 900;
+            letter-spacing: 0.04em; line-height: 1;
+            margin-bottom: 3px;
+        }
+        .header-text small {
+            font-size: 0.64rem; color: var(--text-2);
+            font-family: var(--font-mono); letter-spacing: 0.03em;
+        }
+        .header-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+        .app-body { max-width: 960px; margin: 0 auto; padding: 1.5rem 1.5rem 6rem; }
+
+        /* ══ BUTTONS ══ */
+        .btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 8px 15px; border-radius: var(--r-sm);
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.032);
+            color: var(--text-1);
+            font-family: var(--font-body); font-size: 0.82rem; font-weight: 600;
+            cursor: pointer; text-decoration: none; white-space: nowrap;
+            letter-spacing: 0.01em;
+            transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+        }
+        .btn:hover { background: rgba(255,255,255,0.068); border-color: var(--border-hover); transform: translateY(-1px); }
+        .btn:active { transform: none; }
+
+        .btn-cta {
+            background: linear-gradient(135deg, var(--red) 0%, #c0226b 100%);
+            border-color: transparent; color: #fff;
+            box-shadow: 0 2px 14px rgba(var(--red-rgb),0.25);
+        }
+        .btn-cta:hover { box-shadow: 0 5px 22px rgba(var(--red-rgb),0.42); transform: translateY(-2px); }
+
+        .btn-danger { background: rgba(var(--red-rgb),0.08); border-color: rgba(var(--red-rgb),0.2); color: var(--red); }
+        .btn-danger:hover { background: rgba(var(--red-rgb),0.14); border-color: rgba(var(--red-rgb),0.33); }
+        .btn-primary { background: rgba(var(--violet-rgb),0.08); border-color: rgba(var(--violet-rgb),0.2); color: var(--violet); }
+        .btn-primary:hover { background: rgba(var(--violet-rgb),0.14); border-color: rgba(var(--violet-rgb),0.33); }
+        .btn-success { background: rgba(var(--teal-rgb),0.08); border-color: rgba(var(--teal-rgb),0.2); color: var(--teal); }
+        .btn-success:hover { background: rgba(var(--teal-rgb),0.14); border-color: rgba(var(--teal-rgb),0.33); }
+        .btn-warning { background: rgba(var(--amber-rgb),0.08); border-color: rgba(var(--amber-rgb),0.2); color: var(--amber); }
+        .btn-warning:hover { background: rgba(var(--amber-rgb),0.14); border-color: rgba(var(--amber-rgb),0.33); }
+        .btn-sm { padding: 6px 11px; font-size: 0.77rem; }
+        .btn-icon { padding: 7px; min-width: 34px; justify-content: center; }
+
+        /* ══ CONF BANNER ══ */
+        .conf-banner {
+            display: flex; align-items: center; gap: 13px;
+            padding: 11px 18px;
+            background: rgba(var(--red-rgb),0.045);
+            border: 1px solid rgba(var(--red-rgb),0.11);
+            border-radius: var(--r-md); margin-bottom: 1.5rem;
+        }
+        .conf-banner-icon { width: 30px; height: 30px; flex-shrink: 0; }
+        .conf-banner-text { font-size: 0.78rem; color: var(--text-2); line-height: 1.55; }
+        .conf-banner-text strong { color: var(--red); font-weight: 700; }
+
+        /* ══ STATS GRID ══ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px; margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--r-md); padding: 1.2rem;
+            position: relative; overflow: hidden;
+            transition: border-color 0.2s, transform 0.25s cubic-bezier(0.16,1,0.3,1);
+        }
+        .stat-card:hover { border-color: var(--border-hover); transform: translateY(-3px); }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+        }
+        .stat-card::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.015) 50%, transparent 70%);
+            background-size: 200%;
+            animation: cardShimmer 6s ease infinite;
+        }
+        @keyframes cardShimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .stat-card-total::before { background: var(--violet); }
+        .stat-card-critical::before { background: var(--red); }
+        .stat-card-high::before { background: var(--amber); }
+        .stat-card-span::before { background: var(--blue); }
+
+        .stat-icon { position: absolute; top: 1rem; right: 1rem; opacity: 0.1; width: 30px; height: 30px; }
+        .stat-label { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-2); margin-bottom: 0.45rem; }
+        .stat-num { font-family: var(--font-display); font-size: 2.1rem; font-weight: 900; line-height: 1; }
+        .stat-card-total .stat-num { color: var(--violet); }
+        .stat-card-critical .stat-num { color: var(--red); }
+        .stat-card-high .stat-num { color: var(--amber); }
+        .stat-card-span .stat-num { color: var(--blue); font-size: 1.55rem; }
+
+        /* ══ TOOLBAR ══ */
+        .toolbar {
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap;
+        }
+        .toolbar-left, .toolbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+        .search-box {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border); border-radius: var(--r-sm);
+            padding: 0 12px; transition: border-color 0.2s, background 0.2s;
+        }
+        .search-box:focus-within { border-color: rgba(var(--red-rgb),0.28); background: rgba(255,255,255,0.04); }
+        .search-box svg { flex-shrink: 0; opacity: 0.35; }
+        .search-box input {
+            background: none; border: none; color: var(--text-0);
+            font-family: var(--font-body); font-size: 0.85rem;
+            padding: 9px 4px; outline: none; width: 185px;
+        }
+        .search-box input::placeholder { color: var(--text-2); }
+
+        .filter-select {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            border-radius: var(--r-sm); color: var(--text-1);
+            padding: 9px 11px; font-family: var(--font-body);
+            font-size: 0.82rem; outline: none; cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .filter-select:focus { border-color: var(--border-hover); }
+        .filter-select option { background: #090c16; color: #f1f5f9; }
+
+        /* ══ ENTRY CARDS ══ */
+        .entries-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .entry-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--r-md); padding: 1.2rem 1.2rem 1rem 1.45rem;
+            position: relative; overflow: hidden; cursor: default;
+            transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+            animation: cardIn 0.38s ease both;
+        }
+        @keyframes cardIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+        .entry-card:nth-child(1) { animation-delay: 0ms; }
+        .entry-card:nth-child(2) { animation-delay: 55ms; }
+        .entry-card:nth-child(3) { animation-delay: 110ms; }
+        .entry-card:nth-child(4) { animation-delay: 165ms; }
+        .entry-card:nth-child(5) { animation-delay: 220ms; }
+
+        .entry-card:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
         .entry-card::before {
             content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-            border-radius: 3px 0 0 3px;
         }
-        .entry-card[data-severity="critical"]::before { background: var(--danger); }
-        .entry-card[data-severity="high"]::before { background: var(--warning); }
-        .entry-card[data-severity="medium"]::before { background: var(--info); }
-        .entry-card[data-severity="low"]::before { background: var(--success); }
-        .entry-card[data-severity="note"]::before { background: var(--text-muted); }
-        .entry-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
-        .entry-date { font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted); }
-        .entry-time { font-size: 0.72rem; color: var(--text-muted); opacity: 0.6; }
+        .entry-card[data-severity="critical"]::before { background: var(--red); box-shadow: 0 0 14px rgba(var(--red-rgb),0.65); }
+        .entry-card[data-severity="high"]::before { background: var(--amber); box-shadow: 0 0 10px rgba(var(--amber-rgb),0.45); }
+        .entry-card[data-severity="medium"]::before { background: var(--blue); }
+        .entry-card[data-severity="low"]::before { background: var(--teal); }
+        .entry-card[data-severity="note"]::before { background: rgba(var(--muted-rgb),0.5); }
+
+        .entry-card[data-severity="critical"] {
+            background: rgba(12,5,10,0.96);
+            border-color: rgba(var(--red-rgb),0.09);
+        }
+        .entry-card[data-severity="critical"]:hover { border-color: rgba(var(--red-rgb),0.18); box-shadow: 0 8px 32px rgba(var(--red-rgb),0.08); }
+
+        .entry-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 9px; }
+        .entry-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .entry-date { font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-2); font-weight: 500; }
+        .entry-time { font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-3); }
+
         .entry-severity {
-            font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
-            padding: 3px 10px; border-radius: 6px; white-space: nowrap;
+            font-size: 0.62rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.1em; padding: 3px 9px; border-radius: 4px; white-space: nowrap;
         }
-        .sev-critical { background: rgba(var(--danger-rgb), 0.15); color: var(--danger); }
-        .sev-high { background: rgba(var(--warning-rgb), 0.15); color: var(--warning); }
-        .sev-medium { background: rgba(59, 130, 246, 0.15); color: var(--info); }
-        .sev-low { background: rgba(var(--success-rgb), 0.15); color: var(--success); }
-        .sev-note { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+        .sev-critical { background: rgba(var(--red-rgb),0.1); color: var(--red); border: 1px solid rgba(var(--red-rgb),0.22); }
+        .sev-high { background: rgba(var(--amber-rgb),0.1); color: var(--amber); border: 1px solid rgba(var(--amber-rgb),0.22); }
+        .sev-medium { background: rgba(var(--blue-rgb),0.1); color: var(--blue); border: 1px solid rgba(var(--blue-rgb),0.22); }
+        .sev-low { background: rgba(var(--teal-rgb),0.1); color: var(--teal); border: 1px solid rgba(var(--teal-rgb),0.22); }
+        .sev-note { background: rgba(255,255,255,0.04); color: var(--text-2); border: 1px solid var(--border); }
+
         .entry-category {
-            display: inline-flex; align-items: center; gap: 4px;
-            font-size: 0.72rem; background: rgba(var(--primary-rgb), 0.1); color: var(--primary);
-            padding: 2px 8px; border-radius: 6px; margin-bottom: 6px;
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 0.68rem; font-weight: 600;
+            color: rgba(var(--violet-rgb),0.85);
+            background: rgba(var(--violet-rgb),0.07);
+            border: 1px solid rgba(var(--violet-rgb),0.13);
+            padding: 3px 9px; border-radius: 4px;
+            margin-bottom: 8px; letter-spacing: 0.01em;
         }
-        .entry-text { font-size: 0.92rem; line-height: 1.7; color: var(--text-main); white-space: pre-wrap; }
+
+        .entry-text { font-size: 0.9rem; line-height: 1.75; color: var(--text-1); white-space: pre-wrap; }
+
         .entry-witnesses {
-            margin-top: 8px; font-size: 0.78rem; color: var(--text-muted);
-            padding-top: 8px; border-top: 1px solid var(--border);
-        }
-        .entry-actions { display: flex; gap: 6px; margin-top: 10px; }
-        .empty-state {
-            text-align: center; padding: 4rem 2rem; color: var(--text-muted);
-        }
-        .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; }
-        .empty-state h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text-main); opacity: 0.7; }
-        .empty-state p { font-size: 0.85rem; max-width: 400px; margin: 0 auto; line-height: 1.6; }
-
-        /* ====== MODAL ====== */
-        .modal-overlay {
-            position: fixed; inset: 0; z-index: 900; background: rgba(0,0,0,0.7);
-            display: none; align-items: center; justify-content: center; padding: 1rem;
-            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        }
-        .modal-overlay.active { display: flex; animation: fadeIn 0.25s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal {
-            background: var(--bg-glass-heavy); border: 1px solid var(--border); border-radius: 20px;
-            max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto;
-            box-shadow: 0 32px 64px rgba(0,0,0,0.5); position: relative;
-        }
-        .modal::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-            background: linear-gradient(90deg, var(--danger), var(--primary));
-        }
-        .modal-head {
-            padding: 1.5rem 1.5rem 0; display: flex; justify-content: space-between; align-items: center;
-        }
-        .modal-head h2 { font-size: 1.1rem; font-weight: 700; }
-        .modal-close {
-            background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;
-            padding: 4px 8px; border-radius: 8px; transition: all 0.2s;
-        }
-        .modal-close:hover { background: rgba(255,255,255,0.06); color: var(--text-main); }
-        .modal-body { padding: 1.25rem 1.5rem 1.5rem; }
-        .form-group { margin-bottom: 1rem; }
-        .form-label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .form-input, .form-textarea, .form-select {
-            width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border);
-            background: rgba(255,255,255,0.03); color: var(--text-main); font-size: 0.9rem;
-            outline: none; transition: border-color 0.3s, box-shadow 0.3s; font-family: var(--font-main);
-        }
-        .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1); }
-        .form-textarea { resize: vertical; min-height: 120px; line-height: 1.7; }
-        .form-select option { background: #111; color: #fff; }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.25rem; }
-        .severity-pills { display: flex; gap: 6px; flex-wrap: wrap; }
-        .severity-pill {
-            padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border);
-            background: rgba(255,255,255,0.03); color: var(--text-muted); font-size: 0.8rem;
-            cursor: pointer; transition: all 0.25s; font-weight: 600;
-        }
-        .severity-pill:hover { border-color: var(--border-hover); }
-        .severity-pill.active { color: #fff; }
-        .severity-pill[data-sev="critical"].active { background: rgba(var(--danger-rgb), 0.2); border-color: var(--danger); color: var(--danger); }
-        .severity-pill[data-sev="high"].active { background: rgba(var(--warning-rgb), 0.2); border-color: var(--warning); color: var(--warning); }
-        .severity-pill[data-sev="medium"].active { background: rgba(59,130,246,0.2); border-color: var(--info); color: var(--info); }
-        .severity-pill[data-sev="low"].active { background: rgba(var(--success-rgb), 0.2); border-color: var(--success); color: var(--success); }
-        .severity-pill[data-sev="note"].active { background: rgba(255,255,255,0.08); border-color: var(--text-muted); color: var(--text-muted); }
-
-        /* ====== EXPORT MODAL ====== */
-        .export-preview {
-            background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: var(--radius-sm);
-            padding: 1.25rem; max-height: 50vh; overflow-y: auto; font-family: var(--font-mono);
-            font-size: 0.78rem; line-height: 1.8; white-space: pre-wrap; color: var(--text-muted);
+            margin-top: 10px; font-size: 0.74rem; color: var(--text-2);
+            padding-top: 10px; border-top: 1px solid var(--border);
         }
 
-        /* ====== CONFIDENTIALITY BANNER ====== */
-        .conf-banner {
-            display: flex; align-items: center; gap: 10px; padding: 10px 16px;
-            background: rgba(var(--danger-rgb), 0.06); border: 1px solid rgba(var(--danger-rgb), 0.15);
-            border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.78rem; color: var(--text-muted);
-        }
-        .conf-banner strong { color: var(--danger); }
+        .entry-actions { display: flex; gap: 6px; margin-top: 11px; }
 
-        /* ====== SESSION TIMER ====== */
+        /* ══ EMPTY STATE ══ */
+        .empty-state { text-align: center; padding: 5rem 2rem; color: var(--text-2); }
+        .empty-state-icon { display: flex; justify-content: center; margin-bottom: 1.5rem; opacity: 0.25; }
+        .empty-state h3 {
+            font-family: var(--font-display); font-size: 1.5rem; font-weight: 900;
+            color: var(--text-1); margin-bottom: 0.5rem; opacity: 0.65;
+        }
+        .empty-state p { font-size: 0.85rem; max-width: 380px; margin: 0 auto; line-height: 1.7; }
+
+        /* ══ SESSION TIMER ══ */
         .session-timer {
-            position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 100;
-            background: var(--bg-glass-heavy); border: 1px solid var(--border); border-radius: var(--radius-sm);
-            padding: 8px 14px; font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono);
-            display: flex; align-items: center; gap: 8px;
+            position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 100;
+            background: rgba(9,12,22,0.92); border: 1px solid var(--border);
+            border-radius: var(--r-sm); padding: 7px 12px;
+            font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-2);
+            display: flex; align-items: center; gap: 7px;
+            backdrop-filter: blur(20px);
         }
-        .session-timer .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .session-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--teal);
+            animation: timerBlink 2.2s ease-in-out infinite;
+        }
+        @keyframes timerBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
 
-        /* ====== TOAST ====== */
+        /* ══ TOAST ══ */
         .toast {
-            position: fixed; top: 1.5rem; right: 1.5rem; z-index: 999;
-            background: var(--bg-glass-heavy); border: 1px solid var(--border); border-radius: var(--radius-sm);
-            padding: 14px 20px; font-size: 0.85rem; max-width: 380px;
+            position: fixed; top: 1.25rem; right: 1.25rem; z-index: 9999;
+            background: rgba(9,12,22,0.96); border: 1px solid var(--border);
+            border-radius: var(--r-sm); padding: 12px 18px;
+            font-size: 0.84rem; max-width: 360px;
             display: flex; align-items: center; gap: 10px;
-            transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 16px 48px rgba(0,0,0,0.3);
+            backdrop-filter: blur(32px); box-shadow: var(--shadow-md);
+            transform: translateX(calc(100% + 2rem));
+            transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
         }
         .toast.show { transform: translateX(0); }
 
-        /* ====== RESPONSIVE ====== */
-        @media (max-width: 600px) {
-            .app-container { padding: 1rem; }
-            .app-header { padding: 1.2rem; }
-            .header-top { flex-direction: column; align-items: flex-start; }
+        /* ══ MODALS ══ */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 900;
+            background: rgba(0,0,0,0.72);
+            display: none; align-items: center; justify-content: center;
+            padding: 1rem;
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+        }
+        .modal-overlay.active { display: flex; animation: overlayIn 0.22s ease both; }
+        @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal {
+            background: var(--bg-card-solid);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--r-lg);
+            max-width: 560px; width: 100%;
+            max-height: 90vh; overflow-y: auto;
+            box-shadow: var(--shadow-lg); position: relative;
+            animation: modalIn 0.32s cubic-bezier(0.16,1,0.3,1) both;
+        }
+        @keyframes modalIn { from { opacity: 0; transform: translateY(18px) scale(0.975); } to { opacity: 1; transform: none; } }
+
+        .modal::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--red), var(--violet), transparent);
+        }
+
+        .modal-head {
+            padding: 1.5rem 1.5rem 0;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .modal-head h2 {
+            font-family: var(--font-display); font-size: 1.05rem;
+            font-weight: 900; letter-spacing: 0.03em;
+        }
+        .modal-close {
+            background: none; border: none; color: var(--text-2); cursor: pointer;
+            width: 32px; height: 32px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.3rem; line-height: 1; transition: all 0.2s;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.06); color: var(--text-0); }
+
+        .modal-body { padding: 1.25rem 1.5rem 1.5rem; }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-label {
+            display: block; font-size: 0.69rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.09em;
+            color: var(--text-2); margin-bottom: 6px;
+        }
+        .form-input, .form-textarea, .form-select {
+            width: 100%; padding: 11px 14px;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid var(--border); border-radius: var(--r-sm);
+            color: var(--text-0); font-family: var(--font-body);
+            font-size: 0.9rem; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            border-color: rgba(var(--red-rgb),0.32);
+            box-shadow: 0 0 0 3px rgba(var(--red-rgb),0.07);
+        }
+        .form-textarea { resize: vertical; min-height: 130px; line-height: 1.7; }
+        .form-select option { background: #090c16; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.25rem; }
+
+        .severity-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+        .severity-pill {
+            padding: 7px 14px; border-radius: 6px;
+            border: 1px solid var(--border); background: rgba(255,255,255,0.02);
+            color: var(--text-2); font-size: 0.78rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; letter-spacing: 0.01em;
+        }
+        .severity-pill:hover { border-color: var(--border-hover); color: var(--text-1); }
+        .severity-pill[data-sev="critical"].active { background: rgba(var(--red-rgb),0.11); border-color: rgba(var(--red-rgb),0.28); color: var(--red); }
+        .severity-pill[data-sev="high"].active { background: rgba(var(--amber-rgb),0.11); border-color: rgba(var(--amber-rgb),0.28); color: var(--amber); }
+        .severity-pill[data-sev="medium"].active { background: rgba(var(--blue-rgb),0.11); border-color: rgba(var(--blue-rgb),0.28); color: var(--blue); }
+        .severity-pill[data-sev="low"].active { background: rgba(var(--teal-rgb),0.11); border-color: rgba(var(--teal-rgb),0.28); color: var(--teal); }
+        .severity-pill[data-sev="note"].active { background: rgba(255,255,255,0.06); border-color: var(--border-hover); color: var(--text-1); }
+
+        .export-preview {
+            background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+            border-radius: var(--r-sm); padding: 1.25rem;
+            max-height: 50vh; overflow-y: auto;
+            font-family: var(--font-mono); font-size: 0.74rem;
+            line-height: 1.8; white-space: pre-wrap; color: var(--text-2);
+        }
+
+        /* ══ RESPONSIVE ══ */
+        @media (max-width: 700px) {
+            .app-body { padding: 1rem 1rem 5rem; }
+            .header-inner { height: auto; padding: 0.75rem 1rem; flex-direction: column; align-items: flex-start; gap: 0.75rem; }
             .header-actions { width: 100%; }
-            .stats-strip { grid-template-columns: repeat(2, 1fr); }
-            .toolbar { flex-direction: column; }
+            .stats-grid { grid-template-columns: repeat(2,1fr); }
+            .toolbar { flex-direction: column; align-items: stretch; }
             .toolbar-left, .toolbar-right { width: 100%; }
             .search-box { flex: 1; }
-            .search-box input { width: 100%; }
+            .search-box input { width: 100%; flex: 1; }
             .form-row { grid-template-columns: 1fr; }
-            .entry-header { flex-direction: column; }
+            .entry-header { flex-direction: column; gap: 6px; }
+            .session-timer { bottom: 0.75rem; right: 0.75rem; }
+            .lock-wrap { padding: 1.5rem 1rem; }
+            .lock-card { padding: 2rem 1.5rem 1.75rem; }
+            .lock-title { font-size: 1.55rem; }
         }
 
-        /* ====== PRINT ====== */
         @media print {
             body { background: #fff !important; color: #000 !important; }
-            .bg-mesh, .session-timer, .toast, .header-actions, .toolbar, .conf-banner, .entry-actions { display: none !important; }
-            .app-header, .entry-card, .stat-card { border-color: #ddd !important; background: #fff !important; }
+            .bg-canvas, .session-timer, .toast, .header-actions, .toolbar, .conf-banner, .entry-actions { display: none !important; }
+            .app-header { position: static !important; background: #fff !important; border-bottom: 1px solid #eee !important; }
+            .entry-card, .stat-card { border-color: #ddd !important; background: #fff !important; color: #000 !important; }
             .entry-card::before { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
-
-        /* scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
-    <div class="bg-mesh"><div class="bg-orb"></div><div class="bg-orb"></div><div class="bg-orb"></div></div>
 
-    <!-- =========================================== -->
-    <!-- LOCK SCREEN -->
-    <!-- =========================================== -->
-    <div id="lockScreen">
+<!-- ══════════════════════════════════════════
+     BACKGROUND
+     ══════════════════════════════════════════ -->
+<div class="bg-canvas" aria-hidden="true">
+    <div class="bg-grid"></div>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-scan"></div>
+    <div class="bg-topline"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     LOCK SCREEN
+     ══════════════════════════════════════════ -->
+<div id="lockScreen">
+    <div class="lock-wrap">
+
+        <!-- Classified stamp (outside card, rotated) -->
+        <div class="classified-stamp" aria-hidden="true">
+            <svg width="182" height="68" viewBox="0 0 182 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1.5" y="1.5" width="179" height="65" rx="4" stroke="#ff2d55" stroke-width="1.5"/>
+                <rect x="6.5" y="6.5" width="169" height="55" rx="2" stroke="#ff2d55" stroke-width="0.75" stroke-dasharray="3 3"/>
+                <text x="91" y="37" text-anchor="middle" fill="#ff2d55" font-family="'Big Shoulders Display',sans-serif" font-size="23" font-weight="900" letter-spacing="7">VERTRAULICH</text>
+                <text x="91" y="52" text-anchor="middle" fill="#ff2d55" font-family="monospace" font-size="8" letter-spacing="3" opacity="0.7">CLASSIFIED DOCUMENT</text>
+            </svg>
+        </div>
+
         <div class="lock-card">
-            <div class="lock-icon">🔐</div>
-            <div class="lock-title">Schatten-Berichtsheft</div>
-            <p class="lock-sub">Vertrauliches, AES-256 verschlüsseltes Protokoll.<br>Nur mit deinem Passwort zugänglich.</p>
+            <!-- Animated SVG lock icon -->
+            <div class="lock-icon-wrap">
+                <svg class="lock-svg" viewBox="0 0 108 108" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Outer dashed rotating ring -->
+                    <circle class="svg-ring-outer" cx="54" cy="54" r="50"
+                        stroke="rgba(255,45,85,0.22)" stroke-width="1"
+                        stroke-dasharray="5 5" />
+                    <!-- Inner rotating ring -->
+                    <circle class="svg-ring-inner" cx="54" cy="54" r="42"
+                        stroke="rgba(255,45,85,0.1)" stroke-width="0.75"
+                        stroke-dasharray="2 7" />
+                    <!-- Cardinal tick marks -->
+                    <line x1="54" y1="2" x2="54" y2="9" stroke="rgba(255,45,85,0.55)" stroke-width="1.5" stroke-linecap="round"/>
+                    <line x1="54" y1="99" x2="54" y2="106" stroke="rgba(255,45,85,0.55)" stroke-width="1.5" stroke-linecap="round"/>
+                    <line x1="2" y1="54" x2="9" y2="54" stroke="rgba(255,45,85,0.55)" stroke-width="1.5" stroke-linecap="round"/>
+                    <line x1="99" y1="54" x2="106" y2="54" stroke="rgba(255,45,85,0.55)" stroke-width="1.5" stroke-linecap="round"/>
+                    <!-- Lock body -->
+                    <g class="svg-lock-body">
+                        <rect x="29" y="50" width="50" height="38" rx="9"
+                            fill="rgba(255,45,85,0.055)"
+                            stroke="rgba(255,45,85,0.75)" stroke-width="1.5"/>
+                        <!-- Shackle -->
+                        <path d="M39 50V36.5C39 27.1 45.7 20 54 20C62.3 20 69 27.1 69 36.5V50"
+                            stroke="rgba(255,45,85,0.88)" stroke-width="2"
+                            stroke-linecap="round" fill="none"/>
+                        <!-- Keyhole body -->
+                        <circle cx="54" cy="66" r="6.5" fill="rgba(255,45,85,0.82)"/>
+                        <rect x="51" y="66" width="6" height="11" rx="3" fill="rgba(255,45,85,0.82)"/>
+                        <!-- Decorative lines on lock body -->
+                        <line x1="35" y1="60" x2="40" y2="60" stroke="rgba(255,45,85,0.28)" stroke-width="1"/>
+                        <line x1="68" y1="60" x2="73" y2="60" stroke="rgba(255,45,85,0.28)" stroke-width="1"/>
+                        <line x1="35" y1="82" x2="40" y2="82" stroke="rgba(255,45,85,0.28)" stroke-width="1"/>
+                        <line x1="68" y1="82" x2="73" y2="82" stroke="rgba(255,45,85,0.28)" stroke-width="1"/>
+                    </g>
+                </svg>
+            </div>
 
-            <div id="unlockSection" style="display:none;">
+            <h1 class="lock-title">SCHATTEN-BERICHTSHEFT</h1>
+            <p class="lock-sub">Vertrauliches Dokumentations-Protokoll<br>AES-256 verschlüsselt · Nur auf deinem Gerät</p>
+
+            <div style="display:flex;justify-content:center;">
+                <span class="enc-badge">
+                    <span class="enc-dot"></span>
+                    AES-256-GCM · PBKDF2 · 600K ITER
+                </span>
+            </div>
+
+            <!-- UNLOCK SECTION -->
+            <div id="unlockSection">
                 <div class="lock-input-group">
-                    <input type="password" class="lock-input" id="pwInput" placeholder="Passwort eingeben…" autocomplete="off">
+                    <label class="lock-label">Passwort</label>
+                    <input type="password" class="lock-input" id="pwInput"
+                        placeholder="Passwort eingeben…" autocomplete="off">
                     <button class="lock-toggle-pw" onclick="togglePwVis('pwInput', this)" aria-label="Passwort anzeigen">👁</button>
                 </div>
                 <div class="lock-strength"><div class="lock-strength-bar" id="pwStrength"></div></div>
-                <button class="lock-btn lock-btn-primary" id="unlockBtn" onclick="handleUnlock()">🔓 Entsperren</button>
+                <button class="lock-btn lock-btn-primary" id="unlockBtn" onclick="handleUnlock()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+                    </svg>
+                    ZUGANG GEWÄHREN
+                </button>
                 <div class="lock-error" id="lockError"></div>
             </div>
 
+            <!-- SETUP SECTION -->
             <div id="setupSection">
                 <div class="first-time-section">
-                    <p class="lock-sub">⚡ Ersteinrichtung - wähle ein starkes Passwort. <strong>Es gibt keine Wiederherstellung!</strong></p>
+                    <div class="setup-alert-label">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        Ersteinrichtung — Tresor erstellen
+                    </div>
+                    <div class="setup-warning-box">
+                        Wähle ein starkes Passwort. Es gibt <strong>keine Wiederherstellung</strong> — bei Verlust sind alle Daten dauerhaft unzugänglich.
+                    </div>
                     <div class="lock-input-group">
-                        <input type="password" class="lock-input" id="newPwInput" placeholder="Neues Passwort (min. 8 Zeichen)" autocomplete="new-password">
+                        <label class="lock-label">Neues Passwort (min. 8 Zeichen)</label>
+                        <input type="password" class="lock-input" id="newPwInput"
+                            placeholder="Sicheres Passwort wählen…" autocomplete="new-password">
                         <button class="lock-toggle-pw" onclick="togglePwVis('newPwInput', this)">👁</button>
                     </div>
                     <div class="lock-strength"><div class="lock-strength-bar" id="newPwStrength"></div></div>
                     <div class="lock-input-group">
-                        <input type="password" class="lock-input" id="confirmPwInput" placeholder="Passwort bestätigen" autocomplete="new-password">
+                        <label class="lock-label">Passwort bestätigen</label>
+                        <input type="password" class="lock-input" id="confirmPwInput"
+                            placeholder="Passwort wiederholen…" autocomplete="new-password">
                     </div>
-                    <button class="lock-btn lock-btn-primary" onclick="handleSetup()">🛡️ Tresor erstellen</button>
+                    <button class="lock-btn lock-btn-primary" onclick="handleSetup()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        TRESOR ERSTELLEN
+                    </button>
                     <div class="lock-error" id="setupError"></div>
                 </div>
             </div>
 
-            <p class="lock-hint">🔒 AES-256-GCM · PBKDF2 600k Iterationen · Dein Passwort verlässt nie dein Gerät</p>
-            <button class="lock-btn lock-btn-secondary" onclick="window.location.href='/'">← Zurück zur App</button>
+            <p class="lock-hint">Passwort verlässt nie dein Gerät · Kein Server · Keine Cloud · Keine Wiederherstellung</p>
+            <button class="lock-btn lock-btn-secondary" onclick="window.location.href='/'">
+                ← Zurück zur App
+            </button>
         </div>
     </div>
+</div>
 
-    <!-- =========================================== -->
-    <!-- MAIN APP -->
-    <!-- =========================================== -->
-    <div id="mainApp">
-        <div class="app-container">
-            <!-- Header -->
-            <header class="app-header">
-                <div class="header-top">
-                    <div class="header-brand">
-                        <span class="header-brand-icon">📓</span>
-                        <div>
-                            <h1>Schatten-Berichtsheft</h1>
-                            <small>AES-256 verschlüsseltes Vertraulichkeits-Protokoll</small>
-                        </div>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn btn-primary" onclick="openNewEntry()">✍️ Neuer Eintrag</button>
-                        <button class="btn btn-warning" onclick="openExportModal()">📤 IHK-Export</button>
-                        <button class="btn btn-sm" onclick="lockApp()" title="Sperren">🔒</button>
-                        <a href="/" class="btn btn-sm" title="Zurück">←</a>
-                    </div>
-                </div>
-            </header>
+<!-- ══════════════════════════════════════════
+     MAIN APP
+     ══════════════════════════════════════════ -->
+<div id="mainApp">
 
-            <!-- Confidentiality Banner -->
-            <div class="conf-banner">
-                <span>🔐</span>
-                <span><strong>VERTRAULICH</strong> - Alle Einträge werden lokal mit AES-256-GCM verschlüsselt gespeichert. Kein Server, kein Cloud, kein Zugriff ohne Passwort.</span>
-            </div>
-
-            <!-- Stats -->
-            <div class="stats-strip">
-                <div class="stat-card">
-                    <div class="stat-num" style="color: var(--primary);" id="statTotal">0</div>
-                    <div class="stat-label">Einträge</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-num" style="color: var(--danger);" id="statCritical">0</div>
-                    <div class="stat-label">Kritisch</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-num" style="color: var(--warning);" id="statHigh">0</div>
-                    <div class="stat-label">Hoch</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-num" style="color: var(--text-muted);" id="statSpan">-</div>
-                    <div class="stat-label">Zeitraum</div>
+    <!-- Sticky header — full width outside container -->
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="header-brand">
+                <!-- Logo -->
+                <svg class="header-logo" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="34" height="34" rx="9" fill="rgba(255,45,85,0.09)"/>
+                    <rect x="0.75" y="0.75" width="32.5" height="32.5" rx="8.25" stroke="rgba(255,45,85,0.28)" stroke-width="0.75"/>
+                    <path d="M17 5.5L8.5 8.75V16.25C8.5 21 12.75 25.25 17 27.5C21.25 25.25 25.5 21 25.5 16.25V8.75L17 5.5Z"
+                        fill="rgba(255,45,85,0.1)" stroke="rgba(255,45,85,0.7)" stroke-width="1.2" stroke-linejoin="round"/>
+                    <rect x="13.5" y="16.5" width="7" height="6" rx="1.5" fill="rgba(255,45,85,0.85)"/>
+                    <path d="M14.5 16.5V14.5C14.5 13.1 15.6 12 17 12C18.4 12 19.5 13.1 19.5 14.5V16.5"
+                        stroke="rgba(255,45,85,0.85)" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+                </svg>
+                <div class="header-text">
+                    <h1>Schatten-Berichtsheft</h1>
+                    <small>AES-256-GCM · verschlüsseltes Protokoll</small>
                 </div>
             </div>
-
-            <!-- Toolbar -->
-            <div class="toolbar">
-                <div class="toolbar-left">
-                    <div class="search-box">
-                        <span>🔍</span>
-                        <input type="text" id="searchInput" placeholder="Einträge durchsuchen…" oninput="renderEntries()">
-                    </div>
-                    <select class="filter-select" id="filterSeverity" onchange="renderEntries()">
-                        <option value="all">Alle Stufen</option>
-                        <option value="critical">🔴 Kritisch</option>
-                        <option value="high">🟠 Hoch</option>
-                        <option value="medium">🔵 Mittel</option>
-                        <option value="low">🟢 Niedrig</option>
-                        <option value="note">⚪ Notiz</option>
-                    </select>
-                    <select class="filter-select" id="filterCategory" onchange="renderEntries()">
-                        <option value="all">Alle Kategorien</option>
-                    </select>
-                </div>
-                <div class="toolbar-right">
-                    <select class="filter-select" id="sortOrder" onchange="renderEntries()">
-                        <option value="newest">Neueste zuerst</option>
-                        <option value="oldest">Älteste zuerst</option>
-                        <option value="severity">Nach Schwere</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Entries List -->
-            <div class="entries-list" id="entriesList"></div>
-        </div>
-    </div>
-
-    <!-- =========================================== -->
-    <!-- NEW/EDIT ENTRY MODAL -->
-    <!-- =========================================== -->
-    <div class="modal-overlay" id="entryModal">
-        <div class="modal">
-            <div class="modal-head">
-                <h2 id="entryModalTitle">✍️ Neuer Eintrag</h2>
-                <button class="modal-close" onclick="closeModal('entryModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="entryEditId">
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">📅 Datum</label>
-                        <input type="date" class="form-input" id="entryDate">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">🕐 Uhrzeit (optional)</label>
-                        <input type="time" class="form-input" id="entryTime">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">⚠️ Schweregrad</label>
-                    <div class="severity-pills" id="severityPills">
-                        <div class="severity-pill" data-sev="critical" onclick="selectSeverity('critical')">🔴 Kritisch</div>
-                        <div class="severity-pill" data-sev="high" onclick="selectSeverity('high')">🟠 Hoch</div>
-                        <div class="severity-pill active" data-sev="medium" onclick="selectSeverity('medium')">🔵 Mittel</div>
-                        <div class="severity-pill" data-sev="low" onclick="selectSeverity('low')">🟢 Niedrig</div>
-                        <div class="severity-pill" data-sev="note" onclick="selectSeverity('note')">⚪ Notiz</div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">🏷️ Kategorie</label>
-                    <select class="form-select" id="entryCategory">
-                        <option value="verbal">🗣️ Verbale Belästigung / Anschreien</option>
-                        <option value="neglect">🚫 Ausbildungspflicht vernachlässigt</option>
-                        <option value="overtime">⏰ Überstunden / Arbeitszeitverstöße</option>
-                        <option value="mobbing">😢 Mobbing / Ausgrenzung</option>
-                        <option value="safety">⚡ Arbeitsschutz-Verstoß</option>
-                        <option value="discrimination">🚷 Diskriminierung</option>
-                        <option value="documentation">📝 Fehlende Dokumentation / Anleitung</option>
-                        <option value="positive">✅ Positiver Fortschritt</option>
-                        <option value="other">📌 Sonstiges</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">📝 Was ist passiert?</label>
-                    <textarea class="form-textarea" id="entryText" placeholder="Beschreibe den Vorfall so detailliert wie möglich: Was genau wurde gesagt/getan? Von wem? Wo? Unter welchen Umständen?"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">👥 Zeugen (optional)</label>
-                    <input type="text" class="form-input" id="entryWitnesses" placeholder="Namen, durch Komma getrennt">
-                </div>
-
-                <div class="modal-footer">
-                    <button class="btn" onclick="closeModal('entryModal')">Abbrechen</button>
-                    <button class="btn btn-danger" onclick="saveEntry()">🔐 Verschlüsselt speichern</button>
-                </div>
+            <div class="header-actions">
+                <button class="btn btn-cta" onclick="openNewEntry()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Neuer Eintrag
+                </button>
+                <button class="btn btn-warning" onclick="openExportModal()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    IHK-Export
+                </button>
+                <button class="btn btn-sm btn-icon" onclick="lockApp()" title="Sperren (Strg+L)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </button>
+                <a href="/" class="btn btn-sm btn-icon" title="Zurück">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                </a>
             </div>
         </div>
-    </div>
+    </header>
 
-    <!-- =========================================== -->
-    <!-- EXPORT MODAL -->
-    <!-- =========================================== -->
-    <div class="modal-overlay" id="exportModal">
-        <div class="modal" style="max-width: 680px;">
-            <div class="modal-head">
-                <h2>📤 IHK-Beschwerde-Protokoll Export</h2>
-                <button class="modal-close" onclick="closeModal('exportModal')">&times;</button>
+    <div class="app-body">
+
+        <!-- CONFIDENTIALITY BANNER -->
+        <div class="conf-banner">
+            <svg class="conf-banner-icon" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="15" cy="15" r="13" stroke="rgba(255,45,85,0.38)" stroke-width="1.25"/>
+                <path d="M15 4L7 7V14.5C7 19.2 10.6 23.5 15 25C19.4 23.5 23 19.2 23 14.5V7L15 4Z"
+                    fill="rgba(255,45,85,0.08)" stroke="rgba(255,45,85,0.6)" stroke-width="1.25" stroke-linejoin="round"/>
+                <rect x="12.5" y="15" width="5" height="4.5" rx="1.25" fill="rgba(255,45,85,0.85)"/>
+                <path d="M13.5 15V13.5C13.5 12.7 14.2 12 15 12C15.8 12 16.5 12.7 16.5 13.5V15"
+                    stroke="rgba(255,45,85,0.85)" stroke-width="1.25" stroke-linecap="round" fill="none"/>
+            </svg>
+            <span class="conf-banner-text">
+                <strong>VERTRAULICH</strong> — Alle Einträge werden lokal mit AES-256-GCM verschlüsselt gespeichert. Kein Server, keine Cloud, kein Zugriff ohne dein Passwort.
+            </span>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-grid">
+            <div class="stat-card stat-card-total">
+                <svg class="stat-icon" viewBox="0 0 30 30" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round">
+                    <rect x="3" y="3" width="24" height="24" rx="4"/>
+                    <line x1="8" y1="10" x2="22" y2="10"/>
+                    <line x1="8" y1="15" x2="22" y2="15"/>
+                    <line x1="8" y1="20" x2="16" y2="20"/>
+                </svg>
+                <div class="stat-label">Einträge</div>
+                <div class="stat-num" id="statTotal">0</div>
             </div>
-            <div class="modal-body">
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.6;">
-                    Exportiert alle Einträge als strukturiertes Beschwerde-Protokoll.
-                    <strong>Tipp:</strong> Du kannst auch nur bestimmte Schweregrade oder Zeiträume exportieren.
-                </p>
-
-                <div class="form-row" style="margin-bottom: 1rem;">
-                    <div class="form-group">
-                        <label class="form-label">📅 Von</label>
-                        <input type="date" class="form-input" id="exportFrom">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">📅 Bis</label>
-                        <input type="date" class="form-input" id="exportTo">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Schweregrad-Filter</label>
-                    <select class="form-select" id="exportSeverity">
-                        <option value="all">Alle Stufen</option>
-                        <option value="critical">Nur Kritisch</option>
-                        <option value="critical,high">Kritisch + Hoch</option>
-                        <option value="critical,high,medium">Kritisch + Hoch + Mittel</option>
-                    </select>
-                </div>
-
-                <div style="margin-top: 1rem;">
-                    <label class="form-label">Vorschau</label>
-                    <div class="export-preview" id="exportPreview">Klicke "Vorschau" um das Protokoll zu generieren.</div>
-                </div>
-
-                <div class="modal-footer" style="margin-top: 1rem;">
-                    <button class="btn" onclick="generatePreview()">👁 Vorschau</button>
-                    <button class="btn btn-success" onclick="exportAsText()">📄 Als TXT</button>
-                    <button class="btn btn-primary" onclick="exportAsPDF()">📑 Als PDF</button>
-                </div>
+            <div class="stat-card stat-card-critical">
+                <svg class="stat-icon" viewBox="0 0 30 30" fill="none" stroke="#ff2d55" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 3L27 27H3L15 3Z"/>
+                    <line x1="15" y1="13" x2="15" y2="19"/>
+                    <circle cx="15" cy="23" r="1" fill="#ff2d55"/>
+                </svg>
+                <div class="stat-label">Kritisch</div>
+                <div class="stat-num" id="statCritical">0</div>
+            </div>
+            <div class="stat-card stat-card-high">
+                <svg class="stat-icon" viewBox="0 0 30 30" fill="none" stroke="#ffb347" stroke-width="2" stroke-linecap="round">
+                    <circle cx="15" cy="15" r="12"/>
+                    <line x1="15" y1="10" x2="15" y2="17"/>
+                    <circle cx="15" cy="21" r="1" fill="#ffb347"/>
+                </svg>
+                <div class="stat-label">Hoch</div>
+                <div class="stat-num" id="statHigh">0</div>
+            </div>
+            <div class="stat-card stat-card-span">
+                <svg class="stat-icon" viewBox="0 0 30 30" fill="none" stroke="#4dabf7" stroke-width="2" stroke-linecap="round">
+                    <rect x="3" y="5" width="24" height="22" rx="3"/>
+                    <line x1="3" y1="11" x2="27" y2="11"/>
+                    <line x1="9" y1="3" x2="9" y2="7"/>
+                    <line x1="21" y1="3" x2="21" y2="7"/>
+                    <rect x="9" y="16" width="4" height="4" rx="1" fill="#4dabf7"/>
+                    <rect x="17" y="16" width="4" height="4" rx="1" fill="#4dabf7"/>
+                </svg>
+                <div class="stat-label">Zeitraum</div>
+                <div class="stat-num" id="statSpan">—</div>
             </div>
         </div>
-    </div>
 
-    <!-- =========================================== -->
-    <!-- DELETE CONFIRM MODAL -->
-    <!-- =========================================== -->
-    <div class="modal-overlay" id="deleteModal">
-        <div class="modal" style="max-width: 400px;">
-            <div class="modal-head">
-                <h2>🗑️ Eintrag löschen</h2>
-                <button class="modal-close" onclick="closeModal('deleteModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6;">Diesen Eintrag unwiderruflich löschen? Die Änderung wird sofort verschlüsselt gespeichert.</p>
-                <div class="modal-footer">
-                    <button class="btn" onclick="closeModal('deleteModal')">Abbrechen</button>
-                    <button class="btn btn-danger" id="confirmDeleteBtn">🗑️ Endgültig löschen</button>
+        <!-- TOOLBAR -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <div class="search-box">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Einträge durchsuchen…" oninput="renderEntries()">
                 </div>
+                <select class="filter-select" id="filterSeverity" onchange="renderEntries()">
+                    <option value="all">Alle Stufen</option>
+                    <option value="critical">🔴 Kritisch</option>
+                    <option value="high">🟠 Hoch</option>
+                    <option value="medium">🔵 Mittel</option>
+                    <option value="low">🟢 Niedrig</option>
+                    <option value="note">⚪ Notiz</option>
+                </select>
+                <select class="filter-select" id="filterCategory" onchange="renderEntries()">
+                    <option value="all">Alle Kategorien</option>
+                </select>
+            </div>
+            <div class="toolbar-right">
+                <select class="filter-select" id="sortOrder" onchange="renderEntries()">
+                    <option value="newest">Neueste zuerst</option>
+                    <option value="oldest">Älteste zuerst</option>
+                    <option value="severity">Nach Schwere</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- ENTRIES -->
+        <div class="entries-list" id="entriesList"></div>
+
+    </div><!-- /.app-body -->
+</div><!-- /#mainApp -->
+
+<!-- ══════════════════════════════════════════
+     ENTRY MODAL
+     ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="entryModal">
+    <div class="modal">
+        <div class="modal-head">
+            <h2 id="entryModalTitle">Neuer Eintrag</h2>
+            <button class="modal-close" onclick="closeModal('entryModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="entryEditId">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Datum</label>
+                    <input type="date" class="form-input" id="entryDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Uhrzeit (optional)</label>
+                    <input type="time" class="form-input" id="entryTime">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Schweregrad</label>
+                <div class="severity-pills" id="severityPills">
+                    <div class="severity-pill" data-sev="critical" onclick="selectSeverity('critical')">Kritisch</div>
+                    <div class="severity-pill" data-sev="high" onclick="selectSeverity('high')">Hoch</div>
+                    <div class="severity-pill active" data-sev="medium" onclick="selectSeverity('medium')">Mittel</div>
+                    <div class="severity-pill" data-sev="low" onclick="selectSeverity('low')">Niedrig</div>
+                    <div class="severity-pill" data-sev="note" onclick="selectSeverity('note')">Notiz</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Kategorie</label>
+                <select class="form-select" id="entryCategory">
+                    <option value="verbal">Verbale Belästigung / Anschreien</option>
+                    <option value="neglect">Ausbildungspflicht vernachlässigt</option>
+                    <option value="overtime">Überstunden / Arbeitszeitverstöße</option>
+                    <option value="mobbing">Mobbing / Ausgrenzung</option>
+                    <option value="safety">Arbeitsschutz-Verstoß</option>
+                    <option value="discrimination">Diskriminierung</option>
+                    <option value="documentation">Fehlende Dokumentation / Anleitung</option>
+                    <option value="positive">Positiver Fortschritt</option>
+                    <option value="other">Sonstiges</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Was ist passiert?</label>
+                <textarea class="form-textarea" id="entryText"
+                    placeholder="Beschreibe den Vorfall so detailliert wie möglich: Was genau wurde gesagt/getan? Von wem? Wo? Unter welchen Umständen?"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Zeugen (optional)</label>
+                <input type="text" class="form-input" id="entryWitnesses"
+                    placeholder="Namen, durch Komma getrennt">
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('entryModal')">Abbrechen</button>
+                <button class="btn btn-danger" onclick="saveEntry()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    Verschlüsselt speichern
+                </button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Session Timer -->
-    <div class="session-timer" id="sessionTimer" style="display:none;">
-        <div class="dot"></div>
-        <span id="sessionTimerText">Sitzung: 0:00</span>
+<!-- ══════════════════════════════════════════
+     EXPORT MODAL
+     ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="exportModal">
+    <div class="modal" style="max-width:680px;">
+        <div class="modal-head">
+            <h2>IHK-Beschwerde-Protokoll Export</h2>
+            <button class="modal-close" onclick="closeModal('exportModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="color:var(--text-2);font-size:0.84rem;margin-bottom:1.25rem;line-height:1.6;">
+                Exportiert alle Einträge als strukturiertes Beschwerde-Protokoll für die IHK.
+                Du kannst Zeitraum und Schweregrad einschränken.
+            </p>
+            <div class="form-row" style="margin-bottom:1rem;">
+                <div class="form-group">
+                    <label class="form-label">Von</label>
+                    <input type="date" class="form-input" id="exportFrom">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Bis</label>
+                    <input type="date" class="form-input" id="exportTo">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Schweregrad-Filter</label>
+                <select class="form-select" id="exportSeverity">
+                    <option value="all">Alle Stufen</option>
+                    <option value="critical">Nur Kritisch</option>
+                    <option value="critical,high">Kritisch + Hoch</option>
+                    <option value="critical,high,medium">Kritisch + Hoch + Mittel</option>
+                </select>
+            </div>
+            <div style="margin-top:1rem;">
+                <label class="form-label">Vorschau</label>
+                <div class="export-preview" id="exportPreview">Klicke "Vorschau" um das Protokoll zu generieren.</div>
+            </div>
+            <div class="modal-footer" style="margin-top:1rem;">
+                <button class="btn" onclick="generatePreview()">Vorschau</button>
+                <button class="btn btn-success" onclick="exportAsText()">Als TXT</button>
+                <button class="btn btn-primary" onclick="exportAsPDF()">Als PDF</button>
+            </div>
+        </div>
     </div>
+</div>
 
-    <!-- Toast -->
-    <div class="toast" id="toast"><span id="toastText"></span></div>
+<!-- ══════════════════════════════════════════
+     DELETE MODAL
+     ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="max-width:400px;">
+        <div class="modal-head">
+            <h2>Eintrag löschen</h2>
+            <button class="modal-close" onclick="closeModal('deleteModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="color:var(--text-2);font-size:0.9rem;line-height:1.65;">
+                Diesen Eintrag unwiderruflich löschen? Die Änderung wird sofort verschlüsselt gespeichert.
+            </p>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('deleteModal')">Abbrechen</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn">Endgültig löschen</button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Session Timer -->
+<div class="session-timer" id="sessionTimer" style="display:none;">
+    <div class="session-dot"></div>
+    <span id="sessionTimerText">Sitzung: 0:00</span>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><span id="toastText"></span></div>
+
+<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js"></script>
 </body>
 </html>
