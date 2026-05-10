@@ -512,6 +512,7 @@
             border: 1px solid transparent; cursor: pointer;
             transition: all 0.15s var(--ease);
             opacity: 0; transform: translateY(6px);
+            position: relative; overflow: hidden;
         }
         .report-item.visible {
             opacity: 1; transform: translateY(0);
@@ -1274,6 +1275,47 @@
         .ais-history-item-prof {
             font-size: 0.75rem; font-weight: 600; color: var(--text-secondary);
         }
+        .ais-del-trigger {
+            background: none; border: none; color: var(--text-muted);
+            cursor: pointer; padding: 4px 8px; font-size: 0.8rem;
+            border-radius: 6px; transition: all 0.15s; opacity: 0.5; line-height: 1; flex-shrink: 0;
+        }
+        .ais-del-trigger:hover { opacity: 1; color: #f87171; background: rgba(239,68,68,0.1); }
+
+        /* Inline Delete Confirmation Strip — slides in from right within the row */
+        .ais-history-item { overflow: hidden; }
+        .ais-del-confirm-strip {
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(12,6,24,0.97) 28%);
+            display: flex; align-items: center; justify-content: flex-end;
+            gap: 6px; padding: 0 10px;
+            transform: translateX(101%);
+            transition: transform 0.22s cubic-bezier(0.16,1,0.3,1);
+            border-radius: inherit; pointer-events: none;
+        }
+        .ais-history-item.ais-confirming { position: relative; }
+        .ais-history-item.ais-confirming .ais-del-confirm-strip,
+        .report-item.ais-confirming .ais-del-confirm-strip {
+            transform: translateX(0); pointer-events: all;
+        }
+        .ais-del-confirm-label {
+            font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.55);
+            white-space: nowrap; margin-right: 2px;
+        }
+        .ais-del-btn-nein {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.4); border-radius: 7px; padding: 4px 11px;
+            font-size: 0.7rem; font-weight: 500; cursor: pointer;
+            transition: all 0.15s; white-space: nowrap;
+        }
+        .ais-del-btn-nein:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+        .ais-del-btn-ja {
+            background: rgba(239,68,68,0.14); border: 1px solid rgba(239,68,68,0.3);
+            color: #f87171; border-radius: 7px; padding: 4px 13px;
+            font-size: 0.7rem; font-weight: 700; cursor: pointer;
+            transition: all 0.15s; white-space: nowrap; letter-spacing: 0.03em;
+        }
+        .ais-del-btn-ja:hover { background: rgba(239,68,68,0.25); border-color: rgba(239,68,68,0.55); color: #fca5a5; }
 
         /* AI Studio Day Actions */
         .ais-day-action {
@@ -3626,6 +3668,11 @@ Beispiel:
                             <button class="btn-icon success" onclick="duplicateReport('${report.id}')" title="Duplizieren"><svg class="icon"><use href="#i-copy"/></svg></button>
                             <button class="btn-icon" onclick="exportReportPDF('${report.id}')" title="Als PDF exportieren"><svg class="icon"><use href="#i-file"/></svg></button>
                             <button class="btn-icon danger" onclick="deleteReport('${report.id}')" title="Löschen"><svg class="icon"><use href="#i-trash"/></svg></button>
+                        </div>
+                        <div class="ais-del-confirm-strip" onclick="event.stopPropagation()">
+                            <span class="ais-del-confirm-label">Löschen?</span>
+                            <button class="ais-del-btn-nein" onclick="cancelDeleteReport('${report.id}')">Nein</button>
+                            <button class="ais-del-btn-ja" onclick="confirmDeleteReport('${report.id}')">Ja</button>
                         </div>` : ''}
                     </div>
                 `;
@@ -3946,12 +3993,22 @@ Beispiel:
         }
 
         function deleteReport(id) {
+            const el = document.querySelector(`.report-item[data-id="${id}"]`);
+            if (el) { el.classList.add('ais-confirming'); return; }
+            // fallback if data-id not found
             if (!confirm('Möchtest du diesen Bericht wirklich löschen?')) return;
-
             reports = reports.filter(r => r.id !== id);
-            saveToStorage();
-            updateUI();
-            showToast('Bericht gelöscht', 'info');
+            saveToStorage(); updateUI(); showToast('Bericht gelöscht', 'info');
+        }
+
+        function cancelDeleteReport(id) {
+            const el = document.querySelector(`.report-item[data-id="${id}"]`);
+            if (el) el.classList.remove('ais-confirming');
+        }
+
+        function confirmDeleteReport(id) {
+            reports = reports.filter(r => r.id !== id);
+            saveToStorage(); updateUI(); showToast('Bericht gelöscht', 'info');
         }
 
         // ═══════════════════════════════════════
@@ -6916,13 +6973,18 @@ Beispiel:
                     const dateStr = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
                     const preview = item.days?.[0]?.entries?.[0]?.replace('• ', '') || 'Kein Inhalt';
                     return `
-                        <div class="ais-history-item" onclick="AIStudio.loadFromHistory(${origIdx})">
+                        <div class="ais-history-item" id="ais-hist-${origIdx}" onclick="AIStudio.loadFromHistory(${origIdx})">
                             <div class="ais-history-item-header">
                                 <span class="ais-history-item-prof">${item.professionIcon || '📋'} ${item.professionName || item.profession}</span>
                                 <span class="ais-history-item-date">${dateStr}</span>
-                                <button onclick="event.stopPropagation(); AIStudio.deleteFromHistory(${origIdx});" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px 8px;font-size:0.8rem;" title="Löschen">✕</button>
+                                <button class="ais-del-trigger" onclick="event.stopPropagation(); AIStudio.deleteFromHistory(${origIdx});" title="Löschen">✕</button>
                             </div>
                             <div class="ais-history-item-preview">KW ${item.calendarWeek || '?'} • ${item.days?.length || 0} Tage • ${preview}</div>
+                            <div class="ais-del-confirm-strip" onclick="event.stopPropagation()">
+                                <span class="ais-del-confirm-label">Löschen?</span>
+                                <button class="ais-del-btn-nein" onclick="AIStudio.cancelDeleteHistory(${origIdx})">Nein</button>
+                                <button class="ais-del-btn-ja" onclick="AIStudio.confirmDeleteHistory(${origIdx})">Ja</button>
+                            </div>
                         </div>`;
                 }).join('');
         }
@@ -7894,8 +7956,17 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
         }
 
         function deleteFromHistory(idx) {
+            const el = document.getElementById('ais-hist-' + idx);
+            if (el) el.classList.add('ais-confirming');
+        }
+
+        function cancelDeleteHistory(idx) {
+            const el = document.getElementById('ais-hist-' + idx);
+            if (el) el.classList.remove('ais-confirming');
+        }
+
+        function confirmDeleteHistory(idx) {
             if (idx < 0 || idx >= state.generationHistory.length) return;
-            if (!confirm('Diesen Verlaufs-Eintrag wirklich löschen?')) return;
             state.generationHistory.splice(idx, 1);
             try { localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(state.generationHistory)); } catch(e) {}
             renderHistory();
@@ -7926,6 +7997,8 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
             insertDay,
             loadFromHistory,
             deleteFromHistory,
+            cancelDeleteHistory,
+            confirmDeleteHistory,
             selectStyle,
             toggleTheme,
             toggleHuman,
@@ -7958,7 +8031,7 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
             timer = setTimeout(function() { clicks = 0; }, 1200);
             if (clicks >= 5) {
                 clicks = 0;
-                window.location.href = './schatten-berichtsheft.html';
+                window.location.href = '/schatten-berichtsheft/';
             }
         });
     })();
