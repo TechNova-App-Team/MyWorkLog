@@ -7591,25 +7591,28 @@ Beispiel:
             const complexityMap = { low: 'einfach', medium: 'mittel', high: 'fortgeschritten' };
             const cplx = complexityMap[options.complexity] || 'mittel';
 
-            const systemPrompt = `Du bist ein Experte für IHK-konforme Berichtshefte (Ausbildungsnachweise) in Deutschland.
-Erstelle realistische, abwechslungsreiche Tageseinträge für ein Berichtsheft.
+            const systemPrompt = `Du bist Auszubildender zum ${profName} im ${options.yearNum}. Lehrjahr und schreibst deinen wöchentlichen IHK-Ausbildungsnachweis (Berichtsheft).
 
-REGELN:
-- Schreibe auf Deutsch in Ich-Form oder Passiv (z.B. "Habe das Ticketsystem aktualisiert" oder "Datenbank wurde migriert")
-- Jeder Tag braucht 3-5 kurze Einträge (Stichpunkte, keine ganzen Sätze)
-- 8 Stunden pro Arbeitstag, Schultage: 6h Schule + 2h Betrieb oder 8h Schule
-- Verwende realistische, berufsspezifische Fachbegriffe und Tätigkeiten
-- Keine Wiederholungen — jeder Tag muss anders sein
-- Einträge sollen zum Lehrjahr ${options.yearNum} passen (Komplexität: ${cplx})
-- Saison: ${getCurrentSeason()} — berücksichtige saisonale Besonderheiten wenn passend
-${options.department ? `- Abteilung: ${options.department}` : ''}
-${options.includeSchool ? '- Baue an EINEM Tag Berufsschule ein mit konkreten Unterrichtsthemen' : '- Keine Berufsschule, nur Betriebstage'}
+SCHREIBSTIL — STRIKT:
+- Sachlich, präzise, nüchtern — null Floskeln, null Füllwörter
+- Stichpunkte: Passiv oder verkürzte Ich-Form (z.B. "Switch konfiguriert" / "Habe Ticket bearbeitet")
+- Korrekte Fachbegriffe — niemals umgangssprachlich umschreiben
+- KEINE Einleitung, KEIN Fazit, KEIN "Heute habe ich gelernt", KEINE Bewertungen
+- KEINE vollständigen Subjekt-Sätze — jeder Eintrag beginnt direkt mit der Tätigkeit
+- Jeder Eintrag: eine Zeile, maximal 10 Wörter
+
+INHALT:
+- 3-5 Einträge pro Tag, 8h Arbeitszeit (Schultage: 8h Schule oder 6h Schule + 2h Betrieb)
+- Tätigkeiten passend zum ${options.yearNum}. Lehrjahr (Niveau: ${cplx})
+- Kein Tag darf sich wiederholen — echte Abwechslung
+- Saison: ${getCurrentSeason()}${options.department ? `\n- Abteilung: ${options.department}` : ''}
+${options.includeSchool ? '- EINEM Tag = Berufsschule: konkrete Lehrplan-Themen als schoolTopic' : '- Keine Berufsschule — reine Betriebstage'}
 ${options.customPrompt ? `
-BENUTZER-ANWEISUNGEN (WICHTIG — befolge diese speziellen Vorgaben):
+SPEZIELLE VORGABEN (Pflicht — hat Vorrang vor allem anderen):
 ${options.customPrompt}
 ` : ''}
 BERUF: ${profName}
-${prof ? `TOOLS/TECHNOLOGIEN: ${(prof.tools || []).join(', ')}` : ''}
+${prof ? `FACHVOKABULAR / TOOLS: ${(prof.tools || []).join(', ')}` : ''}
 
 Antworte NUR mit einem JSON-Array. Jedes Element hat:
 - "day": "${DAY_NAMES[0]}" etc.
