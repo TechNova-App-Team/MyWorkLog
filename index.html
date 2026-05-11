@@ -26,11 +26,14 @@
   }catch(e){}
   // 4. Pre-apply full-width for mobile/tablet (<1024px) — prevents margin-left shift when init-app.js adds full-width class
   try{if(window.innerWidth<1024){document.documentElement.setAttribute('data-pre-fw','');}}catch(e){}
-  // 5. Lock #mainContent position before JS runs — prevents sidebar IIFE from causing a layout shift
+  // 5. Lock sidebar+mainContent position before any CSS loads — eliminates CLS from flex-flow reflow
   try{
     var _sbC2=localStorage.getItem('sidebar_collapsed')==='true';
-    var _ml2=window.innerWidth>=1024?(_sbC2?64:220):0;
-    if(_ml2>0){var _mS3=document.createElement('style');_mS3.id='cls-main-pos';_mS3.textContent='#mainContent{margin-left:'+_ml2+'px!important;width:calc(100% - '+_ml2+'px)!important}';document.head.appendChild(_mS3);}
+    var _sbW=_sbC2?64:220;
+    var _ml2=window.innerWidth>=1024?_sbW:0;
+    var _css='.sidebar{position:fixed!important;top:0;left:0;height:100%!important;width:'+_sbW+'px!important;z-index:100!important}';
+    if(_ml2>0){_css+='#mainContent{margin-left:'+_ml2+'px!important;width:calc(100% - '+_ml2+'px)!important}';}
+    var _mS3=document.createElement('style');_mS3.id='cls-main-pos';_mS3.textContent=_css;document.head.appendChild(_mS3);
   }catch(e){}
 })();</script>
 <meta charset="UTF-8">
