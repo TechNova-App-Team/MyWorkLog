@@ -1,4 +1,32 @@
 // ═══ CORE: INIT-APP ═══
+
+    // ── CLS Monitor: logs every layout shift to console ──
+    (function initCLSMonitor() {
+        if (!('PerformanceObserver' in window)) return;
+        let clsTotal = 0;
+        try {
+            const po = new PerformanceObserver(list => {
+                for (const entry of list.getEntries()) {
+                    if (entry.hadRecentInput) continue;
+                    clsTotal += entry.value;
+                    const sources = (entry.sources || []).map(s => {
+                        const el = s.node;
+                        if (!el) return '(unknown)';
+                        const tag = el.tagName ? el.tagName.toLowerCase() : '?';
+                        const id = el.id ? `#${el.id}` : '';
+                        const cls = el.classList && el.classList.length ? `.${[...el.classList].join('.')}` : '';
+                        return `${tag}${id}${cls}`;
+                    }).join(' → ');
+                    console.groupCollapsed(`%c[CLS] +${entry.value.toFixed(4)} (total: ${clsTotal.toFixed(4)}) @ ${Math.round(entry.startTime)}ms`, 'color:#a855f7;font-weight:bold');
+                    console.log('Quellen:', sources || '(keine)');
+                    console.log('Entry:', entry);
+                    console.groupEnd();
+                }
+            });
+            po.observe({ type: 'layout-shift', buffered: true });
+        } catch(e) {}
+    })();
+
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
         // Release the CLS pre-apply lock on #mainContent — CSS classes are now in their final state
