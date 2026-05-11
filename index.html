@@ -993,34 +993,10 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 </div>
             </div>
             <div class="date-badge" id="currentDate"></div>
-<script>document.getElementById('currentDate').textContent=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'long'});</script>
+<script>(function(){var d=new Date();var wd=d.toLocaleDateString('de-DE',{weekday:'short'}).replace('.','').toUpperCase();var dm=d.toLocaleDateString('de-DE',{day:'numeric',month:'short'}).replace('.','').trim();document.getElementById('currentDate').innerHTML='<span class="date-badge__day">'+wd+'</span><span class="date-badge__sep">/</span><span class="date-badge__date">'+dm+'</span>';})();</script>
         </header>
 
         <div id="view-dashboard" class="view-section active">
-
-            <!-- ═══ KNOWN ISSUES BANNER ═══ -->
-            <div id="updatePerfBanner" class="upb-banner" role="alert" aria-live="polite">
-                <div class="upb-content">
-                    <div class="upb-left">
-                        <span class="upb-icon" aria-hidden="true">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                        </span>
-                        <div class="upb-text">
-                            <span class="upb-label">CLS Update im Gange 🔧</span>
-                            <span class="upb-msg">Layout Shift Fix wird deployed</span>
-                        </div>
-                    </div>
-                    <div class="upb-actions">
-                        <a href="/update_bugs/" class="upb-btn upb-btn--bug" title="Probleme anzeigen">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6l-7 7"/></svg>
-                            Details
-                        </a>
-                        <button class="upb-close" onclick="dismissUpdatePerfBanner()" aria-label="Banner schließen" title="Schließen">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
 
             <script>
                 var UPB_ACTIVE = true; // ← false = Banner verstecken
@@ -1052,6 +1028,30 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             <!-- Edit Mode Controls -->
             <div id="dashboardEditControls" style="display:flex; gap:10px; margin-bottom:1.25rem; opacity:0; pointer-events:none; transition:opacity 0.3s;">
                 <button id="dashboardCancelBtn" class="btn" style="padding:8px 16px; font-size:0.85rem; background:rgba(217,119,6,0.15); border:1px solid rgba(217,119,6,0.3); color:#f59e0b; display:none;" onclick="cancelDashboardEditMode()" title="Änderungen verwerfen">✕ Abbrechen</button>
+            </div>
+
+            <!-- ═══ KNOWN ISSUES BANNER ═══ -->
+            <div id="updatePerfBanner" class="upb-banner" role="alert" aria-live="polite">
+                <div class="upb-content">
+                    <div class="upb-left">
+                        <span class="upb-icon" aria-hidden="true">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                        </span>
+                        <div class="upb-text">
+                            <span class="upb-label">CLS Update im Gange 🔧</span>
+                            <span class="upb-msg">Layout Shift Fix wird deployed</span>
+                        </div>
+                    </div>
+                    <div class="upb-actions">
+                        <a href="/update_bugs/" class="upb-btn upb-btn--bug" title="Probleme anzeigen">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6l-7 7"/></svg>
+                            Details
+                        </a>
+                        <button class="upb-close" onclick="dismissUpdatePerfBanner()" aria-label="Banner schließen" title="Schließen">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div id="dashboardContainer" class="dashboard-grid">
