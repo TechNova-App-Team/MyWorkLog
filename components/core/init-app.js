@@ -165,6 +165,44 @@
         } catch(e) {}
     })();
 
+    // ── ResizeObserver on #mainContent — logs stack trace on every size change ──
+    (function initMainContentResizeWatch() {
+        if (!('ResizeObserver' in window)) return;
+        try {
+            let _roFirst = true;
+            const ro = new ResizeObserver(entries => {
+                for (const e of entries) {
+                    const r = e.contentRect;
+                    const t = new Error().stack || '(no stack)';
+                    if (_roFirst) {
+                        // First call = initial size, just record it
+                        _roFirst = false;
+                        console.log(
+                            '%c📐 #mainContent initial size',
+                            'color:#6366f1;font-weight:700;font-size:11px;',
+                            `w:${Math.round(r.width)}px  h:${Math.round(r.height)}px  @${Math.round(performance.now())}ms`
+                        );
+                        return;
+                    }
+                    console.group(
+                        `%c🔴 #mainContent RESIZED  %cw:${Math.round(r.width)}px  h:${Math.round(r.height)}px  @${Math.round(performance.now())}ms`,
+                        'background:#450a0a;color:#ef4444;font-weight:800;padding:3px 8px;border-radius:6px;font-size:11px;',
+                        'color:#94a3b8;font-size:11px;font-family:monospace;'
+                    );
+                    console.log('%c breadcrumb:', 'color:#818cf8;font-weight:700;font-size:11px;', window._clsBC || '?');
+                    console.log('%c STACK TRACE:', 'color:#f59e0b;font-weight:700;font-size:11px;', '\n' + t);
+                    console.groupEnd();
+                }
+            });
+            const mainEl = document.getElementById('mainContent');
+            if (mainEl) ro.observe(mainEl);
+            else document.addEventListener('DOMContentLoaded', () => {
+                const m = document.getElementById('mainContent');
+                if (m) ro.observe(m);
+            });
+        } catch(e) {}
+    })();
+
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
         window._clsBC = 'DOMContentLoaded-start';
