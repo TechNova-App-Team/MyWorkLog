@@ -1,6 +1,7 @@
 // ═══ CORE: INIT-APP ═══
 
-    // ── CLS Monitor: logs every layout shift to console ──
+    // ── CLS Monitor: logs every layout shift with last breadcrumb ──
+    window._clsBC = 'init';
     (function initCLSMonitor() {
         if (!('PerformanceObserver' in window)) return;
         let clsTotal = 0;
@@ -15,9 +16,13 @@
                         const tag = el.tagName ? el.tagName.toLowerCase() : '?';
                         const id = el.id ? `#${el.id}` : '';
                         const cls = el.classList && el.classList.length ? `.${[...el.classList].join('.')}` : '';
-                        return `${tag}${id}${cls}`;
-                    }).join(' → ');
-                    console.groupCollapsed(`%c[CLS] +${entry.value.toFixed(4)} (total: ${clsTotal.toFixed(4)}) @ ${Math.round(entry.startTime)}ms`, 'color:#a855f7;font-weight:bold');
+                        const r = s.previousRect;
+                        const prev = r ? `(${Math.round(r.left)},${Math.round(r.top)})` : '';
+                        const c = s.currentRect;
+                        const curr = c ? `→(${Math.round(c.left)},${Math.round(c.top)})` : '';
+                        return `${tag}${id}${cls} ${prev}${curr}`;
+                    }).join(' | ');
+                    console.groupCollapsed(`%c[CLS] +${entry.value.toFixed(4)} (total: ${clsTotal.toFixed(4)}) @ ${Math.round(entry.startTime)}ms | nach: ${window._clsBC}`, 'color:#a855f7;font-weight:bold');
                     console.log('Quellen:', sources || '(keine)');
                     console.log('Entry:', entry);
                     console.groupEnd();
@@ -29,8 +34,10 @@
 
     // --- INIT ---
     document.addEventListener('DOMContentLoaded', () => {
+        window._clsBC = 'DOMContentLoaded-start';
         // Release the CLS pre-apply lock on #mainContent — CSS classes are now in their final state
         try { var _clsMP = document.getElementById('cls-main-pos'); if (_clsMP) _clsMP.remove(); } catch(e) {}
+        window._clsBC = 'cls-main-pos-removed';
 
         // EmailJS init (deferred SDK ist jetzt geladen)
         try { if (typeof emailjs !== 'undefined') emailjs.init('dLaRbQLynU5R8A0ti'); } catch(e) {}
@@ -40,7 +47,7 @@
             window.location.href = '/offline/';
             return;
         }
-
+        window._clsBC = 'data-loaded';
         if(localStorage.getItem('tg_pro_data')) data = JSON.parse(localStorage.getItem('tg_pro_data'));
         
         if(!data.settings) data.settings = {};
@@ -96,6 +103,7 @@
              delete data.settings.ihk.exam;
         }
 
+        window._clsBC = 'before-mobile-layout';
         if (window.innerWidth < 1024) {
              isSidebarOpen = false;
              document.getElementById('sidebar').classList.add('hidden');
@@ -103,6 +111,7 @@
         }
         // Remove pre-apply attr — CSS class now takes over
         document.documentElement.removeAttribute('data-pre-fw');
+        window._clsBC = 'after-mobile-layout';
 
         // Respect explicit request to keep sidebar closed when navigating from other pages
         try {
@@ -118,11 +127,14 @@
         } catch (e) { /* ignore storage errors */ }
 
 
+        window._clsBC = 'before-applyTheme';
         applyTheme(data.settings.theme);
-        // Apply stored theme mode (dark / light / system)
+        window._clsBC = 'before-setThemeMode';
         if (!data.settings.themeMode) data.settings.themeMode = 'dark';
         setThemeMode(data.settings.themeMode);
+        window._clsBC = 'before-updateUI';
         updateUI();
+        window._clsBC = 'after-updateUI';
         // Re-enable sidebar collapse transition after initial layout settles
         requestAnimationFrame(() => requestAnimationFrame(() => {
             const m = document.getElementById('mainContent');
@@ -192,10 +204,15 @@
         }
 
         // Run post-load initializations that previously ran at parse time
+        window._clsBC = 'before-renderSidebarNav';
         try { renderSidebarNav(); } catch(e) { console.warn('renderSidebarNav failed', e); }
+        window._clsBC = 'before-updateSidebarAvatar';
         try { updateSidebarAvatar(); } catch(e) { console.warn('updateSidebarAvatar failed', e); }
+        window._clsBC = 'before-applyWidgetLayout';
         try { enableWidgetDragDrop(); applyWidgetLayout(); } catch(e) { console.warn('widget drag init failed', e); }
+        window._clsBC = 'before-renderWidgetManager';
         try { renderWidgetManager(); } catch(e) { console.error('Error rendering widget manager:', e); }
+        window._clsBC = 'init-complete';
 
         // Warn user if accessing via localhost/127.0.0.1 on mobile devices (helps avoid mobile PWA 404 issue)
         try { detectLocalhostAndWarn(); } catch(e) { console.warn('detectLocalhostAndWarn failed', e); }
