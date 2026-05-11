@@ -1,4 +1,4 @@
-(function initGhostMode() {
+window._clsBC='extra.js-start';(function initGhostMode() {
         let ghostActive = false;
 
 

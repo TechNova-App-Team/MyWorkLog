@@ -1,4 +1,4 @@
-(function(){
+window._clsBC='onboarding.js-start';(function(){
         try {
             if (!window.initializeTouchOptimizations) {
                 var s = document.createElement('script');

@@ -1,4 +1,5 @@
 // ═══ SETTINGS MODULE ═══
+    window._clsBC = 'settings.js-start';
 
     function openSettings() {
         uEvent('settings-open');

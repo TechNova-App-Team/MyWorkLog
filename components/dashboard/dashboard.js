@@ -1,4 +1,5 @@
 // ═══ DASHBOARD MODULE ═══
+    window._clsBC = 'dashboard.js-start';
 
     function shakeInputError(...ids) {
         ids.forEach(id => {
