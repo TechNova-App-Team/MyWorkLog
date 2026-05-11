@@ -1,32 +1,164 @@
 // ═══ CORE: INIT-APP ═══
     if (!window._clsBC) window._clsBC = 'pre-init-unknown';
 
-    // ── CLS Monitor: logs every layout shift with last breadcrumb ──
-    // Note: _clsBC already set by whichever script ran before this one
+    // ── CLS Monitor — Full Spectrum ──
     (function initCLSMonitor() {
         if (!('PerformanceObserver' in window)) return;
         let clsTotal = 0;
+        let shiftIndex = 0;
+        const vw = window.innerWidth, vh = window.innerHeight;
+
+        function rating(v) {
+            if (v <= 0.1)  return { label: '✅ GOOD',         color: '#10b981', bg: '#052e16' };
+            if (v <= 0.25) return { label: '⚠️  NEEDS WORK',  color: '#f59e0b', bg: '#422006' };
+            return             { label: '❌ POOR',             color: '#ef4444', bg: '#450a0a' };
+        }
+
+        function pct(px, axis) { return ((px / (axis === 'x' ? vw : vh)) * 100).toFixed(1) + '%'; }
+
+        function elPath(node) {
+            if (!node || node === document.body) return 'body';
+            const parts = [];
+            let cur = node;
+            let depth = 0;
+            while (cur && cur !== document.documentElement && depth < 6) {
+                const t = (cur.tagName || '?').toLowerCase();
+                const i = cur.id ? `#${cur.id}` : '';
+                const c = cur.classList && cur.classList.length
+                    ? '.' + [...cur.classList].join('.') : '';
+                parts.unshift(`${t}${i}${c}`);
+                cur = cur.parentElement;
+                depth++;
+            }
+            return parts.join(' > ');
+        }
+
+        function computedKey(el, prop) {
+            try { return window.getComputedStyle(el).getPropertyValue(prop).trim(); }
+            catch(e) { return '?'; }
+        }
+
         try {
             const po = new PerformanceObserver(list => {
                 for (const entry of list.getEntries()) {
                     if (entry.hadRecentInput) continue;
+                    shiftIndex++;
                     clsTotal += entry.value;
-                    const sources = (entry.sources || []).map(s => {
-                        const el = s.node;
-                        if (!el) return '(unknown)';
-                        const tag = el.tagName ? el.tagName.toLowerCase() : '?';
-                        const id = el.id ? `#${el.id}` : '';
-                        const cls = el.classList && el.classList.length ? `.${[...el.classList].join('.')}` : '';
-                        const r = s.previousRect;
-                        const prev = r ? `(${Math.round(r.left)},${Math.round(r.top)})` : '';
-                        const c = s.currentRect;
-                        const curr = c ? `→(${Math.round(c.left)},${Math.round(c.top)})` : '';
-                        return `${tag}${id}${cls} ${prev}${curr}`;
-                    }).join(' | ');
-                    console.groupCollapsed(`%c[CLS] +${entry.value.toFixed(4)} (total: ${clsTotal.toFixed(4)}) @ ${Math.round(entry.startTime)}ms | nach: ${window._clsBC}`, 'color:#a855f7;font-weight:bold');
-                    console.log('Quellen:', sources || '(keine)');
-                    console.log('Entry:', entry);
+                    const sr = rating(entry.value);
+                    const cr = rating(clsTotal);
+                    const sources = entry.sources || [];
+
+                    // ── HEADER ──────────────────────────────────────────────
+                    console.group(
+                        `%c ◈ CLS #${shiftIndex} %c+${entry.value.toFixed(6)}%c ${sr.label} %c∑${clsTotal.toFixed(6)} ${cr.label} %c @${Math.round(entry.startTime)}ms`,
+                        'background:#1e1b4b;color:#a855f7;font-weight:800;padding:3px 8px;border-radius:6px 0 0 6px;font-size:11px;',
+                        `background:${sr.bg};color:${sr.color};font-weight:700;padding:3px 10px;font-size:12px;`,
+                        `background:${sr.bg};color:${sr.color};font-weight:700;padding:3px 8px;`,
+                        `background:${cr.bg};color:${cr.color};font-weight:700;padding:3px 10px;font-size:11px;`,
+                        'background:#0f172a;color:#64748b;padding:3px 8px;border-radius:0 6px 6px 0;font-size:11px;'
+                    );
+
+                    // ── TIMING ──────────────────────────────────────────────
+                    console.groupCollapsed('%c⏱  TIMING', 'color:#818cf8;font-weight:700;font-size:11px;');
+                    console.table({
+                        startTime:    { value: `${Math.round(entry.startTime)} ms`,   note: 'when shift occurred' },
+                        duration:     { value: `${Math.round(entry.duration)} ms`,    note: 'shift window length' },
+                        triggerPhase: { value: window._clsBC || '?',                  note: 'last JS breadcrumb' },
+                        hadRecentInput:{ value: String(entry.hadRecentInput),          note: 'excluded from CLS if true' },
+                    });
                     console.groupEnd();
+
+                    // ── SCORE MATH ──────────────────────────────────────────
+                    console.groupCollapsed('%c📐 SCORE MATH', 'color:#818cf8;font-weight:700;font-size:11px;');
+                    sources.forEach((s, i) => {
+                        const pr = s.previousRect || {}, curr = s.currentRect || {};
+                        const impactW = Math.max(pr.right||0, curr.right||0) - Math.min(pr.left||0, curr.left||0);
+                        const impactH = Math.max(pr.bottom||0, curr.bottom||0) - Math.min(pr.top||0, curr.top||0);
+                        const impactFrac = (impactW * impactH) / (vw * vh);
+                        const dx = Math.abs((curr.left||0) - (pr.left||0));
+                        const dy = Math.abs((curr.top||0)  - (pr.top||0));
+                        const distFrac = Math.max(dx, dy) / Math.max(vw, vh);
+                        console.log(
+                            `%c [${i+1}] impactFraction: ${impactFrac.toFixed(4)}  ×  distanceFraction: ${distFrac.toFixed(4)}  =  ${(impactFrac * distFrac).toFixed(6)}`,
+                            'color:#a78bfa;font-size:11px;font-family:monospace;'
+                        );
+                    });
+                    console.log('%c viewport:', 'color:#64748b;font-size:11px;', `${vw}×${vh}px`);
+                    console.groupEnd();
+
+                    // ── SHIFTED ELEMENTS ────────────────────────────────────
+                    sources.forEach((s, i) => {
+                        const el   = s.node;
+                        const pr   = s.previousRect || {};
+                        const curr = s.currentRect  || {};
+                        const dx   = Math.round((curr.left||0) - (pr.left||0));
+                        const dy   = Math.round((curr.top||0)  - (pr.top||0));
+                        const dw   = Math.round((curr.width||0) - (pr.width||0));
+                        const dh   = Math.round((curr.height||0)- (pr.height||0));
+
+                        console.groupCollapsed(
+                            `%c📦 ELEMENT [${i+1}/${sources.length}]%c  Δx:${dx>0?'+':''}${dx}px  Δy:${dy>0?'+':''}${dy}px  Δw:${dw>0?'+':''}${dw}px  Δh:${dh>0?'+':''}${dh}px`,
+                            'color:#c084fc;font-weight:700;font-size:11px;',
+                            'color:#94a3b8;font-size:11px;font-family:monospace;'
+                        );
+
+                        // DOM path
+                        console.log('%c DOM PATH', 'color:#6366f1;font-weight:700;font-size:10px;',
+                            '\n' + elPath(el));
+
+                        // All classes
+                        if (el && el.classList && el.classList.length) {
+                            console.log('%c ALL CLASSES', 'color:#6366f1;font-weight:700;font-size:10px;',
+                                '\n' + [...el.classList].map(c => '.' + c).join('\n'));
+                        }
+
+                        // Rect table
+                        console.table({
+                            left:   { before: Math.round(pr.left||0),   after: Math.round(curr.left||0),   delta: `${dx>0?'+':''}${dx}px`, viewport: pct(Math.abs(dx),'x') },
+                            top:    { before: Math.round(pr.top||0),    after: Math.round(curr.top||0),    delta: `${dy>0?'+':''}${dy}px`, viewport: pct(Math.abs(dy),'y') },
+                            right:  { before: Math.round(pr.right||0),  after: Math.round(curr.right||0),  delta: `${Math.round((curr.right||0)-(pr.right||0))>0?'+':''}${Math.round((curr.right||0)-(pr.right||0))}px`, viewport: '' },
+                            bottom: { before: Math.round(pr.bottom||0), after: Math.round(curr.bottom||0), delta: `${Math.round((curr.bottom||0)-(pr.bottom||0))>0?'+':''}${Math.round((curr.bottom||0)-(pr.bottom||0))}px`, viewport: '' },
+                            width:  { before: Math.round(pr.width||0),  after: Math.round(curr.width||0),  delta: `${dw>0?'+':''}${dw}px`, viewport: pct(Math.abs(dw),'x') },
+                            height: { before: Math.round(pr.height||0), after: Math.round(curr.height||0), delta: `${dh>0?'+':''}${dh}px`, viewport: pct(Math.abs(dh),'y') },
+                        });
+
+                        // Computed CSS that typically causes shifts
+                        if (el) {
+                            console.groupCollapsed('%c🎨 COMPUTED CSS (shift-relevant)', 'color:#6366f1;font-weight:700;font-size:10px;');
+                            const props = ['position','display','margin-left','margin-top','margin-right','margin-bottom',
+                                           'padding-left','padding-top','width','height','transform','top','left',
+                                           'flex-direction','align-items','justify-content','grid-template-columns',
+                                           'transition','animation','overflow','visibility','opacity','z-index'];
+                            const cssData = {};
+                            props.forEach(p => { cssData[p] = { value: computedKey(el, p) }; });
+                            console.table(cssData);
+                            console.groupEnd();
+
+                            // Inline style
+                            if (el.style && el.style.cssText) {
+                                console.log('%c INLINE STYLE', 'color:#6366f1;font-weight:700;font-size:10px;',
+                                    '\n' + el.style.cssText);
+                            }
+
+                            // Parent info
+                            if (el.parentElement) {
+                                const p = el.parentElement;
+                                console.log('%c PARENT', 'color:#6366f1;font-weight:700;font-size:10px;',
+                                    `${(p.tagName||'').toLowerCase()}${p.id?'#'+p.id:''}  display:${computedKey(p,'display')}  position:${computedKey(p,'position')}`);
+                            }
+
+                            // DOM node reference
+                            console.log('%c DOM NODE', 'color:#6366f1;font-weight:700;font-size:10px;', el);
+                        }
+                        console.groupEnd();
+                    });
+
+                    // ── RAW ENTRY ───────────────────────────────────────────
+                    console.groupCollapsed('%c🔬 RAW PerformanceEntry', 'color:#475569;font-weight:700;font-size:10px;');
+                    console.log(entry);
+                    console.groupEnd();
+
+                    console.groupEnd(); // main group
                 }
             });
             po.observe({ type: 'layout-shift', buffered: true });
