@@ -1,4 +1,5 @@
 // ═══ CORE: DASHBOARD-EXTRAS ═══
+    window._clsBC = 'dashboard-extras.js-start';
     // ============================================
     // NEW FEATURES
     // ============================================

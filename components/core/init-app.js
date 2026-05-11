@@ -1,7 +1,8 @@
 // ═══ CORE: INIT-APP ═══
+    if (!window._clsBC) window._clsBC = 'pre-init-unknown';
 
     // ── CLS Monitor: logs every layout shift with last breadcrumb ──
-    window._clsBC = 'init';
+    // Note: _clsBC already set by whichever script ran before this one
     (function initCLSMonitor() {
         if (!('PerformanceObserver' in window)) return;
         let clsTotal = 0;

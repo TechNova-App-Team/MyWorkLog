@@ -1,4 +1,5 @@
 // ═══ CORE: WIDGET-SYSTEM ═══
+    window._clsBC = 'widget-system.js-start';
     // ===== WIDGET DRAG & DROP (REORDER) =====
     // Tracks whether the dashboard layout has unsaved changes while in edit mode
     let dashboardLayoutDirty = false;

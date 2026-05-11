@@ -1,4 +1,5 @@
 // ═══ CORE: API-CLOUD-SYNC ═══
+    window._clsBC = 'api-cloud-sync.js-start';
     // ============================================
     // API STATUS MONITOR (Edge Logs Style)
     // ============================================

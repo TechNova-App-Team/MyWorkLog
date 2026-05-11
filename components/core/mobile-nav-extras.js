@@ -1,4 +1,5 @@
 // ═══ CORE: MOBILE-NAV-EXTRAS ═══
+    window._clsBC = 'mobile-nav-extras.js-start';
 
     // Tabs that live in the "Mehr" sheet (not shown in main nav strip)
     const _MOB_MORE_TABS = ['yearview','goals','school','ihk','monthcompare','weekview','aibot','analytics-pro','berichtsheft'];

@@ -1,4 +1,5 @@
 // ═══ CORE: NAVBAR-SIDEBAR ====
+    window._clsBC = 'navbar-sidebar.js-start';
     function getIconSvgById(id) {
         const icons = {
             dashboard: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h6v8H3z"/><path d="M9 8h6v13H9z"/><path d="M15 3h6v18h-6z"/></svg>',
@@ -339,6 +340,7 @@
 
     // Restore collapsed states on load
     (function restoreSidebarSections() {
+        window._clsBC = 'restoreSidebarSections-start';
         try {
             const states = JSON.parse(localStorage.getItem('sidebar_sections') || '{}');
             Object.keys(states).forEach(name => {
@@ -350,8 +352,10 @@
                 }
             });
         } catch(e) {}
+        window._clsBC = 'restoreSidebarSections-removeAttr';
         // Remove CLS pre-apply so sections can expand/collapse normally
         document.documentElement.removeAttribute('data-sb-pre-sec');
+        window._clsBC = 'restoreSidebarSections-done';
     })();
 
     // ===== SIDEBAR INTERACTIONS — Hover beam + Scroll fade =====
