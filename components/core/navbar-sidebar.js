@@ -211,7 +211,7 @@
             {id:'dashboard', label:'Dashboard', icon:getIconSvgById('dashboard'), visible:true},
             {id:'performance', label:'Performance', icon:getIconSvgById('performance'), visible:true},
             {id:'history', label:'Verlauf', icon:getIconSvgById('history'), visible:true},
-            {id:'fahrtkosten', label:'Fahrtkosten', icon:getIconSvgById('fahrtkosten'), visible:true, external:'./fahrtkosten/'},
+            {id:'fahrtkosten', label:'Fahrtkosten', icon:getIconSvgById('fahrtkosten'), visible:true, external:'/fahrtkosten/'},
             {id:'yearview', label:'Jahresansicht', icon:getIconSvgById('yearview'), visible:true},
             {id:'monthcompare', label:'Monatsansicht', icon:getIconSvgById('monthcompare'), visible:true},
             {id:'weekview', label:'Wochenansicht', icon:getIconSvgById('weekview'), visible:true},
@@ -219,11 +219,11 @@
             {id:'ihk', label:'IHK', icon:getIconSvgById('ihk'), visible:true},
             {id:'goals', label:'Ziele', icon:getIconSvgById('goals'), visible:true},
             {id:'analytics-pro', label:'Analytics Pro', icon:getIconSvgById('analytics-pro'), visible:true},
-            {id:'aufgaben', label:'Aufgaben', icon:getIconSvgById('aufgaben'), visible:true, external:'./aufgaben/'},
+            {id:'aufgaben', label:'Aufgaben', icon:getIconSvgById('aufgaben'), visible:true, external:'/aufgaben/'},
         ];
 
         // Nav-Version: bei Änderung der Reihenfolge/Items hochzählen → erzwingt Reset
-        const NAV_VERSION = 4;
+        const NAV_VERSION = 5;
         const navNeedsReset = !Array.isArray(data.settings.nav) || data.settings.navVersion !== NAV_VERSION;
         if (navNeedsReset) {
             // Bestehende visibility-Einstellungen übernehmen, aber neue Reihenfolge erzwingen
@@ -241,8 +241,12 @@
             let changed = filteredNav.length !== data.settings.nav.length;
             data.settings.nav = filteredNav;
             defaultNavItems.forEach(defaultItem => {
-                if (!data.settings.nav.find(item => item.id === defaultItem.id)) {
+                const existing = data.settings.nav.find(item => item.id === defaultItem.id);
+                if (!existing) {
                     data.settings.nav.push(defaultItem);
+                    changed = true;
+                } else if (defaultItem.external && existing.external !== defaultItem.external) {
+                    existing.external = defaultItem.external;
                     changed = true;
                 }
             });
@@ -256,7 +260,7 @@
         data.settings.nav.forEach(item => {
             // Fix aufgaben to be external
             if (item.id === 'aufgaben' && !item.external) {
-                item.external = './aufgaben/';
+                item.external = '/aufgaben/';
             }
 
             const el = document.createElement('div');
