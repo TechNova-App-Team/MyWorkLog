@@ -466,7 +466,7 @@
         { id: 'skilltree',    label: 'Skill-Baum',       icon: getIconSvgById('skilltree'), group: 'Extern',     action: () => { window.location.href = './skill-tree/'; } },
         { id: 'ausbildung',   label: 'Ausbildungshilfe',  icon: getIconSvgById('ausbildung'), group: 'Extern',     action: () => { window.location.href = './rechte-checker/'; } },
         { id: 'vertrag',      label: 'Vertrags-Manager',  icon: getIconSvgById('vertrag'), group: 'Extern',     action: () => { window.location.href = './vertrags-manager/'; } },
-        { id: 'repo',         label: 'Repo-Analyse',      icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('Pages/Info/repo-report.html', '_blank') },
+        { id: 'repo',         label: 'Repo-Analyse',      icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('/repo-report/', '_blank') },
         { id: 'analytics',    label: 'Analytics',         icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('./analytics/', '_blank') },
         { id: 'impressum',    label: 'Impressum',         icon: getIconSvgById('impressum'), group: 'Extern',     action: () => window.open('./Impressum/', '_blank') },
         { id: 'dsgvo',        label: 'DSGVO',             icon: getIconSvgById('dsgvo'), group: 'Extern',     action: () => window.open('./DSGVO/', '_blank') },
