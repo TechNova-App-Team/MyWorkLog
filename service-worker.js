@@ -11,7 +11,7 @@
 
 'use strict';
 
-const SW_VERSION  = 'v5.3.2';
+const SW_VERSION  = 'v5.4.0';
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
 const OFFLINE_URL = './offline/';
 const DEBUG       = false;
@@ -65,6 +65,16 @@ self.addEventListener('activate', event => {
           .filter(key => key !== CACHE_NAME)
           .map(key => { log('Delete old cache:', key); return caches.delete(key); })
       ))
+      .then(async () => {
+        // Gecachte URLs mit /pages/ löschen (alte Pfade die nie mehr gültig sind)
+        const cache = await caches.open(CACHE_NAME);
+        const requests = await cache.keys();
+        await Promise.all(
+          requests
+            .filter(req => req.url.includes('/pages/'))
+            .map(req => { log('Purge stale pages/ URL:', req.url); return cache.delete(req); })
+        );
+      })
       .then(() => self.clients.claim())
   );
 });
@@ -101,6 +111,8 @@ self.addEventListener('fetch', event => {
 
   // CDN und nicht-cacheable: direkt ans Netz
   if (!isCacheable(request.url)) return;
+  // /pages/-Pfade nie cachen (werden von Cloudflare umgeschrieben)
+  if (new URL(request.url).pathname.startsWith('/pages/')) return;
 
   // Eigene Assets: Stale-While-Revalidate
   event.respondWith(
