@@ -4,11 +4,11 @@
     // Smooth value animation for dashboard numbers
     function animateDashboardValue(el, newText) {
         if (!el) return;
-        if (el.innerText === newText) return;
+        if (el.textContent === newText) return;
         el.style.opacity = '0.5';
         el.style.transform = 'translateY(-2px)';
         setTimeout(() => {
-            el.innerText = newText;
+            el.textContent = newText;
             el.style.opacity = '1';
             el.style.transform = 'translateY(0)';
         }, 150);

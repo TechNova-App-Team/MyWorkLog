@@ -202,6 +202,7 @@
         }
 
     function updateStreakCounter() {
+        if (typeof calculateStreak !== 'function') return;
         const streak = calculateStreak();
         const elCount = document.getElementById('streakCount');
         const elBest = document.getElementById('streakBest');

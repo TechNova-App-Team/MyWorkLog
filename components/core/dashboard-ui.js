@@ -131,7 +131,7 @@
         else vacBar.style.background = 'var(--success)';
 
         // Mini Week Progress Dots (Mo-Fr)
-        renderWeekDots();
+        if (typeof renderWeekDots === 'function') renderWeekDots();
 
         renderLists();
         renderTrend(trendData, 'trendChart', true, null, ascEntries);

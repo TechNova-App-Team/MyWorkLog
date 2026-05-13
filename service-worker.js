@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * TimeTracker Service Worker — v5.3.1
+ * TimeTracker Service Worker — v5.4.1
  * ============================================================
  * Strategie: Stale-While-Revalidate für eigene JS/CSS/Assets.
  * → Erster Aufruf: aus Cache (instant) + Hintergrund-Update
@@ -11,7 +11,7 @@
 
 'use strict';
 
-const SW_VERSION  = 'v5.4.0';
+const SW_VERSION  = 'v5.4.1';
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
 const OFFLINE_URL = './offline/';
 const DEBUG       = false;
