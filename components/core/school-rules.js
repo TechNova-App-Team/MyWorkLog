@@ -161,5 +161,5 @@
         data.entries.push(entry);
         data.entries.sort((a,b) => new Date(b.date) - new Date(a.date));
         save();
-        showCustomMessage('✅ Eingetragen', `Berufsschule für ${dateISO} wurde hinzugefügt.`, 'success');
+        showSuccessToast(`Berufsschule ${dateISO} eingetragen`, { icon: '🏫' });
     }
