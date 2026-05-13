@@ -146,3 +146,15 @@ html[data-pre-fw] .main {
     align-items: center;
     justify-content: center;
 }
+
+/* ── CLS FIX: Ghost-Mode overlays + PWA banner have their CSS only in body <style> tags.
+       Without this rule they are in-flow flex items at first paint → push mainContent right.
+       position:fixed removes them from the flex flow; display:none hides them visually.
+       The .active / .visible class rules in the body <style> have higher specificity and
+       correctly override these base rules when the features are activated. ── */
+#ghostModeOverlay,
+#ghostModeVSCode,
+.pwa-install-banner {
+    display: none;
+    position: fixed;
+}
