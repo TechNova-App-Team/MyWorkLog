@@ -147,6 +147,48 @@ html[data-pre-fw] .main {
     justify-content: center;
 }
 
+/* ── A11Y FIX: Skip-link — pure-CSS visibility on focus (no JS needed, Lighthouse-friendly) ── */
+.skip-link {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    text-decoration: none;
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: auto;
+    height: auto;
+    padding: 0.5rem 1rem;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    background: var(--primary);
+    color: #fff;
+    font-family: var(--font-main);
+    font-size: 0.875rem;
+    font-weight: 600;
+    z-index: 99999;
+    border-radius: 0 0 8px 0;
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+}
+
+/* ── A11Y FIX: Donut segment labels — full-opacity white for WCAG AA contrast ── */
+.segment-label {
+    color: #fff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
 /* ── CLS FIX: Ghost-Mode overlays + PWA banner have their CSS only in body <style> tags.
        Without this rule they are in-flow flex items at first paint → push mainContent right.
        position:fixed removes them from the flex flow; display:none hides them visually.
