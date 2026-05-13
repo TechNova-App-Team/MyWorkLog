@@ -321,6 +321,7 @@
     function renderTrend(dataPoints, elementId, areaFill = true, chartStyle = null, allEntries = null) {
         const c = document.getElementById(elementId);
         if(!c) return;
+        const w = c.clientWidth || 400; // read before any DOM writes to avoid forced reflow
         
         // Support legacy numeric arrays (from chart preview etc.)
         const isRichData = dataPoints.length > 0 && typeof dataPoints[0] === 'object';
@@ -425,7 +426,6 @@
             statEl('trendStatVolatility', volatility, '');
         }
         
-        const w = c.clientWidth || 400;
         const h = 220;
         const padTop = 15, padBot = 15, padLeft = 0, padRight = 0;
         const chartH = h - padTop - padBot;

@@ -160,7 +160,7 @@ window._clsBC='extra.js-start';(function initGhostMode() {
                     window._showGhostButton();
                     // cleanup
                     document.removeEventListener('visibilitychange', visibilityHandler);
-                    window.removeEventListener('beforeunload', endSession);
+                    window.removeEventListener('pagehide', endSession);
                     if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
                     if (showTimeout) { clearTimeout(showTimeout); showTimeout = null; }
                 } else {
@@ -174,7 +174,7 @@ window._clsBC='extra.js-start';(function initGhostMode() {
             // Start tracking
             startSession();
             document.addEventListener('visibilitychange', visibilityHandler);
-            window.addEventListener('beforeunload', endSession);
+            window.addEventListener('pagehide', endSession);
             // Initial check
             maybeShow();
         };

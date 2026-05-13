@@ -406,6 +406,11 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <noscript><link rel="stylesheet" href="/components/settings/settings-inline.css"></noscript>
     <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css"></noscript>
+    <!-- Google Fonts: preconnect + async (DM Serif Display + Plus Jakarta Sans for support view) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
 
 </head>
 <body>
@@ -621,9 +626,10 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     </div>
   </div>
 
-    <link rel="stylesheet" href="/components/landing/landing.css">
+    <link rel="stylesheet" href="/components/landing/landing.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/landing/landing.css"></noscript>
 
-    <script src="/components/landing/landing.js"></script>
+    <script defer src="/components/landing/landing.js"></script>
 </div>
 
 
@@ -1008,60 +1014,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
         <div id="view-dashboard" class="view-section active">
 
-            <script>
-                var UPB_ACTIVE = true; // ← false = Banner verstecken
-                (function() {
-                    var banner = document.getElementById('updatePerfBanner');
-                    if (!banner) return;
-                    if (!UPB_ACTIVE) banner.style.display = 'none';
-                })();
-                function openSupportFeedback() {
-                    switchTab('support');
-                    setTimeout(function() {
-                        var el = document.getElementById('supportFeedbackSection');
-                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 280);
-                    if (typeof uEvent === 'function') uEvent('upb_bug_report_click');
-                }
-                function dismissUpdatePerfBanner() {
-                    var banner = document.getElementById('updatePerfBanner');
-                    if (!banner) return;
-                    banner.classList.add('upb-hiding');
-                    banner.addEventListener('animationend', function() {
-                        banner.style.display = 'none';
-                        banner.classList.remove('upb-hiding');
-                    }, { once: true });
-                    if (typeof uEvent === 'function') uEvent('upb_dismissed');
-                }
-            </script>
-
             <!-- Edit Mode Controls -->
             <div id="dashboardEditControls" style="display:flex; gap:10px; margin-bottom:1.25rem; opacity:0; pointer-events:none; transition:opacity 0.3s;">
                 <button id="dashboardCancelBtn" class="btn" style="padding:8px 16px; font-size:0.85rem; background:rgba(217,119,6,0.15); border:1px solid rgba(217,119,6,0.3); color:#f59e0b; display:none;" onclick="cancelDashboardEditMode()" title="Änderungen verwerfen">✕ Abbrechen</button>
-            </div>
-
-            <!-- ═══ KNOWN ISSUES BANNER ═══ -->
-            <div id="updatePerfBanner" class="upb-banner" role="alert" aria-live="polite">
-                <div class="upb-content">
-                    <div class="upb-left">
-                        <span class="upb-icon" aria-hidden="true">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                        </span>
-                        <div class="upb-text">
-                            <span class="upb-label">CLS Update im Gange 🔧</span>
-                            <span class="upb-msg">Layout Shift Fix wird deployed</span>
-                        </div>
-                    </div>
-                    <div class="upb-actions">
-                        <a href="/update_bugs/" class="upb-btn upb-btn--bug" title="Probleme anzeigen">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6l-7 7"/></svg>
-                            Details
-                        </a>
-                        <button class="upb-close" onclick="dismissUpdatePerfBanner()" aria-label="Banner schließen" title="Schließen">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        </button>
-                    </div>
-                </div>
             </div>
 
             <div id="dashboardContainer" class="dashboard-grid">
@@ -2718,8 +2673,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
              Styles scoped to #view-support to avoid leaking.
         ══════════════════════════════════════════════════════ -->
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
             /* ── layout wrapper ── */
             #view-support {
                 padding: 0 !important;
@@ -6436,13 +6389,13 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 </div>
 
     <!-- NFC MODULE -->
-    <script src="/components/nfc/nfc.js"></script>
+    <script defer src="/components/nfc/nfc.js"></script>
 
     <!-- GHOST MODE / BOSS KEY SCRIPT -->
-    <script src="/components/core/extra.js"></script>
+    <script defer src="/components/core/extra.js"></script>
 
     <!-- AUTO-CAMOUFLAGE / TAB-VERSTECKER -->
-    <script src="/components/core/camo.js"></script>
+    <script defer src="/components/core/camo.js"></script>
 
     <!-- ENTRY DETAIL BOTTOM SHEET -->
     <div class="ed-backdrop" id="entryDetailBackdrop" onclick="closeEntryDetail()"></div>

@@ -847,7 +847,7 @@ function initAutoInstallPrompt() {
             requestAnimationFrame(function() { requestAnimationFrame(function() { banner.classList.add('visible'); }); });
             // cleanup listeners and timers
             document.removeEventListener('visibilitychange', visibilityHandler);
-            window.removeEventListener('beforeunload', endSession);
+            window.removeEventListener('pagehide', endSession);
             if (showTimeout) { clearTimeout(showTimeout); showTimeout = null; }
         } else {
             // Schedule to check when remaining time elapses
@@ -863,7 +863,7 @@ function initAutoInstallPrompt() {
     // Start tracking session time
     startSession();
     document.addEventListener('visibilitychange', visibilityHandler);
-    window.addEventListener('beforeunload', endSession);
+    window.addEventListener('pagehide', endSession);
 
     // Kick off check (do not show immediately; maybeShowBanner will show after 30m)
     maybeShowBanner();
