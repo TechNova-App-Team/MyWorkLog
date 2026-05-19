@@ -973,3 +973,404 @@
         font-size: 0.68rem;
     }
 }
+
+/* ═══ DUAL-CHOICE CARDS (Step 1) ═══ */
+
+.untis-choice-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.untis-choice-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 1.2rem 1rem 1rem;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid rgba(255, 255, 255, 0.09);
+    cursor: pointer;
+    text-align: left;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+
+.untis-choice-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(168, 85, 247, 0.35);
+    box-shadow: 0 8px 32px rgba(168, 85, 247, 0.12);
+}
+
+.untis-choice-card.untis-choice-manual:hover {
+    border-color: rgba(34, 211, 238, 0.35);
+    box-shadow: 0 8px 32px rgba(34, 211, 238, 0.1);
+}
+
+.untis-choice-card:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.untis-choice-glow {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+.untis-choice-ical .untis-choice-glow {
+    background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.1) 0%, transparent 70%);
+}
+
+.untis-choice-manual .untis-choice-glow {
+    background: radial-gradient(circle at 50% 0%, rgba(34, 211, 238, 0.08) 0%, transparent 70%);
+}
+
+.untis-choice-card:hover .untis-choice-glow {
+    opacity: 1;
+}
+
+.untis-choice-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(168, 85, 247, 0.15);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    color: #d8b4fe;
+    flex-shrink: 0;
+    margin-bottom: 0.25rem;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.untis-choice-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #d8b4fe;
+    line-height: 1;
+}
+
+.untis-choice-name {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.untis-choice-desc {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    line-height: 1.4;
+    flex: 1;
+}
+
+.untis-choice-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-top: 0.25rem;
+}
+
+.untis-badge-purple {
+    background: rgba(168, 85, 247, 0.15);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    color: #d8b4fe;
+}
+
+.untis-badge-cyan {
+    background: rgba(34, 211, 238, 0.12);
+    border: 1px solid rgba(34, 211, 238, 0.28);
+    color: #67e8f9;
+}
+
+.untis-choice-arrow {
+    position: absolute;
+    bottom: 0.9rem;
+    right: 0.9rem;
+    color: rgba(255, 255, 255, 0.2);
+    transition: color 0.2s, transform 0.2s;
+}
+
+.untis-choice-card:hover .untis-choice-arrow {
+    color: rgba(255, 255, 255, 0.5);
+    transform: translateX(2px);
+}
+
+@media (max-width: 420px) {
+    .untis-choice-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .untis-choice-card {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.9rem 1rem;
+    }
+
+    .untis-choice-icon {
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+
+    .untis-choice-arrow {
+        position: static;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .untis-choice-desc {
+        display: none;
+    }
+}
+
+/* ═══ MANUAL GRID BUILDER ═══ */
+
+/* ── Day Tabs ── */
+.untis-day-tabs {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.untis-day-tab {
+    position: relative;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.45);
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 44px;
+    text-align: center;
+}
+
+.untis-day-tab:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.75);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.untis-day-tab.active {
+    background: rgba(34, 211, 238, 0.12);
+    border-color: rgba(34, 211, 238, 0.4);
+    color: #67e8f9;
+    box-shadow: 0 0 16px rgba(34, 211, 238, 0.12);
+}
+
+.untis-day-tab.has-lessons::after {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #67e8f9;
+    opacity: 0.7;
+}
+
+.untis-day-tab.active.has-lessons::after {
+    opacity: 1;
+    background: #67e8f9;
+    box-shadow: 0 0 6px rgba(34, 211, 238, 0.6);
+}
+
+/* ── Lesson Rows ── */
+.untis-manual-lesson {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    margin-bottom: 0.4rem;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.untis-manual-lesson:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.untis-manual-lesson-time {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.untis-manual-lesson-room {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.3);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.untis-manual-lesson-del {
+    margin-left: auto;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    border: 1px solid rgba(248, 113, 113, 0.2);
+    background: rgba(248, 113, 113, 0.07);
+    color: rgba(248, 113, 113, 0.5);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.untis-manual-lesson-del:hover {
+    background: rgba(248, 113, 113, 0.18);
+    border-color: rgba(248, 113, 113, 0.45);
+    color: #fca5a5;
+}
+
+/* ── Empty Day State ── */
+.untis-manual-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    border-radius: 14px;
+    border: 1.5px dashed rgba(255, 255, 255, 0.08);
+}
+
+/* ── Add Lesson Button ── */
+.untis-btn-add-lesson {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.3rem 0.7rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    border: 1.5px solid rgba(34, 211, 238, 0.3);
+    background: rgba(34, 211, 238, 0.08);
+    color: #67e8f9;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.untis-btn-add-lesson:hover {
+    background: rgba(34, 211, 238, 0.15);
+    border-color: rgba(34, 211, 238, 0.5);
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.12);
+}
+
+/* ── Add Form ── */
+.untis-manual-add-form {
+    padding: 1rem;
+    border-radius: 14px;
+    background: rgba(34, 211, 238, 0.04);
+    border: 1.5px solid rgba(34, 211, 238, 0.2);
+    margin-top: 0.75rem;
+    animation: untis-step-in 0.2s ease;
+}
+
+.untis-form-row {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+    align-items: flex-end;
+}
+
+.untis-form-input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.untis-form-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.untis-form-input:focus {
+    border-color: rgba(34, 211, 238, 0.45);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.08);
+}
+
+input[type="time"].untis-form-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.4);
+    cursor: pointer;
+}
+
+/* ── Manual Footer ── */
+.untis-manual-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 1rem 1.5rem;
+    flex-shrink: 0;
+    background: rgba(6, 5, 20, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.untis-manual-footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.untis-manual-footer-info {
+    flex: 1;
+    min-width: 0;
+}
+
+@media (max-width: 600px) {
+    .untis-day-tab {
+        padding: 0.45rem 0.6rem;
+        font-size: 0.75rem;
+    }
+
+    .untis-manual-footer {
+        padding: 0.85rem 1rem;
+    }
+
+    .untis-form-row {
+        flex-direction: column;
+    }
+
+    .untis-form-row > div {
+        width: 100%;
+    }
+
+    .untis-choice-grid {
+        grid-template-columns: 1fr;
+    }
+}
