@@ -1108,3 +1108,253 @@
         return Object.values(weeklyDiffs).filter(diff => diff > 0.5).length; // Mehr als 0.5h im Plus zählen
     }
 
+    // ═══ VOICE INPUT MODULE ═══
+    window._voiceRawText = '';
+    window._voiceListening = false;
+    window._voiceRecognition = null;
+
+    window.showVoiceFeedback = function(msg, type, chips) {
+        try {
+            type = type || 'info';
+            var fb = document.getElementById('voiceFeedback');
+            if (!fb) {
+                fb = document.createElement('div');
+                fb.id = 'voiceFeedback';
+                var actions = document.querySelector('.entry-form__actions');
+                if (actions && actions.parentNode) {
+                    actions.parentNode.insertBefore(fb, actions.nextSibling);
+                }
+            }
+            clearTimeout(fb._t);
+
+            var inner = '<div class="vfc-bar vfc-bar--' + type + '"></div><div class="vfc-body">';
+
+            if (type === 'info') {
+                inner += '<div class="vfc-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>';
+                inner += '<div class="vfc-live-text">' + (msg || '').replace(/^[🎤📝]\s*/, '') + '</div>';
+            } else if (type === 'success' && chips) {
+                inner += '<div class="vfc-chips">';
+                if (chips.time)    inner += '<span class="vfc-chip vfc-chip--time">⏰ ' + chips.time + '</span>';
+                if (chips.date)    inner += '<span class="vfc-chip vfc-chip--date">📅 ' + chips.date + '</span>';
+                if (chips.project) inner += '<span class="vfc-chip vfc-chip--project">📁 ' + chips.project + '</span>';
+                if (chips.note)    inner += '<span class="vfc-chip vfc-chip--note">📝 ' + chips.note + '</span>';
+                inner += '</div>';
+            } else {
+                var icon = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : '✅';
+                inner += '<div class="vfc-msg">' + icon + ' <span>' + msg + '</span></div>';
+            }
+
+            inner += '</div>';
+            fb.className = 'voice-feedback-card';
+            fb.style.display = 'block';
+            fb.innerHTML = inner;
+
+            if (type !== 'info') {
+                fb._t = setTimeout(function() { fb.style.display = 'none'; }, type === 'success' ? 6000 : 4000);
+            }
+        } catch (e) {}
+    }
+
+    window.startVoiceInput = function() {
+        try {
+            var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) { showVoiceFeedback('❌ Kein Browser-Support (Chrome/Edge nutzen)', 'error'); return; }
+
+            if (window._voiceRecognition) {
+                try { window._voiceRecognition.abort(); } catch (e) {}
+                window._voiceRecognition = null;
+            }
+
+            var rec = new SR();
+            window._voiceRecognition = rec;
+            rec.lang = 'de-DE';
+            rec.interimResults = true;
+            rec.continuous = true;
+            rec.maxAlternatives = 1;
+
+            var btn = document.getElementById('voiceBtn');
+            if (btn) btn.classList.add('voice-active');
+            window._voiceListening = true;
+            window._voiceRawText = '';
+
+            showVoiceFeedback('🎤 Höre zu... (sprich jetzt)', 'info');
+
+            rec.onresult = function(event) {
+                var t = '';
+                for (var i = 0; i < event.results.length; i++) {
+                    t += event.results[i][0].transcript + ' ';
+                }
+                window._voiceRawText = t.trim();
+                showVoiceFeedback('📝 ' + window._voiceRawText.substring(0, 120), 'info');
+            };
+
+            rec.onerror = function(event) {
+                if (event.error === 'not-allowed') {
+                    showVoiceFeedback('❌ Mikrofon gesperrt – Browser-Einstellungen prüfen', 'error');
+                } else if (event.error !== 'no-speech') {
+                    showVoiceFeedback('❌ Fehler: ' + event.error, 'error');
+                }
+                var b = document.getElementById('voiceBtn');
+                if (b) b.classList.remove('voice-active');
+                window._voiceListening = false;
+                window._voiceRecognition = null;
+            };
+
+            rec.onend = function() {
+                var b = document.getElementById('voiceBtn');
+                if (b) b.classList.remove('voice-active');
+                window._voiceListening = false;
+                if (window._voiceRawText.trim()) {
+                    parseVoiceInput(window._voiceRawText.trim());
+                } else {
+                    showVoiceFeedback('⚠️ Nichts erkannt – nochmal versuchen', 'warning');
+                }
+                window._voiceRecognition = null;
+            };
+
+            rec.start();
+
+            // 10s Timeout
+            setTimeout(function() {
+                if (window._voiceRecognition && window._voiceListening) {
+                    window._voiceRecognition.stop();
+                }
+            }, 10000);
+
+        } catch (e) {
+            showVoiceFeedback('❌ Spracherkennung konnte nicht starten', 'error');
+            window._voiceListening = false;
+            window._voiceRecognition = null;
+        }
+    };
+
+    function parseVoiceInput(rawText) { // called by window.startVoiceInput
+        try {
+            if (!rawText || typeof rawText !== 'string') return;
+            var text = rawText.toLowerCase().trim();
+
+            // ── Spoken numbers → Ziffern (DE) ──
+            var nums = {
+                'null':0,'ein':1,'eins':1,'eine':1,'zwei':2,'zwo':2,'drei':3,'vier':4,
+                'fünf':5,'sechs':6,'sieben':7,'acht':8,'neun':9,'zehn':10,
+                'elf':11,'zwölf':12,'dreizehn':13,'vierzehn':14,'fünfzehn':15,
+                'sechzehn':16,'siebzehn':17,'achtzehn':18,'neunzehn':19,
+                'zwanzig':20,'einundzwanzig':21,'zweiundzwanzig':22,'dreiundzwanzig':23
+            };
+            text = text.replace(/\b(sechzehn|siebzehn|achtzehn|neunzehn|zwanzig|einundzwanzig|zweiundzwanzig|dreiundzwanzig|dreizehn|vierzehn|fünfzehn|zwölf|elf|zehn|neun|acht|sieben|sechs|fünf|vier|drei|zwo|zwei|eine|eins|ein|null)\b/g, function(m) {
+                return nums[m] !== undefined ? nums[m] : m;
+            });
+
+            var startTime = null, endTime = null, hours = null, project = '', notes = '';
+
+            // ── Datum ──
+            var today = new Date();
+            var dateStr = today.toISOString().split('T')[0];
+            var months = {
+                'januar':1,'februar':2,'märz':3,'maerz':3,'april':4,'mai':5,'juni':6,
+                'juli':7,'august':8,'september':9,'oktober':10,'november':11,'dezember':12
+            };
+
+            if (/gestern/.test(text)) {
+                var d = new Date(today); d.setDate(d.getDate() - 1);
+                dateStr = d.toISOString().split('T')[0];
+            } else if (/vorgestern/.test(text)) {
+                var d = new Date(today); d.setDate(d.getDate() - 2);
+                dateStr = d.toISOString().split('T')[0];
+            } else {
+                // "18.5.2026" oder "18.5." oder "18. Mai 2026" oder "18 mai"
+                var dm = text.match(/(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{4})/);
+                if (!dm) dm = text.match(/(\d{1,2})[.\s]+(\d{1,2})/);
+                var dmWord = text.match(/(\d{1,2})[.\s]+(januar|februar|m[äa]rz|april|mai|juni|juli|august|september|oktober|november|dezember)(?:[.\s]+(\d{4}))?/i);
+
+                if (dmWord) {
+                    var day = parseInt(dmWord[1]);
+                    var mon = months[dmWord[2].toLowerCase()];
+                    var yr  = dmWord[3] ? parseInt(dmWord[3]) : today.getFullYear();
+                    if (day >= 1 && day <= 31 && mon) {
+                        dateStr = yr + '-' + (mon < 10 ? '0' : '') + mon + '-' + (day < 10 ? '0' : '') + day;
+                    }
+                } else if (dm) {
+                    var day = parseInt(dm[1]);
+                    var mon = parseInt(dm[2]);
+                    var yr  = dm[3] ? parseInt(dm[3]) : today.getFullYear();
+                    if (day >= 1 && day <= 31 && mon >= 1 && mon <= 12) {
+                        dateStr = yr + '-' + (mon < 10 ? '0' : '') + mon + '-' + (day < 10 ? '0' : '') + day;
+                    }
+                }
+            }
+
+            // Datum aus Text entfernen bevor Zeit gesucht wird (sonst matched Datum als Zeit)
+            var textNoDate = text
+                .replace(/\d{1,2}[.\s]+\d{1,2}[.\s]+\d{4}/g, '')
+                .replace(/\d{1,2}[.\s]+(januar|februar|m[äa]rz|april|mai|juni|juli|august|september|oktober|november|dezember)[.\s]+\d{4}/gi, '')
+                .replace(/\d{1,2}[.\s]+(januar|februar|m[äa]rz|april|mai|juni|juli|august|september|oktober|november|dezember)/gi, '');
+
+            // ── Zeiten: "6 bis 16", "6-16", "6 uhr bis 16 uhr" ──
+            var tm = textNoDate.match(/(\d{1,2})\s*(?:uhr)?\s*(?:bis|-)\s*(\d{1,2})\s*(?:uhr)?/);
+            if (tm) {
+                var s = parseInt(tm[1]), e = parseInt(tm[2]);
+                if (s >= 0 && s <= 23 && e > s && e <= 23) {
+                    startTime = (s < 10 ? '0' : '') + s + ':00';
+                    endTime   = (e < 10 ? '0' : '') + e + ':00';
+                    hours = e - s;
+                }
+            }
+
+            // ── Fallback: Stunden-Dauer ──
+            if (!hours) {
+                var hm = text.match(/(\d+[.,]\d+|\d+)\s*(?:stunden?|std\b)/);
+                if (hm) {
+                    hours = parseFloat(hm[1].replace(',', '.'));
+                    if (!isFinite(hours) || hours <= 0 || hours > 16) hours = null;
+                }
+            }
+
+            // ── Projekt ──
+            var pText = text;
+            if (tm) pText = pText.replace(tm[0], '');
+            pText = pText.replace(/\d+[.,]?\d*\s*(?:stunden?|std\b)/g, '');
+            pText = pText.replace(/\b(?:notiz|info|anmerkung|bugfix|fehler)\b.*/i, '');
+            pText = pText.replace(/\b(?:gestern|vorgestern|heute|von|bis|uhr|habe|bin|und|oder|mit|im|am|ich)\b/g, '').trim();
+
+            var pw = pText.split(/\s+/).filter(function(w) { return w.length >= 2; });
+            if (pw.length) {
+                project = pw.slice(0, 4).map(function(w) { return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ').substring(0, 50);
+            }
+
+            // ── Notizen ──
+            var nm = text.match(/(?:notiz|info|anmerkung|bugfix|fehler)\s+(.+)/i);
+            if (nm) notes = nm[1].trim().substring(0, 100);
+
+            // ── Formular füllen ──
+            var el;
+            el = document.getElementById('inpDate'); if (el) el.value = dateStr;
+            el = document.getElementById('inpStart'); if (el) el.value = startTime || '';
+            el = document.getElementById('inpEnd');   if (el) el.value = endTime || '';
+            el = document.getElementById('inpHours'); if (el) el.value = (hours && !startTime) ? hours.toFixed(2) : '';
+            el = document.getElementById('inpType');  if (el) el.value = 'work';
+            el = document.getElementById('inpProject'); if (el) el.value = project;
+            el = document.getElementById('inpNotes');   if (el) el.value = notes;
+            if (typeof toggleTimeInputs === 'function') toggleTimeInputs();
+
+            // ── Feedback als Chips ──
+            var chips = {};
+            if (startTime && endTime) chips.time = startTime + '–' + endTime + ' · ' + (hours || 0) + 'h';
+            else if (hours)           chips.time = hours + 'h';
+            var todayStr = today.toISOString().split('T')[0];
+            if (dateStr !== todayStr) chips.date = dateStr;
+            if (project) chips.project = project;
+            if (notes)   chips.note = notes.substring(0, 28);
+
+            if (Object.keys(chips).length) {
+                showVoiceFeedback('', 'success', chips);
+            } else {
+                showVoiceFeedback('Nichts erkannt – sag z.B. "6 bis 16 IT Server"', 'warning');
+            }
+
+        } catch (e) {
+            console.error('parseVoiceInput:', e);
+            showVoiceFeedback('❌ Fehler beim Verarbeiten', 'error');
+        }
+    }
+
