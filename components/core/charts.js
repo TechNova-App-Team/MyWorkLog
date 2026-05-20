@@ -1121,15 +1121,25 @@
 
     // Interactive segment highlighting for stacked bar
     function highlightDonutSegment(type) {
+        var aliasMap = { 'vac': 'vacation' };
+        var normalizedType = aliasMap[type] || type;
+        var idFallback = { 'work': 'donutWork', 'school': 'donutSchool', 'vacation': 'donutVac', 'sick': 'donutSick', 'holiday': 'donutHoliday' };
+        var targetId = idFallback[normalizedType];
+
         const segments = document.querySelectorAll('.donut-segment');
         segments.forEach(seg => {
-            if (seg.dataset.type === type) {
-                seg.style.filter = 'brightness(1.2) drop-shadow(0 2px 8px rgba(0,0,0,0.3))';
+            var isMatch = seg.dataset.type === normalizedType || (targetId && seg.id === targetId);
+            if (isMatch) {
+                seg.style.filter = 'brightness(1.5) drop-shadow(0 2px 12px rgba(0,0,0,0.4))';
                 seg.style.transform = 'scaleY(1.3)';
                 seg.style.transformOrigin = 'center';
                 seg.style.zIndex = '10';
+                seg.style.opacity = '1';
             } else {
-                seg.style.opacity = '0.5';
+                seg.style.opacity = '0.4';
+                seg.style.filter = '';
+                seg.style.transform = 'scaleY(1)';
+                seg.style.zIndex = 'auto';
             }
         });
     }
