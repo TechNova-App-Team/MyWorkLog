@@ -111,27 +111,30 @@ class SupabaseCloudSyncUI {
      */
     bindAuthCallbacks() {
         const self = this;
+        let _wasLoggedIn = false;
 
         // Überschreibe den onAuthStateChanged Callback
         this.sync.onAuthStateChanged = function(isLoggedIn, user) {
+            const justLoggedIn = isLoggedIn && !_wasLoggedIn;
+            _wasLoggedIn = isLoggedIn;
+
             if (isLoggedIn) {
                 self.showSyncContainer(user);
                 self.closeLoginModal();
 
-                const showCloudAfterOAuth = localStorage.getItem('_showCloudTabAfterOAuth');
-
-                // Nach erfolgreichem Login: Navigiere zum Cloud-Tab
-                setTimeout(() => {
-                    // Wenn OAuth: Öffne Settings und navigiere zum Cloud-Tab
-                    if (showCloudAfterOAuth) {
-                        localStorage.removeItem('_showCloudTabAfterOAuth');
-                        if (window.openSettings) window.openSettings();
-                    }
-                    // Navigiere zum Cloud-Tab
-                    if (window.switchSettingsTab) {
-                        window.switchSettingsTab('cloud');
-                    }
-                }, 100);
+                // Nur bei tatsächlichem Login-Event zum Cloud-Tab navigieren (nicht bei Token-Refresh)
+                if (justLoggedIn) {
+                    const showCloudAfterOAuth = localStorage.getItem('_showCloudTabAfterOAuth');
+                    setTimeout(() => {
+                        if (showCloudAfterOAuth) {
+                            localStorage.removeItem('_showCloudTabAfterOAuth');
+                            if (window.openSettings) window.openSettings();
+                        }
+                        if (window.switchSettingsTab) {
+                            window.switchSettingsTab('cloud');
+                        }
+                    }, 100);
+                }
             } else {
                 self.hideSyncContainer();
             }

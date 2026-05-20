@@ -122,11 +122,7 @@ class SupabaseCloudSync {
                 this.session = session;
                 this.user = session.user;
                 console.log('[Session] Existierende Session gefunden:', this.user.email);
-                
-                // Trigger UI Update
-                this.onAuthStateChanged(true, this.user);
-                
-                // Kein Auto-Download — User entscheidet manuell über Hoch-/Runterladen
+                // onAuthStateChange (INITIAL_SESSION) handles the UI update — no manual call needed
                 console.log('[Cloud] Session aktiv — manueller Sync über Buttons möglich');
             }
         } catch (error) {

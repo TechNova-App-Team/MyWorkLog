@@ -466,20 +466,22 @@
         const waitForCloudSync = setInterval(() => {
             if (window.cloudSync) {
                 clearInterval(waitForCloudSync);
+                // supabase-config.js hat cloudSyncUI bereits initialisiert — hier nur UI-Status aktualisieren
+                if (!window.cloudSyncUI && typeof SupabaseCloudSyncUI !== 'undefined') {
+                    try {
+                        window.cloudSyncUI = new SupabaseCloudSyncUI(window.cloudSync);
+                        setupCloudSyncIntegration();
+                        console.log('[App] ✅ Cloud Sync UI erfolgreich aktiviert!');
+                    } catch (err) {
+                        console.warn('[App] ⚠️ Cloud Sync UI Init Fehler:', err.message);
+                        setupCloudSyncIntegration();
+                    }
+                }
                 try {
-                    window.cloudSyncUI = new SupabaseCloudSyncUI(window.cloudSync);
-                    console.log('[App] ✅ Cloud Sync UI erfolgreich aktiviert!');
-                    setupCloudSyncIntegration();
-                    
-                    // Aktualisiere UI sofort mit aktuellem Status
                     const isLoggedIn = window.cloudSync.isLoggedIn();
                     const user = window.cloudSync.getCurrentUser();
                     updateCloudSyncUI(isLoggedIn, user);
-                } catch (err) {
-                    console.warn('[App] ⚠️ Cloud Sync UI Init Fehler:', err.message);
-                    // Trotzdem Cloud Sync Integration versuchen
-                    setupCloudSyncIntegration();
-                }
+                } catch (err) { /* ignore */ }
             }
         }, 100);
         
