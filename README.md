@@ -53,7 +53,7 @@
 ══════════════════════════════════════════════════════════════════ -->
 <p>
   <img src="https://img.shields.io/badge/Created-2025-475569?style=flat-square&logo=calendar&logoColor=94a3b8&labelColor=0f172a" alt="Created">
-  <img src="https://img.shields.io/badge/Last%20Updated-M%C3%A4rz%202026-475569?style=flat-square&logo=clockify&logoColor=94a3b8&labelColor=0f172a" alt="Last Updated">
+  <img src="https://img.shields.io/badge/Last%20Updated-Mai%202026-475569?style=flat-square&logo=clockify&logoColor=94a3b8&labelColor=0f172a" alt="Last Updated">
 </p>
 
 <br>
@@ -89,12 +89,12 @@
 ---
 
 <div align="center">
-  <a href="scripts/Repo_to_diagramm/archflow.html" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.4rem;border-radius:12px;background:#1f2937;color:#f8fafc;font-weight:600;text-decoration:none;border:1px solid rgba(248,250,252,.16);box-shadow:0 8px 20px rgba(15,23,42,.12);transition:background .2s;margin: 5px;">
+  <a href="pages/archflow/" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.4rem;border-radius:12px;background:#1f2937;color:#f8fafc;font-weight:600;text-decoration:none;border:1px solid rgba(248,250,252,.16);box-shadow:0 8px 20px rgba(15,23,42,.12);transition:background .2s;margin: 5px;">
     <span>Detailliertes Architektur-Layout Codebase</span>
     <span style="font-size:1rem;line-height:1;color:#93c5fd;">→</span>
   </a>
 
-  <a href="https://myworklog.de/scripts/Repo_to_diagramm/archflow.html" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.4rem;border-radius:12px;background:#1f2937;color:#f8fafc;font-weight:600;text-decoration:none;border:1px solid rgba(248,250,252,.16);box-shadow:0 8px 20px rgba(15,23,42,.12);transition:background .2s;margin: 5px;">
+  <a href="https://myworklog.de/archflow/" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.4rem;border-radius:12px;background:#1f2937;color:#f8fafc;font-weight:600;text-decoration:none;border:1px solid rgba(248,250,252,.16);box-shadow:0 8px 20px rgba(15,23,42,.12);transition:background .2s;margin: 5px;">
     <span>Archflow Live (myworklog.de)</span>
     <span style="font-size:1rem;line-height:1;color:#93c5fd;">→</span>
   </a>
@@ -117,14 +117,14 @@
 - [🛠️ Entwicklung](#️-entwicklung)
 - [📊 Tech Stack](#-tech-stack)
 - [🧪 Testing](#-testing)
-- [� P2P Sync (WebRTC)](#-p2p-sync-webrtc)
-- [�📱 PWA Features](#-pwa-features)
+- [📡 P2P Sync (WebRTC)](#-p2p-sync-webrtc)
+- [📱 PWA Features](#-pwa-features)
 - [🔒 Sicherheit & Datenschutz](#-sicherheit--datenschutz)
 - [🌍 Browser-Kompatibilität](#-browser-kompatibilität)
 - [🤝 Contributing](#-contributing)
 - [📄 Lizenz & Rechtliches](#-lizenz--rechtliches)
 - [👥 Team](#-team)
-- [📊 Advanced Analytics](README´s/ADVANCED-ANALYTICS.txt)
+- [📊 Advanced Analytics](README´s/ADVANCED-ANALYTICS.md)
 
 ---
 
@@ -133,157 +133,172 @@
 ```
 MyWorkLog/
 ├── 📄 index.html                 ⭐ HAUPTDATEI – Komplette PWA Single-Page-App
-│                                    (Timer, Dashboard, Modals, ~28.000 Zeilen)
+│                                    (Timer, Dashboard, Modals, ~28.000+ Zeilen)
 ├── 📄 package.json               📦 npm Dependencies (Testing, Linting)
 ├── 📄 service-worker.js          🔄 Service Worker für Offline-Fähigkeit
 ├── 🔐 manifest.json              📱 PWA-Manifest (App-Metadaten)
-├── 🤖 browserconfig.xml           🌐 Browser-Konfiguration
+├── 🤖 browserconfig.xml          🌐 Browser-Konfiguration
 ├── 🔍 robots.txt                 🤖 SEO Robot-Direktiven
 ├── 📋 sitemap.xml                🗺️  XML-Sitemap
 │
-├─ 🤖 AI-Bot/                      🧠 KI-Assistent Engine
-│  ├── aibot-engine-pro.js         💬 Chat/NLP-Engine + Intent Detection
-│  ├── data-analyzer-pro.js        📊 Datenanalyse + KPI-Berechnung
-│  └─ LLM/                         🧠 Lokales Language Model (WebGPU)
-│     ├── webllm-config.js         ⚙️  Modell-Konfiguration
-│     ├── webllm-integration.js    🔗 Browser-LLM Integration
-│     └── webllm-validator.js      ✅ Response-Validierung
+├─ 🤖 AI-Bot/                     🧠 KI-Assistent Engine
+│  ├── aibot-engine-pro.js        💬 Chat/NLP-Engine + Intent Detection
+│  ├── data-analyzer-pro.js       📊 Datenanalyse + KPI-Berechnung
+│  └─ LLM/                        🧠 Lokales Language Model (WebGPU)
+│     ├── webllm-config.js        ⚙️  Modell-Konfiguration
+│     ├── webllm-integration.js   🔗 Browser-LLM Integration
+│     └── webllm-validator.js     ✅ Response-Validierung
 │
-├─ 🎨 Assets/                      📦 Statische Ressourcen
-│  ├─ css/                         
-│  │  └─ Event/                    🎉 Event-spezifische Styles
+├─ 🎨 Assets/                     📦 Statische Ressourcen
+│  ├─ css/                        
+│  │  └─ Event/                   🎉 Event-spezifische Styles
 │  │     ├─ New_Year/
-│  │     │  └── fireworks.css      🎆 Silvester-Feuerwerk Animation
+│  │     │  └── fireworks.css     🎆 Silvester-Feuerwerk Animation
 │  │     └─ Weihnachten/
-│  │        └── snowflakes.css     ❄️  Weihnachts-Schneefall
+│  │        └── snowflakes.css    ❄️  Weihnachts-Schneefall
 │  │
-│  └─ js/                          
-│     ├── icons.js                 🎨 Icon Font Definitionen
-│     ├── pinch-zoom.js            🔍 Pinch-Zoom Mobil
+│  └─ js/                         
+│     ├── activity-swipe.js       👆 Swipe-Gesten für Aktivitäten
+│     ├── fahrtkosten.js          🚗 Fahrtkosten-Logik
+│     ├── pinch-zoom.js           🔍 Pinch-Zoom Mobil
 │     ├── touch-mobile-optimizations.js 📱 Touch-Gestures
-│     ├── task-manager.js          ✅ Task-Management
-│     ├── shortcuts.js             ⌨️  Tastenkombinationen
-│     ├── version-loader.js        📌 Version-Management
-│     ├── service-worker.js        🔄 Service Worker Copy
+│     ├── shortcuts.js            ⌨️  Tastenkombinationen
+│     ├── version-loader.js       📌 Version-Management
 │     │
-│     ├─ Cloud/                    ☁️  Supabase Cloud Integration
+│     ├─ Cloud/                   ☁️  Supabase Cloud Integration
 │     │  ├── supabase-integration.js 🔗 Supabase Auth & Sync
-│     │  ├── supabase-advanced.js  ⚙️  Erweiterte Features
-│     │  └── supabase-ui.js        🎨 Cloud-UI Komponenten
+│     │  ├── supabase-advanced.js ⚙️  Erweiterte Features
+│     │  └── supabase-ui.js       🎨 Cloud-UI Komponenten
 │     │
-│     └─ Event/                    🎉 Event-Features
+│     ├─ analytics/               📊 Analytics-Module
+│     ├─ berichtsheft/            📖 Berichtsheft-Module
+│     ├─ fahrtkosten/             🚗 Fahrtkosten-Module
+│     │
+│     └─ Event/                   🎉 Event-Features
 │        ├─ New_Year/
-│        │  └── fireworks.js       🎆 JS Feuerwerk-Logik
+│        │  └── fireworks.js      🎆 JS Feuerwerk-Logik
 │        └─ Weihnachten/
-│           └── snowflakes.js      ❄️  JS Schneefall-Logik
+│           └── snowflakes.js     ❄️  JS Schneefall-Logik
 │
-├─ ⚙️  config/                      🔧 Konfigurationsdateien
-│  ├── supabase-config.js          ☁️  Supabase Project-Keys
-│  ├── humans.txt                  👥 Menschliche Kontakte
-│  └── version.json                📌 App-Version Info
+├─ 🧩 components/                 🔧 Modulare UI-Komponenten
+│  ├─ core/                       ⚙️  Kern-Komponente (Timer, Speicherung)
+│  ├─ dashboard/                  📊 KPI-Dashboard & Charts
+│  ├─ analytics-pro/              📈 Advanced Analytics Pro
+│  ├─ weekview/                   📅 Wochenansicht
+│  ├─ monthcompare/               📆 Monatsvergleich
+│  ├─ yearview/                   📅 Jahresansicht
+│  ├─ history/                    📋 Eintragshistorie
+│  ├─ goals/                      🎯 Ziel-Tracking
+│  ├─ performance/                ⚡ Performance-Metriken
+│  ├─ school/                     🏫 Schultag-Verwaltung
+│  ├─ untis/                      📅 Untis Stundenplan-Integration
+│  ├─ ihk/                        📋 IHK-Modul
+│  ├─ nfc/                        📶 NFC-Integration
+│  ├─ bbig-scanner/               📷 BBiG-Scanner (QR/Barcode)
+│  ├─ modals/                     💬 Dialog-Komponenten
+│  ├─ settings/                   ⚙️  Einstellungen
+│  ├─ sidebar/                    📌 Navigation Sidebar
+│  ├─ success-banner/             🎉 Erfolgs-Banner
+│  ├─ mobile-nav/                 📱 Mobile Navigation
+│  ├─ landing/                    🏠 Landing-Bereich
+│  └─ support/                    💙 Support-Komponente
 │
-├─ 🗄️  DB/                         🗃️  Datenbankskripte
-│  └── rls-policies.sql            🔒 Supabase RLS-Policies
+├─ ⚙️  config/                    🔧 Konfigurationsdateien
+│  ├── supabase-config.js         ☁️  Supabase Project-Keys
+│  ├── humans.txt                 👥 Menschliche Kontakte
+│  └── version.json               📌 App-Version Info
 │
-├─ 📧 Email/                       📨 Feedback & Emails
-│  └── send.html                   💌 EmailJS Integration
+├─ 🗄️  DB/                        🗃️  Datenbankskripte
+│  └── rls-policies.sql           🔒 Supabase RLS-Policies
 │
-├─ 🖼️  Grafiken/                    🎨 Bilder & Assets
-│  └── [PNG, WebP, SVG]            📸 Screenshots, Icons
+├─ 📧 Email/                      📨 Feedback & Emails
+│  └── send.html                  💌 EmailJS Integration
 │
-├─ 📄 Pages/                       🌐 Zusätzliche Seiten
-│  ├── quantum-translator.html     🌐 Quantum Translator Seite
+├─ 🖼️  Grafiken/                   🎨 Bilder & Assets
+│  └── [PNG, WebP, SVG]           📸 Screenshots, Icons
+│
+├─ 🌐 pages/                      🌐 Standalone Seiten (Clean URLs)
 │  │
-│  ├─ App/                         ⚙️  App Features
-│  │  ├── berichtsheft.html        📖 IHK Ausbildungsnachweise
-│  │  ├── vertrags-manager.html    📋 Gehalt/Urlaub Manager
-│  │  └─ Ausbildungs_Hilfe/        📚 Ausbildungs-Ressourcen
-│  │     └─ Fachinformatiker/
-│  │        └── Fachinformatiker.html  💻 IT-Spezialist-Guide
-│  │
-│  ├─ DE-Gestz/                    ⚖️  Deutsche Rechtliches
-│  │  ├── DSGVO.html               🔒 DSGVO-Konformität
-│  │  └── Impressum.html           📋 Impressum
-│  │
-│  ├─ Error/                       ❌ Fehlerseiten
-│  │  └── 404.html                 🚫 404 Not Found
-│  │
-│  ├─ Event/                       🎉 Sonder-Events
-│  │  └── Weihnachten.html         🎄 Weihnachtsseite
-│  │
-│  └─ Info/                        ℹ️  Informationen
-│     ├── about.html               👋 Über MyWorkLog
-│     ├── analytics.html           📊 Advanced Analytics Pro (8 Tabs)
-│     ├── offline.html             📴 Offline-Modus Info
-│     └── repo-report.html         📈 Repository-Report
+│  ├── about/                     👋 Über MyWorkLog
+│  ├── analytics/                 📊 Advanced Analytics Pro (8+ Tabs)
+│  ├── archflow/                  🏗️  Architektur-Visualisierung
+│  ├── aufgaben/                  ✅ Task-Manager
+│  ├── berichtsheft/              📖 IHK Ausbildungsnachweise
+│  ├── DSGVO/                     🔒 Datenschutzerklärung
+│  ├── Fachinformatiker/          💻 IT-Spezialist-Guide
+│  ├── fahrtkosten/               🚗 Fahrtkosten-Tracker (NEU 🆕)
+│  ├── Impressum/                 📋 Impressum
+│  ├── it-landing/                💻 IT Professional Hub (NEU 🆕)
+│  ├── offline/                   📴 Offline-Modus Info
+│  ├── rechte-checker/            ⚖️  Azubi-Rechte-Checker BBiG (NEU 🆕)
+│  ├── repo-report/               📈 Repository-Report
+│  ├── schatten-berichtsheft/     🕵️  Schatten-Berichtsheft Vault (NEU 🆕)
+│  ├── skill-tree/                🎮 RPG Skill-Baum für Azubis (NEU 🆕)
+│  ├── update_bugs/               🐛 Issues & Bug-Tracker
+│  ├── vertrags-manager/          📋 Gehalt/Urlaub Manager
+│  └── Weihnachten/               🎄 Weihnachtsseite
 │
-├─ 📚 README´s/                    📖 Ausführliche Dokumentation
-│  ├── INDEX-DOCUMENTATION.md      📇 Dokumentations-Index
-│  ├── FEATURES.md                 ✨ Feature List
-│  ├── ADVANCED-ANALYTICS.md       📊 Analytics-Tiefgang
-│  ├── COMPLETION-REPORT-STEP2.md  ✅ Progress Report
-│  ├── ROADMAP-NEXT-STEPS.md       🗺️  Zukunfts-Roadmap
-│  ├── PWA-README.md               📱 PWA Deep Dive
-│  ├── TASK-MANAGER-README.md      ✅ Task-Manager Doku
-│  ├── VISUAL-SUMMARY-STEP2.md     🎨 Visual Overview
+├─ 📚 README´s/                   📖 Ausführliche Dokumentation
+│  ├── INDEX-DOCUMENTATION.md     📇 Dokumentations-Index
+│  ├── FEATURES.md                ✨ Feature List
+│  ├── ADVANCED-ANALYTICS.md      📊 Analytics-Tiefgang
+│  ├── PWA-README.md              📱 PWA Deep Dive
+│  ├── TASK-MANAGER-README.md     ✅ Task-Manager Doku
+│  ├── ROADMAP-NEXT-STEPS.md      🗺️  Zukunfts-Roadmap
 │  │
-│  ├─ AI-Bot/                      🤖 AI-Dokumentation
-│  │  ├── INTEGRATION-NOTES.md     📝 Integration-Guide
-│  │  └─ WEB-LLM/                  🧠 WebLLM-Details
-│  │     ├── CDN-DIAGNOSTICS.md    🔍 CDN-Fehlersuche
-│  │     ├── CDN-UPDATE-JANUARY-2026.md 📅 Update-Notes
-│  │     ├── WEBLLM-CHECKLIST.md   ✅ Setup-Checklist
-│  │     ├── WEBLLM-COMPLETE-REPORT.md 📊 Vollständiger Report
-│  │     ├── WEBLLM-DONE.md        ✅ Abgeschlossen ✓
-│  │     ├── WEBLLM-IMPLEMENTATION.md 🛠️  Implementierung
-│  │     ├── WEBLLM-INTEGRATION.md 🔗 Integration
-│  │     ├── WEBLLM-QUICK-START.md 🚀 Quick Start
-│  │     └── WEBLLM-READY.md       ✓ Ready
+│  ├─ AI-Bot/                     🤖 AI-Dokumentation
+│  │  └── INTEGRATION-NOTES.md    📝 Integration-Guide
 │  │
-│  └─ ICAL/                         📅 iCalendar-Export
-│     ├── ICAL-EXPORT-SETUP.md     📅 Setup iCal
-│     └── STEP2-ICAL-COMPLETE.md   ✅ iCal fertig
+│  ├─ Update/                     📋 Changelogs
+│  │  └── CHANGELOG.md            📋 Vollständiger Changelog
+│  │
+│  └─ ICAL/                       📅 iCalendar-Export
+│     └── ICAL-EXPORT-SETUP.md    📅 Setup iCal
 │
-├─ ⚖️  Rechtliches/                 📜 Lizenz & Rechtliches
-│  ├── CODE_OF_CONDUCT.md          👥 Community Guidelines
-│  ├── CONTRIBUTING.md             🤝 Kontribution Guide
-│  ├── LICENSE.md                  📄 MIT Lizenz
-│  ├── NOTICE.md                   © Copyright Notice
-│  ├── PRIVACY.md                  🔒 Datenschutzerklärung
-│  └── SECURITY.md                 🛡️  Sicherheitsrichtlinien
+├─ ⚖️  Rechtliches/               📜 Lizenz & Rechtliches
+│  ├── CODE_OF_CONDUCT.md         👥 Community Guidelines
+│  ├── CONTRIBUTING.md            🤝 Kontribution Guide
+│  ├── LICENSE.md                 📄 MIT Lizenz
+│  ├── NOTICE.md                  © Copyright Notice
+│  ├── PRIVACY.md                 🔒 Datenschutzerklärung
+│  └── SECURITY.md                🛡️  Sicherheitsrichtlinien
 │
-└─ 🛠️  scripts/                    🔧 Hilfsskripte
-   └── repo-tracker.py             📊 Repository-Tracker
+└─ 🛠️  scripts/                   🔧 Hilfsskripte
+   └── repo-tracker.py            📊 Repository-Tracker
 ```
 
 ### 🎯 Wo finde ich was?
 
 | Funktion | Datei | Zeilen / Details |
 |----------|-------|-----------------|
-| **Timer (DOM)** | `index.html` | **Zeile 7773** - timer-box HTML-Element |
-| **Timer (Logik)** | `index.html` | **Zeilen 11161-11300+** - Timer-Objekt, Funktionen & Intervals |
-| **Dark Mode (CSS)** | `index.html` | **Zeilen 183-280** - [data-theme="light"] Styles |
+| **Timer (DOM)** | `index.html` | Zeile ~7773 — timer-box HTML-Element |
+| **Timer (Logik)** | `index.html` | Zeilen ~11161–11300 — Timer-Objekt, Funktionen & Intervals |
+| **Dark Mode (CSS)** | `index.html` | Zeilen ~183–280 — [data-theme="light"] Styles |
 | **Dark Mode Toggle** | `Assets/js/shortcuts.js` | Tastatur-Hotkeys & Event-Listener |
-| **Command Palette** | `index.html` | **Zeilen ~23200-23400** - Befehl-Registry |
-| **Analytics Charts** | `Pages/Info/analytics.html` | Komplette Analytics-Seite mit 8+ Tabs |
-| **3D City Visualization** | `inde.html` | City Tab - Three.js 3D-Rendering |
-| **Galaxy 3D** | `index.html` | Galaxy Tab - 3D-Weltraum-Szene |
+| **Command Palette** | `index.html` | Zeilen ~23200–23400 — Befehl-Registry |
+| **Analytics Charts** | `pages/analytics/` | Komplette Analytics-Seite mit 8+ Tabs |
+| **Architektur-Diagramm** | `pages/archflow/` | Interaktives Codebase-Diagramm |
 | **AI Bot Engine** | `AI-Bot/aibot-engine-pro.js` | Conversation, Intent Detection, Pattern Recognition |
 | **AI Data Analyzer** | `AI-Bot/data-analyzer-pro.js` | KPI-Berechnung, Trends, Insights |
 | **WebLLM (On-Device AI)** | `AI-Bot/LLM/webllm-integration.js` | Lokales Language Model (WebGPU) |
 | **Cloud Sync (Supabase)** | `Assets/js/Cloud/supabase-integration.js` | Magic Link Auth, Data Sync |
 | **Cloud UI & Dashboard** | `Assets/js/Cloud/supabase-ui.js` | Cloud Status, Account Menu |
 | **Offline Mode (Cache)** | `service-worker.js` | Cache-First & Network-First Strategies |
-| **Berichtsheft (IHK)** | `Pages/App/berichtsheft.html` | IHK-konforme Ausbildungsnachweise |
-| **Verträge & Gehalt** | `Pages/App/vertrags-manager.html` | Arbeitzeitkonten, Urlaub, Lohnzuschläge |
-| **Aufgaben Manager (NEU🆕)** | `Pages/App/Tasks/aufgaben.html` | Task-Management mit Kategorien, Recurring, Achievements |
-| **Task Manager Logik** | `Assets/js/task-manager.js` | Aufgaben-Speicherung & Verarbeitung (veraltet) |
+| **Berichtsheft (IHK)** | `pages/berichtsheft/` | IHK-konforme Ausbildungsnachweise |
+| **Verträge & Gehalt** | `pages/vertrags-manager/` | Arbeitzeitkonten, Urlaub, Lohnzuschläge |
+| **Aufgaben Manager** | `pages/aufgaben/` | Task-Management mit Kategorien, Recurring, Achievements |
+| **Fahrtkosten-Tracker** | `pages/fahrtkosten/` | Routing, ÖPNV, Spritkosten, Pendlerpauschale |
+| **Rechte-Checker** | `pages/rechte-checker/` | BBiG Azubi-Rechte interaktiv prüfen |
+| **Skill-Baum** | `pages/skill-tree/` | RPG Gamification für Azubi-Fortschritt |
+| **Schatten-Berichtsheft** | `pages/schatten-berichtsheft/` | Classified Vault — privater Berichtsheft-Bereich |
+| **IT Professional Hub** | `pages/it-landing/` | IT-Ressourcen, Links & Tools |
+| **Untis Integration** | `components/untis/` | Stundenplan-Sync & manuelle Eingabe |
 | **Shortcuts & Hotkeys** | `Assets/js/shortcuts.js` | Tastaturkürzel, Command Palette, Toggle-Events |
-| **Benachrichtigungen** | `index.html` | **Zeilen 27000-27100** - Smart Notifications System |
-| **WeatherAPI Integration** | `index.html` | **Zeilen 13000-13700** - Weather Auto-Refresh |
-| **P2P Sync (WebRTC)** | `index.html` | **Zeilen 19000-20000** - SimplePeer P2P Verbindungen |
-| **Pomodoro Timer** | `index.html` | **Zeile 23901** - Focus Timer Interval |
-| **Fokus Modus** | `index.html` | **Zeilen 28000-28500** - Focus Mode UI & Logic |
+| **Benachrichtigungen** | `index.html` | Zeilen ~27000–27100 — Smart Notifications System |
+| **WeatherAPI Integration** | `index.html` | Zeilen ~13000–13700 — Weather Auto-Refresh |
+| **P2P Sync (WebRTC)** | `index.html` | Zeilen ~19000–20000 — SimplePeer P2P Verbindungen |
+| **Pomodoro Timer** | `index.html` | Zeile ~23901 — Focus Timer Interval |
+| **Fokus Modus** | `index.html` | Zeilen ~28000–28500 — Focus Mode UI & Logic |
 
 ---
 
@@ -300,6 +315,8 @@ MyWorkLog/
 ✅ Gleitzeit-ready – Deutsche Arbeitszeitmodelle             ⚡ Zero-Setup
 ✅ Verschlüsselt – AES-256-GCM Backup                        🎨 Dark/Light Mode
 ✅ Cloud-Sync – Optionale Synchronisation via Supabase       ☁️ Geräteübergreifend
+✅ Gamification – RPG Skill-Baum & Achievements              🎮 Azubi-Motivation
+✅ Azubi-Tools – Rechte-Checker, Fahrtkosten, Untis          📚 All-in-One Lösung
 ```
 
 ### 📊 Projektstand
@@ -314,10 +331,18 @@ MyWorkLog/
 | ✅ **Stabil** | Cloud-Sync (optional) | v3.1.0 |
 | ✅ **Stabil** | P2P Sync + TURN Config | v3.2.0 |
 | ✅ **Stabil** | Weather Auto-Refresh | v3.2.1 |
-| 🚧 **in Progress** | Quantum Translator | v3.2.1 |
-| ✅ **Stabil** | Smaller Updates | v3.3.1 |
-| ✅ **Stabil** | Smaller Updates and new aufgaben.html | v3.3.2 |
-**Letztes Update:** 09. März 2026 | **Release:** v3.3.2
+| ✅ **Stabil** | Aufgaben Manager | v3.3.2 |
+| ✅ **Stabil** | Advanced Analytics Pro | v3.4.0 |
+| ✅ **Stabil** | Fahrtkosten-Tracker | v3.4.0 |
+| ✅ **Stabil** | Azubi-Rechte-Checker (BBiG) | v3.4.0 |
+| ✅ **Stabil** | RPG Skill-Baum | v3.4.0 |
+| ✅ **Stabil** | Untis Stundenplan-Integration | v3.5.0 |
+| ✅ **Stabil** | IT Professional Hub | v3.5.0 |
+| ✅ **Stabil** | Schatten-Berichtsheft Vault | v3.5.0 |
+| ✅ **Stabil** | Cloud Backup Alerts | v3.5.3 |
+| ✅ **Stabil** | Spracheingabe Enhanced | v3.5.3 |
+
+**Letztes Update:** 10. März 2026 | **Release:** v3.5.3
 
 ---
 
@@ -335,6 +360,7 @@ MyWorkLog/
 - 🎯 Kategorie-System (Work, School, Vacation, Sick, Holiday)
 - 📅 Kalender-Ansicht mit Monatsübersicht
 - 🔄 Automatische Pausenregel (§4 ArbZG konform)
+- 🏫 Berufschule Auto-Eintrag Modal
 
 #### 📊 **Analytics & Reports**
 - 📈 KPI-Dashboard mit Echtzeit-Ringen
@@ -342,6 +368,7 @@ MyWorkLog/
 - 🎨 Anpassbare SVG-Charts (Area, Bar, Smooth, Line)
 - 🔥 Heatmap-Visualisierung
 - 📊 Export zu PDF, Excel, CSV
+- 📊 Advanced Analytics Pro (8+ Tabs)
 
 </td>
 <td width="50%" valign="top">
@@ -353,12 +380,14 @@ MyWorkLog/
 - 🎯 Smart Recommendations
 - 📝 Conversation History
 - 🤖 Lokales WebLLM (on-device KI)
+- 🎤 Spracheingabe (enhanced)
 
 #### 🔒 **Sicherheit & Backup**
 - 🔐 AES-256-GCM Verschlüsselung
 - 💾 JSON Export/Import
 - 📅 iCalendar Export (RFC 5545)
 - 🔄 Automatische Backups
+- ☁️ Cloud Backup Alerts (inkl. Cloud-Erkennung)
 - ☁️ Optionale Cloud-Sync (Supabase)
 - 🛡️ DSGVO-konform
 
@@ -366,104 +395,81 @@ MyWorkLog/
 </tr>
 </table>
 
-### 🆕 Neue Features (v3.2.0) (Now 3.3.2)
+### 🎓 Azubi-spezifische Tools
 
-| Feature | Beschreibung | Docs |
+<table>
+<tr>
+<td width="50%" valign="top">
+
+#### 📋 **Ausbildungs-Management**
+- 📖 Berichtsheft (IHK-konform)
+- 🕵️ Schatten-Berichtsheft (Privater Vault)
+- 📅 Untis Stundenplan-Integration (manuell & auto)
+- 💻 Fachinformatiker-Guide
+- 💼 IT Professional Hub
+
+#### ⚖️ **Rechtliches & Finanzen**
+- ⚖️ Azubi-Rechte-Checker (BBiG interaktiv)
+- 📋 Vertrags-Manager (Gehalt & Urlaub)
+- 🚗 Fahrtkosten-Tracker (Routing, ÖPNV, Pendlerpauschale)
+
+</td>
+<td width="50%" valign="top">
+
+#### 🎮 **Gamification**
+- 🌳 RPG Skill-Baum für Azubi-Fortschritt
+- 🏆 Achievements & Badges
+- 📊 Produktivitäts-Score
+- 🎯 Ziel-Tracking (Goals)
+- ⚡ Performance-Metriken
+
+#### 🛠️ **Weitere Tools**
+- ✅ Task-Manager (Aufgaben, Kategorien, Recurring)
+- 🏗️ ArchFlow – Architektur-Visualisierung
+- 📷 BBiG-Scanner (QR/Barcode)
+- 📶 NFC-Integration
+- 🐛 Issues & Bug-Tracker
+
+</td>
+</tr>
+</table>
+
+### 🆕 Neue Features (v3.4.0 – v3.5.3)
+
+| Feature | Beschreibung | Link |
 |---------|-------------|------|
-| ☁️ **Cloud-Sync** | Optionale Synchronisation via Supabase (Magic Link Auth) | [Cloud Docs](Assets/js/Cloud/) |
-| 📆 **Wochenansicht** | Dedizierter Wochen-Tab mit KPIs, Vergleich & Breakdown | — |
-| 📊 **Monatvergleich** | Monat-vs-Monat Vergleichswidget mit Mini-Kalender | — |
-| 🤖 **WebLLM** | Lokales LLM (on-device KI) für erweiterte Analyse | [WebLLM Docs](README´s/AI-Bot/WEB-LLM/) |
-| 💬 **Feedback (EmailJS)** | In-App Feedback mit DSGVO-Datenmodus (Minimal/Vollständig) | — |
-| 💰 **Spenden (PayPal)** | Support-Seite mit PayPal-Integration | — |
-| ⚡ **Schnelleintrag** | 1-Klick Vorlagen für Arbeitstag, Schultag etc. | — |
-|  **Berichtsheft** | IHK-konforme Ausbildungsnachweise | [Berichtsheft](Pages/App/berichtsheft.html) |
-| 📄 **Vertrags-Manager** | Gehalt & Urlaubsübersicht | [Vertrags-Manager](Pages/App/vertrags-manager.html) |
+| 🚗 **Fahrtkosten-Tracker** | Routing, Adresssuche, ÖPNV-Links, Spritkosten & Pendlerpauschale | [fahrtkosten/](pages/fahrtkosten/) |
+| ⚖️ **Rechte-Checker** | BBiG Azubi-Rechte interaktiv prüfen — "Darf der Chef das?" | [rechte-checker/](pages/rechte-checker/) |
+| 🌳 **RPG Skill-Baum** | Gamifizierter Azubi-Fortschritt mit Level & Achievements | [skill-tree/](pages/skill-tree/) |
+| 🕵️ **Schatten-Berichtsheft** | Privater Classified Vault für den Berichtsheft | [schatten-berichtsheft/](pages/schatten-berichtsheft/) |
+| 💻 **IT Professional Hub** | Zentrales IT-Ressourcen-Portal für Fachinformatiker | [it-landing/](pages/it-landing/) |
+| 📅 **Untis Integration** | Automatischer & manueller Stundenplan-Import | `components/untis/` |
+| ☁️ **Cloud Backup Alerts** | Backup-Benachrichtigungen erkennen jetzt auch Cloud-Backups | `core.js` |
+| 🎤 **Spracheingabe Enhanced** | Verbesserte Spracheingabe für Timer & Chat | `index.html` |
+| 🏗️ **ArchFlow** | Interaktive Codebase-Architektur-Visualisierung | [archflow/](pages/archflow/) |
+| 📈 **Analytics Pro** | Erweitertes Analytics mit neuen Komponenten | `components/analytics-pro/` |
+| 👆 **Activity Swipe** | Swipe-Gesten für schnelle Eintrags-Navigation | `Assets/js/activity-swipe.js` |
 
 ---
 
-## 🤖 AI-Bot Assistent
-
-Der integrierte AI-Bot analysiert deine Zeiterfassungsdaten intelligent und gibt dir personalisierte Einblicke.
-
-### 🧠 Bot-Fähigkeiten
-
-```javascript
-// Beispiel-Interaktionen
-"Wie viele Stunden habe ich diese Woche gearbeitet?"     → 📊 Weekly Stats
-"Zeige mir meine Produktivität."                          → 📈 Trend Analysis
-"Wann sollte ich eine Pause machen?"                     → 💡 Smart Recommendation
-"Wie sieht mein Monat aus?"                              → 📅 Monthly Forecast
-"Bin ich im Saldo?"                                      → ⚖️ Balance Check
-```
-
-### 🏗️ Architektur
-
-<div align="center">
-
-[AI Bot Architecture](Grafiken/Bot-engine.webp)
-
-</div>
-
-**Drei-Module-System:**
-
-1. **`data-analyzer-pro.js`** – Datenanalyse-Engine
-   - Aggregiert LocalStorage-Daten
-   - Berechnet KPIs, Trends, Patterns
-   - Caching für Performance
-   - Fallback für leere Datasets
-
-2. **`aibot-engine-pro.js`** – Conversation Engine
-   - Intent Detection & Classification
-   - Natural Language Processing (vereinfacht)
-   - User Profiling (Consistency, Performance, Work Style)
-   - History Management
-
-3. **WebLLM Integration** – Lokales LLM (on-device)
-   - `webllm-config.js` – Modell-Konfiguration
-   - `webllm-integration.js` – Browser-LLM Engine
-   - `webllm-validator.js` – Response-Validierung
-   - Läuft vollständig im Browser (WebGPU)
-
-<div align="center">
-
-[Data Analyzer](Grafiken/Bot-Analyzer.webp)
-
-</div>
-
-**Features:**
-- 🔒 Primär lokal – Cloud nur optional
-- 💾 Conversation History in LocalStorage
-- 🎯 Pattern Recognition für wiederkehrende Fragen
-- 📊 Echtzeit-Zugriff auf Zeiterfassungsdaten
-- 🤝 Graceful Degradation (funktioniert auch ohne Analyzer)
-- 🤖 WebLLM für erweiterte KI-Antworten (optional, on-device)
-
-➡️ **[Mehr zur AI-Bot Integration](README´s/AI-Bot/INTEGRATION-NOTES.md)**
-
----
 
 ## ☁️ Cloud-Sync mit Supabase
 
 Optional: Synchronisiere deine Zeiterfassungsdaten über die Cloud! Deine Einträge werden automatisch in Supabase gespeichert und sind dadurch **geräteübergreifend verfügbar**.
-
-<div align="center">
-
-![Supabase Cloud Sync](Grafiken/supabase.png)
-
-</div>
 
 **Wie es funktioniert:**
 1. 🔐 Lokale App speichert alle Daten in deinem Browser (localStorage)
 2. 🔄 Optional: Synchronisierung zu Supabase Cloud
 3. 📱 Zugriff auf alle Geräten (Handy, Tablet, Computer)
 4. 🔒 Daten bleiben privat – nur du kannst sie sehen
+5. 🔔 Backup-Alerts informieren bei lokalem und Cloud-Backup-Status
 
 **Features:**
 - ✅ Automatische Synchronisation
 - ✅ Vertrauenswürdig: Magic Link Authentication
 - ✅ Row-Level Security (RLS) Policies
 - ✅ Fallback-Modus: App funktioniert auch ohne Cloud
+- ✅ Cloud Backup Alerts (Erkennung von Cloud-Backups)
 - ✅ DSGVO-konform
 
 **Setup:**
@@ -582,13 +588,12 @@ cd MyWorkLog
 ### 🎨 Design-System
 
 ```css
-/* CSS Custom Properties (Auszug) */
+/* CSS Custom Properties */
 :root {
-  /* Farben */
-  --bg-deep: #0a0e27;
+  --primary: #a855f7;
+  --bg-deep: #030305;
   --bg-glass: rgba(255, 255, 255, 0.05);
-  --primary: #00d4ff;
-  --accent: #ff006e;
+  --radius: 20px;
 
   /* Kategorie-Farben */
   --work-color: #00d4ff;
@@ -597,7 +602,6 @@ cd MyWorkLog
   --sick: #ff006e;
 
   /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.1);
   --backdrop-blur: 10px;
 }
@@ -618,18 +622,16 @@ graph LR
     B --> C[LocalStorage]
     C --> D[Data Analyzer]
     D --> E[UI Rendering]
-    D --> F[AI Bot]
-    F --> G[Recommendations]
-    F --> L[WebLLM]
     E --> H[SVG Charts]
     C --> I[Export/Backup]
     C -->|opt-in| J[Supabase Cloud]
     C -->|consent| K[EmailJS Feedback]
+    B --> M[Untis Sync]
+    B --> N[Fahrtkosten]
 ```
 
 **LocalStorage Keys:**
 - `tg_pro_data` – Hauptdaten (Zeiteinträge, Einstellungen, Profile)
-- `aiBotHistoryPro` – AI Conversation History
 - `tt_chart_style` – Chart-Anpassungen
 - `theme` – Dark/Light Mode
 
@@ -662,6 +664,7 @@ graph LR
 ![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)
 ![jsPDF](https://img.shields.io/badge/jsPDF-E74C3C?style=for-the-badge)
 ![QRCode.js](https://img.shields.io/badge/QRCode.js-000000?style=for-the-badge)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 
 </div>
 
@@ -677,8 +680,9 @@ graph LR
     "html2canvas": "v1.4.1",    // DOM → Canvas
     "Supabase JS": "v2",        // Cloud-Sync & Auth
     "EmailJS": "v4",            // Feedback-Versand
-    "WebLLM": "v0.2.80"         // Lokales LLM (on-device)
-  },
+    "WebLLM": "v0.2.80",        // Lokales LLM (on-device)
+    "DOMPurify": "v3.2.4"       // XSS-Sanitization
+  }
 }
 ```
 
@@ -690,6 +694,8 @@ graph LR
 - ✅ **Mobile First** – Responsive Design ab 320px
 - ✅ **Zero Configuration** – Keine Einrichtung nötig
 - ✅ **Vanilla JavaScript** – Keine Frameworks (ES6+)
+- ✅ **Modular Components** – `components/` für wiederverwendbare UI-Blöcke
+- ✅ **Clean URLs** – `/pages/{name}/` via Cloudflare Pages `_redirects`
 
 ---
 
@@ -712,8 +718,6 @@ graph LR
 ✅ Kein Node.js, npm oder Build-Tools nötig!
 ```
 
-**Die App ist 100% Vanilla JavaScript** – du kannst `index.html` direkt öffnen oder auf jedem Web-Server hosten.
-
 ### 🚀 Development Setup
 
 ```bash
@@ -724,9 +728,6 @@ cd MyWorkLog
 # index.html öffnen im Browser
 # Keine Dependencies oder Build-Steps nötig!
 ```
-
-
-
 
 ### 📝 Code Style Guide
 
@@ -743,16 +744,15 @@ function calc(w,e){return w-e;}
 **Regeln:**
 - ES6+ Syntax bevorzugen
 - Sprechende Variablen-Namen (Deutsch erlaubt)
-- JSDoc-Kommentare für komplexe Funktionen
-- Keine globalen Variablen (außer `window.app`)
+- Globale Funktionen (keine Klassen außer AIBotEnginePro)
+- Header: `// ═══ {NAME} MODULE ═══`
 - Fehlerbehandlung mit try-catch
 - LocalStorage-Zugriffe immer mit Fallback
+- IMMER `safeHTML()`/`esc()` für User-Input
 
 ---
 
----
-
-## � P2P Sync (WebRTC)
+## 📡 P2P Sync (WebRTC)
 
 MyWorkLog unterstützt **direkte Geräte-zu-Geräte-Synchronisation** über WebRTC (SimplePeer). Keine Server-Infrastruktur nötig – Daten werden verschlüsselt direkt zwischen den Geräten übertragen.
 
@@ -782,8 +782,7 @@ iceServers: [
 
 - **"Verbindung herstellen"** Button wird `disabled` + zeigt "⏳ Verbinde..." Text
 - Animierter **Spinner + Fortschrittsbalken** mit Gradient erscheint darunter
-- **ICE-Status** wird live angezeigt:
-  - `Initialisiere...` → `Suche Route...` → `Verbunden!`
+- **ICE-Status** wird live angezeigt: `Initialisiere...` → `Suche Route...` → `Verbunden!`
 - Bei Fehler: Button wird zurückgesetzt, **Retry möglich** (`answerApplied` wird reset)
 
 ### 3. Bessere Fehlermeldung bei Connection Failed
@@ -792,17 +791,11 @@ iceServers: [
 - Erkennt sowohl `Connection failed.` als auch `ERR_ICE_CONNECTION_FAILURE`
 - User bekommt konkrete Lösungsvorschläge angezeigt
 
-### 4. Cleanup in allen Handlern
-
-- **connect**, **error** und **close** Handler räumen die Loading-Animation sauber auf
-- Interval wird gestoppt, Button-State wird zurückgesetzt
-- Kein Memory-Leak durch verwaiste Intervalle
-
 > **⚠️ Hinweis:** Die aktuellen Metered.ca TURN-Credentials sind kostenlose Demo-Keys. Für Produktion eigene Keys auf [metered.ca](https://www.metered.ca/stun-turn) erstellen (kostenloser Tier: 500 MB/Monat).
 
 ---
 
-## �📱 PWA Features
+## 📱 PWA Features
 
 ### ✨ Progressive Web App Highlights
 
@@ -836,6 +829,7 @@ iceServers: [
 - Timer-Alerts
 - Pausen-Erinnerungen
 - Tages-Summary
+- Cloud Backup Alerts
 
 </td>
 </tr>
@@ -856,61 +850,6 @@ iceServers: [
 ✅ Apple Touch Icons
 ```
 
-### 🔧 Service Worker Konfiguration
-
-```javascript
-// service-worker.js (Auszug)
-const CACHE_NAME = 'myworklog-cache-v4';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/Assets/js/icons.js',
-  // ... mehr
-];
-
-// Cache-First Strategy
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-  );
-});
-```
-
-### 📱 Manifest.json
-
-```json
-{
-  "name": "MyWorkLog - Zeiterfassung",
-  "short_name": "MyWorkLog",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#0a0e27",
-  "theme_color": "#00d4ff",
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Timer starten",
-      "url": "/?action=start-timer",
-      "icons": [{ "src": "play-icon.png", "sizes": "96x96" }]
-    }
-  ]
-}
-```
-
 **➡️ [Vollständige PWA-Dokumentation](README´s/PWA-README.md)**
 
 ---
@@ -926,7 +865,7 @@ self.addEventListener('fetch', (event) => {
 ✅ Datenmodus wählbar: Minimal oder Vollständig
 ✅ Keine Cookies (außer Session)
 ✅ Keine Tracking-Scripts
-✅ Opt-In für Analytics (Plausible, privacy-friendly)
+✅ Opt-In für Analytics (Umami, privacy-friendly)
 ✅ Datenportabilität (JSON Export)
 ✅ Recht auf Löschung (Clear Data)
 ✅ Transparente Datenvorschau vor jedem Versand
@@ -937,7 +876,6 @@ self.addEventListener('fetch', (event) => {
 
 **AES-256-GCM Backup:**
 ```javascript
-// Backup-Verschlüsselung
 const encryptData = async (data, password) => {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const key = await deriveKey(password, salt); // PBKDF2
@@ -959,27 +897,7 @@ const encryptData = async (data, password) => {
 - 🎲 Kryptografisch sichere Zufallszahlen
 - 🛡️ Keine Passwort-Speicherung
 - 🔓 Client-seitige Ver-/Entschlüsselung
-
-### 🔍 Security Audits
-
-```bash
-# npm Audit
-npm audit
-
-# OWASP Dependency Check (CI/CD)
-dependency-check --scan ./
-
-# Lighthouse Security Score
-lighthouse https://your-domain --view
-```
-
-### 📋 Security Policy
-
-**Responsible Disclosure:**
-- Security-Issues an `security@your-domain.com`
-- PGP-Key verfügbar
-- Response innerhalb 48h
-- CVE-Koordination bei Bedarf
+- 🧹 DOMPurify 3.2.4 für XSS-Schutz
 
 **➡️ [Vollständige Security Policy](Rechtliches/SECURITY.md)**
 
@@ -1010,31 +928,14 @@ lighthouse https://your-domain --view
 | **IE 11** | - | ❌ Nicht unterstützt | Keine ES6+ Features |
 | **Android Browser** | < 90 | ⚠️ Teilweise | Eingeschränkte PWA |
 
-### 🧪 Feature Detection
-
-```javascript
-// Automatische Feature Detection
-const features = {
-  serviceWorker: 'serviceWorker' in navigator,
-  localStorage: typeof Storage !== 'undefined',
-  cryptoSubtle: crypto && crypto.subtle,
-  pushNotifications: 'PushManager' in window,
-  webRTC: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
-};
-
-// Graceful Degradation
-if (!features.serviceWorker) {
-  console.warn('Service Worker nicht verfügbar - Offline-Mode deaktiviert');
-}
-```
-
 ### 📱 Mobile-Optimierungen
 
-- ✅ Touch-Gesten (Swipe, Pinch-to-Zoom)
+- ✅ Touch-Gesten (Swipe, Pinch-to-Zoom, Activity-Swipe)
 - ✅ Responsive ab 320px Breite
 - ✅ Optimierte Performance (60fps)
 - ✅ Reduzierte Netzwerk-Nutzung
 - ✅ Battery-Aware (RequestIdleCallback)
+- ✅ Mobile Navigation (Bottom-Nav)
 
 ---
 
@@ -1081,22 +982,7 @@ gh pr create --title "Add XYZ feature" --body "Beschreibung..."
 - [ ] Screenshots hinzugefügt (bei UI-Änderungen)
 - [ ] DSGVO-Konformität geprüft
 - [ ] Browser-Kompatibilität getestet
-
-### 🎯 Wo kann ich helfen?
-
-**Good First Issues:**
-- 🐛 Bug-Fixes
-- 📝 Dokumentation verbessern
-- 🌍 Übersetzungen (Englisch, etc.)
-- 🎨 UI/UX Verbesserungen
-- ♿ Accessibility (a11y)
-
-**Erweiterte Contributions:**
-- 🤖 AI-Bot Verbesserungen
-- 📊 Neue Chart-Typen
-- 🔌 API-Integrationen
-- 🧪 Test-Coverage erhöhen
-- ⚡ Performance-Optimierungen
+- [ ] Absolute Pfade verwendet (`/Assets/...` statt `./Assets/...`)
 
 **➡️ [Contributing Guide](Rechtliches/CONTRIBUTING.md)**
 
@@ -1109,7 +995,7 @@ gh pr create --title "Add XYZ feature" --body "Beschreibung..."
 **MIT License** für den Quellcode – Siehe [LICENSE.md](Rechtliches/LICENSE.md)
 
 ```
-Copyright (c) 2025 TechNova App Team
+Copyright (c) 2025–2026 TechNova App Team
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -1134,21 +1020,14 @@ Die MIT-Lizenz gilt **NUR für den Quellcode**. Folgende Komponenten und Inhalte
 - ✓ Verbessern & Erweitern des Codes (siehe [CONTRIBUTING.md](Rechtliches/CONTRIBUTING.md))
 - ✓ Kommerzielle Nutzung des modifizierten Codes (mit Attribution)
 
-**🔗 Attribution erforderlich:**
-Wenn du den Code nutzt, musst du folgende Nennung einfügen:
-```
-MyWorkLog © 2025 TechNova App Team. Licensed under MIT License.
-Original Project: https://github.com/yourusername/MyWorkLog
-```
-
 ---
 
 ### 🛡️ Rechtliche Dokumente
 
 | Dokument | Beschreibung | Link |
 |----------|--------------|------|
-| **DSGVO** | Datenschutzerklärung (HTML) | [DSGVO.html](./DSGVO.html) |
-| **Impressum** | Impressum (HTML) | [Impressum.html](./Impressum.html) |
+| **DSGVO** | Datenschutzerklärung | [/DSGVO/](pages/DSGVO/) |
+| **Impressum** | Impressum | [/Impressum/](pages/Impressum/) |
 | **Privacy Policy** | Datenschutz (Markdown) | [PRIVACY.md](Rechtliches/PRIVACY.md) |
 | **Security Policy** | Sicherheit & Responsible Disclosure | [SECURITY.md](Rechtliches/SECURITY.md) |
 | **Code of Conduct** | Verhaltenskodex für Contributors | [CODE_OF_CONDUCT.md](Rechtliches/CODE_OF_CONDUCT.md) |
@@ -1166,6 +1045,7 @@ html2canvas (MIT) - Screenshot Library
 Supabase JS (MIT) - Cloud Database & Auth
 EmailJS (MIT) - Email Sending Service SDK
 WebLLM (Apache-2.0) - On-Device LLM Runtime
+DOMPurify (Apache-2.0/MIT) - XSS Sanitization
 ```
 
 **➡️ [Vollständige Third-Party Notices](Rechtliches/NOTICE.md)**
@@ -1203,9 +1083,9 @@ Eine moderne Lösung für intelligente Zeiterfassung
 
 ---
 
-<sub>MyWorkLog v3.3.2 | Gebaut mit modernstem Web-Standard | 🤖 AI-Bot powered | ☁️ Cloud-Sync | 🚀 Production Ready</sub>
+<sub>MyWorkLog v3.5.3 | Gebaut mit modernstem Web-Standard | ☁️ Cloud-Sync | 🚀 Production Ready</sub>
 
-<sub>© 2025–2026 TechNova App Team. Alle Rechte vorbehalten. | [DSGVO](./DSGVO.html) | [Impressum](./Impressum.html) | [MIT License](Rechtliches/LICENSE.md)</sub>
+<sub>© 2025–2026 TechNova App Team. Alle Rechte vorbehalten. | [DSGVO](/DSGVO/) | [Impressum](/Impressum/) | [MIT License](Rechtliches/LICENSE.md)</sub>
 
 </div>
 
@@ -1219,11 +1099,12 @@ Eine moderne Lösung für intelligente Zeiterfassung
 - 📖 [AI-Bot Integration](README´s/AI-Bot/INTEGRATION-NOTES.md) – AI-Bot Entwicklung
 - 📖 [Security Policy](Rechtliches/SECURITY.md) – Sicherheits-Richtlinien
 - 📖 [Contributing Guide](Rechtliches/CONTRIBUTING.md) – Wie kann ich beitragen?
+- 📖 [Changelog](README´s/Update/CHANGELOG.md) – Alle Versionen & Änderungen
 
 ---
 
 <div align="center">
 
-**[⬆ Zurück nach oben](#️-myworklog)**
+**[⬆ Zurück nach oben](#myworklog)**
 
 </div>
