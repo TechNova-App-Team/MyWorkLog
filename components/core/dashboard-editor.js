@@ -347,9 +347,10 @@
                         <span class="cmd-icon"><svg viewBox="0 0 24 24"><path d="M14.5 2c1.4 0 2.5 1.1 2.5 2.5S15.9 7 14.5 7 12 5.9 12 4.5 13.1 2 14.5 2z"/><path d="M18 14l-4-4-4 4"/><path d="M6 22V9"/><path d="M18 22V9"/><path d="M2 22h20"/></svg></span>
                         <span class="cmd-label">Feiertage</span>
                     </button>
-                    <button disabled>
+                    <button class="nfc-cmd-btn" disabled>
                         <span class="cmd-icon"><svg viewBox="0 0 24 24"><path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 018 4"/><path d="M5 19.5C5.5 18 6 15 6 12"/><path d="M21 12c0 1.5-.5 3-1.5 4.5"/><path d="M12 2c2 2 3 5 3 10"/><path d="M12 2c-2 2-3 5-3 10"/><path d="M18 22l4-4-4-4"/><path d="M22 18h-7"/></svg></span>
                         <span class="cmd-label">NFC</span>
+                        <span class="nfc-new-badge">NEU</span>
                     </button>
                     <button onclick="window.location.href='/berichtsheft/'">
                         <span class="cmd-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>

@@ -533,6 +533,8 @@
         try {
             console.log('[Upload] Starte Upload...');
             await window.cloudSync.uploadToCloud();
+            try { localStorage.setItem('tt_last_export', new Date().toISOString()); } catch(e) {}
+            try { const today = new Date().toISOString().split('T')[0]; localStorage.setItem('tt_export_reminder_shown_' + today, '1'); } catch(e) {}
             cloudBtnSuccess(uploadBtn, originalHTML);
         } catch (error) {
             console.error('[Upload] Fehler:', error);
