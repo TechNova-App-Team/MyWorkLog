@@ -14,7 +14,7 @@
 const SW_VERSION  = 'v5.4.2';
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
 const OFFLINE_URL = './offline/';
-const DEBUG       = false;
+const DEBUG       = true;
 
 const log  = (...a) => DEBUG && console.log('[SW]', ...a);
 const warn = (...a) => DEBUG && console.warn('[SW]', ...a);
