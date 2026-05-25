@@ -216,7 +216,7 @@
             modal.classList.remove('active');
             
             showCustomMessage('✅ Sicher verschlüsselt', 'Backup wurde mit AES-256-GCM verschlüsselt & heruntergeladen', 'success');
-            try { localStorage.setItem('tt_last_export', new Date().toISOString()); } catch(e) {}
+            try { localStorage.setItem('mwl_last_export', new Date().toISOString()); } catch(e) {}
         } catch (e) {
             console.error('[ERROR] Export failed:', e);
             showCustomMessage('❌ Verschlüsselung fehlgeschlagen', e.message, 'error');
@@ -368,9 +368,9 @@
         }
         // Import = gültiges Backup vorhanden → Reminder zurücksetzen
         try {
-            localStorage.setItem('tt_last_export', new Date().toISOString());
+            localStorage.setItem('mwl_last_export', new Date().toISOString());
             const today = new Date().toISOString().split('T')[0];
-            localStorage.setItem('tt_export_reminder_shown_' + today, '1');
+            localStorage.setItem('mwl_export_reminder_shown_' + today, '1');
         } catch(e) {}
     }
     function updateShortcutsPanelVisibility() {

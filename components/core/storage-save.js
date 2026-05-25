@@ -1,13 +1,19 @@
 // ═══ CORE: STORAGE-SAVE ═══
     function cleanupLocalStorage() {
-        // Lösche alte tt_export_reminder_shown_* Keys - behalte nur den heutigen
+        // Einmalige Migration tt_ → mwl_ Keys
+        if (!localStorage.getItem('mwl_last_export') && localStorage.getItem('tt_last_export')) {
+            localStorage.setItem('mwl_last_export', localStorage.getItem('tt_last_export'));
+            localStorage.removeItem('tt_last_export');
+        }
+
+        // Lösche alte mwl_export_reminder_shown_* Keys - behalte nur den heutigen
         const today = new Date().toISOString().split('T')[0];
-        const currentKey = 'tt_export_reminder_shown_' + today;
-        
+        const currentKey = 'mwl_export_reminder_shown_' + today;
+
         let deletedCount = 0;
         for (let i = localStorage.length - 1; i >= 0; i--) {
             const key = localStorage.key(i);
-            if (key && key.startsWith('tt_export_reminder_shown_') && key !== currentKey) {
+            if (key && (key.startsWith('mwl_export_reminder_shown_') || key.startsWith('tt_export_reminder_shown_')) && key !== currentKey) {
                 localStorage.removeItem(key);
                 deletedCount++;
             }

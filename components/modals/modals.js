@@ -201,8 +201,8 @@
              a.download = 'MyWorkLog_Backup_' + new Date().toISOString().split('T')[0] + '.json';
              a.click();
              URL.revokeObjectURL(a.href);
-             try { localStorage.setItem('tt_last_export', new Date().toISOString()); } catch(e) {}
-            try { const today = new Date().toISOString().split('T')[0]; localStorage.setItem('tt_export_reminder_shown_' + today, '1'); } catch(e) {}
+             try { localStorage.setItem('mwl_last_export', new Date().toISOString()); } catch(e) {}
+            try { const today = new Date().toISOString().split('T')[0]; localStorage.setItem('mwl_export_reminder_shown_' + today, '1'); } catch(e) {}
             if (typeof updateAlertExportInfo === 'function') setTimeout(updateAlertExportInfo, 300);
              if (typeof showSmartNotification === 'function') showSmartNotification('💾 Vollständiges Backup', `${backup._keyCount} localStorage-Keys exportiert. Alle Einstellungen, Timer, Alerts, Theme & mehr gesichert.`, 'success');
         } else if (format === 'csv') {
@@ -211,8 +211,8 @@
             a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
             a.download = 'time_pro_full_export.csv';
             a.click();
-            try { localStorage.setItem('tt_last_export', new Date().toISOString()); } catch(e) {}
-            try { const today = new Date().toISOString().split('T')[0]; localStorage.setItem('tt_export_reminder_shown_' + today, '1'); } catch(e) {}
+            try { localStorage.setItem('mwl_last_export', new Date().toISOString()); } catch(e) {}
+            try { const today = new Date().toISOString().split('T')[0]; localStorage.setItem('mwl_export_reminder_shown_' + today, '1'); } catch(e) {}
             if (typeof updateAlertExportInfo === 'function') setTimeout(updateAlertExportInfo, 300);
             if (typeof showSmartNotification === 'function') showSmartNotification('💾 Backup', 'CSV-Export gestartet. Datei wurde heruntergeladen.', 'success');
         }

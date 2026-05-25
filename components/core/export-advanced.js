@@ -50,7 +50,7 @@
         a.download = 'MyWorkLog_Minimal_' + new Date().toISOString().split('T')[0] + '.json';
         a.click();
         URL.revokeObjectURL(a.href);
-        try { localStorage.setItem('tt_last_export', new Date().toISOString()); } catch(e) {}
+        try { localStorage.setItem('mwl_last_export', new Date().toISOString()); } catch(e) {}
         document.getElementById('exportStatsModal').style.display = 'none';
         showSmartNotification('📦 Minimal Export', `${data.entries.length} Einträge kompakt exportiert (${(blob.size/1024).toFixed(0)} KB)`, 'success');
     }
@@ -245,7 +245,7 @@
         a.download = 'MyWorkLog_MAX_Report_' + new Date().toISOString().split('T')[0] + '.html';
         a.click();
         URL.revokeObjectURL(a.href);
-        try { localStorage.setItem('tt_last_export', new Date().toISOString()); } catch(e) {}
+        try { localStorage.setItem('mwl_last_export', new Date().toISOString()); } catch(e) {}
         document.getElementById('exportStatsModal').style.display = 'none';
         showSmartNotification('🚀 MAX Report', `HTML-Report mit Diagrammen exportiert (${(blob.size/1024).toFixed(0)} KB)`, 'success');
     }

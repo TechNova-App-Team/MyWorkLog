@@ -107,7 +107,7 @@
 
     function updateAlertExportInfo() {
         try {
-            const last = localStorage.getItem('tt_last_export');
+            const last = localStorage.getItem('mwl_last_export');
             const el = document.getElementById('lastExportInfo');
             if (!el) return;
             if (!last) {

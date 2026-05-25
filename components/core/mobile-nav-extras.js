@@ -303,34 +303,34 @@
         const deficit = Math.max(0, todayExpected - todayWorked);
 
         // Nachmittag-Erinnerung (15:00 Uhr)
-        if (now.getHours() === 15 && !sessionStorage.getItem('tt_notif_afternoon')) {
+        if (now.getHours() === 15 && !sessionStorage.getItem('mwl_notif_afternoon')) {
             let message = '';
             if (deficit > 0) {
                 message = `Du brauchst noch ${deficit.toFixed(1)}h heute! (Soll: ${todayExpected.toFixed(2)}h, bisher: ${todayWorked.toFixed(2)}h)`;
                 showSmartNotification('⏰ Nachmittags-Check', message, 'warning');
-                sessionStorage.setItem('tt_notif_afternoon', 'shown');
+                sessionStorage.setItem('mwl_notif_afternoon', 'shown');
             } else {
                 showSmartNotification('✅ Tagesgoal erreicht!', `Du hast dein Soll bereits erfüllt! 🎉`, 'success');
-                sessionStorage.setItem('tt_notif_afternoon', 'shown');
+                sessionStorage.setItem('mwl_notif_afternoon', 'shown');
             }
         }
 
         // Feierabend-Erinnerung (17:00 Uhr)
-        if (now.getHours() === 17 && !sessionStorage.getItem('tt_notif_evening')) {
+        if (now.getHours() === 17 && !sessionStorage.getItem('mwl_notif_evening')) {
             if (deficit > 0) {
                 showSmartNotification('🌆 Feierabend-Reminder', `Noch ${deficit.toFixed(1)}h — möchtest du noch ein bisschen arbeiten?`, 'info');
-                sessionStorage.setItem('tt_notif_evening', 'shown');
+                sessionStorage.setItem('mwl_notif_evening', 'shown');
             } else if (isFriday) {
                 showSmartNotification('✨ Schönes Wochenende!', `Dein Tag ist voll! Genieß die Freizeit! 🏖️`, 'success');
-                sessionStorage.setItem('tt_notif_evening', 'shown');
+                sessionStorage.setItem('mwl_notif_evening', 'shown');
             } else {
                 showSmartNotification('✅ Feierabend!', `Tagesziel erreicht — schönen Feierabend! 🎉`, 'success');
-                sessionStorage.setItem('tt_notif_evening', 'shown');
+                sessionStorage.setItem('mwl_notif_evening', 'shown');
             }
         }
 
         // Wochenende-Check (Freitag 16:00 Uhr)
-        if (now.getDay() === 5 && now.getHours() === 16 && !sessionStorage.getItem('tt_notif_friday')) {
+        if (now.getDay() === 5 && now.getHours() === 16 && !sessionStorage.getItem('mwl_notif_friday')) {
             const week = getWeek(now);
             let weekHours = 0;
             data.entries.forEach(e => {
@@ -346,20 +346,20 @@
                 const needed = Math.abs(weekHours);
                 showSmartNotification('📋 Wochenplan', `Nächste Woche ${needed.toFixed(1)}h extra planen?`, 'warning');
             }
-            sessionStorage.setItem('tt_notif_friday', 'shown');
+            sessionStorage.setItem('mwl_notif_friday', 'shown');
         }
 
         // Export/Backup Reminder (wenn älter als 7 Tage oder nie exportiert)
         try {
             if (alertSettings.exportReminder) {
-                const lastExport = localStorage.getItem('tt_last_export');
+                const lastExport = localStorage.getItem('mwl_last_export');
                 let needsExport = false;
                 if (!lastExport) needsExport = true;
                 else {
                     const diffMs = Date.now() - new Date(lastExport).getTime();
                     if (diffMs > (7 * 24 * 60 * 60 * 1000)) needsExport = true;
                 }
-                const exportReminderKey = 'tt_export_reminder_shown_' + today;
+                const exportReminderKey = 'mwl_export_reminder_shown_' + today;
                 if (needsExport && !localStorage.getItem(exportReminderKey)) {
                     const msg = 'Dein letztes Backup ist älter als 7 Tage (oder nicht vorhanden). Bitte exportiere deine Daten!';
                     showSmartNotification('💾 Backup Reminder', msg, 'warning');
