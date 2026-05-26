@@ -413,7 +413,6 @@
         const b = backups.find(x => x.ts === ts);
         if(!b) return showCustomMessage('❌ Fehler', 'Backup nicht gefunden.', 'error');
         localStorage.setItem('tg_pro_data', JSON.stringify(b.data));
-        localStorage.setItem('tg_last_save', b.ts);
         showCustomMessage('✅ Wiederhergestellt', 'Backup wurde auf diese Sitzung angewendet. Die Seite wird neu geladen.', 'success');
         setTimeout(() => location.reload(), 800);
     }

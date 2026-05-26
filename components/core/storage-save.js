@@ -44,8 +44,7 @@
             console.warn('⚠️ Backup snapshot failed:', e);
         }
 
-        localStorage.setItem('tg_pro_data', JSON.stringify(data)); 
-        localStorage.setItem('tg_last_save', Date.now());
+        localStorage.setItem('tg_pro_data', JSON.stringify(data));
         checkAlertsThresholds();
         checkOvertimeAlert();
         updateUI(); 
