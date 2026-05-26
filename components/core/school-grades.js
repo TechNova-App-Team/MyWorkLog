@@ -190,6 +190,20 @@
         
         save();
         renderIHKView();
-        showCustomMessage('✅ Erfolg', 'IHK Daten (inkl. Noten) erfolgreich gespeichert und berechnet.', 'success');
+        const btn   = document.getElementById('ihkSaveBtn');
+        const icon  = document.getElementById('ihkSaveBtnIcon');
+        const label = document.getElementById('ihkSaveBtnLabel');
+        if (btn) {
+            btn.classList.add('is-saved');
+            btn.disabled = true;
+            if (icon)  icon.textContent  = '✓';
+            if (label) label.textContent = 'Gespeichert!';
+            setTimeout(() => {
+                btn.classList.remove('is-saved');
+                btn.disabled = false;
+                if (icon)  icon.textContent  = '▶';
+                if (label) label.textContent = 'Speichern & Berechnen';
+            }, 2500);
+        }
     }
 

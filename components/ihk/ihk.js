@@ -1,5 +1,32 @@
 // ═══ IHK MODULE ═══
 
+    function toggleAbsenceInfo() {
+        const pop     = document.getElementById('mcAbsencePopover');
+        const chevron = document.getElementById('mcAbsenceChevron');
+        if (!pop) return;
+        const isOpen = pop.classList.toggle('is-open');
+        pop.setAttribute('aria-hidden', String(!isOpen));
+        if (chevron) chevron.style.transform = isOpen ? 'rotate(180deg)' : '';
+        if (isOpen) {
+            setTimeout(() => document.addEventListener('click', _closeAbsenceOutside, { once: true }), 0);
+        }
+    }
+
+    function _closeAbsenceOutside(e) {
+        const wrap = document.getElementById('mcQuotaWrap');
+        if (wrap && wrap.contains(e.target)) {
+            document.addEventListener('click', _closeAbsenceOutside, { once: true });
+            return;
+        }
+        const pop     = document.getElementById('mcAbsencePopover');
+        const chevron = document.getElementById('mcAbsenceChevron');
+        if (pop && pop.classList.contains('is-open')) {
+            pop.classList.remove('is-open');
+            pop.setAttribute('aria-hidden', 'true');
+            if (chevron) chevron.style.transform = '';
+        }
+    }
+
     function renderIHKView() {
         const { start, end, exam_zwischen, note_zwischen, note_abschluss } = data.settings.ihk;
         const now = new Date().getTime();
@@ -134,18 +161,39 @@
         if (totalDurDays > 0 && elapsedDurDays > 0) {
             const missPct = (sickDays / elapsedDurDays) * 100;
             warningEl.textContent = missPct.toFixed(1) + '%';
-            warningEl.style.color = missPct >= 10 ? 'var(--mc-red,#ef4444)'
-                                  : missPct >= 5  ? 'var(--mc-amber,#f59e0b)'
-                                  :                 'var(--mc-green,#22c55e)';
+            warningEl.style.color = missPct >= 10  ? 'var(--mc-red,#ef4444)'
+                                  : missPct >= 6.9 ? 'var(--mc-amber,#f59e0b)'
+                                  :                  'var(--mc-green,#22c55e)';
             if (quotaFill) {
                 quotaFill.style.width      = Math.min(missPct, 100) + '%';
-                quotaFill.style.background = missPct >= 10 ? '#ef4444'
-                                           : missPct >= 5  ? '#f59e0b'
-                                           :                 '#22c55e';
+                quotaFill.style.background = missPct >= 10  ? '#ef4444'
+                                           : missPct >= 6.9 ? '#f59e0b'
+                                           :                  '#22c55e';
             }
+            updateAbsencePopover(sickDays, missPct);
         } else {
             warningEl.textContent = '0%';
             warningEl.style.color = 'var(--mc-green,#22c55e)';
+            updateAbsencePopover(sickDays, 0);
+        }
+
+        // ── Abwesenheits-Popover ──
+        function updateAbsencePopover(days, pct) {
+            const valEl  = document.getElementById('mcAbspopCurrentVal');
+            const descEl = document.getElementById('mcAbspopCurrentDesc');
+            if (!valEl) return;
+            const zone = pct >= 10 ? 'red' : pct >= 6.9 ? 'amber' : 'green';
+            valEl.textContent = days + (days === 1 ? ' Tag' : ' Tage') + ' / ' + pct.toFixed(1) + '%';
+            valEl.style.color = zone === 'red' ? '#ef4444' : zone === 'amber' ? '#f59e0b' : '#22c55e';
+            if (descEl) {
+                descEl.textContent = zone === 'red'   ? 'Kritisch — IHK-Grenze erreicht oder überschritten!'
+                                   : zone === 'amber' ? 'Überdurchschnittlich, aber IHK-technisch noch sicher'
+                                   : pct < 3          ? 'Du liegst aktuell extrem weit im unteren grünen Spektrum'
+                                   :                    'Du liegst im statistischen Normalbereich';
+            }
+            document.querySelectorAll('#mcAbsencePopover .mc-abspop-range').forEach(r => {
+                r.classList.toggle('is-active', r.dataset.zone === zone);
+            });
         }
 
         // ── Abschlussprüfung Countdown ──
