@@ -2740,7 +2740,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             #view-support {
                 padding: 0 !important;
                 position: relative;
-                overflow: hidden;
+                overflow-x: hidden;
+                overflow-y: visible;
             }
 
             /* ── parallax sections ── */
@@ -3108,19 +3109,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             .sp-float-row { display: flex; gap: 1rem; }
             .sp-float-row .sp-float-card { flex: 1; }
 
-            /* ── FOOTER strip ── */
-            .sp-footer {
-                border-top: 1px solid rgba(255,255,255,.06);
-                padding: 1.8rem 2.2rem;
-                display: flex; flex-wrap: wrap;
-                align-items: center; justify-content: space-between; gap: 1rem;
-            }
-            .sp-footer-links { display: flex; gap: 1.4rem; flex-wrap: wrap; }
-            .sp-footer-links a {
-                color: var(--text-muted); text-decoration: none;
-                font-size: .78rem; transition: color .22s;
-            }
-            .sp-footer-links a:hover { color: var(--primary); }
         </style>
 
         <!-- ══ PARALLAX HERO ══════════════════════════════ -->
@@ -3302,16 +3290,8 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             </div>
         </div>
 
-        <!-- ══ FOOTER STRIP ═══════════════════════════════ -->
-        <div class="sp-footer">
-            <span style="font-size:.78rem; color:var(--text-muted); opacity:.6;">MyWorkLog — Made with ❤️ for Azubis</span>
-            <div class="sp-footer-links">
-                <a href="./Impressum/" target="_blank" rel="noopener noreferrer">Impressum</a>
-                <a href="./DSGVO/" target="_blank" rel="noopener noreferrer">Datenschutz</a>
-                <a href="./about/" target="_blank" rel="noopener noreferrer">Über uns</a>
-                <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener noreferrer">GitHub</a>
-            </div>
-        </div>
+        <!-- ══ FOOTER ════════════════════════════════════ -->
+        <div id="support-footer"></div>
 
         <!-- ══ PARALLAX & REVEAL JS ════════════════════════ -->
         <script>
@@ -3388,6 +3368,17 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 }
             }
         })();
+        </script>
+        <script>
+        fetch('/pages/footer/footer.html')
+            .then(function(r) { return r.text(); })
+            .then(function(html) {
+                var ph = document.getElementById('support-footer');
+                if (!ph) return;
+                var tmpl = document.createElement('template');
+                tmpl.innerHTML = html;
+                ph.replaceWith(tmpl.content);
+            });
         </script>
 
         </div>
