@@ -353,13 +353,19 @@
         if (window.backupMenuElement) {
             window.backupMenuElement.remove();
             window.backupMenuElement = null;
-            document.removeEventListener('click', closeBackupMenu);
+        }
+        if (window.backupMenuOverlay) {
+            window.backupMenuOverlay.remove();
+            window.backupMenuOverlay = null;
         }
     }
     function closeExportMenu() {
         if (window.exportMenuElement) {
             window.exportMenuElement.remove();
             window.exportMenuElement = null;
-            document.removeEventListener('click', closeExportMenu);
+        }
+        if (window.exportMenuOverlay) {
+            window.exportMenuOverlay.remove();
+            window.exportMenuOverlay = null;
         }
     }
