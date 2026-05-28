@@ -7,8 +7,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#a855f7">
     <title>Datenschutz (DSGVO) - MyWorkLog</title>
-    <script src="../../../Assets/js/icons.js"></script>
     <script defer src="../../../Assets/js/touch-mobile-optimizations.js"></script>
+    <link rel="stylesheet" href="/Assets/css/dsgvo-icons.css">
     <style>
         /* --- CORE VARIABLES (MATCHING index.html) --- */
         :root {
@@ -54,7 +54,6 @@
             padding: 0;
             line-height: 1.8;
             padding-top: 120px;
-            padding-bottom: calc(4rem + var(--safe-area-inset-bottom));
             -webkit-user-select: none;
             -webkit-touch-callout: none;
             -webkit-tap-highlight-color: transparent;
@@ -472,72 +471,6 @@
             white-space: nowrap;
         }
 
-        /* --- FOOTER --- */
-        .footer {
-            text-align: center;
-            padding: 4rem 2rem 3rem;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-top: 4rem;
-            position: relative;
-        }
-
-        .footer::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 10%;
-            right: 10%;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.3), transparent);
-        }
-
-        .footer-brand {
-            font-size: 1.1rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--info));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-
-        .footer p {
-            margin: 0.4rem 0;
-        }
-
-        .footer a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.25s ease;
-        }
-
-        .footer a:hover {
-            color: #c084fc;
-        }
-
-        .footer-back {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 1.5rem;
-            padding: 0.65rem 1.5rem;
-            background: rgba(var(--primary-rgb), 0.1);
-            border: 1px solid rgba(var(--primary-rgb), 0.2);
-            border-radius: 99px;
-            color: var(--primary);
-            font-weight: 600;
-            font-size: 0.85rem;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .footer-back:hover {
-            background: rgba(var(--primary-rgb), 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(var(--primary-rgb), 0.2);
-        }
 
         /* --- RESPONSIVE --- */
         @media (max-width: 768px) {
@@ -608,9 +541,31 @@
     <script defer src="../../../Assets/js/version-loader.js"></script>
 </head>
 <body>
+    <!-- Load SVG Sprite -->
+    <script>
+        (async () => {
+            try {
+                const response = await fetch('/Assets/icons/dsgvo-icons.svg');
+                const svgText = await response.text();
+                const temp = document.createElement('div');
+                temp.innerHTML = svgText;
+                const svg = temp.querySelector('svg');
+                if (svg) {
+                    svg.style.display = 'none';
+                    document.body.insertBefore(svg, document.body.firstChild);
+                }
+            } catch (e) {
+                console.warn('SVG sprite load failed:', e);
+            }
+        })();
+    </script>
+
     <!-- Apple-Style Navbar -->
     <nav class="navbar">
-        <span class="navbar-title">🔒 DSGVO</span>
+        <span class="navbar-title">
+            <svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-lock"/></svg>
+            DSGVO
+        </span>
         <a href="/" class="navbar-back">← MyWorkLog</a>
     </nav>
 
@@ -637,19 +592,19 @@
         </nav>
 
         <div class="section" id="s1">
-            <h2><span class="section-icon">📋</span> 1. Verantwortlicher und Datenschutz</h2>
+            <h2><span class="section-icon"><svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-clipboard"/></svg></span> 1. Verantwortlicher und Datenschutz</h2>
             <p>Willkommen bei <strong>MyWorkLog</strong>. Der Schutz Ihrer persönlichen Daten ist uns wichtig. Diese Datenschutzerklärung informiert Sie darüber, wie wir Ihre Daten verarbeiten.</p>
             
             <h3>Verantwortlicher für die Datenverarbeitung</h3>
             <p>Die Verantwortung für die Datenverarbeitung liegt bei den Betreibern dieser Anwendung.</p>
 
             <div class="highlight-box">
-                <strong>🔔 Wichtig:</strong> Diese Anwendung speichert Daten <strong>standardmäßig lokal in Ihrem Browser</strong>. Eine Datenübermittlung erfolgt nur bei optionaler Cloud-Synchronisation oder der Feedback-Funktion – jeweils mit Ihrer <strong>ausdrücklichen Einwilligung</strong> (siehe Abschnitt 4).
+                <svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-bell"/></svg><strong>Wichtig:</strong> Diese Anwendung speichert Daten <strong>standardmäßig lokal in Ihrem Browser</strong>. Eine Datenübermittlung erfolgt nur bei optionaler Cloud-Synchronisation oder der Feedback-Funktion – jeweils mit Ihrer <strong>ausdrücklichen Einwilligung</strong> (siehe Abschnitt 4).
             </div>
         </div>
 
         <div class="section" id="s2">
-            <h2><span class="section-icon">💾</span> 2. Welche Daten werden erfasst?</h2>
+            <h2><span class="section-icon"><svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-database"/></svg></span> 2. Welche Daten werden erfasst?</h2>
             
             <h3>Lokal gespeicherte Daten</h3>
             <p>MyWorkLog speichert folgende Informationen <strong>primär lokal</strong> im Local Storage Ihres Browsers:</p>
@@ -678,12 +633,12 @@
             <p><strong>Ausnahme:</strong> Beim freiwilligen Senden von Feedback im Modus „Vollständig" werden Geräteinformationen (Bildschirmgröße, Plattform, Sprache, User Agent) mitgesendet. Dies geschieht nur mit Ihrer ausdrücklichen Einwilligung.</p>
 
             <div class="highlight-box">
-                <strong>✅ Datensicherheit:</strong> Standardmäßig bleiben alle Daten auf Ihrem Gerät. Sie kontrollieren vollständig, wann und wie diese Daten gelöscht werden. Eine Übermittlung an Dritte erfolgt nur mit Ihrer ausdrücklichen Einwilligung.
+                <svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-checkmark"/></svg><strong>Datensicherheit:</strong> Standardmäßig bleiben alle Daten auf Ihrem Gerät. Sie kontrollieren vollständig, wann und wie diese Daten gelöscht werden. Eine Übermittlung an Dritte erfolgt nur mit Ihrer ausdrücklichen Einwilligung.
             </div>
         </div>
 
         <div class="section" id="s3">
-            <h2><span class="section-icon">🔐</span> 3. Datenspeicherung und -sicherheit</h2>
+            <h2><span class="section-icon"><svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-shield"/></svg></span> 3. Datenspeicherung und -sicherheit</h2>
             
             <h3>Wo werden Ihre Daten gespeichert?</h3>
             <p>Ihre Daten werden standardmäßig <strong>im Local Storage Ihres Browsers</strong> gespeichert. Optional können Sie die Cloud-Synchronisation aktivieren:</p>
@@ -703,7 +658,7 @@
         </div>
 
         <div class="section" id="s4">
-            <h2><span class="section-icon">📤</span> 4. Datenweitergabe</h2>
+            <h2><span class="section-icon"><svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-upload"/></svg></span> 4. Datenweitergabe</h2>
             
             <p>MyWorkLog gibt <strong>grundsätzlich keine Daten an Dritte weiter</strong>, es sei denn, Sie nutzen aktiv eine der folgenden optionalen Funktionen. Es gibt keine:</p>
             <ul>
@@ -729,7 +684,7 @@
             <p>Weitere Informationen: <a href="https://supabase.com/privacy" target="_blank" rel="noopener" style="color: var(--primary);">Supabase Privacy Policy</a></p>
 
             <div class="highlight-box">
-                <strong>🔐 Hinweis zur Drittlandübermittlung:</strong> Supabase und EmailJS haben ihren Sitz in den <strong>USA</strong>. Die Datenübermittlung erfolgt auf Basis Ihrer Einwilligung (Art. 49 Abs. 1 lit. a DSGVO). Die USA verfügen über das EU-U.S. Data Privacy Framework. Sie können Ihre Einwilligung jederzeit widerrufen.
+                <svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-shield"/></svg><strong>Hinweis zur Drittlandübermittlung:</strong> Supabase und EmailJS haben ihren Sitz in den <strong>USA</strong>. Die Datenübermittlung erfolgt auf Basis Ihrer Einwilligung (Art. 49 Abs. 1 lit. a DSGVO). Die USA verfügen über das EU-U.S. Data Privacy Framework. Sie können Ihre Einwilligung jederzeit widerrufen.
             </div>
 
             <h4>b) Spenden (PayPal)</h4>
@@ -779,12 +734,12 @@
             <p>Sie können Ihre Einwilligung jederzeit widerrufen, indem Sie die Checkbox deaktivieren. Ein Widerruf berührt nicht die Rechtmäßigkeit der bis dahin erfolgten Verarbeitung.</p>
 
             <div class="highlight-box">
-                <strong>🔒 Hinweis:</strong> EmailJS überträgt Daten verschlüsselt (HTTPS/TLS). Die E-Mail wird direkt an den Entwickler zugestellt. EmailJS speichert keine Nachrichteninhalte dauerhaft. Weitere Informationen: <a href="https://www.emailjs.com/legal/privacy-policy/" target="_blank" rel="noopener" style="color: var(--primary);">EmailJS Privacy Policy</a>.
+                <svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-lock"/></svg><strong>Hinweis:</strong> EmailJS überträgt Daten verschlüsselt (HTTPS/TLS). Die E-Mail wird direkt an den Entwickler zugestellt. EmailJS speichert keine Nachrichteninhalte dauerhaft. Weitere Informationen: <a href="https://www.emailjs.com/legal/privacy-policy/" target="_blank" rel="noopener" style="color: var(--primary);">EmailJS Privacy Policy</a>.
             </div>
         </div>
 
         <div class="section" id="s5">
-            <h2><span class="section-icon">🔄</span> 5. Ihre Rechte (DSGVO)</h2>
+            <h2><span class="section-icon"><svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-cycle"/></svg></span> 5. Ihre Rechte (DSGVO)</h2>
             
             <p>Nach der Datenschutzgrundverordnung (DSGVO) haben Sie folgende Rechte:</p>
 
@@ -821,7 +776,7 @@
         </div>
 
         <div class="section" id="s6">
-            <h2><span class="section-icon">📊</span> 6. Cookies und Tracking</h2>
+            <h2><span class="section-icon"><svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-chart"/></svg></span> 6. Cookies und Tracking</h2>
             
             <h3>Cookies in MyWorkLog</h3>
             <p>MyWorkLog verwendet <strong>keine Tracking-Cookies</strong>. Gespeicherte Daten sind:</p>
@@ -831,7 +786,7 @@
             </ul>
 
             <div class="highlight-box">
-                <strong>🚫 Kein Tracking:</strong> Es gibt keine Google Analytics, Facebook Pixel oder ähnliche Tracking-Tools.
+                <svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-prohibition"/></svg><strong>Kein Tracking:</strong> Es gibt keine Google Analytics, Facebook Pixel oder ähnliche Tracking-Tools.
             </div>
 
             <h3>Notwendige Cookies</h3>
@@ -844,7 +799,7 @@
         </div>
 
         <div class="section" id="s7">
-            <h2><span class="section-icon">🌐</span> 7. Externe Links und Ressourcen</h2>
+            <h2><span class="section-icon"><svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-globe"/></svg></span> 7. Externe Links und Ressourcen</h2>
             
             <p>MyWorkLog kann Links zu externen Websites enthalten. Wir sind nicht verantwortlich für deren Datenschutzpraktiken:</p>
             <ul>
@@ -855,7 +810,7 @@
         </div>
 
         <div class="section" id="s8">
-            <h2><span class="section-icon">🔄</span> 8. Datenaufbewahrung</h2>
+            <h2><span class="section-icon"><svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-clock"/></svg></span> 8. Datenaufbewahrung</h2>
             
             <p><strong>Aufbewahrungsdauer:</strong> Ihre Daten werden so lange gespeichert, wie Sie diese in MyWorkLog behalten.</p>
             
@@ -876,7 +831,7 @@
         </div>
 
         <div class="section" id="s9">
-            <h2><span class="section-icon">👥</span> 9. Datenschutz für Minderjährige</h2>
+            <h2><span class="section-icon"><svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-people"/></svg></span> 9. Datenschutz für Minderjährige</h2>
             
             <p>MyWorkLog ist konzipiert für Schüler und Studenten, einschließlich Minderjähriger. Besonderheiten:</p>
             <ul>
@@ -888,12 +843,12 @@
             </ul>
 
             <div class="highlight-box">
-                <strong>👨‍👩‍👧:</strong> Eltern haben die Kontrolle über alle Daten ihres Kindes durch Zugriff auf das Gerät und den Browser.
+                <svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-family"/></svg><strong>Elternkontrolle:</strong> Eltern haben die Kontrolle über alle Daten ihres Kindes durch Zugriff auf das Gerät und den Browser.
             </div>
         </div>
 
         <div class="section" id="s10">
-            <h2><span class="section-icon">🔔</span> 10. Änderungen dieser Datenschutzerklärung</h2>
+            <h2><span class="section-icon"><svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-bell"/></svg></span> 10. Änderungen dieser Datenschutzerklärung</h2>
             
             <p>Wir können diese Datenschutzerklärung jederzeit aktualisieren. Wesentliche Änderungen werden:</p>
             <ul>
@@ -906,7 +861,7 @@
         </div>
 
         <div class="section" id="s11">
-            <h2><span class="section-icon">📞</span> 11. Kontakt und Fragen</h2>
+            <h2><span class="section-icon"><svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-phone"/></svg></span> 11. Kontakt und Fragen</h2>
             
             <p>Bei Fragen zum Datenschutz oder zur Ausübung Ihrer Betroffenenrechte können Sie uns kontaktieren:</p>
             <ul>
@@ -922,12 +877,12 @@
             </ul>
 
             <div class="highlight-box">
-                <strong>ℹ️ Hinweis:</strong> Da MyWorkLog primär lokal läuft, können Sie die meisten Ihrer Rechte (Auskunft, Löschung, Export) direkt in der App ausüben, ohne uns kontaktieren zu müssen.
+                <svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-bell"/></svg><strong>Hinweis:</strong> Da MyWorkLog primär lokal läuft, können Sie die meisten Ihrer Rechte (Auskunft, Löschung, Export) direkt in der App ausüben, ohne uns kontaktieren zu müssen.
             </div>
         </div>
 
         <div class="section" id="s12">
-            <h2><span class="section-icon">⚖️</span> 12. Rechtsgrundlagen</h2>
+            <h2><span class="section-icon"><svg class="dsgvo-icon" aria-hidden="true"><use xlink:href="#icon-scale"/></svg></span> 12. Rechtsgrundlagen</h2>
             
             <p>Diese Datenschutzerklärung basiert auf:</p>
             <ul>
@@ -947,13 +902,9 @@
             </ul>
         </div>
 
-        <div class="footer">
-            <p class="footer-brand">MyWorkLog <span data-app-version>V3.3.3a</span></p>
-            <p>Deine moderne Zeiterfassungs-Anwendung mit vollständiger Datenkontrolle</p>
-            <a href="/" class="footer-back">← Zurück zur Anwendung</a>
-            <p style="margin-top: 2rem; color: var(--text-muted); font-size: 0.8rem; opacity: 0.6;">© 2025–2026 MyWorkLog. Alle Rechte vorbehalten.</p>
-        </div>
     </div>
+
+    <div id="page-footer"></div>
 
     <script>
         // === COLOR SYNC SYSTEM ===
@@ -1033,6 +984,79 @@
         }, { threshold: 0.3, rootMargin: '-80px 0px -50% 0px' });
 
         sections.forEach(s => tocObserver.observe(s));
+
+        // === SHARED FOOTER ===
+        fetch('/pages/footer/footer.html')
+            .then(r => r.text())
+            .then(html => {
+                const ph = document.getElementById('page-footer');
+                if (!ph) return;
+                const tmpl = document.createElement('template');
+                tmpl.innerHTML = html;
+                ph.replaceWith(tmpl.content);
+
+                // Override nach Footer-Inject, sonst überschreibt footer's <style> unsere Regeln
+                const style = document.createElement('style');
+                style.textContent = `
+                    .site-footer {
+                        background: linear-gradient(180deg, #0a0a0d 0%, #060608 100%) !important;
+                        border-top: 1px solid rgba(255,255,255,0.06) !important;
+                        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08) !important;
+                        --_p1:    #e2e8f0;
+                        --_p3:    #ffffff;
+                        --_muted: rgba(200,210,220,0.5);
+                        --_border: rgba(255,255,255,0.07);
+                        --_green: #4fffb0;
+                    }
+                    .site-footer .footer-logo-text {
+                        background: linear-gradient(135deg, #fff 0%, #a0aec0 100%) !important;
+                        -webkit-background-clip: text !important;
+                        background-clip: text !important;
+                        -webkit-text-fill-color: transparent !important;
+                        filter: drop-shadow(0 0 8px rgba(255,255,255,0.25));
+                    }
+                    .site-footer .footer-badge {
+                        background: rgba(255,255,255,0.06) !important;
+                        border-color: rgba(255,255,255,0.12) !important;
+                        color: rgba(255,255,255,0.7) !important;
+                    }
+                    .site-footer .footer-badge-green {
+                        background: rgba(79,255,176,0.08) !important;
+                        border-color: rgba(79,255,176,0.2) !important;
+                        color: #4fffb0 !important;
+                    }
+                    .site-footer .footer-col-title {
+                        color: rgba(255,255,255,0.2) !important;
+                        border-bottom-color: rgba(255,255,255,0.04) !important;
+                    }
+                    .site-footer .footer-nav a:hover {
+                        color: #fff !important;
+                        text-shadow: 0 0 10px rgba(255,255,255,0.4);
+                    }
+                    .site-footer .footer-contact-item:hover,
+                    .site-footer .footer-contact-item:hover span {
+                        color: #fff !important;
+                        -webkit-text-fill-color: #fff !important;
+                    }
+                    .site-footer .footer-contact-item:hover svg { opacity: 1 !important; }
+                    .site-footer .footer-bottom {
+                        border-top-color: rgba(255,255,255,0.04) !important;
+                    }
+                    .site-footer .footer-legal-links a:hover {
+                        color: rgba(255,255,255,0.6) !important;
+                    }
+                    .site-footer .footer-nav a,
+                    .site-footer .footer-contact-item,
+                    .site-footer .footer-contact-item span,
+                    .site-footer .footer-tagline,
+                    .site-footer .footer-copy,
+                    .site-footer .footer-legal-links a {
+                        color: rgba(255,255,255,0.38) !important;
+                        -webkit-text-fill-color: rgba(255,255,255,0.38) !important;
+                    }
+                `;
+                document.head.appendChild(style);
+            });
     </script>
 
 </body>
