@@ -29,8 +29,11 @@
             'aibot': 'AI-Bot Assistent',
             'support': 'Unterstützung',
             'analytics-pro': 'Analytics Pro',
+            'aufgaben': 'Aufgaben',
+            'aufgaben-tab': 'Aufgaben',
         };
         document.querySelector('.page-title').textContent = titles[tabId];
+        document.title = 'MyWorkLog | ' + (titles[tabId] || tabId);
 
         if (window.innerWidth < 1024 && tabId !== 'dashboard') {
              toggleSidebar(); // Sidebar auf Mobile nach Klick ausblenden
