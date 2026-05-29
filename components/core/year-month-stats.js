@@ -41,7 +41,7 @@
         
         stats.weeks.forEach(week => {
             const avgDay = week.entries > 0 ? week.hours / week.entries : 0;
-            const saldo = week.hours - (week.entries * 8.75);
+            const saldo = typeof week.saldo === 'number' ? week.saldo : (week.hours - (week.entries * 8.75));
             const saldoColor = saldo >= 0 ? 'var(--success)' : 'var(--danger)';
             
             const card = document.createElement('div');

@@ -307,6 +307,7 @@
             if (dayEntries.length === 0) continue;
 
             let dayWorkedHours = 0;
+            let daySaldo = 0;
             let dayHasWork = false;
             let dayHasSchool = false;
             let dayHasVacation = false;
@@ -334,7 +335,10 @@
                         hours = Number(e.hours) || 0;
                     }
                     dayWorkedHours += hours;
-                    if (hours > 0) dayHasWork = true;
+                    if (hours > 0) {
+                        dayHasWork = true;
+                        daySaldo += (typeof e.diff === 'number' ? e.diff : (hours - (e.expected ?? (data.settings.hours[new Date(dateStr).getDay()] || 0))));
+                    }
                 } else if (type === 'school') {
                     dayHasSchool = true;
                 } else if (type === 'vacation') {
@@ -352,9 +356,8 @@
             if (dayHasWork) {
                 stats.worked += dayWorkedHours;
                 stats.workDays += 1; // pro Arbeitstag nur einmal zählen
-                const dayDiff = dayWorkedHours - 8.75;
-                stats.saldo += dayDiff;
-                stats.dailyDiffs.push(dayDiff);
+                stats.saldo += daySaldo;
+                stats.dailyDiffs.push(daySaldo);
             }
             if (dayHasSchool) stats.schoolDays += 1;
             if (dayHasVacation) stats.vacationDays += 1;
@@ -366,10 +369,10 @@
             const weekNum = Math.ceil(d / 7);
             let week = stats.weeks.find(w => w.weekNum === weekNum);
             if (!week) {
-                week = { weekNum: weekNum, entries: 0, hours: 0 };
+                week = { weekNum: weekNum, entries: 0, hours: 0, saldo: 0 };
                 stats.weeks.push(week);
             }
-            if (dayHasWork) week.entries += 1; // Arbeitstage pro Woche
+            if (dayHasWork) { week.entries += 1; week.saldo += daySaldo; }
             week.hours += dayWorkedHours;
         }
 
