@@ -1,848 +1,568 @@
 <!DOCTYPE html>
-<html lang="de" data-theme="dark">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Vertrags-Manager: Professionelle Verwaltung deines Ausbildungsvertrags, Gehalt & Urlaub. SaaS-Standard.">
-    <script defer src="../../../Assets/js/touch-mobile-optimizations.js"></script>
     <title>MyWorkLog | Vertrags-Manager</title>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
     <style>
-        /* ═══ TRUE DARK THEME: SCHWARZ/GRAU + AKZENTE ═══ */
         :root {
-            --bg-0: #0f0f0f !important;
-            --bg-1: #1a1a1a !important;
-            --bg-2: #2a2a2a !important;
-            --bg-3: #3a3a3a !important;
-            --accent-primary: #3b82f6 !important;
-            --accent-primary-dim: rgba(59, 130, 246, 0.08) !important;
-            --accent-primary-glow: rgba(59, 130, 246, 0.2) !important;
-            --accent-success: #10b981 !important;
-            --accent-warning: #f59e0b !important;
-            --accent-danger: #ef4444 !important;
-            --text-primary: #ffffff !important;
-            --text-secondary: #d1d5db !important;
-            --text-tertiary: #9ca3af !important;
-            --border-subtle: rgba(255, 255, 255, 0.08) !important;
-            --border-mild: rgba(255, 255, 255, 0.12) !important;
-            --font-display: 'Space Mono', 'JetBrains Mono', monospace !important;
-            --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif !important;
+            --bg-deep:       #030305;
+            --bg-glass:      rgba(22, 22, 26, 0.65);
+            --bg-glass-hvy:  rgba(12, 12, 16, 0.85);
+            --primary:       #a855f7;
+            --primary-rgb:   168, 85, 247;
+            --primary-dim:   rgba(168, 85, 247, 0.10);
+            --primary-brd:   rgba(168, 85, 247, 0.20);
+            --primary-glow:  rgba(168, 85, 247, 0.25);
+            --success:       #10b981;
+            --warning:       #f59e0b;
+            --danger:        #ef4444;
+            --info:          #06b6d4;
+            --text-main:     #f8fafc;
+            --text-muted:    #94a3b8;
+            --text-faint:    #64748b;
+            --border:        rgba(255,255,255,.06);
+            --border-hover:  rgba(255,255,255,.12);
+            --radius:        20px;
+            --radius-sm:     12px;
+            --ff:            'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --fm:            'JetBrains Mono', 'Roboto Mono', monospace;
+            --ease:          cubic-bezier(.16,1,.3,1);
         }
 
-        html { background-color: #0f0f0f !important; }
-        body { background-color: #0f0f0f !important; color: #ffffff !important; }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        html, body {
-            font-family: var(--font-body);
-            background-color: var(--bg-0);
-            color: var(--text-primary);
-            scroll-behavior: smooth;
-            overflow-x: hidden;
-        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior: smooth; }
 
         body {
+            font-family: var(--ff);
+            background: var(--bg-deep);
+            color: var(--text-main);
             min-height: 100vh;
-            background-image: none;
-            animation: none;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        ::-webkit-scrollbar {
-            width: 8px;
+        ::selection { background: rgba(168,85,247,.2); }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: rgba(168,85,247,.3); border-radius: 2px; }
+
+        /* ─── BACKGROUND MESH ─── */
+        .bg-mesh {
+            position: fixed; inset: 0; z-index: 0;
+            overflow: hidden; pointer-events: none;
+        }
+        .bg-orb {
+            position: absolute; border-radius: 50%;
+            filter: blur(130px); opacity: .08;
+            animation: orbDrift 28s ease-in-out infinite alternate;
+        }
+        .bg-orb.o1 { width: 700px; height: 700px; background: var(--primary); top: -15%; left: -15%; }
+        .bg-orb.o2 { width: 500px; height: 500px; background: var(--info);    bottom: -10%; right: -8%; animation-delay: -10s; }
+        .bg-orb.o3 { width: 400px; height: 400px; background: #ec4899;         top: 45%; left: 55%; animation-delay: -18s; }
+        @keyframes orbDrift {
+            0%   { transform: translate(0,0) scale(1); }
+            100% { transform: translate(50px,-40px) scale(1.12); }
+        }
+        .bg-grid {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .4;
+            background-image:
+                repeating-linear-gradient(0deg,   transparent, transparent 39px, rgba(255,255,255,.025) 39px, rgba(255,255,255,.025) 40px),
+                repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,.025) 39px, rgba(255,255,255,.025) 40px);
         }
 
-        ::-webkit-scrollbar-track {
-            background: transparent;
+        /* ─── SCROLL PROGRESS ─── */
+        .scroll-progress {
+            position: fixed; top: 0; left: 0; height: 2px; width: 0;
+            background: linear-gradient(90deg, var(--primary), var(--info));
+            z-index: 10001; transform-origin: left; transition: width .1s linear;
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, var(--accent-primary), rgba(0, 217, 255, 0.4));
-            border-radius: 4px;
-            border: 2px solid var(--bg-0);
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, var(--accent-primary), var(--accent-primary));
-        }
-
-        /* ═══ HEADER/NAV ═══ */
+        /* ─── NAVBAR ─── */
         .navbar {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: #1a1a1a;
-            backdrop-filter: none;
-            border-bottom: 1px solid var(--border-subtle);
-            padding: 1rem 2rem;
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 0 5%;
+            background: rgba(3,3,5,.85);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(16px) saturate(1.4);
+            -webkit-backdrop-filter: blur(16px) saturate(1.4);
+            transition: box-shadow .3s;
+        }
+        .navbar.scrolled { box-shadow: 0 1px 30px rgba(0,0,0,.4); }
+        .nav-content {
+            max-width: 1280px; margin: 0 auto; height: 64px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .nav-logo {
+            font-family: var(--ff); font-weight: 800; font-size: 1.05rem;
+            letter-spacing: -.02em; color: var(--text-main); text-decoration: none;
+            display: flex; align-items: center; gap: .5rem;
+        }
+        .nav-logo-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 12px var(--primary);
+            animation: dotPulse 2.5s ease-in-out infinite;
+        }
+        @keyframes dotPulse {
+            0%,100% { box-shadow: 0 0 8px var(--primary); }
+            50%      { box-shadow: 0 0 20px var(--primary); }
+        }
+        .nav-links { display: flex; gap: 2rem; list-style: none; }
+        .nav-links a {
+            color: var(--text-muted); text-decoration: none;
+            font-weight: 500; font-size: .875rem; transition: color .2s;
+        }
+        .nav-links a:hover { color: var(--text-main); }
+        .nav-cta {
+            padding: .45rem 1.2rem;
+            background: var(--primary); color: #fff;
+            text-decoration: none; border-radius: 7px;
+            font-weight: 600; font-size: .85rem;
+            transition: background .2s, box-shadow .2s;
+            box-shadow: 0 0 20px rgba(168,85,247,.25);
+        }
+        .nav-cta:hover { background: #9333ea; box-shadow: 0 0 30px rgba(168,85,247,.4); }
+        @media (max-width: 768px) { .nav-links { display: none; } }
+
+        /* ─── PAGE WRAPPER ─── */
+        .page-wrap {
+            position: relative; z-index: 1;
+            max-width: 1280px; margin: 0 auto;
+            padding: 100px 5% 4rem;
         }
 
-        .navbar-content {
-            max-width: 1600px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 2rem;
+        /* ─── CHIP / BADGE ─── */
+        .chip {
+            display: inline-flex; align-items: center; gap: .4rem;
+            padding: .25rem .75rem;
+            background: var(--primary-dim); border: 1px solid var(--primary-brd);
+            border-radius: 20px; font-size: .72rem; font-weight: 700;
+            letter-spacing: .09em; text-transform: uppercase; color: #c084fc;
+            font-family: var(--fm);
         }
+        .chip-dot { width: 5px; height: 5px; border-radius: 50%; background: #c084fc; }
 
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 700;
-            font-size: 0.9rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: var(--accent-primary);
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .navbar-brand:hover {
-            transform: translateX(4px);
-        }
-
-        .navbar-brand::before {
-            content: '';
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: var(--accent-primary);
-            border-radius: 50%;
-            box-shadow: 0 0 12px var(--accent-primary);
-            animation: dot-pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes dot-pulse {
-            0%, 100% { box-shadow: 0 0 12px var(--accent-primary); }
-            50% { box-shadow: 0 0 24px var(--accent-primary); }
-        }
-
-        .navbar-actions {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .btn-nav {
-            padding: 0.5rem 1.2rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-mild);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-nav:hover {
-            background: rgba(0, 217, 255, 0.1);
-            border-color: var(--accent-primary);
-            color: var(--accent-primary);
-        }
-
-        /* ═══ PAGE CONTAINER ═══ */
-        .page-container {
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 3rem 2rem;
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ═══ HERO SECTION ═══ */
+        /* ─── HERO ─── */
         .hero {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            margin-bottom: 4rem;
-            align-items: center;
+            padding: 3.5rem 0 3rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 3.5rem;
+            display: grid; grid-template-columns: 1fr auto;
+            gap: 2.5rem; align-items: center;
         }
-
-        .hero-left {
-            position: relative;
-            z-index: 2;
+        .hero-eyebrow { margin-bottom: 1.25rem; }
+        .hero-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800; line-height: 1.15;
+            letter-spacing: -.035em; margin-bottom: .9rem;
         }
-
-        .hero-right {
-            position: relative;
-            height: 300px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .hero-title em {
+            font-style: normal;
+            background: linear-gradient(135deg, var(--primary) 0%, #c084fc 60%, var(--info) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
+        .hero-sub {
+            font-size: .975rem; color: var(--text-muted);
+            line-height: 1.75; max-width: 520px; margin-bottom: 1.75rem;
+        }
+        .hero-meta {
+            display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;
+        }
+        .meta-item { display: flex; flex-direction: column; gap: .3rem; }
+        .meta-label {
+            font-family: var(--fm); font-size: .65rem; font-weight: 600;
+            letter-spacing: .1em; text-transform: uppercase; color: var(--text-faint);
+        }
+        .meta-value {
+            font-family: var(--fm); font-size: 1.3rem; font-weight: 700;
+            color: var(--primary);
+        }
+        .hero-actions { display: flex; gap: .75rem; flex-wrap: wrap; }
 
         .hero-visual {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: #1a1a1a;
-            border-radius: 24px;
-            border: 1px solid var(--border-subtle);
-            backdrop-filter: none;
-            animation: none;
+            width: 180px; height: 180px;
+            background: var(--primary-dim); border: 1px solid var(--primary-brd);
+            border-radius: 28px; display: flex; align-items: center; justify-content: center;
+            font-size: 5rem; flex-shrink: 0;
+            box-shadow: 0 0 60px rgba(168,85,247,.12);
+            animation: floatVisual 6s ease-in-out infinite;
         }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+        @keyframes floatVisual {
+            0%,100% { transform: translateY(0); }
+            50%      { transform: translateY(-12px); }
         }
+        @media (max-width: 768px) { .hero { grid-template-columns: 1fr; } .hero-visual { display: none; } }
 
-        .hero-icon {
-            position: relative;
-            z-index: 10;
-            font-size: 5rem;
-            animation: float 6s ease-in-out infinite;
-        }
-
-        .hero-title {
-            font-size: 3rem;
-            font-weight: 900;
-            line-height: 1.2;
-            margin-bottom: 1rem;
-            letter-spacing: -1px;
-            font-family: var(--font-display);
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-success));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero-subtitle {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-            line-height: 1.6;
-        }
-
-        .hero-meta {
-            display: flex;
-            gap: 2rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .meta-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .meta-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-tertiary);
-        }
-
-        .meta-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            font-family: var(--font-display);
-            color: var(--accent-primary);
-        }
-
-        .hero-actions {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        /* ═══ BUTTONS ═══ */
+        /* ─── BUTTONS ─── */
         .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            text-decoration: none;
-            position: relative;
-            overflow: hidden;
+            display: inline-flex; align-items: center; gap: .5rem;
+            padding: .65rem 1.4rem; border-radius: 9px;
+            font-weight: 600; font-size: .875rem; cursor: pointer;
+            border: none; text-decoration: none;
+            transition: transform .2s var(--ease), box-shadow .2s var(--ease), background .2s;
+            position: relative; overflow: hidden;
         }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            transition: left 0.3s ease;
-            z-index: -1;
-        }
-
-        .btn:hover::before {
-            left: 100%;
-        }
-
         .btn-primary {
-            background: linear-gradient(135deg, var(--accent-primary), #00a8cc);
-            color: var(--bg-0);
-            box-shadow: 0 8px 24px rgba(0, 217, 255, 0.3);
+            background: var(--primary); color: #fff;
+            box-shadow: 0 0 24px rgba(168,85,247,.3);
         }
-
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 32px rgba(0, 217, 255, 0.4);
+            background: #9333ea; transform: translateY(-1px);
+            box-shadow: 0 0 36px rgba(168,85,247,.45);
         }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-primary);
-            border: 1px solid var(--border-mild);
+        .btn-ghost {
+            background: rgba(255,255,255,.05); color: var(--text-main);
+            border: 1px solid var(--border-hover);
         }
-
-        .btn-secondary:hover {
-            background: rgba(0, 217, 255, 0.1);
-            border-color: var(--accent-primary);
-            color: var(--accent-primary);
+        .btn-ghost:hover {
+            background: rgba(255,255,255,.09); border-color: var(--primary-brd);
+            transform: translateY(-1px);
         }
+        .btn-sm { padding: .45rem 1rem; font-size: .8rem; border-radius: 7px; }
+        .btn-danger { background: rgba(239,68,68,.12); color: var(--danger); border: 1px solid rgba(239,68,68,.25); }
+        .btn-danger:hover { background: rgba(239,68,68,.2); }
 
-        /* ═══ STATS GRID ═══ */
-        .stats-section {
-            margin-bottom: 4rem;
+        /* ─── SECTION HEADER ─── */
+        .section-hd {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 1.5rem; gap: 1rem;
         }
-
         .section-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-family: var(--font-display);
-            letter-spacing: 0.5px;
+            font-size: 1rem; font-weight: 700; letter-spacing: -.01em;
+            display: flex; align-items: center; gap: .6rem;
+        }
+        .section-icon {
+            width: 30px; height: 30px; border-radius: 8px;
+            background: var(--primary-dim); border: 1px solid var(--primary-brd);
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem;
         }
 
+        /* ─── STATS GRID ─── */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.25rem; margin-bottom: 3rem;
         }
+        @media (max-width: 1024px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 480px)  { .stats-grid { grid-template-columns: 1fr; } }
 
         .stat-card {
-            position: relative;
-            padding: 2rem;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            backdrop-filter: blur(20px);
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            overflow: hidden;
+            padding: 1.75rem 1.5rem;
+            background: var(--bg-glass); border: 1px solid var(--border);
+            border-radius: var(--radius);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            transition: border-color .25s, transform .25s var(--ease), box-shadow .25s;
+            position: relative; overflow: hidden;
         }
-
         .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--accent-primary), transparent);
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            opacity: 0; transition: opacity .3s;
         }
-
-        .stat-card:hover {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: var(--accent-primary-glow);
-            transform: translateY(-8px);
+        .stat-card:hover { border-color: var(--primary-brd); transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.25); }
+        .stat-card:hover::before { opacity: 1; }
+        .stat-icon-wrap { margin-bottom: 1rem; font-size: 1.6rem; }
+        .stat-lbl {
+            font-family: var(--fm); font-size: .65rem; font-weight: 600;
+            letter-spacing: .1em; text-transform: uppercase; color: var(--text-faint);
+            margin-bottom: .4rem;
         }
-
-        .stat-card:hover::before {
-            opacity: 1;
+        .stat-val {
+            font-family: var(--fm); font-size: 2rem; font-weight: 700;
+            color: var(--primary); line-height: 1;
         }
-
-        .stat-icon {
-            font-size: 2rem;
-            margin-bottom: 1rem;
+        .stat-note {
+            font-size: .78rem; color: var(--success); margin-top: .6rem;
+            display: flex; align-items: center; gap: .3rem;
         }
+        .stat-note.warn { color: var(--warning); }
 
-        .stat-label {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-tertiary);
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-value {
-            font-size: 2.2rem;
-            font-weight: 900;
-            color: var(--accent-primary);
-            font-family: var(--font-display);
-            line-height: 1;
-        }
-
-        .stat-change {
-            font-size: 0.85rem;
-            color: var(--accent-success);
-            margin-top: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        /* ═══ CONTENT GRID ═══ */
-        .content-grid {
+        /* ─── MAIN GRID ─── */
+        .main-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1fr 320px;
             gap: 2rem;
-            margin-bottom: 4rem;
         }
+        @media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr; } }
 
+        /* ─── GLASS CARD ─── */
         .card {
-            padding: 2.5rem;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-subtle);
-            border-radius: 16px;
-            backdrop-filter: blur(30px);
-            transition: all 0.4s ease;
+            background: var(--bg-glass); border: 1px solid var(--border);
+            border-radius: var(--radius);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 2rem;
+            transition: border-color .25s;
+            margin-bottom: 1.5rem;
         }
+        .card:hover { border-color: var(--border-hover); }
+        .card:last-child { margin-bottom: 0; }
 
-        .card:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: var(--border-mild);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            gap: 1rem;
-        }
-
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            font-family: var(--font-display);
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        /* ═══ TIMELINE ═══ */
-        .timeline {
-            position: relative;
-            padding-left: 2rem;
-        }
-
+        /* ─── TIMELINE ─── */
+        .timeline { padding-left: 1.5rem; position: relative; }
         .timeline::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: linear-gradient(180deg, var(--accent-primary), transparent);
+            content: ''; position: absolute; left: 0; top: 6px; bottom: 0; width: 2px;
+            background: linear-gradient(180deg, var(--primary), transparent);
         }
-
-        .timeline-item {
-            position: relative;
-            margin-bottom: 2rem;
-            padding-bottom: 2rem;
-            border-bottom: 1px solid var(--border-subtle);
+        .tl-item { position: relative; padding-bottom: 2rem; }
+        .tl-item:last-child { padding-bottom: 0; }
+        .tl-item::before {
+            content: ''; position: absolute; left: -1.5rem;
+            top: 4px; width: 10px; height: 10px;
+            background: var(--primary); border-radius: 50%;
+            border: 2px solid var(--bg-deep);
+            box-shadow: 0 0 12px var(--primary);
         }
-
-        .timeline-item:last-child {
-            border-bottom: none;
+        .tl-year {
+            font-family: var(--fm); font-size: .85rem; font-weight: 600;
+            color: var(--primary); margin-bottom: .5rem;
         }
-
-        .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: -1.25rem;
-            top: 0;
-            width: 12px;
-            height: 12px;
-            background: var(--accent-primary);
-            border-radius: 50%;
-            border: 3px solid var(--bg-0);
-            box-shadow: 0 0 16px var(--accent-primary);
+        .tl-badge {
+            display: inline-block; padding: .15rem .5rem;
+            background: var(--primary-dim); border: 1px solid var(--primary-brd);
+            border-radius: 4px; font-size: .65rem; font-family: var(--fm);
+            color: #c084fc; letter-spacing: .06em; text-transform: uppercase;
+            margin-left: .5rem;
         }
+        .tl-badge.active { background: rgba(16,185,129,.12); border-color: rgba(16,185,129,.25); color: var(--success); }
+        .tl-badge.done   { background: rgba(100,116,139,.1);  border-color: rgba(100,116,139,.2);  color: var(--text-faint); }
+        .tl-cols { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-top: .75rem; }
+        .tl-detail-lbl { font-size: .72rem; color: var(--text-faint); margin-bottom: .2rem; }
+        .tl-detail-val { font-family: var(--fm); font-size: .9rem; font-weight: 600; color: var(--success); }
 
-        .timeline-year {
-            font-size: 1.1rem;
-            font-weight: 700;
-            font-family: var(--font-display);
-            color: var(--accent-primary);
-            margin-bottom: 0.5rem;
-        }
-
-        .timeline-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .timeline-detail {
-            font-size: 0.9rem;
-        }
-
-        .timeline-detail-label {
-            color: var(--text-tertiary);
-            margin-bottom: 0.25rem;
-        }
-
-        .timeline-detail-value {
-            font-weight: 700;
-            color: var(--accent-success);
-            font-family: var(--font-display);
-        }
-
-        /* ═══ DATA SECTIONS ═══ */
-        .data-section {
-            margin-bottom: 2rem;
-        }
-
+        /* ─── SALARY GRID ─── */
         .data-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
         }
-
-        .data-item {
-            padding: 1.5rem;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-subtle);
-            border-radius: 12px;
-            transition: all 0.3s ease;
+        .data-cell {
+            padding: 1.25rem 1rem;
+            background: rgba(255,255,255,.025); border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            transition: background .2s, border-color .2s;
         }
+        .data-cell:hover { background: var(--primary-dim); border-color: var(--primary-brd); }
+        .data-cell-lbl { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-faint); margin-bottom: .5rem; font-family: var(--fm); }
+        .data-cell-val { font-family: var(--fm); font-size: 1.35rem; font-weight: 700; color: var(--text-main); }
+        .data-cell-val.accent { color: var(--primary); }
 
-        .data-item:hover {
-            background: rgba(0, 217, 255, 0.05);
-            border-color: var(--accent-primary-glow);
+        /* ─── PROGRESS BAR ─── */
+        .prog-wrap { margin-top: 1.5rem; }
+        .prog-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; font-size: .82rem; }
+        .prog-track { height: 6px; background: rgba(255,255,255,.07); border-radius: 3px; overflow: hidden; }
+        .prog-fill {
+            height: 100%; border-radius: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--info));
+            transition: width .6s var(--ease);
         }
+        .prog-fill.warn { background: linear-gradient(90deg, var(--warning), var(--danger)); }
 
-        .data-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-tertiary);
-            margin-bottom: 0.75rem;
-        }
+        /* ─── VACATION DATA ─── */
+        .vacation-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
 
-        .data-value {
-            font-size: 1.5rem;
-            font-weight: 800;
-            font-family: var(--font-display);
-            color: var(--text-primary);
-        }
-
-        .data-value.accent {
-            color: var(--accent-primary);
-        }
-
-        /* ═══ VACATION TRACKER ═══ */
-        .vacation-container {
-            margin-bottom: 2rem;
-        }
-
-        .progress-bar-container {
-            margin-top: 1.5rem;
-        }
-
-        .progress-bar {
-            height: 8px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 0.75rem;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent-warning), var(--accent-danger));
-            border-radius: 4px;
-            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        /* ═══ BENEFITS GRID ═══ */
+        /* ─── BENEFITS ─── */
         .benefits-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: .75rem;
         }
-
-        .benefit-badge {
-            padding: 1.5rem;
-            background: linear-gradient(135deg, rgba(0, 217, 255, 0.05), rgba(16, 185, 129, 0.05));
-            border: 1px solid var(--border-mild);
-            border-radius: 12px;
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
+        .benefit-tile {
+            padding: 1.25rem .75rem; text-align: center;
+            background: rgba(255,255,255,.025); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); cursor: pointer;
+            transition: background .2s, border-color .2s, transform .2s var(--ease);
         }
+        .benefit-tile:hover { background: var(--primary-dim); border-color: var(--primary-brd); transform: translateY(-3px); }
+        .benefit-tile-icon { font-size: 2rem; margin-bottom: .5rem; }
+        .benefit-tile-name { font-size: .78rem; font-weight: 600; color: var(--text-muted); line-height: 1.3; }
 
-        .benefit-badge:hover {
-            transform: translateY(-4px);
-            background: linear-gradient(135deg, rgba(0, 217, 255, 0.1), rgba(16, 185, 129, 0.1));
-            border-color: var(--accent-primary);
-        }
-
-        .benefit-icon {
-            font-size: 2.5rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .benefit-name {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        /* ═══ MODAL ═══ */
-        .modal {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal-content {
-            background: var(--bg-1);
-            border: 1px solid var(--border-mild);
-            border-radius: 20px;
-            padding: 2.5rem;
-            max-width: 600px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            width: 40px;
-            height: 40px;
-            border: none;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 50%;
-            color: var(--text-primary);
-            font-size: 1.5rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .modal-close:hover {
-            background: var(--accent-danger);
-            transform: rotate(90deg);
-        }
-
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 800;
-            font-family: var(--font-display);
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        /* ═══ FORM ═══ */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--text-primary);
-        }
-
-        .form-input,
-        .form-select {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-mild);
-            border-radius: 10px;
-            color: var(--text-primary);
-            font-family: var(--font-body);
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            background: rgba(0, 217, 255, 0.05);
-            box-shadow: 0 0 16px rgba(0, 217, 255, 0.15);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        /* ═══ SIDE PANEL ═══ */
-        .sidebar {
-            position: sticky;
-            top: 100px;
-            height: fit-content;
-        }
-
+        /* ─── SIDEBAR CARD ─── */
+        .sidebar { position: sticky; top: 84px; height: fit-content; }
+        @media (max-width: 1100px) { .sidebar { position: static; } }
         .sidebar-card {
-            padding: 2rem;
-            background: linear-gradient(135deg, rgba(0, 217, 255, 0.08), rgba(16, 185, 129, 0.05));
-            border: 1px solid var(--border-mild);
-            border-radius: 16px;
-            margin-bottom: 1.5rem;
+            background: var(--bg-glass); border: 1px solid var(--border);
+            border-radius: var(--radius);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 1.75rem; margin-bottom: 1.25rem;
+        }
+        .sidebar-card:last-child { margin-bottom: 0; }
+        .sidebar-card-title {
+            font-size: .8rem; font-weight: 700; letter-spacing: .08em;
+            text-transform: uppercase; color: var(--text-faint); font-family: var(--fm);
+            margin-bottom: 1.25rem; padding-bottom: .75rem; border-bottom: 1px solid var(--border);
+        }
+        .detail-row { display: flex; flex-direction: column; gap: .25rem; padding: .6rem 0; border-bottom: 1px solid var(--border); }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-lbl { font-size: .7rem; color: var(--text-faint); font-family: var(--fm); text-transform: uppercase; letter-spacing: .07em; }
+        .detail-val { font-size: .9rem; font-weight: 600; color: var(--text-main); }
+        .action-stack { display: flex; flex-direction: column; gap: .6rem; }
+
+        /* ─── MODAL ─── */
+        .modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,.75);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 2000; align-items: center; justify-content: center;
+            padding: 1.5rem;
+        }
+        .modal.active { display: flex; animation: modalFadeIn .2s ease; }
+        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-box {
+            background: #0e0e14; border: 1px solid var(--primary-brd);
+            border-radius: var(--radius); padding: 2.5rem;
+            max-width: 580px; width: 100%; max-height: 92vh;
+            overflow-y: auto; position: relative;
+            animation: modalSlide .3s var(--ease);
+            box-shadow: 0 40px 80px rgba(0,0,0,.5), 0 0 60px rgba(168,85,247,.08);
+        }
+        @keyframes modalSlide {
+            from { opacity: 0; transform: translateY(24px) scale(.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-close {
+            position: absolute; top: 1.25rem; right: 1.25rem;
+            width: 34px; height: 34px; border-radius: 50%;
+            background: rgba(255,255,255,.06); border: 1px solid var(--border);
+            color: var(--text-muted); font-size: 1.1rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background .2s, transform .2s, color .2s;
+        }
+        .modal-close:hover { background: var(--danger); color: #fff; transform: rotate(90deg); }
+        .modal-title {
+            font-size: 1.3rem; font-weight: 800; letter-spacing: -.02em;
+            margin-bottom: 1.75rem; display: flex; align-items: center; gap: .6rem;
         }
 
-        .sidebar-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            font-family: var(--font-display);
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        /* ─── FORMS ─── */
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label { display: block; margin-bottom: .4rem; font-size: .82rem; font-weight: 600; color: var(--text-muted); }
+        .form-input, .form-select {
+            width: 100%; padding: .7rem 1rem;
+            background: rgba(255,255,255,.05); border: 1px solid var(--border-hover);
+            border-radius: 10px; color: var(--text-main);
+            font-family: var(--ff); font-size: .875rem;
+            transition: border-color .2s, background .2s, box-shadow .2s;
         }
-
-        /* ═══ RESPONSIVE ═══ */
-        @media (max-width: 1200px) {
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .hero {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-
-            .hero-right {
-                display: none;
-            }
+        .form-input:focus, .form-select:focus {
+            outline: none; border-color: var(--primary);
+            background: rgba(168,85,247,.06);
+            box-shadow: 0 0 0 3px rgba(168,85,247,.12);
         }
+        .form-select option { background: #1a1a2e; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+        .form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; }
+        @media (max-width: 500px) { .form-row, .form-row-3 { grid-template-columns: 1fr; } }
+        .form-actions { display: flex; gap: .75rem; margin-top: 1.75rem; }
 
-        @media (max-width: 768px) {
-            .navbar-content {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .page-container {
-                padding: 2rem 1rem;
-            }
-
-            .hero-title {
-                font-size: 2rem;
-            }
-
-            .hero-meta {
-                gap: 1rem;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                position: static;
-            }
-
-            .benefits-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            }
-
-            .hero-actions {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
+        /* ─── CALC RESULT BOX ─── */
+        .calc-result {
+            margin-top: 1.5rem; padding: 1.5rem;
+            background: rgba(16,185,129,.07); border: 1px solid rgba(16,185,129,.2);
+            border-radius: var(--radius-sm);
         }
+        .calc-result-lbl { font-size: .7rem; font-family: var(--fm); letter-spacing: .1em; text-transform: uppercase; color: var(--text-faint); margin-bottom: .4rem; }
+        .calc-result-val { font-family: var(--fm); font-size: 2.2rem; font-weight: 700; color: var(--success); }
+        .calc-result-note { font-size: .75rem; color: var(--text-faint); margin-top: .75rem; }
 
-        @keyframes slideInRight {
-            from { transform: translateX(400px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        /* ─── TOAST ─── */
+        .toast {
+            position: fixed; top: 5rem; right: 1.5rem; z-index: 3000;
+            padding: .75rem 1.25rem; border-radius: 10px;
+            font-size: .875rem; font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0,0,0,.35);
+            animation: toastIn .35s var(--ease);
         }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        .toast-success { background: var(--success); color: #fff; }
+        .toast-error   { background: var(--danger);  color: #fff; }
+
+        /* ─── EMPTY STATE ─── */
+        .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-faint); }
+        .empty-state svg { opacity: .3; margin-bottom: 1rem; }
+        .empty-state p { font-size: .875rem; }
+
+        /* ─── FOOTER (shared) ─── */
+        .site-footer {
+            --_p1: #a855f7; --_p3: #c084fc;
+            --_muted: rgba(192,170,252,.5); --_green: #10b981;
+            --_border: rgba(168,85,247,.14);
+            border-top: 1px solid var(--_border);
+            background: linear-gradient(180deg, transparent, rgba(124,58,237,.04));
+            padding: 4.5rem 6% 0; position: relative; z-index: 1;
+        }
+        .footer-inner { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1.7fr 1fr 1fr; gap: 3rem; padding-bottom: 3rem; align-items: start; }
+        .footer-logo-text { font-weight: 800; font-size: 1.1rem; letter-spacing: -.03em; background: linear-gradient(135deg,var(--_p1),var(--_p3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: inline-block; margin-bottom: .75rem; }
+        .footer-tagline { color: var(--_muted); font-size: .82rem; line-height: 1.75; margin-bottom: 1.25rem; max-width: 270px; }
+        .footer-badges { display: flex; gap: .5rem; flex-wrap: wrap; }
+        .footer-badge { padding: .22rem .65rem; background: rgba(168,85,247,.08); border: 1px solid rgba(168,85,247,.2); border-radius: 20px; font-size: .62rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--_p3); }
+        .footer-badge-green { background: rgba(16,185,129,.08); border-color: rgba(16,185,129,.2); color: var(--_green); }
+        .footer-col-title { font-size: .62rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; color: rgba(255,255,255,.28); margin-bottom: 1.1rem; padding-bottom: .6rem; border-bottom: 1px solid rgba(255,255,255,.05); }
+        .footer-nav { display: flex; flex-direction: column; gap: .55rem; }
+        .footer-nav a { color: var(--_muted); text-decoration: none; font-size: .84rem; font-weight: 500; transition: color .2s, padding-left .2s; }
+        .footer-nav a:hover { color: var(--_p3); padding-left: .3rem; }
+        .footer-contacts { display: flex; flex-direction: column; gap: .8rem; }
+        .footer-contact-item { display: flex; align-items: center; gap: .55rem; color: var(--_muted); text-decoration: none; font-size: .82rem; font-weight: 500; transition: color .2s; }
+        .footer-contact-item:hover { color: var(--_p3); }
+        .footer-contact-item svg { opacity: .5; flex-shrink: 0; transition: opacity .2s; }
+        .footer-contact-item:hover svg { opacity: 1; }
+        .footer-contact-item span { color: var(--_muted); -webkit-text-fill-color: var(--_muted); transition: color .2s; }
+        .footer-contact-item:hover span { color: var(--_p3); -webkit-text-fill-color: var(--_p3); }
+        .footer-bottom { max-width: 1000px; margin: 0 auto; border-top: 1px solid rgba(255,255,255,.045); padding: 1.4rem 0 2.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .75rem; }
+        .footer-copy { color: rgba(255,255,255,.2); font-size: .74rem; }
+        .footer-legal-links { display: flex; gap: 1.5rem; }
+        .footer-legal-links a { color: rgba(255,255,255,.2); text-decoration: none; font-size: .74rem; transition: color .2s; font-weight: 500; }
+        .footer-legal-links a:hover { color: var(--_muted); }
+        @media (max-width: 680px) { .footer-inner { grid-template-columns: 1fr; gap: 2.25rem; } .footer-bottom { flex-direction: column; align-items: flex-start; gap: .6rem; } .footer-tagline { max-width: 100%; } }
     </style>
 </head>
 <body>
-    <!-- NAVBAR -->
-    <nav class="navbar">
-        <div class="navbar-content">
-            <a href="/" class="navbar-brand">MyWorkLog</a>
-            <div class="navbar-actions">
-                <a href="/" class="btn-nav">← Dashboard</a>
-            </div>
+    <!-- Background -->
+    <div class="bg-mesh">
+        <div class="bg-orb o1"></div>
+        <div class="bg-orb o2"></div>
+        <div class="bg-orb o3"></div>
+    </div>
+    <div class="bg-grid"></div>
+    <div class="scroll-progress" id="scrollProg"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-content">
+            <a href="/" class="nav-logo">
+                <span class="nav-logo-dot"></span>
+                MyWorkLog
+            </a>
+            <ul class="nav-links">
+                <li><a href="/">Dashboard</a></li>
+                <li><a href="/about/">Über uns</a></li>
+            </ul>
+            <a href="/" class="nav-cta">← App öffnen</a>
         </div>
     </nav>
 
-    <!-- PAGE -->
-    <div class="page-container">
-        <!-- HERO SECTION -->
+    <!-- Page Content -->
+    <div class="page-wrap">
+
+        <!-- Hero -->
         <section class="hero">
-            <div class="hero-left">
-                <h1 class="hero-title" id="heroTitle">Vertrags-Manager</h1>
-                <p class="hero-subtitle">Verwalte deinen Ausbildungsvertrag, Gehalt und Urlaubsansprüche an einer Stelle</p>
+            <div>
+                <div class="hero-eyebrow">
+                    <span class="chip"><span class="chip-dot"></span>Ausbildung</span>
+                </div>
+                <h1 class="hero-title">
+                    Vertrags-<em>Manager</em>
+                </h1>
+                <p class="hero-sub">
+                    Behalte den Überblick über deinen Ausbildungsvertrag — Gehalt, Urlaub, Benefits und mehr an einem Ort.
+                </p>
                 <div class="hero-meta">
                     <div class="meta-item">
                         <span class="meta-label">Unternehmen</span>
@@ -855,180 +575,226 @@
                 </div>
                 <div class="hero-actions">
                     <button class="btn btn-primary" onclick="openContractModal()">
-                        <span>📝</span> Vertrag bearbeiten
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Vertrag bearbeiten
                     </button>
-                    <button class="btn btn-secondary" onclick="openCalculatorModal()">
-                        <span>💰</span> Gehaltsrechner
+                    <button class="btn btn-ghost" onclick="openCalculatorModal()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+                        Gehaltsrechner
                     </button>
                 </div>
             </div>
-            <div class="hero-right">
-                <div class="hero-visual"></div>
-                <div class="hero-icon">📋</div>
-            </div>
+            <div class="hero-visual">📋</div>
         </section>
 
-        <!-- STATS SECTION -->
-        <section class="stats-section">
-            <h2 class="section-title">
-                <span>⚡</span> Überblick
-            </h2>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">💰</div>
-                    <div class="stat-label">Aktuelles Gehalt</div>
-                    <div class="stat-value" id="currentSalaryDisplay">0€</div>
-                    <div class="stat-change">✓ Gültig</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📅</div>
-                    <div class="stat-label">Verbleibende Monate</div>
-                    <div class="stat-value" id="remainingMonths">0</div>
-                    <div class="stat-change" id="remainingStatus">bis Abschluss</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🏖️</div>
-                    <div class="stat-label">Urlaubstage frei</div>
-                    <div class="stat-value" id="vacationFree">0</div>
-                    <div class="stat-change" id="vacationPercent">0% genutzt</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">⏰</div>
-                    <div class="stat-label">Wochenarbeitszeit</div>
-                    <div class="stat-value" id="weeklyHoursDisplay">0h</div>
-                    <div class="stat-change">pro Woche</div>
-                </div>
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon-wrap">💰</div>
+                <div class="stat-lbl">Aktuelles Gehalt</div>
+                <div class="stat-val" id="currentSalaryDisplay">0€</div>
+                <div class="stat-note">✓ Gültig</div>
             </div>
-        </section>
+            <div class="stat-card">
+                <div class="stat-icon-wrap">📅</div>
+                <div class="stat-lbl">Verbleibende Monate</div>
+                <div class="stat-val" id="remainingMonths">0</div>
+                <div class="stat-note" id="remainingStatus">bis Abschluss</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon-wrap">🏖️</div>
+                <div class="stat-lbl">Urlaubstage frei</div>
+                <div class="stat-val" id="vacationFree">0</div>
+                <div class="stat-note warn" id="vacationPercent">0% genutzt</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon-wrap">⏱️</div>
+                <div class="stat-lbl">Wochenarbeitszeit</div>
+                <div class="stat-val" id="weeklyHoursDisplay">0h</div>
+                <div class="stat-note">pro Woche</div>
+            </div>
+        </div>
 
-        <!-- CONTENT GRID -->
-        <div class="content-grid">
-            <!-- LEFT COLUMN -->
+        <!-- Main Grid -->
+        <div class="main-grid">
+
+            <!-- Left Column -->
             <div>
-                <!-- CONTRACT TIMELINE -->
+                <!-- Timeline -->
                 <div class="card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <span>📊</span> Ausbildungsverlauf
+                    <div class="section-hd">
+                        <div class="section-title">
+                            <span class="section-icon">📊</span>
+                            Ausbildungsverlauf
                         </div>
                     </div>
                     <div class="timeline" id="contractTimeline">
-                        <p style="color: var(--text-tertiary); text-align: center;">Vertragsdaten erforderlich</p>
+                        <div class="empty-state">
+                            <p>Vertragsdaten erforderlich — klicke auf „Vertrag bearbeiten"</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- SALARY SECTION -->
-                <div class="card" style="margin-top: 2rem;">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <span>💳</span> Gehaltsentwicklung
+                <!-- Salary -->
+                <div class="card">
+                    <div class="section-hd">
+                        <div class="section-title">
+                            <span class="section-icon">💳</span>
+                            Gehaltsentwicklung
                         </div>
                     </div>
                     <div class="data-grid" id="salaryGrid">
-                        <div class="data-item">
-                            <div class="data-label">1. Jahr</div>
-                            <div class="data-value">0€</div>
+                        <div class="data-cell"><div class="data-cell-lbl">1. Jahr</div><div class="data-cell-val">0€</div></div>
+                        <div class="data-cell"><div class="data-cell-lbl">2. Jahr</div><div class="data-cell-val">0€</div></div>
+                        <div class="data-cell"><div class="data-cell-lbl">3. Jahr</div><div class="data-cell-val">0€</div></div>
+                        <div class="data-cell"><div class="data-cell-lbl">Gesamt (3 J.)</div><div class="data-cell-val accent">0€</div></div>
+                    </div>
+                </div>
+
+                <!-- Vacation -->
+                <div class="card">
+                    <div class="section-hd">
+                        <div class="section-title">
+                            <span class="section-icon">🏖️</span>
+                            Urlaubsplan
                         </div>
-                        <div class="data-item">
-                            <div class="data-label">2. Jahr</div>
-                            <div class="data-value">0€</div>
+                        <button class="btn btn-ghost btn-sm" onclick="adjustVacation()">Urlaub buchen</button>
+                    </div>
+                    <div class="vacation-stats">
+                        <div class="data-cell">
+                            <div class="data-cell-lbl">Anspruch</div>
+                            <div class="data-cell-val accent" id="vacationTotal">30</div>
                         </div>
-                        <div class="data-item">
-                            <div class="data-label">3. Jahr</div>
-                            <div class="data-value">0€</div>
+                        <div class="data-cell">
+                            <div class="data-cell-lbl">Genutzt</div>
+                            <div class="data-cell-val" id="vacationUsedVal">0</div>
                         </div>
-                        <div class="data-item">
-                            <div class="data-label">Gesamtsumme</div>
-                            <div class="data-value accent">0€</div>
+                        <div class="data-cell">
+                            <div class="data-cell-lbl">Verfügbar</div>
+                            <div class="data-cell-val accent" id="vacationAvailable">30</div>
+                        </div>
+                    </div>
+                    <div class="prog-wrap">
+                        <div class="prog-row">
+                            <span style="font-size:.82rem;color:var(--text-muted)">Urlaubsfortschritt</span>
+                            <span style="font-size:.82rem;color:var(--warning);font-family:var(--fm)" id="vacationProgressPercent">0%</span>
+                        </div>
+                        <div class="prog-track">
+                            <div class="prog-fill warn" id="vacationProgressBar" style="width:0%"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- VACATION TRACKER -->
-                <div class="card" style="margin-top: 2rem;">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <span>🏖️</span> Urlaubsplan
+                <!-- Benefits -->
+                <div class="card">
+                    <div class="section-hd">
+                        <div class="section-title">
+                            <span class="section-icon">🎁</span>
+                            Benefits
                         </div>
-                    </div>
-                    <div class="vacation-container">
-                        <div class="data-grid" style="grid-template-columns: repeat(3, 1fr);">
-                            <div class="data-item">
-                                <div class="data-label">Anspruch</div>
-                                <div class="data-value accent" id="vacationTotal">30</div>
-                            </div>
-                            <div class="data-item">
-                                <div class="data-label">Genutzt</div>
-                                <div class="data-value" id="vacationUsedVal">0</div>
-                            </div>
-                            <div class="data-item">
-                                <div class="data-label">Verfügbar</div>
-                                <div class="data-value accent" id="vacationAvailable">30</div>
-                            </div>
-                        </div>
-                        <div class="progress-bar-container">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem;">
-                                <span>Urlaubsfortschritt</span>
-                                <span style="color: var(--accent-warning);" id="vacationProgressPercent">0%</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="vacationProgressBar" style="width: 0%;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- BENEFITS -->
-                <div class="card" style="margin-top: 2rem;">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <span>🎁</span> Benefits
-                        </div>
-                        <button class="btn btn-secondary" onclick="openBenefitsModal()" style="padding: 0.5rem 1rem; font-size: 0.8rem;">+ Hinzufügen</button>
+                        <button class="btn btn-ghost btn-sm" onclick="openBenefitsModal()">+ Hinzufügen</button>
                     </div>
                     <div class="benefits-grid" id="benefitsGrid">
-                        <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-tertiary);">
-                            Keine Benefits hinterlegt
+                        <div class="empty-state" style="grid-column:1/-1">
+                            <p>Noch keine Benefits hinterlegt</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN (SIDEBAR) -->
+            <!-- Sidebar -->
             <div class="sidebar">
-                <!-- QUICK INFO -->
+                <!-- Contract Details -->
                 <div class="sidebar-card">
-                    <div class="sidebar-title">
-                        <span>ℹ️</span> Vertragsdetails
-                    </div>
-                    <div class="data-section" id="contractDetailsPanel">
-                        <div class="data-item">
-                            <div class="data-label">Status</div>
-                            <div class="data-value">Nicht eingerichtet</div>
+                    <div class="sidebar-card-title">Vertragsdetails</div>
+                    <div id="contractDetailsPanel">
+                        <div class="detail-row">
+                            <span class="detail-lbl">Status</span>
+                            <span class="detail-val">Nicht eingerichtet</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- ACTIONS -->
-                <div class="sidebar-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(0, 217, 255, 0.05));">
-                    <div class="sidebar-title">
-                        <span>⚙️</span> Aktionen
+                <!-- Actions -->
+                <div class="sidebar-card">
+                    <div class="sidebar-card-title">Aktionen</div>
+                    <div class="action-stack">
+                        <button class="btn btn-primary" onclick="openContractModal()" style="width:100%;justify-content:center;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            Vertrag bearbeiten
+                        </button>
+                        <button class="btn btn-ghost" onclick="exportData()" style="width:100%;justify-content:center;">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Daten exportieren
+                        </button>
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        <button class="btn btn-secondary" onclick="openContractModal()" style="width: 100%; justify-content: center; padding: 0.6rem;">✏️ Bearbeiten</button>
-                        <button class="btn btn-secondary" onclick="exportData()" style="width: 100%; justify-content: center; padding: 0.6rem;">📥 Exportieren</button>
-                    </div>
+                </div>
+
+                <!-- Tips -->
+                <div class="sidebar-card" style="background:linear-gradient(135deg,rgba(168,85,247,.07),rgba(6,182,212,.05));border-color:var(--primary-brd)">
+                    <div class="sidebar-card-title">Hinweise</div>
+                    <p style="font-size:.8rem;color:var(--text-muted);line-height:1.65">
+                        Trage deine Vertragsdaten ein um Gehaltsverläufe, Resturlaubstage und die verbleibende Ausbildungszeit automatisch zu berechnen.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODALS -->
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <div class="footer-logo-text">MyWorkLog</div>
+                <p class="footer-tagline">Die kostenlose Zeiterfassung für Auszubildende. Open Source, DSGVO-konform &amp; offline-first.</p>
+                <div class="footer-badges">
+                    <span class="footer-badge">v3.5.3</span>
+                    <span class="footer-badge footer-badge-green">Open Source</span>
+                </div>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-title">Navigation</div>
+                <div class="footer-nav">
+                    <a href="/">App öffnen</a>
+                    <a href="/about/">Über uns</a>
+                    <a href="/dsgvo/">Datenschutz</a>
+                    <a href="/impressum/">Impressum</a>
+                </div>
+            </div>
+            <div class="footer-col">
+                <div class="footer-col-title">Kontakt</div>
+                <div class="footer-contacts">
+                    <a href="mailto:info@myworklog.de" class="footer-contact-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        <span>info@myworklog.de</span>
+                    </a>
+                    <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener" class="footer-contact-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+                        <span>GitHub</span>
+                    </a>
+                    <a href="https://myworklog.de" class="footer-contact-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                        <span>myworklog.de</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span class="footer-copy">© 2025–2026 MyWorkLog · Sven Kunz</span>
+            <div class="footer-legal-links">
+                <a href="/dsgvo/">Datenschutz</a>
+                <a href="/impressum/">Impressum</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal: Vertrag bearbeiten -->
     <div class="modal" id="contractModal">
-        <div class="modal-content">
+        <div class="modal-box">
             <button class="modal-close" onclick="closeContractModal()">×</button>
             <div class="modal-title">
-                <span>📝</span> Vertragsdaten
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Vertragsdaten
             </div>
             <form id="contractForm" onsubmit="saveContract(event)">
                 <div class="form-group">
@@ -1036,8 +802,8 @@
                     <input type="text" class="form-input" id="company" placeholder="z.B. TechCorp GmbH" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Position</label>
-                    <input type="text" class="form-input" id="jobTitle" placeholder="z.B. Fachinformatiker/-in" required>
+                    <label class="form-label">Position / Ausbildungsberuf</label>
+                    <input type="text" class="form-input" id="jobTitle" placeholder="z.B. Fachinformatiker/-in Anwendungsentwicklung" required>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -1051,35 +817,40 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Wochenarbeitszeit</label>
+                        <label class="form-label">Wochenarbeitszeit (h)</label>
                         <input type="number" class="form-input" id="weeklyHours" step="0.5" placeholder="40" required>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Urlaubstage/Jahr</label>
+                        <label class="form-label">Urlaubstage / Jahr</label>
                         <input type="number" class="form-input" id="vacationDays" placeholder="30" required>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Gehälter (€/Monat)</label>
-                    <div class="form-row">
+                    <label class="form-label">Gehalt (€ / Monat)</label>
+                    <div class="form-row-3">
                         <input type="number" class="form-input" id="salary1" placeholder="1. Jahr" required>
                         <input type="number" class="form-input" id="salary2" placeholder="2. Jahr" required>
                         <input type="number" class="form-input" id="salary3" placeholder="3. Jahr" required>
                     </div>
                 </div>
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">💾 Speichern</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeContractModal()">Abbrechen</button>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" style="flex:1">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Speichern
+                    </button>
+                    <button type="button" class="btn btn-ghost" onclick="closeContractModal()">Abbrechen</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Modal: Gehaltsrechner -->
     <div class="modal" id="calculatorModal">
-        <div class="modal-content">
+        <div class="modal-box">
             <button class="modal-close" onclick="closeCalculatorModal()">×</button>
             <div class="modal-title">
-                <span>🧮</span> Gehaltsrechner
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+                Netto-Gehaltsrechner
             </div>
             <div class="form-group">
                 <label class="form-label">Brutto-Gehalt (Monat)</label>
@@ -1106,7 +877,7 @@
                         <option>Brandenburg</option>
                         <option>Bremen</option>
                         <option>Hamburg</option>
-                        <option>Hesen</option>
+                        <option>Hessen</option>
                         <option>Mecklenburg-Vorpommern</option>
                         <option>Niedersachsen</option>
                         <option>Nordrhein-Westfalen</option>
@@ -1119,19 +890,21 @@
                     </select>
                 </div>
             </div>
-            <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(0, 217, 255, 0.08); border-radius: 12px; border: 1px solid var(--border-mild);">
-                <div style="font-size: 0.8rem; color: var(--text-tertiary); margin-bottom: 0.5rem;">NETTO-GEHALT (Schätzung)</div>
-                <div style="font-size: 2rem; font-weight: 800; color: var(--accent-success); font-family: var(--font-display);" id="nettoResult">0,00 €</div>
-                <div style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 1rem;">⚠️ Vereinfachte Berechnung. Genaue Werte: Arbeitgeber</div>
+            <div class="calc-result">
+                <div class="calc-result-lbl">Netto-Gehalt (Schätzung)</div>
+                <div class="calc-result-val" id="nettoResult">0,00 €</div>
+                <div class="calc-result-note">⚠️ Vereinfachte Berechnung — genaue Angaben vom Arbeitgeber.</div>
             </div>
         </div>
     </div>
 
+    <!-- Modal: Benefit hinzufügen -->
     <div class="modal" id="benefitsModal">
-        <div class="modal-content">
+        <div class="modal-box">
             <button class="modal-close" onclick="closeBenefitsModal()">×</button>
             <div class="modal-title">
-                <span>🎁</span> Benefit hinzufügen
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                Benefit hinzufügen
             </div>
             <form id="benefitsForm" onsubmit="saveBenefit(event)">
                 <div class="form-group">
@@ -1139,23 +912,47 @@
                     <input type="text" class="form-input" id="benefitName" placeholder="z.B. Jobticket" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Beschreibung</label>
+                    <label class="form-label">Beschreibung (optional)</label>
                     <input type="text" class="form-input" id="benefitDesc" placeholder="z.B. Kostenlose ÖPNV-Fahrkarte">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Icon (Emoji)</label>
                     <input type="text" class="form-input" id="benefitIcon" placeholder="🚌" maxlength="2">
                 </div>
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                    <button type="submit" class="btn btn-primary" style="flex: 1;">💾 Speichern</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeBenefitsModal()">Abbrechen</button>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" style="flex:1">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Speichern
+                    </button>
+                    <button type="button" class="btn btn-ghost" onclick="closeBenefitsModal()">Abbrechen</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Modal: Urlaub buchen -->
+    <div class="modal" id="vacationModal">
+        <div class="modal-box" style="max-width:380px">
+            <button class="modal-close" onclick="closeVacationModal()">×</button>
+            <div class="modal-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                Urlaub anpassen
+            </div>
+            <div class="form-group">
+                <label class="form-label">Genutzte Urlaubstage</label>
+                <input type="number" class="form-input" id="vacationUsedInput" min="0" placeholder="0">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-primary" style="flex:1" onclick="saveVacation()">Speichern</button>
+                <button type="button" class="btn btn-ghost" onclick="closeVacationModal()">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // ═══ VERTRAGS-MANAGER MODULE ═══
         const STORAGE_KEY = 'contract_manager_v2';
+
         let contractData = {
             company: '',
             jobTitle: '',
@@ -1168,6 +965,19 @@
             vacationUsed: 0
         };
 
+        // ─── SCROLL EFFECTS ───
+        window.addEventListener('scroll', () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const prog = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+            document.getElementById('scrollProg').style.width = prog + '%';
+
+            const navbar = document.getElementById('navbar');
+            if (scrollTop > 20) navbar.classList.add('scrolled');
+            else navbar.classList.remove('scrolled');
+        });
+
+        // ─── DATA ───
         function loadData() {
             const stored = localStorage.getItem(STORAGE_KEY);
             if (stored) contractData = { ...contractData, ...JSON.parse(stored) };
@@ -1216,57 +1026,61 @@
 
             const remaining = contractData.vacationDays - contractData.vacationUsed;
             document.getElementById('vacationFree').textContent = remaining;
-            const percent = Math.round((contractData.vacationUsed / contractData.vacationDays) * 100);
+            const percent = contractData.vacationDays > 0
+                ? Math.round((contractData.vacationUsed / contractData.vacationDays) * 100) : 0;
             document.getElementById('vacationPercent').textContent = percent + '% genutzt';
         }
 
         function updateTimeline() {
             const timeline = document.getElementById('contractTimeline');
             if (!contractData.startDate) {
-                timeline.innerHTML = '<p style="color: var(--text-tertiary); text-align: center; padding: 2rem;">Bitte fülle deine Vertragsdaten aus</p>';
+                timeline.innerHTML = '<div class="empty-state"><p>Bitte fülle deine Vertragsdaten aus</p></div>';
                 return;
             }
 
             const currentYear = getCurrentYear();
-            const years = [1, 2, 3];
-            timeline.innerHTML = years.map(y => `
-                <div class="timeline-item">
-                    <div class="timeline-year">${y}. Ausbildungsjahr ${y === currentYear ? '(aktuell)' : y < currentYear ? '✓' : ''}</div>
-                    <div class="timeline-content">
-                        <div class="timeline-detail">
-                            <div class="timeline-detail-label">Gehalt</div>
-                            <div class="timeline-detail-value">${contractData.salaries[y - 1] || 0}€/Mo</div>
+            timeline.innerHTML = [1, 2, 3].map(y => {
+                const badge = y === currentYear
+                    ? '<span class="tl-badge active">Aktuell</span>'
+                    : y < currentYear
+                        ? '<span class="tl-badge done">✓ Abgeschlossen</span>'
+                        : '<span class="tl-badge">Geplant</span>';
+                return `
+                    <div class="tl-item">
+                        <div class="tl-year">${y}. Ausbildungsjahr${badge}</div>
+                        <div class="tl-cols">
+                            <div>
+                                <div class="tl-detail-lbl">Gehalt / Monat</div>
+                                <div class="tl-detail-val">${contractData.salaries[y - 1] || 0} €</div>
+                            </div>
+                            <div>
+                                <div class="tl-detail-lbl">Status</div>
+                                <div class="tl-detail-val">${y < currentYear ? 'Abgeschlossen' : y === currentYear ? 'Läuft' : 'Ausstehend'}</div>
+                            </div>
                         </div>
-                        <div class="timeline-detail">
-                            <div class="timeline-detail-label">Status</div>
-                            <div class="timeline-detail-value">${y < currentYear ? 'Abgeschlossen' : y === currentYear ? 'Läuft' : 'Geplant'}</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+                    </div>`;
+            }).join('');
         }
 
         function updateSalary() {
-            const grid = document.getElementById('salaryGrid');
             const total = contractData.salaries.reduce((a, b) => a + b, 0) * 12;
-            grid.innerHTML = [1, 2, 3].map(y => `
-                <div class="data-item">
-                    <div class="data-label">${y}. Jahr</div>
-                    <div class="data-value">${contractData.salaries[y - 1] || 0}€</div>
-                </div>
-            `).join('') + `
-                <div class="data-item">
-                    <div class="data-label">Gesamtsumme (3 Jahre)</div>
-                    <div class="data-value accent">${total}€</div>
-                </div>
-            `;
+            document.getElementById('salaryGrid').innerHTML =
+                [1, 2, 3].map(y => `
+                    <div class="data-cell">
+                        <div class="data-cell-lbl">${y}. Jahr</div>
+                        <div class="data-cell-val">${contractData.salaries[y - 1] || 0} €</div>
+                    </div>`).join('') + `
+                <div class="data-cell">
+                    <div class="data-cell-lbl">Gesamt (3 J.)</div>
+                    <div class="data-cell-val accent">${total.toLocaleString('de-DE')} €</div>
+                </div>`;
         }
 
         function updateVacation() {
             const total = contractData.vacationDays;
             const used = contractData.vacationUsed;
             const available = total - used;
-            const percent = Math.round((used / total) * 100);
+            const percent = total > 0 ? Math.round((used / total) * 100) : 0;
 
             document.getElementById('vacationTotal').textContent = total;
             document.getElementById('vacationUsedVal').textContent = used;
@@ -1278,154 +1092,152 @@
         function updateBenefits() {
             const grid = document.getElementById('benefitsGrid');
             if (!contractData.benefits.length) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-tertiary);">Keine Benefits hinterlegt</div>';
+                grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><p>Noch keine Benefits hinterlegt</p></div>';
                 return;
             }
-            grid.innerHTML = contractData.benefits.map(b => `
-                <div class="benefit-badge">
-                    <div class="benefit-icon">${b.icon || '🎁'}</div>
-                    <div class="benefit-name">${b.name}</div>
-                </div>
-            `).join('');
+            grid.innerHTML = contractData.benefits.map((b, i) => `
+                <div class="benefit-tile" title="${b.description || ''}" onclick="removeBenefit(${i})">
+                    <div class="benefit-tile-icon">${b.icon || '🎁'}</div>
+                    <div class="benefit-tile-name">${b.name}</div>
+                </div>`).join('');
         }
 
         function updateDetails() {
-            const panel = document.getElementById('contractDetailsPanel');
-            panel.innerHTML = `
-                <div class="data-item">
-                    <div class="data-label">Start</div>
-                    <div class="data-value">${contractData.startDate ? new Date(contractData.startDate).toLocaleDateString('de-DE') : '–'}</div>
+            document.getElementById('contractDetailsPanel').innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-lbl">Unternehmen</span>
+                    <span class="detail-val">${contractData.company || '–'}</span>
                 </div>
-                <div class="data-item">
-                    <div class="data-label">Ende</div>
-                    <div class="data-value">${contractData.endDate ? new Date(contractData.endDate).toLocaleDateString('de-DE') : '–'}</div>
+                <div class="detail-row">
+                    <span class="detail-lbl">Start</span>
+                    <span class="detail-val">${contractData.startDate ? new Date(contractData.startDate).toLocaleDateString('de-DE') : '–'}</span>
                 </div>
-                <div class="data-item">
-                    <div class="data-label">Arbeitszeit</div>
-                    <div class="data-value">${contractData.weeklyHours}h/Wo</div>
+                <div class="detail-row">
+                    <span class="detail-lbl">Ende</span>
+                    <span class="detail-val">${contractData.endDate ? new Date(contractData.endDate).toLocaleDateString('de-DE') : '–'}</span>
                 </div>
-                <div class="data-item">
-                    <div class="data-label">Urlaub</div>
-                    <div class="data-value">${contractData.vacationDays}d/Jahr</div>
+                <div class="detail-row">
+                    <span class="detail-lbl">Arbeitszeit</span>
+                    <span class="detail-val">${contractData.weeklyHours} h/Wo</span>
                 </div>
-            `;
+                <div class="detail-row">
+                    <span class="detail-lbl">Urlaub</span>
+                    <span class="detail-val">${contractData.vacationDays} Tage/Jahr</span>
+                </div>`;
         }
 
+        // ─── CONTRACT MODAL ───
         function openContractModal() {
-            document.getElementById('company').value = contractData.company || '';
-            document.getElementById('jobTitle').value = contractData.jobTitle || '';
-            document.getElementById('startDate').value = contractData.startDate || '';
-            document.getElementById('endDate').value = contractData.endDate || '';
+            document.getElementById('company').value    = contractData.company || '';
+            document.getElementById('jobTitle').value   = contractData.jobTitle || '';
+            document.getElementById('startDate').value  = contractData.startDate || '';
+            document.getElementById('endDate').value    = contractData.endDate || '';
             document.getElementById('weeklyHours').value = contractData.weeklyHours || 40;
             document.getElementById('vacationDays').value = contractData.vacationDays || 30;
-            document.getElementById('salary1').value = contractData.salaries[0] || '';
-            document.getElementById('salary2').value = contractData.salaries[1] || '';
-            document.getElementById('salary3').value = contractData.salaries[2] || '';
+            document.getElementById('salary1').value    = contractData.salaries[0] || '';
+            document.getElementById('salary2').value    = contractData.salaries[1] || '';
+            document.getElementById('salary3').value    = contractData.salaries[2] || '';
             document.getElementById('contractModal').classList.add('active');
         }
-
-        function closeContractModal() {
-            document.getElementById('contractModal').classList.remove('active');
-        }
+        function closeContractModal() { document.getElementById('contractModal').classList.remove('active'); }
 
         function saveContract(e) {
             e.preventDefault();
-            contractData.company = document.getElementById('company').value;
-            contractData.jobTitle = document.getElementById('jobTitle').value;
-            contractData.startDate = document.getElementById('startDate').value;
-            contractData.endDate = document.getElementById('endDate').value;
+            contractData.company     = document.getElementById('company').value;
+            contractData.jobTitle    = document.getElementById('jobTitle').value;
+            contractData.startDate   = document.getElementById('startDate').value;
+            contractData.endDate     = document.getElementById('endDate').value;
             contractData.weeklyHours = parseFloat(document.getElementById('weeklyHours').value);
             contractData.vacationDays = parseInt(document.getElementById('vacationDays').value);
-            contractData.salaries = [
+            contractData.salaries    = [
                 parseInt(document.getElementById('salary1').value) || 0,
                 parseInt(document.getElementById('salary2').value) || 0,
                 parseInt(document.getElementById('salary3').value) || 0
             ];
-            saveData();
-            updateUI();
-            closeContractModal();
-            showNotification('✓ Vertragsdaten gespeichert', 'success');
+            saveData(); updateUI(); closeContractModal();
+            showToast('Vertragsdaten gespeichert', 'success');
         }
 
+        // ─── CALCULATOR MODAL ───
         function openCalculatorModal() {
-            const currentYear = getCurrentYear();
-            const salary = contractData.salaries[currentYear - 1] || 0;
+            const salary = contractData.salaries[getCurrentYear() - 1] || 0;
             document.getElementById('bruttoInput').value = salary;
             calculateNet();
             document.getElementById('calculatorModal').classList.add('active');
         }
-
-        function closeCalculatorModal() {
-            document.getElementById('calculatorModal').classList.remove('active');
-        }
+        function closeCalculatorModal() { document.getElementById('calculatorModal').classList.remove('active'); }
 
         function calculateNet() {
             const brutto = parseFloat(document.getElementById('bruttoInput').value) || 0;
-            const socialSecurity = brutto * 0.20;
-            const tax = brutto > 1300 ? (brutto - 1300) * 0.05 : 0;
-            const netto = brutto - socialSecurity - tax;
+            const social = brutto * 0.20;
+            const tax    = brutto > 1300 ? (brutto - 1300) * 0.05 : 0;
+            const netto  = brutto - social - tax;
             document.getElementById('nettoResult').textContent = netto.toFixed(2).replace('.', ',') + ' €';
         }
 
-        function openBenefitsModal() {
-            document.getElementById('benefitsForm').reset();
-            document.getElementById('benefitsModal').classList.add('active');
-        }
-
-        function closeBenefitsModal() {
-            document.getElementById('benefitsModal').classList.remove('active');
-        }
+        // ─── BENEFITS MODAL ───
+        function openBenefitsModal() { document.getElementById('benefitsForm').reset(); document.getElementById('benefitsModal').classList.add('active'); }
+        function closeBenefitsModal() { document.getElementById('benefitsModal').classList.remove('active'); }
 
         function saveBenefit(e) {
             e.preventDefault();
             contractData.benefits.push({
-                id: Date.now().toString(),
-                name: document.getElementById('benefitName').value,
+                id:          Date.now().toString(),
+                name:        document.getElementById('benefitName').value,
                 description: document.getElementById('benefitDesc').value,
-                icon: document.getElementById('benefitIcon').value || '🎁'
+                icon:        document.getElementById('benefitIcon').value || '🎁'
             });
-            saveData();
-            updateUI();
-            closeBenefitsModal();
-            showNotification('✓ Benefit hinzugefügt', 'success');
+            saveData(); updateUI(); closeBenefitsModal();
+            showToast('Benefit hinzugefügt', 'success');
         }
 
+        function removeBenefit(index) {
+            if (!confirm('Benefit entfernen?')) return;
+            contractData.benefits.splice(index, 1);
+            saveData(); updateUI();
+        }
+
+        // ─── VACATION MODAL ───
+        function adjustVacation() {
+            document.getElementById('vacationUsedInput').value = contractData.vacationUsed;
+            document.getElementById('vacationModal').classList.add('active');
+        }
+        function closeVacationModal() { document.getElementById('vacationModal').classList.remove('active'); }
+
+        function saveVacation() {
+            const val = parseInt(document.getElementById('vacationUsedInput').value) || 0;
+            contractData.vacationUsed = Math.max(0, Math.min(val, contractData.vacationDays));
+            saveData(); updateUI(); closeVacationModal();
+            showToast('Urlaub aktualisiert', 'success');
+        }
+
+        // ─── EXPORT ───
         function exportData() {
             const json = JSON.stringify(contractData, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `vertrag-${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            showNotification('✓ Daten exportiert', 'success');
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href = url; a.download = `vertrag-${new Date().toISOString().split('T')[0]}.json`;
+            a.click(); URL.revokeObjectURL(url);
+            showToast('Daten exportiert', 'success');
         }
 
-        function showNotification(msg, type = 'info') {
+        // ─── TOAST ───
+        function showToast(msg, type = 'success') {
             const el = document.createElement('div');
-            el.style.cssText = `
-                position: fixed;
-                top: 2rem;
-                right: 2rem;
-                padding: 1rem 1.5rem;
-                background: ${type === 'success' ? 'var(--accent-success)' : 'var(--accent-primary)'};
-                color: #000;
-                border-radius: 10px;
-                box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-                z-index: 2000;
-                font-weight: 600;
-                animation: slideInRight 0.4s ease;
-            `;
-            el.textContent = msg;
+            el.className = `toast toast-${type}`;
+            el.textContent = '✓ ' + msg;
             document.body.appendChild(el);
             setTimeout(() => el.remove(), 3000);
         }
 
+        // ─── KEYBOARD ───
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
                 closeContractModal();
                 closeCalculatorModal();
                 closeBenefitsModal();
+                closeVacationModal();
             }
         });
 
