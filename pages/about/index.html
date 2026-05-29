@@ -436,9 +436,6 @@
         .btn-cta-outline:hover { border-color: rgba(255,255,255,.35); color: var(--white); }
 
         /* FOOTER */
-        footer { padding: 2.5rem 5%; border-top: 1px solid rgba(255,255,255,.06); background: #030305; text-align: left; color: rgba(255,255,255,.35); }
-        .footer-content { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
-        .footer-logo { font-family: var(--ff); font-size: .95rem; font-weight: 700; color: rgba(255,255,255,.5); background: none; -webkit-text-fill-color: rgba(255,255,255,.5); margin-bottom: 0; display: inline; }
 
         /* SCROLL REVEAL */
         .px-reveal { opacity: 0; transition: opacity .55s ease, transform .55s cubic-bezier(.22,.68,0,1.1); }
@@ -1189,14 +1186,7 @@
         </div>
     </section>
 
-    <!-- FOOTER -->
-    <footer>
-        <div class="footer-content">
-            <div class="footer-logo">MyWorkLog</div>
-            <p style="font-size:.78rem;">&copy; 2025–2026 MyWorkLog. Engineered in Germany with Precision &amp; Passion.</p>
-            <p style="font-size:.75rem;color:rgba(255,255,255,.2);">Azubi Zeiterfassung | Digitales Berichtsheft | Gleitzeitkonto | Überstundenrechner | DSGVO-konform</p>
-        </div>
-    </footer>
+    <div id="page-footer"></div>
 
     <!-- ALL ORIGINAL JS — unverändert -->
     <script>
@@ -1350,6 +1340,18 @@
 
         updateParallax();
     })();
+    </script>
+
+    <script>
+        fetch('/pages/footer/footer.html')
+            .then(r => r.text())
+            .then(html => {
+                const ph = document.getElementById('page-footer');
+                if (!ph) return;
+                const tmpl = document.createElement('template');
+                tmpl.innerHTML = html;
+                ph.replaceWith(tmpl.content);
+            });
     </script>
 </body>
 </html>
