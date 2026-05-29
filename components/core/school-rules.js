@@ -53,18 +53,52 @@
         data.settings.schoolRules.biweekly = rules;
     }
 
+    function _showSchoolCheckResult(modifier, icon, text) {
+        const el = document.getElementById('schoolCheckResult');
+        if (!el) return;
+        clearTimeout(el._hideTimer);
+        // Force animation restart by toggling display off first
+        el.style.display = 'none';
+        el.className = `school-inline-result school-inline-result--${modifier}`;
+        el.innerHTML = `<span class="school-inline-result__icon">${icon}</span><span>${text}</span>`;
+        // Reflow trigger so browser registers the display:none before showing again
+        void el.offsetHeight;
+        el.style.display = 'flex';
+        el._hideTimer = setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
     function checkDateVocFromInput() {
         const d = document.getElementById('checkVocDate').value;
-        if(!d) return showCustomMessage('❌ Fehler', 'Bitte ein Datum auswählen.', 'error');
-        const res = isVocSchoolForDate(new Date(d));
-        if(res.isVocSchool) showCustomMessage('✅ Berufsschultag', `Der ${d} ist Berufsschule (${res.reason}).`, 'success');
-        else showCustomMessage('ℹ️ Kein Berufsschultag', `Der ${d} ist keine Berufsschule (${res.reason}).`, 'info');
+        if(!d) {
+            _showSchoolCheckResult('warn', '⚠️', 'Bitte ein Datum auswählen.');
+            return;
+        }
+        try { saveSchoolSettingsToData(); } catch(e) {}
+        const [yr, mo, dy] = d.split('-').map(Number);
+        const res = isVocSchoolForDate(new Date(yr, mo - 1, dy));
+        if(res.isVocSchool) _showSchoolCheckResult('ok', '✅', `${d} ist ein Berufsschultag.`);
+        else _showSchoolCheckResult('no', 'ℹ️', `${d} ist kein Berufsschultag.`);
+    }
+
+    function saveSchoolRulesAndNotify() {
+        try { saveSchoolSettingsToData(); } catch(e) {}
+        save();
+        const btn = document.getElementById('schoolSaveBtn');
+        if (!btn) return;
+        btn.classList.add('school-save-btn--success');
+        btn.textContent = '✓ Gespeichert';
+        clearTimeout(btn._resetTimer);
+        btn._resetTimer = setTimeout(() => {
+            btn.classList.remove('school-save-btn--success');
+            btn.textContent = 'Speichern';
+        }, 2000);
     }
 
     function isVocSchoolForDate(date) {
         // Ensure rules exist
         const rules = (data.settings.schoolRules && data.settings.schoolRules) || { weeklyDays: [], biweekly: [] };
-        const dateISO = date.toISOString().slice(0,10);
+        // Build ISO from local date parts — toISOString() is UTC and can mismatch getDay() in UTC+ zones
+        const dateISO = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
         const dayIndex = date.getDay();
 
         // 1) Check booked vacations (explicit entries)
@@ -117,7 +151,7 @@
     function checkTodayVocSchool() {
         try {
             const today = new Date();
-            const iso = today.toISOString().slice(0,10);
+            const iso = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
             const res = isVocSchoolForDate(today);
             if(res.isVocSchool) {
                 const exists = data.entries.some(e => e.date === iso && e.type === 'school');
@@ -141,7 +175,7 @@
     }
 
     function createSchoolEntryForDate(d) {
-        const dateISO = d.toISOString().slice(0,10);
+        const dateISO = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
         const dayIndex = d.getDay();
         const SCHOOL_HOURS = 6.75; // default used elsewhere
         const expected = data.settings.hours[dayIndex] || 0;
