@@ -2,6 +2,7 @@
     if(localStorage.getItem('pro_intro_seen')==='true') return;
     var intro=document.getElementById('pro-intro');
     intro.style.display='block';
+    document.body.style.overflow='hidden';
 
     var sections=intro.querySelectorAll('.vi-s');
     var progBar=document.getElementById('viProgBar');
@@ -87,10 +88,11 @@
       var el=intro.querySelector('.vi-scroll');
       scrollMax=el?Math.max(1,el.offsetHeight-intro.clientHeight):1;
     }
-    cacheScrollMax();
     window.addEventListener('resize',cacheScrollMax,{passive:true});
 
     function getP(){
+      // Fallback: recompute if scrollMax wasn't ready yet
+      if(scrollMax<2){cacheScrollMax();}
       return Math.min(1,Math.max(0,intro.scrollTop/scrollMax));
     }
 
@@ -114,9 +116,12 @@
     intro.addEventListener('scroll',function(){
       if(!ticking){requestAnimationFrame(update);ticking=true}
     },{passive:true});
-    
-    // Initialize on next frame (layout must be ready)
-    requestAnimationFrame(update);
+
+    // Defer layout-dependent init to after first paint
+    requestAnimationFrame(function(){
+      cacheScrollMax();
+      update();
+    });
 
     /* — Finish — */
     window.finishIntro=function(){
