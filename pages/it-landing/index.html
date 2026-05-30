@@ -6,597 +6,711 @@
     <meta name="description" content="IT Professional Hub — Skill Tree & Fachinformatiker Academy. Dein Portal für Ausbildung und Skill-Entwicklung">
     <title>MyWorkLog | IT Professional Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        * {
+        *, *::before, *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
-        html {
-            scroll-behavior: smooth;
-        }
+        html { scroll-behavior: smooth; }
 
         :root {
-            --bg-deep: #030305;
-            --bg-root: #0a0a12;
-            --bg-surface: #11111d;
-            --bg-elevated: #16162a;
-            --border: rgba(255,255,255,0.08);
-            --text-main: #f5f5f7;
-            --text-muted: #a8a8b8;
-            --primary: #a855f7;
-            --primary-light: #d67ff7;
-            --accent: #00d2a0;
-            --accent-glow: rgba(0, 210, 160, 0.2);
-            --radius: 20px;
-            --radius-lg: 24px;
-            --transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            --bg-base:      #030305;
+            --bg-card:      rgba(255, 255, 255, 0.025);
+            --bg-hover:     rgba(168, 85, 247, 0.055);
+            --border:       rgba(255, 255, 255, 0.06);
+            --border-mid:   rgba(255, 255, 255, 0.10);
+            --border-purple: rgba(168, 85, 247, 0.38);
+            --border-green:  rgba(16, 185, 129, 0.38);
+            --text-primary:   #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted:     #475569;
+            --primary:       #a855f7;
+            --primary-light: #c084fc;
+            --primary-glow:  rgba(168, 85, 247, 0.12);
+            --green:         #10b981;
+            --green-glow:    rgba(16, 185, 129, 0.10);
+            --amber:         #f59e0b;
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg-deep);
-            color: var(--text-main);
+            font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+            background: var(--bg-base);
+            color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
-            position: relative;
         }
 
-        /* ── ANIMATED GRID BACKGROUND ── */
-        .bg-grid {
+        /* ── BACKGROUND ── */
+        .bg-dots {
             position: fixed;
             inset: 0;
-            z-index: -2;
-            opacity: 0.4;
-            background:
-                linear-gradient(90deg, var(--primary) 0.5px, transparent 0.5px),
-                linear-gradient(var(--primary) 0.5px, transparent 0.5px);
-            background-size: 80px 80px;
-            background-position: 0 0;
-            animation: gridShift 20s linear infinite;
-        }
-
-        @keyframes gridShift {
-            0% { background-position: 0 0; }
-            100% { background-position: 80px 80px; }
-        }
-
-        /* ── AMBIENT GLOW ORBS ── */
-        .ambient-orbs {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
+            z-index: 0;
+            background-image: radial-gradient(circle, rgba(168,85,247,0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
             pointer-events: none;
-            overflow: hidden;
         }
 
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(90px);
-            opacity: 0.08;
-            animation: float 25s ease-in-out infinite;
+        .bg-radial {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(168,85,247,0.07) 0%, transparent 70%);
+            pointer-events: none;
         }
 
-        .orb-1 {
-            width: 400px;
-            height: 400px;
-            background: var(--primary);
-            top: -100px;
-            right: -100px;
-            animation-delay: 0s;
-        }
-
-        .orb-2 {
-            width: 350px;
-            height: 350px;
-            background: var(--accent);
-            bottom: -50px;
-            left: 10%;
-            animation-delay: 5s;
-        }
-
-        .orb-3 {
-            width: 300px;
-            height: 300px;
-            background: var(--primary);
-            top: 50%;
-            left: 50%;
-            animation-delay: 10s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            25% { transform: translate(30px, -30px); }
-            50% { transform: translate(-20px, 20px); }
-            75% { transform: translate(20px, 30px); }
-        }
-
-        /* ── CONTAINER ── */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 60px 24px;
+        /* ── PAGE ── */
+        .page {
             position: relative;
             z-index: 1;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 72px 24px 56px;
         }
 
-        /* ── HEADER / HERO ── */
+        /* ── HERO ── */
         .hero {
-            text-align: center;
-            margin-bottom: 80px;
-            animation: fadeInDown 0.8s ease-out;
+            margin-bottom: 56px;
+            animation: fadeUp 0.65s ease-out both;
         }
 
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .hero-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
         }
 
-        .hero-badge {
-            display: inline-block;
-            padding: 8px 16px;
-            background: rgba(168, 85, 247, 0.15);
-            border: 1px solid rgba(168, 85, 247, 0.4);
-            border-radius: 50px;
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
+        .breadcrumb-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 500;
             color: var(--primary-light);
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px);
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+        }
+
+        .breadcrumb-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(168,85,247,0.35) 0%, transparent 70%);
+        }
+
+        .breadcrumb-chip {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            border: 1px solid var(--border-mid);
+            padding: 3px 9px;
+            border-radius: 3px;
+            letter-spacing: 0.05em;
+            flex-shrink: 0;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 40px;
+            align-items: end;
+        }
+
+        @media (max-width: 700px) {
+            .hero-content { grid-template-columns: 1fr; }
         }
 
         .hero-title {
-            font-family: 'Syne', sans-serif;
-            font-size: clamp(2.5rem, 8vw, 4rem);
-            font-weight: 800;
-            line-height: 1.15;
-            margin-bottom: 16px;
-            background: linear-gradient(135deg, var(--text-main) 0%, var(--primary-light) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            letter-spacing: -0.02em;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: clamp(3.4rem, 9vw, 6rem);
+            font-weight: 700;
+            line-height: 0.93;
+            letter-spacing: -0.01em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            margin-bottom: 18px;
         }
 
-        .hero-subtitle {
-            font-size: clamp(1rem, 2.5vw, 1.25rem);
-            color: var(--text-muted);
-            margin-bottom: 40px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            line-height: 1.6;
+        .hero-title .accent { color: var(--primary); }
+
+        .hero-desc {
+            font-size: 14.5px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            max-width: 500px;
             font-weight: 400;
         }
 
-        /* ── GRID LAYOUT ── */
-        .grid-2 {
+        .hero-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+            padding-bottom: 4px;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 700px) {
+            .hero-meta { flex-direction: row; align-items: center; }
+        }
+
+        .meta-value {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: rgba(168, 85, 247, 0.15);
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+
+        .meta-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--text-muted);
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── MODULE CARDS ── */
+        .modules {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 32px;
-            margin-bottom: 60px;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 48px;
         }
 
-        @media (max-width: 768px) {
-            .grid-2 {
-                grid-template-columns: 1fr;
-                gap: 24px;
-            }
+        @media (max-width: 760px) {
+            .modules { grid-template-columns: 1fr; }
         }
 
-        /* ── FEATURE CARD ── */
-        .feature-card {
+        .module {
             position: relative;
-            border-radius: var(--radius-lg);
+            border-radius: 8px;
             border: 1px solid var(--border);
-            padding: 48px 36px;
-            background: rgba(17, 17, 29, 0.5);
-            backdrop-filter: blur(20px);
-            cursor: pointer;
-            transition: var(--transition);
+            background: var(--bg-card);
             overflow: hidden;
             text-decoration: none;
             color: inherit;
             display: flex;
             flex-direction: column;
-            gap: 24px;
-            min-height: 450px;
-            animation: fadeInUp 0.8s ease-out;
-            animation-fill-mode: both;
+            transition: border-color 0.22s ease, background 0.22s ease, transform 0.22s ease;
+            animation: fadeUp 0.65s ease-out both;
         }
 
-        .feature-card:nth-child(1) { animation-delay: 0.2s; }
-        .feature-card:nth-child(2) { animation-delay: 0.4s; }
+        .module:nth-child(1) { animation-delay: 0.12s; }
+        .module:nth-child(2) { animation-delay: 0.22s; }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .module.purple:hover {
+            border-color: var(--border-purple);
+            background: var(--bg-hover);
+            transform: translateY(-2px);
         }
 
-        .feature-card::before {
+        .module.green:hover {
+            border-color: var(--border-green);
+            background: rgba(16,185,129,0.04);
+            transform: translateY(-2px);
+        }
+
+        /* Scan line hover effect */
+        .module::after {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
-            width: 100%;
+            width: 60%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: left 0.6s ease;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.02), transparent);
+            transition: left 0.55s ease;
+            pointer-events: none;
         }
 
-        .feature-card:hover::before {
-            left: 100%;
+        .module:hover::after { left: 140%; }
+
+        /* Top accent line */
+        .module-bar {
+            height: 2px;
+            width: 100%;
+            flex-shrink: 0;
         }
 
-        .feature-card:hover {
-            border-color: rgba(168, 85, 247, 0.5);
-            background: rgba(17, 17, 29, 0.7);
-            transform: translateY(-8px);
-            box-shadow: 0 30px 60px rgba(168, 85, 247, 0.15);
+        .module.purple .module-bar {
+            background: linear-gradient(90deg, var(--primary) 0%, rgba(168,85,247,0.1) 100%);
         }
 
-        .feature-card.skill-tree:hover {
-            box-shadow: 0 30px 60px rgba(168, 85, 247, 0.2);
-            border-color: rgba(168, 85, 247, 0.6);
+        .module.green .module-bar {
+            background: linear-gradient(90deg, var(--green) 0%, rgba(16,185,129,0.1) 100%);
         }
 
-        .feature-card.fi-academy:hover {
-            box-shadow: 0 30px 60px rgba(0, 210, 160, 0.2);
-            border-color: rgba(0, 210, 160, 0.6);
-        }
-
-        .card-icon {
-            font-size: 64px;
+        /* Number decoration */
+        .module-num {
+            position: absolute;
+            bottom: 12px;
+            right: 20px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 120px;
+            font-weight: 800;
             line-height: 1;
-            margin-bottom: 8px;
+            color: rgba(255,255,255,0.018);
+            letter-spacing: -0.03em;
+            user-select: none;
+            pointer-events: none;
         }
 
-        .card-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            width: fit-content;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-        }
-
-        .skill-tree .card-tag {
-            background: rgba(168, 85, 247, 0.15);
-            color: var(--primary-light);
-            border: 1px solid rgba(168, 85, 247, 0.3);
-        }
-
-        .fi-academy .card-tag {
-            background: rgba(0, 210, 160, 0.15);
-            color: var(--accent);
-            border: 1px solid rgba(0, 210, 160, 0.3);
-        }
-
-        .card-title {
-            font-family: 'Syne', sans-serif;
-            font-size: 28px;
-            font-weight: 700;
-            line-height: 1.3;
-            margin: 8px 0;
-        }
-
-        .card-description {
-            color: var(--text-muted);
-            font-size: 15px;
-            line-height: 1.7;
+        .module-body {
+            padding: 26px 26px 0;
             flex: 1;
-        }
-
-        .card-features {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin: 16px 0;
         }
 
-        .feature-item {
+        .module-head {
             display: flex;
             align-items: flex-start;
-            gap: 10px;
-            font-size: 14px;
+            gap: 14px;
+            margin-bottom: 18px;
         }
 
-        .feature-item::before {
-            content: '→';
-            color: var(--primary);
-            font-weight: 700;
+        .module-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             flex-shrink: 0;
-            min-width: 20px;
         }
 
-        .fi-academy .feature-item::before {
-            color: var(--accent);
+        .module.purple .module-icon {
+            background: var(--primary-glow);
+            border: 1px solid rgba(168,85,247,0.22);
         }
 
-        .card-cta {
-            display: inline-flex;
+        .module.green .module-icon {
+            background: var(--green-glow);
+            border: 1px solid rgba(16,185,129,0.22);
+        }
+
+        .module-icon svg { width: 20px; height: 20px; }
+
+        .module.purple .module-icon svg { color: var(--primary-light); }
+        .module.green  .module-icon svg { color: var(--green); }
+
+        .module-info { flex: 1; }
+
+        .module-tag {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9.5px;
+            font-weight: 500;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            padding: 2.5px 7px;
+            border-radius: 3px;
+            margin-bottom: 7px;
+        }
+
+        .module.purple .module-tag {
+            background: var(--primary-glow);
+            color: var(--primary-light);
+            border: 1px solid rgba(168,85,247,0.22);
+        }
+
+        .module.green .module-tag {
+            background: var(--green-glow);
+            color: var(--green);
+            border: 1px solid rgba(16,185,129,0.22);
+        }
+
+        .module-name {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+
+        .module-desc {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            line-height: 1.68;
+            margin-bottom: 20px;
+        }
+
+        .module-features {
+            display: flex;
+            flex-direction: column;
+            border-top: 1px solid var(--border);
+        }
+
+        .feat-row {
+            display: flex;
             align-items: center;
             gap: 10px;
-            padding: 14px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            transition: var(--transition);
-            border: 1px solid;
-            text-decoration: none;
-            width: fit-content;
-            margin-top: auto;
-            cursor: pointer;
-        }
-
-        .skill-tree .card-cta {
-            background: rgba(168, 85, 247, 0.1);
-            color: var(--primary-light);
-            border-color: rgba(168, 85, 247, 0.4);
-        }
-
-        .skill-tree .card-cta:hover {
-            background: rgba(168, 85, 247, 0.2);
-            border-color: rgba(168, 85, 247, 0.7);
-            transform: translateX(6px);
-        }
-
-        .fi-academy .card-cta {
-            background: rgba(0, 210, 160, 0.1);
-            color: var(--accent);
-            border-color: rgba(0, 210, 160, 0.4);
-        }
-
-        .fi-academy .card-cta:hover {
-            background: rgba(0, 210, 160, 0.2);
-            border-color: rgba(0, 210, 160, 0.7);
-            transform: translateX(6px);
-        }
-
-        /* ── STATS SECTION ── */
-        .stats-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 24px;
-            padding: 40px 0;
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
-            margin: 60px 0;
-            animation: fadeInUp 0.8s ease-out 0.6s both;
-        }
-
-        .stat {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-family: 'Syne', sans-serif;
-            font-size: 36px;
-            font-weight: 800;
-            color: var(--primary);
-            line-height: 1;
-            margin-bottom: 8px;
-        }
-
-        .stat-label {
             font-size: 13px;
+            color: var(--text-secondary);
+            padding: 9px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .feat-row:last-child { border-bottom: none; }
+
+        .feat-pip {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .module.purple .feat-pip { background: var(--primary); }
+        .module.green  .feat-pip { background: var(--green); }
+
+        .module-foot {
+            padding: 14px 26px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid var(--border);
+            margin-top: 18px;
+        }
+
+        .module-cta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            transition: gap 0.2s ease;
+        }
+
+        .module.purple .module-cta { color: var(--primary-light); }
+        .module.green  .module-cta { color: var(--green); }
+
+        .module:hover .module-cta { gap: 13px; }
+
+        .cta-arrow {
+            font-size: 15px;
+            line-height: 1;
+            transition: transform 0.2s ease;
+        }
+
+        .module:hover .cta-arrow { transform: translateX(3px); }
+
+        .module-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9.5px;
             color: var(--text-muted);
-            font-weight: 500;
             letter-spacing: 0.05em;
             text-transform: uppercase;
         }
 
-        /* ── FOOTER INFO ── */
-        .footer-info {
-            text-align: center;
-            padding: 40px 0;
+        .status-pip {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+
+        .module.purple .status-pip { background: var(--primary); opacity: 0.6; }
+        .module.green  .status-pip { background: var(--green);   opacity: 0.6; }
+
+        /* ── METRICS ── */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 48px;
+            animation: fadeUp 0.65s 0.34s ease-out both;
+        }
+
+        @media (max-width: 600px) {
+            .metrics { grid-template-columns: 1fr 1fr; }
+        }
+
+        .metric {
+            padding: 22px 20px;
+            border-right: 1px solid var(--border);
+        }
+
+        .metric:last-child { border-right: none; }
+
+        @media (max-width: 600px) {
+            .metric:nth-child(2) { border-right: none; }
+            .metric:nth-child(3) { border-top: 1px solid var(--border); }
+            .metric:nth-child(4) { border-top: 1px solid var(--border); border-right: none; }
+        }
+
+        .metric-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9.5px;
             color: var(--text-muted);
-            font-size: 13px;
-            animation: fadeInUp 0.8s ease-out 0.8s both;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
         }
 
-        .footer-info a {
-            color: var(--primary-light);
-            text-decoration: none;
-            transition: color 0.3s ease;
+        .metric-val {
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 38px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.01em;
         }
 
-        .footer-info a:hover {
-            color: var(--primary);
-        }
+        .metric-val.purple { color: var(--primary-light); }
+        .metric-val.green  { color: var(--green); }
+        .metric-val.amber  { color: var(--amber); }
+        .metric-val.plain  { color: var(--text-primary); font-size: 22px; line-height: 1.65; }
 
-        /* ── RESPONSIVE ── */
-        @media (max-width: 768px) {
-            .container {
-                padding: 40px 16px;
-            }
-
-            .hero {
-                margin-bottom: 50px;
-            }
-
-            .hero-title {
-                font-size: 2rem;
-            }
-
-            .feature-card {
-                padding: 32px 24px;
-                min-height: auto;
-            }
-
-            .card-title {
-                font-size: 22px;
-            }
-
-            .stats-section {
-                margin: 40px 0;
-                gap: 20px;
-            }
-
-            .stat-value {
-                font-size: 28px;
-            }
+        .metric-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 5px;
         }
 
         /* ── SCROLLBAR ── */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-base); }
+        ::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(168,85,247,0.4); }
 
-        ::-webkit-scrollbar-track {
-            background: var(--bg-root);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(168, 85, 247, 0.3);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(168, 85, 247, 0.6);
+        /* ── RESPONSIVE ── */
+        @media (max-width: 640px) {
+            .page { padding: 44px 16px 40px; }
+            .hero { margin-bottom: 40px; }
+            .hero-title { font-size: 3rem; }
+            .module-body { padding: 20px 20px 0; }
+            .module-foot { padding: 12px 20px 16px; }
+            .metric { padding: 16px 14px; }
+            .metric-val { font-size: 30px; }
         }
     </style>
 </head>
 <body>
-    <!-- Animated Background -->
-    <div class="bg-grid"></div>
-    <div class="ambient-orbs">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
-    </div>
+    <div class="bg-dots"></div>
+    <div class="bg-radial"></div>
 
-    <div class="container">
-        <!-- Hero Section -->
+    <main class="page">
+
+        <!-- Hero -->
         <section class="hero">
-            <div class="hero-badge">🚀 IT Professional Hub</div>
-            <h1 class="hero-title">Dein Portal für Ausbildung & Skill-Entwicklung</h1>
-            <p class="hero-subtitle">Wähle deinen Weg: RPG-Style Skill-Baum für gamifizierte Entwicklung oder strukturiertes Fachinformatiker Lernen</p>
+            <div class="hero-breadcrumb">
+                <span class="breadcrumb-text">// learning.platform</span>
+                <div class="breadcrumb-line"></div>
+                <span class="breadcrumb-chip">v3.5.3</span>
+            </div>
+            <div class="hero-content">
+                <div>
+                    <h1 class="hero-title">
+                        IT Professional<br>
+                        <span class="accent">Development</span> Hub
+                    </h1>
+                    <p class="hero-desc">
+                        Wähle deinen Entwicklungspfad: Gamifiziertes Skill-Tracking oder strukturiertes Fachinformatiker-Lernprogramm — vollständig integriert in dein MyWorkLog Ökosystem.
+                    </p>
+                </div>
+                <div class="hero-meta">
+                    <span class="meta-value">02</span>
+                    <span class="meta-label">Module aktiv</span>
+                </div>
+            </div>
         </section>
 
-        <!-- Feature Cards Grid -->
-        <section class="grid-2">
-            <!-- Skill Tree Card -->
-            <a href="/skill-tree/" class="feature-card skill-tree" style="text-decoration: none; color: inherit;">
-                <div>
-                    <div class="card-icon">🎮</div>
-                    <div class="card-tag">
-                        <span>RPG Mode</span>
+        <!-- Module Cards -->
+        <section class="modules">
+
+            <!-- Skill Tree -->
+            <a href="/skill-tree/" class="module purple">
+                <div class="module-bar"></div>
+                <div class="module-num">01</div>
+                <div class="module-body">
+                    <div class="module-head">
+                        <div class="module-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="4" r="2"/>
+                                <circle cx="5" cy="20" r="2"/>
+                                <circle cx="19" cy="20" r="2"/>
+                                <path d="M12 6v5M9.5 18.5l-2.5-2M14.5 18.5l2.5-2M12 11l-3.5 5.5M12 11l3.5 5.5"/>
+                            </svg>
+                        </div>
+                        <div class="module-info">
+                            <div class="module-tag">Skill Tracking</div>
+                            <div class="module-name">Skill Tree</div>
+                        </div>
                     </div>
-                    <h2 class="card-title">Skill Tree</h2>
+
+                    <p class="module-desc">
+                        Visualisiere und tracke deine technischen Kompetenzen in einem strukturierten Fähigkeitenbaum. KI-gestützte Empfehlungen für deinen nächsten Entwicklungsschritt.
+                    </p>
+
+                    <div class="module-features">
+                        <div class="feat-row">
+                            <div class="feat-pip"></div>
+                            <span>Kompetenzbaum mit Level-Tracking</span>
+                        </div>
+                        <div class="feat-row">
+                            <div class="feat-pip"></div>
+                            <span>KI-Mentoring &amp; personalisierte Lernpfade</span>
+                        </div>
+                        <div class="feat-row">
+                            <div class="feat-pip"></div>
+                            <span>Skill-Erkennung &amp; Zertifizierungs-Badges</span>
+                        </div>
+                        <div class="feat-row">
+                            <div class="feat-pip"></div>
+                            <span>Fortschritts-Dashboard &amp; Achievements</span>
+                        </div>
+                    </div>
                 </div>
-
-                <p class="card-description">Entwickle deine Fähigkeiten wie in einem RPG. Visualisiere deinen Fortschritt in einem 3D Skill-Baum mit KI-gestützten Empfehlungen für deine nächsten Schritte.</p>
-
-                <div class="card-features">
-                    <div class="feature-item">3D Skill-Visualisierung mit Level-Tracking</div>
-                    <div class="feature-item">KI-Mentoring für personalisierte Lernpfade</div>
-                    <div class="feature-item">Automatische Skill-Erkennung & Badges</div>
-                    <div class="feature-item">Community Leaderboards & Achievements</div>
-                </div>
-
-                <div class="card-cta">
-                    Skill Tree öffnen <span style="font-size: 16px;">→</span>
+                <div class="module-foot">
+                    <div class="module-cta">
+                        Skill Tree öffnen
+                        <span class="cta-arrow">→</span>
+                    </div>
+                    <div class="module-status">
+                        <div class="status-pip"></div>
+                        Active
+                    </div>
                 </div>
             </a>
 
-            <!-- FI Academy Card -->
-            <a href="/Fachinformatiker/" class="feature-card fi-academy" style="text-decoration: none; color: inherit;">
-                <div>
-                    <div class="card-icon">📚</div>
-                    <div class="card-tag">
-                        <span>Strukturiert</span>
+            <!-- FI Academy -->
+            <a href="/Fachinformatiker/" class="module green">
+                <div class="module-bar"></div>
+                <div class="module-num">02</div>
+                <div class="module-body">
+                    <div class="module-head">
+                        <div class="module-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+                                <line x1="8" y1="7" x2="16" y2="7"/>
+                                <line x1="8" y1="11" x2="13" y2="11"/>
+                            </svg>
+                        </div>
+                        <div class="module-info">
+                            <div class="module-tag">IHK-Konform</div>
+                            <div class="module-name">FI Academy</div>
+                        </div>
                     </div>
-                    <h2 class="card-title">FI Academy</h2>
+
+                    <p class="module-desc">
+                        Strukturiertes Lernprogramm für Fachinformatiker-Ausbildung. Vollständige IHK-Themenbereiche mit Modulprüfungen, Karteikarten und Lernfortschritt-Tracking.
+                    </p>
+
+                    <div class="module-features">
+                        <div class="feat-row">
+                            <div class="feat-pip"></div>
+                            <span>5 Ausbildungs-Phasen mit Roadmap</span>
+                        </div>
+                        <div class="feat-row">
+                            <div class="feat-pip"></div>
+                            <span>12+ Module mit Prüfungs-Quiz</span>
+                        </div>
+                        <div class="feat-row">
+                            <div class="feat-pip"></div>
+                            <span>Karteikarten &amp; Cheat Sheets</span>
+                        </div>
+                        <div class="feat-row">
+                            <div class="feat-pip"></div>
+                            <span>Fortschritts-Tracking &amp; Lernserie</span>
+                        </div>
+                    </div>
                 </div>
-
-                <p class="card-description">Strukturiertes Lernprogramm für Fachinformatiker. IHK-konform mit Quiz, Karteikarten, Modulen und Lernpfad für deine Ausbildung.</p>
-
-                <div class="card-features">
-                    <div class="feature-item">5 Ausbildungs-Phasen mit Roadmap</div>
-                    <div class="feature-item">12+ Module mit Prüfungs-Quiz</div>
-                    <div class="feature-item">Karteikarten & Cheat Sheets</div>
-                    <div class="feature-item">Fortschritts-Tracking & Lernserie</div>
-                </div>
-
-                <div class="card-cta">
-                    FI Academy starten <span style="font-size: 16px;">→</span>
+                <div class="module-foot">
+                    <div class="module-cta">
+                        FI Academy starten
+                        <span class="cta-arrow">→</span>
+                    </div>
+                    <div class="module-status">
+                        <div class="status-pip"></div>
+                        Active
+                    </div>
                 </div>
             </a>
+
         </section>
 
-        <!-- Stats Section -->
-        <section class="stats-section">
-            <div class="stat">
-                <div class="stat-value">2</div>
-                <div class="stat-label">Learning Paths</div>
+        <!-- Metrics -->
+        <section class="metrics">
+            <div class="metric">
+                <div class="metric-label">Learning Paths</div>
+                <div class="metric-val purple" id="cnt-paths">2</div>
+                <div class="metric-sub">Verfügbare Module</div>
             </div>
-            <div class="stat">
-                <div class="stat-value">100%</div>
-                <div class="stat-label">Offline Ready</div>
+            <div class="metric">
+                <div class="metric-label">Offline Support</div>
+                <div class="metric-val green">100%</div>
+                <div class="metric-sub">PWA-Ready</div>
             </div>
-            <div class="stat">
-                <div class="stat-value">0ms</div>
-                <div class="stat-label">Load Time</div>
+            <div class="metric">
+                <div class="metric-label">Init Time</div>
+                <div class="metric-val amber">&lt;1ms</div>
+                <div class="metric-sub">Keine Load-Zeit</div>
             </div>
-            <div class="stat">
-                <div class="stat-value">Dein</div>
-                <div class="stat-label">Tempo</div>
+            <div class="metric">
+                <div class="metric-label">Data Sync</div>
+                <div class="metric-val plain">Echtzeit</div>
+                <div class="metric-sub">Cloud-Synchron</div>
             </div>
         </section>
 
-        <!-- Footer -->
-        <section class="footer-info">
-            <p>Beide Plattformen sind Teil deines MyWorkLog Ökosystems — alle Daten synchronisieren sich.<br>
-            Datenschutz & Sicherheit sind garantiert. <a href="/DSGVO/">Mehr Info →</a></p>
-        </section>
-    </div>
+    </main>
+
+    <!-- Shared Footer -->
+    <div id="page-footer"></div>
 
     <script>
-        // Smooth scroll behavior for links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    e.preventDefault();
-                    target.scrollIntoView({ behavior: 'smooth' });
+        // Counter animation
+        function animateCounter(el, from, to, duration) {
+            var start = performance.now();
+            function step(now) {
+                var elapsed = Math.min((now - start) / duration, 1);
+                var eased = 1 - Math.pow(1 - elapsed, 3);
+                el.textContent = Math.round(from + (to - from) * eased);
+                if (elapsed < 1) requestAnimationFrame(step);
+            }
+            requestAnimationFrame(step);
+        }
+
+        var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    var el = document.getElementById('cnt-paths');
+                    if (el) animateCounter(el, 0, 2, 600);
+                    observer.disconnect();
                 }
             });
-        });
+        }, { threshold: 0.5 });
 
-        // Add click animation to cards
-        document.querySelectorAll('.feature-card').forEach(card => {
-            card.addEventListener('mousedown', function() {
-                this.style.transform = 'scale(0.98)';
+        var metricsEl = document.querySelector('.metrics');
+        if (metricsEl) observer.observe(metricsEl);
+
+        // Load shared footer
+        fetch('/pages/footer/footer.html')
+            .then(function(r) { return r.text(); })
+            .then(function(html) {
+                var ph = document.getElementById('page-footer');
+                if (!ph) return;
+                var tmpl = document.createElement('template');
+                tmpl.innerHTML = html;
+                ph.replaceWith(tmpl.content);
             });
-            card.addEventListener('mouseup', function() {
-                this.style.transform = '';
-            });
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = '';
-            });
-        });
     </script>
 </body>
 </html>

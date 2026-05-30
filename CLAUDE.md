@@ -26,6 +26,30 @@ Kein Build. Rohe Dateien via `<script src>` in index.html (Reihenfolge wichtig!)
 
 **Standalone-Seite:** Pages/{name}.html + Assets/{css,js}/{name}/. Pfade: ../../Assets/...
 
+**Footer (PFLICHT):** Jede Standalone-Seite MUSS den geteilten Footer verwenden — KEIN eigener Footer-HTML:
+```html
+<div id="page-footer"></div>
+<script>
+  fetch('/pages/footer/footer.html')
+    .then(function(r){return r.text();})
+    .then(function(html){
+      var ph=document.getElementById('page-footer');
+      if(!ph)return;
+      var t=document.createElement('template');
+      t.innerHTML=html;
+      ph.replaceWith(t.content);
+    });
+</script>
+```
+
+**Farben (PFLICHT):** Standalone-Seiten nutzen IMMER die Tokens aus `components/core/core.css` — keine eigenen Farbwerte erfinden:
+- `--primary:#a855f7` (Purple, Haupt-Akzent)
+- `--bg-deep:#030305` (Hintergrund)
+- `--text-main:#f8fafc` / `--text-muted:#94a3b8`
+- `--success:#10b981` (Grün), `--danger:#ef4444` (Rot)
+- `--border:rgba(255,255,255,0.06)`
+- Fonts: `--font-main:'Inter'` / `--font-mono:'JetBrains Mono'`
+
 **Tests:** `npm test` | `npm run test:watch` | `npm run test:coverage` | `npm run lint`
 
 **UI** Nutze Sehr hochmodernen Style der Firmen Vibe ist, nutzte für Ui immer das plugin /frontend-design. Das design soll auch für handys optimiert sein und dark theme.
