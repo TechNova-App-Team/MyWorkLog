@@ -1103,8 +1103,13 @@ const updateManager = (() => {
 
     function apply() {
         localStorage.setItem('mwl_upd_applying', 'true');
-        if (newWorker) newWorker.postMessage({ type: 'SKIP_WAITING' });
-        location.reload();
+        if (!newWorker) { location.reload(); return; }
+        // Erst auf controllerchange warten, DANN reloaden — garantiert dass neuer SW
+        // bereits aktiv ist und den Navigate-Request abfängt (kein Race Condition).
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+            location.reload();
+        }, { once: true });
+        newWorker.postMessage({ type: 'SKIP_WAITING' });
     }
 
     function test() {

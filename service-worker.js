@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * TimeTracker Service Worker — v5.4.3
+ * TimeTracker Service Worker — v5.4.5
  * ============================================================
  * Strategie: Stale-While-Revalidate für eigene JS/CSS/Assets.
  * → Erster Aufruf: aus Cache (instant) + Hintergrund-Update
@@ -11,7 +11,7 @@
 
 'use strict';
 
-const SW_VERSION  = 'v5.4.4';
+const SW_VERSION  = 'v5.4.5';
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
 const OFFLINE_URL = './offline/';
 const DEBUG       = true;
@@ -45,10 +45,11 @@ function isCacheable(url) {
 
 self.addEventListener('install', event => {
   log('Install', SW_VERSION);
+  // Kein skipWaiting() hier — der SW wartet, bis apply() ihn via SKIP_WAITING-Message aktiviert.
+  // Dadurch ist der neue SW garantiert aktiv, bevor location.reload() ausgelöst wird.
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.add(OFFLINE_URL).catch(() => {}))
-      .then(() => self.skipWaiting())
   );
 });
 
@@ -87,12 +88,12 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
-  // HTML-Navigation: Network-First, Offline-Fallback
+  // HTML-Navigation: Network-First mit cache:'no-store' → bypassed Browser-HTTP-Cache komplett.
+  // Verhindert, dass bei Cloudflare-Deployments ein 304-Hit alten HTML-Content liefert.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetch(new Request(request, { cache: 'no-store' }))
         .then(response => {
-          // Neue HTML-Version im Hintergrund cachen (nur vollständige Antworten, kein 206)
           if (response.status === 200) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then(c => c.put(request, clone));
