@@ -728,8 +728,7 @@
                     if (top < 0) top = 10;
                     
                     tooltip.style.display = 'block';
-                    tooltip.style.left = left + 'px';
-                    tooltip.style.top = top + 'px';
+                    tooltip.style.transform = `translate(${left}px, ${top}px)`;
                     
                     // Crosshair
                     if (crossV) { crossV.style.display = 'block'; crossV.setAttribute('x1', x); crossV.setAttribute('x2', x); }
