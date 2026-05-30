@@ -1,17 +1,17 @@
 /**
  * ============================================================
- * TimeTracker Service Worker — v5.4.5
+ * TimeTracker Service Worker — v5.4.6
  * ============================================================
- * Strategie: Stale-While-Revalidate für eigene JS/CSS/Assets.
- * → Erster Aufruf: aus Cache (instant) + Hintergrund-Update
- * → Neuer SW: alten Cache löschen → Update-Toast zeigen
+ * Strategie: Network-First für alle eigenen Assets (JS/CSS/HTML).
+ * → Immer frisch vom Server (ETag-Prüfung via cache:'no-cache')
+ * → SW-Cache nur als Offline-Fallback
  * → CDN-Scripts (supabase, emailjs etc.): nicht cachen
  * ============================================================
  */
 
 'use strict';
 
-const SW_VERSION  = 'v5.4.5';
+const SW_VERSION  = 'v5.4.6';
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
 const OFFLINE_URL = './offline/';
 const DEBUG       = true;
@@ -81,7 +81,7 @@ self.addEventListener('activate', event => {
 });
 
 // ─────────────────────────────────────────────
-// FETCH — Stale-While-Revalidate für eigene Assets
+// FETCH — Network-First für alle eigenen Assets
 // ─────────────────────────────────────────────
 
 self.addEventListener('fetch', event => {
@@ -115,19 +115,21 @@ self.addEventListener('fetch', event => {
   // /pages/-Pfade nie cachen (werden von Cloudflare umgeschrieben)
   if (new URL(request.url).pathname.startsWith('/pages/')) return;
 
-  // Eigene Assets: Stale-While-Revalidate
+  // Eigene Assets: Network-First mit ETag-Revalidierung.
+  // cache:'no-cache' = fragt immer beim Server nach (304 wenn unverändert, 200 wenn neu).
+  // SW-Cache wird nur genutzt wenn offline (Fallback).
   event.respondWith(
-    caches.open(CACHE_NAME).then(async cache => {
-      const cached = await cache.match(request);
-
-      const fetchPromise = fetch(request).then(response => {
-        if (response.status === 200) cache.put(request, response.clone());
+    fetch(new Request(request, { cache: 'no-cache' }))
+      .then(response => {
+        if (response.status === 200) {
+          caches.open(CACHE_NAME).then(c => c.put(request, response.clone()));
+        }
         return response;
-      }).catch(() => null);
-
-      // Sofort aus Cache antworten, im Hintergrund updaten
-      return cached ?? await fetchPromise;
-    })
+      })
+      .catch(async () => {
+        const cache = await caches.open(CACHE_NAME);
+        return (await cache.match(request)) ?? new Response('', { status: 503 });
+      })
   );
 });
 
@@ -138,7 +140,14 @@ self.addEventListener('fetch', event => {
 self.addEventListener('message', event => {
   switch (event.data?.type) {
     case 'SKIP_WAITING':
-      self.skipWaiting();
+      // Erst alle alten Caches löschen, DANN aktivieren.
+      // Selbst wenn der alte apply()-Code sofort location.reload() aufruft (Race Condition),
+      // findet der alte SW beim Reload leere Caches → holt alles frisch vom Netz.
+      caches.keys()
+        .then(keys => Promise.all(
+          keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+        ))
+        .then(() => self.skipWaiting());
       break;
     case 'GET_VERSION':
       event.source?.postMessage({ type: 'VERSION_INFO', version: SW_VERSION });
