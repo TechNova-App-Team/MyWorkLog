@@ -122,7 +122,8 @@ self.addEventListener('fetch', event => {
     fetch(new Request(request, { cache: 'no-cache' }))
       .then(response => {
         if (response.status === 200) {
-          caches.open(CACHE_NAME).then(c => c.put(request, response.clone()));
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(c => c.put(request, clone));
         }
         return response;
       })
