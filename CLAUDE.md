@@ -54,6 +54,21 @@ Kein Build. Rohe Dateien via `<script src>` in index.html (Reihenfolge wichtig!)
 
 **UI** Nutze Sehr hochmodernen Style der Firmen Vibe ist, nutzte für Ui immer das plugin /frontend-design. Das design soll auch für handys optimiert sein und dark theme.
 
+**Design-Vibe: SaaS / Enterprise Data Terminal (BESTÄTIGT ✓)**
+Dieser Stil wurde explizit vom User abgesegnet — immer so umsetzen:
+- **Geometrische Karten:** `clip-path: polygon(...)` für Notch-Ecken (abgeschnittene Ecke oben-rechts oder unten-rechts). Kein `border-radius > 4px`.
+- **Corner Brackets:** `::before` = TL-Bracket, `::after` = BR-Bracket via `border-top/left` bzw. `border-bottom/right`. Erscheinen subtil, verstärkt bei Hover.
+- **Gestaffelte Karten (Stagger):** Bei 3 Karten in einer Row: 2. Karte `translateY(16px)`, 3. Karte `translateY(8px)`. Mobile: Stagger deaktivieren.
+- **Targeting-Brackets auf Ring/SVG-Elementen:** `::before` TL + `::after` BR auf dem Wrap-Element, außen (-10px offset).
+- **Animiertes Scan-Grid im Header:** `background-image: linear-gradient(...)` Grid-Linien + `animation: sc-grid-drift` scrollt die Linien kontinuierlich.
+- **Diagonale Streifen auf Progress-Bars:** `repeating-linear-gradient(-55deg, ...)` über der Basisfarbe.
+- **Linker Akzentstreifen auf Panels:** `::before` mit `width: 3px`, Gradient von `--primary` → transparent.
+- **Parallelogramm-Tags:** `clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)` auf Badge-Elementen.
+- **Trend-Indicator Box:** Abgeschrägter Block via `clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%)`.
+- **Tabellen-Hover:** Hintergrund-Highlight + `border-left: 2px solid --primary` auf der ersten Zelle.
+- **Typografie:** `font-variant-numeric: tabular-nums` auf allen Zahlen. Mono-Font für alle Labels/Eyebrows.
+- **Buttons:** Angular via `clip-path`, kein Standard-`border-radius`. Add-Btn = Purple-Ghost, Save-Btn = Green-Ghost.
+
 ## Schlüsseldateien
 
 core.js=save/load/Timer, settings.js=Theme/Export, dashboard.js=KPIs/Charts, version.json=Version, service-worker.js=Cache, aibot-engine-pro.js=NLP

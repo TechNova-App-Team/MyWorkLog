@@ -132,7 +132,7 @@
             const grades = data.settings.school.grades[subject];
             const validGrades = grades.filter(n => !isNaN(parseFloat(n)) && n >= 1 && n <= 6);
             const avg = validGrades.length > 0 ? validGrades.reduce((a,b) => a + parseFloat(b), 0) / validGrades.length : 0;
-            const avgColor = avg > 0 ? getSchoolNoteColor(avg) : 'var(--sc-blue)';
+            const avgColor = avg > 0 ? getSchoolNoteColor(avg) : 'var(--primary)';
 
             html += `
                 <div style="background:rgba(255,255,255,0.03);padding:1.25rem;border-radius:16px;border:1px solid rgba(255,255,255,0.06);position:relative;overflow:hidden;">
@@ -143,7 +143,7 @@
                             ${avg > 0 ? '<span style="font-size:.75rem;padding:3px 10px;border-radius:8px;background:' + avgColor + '20;color:' + avgColor + ';font-weight:600;">Ø ' + avg.toFixed(1) + '</span>' : ''}
                         </div>
                         <div style="display:flex;gap:6px;">
-                            <button onclick="renameSchoolSubject('${subject.replace(/'/g, "\\'")}')" style="background:rgba(59,130,246,0.2);color:var(--sc-blue);border:none;padding:4px 8px;border-radius:6px;font-size:.9rem;cursor:pointer;transition:all 0.2s;font-weight:600;" title="Fach umbenennen" class="school-action-btn">✏️</button>
+                            <button onclick="renameSchoolSubject('${subject.replace(/'/g, "\\'")}')" style="background:rgba(168,85,247,0.15);color:var(--primary);border:none;padding:4px 8px;border-radius:6px;font-size:.9rem;cursor:pointer;transition:all 0.2s;font-weight:600;" title="Fach umbenennen" class="school-action-btn">✏️</button>
                             <button onclick="deleteSchoolSubject('${subject.replace(/'/g, "\\'")}')" style="background:rgba(239,68,68,0.2);color:#ef4444;border:none;padding:4px 8px;border-radius:6px;font-size:.9rem;cursor:pointer;transition:all 0.2s;font-weight:600;" title="Fach löschen" class="school-action-btn">🗑️</button>
                         </div>
                     </div>
@@ -157,7 +157,7 @@
                             </div>
                         `).join('')}
 
-                        <button class="btn btn-ghost" onclick="addSchoolGrade('${subject}')" style="background:transparent;border:1px dashed rgba(59,130,246,0.3);color:var(--sc-blue);padding:10px;border-radius:12px;font-size:.85rem;">+ Note hinzufügen</button>
+                        <button class="btn btn-ghost" onclick="addSchoolGrade('${subject}')" style="background:transparent;border:1px dashed rgba(168,85,247,0.3);color:var(--primary);padding:10px;border-radius:12px;font-size:.85rem;">+ Note hinzufügen</button>
                     </div>
                 </div>
             `;
@@ -340,7 +340,7 @@
 
     function getSchoolNoteColor(note) {
         const n = parseFloat(note);
-        if (isNaN(n) || n === 0) return 'var(--sc-blue, #3b82f6)';
+        if (isNaN(n) || n === 0) return 'var(--primary)';
         if (n <= 2.0) return '#22c55e';
         if (n <= 3.0) return '#f59e0b';
         return '#ef4444';
