@@ -1087,6 +1087,55 @@
         .ais-engine-section {
             padding: 14px 0; border-bottom: 1px solid var(--border);
         }
+
+        /* Gemini Kill-Switch Banner (Wartungs-/Sperr-Anzeige) */
+        .ais-gemini-blocked {
+            display: flex; gap: 12px; align-items: flex-start;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, rgba(239,68,68,0.14), rgba(239,68,68,0.04));
+            border: 1px solid rgba(239,68,68,0.35);
+            border-radius: 12px;
+            position: relative; overflow: hidden;
+        }
+        .ais-gemini-blocked::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at 0% 0%, rgba(239,68,68,0.18), transparent 55%);
+            pointer-events: none;
+        }
+        .ais-gemini-blocked-icon {
+            flex-shrink: 0; width: 36px; height: 36px;
+            background: rgba(239,68,68,0.18);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: #f87171; position: relative; z-index: 1;
+        }
+        .ais-gemini-blocked-icon svg { width: 18px; height: 18px; }
+        .ais-gemini-blocked-content { flex: 1; min-width: 0; position: relative; z-index: 1; }
+        .ais-gemini-blocked-title {
+            font-size: 0.85rem; font-weight: 700;
+            color: #fca5a5; letter-spacing: 0.01em;
+            margin-bottom: 4px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .ais-gemini-blocked-tag {
+            font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em;
+            background: #ef4444; color: #fff;
+            padding: 2px 7px; border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .ais-gemini-blocked-msg {
+            font-size: 0.75rem; color: var(--text-muted);
+            line-height: 1.55;
+        }
+        .ais-gemini-blocked-msg strong {
+            color: var(--text-main); font-weight: 600;
+        }
+        .ais-gemini-blocked-hint {
+            margin-top: 8px; font-size: 0.7rem; color: var(--text-dim);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .ais-gemini-blocked-hint svg { width: 12px; height: 12px; color: var(--success); }
         .ais-engine-toggle {
             display: flex; align-items: center; gap: 10px;
             padding: 10px 14px; cursor: pointer;
@@ -3107,27 +3156,54 @@ Beispiel:
                     </div>
                     <!-- Engine Selection -->
                     <div class="ais-engine-section">
-                        <div style="background:var(--primary-dim);border:1px solid var(--primary);border-radius:8px;padding:8px 10px;margin-bottom:10px;">
-                            <div style="font-size:0.75rem;font-weight:700;color:var(--primary-light);">✨ Gemini AI — kein Setup nötig</div>
-                            <div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px;">Läuft automatisch für alle Nutzer. Kein eigener API Key erforderlich.</div>
-                        </div>
-                        <label class="ais-engine-toggle">
-                            <input type="checkbox" id="aisUseLocalOnly" checked onchange="AIStudio.toggleLocalOnly(!this.checked)" style="accent-color:var(--accent);width:16px;height:16px;">
-                            <span class="ais-engine-toggle-label">Gemini AI aktiv</span>
-                            <span class="ais-engine-toggle-badge ais-engine-badge-gemini" id="aisEngineBadge">Gemini</span>
-                        </label>
-                        <details style="margin-top:10px;" id="aisOwnKeySection">
-                            <summary style="font-size:0.7rem;color:var(--text-dim);cursor:pointer;user-select:none;">Eigener API Key (nur lokale Entwicklung)</summary>
-                            <div class="ais-api-key-row visible" id="aisApiKeyRow" style="margin-top:8px;">
-                                <div class="ais-api-key-input-wrap">
-                                    <input type="password" class="ais-api-key-input" id="aisApiKeyInput" placeholder="Eigener Gemini Key..." autocomplete="off">
-                                    <button class="ais-api-save-btn" onclick="AIStudio.saveApiKey()">Speichern</button>
+                        <!-- KILL-SWITCH: Gemini-Sperre (eingeblendet via JS wenn aktiv) -->
+                        <div class="ais-gemini-blocked" id="aisGeminiBlocked" style="display:none;">
+                            <div class="ais-gemini-blocked-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                    <line x1="12" y1="9" x2="12" y2="13"/>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                </svg>
+                            </div>
+                            <div class="ais-gemini-blocked-content">
+                                <div class="ais-gemini-blocked-title">
+                                    Gemini AI deaktiviert
+                                    <span class="ais-gemini-blocked-tag">Wartung</span>
                                 </div>
-                                <div class="ais-api-hint" style="margin-top:4px;">
-                                    <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">&rarr; aistudio.google.com/apikey</a>
+                                <div class="ais-gemini-blocked-msg">
+                                    Die Cloud-Generierung ist aktuell <strong>nicht verfügbar</strong>. Voraussichtlich wieder erreichbar ab <strong id="aisGeminiBlockedUntil">--</strong>.
+                                </div>
+                                <div class="ais-gemini-blocked-hint">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Die lokale Engine funktioniert wie gewohnt.
                                 </div>
                             </div>
-                        </details>
+                        </div>
+
+                        <!-- Normales Engine-UI (bei Sperre per JS ausgeblendet) -->
+                        <div id="aisEngineNormal">
+                            <div style="background:var(--primary-dim);border:1px solid var(--primary);border-radius:8px;padding:8px 10px;margin-bottom:10px;">
+                                <div style="font-size:0.75rem;font-weight:700;color:var(--primary-light);">✨ Gemini AI — kein Setup nötig</div>
+                                <div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px;">Läuft automatisch für alle Nutzer. Kein eigener API Key erforderlich.</div>
+                            </div>
+                            <label class="ais-engine-toggle">
+                                <input type="checkbox" id="aisUseLocalOnly" checked onchange="AIStudio.toggleLocalOnly(!this.checked)" style="accent-color:var(--accent);width:16px;height:16px;">
+                                <span class="ais-engine-toggle-label">Gemini AI aktiv</span>
+                                <span class="ais-engine-toggle-badge ais-engine-badge-gemini" id="aisEngineBadge">Gemini</span>
+                            </label>
+                            <details style="margin-top:10px;" id="aisOwnKeySection">
+                                <summary style="font-size:0.7rem;color:var(--text-dim);cursor:pointer;user-select:none;">Eigener API Key (nur lokale Entwicklung)</summary>
+                                <div class="ais-api-key-row visible" id="aisApiKeyRow" style="margin-top:8px;">
+                                    <div class="ais-api-key-input-wrap">
+                                        <input type="password" class="ais-api-key-input" id="aisApiKeyInput" placeholder="Eigener Gemini Key..." autocomplete="off">
+                                        <button class="ais-api-save-btn" onclick="AIStudio.saveApiKey()">Speichern</button>
+                                    </div>
+                                    <div class="ais-api-hint" style="margin-top:4px;">
+                                        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">&rarr; aistudio.google.com/apikey</a>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
                     </div>
                 </div>
 
@@ -7239,6 +7315,29 @@ Beispiel:
         const GEMINI_DIRECT  = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
         const GEMINI_ENDPOINT = GEMINI_DIRECT; // kept for legacy references
 
+        // ═══════════════════════════════════════
+        // GEMINI KILL-SWITCH (temporäre Sperre)
+        // ═══════════════════════════════════════
+        // ISO-Datum bis zu dem Gemini blockiert ist. Auf null/'' setzen um Sperre aufzuheben.
+        // Localhost (dev) ist immer ausgenommen, damit man die Sperre testen kann.
+        const GEMINI_BLOCKED_UNTIL = '2026-06-03T23:59:59';
+
+        function _isGeminiBlocked() {
+            const host = location.hostname;
+            if (host === 'localhost' || host === '127.0.0.1') return false;
+            if (!GEMINI_BLOCKED_UNTIL) return false;
+            const until = new Date(GEMINI_BLOCKED_UNTIL).getTime();
+            if (isNaN(until)) return false;
+            return Date.now() < until;
+        }
+
+        function _formatBlockedUntil() {
+            if (!GEMINI_BLOCKED_UNTIL) return '';
+            const d = new Date(GEMINI_BLOCKED_UNTIL);
+            if (isNaN(d.getTime())) return '';
+            return d.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit' });
+        }
+
         function toggleEngine(useGemini) {
             // Legacy — kept for compatibility
             state.useGemini = useGemini;
@@ -7581,6 +7680,19 @@ Beispiel:
                 if (cb) cb.checked = false; // unchecked = Gemini aus
                 toggleLocalOnly(true);
             }
+
+            // KILL-SWITCH: Wenn Gemini gesperrt → UI auf Wartungs-Banner umstellen
+            if (_isGeminiBlocked()) {
+                state.useGemini = false;
+                const banner    = document.getElementById('aisGeminiBlocked');
+                const normalBox = document.getElementById('aisEngineNormal');
+                const untilEl   = document.getElementById('aisGeminiBlockedUntil');
+                if (banner)    banner.style.display = 'flex';
+                if (normalBox) normalBox.style.display = 'none';
+                if (untilEl)   untilEl.textContent = _formatBlockedUntil();
+                const btnText = document.querySelector('#aisGenerateBtn .ais-mega-text');
+                if (btnText) btnText.textContent = '⚡ Lokal generieren';
+            }
         }
 
         function _buildGeminiPrompt(professionId, options) {
@@ -7671,6 +7783,9 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
         }
 
         async function generateWithGemini(professionId, options) {
+            if (_isGeminiBlocked()) {
+                throw new Error('Gemini AI ist vorübergehend deaktiviert (Wartung).');
+            }
             const prompt = _buildGeminiPrompt(professionId, options);
             const requestBody = {
                 contents: [{ parts: [{ text: prompt }] }],
@@ -7843,7 +7958,8 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                 // Always try Gemini first (via shared proxy or user's own key)
                 // Only skip if user explicitly has the toggle OFF
                 const wantsGemini = state.useGemini || !state.apiKey; // proxy = always on unless user opted out
-                const hasGeminiAccess = wantsGemini && !document.getElementById('aisUseGemini')?.dataset.disabled;
+                const geminiBlocked = _isGeminiBlocked();
+                const hasGeminiAccess = !geminiBlocked && wantsGemini && !document.getElementById('aisUseGemini')?.dataset.disabled;
 
                 if (hasGeminiAccess) {
                     try {
