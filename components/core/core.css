@@ -64,97 +64,356 @@
         }
         
 
+        /* ── Cloud Login Modal ── */
         .cloud-login-modal {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            inset: 0;
             z-index: 2000;
             display: flex !important;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            padding: 1.5rem;
         }
-
         .cloud-login-modal[style*="display: none"] {
             display: none !important;
         }
 
         .cloud-login-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(7, 16, 35, 0.6);
-            backdrop-filter: blur(2px);
-            -webkit-backdrop-filter: blur(2px);
+            inset: 0;
+            background: rgba(3, 3, 5, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
         }
 
         .cloud-login-box {
             position: relative;
             width: 100%;
-            max-width: 500px;
-            background: var(--bg-glass);
+            max-width: 400px;
+            background: #0e0e18;
             border: 1px solid var(--border);
-            padding: 2rem;
-            border-radius: 14px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border-top: 1px solid rgba(var(--primary-rgb), 0.28);
+            border-radius: 20px;
+            box-shadow:
+                0 0 0 1px rgba(var(--primary-rgb), 0.07),
+                0 32px 80px rgba(0,0,0,0.72),
+                0 0 80px rgba(var(--primary-rgb), 0.06);
             z-index: 2010;
-            animation: modalSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+            animation: cl-appear 0.32s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes modalSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
+        @keyframes cl-appear {
+            from { opacity: 0; transform: translateY(22px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
         }
 
+        /* Close */
         .cloud-modal-close {
             position: absolute;
             top: 14px;
             right: 14px;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
             border: 1px solid var(--border);
             background: transparent;
             cursor: pointer;
-            font-size: 24px;
-            color: var(--text-main);
+            color: var(--text-muted);
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s ease;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
             padding: 0;
+            z-index: 10;
         }
-
         .cloud-modal-close:hover {
-            background: rgba(var(--primary-rgb), 0.1);
-            border-color: var(--primary);
-            transform: scale(1.1);
+            background: rgba(var(--primary-rgb), 0.08);
+            border-color: rgba(var(--primary-rgb), 0.2);
+            color: var(--text-main);
         }
 
-        .cloud-modal-close:active {
-            transform: scale(0.95);
+        /* Header band */
+        .cl-header-band {
+            position: relative;
+            padding: 22px 24px 18px;
+            background: linear-gradient(155deg, rgba(var(--primary-rgb), 0.1) 0%, rgba(var(--primary-rgb), 0.03) 60%, transparent 100%);
+            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+        }
+        .cl-header-band::after {
+            content: '';
+            position: absolute;
+            top: -60px;
+            right: -60px;
+            width: 160px;
+            height: 160px;
+            background: radial-gradient(circle, rgba(var(--primary-rgb), 0.12) 0%, transparent 65%);
+            pointer-events: none;
         }
 
-        @media (max-width: 520px) {
-            .cloud-login-box {
-                padding: 1.5rem;
-                border-radius: 12px;
-                max-width: 95vw;
-            }
-            
-            .cloud-login-modal {
-                padding: 1rem;
-            }
+        .cl-brand {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .cl-brand-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+        .cl-brand-name {
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            color: var(--primary);
+            opacity: 0.85;
+        }
+
+        .cl-icon-wrap {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: rgba(var(--primary-rgb), 0.12);
+            border: 1px solid rgba(var(--primary-rgb), 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .cl-title {
+            margin: 0 0 5px 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.4px;
+            line-height: 1.2;
+        }
+        .cl-subtitle {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Form */
+        .cl-form {
+            padding: 18px 24px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .cl-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .cl-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+        .cl-input-wrap {
+            position: relative;
+        }
+        .cl-input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            opacity: 0.4;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.15s, opacity 0.15s;
+        }
+        .cl-input-wrap:focus-within .cl-input-icon {
+            color: var(--primary);
+            opacity: 0.7;
+        }
+        .cl-input {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(var(--primary-rgb), 0.03);
+            color: var(--text-main);
+            font-family: var(--font-main, 'Inter'), sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+            box-sizing: border-box;
+            display: block;
+        }
+        .cl-input:focus {
+            border-color: rgba(var(--primary-rgb), 0.4);
+            background: rgba(var(--primary-rgb), 0.05);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
+        }
+        .cl-input::placeholder { color: var(--text-muted); opacity: 0.4; }
+
+        /* Primary button */
+        .cl-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            font-family: var(--font-main, 'Inter'), sans-serif;
+            font-weight: 600;
+            transition: all 0.15s ease;
+            border: none;
+        }
+        .cl-btn-primary {
+            width: 100%;
+            padding: 11px 20px;
+            border-radius: 10px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 14px;
+            letter-spacing: 0.1px;
+        }
+        .cl-btn-primary:hover {
+            filter: brightness(1.1);
+            box-shadow: 0 6px 24px rgba(var(--primary-rgb), 0.4);
+            transform: translateY(-1px);
+        }
+        .cl-btn-primary:active { transform: translateY(0); box-shadow: none; filter: none; }
+        .cl-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* Message */
+        .cl-message,
+        .cloud-login-message {
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+        .cl-message.success,
+        .cloud-login-message.success {
+            background: rgba(16,185,129,0.1);
+            border-color: rgba(16,185,129,0.22);
+            color: var(--success);
+        }
+        .cl-message.error,
+        .cloud-login-message.error {
+            background: rgba(239,68,68,0.1);
+            border-color: rgba(239,68,68,0.22);
+            color: var(--danger);
+        }
+
+        /* Spinner */
+        .cl-spin { animation: cl-spin-anim 0.85s linear infinite; }
+        @keyframes cl-spin-anim { to { transform: rotate(360deg); } }
+
+        /* Divider */
+        .cl-divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 24px;
+            margin-bottom: 12px;
+        }
+        .cl-divider-line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+        .cl-divider-text {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-muted);
+            opacity: 0.5;
+            white-space: nowrap;
+            letter-spacing: 0.4px;
+        }
+
+        /* OAuth row */
+        .cl-oauth-row {
+            padding: 0 24px;
+            display: flex;
+            gap: 8px;
+        }
+        .cl-oauth-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 9px 10px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-main);
+            font-family: var(--font-main, 'Inter'), sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, transform 0.1s;
+        }
+        .cl-oauth-btn:hover {
+            background: rgba(var(--primary-rgb), 0.07);
+            border-color: rgba(var(--primary-rgb), 0.2);
+            transform: translateY(-1px);
+        }
+        .cl-oauth-btn:active { transform: translateY(0); }
+
+        /* Trust footer */
+        .cl-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            margin: 12px 24px 18px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: var(--primary-dim);
+            border: 1px solid var(--border);
+            font-size: 11.5px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            text-align: center;
+        }
+        .cl-hint svg {
+            flex-shrink: 0;
+            color: var(--primary);
+            opacity: 0.6;
+        }
+
+        /* Light theme overrides */
+        [data-theme="light"] .cloud-login-box {
+            background: #ffffff;
+            box-shadow: 0 0 0 1px rgba(var(--primary-rgb), 0.1), 0 20px 60px rgba(0,0,0,0.12);
+        }
+        [data-theme="light"] .cloud-login-overlay {
+            background: rgba(240,242,247,0.88);
+        }
+        [data-theme="light"] .cl-input {
+            background: rgba(var(--primary-rgb), 0.03);
+        }
+        [data-theme="light"] .cl-input:focus {
+            background: rgba(var(--primary-rgb), 0.04);
+        }
+
+        @media (max-width: 480px) {
+            .cloud-login-modal { padding: 0.75rem; }
+            .cl-header-band { padding: 18px 18px 14px; }
+            .cl-form { padding: 16px 18px 12px; }
+            .cl-divider { padding: 0 18px; }
+            .cl-oauth-row { padding: 0 18px; flex-wrap: wrap; }
+            .cl-oauth-btn { flex: 1 1 calc(50% - 4px); min-width: 0; }
+            .cl-hint { margin: 10px 18px 16px; }
         }
         
 

@@ -52,22 +52,18 @@ Kein Build. Rohe Dateien via `<script src>` in index.html (Reihenfolge wichtig!)
 
 **Tests:** `npm test` | `npm run test:watch` | `npm run test:coverage` | `npm run lint`
 
-**UI** Nutze Sehr hochmodernen Style der Firmen Vibe ist, nutzte für Ui immer das plugin /frontend-design. Das design soll auch für handys optimiert sein und dark theme.
+**UI** Nutze sehr hochmodernen Clean-SaaS-Style (SAP Fiori / Linear / Vercel Vibe). Nutze für UI immer das plugin /frontend-design. Design muss für Handys optimiert und Dark-Theme sein.
 
-**Design-Vibe: SaaS / Enterprise Data Terminal (BESTÄTIGT ✓)**
-Dieser Stil wurde explizit vom User abgesegnet — immer so umsetzen:
-- **Geometrische Karten:** `clip-path: polygon(...)` für Notch-Ecken (abgeschnittene Ecke oben-rechts oder unten-rechts). Kein `border-radius > 4px`.
-- **Corner Brackets:** `::before` = TL-Bracket, `::after` = BR-Bracket via `border-top/left` bzw. `border-bottom/right`. Erscheinen subtil, verstärkt bei Hover.
-- **Gestaffelte Karten (Stagger):** Bei 3 Karten in einer Row: 2. Karte `translateY(16px)`, 3. Karte `translateY(8px)`. Mobile: Stagger deaktivieren.
-- **Targeting-Brackets auf Ring/SVG-Elementen:** `::before` TL + `::after` BR auf dem Wrap-Element, außen (-10px offset).
-- **Animiertes Scan-Grid im Header:** `background-image: linear-gradient(...)` Grid-Linien + `animation: sc-grid-drift` scrollt die Linien kontinuierlich.
-- **Diagonale Streifen auf Progress-Bars:** `repeating-linear-gradient(-55deg, ...)` über der Basisfarbe.
-- **Linker Akzentstreifen auf Panels:** `::before` mit `width: 3px`, Gradient von `--primary` → transparent.
-- **Parallelogramm-Tags:** `clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%)` auf Badge-Elementen.
-- **Trend-Indicator Box:** Abgeschrägter Block via `clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%)`.
-- **Tabellen-Hover:** Hintergrund-Highlight + `border-left: 2px solid --primary` auf der ersten Zelle.
-- **Typografie:** `font-variant-numeric: tabular-nums` auf allen Zahlen. Mono-Font für alle Labels/Eyebrows.
-- **Buttons:** Angular via `clip-path`, kein Standard-`border-radius`. Add-Btn = Purple-Ghost, Save-Btn = Green-Ghost.
+**Design-Vibe: Clean Enterprise SaaS (Dark)**
+- Klare Hierarchie, großzügiges Whitespace, subtile Borders (`rgba(255,255,255,0.08)`)
+- `border-radius: 12–16px` auf Karten, `8px` auf Inputs/Buttons
+- Keine Clip-Path-Polygone oder Corner-Brackets — wirkt billig
+- Farben: `--primary:#a855f7` als Akzent, sparsam einsetzen. Backgrounds: gestaffelte Dunkelheit (`#0a0a12`, `#111118`, `#18181f`)
+- Icons: immer SVG (Stroke, 1.5px, Lucide-Style), keine Emojis
+- Buttons: Solid-Primary (Purple) oder Ghost (transparenter Hintergrund, Border). Klare Hover-States mit `background` + leichtem `box-shadow`
+- Inputs: saubere Border, deutlicher Fokus-Ring via `box-shadow: 0 0 0 3px rgba(168,85,247,0.2)`
+- Typografie: `Inter` für alles, kein forced Mono außer bei Code/Timestamps
+- Micro-Animations: `transition: all 0.2s ease`, kein Overengineering
 
 ## Schlüsseldateien
 
