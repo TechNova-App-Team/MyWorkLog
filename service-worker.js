@@ -45,8 +45,9 @@ function isCacheable(url) {
 
 self.addEventListener('install', event => {
   log('Install', SW_VERSION);
-  // Kein skipWaiting() hier — der SW wartet, bis apply() ihn via SKIP_WAITING-Message aktiviert.
-  // Dadurch ist der neue SW garantiert aktiv, bevor location.reload() ausgelöst wird.
+  // skipWaiting() sofort — verhindert Version-Mismatch (neue index.html + alter SW-Cache).
+  // apply() in onboarding.js funktioniert weiterhin für den Update-Banner-Flow.
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.add(OFFLINE_URL).catch(() => {}))
