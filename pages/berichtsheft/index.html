@@ -2099,6 +2099,22 @@
         .ais-mega-btn.loading .ais-mega-spinner { display: block; }
         .ais-mega-text { display: flex; align-items: center; gap: 8px; }
 
+        /* Rate-Limit Info (Quota + Cooldown) */
+        .ais-ratelimit-info {
+            text-align: center;
+            font: 11px/1.4 var(--font-mono, ui-monospace, monospace);
+            color: var(--text-muted);
+            margin: 6px 0 -2px;
+            min-height: 14px;
+            transition: color 0.2s ease;
+            letter-spacing: 0.02em;
+        }
+        .ais-ratelimit-info.warning  { color: #f59e0b; }
+        .ais-ratelimit-info.cooldown { color: var(--primary, #a855f7); }
+        .ais-ratelimit-info.limit    { color: var(--danger, #ef4444); font-weight: 600; }
+        .ais-mega-btn.rl-blocked { opacity: 0.55; cursor: not-allowed; filter: grayscale(0.4); }
+        .ais-mega-btn.rl-blocked:hover { transform: none; box-shadow: none; }
+
         /* Quick-generate presets */
         .ais-quick-row { display: flex; gap: 6px; flex-wrap: wrap; }
         .ais-quick-btn {
@@ -3212,6 +3228,7 @@ Beispiel:
                     <div class="ais-mega-spinner"></div>
                     <div class="ais-mega-text">✨ Berichtsheft generieren</div>
                 </button>
+                <div class="ais-ratelimit-info" id="aisRateLimitInfo">&nbsp;</div>
 
             </div>
         </div>
@@ -7203,6 +7220,9 @@ Beispiel:
 
             _loadProfile();
             _restoreApiSettings();
+            // Rate-Limit Counter initial befüllen (auch wenn UI noch nicht offen ist —
+            // _updateRateLimitUI gettet das DOM defensiv)
+            setTimeout(_updateRateLimitUI, 50);
             console.log(`[AI Studio] Berichtsheft-Assistent v${VERSION} — ${Object.keys(PROFESSIONS).length} Berufe geladen.`);
         }
 
@@ -7216,6 +7236,7 @@ Beispiel:
             const backdrop = document.getElementById('aiStudioBackdrop');
             if (panel) panel.classList.add('open');
             if (backdrop) backdrop.classList.add('open');
+            _updateRateLimitUI();
         }
 
         function close() {
@@ -7336,6 +7357,111 @@ Beispiel:
             const d = new Date(GEMINI_BLOCKED_UNTIL);
             if (isNaN(d.getTime())) return '';
             return d.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit' });
+        }
+
+        // ═══════════════════════════════════════
+        // CLIENT-SIDE RATE LIMIT
+        // ═══════════════════════════════════════
+        // Schützt den geteilten OpenRouter Free-Tier Pool (1000 Credits/Tag,
+        // 4 Modelle geteilt). Limit gilt für ALLE Endpoints (auch localhost),
+        // damit Production-Bedingungen reproduzierbar sind.
+        // Tweak hier wenn nötig:
+        const RATE_LIMIT_DAILY        = 20;     // Generationen pro User pro Tag
+        const RATE_LIMIT_COOLDOWN_MS  = 10000;  // Pause zwischen zwei Calls
+        const RATE_LIMIT_STORAGE_KEY  = 'tg_ai_rl';
+
+        const RateLimit = {
+            _todayKey() {
+                const d = new Date();
+                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            },
+            _read() {
+                try {
+                    const raw = localStorage.getItem(RATE_LIMIT_STORAGE_KEY);
+                    if (!raw) return null;
+                    const data = JSON.parse(raw);
+                    if (data.date !== this._todayKey()) return null; // stale day → reset
+                    return data;
+                } catch (e) { return null; }
+            },
+            _write(data) {
+                try { localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+            },
+            status() {
+                const data = this._read() || { date: this._todayKey(), count: 0, lastTs: 0 };
+                const now = Date.now();
+                const cooldownMs = Math.max(0, (data.lastTs + RATE_LIMIT_COOLDOWN_MS) - now);
+                return {
+                    count: data.count,
+                    remaining: Math.max(0, RATE_LIMIT_DAILY - data.count),
+                    cooldownMs,
+                };
+            },
+            check() {
+                const s = this.status();
+                if (s.remaining <= 0) return {
+                    ok: false, reason: 'daily',
+                    message: `Tageslimit erreicht (${RATE_LIMIT_DAILY} Generationen). Morgen geht's weiter — nutze solange die lokale Engine.`,
+                };
+                if (s.cooldownMs > 0) return {
+                    ok: false, reason: 'cooldown',
+                    message: `Bitte noch ${Math.ceil(s.cooldownMs/1000)}s warten, dann wieder generieren.`,
+                    cooldownMs: s.cooldownMs,
+                };
+                return { ok: true };
+            },
+            increment() {
+                const today = this._todayKey();
+                const data = this._read() || { date: today, count: 0, lastTs: 0 };
+                data.date = today;
+                data.count += 1;
+                data.lastTs = Date.now();
+                this._write(data);
+            },
+        };
+
+        let _rateLimitTickHandle = null;
+        function _updateRateLimitUI() {
+            const info = document.getElementById('aisRateLimitInfo');
+            const btn  = document.getElementById('aisGenerateBtn');
+            if (!info) return;
+
+            const s = RateLimit.status();
+            let txt, cls = '';
+
+            if (s.remaining === 0) {
+                txt = `Tageslimit ${s.count}/${RATE_LIMIT_DAILY} — fällt zurück auf lokale Engine`;
+                cls = 'limit';
+            } else if (s.cooldownMs > 0) {
+                txt = `Cooldown ${Math.ceil(s.cooldownMs/1000)}s · ${s.count}/${RATE_LIMIT_DAILY} heute`;
+                cls = 'cooldown';
+            } else if (s.remaining <= 3) {
+                txt = `Noch ${s.remaining} von ${RATE_LIMIT_DAILY} heute übrig`;
+                cls = 'warning';
+            } else {
+                txt = `${s.count}/${RATE_LIMIT_DAILY} heute`;
+            }
+
+            info.textContent = txt;
+            info.className = 'ais-ratelimit-info ' + cls;
+
+            if (btn) {
+                const block = s.cooldownMs > 0;
+                btn.classList.toggle('rl-blocked', block);
+                btn.disabled = block || state.isGenerating;
+            }
+
+            // Cooldown-Tick: alle 250ms updaten solange aktiv
+            if (s.cooldownMs > 0 && !_rateLimitTickHandle) {
+                _rateLimitTickHandle = setInterval(() => {
+                    const ns = RateLimit.status();
+                    _updateRateLimitUI();
+                    if (ns.cooldownMs <= 0) {
+                        clearInterval(_rateLimitTickHandle);
+                        _rateLimitTickHandle = null;
+                    }
+                }, 250);
+            }
         }
 
         function toggleEngine(useGemini) {
@@ -7703,38 +7829,44 @@ Beispiel:
             const complexityMap = { low: 'einfach', medium: 'mittel', high: 'fortgeschritten' };
             const cplx = complexityMap[options.complexity] || 'mittel';
 
-            const systemPrompt = `Du bist Auszubildender zum ${profName} im ${options.yearNum}. Lehrjahr und schreibst deinen wöchentlichen IHK-Ausbildungsnachweis (Berichtsheft).
+            const ljHint = options.yearNum === 1
+                ? '· 1. LJ: Grundlagen, unter Anleitung, einfache Routine-Aufgaben'
+                : options.yearNum === 2
+                ? '· 2. LJ: eigenständige Routine-Aufgaben, beginnende Verantwortung'
+                : '· 3. LJ: komplexe/eigenverantwortliche Aufgaben, Anleitung von Jüngeren';
 
-SCHREIBSTIL — STRIKT:
-- Sachlich, präzise, nüchtern — null Floskeln, null Füllwörter
-- Stichpunkte: Passiv oder verkürzte Ich-Form (z.B. "Switch konfiguriert" / "Habe Ticket bearbeitet")
-- Korrekte Fachbegriffe — niemals umgangssprachlich umschreiben
-- KEINE Einleitung, KEIN Fazit, KEIN "Heute habe ich gelernt", KEINE Bewertungen
-- KEINE vollständigen Subjekt-Sätze — jeder Eintrag beginnt direkt mit der Tätigkeit
-- Jeder Eintrag: eine Zeile, maximal 10 Wörter
+            const schoolTopicsHint = (prof?.schoolTopics || []).slice(0, 5).join(', ');
 
-INHALT:
-- 3-5 Einträge pro Tag, 8h Arbeitszeit (Schultage: 8h Schule oder 6h Schule + 2h Betrieb)
-- Tätigkeiten passend zum ${options.yearNum}. Lehrjahr (Niveau: ${cplx})
-- Kein Tag darf sich wiederholen — echte Abwechslung
-- Saison: ${getCurrentSeason()}${options.department ? `\n- Abteilung: ${options.department}` : ''}
-${options.includeSchool ? '- EINEM Tag = Berufsschule: konkrete Lehrplan-Themen als schoolTopic' : '- Keine Berufsschule — reine Betriebstage'}
+            const systemPrompt = `Du bist Auszubildender zum ${profName} im ${options.yearNum}. Lehrjahr und schreibst deinen wöchentlichen IHK-Berichtsheft.
+
+[AUSGABE] Nur gültiges JSON-Array. Kein Markdown, kein Text drumherum.
+Schema: [{"day":"Montag","entries":["…","…",…],"hours":8,"isSchoolDay":false,"schoolTopic":null}, …]
+
+[STIL]
+- Jeder Eintrag startet DIREKT mit der Tätigkeit. Max 10 Wörter. EINE Tätigkeit, keine "und"-Verkettung.
+- ✓ "Switch konfiguriert" · "Active Directory-Benutzer angelegt" · "Backup-Job überprüft"
+- ✗ "Ich habe…" · "Heute war ich…" · "Viel gelernt" · "Hat Spaß gemacht" · mehrere Sätze
+- Korrekte Fachbegriffe. Keine Einleitung/Fazit/Bewertung.
+
+[ANTI-HALLUZINATION] Niemals erfinden: IP-Adressen, Personennamen (Herr/Frau X), Firmennamen (XY GmbH), Geldbeträge, Ticket-Nummern, konkrete Versions-/Modellnummern. Ausnahme: nur was unten in [VORGABEN] steht.
+
+[INHALT]
+- 3-5 Einträge/Tag, immer hours=8 (Schultag: 8h Schule oder 6h+2h Betrieb).
+- ${options.yearNum}. Lehrjahr (${cplx}). ${ljHint}
+- Kein Tag wiederholt sich. Bleibe strikt im Beruf "${profName}" — kein bereichsfremder Inhalt.
+- Saison: ${getCurrentSeason()}${options.department ? `. Abteilung: ${options.department}` : ''}
+
+[SCHULE] ${options.includeSchool
+    ? `Genau EIN Tag: isSchoolDay=true, schoolTopic="konkretes Thema" (z.B. ${schoolTopicsHint || 'Rahmenlehrplan'}). Andere Tage: false/null.`
+    : `Alle Tage: isSchoolDay=false, schoolTopic=null.`}
 ${options.customPrompt ? `
-SPEZIELLE VORGABEN (Pflicht — hat Vorrang vor allem anderen):
+[VORGABEN — HÖCHSTE PRIORITÄT, überschreibt INHALT]
 ${options.customPrompt}
+"nur X" = wirklich nur X. "kein X" = wirklich kein X. Stichworte → IHK-Einträge im Stil oben.
 ` : ''}
-BERUF: ${profName}
-${prof ? `FACHVOKABULAR / TOOLS: ${(prof.tools || []).join(', ')}` : ''}
+[FACHVOKABULAR] ${prof ? `${profName} — Tools (wenn passend): ${(prof.tools || []).slice(0, 14).join(', ')}` : profName}
 
-Antworte NUR mit einem JSON-Array. Jedes Element hat:
-- "day": "${DAY_NAMES[0]}" etc.
-- "entries": ["Eintrag 1", "Eintrag 2", ...]  (3-5 Stück)
-- "hours": 8
-- "isSchoolDay": true/false
-- "schoolTopic": "Thema" oder null
-
-Generiere Einträge für: ${daysList}
-Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
+[AUFTRAG] Genau ${options.selectedDays.length} Array-Elemente für: ${daysList}. KW ${options.calendarWeek || 'beliebig'}.`;
 
             return systemPrompt;
         }
@@ -7917,6 +8049,15 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                 return;
             }
 
+            // Rate-Limit: Cooldown ist harter Block (kein Fallback nötig).
+            // Tageslimit wird unten weicher behandelt (Fallback auf lokale Engine).
+            const _rlPre = RateLimit.check();
+            if (_rlPre.reason === 'cooldown') {
+                showToast(_rlPre.message, 'warning');
+                _updateRateLimitUI();
+                return;
+            }
+
             state.isGenerating = true;
             const btn = document.getElementById('aisGenerateBtn');
             if (btn) btn.classList.add('loading');
@@ -7962,16 +8103,28 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
                 const hasGeminiAccess = !geminiBlocked && wantsGemini && !document.getElementById('aisUseGemini')?.dataset.disabled;
 
                 if (hasGeminiAccess) {
-                    try {
-                        week = await generateWithGemini(state.selectedProfession, genOptions);
-                        usedGemini = true;
-                    } catch (apiErr) {
-                        console.warn('[AIStudio] Gemini failed, using local engine:', apiErr.message);
-                        if (apiErr.message.includes('Tageslimit') || apiErr.message.includes('Proxy nicht erreichbar')) {
-                            showToast('Gemini Limit erreicht — nutze lokale Engine 🔄', 'warning');
-                        }
+                    // Tageslimit: weicher Block — Fallback auf lokale Engine
+                    const _rlNow = RateLimit.check();
+                    if (_rlNow.reason === 'daily') {
+                        showToast(_rlNow.message, 'warning');
+                        _updateRateLimitUI();
                         await new Promise(r => setTimeout(r, 300));
                         week = generateWeek(state.selectedProfession, genOptions);
+                    } else {
+                        // Counter VOR dem Call hochzählen — fehlgeschlagene Versuche zählen mit
+                        RateLimit.increment();
+                        _updateRateLimitUI();
+                        try {
+                            week = await generateWithGemini(state.selectedProfession, genOptions);
+                            usedGemini = true;
+                        } catch (apiErr) {
+                            console.warn('[AIStudio] Gemini failed, using local engine:', apiErr.message);
+                            if (apiErr.message.includes('Tageslimit') || apiErr.message.includes('Proxy nicht erreichbar')) {
+                                showToast('Gemini Limit erreicht — nutze lokale Engine 🔄', 'warning');
+                            }
+                            await new Promise(r => setTimeout(r, 300));
+                            week = generateWeek(state.selectedProfession, genOptions);
+                        }
                     }
                 } else {
                     // User opted out of Gemini → local engine
@@ -7999,6 +8152,7 @@ Kalenderwoche: ${options.calendarWeek || 'beliebig'}`;
             } finally {
                 state.isGenerating = false;
                 if (btn) btn.classList.remove('loading');
+                _updateRateLimitUI();
             }
         }
 

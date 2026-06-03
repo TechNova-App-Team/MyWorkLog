@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Berichtsheft AI Benchmark — DEV</title>
+<style>
+  :root {
+    --primary: #a855f7;
+    --primary-dim: rgba(168,85,247,.2);
+    --bg-deep: #030305;
+    --bg-1: #0a0a12;
+    --bg-2: #111118;
+    --bg-3: #18181f;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --border: rgba(255,255,255,.06);
+    --border-strong: rgba(255,255,255,.12);
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 16px 64px;
+    background: var(--bg-deep);
+    color: var(--text-main);
+    font: 14px/1.5 var(--font-main);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+  header { margin-bottom: 24px; }
+  h1 {
+    font-size: 22px; font-weight: 600; margin: 0 0 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .badge {
+    background: var(--primary-dim); color: var(--primary);
+    padding: 2px 8px; border-radius: 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .sub { color: var(--text-muted); font-size: 13px; margin: 0; }
+
+  .card {
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 14px; font-weight: 600; margin: 0 0 12px;
+    text-transform: uppercase; letter-spacing: .06em;
+    color: var(--text-muted);
+  }
+
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  input[type="password"], input[type="text"] {
+    flex: 1; min-width: 200px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text-main);
+    font: 13px var(--font-mono);
+    outline: none;
+    transition: all .2s ease;
+  }
+  input[type="password"]:focus, input[type="text"]:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-dim);
+  }
+  button {
+    background: var(--primary); color: #fff;
+    border: 0; border-radius: 8px;
+    padding: 10px 18px;
+    font: 600 13px var(--font-main);
+    cursor: pointer;
+    transition: all .2s ease;
+  }
+  button:hover:not(:disabled) { background: #9333ea; box-shadow: 0 4px 14px rgba(168,85,247,.4); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.ghost {
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--text-main);
+  }
+  button.ghost:hover:not(:disabled) {
+    background: var(--bg-2);
+    border-color: var(--primary);
+  }
+
+  .status-row {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--text-muted); font-size: 12px;
+    padding-top: 8px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); }
+  .dot.ok { background: var(--success); box-shadow: 0 0 8px rgba(16,185,129,.5); }
+  .dot.err { background: var(--danger); }
+
+  .models-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .model-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    transition: all .2s ease;
+  }
+  .model-card.running { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
+  .model-card.done { border-color: var(--success); }
+  .model-card.failed { border-color: var(--danger); }
+  .model-head { display: flex; justify-content: space-between; align-items: start; gap: 8px; margin-bottom: 10px; }
+  .model-name { font-weight: 600; font-size: 14px; }
+  .model-id { color: var(--text-dim); font: 11px var(--font-mono); margin-top: 2px; word-break: break-all; }
+  .model-role { font-size: 11px; color: var(--text-muted); }
+  .score {
+    font-size: 28px; font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), #ec4899);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .score-meta { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
+  .grade {
+    display: inline-block;
+    padding: 2px 8px; border-radius: 6px;
+    font: 600 11px var(--font-mono);
+    margin-left: 6px;
+  }
+  .grade-A { background: rgba(16,185,129,.15); color: var(--success); }
+  .grade-B { background: rgba(16,185,129,.1);  color: var(--success); }
+  .grade-C { background: rgba(245,158,11,.15); color: var(--warning); }
+  .grade-D { background: rgba(245,158,11,.1);  color: var(--warning); }
+  .grade-F { background: rgba(239,68,68,.15);  color: var(--danger); }
+
+  .progress {
+    height: 4px; background: var(--bg-deep); border-radius: 4px;
+    overflow: hidden; margin-top: 10px;
+  }
+  .progress-bar {
+    height: 100%; background: linear-gradient(90deg, var(--primary), #ec4899);
+    width: 0%; transition: width .3s ease;
+  }
+
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 12px; margin-top: 8px;
+  }
+  th, td {
+    padding: 8px 10px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    color: var(--text-muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .04em;
+    font-size: 10px;
+  }
+  td.test-name { color: var(--text-main); }
+  td.score-cell { text-align: center; font: 600 12px var(--font-mono); }
+  .s-good { color: var(--success); }
+  .s-mid  { color: var(--warning); }
+  .s-bad  { color: var(--danger); }
+
+  .test-running { background: rgba(168,85,247,.05); }
+
+  details { margin-top: 8px; }
+  details summary {
+    cursor: pointer; color: var(--text-muted); font-size: 12px;
+    padding: 4px 0;
+  }
+  details[open] summary { color: var(--text-main); }
+  .issues {
+    background: var(--bg-deep);
+    border-left: 2px solid var(--warning);
+    padding: 8px 10px;
+    margin-top: 6px;
+    font: 11px var(--font-mono);
+    color: var(--text-muted);
+    border-radius: 4px;
+  }
+  .issues li { margin: 2px 0; }
+  .raw {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    padding: 10px;
+    margin-top: 6px;
+    font: 10px/1.4 var(--font-mono);
+    color: var(--text-muted);
+    border-radius: 6px;
+    max-height: 200px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .recommendations { margin-top: 12px; }
+  .rec-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg-2);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font: 12px var(--font-mono);
+  }
+  .rec-rank {
+    background: var(--primary);
+    color: #fff; font-weight: 600;
+    padding: 2px 8px; border-radius: 6px;
+    min-width: 24px; text-align: center;
+  }
+
+  .hint {
+    color: var(--text-dim); font-size: 12px;
+    font-style: italic; margin-top: 8px;
+  }
+
+  @media (max-width: 720px) {
+    body { padding: 16px 12px 48px; }
+    h1 { font-size: 18px; }
+    .row { flex-direction: column; align-items: stretch; }
+    input, button { width: 100%; }
+    th, td { padding: 6px 4px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Berichtsheft AI Benchmark <span class="badge">DEV</span></h1>
+    <p class="sub">Browser-Variante von <code>pages/berichtsheft/ai.js</code> — fährt die exakt gleiche 10er-Test-Suite gegen OpenRouter.</p>
+  </header>
+
+  <div class="card">
+    <h2>1. OpenRouter API Key</h2>
+    <div class="row">
+      <input type="password" id="apiKeyInput" placeholder="sk-or-v1-…" autocomplete="off">
+      <button class="ghost" id="saveKeyBtn">Speichern</button>
+      <button class="ghost" id="clearKeyBtn">Löschen</button>
+    </div>
+    <div class="status-row">
+      <span class="dot" id="keyDot"></span>
+      <span id="keyStatus">Kein Key gespeichert</span>
+    </div>
+    <p class="hint">Wird in <code>localStorage.mwlbench_or_key</code> abgelegt. Lokal/Dev-only.</p>
+  </div>
+
+  <div class="card">
+    <h2>2. Konfiguration</h2>
+    <div class="status-row" style="gap: 24px; padding: 4px 0;">
+      <span><b id="cfgModels">4</b> Modelle</span>
+      <span><b id="cfgTests">10</b> Tests</span>
+      <span><b id="cfgCalls">40</b> Gesamt-Calls</span>
+      <span style="font: 11px var(--font-mono); color: var(--text-dim);">temp=0.9 · top_p=0.95 · max=4096</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>3. Ausführen</h2>
+    <div class="row">
+      <button id="runBtn">▶ Benchmark starten</button>
+      <button class="ghost" id="cancelBtn" disabled>Abbrechen</button>
+      <span class="status-row" style="margin-left: auto;" id="globalProgress"></span>
+    </div>
+    <p class="hint">Console-Hooks: <code>MWLBench.run()</code> · <code>MWLBench.runOne('model/id')</code> · <code>MWLBench.last</code></p>
+  </div>
+
+  <div id="modelsContainer" class="models-grid"></div>
+
+  <div class="card" id="matrixCard" style="display: none;">
+    <h2>4. Detail-Matrix (Test × Modell)</h2>
+    <div style="overflow-x: auto;">
+      <table id="matrixTable"></table>
+    </div>
+  </div>
+
+  <div class="card" id="recCard" style="display: none;">
+    <h2>5. Empfohlene Fallback-Chain</h2>
+    <div class="recommendations" id="recommendations"></div>
+  </div>
+
+</div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════
+//  Spiegelt 1:1 die Test-Suite aus pages/berichtsheft/ai.js
+// ═══════════════════════════════════════════════════════════
+
+const STORAGE_KEY = 'mwlbench_or_key';
+
+// Reihenfolge & Rollen identisch zur Produktions-Fallback-Chain im Worker
+const MODELS = [
+  { id: 'openai/gpt-oss-120b:free',            label: 'GPT-OSS 120B',        role: 'Primary' },
+  { id: 'liquid/lfm-2.5-1.2b-instruct:free',   label: 'LFM 1.2B Instruct',   role: 'Fallback 1' },
+  { id: 'nvidia/nemotron-3-nano-30b-a3b:free', label: 'Nemotron 3 Nano 30B', role: 'Fallback 2' },
+  { id: 'moonshotai/kimi-k2.6:free',           label: 'Kimi K2.6',           role: 'Wildcard (nicht in Prod)' },
+];
+
+const PROD_TEMPERATURE = 0.9;
+const PROD_TOP_P       = 0.95;
+const PROD_MAX_TOKENS  = 4096;
+const HTTP_TIMEOUT_MS  = 45000;
+
+const PROFESSIONS = {
+  sysadmin: {
+    name: 'Fachinformatiker SI',
+    tools: ['PowerShell','Bash','VMware','Hyper-V','Azure','AWS','Nagios','Zabbix','Windows Server','Linux','pfSense','Ansible','Terraform','SCCM','WSUS','WireShark','PuTTY','Remote Desktop'],
+    schoolTopics: ['Netzwerktechnik','Betriebssysteme','IT-Sicherheit','Virtualisierung','Cloud-Computing'],
+  },
+  software: {
+    name: 'Fachinformatiker AE',
+    tools: ['Git','VS Code','Docker','Jira','Jenkins','React','Node.js','Python','TypeScript','SQL','MongoDB','Kubernetes','Postman','GitHub Actions','ESLint','Jest','PostgreSQL'],
+    schoolTopics: ['Datenbanken und SQL','OOP','Softwareengineering','UML','Algorithmik'],
+  },
+  kaufmann: {
+    name: 'Kaufmann/-frau',
+    tools: ['SAP','DATEV','Lexware','Excel','ERP-System','CRM-System','Outlook','Teams','SharePoint','Power BI'],
+    schoolTopics: ['Rechnungswesen','Wirtschaftslehre','Bürokommunikation','Personalwirtschaft'],
+  },
+  gastronomie: {
+    name: 'Koch/Köchin',
+    tools: ['Konvektomat','Thermometer','Waage','Backofen','Salamander','Vakuumierer','Friteuse','Pürierstab','Mandoline','Grillstation'],
+    schoolTopics: ['Ernährungslehre','Warenkunde','Kochtechniken','HACCP'],
+  },
+};
+
+const DAY_NAMES = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag'];
+
+// ─── Production-Prompt (gleich wie in index.html _buildGeminiPrompt) ──────
+function buildProdPrompt(opts) {
+  const {
+    professionId, yearNum = 2, complexity = 'medium',
+    selectedDays = [0,1,2,3,4], includeSchool = false,
+    department = '', customPrompt = '', calendarWeek = 10,
+    season = 'Frühling',
+  } = opts;
+  const prof = PROFESSIONS[professionId];
+  const profName = prof?.name || professionId;
+  const cplx = { low: 'einfach', medium: 'mittel', high: 'fortgeschritten' }[complexity] || 'mittel';
+  const daysList = selectedDays.map(d => DAY_NAMES[d]).join(', ');
+  const ljHint = yearNum === 1
+    ? '· 1. LJ: Grundlagen, unter Anleitung, einfache Routine-Aufgaben'
+    : yearNum === 2
+    ? '· 2. LJ: eigenständige Routine-Aufgaben, beginnende Verantwortung'
+    : '· 3. LJ: komplexe/eigenverantwortliche Aufgaben, Anleitung von Jüngeren';
+  const schoolTopicsHint = (prof?.schoolTopics || []).slice(0,5).join(', ');
+
+  return `Du bist Auszubildender zum ${profName} im ${yearNum}. Lehrjahr und schreibst deinen wöchentlichen IHK-Berichtsheft.
+
+[AUSGABE] Nur gültiges JSON-Array. Kein Markdown, kein Text drumherum.
+Schema: [{"day":"Montag","entries":["…","…",…],"hours":8,"isSchoolDay":false,"schoolTopic":null}, …]
+
+[STIL]
+- Jeder Eintrag startet DIREKT mit der Tätigkeit. Max 10 Wörter. EINE Tätigkeit, keine "und"-Verkettung.
+- ✓ "Switch konfiguriert" · "Active Directory-Benutzer angelegt" · "Backup-Job überprüft"
+- ✗ "Ich habe…" · "Heute war ich…" · "Viel gelernt" · "Hat Spaß gemacht" · mehrere Sätze
+- Korrekte Fachbegriffe. Keine Einleitung/Fazit/Bewertung.
+
+[ANTI-HALLUZINATION] Niemals erfinden: IP-Adressen, Personennamen (Herr/Frau X), Firmennamen (XY GmbH), Geldbeträge, Ticket-Nummern, konkrete Versions-/Modellnummern. Ausnahme: nur was unten in [VORGABEN] steht.
+
+[INHALT]
+- 3-5 Einträge/Tag, immer hours=8 (Schultag: 8h Schule oder 6h+2h Betrieb).
+- ${yearNum}. Lehrjahr (${cplx}). ${ljHint}
+- Kein Tag wiederholt sich. Bleibe strikt im Beruf "${profName}" — kein bereichsfremder Inhalt.
+- Saison: ${season}${department ? `. Abteilung: ${department}` : ''}
+
+[SCHULE] ${includeSchool
+  ? `Genau EIN Tag: isSchoolDay=true, schoolTopic="konkretes Thema" (z.B. ${schoolTopicsHint || 'Rahmenlehrplan'}). Andere Tage: false/null.`
+  : `Alle Tage: isSchoolDay=false, schoolTopic=null.`}
+${customPrompt ? `
+[VORGABEN — HÖCHSTE PRIORITÄT, überschreibt INHALT]
+${customPrompt}
+"nur X" = wirklich nur X. "kein X" = wirklich kein X. Stichworte → IHK-Einträge im Stil oben.
+` : ''}
+[FACHVOKABULAR] ${prof ? `${profName} — Tools (wenn passend): ${(prof.tools || []).slice(0, 14).join(', ')}` : profName}
+
+[AUFTRAG] Genau ${selectedDays.length} Array-Elemente für: ${daysList}. KW ${calendarWeek}.`;
+}
+
+// ─── JSON-Extraktion (Mirror von _repairJSON aus index.html) ──────────────
+function extractJSON(text) {
+  let s = (text || '').trim();
+  if (s.startsWith('```')) s = s.replace(/^```(?:json)?\s*/, '').replace(/\s*```\s*$/, '');
+  const start = s.indexOf('[');
+  const end = s.lastIndexOf(']');
+  if (start === -1 || end === -1 || end < start) return { json: null, err: 'kein [ … ] Block' };
+  const candidate = s.slice(start, end + 1);
+  try { return { json: JSON.parse(candidate) }; }
+  catch (e) {
+    try { return { json: JSON.parse(candidate.replace(/,(\s*[}\]])/g, '$1')), repaired: true }; }
+    catch (e2) { return { json: null, err: e.message }; }
+  }
+}
+
+function collectEntries(json) {
+  const out = [];
+  if (!Array.isArray(json)) return out;
+  for (const d of json) for (const e of (d?.entries || [])) out.push(e);
+  return out;
+}
+
+function checkStructure(json, expectedDayIdx) {
+  const issues = [];
+  if (!Array.isArray(json)) { issues.push('Root ist kein Array'); return issues; }
+  if (json.length !== expectedDayIdx.length) issues.push(`Tagesanzahl ${json.length}/${expectedDayIdx.length}`);
+  const expectedNames = expectedDayIdx.map(i => DAY_NAMES[i]);
+  json.forEach((d, i) => {
+    if (!d || typeof d !== 'object') { issues.push(`Tag ${i+1}: kein Objekt`); return; }
+    const expected = expectedNames[i];
+    if (expected && d.day !== expected) issues.push(`Tag ${i+1}: "${d.day}" statt "${expected}"`);
+    if (!Array.isArray(d.entries)) issues.push(`${d.day || 'Tag '+(i+1)}: entries kein Array`);
+    else {
+      if (d.entries.length < 3 || d.entries.length > 5) issues.push(`${d.day}: ${d.entries.length} Einträge (3-5 nötig)`);
+      d.entries.forEach((e, idx) => {
+        if (typeof e !== 'string' || e.trim().length === 0) issues.push(`${d.day} #${idx+1}: leer`);
+      });
+    }
+    if (d.hours !== 8) issues.push(`${d.day}: hours=${d.hours} (8 nötig)`);
+    if (typeof d.isSchoolDay !== 'boolean') issues.push(`${d.day}: isSchoolDay nicht boolean`);
+    if (d.schoolTopic !== null && typeof d.schoolTopic !== 'string') issues.push(`${d.day}: schoolTopic Typ`);
+  });
+  return issues;
+}
+
+function checkStichpunktStil(entries) {
+  const issues = [];
+  const subjektStart = /^(ich\s+(habe|bin|werde)|heute\s+(habe|war|bin)|wir\s+(haben|sind)|am\s+(vormittag|nachmittag)|im\s+laufe\s+des\s+tages|außerdem\s+habe\s+ich)/i;
+  const floskeln = /\b(viel\s+gelernt|interessant|spannend|hat\s+spaß\s+gemacht|war\s+(sehr|recht)\s+\w+|toll|super|schön|fantastisch)\b/i;
+  entries.forEach((e, i) => {
+    const t = e.trim();
+    const wc = t.split(/\s+/).length;
+    if (wc > 10) issues.push(`#${i+1} (${wc} W): "${t.slice(0,40)}…"`);
+    if (subjektStart.test(t)) issues.push(`#${i+1} Subjekt: "${t.slice(0,40)}…"`);
+    if (floskeln.test(t)) issues.push(`#${i+1} Floskel: "${t.slice(0,40)}…"`);
+    if (/[.!?]\s+[A-ZÄÖÜ]/.test(t)) issues.push(`#${i+1} mehrere Sätze`);
+  });
+  return issues;
+}
+
+function checkVariation(json) {
+  const issues = [];
+  if (!Array.isArray(json) || json.length < 2) return issues;
+  const entries = collectEntries(json).map(e => e.trim().toLowerCase());
+  const seen = new Set(); let dupes = 0;
+  for (const e of entries) { if (seen.has(e)) dupes++; else seen.add(e); }
+  if (dupes > 0) issues.push(`${dupes} identische Einträge über Tage`);
+  const dayWords = json.map(d => new Set(
+    (d.entries || []).join(' ').toLowerCase().split(/[^a-zäöüß]+/i).filter(w => w.length > 4)
+  ));
+  for (let a = 0; a < json.length; a++) {
+    for (let b = a + 1; b < json.length; b++) {
+      const wa = dayWords[a], wb = dayWords[b];
+      if (wa.size === 0 || wb.size === 0) continue;
+      const inter = [...wa].filter(w => wb.has(w)).length;
+      const overlap = inter / Math.min(wa.size, wb.size);
+      if (overlap > 0.7) issues.push(`Tag ${a+1}↔${b+1}: ${Math.round(overlap*100)}% Wortüberlappung`);
+    }
+  }
+  return issues;
+}
+
+function checkFachvokabular(entries, professionId) {
+  const issues = [];
+  const prof = PROFESSIONS[professionId];
+  if (!prof) return issues;
+  const text = entries.join(' ').toLowerCase();
+  const hits = prof.tools.filter(t => text.includes(t.toLowerCase()));
+  if (hits.length === 0) issues.push(`Kein Fachvokabular (erwartet z.B. ${prof.tools.slice(0,4).join('/')})`);
+  else if (hits.length === 1) issues.push(`Nur 1 Fachterm (${hits[0]})`);
+  return issues;
+}
+
+function checkAntiHalluzination(entries) {
+  const issues = [];
+  const text = entries.join(' ');
+  if (/\b(?!0\.|1\.|2\.|3\.)\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/.test(text)) issues.push('IP-Adresse erfunden');
+  if (/\b(Herr|Frau)\s+[A-ZÄÖÜ][a-zäöüß]+/.test(text))                       issues.push('Personenname erfunden');
+  if (/\b[A-ZÄÖÜ][a-zA-ZäöüßÄÖÜ]{2,}\s+(GmbH|AG|KG|OHG|SE)\b/.test(text))    issues.push('Firmenname erfunden');
+  if (/\b\d{3,}\s?(€|EUR|Euro)\b/i.test(text))                                issues.push('Geldsumme erfunden');
+  if (/\bTicket[\s-]?#?\d{3,}\b/i.test(text))                                 issues.push('Ticket-Nr erfunden');
+  return issues;
+}
+
+function checkSchultag(json, expectExactlyOne) {
+  const issues = [];
+  if (!Array.isArray(json)) return issues;
+  const schoolDays = json.filter(d => d?.isSchoolDay === true);
+  if (expectExactlyOne) {
+    if (schoolDays.length !== 1) issues.push(`${schoolDays.length} Schultage statt 1`);
+    for (const d of schoolDays) {
+      if (!d.schoolTopic || typeof d.schoolTopic !== 'string' || d.schoolTopic.trim().length < 3) {
+        issues.push(`Schultag ${d.day}: schoolTopic fehlt/leer`);
+      }
+    }
+  } else {
+    if (schoolDays.length !== 0) issues.push(`${schoolDays.length} Schultage trotz includeSchool=false`);
+    for (const d of json) if (d?.schoolTopic) issues.push(`${d.day}: schoolTopic gesetzt`);
+  }
+  return issues;
+}
+
+// ─── TESTS (gleich wie ai.js) ─────────────────────────────────────────────
+const TESTS = [
+  {
+    name: 'JSON-Struktur (FISI-SI 2.Lj, Mo-Fr, kein Schultag)',
+    weight: 5,
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false, department: 'IT-Infrastruktur' },
+    check: (text, o) => {
+      const { json, err, repaired } = extractJSON(text);
+      if (!json) return [`JSON unparsbar: ${err}`];
+      const issues = [...checkStructure(json, o.selectedDays), ...checkSchultag(json, false)];
+      if (repaired) issues.push('JSON brauchte Repair');
+      return issues;
+    },
+  },
+  {
+    name: 'Stichpunkt-Stil (max 10 Wörter, keine Subjekt-Sätze)',
+    weight: 4,
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false },
+    check: (text) => {
+      const { json } = extractJSON(text);
+      if (!json) return ['JSON unparsbar — Stil nicht prüfbar'];
+      return checkStichpunktStil(collectEntries(json));
+    },
+  },
+  {
+    name: 'Tagesvariation (keine Wiederholung)',
+    weight: 3,
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false },
+    check: (text) => {
+      const { json } = extractJSON(text);
+      if (!json) return ['JSON unparsbar'];
+      return checkVariation(json);
+    },
+  },
+  {
+    name: 'Fachvokabular (FISI-SI Tools)',
+    weight: 3,
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false },
+    check: (text, o) => {
+      const { json } = extractJSON(text);
+      if (!json) return ['JSON unparsbar'];
+      return checkFachvokabular(collectEntries(json), o.professionId);
+    },
+  },
+  {
+    name: 'Custom-Prompt-Priorität (Lager-Woche)',
+    weight: 5,
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false,
+               customPrompt: 'Diese Woche AUSSCHLIESSLICH im Lager: Hardware ausgepackt, inventarisiert, auf Bestellscheine geprüft, Asset-Tags angebracht. KEIN Server, KEIN Netzwerk, KEIN Ticket, KEIN AD, KEIN Firewall.' },
+    check: (text) => {
+      const { json } = extractJSON(text);
+      if (!json) return ['JSON unparsbar'];
+      const t = collectEntries(json).join(' ').toLowerCase();
+      const issues = [];
+      const mussRein = ['lager','hardware','inventar','asset','bestellschein','auspack','etiket'];
+      const mussInsg = mussRein.filter(k => t.includes(k)).length;
+      if (mussInsg === 0) issues.push('Custom-Vorgabe komplett ignoriert');
+      else if (mussInsg < 3) issues.push(`Custom nur lückenhaft (${mussInsg}/${mussRein.length})`);
+      ['server','netzwerk','ticket','firewall','vlan','active directory'].forEach(v => {
+        if (t.includes(v)) issues.push(`Verbotenes Thema "${v}"`);
+      });
+      return issues;
+    },
+  },
+  {
+    name: 'Schultag-Handling (1 Tag = Schule)',
+    weight: 4,
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: true },
+    check: (text, o) => {
+      const { json } = extractJSON(text);
+      if (!json) return ['JSON unparsbar'];
+      return [...checkStructure(json, o.selectedDays), ...checkSchultag(json, true)];
+    },
+  },
+  {
+    name: 'Anti-Halluzination',
+    weight: 4,
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false,
+               customPrompt: 'Erfinde NICHTS Konkretes — keine IP-Adressen, keine Namen, keine Firmennamen, keine Geldbeträge, keine Ticket-Nummern.' },
+    check: (text) => {
+      const { json } = extractJSON(text);
+      if (!json) return ['JSON unparsbar'];
+      return checkAntiHalluzination(collectEntries(json));
+    },
+  },
+  {
+    name: '1. Lehrjahr-Niveau',
+    weight: 2,
+    options: { professionId: 'sysadmin', yearNum: 1, complexity: 'low', selectedDays: [0,1,2,3,4], includeSchool: false },
+    check: (text) => {
+      const { json } = extractJSON(text);
+      if (!json) return ['JSON unparsbar'];
+      const t = collectEntries(json).join(' ').toLowerCase();
+      const issues = [];
+      ['ha-cluster','hochverfügbar','disaster recovery','server-migration','schichtleitung','sicherheitskonzept erarbeitet','azubi angeleitet'].forEach(p => {
+        if (t.includes(p)) issues.push(`zu fortgeschritten für 1.LJ: "${p}"`);
+      });
+      return issues;
+    },
+  },
+  {
+    name: 'Multi-Beruf: Koch 2.Lj',
+    weight: 3,
+    options: { professionId: 'gastronomie', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false, department: 'Küche' },
+    check: (text, o) => {
+      const { json } = extractJSON(text);
+      if (!json) return ['JSON unparsbar'];
+      const entries = collectEntries(json);
+      const issues = [...checkStructure(json, o.selectedDays), ...checkFachvokabular(entries, 'gastronomie')];
+      const t = entries.join(' ').toLowerCase();
+      ['server','firewall','vlan','active directory','router','ticket','datenbank'].forEach(v => {
+        if (t.includes(v)) issues.push(`IT-Vokabular im Koch-Bericht: "${v}"`);
+      });
+      return issues;
+    },
+  },
+  {
+    name: 'Teilwoche (Mo/Mi/Fr, Kaufmann)',
+    weight: 2,
+    options: { professionId: 'kaufmann', yearNum: 2, complexity: 'medium', selectedDays: [0,2,4], includeSchool: false, department: 'Buchhaltung' },
+    check: (text, o) => {
+      const { json } = extractJSON(text);
+      if (!json) return ['JSON unparsbar'];
+      return [...checkStructure(json, o.selectedDays), ...checkFachvokabular(collectEntries(json), o.professionId)];
+    },
+  },
+];
+
+// ─── API Call ─────────────────────────────────────────────────────────────
+async function callModel(modelId, prompt, apiKey, signal) {
+  const start = performance.now();
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), HTTP_TIMEOUT_MS);
+  if (signal) signal.addEventListener('abort', () => ac.abort());
+
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      signal: ac.signal,
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://myworklog.de',
+        'X-Title': 'MyWorkLog Berichtsheft Browser-Bench',
+      },
+      body: JSON.stringify({
+        model: modelId,
+        max_tokens: PROD_MAX_TOKENS,
+        temperature: PROD_TEMPERATURE,
+        top_p: PROD_TOP_P,
+        response_format: { type: 'json_object' },
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    clearTimeout(timer);
+    const ms = Math.round(performance.now() - start);
+    const data = await res.json();
+    if (!res.ok) return { ok: false, ms, error: data?.error?.message || `HTTP ${res.status}` };
+    const text = data.choices?.[0]?.message?.content?.trim() || '';
+    return { ok: true, ms, text };
+  } catch (e) {
+    clearTimeout(timer);
+    return { ok: false, ms: Math.round(performance.now() - start), error: e.name === 'AbortError' ? `TIMEOUT (>${HTTP_TIMEOUT_MS/1000}s)` : e.message };
+  }
+}
+
+function scoreResult(result, test) {
+  if (!result.ok) return { score: 0, issues: [`FEHLER: ${result.error}`] };
+  const issues = test.check(result.text, test.options);
+  return { score: Math.max(0, 10 - issues.length * 2), issues };
+}
+
+function classifyScore(score) {
+  if (score >= 80) return { grade: 'A', tag: 'Produktions-tauglich' };
+  if (score >= 65) return { grade: 'B', tag: 'Brauchbar mit Vorbehalt' };
+  if (score >= 50) return { grade: 'C', tag: 'Nur als Fallback' };
+  if (score >= 30) return { grade: 'D', tag: 'Notnagel' };
+  return { grade: 'F', tag: 'NICHT geeignet' };
+}
+
+// ─── UI ───────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const el = (tag, props = {}, children = []) => {
+  const e = document.createElement(tag);
+  Object.entries(props).forEach(([k, v]) => {
+    if (k === 'class') e.className = v;
+    else if (k === 'style') e.style.cssText = v;
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  });
+  (Array.isArray(children) ? children : [children]).forEach(c => {
+    if (c == null) return;
+    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  });
+  return e;
+};
+
+function getKey()  { return localStorage.getItem(STORAGE_KEY) || ''; }
+function setKey(k) { localStorage.setItem(STORAGE_KEY, k); updateKeyStatus(); }
+function clrKey()  { localStorage.removeItem(STORAGE_KEY); updateKeyStatus(); }
+function updateKeyStatus() {
+  const k = getKey();
+  $('keyDot').className = 'dot' + (k ? ' ok' : '');
+  $('keyStatus').textContent = k ? `Key gespeichert (…${k.slice(-6)})` : 'Kein Key gespeichert';
+}
+
+function renderModelCard(model) {
+  return el('div', { class: 'model-card', id: 'mc-' + model.id.replace(/[^a-z0-9]/gi, '_') }, [
+    el('div', { class: 'model-head' }, [
+      el('div', {}, [
+        el('div', { class: 'model-name' }, model.label),
+        el('div', { class: 'model-id' }, model.id),
+      ]),
+      el('div', { class: 'model-role' }, model.role),
+    ]),
+    el('div', { class: 'mc-body' }, [
+      el('div', { class: 'score', id: 'mc-score-' + model.id }, '—'),
+      el('div', { class: 'score-meta', id: 'mc-meta-' + model.id }, 'Wartet…'),
+      el('div', { class: 'progress' }, [
+        el('div', { class: 'progress-bar', id: 'mc-bar-' + model.id }),
+      ]),
+    ]),
+    el('details', { id: 'mc-details-' + model.id }, [
+      el('summary', {}, 'Details'),
+      el('div', { id: 'mc-tests-' + model.id }),
+    ]),
+  ]);
+}
+
+function updateModelCard(modelId, state) {
+  const card = $('mc-' + modelId.replace(/[^a-z0-9]/gi, '_'));
+  if (!card) return;
+  card.classList.remove('running', 'done', 'failed');
+  if (state.status) card.classList.add(state.status);
+  if (state.score != null) {
+    $('mc-score-' + modelId).textContent = state.score.toFixed(0) + '%';
+    const k = classifyScore(state.score);
+    $('mc-score-' + modelId).innerHTML = `${state.score.toFixed(0)}% <span class="grade grade-${k.grade}">${k.grade}</span>`;
+  }
+  if (state.meta) $('mc-meta-' + modelId).textContent = state.meta;
+  if (state.progress != null) $('mc-bar-' + modelId).style.width = (state.progress * 100) + '%';
+}
+
+function renderTestRow(modelId, test, evaluation, result, idx) {
+  const cont = $('mc-tests-' + modelId);
+  const cls = evaluation.score >= 8 ? 's-good' : evaluation.score >= 5 ? 's-mid' : 's-bad';
+  const row = el('div', { style: 'padding: 8px 0; border-bottom: 1px solid var(--border);' }, [
+    el('div', { style: 'display:flex; justify-content:space-between; gap:8px; font-size:12px;' }, [
+      el('span', {}, `${idx+1}. ${test.name}`),
+      el('span', { class: cls, style: 'font:600 12px var(--font-mono);' }, `${evaluation.score}/10 · ${result.ms}ms`),
+    ]),
+  ]);
+  if (evaluation.issues.length) {
+    row.appendChild(el('ul', { class: 'issues' },
+      evaluation.issues.map(i => el('li', {}, i))
+    ));
+  }
+  if (result.ok && result.text) {
+    const det = el('details', {}, [
+      el('summary', {}, 'Raw Response'),
+      el('div', { class: 'raw' }, result.text.slice(0, 2000) + (result.text.length > 2000 ? '\n…' : '')),
+    ]);
+    row.appendChild(det);
+  }
+  cont.appendChild(row);
+}
+
+function renderMatrix(scores) {
+  const t = $('matrixTable');
+  t.innerHTML = '';
+  const sorted = [...scores].sort((a,b) => b.finalScore - a.finalScore);
+  const thead = el('thead', {}, [
+    el('tr', {}, [
+      el('th', {}, 'Test'),
+      ...sorted.map(s => el('th', { style: 'text-align:center;' }, s.model.label)),
+    ]),
+  ]);
+  const tbody = el('tbody', {}, TESTS.map((test, i) => {
+    return el('tr', {}, [
+      el('td', { class: 'test-name' }, `${i+1}. ${test.name}`),
+      ...sorted.map(s => {
+        const ev = s.results[i]?.evaluation;
+        if (!ev) return el('td', { class: 'score-cell' }, 'n/a');
+        const cls = ev.score >= 8 ? 's-good' : ev.score >= 5 ? 's-mid' : 's-bad';
+        return el('td', { class: 'score-cell ' + cls }, `${ev.score}/10`);
+      }),
+    ]);
+  }));
+  t.appendChild(thead);
+  t.appendChild(tbody);
+  $('matrixCard').style.display = 'block';
+}
+
+function renderRecommendations(scores) {
+  const sorted = [...scores].sort((a,b) => b.finalScore - a.finalScore);
+  const usable = sorted.filter(s => s.finalScore >= 30);
+  const cont = $('recommendations');
+  cont.innerHTML = '';
+  if (usable.length === 0) {
+    cont.appendChild(el('div', { class: 'rec-item', style: 'color: var(--danger);' },
+      'Kein Modell erreicht die Mindest-Qualität (30%).'));
+  } else {
+    const labels = ['Primary', 'Fallback 1', 'Fallback 2', 'Last Resort'];
+    usable.forEach((s, i) => {
+      cont.appendChild(el('div', { class: 'rec-item' }, [
+        el('span', { class: 'rec-rank' }, String(i+1)),
+        el('span', { style: 'flex:1;' }, s.model.id),
+        el('span', { style: 'color: var(--text-muted);' }, `${s.finalScore.toFixed(0)}% · ${s.avgMs.toFixed(0)}ms`),
+        el('span', { style: 'color: var(--text-dim); font-size: 11px;' }, labels[i] || ''),
+      ]));
+    });
+  }
+  $('recCard').style.display = 'block';
+}
+
+// ─── Benchmark Runner ─────────────────────────────────────────────────────
+let CANCEL = null;
+let LAST = null;
+
+async function runBenchmark(modelFilter) {
+  const apiKey = getKey();
+  if (!apiKey) { alert('Bitte zuerst OpenRouter API Key speichern.'); return null; }
+
+  const models = modelFilter ? MODELS.filter(m => m.id === modelFilter) : MODELS;
+  if (models.length === 0) { alert('Modell nicht gefunden: ' + modelFilter); return null; }
+
+  CANCEL = new AbortController();
+  $('runBtn').disabled = true;
+  $('cancelBtn').disabled = false;
+
+  // Setup model cards
+  const container = $('modelsContainer');
+  container.innerHTML = '';
+  models.forEach(m => container.appendChild(renderModelCard(m)));
+
+  const allScores = [];
+  let globalDone = 0;
+  const globalTotal = models.length * TESTS.length;
+
+  for (const model of models) {
+    updateModelCard(model.id, { status: 'running', meta: 'Läuft…' });
+    const results = [];
+    let totalScore = 0, totalWeight = 0, totalMs = 0, okCount = 0;
+
+    for (let i = 0; i < TESTS.length; i++) {
+      if (CANCEL.signal.aborted) break;
+      const test = TESTS[i];
+      const prompt = buildProdPrompt(test.options);
+      const result = await callModel(model.id, prompt, apiKey, CANCEL.signal);
+      const evaluation = scoreResult(result, test);
+      results.push({ test, result, evaluation });
+      totalWeight += test.weight;
+      totalScore  += evaluation.score * test.weight;
+      if (result.ok) { totalMs += result.ms; okCount++; }
+      renderTestRow(model.id, test, evaluation, result, i);
+
+      globalDone++;
+      updateModelCard(model.id, {
+        progress: (i + 1) / TESTS.length,
+        meta: `Test ${i+1}/${TESTS.length}`,
+      });
+      $('globalProgress').innerHTML = `<span class="dot ok"></span>${globalDone}/${globalTotal} Calls`;
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    const avgMs = okCount > 0 ? totalMs / okCount : 0;
+    const finalScore = totalWeight > 0 ? (totalScore / (totalWeight * 10)) * 100 : 0;
+    const failCount = TESTS.length - okCount;
+
+    updateModelCard(model.id, {
+      status: CANCEL.signal.aborted ? 'failed' : 'done',
+      score: finalScore,
+      meta: `Ø ${avgMs.toFixed(0)}ms · ${okCount}/${TESTS.length} OK`,
+      progress: 1,
+    });
+
+    allScores.push({ model, finalScore, avgMs, failCount, results });
+
+    if (CANCEL.signal.aborted) break;
+    await new Promise(r => setTimeout(r, 800));
+  }
+
+  if (allScores.length > 1) {
+    renderMatrix(allScores);
+    renderRecommendations(allScores);
+  }
+
+  LAST = allScores;
+  if (window.MWLBench) window.MWLBench.last = allScores;
+  $('runBtn').disabled = false;
+  $('cancelBtn').disabled = true;
+  CANCEL = null;
+  return allScores;
+}
+
+// ─── Bindings ─────────────────────────────────────────────────────────────
+$('saveKeyBtn').addEventListener('click', () => {
+  const v = $('apiKeyInput').value.trim();
+  if (!v) return alert('Key ist leer.');
+  setKey(v);
+  $('apiKeyInput').value = '';
+});
+$('clearKeyBtn').addEventListener('click', () => {
+  clrKey();
+  $('apiKeyInput').value = '';
+});
+$('runBtn').addEventListener('click', () => runBenchmark());
+$('cancelBtn').addEventListener('click', () => { if (CANCEL) CANCEL.abort(); });
+
+updateKeyStatus();
+$('cfgModels').textContent = MODELS.length;
+$('cfgTests').textContent = TESTS.length;
+$('cfgCalls').textContent = MODELS.length * TESTS.length;
+
+// ─── Console-Hook ─────────────────────────────────────────────────────────
+window.MWLBench = {
+  run: runBenchmark,
+  runOne: (modelId) => runBenchmark(modelId),
+  cancel: () => { if (CANCEL) CANCEL.abort(); },
+  setKey, getKey, clrKey,
+  MODELS, TESTS, PROFESSIONS,
+  buildProdPrompt,
+  last: null,
+};
+
+console.log('%c MyWorkLog Berichtsheft Bench bereit ', 'background:#a855f7;color:#fff;padding:4px 8px;border-radius:4px;font-weight:600;');
+console.log('Console-API:');
+console.log('  MWLBench.run()                          — alle Modelle, alle Tests');
+console.log("  MWLBench.runOne('openai/gpt-oss-120b:free')  — nur ein Modell");
+console.log('  MWLBench.cancel()                       — laufenden Run abbrechen');
+console.log('  MWLBench.last                           — Ergebnis-Array vom letzten Run');
+console.log("  MWLBench.setKey('sk-or-…')              — Key setzen ohne UI");
+</script>
+</body>
+</html>
