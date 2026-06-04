@@ -304,7 +304,7 @@ const MODELS = [
   { id: 'openai/gpt-oss-120b:free',            label: 'GPT-OSS 120B',        role: 'Primary' },
   { id: 'liquid/lfm-2.5-1.2b-instruct:free',   label: 'LFM 1.2B Instruct',   role: 'Fallback 1' },
   { id: 'nvidia/nemotron-3-nano-30b-a3b:free', label: 'Nemotron 3 Nano 30B', role: 'Fallback 2' },
-  { id: 'moonshotai/kimi-k2.6:free',           label: 'Kimi K2.6',           role: 'Wildcard (nicht in Prod)' },
+  { id: 'openai/gpt-oss-20b:free',             label: 'GPT-OSS 20B',         role: 'Wildcard (nicht in Prod)' },
 ];
 
 const PROD_TEMPERATURE = 0.9;
@@ -341,7 +341,7 @@ const DAY_NAMES = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag'];
 function buildProdPrompt(opts) {
   const {
     professionId, yearNum = 2, complexity = 'medium',
-    selectedDays = [0,1,2,3,4], includeSchool = false,
+    selectedDays = [0,1,2,3,4], schoolDayIndex = null,
     department = '', customPrompt = '', calendarWeek = 10,
     season = 'Frühling',
   } = opts;
@@ -356,10 +356,28 @@ function buildProdPrompt(opts) {
     : '· 3. LJ: komplexe/eigenverantwortliche Aufgaben, Anleitung von Jüngeren';
   const schoolTopicsHint = (prof?.schoolTopics || []).slice(0,5).join(', ');
 
-  return `Du bist Auszubildender zum ${profName} im ${yearNum}. Lehrjahr und schreibst deinen wöchentlichen IHK-Berichtsheft.
+  const retryPrefix = opts._retryHint
+    ? `[ACHTUNG — VORHERIGER VERSUCH FALSCH] ${opts._retryHint}\n\n`
+    : '';
 
-[AUSGABE] Nur gültiges JSON-Array. Kein Markdown, kein Text drumherum.
-Schema: [{"day":"Montag","entries":["…","…",…],"hours":8,"isSchoolDay":false,"schoolTopic":null}, …]
+  return `${retryPrefix}Du bist Auszubildender zum ${profName} im ${yearNum}. Lehrjahr und schreibst deinen wöchentlichen IHK-Berichtsheft.
+
+[KRITISCH — ANTWORT-FORMAT]
+Antwort = JSON-ARRAY mit GENAU ${selectedDays.length} VOLLSTÄNDIGEN Tag-Objekten. Jedes Element MUSS alle 5 Felder enthalten: day, entries, hours, isSchoolDay, schoolTopic.
+
+✓ RICHTIG (vollständige Struktur):
+[
+  {"day":"Montag","entries":["Tätigkeit 1","Tätigkeit 2","Tätigkeit 3"],"hours":8,"isSchoolDay":false,"schoolTopic":null},
+  {"day":"Dienstag","entries":["…","…","…"],"hours":8,"isSchoolDay":false,"schoolTopic":null}
+  … (gesamt ${selectedDays.length} Tage)
+]
+
+✗ FALSCH:  {"day":"Montag",...}                ← einzelnes Objekt
+✗ FALSCH:  {"days":[…]}                        ← verschachtelt
+✗ FALSCH:  ["Montag: …","Dienstag: …"]        ← Strings statt Objekten
+✗ FALSCH:  [["Tätigkeit 1","Tätigkeit 2"]]    ← nur entries ohne day-Feld
+
+Kein Markdown. Kein Text drumherum. Antwort beginnt mit [ und endet mit ].
 
 [STIL]
 - Jeder Eintrag startet DIREKT mit der Tätigkeit. Max 10 Wörter. EINE Tätigkeit, keine "und"-Verkettung.
@@ -375,9 +393,11 @@ Schema: [{"day":"Montag","entries":["…","…",…],"hours":8,"isSchoolDay":fal
 - Kein Tag wiederholt sich. Bleibe strikt im Beruf "${profName}" — kein bereichsfremder Inhalt.
 - Saison: ${season}${department ? `. Abteilung: ${department}` : ''}
 
-[SCHULE] ${includeSchool
-  ? `Genau EIN Tag: isSchoolDay=true, schoolTopic="konkretes Thema" (z.B. ${schoolTopicsHint || 'Rahmenlehrplan'}). Andere Tage: false/null.`
-  : `Alle Tage: isSchoolDay=false, schoolTopic=null.`}
+[SCHULE] ${(typeof schoolDayIndex === 'number' && schoolDayIndex >= 0)
+  ? `Schultag ist GENAU ${DAY_NAMES[schoolDayIndex]} — kein anderer Tag.
+- ${DAY_NAMES[schoolDayIndex]}:  isSchoolDay=true (boolean), schoolTopic="<konkretes Fach z.B. ${schoolTopicsHint || 'Rahmenlehrplan'}>", entries=[3-5 Schul-Themen die behandelt wurden, ✓ "Subnetting geübt" "Active Directory besprochen" — NICHT Betriebs-Tätigkeiten]
+- Alle anderen Tage: isSchoolDay=false (IMMER boolean, NIEMALS null), schoolTopic=null, entries=[normale Betriebs-Tätigkeiten]`
+  : `Kein Schultag diese Woche. Alle Tage: isSchoolDay=false (IMMER boolean, NIEMALS null), schoolTopic=null.`}
 ${customPrompt ? `
 [VORGABEN — HÖCHSTE PRIORITÄT, überschreibt INHALT]
 ${customPrompt}
@@ -388,19 +408,100 @@ ${customPrompt}
 [AUFTRAG] Genau ${selectedDays.length} Array-Elemente für: ${daysList}. KW ${calendarWeek}.`;
 }
 
-// ─── JSON-Extraktion (Mirror von _repairJSON aus index.html) ──────────────
+// ─── JSON-Extraktion (Mirror von index.html generateWithGemini) ───────────
+// mode: 'direct' | 'repaired' | 'truncation-repaired' | 'multi-day-split' | 'unescaped' | 'unwrapped:KEY' | 'wrapped-single' | 'fail'
+
+// Pre-Fix: bekannte Modell-Output-Bugs reparieren bevor JSON.parse läuft.
+// Wichtig: dup-key-Bug erkennt JSON.parse selbst nicht (es behält stillschweigend den letzten Key) —
+// wir müssen das VOR dem Parse aufsplitten, sonst gehen 4/5 Tage verloren.
+function preFixJSON(str) {
+  let s = str;
+  const fixes = [];
+  // Fix A: Multi-day in einem Objekt → in Array splitten
+  // Pattern: {"day":"Mo",…,"day":"Di",…,"day":"Mi",…}  →  [{…},{…},{…}]
+  if (s.trim().startsWith('{') && (s.match(/"day"\s*:/g) || []).length > 1) {
+    s = '[' + s.replace(/,\s*("day"\s*:\s*")/g, '},{$1') + ']';
+    fixes.push('multi-day-split');
+  }
+  // Fix B: Doppel-Escape von Struktur-Quotes (Modell schreibt \" wo " hingehört).
+  // Konservativ: nur \": und :\" Pattern, die strukturell wirken (außerhalb von Werten)
+  if (/\\":|:\\"/.test(s)) {
+    s = s.replace(/\\":/g, '":').replace(/:\\"/g, ':"');
+    fixes.push('unescaped');
+  }
+  return { str: s, fixes };
+}
+
+function repairTruncatedJSON(str) {
+  // Trailing commas vor ] oder } entfernen
+  str = str.replace(/,(\s*[}\]])/g, '$1');
+  // Offene Brackets/Braces durchzählen und schließen (LFM-Truncation)
+  const opens = [];
+  let inStr = false, escaped = false;
+  for (const ch of str) {
+    if (escaped) { escaped = false; continue; }
+    if (ch === '\\') { escaped = true; continue; }
+    if (ch === '"') { inStr = !inStr; continue; }
+    if (!inStr) {
+      if (ch === '[' || ch === '{') opens.push(ch);
+      else if (ch === ']' || ch === '}') opens.pop();
+    }
+  }
+  if (inStr) str += '"';
+  for (let i = opens.length - 1; i >= 0; i--) str += opens[i] === '[' ? ']' : '}';
+  return str;
+}
+
 function extractJSON(text) {
   let s = (text || '').trim();
   if (s.startsWith('```')) s = s.replace(/^```(?:json)?\s*/, '').replace(/\s*```\s*$/, '');
-  const start = s.indexOf('[');
-  const end = s.lastIndexOf(']');
-  if (start === -1 || end === -1 || end < start) return { json: null, err: 'kein [ … ] Block' };
-  const candidate = s.slice(start, end + 1);
-  try { return { json: JSON.parse(candidate) }; }
-  catch (e) {
-    try { return { json: JSON.parse(candidate.replace(/,(\s*[}\]])/g, '$1')), repaired: true }; }
-    catch (e2) { return { json: null, err: e.message }; }
+
+  // 1. ROOT-Bracket erkennen anhand des ERSTEN { oder [.
+  // Wichtig: wenn das erste Zeichen { ist, NICHT greedy nach [ suchen — wir würden
+  // sonst ein entries-Array mitten im Day-Objekt als Day-Array missinterpretieren.
+  const aStart = s.indexOf('[');
+  const oStart = s.indexOf('{');
+  const arrayIsRoot  = aStart !== -1 && (oStart === -1 || aStart < oStart);
+  const objectIsRoot = !arrayIsRoot && oStart !== -1;
+
+  let candidate;
+  if (arrayIsRoot) {
+    const aEnd = s.lastIndexOf(']');
+    candidate = aEnd > aStart ? s.slice(aStart, aEnd + 1) : s.slice(aStart); // Truncation: kein ] → bis Ende
+  } else if (objectIsRoot) {
+    const oEnd = s.lastIndexOf('}');
+    candidate = oEnd > oStart ? s.slice(oStart, oEnd + 1) : s.slice(oStart); // Truncation: kein } → bis Ende
+  } else {
+    return { json: null, mode: 'fail', err: 'kein JSON-Block' };
   }
+
+  // 2. Pre-Fix bekannte Modell-Bugs (dup-keys, double-escape) — vor JSON.parse!
+  const preFix = preFixJSON(candidate);
+  candidate = preFix.str;
+  let parsed = null;
+  let mode = preFix.fixes.length ? preFix.fixes.join('+') : 'direct';
+
+  // 3. Parse-Versuche: direkt → trailing-comma-fix → bracket-completion
+  try { parsed = JSON.parse(candidate); }
+  catch (_) {
+    try { parsed = JSON.parse(candidate.replace(/,(\s*[}\]])/g, '$1')); mode = (mode === 'direct' ? 'repaired' : mode + '+repaired'); }
+    catch (_) {
+      try { parsed = JSON.parse(repairTruncatedJSON(candidate)); mode = (mode === 'direct' ? 'truncation-repaired' : mode + '+truncated'); }
+      catch (e) { return { json: null, mode: 'fail', err: e.message }; }
+    }
+  }
+
+  // 3. Tolerantes Unwrapping — aber nur wenn Items wirklich Day-shaped sind
+  const looksLikeDay = (x) => x && typeof x === 'object' && typeof x.day === 'string';
+  if (!Array.isArray(parsed) && parsed && typeof parsed === 'object') {
+    if (Array.isArray(parsed.days) && parsed.days.length && parsed.days.every(looksLikeDay))      { parsed = parsed.days; mode = 'unwrapped:days'; }
+    else if (Array.isArray(parsed.week) && parsed.week.length && parsed.week.every(looksLikeDay)) { parsed = parsed.week; mode = 'unwrapped:week'; }
+    else if (Array.isArray(parsed.tage) && parsed.tage.length && parsed.tage.every(looksLikeDay)) { parsed = parsed.tage; mode = 'unwrapped:tage'; }
+    else if (typeof parsed.day === 'string') { parsed = [parsed]; mode = 'wrapped-single'; }
+  }
+
+  if (!Array.isArray(parsed)) return { json: null, mode: 'fail', err: 'kein Array nach Unwrap' };
+  return { json: parsed, mode };
 }
 
 function collectEntries(json) {
@@ -492,19 +593,29 @@ function checkAntiHalluzination(entries) {
   return issues;
 }
 
-function checkSchultag(json, expectExactlyOne) {
+function checkSchultag(json, expectedSchoolDayIdx) {
+  // expectedSchoolDayIdx: null = kein Schultag erwartet, sonst 0-4
   const issues = [];
   if (!Array.isArray(json)) return issues;
   const schoolDays = json.filter(d => d?.isSchoolDay === true);
-  if (expectExactlyOne) {
+  // Boolean-Check: isSchoolDay muss IMMER boolean sein
+  for (const d of json) {
+    if (typeof d?.isSchoolDay !== 'boolean') issues.push(`${d?.day || '?'}: isSchoolDay nicht boolean`);
+  }
+  if (typeof expectedSchoolDayIdx === 'number' && expectedSchoolDayIdx >= 0) {
+    const expectedName = DAY_NAMES[expectedSchoolDayIdx];
     if (schoolDays.length !== 1) issues.push(`${schoolDays.length} Schultage statt 1`);
+    // Genau dieser Tag soll Schultag sein
+    const target = json.find(d => d?.day === expectedName);
+    if (target && target.isSchoolDay !== true) issues.push(`${expectedName} nicht als Schultag markiert`);
     for (const d of schoolDays) {
+      if (d.day !== expectedName) issues.push(`falscher Schultag: ${d.day} statt ${expectedName}`);
       if (!d.schoolTopic || typeof d.schoolTopic !== 'string' || d.schoolTopic.trim().length < 3) {
         issues.push(`Schultag ${d.day}: schoolTopic fehlt/leer`);
       }
     }
   } else {
-    if (schoolDays.length !== 0) issues.push(`${schoolDays.length} Schultage trotz includeSchool=false`);
+    if (schoolDays.length !== 0) issues.push(`${schoolDays.length} Schultage trotz schoolDayIndex=null`);
     for (const d of json) if (d?.schoolTopic) issues.push(`${d.day}: schoolTopic gesetzt`);
   }
   return issues;
@@ -515,11 +626,11 @@ const TESTS = [
   {
     name: 'JSON-Struktur (FISI-SI 2.Lj, Mo-Fr, kein Schultag)',
     weight: 5,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false, department: 'IT-Infrastruktur' },
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null, department: 'IT-Infrastruktur' },
     check: (text, o) => {
       const { json, err, repaired } = extractJSON(text);
       if (!json) return [`JSON unparsbar: ${err}`];
-      const issues = [...checkStructure(json, o.selectedDays), ...checkSchultag(json, false)];
+      const issues = [...checkStructure(json, o.selectedDays), ...checkSchultag(json, null)];
       if (repaired) issues.push('JSON brauchte Repair');
       return issues;
     },
@@ -527,7 +638,7 @@ const TESTS = [
   {
     name: 'Stichpunkt-Stil (max 10 Wörter, keine Subjekt-Sätze)',
     weight: 4,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false },
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null },
     check: (text) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar — Stil nicht prüfbar'];
@@ -537,7 +648,7 @@ const TESTS = [
   {
     name: 'Tagesvariation (keine Wiederholung)',
     weight: 3,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false },
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null },
     check: (text) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar'];
@@ -547,7 +658,7 @@ const TESTS = [
   {
     name: 'Fachvokabular (FISI-SI Tools)',
     weight: 3,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false },
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null },
     check: (text, o) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar'];
@@ -557,7 +668,7 @@ const TESTS = [
   {
     name: 'Custom-Prompt-Priorität (Lager-Woche)',
     weight: 5,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false,
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null,
                customPrompt: 'Diese Woche AUSSCHLIESSLICH im Lager: Hardware ausgepackt, inventarisiert, auf Bestellscheine geprüft, Asset-Tags angebracht. KEIN Server, KEIN Netzwerk, KEIN Ticket, KEIN AD, KEIN Firewall.' },
     check: (text) => {
       const { json } = extractJSON(text);
@@ -575,19 +686,19 @@ const TESTS = [
     },
   },
   {
-    name: 'Schultag-Handling (1 Tag = Schule)',
+    name: 'Schultag-Handling (Mittwoch = Schule)',
     weight: 4,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: true },
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: 2 },
     check: (text, o) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar'];
-      return [...checkStructure(json, o.selectedDays), ...checkSchultag(json, true)];
+      return [...checkStructure(json, o.selectedDays), ...checkSchultag(json, o.schoolDayIndex)];
     },
   },
   {
     name: 'Anti-Halluzination',
     weight: 4,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false,
+    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null,
                customPrompt: 'Erfinde NICHTS Konkretes — keine IP-Adressen, keine Namen, keine Firmennamen, keine Geldbeträge, keine Ticket-Nummern.' },
     check: (text) => {
       const { json } = extractJSON(text);
@@ -598,7 +709,7 @@ const TESTS = [
   {
     name: '1. Lehrjahr-Niveau',
     weight: 2,
-    options: { professionId: 'sysadmin', yearNum: 1, complexity: 'low', selectedDays: [0,1,2,3,4], includeSchool: false },
+    options: { professionId: 'sysadmin', yearNum: 1, complexity: 'low', selectedDays: [0,1,2,3,4], schoolDayIndex: null },
     check: (text) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar'];
@@ -613,7 +724,7 @@ const TESTS = [
   {
     name: 'Multi-Beruf: Koch 2.Lj',
     weight: 3,
-    options: { professionId: 'gastronomie', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], includeSchool: false, department: 'Küche' },
+    options: { professionId: 'gastronomie', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null, department: 'Küche' },
     check: (text, o) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar'];
@@ -629,7 +740,7 @@ const TESTS = [
   {
     name: 'Teilwoche (Mo/Mi/Fr, Kaufmann)',
     weight: 2,
-    options: { professionId: 'kaufmann', yearNum: 2, complexity: 'medium', selectedDays: [0,2,4], includeSchool: false, department: 'Buchhaltung' },
+    options: { professionId: 'kaufmann', yearNum: 2, complexity: 'medium', selectedDays: [0,2,4], schoolDayIndex: null, department: 'Buchhaltung' },
     check: (text, o) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar'];
@@ -756,10 +867,25 @@ function updateModelCard(modelId, state) {
 function renderTestRow(modelId, test, evaluation, result, idx) {
   const cont = $('mc-tests-' + modelId);
   const cls = evaluation.score >= 8 ? 's-good' : evaluation.score >= 5 ? 's-mid' : 's-bad';
+  // parseMode-Badge: nur wenn nicht 'direct'
+  const pm = result.parseMode;
+  const showBadge = pm && pm !== 'direct';
+  const badgeColor = !pm ? '' : (pm.startsWith('retry:') ? 'var(--success)' :
+                                  pm.startsWith('retry-') ? 'var(--danger)' :
+                                  pm.includes('multi-day-split') ? 'var(--success)' :
+                                  pm.includes('unescaped') ? 'var(--warning)' :
+                                  pm === 'wrapped-single' ? 'var(--warning)' :
+                                  pm.startsWith('unwrapped') ? 'var(--warning)' :
+                                  pm.includes('truncated') || pm === 'truncation-repaired' ? 'var(--warning)' :
+                                  pm === 'repaired' ? 'var(--text-muted)' : 'var(--text-muted)');
+  const headerRight = el('span', { style: 'display:flex; gap:6px; align-items:center;' }, [
+    showBadge ? el('span', { style: `font:600 10px var(--font-mono); padding:2px 6px; border-radius:4px; background:rgba(255,255,255,.05); color:${badgeColor};` }, pm) : null,
+    el('span', { class: cls, style: 'font:600 12px var(--font-mono);' }, `${evaluation.score}/10 · ${result.ms}ms`),
+  ].filter(Boolean));
   const row = el('div', { style: 'padding: 8px 0; border-bottom: 1px solid var(--border);' }, [
-    el('div', { style: 'display:flex; justify-content:space-between; gap:8px; font-size:12px;' }, [
+    el('div', { style: 'display:flex; justify-content:space-between; gap:8px; font-size:12px; align-items:center;' }, [
       el('span', {}, `${idx+1}. ${test.name}`),
-      el('span', { class: cls, style: 'font:600 12px var(--font-mono);' }, `${evaluation.score}/10 · ${result.ms}ms`),
+      headerRight,
     ]),
   ]);
   if (evaluation.issues.length) {
@@ -854,11 +980,51 @@ async function runBenchmark(modelFilter) {
     const results = [];
     let totalScore = 0, totalWeight = 0, totalMs = 0, okCount = 0;
 
+    let wrapCount = 0, retryCount = 0;
     for (let i = 0; i < TESTS.length; i++) {
       if (CANCEL.signal.aborted) break;
       const test = TESTS[i];
       const prompt = buildProdPrompt(test.options);
       const result = await callModel(model.id, prompt, apiKey, CANCEL.signal);
+
+      // Smart-Retry: prüfen ob Antwort komplett & strukturell korrekt ist
+      if (result.ok && result.text) {
+        const ex = extractJSON(result.text);
+        result.parseMode = ex.mode;
+        const expectedLen = (test.options.selectedDays || [0,1,2,3,4]).length;
+        const isDayShaped = (x) => x && typeof x === 'object' && typeof x.day === 'string';
+        const validItems = ex.json ? ex.json.filter(isDayShaped).length : 0;
+        const tooFew = ex.json && ex.json.length < expectedLen;
+        const wrongShape = ex.json && validItems < ex.json.length; // mind. ein Item ist kein Day-Objekt
+        const needRetry = !ex.json || tooFew || wrongShape;
+        if (ex.mode === 'wrapped-single' || ex.mode === 'unwrapped:days' || ex.mode === 'unwrapped:week' || ex.mode === 'unwrapped:tage') wrapCount++;
+        if (needRetry) {
+          retryCount++;
+          const reason = !ex.json
+            ? `Antwort war kein parsbares JSON.`
+            : wrongShape
+            ? `Items im Array waren keine vollständigen Tag-Objekte (es fehlte "day").`
+            : `Antwort enthielt nur ${ex.json.length} statt ${expectedLen} Tage.`;
+          const retryHint = `${reason} Diesmal MUSS die Antwort ein JSON-ARRAY mit GENAU ${expectedLen} VOLLSTÄNDIGEN Tag-Objekten sein — jedes Element {"day":"…","entries":[…],"hours":8,"isSchoolDay":…,"schoolTopic":…}.`;
+          const retryPrompt = buildProdPrompt({ ...test.options, _retryHint: retryHint });
+          const retry = await callModel(model.id, retryPrompt, apiKey, CANCEL.signal);
+          if (retry.ok && retry.text) {
+            const ex2 = extractJSON(retry.text);
+            const validItems2 = ex2.json ? ex2.json.filter(isDayShaped).length : 0;
+            // ersetzen wenn Retry strukturell besser ist (mehr gültige Day-Objekte)
+            if (validItems2 > validItems) {
+              result.text = retry.text;
+              result.ms += retry.ms;
+              result.parseMode = 'retry:' + ex2.mode;
+            } else {
+              result.parseMode = 'retry-fail:' + ex.mode;
+            }
+          } else {
+            result.parseMode = 'retry-err:' + ex.mode;
+          }
+        }
+      }
+
       const evaluation = scoreResult(result, test);
       results.push({ test, result, evaluation });
       totalWeight += test.weight;
@@ -879,14 +1045,18 @@ async function runBenchmark(modelFilter) {
     const finalScore = totalWeight > 0 ? (totalScore / (totalWeight * 10)) * 100 : 0;
     const failCount = TESTS.length - okCount;
 
+    const recoveryHint = (wrapCount || retryCount)
+      ? ` · 🛟 wrap:${wrapCount} retry:${retryCount}`
+      : '';
+
     updateModelCard(model.id, {
       status: CANCEL.signal.aborted ? 'failed' : 'done',
       score: finalScore,
-      meta: `Ø ${avgMs.toFixed(0)}ms · ${okCount}/${TESTS.length} OK`,
+      meta: `Ø ${avgMs.toFixed(0)}ms · ${okCount}/${TESTS.length} OK${recoveryHint}`,
       progress: 1,
     });
 
-    allScores.push({ model, finalScore, avgMs, failCount, results });
+    allScores.push({ model, finalScore, avgMs, failCount, wrapCount, retryCount, results });
 
     if (CANCEL.signal.aborted) break;
     await new Promise(r => setTimeout(r, 800));

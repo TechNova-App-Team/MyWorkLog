@@ -1051,6 +1051,25 @@
             color: var(--primary-light);
         }
 
+        .ais-school-selector {
+            display: flex; gap: 4px; margin-top: 4px;
+        }
+        .ais-school-chip {
+            flex: 1; padding: 7px 2px; text-align: center;
+            border-radius: var(--radius-xs);
+            background: var(--bg-card); border: 1px solid var(--border);
+            font-size: 0.72rem; font-weight: 700; color: var(--text-muted);
+            cursor: pointer; transition: all 0.15s var(--ease);
+            display: flex; align-items: center; justify-content: center; gap: 3px;
+        }
+        .ais-school-chip:hover:not(.disabled) { border-color: var(--border-hover); background: var(--bg-hover); }
+        .ais-school-chip.selected {
+            background: rgba(16,185,129,.18); border-color: var(--success, #10b981);
+            color: var(--success, #10b981);
+        }
+        .ais-school-chip.disabled { opacity: 0.32; cursor: not-allowed; pointer-events: none; }
+        .ais-school-chip[data-school="-1"] { flex: 0.7; font-size: 0.68rem; }
+
         .ais-option-label {
             display: flex; align-items: center; gap: 8px;
             cursor: pointer; padding: 9px 12px;
@@ -1088,54 +1107,89 @@
             padding: 14px 0; border-bottom: 1px solid var(--border);
         }
 
-        /* Gemini Kill-Switch Banner (Wartungs-/Sperr-Anzeige) */
-        .ais-gemini-blocked {
+        /* Test-Phase Info-Banner (während Beta-Phase eingeblendet) */
+        .ais-test-phase {
             display: flex; gap: 12px; align-items: flex-start;
-            padding: 14px 16px;
-            background: linear-gradient(135deg, rgba(239,68,68,0.14), rgba(239,68,68,0.04));
-            border: 1px solid rgba(239,68,68,0.35);
+            padding: 14px 16px; margin-bottom: 10px;
+            background: linear-gradient(135deg, rgba(168,85,247,0.13), rgba(168,85,247,0.03));
+            border: 1px solid rgba(168,85,247,0.3);
             border-radius: 12px;
             position: relative; overflow: hidden;
         }
-        .ais-gemini-blocked::before {
+        .ais-test-phase::before {
             content: ''; position: absolute; inset: 0;
-            background: radial-gradient(circle at 0% 0%, rgba(239,68,68,0.18), transparent 55%);
+            background: radial-gradient(circle at 0% 0%, rgba(168,85,247,0.18), transparent 55%);
             pointer-events: none;
         }
-        .ais-gemini-blocked-icon {
+        .ais-test-phase-icon {
             flex-shrink: 0; width: 36px; height: 36px;
-            background: rgba(239,68,68,0.18);
-            border: 1px solid rgba(239,68,68,0.3);
+            background: rgba(168,85,247,0.18);
+            border: 1px solid rgba(168,85,247,0.35);
             border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            color: #f87171; position: relative; z-index: 1;
+            color: var(--primary-light, #c4b5fd); position: relative; z-index: 1;
         }
-        .ais-gemini-blocked-icon svg { width: 18px; height: 18px; }
-        .ais-gemini-blocked-content { flex: 1; min-width: 0; position: relative; z-index: 1; }
-        .ais-gemini-blocked-title {
+        .ais-test-phase-icon svg { width: 18px; height: 18px; }
+        .ais-test-phase-content { flex: 1; min-width: 0; position: relative; z-index: 1; }
+        .ais-test-phase-title {
             font-size: 0.85rem; font-weight: 700;
-            color: #fca5a5; letter-spacing: 0.01em;
+            color: var(--primary-light, #c4b5fd); letter-spacing: 0.01em;
             margin-bottom: 4px;
-            display: flex; align-items: center; gap: 8px;
+            display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
         }
-        .ais-gemini-blocked-tag {
+        .ais-test-phase-tag {
             font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em;
-            background: #ef4444; color: #fff;
+            background: var(--primary, #a855f7); color: #fff;
             padding: 2px 7px; border-radius: 4px;
             text-transform: uppercase;
         }
-        .ais-gemini-blocked-msg {
+        .ais-test-phase-msg {
             font-size: 0.75rem; color: var(--text-muted);
             line-height: 1.55;
         }
-        .ais-gemini-blocked-msg strong {
-            color: var(--text-main); font-weight: 600;
+        .ais-test-phase-msg strong { color: var(--text-main); font-weight: 600; }
+        .ais-test-phase-msg a {
+            color: var(--primary-light, #c4b5fd);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--primary-light, #c4b5fd);
         }
-        .ais-gemini-blocked-hint {
-            margin-top: 8px; font-size: 0.7rem; color: var(--text-dim);
-            display: flex; align-items: center; gap: 6px;
+        .ais-test-phase-details {
+            margin-top: 10px; padding-top: 10px;
+            border-top: 1px solid rgba(168,85,247,0.18);
         }
-        .ais-gemini-blocked-hint svg { width: 12px; height: 12px; color: var(--success); }
+        .ais-test-phase-details summary {
+            cursor: pointer; font-size: 0.72rem; color: var(--text-dim);
+            user-select: none; padding: 4px 0;
+            list-style: none;
+        }
+        .ais-test-phase-details summary::-webkit-details-marker { display: none; }
+        .ais-test-phase-details summary::before {
+            content: '▸'; display: inline-block; margin-right: 6px;
+            transition: transform 0.15s var(--ease, ease);
+        }
+        .ais-test-phase-details[open] summary::before { transform: rotate(90deg); }
+        .ais-test-phase-details summary:hover { color: var(--primary-light, #c4b5fd); }
+        .ais-test-phase-deet {
+            margin-top: 10px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .ais-test-phase-deet-h {
+            font-size: 0.68rem; font-weight: 700;
+            color: var(--text-main); margin-bottom: 4px;
+            text-transform: uppercase; letter-spacing: 0.06em;
+        }
+        .ais-test-phase-deet-body {
+            font-size: 0.72rem; color: var(--text-muted); line-height: 1.55;
+        }
+        .ais-test-phase-deet ul {
+            margin: 0; padding-left: 16px;
+            font-size: 0.72rem; color: var(--text-muted); line-height: 1.7;
+        }
+        .ais-test-phase-deet ul strong { color: var(--text-main); font-weight: 600; }
+        .ais-test-phase-deet code {
+            background: rgba(168,85,247,0.1); padding: 1px 5px; border-radius: 3px;
+            font-family: var(--font-mono, monospace); font-size: 0.68rem;
+            color: var(--primary-light, #c4b5fd);
+        }
         .ais-engine-toggle {
             display: flex; align-items: center; gap: 10px;
             padding: 10px 14px; cursor: pointer;
@@ -3126,6 +3180,17 @@ Beispiel:
                         </div>
                     </div>
                     <div class="ais-section">
+                        <div class="ais-sec-lbl">Berufsschultag</div>
+                        <div class="ais-school-selector" id="aisSchoolSelector">
+                            <div class="ais-school-chip selected" data-school="-1" onclick="AIStudio.setSchoolDay(-1)">Kein</div>
+                            <div class="ais-school-chip" data-school="0" onclick="AIStudio.setSchoolDay(0)">Mo</div>
+                            <div class="ais-school-chip" data-school="1" onclick="AIStudio.setSchoolDay(1)">Di</div>
+                            <div class="ais-school-chip" data-school="2" onclick="AIStudio.setSchoolDay(2)">Mi</div>
+                            <div class="ais-school-chip" data-school="3" onclick="AIStudio.setSchoolDay(3)">Do</div>
+                            <div class="ais-school-chip" data-school="4" onclick="AIStudio.setSchoolDay(4)">Fr</div>
+                        </div>
+                    </div>
+                    <div class="ais-section">
                         <div class="ais-sec-lbl">Schreibstil</div>
                         <div class="ais-style-selector" id="aisStyleSelector">
                             <div class="ais-style-opt sel" data-style="ihk" onclick="AIStudio.selectStyle('ihk',this)">
@@ -3148,10 +3213,6 @@ Beispiel:
                     <div class="ais-section">
                         <div class="ais-sec-lbl">Optionen</div>
                         <label class="ais-option-label">
-                            <input type="checkbox" id="aisIncludeSchool" checked>
-                            <span>Berufsschultag einbauen</span>
-                        </label>
-                        <label class="ais-option-label" style="margin-top:8px;">
                             <input type="checkbox" id="aisVariation" checked>
                             <span>Maximale Variation</span>
                         </label>
@@ -3172,40 +3233,70 @@ Beispiel:
                     </div>
                     <!-- Engine Selection -->
                     <div class="ais-engine-section">
-                        <!-- KILL-SWITCH: Gemini-Sperre (eingeblendet via JS wenn aktiv) -->
-                        <div class="ais-gemini-blocked" id="aisGeminiBlocked" style="display:none;">
-                            <div class="ais-gemini-blocked-icon">
+                        <!-- TEST-PHASE BANNER (eingeblendet via JS während Phase aktiv) -->
+                        <div class="ais-test-phase" id="aisTestPhase" style="display:none;">
+                            <div class="ais-test-phase-icon">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                                    <line x1="12" y1="9" x2="12" y2="13"/>
-                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                    <path d="M9 3h6"/>
+                                    <path d="M10 3v6.5L4.5 17.5A3 3 0 0 0 7 22h10a3 3 0 0 0 2.5-4.5L14 9.5V3"/>
+                                    <path d="M7 17h10"/>
                                 </svg>
                             </div>
-                            <div class="ais-gemini-blocked-content">
-                                <div class="ais-gemini-blocked-title">
-                                    Gemini AI deaktiviert
-                                    <span class="ais-gemini-blocked-tag">Wartung</span>
+                            <div class="ais-test-phase-content">
+                                <div class="ais-test-phase-title">
+                                    KI Test-Phase aktiv
+                                    <span class="ais-test-phase-tag">BETA</span>
                                 </div>
-                                <div class="ais-gemini-blocked-msg">
-                                    Die Cloud-Generierung ist aktuell <strong>nicht verfügbar</strong>. Voraussichtlich wieder erreichbar ab <strong id="aisGeminiBlockedUntil">--</strong>.
+                                <div class="ais-test-phase-msg">
+                                    Die Cloud-KI ist gerade in der <strong>Beta-Phase</strong> bis <strong id="aisTestPhaseUntil">--</strong>. Modelle, Prompts und Tageslimit werden getestet. Feedback gerne an <a href="mailto:dev@myworklog.de">dev@myworklog.de</a>.
                                 </div>
-                                <div class="ais-gemini-blocked-hint">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                    Die lokale Engine funktioniert wie gewohnt.
-                                </div>
+                                <details class="ais-test-phase-details">
+                                    <summary>So funktioniert's: Modelle, Prompt, Rate-Limit</summary>
+                                    <div class="ais-test-phase-deet">
+                                        <div>
+                                            <div class="ais-test-phase-deet-h">KI-Modelle (automatischer Fallback)</div>
+                                            <ul>
+                                                <li><strong>Primary:</strong> GPT-OSS 120B — beste Qualität bei Multi-Beruf &amp; Tagesvariation</li>
+                                                <li><strong>Fallback 1:</strong> Nemotron 3 Nano 30B — schnell &amp; robust bei JSON-Struktur</li>
+                                                <li><strong>Fallback 2:</strong> LFM 1.2B Instruct — Notnagel, immer verfügbar</li>
+                                            </ul>
+                                            <div class="ais-test-phase-deet-body" style="margin-top:6px;">
+                                                Wenn das Primary-Modell ausfällt (z.B. Rate-Limit) wird automatisch das nächste angesprochen — du merkst nichts davon.
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="ais-test-phase-deet-h">Rate-Limit</div>
+                                            <div class="ais-test-phase-deet-body">
+                                                <strong>20 KI-Generierungen</strong> pro Tag, <strong>10 Sek Cooldown</strong> zwischen Klicks. Falls erreicht → automatischer Fallback auf die <strong>lokale Engine</strong> (funktioniert immer, unbegrenzt).
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="ais-test-phase-deet-h">Prompt-Strategie</div>
+                                            <div class="ais-test-phase-deet-body">
+                                                Strenge IHK-Stil-Regeln: max. 10 Wörter pro Eintrag, Stichpunkt-Form, korrekte Fachbegriffe. Schultag explizit per UI wählbar (kein Raten). Anti-Halluzinations-Schutz gegen erfundene Namen/IPs/Ticket-Nummern.
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="ais-test-phase-deet-h">Datenschutz</div>
+                                            <div class="ais-test-phase-deet-body">
+                                                Dein Beruf, Lehrjahr und Custom-Stichpunkte werden ans Modell geschickt — sonst nichts. Keine Namen, keine IDs, kein Tracking.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </details>
                             </div>
                         </div>
 
-                        <!-- Normales Engine-UI (bei Sperre per JS ausgeblendet) -->
+                        <!-- Normales Engine-UI -->
                         <div id="aisEngineNormal">
                             <div style="background:var(--primary-dim);border:1px solid var(--primary);border-radius:8px;padding:8px 10px;margin-bottom:10px;">
-                                <div style="font-size:0.75rem;font-weight:700;color:var(--primary-light);">✨ Gemini AI — kein Setup nötig</div>
+                                <div style="font-size:0.75rem;font-weight:700;color:var(--primary-light);">✨ Cloud KI — kein Setup nötig</div>
                                 <div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px;">Läuft automatisch für alle Nutzer. Kein eigener API Key erforderlich.</div>
                             </div>
                             <label class="ais-engine-toggle">
                                 <input type="checkbox" id="aisUseLocalOnly" checked onchange="AIStudio.toggleLocalOnly(!this.checked)" style="accent-color:var(--accent);width:16px;height:16px;">
-                                <span class="ais-engine-toggle-label">Gemini AI aktiv</span>
-                                <span class="ais-engine-toggle-badge ais-engine-badge-gemini" id="aisEngineBadge">Gemini</span>
+                                <span class="ais-engine-toggle-label">Cloud KI aktiv</span>
+                                <span class="ais-engine-toggle-badge ais-engine-badge-gemini" id="aisEngineBadge">Cloud</span>
                             </label>
                             <details style="margin-top:10px;" id="aisOwnKeySection">
                                 <summary style="font-size:0.7rem;color:var(--text-dim);cursor:pointer;user-select:none;">Eigener API Key (nur lokale Entwicklung)</summary>
@@ -5934,6 +6025,7 @@ Beispiel:
             selectedProfession: null,
             customProfession: '',
             selectedDays: [0, 1, 2, 3, 4],
+            schoolDayIndex: null, // null = kein Schultag, sonst 0-4 (Mo-Fr)
             generatedEntries: null,
             generationHistory: [],
             usedPhrases: new Set(),
@@ -6789,7 +6881,7 @@ Beispiel:
                 yearNum = 2,
                 complexity = 'medium',
                 selectedDays = [0, 1, 2, 3, 4],
-                includeSchool = true,
+                schoolDayIndex: optSchoolDayIndex = null,
                 maxVariation = true,
                 department = '',
                 calendarWeek = null,
@@ -6803,12 +6895,10 @@ Beispiel:
             const season = getCurrentSeason();
             const allExcludePhrases = maxVariation ? [...state.usedPhrases] : [];
 
-            // Pick a school day (usually Wednesday or Friday)
-            let schoolDayIndex = -1;
-            if (includeSchool && selectedDays.length >= 3) {
-                const schoolCandidates = selectedDays.filter(d => d === 2 || d === 4 || d === 1);
-                schoolDayIndex = schoolCandidates.length > 0 ? pickRandom(schoolCandidates) : pickRandom(selectedDays);
-            }
+            // Schultag vom User explizit per UI gewählt — kein Random mehr.
+            // null/undefined = kein Schultag, sonst 0-4
+            const schoolDayIndex = (typeof optSchoolDayIndex === 'number' && selectedDays.includes(optSchoolDayIndex))
+                ? optSchoolDayIndex : -1;
 
             const week = {
                 profession: professionId,
@@ -6986,7 +7076,7 @@ Beispiel:
                 if (score) {
                     const isGemini = week.source === 'gemini';
                     score.innerHTML = isGemini
-                        ? `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(6,182,212,0.2));border:1px solid rgba(139,92,246,0.4);font-size:0.7rem;font-weight:700;color:#a78bfa;">✨ Gemini AI</span>`
+                        ? `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(6,182,212,0.2));border:1px solid rgba(139,92,246,0.4);font-size:0.7rem;font-weight:700;color:#a78bfa;">✨ Cloud KI</span>`
                         : `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid var(--border-light);font-size:0.7rem;font-weight:700;color:var(--text-dim);">⚡ Lokal</span>`;
                 }
             }
@@ -7237,6 +7327,7 @@ Beispiel:
             if (panel) panel.classList.add('open');
             if (backdrop) backdrop.classList.add('open');
             _updateRateLimitUI();
+            updateSchoolDayChips();
         }
 
         function close() {
@@ -7323,40 +7414,69 @@ Beispiel:
                 if (!state.selectedDays.includes(dayIdx)) state.selectedDays.push(dayIdx);
             } else {
                 state.selectedDays = state.selectedDays.filter(d => d !== dayIdx);
+                // Schultag automatisch zurücksetzen wenn der abgewählte Tag der Schultag war
+                if (state.schoolDayIndex === dayIdx) state.schoolDayIndex = null;
             }
             state.selectedDays.sort();
+            updateSchoolDayChips();
+        }
+
+        function setSchoolDay(idx) {
+            // -1 = Kein Schultag (null im State)
+            if (idx === -1) {
+                state.schoolDayIndex = null;
+            } else if (state.selectedDays.includes(idx)) {
+                state.schoolDayIndex = idx;
+            } else {
+                // Tag ist nicht aktiv → ignorieren (UI sollte das eh blocken)
+                return;
+            }
+            updateSchoolDayChips();
+        }
+
+        function updateSchoolDayChips() {
+            const chips = document.querySelectorAll('#aisSchoolSelector .ais-school-chip');
+            if (!chips.length) return;
+            const cur = state.schoolDayIndex === null ? -1 : state.schoolDayIndex;
+            chips.forEach(chip => {
+                const idx = parseInt(chip.dataset.school);
+                if (idx === -1) {
+                    chip.classList.remove('disabled');
+                } else {
+                    chip.classList.toggle('disabled', !state.selectedDays.includes(idx));
+                }
+                chip.classList.toggle('selected', idx === cur);
+            });
         }
 
         // ═══════════════════════════════════════
-        // GEMINI API INTEGRATION
+        // CLOUD KI API INTEGRATION
         // ═══════════════════════════════════════
 
-        // Worker-URL direkt (kein /api/gemini — Cloudflare Pages/Workers Routing-Konflikt)
-        const GEMINI_PROXY   = 'https://gemini-proxy.myworklog.workers.dev';
-        const GEMINI_DIRECT  = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-        const GEMINI_ENDPOINT = GEMINI_DIRECT; // kept for legacy references
+        // Worker-URL direkt (kein /api/* — Cloudflare Pages/Workers Routing-Konflikt).
+        // Localhost + Production gehen beide hier durch.
+        const GEMINI_PROXY = 'https://ai-proxy.myworklog.workers.dev';
 
         // ═══════════════════════════════════════
-        // GEMINI KILL-SWITCH (temporäre Sperre)
+        // AI TEST-PHASE (Informations-Banner)
         // ═══════════════════════════════════════
-        // ISO-Datum bis zu dem Gemini blockiert ist. Auf null/'' setzen um Sperre aufzuheben.
-        // Localhost (dev) ist immer ausgenommen, damit man die Sperre testen kann.
-        const GEMINI_BLOCKED_UNTIL = '2026-06-03T23:59:59';
+        // ISO-Datum bis zu dem das Test-Phase-Banner angezeigt wird.
+        // Auf null setzen um Banner zu verbergen — die KI läuft davon unabhängig immer.
+        const AI_TEST_PHASE_UNTIL = '2026-06-07T23:59:59';
 
-        function _isGeminiBlocked() {
-            const host = location.hostname;
-            if (host === 'localhost' || host === '127.0.0.1') return false;
-            if (!GEMINI_BLOCKED_UNTIL) return false;
-            const until = new Date(GEMINI_BLOCKED_UNTIL).getTime();
+        function _isInTestPhase() {
+            if (!AI_TEST_PHASE_UNTIL) return false;
+            const until = new Date(AI_TEST_PHASE_UNTIL).getTime();
             if (isNaN(until)) return false;
             return Date.now() < until;
         }
 
-        function _formatBlockedUntil() {
-            if (!GEMINI_BLOCKED_UNTIL) return '';
-            const d = new Date(GEMINI_BLOCKED_UNTIL);
-            if (isNaN(d.getTime())) return '';
-            return d.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: '2-digit' });
+        function _formatTestPhaseEnd() {
+            if (!AI_TEST_PHASE_UNTIL) return '--';
+            const d = new Date(AI_TEST_PHASE_UNTIL);
+            if (isNaN(d.getTime())) return '--';
+            return d.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long' }) +
+                   ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
         }
 
         // ═══════════════════════════════════════
@@ -7771,7 +7891,7 @@ Beispiel:
             _updateApiStatus(true);
             showToast('API Key gespeichert! 🔑', 'success');
             const btnText = document.querySelector('#aisGenerateBtn .ais-mega-text');
-            if (btnText && state.useGemini) btnText.textContent = '✨ Mit Gemini AI generieren';
+            if (btnText && state.useGemini) btnText.textContent = '✨ Mit Cloud KI generieren';
         }
 
         function _updateApiStatus(connected) {
@@ -7783,23 +7903,15 @@ Beispiel:
 
         function _restoreApiSettings() {
             state.useGemini = true;
-            const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-            const savedKey = localStorage.getItem(STORAGE_KEYS.apiKey);
             const savedLocalOnly = localStorage.getItem(STORAGE_KEYS.useGemini) === '0';
 
-            if (isLocal) {
-                if (savedKey) {
-                    state.apiKey = savedKey;
-                    const input = document.getElementById('aisApiKeyInput');
-                    if (input) input.placeholder = '••••••••' + savedKey.slice(-4);
-                }
-            } else {
-                // Production: clear any stored key, hide the field entirely
-                state.apiKey = '';
-                localStorage.removeItem(STORAGE_KEYS.apiKey);
-                const ownKeySection = document.getElementById('aisOwnKeySection');
-                if (ownKeySection) ownKeySection.style.display = 'none';
-            }
+            // Alle alten Gemini-Keys aus früherer Direkt-API-Zeit löschen — werden nicht mehr gebraucht.
+            // Cloud-KI läuft IMMER über den Proxy (auch localhost), Key liegt nur im Worker.
+            state.apiKey = '';
+            localStorage.removeItem(STORAGE_KEYS.apiKey);
+            const ownKeySection = document.getElementById('aisOwnKeySection');
+            if (ownKeySection) ownKeySection.style.display = 'none';
+
             if (savedLocalOnly) {
                 state.useGemini = false;
                 const cb = document.getElementById('aisUseLocalOnly');
@@ -7807,17 +7919,12 @@ Beispiel:
                 toggleLocalOnly(true);
             }
 
-            // KILL-SWITCH: Wenn Gemini gesperrt → UI auf Wartungs-Banner umstellen
-            if (_isGeminiBlocked()) {
-                state.useGemini = false;
-                const banner    = document.getElementById('aisGeminiBlocked');
-                const normalBox = document.getElementById('aisEngineNormal');
-                const untilEl   = document.getElementById('aisGeminiBlockedUntil');
-                if (banner)    banner.style.display = 'flex';
-                if (normalBox) normalBox.style.display = 'none';
-                if (untilEl)   untilEl.textContent = _formatBlockedUntil();
-                const btnText = document.querySelector('#aisGenerateBtn .ais-mega-text');
-                if (btnText) btnText.textContent = '⚡ Lokal generieren';
+            // TEST-PHASE: Info-Banner einblenden (kein Block — KI läuft normal weiter)
+            if (_isInTestPhase()) {
+                const banner  = document.getElementById('aisTestPhase');
+                const untilEl = document.getElementById('aisTestPhaseUntil');
+                if (banner)  banner.style.display = 'flex';
+                if (untilEl) untilEl.textContent = _formatTestPhaseEnd();
             }
         }
 
@@ -7837,15 +7944,56 @@ Beispiel:
 
             const schoolTopicsHint = (prof?.schoolTopics || []).slice(0, 5).join(', ');
 
-            const systemPrompt = `Du bist Auszubildender zum ${profName} im ${options.yearNum}. Lehrjahr und schreibst deinen wöchentlichen IHK-Berichtsheft.
+            // Schreibstil-Variante (UI: IHK Präzise / Ausführlich / Menschlich)
+            const writeStyleHint = (function() {
+                const s = options.writeStyle || 'ihk';
+                if (s === 'detailed') return 'Ausführlich-Modus: 4-5 Einträge pro Tag statt 3-5, jeder Eintrag etwas detaillierter (aber WEITER max 10 Wörter, Stichpunkt-Form).';
+                if (s === 'human' || options.humanStyle) return 'Menschlich-Modus: natürlicher Tonfall, weniger steif als reine IHK-Form. Verben dürfen am Anfang stehen ("Konfiguriert…", "Behoben…"). Trotzdem: keine Ich-Form, keine Floskeln, keine Sätze.';
+                return 'IHK-Präzise: maximal sachlich, Partizip-Konstruktion ("X konfiguriert"), keine Pronomen, keine wertenden Adjektive.';
+            })();
 
-[AUSGABE] Nur gültiges JSON-Array. Kein Markdown, kein Text drumherum.
-Schema: [{"day":"Montag","entries":["…","…",…],"hours":8,"isSchoolDay":false,"schoolTopic":null}, …]
+            // Wochen-Stimmung (UI: Mood-Cards Normal/Projekt/Schule/Support/Prüfung)
+            const themeMap = {
+                projekt:      'Aktive Projekt-Phase: Sprint-Meetings, Konzeption, Implementierung, Code-Reviews als roter Faden durch die Woche.',
+                kunde:        'Kunden-orientierte Woche: Kundengespräche, Anforderungsaufnahme, Präsentationen, Auftragsbearbeitung.',
+                einarbeitung: 'Einarbeitungsphase: Neue Technologien studieren, Dokumentation lesen, Tutorials, Onboarding-Gespräche.',
+                messe:        'Messe-Woche: Standvorbereitung, Produktvorstellungen, Networking, Nachbereitung.',
+                wartung:      'Support/Wartung-Woche: Routinechecks, Tickets bearbeiten, Fehleranalyse, Updates einspielen.',
+                schule:       'Schul-fokussierte Woche: viel Lern-Aktivität, Mitschriften, Gruppenarbeit, Prüfungsvorbereitung.',
+                pruefung:     'Prüfungsvorbereitung: Wiederholung, Karteikarten, Übungsaufgaben, Lerngruppen.',
+            };
+            const themeBlock = (options.activeTheme && themeMap[options.activeTheme])
+                ? `\n[WOCHEN-THEMA] ${themeMap[options.activeTheme]} — mindestens 2-3 Einträge in diese Richtung über die Woche verteilen.`
+                : '';
+
+            const retryPrefix = options._retryHint
+                ? `[ACHTUNG — VORHERIGER VERSUCH FALSCH] ${options._retryHint}\n\n`
+                : '';
+
+            const systemPrompt = `${retryPrefix}Du bist Auszubildender zum ${profName} im ${options.yearNum}. Lehrjahr und schreibst deinen wöchentlichen IHK-Berichtsheft.
+
+[KRITISCH — ANTWORT-FORMAT]
+Antwort = JSON-ARRAY mit GENAU ${options.selectedDays.length} VOLLSTÄNDIGEN Tag-Objekten. Jedes Element MUSS alle 5 Felder enthalten: day, entries, hours, isSchoolDay, schoolTopic.
+
+✓ RICHTIG (vollständige Struktur):
+[
+  {"day":"Montag","entries":["Tätigkeit 1","Tätigkeit 2","Tätigkeit 3"],"hours":8,"isSchoolDay":false,"schoolTopic":null},
+  {"day":"Dienstag","entries":["…","…","…"],"hours":8,"isSchoolDay":false,"schoolTopic":null}
+  … (gesamt ${options.selectedDays.length} Tage)
+]
+
+✗ FALSCH:  {"day":"Montag",...}                ← einzelnes Objekt
+✗ FALSCH:  {"days":[…]}                        ← verschachtelt
+✗ FALSCH:  ["Montag: …","Dienstag: …"]        ← Strings statt Objekten
+✗ FALSCH:  [["Tätigkeit 1","Tätigkeit 2"]]    ← nur entries ohne day-Feld
+
+Kein Markdown. Kein Text drumherum. Antwort beginnt mit [ und endet mit ].
 
 [STIL]
 - Jeder Eintrag startet DIREKT mit der Tätigkeit. Max 10 Wörter. EINE Tätigkeit, keine "und"-Verkettung.
 - ✓ "Switch konfiguriert" · "Active Directory-Benutzer angelegt" · "Backup-Job überprüft"
 - ✗ "Ich habe…" · "Heute war ich…" · "Viel gelernt" · "Hat Spaß gemacht" · mehrere Sätze
+- ${writeStyleHint}
 - Korrekte Fachbegriffe. Keine Einleitung/Fazit/Bewertung.
 
 [ANTI-HALLUZINATION] Niemals erfinden: IP-Adressen, Personennamen (Herr/Frau X), Firmennamen (XY GmbH), Geldbeträge, Ticket-Nummern, konkrete Versions-/Modellnummern. Ausnahme: nur was unten in [VORGABEN] steht.
@@ -7854,14 +8002,18 @@ Schema: [{"day":"Montag","entries":["…","…",…],"hours":8,"isSchoolDay":fal
 - 3-5 Einträge/Tag, immer hours=8 (Schultag: 8h Schule oder 6h+2h Betrieb).
 - ${options.yearNum}. Lehrjahr (${cplx}). ${ljHint}
 - Kein Tag wiederholt sich. Bleibe strikt im Beruf "${profName}" — kein bereichsfremder Inhalt.
-- Saison: ${getCurrentSeason()}${options.department ? `. Abteilung: ${options.department}` : ''}
+- Saison: ${getCurrentSeason()}${options.department ? `. Abteilung: ${options.department}` : ''}${themeBlock}
 
-[SCHULE] ${options.includeSchool
-    ? `Genau EIN Tag: isSchoolDay=true, schoolTopic="konkretes Thema" (z.B. ${schoolTopicsHint || 'Rahmenlehrplan'}). Andere Tage: false/null.`
-    : `Alle Tage: isSchoolDay=false, schoolTopic=null.`}
+[SCHULE] ${(typeof options.schoolDayIndex === 'number' && options.schoolDayIndex >= 0)
+    ? `Schultag ist GENAU ${DAY_NAMES[options.schoolDayIndex]} — kein anderer Tag.
+- ${DAY_NAMES[options.schoolDayIndex]}:  isSchoolDay=true (boolean), schoolTopic="<konkretes Fach z.B. ${schoolTopicsHint || 'Rahmenlehrplan'}>", entries=[3-5 Schul-Themen die behandelt wurden, ✓ "Subnetting geübt" "Active Directory besprochen" — NICHT Betriebs-Tätigkeiten]
+- Alle anderen Tage: isSchoolDay=false (IMMER boolean, NIEMALS null), schoolTopic=null, entries=[normale Betriebs-Tätigkeiten]`
+    : `Kein Schultag diese Woche. Alle Tage: isSchoolDay=false (IMMER boolean, NIEMALS null), schoolTopic=null.`}
 ${options.customPrompt ? `
 [VORGABEN — HÖCHSTE PRIORITÄT, überschreibt INHALT]
 ${options.customPrompt}
+
+Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die entries des entsprechenden Tages eingebaut werden — nicht über die Woche verstreut.
 "nur X" = wirklich nur X. "kein X" = wirklich kein X. Stichworte → IHK-Einträge im Stil oben.
 ` : ''}
 [FACHVOKABULAR] ${prof ? `${profName} — Tools (wenn passend): ${(prof.tools || []).slice(0, 14).join(', ')}` : profName}
@@ -7915,9 +8067,6 @@ ${options.customPrompt}
         }
 
         async function generateWithGemini(professionId, options) {
-            if (_isGeminiBlocked()) {
-                throw new Error('Gemini AI ist vorübergehend deaktiviert (Wartung).');
-            }
             const prompt = _buildGeminiPrompt(professionId, options);
             const requestBody = {
                 contents: [{ parts: [{ text: prompt }] }],
@@ -7929,21 +8078,15 @@ ${options.customPrompt}
                 },
             };
 
-            // SECURITY: Production always uses Cloudflare proxy — key never exposed in browser.
-            // Local dev only: direct API with own key (proxy not available on localhost).
-            const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-            let url;
-            if (isLocal) {
-                if (!state.apiKey) throw new Error('Lokal: eigenen API Key unter "Erweiterte Optionen" eintragen.');
-                url = `${GEMINI_DIRECT}?key=${state.apiKey}`;
-            } else {
-                url = GEMINI_PROXY; // key bleibt in Cloudflare Secrets, nie im Browser
-            }
+            // Localhost UND Production gehen über den Cloudflare Worker (ai-proxy).
+            // Der Worker hat CORS für localhost/127.0.0.1 erlaubt und kümmert sich
+            // um OpenRouter-Übersetzung. Kein API-Key im Browser nötig.
+            const fetchHeaders = {
+                'Content-Type': 'application/json',
+                'X-MyWorkLog-Token': 'FISI-Berichtsheft-2026',
+            };
 
-            const fetchHeaders = { 'Content-Type': 'application/json' };
-            if (!isLocal) fetchHeaders['X-MyWorkLog-Token'] = 'FISI-Berichtsheft-2026';
-
-            const response = await fetch(url, {
+            const response = await fetch(GEMINI_PROXY, {
                 method: 'POST',
                 headers: fetchHeaders,
                 body: JSON.stringify(requestBody),
@@ -7972,6 +8115,30 @@ ${options.customPrompt}
                 jsonStr = jsonStr.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
             }
 
+            // LFM-Truncation-Fix: ROOT-Bracket bestimmen anhand des ERSTEN { oder [.
+            // (Wenn wir einfach den ersten [ nehmen, schnappen wir uns ein entries-Array
+            // mitten im Day-Objekt — Bug bei Single-Object-Responses.)
+            const _aStart = jsonStr.indexOf('['), _aEnd = jsonStr.lastIndexOf(']');
+            const _oStart = jsonStr.indexOf('{'), _oEnd = jsonStr.lastIndexOf('}');
+            const _arrayIsRoot  = _aStart !== -1 && (_oStart === -1 || _aStart < _oStart);
+            const _objectIsRoot = !_arrayIsRoot && _oStart !== -1;
+            if (_arrayIsRoot  && _aEnd > _aStart)      jsonStr = jsonStr.slice(_aStart, _aEnd + 1);
+            else if (_objectIsRoot && _oEnd > _oStart) jsonStr = jsonStr.slice(_oStart, _oEnd + 1);
+
+            // Pre-Fix bekannte Modell-Bugs VOR JSON.parse:
+            // 1. Multi-day in einem Objekt — dup-keys werden von JSON.parse stillschweigend
+            //    auf den letzten reduziert → wir verlieren 4/5 Tage. Erkennen am Pattern
+            //    {"day":"Mo",…,"day":"Di",…} und in Array splitten.
+            if (jsonStr.trim().startsWith('{') && (jsonStr.match(/"day"\s*:/g) || []).length > 1) {
+                jsonStr = '[' + jsonStr.replace(/,\s*("day"\s*:\s*")/g, '},{$1') + ']';
+                console.warn('[AIStudio] Pre-Fix: multi-day-object → array');
+            }
+            // 2. Doppel-Escape von Struktur-Quotes (Modell schreibt \" wo " hingehört).
+            if (/\\":|:\\"/.test(jsonStr)) {
+                jsonStr = jsonStr.replace(/\\":/g, '":').replace(/:\\"/g, ':"');
+                console.warn('[AIStudio] Pre-Fix: unescaped structural quotes');
+            }
+
             let daysData;
             try {
                 daysData = JSON.parse(jsonStr);
@@ -7984,8 +8151,43 @@ ${options.customPrompt}
                     throw new Error('Gemini hat ungültiges JSON zurückgegeben. Bitte nochmals versuchen.');
                 }
             }
+
+            // Tolerantes Parsing: kleine Modelle liefern oft EIN Objekt statt Array,
+            // oder wrappen in {days:[...]}. Nur entwrappen wenn Items Day-shaped sind
+            // (sonst nehmen wir Strings für Day-Objekte → "Tag X: kein Objekt"-Fehler).
+            const _looksLikeDay = (x) => x && typeof x === 'object' && typeof x.day === 'string';
+            if (!Array.isArray(daysData)) {
+                if (daysData && typeof daysData === 'object') {
+                    if (Array.isArray(daysData.days) && daysData.days.length && daysData.days.every(_looksLikeDay))      daysData = daysData.days;
+                    else if (Array.isArray(daysData.week) && daysData.week.length && daysData.week.every(_looksLikeDay)) daysData = daysData.week;
+                    else if (Array.isArray(daysData.tage) && daysData.tage.length && daysData.tage.every(_looksLikeDay)) daysData = daysData.tage;
+                    else if (typeof daysData.day === 'string') {
+                        console.warn('[AIStudio] Modell lieferte EIN Objekt statt Array — wrappe');
+                        daysData = [daysData];
+                    }
+                }
+            }
             if (!Array.isArray(daysData) || daysData.length === 0) {
                 throw new Error('Unerwartetes Antwort-Format von Gemini.');
+            }
+
+            // Auto-Retry (genau 1x): Anzahl ODER Struktur kaputt → erneut anfragen mit explizitem Hinweis.
+            // Zählt NICHT als 2. Klick im User-Rate-Limit (Pool-Schutz durch CF WAF).
+            const expectedDays = options.selectedDays.length;
+            const _isDayShaped = (x) => x && typeof x === 'object' && typeof x.day === 'string';
+            const _validItems = daysData.filter(_isDayShaped).length;
+            const _tooFew = daysData.length < expectedDays;
+            const _wrongShape = _validItems < daysData.length;
+            if ((_tooFew || _wrongShape) && !options._isRetry) {
+                const _reason = _wrongShape
+                    ? `Items im Array waren keine vollständigen Tag-Objekte (es fehlte "day").`
+                    : `Antwort enthielt nur ${daysData.length} statt ${expectedDays} Tage.`;
+                console.warn(`[AIStudio] Retry — ${_reason}`);
+                return generateWithGemini(professionId, {
+                    ...options,
+                    _isRetry: true,
+                    _retryHint: `${_reason} Diesmal MUSS die Antwort ein JSON-ARRAY mit GENAU ${expectedDays} VOLLSTÄNDIGEN Tag-Objekten sein — jedes Element {"day":"…","entries":[…],"hours":8,"isSchoolDay":…,"schoolTopic":…}.`,
+                });
             }
 
             const DAY_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
@@ -8026,6 +8228,54 @@ ${options.customPrompt}
 
             if (week.days.length === 0) {
                 throw new Error('Keine gültigen Tage in der Gemini-Antwort.');
+            }
+
+            // Hybrid-Fallback: fehlt die KI noch Tage (z.B. Modell hat trotz Retry
+            // nur 1 statt 5 Tage geliefert) → mit lokaler Engine auffüllen.
+            // User bekommt dann immer eine vollständige Woche.
+            const expectedDayIndices = options.selectedDays;
+            const haveDayIndices = new Set(week.days.map(d => d.index));
+            const missingDayIndices = expectedDayIndices.filter(idx => !haveDayIndices.has(idx));
+
+            if (missingDayIndices.length > 0) {
+                console.warn(`[AIStudio] KI lieferte nur ${week.days.length}/${expectedDayIndices.length} Tage — fülle ${missingDayIndices.length} Tag(e) lokal nach`);
+                const season = getCurrentSeason();
+                const usedSchoolDayIdx = (typeof options.schoolDayIndex === 'number' && options.schoolDayIndex >= 0)
+                    ? options.schoolDayIndex : -1;
+
+                for (const dayIdx of missingDayIndices) {
+                    try {
+                        const result = generateDayEntries(professionId, {
+                            yearNum: options.yearNum,
+                            complexity: options.complexity,
+                            dayIndex: dayIdx,
+                            isSchoolDay: dayIdx === usedSchoolDayIdx,
+                            season,
+                            excludePhrases: [],
+                            department: week.department,
+                            writeStyle: options.writeStyle || 'ihk',
+                            activeTheme: options.activeTheme || null,
+                            humanStyle: options.humanStyle || false,
+                            customPrompt: options.customPrompt || '',
+                        });
+                        week.days.push({
+                            index: dayIdx,
+                            name: DAY_NAMES[dayIdx],
+                            entries: result.entries,
+                            hours: result.hours || 8,
+                            isSchoolDay: result.isSchoolDay,
+                            schoolTopic: result.schoolTopic || null,
+                        });
+                        week.totalHours += result.hours || 8;
+                    } catch (synthErr) {
+                        console.error(`[AIStudio] Lokales Auffüllen für Tag ${dayIdx} fehlgeschlagen:`, synthErr);
+                    }
+                }
+                // Tage nach Wochentags-Index sortieren damit Reihenfolge stimmt
+                week.days.sort((a, b) => a.index - b.index);
+                // Quellen-Tag: Hybrid statt rein gemini
+                week.source = 'gemini+local';
+                week.partialAI = { aiDays: week.days.length - missingDayIndices.length, localDays: missingDayIndices.length };
             }
 
             return week;
@@ -8073,7 +8323,6 @@ ${options.customPrompt}
 
                 const calendarWeek = parseInt(document.getElementById('aisCalendarWeek')?.value) || null;
                 const department = document.getElementById('aisDepartment')?.value?.trim() || '';
-                const includeSchool = document.getElementById('aisIncludeSchool')?.checked ?? true;
                 const maxVariation = document.getElementById('aisVariation')?.checked ?? true;
 
                 // Build enriched prompt from user text + activity chips + day notes
@@ -8083,7 +8332,7 @@ ${options.customPrompt}
                     yearNum,
                     complexity,
                     selectedDays: state.selectedDays,
-                    includeSchool,
+                    schoolDayIndex: state.schoolDayIndex,
                     maxVariation,
                     department,
                     calendarWeek,
@@ -8096,11 +8345,10 @@ ${options.customPrompt}
                 let week;
                 let usedGemini = false;
 
-                // Always try Gemini first (via shared proxy or user's own key)
+                // Always try Cloud-KI first (via shared proxy or user's own key)
                 // Only skip if user explicitly has the toggle OFF
                 const wantsGemini = state.useGemini || !state.apiKey; // proxy = always on unless user opted out
-                const geminiBlocked = _isGeminiBlocked();
-                const hasGeminiAccess = !geminiBlocked && wantsGemini && !document.getElementById('aisUseGemini')?.dataset.disabled;
+                const hasGeminiAccess = wantsGemini && !document.getElementById('aisUseGemini')?.dataset.disabled;
 
                 if (hasGeminiAccess) {
                     // Tageslimit: weicher Block — Fallback auf lokale Engine
@@ -8145,7 +8393,7 @@ ${options.customPrompt}
                 switchTab('preview');
                 renderPreview(week);
 
-                showToast(usedGemini ? `✨ ${week.days.length} Tage mit Gemini AI generiert!` : `⚡ ${week.days.length} Tage lokal generiert`, 'success');
+                showToast(usedGemini ? `✨ ${week.days.length} Tage mit Cloud KI generiert!` : `⚡ ${week.days.length} Tage lokal generiert`, 'success');
             } catch(e) {
                 console.error('[AIStudio] Generation error:', e);
                 showToast('Fehler bei der Generierung: ' + e.message, 'error');
@@ -8259,6 +8507,7 @@ ${options.customPrompt}
             selectProfession,
             onCustomProf,
             toggleDay,
+            setSchoolDay,
             toggleEngine,
             saveApiKey,
             generate,
