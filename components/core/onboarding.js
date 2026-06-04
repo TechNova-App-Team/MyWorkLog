@@ -503,9 +503,14 @@ if ('serviceWorker' in navigator) {
         }
     });
 
-    // Listen for controller change (update applied)
+    // Listen for controller change → neuer SW hat übernommen → Banner zeigen
+    // hadController: true = Update (alter SW war Controller), false = Erstinstallation
+    const hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         console.log('[PWA] Service Worker controller changed');
+        if (hadController && typeof updateManager !== 'undefined') {
+            updateManager.notifyUpdate(navigator.serviceWorker.controller);
+        }
     });
 }
 
@@ -1103,9 +1108,13 @@ const updateManager = (() => {
 
     function apply() {
         localStorage.setItem('mwl_upd_applying', 'true');
-        if (!newWorker) { location.reload(); return; }
-        // Erst auf controllerchange warten, DANN reloaden — garantiert dass neuer SW
-        // bereits aktiv ist und den Navigate-Request abfängt (kein Race Condition).
+        // SW ruft skipWaiting() bereits im install-Event auf → Worker ist oft schon
+        // 'activating'/'activated' wenn der User klickt. In dem Fall ist controllerchange
+        // schon abgefeuert → einfach sofort reloaden.
+        if (!newWorker || newWorker.state === 'activating' || newWorker.state === 'activated') {
+            location.reload();
+            return;
+        }
         navigator.serviceWorker.addEventListener('controllerchange', function() {
             location.reload();
         }, { once: true });

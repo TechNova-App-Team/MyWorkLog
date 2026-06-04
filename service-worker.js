@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * TimeTracker Service Worker — v5.5.4
+ * TimeTracker Service Worker — v5.5.7
  * ============================================================
  * Strategie: Network-First für alle eigenen Assets (JS/CSS/HTML).
  * → Immer frisch vom Server (ETag-Prüfung via cache:'no-cache')
@@ -11,7 +11,7 @@
 
 'use strict';
 
-const SW_VERSION  = 'v5.5.4';
+const SW_VERSION  = 'v5.5.7';
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
 const OFFLINE_URL = './offline/';
 const DEBUG       = true;
