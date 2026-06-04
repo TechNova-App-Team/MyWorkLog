@@ -9007,5 +9007,454 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
             }
         }
     </script>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Cloud-KI v2 Patch-Notes Modal (einmaliger Forced-Read)
+         Erscheint beim ersten Öffnen, 12s Countdown im CTA-Button,
+         dismissed via localStorage. Force-Show: ?showAnnouncement=1
+         ═══════════════════════════════════════════════════════════════ -->
+    <style>
+        /* Backdrop + Wrapper */
+        .cv2-modal[hidden] { display: none !important; }
+        .cv2-modal {
+            position: fixed; inset: 0; z-index: 99999;
+            display: flex; align-items: center; justify-content: center;
+            padding: 16px;
+            opacity: 0; transition: opacity 0.28s ease;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        .cv2-modal.show { opacity: 1; }
+        .cv2-backdrop {
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse at top, rgba(168,85,247,0.10), transparent 55%),
+                rgba(3,3,5,0.86);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
+        /* feine Scanline-Atmosphäre über dem Backdrop */
+        .cv2-backdrop::after {
+            content: ''; position: absolute; inset: 0;
+            background-image: repeating-linear-gradient(
+                0deg,
+                rgba(255,255,255,0.012) 0px,
+                rgba(255,255,255,0.012) 1px,
+                transparent 1px,
+                transparent 3px);
+            opacity: 0.6; pointer-events: none;
+        }
+
+        /* Card */
+        .cv2-card {
+            position: relative;
+            width: 100%; max-width: 560px;
+            max-height: calc(100dvh - 32px);
+            display: flex; flex-direction: column;
+            background: linear-gradient(180deg, #0a0a14 0%, #060609 100%);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 20px;
+            box-shadow:
+                0 24px 64px rgba(0,0,0,0.55),
+                0 0 0 1px rgba(168,85,247,0.10),
+                inset 0 1px 0 rgba(255,255,255,0.04);
+            transform: translateY(14px) scale(0.97);
+            transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+            overflow: hidden;
+        }
+        .cv2-modal.show .cv2-card { transform: translateY(0) scale(1); }
+
+        /* Subtile Akzent-Linie oben */
+        .cv2-card::before {
+            content: ''; position: absolute; top: 0; left: 16px; right: 16px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(168,85,247,0.55), transparent);
+        }
+
+        /* Head: PATCH NOTES Tag */
+        .cv2-head {
+            display: flex; align-items: center; gap: 8px;
+            padding: 18px 22px 0;
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 11px; letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.55);
+            text-transform: uppercase;
+        }
+        .cv2-tag {
+            padding: 3px 9px;
+            border: 1px solid rgba(168,85,247,0.4);
+            background: rgba(168,85,247,0.08);
+            color: #c4b5fd;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+        .cv2-sep { opacity: 0.4; }
+        .cv2-version { color: rgba(255,255,255,0.75); font-weight: 600; }
+
+        /* Body (scrollable) */
+        .cv2-body {
+            padding: 16px 22px 22px;
+            overflow-y: auto;
+            color: rgba(255,255,255,0.82);
+            font-size: 14.5px; line-height: 1.58;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(168,85,247,0.3) transparent;
+        }
+        .cv2-body::-webkit-scrollbar { width: 6px; }
+        .cv2-body::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.3); border-radius: 3px; }
+
+        .cv2-headline {
+            margin: 8px 0 6px;
+            font-size: 22px; line-height: 1.25; font-weight: 700;
+            color: #f8fafc;
+            letter-spacing: -0.015em;
+        }
+        .cv2-intro {
+            margin: 0 0 20px;
+            color: rgba(255,255,255,0.58);
+            font-size: 14px;
+        }
+
+        /* Sections */
+        .cv2-sec {
+            margin: 0 0 18px;
+            padding-left: 16px;
+            border-left: 1px solid rgba(255,255,255,0.06);
+        }
+        .cv2-sec-h {
+            display: flex; align-items: center; gap: 8px;
+            margin: 0 0 6px;
+            font-size: 11.5px;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            font-weight: 700;
+            color: rgba(255,255,255,0.92);
+        }
+        .cv2-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: #a855f7;
+            box-shadow: 0 0 12px rgba(168,85,247,0.6);
+            flex: 0 0 auto;
+        }
+        .cv2-sec p { margin: 0; color: rgba(255,255,255,0.78); }
+        .cv2-sec p strong { color: #f8fafc; font-weight: 600; }
+        .cv2-sec code {
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 12.5px;
+            padding: 1.5px 6px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 5px;
+            color: #c4b5fd;
+        }
+        .cv2-num {
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-weight: 700;
+            color: #a855f7;
+            margin-right: 4px;
+        }
+        .cv2-pill {
+            display: inline-block;
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 12.5px; font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            padding: 1px 8px; margin: 0 2px;
+            background: rgba(168,85,247,0.12);
+            border: 1px solid rgba(168,85,247,0.3);
+            border-radius: 5px;
+            color: #ddd6fe;
+        }
+
+        /* Times list */
+        .cv2-times {
+            list-style: none; margin: 4px 0 0; padding: 0;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .cv2-times li {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 13.5px;
+            color: rgba(255,255,255,0.72);
+        }
+        .cv2-time {
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 11.5px; font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 5px;
+            border: 1px solid;
+            white-space: nowrap;
+            min-width: 92px; text-align: center;
+        }
+        .cv2-time-bad  { color: #fca5a5; border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.08); }
+        .cv2-time-mid  { color: #fcd34d; border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.08); }
+        .cv2-time-good { color: #6ee7b7; border-color: rgba(16,185,129,0.4);  background: rgba(16,185,129,0.08); }
+
+        /* Email Callout */
+        .cv2-callout {
+            margin-top: 22px;
+            padding: 14px 16px;
+            background:
+                linear-gradient(135deg, rgba(168,85,247,0.06), rgba(99,102,241,0.04));
+            border: 1px solid rgba(168,85,247,0.22);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+            position: relative; overflow: hidden;
+        }
+        .cv2-callout:hover {
+            background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(99,102,241,0.08));
+            border-color: rgba(168,85,247,0.4);
+        }
+        .cv2-callout:active { transform: scale(0.995); }
+        .cv2-callout-h {
+            font-size: 10.5px;
+            text-transform: uppercase; letter-spacing: 0.12em;
+            color: rgba(255,255,255,0.55);
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .cv2-callout-mail {
+            display: flex; align-items: center; gap: 8px;
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 14.5px; font-weight: 600;
+            color: #ddd6fe;
+        }
+        .cv2-arrow { color: #a855f7; }
+        .cv2-mail  { letter-spacing: 0.01em; }
+        .cv2-copy-hint {
+            margin-left: auto;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px; font-weight: 500;
+            color: rgba(255,255,255,0.4);
+            text-transform: lowercase; letter-spacing: 0;
+            transition: opacity 0.2s ease;
+        }
+        .cv2-callout.cv2-copied { border-color: rgba(16,185,129,0.5); background: rgba(16,185,129,0.10); }
+        .cv2-callout.cv2-copied .cv2-copy-hint::before { content: '✓ kopiert'; color: #10b981; }
+        .cv2-callout.cv2-copied .cv2-copy-hint > * { display: none; }
+        .cv2-callout.cv2-copied .cv2-copy-hint { color: transparent; }
+
+        /* Footer / CTA */
+        .cv2-foot {
+            padding: 14px 22px 18px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            background: linear-gradient(180deg, transparent, rgba(0,0,0,0.18));
+        }
+        .cv2-cta {
+            position: relative; overflow: hidden;
+            width: 100%; min-height: 48px;
+            padding: 0 18px;
+            border-radius: 12px;
+            border: 1px solid rgba(168,85,247,0.3);
+            background: rgba(168,85,247,0.06);
+            color: rgba(255,255,255,0.72);
+            font-family: 'Inter', sans-serif;
+            font-size: 14.5px; font-weight: 600;
+            cursor: not-allowed;
+            transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+        }
+        .cv2-cta-fill {
+            position: absolute; left: 0; top: 0; bottom: 0;
+            width: 0%;
+            background: linear-gradient(90deg, rgba(168,85,247,0.18), rgba(168,85,247,0.32));
+            border-right: 1px solid rgba(168,85,247,0.5);
+            transition: width 0.1s linear;
+            pointer-events: none;
+        }
+        .cv2-cta-text {
+            position: relative; z-index: 1;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            font-variant-numeric: tabular-nums;
+        }
+        .cv2-cta-counting,
+        .cv2-cta-ready {
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .cv2-cta-ready { display: none; }
+        .cv2-cta.cv2-ready {
+            cursor: pointer;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6366f1 100%);
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 6px 20px rgba(139,92,246,0.35);
+        }
+        .cv2-cta.cv2-ready:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(139,92,246,0.5); }
+        .cv2-cta.cv2-ready .cv2-cta-counting { display: none; }
+        .cv2-cta.cv2-ready .cv2-cta-ready    { display: inline-flex; }
+        .cv2-cta.cv2-ready .cv2-cta-fill     { width: 100% !important; opacity: 0; transition: opacity 0.3s ease; }
+
+        #cv2Sec {
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-weight: 700;
+            color: #c4b5fd;
+            min-width: 14px; display: inline-block; text-align: center;
+        }
+
+        /* Mobile */
+        @media (max-width: 520px) {
+            .cv2-modal { padding: 10px; }
+            .cv2-card { border-radius: 16px; max-height: calc(100dvh - 20px); }
+            .cv2-head { padding: 14px 16px 0; font-size: 10px; }
+            .cv2-body { padding: 12px 16px 18px; font-size: 14px; }
+            .cv2-headline { font-size: 19px; }
+            .cv2-times li { flex-wrap: wrap; gap: 6px; font-size: 12.5px; }
+            .cv2-time { min-width: 80px; font-size: 11px; }
+            .cv2-foot { padding: 12px 16px 14px; }
+            .cv2-callout-mail { font-size: 13px; flex-wrap: wrap; }
+            .cv2-copy-hint { margin-left: 0; font-size: 10.5px; flex-basis: 100%; }
+        }
+    </style>
+
+    <div class="cv2-modal" id="cloudV2Modal" hidden>
+        <div class="cv2-backdrop" aria-hidden="true"></div>
+        <div class="cv2-card" role="dialog" aria-modal="true" aria-labelledby="cv2Title">
+            <div class="cv2-head">
+                <span class="cv2-tag">Patch Notes</span>
+                <span class="cv2-sep">/</span>
+                <span class="cv2-version">Cloud-KI &middot; v2.0</span>
+            </div>
+            <div class="cv2-body">
+                <h2 id="cv2Title" class="cv2-headline">Wir sind von Gemini zu OpenRouter gewechselt.</h2>
+                <p class="cv2-intro">Kurz worum's geht &mdash; und was das f&uuml;r dich hei&szlig;t.</p>
+
+                <section class="cv2-sec">
+                    <h3 class="cv2-sec-h"><span class="cv2-dot"></span> Warum der Wechsel</h3>
+                    <p>Gemini ist f&uuml;r unsere Nutzungsmenge zu <strong>teuer</strong> geworden. MyWorkLog soll aber <strong>Open Source &amp; kostenlos</strong> bleiben &mdash; also l&auml;uft die Cloud-KI ab jetzt &uuml;ber OpenRouter mit starken freien Modellen.</p>
+                </section>
+
+                <section class="cv2-sec">
+                    <h3 class="cv2-sec-h"><span class="cv2-dot"></span> 4 Modelle statt einem</h3>
+                    <p>
+                        <span class="cv2-num">1&times;</span>Prim&auml;r: <code>openai/gpt-oss-120b</code><br>
+                        <span class="cv2-num">3&times;</span>Fallback wenn das Prim&auml;rmodell down oder &uuml;berlastet ist.
+                    </p>
+                </section>
+
+                <section class="cv2-sec">
+                    <h3 class="cv2-sec-h"><span class="cv2-dot"></span> Qualit&auml;t &amp; Tempo</h3>
+                    <p><strong>Qualit&auml;t:</strong> nahezu auf Gemini-Niveau &mdash; OSS 120B liefert solide Outputs.<br>
+                       <strong>Tempo:</strong> einen Tick langsamer. Hab kurz Geduld beim Generieren.</p>
+                </section>
+
+                <section class="cv2-sec">
+                    <h3 class="cv2-sec-h"><span class="cv2-dot"></span> Neues Tageslimit</h3>
+                    <p>Max. <span class="cv2-pill">20</span> Generierungen pro Tag &amp; Person. Geteilter Pool von insgesamt <span class="cv2-pill">1000</span> Calls pro Tag &uuml;ber alle 4 Modelle.</p>
+                </section>
+
+                <section class="cv2-sec">
+                    <h3 class="cv2-sec-h"><span class="cv2-dot"></span> Beste Zeit zum Generieren</h3>
+                    <ul class="cv2-times">
+                        <li><span class="cv2-time cv2-time-bad">06 &ndash; 18 Uhr</span> Rush &mdash; Modelle gehen &ouml;fter down</li>
+                        <li><span class="cv2-time cv2-time-mid">16 &ndash; 18 Uhr</span> bissl besser, noch leichte Downtime</li>
+                        <li><span class="cv2-time cv2-time-good">ab 18 Uhr</span> entspannt, klappt zuverl&auml;ssig</li>
+                    </ul>
+                </section>
+
+                <div class="cv2-callout" data-cv2-copy-email tabindex="0" role="button" aria-label="E-Mail-Adresse kopieren">
+                    <div class="cv2-callout-h">Bugs? Feedback?</div>
+                    <div class="cv2-callout-mail">
+                        <span class="cv2-arrow">&#9658;</span>
+                        <span class="cv2-mail">dev@myworklog.de</span>
+                        <span class="cv2-copy-hint"><span>klicken zum Kopieren</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="cv2-foot">
+                <button class="cv2-cta" id="cv2Cta" disabled type="button">
+                    <span class="cv2-cta-fill" aria-hidden="true"></span>
+                    <span class="cv2-cta-text">
+                        <span class="cv2-cta-counting">Bitte lies kurz &middot; <span id="cv2Sec">12</span>s</span>
+                        <span class="cv2-cta-ready">&#10003; Verstanden, lass mich rein</span>
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const KEY = 'ais_cloud_v2_announcement_dismissed';
+            const COUNTDOWN_SEC = 12;
+            // Force-show via ?showAnnouncement=1 (zum Testen ohne localStorage zu löschen)
+            const force = location.search.indexOf('showAnnouncement=1') !== -1;
+            let dismissed = false;
+            try { dismissed = !!localStorage.getItem(KEY); } catch(e) {}
+            if (dismissed && !force) return;
+
+            function init() {
+                const modal = document.getElementById('cloudV2Modal');
+                if (!modal) return;
+                const cta   = document.getElementById('cv2Cta');
+                const secEl = document.getElementById('cv2Sec');
+                const fill  = modal.querySelector('.cv2-cta-fill');
+
+                modal.hidden = false;
+                const prevOverflow = document.body.style.overflow;
+                document.body.style.overflow = 'hidden';
+                requestAnimationFrame(() => modal.classList.add('show'));
+
+                // Countdown: lineare Fill von 0%→100% über COUNTDOWN_SEC Sekunden
+                const startTs = Date.now();
+                let rafId;
+                function tick() {
+                    const elapsed = (Date.now() - startTs) / 1000;
+                    const pct = Math.min(100, (elapsed / COUNTDOWN_SEC) * 100);
+                    if (fill) fill.style.width = pct + '%';
+                    const left = Math.max(0, Math.ceil(COUNTDOWN_SEC - elapsed));
+                    if (secEl) secEl.textContent = left;
+                    if (elapsed >= COUNTDOWN_SEC) {
+                        cta.disabled = false;
+                        cta.classList.add('cv2-ready');
+                        cta.focus();
+                        return;
+                    }
+                    rafId = requestAnimationFrame(tick);
+                }
+                rafId = requestAnimationFrame(tick);
+
+                cta.addEventListener('click', () => {
+                    if (cta.disabled) return;
+                    try { localStorage.setItem(KEY, '1'); } catch(e) {}
+                    if (rafId) cancelAnimationFrame(rafId);
+                    modal.classList.remove('show');
+                    setTimeout(() => {
+                        modal.hidden = true;
+                        document.body.style.overflow = prevOverflow;
+                    }, 280);
+                });
+
+                // Email-Copy beim Klick auf Callout
+                const callout = modal.querySelector('[data-cv2-copy-email]');
+                if (callout) {
+                    const copy = async () => {
+                        try {
+                            await navigator.clipboard.writeText('dev@myworklog.de');
+                            callout.classList.add('cv2-copied');
+                            setTimeout(() => callout.classList.remove('cv2-copied'), 1800);
+                        } catch(e) {
+                            // Fallback: textarea-copy für ältere Browser
+                            const ta = document.createElement('textarea');
+                            ta.value = 'dev@myworklog.de';
+                            ta.style.position = 'fixed'; ta.style.opacity = '0';
+                            document.body.appendChild(ta);
+                            ta.select();
+                            try { document.execCommand('copy'); callout.classList.add('cv2-copied'); setTimeout(() => callout.classList.remove('cv2-copied'), 1800); } catch(_) {}
+                            document.body.removeChild(ta);
+                        }
+                    };
+                    callout.addEventListener('click', copy);
+                    callout.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); copy(); } });
+                }
+
+                // Escape während Countdown blockieren — nach Ready darf dismissed werden
+                document.addEventListener('keydown', e => {
+                    if (modal.hidden) return;
+                    if (e.key === 'Escape' && cta.classList.contains('cv2-ready')) cta.click();
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
 </body>
 </html>
