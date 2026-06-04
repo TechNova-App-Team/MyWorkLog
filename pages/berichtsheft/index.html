@@ -1209,7 +1209,7 @@
         .ais-engine-badge-local {
             background: var(--primary-dim); color: var(--primary-light);
         }
-        .ais-engine-badge-gemini {
+        .ais-engine-badge-cloud {
             background: rgba(var(--accent-rgb), 0.1); color: var(--accent);
         }
         .ais-api-key-row {
@@ -1481,6 +1481,15 @@
             color: var(--primary-light);
         }
         .ais-day-action .icon { width: 13px; height: 13px; }
+        /* Cloud-Variante: dezenter Purple-Akzent damit User sieht "kostet was" */
+        .ais-day-action-cloud {
+            border-color: rgba(168, 85, 247, 0.35);
+            color: var(--primary-light);
+        }
+        .ais-day-action-cloud:hover {
+            background: rgba(168, 85, 247, 0.12);
+            border-color: var(--primary);
+        }
 
         .ais-day-school {
             padding: 10px 16px; background: rgba(var(--accent-rgb), 0.05);
@@ -2133,25 +2142,133 @@
         .ais-week-textarea::placeholder { color: var(--text-dim); font-style: italic; }
 
         /* Mega generate button */
+        /* ═══ Mega-Generate-Button — Progress-as-Fill ═══ */
         .ais-mega-btn {
             margin: 10px 16px 16px; width: calc(100% - 32px);
-            padding: 15px 20px; border-radius: 14px; border: none;
+            min-height: 52px; padding: 0 20px;
+            border-radius: 14px; border: none;
             background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6366f1 100%);
             color: white; font-size: 0.97rem; font-weight: 700;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            gap: 10px; transition: all 0.2s; position: relative; overflow: hidden;
+            cursor: pointer; position: relative; overflow: hidden;
+            transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease), background 0.3s ease;
             box-shadow: 0 4px 16px rgba(139,92,246,0.3);
+            -webkit-tap-highlight-color: transparent;
         }
-        .ais-mega-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(139,92,246,0.45); }
+        .ais-mega-btn:hover  { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(139,92,246,0.45); }
         .ais-mega-btn:active { transform: translateY(0); }
-        .ais-mega-spinner {
-            display: none; width: 18px; height: 18px;
-            border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
-            border-radius: 50%; animation: spin 0.8s linear infinite;
+
+        /* Content-Layer (über dem Fill) */
+        .ais-mega-content {
+            position: relative; z-index: 2;
+            display: flex; align-items: center; justify-content: center;
+            gap: 10px; min-height: 52px;
+            padding: 14px 0;
         }
-        .ais-mega-btn.loading .ais-mega-text { display: none; }
-        .ais-mega-btn.loading .ais-mega-spinner { display: block; }
-        .ais-mega-text { display: flex; align-items: center; gap: 8px; }
+        .ais-mega-text  { display: flex; align-items: center; gap: 8px; }
+        .ais-mega-pulse { display: none; }
+
+        /* === LOADING STATE === */
+        .ais-mega-btn.loading {
+            background: linear-gradient(135deg, #0d0d18 0%, #131322 100%);
+            box-shadow: 0 4px 16px rgba(139,92,246,0.18),
+                        inset 0 0 0 1px rgba(168,85,247,0.28);
+            cursor: progress;
+            transform: none;
+        }
+        .ais-mega-btn.loading:hover { transform: none; box-shadow: 0 4px 16px rgba(139,92,246,0.18), inset 0 0 0 1px rgba(168,85,247,0.28); }
+        .ais-mega-btn.loading .ais-mega-text   { display: none; }
+        .ais-mega-btn.loading .ais-mega-status { display: flex; }
+        .ais-mega-btn.loading .ais-mega-content { justify-content: flex-start; padding: 12px 4px; }
+
+        /* Der eigentliche Fill — wandert von 0 → 90% während Wartezeit */
+        .ais-mega-fill {
+            position: absolute; left: 0; top: 0; bottom: 0;
+            width: 0%; z-index: 1;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 55%, #6366f1 100%);
+            transition: width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+                        background 0.4s ease;
+            opacity: 0; pointer-events: none;
+            box-shadow: inset -1px 0 0 rgba(168,85,247,0.4);
+        }
+        .ais-mega-btn.loading .ais-mega-fill { opacity: 1; }
+
+        /* Shimmer-Streifen der durch den Fill wandert */
+        .ais-mega-fill::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(255,255,255,0.0) 40%,
+                rgba(255,255,255,0.22) 50%,
+                rgba(255,255,255,0.0) 60%,
+                transparent 100%);
+            animation: ais-mega-shimmer 1.8s linear infinite;
+            transform: translateX(-100%);
+        }
+        @keyframes ais-mega-shimmer {
+            0%   { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Pulsing Dot links — Lebenszeichen */
+        .ais-mega-btn.loading .ais-mega-pulse {
+            display: inline-block;
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 0 0 0 rgba(255,255,255,0.55);
+            animation: ais-mega-dot 1.4s ease-in-out infinite;
+            flex: 0 0 auto;
+            margin-left: 4px;
+        }
+        @keyframes ais-mega-dot {
+            0%, 100% { opacity: 0.55; transform: scale(0.85); box-shadow: 0 0 0 0 rgba(255,255,255,0.45); }
+            50%      { opacity: 1;    transform: scale(1.15); box-shadow: 0 0 0 5px rgba(255,255,255,0); }
+        }
+
+        /* Status-Block: Message links, Percent rechts */
+        .ais-mega-status {
+            display: none; flex: 1;
+            align-items: center; justify-content: space-between;
+            gap: 12px; min-width: 0;
+        }
+        .ais-mega-message {
+            font-size: 0.91rem; font-weight: 600;
+            letter-spacing: 0.005em; color: #ffffff;
+            opacity: 1;
+            transition: opacity 0.22s ease, transform 0.22s ease;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+        }
+        .ais-mega-message.fading {
+            opacity: 0; transform: translateY(-3px);
+        }
+        .ais-mega-percent {
+            font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+            font-size: 0.82rem; font-weight: 700;
+            font-variant-numeric: tabular-nums; letter-spacing: 0.04em;
+            color: rgba(255,255,255,0.94);
+            padding: 3px 10px; border-radius: 8px;
+            background: rgba(0,0,0,0.28);
+            border: 1px solid rgba(255,255,255,0.1);
+            min-width: 54px; text-align: right;
+            flex: 0 0 auto;
+            margin-right: 6px;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Success-Pulse — kurzer Grün-Flash am Ende */
+        .ais-mega-btn.success-pulse .ais-mega-fill {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .ais-mega-btn.success-pulse {
+            box-shadow: 0 4px 24px rgba(16,185,129,0.45),
+                        inset 0 0 0 1px rgba(16,185,129,0.55);
+            animation: ais-mega-success 0.6s ease-out;
+        }
+        @keyframes ais-mega-success {
+            0%   { transform: scale(1); }
+            40%  { transform: scale(1.012); }
+            100% { transform: scale(1); }
+        }
 
         /* Rate-Limit Info (Quota + Cooldown) */
         .ais-ratelimit-info {
@@ -3296,13 +3413,13 @@ Beispiel:
                             <label class="ais-engine-toggle">
                                 <input type="checkbox" id="aisUseLocalOnly" checked onchange="AIStudio.toggleLocalOnly(!this.checked)" style="accent-color:var(--accent);width:16px;height:16px;">
                                 <span class="ais-engine-toggle-label">Cloud KI aktiv</span>
-                                <span class="ais-engine-toggle-badge ais-engine-badge-gemini" id="aisEngineBadge">Cloud</span>
+                                <span class="ais-engine-toggle-badge ais-engine-badge-cloud" id="aisEngineBadge">Cloud</span>
                             </label>
                             <details style="margin-top:10px;" id="aisOwnKeySection">
                                 <summary style="font-size:0.7rem;color:var(--text-dim);cursor:pointer;user-select:none;">Eigener API Key (nur lokale Entwicklung)</summary>
                                 <div class="ais-api-key-row visible" id="aisApiKeyRow" style="margin-top:8px;">
                                     <div class="ais-api-key-input-wrap">
-                                        <input type="password" class="ais-api-key-input" id="aisApiKeyInput" placeholder="Eigener Gemini Key..." autocomplete="off">
+                                        <input type="password" class="ais-api-key-input" id="aisApiKeyInput" placeholder="Eigener API Key..." autocomplete="off">
                                         <button class="ais-api-save-btn" onclick="AIStudio.saveApiKey()">Speichern</button>
                                     </div>
                                     <div class="ais-api-hint" style="margin-top:4px;">
@@ -3314,10 +3431,17 @@ Beispiel:
                     </div>
                 </div>
 
-                <!-- Generate Button -->
+                <!-- Generate Button mit Progress-as-Fill -->
                 <button class="ais-mega-btn" id="aisGenerateBtn" onclick="AIStudio.generate()">
-                    <div class="ais-mega-spinner"></div>
-                    <div class="ais-mega-text">✨ Berichtsheft generieren</div>
+                    <span class="ais-mega-fill" aria-hidden="true"></span>
+                    <span class="ais-mega-content">
+                        <span class="ais-mega-pulse" aria-hidden="true"></span>
+                        <span class="ais-mega-text">✨ Berichtsheft generieren</span>
+                        <span class="ais-mega-status" aria-live="polite">
+                            <span class="ais-mega-message">KI denkt nach…</span>
+                            <span class="ais-mega-percent">0%</span>
+                        </span>
+                    </span>
                 </button>
                 <div class="ais-ratelimit-info" id="aisRateLimitInfo">&nbsp;</div>
 
@@ -6015,8 +6139,8 @@ Beispiel:
             history: 'ais_generation_history',
             usedPhrases: 'ais_used_phrases',
             settings: 'ais_settings',
-            apiKey: 'ais_gemini_api_key',
-            useGemini: 'ais_use_gemini',
+            apiKey: 'ais_cloud_api_key',
+            useCloud: 'ais_use_cloud',
             profile: 'ais_user_profile_v2',
         };
 
@@ -6031,7 +6155,7 @@ Beispiel:
             usedPhrases: new Set(),
             isGenerating: false,
             apiKey: '',
-            useGemini: false,
+            useCloud: false,
             writeStyle: 'ihk',
             activeTheme: null,
             humanStyle: false,
@@ -6786,17 +6910,26 @@ Beispiel:
             }
 
             // 4. Inject user-defined context (customPrompt / department keywords)
-            if (customPrompt || department) {
+            // Zwei Pfade:
+            //  a) generateWeek hat einen pre-picked Eintrag mitgegeben (injectedCustomEntry)
+            //     → genau diesen einen Eintrag injizieren (Wochen-Verteilung)
+            //  b) Direkter Aufruf (z.B. regenerateDay) → mit Wahrscheinlichkeit ~40% EINEN
+            //     zufälligen Eintrag injizieren, sonst nichts. Verhindert dass identische
+            //     Notiz in jedem Tag landet.
+            if (options.injectedCustomEntry) {
+                const ce = options.injectedCustomEntry;
+                if (!entries.some(e => e === ce)) {
+                    entries.unshift(ce);
+                    excludePhrases.push(ce.replace('• ', ''));
+                }
+            } else if ((customPrompt || department) && Math.random() < 0.4) {
                 const customEntries = _customContextEntries(customPrompt, department);
                 if (customEntries.length > 0) {
-                    // Pick 1-2 custom entries, inject at front, trim to stay within numEntries
-                    const toInject = customEntries.slice(0, Math.min(2, customEntries.length));
-                    toInject.forEach(ce => {
-                        if (!entries.some(e => e === ce)) {
-                            entries.unshift(ce);
-                            excludePhrases.push(ce.replace('• ', ''));
-                        }
-                    });
+                    const ce = customEntries[Math.floor(Math.random() * customEntries.length)];
+                    if (!entries.some(e => e === ce)) {
+                        entries.unshift(ce);
+                        excludePhrases.push(ce.replace('• ', ''));
+                    }
                 }
             }
 
@@ -6915,6 +7048,18 @@ Beispiel:
                 totalHours: 0,
             };
 
+            // Custom-Entries WOCHEN-WEIT berechnen und auf max 2 zufällige Tage verteilen.
+            // Sonst landet die User-Notiz ("War kurz im Einkauf") in JEDEM Tag.
+            const _weekCustomEntries = _customContextEntries(customPrompt, week.department);
+            const _customAssignment = new Map(); // dayIdx → custom entry string
+            if (_weekCustomEntries.length > 0 && selectedDays.length > 0) {
+                const _shuffledDays = [...selectedDays].sort(() => Math.random() - 0.5);
+                const _maxCustomDays = Math.min(_weekCustomEntries.length, 2, _shuffledDays.length);
+                for (let i = 0; i < _maxCustomDays; i++) {
+                    _customAssignment.set(_shuffledDays[i], _weekCustomEntries[i]);
+                }
+            }
+
             for (const dayIdx of selectedDays) {
                 const isSchoolDay = dayIdx === schoolDayIndex;
                 const result = generateDayEntries(professionId, {
@@ -6924,11 +7069,12 @@ Beispiel:
                     isSchoolDay,
                     season,
                     excludePhrases: allExcludePhrases,
-                    department: week.department,
+                    department: '',                                  // blockt Re-Injection
+                    customPrompt: '',                                // im day-fn (Wochenebene erledigt)
+                    injectedCustomEntry: _customAssignment.get(dayIdx) || null,
                     writeStyle,
                     activeTheme,
                     humanStyle,
-                    customPrompt,
                 });
 
                 const day = {
@@ -7074,8 +7220,9 @@ Beispiel:
                 toolbar.style.display = 'flex';
                 const score = document.getElementById('aisPreviewScore');
                 if (score) {
-                    const isGemini = week.source === 'gemini';
-                    score.innerHTML = isGemini
+                    // Akzeptiert auch alten 'gemini'-Tag aus History vor dem Rename.
+                    const isCloud = week.source === 'cloud' || week.source === 'gemini';
+                    score.innerHTML = isCloud
                         ? `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(6,182,212,0.2));border:1px solid rgba(139,92,246,0.4);font-size:0.7rem;font-weight:700;color:#a78bfa;">✨ Cloud KI</span>`
                         : `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid var(--border-light);font-size:0.7rem;font-weight:700;color:var(--text-dim);">⚡ Lokal</span>`;
                 }
@@ -7089,7 +7236,8 @@ Beispiel:
                         <div style="display:flex;align-items:center;gap:8px;">
                             <span class="ais-day-hours">${day.hours}h</span>
                             <div class="ais-day-card-actions">
-                                <button class="ais-day-action" onclick="AIStudio.regenerateDay(${day.index})" title="Tag neu generieren"><svg class="icon icon-sm"><use href="#i-refresh"/></svg></button>
+                                <button class="ais-day-action" onclick="AIStudio.regenerateDay(${day.index})" title="Lokal neu generieren (frei, kein Limit)"><svg class="icon icon-sm"><use href="#i-zap"/></svg></button>
+                                <button class="ais-day-action ais-day-action-cloud" onclick="AIStudio.regenerateDayCloud(${day.index})" title="Mit Cloud-KI neu (zählt 1/20)"><svg class="icon icon-sm"><use href="#i-sparkles"/></svg></button>
                                 <button class="ais-day-action" onclick="AIStudio.insertDay(${day.index})" title="Einzeln einfügen"><svg class="icon icon-sm"><use href="#i-download"/></svg></button>
                             </div>
                         </div>
@@ -7455,7 +7603,7 @@ Beispiel:
 
         // Worker-URL direkt (kein /api/* — Cloudflare Pages/Workers Routing-Konflikt).
         // Localhost + Production gehen beide hier durch.
-        const GEMINI_PROXY = 'https://ai-proxy.myworklog.workers.dev';
+        const CLOUD_PROXY = 'https://ai-proxy.myworklog.de';
 
         // ═══════════════════════════════════════
         // AI TEST-PHASE (Informations-Banner)
@@ -7546,6 +7694,21 @@ Beispiel:
             const btn  = document.getElementById('aisGenerateBtn');
             if (!info) return;
 
+            // Lokal-Only-Modus: Rate-Limit ist irrelevant — kein Cooldown, kein /20 Counter.
+            if (!state.useCloud) {
+                info.textContent = 'Lokal-Modus · kein Limit';
+                info.className = 'ais-ratelimit-info';
+                if (btn) {
+                    btn.classList.remove('rl-blocked');
+                    btn.disabled = state.isGenerating;
+                }
+                if (_rateLimitTickHandle) {
+                    clearInterval(_rateLimitTickHandle);
+                    _rateLimitTickHandle = null;
+                }
+                return;
+            }
+
             const s = RateLimit.status();
             let txt, cls = '';
 
@@ -7584,19 +7747,21 @@ Beispiel:
             }
         }
 
-        function toggleEngine(useGemini) {
+        function toggleEngine(useCloud) {
             // Legacy — kept for compatibility
-            state.useGemini = useGemini;
+            state.useCloud = useCloud;
         }
 
         function toggleLocalOnly(localOnly) {
-            state.useGemini = !localOnly;
-            localStorage.setItem(STORAGE_KEYS.useGemini, localOnly ? '0' : '1');
+            state.useCloud = !localOnly;
+            localStorage.setItem(STORAGE_KEYS.useCloud, localOnly ? '0' : '1');
             const badge = document.getElementById('aisEngineBadge');
             if (badge) {
-                badge.textContent = localOnly ? 'Lokal' : 'Gemini';
-                badge.className = 'ais-engine-toggle-badge ' + (localOnly ? 'ais-engine-badge-local' : 'ais-engine-badge-gemini');
+                badge.textContent = localOnly ? 'Lokal' : 'Cloud';
+                badge.className = 'ais-engine-toggle-badge ' + (localOnly ? 'ais-engine-badge-local' : 'ais-engine-badge-cloud');
             }
+            // Rate-Limit-UI sofort umschalten: Cooldown/Counter ausblenden bzw. einblenden
+            _updateRateLimitUI();
         }
 
         // NEW: Style selection (IHK, detailed, human)
@@ -7786,12 +7951,15 @@ Beispiel:
                 });
             });
 
-            // Turn each fragment into a past-tense IHK entry
+            // Turn each fragment into a past-tense IHK entry.
+            // WICHTIG: nur erkannte Keywords → konkrete Templates. Unbekannte Fragmente
+            // werden verworfen (lieber kein Eintrag als "Rechenzentrum bearbeitet und
+            // dokumentiert"-Müll, der sonst die Wochenoptik zerstört).
             return fragments.slice(0, 6).map(kw => {
                 const lower = kw.toLowerCase();
-                // Matched templates
                 if (lower.includes('rechnung'))       return 'Rechnungen kontrolliert und gebucht';
                 if (lower.includes('lieferschein'))   return 'Lieferscheine geprüft und abgeheftet';
+                if (lower.includes('sendung'))        return 'Sendungsverfolgung durchgeführt und nachgehalten';
                 if (lower.includes('einkauf'))        return 'Einkaufsvorgänge bearbeitet und dokumentiert';
                 if (lower.includes('bestellung'))     return 'Bestellungen aufgegeben und verfolgt';
                 if (lower.includes('lager'))          return 'Lagerbestand kontrolliert und aktualisiert';
@@ -7801,12 +7969,9 @@ Beispiel:
                 if (lower.includes('mail') || lower.includes('e-mail')) return 'E-Mail-Korrespondenz bearbeitet';
                 if (lower.includes('doku'))           return 'Dokumentation erstellt und aktualisiert';
                 if (lower.includes('schulung') || lower.includes('training')) return 'Schulungsunterlagen vorbereitet und Einarbeitung begleitet';
-                if (lower.includes('it'))             return 'IT-seitige Aufgaben bearbeitet und dokumentiert';
-                // Generic: append a suitable verb based on word ending
-                if (kw.match(/ung$/i)) return kw + ' durchgeführt und protokolliert';
-                if (kw.match(/en$/i))  return kw + ' abgeschlossen';
-                return kw + ' bearbeitet und dokumentiert';
-            }).map(e => '• ' + e);
+                // KEIN generischer Fallback mehr — unbekannte Keywords ignorieren.
+                return null;
+            }).filter(Boolean).map(e => '• ' + e);
         }
 
         function _saveProfile() {
@@ -7891,7 +8056,7 @@ Beispiel:
             _updateApiStatus(true);
             showToast('API Key gespeichert! 🔑', 'success');
             const btnText = document.querySelector('#aisGenerateBtn .ais-mega-text');
-            if (btnText && state.useGemini) btnText.textContent = '✨ Mit Cloud KI generieren';
+            if (btnText && state.useCloud) btnText.textContent = '✨ Mit Cloud KI generieren';
         }
 
         function _updateApiStatus(connected) {
@@ -7902,20 +8067,22 @@ Beispiel:
         }
 
         function _restoreApiSettings() {
-            state.useGemini = true;
-            const savedLocalOnly = localStorage.getItem(STORAGE_KEYS.useGemini) === '0';
+            state.useCloud = true;
+            const savedLocalOnly = localStorage.getItem(STORAGE_KEYS.useCloud) === '0';
 
-            // Alle alten Gemini-Keys aus früherer Direkt-API-Zeit löschen — werden nicht mehr gebraucht.
+            // Alle alten API-Keys aus früherer Direkt-API-Zeit löschen — werden nicht mehr gebraucht.
             // Cloud-KI läuft IMMER über den Proxy (auch localhost), Key liegt nur im Worker.
             state.apiKey = '';
             localStorage.removeItem(STORAGE_KEYS.apiKey);
+            localStorage.removeItem('ais_gemini_api_key'); // Legacy-Key aus alten Builds
+            localStorage.removeItem('ais_use_gemini');     // Legacy-Pref aus alten Builds
             const ownKeySection = document.getElementById('aisOwnKeySection');
             if (ownKeySection) ownKeySection.style.display = 'none';
 
             if (savedLocalOnly) {
-                state.useGemini = false;
+                state.useCloud = false;
                 const cb = document.getElementById('aisUseLocalOnly');
-                if (cb) cb.checked = false; // unchecked = Gemini aus
+                if (cb) cb.checked = false; // unchecked = Cloud-KI aus
                 toggleLocalOnly(true);
             }
 
@@ -7928,7 +8095,7 @@ Beispiel:
             }
         }
 
-        function _buildGeminiPrompt(professionId, options) {
+        function _buildCloudPrompt(professionId, options) {
             const prof = PROFESSIONS[professionId];
             const DAY_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
             const daysList = options.selectedDays.map(d => DAY_NAMES[d]).join(', ');
@@ -7991,8 +8158,9 @@ Kein Markdown. Kein Text drumherum. Antwort beginnt mit [ und endet mit ].
 
 [STIL]
 - Jeder Eintrag startet DIREKT mit der Tätigkeit. Max 10 Wörter. EINE Tätigkeit, keine "und"-Verkettung.
-- ✓ "Switch konfiguriert" · "Active Directory-Benutzer angelegt" · "Backup-Job überprüft"
-- ✗ "Ich habe…" · "Heute war ich…" · "Viel gelernt" · "Hat Spaß gemacht" · mehrere Sätze
+- Form: "<Substantiv/Objekt> <Partizip>" — z.B. "<Komponente> konfiguriert", "<Dokument> erstellt", "<Prozess> durchgeführt".
+- ⚠️ Diese Form-Beispiele sind PLATZHALTER — übernimm sie NIEMALS wörtlich. Generiere für jeden Tag KONKRETE, UNTERSCHIEDLICHE Tätigkeiten passend zum Beruf "${profName}".
+- ✗ Verboten: Ich-Form ("Ich habe…"), Tag-Verweise ("Heute war ich…"), Bewertungen ("Viel gelernt", "Hat Spaß gemacht"), mehrere Sätze pro Eintrag.
 - ${writeStyleHint}
 - Korrekte Fachbegriffe. Keine Einleitung/Fazit/Bewertung.
 
@@ -8066,8 +8234,8 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
             return str;
         }
 
-        async function generateWithGemini(professionId, options) {
-            const prompt = _buildGeminiPrompt(professionId, options);
+        async function generateWithCloud(professionId, options) {
+            const prompt = _buildCloudPrompt(professionId, options);
             const requestBody = {
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
@@ -8086,7 +8254,7 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
                 'X-MyWorkLog-Token': 'FISI-Berichtsheft-2026',
             };
 
-            const response = await fetch(GEMINI_PROXY, {
+            const response = await fetch(CLOUD_PROXY, {
                 method: 'POST',
                 headers: fetchHeaders,
                 body: JSON.stringify(requestBody),
@@ -8100,14 +8268,30 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
                     const errData = JSON.parse(rawText);
                     errMsg = errData?.error?.message || errData?.message || errMsg;
                 } catch (_) {}
-                if (response.status === 429) throw new Error('Tageslimit erreicht — bitte morgen nochmal versuchen.');
+                if (response.status === 429) {
+                    // Retry-After (in s) unterscheidet Burst-Limit (10-Min-Window) von Tageslimit.
+                    const retryAfter = parseInt(response.headers.get('Retry-After') || '0', 10);
+                    if (retryAfter > 0 && retryAfter < 900) {
+                        throw new Error(`Burst-Limit erreicht — in ca. ${Math.ceil(retryAfter/60)} Min wieder verfügbar.`);
+                    }
+                    // Tageslimit: Client-Counter auf MAX synchronisieren, damit UI das Limit zeigt.
+                    try {
+                        const _td = new Date();
+                        localStorage.setItem(RATE_LIMIT_STORAGE_KEY, JSON.stringify({
+                            date: `${_td.getFullYear()}-${String(_td.getMonth()+1).padStart(2,'0')}-${String(_td.getDate()).padStart(2,'0')}`,
+                            count: RATE_LIMIT_DAILY,
+                            lastTs: Date.now(),
+                        }));
+                    } catch(e) {}
+                    throw new Error('Tageslimit erreicht — morgen geht\'s weiter, nutze solange die lokale Engine.');
+                }
                 if (response.status === 403) throw new Error('Proxy nicht erreichbar (403). Worker-URL oder CORS prüfen.');
-                throw new Error(`Gemini Fehler (${response.status}): ${errMsg}`);
+                throw new Error(`Cloud-KI Fehler (${response.status}): ${errMsg}`);
             }
 
             const data = await response.json();
             const textContent = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!textContent) throw new Error('Leere Antwort von Gemini API.');
+            if (!textContent) throw new Error('Leere Antwort von Cloud-KI.');
 
             // Parse JSON from response (may be wrapped in markdown code block)
             let jsonStr = textContent.trim();
@@ -8148,7 +8332,7 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
                     daysData = JSON.parse(_repairJSON(jsonStr));
                 } catch (repairErr) {
                     console.error('[AIStudio] JSON nicht reparierbar:', repairErr.message, '\nRaw:', jsonStr.slice(0, 300));
-                    throw new Error('Gemini hat ungültiges JSON zurückgegeben. Bitte nochmals versuchen.');
+                    throw new Error('Cloud-KI hat ungültiges JSON zurückgegeben. Bitte nochmals versuchen.');
                 }
             }
 
@@ -8156,6 +8340,50 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
             // oder wrappen in {days:[...]}. Nur entwrappen wenn Items Day-shaped sind
             // (sonst nehmen wir Strings für Day-Objekte → "Tag X: kein Objekt"-Fehler).
             const _looksLikeDay = (x) => x && typeof x === 'object' && typeof x.day === 'string';
+
+            // Deep-Search: durchsucht verschachtelte Objekte/Arrays nach Day-Items.
+            // Hilft bei Modellen, die das Array unter unerwarteten Keys verstecken
+            // (z.B. {"berichtsheft":{"woche":[...]}} oder verschachtelte JSON-Schichten).
+            const _deepFindDays = (node, depth) => {
+                if (depth > 4 || node == null) return [];
+                if (Array.isArray(node)) {
+                    const direct = node.filter(_looksLikeDay);
+                    if (direct.length) return direct;
+                    for (const item of node) {
+                        const found = _deepFindDays(item, depth + 1);
+                        if (found.length) return found;
+                    }
+                    return [];
+                }
+                if (typeof node === 'object') {
+                    // Day-keyed Pattern: {"Montag":{entries:[…]}, "Dienstag":{…}}
+                    const dayKeyRx = /^(montag|dienstag|mittwoch|donnerstag|freitag)$/i;
+                    const dayKeys = Object.keys(node).filter(k => dayKeyRx.test(k));
+                    if (dayKeys.length >= 2) {
+                        console.warn('[AIStudio] Deep-Extract: day-keyed Objekt-Pattern erkannt');
+                        return dayKeys.map(k => {
+                            const v = node[k] || {};
+                            const entries = Array.isArray(v.entries) ? v.entries
+                                          : Array.isArray(v.eintraege) ? v.eintraege
+                                          : Array.isArray(v) ? v
+                                          : (typeof v === 'string' ? [v] : []);
+                            return {
+                                day: k.charAt(0).toUpperCase() + k.slice(1).toLowerCase(),
+                                entries,
+                                hours: typeof v.hours === 'number' ? v.hours : 8,
+                                isSchoolDay: !!v.isSchoolDay,
+                                schoolTopic: v.schoolTopic || null,
+                            };
+                        });
+                    }
+                    for (const v of Object.values(node)) {
+                        const found = _deepFindDays(v, depth + 1);
+                        if (found.length) return found;
+                    }
+                }
+                return [];
+            };
+
             if (!Array.isArray(daysData)) {
                 if (daysData && typeof daysData === 'object') {
                     if (Array.isArray(daysData.days) && daysData.days.length && daysData.days.every(_looksLikeDay))      daysData = daysData.days;
@@ -8164,11 +8392,29 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
                     else if (typeof daysData.day === 'string') {
                         console.warn('[AIStudio] Modell lieferte EIN Objekt statt Array — wrappe');
                         daysData = [daysData];
+                    } else {
+                        // Letzter Versuch: Deep-Search durch beliebig verschachtelte Struktur
+                        const found = _deepFindDays(daysData, 0);
+                        if (found.length) {
+                            console.warn(`[AIStudio] Deep-Extract: ${found.length} Day-Items aus verschachtelter Struktur extrahiert`);
+                            daysData = found;
+                        }
                     }
                 }
             }
             if (!Array.isArray(daysData) || daysData.length === 0) {
-                throw new Error('Unerwartetes Antwort-Format von Gemini.');
+                // Format komplett unerkannt → Raw-Response loggen für Debug
+                console.error('[AIStudio] Unbekanntes Format. Raw (500Z):', textContent.slice(0, 500));
+                // Statt sofort werfen: Retry triggern (nur einmal) — vielleicht klappt der nächste Versuch
+                if (!options._isRetry) {
+                    console.warn('[AIStudio] Retry mit explizitem Array-Hinweis');
+                    return generateWithCloud(professionId, {
+                        ...options,
+                        _isRetry: true,
+                        _retryHint: `Die letzte Antwort war kein JSON-Array sondern ein anderes Format. Die nächste Antwort MUSS exakt ein JSON-ARRAY mit ${options.selectedDays.length} Tag-Objekten sein. Format: [{"day":"Montag","entries":["…","…","…"],"hours":8,"isSchoolDay":false,"schoolTopic":null}, …]. KEIN Wrapper-Objekt, KEIN day-keyed Objekt, KEINE Erklärung — NUR das Array beginnend mit [ und endend mit ].`,
+                    });
+                }
+                throw new Error('Unerwartetes Antwort-Format von Cloud-KI.');
             }
 
             // Auto-Retry (genau 1x): Anzahl ODER Struktur kaputt → erneut anfragen mit explizitem Hinweis.
@@ -8183,7 +8429,7 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
                     ? `Items im Array waren keine vollständigen Tag-Objekte (es fehlte "day").`
                     : `Antwort enthielt nur ${daysData.length} statt ${expectedDays} Tage.`;
                 console.warn(`[AIStudio] Retry — ${_reason}`);
-                return generateWithGemini(professionId, {
+                return generateWithCloud(professionId, {
                     ...options,
                     _isRetry: true,
                     _retryHint: `${_reason} Diesmal MUSS die Antwort ein JSON-ARRAY mit GENAU ${expectedDays} VOLLSTÄNDIGEN Tag-Objekten sein — jedes Element {"day":"…","entries":[…],"hours":8,"isSchoolDay":…,"schoolTopic":…}.`,
@@ -8204,7 +8450,7 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
                 department: options.department || (prof?.departments ? pickRandom(prof.departments) : ''),
                 season: getCurrentSeason(),
                 timestamp: Date.now(),
-                source: 'gemini',
+                source: 'cloud',
                 days: [],
                 totalHours: 0,
             };
@@ -8227,7 +8473,7 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
             }
 
             if (week.days.length === 0) {
-                throw new Error('Keine gültigen Tage in der Gemini-Antwort.');
+                throw new Error('Keine gültigen Tage in der Cloud-KI-Antwort.');
             }
 
             // Hybrid-Fallback: fehlt die KI noch Tage (z.B. Modell hat trotz Retry
@@ -8273,12 +8519,114 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
                 }
                 // Tage nach Wochentags-Index sortieren damit Reihenfolge stimmt
                 week.days.sort((a, b) => a.index - b.index);
-                // Quellen-Tag: Hybrid statt rein gemini
-                week.source = 'gemini+local';
+                // Quellen-Tag: Hybrid statt rein cloud
+                week.source = 'cloud+local';
                 week.partialAI = { aiDays: week.days.length - missingDayIndices.length, localDays: missingDayIndices.length };
             }
 
             return week;
+        }
+
+        // ═══════════════════════════════════════
+        // GENERATE-BUTTON PROGRESS-UI
+        // ═══════════════════════════════════════
+        // Status-Messages werden mit der Zeit "ungeduldiger" und am Ende witzig.
+        // Erster Eintrag (t=0) ist Default beim Start.
+        const BTN_STATUS_MESSAGES = [
+            { t: 0,     msg: 'KI denkt nach…' },
+            { t: 3000,  msg: 'Tätigkeiten werden ausgewählt…' },
+            { t: 6500,  msg: 'Verben mit Substantiven verkuppelt…' },
+            { t: 10000, msg: 'Berichtsheft formuliert…' },
+            { t: 14000, msg: 'Letzter Schliff am Wortlaut…' },
+            { t: 18000, msg: 'KI poliert noch ein bisschen…' },
+            { t: 23000, msg: 'Hmm, das Modell sucht das perfekte Verb…' },
+            { t: 30000, msg: 'KI hat kurz Kaffee geholt…' },
+            { t: 40000, msg: 'Jetzt aber wirklich gleich…' },
+        ];
+
+        let _btnProgress = { rafId: null, msgTimer: null, startTs: 0, finished: true };
+
+        function startBtnProgress() {
+            const btn = document.getElementById('aisGenerateBtn');
+            if (!btn) return;
+            const fill      = btn.querySelector('.ais-mega-fill');
+            const percentEl = btn.querySelector('.ais-mega-percent');
+            const msgEl     = btn.querySelector('.ais-mega-message');
+
+            // Reset visueller Zustand
+            btn.classList.remove('success-pulse');
+            btn.classList.add('loading');
+            if (fill)      fill.style.width = '0%';
+            if (percentEl) percentEl.textContent = '0%';
+            if (msgEl)     { msgEl.textContent = BTN_STATUS_MESSAGES[0].msg; msgEl.classList.remove('fading'); }
+
+            _btnProgress.startTs = Date.now();
+            _btnProgress.finished = false;
+
+            // Ease-out gegen TARGET_MAX (=90) — so dass die Bar nie "voll" wirkt
+            // bevor wir tatsächlich fertig sind. Halbwertszeit ~6s.
+            const TARGET_MAX = 90;
+            const TAU        = 6000;
+            const tick = () => {
+                if (_btnProgress.finished) return;
+                const elapsed = Date.now() - _btnProgress.startTs;
+                const pct = Math.min(TARGET_MAX, Math.floor(TARGET_MAX * (1 - Math.exp(-elapsed / TAU))));
+                if (fill)      fill.style.width = pct + '%';
+                if (percentEl) percentEl.textContent = pct + '%';
+                _btnProgress.rafId = requestAnimationFrame(tick);
+            };
+            _btnProgress.rafId = requestAnimationFrame(tick);
+
+            // Message-Rotation alle 3.5s prüfen & ggf. wechseln
+            const cycleMessage = () => {
+                if (_btnProgress.finished) return;
+                const elapsed = Date.now() - _btnProgress.startTs;
+                let chosen = BTN_STATUS_MESSAGES[0].msg;
+                for (const item of BTN_STATUS_MESSAGES) {
+                    if (elapsed >= item.t) chosen = item.msg;
+                }
+                if (msgEl && msgEl.textContent !== chosen) {
+                    msgEl.classList.add('fading');
+                    setTimeout(() => {
+                        if (_btnProgress.finished) return;
+                        msgEl.textContent = chosen;
+                        msgEl.classList.remove('fading');
+                    }, 220);
+                }
+                _btnProgress.msgTimer = setTimeout(cycleMessage, 3500);
+            };
+            _btnProgress.msgTimer = setTimeout(cycleMessage, 3500);
+        }
+
+        function stopBtnProgress(success) {
+            if (_btnProgress.finished) return;
+            _btnProgress.finished = true;
+            if (_btnProgress.rafId)    cancelAnimationFrame(_btnProgress.rafId);
+            if (_btnProgress.msgTimer) clearTimeout(_btnProgress.msgTimer);
+
+            const btn = document.getElementById('aisGenerateBtn');
+            if (!btn) return;
+            const fill      = btn.querySelector('.ais-mega-fill');
+            const percentEl = btn.querySelector('.ais-mega-percent');
+            const msgEl     = btn.querySelector('.ais-mega-message');
+
+            if (success) {
+                // Schnapp zu 100% + Grün-Pulse für 700ms
+                if (fill)      fill.style.width = '100%';
+                if (percentEl) percentEl.textContent = '100%';
+                if (msgEl)     { msgEl.classList.remove('fading'); msgEl.textContent = 'Fertig! ✓'; }
+                btn.classList.add('success-pulse');
+                setTimeout(() => {
+                    btn.classList.remove('loading', 'success-pulse');
+                    if (fill)      fill.style.width = '0%';
+                    if (percentEl) percentEl.textContent = '0%';
+                }, 850);
+            } else {
+                // Error: ohne Pulse zurück in Ruhe
+                btn.classList.remove('loading');
+                if (fill)      fill.style.width = '0%';
+                if (percentEl) percentEl.textContent = '0%';
+            }
         }
 
         async function generate() {
@@ -8299,18 +8647,21 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
                 return;
             }
 
-            // Rate-Limit: Cooldown ist harter Block (kein Fallback nötig).
-            // Tageslimit wird unten weicher behandelt (Fallback auf lokale Engine).
-            const _rlPre = RateLimit.check();
-            if (_rlPre.reason === 'cooldown') {
-                showToast(_rlPre.message, 'warning');
-                _updateRateLimitUI();
-                return;
+            // Rate-Limit: gilt NUR für Cloud-KI-Calls. Lokal-Only Modus
+            // hat KEIN Limit — Cooldown/Daily zählen nur wenn der User
+            // tatsächlich die Cloud nutzen würde.
+            if (state.useCloud) {
+                const _rlPre = RateLimit.check();
+                if (_rlPre.reason === 'cooldown') {
+                    showToast(_rlPre.message, 'warning');
+                    _updateRateLimitUI();
+                    return;
+                }
             }
 
             state.isGenerating = true;
-            const btn = document.getElementById('aisGenerateBtn');
-            if (btn) btn.classList.add('loading');
+            startBtnProgress();
+            let _genSuccess = false;
 
             try {
                 // Use lehrjahr from state (set via profile), fall back to hidden select if still present
@@ -8343,14 +8694,14 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
                 };
 
                 let week;
-                let usedGemini = false;
+                let usedCloud = false;
 
                 // Always try Cloud-KI first (via shared proxy or user's own key)
                 // Only skip if user explicitly has the toggle OFF
-                const wantsGemini = state.useGemini || !state.apiKey; // proxy = always on unless user opted out
-                const hasGeminiAccess = wantsGemini && !document.getElementById('aisUseGemini')?.dataset.disabled;
+                const wantsCloud = state.useCloud || !state.apiKey; // proxy = always on unless user opted out
+                const hasCloudAccess = wantsCloud && !document.getElementById('aisUseCloud')?.dataset.disabled;
 
-                if (hasGeminiAccess) {
+                if (hasCloudAccess) {
                     // Tageslimit: weicher Block — Fallback auf lokale Engine
                     const _rlNow = RateLimit.check();
                     if (_rlNow.reason === 'daily') {
@@ -8363,19 +8714,23 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
                         RateLimit.increment();
                         _updateRateLimitUI();
                         try {
-                            week = await generateWithGemini(state.selectedProfession, genOptions);
-                            usedGemini = true;
+                            week = await generateWithCloud(state.selectedProfession, genOptions);
+                            usedCloud = true;
                         } catch (apiErr) {
-                            console.warn('[AIStudio] Gemini failed, using local engine:', apiErr.message);
-                            if (apiErr.message.includes('Tageslimit') || apiErr.message.includes('Proxy nicht erreichbar')) {
-                                showToast('Gemini Limit erreicht — nutze lokale Engine 🔄', 'warning');
+                            console.warn('[AIStudio] Cloud-KI failed, using local engine:', apiErr.message);
+                            if (apiErr.message.includes('Tageslimit')) {
+                                showToast('Tageslimit erreicht — nutze lokale Engine 🔄', 'warning');
+                            } else if (apiErr.message.includes('Burst-Limit')) {
+                                showToast(apiErr.message + ' Nutze solange die lokale Engine.', 'warning');
+                            } else if (apiErr.message.includes('Proxy nicht erreichbar')) {
+                                showToast('Cloud-KI Proxy offline — nutze lokale Engine 🔄', 'warning');
                             }
                             await new Promise(r => setTimeout(r, 300));
                             week = generateWeek(state.selectedProfession, genOptions);
                         }
                     }
                 } else {
-                    // User opted out of Gemini → local engine
+                    // User opted out of Cloud-KI → local engine
                     await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
                     week = generateWeek(state.selectedProfession, genOptions);
                 }
@@ -8393,13 +8748,14 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
                 switchTab('preview');
                 renderPreview(week);
 
-                showToast(usedGemini ? `✨ ${week.days.length} Tage mit Cloud KI generiert!` : `⚡ ${week.days.length} Tage lokal generiert`, 'success');
+                showToast(usedCloud ? `✨ ${week.days.length} Tage mit Cloud KI generiert!` : `⚡ ${week.days.length} Tage lokal generiert`, 'success');
+                _genSuccess = true;
             } catch(e) {
                 console.error('[AIStudio] Generation error:', e);
                 showToast('Fehler bei der Generierung: ' + e.message, 'error');
             } finally {
                 state.isGenerating = false;
-                if (btn) btn.classList.remove('loading');
+                stopBtnProgress(_genSuccess);
                 _updateRateLimitUI();
             }
         }
@@ -8433,7 +8789,86 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
             if (result.schoolTopic) state.generatedEntries.days[dayArrayIndex].schoolTopic = result.schoolTopic;
 
             renderPreview(state.generatedEntries);
-            showToast(`${day.name} neu generiert!`, 'info');
+            showToast(`⚡ ${day.name} lokal neu generiert`, 'info');
+        }
+
+        // Cloud-Variante: zählt gegen das Rate-Limit (Cooldown + 1/20),
+        // weil hier wirklich ein API-Call rausgeht.
+        async function regenerateDayCloud(dayIdx) {
+            if (!state.generatedEntries || !state.selectedProfession) return;
+            if (state.isGenerating) {
+                showToast('Bitte warten — eine Generierung läuft schon.', 'warning');
+                return;
+            }
+            if (!state.useCloud) {
+                showToast('Cloud-KI ist aus. Schalte den Lokal-Toggle um oder nutze "Lokal neu".', 'warning');
+                return;
+            }
+
+            const dayArrayIndex = state.generatedEntries.days.findIndex(d => d.index === dayIdx);
+            if (dayArrayIndex === -1) return;
+            const day = state.generatedEntries.days[dayArrayIndex];
+
+            // Rate-Limit hart prüfen — Cooldown und Tageslimit BEIDE blocken hier,
+            // weil der User explizit Cloud will (kein automatischer Fallback wie bei generate()).
+            const _rl = RateLimit.check();
+            if (_rl.reason === 'cooldown') {
+                showToast(_rl.message, 'warning');
+                _updateRateLimitUI();
+                return;
+            }
+            if (_rl.reason === 'daily') {
+                showToast(_rl.message + ' Nutze "Lokal neu" für freie Iteration.', 'warning');
+                _updateRateLimitUI();
+                return;
+            }
+
+            const yearNum = state.lehrjahr || parseInt(document.getElementById('aisTrainingYear')?.value) || 2;
+            const strengeComplexityMap = { entspannt: 'simple', normal: 'medium', streng: 'complex', sehr_streng: 'complex' };
+            const complexity = document.getElementById('aisComplexity')?.value
+                            || strengeComplexityMap[state.ausbilderStrenge] || 'medium';
+
+            state.isGenerating = true;
+            _updateRateLimitUI();
+            showToast(`✨ ${day.name} wird neu generiert…`, 'info');
+
+            try {
+                // Counter VOR dem Call hochzählen — Fehlversuche zählen mit (Pool-Schutz)
+                RateLimit.increment();
+                _updateRateLimitUI();
+
+                const result = await generateWithCloud(state.selectedProfession, {
+                    yearNum,
+                    complexity,
+                    selectedDays: [dayIdx],
+                    schoolDayIndex: day.isSchoolDay ? dayIdx : null,
+                    maxVariation: true,
+                    department: state.generatedEntries.department || '',
+                    calendarWeek: state.generatedEntries.calendarWeek,
+                    customPrompt: _buildEnrichedPrompt(),
+                    writeStyle: state.writeStyle || 'ihk',
+                    activeTheme: state.activeTheme || null,
+                    humanStyle: state.humanStyle || false,
+                });
+
+                const newDay = result.days.find(d => d.index === dayIdx) || result.days[0];
+                if (!newDay) throw new Error('Cloud-KI lieferte keinen Tag zurück.');
+
+                state.generatedEntries.days[dayArrayIndex] = {
+                    ...state.generatedEntries.days[dayArrayIndex],
+                    entries: newDay.entries,
+                    hours: newDay.hours || state.generatedEntries.days[dayArrayIndex].hours,
+                    schoolTopic: newDay.schoolTopic ?? state.generatedEntries.days[dayArrayIndex].schoolTopic,
+                };
+                renderPreview(state.generatedEntries);
+                showToast(`✨ ${day.name} mit Cloud-KI neu generiert`, 'success');
+            } catch (e) {
+                console.warn('[AIStudio] regenerateDayCloud failed:', e.message);
+                showToast('Cloud-KI Fehler: ' + e.message + ' — versuche "Lokal neu" daneben.', 'error');
+            } finally {
+                state.isGenerating = false;
+                _updateRateLimitUI();
+            }
         }
 
         function updateEntry(dayIdx, entryIdx, newText) {
@@ -8513,6 +8948,7 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
             generate,
             regenerateAll,
             regenerateDay,
+            regenerateDayCloud,
             updateEntry,
             shuffleEntries,
             insertAll,

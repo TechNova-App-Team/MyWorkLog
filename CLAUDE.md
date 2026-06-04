@@ -86,12 +86,13 @@ IMMER safeHTML()/esc() für User-Input. Kein innerHTML mit ungefiltertem Content
 
 **Bei 404-Fehlern auf Live:** Erst Cloudflare Cache löschen ("Purge Everything"), dann prüfen ob Pfade mit `/` anfangen.
 
-## Gemini Proxy (Backend)
+## Cloud-KI Proxy (Backend)
 
-**Worker:** `gemini-proxy` auf `gemini-proxy.myworklog.workers.dev`
-- Gemini API-Key liegt AUSSCHLIESSLICH in Cloudflare Worker Secrets (`GEMINI_API_KEY`) — nie im Frontend
-- Frontend ruft direkt die Worker-URL auf (NICHT `/api/gemini`), um Routing-Konflikte zwischen Cloudflare Pages und Workers auf derselben Domain zu vermeiden
-- **Fetch-URL im Frontend:** `https://gemini-proxy.myworklog.workers.dev`
-- CORS erlaubt: `localhost`, `127.0.0.1`, `myworklog.de`
-- Rate Limiting: Cloudflare WAF Regel — 30 Requests / 10 Minuten pro IP (kein KV, kein Write-Limit)
-- Localhost-Dev: eigener API-Key nötig (direkt an Google API), kein Proxy
+**Worker:** `ai-proxy` auf Custom Domain `ai-proxy.myworklog.de`
+- API-Keys liegen AUSSCHLIESSLICH in Cloudflare Worker Secrets — nie im Frontend
+- Backend nutzt **OpenRouter** (free tier, 1000 Credits/Tag geteilt) — Gemini wird NICHT mehr verwendet
+- Frontend ruft direkt die Custom-Domain-URL auf (NICHT `/api/...`), um Routing-Konflikte mit Pages zu vermeiden
+- **Fetch-URL im Frontend:** `https://ai-proxy.myworklog.de` (Konstante `CLOUD_PROXY` in `pages/berichtsheft/index.html`)
+- CORS erlaubt: `localhost`, `127.0.0.1`, `myworklog.de`, `*.myworklog.pages.dev`
+- Rate Limiting: Cloudflare WAF (Zone myworklog.de) — Burst 30/10min + Tageslimit 20/24h pro IP, beide mit `Retry-After`-Header
+- Localhost-Dev: läuft über denselben Proxy (kein eigener Key nötig)
