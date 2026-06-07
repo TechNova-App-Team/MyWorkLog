@@ -16,7 +16,7 @@
         container.classList.toggle('edit-mode');
         
         if (container.classList.contains('edit-mode')) {
-            btnEdit.textContent = '✓ Layout speichern';
+            btnEdit.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg><span>Layout speichern</span>';
             btnEdit.classList.add('btn-success');
             btnEdit.classList.remove('btn-primary');
             btnReset.style.display = 'inline-block';
@@ -27,7 +27,7 @@
             console.log('Entering edit mode, setting up drag drop');
             setupDashboardDragDrop();
         } else {
-            btnEdit.textContent = '🔧 Layout editieren';
+            btnEdit.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Layout editieren</span>';
             btnEdit.classList.add('btn-primary');
             btnEdit.classList.remove('btn-success');
             btnReset.style.display = 'none';

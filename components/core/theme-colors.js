@@ -41,28 +41,49 @@
         document.getElementById('colorPreview').style.background = hex;
     }
 
+    // Inline button-morph feedback: temporär Icon+Text+Farbe ändern, dann zurück
+    function showSettingsBtnFeedback(btn, kind, label) {
+        if (!btn) return;
+        if (!btn.dataset._originalHtml) btn.dataset._originalHtml = btn.innerHTML;
+        btn.classList.remove('cloud-btn-success', 'cloud-btn-error');
+        // reflow erzwingt Re-Trigger der CSS-Animation
+        void btn.offsetWidth;
+        btn.classList.add(kind === 'success' ? 'cloud-btn-success' : 'cloud-btn-error');
+        const icon = kind === 'success'
+            ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>'
+            : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+        btn.innerHTML = icon + '<span>' + label + '</span>';
+        clearTimeout(btn._feedbackTimer);
+        btn._feedbackTimer = setTimeout(() => {
+            btn.classList.remove('cloud-btn-success', 'cloud-btn-error');
+            btn.innerHTML = btn.dataset._originalHtml;
+            delete btn.dataset._originalHtml;
+        }, kind === 'success' ? 1700 : 2400);
+    }
+
     function resetColorPicker() {
         const defaultColor = '#a855f7';
         document.getElementById('customColorPicker').value = defaultColor;
         document.getElementById('customColorHex').value = 'A855F7';
         document.getElementById('colorPreview').style.background = defaultColor;
-        showCustomMessage('↺ Zurückgesetzt', 'Farbe auf Standard zurückgesetzt.', 'info');
+        setThemeColor(defaultColor);
+        showSettingsBtnFeedback(document.getElementById('btnResetCustomColor'), 'success', 'Zurückgesetzt');
     }
 
     function applyCustomColor() {
+        const btn = document.getElementById('btnApplyCustomColor');
         let hex = document.getElementById('customColorHex').value.trim();
-        
+
         if (!hex) {
-            showCustomMessage('❌ Fehler', 'Bitte gib einen Farbcode ein.', 'error');
+            showSettingsBtnFeedback(btn, 'error', 'Hex fehlt');
             return;
         }
-
         if (!hex.startsWith('#')) hex = '#' + hex;
         if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-            showCustomMessage('❌ Ungültig', 'Bitte gib einen gültigen Hex-Code ein (z.B. a855f7).', 'error');
+            showSettingsBtnFeedback(btn, 'error', 'Ungültiger Hex');
             return;
         }
 
         setThemeColor(hex);
-        showCustomMessage('✅ Gespeichert', `Farbe: ${hex.toUpperCase()}`, 'success');
+        showSettingsBtnFeedback(btn, 'success', 'Gespeichert');
     }
