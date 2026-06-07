@@ -1,59 +1,164 @@
+# ─────────────────────────────────────────────
+# MyWorkLog .gitignore
+# ─────────────────────────────────────────────
+# Regel: alles, was nicht zur Production-PWA gehört
+# oder Secrets/internes Wissen leaken könnte → raus.
+# ─────────────────────────────────────────────
+
+# ─── Secrets & Env ────────────────────────────
+.env
+.env.*
+*.env
+secrets.json
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.csr
+credentials.json
+service-account*.json
+firebase-adminsdk*.json
+# Cloudflare Worker lokale Secrets / wrangler State
+.wrangler/
+.dev.vars
+wrangler.toml.local
+
+# ─── Dependencies ─────────────────────────────
 node_modules/
-coverage/
+jspm_packages/
+bower_components/
+.npm
+.yarn/
+.pnp.*
+
+# ─── Build / Cache / Coverage ─────────────────
 dist/
 build/
-.env
-.env.local
-.env*.local
-.DS_Store
+out/
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vite/
+.turbo/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+
+# ─── Logs ─────────────────────────────────────
 *.log
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-.cache/
-.vscode/launch.json
-.vscode/settings.json
-.vscode/*.code-workspace
+pnpm-debug.log*
+
+# ─── Test-Artefakte ───────────────────────────
+tests/
+TESTING.md
+*.test.js
+*.spec.js
+jest.config.js
+junit.xml
+playwright-report/
+test-results/
+
+# ─── IDE / Editor ─────────────────────────────
+.vscode/
+!.vscode/extensions.json
 .idea/
 .idea_modules/
-*.swp
-*.swo
-*~
-.eslintcache
-.stylelintcache
-*.bak
-*.tmp
-.env.test.local
-.env.production.local
-.npm
-.eslintignore
-.prettierignore
-# IDE
+*.iml
 *.sublime-project
 *.sublime-workspace
 .vscode-test/
 .history/
-# OS
+*.swp
+*.swo
+*~
+
+# ─── OS-Cruft ─────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
 Thumbs.db
 .Thumbs.db
-# Testing
-.nyc_output/
-junit.xml
-# Backup files
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ─── Backups & Tempfiles ──────────────────────
 *.bak
+*.backup
 *_backup*
-# Lock files (optional - uncomment if you want to exclude them)
-# package-lock.json
-# yarn.lock
+*.old
+*.orig
+*.tmp
+*.temp
+*.rej
+.~lock.*
 
-# Test files and directories
-
-tests/
-TESTING.md
-*.test.js
-jest.config.js
-
+# ─── KI-Assistenten / Workspace-Configs ───────
+# CLAUDE.md enthält interne Projekt-Konventionen
+# und ist nichts für die Public.
 .claude/
 CLAUDE.md
-DB/rls-policies.sql
+.cursor/
+.cursorrules
+.aider*
+.github/copilot/
+
+# ─── Interne Dev-Tools (nicht für End-User) ───
+# Python-Scripts, die nur lokal laufen
+dead_storage_hunter.py
+repo-tracker.py
+*.pyc
+__pycache__/
+.python-version
+.venv/
+venv/
+
+# ─── Interne Doku & Reports ───────────────────
+# Internes Wissen, Roadmaps, Reviews — nichts für public
+SECURITY-FIX.md
+SECURITY-AUDIT*.md
+TODO.md
+NOTES.md
+SCRATCH.md
+ROADMAP*.md
+# Interne READMEs (Workdocs)
+README´s/
+
+# ─── DB / SQL / Migrations ────────────────────
+# RLS-Policies und Schemas leaken Backend-Logik
+DB/
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+
+# ─── Backups vom localStorage / Exports ───────
+tg_pro_data*.json
+tg_pro_data*.txt
+backup_*.json
+export_*.json
+
+# ─── Sonstiges ────────────────────────────────
+.eslintignore
+.prettierignore
+.vagrant/
+.docker/
+docker-compose.override.yml
+
+# ─── Hier NICHT ignorieren (Whitelist) ────────
+# Falls obige Patterns zu breit greifen:
+!Rechtliches/SECURITY.md
+!Rechtliches/PRIVACY.md
+!README.md
