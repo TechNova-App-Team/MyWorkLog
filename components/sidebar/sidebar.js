@@ -143,3 +143,58 @@
         }
     }
 
+    // ─── Flyout-Dropdown im Collapsed-Mode (position:fixed um overflow-clip zu umgehen) ───
+    (function initCollapsedFlyouts() {
+        function isCollapsed() {
+            return document.getElementById('sidebar')?.classList.contains('collapsed');
+        }
+        function activateFlyout(triggerEl, dropdown) {
+            if (!isCollapsed()) return;
+            const rect = triggerEl.getBoundingClientRect();
+            dropdown.style.setProperty('--flyout-top', rect.top + 'px');
+            dropdown.style.setProperty('--flyout-left', (rect.right + 8) + 'px');
+            dropdown.classList.add('flyout-active');
+        }
+        function deactivateFlyout(dropdown) {
+            dropdown.classList.remove('flyout-active');
+            dropdown.style.removeProperty('--flyout-top');
+            dropdown.style.removeProperty('--flyout-left');
+        }
+        function hideAllFlyouts() {
+            document.querySelectorAll('.nav-dropdown.flyout-active').forEach(deactivateFlyout);
+        }
+        function bind() {
+            document.querySelectorAll('.nav-item-dropdown').forEach(function(wrap) {
+                if (wrap.dataset.flyoutBound) return;
+                wrap.dataset.flyoutBound = '1';
+                const dropdown = wrap.querySelector('.nav-dropdown');
+                if (!dropdown) return;
+                let hideTimer = null;
+                const show = function() {
+                    clearTimeout(hideTimer);
+                    activateFlyout(wrap, dropdown);
+                };
+                const hide = function() {
+                    clearTimeout(hideTimer);
+                    hideTimer = setTimeout(function() { deactivateFlyout(dropdown); }, 80);
+                };
+                wrap.addEventListener('mouseenter', show);
+                wrap.addEventListener('mouseleave', hide);
+                dropdown.addEventListener('mouseenter', show);
+                dropdown.addEventListener('mouseleave', hide);
+            });
+            // Andere nav-items (nicht im Dropdown-Wrap) → Flyout sofort schließen
+            document.querySelectorAll('.sidebar .nav-item').forEach(function(item) {
+                if (item.closest('.nav-item-dropdown')) return;
+                if (item.dataset.flyoutClose) return;
+                item.dataset.flyoutClose = '1';
+                item.addEventListener('mouseenter', hideAllFlyouts);
+            });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bind);
+        } else {
+            bind();
+        }
+    })();
+

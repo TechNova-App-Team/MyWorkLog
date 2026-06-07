@@ -1172,9 +1172,22 @@
             .sidebar.collapsed .nav-label {
                 opacity: 0;
                 max-width: 0;
+                width: 0;
+                min-width: 0;
+                margin: 0;
+                padding: 0;
                 overflow: hidden;
+                white-space: nowrap;
                 pointer-events: none;
                 transition: opacity 0.2s, max-width 0.3s cubic-bezier(0.4,0,0.2,1);
+            }
+            /* Defensive: hide any raw text node directly inside collapsed nav-item */
+            .sidebar.collapsed .nav-item {
+                font-size: 0;
+            }
+            .sidebar.collapsed .nav-item .nav-icon,
+            .sidebar.collapsed .nav-item .nav-icon * {
+                font-size: 14px;
             }
             .sidebar.collapsed .nav-section {
                 opacity: 0 !important;
@@ -1278,6 +1291,43 @@
             /* Nav separator subtle in collapsed */
             .sidebar.collapsed .nav-separator {
                 margin: 8px 16px;
+            }
+            /* Dropdown-Items: arrow + popup ausblenden, Icon zentrieren */
+            .sidebar.collapsed .nav-item-dropdown .nav-item {
+                justify-content: center !important;
+            }
+            .sidebar.collapsed .nav-item-dropdown .nav-item > span {
+                gap: 0 !important;
+                justify-content: center !important;
+            }
+            .sidebar.collapsed .nav-dropdown-arrow {
+                display: none !important;
+            }
+            /* CSS-Hover-Show im Collapsed-Mode ausschalten — nur JS-gesteuerter Flyout */
+            .sidebar.collapsed .nav-dropdown:not(.flyout-active) {
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+            }
+            /* Flyout-Dropdown: position:fixed via JS gesetzt, damit es nicht geclippt wird */
+            .sidebar.collapsed .nav-dropdown.flyout-active {
+                display: block !important;
+                position: fixed !important;
+                top: var(--flyout-top, 0) !important;
+                left: var(--flyout-left, 64px) !important;
+                right: auto !important;
+                margin: 0 !important;
+                min-width: 180px;
+                opacity: 1 !important;
+                visibility: visible !important;
+                transform: none !important;
+                z-index: 1000;
+            }
+            .sidebar.collapsed .nav-item-dropdown .nav-item:hover::after {
+                display: none !important;
+            }
+            .sidebar.collapsed .nav-dropdown-item {
+                font-size: 0.8rem;
             }
         }
 
