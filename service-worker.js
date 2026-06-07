@@ -168,7 +168,7 @@ self.addEventListener('push', event => {
   event.waitUntil(
     self.registration.showNotification(data.title ?? 'TimeTracker', {
       body:               data.body ?? 'Neue Benachrichtigung',
-      icon:               './Grafiken/icon-192.svg',
+      icon:               './Grafiken/icon-192.png',
       tag:                data.tag  ?? 'timetracker',
       requireInteraction: false,
     })
