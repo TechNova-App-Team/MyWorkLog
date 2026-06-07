@@ -731,6 +731,31 @@
     })();
     </script>
 
+    <!-- Theme-Farbe-Sync: liest User-Akzent aus tg_pro_data.settings.theme -->
+    <script>
+    (function() {
+        function applyTheme(hex) {
+            if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+            var r = parseInt(hex.slice(1,3), 16);
+            var g = parseInt(hex.slice(3,5), 16);
+            var b = parseInt(hex.slice(5,7), 16);
+            document.documentElement.style.setProperty('--primary', hex);
+            document.documentElement.style.setProperty('--primary-rgb', r + ',' + g + ',' + b);
+            document.documentElement.style.setProperty('--primary-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
+        }
+        function syncTheme() {
+            try {
+                var raw = localStorage.getItem('tg_pro_data');
+                if (!raw) return;
+                var data = JSON.parse(raw);
+                if (data && data.settings && data.settings.theme) applyTheme(data.settings.theme);
+            } catch (e) { /* ignore */ }
+        }
+        syncTheme();
+        window.addEventListener('storage', function(e) { if (e.key === 'tg_pro_data') syncTheme(); });
+        document.addEventListener('visibilitychange', function() { if (!document.hidden) syncTheme(); });
+    })();
+    </script>
 
 </body>
 </html>
