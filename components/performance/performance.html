@@ -1,128 +1,217 @@
         <div id="view-performance" class="view-section">
-            <h2 style="margin-bottom:1.5rem;">📈 Performance Analyse & Muster</h2>
 
-            <div class="kpi-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1.5rem;">
-                <div class="card kpi-large">
-                    <div class="kpi-large-label">Soll-Erfüllungsgrad (90 Tage)</div>
-                    <div class="kpi-large-value" id="kpiPerformance">0%</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">Ziel: 100%</div>
+            <!-- ─── Page Hero ────────────────────────────────────────── -->
+            <div class="perf-hero">
+                <div class="perf-hero__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 3v18h18"/>
+                        <path d="M7 16V11"/>
+                        <path d="M12 16V7"/>
+                        <path d="M17 16v-4"/>
+                    </svg>
                 </div>
-                <div class="card kpi-large" style="border-left: 3px solid #06b6d4;">
-                    <div class="kpi-large-label">Ø Arbeitsbeginn</div>
-                    <div class="kpi-large-value" id="kpiAvgStartTime" style="color:#06b6d4;">---</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">Dein bestes Startfenster</div>
+                <div class="perf-hero__text">
+                    <h2 class="perf-hero__title">Performance Analyse & Muster</h2>
+                    <p class="perf-hero__sub">Arbeitszeit, Trends und Compliance auf einen Blick.</p>
                 </div>
-                <div class="card kpi-large" style="border-left: 3px solid #f59e0b;">
-                    <div class="kpi-large-label">Ø Längste Fokusphase</div>
-                    <div class="kpi-large-value" id="kpiAvgFocus" style="color:#f59e0b;">0.0h</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">Zwischen Pausen & Start/Ende</div>
-                </div>
-                 <div class="card kpi-large">
-                    <div class="kpi-large-label">Ø Saldo Monatlich (1 Jahr)</div>
-                    <div class="kpi-large-value" id="kpiAvgMonthlyDiff" style="color:var(--primary);">+0h</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">Zeigt den monatlichen Trend</div>
+                <div class="perf-hero__scope">
+                    <span class="perf-hero__scope-dot"></span>
+                    Letzte 90 Tage
                 </div>
             </div>
 
-            <div class="charts-row" style="grid-template-columns: 1fr;">
-                <div class="card">
-                    <div class="chart-header">
+            <!-- ─── KPI Stat Tiles ──────────────────────────────────── -->
+            <div class="perf-stats">
+                <div class="perf-stat" data-accent="primary">
+                    <div class="perf-stat__head">
+                        <span class="perf-stat__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="9"/>
+                                <circle cx="12" cy="12" r="5"/>
+                                <circle cx="12" cy="12" r="1.5"/>
+                            </svg>
+                        </span>
+                        <span class="perf-stat__label">Soll-Erfüllungsgrad</span>
+                    </div>
+                    <div class="perf-stat__value" id="kpiPerformance">0%</div>
+                    <div class="perf-stat__foot">Ziel: 100% · 90 Tage</div>
+                </div>
+
+                <div class="perf-stat" data-accent="cyan">
+                    <div class="perf-stat__head">
+                        <span class="perf-stat__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 18a5 5 0 0 0-10 0"/>
+                                <line x1="12" y1="9" x2="12" y2="2"/>
+                                <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/>
+                                <line x1="1" y1="18" x2="3" y2="18"/>
+                                <line x1="21" y1="18" x2="23" y2="18"/>
+                                <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/>
+                                <line x1="23" y1="22" x2="1" y2="22"/>
+                                <polyline points="8 6 12 2 16 6"/>
+                            </svg>
+                        </span>
+                        <span class="perf-stat__label">Ø Arbeitsbeginn</span>
+                    </div>
+                    <div class="perf-stat__value" id="kpiAvgStartTime">---</div>
+                    <div class="perf-stat__foot">Dein bestes Startfenster</div>
+                </div>
+
+                <div class="perf-stat" data-accent="amber">
+                    <div class="perf-stat__head">
+                        <span class="perf-stat__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                            </svg>
+                        </span>
+                        <span class="perf-stat__label">Ø Längste Fokusphase</span>
+                    </div>
+                    <div class="perf-stat__value" id="kpiAvgFocus">0.0h</div>
+                    <div class="perf-stat__foot">Zwischen Pausen & Start/Ende</div>
+                </div>
+
+                <div class="perf-stat" data-accent="success">
+                    <div class="perf-stat__head">
+                        <span class="perf-stat__icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                                <polyline points="16 7 22 7 22 13"/>
+                            </svg>
+                        </span>
+                        <span class="perf-stat__label">Ø Saldo Monatlich</span>
+                    </div>
+                    <div class="perf-stat__value" id="kpiAvgMonthlyDiff">+0h</div>
+                    <div class="perf-stat__foot">Monatlicher Trend · 1 Jahr</div>
+                </div>
+            </div>
+
+            <!-- ─── Wöchentlicher Soll-Ist-Vergleich ────────────────── -->
+            <div class="perf-card">
+                <div class="perf-card__head">
+                    <div>
+                        <div class="perf-card__title">Wöchentlicher Soll-Ist-Vergleich</div>
+                        <div class="perf-card__sub">Geleistete Zeit vs. Soll-Zeit der letzten 8 Wochen</div>
+                    </div>
+                    <div class="perf-legend">
+                        <span class="perf-legend__item"><span class="perf-dot" style="background:var(--work-color)"></span>Geleistet</span>
+                        <span class="perf-legend__item"><span class="perf-dot" style="background:var(--expected-color)"></span>Soll</span>
+                    </div>
+                </div>
+                <div class="stacked-bar-chart" id="chartWeeklyPerformance"></div>
+            </div>
+
+            <!-- ─── Projekt + Saldo-Trend ───────────────────────────── -->
+            <div class="perf-grid-2">
+                <div class="perf-card">
+                    <div class="perf-card__head">
                         <div>
-                            <div class="chart-title">Wöchentlicher Soll-Ist-Vergleich</div>
-                            <div class="chart-sub">Deine geleistete Zeit vs. Soll-Zeit der letzten 8 Wochen</div>
-                        </div>
-                        <div class="donut-legend">
-                            <div class="legend-item"><div class="dot" style="background:var(--work-color)"></div> Geleistet</div>
-                            <div class="legend-item"><div class="dot" style="background:var(--expected-color)"></div> Soll</div>
+                            <div class="perf-card__title">Projekt-Verteilung</div>
+                            <div class="perf-card__sub">Aufteilung der gesamten Arbeitszeit</div>
                         </div>
                     </div>
-                    <div class="stacked-bar-chart" id="chartWeeklyPerformance">
+                    <div class="donut-container" id="chartProjectDistribution"></div>
+                    <div class="donut-legend" id="projectDonutLegend"></div>
+                </div>
+
+                <div class="perf-card">
+                    <div class="perf-card__head">
+                        <div>
+                            <div class="perf-card__title">Saldo-Entwicklung pro Monat</div>
+                            <div class="perf-card__sub">Kumulierte Saldo-Veränderung pro Monat (12 Monate)</div>
                         </div>
+                    </div>
+                    <div class="trend-container" id="chartMonthlyTrend"></div>
                 </div>
             </div>
-            
-            <div class="charts-row" style="grid-template-columns: 1fr 1fr;">
-                 <div class="card">
-                    <div class="chart-header">
+
+            <!-- ─── Wochentag + Heatmap ─────────────────────────────── -->
+            <div class="perf-grid-deep">
+                <div class="perf-card">
+                    <div class="perf-card__head">
                         <div>
-                            <div class="chart-title">Projekt-Verteilung</div>
-                            <div class="chart-sub">Aufteilung der gesamten Arbeitszeit</div>
+                            <div class="perf-card__title">Ø Produktivität pro Wochentag</div>
+                            <div class="perf-card__sub">Durchschnittlicher Saldo Mo – Fr</div>
                         </div>
                     </div>
-                    <div class="donut-container" id="chartProjectDistribution">
+                    <div class="horizontal-bar-container" id="chartProductivityByDay" style="max-height: 320px; overflow-y: auto;"></div>
+                </div>
+
+                <div class="perf-card">
+                    <div class="perf-card__head">
+                        <div>
+                            <div class="perf-card__title">Tages-Heatmap</div>
+                            <div class="perf-card__sub">Ø geleistete Zeit pro Stunde (8:00 – 23:00)</div>
+                        </div>
                     </div>
-                    <div class="donut-legend" id="projectDonutLegend">
+                    <div id="chartProductivityHeatmap"></div>
+                </div>
+            </div>
+
+            <!-- ─── Compliance & Ruhezeiten ─────────────────────────── -->
+            <div class="perf-card">
+                <div class="perf-card__head">
+                    <div>
+                        <div class="perf-card__title">Compliance & Ruhezeiten-Audit</div>
+                        <div class="perf-card__sub">Gesetzliche Vorgaben deiner letzten Schicht</div>
                     </div>
                 </div>
-                
-                 <div class="card">
-                    <div class="chart-header">
-                        <div>
-                            <div class="chart-title">Saldo-Entwicklung pro Monat</div>
-                            <div class="chart-sub">Kumulierte Saldo-Veränderung pro Monat (12 Monate)</div>
+                <div class="perf-audit-grid">
+                    <div class="perf-audit" data-status="ok" id="auditMaxHours">
+                        <div class="perf-audit__top">
+                            <span class="perf-audit__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="9"/>
+                                    <polyline points="12 7 12 12 15 14"/>
+                                </svg>
+                            </span>
+                            <span class="perf-audit__pill" id="auditMaxHoursValue">OK</span>
                         </div>
+                        <div class="perf-audit__label">10h Max-Arbeitszeit</div>
+                        <div class="perf-audit__desc">Tägliche Höchstarbeitszeit</div>
                     </div>
-                    <div class="trend-container" id="chartMonthlyTrend">
+
+                    <div class="perf-audit" data-status="ok" id="auditRestTime">
+                        <div class="perf-audit__top">
+                            <span class="perf-audit__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                                </svg>
+                            </span>
+                            <span class="perf-audit__pill" id="auditRestTimeValue">OK</span>
+                        </div>
+                        <div class="perf-audit__label">11h Ruhezeit</div>
+                        <div class="perf-audit__desc">Pause zur letzten Schicht</div>
+                    </div>
+
+                    <div class="perf-audit" data-status="ok" id="auditBreakMin">
+                        <div class="perf-audit__top">
+                            <span class="perf-audit__icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
+                                    <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+                                    <line x1="6" y1="1" x2="6" y2="4"/>
+                                    <line x1="10" y1="1" x2="10" y2="4"/>
+                                    <line x1="14" y1="1" x2="14" y2="4"/>
+                                </svg>
+                            </span>
+                            <span class="perf-audit__pill" id="auditBreakMinValue">OK</span>
+                        </div>
+                        <div class="perf-audit__label">Pausen-Compliance</div>
+                        <div class="perf-audit__desc">Mindestpausen der letzten Schicht</div>
                     </div>
                 </div>
             </div>
 
-            <div class="charts-row" style="grid-template-columns: 1fr;">
-                 <div class="card chart-deep-row">
-                     <div style="padding-right: 1.5rem; border-right: 1px solid var(--border);">
-                        <div class="chart-header">
-                            <div>
-                                <div class="chart-title">Ø Produktivität pro Wochentag</div>
-                                <div class="chart-sub">Durchschnittlicher Saldo Mo - Fr</div>
-                            </div>
-                        </div>
-                        <div class="horizontal-bar-container" id="chartProductivityByDay" style="max-height: 300px; overflow-y: auto;">
-                            </div>
-                    </div>
-                     
-                    <div style="padding-left: 1.5rem;">
-                         <div class="chart-header">
-                            <div>
-                                <div class="chart-title">Tages-Heatmap</div>
-                                <div class="chart-sub">Durchschnittliche geleistete Zeit pro Stunde (8:00 - 23:00)</div>
-                            </div>
-                        </div>
-                        <div id="chartProductivityHeatmap">
-                            </div>
+            <!-- ─── Stimmungs-Übersicht ─────────────────────────────── -->
+            <div class="perf-card">
+                <div class="perf-card__head">
+                    <div>
+                        <div class="perf-card__title">Stimmungs-Übersicht</div>
+                        <div class="perf-card__sub">Deine Stimmung über die letzten 30 Tage</div>
                     </div>
                 </div>
-            </div>
-
-            <div class="card">
-                <h3 style="margin-bottom:1.5rem;">Compliance & Ruhezeiten-Audit</h3>
-                <div class="audit-grid" style="grid-template-columns: repeat(3, 1fr); gap: 1rem;">
-                    <div class="card audit-card" id="auditMaxHours">
-                        <div class="audit-label">10h Max-Arbeitszeit</div>
-                        <div class="audit-value" id="auditMaxHoursValue">OK</div>
-                    </div>
-                    <div class="card audit-card" id="auditRestTime">
-                        <div class="audit-label">11h Ruhezeit (Letzte Schicht)</div>
-                        <div class="audit-value" id="auditRestTimeValue">OK</div>
-                    </div>
-                     <div class="card audit-card" id="auditBreakMin">
-                        <div class="audit-label">Pausen-Compliance (Letzte Schicht)</div>
-                        <div class="audit-value" id="auditBreakMinValue">OK</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Mood Overview -->
-            <div class="charts-row" style="grid-template-columns: 1fr;">
-                <div class="card">
-                    <div class="chart-header">
-                        <div>
-                            <div class="chart-title">Stimmungs-Übersicht</div>
-                            <div class="chart-sub">Deine Stimmung über die letzten 30 Tage</div>
-                        </div>
-                    </div>
-                    <div id="moodOverview" style="display:flex; flex-wrap:wrap; gap:8px; padding:1rem;">
-                        <!-- Mood entries will be filled by JS -->
-                    </div>
+                <div id="moodOverview" class="perf-mood">
+                    <!-- Mood entries will be filled by JS -->
                 </div>
             </div>
         </div>
