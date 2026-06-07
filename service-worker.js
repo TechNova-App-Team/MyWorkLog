@@ -11,7 +11,7 @@
 
 'use strict';
 
-const SW_VERSION  = 'v5.6.1';
+const SW_VERSION  = 'v5.7.0';
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
 const OFFLINE_URL = './offline/';
 const DEBUG       = true;
@@ -89,11 +89,11 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
-  // HTML-Navigation: Network-First mit cache:'no-store' → bypassed Browser-HTTP-Cache komplett.
+  // HTML-Navigation: Network-First mit cache:'reload' → bypassed Browser-HTTP-Cache komplett.
   // Verhindert, dass bei Cloudflare-Deployments ein 304-Hit alten HTML-Content liefert.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(new Request(request, { cache: 'no-store' }))
+      fetch(new Request(request, { cache: 'reload' }))
         .then(response => {
           if (response.status === 200) {
             const clone = response.clone();
@@ -116,11 +116,13 @@ self.addEventListener('fetch', event => {
   // /pages/-Pfade nie cachen (werden von Cloudflare umgeschrieben)
   if (new URL(request.url).pathname.startsWith('/pages/')) return;
 
-  // Eigene Assets: Network-First mit ETag-Revalidierung.
-  // cache:'no-cache' = fragt immer beim Server nach (304 wenn unverändert, 200 wenn neu).
-  // SW-Cache wird nur genutzt wenn offline (Fallback).
+  // Eigene Assets: Network-First, Browser-HTTP-Cache komplett umgehen.
+  // cache:'reload' = ignoriert HTTP-Cache total → holt immer frisch vom Netz/CDN.
+  // Wichtig: Bisheriger 'no-cache' respektiert "immutable"-Header in einigen Browsern
+  // und liefert dann jahrelang Stale-Content. 'reload' bricht das auf.
+  // SW-Cache wird nur als Offline-Fallback genutzt.
   event.respondWith(
-    fetch(new Request(request, { cache: 'no-cache' }))
+    fetch(new Request(request, { cache: 'reload' }))
       .then(response => {
         if (response.status === 200) {
           const clone = response.clone();

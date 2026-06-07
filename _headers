@@ -7,16 +7,19 @@
 /
   Cache-Control: public, max-age=0, must-revalidate
 
-# JS & CSS assets — long cache (filenames don't change, but content does)
-# Service Worker handles runtime updates
+# JS & CSS assets — MUST revalidate. Filenames sind NICHT gefingerprinted,
+# d.h. Inhalt ändert sich unter gleichem Namen. "immutable" wäre fatal:
+# Browser würden 1 Jahr lang alte Dateien servieren ohne je nachzufragen.
+# max-age=0 + must-revalidate = Browser fragt mit ETag, kriegt 304 (billig)
+# wenn unverändert, 200 mit neuem Content nach Deploy.
 /Assets/css/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=0, must-revalidate
 
 /Assets/js/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=0, must-revalidate
 
 /components/*
-  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+  Cache-Control: public, max-age=0, must-revalidate
 
 # Config files — short cache
 /config/*
