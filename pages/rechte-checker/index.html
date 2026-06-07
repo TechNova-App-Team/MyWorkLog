@@ -2482,13 +2482,20 @@ Mit freundlichen Grüßen
     //  🤖 LLM INTEGRATION
     // ═══════════════════════════════════════════
 
+    // LLM-Key liegt in sessionStorage (verschwindet beim Schließen des Browsers).
+    // Defense-in-Depth: bei einer künftigen XSS-Lücke wäre der Key nicht persistent abgreifbar.
     function getLlmConfig() {
         try {
-            return JSON.parse(localStorage.getItem('rc_llm_config') || '{}');
+            const legacy = localStorage.getItem('rc_llm_config');
+            if (legacy && !sessionStorage.getItem('rc_llm_config')) {
+                sessionStorage.setItem('rc_llm_config', legacy);
+            }
+            localStorage.removeItem('rc_llm_config');
+            return JSON.parse(sessionStorage.getItem('rc_llm_config') || '{}');
         } catch { return {}; }
     }
     function saveLlmConfig(cfg) {
-        localStorage.setItem('rc_llm_config', JSON.stringify(cfg));
+        sessionStorage.setItem('rc_llm_config', JSON.stringify(cfg));
     }
 
     function openLlmKeyModal() {
@@ -2564,6 +2571,7 @@ Mit freundlichen Grüßen
         setSearchMode('llm');
     }
     function deleteLlmKey() {
+        sessionStorage.removeItem('rc_llm_config');
         localStorage.removeItem('rc_llm_config');
         closeLlmKeyModal();
         updateLlmBtnState();
