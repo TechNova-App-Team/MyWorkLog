@@ -15,32 +15,21 @@
     <style>
         :root {
             --bg-deep: #030305;
-            --bg-glass: rgba(22, 22, 26, 0.65);
-            --bg-glass-heavy: rgba(14, 14, 18, 0.9);
             --primary: #a855f7;
             --primary-rgb: 168, 85, 247;
-            --primary-dim: rgba(168, 85, 247, 0.1);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --success: #10b981;     --success-rgb: 16, 185, 129;
             --danger: #ef4444;      --danger-rgb: 239, 68, 68;
             --warning: #f59e0b;     --warning-rgb: 245, 158, 11;
-            --border: rgba(255, 255, 255, 0.06);
-            --border-hover: rgba(255, 255, 255, 0.12);
             --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
-            --notch: 22px;
         }
 
         [data-theme="light"] {
             --bg-deep: #f8fafc;
-            --bg-glass: rgba(255,255,255,0.85);
-            --bg-glass-heavy: rgba(255,255,255,0.94);
             --text-main: #071023;
             --text-muted: #475569;
-            --border: rgba(7, 16, 35, 0.06);
-            --border-hover: rgba(7, 16, 35, 0.12);
-            --primary-dim: rgba(168, 85, 247, 0.08);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -51,13 +40,15 @@
             color: var(--text-main);
             min-height: 100vh;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         /* Background mesh */
         .bg-mesh { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
         .bg-orb {
             position: absolute; border-radius: 50%;
-            filter: blur(120px); opacity: 0.08;
+            filter: blur(140px); opacity: 0.06;
             animation: orbFloat 28s ease-in-out infinite alternate;
         }
         .bg-orb.o1 { width: 700px; height: 700px; background: var(--primary); top: -15%; left: -15%; }
@@ -76,268 +67,218 @@
 
         /* ════ HEADER ════ */
         .fk-header {
-            position: relative;
             display: flex; justify-content: space-between; align-items: flex-start;
             flex-wrap: wrap; gap: 1rem;
-            margin-bottom: 2rem;
-            background:
-                linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
-                radial-gradient(ellipse 55% 65% at 92% -5%, rgba(var(--primary-rgb), 0.16) 0%, transparent 55%),
-                var(--bg-glass);
-            background-size: 36px 36px, 36px 36px, 100% 100%, 100% 100%;
-            border: 1px solid var(--border);
-            border-radius: 3px;
-            padding: 2rem 2rem 1.75rem;
-            overflow: hidden;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            animation: fk-scan 8s linear infinite;
-            clip-path: polygon(
-                0 0, 100% 0,
-                100% calc(100% - var(--notch)),
-                calc(100% - var(--notch)) 100%,
-                0 100%
-            );
+            margin-bottom: 1.75rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 1.5rem 1.75rem;
         }
 
-        @keyframes fk-scan {
-            from { background-position: 0 0, 0 0, 0 0, 0 0; }
-            to   { background-position: 0 36px, 0 36px, 0 0, 0 0; }
-        }
-
-        .fk-header::before {
-            content: '';
-            position: absolute; top: 14px; left: 14px;
-            width: 20px; height: 20px;
-            border-top: 2px solid rgba(var(--primary-rgb), 0.65);
-            border-left: 2px solid rgba(var(--primary-rgb), 0.65);
-            z-index: 3; pointer-events: none;
-        }
-
-        .fk-header::after {
-            content: '';
-            position: absolute; top: 14px; right: 14px;
-            width: 20px; height: 20px;
-            border-top: 2px solid rgba(var(--primary-rgb), 0.28);
-            border-right: 2px solid rgba(var(--primary-rgb), 0.28);
-            z-index: 3; pointer-events: none;
-        }
-
-        .fk-header-left { position: relative; z-index: 1; }
+        .fk-header-left { min-width: 0; flex: 1; }
 
         .fk-status-badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            font-family: var(--font-mono); font-size: 0.57rem; font-weight: 700;
-            letter-spacing: 0.16em; color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.1);
-            border: 1px solid rgba(var(--primary-rgb), 0.28);
-            padding: 3px 12px 3px 8px;
-            clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
-            margin-bottom: 10px;
-        }
-
-        .fk-badge-dot {
-            width: 5px; height: 5px; border-radius: 50%;
-            background: var(--primary);
-            box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.6);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
-
-        .brand {
-            display: flex; align-items: center; gap: 6px;
-            font-family: var(--font-mono); font-size: 0.65rem;
-            font-weight: 600; letter-spacing: 0.08em;
-            color: var(--text-muted); margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-
-        .brand-sep { opacity: 0.3; }
-
-        .fk-title-row {
-            display: flex; align-items: center; gap: 12px;
-            margin-bottom: 5px;
-        }
-
-        .fk-title-icon { width: 34px; height: 34px; flex-shrink: 0; color: var(--primary); }
-
-        .page-title {
-            font-size: 1.7rem; font-weight: 800;
-            letter-spacing: -0.03em; color: var(--text-main);
-        }
-
-        .page-subtitle { font-size: 0.78rem; color: var(--text-muted); }
-
-        .header-right {
-            display: flex; align-items: center; gap: 0.75rem;
-            position: relative; z-index: 1;
-        }
-
-        .theme-toggle {
-            width: 36px; height: 36px;
-            border-radius: 3px; border: 1px solid var(--border);
-            background: rgba(255,255,255,0.03); color: var(--text-main);
-            font-size: 1rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s ease;
-        }
-        .theme-toggle:hover { border-color: var(--primary); background: rgba(var(--primary-rgb),0.1); }
-
-        .btn-back {
             display: inline-flex; align-items: center; gap: 7px;
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
-            border-radius: 3px;
-            color: var(--text-muted); text-decoration: none;
-            font-weight: 600; font-size: 0.78rem;
-            transition: all 0.2s ease;
-            clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
-            font-family: var(--font-main);
-        }
-        .btn-back:hover {
-            background: rgba(var(--primary-rgb),0.08);
-            border-color: rgba(var(--primary-rgb),0.35);
-            color: var(--primary);
-        }
-
-        /* ════ SECTION TITLES ════ */
-        .fk-section-title {
-            display: flex; align-items: center; gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-        .fk-section-title-text {
-            font-family: var(--font-mono); font-size: 0.67rem;
-            font-weight: 700; letter-spacing: 0.12em;
-            color: var(--text-muted); text-transform: uppercase;
-        }
-        .fk-section-tag {
-            font-family: var(--font-mono); font-size: 0.56rem;
-            font-weight: 700; letter-spacing: 0.1em;
+            font-size: 0.7rem; font-weight: 600;
             color: var(--primary);
             background: rgba(var(--primary-rgb), 0.1);
             border: 1px solid rgba(var(--primary-rgb), 0.22);
-            padding: 2px 12px 2px 8px;
-            clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+            padding: 4px 10px;
+            border-radius: 999px;
+            margin-bottom: 12px;
+            letter-spacing: -0.01em;
         }
-        .fk-section-title::after {
-            content: ''; flex: 1; height: 1px;
-            background: linear-gradient(to right, var(--border), transparent);
+
+        .fk-badge-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 6px rgba(var(--primary-rgb), 0.6);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        .brand {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            letter-spacing: -0.01em;
+        }
+
+        .brand-sep { opacity: 0.35; }
+
+        .fk-title-row {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .fk-title-icon {
+            width: 34px; height: 34px; flex-shrink: 0;
+            color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.1);
+            border: 1px solid rgba(var(--primary-rgb), 0.18);
+            border-radius: 10px;
+            padding: 5px;
+        }
+
+        .page-title {
+            font-size: 1.6rem; font-weight: 700;
+            letter-spacing: -0.025em; color: var(--text-main);
+        }
+
+        .page-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            letter-spacing: -0.01em;
+        }
+
+        .header-right {
+            display: flex; align-items: center; gap: 0.6rem;
+        }
+
+        .theme-toggle {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            color: var(--text-main);
+            font-size: 1.05rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 9px 16px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            color: var(--text-main); text-decoration: none;
+            font-weight: 600; font-size: 0.82rem;
+            transition: all 0.2s ease;
+            font-family: var(--font-main);
+            letter-spacing: -0.01em;
+        }
+        .btn-back:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        /* ════ SECTION TITLES (Settings-Style) ════ */
+        .fk-section-title {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 1rem;
+            margin-top: 0.5rem;
+        }
+        .fk-section-title::before {
+            content: '';
+            width: 3px;
+            height: 14px;
+            background: rgba(255,255,255,0.25);
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+        .fk-section-title-text {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+        .fk-section-tag {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.1);
+            border: 1px solid rgba(var(--primary-rgb), 0.18);
+            padding: 3px 9px;
+            border-radius: 999px;
         }
 
         /* ════ PENDEL RING SECTION ════ */
         .fk-ring-section {
             display: grid;
-            grid-template-columns: 210px 1fr;
-            gap: 1.25rem;
+            grid-template-columns: 220px 1fr;
+            gap: 0.85rem;
             margin-top: 1rem;
-            align-items: center;
+            align-items: stretch;
         }
 
         .fk-ring-panel {
-            position: relative;
-            background:
-                radial-gradient(ellipse 80% 70% at 10% 0%, rgba(var(--primary-rgb), 0.1) 0%, transparent 60%),
-                var(--bg-glass);
-            border: 1px solid rgba(var(--primary-rgb), 0.2);
-            border-radius: 3px;
-            padding: 1.5rem 1.75rem;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
-            clip-path: polygon(0 0, calc(100% - var(--notch)) 0, 100% var(--notch), 100% 100%, 0 100%);
-            box-shadow: inset 3px 0 0 rgba(var(--primary-rgb), 0.55), 0 0 0 1px rgba(var(--primary-rgb), 0.08);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 1.25rem 1.25rem 1.4rem;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 0.8rem;
+            transition: border-color 0.2s ease;
         }
-
-        .fk-ring-panel::before {
-            content: '';
-            position: absolute; top: 10px; left: 10px;
-            width: 13px; height: 13px;
-            border-top: 1.5px solid rgba(var(--primary-rgb), 0.6);
-            border-left: 1.5px solid rgba(var(--primary-rgb), 0.6);
-        }
-
-        .fk-ring-panel::after {
-            content: '';
-            position: absolute; bottom: 10px; right: 10px;
-            width: 13px; height: 13px;
-            border-bottom: 1.5px solid rgba(var(--primary-rgb), 0.28);
-            border-right: 1.5px solid rgba(var(--primary-rgb), 0.28);
-        }
+        .fk-ring-panel:hover { border-color: rgba(255,255,255,0.12); }
 
         .fk-ring-eyebrow {
-            font-family: var(--font-mono); font-size: 0.58rem;
-            font-weight: 700; letter-spacing: 0.14em;
-            color: var(--text-muted); text-transform: uppercase;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: -0.01em;
         }
 
         .fk-ring-wrap {
-            position: relative; width: 136px; height: 136px;
-        }
-
-        .fk-ring-wrap::before {
-            content: '';
-            position: absolute; top: -8px; left: -8px;
-            width: 22px; height: 22px;
-            border-top: 2px solid rgba(var(--primary-rgb), 0.5);
-            border-left: 2px solid rgba(var(--primary-rgb), 0.5);
-            z-index: 2;
-        }
-
-        .fk-ring-wrap::after {
-            content: '';
-            position: absolute; bottom: -8px; right: -8px;
-            width: 22px; height: 22px;
-            border-bottom: 2px solid rgba(var(--primary-rgb), 0.5);
-            border-right: 2px solid rgba(var(--primary-rgb), 0.5);
-            z-index: 2;
+            width: 130px; height: 130px;
         }
 
         .fk-ring-svg {
             width: 100%; height: 100%;
-            filter: drop-shadow(0 0 18px rgba(var(--primary-rgb), 0.18));
         }
 
-        .fk-ring-track { stroke: rgba(255,255,255,0.07); stroke-width: 7; }
-        .fk-ring-glow  { stroke: rgba(var(--primary-rgb), 0.1); stroke-width: 11; filter: blur(3px); }
+        .fk-ring-track { stroke: rgba(255,255,255,0.06); stroke-width: 7; }
+        .fk-ring-glow  { stroke: rgba(var(--primary-rgb), 0.08); stroke-width: 10; filter: blur(2px); }
 
         .fk-ring-progress {
             stroke: var(--primary); stroke-width: 7;
-            stroke-linecap: square;
+            stroke-linecap: round;
             transition: stroke-dashoffset 0.75s cubic-bezier(0.4,0,0.2,1);
-            filter: drop-shadow(0 0 10px rgba(var(--primary-rgb), 0.5));
         }
 
         .fk-ring-pct {
-            font-family: var(--font-mono); font-size: 21px;
-            font-weight: 800; fill: var(--text-main); text-anchor: middle;
+            font-family: var(--font-main); font-size: 22px;
+            font-weight: 700; fill: var(--text-main); text-anchor: middle;
+            letter-spacing: -0.03em;
         }
 
         .fk-ring-unit {
-            font-family: var(--font-mono); font-size: 9px;
-            font-weight: 600; fill: rgba(148,163,184,0.5);
-            text-anchor: middle; letter-spacing: 0.1em;
+            font-family: var(--font-main); font-size: 9px;
+            font-weight: 600; fill: var(--text-muted);
+            text-anchor: middle; letter-spacing: 0.08em;
         }
 
         .fk-ring-meta {
-            font-family: var(--font-mono); font-size: 0.65rem;
+            font-size: 0.78rem;
             color: var(--text-muted); text-align: center;
-            letter-spacing: 0.03em;
+            letter-spacing: -0.01em;
         }
 
         @media (max-width: 700px) {
             .fk-ring-section { grid-template-columns: 1fr; }
-            .fk-ring-panel { clip-path: none; flex-direction: row; gap: 1.5rem; }
-            .fk-ring-wrap { width: 100px; height: 100px; }
+            .fk-ring-panel { flex-direction: row; justify-content: flex-start; gap: 1.25rem; padding: 1.25rem; }
+            .fk-ring-panel > .fk-ring-eyebrow { display: none; }
+            .fk-ring-wrap { width: 100px; height: 100px; flex-shrink: 0; }
+            .fk-ring-meta { text-align: left; }
         }
 
         @media (max-width: 600px) {
-            .page-wrap { padding: 1rem 1rem 3.5rem; }
-            .page-title { font-size: 1.4rem; }
-            .fk-header { clip-path: none; padding: 1.5rem; }
-            .fk-ring-panel { flex-direction: column; }
+            .page-wrap { padding: 1.25rem 1rem 3.5rem; }
+            .fk-header { padding: 1.25rem; border-radius: 14px; }
+            .page-title { font-size: 1.35rem; }
+            .header-right { width: 100%; justify-content: flex-end; }
+            .btn-back { padding: 8px 14px; }
         }
     </style>
 </head>
