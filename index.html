@@ -2250,7 +2250,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             <svg class="gc-ring-svg" viewBox="0 0 120 120">
                                 <defs>
                                     <linearGradient id="gcRingGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" stop-color="#8b5cf6"/>
+                                        <stop offset="0%" style="stop-color:var(--primary)"/>
                                         <stop offset="100%" stop-color="#06b6d4"/>
                                     </linearGradient>
                                 </defs>
@@ -4723,159 +4723,407 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 <!-- Tab: Profil -->
                 <div id="settings-tab-profile" class="settings-tab-content">
                     
-                    <!-- Name -->
-                    <div class="settings-section">
+                    <!-- Profile (Name + Beruf + Bundesland) -->
+                    <div class="settings-section profile-card">
                         <div class="settings-section-title">Profil</div>
-                        <label class="settings-label">Dein Name</label>
-                        <input type="text" id="confName" class="glass-input" placeholder="z.B. Sven" style="max-width:320px;">
-                    </div>
 
-                    <!-- Job / Ausbildungsberuf -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Ausbildungsberuf</div>
-                        <label class="settings-label">Dein Beruf (beeinflusst Ghost Mode Skin)</label>
-                        <select id="confJob" class="glass-input" style="max-width:320px; padding:8px 12px; appearance:auto;" onchange="data.settings.job = this.value; save();">
-                            <option value="">— Bitte wählen —</option>
-                            <optgroup label="IT-Berufe">
-                                <option value="fachinformatiker-anwendung">Fachinformatiker Anwendungsentwicklung</option>
-                                <option value="fachinformatiker-system">Fachinformatiker Systemintegration</option>
-                                <option value="fachinformatiker-daten">Fachinformatiker Daten- & Prozessanalyse</option>
-                                <option value="fachinformatiker-digital">Fachinformatiker Digitale Vernetzung</option>
-                                <option value="it-systemelektroniker">IT-Systemelektroniker</option>
-                                <option value="it-kaufmann">Kaufmann für IT-System-Management</option>
-                                <option value="it-digitalisierung">Kaufmann für Digitalisierungsmanagement</option>
-                            </optgroup>
-                            <optgroup label="Kaufmännische Berufe">
-                                <option value="kaufmann-bueromanagement">Kaufmann/frau für Büromanagement</option>
-                                <option value="kaufmann-grosshandel">Kaufmann/frau im Groß- und Außenhandel</option>
-                                <option value="industriekaufmann">Industriekaufmann/frau</option>
-                                <option value="bankkaufmann">Bankkaufmann/frau</option>
-                                <option value="steuerfachangestellter">Steuerfachangestellte/r</option>
-                                <option value="kaufmann-ecommerce">Kaufmann/frau im E-Commerce</option>
-                            </optgroup>
-                            <optgroup label="Gewerblich-technische Berufe">
-                                <option value="elektroniker">Elektroniker/in</option>
-                                <option value="mechatroniker">Mechatroniker/in</option>
-                                <option value="industriemechaniker">Industriemechaniker/in</option>
-                                <option value="zerspanungsmechaniker">Zerspanungsmechaniker/in</option>
-                                <option value="anlagenmechaniker">Anlagenmechaniker/in</option>
-                            </optgroup>
-                            <optgroup label="Medien & Gestaltung">
-                                <option value="mediengestalter">Mediengestalter/in Digital & Print</option>
-                                <option value="gestaltungstechnischer-assistent">Gestaltungstechnische/r Assistent/in</option>
-                            </optgroup>
-                            <optgroup label="Sonstige">
-                                <option value="sonstige">Anderer Beruf</option>
-                            </optgroup>
-                        </select>
-                        <span class="settings-hint" style="margin-top:6px; display:block;">IT-Berufe → Code-Editor Ghost Mode &nbsp;|&nbsp; Kaufmännisch → Excel Ghost Mode</span>
-                    </div>
+                        <!-- Hero -->
+                        <div class="profile-hero">
+                            <div class="profile-hero-avatar" data-profile-avatar aria-hidden="true">?</div>
+                            <div class="profile-hero-info">
+                                <div class="profile-hero-name is-empty" data-profile-name>Noch kein Name</div>
+                                <div class="profile-hero-job" data-profile-job>Beruf nicht ausgewählt</div>
+                                <div class="profile-hero-meta">
+                                    <span class="profile-hero-region" data-profile-region>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                        <span>Region offen</span>
+                                    </span>
+                                    <span class="profile-hero-badge" data-profile-badge hidden></span>
+                                </div>
+                            </div>
+                        </div>
 
-                    <!-- Bundesland -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Bundesland</div>
-                        <label class="settings-label">Dein Bundesland (für Feiertage)</label>
-                        <select id="confBundesland" class="glass-input" style="max-width:320px; padding:8px 12px; appearance:auto;" onchange="data.settings.bundesland = this.value; save();">
-                            <option value="">— Bitte wählen —</option>
-                            <option value="BW">Baden-Württemberg</option>
-                            <option value="BY">Bayern</option>
-                            <option value="BE">Berlin</option>
-                            <option value="BB">Brandenburg</option>
-                            <option value="HB">Bremen</option>
-                            <option value="HH">Hamburg</option>
-                            <option value="HE">Hessen</option>
-                            <option value="MV">Mecklenburg-Vorpommern</option>
-                            <option value="NI">Niedersachsen</option>
-                            <option value="NW">Nordrhein-Westfalen</option>
-                            <option value="RP">Rheinland-Pfalz</option>
-                            <option value="SL">Saarland</option>
-                            <option value="SN">Sachsen</option>
-                            <option value="ST">Sachsen-Anhalt</option>
-                            <option value="SH">Schleswig-Holstein</option>
-                            <option value="TH">Thüringen</option>
-                        </select>
+                        <!-- Fields -->
+                        <div class="profile-fields">
+                            <!-- Name -->
+                            <label class="profile-field">
+                                <span class="profile-field-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                </span>
+                                <span class="profile-field-body">
+                                    <span class="profile-field-label">Dein Name</span>
+                                    <input type="text" id="confName" class="profile-field-input" placeholder="z.B. Sven" autocomplete="off">
+                                </span>
+                                <span></span>
+                            </label>
+
+                            <!-- Job -->
+                            <label class="profile-field">
+                                <span class="profile-field-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                                </span>
+                                <span class="profile-field-body">
+                                    <span class="profile-field-label">Ausbildungsberuf</span>
+                                    <span class="profile-field-hint">Beeinflusst deinen Ghost-Mode-Skin</span>
+                                    <select id="confJob" class="profile-field-input" onchange="data.settings.job = this.value; save();">
+                                        <option value="">— Bitte wählen —</option>
+                                        <optgroup label="IT-Berufe">
+                                            <option value="fachinformatiker-anwendung">Fachinformatiker Anwendungsentwicklung</option>
+                                            <option value="fachinformatiker-system">Fachinformatiker Systemintegration</option>
+                                            <option value="fachinformatiker-daten">Fachinformatiker Daten- & Prozessanalyse</option>
+                                            <option value="fachinformatiker-digital">Fachinformatiker Digitale Vernetzung</option>
+                                            <option value="it-systemelektroniker">IT-Systemelektroniker</option>
+                                            <option value="it-kaufmann">Kaufmann für IT-System-Management</option>
+                                            <option value="it-digitalisierung">Kaufmann für Digitalisierungsmanagement</option>
+                                        </optgroup>
+                                        <optgroup label="Kaufmännische Berufe">
+                                            <option value="kaufmann-bueromanagement">Kaufmann/frau für Büromanagement</option>
+                                            <option value="kaufmann-grosshandel">Kaufmann/frau im Groß- und Außenhandel</option>
+                                            <option value="industriekaufmann">Industriekaufmann/frau</option>
+                                            <option value="bankkaufmann">Bankkaufmann/frau</option>
+                                            <option value="steuerfachangestellter">Steuerfachangestellte/r</option>
+                                            <option value="kaufmann-ecommerce">Kaufmann/frau im E-Commerce</option>
+                                        </optgroup>
+                                        <optgroup label="Gewerblich-technische Berufe">
+                                            <option value="elektroniker">Elektroniker/in</option>
+                                            <option value="mechatroniker">Mechatroniker/in</option>
+                                            <option value="industriemechaniker">Industriemechaniker/in</option>
+                                            <option value="zerspanungsmechaniker">Zerspanungsmechaniker/in</option>
+                                            <option value="anlagenmechaniker">Anlagenmechaniker/in</option>
+                                        </optgroup>
+                                        <optgroup label="Medien & Gestaltung">
+                                            <option value="mediengestalter">Mediengestalter/in Digital & Print</option>
+                                            <option value="gestaltungstechnischer-assistent">Gestaltungstechnische/r Assistent/in</option>
+                                        </optgroup>
+                                        <optgroup label="Sonstige">
+                                            <option value="sonstige">Anderer Beruf</option>
+                                        </optgroup>
+                                    </select>
+                                </span>
+                                <span class="profile-field-chevron" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                                </span>
+                            </label>
+
+                            <!-- Bundesland -->
+                            <label class="profile-field">
+                                <span class="profile-field-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                </span>
+                                <span class="profile-field-body">
+                                    <span class="profile-field-label">Bundesland</span>
+                                    <span class="profile-field-hint">Für lokale Feiertage</span>
+                                    <select id="confBundesland" class="profile-field-input" onchange="data.settings.bundesland = this.value; save();">
+                                        <option value="">— Bitte wählen —</option>
+                                        <option value="BW">Baden-Württemberg</option>
+                                        <option value="BY">Bayern</option>
+                                        <option value="BE">Berlin</option>
+                                        <option value="BB">Brandenburg</option>
+                                        <option value="HB">Bremen</option>
+                                        <option value="HH">Hamburg</option>
+                                        <option value="HE">Hessen</option>
+                                        <option value="MV">Mecklenburg-Vorpommern</option>
+                                        <option value="NI">Niedersachsen</option>
+                                        <option value="NW">Nordrhein-Westfalen</option>
+                                        <option value="RP">Rheinland-Pfalz</option>
+                                        <option value="SL">Saarland</option>
+                                        <option value="SN">Sachsen</option>
+                                        <option value="ST">Sachsen-Anhalt</option>
+                                        <option value="SH">Schleswig-Holstein</option>
+                                        <option value="TH">Thüringen</option>
+                                    </select>
+                                </span>
+                                <span class="profile-field-chevron" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                                </span>
+                            </label>
+                        </div>
+
+                        <!-- Ghost-Mode tip -->
+                        <div class="profile-ghost-tip">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                            <span>IT-Berufe → <strong>Code-Editor Ghost Mode</strong></span>
+                            <span class="profile-ghost-tip-divider"></span>
+                            <span>Kaufmännisch → <strong>Excel Ghost Mode</strong></span>
+                        </div>
                     </div>
+                    <script>
+                    (function(){
+                        function init(){
+                            var cards = document.querySelectorAll('.profile-card:not([data-profile-ready])');
+                            cards.forEach(function(card){
+                                card.setAttribute('data-profile-ready','1');
+                                var avatarEl = card.querySelector('[data-profile-avatar]');
+                                var nameEl   = card.querySelector('[data-profile-name]');
+                                var jobEl    = card.querySelector('[data-profile-job]');
+                                var regionTextEl = card.querySelector('[data-profile-region] span');
+                                var badgeEl  = card.querySelector('[data-profile-badge]');
+                                var nameInput  = card.querySelector('#confName');
+                                var jobSelect  = card.querySelector('#confJob');
+                                var bundSelect = card.querySelector('#confBundesland');
+
+                                function initials(n){
+                                    if (!n) return '?';
+                                    var parts = n.trim().split(/\s+/).slice(0,2);
+                                    var s = parts.map(function(p){ return p.charAt(0); }).join('').toUpperCase();
+                                    return s || '?';
+                                }
+                                function jobCategory(val){
+                                    if (!val) return null;
+                                    if (/^fachinformatiker|^it-/.test(val)) return 'IT-Beruf';
+                                    if (/^kaufmann|^industriekaufmann|^bankkaufmann|^steuerfach/.test(val)) return 'Kaufmännisch';
+                                    if (/^elektroniker|^mechatroniker|^industriemech|^zerspanung|^anlagen/.test(val)) return 'Gewerblich-Technisch';
+                                    if (/^medien|^gestaltung/.test(val)) return 'Medien';
+                                    if (val === 'sonstige') return 'Sonstiges';
+                                    return null;
+                                }
+                                function sync(){
+                                    var name = (nameInput && nameInput.value || '').trim();
+                                    if (name){
+                                        nameEl.textContent = name;
+                                        nameEl.classList.remove('is-empty');
+                                        avatarEl.textContent = initials(name);
+                                    } else {
+                                        nameEl.textContent = 'Noch kein Name';
+                                        nameEl.classList.add('is-empty');
+                                        avatarEl.textContent = '?';
+                                    }
+                                    var jobOpt = jobSelect ? jobSelect.options[jobSelect.selectedIndex] : null;
+                                    if (jobOpt && jobOpt.value){
+                                        jobEl.textContent = jobOpt.textContent;
+                                        var cat = jobCategory(jobOpt.value);
+                                        if (cat){ badgeEl.textContent = cat; badgeEl.hidden = false; }
+                                        else { badgeEl.hidden = true; }
+                                    } else {
+                                        jobEl.textContent = 'Beruf nicht ausgewählt';
+                                        badgeEl.hidden = true;
+                                    }
+                                    var bundOpt = bundSelect ? bundSelect.options[bundSelect.selectedIndex] : null;
+                                    if (bundOpt && bundOpt.value){
+                                        regionTextEl.textContent = bundOpt.textContent;
+                                    } else {
+                                        regionTextEl.textContent = 'Region offen';
+                                    }
+                                }
+
+                                if (nameInput)  nameInput.addEventListener('input', sync);
+                                if (jobSelect)  jobSelect.addEventListener('change', sync);
+                                if (bundSelect) bundSelect.addEventListener('change', sync);
+
+                                // openSettings() writes values via .value = — kein Input-Event. Bei Modal-Open re-syncen.
+                                var modal = document.getElementById('settingsModal');
+                                if (modal){
+                                    var obs = new MutationObserver(function(){
+                                        if (modal.classList.contains('active')) setTimeout(sync, 30);
+                                    });
+                                    obs.observe(modal, { attributes:true, attributeFilter:['class'] });
+                                }
+                                sync();
+                            });
+                        }
+                        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+                        else init();
+                    })();
+                    </script>
 
                     <!-- Accent Color -->
-                    <div class="settings-section">
+                    <div class="settings-section accent-picker">
                         <div class="settings-section-title">Akzentfarbe</div>
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(38px, 1fr)); gap:10px; margin-bottom:1.25rem;">
-                            <div class="color-dot" style="background:#a78bfa" onclick="setThemeColor('#a78bfa')" title="Lila-Hell"></div>
-                            <div class="color-dot" style="background:#a855f7" onclick="setThemeColor('#a855f7')" title="Lila"></div>
-                            <div class="color-dot" style="background:#8b5cf6" onclick="setThemeColor('#8b5cf6')" title="Indigo"></div>
-                            <div class="color-dot" style="background:#7c3aed" onclick="setThemeColor('#7c3aed')" title="Violett"></div>
-                            <div class="color-dot" style="background:#6366f1" onclick="setThemeColor('#6366f1')" title="Indigo-Hell"></div>
-                            <div class="color-dot" style="background:#4f46e5" onclick="setThemeColor('#4f46e5')" title="Deep Indigo"></div>
-                            <div class="color-dot" style="background:#0ea5e9" onclick="setThemeColor('#0ea5e9')" title="Sky Blue"></div>
-                            <div class="color-dot" style="background:#00b4d8" onclick="setThemeColor('#00b4d8')" title="Steel Blue"></div>
-                            <div class="color-dot" style="background:#60a5fa" onclick="setThemeColor('#60a5fa')" title="Blau-Hell"></div>
-                            <div class="color-dot" style="background:#3b82f6" onclick="setThemeColor('#3b82f6')" title="Blau"></div>
-                            <div class="color-dot" style="background:#06b6d4" onclick="setThemeColor('#06b6d4')" title="Cyan"></div>
-                            <div class="color-dot" style="background:#22d3ee" onclick="setThemeColor('#22d3ee')" title="Cyan-Hell"></div>
-                            <div class="color-dot" style="background:#00d9ff" onclick="setThemeColor('#00d9ff')" title="Aqua"></div>
-                            <div class="color-dot" style="background:#10b981" onclick="setThemeColor('#10b981')" title="Grün"></div>
-                            <div class="color-dot" style="background:#34d399" onclick="setThemeColor('#34d399')" title="Grün-Hell"></div>
-                            <div class="color-dot" style="background:#06d6a0" onclick="setThemeColor('#06d6a0')" title="Mint"></div>
-                            <div class="color-dot" style="background:#84cc16" onclick="setThemeColor('#84cc16')" title="Limette"></div>
-                            <div class="color-dot" style="background:#fbbf24" onclick="setThemeColor('#fbbf24')" title="Gelb"></div>
-                            <div class="color-dot" style="background:#eab308" onclick="setThemeColor('#eab308')" title="Gelb-Hell"></div>
-                            <div class="color-dot" style="background:#f59e0b" onclick="setThemeColor('#f59e0b')" title="Gelb-Orange"></div>
-                            <div class="color-dot" style="background:#fb923c" onclick="setThemeColor('#fb923c')" title="Orange"></div>
-                            <div class="color-dot" style="background:#f97316" onclick="setThemeColor('#f97316')" title="Orange-Hell"></div>
-                            <div class="color-dot" style="background:#ef4444" onclick="setThemeColor('#ef4444')" title="Rot"></div>
-                            <div class="color-dot" style="background:#f43f5e" onclick="setThemeColor('#f43f5e')" title="Rose"></div>
-                            <div class="color-dot" style="background:#ec4899" onclick="setThemeColor('#ec4899')" title="Pink"></div>
-                            <div class="color-dot" style="background:#d946ef" onclick="setThemeColor('#d946ef')" title="Fuchsia"></div>
-                            <div class="color-dot" style="background:#db2777" onclick="setThemeColor('#db2777')" title="Crimson"></div>
-                            <div class="color-dot" style="background:#be185d" onclick="setThemeColor('#be185d')" title="Magenta-Dunkel"></div>
-                            <div class="color-dot" style="background:#94a3b8" onclick="setThemeColor('#94a3b8')" title="Grau"></div>
-                            <div class="color-dot" style="background:#64748b" onclick="setThemeColor('#64748b')" title="Grau-Dunkel"></div>
-                            <div class="color-dot" style="background:#475569" onclick="setThemeColor('#475569')" title="Slate"></div>
-                            <div class="color-dot" style="background:#9ca3af" onclick="setThemeColor('#9ca3af')" title="Silber"></div>
-                            <div class="color-dot" style="background:#78716c" onclick="setThemeColor('#78716c')" title="Stone"></div>
-                        </div>
 
-                        <hr class="settings-divider">
+                        <!-- Live hero preview -->
+                        <div class="accent-hero">
+                            <div class="accent-hero-swatch" aria-hidden="true"></div>
+                            <div class="accent-hero-info">
+                                <div class="accent-hero-label">Aktive Farbe</div>
+                                <div class="accent-hero-hex" data-accent-hex>#A855F7</div>
+                                <div class="accent-hero-meta">Wird in Buttons, Links & Highlights verwendet</div>
+                            </div>
+                        </div>
 
                         <!-- Theme Mode -->
-                        <label class="settings-label">Design-Modus</label>
-                        <div style="display:flex; gap:16px; align-items:center; margin-bottom:1.25rem;">
-                            <label style="display:flex; gap:6px; align-items:center; color:var(--text-main); font-size:0.85rem; cursor:pointer;"><input type="radio" name="themeMode" value="system" onchange="setThemeMode('system')"> System</label>
-                            <label style="display:flex; gap:6px; align-items:center; color:var(--text-main); font-size:0.85rem; cursor:pointer;"><input type="radio" name="themeMode" value="dark" onchange="setThemeMode('dark')"> Dunkel</label>
-                            <label style="display:flex; gap:6px; align-items:center; color:var(--text-main); font-size:0.85rem; cursor:pointer;"><input type="radio" name="themeMode" value="light" onchange="setThemeMode('light')"> Hell</label>
-                        </div>
-
-                        <hr class="settings-divider">
-
-                        <!-- Custom Color Editor -->
-                        <label class="settings-label">Eigene Farbe</label>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
-                            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1.25rem; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px; gap:1rem;">
-                                <input type="color" id="customColorPicker" onchange="updateColorFromPicker()" style="width:100px; height:100px; border:2px solid rgba(255,255,255,0.1); border-radius:14px; cursor:pointer; background:var(--primary);">
-                                <span class="settings-hint" style="text-align:center; margin:0;">Klick zum Wählen</span>
-                            </div>
-                            <div style="display:flex; flex-direction:column; gap:12px;">
-                                <div style="padding:1rem; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px;">
-                                    <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:6px; display:block; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Hex-Code</label>
-                                    <input type="text" id="customColorHex" class="glass-input" placeholder="a855f7" oninput="updateColorPickerFromHex()" style="font-family:var(--font-mono); font-size:0.95rem; font-weight:600; text-transform:uppercase;">
-                                </div>
-                                <div style="padding:1rem; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:12px;">
-                                    <label style="font-size:0.7rem; color:var(--text-muted); margin-bottom:6px; display:block; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Vorschau</label>
-                                    <div id="colorPreview" style="width:100%; height:48px; background:var(--primary); border-radius:10px; border:1px solid rgba(255,255,255,0.06); transition:all 0.3s ease;"></div>
-                                </div>
+                        <div class="accent-block">
+                            <div class="accent-block-label">Design-Modus</div>
+                            <div class="accent-segment" role="group" aria-label="Design-Modus">
+                                <button type="button" class="accent-segment-btn" data-mode="system">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                    <span>System</span>
+                                </button>
+                                <button type="button" class="accent-segment-btn" data-mode="dark">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                                    <span>Dunkel</span>
+                                </button>
+                                <button type="button" class="accent-segment-btn" data-mode="light">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>
+                                    <span>Hell</span>
+                                </button>
                             </div>
                         </div>
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:1rem;">
-                            <button id="btnApplyCustomColor" class="settings-btn settings-btn-primary" onclick="applyCustomColor()">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                                <span>Speichern</span>
-                            </button>
-                            <button id="btnResetCustomColor" class="settings-btn" onclick="resetColorPicker()">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-                                <span>Reset</span>
-                            </button>
+
+                        <!-- Palette -->
+                        <div class="accent-block">
+                            <div class="accent-block-label">Voreinstellungen</div>
+                            <div class="accent-palette">
+                                <button type="button" class="accent-swatch" data-color="#a78bfa" style="background:#a78bfa" title="Lila-Hell" aria-label="Lila-Hell"></button>
+                                <button type="button" class="accent-swatch" data-color="#a855f7" style="background:#a855f7" title="Lila" aria-label="Lila"></button>
+                                <button type="button" class="accent-swatch" data-color="#8b5cf6" style="background:#8b5cf6" title="Indigo" aria-label="Indigo"></button>
+                                <button type="button" class="accent-swatch" data-color="#7c3aed" style="background:#7c3aed" title="Violett" aria-label="Violett"></button>
+                                <button type="button" class="accent-swatch" data-color="#6366f1" style="background:#6366f1" title="Indigo-Hell" aria-label="Indigo-Hell"></button>
+                                <button type="button" class="accent-swatch" data-color="#4f46e5" style="background:#4f46e5" title="Deep Indigo" aria-label="Deep Indigo"></button>
+                                <button type="button" class="accent-swatch" data-color="#0ea5e9" style="background:#0ea5e9" title="Sky Blue" aria-label="Sky Blue"></button>
+                                <button type="button" class="accent-swatch" data-color="#00b4d8" style="background:#00b4d8" title="Steel Blue" aria-label="Steel Blue"></button>
+                                <button type="button" class="accent-swatch" data-color="#60a5fa" style="background:#60a5fa" title="Blau-Hell" aria-label="Blau-Hell"></button>
+                                <button type="button" class="accent-swatch" data-color="#3b82f6" style="background:#3b82f6" title="Blau" aria-label="Blau"></button>
+                                <button type="button" class="accent-swatch" data-color="#06b6d4" style="background:#06b6d4" title="Cyan" aria-label="Cyan"></button>
+                                <button type="button" class="accent-swatch" data-color="#22d3ee" style="background:#22d3ee" title="Cyan-Hell" aria-label="Cyan-Hell"></button>
+                                <button type="button" class="accent-swatch" data-color="#00d9ff" style="background:#00d9ff" title="Aqua" aria-label="Aqua"></button>
+                                <button type="button" class="accent-swatch" data-color="#10b981" style="background:#10b981" title="Grün" aria-label="Grün"></button>
+                                <button type="button" class="accent-swatch" data-color="#34d399" style="background:#34d399" title="Grün-Hell" aria-label="Grün-Hell"></button>
+                                <button type="button" class="accent-swatch" data-color="#06d6a0" style="background:#06d6a0" title="Mint" aria-label="Mint"></button>
+                                <button type="button" class="accent-swatch" data-color="#84cc16" style="background:#84cc16" title="Limette" aria-label="Limette"></button>
+                                <button type="button" class="accent-swatch" data-color="#fbbf24" style="background:#fbbf24" title="Gelb" aria-label="Gelb"></button>
+                                <button type="button" class="accent-swatch" data-color="#eab308" style="background:#eab308" title="Gelb-Hell" aria-label="Gelb-Hell"></button>
+                                <button type="button" class="accent-swatch" data-color="#f59e0b" style="background:#f59e0b" title="Gelb-Orange" aria-label="Gelb-Orange"></button>
+                                <button type="button" class="accent-swatch" data-color="#fb923c" style="background:#fb923c" title="Orange" aria-label="Orange"></button>
+                                <button type="button" class="accent-swatch" data-color="#f97316" style="background:#f97316" title="Orange-Hell" aria-label="Orange-Hell"></button>
+                                <button type="button" class="accent-swatch" data-color="#ef4444" style="background:#ef4444" title="Rot" aria-label="Rot"></button>
+                                <button type="button" class="accent-swatch" data-color="#f43f5e" style="background:#f43f5e" title="Rose" aria-label="Rose"></button>
+                                <button type="button" class="accent-swatch" data-color="#ec4899" style="background:#ec4899" title="Pink" aria-label="Pink"></button>
+                                <button type="button" class="accent-swatch" data-color="#d946ef" style="background:#d946ef" title="Fuchsia" aria-label="Fuchsia"></button>
+                                <button type="button" class="accent-swatch" data-color="#db2777" style="background:#db2777" title="Crimson" aria-label="Crimson"></button>
+                                <button type="button" class="accent-swatch" data-color="#be185d" style="background:#be185d" title="Magenta-Dunkel" aria-label="Magenta-Dunkel"></button>
+                                <button type="button" class="accent-swatch" data-color="#94a3b8" style="background:#94a3b8" title="Grau" aria-label="Grau"></button>
+                                <button type="button" class="accent-swatch" data-color="#64748b" style="background:#64748b" title="Grau-Dunkel" aria-label="Grau-Dunkel"></button>
+                                <button type="button" class="accent-swatch" data-color="#475569" style="background:#475569" title="Slate" aria-label="Slate"></button>
+                                <button type="button" class="accent-swatch" data-color="#9ca3af" style="background:#9ca3af" title="Silber" aria-label="Silber"></button>
+                                <button type="button" class="accent-swatch" data-color="#78716c" style="background:#78716c" title="Stone" aria-label="Stone"></button>
+                            </div>
                         </div>
+
+                        <!-- Custom color -->
+                        <div class="accent-block">
+                            <div class="accent-block-label">Eigene Farbe</div>
+                            <div class="accent-custom">
+                                <label class="accent-custom-picker" title="Klick zum Wählen">
+                                    <input type="color" id="customColorPicker" aria-label="Farbe auswählen">
+                                </label>
+                                <div class="accent-custom-input-wrap">
+                                    <span class="accent-custom-hash" aria-hidden="true">#</span>
+                                    <input type="text" id="customColorHex" placeholder="A855F7" maxlength="6" autocomplete="off" spellcheck="false" aria-label="Hex-Code">
+                                </div>
+                                <button type="button" id="btnApplyCustomColor" class="accent-custom-btn accent-custom-btn-apply">
+                                    <span>Speichern</span>
+                                </button>
+                                <button type="button" id="btnResetCustomColor" class="accent-custom-btn accent-custom-btn-icon" title="Reset" aria-label="Reset">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hidden legacy node for theme-colors.js compat -->
+                        <div id="colorPreview" hidden></div>
                     </div>
+                    <script>
+                    (function(){
+                        function init(){
+                            var sections = document.querySelectorAll('.accent-picker:not([data-accent-ready])');
+                            if (!sections.length) return;
+                            sections.forEach(function(section){
+                                section.setAttribute('data-accent-ready','1');
+                                var hexEls = section.querySelectorAll('[data-accent-hex]');
+                                var palette = section.querySelector('.accent-palette');
+                                var hexInput = section.querySelector('#customColorHex');
+                                var picker   = section.querySelector('#customColorPicker');
+
+                                function rgbToHex(r,g,b){
+                                    return '#' + [r,g,b].map(function(n){ return ('0'+Number(n).toString(16)).slice(-2); }).join('');
+                                }
+                                function getCurrentHex(){
+                                    try {
+                                        var p = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+                                        if (/^#[0-9a-f]{6}$/i.test(p)) return p.toLowerCase();
+                                        var m = p.match(/(\d+)\D+(\d+)\D+(\d+)/);
+                                        if (m) return rgbToHex(m[1],m[2],m[3]);
+                                    } catch(e){}
+                                    return '#a855f7';
+                                }
+                                function getCurrentMode(){
+                                    try { return (window.data && data.settings && data.settings.themeMode) || 'system'; } catch(e){ return 'system'; }
+                                }
+                                var lastHex = '', lastMode = '';
+                                function sync(){
+                                    var hex = getCurrentHex();
+                                    if (hex !== lastHex){
+                                        lastHex = hex;
+                                        var upper = '#' + hex.slice(1).toUpperCase();
+                                        hexEls.forEach(function(el){ el.textContent = upper; });
+                                        if (palette){
+                                            palette.querySelectorAll('.accent-swatch').forEach(function(s){
+                                                s.classList.toggle('active', (s.dataset.color||'').toLowerCase() === hex);
+                                            });
+                                        }
+                                        if (hexInput && document.activeElement !== hexInput){
+                                            hexInput.value = hex.slice(1).toUpperCase();
+                                        }
+                                        if (picker) picker.value = hex;
+                                    }
+                                    var mode = getCurrentMode();
+                                    if (mode !== lastMode){
+                                        lastMode = mode;
+                                        section.querySelectorAll('.accent-segment-btn').forEach(function(b){
+                                            b.classList.toggle('active', b.dataset.mode === mode);
+                                        });
+                                    }
+                                }
+
+                                section.addEventListener('click', function(e){
+                                    var sw = e.target.closest('.accent-swatch');
+                                    if (sw && sw.dataset.color){
+                                        if (typeof setThemeColor === 'function') setThemeColor(sw.dataset.color);
+                                        sync(); return;
+                                    }
+                                    var modeBtn = e.target.closest('.accent-segment-btn');
+                                    if (modeBtn && modeBtn.dataset.mode){
+                                        if (typeof setThemeMode === 'function') setThemeMode(modeBtn.dataset.mode);
+                                        sync(); return;
+                                    }
+                                    if (e.target.closest('#btnApplyCustomColor')){
+                                        if (typeof applyCustomColor === 'function') applyCustomColor();
+                                        sync(); return;
+                                    }
+                                    if (e.target.closest('#btnResetCustomColor')){
+                                        if (typeof resetColorPicker === 'function') resetColorPicker();
+                                        sync(); return;
+                                    }
+                                });
+
+                                if (picker){
+                                    picker.addEventListener('input', function(){
+                                        if (typeof updateColorFromPicker === 'function') updateColorFromPicker();
+                                        sync();
+                                    });
+                                }
+                                if (hexInput){
+                                    hexInput.addEventListener('input', function(){
+                                        if (typeof updateColorPickerFromHex === 'function') updateColorPickerFromHex();
+                                        sync();
+                                    });
+                                }
+
+                                try {
+                                    var obs = new MutationObserver(sync);
+                                    obs.observe(document.documentElement, { attributes:true, attributeFilter:['style','data-theme'] });
+                                } catch(e){}
+
+                                sync();
+                            });
+                        }
+                        if (document.readyState === 'loading'){
+                            document.addEventListener('DOMContentLoaded', init);
+                        } else {
+                            init();
+                        }
+                    })();
+                    </script>
 
                     <!-- PWA Installation -->
                     <div class="settings-section" id="pwaInstallSection">
