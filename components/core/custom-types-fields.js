@@ -11,6 +11,12 @@
         { id: 'holiday', label: '🎉 Feiertag', emoji: '🎉', color: '#f59e0b', description: 'Offizielle Feiertage' }
     ];
 
+    // Nur Hex-Farben (#RGB / #RRGGBB / #RRGGBBAA) durchlassen — verhindert
+    // CSS-Attribut-Break-Out via style="background:${...}".
+    function sanitizeColor(c) {
+        return /^#[0-9a-f]{3,8}$/i.test(c || '') ? c : '#888';
+    }
+
     function getAllEntryTypes() {
         // Kombiniere Standard-Typen mit benutzerdefinierten
         return [...DEFAULT_ENTRY_TYPES, ...(data.customEntryTypes || [])];
@@ -181,12 +187,12 @@
                 const typeEl = document.createElement('div');
                 typeEl.style.cssText = 'display:flex; align-items:center; gap:12px; padding:12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border); margin-bottom:0.75rem;';
                 typeEl.innerHTML = `
-                    <div style="font-size:1.5rem;">${type.emoji}</div>
+                    <div style="font-size:1.5rem;">${esc(type.emoji)}</div>
                     <div style="flex:1;">
-                        <div style="font-weight:600;">${type.label}</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">${type.description}</div>
+                        <div style="font-weight:600;">${esc(type.label)}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">${esc(type.description)}</div>
                     </div>
-                    <div style="width:20px; height:20px; background:${type.color}; border-radius:50%; border:1px solid var(--border);"></div>
+                    <div style="width:20px; height:20px; background:${sanitizeColor(type.color)}; border-radius:50%; border:1px solid var(--border);"></div>
                     <button class="btn btn-ghost" onclick="deleteCustomType('${type.id}')" style="padding:6px 12px; font-size:0.85rem;">🗑️ Löschen</button>
                 `;
                 customSection.appendChild(typeEl);
@@ -222,9 +228,9 @@
                 fieldEl.style.cssText = 'display:flex; align-items:center; gap:12px; padding:12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border); margin-bottom:0.75rem;';
                 fieldEl.innerHTML = `
                     <div style="flex:1;">
-                        <div style="font-weight:600;">${field.label}</div>
+                        <div style="font-weight:600;">${esc(field.label)}</div>
                         <div style="font-size:0.8rem; color:var(--text-muted);">
-                            ${typeLabel} • ${field.type} ${field.required ? '(erforderlich)' : ''}
+                            ${esc(typeLabel)} • ${esc(field.type)} ${field.required ? '(erforderlich)' : ''}
                         </div>
                     </div>
                     <button class="btn btn-ghost" onclick="deleteCustomField('${field.id}')" style="padding:6px 12px; font-size:0.85rem;">🗑️ Löschen</button>
