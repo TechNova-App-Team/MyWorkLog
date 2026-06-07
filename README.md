@@ -2,1109 +2,263 @@
 
 <br>
 
+<img src="Grafiken/icon-512.png" alt="MyWorkLog" width="120" height="120">
+
+<br>
+
 # MyWorkLog
 
-### Professionelle Zeiterfassung · Lokal · Sicher · Intelligent
+### Die offene Zeiterfassung für Auszubildende
+
+Lokal-first · Offline-fähig · DSGVO-konform · 100% kostenlos
 
 <br>
 
-<!-- ══════════════════════════════════════════════════════════════════
-     TIER 1 — Identity & Release
-══════════════════════════════════════════════════════════════════ -->
-<p>
-  <a href="https://myworklog.de/">
-    <img src="https://img.shields.io/badge/myworklog.de-online-6d28d9?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0d0d14" alt="Website">
-  </a>
-  <a href="https://github.com/releases">
-    <img src="https://img.shields.io/badge/version-3.5.3-5b21b6?style=for-the-badge&logo=git&logoColor=a78bfa&labelColor=0d0d14" alt="Version">
-  </a>
-  <a href="https://myworklog.de/">
-    <img src="https://img.shields.io/badge/PWA-Ready-059669?style=for-the-badge&logo=pwa&logoColor=6ee7b7&labelColor=0d0d14" alt="PWA">
-  </a>
-  <a href="Rechtliches/LICENSE.md">
-    <img src="https://img.shields.io/badge/License-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=facc15&labelColor=0d0d14" alt="MIT License">
-  </a>
-</p>
-
-<!-- ══════════════════════════════════════════════════════════════════
-     TIER 2 — CI / Quality / Security
-══════════════════════════════════════════════════════════════════ -->
-<p>
-  <img src="https://img.shields.io/badge/build-passing-16a34a?style=flat-square&logo=githubactions&logoColor=white&labelColor=111827" alt="Build">
-  <img src="https://img.shields.io/badge/tests-passing-16a34a?style=flat-square&logo=vitest&logoColor=white&labelColor=111827" alt="Tests">
-  <img src="https://img.shields.io/badge/coverage-60%25+-f97316?style=flat-square&logo=codecov&logoColor=white&labelColor=111827" alt="Coverage">
-  <img src="https://img.shields.io/badge/vulnerabilities-none-16a34a?style=flat-square&logo=snyk&logoColor=white&labelColor=111827" alt="Security">
-  <img src="https://img.shields.io/badge/maintained-yes-6d28d9?style=flat-square&logo=github&logoColor=white&labelColor=111827" alt="Maintained">
-</p>
-
-<!-- ══════════════════════════════════════════════════════════════════
-     TIER 3 — Stack & Compliance
-══════════════════════════════════════════════════════════════════ -->
-<p>
-  <img src="https://img.shields.io/badge/Vanilla-JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=white&labelColor=111827" alt="Vanilla JS">
-  <img src="https://img.shields.io/badge/DSGVO-konform-ef4444?style=flat-square&logo=eu&logoColor=white&labelColor=111827" alt="DSGVO">
-  <img src="https://img.shields.io/badge/Offline-First-8b5cf6?style=flat-square&logo=servicestack&logoColor=white&labelColor=111827" alt="Offline First">
-  <img src="https://img.shields.io/badge/AI-Powered-ec4899?style=flat-square&logo=openai&logoColor=white&labelColor=111827" alt="AI Powered">
-  <img src="https://img.shields.io/badge/Open-Source-38bdf8?style=flat-square&logo=github&logoColor=white&labelColor=111827" alt="Open Source">
-</p>
-
-<!-- ══════════════════════════════════════════════════════════════════
-     META — Dates & Stats
-══════════════════════════════════════════════════════════════════ -->
-<p>
-  <img src="https://img.shields.io/badge/Created-2025-475569?style=flat-square&logo=calendar&logoColor=94a3b8&labelColor=0f172a" alt="Created">
-  <img src="https://img.shields.io/badge/Last%20Updated-Mai%202026-475569?style=flat-square&logo=clockify&logoColor=94a3b8&labelColor=0f172a" alt="Last Updated">
-</p>
+[![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
+[![Version](https://img.shields.io/badge/version-3.5.4-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](https://github.com/TechNova-App-Team/MyWorkLog/releases)
+[![PWA](https://img.shields.io/badge/PWA-Ready-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
+[![License](https://img.shields.io/badge/License-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
 <br>
 
-<!-- ══════════════════════════════════════════════════════════════════
-     NAVIGATION
-══════════════════════════════════════════════════════════════════ -->
+[Live Demo](https://myworklog.de/) · [Berichtsheft](https://myworklog.de/berichtsheft/) · [Aufgaben](https://myworklog.de/aufgaben/) · [Rechte-Checker](https://myworklog.de/rechte-checker/) · [Architektur](https://myworklog.de/archflow/)
+
+<br>
+
+</div>
+
+---
+
+## Was ist MyWorkLog?
+
+MyWorkLog ist eine **Progressive Web App** für deutsche Auszubildende, Mitarbeiter und Freelancer, die ihre Arbeitszeit professionell erfassen wollen — **ohne Account-Zwang, ohne Tracker, ohne Cloud-Pflicht.**
+
+Die App läuft als Vanilla-HTML/CSS/JS-PWA komplett im Browser. Daten liegen lokal in deinem `localStorage`. Wer will, kann optional auf eine eigene Supabase-Instanz syncen — der Source-Code ist offen, du behältst die Kontrolle.
+
+```
+   Lokal-first    →   Daten bleiben auf deinem Gerät
+   Offline-ready  →   PWA mit Service Worker, läuft ohne Internet
+   DSGVO-clean    →   Kein Tracking, keine Dritt-Anbieter-Calls per Default
+   Azubi-DNA      →   Berichtsheft (IHK), BBiG-Rechte, Untis, Fahrtkosten
+   AI-optional    →   Cloud-KI (OpenRouter-Proxy) oder lokales WebLLM
+```
+
+---
+
+## Features
+
 <table>
-  <tr>
-    <td align="center"><a href="https://myworklog.de/"><b>🚀 Live Demo</b></a></td>
-    <td align="center"><a href="README´s/"><b>📖 Dokumentation</b></a></td>
-    <td align="center"><a href="README´s/Update/CHANGELOG.md"><b>📋 Changelog</b></a></td>
-    <td align="center"><a href="https://github.com/issues"><b>🐛 Bug Report</b></a></td>
-    <td align="center"><a href="https://github.com/issues"><b>✨ Feature Request</b></a></td>
-  </tr>
+<tr>
+<td width="50%" valign="top">
+
+### Zeiterfassung
+- Live-Timer mit Pause-Automatik
+- Kategorien: Arbeit · Schule · Urlaub · Krank · Feiertag
+- §4 ArbZG-konforme Pausenregel
+- Kalender- und Wochenansicht
+- Custom Entry Types & Fields
+
+### Analytics
+- KPI-Dashboard mit Ringen
+- Trends nach Woche · Monat · Jahr
+- SVG-Charts (Area · Bar · Line · Heatmap)
+- 8+ Analytics-Tabs in `/analytics/`
+- Export: PDF · Excel · CSV · iCal (RFC 5545)
+
+### AI
+- Cloud-KI via OpenRouter-Proxy (kein eigener Key nötig)
+- Lokales WebLLM on-device (WebGPU)
+- Spracheingabe für Timer & Chat
+- Pattern Recognition & Smart Insights
+
+</td>
+<td width="50%" valign="top">
+
+### Azubi-Tools
+- **Berichtsheft** — IHK-konforme Ausbildungsnachweise mit AI-Generierung
+- **Rechte-Checker** — BBiG / JArbSchG / ArbZG interaktiv prüfen
+- **Vertrags-Manager** — Gehalt, Urlaub, Lohnzuschläge
+- **Fahrtkosten** — Routing, ÖPNV, Spritkosten, Pendlerpauschale
+- **Untis-Sync** — Stundenplan automatisch oder manuell
+- **Skill-Tree** — RPG-Gamification für Ausbildungsfortschritt
+
+### Sicherheit
+- AES-256-GCM verschlüsselte Backups
+- DOMPurify Input-Sanitization
+- Row-Level Security (Supabase)
+- Optionaler Cloud-Sync — kein Default-Tracking
+- DSGVO-konform (keine Cookies, kein Server-Logging)
+
+### PWA
+- Service Worker (Cache-First Assets, Network-First Daten)
+- Installierbar auf iOS · Android · Desktop
+- PWA-Quick-Actions (Long-Press-Menü)
+- Web Share Target API
+- P2P-Sync via WebRTC (SimplePeer + TURN)
+
+</td>
+</tr>
 </table>
 
-<br>
-
-</div>
 ---
 
-![MyWorkLog Dashboard](Grafiken/Dashboard.png)
+## Quick Start
 
+```bash
+# Repo clonen
+git clone https://github.com/TechNova-App-Team/MyWorkLog.git
+cd MyWorkLog
 
-</div>
+# Lokal servieren (egal wie)
+python -m http.server 8000
+# oder: npx serve .
+# oder: index.html direkt im Browser öffnen
 
----
+# Tests + Linting
+npm install
+npm test
+npm run lint
+```
 
-
-</div>
-
----
-
-<div align="center">
-  <a href="pages/archflow/" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.4rem;border-radius:12px;background:#1f2937;color:#f8fafc;font-weight:600;text-decoration:none;border:1px solid rgba(248,250,252,.16);box-shadow:0 8px 20px rgba(15,23,42,.12);transition:background .2s;margin: 5px;">
-    <span>Detailliertes Architektur-Layout Codebase</span>
-    <span style="font-size:1rem;line-height:1;color:#93c5fd;">→</span>
-  </a>
-
-  <a href="https://myworklog.de/archflow/" style="display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.4rem;border-radius:12px;background:#1f2937;color:#f8fafc;font-weight:600;text-decoration:none;border:1px solid rgba(248,250,252,.16);box-shadow:0 8px 20px rgba(15,23,42,.12);transition:background .2s;margin: 5px;">
-    <span>Archflow Live (myworklog.de)</span>
-    <span style="font-size:1rem;line-height:1;color:#93c5fd;">→</span>
-  </a>
-</div>
-
-
-</div>
-
----
-## 📋 Inhaltsverzeichnis
-
-- [🎯 Über das Projekt](#-über-das-projekt)
-- [📂 Dateistruktur](#-dateistruktur)
-- [✨ Features](#-features)
-- [🤖 AI-Bot Assistent](#-ai-bot-assistent)
-- [🚀 Quick Start](#-quick-start)
-- [💻 Installation](#-installation)
-- [🎨 Screenshots](#-screenshots)
-- [🏗️ Architektur](#️-architektur)
-- [🛠️ Entwicklung](#️-entwicklung)
-- [📊 Tech Stack](#-tech-stack)
-- [🧪 Testing](#-testing)
-- [📡 P2P Sync (WebRTC)](#-p2p-sync-webrtc)
-- [📱 PWA Features](#-pwa-features)
-- [🔒 Sicherheit & Datenschutz](#-sicherheit--datenschutz)
-- [🌍 Browser-Kompatibilität](#-browser-kompatibilität)
-- [🤝 Contributing](#-contributing)
-- [📄 Lizenz & Rechtliches](#-lizenz--rechtliches)
-- [👥 Team](#-team)
-- [📊 Advanced Analytics](README´s/ADVANCED-ANALYTICS.md)
+**Kein Build-Step.** Vanilla JS/HTML/CSS, alle Scripts werden direkt via `<script src>` geladen. PWA-Manifest und Service Worker sind ohne Konfiguration einsatzbereit.
 
 ---
 
-## 📂 Dateistruktur
+## Projekt-Architektur
 
 ```
 MyWorkLog/
-├── 📄 index.html                 ⭐ HAUPTDATEI – Komplette PWA Single-Page-App
-│                                    (Timer, Dashboard, Modals, ~28.000+ Zeilen)
-├── 📄 package.json               📦 npm Dependencies (Testing, Linting)
-├── 📄 service-worker.js          🔄 Service Worker für Offline-Fähigkeit
-├── 🔐 manifest.json              📱 PWA-Manifest (App-Metadaten)
-├── 🤖 browserconfig.xml          🌐 Browser-Konfiguration
-├── 🔍 robots.txt                 🤖 SEO Robot-Direktiven
-├── 📋 sitemap.xml                🗺️  XML-Sitemap
+├─ index.html              SPA-Hauptdatei (~5500 Zeilen)
+├─ service-worker.js       Offline-Cache, Push-Notifications
+├─ manifest.json           PWA-Metadata, Shortcuts, Icons
 │
-├─ 🤖 AI-Bot/                     🧠 KI-Assistent Engine
-│  ├── aibot-engine-pro.js        💬 Chat/NLP-Engine + Intent Detection
-│  ├── data-analyzer-pro.js       📊 Datenanalyse + KPI-Berechnung
-│  └─ LLM/                        🧠 Lokales Language Model (WebGPU)
-│     ├── webllm-config.js        ⚙️  Modell-Konfiguration
-│     ├── webllm-integration.js   🔗 Browser-LLM Integration
-│     └── webllm-validator.js     ✅ Response-Validierung
+├─ components/             Modulare Komponenten ({css,html,js} pro Modul)
+│  ├─ core/                Timer · Storage · Save · Utils
+│  ├─ dashboard/           KPI-Ringe, Charts
+│  ├─ analytics-pro/       Erweiterte Analytics
+│  ├─ goals/               Ziel-Tracking
+│  ├─ school/              Schultag-Verwaltung
+│  ├─ untis/               Stundenplan-Sync
+│  └─ ...                  20+ weitere Module
 │
-├─ 🎨 Assets/                     📦 Statische Ressourcen
-│  ├─ css/                        
-│  │  └─ Event/                   🎉 Event-spezifische Styles
-│  │     ├─ New_Year/
-│  │     │  └── fireworks.css     🎆 Silvester-Feuerwerk Animation
-│  │     └─ Weihnachten/
-│  │        └── snowflakes.css    ❄️  Weihnachts-Schneefall
-│  │
-│  └─ js/                         
-│     ├── activity-swipe.js       👆 Swipe-Gesten für Aktivitäten
-│     ├── fahrtkosten.js          🚗 Fahrtkosten-Logik
-│     ├── pinch-zoom.js           🔍 Pinch-Zoom Mobil
-│     ├── touch-mobile-optimizations.js 📱 Touch-Gestures
-│     ├── shortcuts.js            ⌨️  Tastenkombinationen
-│     ├── version-loader.js       📌 Version-Management
-│     │
-│     ├─ Cloud/                   ☁️  Supabase Cloud Integration
-│     │  ├── supabase-integration.js 🔗 Supabase Auth & Sync
-│     │  ├── supabase-advanced.js ⚙️  Erweiterte Features
-│     │  └── supabase-ui.js       🎨 Cloud-UI Komponenten
-│     │
-│     ├─ analytics/               📊 Analytics-Module
-│     ├─ berichtsheft/            📖 Berichtsheft-Module
-│     ├─ fahrtkosten/             🚗 Fahrtkosten-Module
-│     │
-│     └─ Event/                   🎉 Event-Features
-│        ├─ New_Year/
-│        │  └── fireworks.js      🎆 JS Feuerwerk-Logik
-│        └─ Weihnachten/
-│           └── snowflakes.js     ❄️  JS Schneefall-Logik
+├─ pages/                  Standalone-Pages (Clean URLs via _redirects)
+│  ├─ berichtsheft/        IHK-Ausbildungsnachweise + AI-Generator
+│  ├─ aufgaben/            Task-Manager
+│  ├─ rechte-checker/      Azubi-Rechte interaktiv prüfen
+│  ├─ vertrags-manager/    Gehalt, Urlaub
+│  ├─ fahrtkosten/         Pendlerpauschale, Routing
+│  ├─ skill-tree/          RPG-Gamification
+│  ├─ analytics/           Advanced Analytics
+│  ├─ archflow/            Architektur-Visualisierung
+│  └─ ...
 │
-├─ 🧩 components/                 🔧 Modulare UI-Komponenten
-│  ├─ core/                       ⚙️  Kern-Komponente (Timer, Speicherung)
-│  ├─ dashboard/                  📊 KPI-Dashboard & Charts
-│  ├─ analytics-pro/              📈 Advanced Analytics Pro
-│  ├─ weekview/                   📅 Wochenansicht
-│  ├─ monthcompare/               📆 Monatsvergleich
-│  ├─ yearview/                   📅 Jahresansicht
-│  ├─ history/                    📋 Eintragshistorie
-│  ├─ goals/                      🎯 Ziel-Tracking
-│  ├─ performance/                ⚡ Performance-Metriken
-│  ├─ school/                     🏫 Schultag-Verwaltung
-│  ├─ untis/                      📅 Untis Stundenplan-Integration
-│  ├─ ihk/                        📋 IHK-Modul
-│  ├─ nfc/                        📶 NFC-Integration
-│  ├─ bbig-scanner/               📷 BBiG-Scanner (QR/Barcode)
-│  ├─ modals/                     💬 Dialog-Komponenten
-│  ├─ settings/                   ⚙️  Einstellungen
-│  ├─ sidebar/                    📌 Navigation Sidebar
-│  ├─ success-banner/             🎉 Erfolgs-Banner
-│  ├─ mobile-nav/                 📱 Mobile Navigation
-│  ├─ landing/                    🏠 Landing-Bereich
-│  └─ support/                    💙 Support-Komponente
+├─ Assets/                 Statische Ressourcen (css, js, icons)
+│  └─ js/Cloud/            Supabase-Integration (Auth + Sync)
 │
-├─ ⚙️  config/                    🔧 Konfigurationsdateien
-│  ├── supabase-config.js         ☁️  Supabase Project-Keys
-│  ├── humans.txt                 👥 Menschliche Kontakte
-│  └── version.json               📌 App-Version Info
+├─ config/                 supabase-config.js (anon key, public-safe)
+├─ Grafiken/               Icons + Intro-Video
+├─ Rechtliches/            LICENSE, PRIVACY, SECURITY, CODE_OF_CONDUCT
 │
-├─ 🗄️  DB/                        🗃️  Datenbankskripte
-│  └── rls-policies.sql           🔒 Supabase RLS-Policies
-│
-├─ 📧 Email/                      📨 Feedback & Emails
-│  └── send.html                  💌 EmailJS Integration
-│
-├─ 🖼️  Grafiken/                   🎨 Bilder & Assets
-│  └── [PNG, WebP, SVG]           📸 Screenshots, Icons
-│
-├─ 🌐 pages/                      🌐 Standalone Seiten (Clean URLs)
-│  │
-│  ├── about/                     👋 Über MyWorkLog
-│  ├── analytics/                 📊 Advanced Analytics Pro (8+ Tabs)
-│  ├── archflow/                  🏗️  Architektur-Visualisierung
-│  ├── aufgaben/                  ✅ Task-Manager
-│  ├── berichtsheft/              📖 IHK Ausbildungsnachweise
-│  ├── DSGVO/                     🔒 Datenschutzerklärung
-│  ├── Fachinformatiker/          💻 IT-Spezialist-Guide
-│  ├── fahrtkosten/               🚗 Fahrtkosten-Tracker (NEU 🆕)
-│  ├── Impressum/                 📋 Impressum
-│  ├── it-landing/                💻 IT Professional Hub (NEU 🆕)
-│  ├── offline/                   📴 Offline-Modus Info
-│  ├── rechte-checker/            ⚖️  Azubi-Rechte-Checker BBiG (NEU 🆕)
-│  ├── repo-report/               📈 Repository-Report
-│  ├── schatten-berichtsheft/     🕵️  Schatten-Berichtsheft Vault (NEU 🆕)
-│  ├── skill-tree/                🎮 RPG Skill-Baum für Azubis (NEU 🆕)
-│  ├── update_bugs/               🐛 Issues & Bug-Tracker
-│  ├── vertrags-manager/          📋 Gehalt/Urlaub Manager
-│  └── Weihnachten/               🎄 Weihnachtsseite
-│
-├─ 📚 README´s/                   📖 Ausführliche Dokumentation
-│  ├── INDEX-DOCUMENTATION.md     📇 Dokumentations-Index
-│  ├── FEATURES.md                ✨ Feature List
-│  ├── ADVANCED-ANALYTICS.md      📊 Analytics-Tiefgang
-│  ├── PWA-README.md              📱 PWA Deep Dive
-│  ├── TASK-MANAGER-README.md     ✅ Task-Manager Doku
-│  ├── ROADMAP-NEXT-STEPS.md      🗺️  Zukunfts-Roadmap
-│  │
-│  ├─ AI-Bot/                     🤖 AI-Dokumentation
-│  │  └── INTEGRATION-NOTES.md    📝 Integration-Guide
-│  │
-│  ├─ Update/                     📋 Changelogs
-│  │  └── CHANGELOG.md            📋 Vollständiger Changelog
-│  │
-│  └─ ICAL/                       📅 iCalendar-Export
-│     └── ICAL-EXPORT-SETUP.md    📅 Setup iCal
-│
-├─ ⚖️  Rechtliches/               📜 Lizenz & Rechtliches
-│  ├── CODE_OF_CONDUCT.md         👥 Community Guidelines
-│  ├── CONTRIBUTING.md            🤝 Kontribution Guide
-│  ├── LICENSE.md                 📄 MIT Lizenz
-│  ├── NOTICE.md                  © Copyright Notice
-│  ├── PRIVACY.md                 🔒 Datenschutzerklärung
-│  └── SECURITY.md                🛡️  Sicherheitsrichtlinien
-│
-└─ 🛠️  scripts/                   🔧 Hilfsskripte
-   └── repo-tracker.py            📊 Repository-Tracker
+├─ _headers                Cloudflare Pages Headers (CSP, Security)
+└─ _redirects              Clean URLs (/berichtsheft → /pages/berichtsheft.html)
 ```
 
-### 🎯 Wo finde ich was?
-
-| Funktion | Datei | Zeilen / Details |
-|----------|-------|-----------------|
-| **Timer (DOM)** | `index.html` | Zeile ~7773 — timer-box HTML-Element |
-| **Timer (Logik)** | `index.html` | Zeilen ~11161–11300 — Timer-Objekt, Funktionen & Intervals |
-| **Dark Mode (CSS)** | `index.html` | Zeilen ~183–280 — [data-theme="light"] Styles |
-| **Dark Mode Toggle** | `Assets/js/shortcuts.js` | Tastatur-Hotkeys & Event-Listener |
-| **Command Palette** | `index.html` | Zeilen ~23200–23400 — Befehl-Registry |
-| **Analytics Charts** | `pages/analytics/` | Komplette Analytics-Seite mit 8+ Tabs |
-| **Architektur-Diagramm** | `pages/archflow/` | Interaktives Codebase-Diagramm |
-| **AI Bot Engine** | `AI-Bot/aibot-engine-pro.js` | Conversation, Intent Detection, Pattern Recognition |
-| **AI Data Analyzer** | `AI-Bot/data-analyzer-pro.js` | KPI-Berechnung, Trends, Insights |
-| **WebLLM (On-Device AI)** | `AI-Bot/LLM/webllm-integration.js` | Lokales Language Model (WebGPU) |
-| **Cloud Sync (Supabase)** | `Assets/js/Cloud/supabase-integration.js` | Magic Link Auth, Data Sync |
-| **Cloud UI & Dashboard** | `Assets/js/Cloud/supabase-ui.js` | Cloud Status, Account Menu |
-| **Offline Mode (Cache)** | `service-worker.js` | Cache-First & Network-First Strategies |
-| **Berichtsheft (IHK)** | `pages/berichtsheft/` | IHK-konforme Ausbildungsnachweise |
-| **Verträge & Gehalt** | `pages/vertrags-manager/` | Arbeitzeitkonten, Urlaub, Lohnzuschläge |
-| **Aufgaben Manager** | `pages/aufgaben/` | Task-Management mit Kategorien, Recurring, Achievements |
-| **Fahrtkosten-Tracker** | `pages/fahrtkosten/` | Routing, ÖPNV, Spritkosten, Pendlerpauschale |
-| **Rechte-Checker** | `pages/rechte-checker/` | BBiG Azubi-Rechte interaktiv prüfen |
-| **Skill-Baum** | `pages/skill-tree/` | RPG Gamification für Azubi-Fortschritt |
-| **Schatten-Berichtsheft** | `pages/schatten-berichtsheft/` | Classified Vault — privater Berichtsheft-Bereich |
-| **IT Professional Hub** | `pages/it-landing/` | IT-Ressourcen, Links & Tools |
-| **Untis Integration** | `components/untis/` | Stundenplan-Sync & manuelle Eingabe |
-| **Shortcuts & Hotkeys** | `Assets/js/shortcuts.js` | Tastaturkürzel, Command Palette, Toggle-Events |
-| **Benachrichtigungen** | `index.html` | Zeilen ~27000–27100 — Smart Notifications System |
-| **WeatherAPI Integration** | `index.html` | Zeilen ~13000–13700 — Weather Auto-Refresh |
-| **P2P Sync (WebRTC)** | `index.html` | Zeilen ~19000–20000 — SimplePeer P2P Verbindungen |
-| **Pomodoro Timer** | `index.html` | Zeile ~23901 — Focus Timer Interval |
-| **Fokus Modus** | `index.html` | Zeilen ~28000–28500 — Focus Mode UI & Logic |
+**Convention:** Components heißen `{name}.{css,html,js}` und werden in `index.html` per `<script src>` geladen — Reihenfolge wichtig (core → dashboard → ... → extras).
 
 ---
 
-## 🎯 Über das Projekt
+## Tech Stack
 
-**MyWorkLog** ist eine moderne, lokale Progressive Web App für professionelle Zeiterfassung, entwickelt für Auszubildende, Mitarbeiter und Freelancer im deutschsprachigen Raum.
-
-### 🌟 Warum MyWorkLog?
-
-```
-✅ Lokal-first – Daten bleiben auf deinem Gerät              🔒 DSGVO-konform
-✅ Offline-fähig – Funktioniert überall                      📱 PWA-installierbar
-✅ KI-gestützt – AI-Bot + lokales WebLLM                     🤖 AI-Bot Assistent
-✅ Gleitzeit-ready – Deutsche Arbeitszeitmodelle             ⚡ Zero-Setup
-✅ Verschlüsselt – AES-256-GCM Backup                        🎨 Dark/Light Mode
-✅ Cloud-Sync – Optionale Synchronisation via Supabase       ☁️ Geräteübergreifend
-✅ Gamification – RPG Skill-Baum & Achievements              🎮 Azubi-Motivation
-✅ Azubi-Tools – Rechte-Checker, Fahrtkosten, Untis          📚 All-in-One Lösung
-```
-
-### 📊 Projektstand
-
-| Status | Feature | Version |
-|--------|---------|---------|
-| ✅ **Produktiv** | Core App (Timer, Buchen, Export) | ≤ v2.9.3 |
-| ✅ **Stabil** | AI-Bot mit Datenanalyse | v2.9.3 |
-| ✅ **Stabil** | PWA mit Service Worker | v2.9.3 |
-| ✅ **Stabil** | Multi-Profile / Team-Mode | v2.9.3 |
-| ✅ **Stabil** | IndexedDB Migration | v3.0.0 |
-| ✅ **Stabil** | Cloud-Sync (optional) | v3.1.0 |
-| ✅ **Stabil** | P2P Sync + TURN Config | v3.2.0 |
-| ✅ **Stabil** | Weather Auto-Refresh | v3.2.1 |
-| ✅ **Stabil** | Aufgaben Manager | v3.3.2 |
-| ✅ **Stabil** | Advanced Analytics Pro | v3.4.0 |
-| ✅ **Stabil** | Fahrtkosten-Tracker | v3.4.0 |
-| ✅ **Stabil** | Azubi-Rechte-Checker (BBiG) | v3.4.0 |
-| ✅ **Stabil** | RPG Skill-Baum | v3.4.0 |
-| ✅ **Stabil** | Untis Stundenplan-Integration | v3.5.0 |
-| ✅ **Stabil** | IT Professional Hub | v3.5.0 |
-| ✅ **Stabil** | Schatten-Berichtsheft Vault | v3.5.0 |
-| ✅ **Stabil** | Cloud Backup Alerts | v3.5.3 |
-| ✅ **Stabil** | Spracheingabe Enhanced | v3.5.3 |
-
-**Letztes Update:** 10. März 2026 | **Release:** v3.5.3
-
----
-
-## ✨ Features
-
-### 🏆 Kernfunktionen
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-#### ⏱️ **Zeiterfassung**
-- ▶️ Live-Timer mit Echtzeit-Anzeige
-- ⏸️ Pause-Funktion (automatisch/manuell)
-- 🎯 Kategorie-System (Work, School, Vacation, Sick, Holiday)
-- 📅 Kalender-Ansicht mit Monatsübersicht
-- 🔄 Automatische Pausenregel (§4 ArbZG konform)
-- 🏫 Berufschule Auto-Eintrag Modal
-
-#### 📊 **Analytics & Reports**
-- 📈 KPI-Dashboard mit Echtzeit-Ringen
-- 📉 Trend-Analysen (Woche/Monat/Jahr)
-- 🎨 Anpassbare SVG-Charts (Area, Bar, Smooth, Line)
-- 🔥 Heatmap-Visualisierung
-- 📊 Export zu PDF, Excel, CSV
-- 📊 Advanced Analytics Pro (8+ Tabs)
-
-</td>
-<td width="50%" valign="top">
-
-#### 🤖 **AI-Powered**
-- 💬 Intelligenter Chat-Assistent
-- 🧠 Pattern Recognition & Insights
-- 📊 Echtzeit-Datenanalyse
-- 🎯 Smart Recommendations
-- 📝 Conversation History
-- 🤖 Lokales WebLLM (on-device KI)
-- 🎤 Spracheingabe (enhanced)
-
-#### 🔒 **Sicherheit & Backup**
-- 🔐 AES-256-GCM Verschlüsselung
-- 💾 JSON Export/Import
-- 📅 iCalendar Export (RFC 5545)
-- 🔄 Automatische Backups
-- ☁️ Cloud Backup Alerts (inkl. Cloud-Erkennung)
-- ☁️ Optionale Cloud-Sync (Supabase)
-- 🛡️ DSGVO-konform
-
-</td>
-</tr>
-</table>
-
-### 🎓 Azubi-spezifische Tools
-
-<table>
-<tr>
-<td width="50%" valign="top">
-
-#### 📋 **Ausbildungs-Management**
-- 📖 Berichtsheft (IHK-konform)
-- 🕵️ Schatten-Berichtsheft (Privater Vault)
-- 📅 Untis Stundenplan-Integration (manuell & auto)
-- 💻 Fachinformatiker-Guide
-- 💼 IT Professional Hub
-
-#### ⚖️ **Rechtliches & Finanzen**
-- ⚖️ Azubi-Rechte-Checker (BBiG interaktiv)
-- 📋 Vertrags-Manager (Gehalt & Urlaub)
-- 🚗 Fahrtkosten-Tracker (Routing, ÖPNV, Pendlerpauschale)
-
-</td>
-<td width="50%" valign="top">
-
-#### 🎮 **Gamification**
-- 🌳 RPG Skill-Baum für Azubi-Fortschritt
-- 🏆 Achievements & Badges
-- 📊 Produktivitäts-Score
-- 🎯 Ziel-Tracking (Goals)
-- ⚡ Performance-Metriken
-
-#### 🛠️ **Weitere Tools**
-- ✅ Task-Manager (Aufgaben, Kategorien, Recurring)
-- 🏗️ ArchFlow – Architektur-Visualisierung
-- 📷 BBiG-Scanner (QR/Barcode)
-- 📶 NFC-Integration
-- 🐛 Issues & Bug-Tracker
-
-</td>
-</tr>
-</table>
-
-### 🆕 Neue Features (v3.4.0 – v3.5.3)
-
-| Feature | Beschreibung | Link |
-|---------|-------------|------|
-| 🚗 **Fahrtkosten-Tracker** | Routing, Adresssuche, ÖPNV-Links, Spritkosten & Pendlerpauschale | [fahrtkosten/](pages/fahrtkosten/) |
-| ⚖️ **Rechte-Checker** | BBiG Azubi-Rechte interaktiv prüfen — "Darf der Chef das?" | [rechte-checker/](pages/rechte-checker/) |
-| 🌳 **RPG Skill-Baum** | Gamifizierter Azubi-Fortschritt mit Level & Achievements | [skill-tree/](pages/skill-tree/) |
-| 🕵️ **Schatten-Berichtsheft** | Privater Classified Vault für den Berichtsheft | [schatten-berichtsheft/](pages/schatten-berichtsheft/) |
-| 💻 **IT Professional Hub** | Zentrales IT-Ressourcen-Portal für Fachinformatiker | [it-landing/](pages/it-landing/) |
-| 📅 **Untis Integration** | Automatischer & manueller Stundenplan-Import | `components/untis/` |
-| ☁️ **Cloud Backup Alerts** | Backup-Benachrichtigungen erkennen jetzt auch Cloud-Backups | `core.js` |
-| 🎤 **Spracheingabe Enhanced** | Verbesserte Spracheingabe für Timer & Chat | `index.html` |
-| 🏗️ **ArchFlow** | Interaktive Codebase-Architektur-Visualisierung | [archflow/](pages/archflow/) |
-| 📈 **Analytics Pro** | Erweitertes Analytics mit neuen Komponenten | `components/analytics-pro/` |
-| 👆 **Activity Swipe** | Swipe-Gesten für schnelle Eintrags-Navigation | `Assets/js/activity-swipe.js` |
-
----
-
-
-## ☁️ Cloud-Sync mit Supabase
-
-Optional: Synchronisiere deine Zeiterfassungsdaten über die Cloud! Deine Einträge werden automatisch in Supabase gespeichert und sind dadurch **geräteübergreifend verfügbar**.
-
-**Wie es funktioniert:**
-1. 🔐 Lokale App speichert alle Daten in deinem Browser (localStorage)
-2. 🔄 Optional: Synchronisierung zu Supabase Cloud
-3. 📱 Zugriff auf alle Geräten (Handy, Tablet, Computer)
-4. 🔒 Daten bleiben privat – nur du kannst sie sehen
-5. 🔔 Backup-Alerts informieren bei lokalem und Cloud-Backup-Status
-
-**Features:**
-- ✅ Automatische Synchronisation
-- ✅ Vertrauenswürdig: Magic Link Authentication
-- ✅ Row-Level Security (RLS) Policies
-- ✅ Fallback-Modus: App funktioniert auch ohne Cloud
-- ✅ Cloud Backup Alerts (Erkennung von Cloud-Backups)
-- ✅ DSGVO-konform
-
-**Setup:**
-1. Erstelle einen kostenlosen Account auf [supabase.com](https://supabase.com)
-2. Kopiere deine Projekt-URL und Public Key
-3. Füge die Werte in `config/supabase-config.js` ein
-4. Cloud Sync ist aktiviert! ☁️
-
-➡️ **[Cloud-Sync Dokumentation](Assets/js/Cloud/)**
-
----
-
-## 🚀 Quick Start
-
-### Option 1: Direkt im Browser (Empfohlen)
-
-```bash
-1. Download MyWorkLog.zip oder git clone
-2. Entpacken
-3. index.html doppelklicken
-4. ✅ Fertig!
-```
-
-### Option 2: Als PWA installieren
-
-1. Öffne https://myworklog.de/
-2. Klicke auf das Install-Icon in der Adressleiste
-3. Bestätige Installation
-4. App läuft jetzt offline!
-
-### Option 3: Lokal Entwickeln
-
-```bash
-# Repository klonen
-git clone https://github.com/TechNova-App-Team/MyWorkLog.git
-cd MyWorkLog
-
-# index.html im Browser öffnen oder
-# mit lokalem Web-Server servieren:
-# python -m http.server 8000
-# Dann: http://localhost:8000
-```
-
----
-
-## 💻 Installation
-
-### 📱 Mobile (iOS/Android)
-
-1. Öffne die Web-App in Safari/Chrome
-2. Tippe auf „Teilen" → „Zum Home-Bildschirm"
-3. App öffnen → Offline-fähig!
-
-### 💻 Desktop (Windows/Mac/Linux)
-
-**Chrome/Edge:**
-```
-1. Navigiere zur Web-App
-2. Adressleiste → Install-Icon (⊕)
-3. „Installieren" klicken
-```
-
-**Firefox:**
-```
-1. about:config → dom.webnotifications.serviceworker.enabled = true
-2. Web-App öffnen
-3. ... → „Site installieren"
-```
-
-**Safari (Mac):**
-```
-1. Web-App öffnen
-2. Menü → „Zu Dock hinzufügen"
-```
-
----
-
-## 🎨 Screenshots
-
-<div align="center">
-
-### 🖥️ Desktop-Ansicht
-
-[Dashboard](Grafiken/Dashboard.png)
-
-*Dashboard mit KPI-Ringen, Live-Timer und Trend-Chart*
-
----
-
-### 📱 Mobile & Touch-Optimierung
-
-[Touch Optimization](Grafiken/Touch.webp)
-
-*Optimierte Touch-Interaktionen und Pinch-to-Zoom*
-
----
-
-### 🌙 Offline-Modus
-
-[Offline Support](Grafiken/Offline.webp)
-
-*PWA Offline-Fallback mit Service Worker*
-
----
-
-### ⚙️ Service Worker
-
-[Service Worker](Grafiken/Service.webp)
-
-*Cache-First Strategie für Assets, Network-First für Daten*
-
-</div>
-
----
-
-### 🎨 Design-System
-
-```css
-/* CSS Custom Properties */
-:root {
-  --primary: #a855f7;
-  --bg-deep: #030305;
-  --bg-glass: rgba(255, 255, 255, 0.05);
-  --radius: 20px;
-
-  /* Kategorie-Farben */
-  --work-color: #00d4ff;
-  --school: #ffd60a;
-  --holiday: #00f5d4;
-  --sick: #ff006e;
-
-  /* Glassmorphism */
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --backdrop-blur: 10px;
-}
-
-/* Light Theme Override */
-[data-theme="light"] {
-  --bg-deep: #f5f5f5;
-  --bg-glass: rgba(0, 0, 0, 0.03);
-  --text-main: #1a1a1a;
-}
-```
-
-### 🔄 Datenfluss
-
-```mermaid
-graph LR
-    A[User Input] --> B[Timer Logic]
-    B --> C[LocalStorage]
-    C --> D[Data Analyzer]
-    D --> E[UI Rendering]
-    E --> H[SVG Charts]
-    C --> I[Export/Backup]
-    C -->|opt-in| J[Supabase Cloud]
-    C -->|consent| K[EmailJS Feedback]
-    B --> M[Untis Sync]
-    B --> N[Fahrtkosten]
-```
-
-**LocalStorage Keys:**
-- `tg_pro_data` – Hauptdaten (Zeiteinträge, Einstellungen, Profile)
-- `tt_chart_style` – Chart-Anpassungen
-- `theme` – Dark/Light Mode
-
-**Cloud (optional):**
-- Supabase PostgreSQL – Alle LocalStorage-Daten (verschlüsselt, Magic Link Auth)
-- EmailJS – Feedback-Versand (nur bei Consent)
-
----
-
-## 📊 Tech Stack
-
-<div align="center">
-
-### 🎯 Core Technologies
-
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
-![Progressive Web App](https://img.shields.io/badge/PWA-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)
-
-### 🛠️ Development & Testing
-
-![Jest](https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=jest&logoColor=white)
-![ESLint](https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
-![Lighthouse](https://img.shields.io/badge/Lighthouse-F44B21?style=for-the-badge&logo=lighthouse&logoColor=white)
-
-### 📚 External Libraries (CDN)
-
-![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)
-![jsPDF](https://img.shields.io/badge/jsPDF-E74C3C?style=for-the-badge)
-![QRCode.js](https://img.shields.io/badge/QRCode.js-000000?style=for-the-badge)
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-
-</div>
-
-### 📦 Dependencies
-
-```json
-{
-  "runtime": {
-    "SimplePeer": "v9",         // WebRTC P2P
-    "QRCode.js": "v1.0.0",      // QR-Code Generation
-    "Chart.js": "v3.9.1",       // Charting (komplementär)
-    "jsPDF": "v2.5.1",          // PDF Export
-    "html2canvas": "v1.4.1",    // DOM → Canvas
-    "Supabase JS": "v2",        // Cloud-Sync & Auth
-    "EmailJS": "v4",            // Feedback-Versand
-    "WebLLM": "v0.2.80",        // Lokales LLM (on-device)
-    "DOMPurify": "v3.2.4"       // XSS-Sanitization
-  }
-}
-```
-
-### 🏛️ Architektur-Prinzipien
-
-- ✅ **Single-File Architecture** – Kein Build-Step erforderlich
-- ✅ **Progressive Enhancement** – Funktioniert auch ohne JS (Basis)
-- ✅ **Offline First** – Service Worker Cache-Strategy
-- ✅ **Mobile First** – Responsive Design ab 320px
-- ✅ **Zero Configuration** – Keine Einrichtung nötig
-- ✅ **Vanilla JavaScript** – Keine Frameworks (ES6+)
-- ✅ **Modular Components** – `components/` für wiederverwendbare UI-Blöcke
-- ✅ **Clean URLs** – `/pages/{name}/` via Cloudflare Pages `_redirects`
-
----
-
-## 🛠️ Entwicklung
-
-### 📋 Voraussetzungen
-
-#### 🚀 Für Nutzer (zum Verwenden der App)
-```
-✅ Moderner Browser (Chrome 90+, Firefox 88+, Safari 14+, Edge 90+)
-✅ Internetverbindung (initial)
-✅ Keine Installation, kein Node.js, kein Build nötig! 🎉
-```
-
-#### 👨‍💻 Für Entwickler (zum Code ändern)
-```
-✅ Git zum Klonen des Repos
-✅ Ein Text-Editor oder IDE (VS Code, etc.)
-✅ Ein lokaler Web-Server (optional, für besseres Testing)
-✅ Kein Node.js, npm oder Build-Tools nötig!
-```
-
-### 🚀 Development Setup
-
-```bash
-# Repository klonen
-git clone https://github.com/TechNova-App-Team/MyWorkLog.git
-cd MyWorkLog
-
-# index.html öffnen im Browser
-# Keine Dependencies oder Build-Steps nötig!
-```
-
-### 📝 Code Style Guide
-
-```javascript
-// ✅ Good
-const calculateBalance = (worked, expected) => {
-  return (worked - expected).toFixed(2);
-};
-
-// ❌ Bad
-function calc(w,e){return w-e;}
-```
-
-**Regeln:**
-- ES6+ Syntax bevorzugen
-- Sprechende Variablen-Namen (Deutsch erlaubt)
-- Globale Funktionen (keine Klassen außer AIBotEnginePro)
-- Header: `// ═══ {NAME} MODULE ═══`
-- Fehlerbehandlung mit try-catch
-- LocalStorage-Zugriffe immer mit Fallback
-- IMMER `safeHTML()`/`esc()` für User-Input
-
----
-
-## 📡 P2P Sync (WebRTC)
-
-MyWorkLog unterstützt **direkte Geräte-zu-Geräte-Synchronisation** über WebRTC (SimplePeer). Keine Server-Infrastruktur nötig – Daten werden verschlüsselt direkt zwischen den Geräten übertragen.
-
-### 1. TURN Servers (Host + Client ICE Config)
-
-- **5 Metered.ca TURN/TURNS Server** (TCP + UDP + TLS) neben den bestehenden STUN-Servern
-- Unterstützt: **UDP Port 80**, **TCP Port 80**, **UDP Port 443**, **TURNS (TLS) Port 443**
-- Ermöglicht NAT-Traversal auch bei strikten Firewalls und verschiedenen Netzwerken
-
-```javascript
-iceServers: [
-    // STUN (Google)
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    { urls: 'stun:stun3.l.google.com:19302' },
-    // STUN + TURN (Metered.ca)
-    { urls: 'stun:stun.relay.metered.ca:80' },
-    { urls: 'turn:global.relay.metered.ca:80',  username: '...', credential: '...' },
-    { urls: 'turn:global.relay.metered.ca:80?transport=tcp',  username: '...', credential: '...' },
-    { urls: 'turn:global.relay.metered.ca:443', username: '...', credential: '...' },
-    { urls: 'turns:global.relay.metered.ca:443?transport=tcp', username: '...', credential: '...' }
-]
-```
-
-### 2. Loading-Animation beim Verbinden (Host-Seite)
-
-- **"Verbindung herstellen"** Button wird `disabled` + zeigt "⏳ Verbinde..." Text
-- Animierter **Spinner + Fortschrittsbalken** mit Gradient erscheint darunter
-- **ICE-Status** wird live angezeigt: `Initialisiere...` → `Suche Route...` → `Verbunden!`
-- Bei Fehler: Button wird zurückgesetzt, **Retry möglich** (`answerApplied` wird reset)
-
-### 3. Bessere Fehlermeldung bei Connection Failed
-
-- **Detaillierte Hinweise** (Firewall, VPN, Netzwerk-Tipps) bei fehlgeschlagener Verbindung
-- Erkennt sowohl `Connection failed.` als auch `ERR_ICE_CONNECTION_FAILURE`
-- User bekommt konkrete Lösungsvorschläge angezeigt
-
-> **⚠️ Hinweis:** Die aktuellen Metered.ca TURN-Credentials sind kostenlose Demo-Keys. Für Produktion eigene Keys auf [metered.ca](https://www.metered.ca/stun-turn) erstellen (kostenloser Tier: 500 MB/Monat).
-
----
-
-## 📱 PWA Features
-
-### ✨ Progressive Web App Highlights
-
-<table>
-<tr>
-<td width="50%">
-
-**🚀 Installierbar**
-- Auf Desktop & Mobile installieren
-- Natives App-Gefühl
-- Eigenes App-Icon
-- Splash-Screen
-
-**📶 Offline-First**
-- Service Worker Cache (v4)
-- Funktioniert ohne Internet
-- Daten bleiben lokal
-- Automatische Sync (optional)
-
-</td>
-<td width="50%">
-
-**⚡ Performance**
-- Cache-First für Assets
-- Network-First für Daten
-- Lazy Loading
-- 60fps Animationen
-
-**🔔 Benachrichtigungen**
-- Push-Notifications (opt-in)
-- Timer-Alerts
-- Pausen-Erinnerungen
-- Tages-Summary
-- Cloud Backup Alerts
-
-</td>
-</tr>
-</table>
-
-### 📋 PWA Checklist
-
-```
-✅ Web App Manifest
-✅ Service Worker registriert
-✅ HTTPS (oder localhost)
-✅ Responsive Design (mobile-first)
-✅ Icons (192x192, 512x512)
-✅ Splash Screens
-✅ Offline-Fallback-Seite
-✅ "Add to Home Screen" Prompt
-✅ Theme Color Meta-Tags
-✅ Apple Touch Icons
-```
-
-**➡️ [Vollständige PWA-Dokumentation](README´s/PWA-README.md)**
-
----
-
-## 🔒 Sicherheit & Datenschutz
-
-### 🛡️ DSGVO-Konformität
-
-```
-✅ Lokale Datenspeicherung als Standard (LocalStorage)
-✅ Cloud-Sync nur mit ausdrücklicher Einwilligung (Supabase)
-✅ Feedback nur mit DSGVO-Consent-Checkbox (EmailJS)
-✅ Datenmodus wählbar: Minimal oder Vollständig
-✅ Keine Cookies (außer Session)
-✅ Keine Tracking-Scripts
-✅ Opt-In für Analytics (Umami, privacy-friendly)
-✅ Datenportabilität (JSON Export)
-✅ Recht auf Löschung (Clear Data)
-✅ Transparente Datenvorschau vor jedem Versand
-✅ Drittlandübermittlung dokumentiert (USA: EU-U.S. DPF)
-```
-
-### 🔐 Verschlüsselung
-
-**AES-256-GCM Backup:**
-```javascript
-const encryptData = async (data, password) => {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await deriveKey(password, salt); // PBKDF2
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-
-  const encrypted = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    new TextEncoder().encode(data)
-  );
-
-  return { encrypted, salt, iv };
-};
-```
-
-**Sicherheits-Features:**
-- 🔐 AES-256-GCM mit PBKDF2 Key-Derivation
-- 🔒 100.000 PBKDF2-Iterationen
-- 🎲 Kryptografisch sichere Zufallszahlen
-- 🛡️ Keine Passwort-Speicherung
-- 🔓 Client-seitige Ver-/Entschlüsselung
-- 🧹 DOMPurify 3.2.4 für XSS-Schutz
-
-**➡️ [Vollständige Security Policy](Rechtliches/SECURITY.md)**
-
----
-
-## 🌍 Browser-Kompatibilität
-
-### ✅ Unterstützte Browser
-
-<div align="center">
-
-| Browser | Version | Status | Features |
-|---------|---------|--------|----------|
-| ![Chrome](https://img.shields.io/badge/Chrome-90+-4285F4?style=flat-square&logo=googlechrome&logoColor=white) | 90+ | ✅ Voll unterstützt | PWA, Service Worker, Crypto API |
-| ![Firefox](https://img.shields.io/badge/Firefox-88+-FF7139?style=flat-square&logo=firefox&logoColor=white) | 88+ | ✅ Voll unterstützt | PWA, Service Worker, Crypto API |
-| ![Safari](https://img.shields.io/badge/Safari-14+-000000?style=flat-square&logo=safari&logoColor=white) | 14+ | ✅ Voll unterstützt | PWA (iOS 14+), eingeschränkte Notifications |
-| ![Edge](https://img.shields.io/badge/Edge-90+-0078D7?style=flat-square&logo=microsoftedge&logoColor=white) | 90+ | ✅ Voll unterstützt | PWA, Service Worker, Crypto API |
-| ![Opera](https://img.shields.io/badge/Opera-76+-FF1B2D?style=flat-square&logo=opera&logoColor=white) | 76+ | ✅ Voll unterstützt | Chromium-basiert |
-| ![Brave](https://img.shields.io/badge/Brave-1.25+-FB542B?style=flat-square&logo=brave&logoColor=white) | 1.25+ | ✅ Voll unterstützt | Enhanced Privacy |
-
-</div>
-
-### ⚠️ Eingeschränkte Unterstützung
-
-| Browser | Version | Status | Limitierungen |
-|---------|---------|--------|---------------|
-| **Safari (iOS)** | < 14 | ⚠️ Teilweise | Keine PWA-Installation |
-| **IE 11** | - | ❌ Nicht unterstützt | Keine ES6+ Features |
-| **Android Browser** | < 90 | ⚠️ Teilweise | Eingeschränkte PWA |
-
-### 📱 Mobile-Optimierungen
-
-- ✅ Touch-Gesten (Swipe, Pinch-to-Zoom, Activity-Swipe)
-- ✅ Responsive ab 320px Breite
-- ✅ Optimierte Performance (60fps)
-- ✅ Reduzierte Netzwerk-Nutzung
-- ✅ Battery-Aware (RequestIdleCallback)
-- ✅ Mobile Navigation (Bottom-Nav)
-
----
-
-## 🤝 Contributing
-
-Wir freuen uns über Beiträge! Bitte lies unsere [Contributing Guidelines](Rechtliches/CONTRIBUTING.md) und [Code of Conduct](Rechtliches/CODE_OF_CONDUCT.md) vor der ersten Contribution.
-
-### 🚀 Contribution Workflow
-
-```bash
-# 1. Fork das Repository
-gh repo fork TechNova-App-Team/MyWorkLog
-
-# 2. Clone deinen Fork
-git clone https://github.com/DEIN-USERNAME/MyWorkLog.git
-cd MyWorkLog
-
-# 3. Erstelle einen Feature-Branch
-git checkout -b feature/mein-neues-feature
-
-# 4. Mache deine Änderungen
-# ... code code code ...
-
-# 5. Tests ausführen
-npm test
-npm run lint
-
-# 6. Commit mit aussagekräftiger Nachricht
-git commit -m "feat: Add XYZ feature"
-
-# 7. Push zu deinem Fork
-git push origin feature/mein-neues-feature
-
-# 8. Erstelle einen Pull Request
-gh pr create --title "Add XYZ feature" --body "Beschreibung..."
-```
-
-### 📋 Contribution Checklist
-
-- [ ] Code folgt dem Style Guide
-- [ ] Tests geschrieben & passing
-- [ ] Dokumentation aktualisiert
-- [ ] CHANGELOG.md aktualisiert (bei größeren Features)
-- [ ] Screenshots hinzugefügt (bei UI-Änderungen)
-- [ ] DSGVO-Konformität geprüft
-- [ ] Browser-Kompatibilität getestet
-- [ ] Absolute Pfade verwendet (`/Assets/...` statt `./Assets/...`)
-
-**➡️ [Contributing Guide](Rechtliches/CONTRIBUTING.md)**
-
----
-
-## 📄 Lizenz & Rechtliches
-
-### 📜 Lizenz
-
-**MIT License** für den Quellcode – Siehe [LICENSE.md](Rechtliches/LICENSE.md)
-
-```
-Copyright (c) 2025–2026 TechNova App Team
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction...
-```
-
-**⚠️ WICHTIG: Nutzungsbedingungen & Einschränkungen**
-
-Die MIT-Lizenz gilt **NUR für den Quellcode**. Folgende Komponenten und Inhalte sind **NICHT unter MIT-Lizenz** und dürfen **NICHT kopiert, geklont oder nachgebaut werden**:
-
-| ❌ NICHT erlaubt | Grund |
+| Layer | Technologie |
 |---|---|
-| **Design & UI/UX** | Proprietary Brand Design |
-| **Website-Klon** | Copyrighted Website Architecture |
-| **Branding & Logo** | Trademark & Brand Protection |
-| **Inhalte & Texte** | Copyright der Creative Works |
-| **Kommerzielle Nutzung ohne Lizenz** | Requires explicit permission |
-
-**✅ WAS erlaubt ist:**
-- ✓ Forking & Modifizieren des **Quellcodes** für private/Lehr-Zwecke
-- ✓ Integration einzelner Code-Module in andere Projekte
-- ✓ Verbessern & Erweitern des Codes (siehe [CONTRIBUTING.md](Rechtliches/CONTRIBUTING.md))
-- ✓ Kommerzielle Nutzung des modifizierten Codes (mit Attribution)
+| **Frontend** | Vanilla HTML/CSS/JavaScript (kein Framework, kein Bundler) |
+| **Storage** | `localStorage` mit JSON-Schema + Backup-Rotation (10×) |
+| **Cloud-Sync** (optional) | Supabase (Auth + Postgres + RLS) |
+| **AI-Proxy** | Cloudflare Worker → OpenRouter (Free Tier) |
+| **On-Device AI** | WebLLM (WebGPU) |
+| **PWA** | Service Worker + Web App Manifest |
+| **Sicherheit** | DOMPurify 3.2.4, AES-256-GCM Backup-Encryption |
+| **P2P** | WebRTC via SimplePeer + TURN |
+| **Hosting** | Cloudflare Pages → `myworklog.de` |
+| **Build** | Kein Build — Roh-Files direkt deployed |
+| **Tests** | Jest + ESLint |
 
 ---
 
-### 🛡️ Rechtliche Dokumente
+## Cloud-Sync (optional)
 
-| Dokument | Beschreibung | Link |
-|----------|--------------|------|
-| **DSGVO** | Datenschutzerklärung | [/DSGVO/](pages/DSGVO/) |
-| **Impressum** | Impressum | [/Impressum/](pages/Impressum/) |
-| **Privacy Policy** | Datenschutz (Markdown) | [PRIVACY.md](Rechtliches/PRIVACY.md) |
-| **Security Policy** | Sicherheit & Responsible Disclosure | [SECURITY.md](Rechtliches/SECURITY.md) |
-| **Code of Conduct** | Verhaltenskodex für Contributors | [CODE_OF_CONDUCT.md](Rechtliches/CODE_OF_CONDUCT.md) |
-| **Contributing** | Contribution Guidelines | [CONTRIBUTING.md](Rechtliches/CONTRIBUTING.md) |
-| **Notice** | Third-Party Notices | [NOTICE.md](Rechtliches/NOTICE.md) |
+Daten bleiben **per Default lokal**. Wer Sync zwischen Geräten will:
 
-### 🔗 Third-Party Lizenzen
+1. Account auf [supabase.com](https://supabase.com) anlegen (free tier reicht)
+2. Project-URL und **anon key** in `config/supabase-config.js` eintragen
+3. RLS-Policies aus `DB/rls-policies.sql` einspielen
+4. In der App via Magic-Link einloggen → Auto-Sync läuft
+
+**Warum sicher:**
+- `anon key` ist **public-by-design** (steht im Frontend, das ist okay)
+- Sicherheit hängt an Row-Level-Security — User sehen nur eigene Rows
+- `service_role`-Key ist nur Backend (niemals client-side)
+- API-Keys für AI laufen über Cloudflare-Worker (`ai-proxy.myworklog.de`), nie im Frontend
+
+---
+
+## Browser-Support
+
+| Browser | Min-Version |
+|---|---|
+| Chrome / Edge | 90+ |
+| Firefox | 88+ |
+| Safari | 14+ |
+
+PWA-Install funktioniert auf allen Modern-Browsers. WebGPU für On-Device-LLM nur Chromium-basiert (Chrome / Edge / Arc).
+
+---
+
+## Versionierung
+
+Aktuelle Version: **v3.5.4** (Release 2026-05-31)
 
 ```
-SimplePeer (MIT) - WebRTC Library
-Chart.js (MIT) - Charting Library
-QRCode.js (MIT) - QR Code Generation
-jsPDF (MIT) - PDF Generation
-html2canvas (MIT) - Screenshot Library
-Supabase JS (MIT) - Cloud Database & Auth
-EmailJS (MIT) - Email Sending Service SDK
-WebLLM (Apache-2.0) - On-Device LLM Runtime
-DOMPurify (Apache-2.0/MIT) - XSS Sanitization
+3.5.4   SW Update-Mechanismus: Network-First, Cache-Clear on Update
+3.5.3   Cloud Backup Alerts, Spracheingabe Enhanced
+3.5.0   Untis Integration, IT Professional Hub, Schatten-Berichtsheft
+3.4.0   Fahrtkosten, Rechte-Checker, Skill-Tree, Analytics Pro
+3.3.2   Aufgaben Manager, SEO, Notifications
+3.2.0   P2P Sync, TURN, Cloud Sync
+3.1.0   Cloud-Sync via Supabase
+3.0.0   IndexedDB Migration
 ```
 
-**➡️ [Vollständige Third-Party Notices](Rechtliches/NOTICE.md)**
+Vollständige Liste in `config/version.json`.
 
 ---
 
-## 👥 Team
+## Mitmachen
 
-<div align="center">
+Pull Requests willkommen. Für größere Änderungen erst Issue öffnen.
 
-### 💙 Made with Love by TechNova App Team
-
-Eine moderne Lösung für intelligente Zeiterfassung
-
-**Kontakt:**
-- 📧 Email: `support@technova-apps.de`
-- 🐛 Bug Reports: [GitHub Issues](https://github.com/TechNova-App-Team/MyWorkLog/issues)
-- 💡 Feature Requests: [GitHub Discussions](https://github.com/TechNova-App-Team/MyWorkLog/discussions)
-- 📢 Updates: [GitHub Releases](https://github.com/TechNova-App-Team/MyWorkLog/releases)
+- **Bug?** → [Issues](https://github.com/TechNova-App-Team/MyWorkLog/issues)
+- **Feature-Idee?** → [Issues](https://github.com/TechNova-App-Team/MyWorkLog/issues) (mit Label `enhancement`)
+- **Code beisteuern?** → [CONTRIBUTING.md](Rechtliches/CONTRIBUTING.md)
+- **Security-Lücke?** → [SECURITY.md](Rechtliches/SECURITY.md) (Disclosure-Process)
+- **Verhalten?** → [CODE_OF_CONDUCT.md](Rechtliches/CODE_OF_CONDUCT.md)
 
 ---
 
-### 🌟 Gefällt dir MyWorkLog?
+## Lizenz
 
-[![Star on GitHub](https://img.shields.io/github/stars/TechNova-App-Team/MyWorkLog?style=social)](https://github.com/TechNova-App-Team/MyWorkLog)
-[![Follow on GitHub](https://img.shields.io/github/followers/TechNova-App-Team?style=social)](https://github.com/TechNova-App-Team)
+[MIT](Rechtliches/LICENSE.md) © TechNova App Team
 
-**Gib uns einen Stern auf GitHub! ⭐**
-
----
-
-### 🚀 Live Version
-
-**[https://myworklog.de/](https://myworklog.de/)**
-
----
-
-<sub>MyWorkLog v3.5.3 | Gebaut mit modernstem Web-Standard | ☁️ Cloud-Sync | 🚀 Production Ready</sub>
-
-<sub>© 2025–2026 TechNova App Team. Alle Rechte vorbehalten. | [DSGVO](/DSGVO/) | [Impressum](/Impressum/) | [MIT License](Rechtliches/LICENSE.md)</sub>
-
-</div>
-
----
-
-## 📚 Weitere Dokumentation
-
-- 📖 [Feature-Übersicht](README´s/FEATURES.md) – Alle Features im Detail
-- 📖 [Dokumentations-Index](README´s/INDEX-DOCUMENTATION.md) – Übersicht aller Docs
-- 📖 [PWA Guide](README´s/PWA-README.md) – Progressive Web App Setup
-- 📖 [AI-Bot Integration](README´s/AI-Bot/INTEGRATION-NOTES.md) – AI-Bot Entwicklung
-- 📖 [Security Policy](Rechtliches/SECURITY.md) – Sicherheits-Richtlinien
-- 📖 [Contributing Guide](Rechtliches/CONTRIBUTING.md) – Wie kann ich beitragen?
-- 📖 [Changelog](README´s/Update/CHANGELOG.md) – Alle Versionen & Änderungen
+Forks, Fork-and-Sell, kommerzielle Nutzung, alles erlaubt — Hauptsache der Copyright-Hinweis bleibt.
 
 ---
 
 <div align="center">
 
-**[⬆ Zurück nach oben](#myworklog)**
+<sub>Gebaut mit Vanilla-JS, Kaffee und der Überzeugung, dass Zeiterfassung nicht kompliziert sein muss.</sub>
+
+<br>
+
+[Website](https://myworklog.de/) · [Impressum](https://myworklog.de/Impressum/) · [Datenschutz](https://myworklog.de/DSGVO/) · [Security](Rechtliches/SECURITY.md)
 
 </div>
