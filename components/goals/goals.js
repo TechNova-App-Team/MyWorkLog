@@ -129,12 +129,13 @@
     }
 
     function getGoalColor(type) {
+        var themePrimary = (getComputedStyle(document.documentElement).getPropertyValue('--primary') || '#a855f7').trim();
         switch (type) {
             case 'TOTAL_WORKED_HOURS': return '#f59e0b';
-            case 'TOTAL_DIFF_HOURS':   return '#8b5cf6';
+            case 'TOTAL_DIFF_HOURS':   return themePrimary;
             case 'POSITIVE_WEEKS':     return '#10b981';
             case 'PERFECT_SHIFTS':     return '#06b6d4';
-            default:                   return '#8b5cf6';
+            default:                   return themePrimary;
         }
     }
 
