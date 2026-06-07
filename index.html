@@ -5137,68 +5137,94 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                     </div>
 
                     <!-- Dashboard Layout -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Dashboard Layout</div>
-                        <p class="settings-hint" style="margin-bottom:1rem;">Reihenfolge anpassen, Widgets hinzufügen oder entfernen.</p>
-                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                            <button id="btnEditLayout" class="settings-btn settings-btn-primary" onclick="toggleDashboardEditMode()" title="Layout anpassen">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
-                                <span>Layout editieren</span>
-                            </button>
-                            <button id="btnNewManageWidgets" class="settings-btn" onclick="openNewWidgetManager()" title="Widgets verwalten">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
-                                <span>Widgets verwalten</span>
-                            </button>
-                            <button id="btnResetLayout" class="settings-btn" onclick="resetDashboardLayout()" title="Standard-Layout wiederherstellen" style="display:none; background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.2); color:#f87171;">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-                                <span>Zurücksetzen</span>
-                            </button>
+                    <div class="tool-row">
+                        <div class="tool-row-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
                         </div>
-                        <small id="editModeStatus" style="color:var(--text-muted); display:block; margin-top:8px; opacity:0; transition:opacity 0.3s; font-size:0.8rem;">📍 Layout-Bearbeitungsmodus AKTIV</small>
+                        <div class="tool-row-body">
+                            <div class="tool-row-title">Dashboard Layout</div>
+                            <div class="tool-row-desc">Reihenfolge anpassen, Widgets hinzufügen oder entfernen.</div>
+                            <div class="tool-row-actions">
+                                <button id="btnEditLayout" class="tool-action tool-action-primary" onclick="toggleDashboardEditMode()" title="Layout anpassen">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                    <span>Layout editieren</span>
+                                </button>
+                                <button id="btnNewManageWidgets" class="tool-action" onclick="openNewWidgetManager()" title="Widgets verwalten">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+                                    <span>Widgets verwalten</span>
+                                </button>
+                                <button id="btnResetLayout" class="tool-action tool-action-danger" onclick="resetDashboardLayout()" title="Standard-Layout wiederherstellen" style="display:none;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+                                    <span>Zurücksetzen</span>
+                                </button>
+                            </div>
+                            <small id="editModeStatus" class="tool-row-status" style="opacity:0;">Layout-Bearbeitungsmodus aktiv</small>
+                        </div>
                     </div>
 
-                    <!-- Tab-Tarnung -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Tab-Tarnung</div>
-                        <p class="settings-hint" style="margin-bottom:10px;">Wenn du den Tab wechselst, sieht er aus wie eine andere Seite (z.B. Stack Overflow, Outlook). Titel & Icon ändern sich automatisch.</p>
-                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px 0;">
-                            <input type="checkbox" id="confTabCamo" onchange="data.settings.tabCamo = this.checked; save(); updateCamoState();" style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;">
-                            <span style="color:var(--text-main); font-size:0.9rem; font-weight:500;">Tab-Tarnung aktivieren</span>
+                    <!-- Toggle-Group (Tab-Tarnung + Mood Feedback) -->
+                    <div class="toggle-stack">
+                        <label class="toggle-row" for="confTabCamo">
+                            <div class="toggle-row-icon" aria-hidden="true">🕵️</div>
+                            <div class="toggle-row-body">
+                                <div class="toggle-row-title">Tab-Tarnung</div>
+                                <div class="toggle-row-desc">Verkleidet deinen Tab als Stack Overflow, Outlook & Co. wenn du weg-tabbst — Chef sieht nur Code.</div>
+                            </div>
+                            <span class="switch">
+                                <input type="checkbox" id="confTabCamo" onchange="data.settings.tabCamo = this.checked; save(); updateCamoState();">
+                                <span class="switch-track"></span>
+                                <span class="switch-thumb"></span>
+                            </span>
                         </label>
-                        <span class="settings-hint" style="display:block; margin-top:4px;">🕵️ Verkleidet deinen Tab wenn du weg-tabbst — Chef sieht nur Stack Overflow o.ä.</span>
-                    </div>
-
-                    <!-- Tägliches Stimmungs-Feedback -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Tägliches Stimmungs-Feedback</div>
-                        <p class="settings-hint" style="margin-bottom:10px;">Nach jedem neuen Eintrag erscheint ein Emoji-Fenster, mit dem du deine aktuelle Stimmung festhalten kannst.</p>
-                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; padding:8px 0;">
-                            <input type="checkbox" id="confMoodSelector" onchange="data.settings.moodSelectorEnabled = this.checked; save();" style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;">
-                            <span style="color:var(--text-main); font-size:0.9rem; font-weight:500;">Stimmungs-Abfrage nach Eintrag aktivieren</span>
+                        <label class="toggle-row" for="confMoodSelector">
+                            <div class="toggle-row-icon" aria-hidden="true">😊</div>
+                            <div class="toggle-row-body">
+                                <div class="toggle-row-title">Stimmungs-Feedback</div>
+                                <div class="toggle-row-desc">Nach jedem neuen Eintrag erscheint ein Emoji-Fenster für deine Tagesstimmung — Daten landen im Mood-Tracker.</div>
+                            </div>
+                            <span class="switch">
+                                <input type="checkbox" id="confMoodSelector" onchange="data.settings.moodSelectorEnabled = this.checked; save();">
+                                <span class="switch-track"></span>
+                                <span class="switch-thumb"></span>
+                            </span>
                         </label>
-                        <span class="settings-hint" style="display:block; margin-top:4px;">😊 Wähle nach dem Speichern, wie du dich heute fühlst — für den Mood-Tracker im Dashboard.</span>
                     </div>
 
                     <!-- Recovery -->
-                    <div class="settings-section">
-                        <div class="settings-section-title">Recovery Center</div>
-                        <p class="settings-hint" style="margin-bottom:1rem;">Backups verwalten, Daten wiederherstellen & sicher importieren.</p>
-                        <button class="settings-btn settings-btn-primary" onclick="openRecoveryModal()" style="display:inline-flex; align-items:center; gap:8px;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><polyline points="23 20 23 14 17 14"></polyline><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>
-                            Recovery öffnen
-                        </button>
+                    <div class="tool-row tool-row-inline">
+                        <div class="tool-row-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+                        </div>
+                        <div class="tool-row-body">
+                            <div class="tool-row-title">Recovery Center</div>
+                            <div class="tool-row-desc">Backups verwalten, Daten wiederherstellen & sicher importieren.</div>
+                        </div>
+                        <div class="tool-row-actions">
+                            <button class="tool-action tool-action-primary" onclick="openRecoveryModal()">
+                                <span>Öffnen</span>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                            </button>
+                        </div>
                     </div>
 
-                        <!-- Danger Zone / Konto löschen -->
-                        <div class="settings-section" style="border:1px solid rgba(239,68,68,0.06); background:rgba(239,68,68,0.02);">
-                            <div class="settings-section-title">GEFAHRENZONE</div>
-                            <p class="settings-hint" style="margin-bottom:8px;">Vorsicht: Hier kannst du alle lokalen Daten unwiderruflich löschen. Diese Aktion betrifft nur LocalStorage (nicht die Cloud).</p>
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <button id="btnDeleteAccount" class="settings-btn" style="border:1px solid rgba(239,68,68,0.9); color:#ef4444; background:transparent; padding:10px 14px; border-radius:10px; font-weight:700;" onclick="confirmAndClearLocalData()">Konto und Daten unwiderruflich löschen</button>
-                                <span title="Momentan werden nur lokale Daten (LocalStorage) gelöscht, Cloud-Daten bleiben unberührt." style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); color:var(--text-muted); font-weight:700;">i</span>
+                    <!-- Danger Zone -->
+                    <div class="danger-zone">
+                        <div class="danger-zone-header">
+                            <div class="danger-zone-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                             </div>
-                            <small class="settings-hint" style="display:block; margin-top:8px; color:var(--text-muted);">Wir empfehlen vorher ein Backup zu erstellen (Backup / Export).</small>
+                            <div class="danger-zone-title">Gefahrenzone</div>
                         </div>
+                        <p class="danger-zone-desc">Lokale Daten unwiderruflich löschen. Betrifft nur LocalStorage — Cloud-Daten bleiben unberührt.</p>
+                        <button id="btnDeleteAccount" class="danger-zone-action" onclick="confirmAndClearLocalData()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            <span>Konto und Daten löschen</span>
+                        </button>
+                        <div class="danger-zone-footer">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <span>Tipp: Erstelle vorher ein Backup über Export oder das Recovery-Center.</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Tab: Arbeitszeiten -->
