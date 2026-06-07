@@ -134,17 +134,18 @@
             const avg = validGrades.length > 0 ? validGrades.reduce((a,b) => a + parseFloat(b), 0) / validGrades.length : 0;
             const avgColor = avg > 0 ? getSchoolNoteColor(avg) : 'var(--primary)';
 
+            const subjectEsc = esc(subject);
             html += `
                 <div style="background:rgba(255,255,255,0.03);padding:1.25rem;border-radius:16px;border:1px solid rgba(255,255,255,0.06);position:relative;overflow:hidden;">
                     <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${avgColor};border-radius:3px 3px 0 0;"></div>
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                         <div style="display:flex;align-items:center;gap:8px;flex:1;">
-                            <h5 style="color:#fff;margin:0;font-size:1rem;font-weight:700;">${subject}</h5>
+                            <h5 style="color:#fff;margin:0;font-size:1rem;font-weight:700;">${subjectEsc}</h5>
                             ${avg > 0 ? '<span style="font-size:.75rem;padding:3px 10px;border-radius:8px;background:' + avgColor + '20;color:' + avgColor + ';font-weight:600;">Ø ' + avg.toFixed(1) + '</span>' : ''}
                         </div>
                         <div style="display:flex;gap:6px;">
-                            <button onclick="renameSchoolSubject('${subject.replace(/'/g, "\\'")}')" style="background:rgba(168,85,247,0.15);color:var(--primary);border:none;padding:4px 8px;border-radius:6px;font-size:.9rem;cursor:pointer;transition:all 0.2s;font-weight:600;" title="Fach umbenennen" class="school-action-btn">✏️</button>
-                            <button onclick="deleteSchoolSubject('${subject.replace(/'/g, "\\'")}')" style="background:rgba(239,68,68,0.2);color:#ef4444;border:none;padding:4px 8px;border-radius:6px;font-size:.9rem;cursor:pointer;transition:all 0.2s;font-weight:600;" title="Fach löschen" class="school-action-btn">🗑️</button>
+                            <button type="button" data-subject="${subjectEsc}" style="background:rgba(168,85,247,0.15);color:var(--primary);border:none;padding:4px 8px;border-radius:6px;font-size:.9rem;cursor:pointer;transition:all 0.2s;font-weight:600;" title="Fach umbenennen" class="school-action-btn school-rename-btn">✏️</button>
+                            <button type="button" data-subject="${subjectEsc}" style="background:rgba(239,68,68,0.2);color:#ef4444;border:none;padding:4px 8px;border-radius:6px;font-size:.9rem;cursor:pointer;transition:all 0.2s;font-weight:600;" title="Fach löschen" class="school-action-btn school-delete-btn">🗑️</button>
                         </div>
                     </div>
                     <div style="display:flex;flex-direction:column;gap:8px;">
@@ -152,18 +153,27 @@
                             <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:10px;">
                                 <label style="font-size:.8rem;color:rgba(255,255,255,0.4);font-weight:500;">Note ${index + 1}</label>
                                 <input type="number" step="0.1" min="1.0" max="6.0"
-                                    class="glass-input school-grade-input" data-subject="${subject}" data-index="${index}" value="${grade}"
+                                    class="glass-input school-grade-input" data-subject="${subjectEsc}" data-index="${index}" value="${esc(grade)}"
                                     style="width:80px;padding:8px;text-align:center;font-family:var(--font-mono);border-radius:10px;">
                             </div>
                         `).join('')}
 
-                        <button class="btn btn-ghost" onclick="addSchoolGrade('${subject}')" style="background:transparent;border:1px dashed rgba(168,85,247,0.3);color:var(--primary);padding:10px;border-radius:12px;font-size:.85rem;">+ Note hinzufügen</button>
+                        <button type="button" class="btn btn-ghost school-addgrade-btn" data-subject="${subjectEsc}" style="background:transparent;border:1px dashed rgba(168,85,247,0.3);color:var(--primary);padding:10px;border-radius:12px;font-size:.85rem;">+ Note hinzufügen</button>
                     </div>
                 </div>
             `;
         }
 
         inputGrid.innerHTML = html;
+        inputGrid.querySelectorAll('.school-rename-btn').forEach(btn => {
+            btn.addEventListener('click', () => renameSchoolSubject(btn.dataset.subject));
+        });
+        inputGrid.querySelectorAll('.school-delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => deleteSchoolSubject(btn.dataset.subject));
+        });
+        inputGrid.querySelectorAll('.school-addgrade-btn').forEach(btn => {
+            btn.addEventListener('click', () => addSchoolGrade(btn.dataset.subject));
+        });
         const buttons = document.querySelectorAll('.school-action-btn');
         buttons.forEach(btn => {
             btn.addEventListener('mouseenter', function() { this.style.background = this.style.background.includes('#ef4444') ? 'rgba(239,68,68,0.3)' : 'rgba(59,130,246,0.3)'; });
@@ -255,7 +265,7 @@
 
                 gradeListHTML += `
                     <tr>
-                        <td class="sc-col-subject">${subject}</td>
+                        <td class="sc-col-subject">${esc(subject)}</td>
                         <td class="sc-col-grade"><span style="color:${statusColor};font-weight:700;">${avg.toFixed(1)}</span></td>
                         <td class="sc-col-trend">${trendText} ${trend.change > 0 ? '+' : ''}${trend.change.toFixed(2)}</td>
                         <td class="sc-col-count">${count}</td>
