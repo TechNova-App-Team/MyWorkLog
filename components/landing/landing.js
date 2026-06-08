@@ -89,10 +89,12 @@
       scrollMax=el?Math.max(1,el.offsetHeight-intro.clientHeight):1;
     }
     window.addEventListener('resize',cacheScrollMax,{passive:true});
+    window.addEventListener('load',function(){cacheScrollMax();update();});
 
     function getP(){
-      // Fallback: recompute if scrollMax wasn't ready yet
-      if(scrollMax<2){cacheScrollMax();}
+      // Wenn scrollMax kleiner als ein Viewport ist, hat das Layout noch nicht gegriffen
+      // (z.B. CSS noch nicht da) → neu rechnen, sonst mappt jeder Wisch auf p=1 (Bug am Handy).
+      if(scrollMax<intro.clientHeight){cacheScrollMax();}
       return Math.min(1,Math.max(0,intro.scrollTop/scrollMax));
     }
 
