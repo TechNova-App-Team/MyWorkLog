@@ -1107,18 +1107,16 @@ const updateManager = (() => {
     }
 
     function apply() {
-        localStorage.setItem('mwl_upd_applying', 'true');
-        // SW ruft skipWaiting() bereits im install-Event auf → Worker ist oft schon
-        // 'activating'/'activated' wenn der User klickt. In dem Fall ist controllerchange
-        // schon abgefeuert → einfach sofort reloaden.
-        if (!newWorker || newWorker.state === 'activating' || newWorker.state === 'activated') {
-            location.reload();
-            return;
+        try { localStorage.setItem('mwl_upd_applying', 'true'); } catch(e) {}
+        // SW ruft skipWaiting() bereits im install-Event auf → controllerchange ist meist
+        // schon gefeuert, bevor der User klickt. Auf das Event WIEDER zu warten verhängt:
+        // es kommt nicht mehr → reload wird nie ausgelöst → "passiert nichts".
+        // → Best-effort SKIP_WAITING senden, dann unbedingt reloaden.
+        if (newWorker && typeof newWorker.postMessage === 'function') {
+            try { newWorker.postMessage({ type: 'SKIP_WAITING' }); } catch(e) {}
         }
-        navigator.serviceWorker.addEventListener('controllerchange', function() {
-            location.reload();
-        }, { once: true });
-        newWorker.postMessage({ type: 'SKIP_WAITING' });
+        // Kurzer Tick, damit postMessage rausgeht, dann hart reload.
+        setTimeout(function() { location.reload(); }, 80);
     }
 
     function test() {
