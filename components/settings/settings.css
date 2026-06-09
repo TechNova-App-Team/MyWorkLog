@@ -2,7 +2,7 @@
         #settingsModal .modal-box {
             background: #0e0e11;
             border: 1px solid rgba(255,255,255,0.06);
-            backdrop-filter: blur(60px);
+            /* backdrop-filter entfernt: BG ist opak, Blur war reine GPU-Last */
         }
         .settings-header {
             background: rgba(255,255,255,0.02);
@@ -605,7 +605,10 @@
         /* ═══════════════════════════════════════════════════════
            ACCENT COLOR PICKER (Redesign 2026-06-08)
            ═══════════════════════════════════════════════════════ */
-        .accent-picker { padding: 1.5rem; }
+        .accent-picker {
+            padding: 1.5rem;
+            contain: layout paint style;
+        }
         .accent-picker .settings-section-title { margin-bottom: 1.25rem; }
 
         /* — Live hero preview — */
@@ -623,6 +626,7 @@
             border: 1px solid rgba(var(--primary-rgb), 0.22);
             overflow: hidden;
             isolation: isolate;
+            contain: layout paint style;
             transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
         }
         .accent-hero::before {
@@ -744,6 +748,8 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(34px, 1fr));
             gap: 8px;
+            /* KEIN contain: paint — würde aktiven Swatch-Ring (::after inset:-5px + scale)
+               an Rand-Reihen abschneiden. */
         }
         .accent-swatch {
             position: relative;
