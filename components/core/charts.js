@@ -1096,12 +1096,21 @@
             const percentage = (cat.val / total) * 100;
             const delay = index * 80;
             const labelEl = document.getElementById(cat.labelId);
+            const pillEl = labelEl ? labelEl.parentElement : null;
 
             el.style.flex = '0 0 0%';
 
             setTimeout(() => {
                 el.style.flex = `0 0 ${percentage}%`;
-                if (labelEl && percentage > 8) labelEl.textContent = percentage.toFixed(0) + '%';
+                if (labelEl && pillEl) {
+                    if (percentage > 8) {
+                        labelEl.textContent = percentage.toFixed(0) + '%';
+                        pillEl.style.display = '';
+                    } else {
+                        labelEl.textContent = '';
+                        pillEl.style.display = 'none';
+                    }
+                }
             }, delay);
 
             el.dataset.value = cat.val.toFixed(1);
