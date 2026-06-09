@@ -32,15 +32,40 @@
             return;
         }
 
-        const typeLabels  = {work:'Arbeit', school:'Schule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'};
-        const typeIcons   = {work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'};
+        // Dynamic lookup — Custom-Types + Overrides + Orphan-Fallback.
+        const lookupIcon = (id) => {
+            if (typeof getEntryTypeInfo === 'function') {
+                const i = getEntryTypeInfo(id);
+                if (i && i.emoji) return i.emoji;
+            }
+            return ({work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'}[id] || (String(id).startsWith('custom-') ? '📌' : '📋'));
+        };
+        const lookupLabel = (id) => {
+            if (typeof getEntryTypeInfo === 'function') {
+                const i = getEntryTypeInfo(id);
+                if (i) {
+                    const clean = String(i.label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim();
+                    if (clean) return clean;
+                }
+            }
+            if (String(id).startsWith('custom-')) return 'Eigener Typ';
+            return ({work:'Arbeit', school:'Schule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'}[id]) || id;
+        };
+        const countsAsWork = (id) => {
+            if (typeof getEntryTypeInfo === 'function') {
+                const i = getEntryTypeInfo(id);
+                if (i && String(id).startsWith('custom-')) return i.countsAsWork === true;
+            }
+            return !String(id).startsWith('custom-');
+        };
         const createRow = (e) => {
-            const diffColor = e.diff >= 0 ? '#10b981' : '#ef4444';
-            const diffBg    = e.diff >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
-            const diffStr   = (e.diff >= 0 ? '+' : '') + e.diff.toFixed(2) + 'h';
+            const isWorkRel = countsAsWork(e.type);
+            const diffColor = isWorkRel ? (e.diff >= 0 ? '#10b981' : '#ef4444') : '#64748b';
+            const diffBg    = isWorkRel ? (e.diff >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)') : 'rgba(100,116,139,0.08)';
+            const diffStr   = isWorkRel ? ((e.diff >= 0 ? '+' : '') + e.diff.toFixed(2) + 'h') : '—';
             const info      = e.isPeriod ? esc(e.label) : esc(e.info || '');
-            const label     = typeLabels[e.type] || e.type;
-            const icon      = typeIcons[e.type]  || '📋';
+            const label     = lookupLabel(e.type);
+            const icon      = lookupIcon(e.type);
             const weekday   = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {weekday:'short'});
             const dateShort = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'2-digit'});
             return `
@@ -119,19 +144,33 @@
         const e = data.entries.find(x => x.id === id);
         if (!e) return;
 
-        const typeLabels = {work:'Arbeit', school:'Berufsschule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'};
-        const typeIcons  = {work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'};
-        const typeBg     = {work:'rgba(168,85,247,0.15)', school:'rgba(6,182,212,0.15)', vacation:'rgba(16,185,129,0.15)', gleittag:'rgba(245,158,11,0.15)', sick:'rgba(239,68,68,0.15)', holiday:'rgba(236,72,153,0.15)'};
+        // Dynamic lookup — Custom-Types + Overrides + Orphan-Fallback.
+        const lkInfo = (typeof getEntryTypeInfo === 'function') ? getEntryTypeInfo(e.type) : null;
+        const isCustom = String(e.type).startsWith('custom-');
+        const fallbackIcons  = {work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'};
+        const fallbackLabels = {work:'Arbeit', school:'Berufsschule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'};
+        const fallbackBg     = {work:'rgba(168,85,247,0.15)', school:'rgba(6,182,212,0.15)', vacation:'rgba(16,185,129,0.15)', gleittag:'rgba(245,158,11,0.15)', sick:'rgba(239,68,68,0.15)', holiday:'rgba(236,72,153,0.15)'};
+        const iconEmoji = (lkInfo && lkInfo.emoji) || fallbackIcons[e.type] || (isCustom ? '📌' : '📋');
+        const cleanLabel = lkInfo ? (String(lkInfo.label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim() || fallbackLabels[e.type]) : (isCustom ? 'Eigener Typ' : (fallbackLabels[e.type] || e.type));
+        // Custom-Color → tinted Hintergrund. Fallback auf Default-Map.
+        let bgStyle = fallbackBg[e.type] || 'rgba(255,255,255,0.08)';
+        if (lkInfo && lkInfo.color) {
+            const hex = String(lkInfo.color).replace('#','');
+            const full = hex.length === 3 ? hex.split('').map(x => x+x).join('') : hex.slice(0,6);
+            const r = parseInt(full.slice(0,2),16), g = parseInt(full.slice(2,4),16), b = parseInt(full.slice(4,6),16);
+            if (!isNaN(r+g+b)) bgStyle = `rgba(${r},${g},${b},0.15)`;
+        }
+        const isWorkRel = !isCustom || (lkInfo && lkInfo.countsAsWork === true);
 
         const weekday  = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {weekday:'long'});
         const dateStr  = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
-        const diffStr  = (e.diff >= 0 ? '+' : '') + e.diff.toFixed(2) + 'h';
-        const diffColor= e.diff >= 0 ? '#34d399' : '#f87171';
+        const diffStr  = isWorkRel ? ((e.diff >= 0 ? '+' : '') + e.diff.toFixed(2) + 'h') : '—';
+        const diffColor= isWorkRel ? (e.diff >= 0 ? '#34d399' : '#f87171') : '#94a3b8';
 
         const icon = document.getElementById('edTypeIcon');
-        icon.textContent = typeIcons[e.type] || '📋';
-        icon.style.background = typeBg[e.type] || 'rgba(255,255,255,0.08)';
-        document.getElementById('edTypeLabel').textContent = typeLabels[e.type] || e.type;
+        icon.textContent = iconEmoji;
+        icon.style.background = bgStyle;
+        document.getElementById('edTypeLabel').textContent = cleanLabel;
         document.getElementById('edDateLine').textContent  = weekday + ' · ' + dateStr;
         document.getElementById('edHours').textContent = e.worked.toFixed(1) + 'h';
         const diffEl = document.getElementById('edDiff');

@@ -225,6 +225,10 @@
         if(!Array.isArray(data.settings.hours)) data.settings.hours = [0,8.75,8.75,8.75,8.75,4.5,0];
         if(!data.settings.break) data.settings.break = {thresh:6, min:[0, 30, 30, 30, 30, 30, 0]};
         if(!Array.isArray(data.trash)) data.trash = [];
+        if(!Array.isArray(data.customEntryTypes)) data.customEntryTypes = [];
+        if(!Array.isArray(data.customFields)) data.customFields = [];
+        if(!Array.isArray(data.workflowRules)) data.workflowRules = [];
+        if(!data.entryTypeOverrides || typeof data.entryTypeOverrides !== 'object' || Array.isArray(data.entryTypeOverrides)) data.entryTypeOverrides = {};
         if (!data.settings.trashAutoEmptyDays && data.settings.trashAutoEmptyDays !== 0) data.settings.trashAutoEmptyDays = 30;
         
         if(!Array.isArray(data.settings.break.min)) {
@@ -233,8 +237,8 @@
         }
         if(!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0};
         
-        // Initialize Untis Integration
-        initializeUntisIntegration();
+        // Initialize Untis Integration (optional — Funktion existiert nur wenn Untis-Modul geladen)
+        if (typeof initializeUntisIntegration === 'function') initializeUntisIntegration();
         
         // Initialize projects list
         if (!Array.isArray(data.settings.projects)) data.settings.projects = [];

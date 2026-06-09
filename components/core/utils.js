@@ -16,10 +16,10 @@
     }
 
     function showModernDeleteConfirm(entry, id) {
-        const typeLabels = {work:'Arbeit', school:'Schule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'};
-        const typeIcons  = {work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'};
-        const label = typeLabels[entry.type] || entry.type;
-        const icon = typeIcons[entry.type] || '📋';
+        const info = (typeof getEntryTypeInfo === 'function') ? getEntryTypeInfo(entry.type) : null;
+        const isCustom = String(entry.type).startsWith('custom-');
+        const label = info ? (String(info.label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim() || info.label || entry.type) : ({work:'Arbeit', school:'Schule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'}[entry.type] || (isCustom ? 'Eigener Typ' : entry.type));
+        const icon  = info ? (info.emoji || '📋') : ({work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'}[entry.type] || (isCustom ? '📌' : '📋'));
         const dateStr = new Date(entry.date + 'T00:00:00').toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'2-digit'});
 
         const overlay = document.createElement('div');

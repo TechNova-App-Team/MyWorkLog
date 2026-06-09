@@ -138,6 +138,29 @@
             worked = expected;
             info = (type === 'vacation' ? 'Urlaubstag' : (type === 'sick' ? 'Krankmeldung' : 'Feiertag')) + ` | ${info}`;
             diff = 0;
+        } else {
+            // Custom-Type (user-definiert).
+            // Akzeptiert: start+end (Zeitraum), manuelle Stunden, oder leer (worked=0 als Tag-Marker).
+            const cInfo = (typeof getEntryTypeInfo === 'function') ? getEntryTypeInfo(type) : null;
+            const cName = cInfo ? String(cInfo.label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim() : type;
+            if (start && end) {
+                shiftStart = start;
+                shiftEnd = end;
+                let d1 = new Date(`2000-01-01T${start}`);
+                let d2 = new Date(`2000-01-01T${end}`);
+                let hoursDiff = (d2 - d1) / 3.6e6;
+                if (hoursDiff < 0) hoursDiff += 24;
+                worked = hoursDiff;
+                info = `${cName} ${start}-${end} (${worked.toFixed(2)}h) | ${info}`;
+            } else if (direct) {
+                worked = parseFloat(direct) || 0;
+                info = `${cName} (${worked.toFixed(2)}h) | ${info}`;
+            } else {
+                worked = 0;
+                info = `${cName} | ${info}`;
+            }
+            // Wenn countsAsWork → wie Arbeit: diff = worked - expected. Sonst neutral (diff=0).
+            diff = (cInfo && cInfo.countsAsWork === true) ? (worked - expected) : 0;
         }
         
         // Entferne führende '| ' wenn info leer war
@@ -394,8 +417,11 @@
     function toggleTimeInputs() {
         const t = document.getElementById('inpType').value;
         const els = [document.getElementById('inpStart'), document.getElementById('inpEnd')];
-        const disableTime = (t !== 'work');
+        // Time-Inputs aktiv für 'work' UND für Custom-Types (User trackt z.B. 17:00–18:00 Fitness).
+        const isCustom = String(t).startsWith('custom-');
+        const disableTime = !(t === 'work' || isCustom);
         els.forEach(e => e.disabled = disableTime);
+        // Manuelle Stunden für alles außer Tages-Pauschalen (Urlaub/Krank/Gleittag/Feiertag).
         document.getElementById('inpHours').disabled = (t === 'gleittag' || t === 'vacation' || t === 'sick' || t === 'holiday');
     }
 

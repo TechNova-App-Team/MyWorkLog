@@ -249,6 +249,7 @@
         }
         if (tabName === 'custom') {
             renderCustomTypesManager();
+            if (typeof renderCustomFieldsManager === 'function') renderCustomFieldsManager();
         }
     }
     
