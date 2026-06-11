@@ -1,7 +1,7 @@
 // =========================================
 //  KONFIGURATION
 // =========================================
-const CF_PROXY = 'https://analytics-proxy.myworklog.de';
+const CF_PROXY = 'https://analytics-proxy.myworklog.workers.dev';
 let currentRange = 7;
 
 // =========================================
