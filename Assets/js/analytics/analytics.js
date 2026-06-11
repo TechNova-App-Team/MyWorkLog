@@ -756,6 +756,25 @@ function setTrend(elId, current, previous) {
 }
 
 // =========================================
+//  LIVE STATUS BADGE
+// =========================================
+function setLiveStatus(status) {
+    var dot = document.getElementById('liveDot');
+    var label = document.getElementById('liveLabel');
+    if (!dot || !label) return;
+    dot.className = 'live-dot';
+    if (status === 'live') {
+        label.textContent = 'Live';
+    } else if (status === 'error') {
+        dot.classList.add('error');
+        label.textContent = 'Offline';
+    } else {
+        dot.classList.add('connecting');
+        label.textContent = 'Verbinde…';
+    }
+}
+
+// =========================================
 //  SKELETON LOADING
 // =========================================
 function showSkeletons() {
@@ -791,6 +810,7 @@ async function loadAll() {
     btn.disabled = true;
     btn.innerHTML = '⏳ Laden...';
 
+    setLiveStatus('connecting');
     showSkeletons();
 
     try {
@@ -965,10 +985,12 @@ async function loadAll() {
         // ── Timestamp ──
         document.getElementById('lastUpdated').textContent = 'Zuletzt aktualisiert: ' + new Date().toLocaleString('de-DE');
 
+        setLiveStatus('live');
         hideSkeletons();
 
     } catch (err) {
         console.error('Analytics Error:', err);
+        setLiveStatus('error');
         hideSkeletons();
         if (err.message.indexOf('401') !== -1 || err.message.indexOf('403') !== -1) {
             document.getElementById('configNotice').style.display = 'block';
@@ -1018,7 +1040,10 @@ document.addEventListener('DOMContentLoaded', function() {
             var active = await api('/active');
             document.getElementById('activeUsers').innerHTML =
                 '<div class="live-dot" style="width:8px;height:8px;"></div> ' + (active.visitors || 0) + ' aktiv';
-        } catch(e) { /* silent */ }
+            setLiveStatus('live');
+        } catch(e) {
+            setLiveStatus('error');
+        }
     }, 30000);
 
     // Auto-refresh all data every 5 minutes
