@@ -108,7 +108,7 @@ function buildQuery(tsField) {
             orderBy: [count_DESC]
           ) {
             count
-            dimensions { name: browserName }
+            dimensions { name: userAgentBrowser }
           }
 
           rumOS: rumPageloadEventsAdaptiveGroups(
@@ -117,7 +117,7 @@ function buildQuery(tsField) {
             orderBy: [count_DESC]
           ) {
             count
-            dimensions { name: osName }
+            dimensions { name: userAgentOS }
           }
 
           rumDevices: rumPageloadEventsAdaptiveGroups(
