@@ -1,6 +1,7 @@
 // =========================================
 //  KONFIGURATION
 // =========================================
+const CF_PROXY = 'https://analytics-proxy.myworklog.de';
 let currentRange = 7;
 
 // =========================================
@@ -762,48 +763,151 @@ function hideSkeletons() {
 }
 
 // =========================================
-//  LOAD ALL DATA
-//  Datenquelle entfernt — UI zeigt leere Tabellen/Charts.
+//  LOAD ALL DATA — Cloudflare Web Analytics via Worker-Proxy
 // =========================================
-function loadAll() {
+async function loadAll() {
     var btn = document.getElementById('refreshBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Laden...'; }
+
+    setLiveStatus('connecting');
+    showSkeletons();
+
+    try {
+        var res = await fetch(CF_PROXY + '?range=' + currentRange, { cache: 'no-store' });
+        if (!res.ok) {
+            var errTxt = await res.text().catch(function() { return ''; });
+            throw new Error('HTTP ' + res.status + ': ' + errTxt.slice(0, 200));
+        }
+        var d = await res.json();
+        if (d.error) throw new Error(d.error);
+
+        // ── Active (last 5 min) ──
+        var activeEl = document.getElementById('activeUsers');
+        if (activeEl) activeEl.innerHTML =
+            '<div class="live-dot" style="width:8px;height:8px;"></div> ' + (d.active.visits || 0) + ' aktiv';
+
+        // ── Totals ──
+        var pv = d.total.pageviews || 0;
+        var visits = d.total.visits || 0;
+        var visitors = visits; // CF RUM: visits == sessions, eigene Visitors-Metrik gibts im Free-Tier nicht
+
+        var pvEl = document.getElementById('kpiPageviews');
+        var visEl = document.getElementById('kpiVisitors');
+        var visitsEl = document.getElementById('kpiVisits');
+        if (pvEl) pvEl.textContent = fmt(pv);
+        if (visEl) visEl.textContent = fmt(visitors);
+        if (visitsEl) visitsEl.textContent = fmt(visits);
+        animateValue(pvEl, pv, '');
+        animateValue(visEl, visitors, '');
+        animateValue(visitsEl, visits, '');
+
+        // ── Pages/Session ──
+        var pps = visits > 0 ? (pv / visits) : 0;
+        var ppsEl = document.getElementById('kpiPagesPerSession');
+        var ppsSubEl = document.getElementById('kpiPagesPerSessionSub');
+        if (ppsEl) ppsEl.textContent = pps.toFixed(1);
+        if (ppsSubEl) ppsSubEl.textContent = fmt(pv) + ' Seiten / ' + fmt(visits) + ' Sessions';
+
+        // ── Felder die CF Web Analytics (Free) nicht liefert ──
+        var bounceEl = document.getElementById('kpiBounce');
+        if (bounceEl) bounceEl.textContent = '–';
+        var durEl = document.getElementById('kpiDuration');
+        if (durEl) durEl.textContent = '–';
+        var totalTimeEl = document.getElementById('kpiTotalTime');
+        if (totalTimeEl) totalTimeEl.textContent = '';
+
+        // ── Engagement (vereinfacht: nur Pages/Session, da Bounce+Time fehlen) ──
+        var engScore = Math.min(100, Math.round((pps / 5) * 100));
+        var engEl = document.getElementById('kpiEngagement');
+        var engSubEl = document.getElementById('kpiEngagementSub');
+        if (engEl) engEl.textContent = engScore + '%';
+        if (engSubEl) {
+            engSubEl.textContent = engScore >= 75 ? 'Hervorragend' :
+                                   engScore >= 50 ? 'Gut' :
+                                   engScore >= 25 ? 'Ausbaufähig' : 'Niedrig';
+        }
+
+        // ── Trends: CF GraphQL für Previous-Range würde 2. Query brauchen → später ──
+        ['kpiPageviewsTrend','kpiVisitorsTrend','kpiVisitsTrend','kpiBouncesTrend'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) { el.className = 'kpi-trend neutral'; el.textContent = '--'; }
+        });
+
+        // ── Time Series ──
+        var seriesPV  = (d.series || []).map(function(s) { return { x: s.ts, y: s.pageviews || 0 }; });
+        var seriesSes = (d.series || []).map(function(s) { return { x: s.ts, y: s.visits || 0 }; });
+        if (currentRange >= 30 && currentRange <= 90) {
+            seriesPV  = aggregateWeekly(seriesPV);
+            seriesSes = aggregateWeekly(seriesSes);
+        }
+        renderBarChartDual('pageviewsChart', seriesPV, seriesSes);
+        renderBarChartSingle('visitorsChart', seriesSes);
+
+        // ── Top Pages ──
+        var topPages = (d.paths || []).map(function(p) {
+            return {
+                name: p.name,
+                pageviews: p.pageviews || 0,
+                visitors: 0,
+                visits: p.visits || 0,
+                bounces: 0,
+                totaltime: 0,
+            };
+        });
+        topPages = cleanExpandedPageData(topPages);
+        renderExpandedTable('topPagesTable', topPages);
+
+        // ── Entry/Exit Pages: CF unterscheidet das nicht im Free-Tier ──
+        renderSimpleTable('entryPagesTable', [], function(x) { return x || '/'; }, 'green');
+        renderSimpleTable('exitPagesTable',  [], function(x) { return x || '/'; }, 'cyan');
+
+        // ── Referrers ──
+        renderSimpleTable('referrersTable', d.referers || [], function(x) { return x; }, 'purple');
+
+        // ── Audience ──
+        renderDevicesDonut(d.devices || []);
+        var browsers = filterBotMetrics(d.browsers || []);
+        var os       = filterBotMetrics(d.os       || []);
+        renderSimpleTableNoRank('browsersTable', browsers, function(x) { return x; }, 'purple');
+        renderSimpleTableNoRank('osTable',       os,       function(x) { return x; }, 'cyan');
+
+        // ── Geo ──
+        renderSimpleTableNoRank('countriesTable', d.countries || [], countryName, 'green');
+        renderSimpleTableNoRank('citiesTable',    [], function(x) { return x; }, 'yellow'); // CF Free: kein City-Breakdown
+
+        // ── Nicht verfügbar bei CF Free-Tier ──
+        renderSimpleTable('channelsTable',  [], function(x) { return x; }, 'yellow');
+        renderSimpleTable('titlesTable',    [], function(x) { return x; }, 'purple');
+        renderSimpleTableNoRank('languagesTable', [], langName, 'cyan');
+        renderSimpleTableNoRank('screensTable',   [], function(x) { return x; }, 'purple');
+        renderSimpleTable('eventsTable',    [], function(x) { return x; }, 'yellow');
+
+        // ── Insights ──
+        var insights = generateInsights(
+            { pageviews: pv, visitors: visitors, visits: visits, bounces: 0, totaltime: 0 },
+            null,
+            d.devices || [],
+            { pageviews: seriesPV, sessions: seriesSes },
+            topPages
+        );
+        renderInsights(insights);
+
+        // ── Timestamp ──
+        var lu = document.getElementById('lastUpdated');
+        if (lu) lu.textContent = 'Zuletzt aktualisiert: ' + new Date().toLocaleString('de-DE');
+
+        setLiveStatus('live');
+        hideSkeletons();
+
+    } catch (err) {
+        console.error('Analytics Error:', err);
+        setLiveStatus('error');
+        hideSkeletons();
+        var adEl = document.getElementById('adblockNotice');
+        if (adEl) adEl.style.display = 'block';
+    }
+
     if (btn) { btn.disabled = false; btn.innerHTML = '🔄 Aktualisieren'; }
-
-    hideSkeletons();
-    setLiveStatus('error');
-
-    var activeEl = document.getElementById('activeUsers');
-    if (activeEl) activeEl.innerHTML = '<div class="live-dot error" style="width:8px;height:8px;"></div> 0 aktiv';
-
-    ['kpiPageviews','kpiVisitors','kpiVisits','kpiBounce','kpiPagesPerSession','kpiEngagement']
-        .forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = '–'; });
-    ['kpiDuration','kpiTotalTime','kpiPagesPerSessionSub','kpiEngagementSub']
-        .forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
-    ['kpiPageviewsTrend','kpiVisitorsTrend','kpiVisitsTrend','kpiBouncesTrend'].forEach(function(id) {
-        var el = document.getElementById(id);
-        if (el) { el.className = 'kpi-trend neutral'; el.textContent = '--'; }
-    });
-
-    renderBarChartDual('pageviewsChart', [], []);
-    renderBarChartSingle('visitorsChart', []);
-    renderExpandedTable('topPagesTable', []);
-    renderSimpleTable('entryPagesTable', [], function(x) { return x || '/'; }, 'green');
-    renderSimpleTable('exitPagesTable', [], function(x) { return x || '/'; }, 'cyan');
-    renderSimpleTable('referrersTable', [], function(x) { return x; }, 'purple');
-    renderSimpleTable('channelsTable', [], function(x) { return x; }, 'yellow');
-    renderSimpleTable('titlesTable', [], function(x) { return x; }, 'purple');
-    renderDevicesDonut([]);
-    renderSimpleTableNoRank('browsersTable', [], function(x) { return x; }, 'purple');
-    renderSimpleTableNoRank('osTable', [], function(x) { return x; }, 'cyan');
-    renderSimpleTableNoRank('countriesTable', [], countryName, 'green');
-    renderSimpleTableNoRank('citiesTable', [], function(x) { return x; }, 'yellow');
-    renderSimpleTableNoRank('languagesTable', [], langName, 'cyan');
-    renderSimpleTableNoRank('screensTable', [], function(x) { return x; }, 'purple');
-    renderSimpleTable('eventsTable', [], function(x) { return x; }, 'yellow');
-    renderInsights([{ icon: '📊', text: 'Keine Daten verfügbar.' }]);
-
-    var lu = document.getElementById('lastUpdated');
-    if (lu) lu.textContent = '';
 }
 
 // =========================================
@@ -830,4 +934,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         fadeEls.forEach(function(el) { el.classList.add('visible'); });
     }
+
+    // Auto-refresh alle 5 Minuten
+    setInterval(function() { loadAll(); }, 300000);
 });
