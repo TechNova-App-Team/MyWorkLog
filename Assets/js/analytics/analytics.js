@@ -25,6 +25,14 @@ function fmtDuration(seconds) {
     return secs + 's';
 }
 
+function fmtBytes(bytes) {
+    if (!bytes || bytes <= 0) return '0 B';
+    var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    var i = Math.floor(Math.log(bytes) / Math.log(1024));
+    i = Math.min(i, units.length - 1);
+    return (bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+}
+
 function getRange(days) {
     const end = Date.now();
     const start = end - (days * 24 * 60 * 60 * 1000);
@@ -781,15 +789,18 @@ async function loadAll() {
         var d = await res.json();
         if (d.error) throw new Error(d.error);
 
-        // ── Active (last 5 min) ──
+        var rum  = d.rum  || {};
+        var zone = d.zone || {};
+
+        // ── Active (RUM letzte 5 min) ──
         var activeEl = document.getElementById('activeUsers');
         if (activeEl) activeEl.innerHTML =
-            '<div class="live-dot" style="width:8px;height:8px;"></div> ' + (d.active.visits || 0) + ' aktiv';
+            '<div class="live-dot" style="width:8px;height:8px;"></div> ' + ((rum.active && rum.active.visits) || 0) + ' aktiv';
 
-        // ── Totals ──
-        var pv = d.total.pageviews || 0;
-        var visits = d.total.visits || 0;
-        var visitors = visits; // CF RUM: visits == sessions, eigene Visitors-Metrik gibts im Free-Tier nicht
+        // ── Totals — RUM für Pageviews/Sessions, Zone für Unique Visitors ──
+        var pv = (rum.total && rum.total.pageviews) || 0;
+        var visits = (rum.total && rum.total.visits) || 0;
+        var visitors = (zone.total && zone.total.uniqueVisitors) || visits;
 
         var pvEl = document.getElementById('kpiPageviews');
         var visEl = document.getElementById('kpiVisitors');
@@ -808,15 +819,20 @@ async function loadAll() {
         if (ppsEl) ppsEl.textContent = pps.toFixed(1);
         if (ppsSubEl) ppsSubEl.textContent = fmt(pv) + ' Seiten / ' + fmt(visits) + ' Sessions';
 
-        // ── Felder die CF Web Analytics (Free) nicht liefert ──
+        // ── CACHE HIT RATE (Tile war "Bounce Rate") ──
+        var chr = zone.cacheHitRate || 0;
         var bounceEl = document.getElementById('kpiBounce');
-        if (bounceEl) bounceEl.textContent = '–';
-        var durEl = document.getElementById('kpiDuration');
-        if (durEl) durEl.textContent = '–';
-        var totalTimeEl = document.getElementById('kpiTotalTime');
-        if (totalTimeEl) totalTimeEl.textContent = '';
+        if (bounceEl) bounceEl.textContent = chr.toFixed(1) + '%';
 
-        // ── Engagement (vereinfacht: nur Pages/Session, da Bounce+Time fehlen) ──
+        // ── BANDWIDTH (Tile war "Verweildauer") ──
+        var bytes = (zone.total && zone.total.bytes) || 0;
+        var cachedBytes = (zone.total && zone.total.cachedBytes) || 0;
+        var durEl = document.getElementById('kpiDuration');
+        var totalTimeEl = document.getElementById('kpiTotalTime');
+        if (durEl) durEl.textContent = fmtBytes(bytes);
+        if (totalTimeEl) totalTimeEl.textContent = 'Davon gecacht: ' + fmtBytes(cachedBytes);
+
+        // ── Engagement (vereinfacht: Pages/Session) ──
         var engScore = Math.min(100, Math.round((pps / 5) * 100));
         var engEl = document.getElementById('kpiEngagement');
         var engSubEl = document.getElementById('kpiEngagementSub');
@@ -827,15 +843,15 @@ async function loadAll() {
                                    engScore >= 25 ? 'Ausbaufähig' : 'Niedrig';
         }
 
-        // ── Trends: CF GraphQL für Previous-Range würde 2. Query brauchen → später ──
+        // ── Trends: brauchen 2. GraphQL-Query für Vorperiode → später ──
         ['kpiPageviewsTrend','kpiVisitorsTrend','kpiVisitsTrend','kpiBouncesTrend'].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) { el.className = 'kpi-trend neutral'; el.textContent = '--'; }
         });
 
-        // ── Time Series ──
-        var seriesPV  = (d.series || []).map(function(s) { return { x: s.ts, y: s.pageviews || 0 }; });
-        var seriesSes = (d.series || []).map(function(s) { return { x: s.ts, y: s.visits || 0 }; });
+        // ── Time Series (RUM) ──
+        var seriesPV  = (rum.series || []).map(function(s) { return { x: s.ts, y: s.pageviews || 0 }; });
+        var seriesSes = (rum.series || []).map(function(s) { return { x: s.ts, y: s.visits || 0 }; });
         if (currentRange >= 30 && currentRange <= 90) {
             seriesPV  = aggregateWeekly(seriesPV);
             seriesSes = aggregateWeekly(seriesSes);
@@ -843,8 +859,8 @@ async function loadAll() {
         renderBarChartDual('pageviewsChart', seriesPV, seriesSes);
         renderBarChartSingle('visitorsChart', seriesSes);
 
-        // ── Top Pages ──
-        var topPages = (d.paths || []).map(function(p) {
+        // ── Top Pages (RUM) ──
+        var topPages = (rum.paths || []).map(function(p) {
             return {
                 name: p.name,
                 pageviews: p.pageviews || 0,
@@ -857,27 +873,33 @@ async function loadAll() {
         topPages = cleanExpandedPageData(topPages);
         renderExpandedTable('topPagesTable', topPages);
 
-        // ── Entry/Exit Pages: CF unterscheidet das nicht im Free-Tier ──
+        // ── Entry/Exit: CF liefert das nicht ──
         renderSimpleTable('entryPagesTable', [], function(x) { return x || '/'; }, 'green');
         renderSimpleTable('exitPagesTable',  [], function(x) { return x || '/'; }, 'cyan');
 
-        // ── Referrers ──
-        renderSimpleTable('referrersTable', d.referers || [], function(x) { return x; }, 'purple');
+        // ── Referrers (RUM) ──
+        renderSimpleTable('referrersTable', rum.referers || [], function(x) { return x; }, 'purple');
 
-        // ── Audience ──
-        renderDevicesDonut(d.devices || []);
-        var browsers = filterBotMetrics(d.browsers || []);
-        var os       = filterBotMetrics(d.os       || []);
+        // ── HTTP Status Codes (Zone) → Channels-Tab umgewidmet ──
+        renderSimpleTable('channelsTable', zone.statusCodes || [], function(x) { return 'HTTP ' + x; }, 'yellow');
+
+        // ── Cache Breakdown (Zone) → Titles-Tab umgewidmet ──
+        renderSimpleTable('titlesTable', zone.cacheBreakdown || [], function(x) { return x; }, 'purple');
+
+        // ── Audience (RUM) ──
+        renderDevicesDonut(rum.devices || []);
+        var browsers = filterBotMetrics(rum.browsers || []);
+        var os       = filterBotMetrics(rum.os       || []);
         renderSimpleTableNoRank('browsersTable', browsers, function(x) { return x; }, 'purple');
         renderSimpleTableNoRank('osTable',       os,       function(x) { return x; }, 'cyan');
 
-        // ── Geo ──
-        renderSimpleTableNoRank('countriesTable', d.countries || [], countryName, 'green');
-        renderSimpleTableNoRank('citiesTable',    [], function(x) { return x; }, 'yellow'); // CF Free: kein City-Breakdown
+        // ── Geo: RUM-Countries primär, Zone-Countries als Fallback ──
+        var rumCountries = rum.countries || [];
+        var countries = rumCountries.length > 0 ? rumCountries : (zone.countries || []);
+        renderSimpleTableNoRank('countriesTable', countries, countryName, 'green');
+        renderSimpleTableNoRank('citiesTable',    [], function(x) { return x; }, 'yellow');
 
-        // ── Nicht verfügbar bei CF Free-Tier ──
-        renderSimpleTable('channelsTable',  [], function(x) { return x; }, 'yellow');
-        renderSimpleTable('titlesTable',    [], function(x) { return x; }, 'purple');
+        // ── Nicht verfügbar ──
         renderSimpleTableNoRank('languagesTable', [], langName, 'cyan');
         renderSimpleTableNoRank('screensTable',   [], function(x) { return x; }, 'purple');
         renderSimpleTable('eventsTable',    [], function(x) { return x; }, 'yellow');
@@ -886,10 +908,17 @@ async function loadAll() {
         var insights = generateInsights(
             { pageviews: pv, visitors: visitors, visits: visits, bounces: 0, totaltime: 0 },
             null,
-            d.devices || [],
+            rum.devices || [],
             { pageviews: seriesPV, sessions: seriesSes },
             topPages
         );
+        // Zusätzliche CF-spezifische Insights
+        if (zone.total && zone.total.requests > 0) {
+            insights.unshift({ icon: '⚡', text: '<strong>' + chr.toFixed(0) + '%</strong> Cache Hit Rate — ' + fmtBytes(cachedBytes) + ' direkt vom CF Edge geliefert.' });
+        }
+        if (bytes > 0) {
+            insights.push({ icon: '📊', text: '<strong>' + fmtBytes(bytes) + '</strong> Gesamt-Traffic über das CF Edge.' });
+        }
         renderInsights(insights);
 
         // ── Timestamp ──
