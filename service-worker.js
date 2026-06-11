@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * TimeTracker Service Worker — v5.7.4
+ * TimeTracker Service Worker — v5.9.1
  * ============================================================
  * Strategie: Network-First für alle eigenen Assets (JS/CSS/HTML).
  * → Immer frisch vom Server (ETag-Prüfung via cache:'no-cache')
@@ -11,7 +11,7 @@
 
 'use strict';
 
-const SW_VERSION  = 'v5.8.1';
+const SW_VERSION  = 'v5.9.1';
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
 const OFFLINE_URL = './offline/';
 const DEBUG       = true;
@@ -27,8 +27,8 @@ const CACHEABLE_EXTS = new Set(['js', 'css', 'html', 'png', 'svg', 'jpg',
 // Analytics/Tracking-Domains NICHT cachen (dynamische Responses)
 // Versioned CDN-Libraries (jsdelivr, cdnjs) werden gecacht — sie ändern sich nie
 const NO_CACHE_ORIGINS = [
-  'cloud.umami.is',
-  'api-gateway.umami.dev',
+  'static.cloudflareinsights.com',
+  'cloudflareinsights.com',
   'fonts.googleapis.com',   // dynamische Font-CSS, nicht cachen
 ];
 

@@ -13,7 +13,6 @@
     }
 
     function handleEntry() {
-        uEvent('entry-save-attempt');
         const dateStr = document.getElementById('inpDate').value;
         const type = document.getElementById('inpType').value;
         const start = document.getElementById('inpStart').value;
@@ -202,8 +201,7 @@
         
         data.entries.sort((a,b) => new Date(b.date) - new Date(a.date));
         save();
-        uEvent('entry-saved', { type: type, isEdit: !!editId });
-        
+
         // Mood Selector nach Eintrag (nur wenn aktiviert)
         if (!editId && data.settings.moodSelectorEnabled !== false) {
             openMoodSelector(entry.id);
@@ -237,7 +235,6 @@
     }
 
     function timerAction(act) {
-        uEvent('timer-' + act);
         const now = Date.now();
         if (act === 'start') {
             if (!timer.running) { 

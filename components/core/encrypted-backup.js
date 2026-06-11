@@ -131,7 +131,6 @@
     
     // Export mit Verschlüsselung
     async function exportEncryptedBackup() {
-        uEvent('backup-export-encrypted');
         console.log('[DEBUG] exportEncryptedBackup called');
         
         const modal = document.getElementById('encryptedBackupModal');

@@ -32,7 +32,6 @@
     }
 
     function startPomodoroTimer() {
-        uEvent('pomodoro-start');
         if (pomodoroState.intervalId) clearInterval(pomodoroState.intervalId);
         
         pomodoroState.intervalId = setInterval(() => {
@@ -97,7 +96,6 @@
 
     // FEATURE 4: Dark/Light Mode Theme
     function setTheme(theme) {
-        uEvent('theme-switch', { theme: theme });
         if (theme === 'light') {
             document.documentElement.style.setProperty('--bg-deep', '#f5f5f7');
             document.documentElement.style.setProperty('--bg-glass', 'rgba(245, 245, 247, 0.8)');

@@ -222,7 +222,6 @@
     
     
     function switchSettingsTab(tabName) {
-        uPageView('/app/settings/' + tabName, 'Settings – ' + tabName);
         // Alle Tab-Contents verstecken
         document.querySelectorAll('.settings-tab-content').forEach(el => el.style.display = 'none');
         // Alle Tab-Buttons deaktivieren
@@ -442,7 +441,6 @@
     }
 
     function openRecoveryModal() {
-        uEvent('recovery-modal-open');
         const modal = document.getElementById('recoveryModal');
         if(!modal) return;
         modal.classList.add('active');

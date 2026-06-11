@@ -57,7 +57,6 @@ function startFocusMode() {
 }
 
 function startFocusTimer() {
-    uEvent('focus-timer-start');
     if (focusRunning) return;
     focusRunning = true;
     document.getElementById('focusStartBtn').disabled = true;

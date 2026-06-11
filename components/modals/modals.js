@@ -1,8 +1,6 @@
 // ═══ MODALS MODULE ═══
 
     function showExportMenu() {
-        uEvent('backup-export-menu');
-
         const overlay = document.createElement('div');
         overlay.style.cssText = `position:fixed;inset:0;z-index:499;background:rgba(0,0,0,0.35);backdrop-filter:blur(2px);`;
         overlay.addEventListener('click', closeExportMenu);
@@ -80,8 +78,6 @@
     }
 
     function showBackupMenu() {
-        uEvent('backup-import-menu');
-
         const overlay = document.createElement('div');
         overlay.style.cssText = `position:fixed;inset:0;z-index:499;background:rgba(0,0,0,0.35);backdrop-filter:blur(2px);`;
         overlay.addEventListener('click', closeBackupMenu);
@@ -141,7 +137,6 @@
     }
 
     function exportData(format) {
-        uEvent('backup-export', { format: format });
         if (format === 'json') {
              const backup = collectFullBackup();
              const a = document.createElement('a');
@@ -167,7 +162,6 @@
     }
 
     function importData(e) {
-        uEvent('backup-import');
         const r = new FileReader();
         r.onload = ev => { 
             try { 

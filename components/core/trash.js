@@ -103,7 +103,6 @@
     }
 
     function restoreSingleTrash(trashIndex) {
-        uEvent('trash-restore');
         if (!data.trash || data.trash.length === 0) return;
         const t = data.trash[trashIndex];
         if (!t) return;

@@ -263,7 +263,6 @@
     }
 
     async function generateAndDownloadICalFile() {
-        uEvent('ical-export');
         const dateRangeSelect = document.getElementById('iCalDateRange');
         const typeFilterSelect = document.getElementById('iCalTypeFilter');
         const includeAlarms = document.getElementById('iCalIncludeAlarms')?.checked ?? true;

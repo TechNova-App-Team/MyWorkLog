@@ -2,7 +2,6 @@
     window._clsBC = 'settings.js-start';
 
     function openSettings() {
-        uEvent('settings-open');
         document.getElementById('settingsModal').classList.add('active');
         switchSettingsTab('profile'); // Standardmäßig auf Profile Tab
         

@@ -173,7 +173,6 @@
     }
 
     function saveEditEntry() {
-        uEvent('entry-edit-saved');
         if (!editingEntryId) return;
 
         const entry = data.entries.find(x => x.id === editingEntryId);

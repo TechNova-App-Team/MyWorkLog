@@ -1,9 +1,6 @@
 // =========================================
 //  KONFIGURATION
 // =========================================
-const WEBSITE_ID = '1ad00d56-ca9d-4fc7-a252-26ca5bd8acf8';
-const API_URL = 'https://api.umami.is/v1';
-let API_TOKEN = localStorage.getItem('umami_api_token') || 'api_zPctNoDxbOj59ZEltLxqLXBBEXpWDUwo';
 let currentRange = 7;
 
 // =========================================
@@ -37,16 +34,6 @@ function getUnit(days) {
     if (days <= 1) return 'hour';
     if (days <= 90) return 'day';
     return 'month';
-}
-
-function saveToken() {
-    const input = document.getElementById('apiTokenInput');
-    API_TOKEN = input.value.trim();
-    if (API_TOKEN) {
-        localStorage.setItem('umami_api_token', API_TOKEN);
-        document.getElementById('configNotice').style.display = 'none';
-        loadAll();
-    }
 }
 
 function setTimeRange(days) {
@@ -267,29 +254,6 @@ function filterBotMetrics(data) {
         const name = item.x || item.name || '';
         return !isKnownBot(name);
     });
-}
-
-// =========================================
-//  API
-// =========================================
-async function api(endpoint, params = {}) {
-    const url = new URL(API_URL + '/websites/' + WEBSITE_ID + endpoint);
-    Object.entries(params).forEach(([k, v]) => {
-        if (v !== undefined && v !== null) url.searchParams.append(k, v);
-    });
-
-    const res = await fetch(url, {
-        headers: { 'x-umami-api-key': API_TOKEN, 'Accept': 'application/json' }
-    });
-
-    if (!res.ok) {
-        var errText = await res.text().catch(function() { return ''; });
-        console.error('API Error:', res.status, res.statusText, url.toString(), errText);
-        throw new Error('API ' + res.status + ': ' + res.statusText);
-    }
-    var json = await res.json();
-    console.log('API OK:', endpoint, json);
-    return json;
 }
 
 // =========================================
@@ -799,221 +763,54 @@ function hideSkeletons() {
 
 // =========================================
 //  LOAD ALL DATA
+//  Datenquelle entfernt — UI zeigt leere Tabellen/Charts.
 // =========================================
-async function loadAll() {
-    if (!API_TOKEN) {
-        document.getElementById('configNotice').style.display = 'block';
-        return;
-    }
-
+function loadAll() {
     var btn = document.getElementById('refreshBtn');
-    btn.disabled = true;
-    btn.innerHTML = '⏳ Laden...';
+    if (btn) { btn.disabled = false; btn.innerHTML = '🔄 Aktualisieren'; }
 
-    setLiveStatus('connecting');
-    showSkeletons();
+    hideSkeletons();
+    setLiveStatus('error');
 
-    try {
-        var range = getRange(currentRange);
-        var prevRange = getRange(currentRange * 2);
-        prevRange.endAt = range.startAt;
-        var unit = getUnit(currentRange);
+    var activeEl = document.getElementById('activeUsers');
+    if (activeEl) activeEl.innerHTML = '<div class="live-dot error" style="width:8px;height:8px;"></div> 0 aktiv';
 
-        // All API calls in parallel
-        var results = await Promise.all([
-            api('/active').catch(function() { return { visitors: 0 }; }),                                   // 0
-            api('/stats', range),                                                                            // 1
-            api('/stats', prevRange).catch(function() { return null; }),                                      // 2
-            api('/pageviews', { startAt: range.startAt, endAt: range.endAt, unit: unit, timezone: 'Europe/Berlin' }), // 3
-            api('/metrics/expanded', { startAt: range.startAt, endAt: range.endAt, type: 'path', limit: 20 }) // 4
-                .catch(function() {
-                    return api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'path', limit: 20 });
-                }),
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'entry', limit: 15 }),       // 5
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'exit', limit: 15 }),         // 6
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'referrer', limit: 15 }),     // 7
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'channel', limit: 10 })      // 8
-                .catch(function() { return []; }),
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'browser', limit: 10 }),     // 9
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'os', limit: 10 }),          // 10
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'device', limit: 5 }),       // 11
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'country', limit: 15 }),     // 12
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'city', limit: 15 }),        // 13
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'language', limit: 10 }),    // 14
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'screen', limit: 10 }),      // 15
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'event', limit: 15 })        // 16
-                .catch(function() { return []; }),
-            api('/metrics', { startAt: range.startAt, endAt: range.endAt, type: 'title', limit: 15 }),       // 17
-        ]);
+    ['kpiPageviews','kpiVisitors','kpiVisits','kpiBounce','kpiPagesPerSession','kpiEngagement']
+        .forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = '–'; });
+    ['kpiDuration','kpiTotalTime','kpiPagesPerSessionSub','kpiEngagementSub']
+        .forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = ''; });
+    ['kpiPageviewsTrend','kpiVisitorsTrend','kpiVisitsTrend','kpiBouncesTrend'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) { el.className = 'kpi-trend neutral'; el.textContent = '--'; }
+    });
 
-        var active       = results[0];
-        var stats        = results[1];
-        var prevStats    = results[2];
-        var pageviewsData= results[3];
-        var topPagesExp  = results[4];
-        var entryPages   = Array.isArray(results[5]) ? results[5] : [];
-        var exitPages    = Array.isArray(results[6]) ? results[6] : [];
-        var referrers    = Array.isArray(results[7]) ? results[7] : [];
-        var channels     = Array.isArray(results[8]) ? results[8] : [];
-        var browsers     = Array.isArray(results[9]) ? results[9] : [];
-        var os           = Array.isArray(results[10]) ? results[10] : [];
-        var devices      = Array.isArray(results[11]) ? results[11] : [];
-        var countries    = Array.isArray(results[12]) ? results[12] : [];
-        var cities       = Array.isArray(results[13]) ? results[13] : [];
-        var languages    = Array.isArray(results[14]) ? results[14] : [];
-        var screens      = Array.isArray(results[15]) ? results[15] : [];
-        var events       = Array.isArray(results[16]) ? results[16] : [];
-        var titles       = Array.isArray(results[17]) ? results[17] : [];
+    renderBarChartDual('pageviewsChart', [], []);
+    renderBarChartSingle('visitorsChart', []);
+    renderExpandedTable('topPagesTable', []);
+    renderSimpleTable('entryPagesTable', [], function(x) { return x || '/'; }, 'green');
+    renderSimpleTable('exitPagesTable', [], function(x) { return x || '/'; }, 'cyan');
+    renderSimpleTable('referrersTable', [], function(x) { return x; }, 'purple');
+    renderSimpleTable('channelsTable', [], function(x) { return x; }, 'yellow');
+    renderSimpleTable('titlesTable', [], function(x) { return x; }, 'purple');
+    renderDevicesDonut([]);
+    renderSimpleTableNoRank('browsersTable', [], function(x) { return x; }, 'purple');
+    renderSimpleTableNoRank('osTable', [], function(x) { return x; }, 'cyan');
+    renderSimpleTableNoRank('countriesTable', [], countryName, 'green');
+    renderSimpleTableNoRank('citiesTable', [], function(x) { return x; }, 'yellow');
+    renderSimpleTableNoRank('languagesTable', [], langName, 'cyan');
+    renderSimpleTableNoRank('screensTable', [], function(x) { return x; }, 'purple');
+    renderSimpleTable('eventsTable', [], function(x) { return x; }, 'yellow');
+    renderInsights([{ icon: '📊', text: 'Keine Daten verfügbar.' }]);
 
-        // 🤖 APPLY BOT FILTERING
-        // Removes known crawlers, bots, and datacenter traffic from analytics
-        browsers = filterBotMetrics(browsers);
-        os = filterBotMetrics(os);
-        referrers = filterBotMetrics(referrers);
-        channels = filterBotMetrics(channels);
-        console.log('🤖 Analytics Filtering: Bot-Metriken gefiltert. Browser nach Filter:', browsers.length, 'OS nach Filter:', os.length);
-
-        // ── Active Users ──
-        document.getElementById('activeUsers').innerHTML =
-            '<div class="live-dot" style="width:8px;height:8px;"></div> ' + (active.visitors || 0) + ' aktiv';
-
-        // ── Main KPIs ──
-        var pv = (typeof stats.pageviews === 'object' && stats.pageviews !== null) ? (stats.pageviews.value || 0) : (stats.pageviews || 0);
-        var vis = (typeof stats.visitors === 'object' && stats.visitors !== null) ? (stats.visitors.value || 0) : (stats.visitors || 0);
-        var visits = (typeof stats.visits === 'object' && stats.visits !== null) ? (stats.visits.value || 0) : (stats.visits || 0);
-        var bounces = (typeof stats.bounces === 'object' && stats.bounces !== null) ? (stats.bounces.value || 0) : (stats.bounces || 0);
-        var totaltime = (typeof stats.totaltime === 'object' && stats.totaltime !== null) ? (stats.totaltime.value || 0) : (stats.totaltime || 0);
-
-        document.getElementById('kpiPageviews').textContent = fmt(pv);
-        document.getElementById('kpiVisitors').textContent = fmt(vis);
-        document.getElementById('kpiVisits').textContent = fmt(visits);
-
-        // Animated counters
-        animateValue(document.getElementById('kpiPageviews'), pv, '');
-        animateValue(document.getElementById('kpiVisitors'), vis, '');
-        animateValue(document.getElementById('kpiVisits'), visits, '');
-
-        var avgTime = visits > 0 ? totaltime / visits : 0;
-        document.getElementById('kpiDuration').textContent = fmtDuration(avgTime);
-        document.getElementById('kpiTotalTime').textContent = 'Gesamt: ' + fmtDuration(totaltime);
-
-        var bounceRate = visits > 0 ? ((bounces / visits) * 100).toFixed(1) : 0;
-        document.getElementById('kpiBounce').textContent = bounceRate + '%';
-
-        // New KPIs: Pages/Session & Engagement Score
-        var pagesPerSession = visits > 0 ? (pv / visits) : 0;
-        document.getElementById('kpiPagesPerSession').textContent = pagesPerSession.toFixed(1);
-        document.getElementById('kpiPagesPerSessionSub').textContent = fmt(pv) + ' Seiten / ' + fmt(visits) + ' Sessions';
-
-        // Engagement = weighted score from bounce, time, pages/session
-        var engBounce = Math.max(0, 100 - parseFloat(bounceRate)); // lower bounce = better
-        var engTime = Math.min(100, (avgTime / 300) * 100);       // up to 5min = 100
-        var engPages = Math.min(100, (pagesPerSession / 5) * 100); // up to 5 pages = 100
-        var engScore = Math.round(engBounce * 0.35 + engTime * 0.4 + engPages * 0.25);
-        document.getElementById('kpiEngagement').textContent = engScore + '%';
-        var engLabel = engScore >= 75 ? 'Hervorragend' : engScore >= 50 ? 'Gut' : engScore >= 25 ? 'Ausbaufähig' : 'Niedrig';
-        document.getElementById('kpiEngagementSub').textContent = engLabel;
-
-        // ── Trends vs previous period ──
-        if (prevStats) {
-            var ppv = (typeof prevStats.pageviews === 'object' && prevStats.pageviews !== null) ? (prevStats.pageviews.value || 0) : (prevStats.pageviews || 0);
-            var pvis = (typeof prevStats.visitors === 'object' && prevStats.visitors !== null) ? (prevStats.visitors.value || 0) : (prevStats.visitors || 0);
-            var pvisits = (typeof prevStats.visits === 'object' && prevStats.visits !== null) ? (prevStats.visits.value || 0) : (prevStats.visits || 0);
-            var pbounces = (typeof prevStats.bounces === 'object' && prevStats.bounces !== null) ? (prevStats.bounces.value || 0) : (prevStats.bounces || 0);
-
-            setTrend('kpiPageviewsTrend', pv, ppv);
-            setTrend('kpiVisitorsTrend', vis, pvis);
-            setTrend('kpiVisitsTrend', visits, pvisits);
-
-            var prevBounceRate = pvisits > 0 ? (pbounces / pvisits) * 100 : 0;
-            var bounceDiff = bounceRate - prevBounceRate;
-            var bEl = document.getElementById('kpiBouncesTrend');
-            if (bounceDiff > 1) {
-                bEl.className = 'kpi-trend down'; bEl.textContent = '↑ +' + bounceDiff.toFixed(1) + '%';
-            } else if (bounceDiff < -1) {
-                bEl.className = 'kpi-trend up'; bEl.textContent = '↓ ' + bounceDiff.toFixed(1) + '%';
-            } else {
-                bEl.className = 'kpi-trend neutral'; bEl.textContent = '→ 0%';
-            }
-        }
-
-        // ── Charts ── (aggregate weekly if range >= 30 days)
-        var chartPV = pageviewsData.pageviews;
-        var chartSessions = pageviewsData.sessions;
-        if (currentRange >= 30 && currentRange <= 90) {
-            chartPV = aggregateWeekly(chartPV);
-            chartSessions = aggregateWeekly(chartSessions);
-        }
-        renderBarChartDual('pageviewsChart', chartPV, chartSessions);
-        renderBarChartSingle('visitorsChart', chartSessions, 'visitor');
-
-        // ── Tab Tables (filtered & normalized) ──
-        topPagesExp = cleanExpandedPageData(topPagesExp);
-        entryPages  = cleanSimplePageData(entryPages);
-        exitPages   = cleanSimplePageData(exitPages);
-
-        renderExpandedTable('topPagesTable', topPagesExp);
-
-        renderSimpleTable('entryPagesTable', entryPages, function(x) { return x || '/'; }, 'green');
-        renderSimpleTable('exitPagesTable', exitPages, function(x) { return x || '/'; }, 'cyan');
-        renderSimpleTable('referrersTable', referrers.map(function(r) {
-            return { x: r.x || '(Direkt)', y: r.y };
-        }), function(x) { return x; }, 'purple');
-        renderSimpleTable('channelsTable', channels, function(x) { return x; }, 'yellow');
-        renderSimpleTable('titlesTable', titles, function(x) { return x; }, 'purple');
-
-        // ── Audience ──
-        renderDevicesDonut(devices);
-        renderSimpleTableNoRank('browsersTable', browsers, function(x) { return x; }, 'purple');
-        renderSimpleTableNoRank('osTable', os, function(x) { return x; }, 'cyan');
-
-        // ── Geo ──
-        renderSimpleTableNoRank('countriesTable', countries, countryName, 'green');
-        renderSimpleTableNoRank('citiesTable', cities, function(x) { return x; }, 'yellow');
-
-        // ── Tech ──
-        renderSimpleTableNoRank('languagesTable', languages, langName, 'cyan');
-        renderSimpleTableNoRank('screensTable', screens, function(x) { return x; }, 'purple');
-
-        // ── Events ──
-        renderSimpleTable('eventsTable', events, function(x) { return x; }, 'yellow');
-
-        // ── Insights ──
-        var insights = generateInsights(stats, prevStats, devices, pageviewsData, topPagesExp);
-        renderInsights(insights);
-
-        // ── Timestamp ──
-        document.getElementById('lastUpdated').textContent = 'Zuletzt aktualisiert: ' + new Date().toLocaleString('de-DE');
-
-        setLiveStatus('live');
-        hideSkeletons();
-
-    } catch (err) {
-        console.error('Analytics Error:', err);
-        setLiveStatus('error');
-        hideSkeletons();
-        if (err.message.indexOf('401') !== -1 || err.message.indexOf('403') !== -1) {
-            document.getElementById('configNotice').style.display = 'block';
-        } else if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-            document.getElementById('adblockNotice').style.display = 'block';
-        } else {
-            alert('❌ Fehler beim Laden!\n\n' + err.message);
-        }
-    }
-
-    btn.disabled = false;
-    btn.innerHTML = '🔄 Aktualisieren';
+    var lu = document.getElementById('lastUpdated');
+    if (lu) lu.textContent = '';
 }
 
 // =========================================
 //  INIT
 // =========================================
 document.addEventListener('DOMContentLoaded', function() {
-    if (!API_TOKEN) {
-        document.getElementById('configNotice').style.display = 'block';
-    } else {
-        loadAll();
-    }
+    loadAll();
 
     // Scroll-to-top visibility
     var scrollBtn = document.getElementById('scrollTopBtn');
@@ -1033,19 +830,4 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         fadeEls.forEach(function(el) { el.classList.add('visible'); });
     }
-
-    // Auto-refresh active users every 30s
-    setInterval(async function() {
-        try {
-            var active = await api('/active');
-            document.getElementById('activeUsers').innerHTML =
-                '<div class="live-dot" style="width:8px;height:8px;"></div> ' + (active.visitors || 0) + ' aktiv';
-            setLiveStatus('live');
-        } catch(e) {
-            setLiveStatus('error');
-        }
-    }, 30000);
-
-    // Auto-refresh all data every 5 minutes
-    setInterval(function() { loadAll(); }, 300000);
 });

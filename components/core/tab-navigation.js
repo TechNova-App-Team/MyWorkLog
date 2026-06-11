@@ -8,9 +8,6 @@
         const navEl = document.getElementById('nav-' + tabId);
         if(navEl) navEl.classList.add('active');
 
-        // Umami SPA Page View
-        uPageView('/app/' + tabId, 'MyWorkLog – ' + tabId);
-        
         // Sync mobile bottom nav
         document.querySelectorAll('.mob-nav-btn').forEach(btn => btn.classList.remove('active'));
         const mobBtn = document.getElementById('mobNav-' + tabId);

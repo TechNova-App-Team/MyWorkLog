@@ -852,17 +852,12 @@
         </div>
     </section>
 
-    <!-- UMAMI STATS JS -->
+    <!-- STATS JS -->
     <script>
 (function () {
-    var UMAMI_API  = 'https://api.umami.is/v1';
-    var WEBSITE_ID = '1ad00d56-ca9d-4fc7-a252-26ca5bd8acf8';
-    var API_TOKEN  = localStorage.getItem('umami_api_token') || 'api_zPctNoDxbOj59ZEltLxqLXBBEXpWDUwo';
     var FALLBACK_VISITORS = 200;
     var FALLBACK_HOURS    = 8900;
     var FALLBACK_SAT = { score: 86, bounce: 72, loyalty: 94, pages: 100, bounceRaw: '~47% Bounce · 6m 12s', loyaltyRaw: '1.75 Sess./Besucher', ppsRaw: '5.4 Seiten/Session' };
-
-    function calcHours(v) { return (v * 45) + 800; }
 
     function animateCount(el, target, duration) {
         if (!el) return;
@@ -878,63 +873,9 @@
         requestAnimationFrame(tick);
     }
 
-    async function fetchUmami(endpoint, params) {
-        var url = new URL(UMAMI_API + '/websites/' + WEBSITE_ID + endpoint);
-        if (params) Object.entries(params).forEach(function(kv) { if (kv[1] != null) url.searchParams.set(kv[0], kv[1]); });
-        var res = await fetch(url, { headers: { 'x-umami-api-key': API_TOKEN, 'Accept': 'application/json' } });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-    }
-
     function setTooltipExample(visitors, hours) {
         var el = document.getElementById('hoursTooltipExample');
         if (el) el.textContent = visitors.toLocaleString('de-DE') + ' × 45 + 800 = ' + hours.toLocaleString('de-DE') + 'h';
-    }
-
-    function exV(v) { return (typeof v === 'object' && v !== null) ? (v.value || 0) : (v || 0); }
-
-    function fmtDur(s) {
-        var m = Math.floor(s / 60), sec = Math.round(s % 60);
-        return m > 0 ? m + 'm ' + sec + 's' : sec + 's';
-    }
-
-    function calcSatisfaction(data) {
-        var pageviews = exV(data.pageviews);
-        var visitors  = exV(data.visitors);
-        var visits    = exV(data.visits);
-        var bounces   = exV(data.bounces);
-        var totaltime = exV(data.totaltime);
-
-        if (visits <= 0 || visitors <= 0) return FALLBACK_SAT;
-
-        var bounceRate   = (bounces / visits) * 100;
-        var avgDuration  = totaltime / visits;
-        var loyaltyRatio = visits / visitors;
-        var pps          = pageviews / visits;
-
-        // Metrik 1: Retention & Bounce (40% Gewicht)
-        // Basis: (100 - BounceRate), Bonus: hohe Verweildauer bis +30 Punkte
-        var bounceScore = Math.min((100 - bounceRate) + Math.min(avgDuration / 600, 1) * 30, 100);
-
-        // Metrik 2: Loyalitäts-Rate (40% Gewicht)
-        // 1.5 Sessions/Besucher = 80%, linear bis max 100%
-        var loyaltyScore = Math.min((loyaltyRatio / 1.5) * 80, 100);
-
-        // Metrik 3: Aktion pro Session (20% Gewicht)
-        // 4+ Seiten/Session = 100%
-        var pagesScore = Math.min((pps / 4) * 100, 100);
-
-        var combined = bounceScore * 0.4 + loyaltyScore * 0.4 + pagesScore * 0.2;
-
-        return {
-            score:      Math.round(combined),
-            bounce:     Math.round(bounceScore),
-            loyalty:    Math.round(loyaltyScore),
-            pages:      Math.round(pagesScore),
-            bounceRaw:  bounceRate.toFixed(1) + '% Bounce · Ø ' + fmtDur(avgDuration),
-            loyaltyRaw: loyaltyRatio.toFixed(2) + ' Sess./Besucher',
-            ppsRaw:     pps.toFixed(1) + ' Seiten/Session'
-        };
     }
 
     function updateSatisfactionUI(sat) {
@@ -969,24 +910,11 @@
         setBar('sat-bar-pages',   sat.pages);
     }
 
-    async function loadStats() {
-        try {
-            var now = Date.now();
-            var data = await fetchUmami('/stats', { startAt: now - 30 * 24 * 60 * 60 * 1000, endAt: now });
-            var visitorsRaw = (data.visitors && data.visitors.value != null) ? data.visitors.value : (data.visitors || FALLBACK_VISITORS);
-            var visitors = Math.round(Number(visitorsRaw) || FALLBACK_VISITORS);
-            var hours = calcHours(visitors);
-            animateCount(document.getElementById('stat-active-users'), visitors);
-            animateCount(document.getElementById('stat-hours'), hours);
-            setTooltipExample(visitors, hours);
-            updateSatisfactionUI(calcSatisfaction(data));
-        } catch (e) {
-            console.warn('[Stats] Fallback:', e.message);
-            animateCount(document.getElementById('stat-active-users'), FALLBACK_VISITORS);
-            animateCount(document.getElementById('stat-hours'), FALLBACK_HOURS);
-            setTooltipExample(FALLBACK_VISITORS, FALLBACK_HOURS);
-            updateSatisfactionUI(FALLBACK_SAT);
-        }
+    function loadStats() {
+        animateCount(document.getElementById('stat-active-users'), FALLBACK_VISITORS);
+        animateCount(document.getElementById('stat-hours'), FALLBACK_HOURS);
+        setTooltipExample(FALLBACK_VISITORS, FALLBACK_HOURS);
+        updateSatisfactionUI(FALLBACK_SAT);
     }
 
     function initTooltip() {
@@ -1353,5 +1281,5 @@
                 ph.replaceWith(tmpl.content);
             });
     </script>
-</body>
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3aa3f484545341a0a8a390cd4dc9983a"}'></script></body>
 </html>
