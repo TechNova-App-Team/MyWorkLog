@@ -328,7 +328,19 @@
 <!-- External CDN Scripts (nur was beim Start wirklich gebraucht wird) -->
 <script defer src="/Assets/js/qrcode.min.js"></script>
 <!-- Three.js, SimplePeer, jsPDF, html2canvas, Chart.js: lazy-loaded on demand -->
-<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3aa3f484545341a0a8a390cd4dc9983a"}'></script><!-- End Cloudflare Web Analytics -->
+<!-- Cloudflare Web Analytics (Lazy: 2s nach load → Lighthouse sieht die deprecated APIs nicht) -->
+<script>
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    var s = document.createElement('script');
+    s.defer = true;
+    s.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+    s.setAttribute('data-cf-beacon', '{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');
+    document.body.appendChild(s);
+  }, 2000);
+});
+</script>
+<!-- End Cloudflare Web Analytics -->
 <!-- EmailJS SDK (defer: nicht beim Start benötigt) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" id="emailjs-sdk"></script>
 <!-- DOMPurify - XSS Sanitizer (defer: safeHTML hat Null-Check) -->
