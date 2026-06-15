@@ -569,6 +569,210 @@
         console.log('[Cloud Sync] Manueller Modus — kein Auto-Sync');
     }
 
+    // ─── QUICK CLOUD SYNC SHORTCUT ──────────────────────────────────
+    // Self-contained 1-Click Upload — funktioniert ohne offene Settings.
+    // Aufrufer: Sidebar-Chip, Mobile-More-Sheet, Post-Save Reminder-Toast.
+    function _formatRelativeTime(iso) {
+        if (!iso) return 'nie';
+        const diff = Date.now() - new Date(iso).getTime();
+        if (diff < 0 || isNaN(diff)) return 'nie';
+        const m = Math.floor(diff / 60000);
+        if (m < 1) return 'gerade eben';
+        if (m < 60) return 'vor ' + m + ' min';
+        const h = Math.floor(m / 60);
+        if (h < 24) return 'vor ' + h + 'h';
+        const d = Math.floor(h / 24);
+        return 'vor ' + d + 'd';
+    }
+
+    function updateCloudSyncChip() {
+        const chip = document.getElementById('sidebarCloudChip');
+        if (!chip) return;
+        if (chip.classList.contains('is-syncing') || chip.classList.contains('is-success') || chip.classList.contains('is-error')) {
+            return; // Mid-action, lass die Animation laufen
+        }
+        const text = document.getElementById('sidebarCloudText');
+        const sub = document.getElementById('sidebarCloudSub');
+        const loggedIn = !!(window.cloudSync && typeof window.cloudSync.isLoggedIn === 'function' && window.cloudSync.isLoggedIn());
+
+        chip.classList.remove('is-offline');
+
+        if (!loggedIn) {
+            chip.classList.add('is-offline');
+            if (text) text.textContent = 'Cloud Sync';
+            if (sub) sub.textContent = 'Login';
+            chip.title = 'Klick: Bei Cloud anmelden';
+            return;
+        }
+
+        const last = localStorage.getItem('mwl_last_export');
+        if (text) text.textContent = 'Sync';
+        if (sub) sub.textContent = _formatRelativeTime(last);
+        chip.title = last ? ('Klick: Jetzt syncen — letzter Upload ' + _formatRelativeTime(last)) : 'Klick: Erstes Mal in die Cloud hochladen';
+    }
+
+    async function quickCloudSync(triggerEl) {
+        const chip = document.getElementById('sidebarCloudChip');
+        const sub = document.getElementById('sidebarCloudSub');
+        const text = document.getElementById('sidebarCloudText');
+
+        if (!window.cloudSync) {
+            if (typeof showCustomMessage === 'function') {
+                showCustomMessage('☁️ Cloud nicht bereit', 'Bitte Seite neu laden und nochmal versuchen.', 'error');
+            }
+            return;
+        }
+
+        // Nicht eingeloggt → Login-Modal aufrufen
+        if (typeof window.cloudSync.isLoggedIn === 'function' && !window.cloudSync.isLoggedIn()) {
+            if (typeof openCloudLoginModal === 'function') openCloudLoginModal();
+            return;
+        }
+
+        if (chip) {
+            chip.classList.remove('is-success', 'is-error', 'is-offline');
+            chip.classList.add('is-syncing');
+        }
+        if (text) text.textContent = 'Lädt hoch';
+        if (sub) sub.textContent = '…';
+
+        try {
+            await window.cloudSync.uploadToCloud();
+            try { localStorage.setItem('mwl_last_export', new Date().toISOString()); } catch (e) {}
+            try { const today = new Date().toISOString().split('T')[0]; localStorage.setItem('mwl_export_reminder_shown_' + today, '1'); } catch (e) {}
+
+            if (chip) {
+                chip.classList.remove('is-syncing');
+                chip.classList.add('is-success');
+            }
+            if (text) text.textContent = 'Synct ✓';
+            if (sub) sub.textContent = 'gerade eben';
+
+            // Auch andere Trigger (Mobile-Tile) kurz markieren
+            if (triggerEl && triggerEl !== chip) {
+                const orig = triggerEl.innerHTML;
+                if (triggerEl.tagName === 'BUTTON') {
+                    triggerEl.disabled = true;
+                    triggerEl.style.opacity = '0.8';
+                }
+                setTimeout(() => {
+                    if (triggerEl.tagName === 'BUTTON') {
+                        triggerEl.disabled = false;
+                        triggerEl.style.opacity = '';
+                    }
+                }, 1800);
+            }
+
+            // Reminder ausblenden, da gerade gesynct
+            dismissCloudSyncPrompt(true);
+
+            setTimeout(() => {
+                if (chip) chip.classList.remove('is-success');
+                updateCloudSyncChip();
+            }, 2200);
+        } catch (error) {
+            console.error('[QuickCloudSync] Fehler:', error);
+            if (chip) {
+                chip.classList.remove('is-syncing');
+                chip.classList.add('is-error');
+            }
+            if (text) text.textContent = 'Fehler';
+            if (sub) sub.textContent = 'erneut?';
+            setTimeout(() => {
+                if (chip) chip.classList.remove('is-error');
+                updateCloudSyncChip();
+            }, 2500);
+        }
+    }
+
+    // ─── POST-SAVE REMINDER-TOAST ───────────────────────────────────
+    // Erscheint nach save(), wenn eingeloggt + letzter Sync >2h her.
+    // - Persistente Cooldown (4h zwischen Anzeigen) damit nach Reload nicht jedes Mal poppt
+    // - Grace-Period 8s nach Page-Load (filtert Init-save() raus)
+    // - Stale-Threshold 2h (statt 30min) — vermeidet Spam wenn User gerade gesynct hat
+    const _cloudPromptPageLoadTs = Date.now();
+    const CLOUD_PROMPT_GRACE_MS = 8 * 1000;          // erste 8s nach Load: nie
+    const CLOUD_PROMPT_COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4h zwischen Anzeigen
+    const CLOUD_PROMPT_STALE_MS = 2 * 60 * 60 * 1000;    // >2h ungesynct = "stale"
+    const CLOUD_PROMPT_KEY = 'mwl_cloud_prompt_last';
+    let _cloudPromptTimer = null;
+
+    function _cloudPromptLastShown() {
+        try { return parseInt(localStorage.getItem(CLOUD_PROMPT_KEY)) || 0; } catch (e) { return 0; }
+    }
+    function _cloudPromptMarkShown() {
+        try { localStorage.setItem(CLOUD_PROMPT_KEY, String(Date.now())); } catch (e) {}
+    }
+
+    function showCloudSyncPrompt() {
+        if (!window.cloudSync || typeof window.cloudSync.isLoggedIn !== 'function' || !window.cloudSync.isLoggedIn()) return;
+        // Grace nach Page-Load: filtert das automatische save() beim Initial-Boot
+        if (Date.now() - _cloudPromptPageLoadTs < CLOUD_PROMPT_GRACE_MS) return;
+        // Persistente Cooldown (überlebt Reload)
+        if (Date.now() - _cloudPromptLastShown() < CLOUD_PROMPT_COOLDOWN_MS) return;
+        if (document.getElementById('cloudSyncPromptToast')) return;
+
+        const last = localStorage.getItem('mwl_last_export');
+        const lastMs = last ? new Date(last).getTime() : 0;
+        const stale = !lastMs || (Date.now() - lastMs) > CLOUD_PROMPT_STALE_MS;
+        if (!stale) return;
+
+        // Toast bauen
+        const toast = document.createElement('div');
+        toast.className = 'cloud-sync-prompt';
+        toast.id = 'cloudSyncPromptToast';
+        toast.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+            <div class="cloud-sync-prompt-text">In die Cloud sichern?<small>${last ? 'Letzter Upload ' + _formatRelativeTime(last) : 'Noch nie hochgeladen'}</small></div>
+            <button class="cloud-sync-prompt-btn" id="cloudSyncPromptGo">Syncen</button>
+            <button class="cloud-sync-prompt-close" id="cloudSyncPromptClose" aria-label="Schließen">×</button>
+        `;
+        document.body.appendChild(toast);
+        _cloudPromptMarkShown();
+        requestAnimationFrame(() => toast.classList.add('show'));
+
+        document.getElementById('cloudSyncPromptGo').addEventListener('click', () => {
+            quickCloudSync();
+        });
+        document.getElementById('cloudSyncPromptClose').addEventListener('click', () => dismissCloudSyncPrompt());
+
+        // Auto-Dismiss nach 12s
+        clearTimeout(_cloudPromptTimer);
+        _cloudPromptTimer = setTimeout(() => dismissCloudSyncPrompt(), 12000);
+    }
+
+    function dismissCloudSyncPrompt(immediate) {
+        const toast = document.getElementById('cloudSyncPromptToast');
+        if (!toast) return;
+        toast.classList.remove('show');
+        clearTimeout(_cloudPromptTimer);
+        setTimeout(() => toast.remove(), immediate ? 0 : 280);
+    }
+
+    // ─── INITIALISIERUNG ────────────────────────────────────────────
+    // Chip beim Laden + alle 60s aktualisieren (relative Zeitangaben)
+    document.addEventListener('DOMContentLoaded', function () {
+        setTimeout(updateCloudSyncChip, 600);
+        setInterval(updateCloudSyncChip, 60000);
+
+        // Hook: nach jedem save() Cloud-Reminder triggern (mit Delay damit save() nicht blockiert)
+        if (typeof window.save === 'function' && !window._saveCloudPromptHooked) {
+            const _origSave = window.save;
+            window.save = function () {
+                const r = _origSave.apply(this, arguments);
+                try { setTimeout(showCloudSyncPrompt, 900); } catch (e) {}
+                return r;
+            };
+            window._saveCloudPromptHooked = true;
+        }
+    });
+
+    // Expose
+    window.quickCloudSync = quickCloudSync;
+    window.updateCloudSyncChip = updateCloudSyncChip;
+    window.showCloudSyncPrompt = showCloudSyncPrompt;
+    window.dismissCloudSyncPrompt = dismissCloudSyncPrompt;
+
     function updateAchievements() {
         const achievements = data.achievements || [];
         const display = document.getElementById('achievementsDisplay');
