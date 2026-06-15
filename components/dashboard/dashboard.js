@@ -420,6 +420,10 @@
         els.forEach(e => e.disabled = disableTime);
         // Manuelle Stunden für alles außer Tages-Pauschalen (Urlaub/Krank/Gleittag/Feiertag).
         document.getElementById('inpHours').disabled = (t === 'gleittag' || t === 'vacation' || t === 'sick' || t === 'holiday');
+
+        // Hint-Banner für Multi-Day-Buchung nur bei Urlaub anzeigen
+        const hint = document.getElementById('vacationMultiHint');
+        if (hint) hint.style.display = (t === 'vacation') ? 'flex' : 'none';
     }
 
     function openCorrection(type) {
