@@ -141,29 +141,29 @@ header{height:52px;flex-shrink:0;display:flex;align-items:center;gap:12px;paddin
 </head>
 <body>
 <div id="loader">
-  <div class="ld-icon">â§†</div>
-  <div class="ld-text"><h1>ArchFlow</h1><p>v3 Â· Architecture Visualizer</p></div>
+  <div class="ld-icon">⧆</div>
+  <div class="ld-text"><h1>ArchFlow</h1><p>v3 · Architecture Visualizer</p></div>
   <div class="ld-track"><div class="ld-bar" id="ldBar"></div></div>
-  <div class="ld-msg" id="ldMsg">Initializingâ€¦</div>
+  <div class="ld-msg" id="ldMsg">Initializing…</div>
 </div>
 <div id="app">
   <header>
     <div class="h-brand">
-      <div class="h-logo">â§†</div>
-      <div><div class="h-title">ArchFlow</div><div class="h-proj" id="hProj">â€”</div></div>
+      <div class="h-logo">⧆</div>
+      <div><div class="h-title">ArchFlow</div><div class="h-proj" id="hProj">—</div></div>
     </div>
     <div class="h-stats" id="hStats"></div>
     <div class="h-space"></div>
     <div class="h-btns">
-      <button class="hb on" id="btnG" onclick="setLayout('group')"><span>â§†</span><span>Groups</span></button>
-      <button class="hb"    id="btnH" onclick="setLayout('hier')"><span>â†“</span><span>Hierarchy</span></button>
-      <button class="hb" onclick="fitView()">âŠ™</button>
-      <button class="hb" onclick="exportPNG()">â†“ PNG</button>
+      <button class="hb on" id="btnG" onclick="setLayout('group')"><span>⧆</span><span>Groups</span></button>
+      <button class="hb"    id="btnH" onclick="setLayout('hier')"><span>↓</span><span>Hierarchy</span></button>
+      <button class="hb" onclick="fitView()">⊙</button>
+      <button class="hb" onclick="exportPNG()">↓ PNG</button>
     </div>
   </header>
   <div class="main">
     <aside class="sb" id="sb">
-      <div class="sb-srch"><input id="srch" type="text" placeholder="Search filesâ€¦" oninput="doFilter()"></div>
+      <div class="sb-srch"><input id="srch" type="text" placeholder="Search files…" oninput="doFilter()"></div>
       <div class="sb-filt" id="sfilt"></div>
       <div class="sb-list" id="slist"></div>
     </aside>
@@ -172,7 +172,7 @@ header{height:52px;flex-shrink:0;display:flex;align-items:center;gap:12px;paddin
       <div class="zc">
         <button class="zb" onclick="doZoom(1.2)">+</button>
         <div class="zl" id="zLvl">100%</div>
-        <button class="zb" onclick="doZoom(.83)">âˆ’</button>
+        <button class="zb" onclick="doZoom(.83)">−</button>
       </div>
       <div class="leg">
         <div class="lr"><div class="ll" style="background:#60a5fa"></div>Navigation</div>
@@ -185,9 +185,9 @@ header{height:52px;flex-shrink:0;display:flex;align-items:center;gap:12px;paddin
     <div class="dp" id="dp"><div class="dp-in" id="dpIn"></div></div>
   </div>
   <nav class="mob-nav">
-    <button class="mt on" id="mtG" onclick="mobTab('G')"><span class="mt-i">â§†</span><span class="mt-l">Graph</span></button>
-    <button class="mt"    id="mtF" onclick="mobTab('F')"><span class="mt-i">ðŸ“</span><span class="mt-l">Files</span></button>
-    <button class="mt"    id="mtI" onclick="mobTab('I')"><span class="mt-i">â„¹</span><span class="mt-l">Info</span></button>
+    <button class="mt on" id="mtG" onclick="mobTab('G')"><span class="mt-i">⧆</span><span class="mt-l">Graph</span></button>
+    <button class="mt"    id="mtF" onclick="mobTab('F')"><span class="mt-i">📁</span><span class="mt-l">Files</span></button>
+    <button class="mt"    id="mtI" onclick="mobTab('I')"><span class="mt-i">ℹ</span><span class="mt-l">Info</span></button>
   </nav>
 </div>
 <div class="bs" id="bs">
@@ -198,7 +198,7 @@ header{height:52px;flex-shrink:0;display:flex;align-items:center;gap:12px;paddin
 <div id="tt"></div>
 <script>
 const TC={page:'#60a5fa',script:'#fbbf24',style:'#a78bfa',data:'#f87171',api:'#34d399',other:'#94a3b8'};
-const TI={page:'ðŸ“„',script:'âš™ï¸',style:'ðŸŽ¨',data:'ðŸ“‹',api:'ðŸŒ',other:'ðŸ“¦'};
+const TI={page:'📄',script:'⚙️',style:'🎨',data:'📋',api:'🌐',other:'📦'};
 const EC={
   import:'rgba(251,191,36,.6)',require:'rgba(251,191,36,.6)',dynamic_import:'rgba(251,191,36,.3)',
   script_load:'rgba(167,139,250,.55)',stylesheet:'rgba(167,139,250,.22)',
@@ -221,26 +221,26 @@ const ldMsg=document.getElementById('ldMsg');
 function prog(p,m){ldBar.style.width=p+'%';if(m)ldMsg.textContent=m;}
 function loadData(){
   return new Promise((res,rej)=>{
-    prog(25,'Loading data fileâ€¦');
+    prog(25,'Loading data file…');
     const s=document.createElement('script');
     s.src='./archflow-data.js?t='+Date.now();
     s.onload=()=>window.__ARCHFLOW_DATA__?res(window.__ARCHFLOW_DATA__):rej(new Error('archflow-data.js: __ARCHFLOW_DATA__ not defined'));
-    s.onerror=()=>rej(new Error('Cannot load archflow-data.js â€” serve via: npx serve .'));
+    s.onerror=()=>rej(new Error('Cannot load archflow-data.js — serve via: npx serve .'));
     document.head.appendChild(s);
   });
 }
 async function init(){
   try{
-    prog(10,'Starting upâ€¦');await delay(250);
+    prog(10,'Starting up…');await delay(250);
     const data=await loadData();
-    prog(70,'Processingâ€¦');await delay(80);
+    prog(70,'Processing…');await delay(80);
     RAW=data;NODES=Object.values(data.nodes||{});EDGES=data.edges||[];GROUPS=Object.values(data.groups||{});
     document.getElementById('hProj').textContent=data.meta?.project||'Project';
     document.getElementById('hStats').innerHTML=[
       {v:NODES.length,l:'nodes'},{v:EDGES.length,l:'edges'},
       {v:GROUPS.length,l:'groups'},{v:NODES.reduce((a,n)=>a+(n.info?.apis?.length||0),0),l:'apis'}
     ].map(s=>'<div class="h-s"><span class="h-s-v">'+s.v+'</span><span class="h-s-l">'+s.l+'</span></div>').join('');
-    prog(85,'Building graphâ€¦');buildFilters();buildList();resize();setLayout('group');
+    prog(85,'Building graph…');buildFilters();buildList();resize();setLayout('group');
     prog(100,'Ready!');await delay(380);
     document.getElementById('loader').classList.add('out');
     await delay(400);
@@ -351,24 +351,24 @@ function render(){
     ctx.beginPath();ctx.moveTo(x,y+NR);ctx.quadraticCurveTo(x,y,x+NR,y);
     ctx.lineTo(x+4,y);ctx.lineTo(x+4,y+NH);ctx.lineTo(x+NR,y+NH);
     ctx.quadraticCurveTo(x,y+NH,x,y+NH-NR);ctx.closePath();ctx.fill();
-    ctx.font='11px serif';ctx.fillText(TI[n.type]||'ðŸ“¦',x+10,p.y+4);
+    ctx.font='11px serif';ctx.fillText(TI[n.type]||'📦',x+10,p.y+4);
     ctx.font=(isSel?'600 ':'500 ')+'11px Outfit,sans-serif';
     ctx.fillStyle=isSel?'#eeeef2':'rgba(238,238,242,.82)';
     let nm=n.name;const mw=NW-38;
     while(ctx.measureText(nm).width>mw&&nm.length>3)nm=nm.slice(0,-1);
-    if(nm!==n.name)nm=nm.slice(0,-1)+'â€¦';
+    if(nm!==n.name)nm=nm.slice(0,-1)+'…';
     ctx.fillText(nm,x+28,p.y-4);
     ctx.font='400 8px IBM Plex Mono,monospace';ctx.fillStyle=hxa(color,isSel?.82:.6);
     ctx.fillText((n.group?.label||n.type).slice(0,22),x+28,p.y+8);
     if(n.inDegree+n.outDegree>0){
       ctx.font='400 7px IBM Plex Mono,monospace';ctx.fillStyle='rgba(238,238,242,.2)';
-      ctx.textAlign='right';ctx.fillText('â†“'+n.inDegree+' â†‘'+n.outDegree,x+NW-4,y+11);ctx.textAlign='left';
+      ctx.textAlign='right';ctx.fillText('↓'+n.inDegree+' ↑'+n.outDegree,x+NW-4,y+11);ctx.textAlign='left';
     }
-    if(n.info?.supabase?.length){ctx.font='8px serif';ctx.fillText('ðŸ—„ï¸',x+NW-20,p.y+5);}
-    if(n.info?.apis?.length){ctx.font='8px serif';ctx.fillText('ðŸŒ',x+NW-34,p.y+5);}
+    if(n.info?.supabase?.length){ctx.font='8px serif';ctx.fillText('🗄️',x+NW-20,p.y+5);}
+    if(n.info?.apis?.length){ctx.font='8px serif';ctx.fillText('🌐',x+NW-34,p.y+5);}
     ctx.globalAlpha=1;
   });
-  // â”€â”€ Snap lines: draw connection guides on top of everything â”€â”€
+  // ── Snap lines: draw connection guides on top of everything ──
   const activeId=sel||hov;
   if(activeId){
     const sp=positions[activeId];
@@ -390,7 +390,7 @@ function render(){
         ctx.lineTo(op.x-9*Math.cos(ang+.34),op.y-9*Math.sin(ang+.34));
         ctx.closePath();ctx.fillStyle=color;ctx.fill();
         const mx=(sp.x+op.x)/2,my=(sp.y+op.y)/2;
-        const lbl=(isOut?'â†’ ':'â† ')+e.type.replace(/_/g,' ');
+        const lbl=(isOut?'→ ':'← ')+e.type.replace(/_/g,' ');
         ctx.font='500 9px IBM Plex Mono,monospace';
         const tw=ctx.measureText(lbl).width,pw=tw+12,ph=16;
         ctx.fillStyle='rgba(9,9,14,.9)';rr(mx-pw/2,my-ph/2,pw,ph,5);ctx.fill();
@@ -479,12 +479,12 @@ function buildDetail(id){
   const color=n.group?.color||TC[n.type]||'#64748b';
   const info=n.info||{};const out=EDGES.filter(e=>e.from===id);const inn=EDGES.filter(e=>e.to===id);
   const ha=(hex,a)=>{const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return'rgba('+r+','+g+','+b+','+a+')';};
-  let h='<button class="dp-x" onclick="closeDetail()">âœ•</button>';
-  h+='<div class="dp-ico">'+(n.group?.icon||TI[n.type]||'ðŸ“¦')+'</div>';
+  let h='<button class="dp-x" onclick="closeDetail()">✕</button>';
+  h+='<div class="dp-ico">'+(n.group?.icon||TI[n.type]||'📦')+'</div>';
   h+='<div class="dp-name">'+n.name+'</div><div class="dp-path">'+n.path+'</div>';
   h+='<div class="dp-badge" style="background:'+ha(color,.1)+';border-color:'+ha(color,.25)+';color:'+color+'">'+(n.group?.icon||'')+' '+(n.group?.label||n.type)+'</div>';
   h+='<div class="dsec"><div class="dsec-t">Connections</div><div class="chips">';
-  h+='<span class="ch b">'+n.type+'</span><span class="ch b">â†“ '+n.inDegree+'</span><span class="ch b">â†‘ '+n.outDegree+'</span></div></div>';
+  h+='<span class="ch b">'+n.type+'</span><span class="ch b">↓ '+n.inDegree+'</span><span class="ch b">↑ '+n.outDegree+'</span></div></div>';
   if(out.length){
     h+='<div class="dsec"><div class="dsec-t">Outgoing ('+out.length+')</div>';
     out.slice(0,12).forEach(e=>{
@@ -494,7 +494,7 @@ function buildDetail(id){
         +'<span class="cr-n">'+(tn?.name||e.to)+'</span>'
         +'<span class="cr-t">'+e.type.replace(/_/g,' ')+'</span></div>';
     });
-    if(out.length>12)h+='<div style="font-size:9px;color:var(--t3);padding:3px 8px">+'+(out.length-12)+' moreâ€¦</div>';
+    if(out.length>12)h+='<div style="font-size:9px;color:var(--t3);padding:3px 8px">+'+(out.length-12)+' more…</div>';
     h+='</div>';
   }
   if(inn.length){
@@ -511,7 +511,7 @@ function buildDetail(id){
   if(info.functions?.length){h+='<div class="dsec"><div class="dsec-t">Functions ('+info.functions.length+')</div><div class="chips">';info.functions.slice(0,24).forEach(f=>{h+='<span class="ch">'+f+'()</span>';});h+='</div></div>';}
   if(info.events?.length){h+='<div class="dsec"><div class="dsec-t">Events</div><div class="chips">';info.events.forEach(ev=>{h+='<span class="ch b">'+ev+'</span>';});h+='</div></div>';}
   if(info.supabase?.length){h+='<div class="dsec"><div class="dsec-t">Supabase</div><div class="chips">';[...new Set(info.supabase)].forEach(s=>{h+='<span class="ch g">'+s+'</span>';});h+='</div></div>';}
-  if(info.apis?.length){h+='<div class="dsec"><div class="dsec-t">API Calls ('+info.apis.length+')</div><div class="chips">';info.apis.slice(0,10).forEach(a=>{const sh=a.length>36?a.slice(0,34)+'â€¦':a;h+='<span class="ch g" title="'+a+'">'+sh+'</span>';});h+='</div></div>';}
+  if(info.apis?.length){h+='<div class="dsec"><div class="dsec-t">API Calls ('+info.apis.length+')</div><div class="chips">';info.apis.slice(0,10).forEach(a=>{const sh=a.length>36?a.slice(0,34)+'…':a;h+='<span class="ch g" title="'+a+'">'+sh+'</span>';});h+='</div></div>';}
   if(info.localStorage?.length){h+='<div class="dsec"><div class="dsec-t">localStorage</div><div class="chips">';info.localStorage.forEach(s=>{h+='<span class="ch y">'+s+'</span>';});h+='</div></div>';}
   return h;
 }
@@ -532,7 +532,7 @@ function showSheetFiles(){
     files.forEach(fid=>{
       const n=RAW.nodes[fid];if(!n)return;const c=TC[n.type]||'#64748b';
       h+='<div class="fi" onclick="selectNode(\''+fid+'\');centerOn(\''+fid+'\');closeSheet()">'
-        +'<span style="font-size:11px">'+(TI[n.type]||'ðŸ“¦')+'</span>'
+        +'<span style="font-size:11px">'+(TI[n.type]||'📦')+'</span>'
         +'<span class="fi-n" title="'+fid+'">'+n.name+'</span>'
         +'<span class="fi-e" style="background:'+c+'22;color:'+c+'">'+n.ext+'</span></div>';
     });
@@ -546,10 +546,10 @@ function mobTab(t){
 }
 const ttEl=document.getElementById('tt');
 function showTT(e,n){
-  ttEl.innerHTML='<div class="tt-n">'+(n.group?.icon||TI[n.type]||'ðŸ“¦')+' '+n.name+'</div>'
+  ttEl.innerHTML='<div class="tt-n">'+(n.group?.icon||TI[n.type]||'📦')+' '+n.name+'</div>'
     +'<div class="tt-p">'+n.path+'</div>'
     +'<div class="tt-r"><span>'+(n.group?.label||n.type)+'</span><span class="tt-v">'+n.ext+'</span></div>'
-    +'<div class="tt-r"><span>â†“ in / â†‘ out</span><span class="tt-v">'+n.inDegree+' / '+n.outDegree+'</span></div>'
+    +'<div class="tt-r"><span>↓ in / ↑ out</span><span class="tt-v">'+n.inDegree+' / '+n.outDegree+'</span></div>'
     +(n.info?.functions?.length?'<div class="tt-r"><span>functions</span><span class="tt-v">'+n.info.functions.length+'</span></div>':'')
     +(n.info?.apis?.length?'<div class="tt-r"><span>api calls</span><span class="tt-v">'+n.info.apis.length+'</span></div>':'');
   ttEl.style.display='block';
@@ -559,8 +559,8 @@ function showTT(e,n){
 }
 function hideTT(){ttEl.style.display='none';}
 function buildFilters(){
-  const types=[{id:'all',l:'All'},{id:'page',l:'ðŸ“„ HTML'},{id:'script',l:'âš™ï¸ JS'},
-    {id:'style',l:'ðŸŽ¨ CSS'},{id:'api',l:'ðŸŒ API'},{id:'data',l:'ðŸ“‹ JSON'}];
+  const types=[{id:'all',l:'All'},{id:'page',l:'📄 HTML'},{id:'script',l:'⚙️ JS'},
+    {id:'style',l:'🎨 CSS'},{id:'api',l:'🌐 API'},{id:'data',l:'📋 JSON'}];
   const el=document.getElementById('sfilt');
   types.forEach(f=>{
     const b=document.createElement('button');b.className='sf'+(f.id==='all'?' on':'');b.textContent=f.l;
@@ -591,7 +591,7 @@ function buildList(){
     files.forEach(fid=>{
       const n=RAW.nodes[fid];if(!n)return;const c=TC[n.type]||'#64748b';
       const item=document.createElement('div');item.className='fi'+(sel===fid?' sel':'');item.dataset.id=fid;
-      item.innerHTML='<span style="font-size:11px">'+(TI[n.type]||'ðŸ“¦')+'</span>'
+      item.innerHTML='<span style="font-size:11px">'+(TI[n.type]||'📦')+'</span>'
         +'<span class="fi-n" title="'+fid+'">'+n.name+'</span>'
         +'<span class="fi-e" style="background:'+c+'22;color:'+c+'">'+n.ext+'</span>';
       item.onclick=()=>{selectNode(fid);centerOn(fid);};fEl.appendChild(item);
@@ -602,17 +602,5 @@ function buildList(){
 function exportPNG(){const a=document.createElement('a');a.href=cvs.toDataURL('image/png');a.download='archflow.png';a.click();}
 init();
 </script>
-<!-- Cloudflare Web Analytics (Lazy: 2s nach load -> Lighthouse Best Practices) -->
-<script>
-window.addEventListener('load', function() {
-  setTimeout(function() {
-    var s = document.createElement('script');
-    s.defer = true;
-    s.src = 'https://static.cloudflareinsights.com/beacon.min.js';
-    s.setAttribute('data-cf-beacon', '{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');
-    document.body.appendChild(s);
-  }, 2000);
-});
-</script>
-</body>
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "3aa3f484545341a0a8a390cd4dc9983a"}'></script></body>
 </html>
