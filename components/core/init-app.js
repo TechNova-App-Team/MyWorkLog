@@ -237,6 +237,12 @@
         }
         if(!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0, mode:'days'};
         if(typeof data.settings.vacation.mode === 'undefined') data.settings.vacation.mode = 'days';
+
+        // Zeit-Rundung: Default = aus (Backward-Compat). User schaltet in Settings ein.
+        if(!data.settings.rounding) data.settings.rounding = { enabled:false, mode:'commercial', taktungMinutes:15 };
+        if(typeof data.settings.rounding.enabled === 'undefined') data.settings.rounding.enabled = false;
+        if(typeof data.settings.rounding.mode === 'undefined') data.settings.rounding.mode = 'commercial';
+        if(typeof data.settings.rounding.taktungMinutes === 'undefined') data.settings.rounding.taktungMinutes = 15;
         
         // Initialize Untis Integration (optional — Funktion existiert nur wenn Untis-Modul geladen)
         if (typeof initializeUntisIntegration === 'function') initializeUntisIntegration();

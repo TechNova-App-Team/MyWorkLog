@@ -64,13 +64,15 @@
         setRadial('ringMonth', 'valMonth', month);
         
         const totEl = document.getElementById('valTotal');
-        const totalStr = (total>=0?'+':'') + total.toFixed(2) + 'h';
+        const totalRounded = (typeof roundHours === 'function') ? roundHours(total, 2) : total;
+        const totalStr = (totalRounded>=0?'+':'') + totalRounded.toFixed(2) + 'h';
         animateDashboardValue(totEl, totalStr);
         totEl.style.color = total>=0 ? 'var(--primary)' : 'var(--danger)';
         totEl.className = 'counter-animate ' + (total >= 0 ? 'kpi-value-positive' : 'kpi-value-negative');
-        
+
         const avg = countDays > 0 ? totalWorked/countDays : 0;
-        document.getElementById('valAvg').innerText = avg.toFixed(1) + 'h';
+        const avgRounded = (typeof roundHours === 'function') ? roundHours(avg, 1) : avg;
+        document.getElementById('valAvg').innerText = avgRounded.toFixed(1) + 'h';
 
         // Gleitzeit-Prognose: Trend-basiert mit Mindestdatenmenge
         // Nutzt alle verfügbaren Daten (mehr Daten = präzisere Prognose)
@@ -109,7 +111,8 @@
                 }
             }
             const projected = total + (avgDiffPerWorkDay * 30);
-            projEl.innerText = (projected>=0?'+':'') + projected.toFixed(1) + 'h';
+            const projRounded = (typeof roundHours === 'function') ? roundHours(projected, 1) : projected;
+            projEl.innerText = (projRounded>=0?'+':'') + projRounded.toFixed(1) + 'h';
             projEl.className = 'projection-badge ' + (projected >= 0 ? 'positive' : 'negative');
 
             // Konfidenz-Label basierend auf Datenmenge

@@ -5368,6 +5368,69 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             <span id="vacProRataLine">Pro-Rata für dieses Eintrittsjahr: <strong id="vacationProRata" style="color:var(--text-main);">—</strong></span>
                         </p>
                     </div>
+
+                    <!-- Zeit-Rundung -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Zeit-Rundung</div>
+                        <p class="settings-hint" style="margin-bottom:1rem;">Falls die Zahlen deines Betriebs minimal von deinen abweichen — gleich deine Anzeige an. Default: aus (exakte Werte).</p>
+
+                        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer; margin-bottom:1rem;">
+                            <input type="checkbox" id="confRoundingEnabled" style="accent-color:var(--primary); width:18px; height:18px;" onchange="onRoundingEnabledChange()">
+                            <div style="flex:1;">
+                                <div style="font-size:0.9rem; font-weight:600; color:var(--text-main);">Rundung aktivieren</div>
+                                <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Wirkt auf Dashboard-Anzeigen (Gleitzeit, Wochen-/Monatssumme, Schnitt).</div>
+                            </div>
+                        </label>
+
+                        <div id="roundingModeBlock" style="display:none;">
+                            <label class="settings-label" style="margin-top:0.25rem;">Modus</label>
+                            <div style="display:grid; grid-template-columns: 1fr; gap:8px; margin-bottom:1rem;">
+                                <label style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+                                    <input type="radio" name="roundingMode" id="roundModeCommercial" value="commercial" style="accent-color:var(--primary); margin-top:2px;" onchange="onRoundingModeChange()">
+                                    <div>
+                                        <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">Kaufmännisch (Standard)</div>
+                                        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">8,164h → 8,16h · 8,165h → 8,17h. Was die meisten Lohnabrechnungen nutzen.</div>
+                                    </div>
+                                </label>
+                                <label style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+                                    <input type="radio" name="roundingMode" id="roundModeDown" value="down" style="accent-color:var(--primary); margin-top:2px;" onchange="onRoundingModeChange()">
+                                    <div>
+                                        <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">Immer abrunden (Abschneiden)</div>
+                                        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">8,169h → 8,16h. Wenn deine Firma zu deinen Lasten abschneidet.</div>
+                                    </div>
+                                </label>
+                                <label style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+                                    <input type="radio" name="roundingMode" id="roundModeTaktung" value="taktung" style="accent-color:var(--primary); margin-top:2px;" onchange="onRoundingModeChange()">
+                                    <div>
+                                        <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">Taktung (Minuten-Raster)</div>
+                                        <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Rundet auf das nächste Raster. Klassiker: 15-Minuten-Takt — viele Betriebe rechnen so.</div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div id="roundingTaktungBlock" style="display:none; margin-top:0.5rem;">
+                                <label class="settings-label">Raster</label>
+                                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
+                                    <label style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+                                        <input type="radio" name="roundingTaktung" value="5" style="accent-color:var(--primary);">
+                                        <span style="font-size:0.85rem; font-weight:600; color:var(--text-main);">5 min</span>
+                                    </label>
+                                    <label style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+                                        <input type="radio" name="roundingTaktung" value="10" style="accent-color:var(--primary);">
+                                        <span style="font-size:0.85rem; font-weight:600; color:var(--text-main);">10 min</span>
+                                    </label>
+                                    <label style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+                                        <input type="radio" name="roundingTaktung" value="15" style="accent-color:var(--primary);">
+                                        <span style="font-size:0.85rem; font-weight:600; color:var(--text-main);">15 min</span>
+                                    </label>
+                                    <label style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+                                        <input type="radio" name="roundingTaktung" value="30" style="accent-color:var(--primary);">
+                                        <span style="font-size:0.85rem; font-weight:600; color:var(--text-main);">30 min</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Tab: Berufsschule -->

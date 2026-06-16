@@ -25,7 +25,10 @@
             console.warn('setRadial: failed to set style for', ringId, e);
         }
 
-        if (txt) txt.innerText = (val >= 0 ? '+' : '') + val.toFixed(1) + 'h';
+        if (txt) {
+            const v = (typeof roundHours === 'function') ? roundHours(val, 1) : val;
+            txt.innerText = (v >= 0 ? '+' : '') + v.toFixed(1) + 'h';
+        }
     }
 
     function getRelativeTime(dateStr) {

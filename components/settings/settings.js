@@ -66,6 +66,20 @@
 
         // Labels + Hint + Pro-Rata + Ref-Hours-Display refreshen (Listener sind inline im HTML)
         if (typeof refreshVacationModeUI === 'function') refreshVacationModeUI();
+
+        // Zeit-Rundung: Werte ins Form
+        const r = (data.settings.rounding) || {};
+        const roundEnabledEl = document.getElementById('confRoundingEnabled');
+        if (roundEnabledEl) roundEnabledEl.checked = !!r.enabled;
+        const rMode = (r.mode === 'down' || r.mode === 'taktung') ? r.mode : 'commercial';
+        ['Commercial','Down','Taktung'].forEach(suf => {
+            const el = document.getElementById('roundMode' + suf);
+            if (el) el.checked = (el.value === rMode);
+        });
+        const taktVal = String(parseInt(r.taktungMinutes, 10) || 15);
+        document.querySelectorAll('input[name="roundingTaktung"]').forEach(el => { el.checked = (el.value === taktVal); });
+        if (typeof refreshRoundingUI === 'function') refreshRoundingUI();
+
         // Load trashAutoEmptyDays setting
         const confTrashEl = document.getElementById('confTrashAutoEmptyDays');
         if(confTrashEl) confTrashEl.value = data.settings.trashAutoEmptyDays || 30;
@@ -138,6 +152,16 @@
         data.settings.vacation.usedManual = isNaN(inputVacUsed) ? 0 : inputVacUsed;
 
         recalculateVacationUsed();
+
+        // Zeit-Rundung speichern
+        if (!data.settings.rounding) data.settings.rounding = { enabled:false, mode:'commercial', taktungMinutes:15 };
+        const roundEnabledSaveEl = document.getElementById('confRoundingEnabled');
+        if (roundEnabledSaveEl) data.settings.rounding.enabled = !!roundEnabledSaveEl.checked;
+        const roundModeRadio = document.querySelector('input[name="roundingMode"]:checked');
+        if (roundModeRadio) data.settings.rounding.mode = roundModeRadio.value;
+        const roundTaktRadio = document.querySelector('input[name="roundingTaktung"]:checked');
+        if (roundTaktRadio) data.settings.rounding.taktungMinutes = parseInt(roundTaktRadio.value, 10) || 15;
+
         // Papierkorb Auto-Leerung Tage
         const trashDaysEl = document.getElementById('confTrashAutoEmptyDays');
         if (trashDaysEl) data.settings.trashAutoEmptyDays = parseInt(trashDaysEl.value, 10) || 0;
@@ -193,4 +217,19 @@
         document.documentElement.style.setProperty('--primary-rgb', `${r},${g},${b}`);
         document.documentElement.style.setProperty('--primary-dim', `rgba(${r},${g},${b}, 0.15)`);
     }
+
+    // --- Zeit-Rundung UI ---
+    function refreshRoundingUI() {
+        const enabledEl = document.getElementById('confRoundingEnabled');
+        const modeBlock = document.getElementById('roundingModeBlock');
+        const taktBlock = document.getElementById('roundingTaktungBlock');
+        if (!modeBlock) return;
+        const isOn = !!(enabledEl && enabledEl.checked);
+        modeBlock.style.display = isOn ? 'block' : 'none';
+        const modeRadio = document.querySelector('input[name="roundingMode"]:checked');
+        const mode = modeRadio ? modeRadio.value : 'commercial';
+        if (taktBlock) taktBlock.style.display = (isOn && mode === 'taktung') ? 'block' : 'none';
+    }
+    function onRoundingEnabledChange() { refreshRoundingUI(); }
+    function onRoundingModeChange() { refreshRoundingUI(); }
 

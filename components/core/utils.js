@@ -8,6 +8,45 @@
         var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
         return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
     }
+
+    // --- ZEIT-RUNDUNG ---
+    // Liest die User-Settings für Zeit-Rundung (kaufmännisch / abrunden / Taktung).
+    // Default: enabled=false → JS-Standard-Rundung wie zuvor.
+    function getRoundingSettings() {
+        const r = (typeof data !== 'undefined' && data && data.settings && data.settings.rounding) || {};
+        return {
+            enabled: !!r.enabled,
+            mode: (r.mode === 'down' || r.mode === 'taktung') ? r.mode : 'commercial',
+            taktungMinutes: parseInt(r.taktungMinutes, 10) || 15
+        };
+    }
+
+    // Rundet einen Stunden-Wert gemäß User-Settings. precision = Nachkommastellen für commercial/down.
+    function roundHours(h, precision) {
+        if (typeof h !== 'number' || !isFinite(h)) return h;
+        if (typeof precision !== 'number') precision = 2;
+        const r = getRoundingSettings();
+        const factor = Math.pow(10, precision);
+        if (!r.enabled) return Math.round(h * factor) / factor;
+        if (r.mode === 'taktung') {
+            const step = r.taktungMinutes / 60;
+            if (step <= 0) return Math.round(h * factor) / factor;
+            return Math.round(h / step) * step;
+        }
+        if (r.mode === 'down') {
+            // Richtung Null abschneiden — damit auch bei negativen Überstunden-Werten "abrunden = weniger Magnitude"
+            return h >= 0 ? Math.floor(h * factor) / factor : Math.ceil(h * factor) / factor;
+        }
+        return Math.round(h * factor) / factor;
+    }
+
+    // Formatiert Stundenwert als String (z.B. "8.25h"). suffix=null/'' lässt das h weg.
+    function fmtHours(h, precision, suffix) {
+        if (typeof precision !== 'number') precision = 2;
+        if (typeof suffix === 'undefined') suffix = 'h';
+        const v = roundHours(h, precision);
+        return v.toFixed(precision) + suffix;
+    }
     function delEntry(id) {
         const entry = data.entries.find(e => e.id === id);
         if (!entry) return;
