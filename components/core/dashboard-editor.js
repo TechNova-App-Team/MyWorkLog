@@ -24,6 +24,15 @@
             if (editControls) editControls.style.opacity = '1';
             if (editControls) editControls.style.pointerEvents = 'auto';
             if (statusEl) statusEl.style.opacity = '1';
+            // Settings-Modal schließen, falls von dort getriggert — User soll Dashboard direkt sehen
+            const settingsModal = document.getElementById('settingsModal');
+            if (settingsModal && settingsModal.classList.contains('active')) {
+                if (typeof saveSettings === 'function') {
+                    try { saveSettings(); } catch (e) { settingsModal.classList.remove('active'); }
+                } else {
+                    settingsModal.classList.remove('active');
+                }
+            }
             console.log('Entering edit mode, setting up drag drop');
             setupDashboardDragDrop();
         } else {
