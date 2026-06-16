@@ -603,7 +603,8 @@
             const oldBreakMin = d.settings.break.min || 30;
             d.settings.break.min = [0, oldBreakMin, oldBreakMin, oldBreakMin, oldBreakMin, 15, 0];
         }
-        if(!d.settings.vacation) d.settings.vacation = {total:30, used:0, usedManual:0};
+        if(!d.settings.vacation) d.settings.vacation = {total:30, used:0, usedManual:0, mode:'days'};
+        if(typeof d.settings.vacation.mode === 'undefined') d.settings.vacation.mode = 'days';
         if(!Array.isArray(d.settings.projects)) d.settings.projects = [];
         if(!d.settings.ihk) d.settings.ihk = {start: '', end: '', exam_zwischen: '', note_zwischen: '', note_abschluss: ''};
         if(!d.settings.school) d.settings.school = { grades: { 'Kernprozesse': [], 'Wirtschaftslehre': [], 'IT-Systeme': [], 'Deutsch/Kommunikation': [] } };

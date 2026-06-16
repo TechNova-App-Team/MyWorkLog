@@ -35,7 +35,7 @@
             trendData.push({ date: e.date, diff: e.diff, total: runningTotal, type: e.type, worked: e.worked });
             // Nur Arbeits-Summen den aktuellen Trend trennen (für alle Jahre)
             if(e.type==='sick') sickSum += e.worked;
-            else if(e.type==='vacation' && entryYear === currentYear) { vacSum += e.worked; usedVacationDays++; }
+            else if(e.type==='vacation' && entryYear === currentYear) { vacSum += e.worked; usedVacationDays += (typeof getVacationMode === 'function' && getVacationMode() === 'hours') ? (parseFloat(e.expected) || 0) : 1; }
             else if(e.type==='gleittag') { /* Gleittag: kein Urlaubstag, Überstunden werden in diff abgezogen */ }
             else if(e.type==='school') schoolSum += (e.expected || e.worked); // Schultag = voller Arbeitstag
             else if(e.type==='holiday' && entryYear === currentYear) holidaySum += e.worked;
@@ -121,8 +121,24 @@
 
         const totalVacation = parseFloat(data.settings.vacation.total);
         const usedVacation = data.settings.vacation.used;
-        document.getElementById('valVacationUsed').innerText = `${usedVacation} / ${totalVacation}`;
-        const vacPct = (usedVacation / totalVacation) * 100;
+        const vacMode = (typeof getVacationMode === 'function') ? getVacationMode() : 'days';
+        const vacEl = document.getElementById('valVacationUsed');
+        const vacLabelEls = document.querySelectorAll('.kpi-stats__vacation-label');
+        if (vacMode === 'hours') {
+            const usedH = Math.round(usedVacation * 10) / 10;
+            const totH = Math.round(totalVacation * 10) / 10;
+            const refH = (typeof getVacationRefHours === 'function') ? getVacationRefHours() : 8;
+            const eqDays = refH > 0 ? (usedVacation / refH).toFixed(1) : '—';
+            const eqTotalDays = refH > 0 ? Math.round(totalVacation / refH) : '—';
+            vacEl.innerText = `${usedH}h / ${totH}h`;
+            vacEl.title = `≈ ${eqDays} / ${eqTotalDays} Tage (Referenz ${Math.round(refH * 100) / 100}h/Tag)`;
+            vacLabelEls.forEach(el => { el.textContent = 'Urlaubsstunden'; });
+        } else {
+            vacEl.innerText = `${usedVacation} / ${totalVacation}`;
+            vacEl.title = '';
+            vacLabelEls.forEach(el => { el.textContent = 'Urlaubstage'; });
+        }
+        const vacPct = totalVacation > 0 ? (usedVacation / totalVacation) * 100 : 0;
         const vacBar = document.getElementById('vacationProgressBar');
         vacBar.style.width = `${Math.min(vacPct, 100)}%`;
         // Smart color: green → yellow → red based on usage

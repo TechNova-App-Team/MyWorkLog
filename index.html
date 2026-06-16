@@ -5327,6 +5327,47 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         </div>
                         <p class="settings-hint" style="margin-top:0.5rem; font-size:0.7rem;">Auf 0 lassen wenn du nicht am Wochenende arbeitest.</p>
                     </div>
+
+                    <!-- Urlaub -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Urlaub</div>
+                        <p class="settings-hint" style="margin-bottom:1rem;">Wie rechnet dein Arbeitgeber Urlaub ab?</p>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:1rem;">
+                            <label style="display:flex; align-items:center; gap:10px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;" id="vacModeDaysLabel">
+                                <input type="radio" name="vacationMode" id="vacModeDays" value="days" style="accent-color:var(--primary);" onchange="onVacationModeChange()">
+                                <div>
+                                    <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">Tage-Modus</div>
+                                    <div style="font-size:0.72rem; color:var(--text-muted);">1 Eintrag = 1 Urlaubstag</div>
+                                </div>
+                            </label>
+                            <label style="display:flex; align-items:center; gap:10px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;" id="vacModeHoursLabel">
+                                <input type="radio" name="vacationMode" id="vacModeHours" value="hours" style="accent-color:var(--primary);" onchange="onVacationModeChange()">
+                                <div>
+                                    <div style="font-size:0.85rem; font-weight:600; color:var(--text-main);">Stunden-Modus</div>
+                                    <div style="font-size:0.72rem; color:var(--text-muted);">Sollstunden des Tags zählen</div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div id="vacModeHoursHint" style="display:none; margin-bottom:1rem; padding:10px 12px; background:rgba(var(--primary-rgb),0.06); border:1px solid rgba(var(--primary-rgb),0.18); border-radius:10px; font-size:0.76rem; color:var(--text-muted); line-height:1.5;">
+                            Referenz: <strong id="vacRefHoursDisplay" style="color:var(--text-main);">—</strong> pro Tag (⌀ deiner Werktage). Ein 4.5h-Freitag verbraucht dann nur 4.5h aus deinem Konto, nicht einen ganzen Tag.
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                            <div>
+                                <label class="settings-label"><span id="vacTotalLabel">Jahresanspruch (Tage)</span></label>
+                                <input type="number" id="confVacationTotal" class="glass-input" min="0" step="0.5" value="30" oninput="refreshVacationModeUI()">
+                            </div>
+                            <div>
+                                <label class="settings-label"><span id="vacUsedManualLabel">Bereits genommen (manuell)</span></label>
+                                <input type="number" id="confVacationUsedManual" class="glass-input" min="0" step="0.5" value="0">
+                            </div>
+                        </div>
+                        <p class="settings-hint" style="margin-top:0.75rem; font-size:0.72rem;">
+                            <span id="vacProRataLine">Pro-Rata für dieses Eintrittsjahr: <strong id="vacationProRata" style="color:var(--text-main);">—</strong></span>
+                        </p>
+                    </div>
                 </div>
 
                 <!-- Tab: Berufsschule -->

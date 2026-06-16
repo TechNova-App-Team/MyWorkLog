@@ -1,12 +1,25 @@
 // ═══ CORE: VACATION-HOLIDAYS ═══
     // --- VACATION & FEIERTAGS MANAGEMENT ---
-    
-    function calculateProRataVacation(totalAnnualDays = 30) {
+
+    // Referenz: wie viele Sollstunden entsprechen "1 Urlaubstag"?
+    // Wochenschnitt aller Werktage (Mo-Fr) mit hours > 0
+    function getVacationRefHours() {
+        const wd = [1,2,3,4,5].map(i => (data.settings.hours && data.settings.hours[i]) || 0).filter(h => h > 0);
+        return wd.length ? (wd.reduce((a,b) => a+b, 0) / wd.length) : 8;
+    }
+
+    function getVacationMode() {
+        return (data.settings.vacation && data.settings.vacation.mode === 'hours') ? 'hours' : 'days';
+    }
+
+    function calculateProRataVacation(totalAnnual) {
+        // totalAnnual: bei mode=days Tage, bei mode=hours Stunden
+        if (typeof totalAnnual !== 'number' || isNaN(totalAnnual)) totalAnnual = parseFloat(data.settings.vacation.total) || 30;
         const startStr = data.settings.ihk.start;
         const now = new Date();
-        
+
         if (!startStr) {
-            return totalAnnualDays; 
+            return totalAnnual;
         }
 
         const startDate = new Date(startStr);
@@ -14,25 +27,97 @@
         const currentYear = now.getFullYear();
 
         if (currentYear > startYear) {
-            // Nach dem ersten Jahr oder wenn das Startdatum vor dem 1. Januar des aktuellen Jahres liegt
-            return totalAnnualDays;
+            return totalAnnual;
         }
 
-        // Berechnung für das Eintrittsjahr (Annahme: Anspruch ab dem 1. des Eintrittsmonats)
-        const entryMonth = startDate.getMonth(); // 0 = Januar
+        const entryMonth = startDate.getMonth();
         const remainingMonths = 12 - entryMonth;
-        
-        // Formel: (Jahresanspruch / 12) * verbleibende Monate
-        const proRata = (totalAnnualDays / 12) * remainingMonths;
-        // Aufrunden auf den nächsten vollen Tag
-        return Math.ceil(proRata); 
+
+        const proRata = (totalAnnual / 12) * remainingMonths;
+        // Tage: auf vollen Tag aufrunden. Stunden: auf 0.25h aufrunden.
+        if (getVacationMode() === 'hours') {
+            return Math.ceil(proRata * 4) / 4;
+        }
+        return Math.ceil(proRata);
+    }
+
+    // UI-Refresh fürs Settings-Modal: Labels, Hint, Pro-Rata (nur Display, kein Auto-Flip)
+    function refreshVacationModeUI() {
+        const modeHoursRadio = document.getElementById('vacModeHours');
+        const mode = (modeHoursRadio && modeHoursRadio.checked) ? 'hours' : 'days';
+        const refH = getVacationRefHours();
+
+        const totalLabel = document.getElementById('vacTotalLabel');
+        const usedManualLabel = document.getElementById('vacUsedManualLabel');
+        const hint = document.getElementById('vacModeHoursHint');
+        const refDisplay = document.getElementById('vacRefHoursDisplay');
+        const proRataEl = document.getElementById('vacationProRata');
+
+        if (mode === 'hours') {
+            if (totalLabel) totalLabel.textContent = 'Jahresanspruch (Stunden)';
+            if (usedManualLabel) usedManualLabel.textContent = 'Bereits genommen (Stunden)';
+            if (hint) hint.style.display = 'block';
+            if (refDisplay) refDisplay.textContent = (Math.round(refH * 100) / 100) + 'h';
+        } else {
+            if (totalLabel) totalLabel.textContent = 'Jahresanspruch (Tage)';
+            if (usedManualLabel) usedManualLabel.textContent = 'Bereits genommen (Tage)';
+            if (hint) hint.style.display = 'none';
+        }
+
+        // Pro-Rata anhand des aktuell eingegebenen Total-Werts
+        const totalEl = document.getElementById('confVacationTotal');
+        const totalVal = totalEl ? parseFloat(totalEl.value) : NaN;
+        if (proRataEl) {
+            const prevMode = data.settings.vacation.mode;
+            data.settings.vacation.mode = mode;
+            const pr = calculateProRataVacation(isNaN(totalVal) ? undefined : totalVal);
+            data.settings.vacation.mode = prevMode;
+            proRataEl.textContent = (mode === 'hours') ? (pr + 'h') : (pr + ' Tage');
+        }
+    }
+
+    // Auf Radio-Wechsel: Total-Input auf den passenden Default umschalten + Refresh
+    function onVacationModeChange() {
+        const modeHoursRadio = document.getElementById('vacModeHours');
+        const newMode = (modeHoursRadio && modeHoursRadio.checked) ? 'hours' : 'days';
+        const totalEl = document.getElementById('confVacationTotal');
+        const usedEl = document.getElementById('confVacationUsedManual');
+        const refH = getVacationRefHours();
+
+        if (totalEl) {
+            const cur = parseFloat(totalEl.value);
+            // Sinnvolle Vorschlags-Konvertierung
+            if (newMode === 'hours' && (isNaN(cur) || cur <= 60)) {
+                // Tage → Stunden: cur Tage × refH
+                totalEl.value = Math.round((isNaN(cur) ? 30 : cur) * refH * 100) / 100;
+            } else if (newMode === 'days' && (isNaN(cur) || cur > 60)) {
+                // Stunden → Tage: cur / refH, gerundet
+                totalEl.value = Math.round((isNaN(cur) ? 30 * refH : cur) / refH);
+            }
+        }
+        if (usedEl) {
+            const cur = parseFloat(usedEl.value);
+            if (!isNaN(cur) && cur > 0) {
+                if (newMode === 'hours' && cur <= 60) usedEl.value = Math.round(cur * refH * 100) / 100;
+                else if (newMode === 'days' && cur > 60) usedEl.value = Math.round((cur / refH) * 100) / 100;
+            }
+        }
+        refreshVacationModeUI();
     }
 
     function recalculateVacationUsed() {
         // Gleittage zählen NICHT als Urlaubstage (nur echte vacation-Einträge)
         const vacationEntries = data.entries.filter(e => e.type === 'vacation' && e.expected > 0);
-        const autoUsedDays = vacationEntries.length;
-        data.settings.vacation.used = autoUsedDays + parseFloat(data.settings.vacation.usedManual || 0);
+        const manual = parseFloat(data.settings.vacation.usedManual || 0) || 0;
+        if (getVacationMode() === 'hours') {
+            // Verbraucht in STUNDEN: Summe der expected-Stunden aller Urlaubseinträge + manueller Wert (Stunden)
+            const autoUsedHours = vacationEntries.reduce((sum, e) => sum + (parseFloat(e.expected) || 0), 0);
+            data.settings.vacation.used = Math.round((autoUsedHours + manual) * 100) / 100;
+        } else {
+            // Verbraucht in TAGEN: 1 Eintrag = 1 Tag (Legacy)
+            const autoUsedDays = vacationEntries.length;
+            data.settings.vacation.used = autoUsedDays + manual;
+        }
     }
     
     function deletePeriod(startStrArg, endStrArg) {
@@ -389,7 +474,23 @@
         const countEl = document.getElementById('vpCount');
         const btn = document.getElementById('vpCommit');
         if (countEl) {
-            countEl.innerHTML = `<strong>${dates.length}</strong> Tag${dates.length === 1 ? '' : 'e'} werden gebucht <div class="vp-count-sub">${dates.length ? dates[0] + ' – ' + dates[dates.length-1] : 'Noch nichts ausgewählt'}</div>`;
+            const refH = getVacationRefHours();
+            // Stunden-Summe: tagesweise Sollstunden, Fallback Wochenschnitt
+            let totalHours = 0;
+            dates.forEach(iso => {
+                const dow = new Date(iso + 'T00:00:00').getDay();
+                let h = (data.settings.hours && data.settings.hours[dow]) || 0;
+                if (h <= 0) h = refH;
+                totalHours += h;
+            });
+            const mode = getVacationMode();
+            const rangeStr = dates.length ? dates[0] + ' – ' + dates[dates.length-1] : 'Noch nichts ausgewählt';
+            if (mode === 'hours') {
+                const h = Math.round(totalHours * 10) / 10;
+                countEl.innerHTML = `<strong>${h}h</strong> werden gebucht <div class="vp-count-sub">${dates.length} Tag${dates.length === 1 ? '' : 'e'} · ${rangeStr}</div>`;
+            } else {
+                countEl.innerHTML = `<strong>${dates.length}</strong> Tag${dates.length === 1 ? '' : 'e'} werden gebucht <div class="vp-count-sub">${rangeStr}</div>`;
+            }
         }
         if (btn) btn.disabled = dates.length === 0;
     }

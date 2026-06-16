@@ -235,7 +235,8 @@
             const oldBreakMin = data.settings.break.min || 30;
             data.settings.break.min = [0, oldBreakMin, oldBreakMin, oldBreakMin, oldBreakMin, 15, 0]; // 15 Min Pause für Freitag
         }
-        if(!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0};
+        if(!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0, mode:'days'};
+        if(typeof data.settings.vacation.mode === 'undefined') data.settings.vacation.mode = 'days';
         
         // Initialize Untis Integration (optional — Funktion existiert nur wenn Untis-Modul geladen)
         if (typeof initializeUntisIntegration === 'function') initializeUntisIntegration();

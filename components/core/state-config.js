@@ -13,7 +13,7 @@
             themeMode: 'dark',
             hours:[0,8.75,8.75,8.75,8.75,4.5,0], 
             break:{thresh:6, min:[0, 15, 30, 30, 30, 30, 0]},
-            vacation:{total:30, used:0, usedManual:0},
+            vacation:{total:30, used:0, usedManual:0, mode:'days'},
             ihk: {
                 start: '',
                 end: '',

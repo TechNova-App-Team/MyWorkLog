@@ -11,7 +11,7 @@
 
 'use strict';
 
-const SW_VERSION  = 'v5.10.1';
+const SW_VERSION  = 'v5.11.1';
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
 const OFFLINE_URL = './offline/';
 const DEBUG       = true;

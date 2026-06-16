@@ -46,20 +46,26 @@
             if(el) el.value = data.settings.hours[i];
         }
         
-        // Urlaub: Pro-rata Anspruch berechnen und anzeigen
-        const proRata = calculateProRataVacation(30); // 30 Tage Basis
-        const vacProEl = document.getElementById('vacationProRata');
-        if(vacProEl) vacProEl.innerText = proRata;
         // Render backups list for restore/debugging
         try { renderBackupsList(); } catch(e){ /* ignore */ }
-        
+
         // Initialize Custom Types & Fields renderers (wird später aufgerufen wenn Tab gewählt wird)
         // renderCustomTypesManager() & renderCustomFieldsManager() werden in switchSettingsTab() aufgerufen
-        
+
+        // Urlaub: Mode + Total + Manual laden, Labels passend rendern
+        const vacMode = (data.settings.vacation && data.settings.vacation.mode === 'hours') ? 'hours' : 'days';
+        const modeDaysRadio = document.getElementById('vacModeDays');
+        const modeHoursRadio = document.getElementById('vacModeHours');
+        if (modeDaysRadio) modeDaysRadio.checked = (vacMode === 'days');
+        if (modeHoursRadio) modeHoursRadio.checked = (vacMode === 'hours');
+
         const confVacTotalEl = document.getElementById('confVacationTotal');
-        if(confVacTotalEl) confVacTotalEl.value = data.settings.vacation.total || 30;
+        if(confVacTotalEl) confVacTotalEl.value = (typeof data.settings.vacation.total !== 'undefined') ? data.settings.vacation.total : 30;
         const confVacUsedEl = document.getElementById('confVacationUsedManual');
         if(confVacUsedEl) confVacUsedEl.value = data.settings.vacation.usedManual || 0;
+
+        // Labels + Hint + Pro-Rata + Ref-Hours-Display refreshen (Listener sind inline im HTML)
+        if (typeof refreshVacationModeUI === 'function') refreshVacationModeUI();
         // Load trashAutoEmptyDays setting
         const confTrashEl = document.getElementById('confTrashAutoEmptyDays');
         if(confTrashEl) confTrashEl.value = data.settings.trashAutoEmptyDays || 30;
@@ -113,14 +119,24 @@
             if(el) data.settings.hours[i] = parseFloat(el.value) || 0;
         }
         
-        // Urlaub: Den eingegebenen Anspruch direkt speichern
+        // Urlaub: Mode + Anspruch + Manual speichern
+        if (!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0, mode:'days'};
+        const modeRadio = document.querySelector('input[name="vacationMode"]:checked');
+        const newMode = modeRadio ? modeRadio.value : data.settings.vacation.mode || 'days';
+        data.settings.vacation.mode = (newMode === 'hours') ? 'hours' : 'days';
+
         const confVacTotalEl2 = document.getElementById('confVacationTotal');
         const inputVacationTotal = confVacTotalEl2 ? parseFloat(confVacTotalEl2.value) : NaN;
-        data.settings.vacation.total = isNaN(inputVacationTotal) ? 30 : inputVacationTotal;
-        
+        if (isNaN(inputVacationTotal)) {
+            data.settings.vacation.total = (data.settings.vacation.mode === 'hours') ? (30 * getVacationRefHours()) : 30;
+        } else {
+            data.settings.vacation.total = inputVacationTotal;
+        }
+
         const confVacUsedEl2 = document.getElementById('confVacationUsedManual');
         const inputVacUsed = confVacUsedEl2 ? parseFloat(confVacUsedEl2.value) : 0;
-        data.settings.vacation.usedManual = inputVacUsed;
+        data.settings.vacation.usedManual = isNaN(inputVacUsed) ? 0 : inputVacUsed;
+
         recalculateVacationUsed();
         // Papierkorb Auto-Leerung Tage
         const trashDaysEl = document.getElementById('confTrashAutoEmptyDays');
