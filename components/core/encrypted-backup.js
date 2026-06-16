@@ -15,8 +15,15 @@
     }
     
     // Hilfsfunktion: Uint8Array -> Base64
+    // Chunked, weil String.fromCharCode.apply bei großen Arrays (>~65k Args)
+    // mit "Maximum call stack size exceeded" knallt → Backup-Verschlüsselung bricht ab.
     function uint8ArrayToBase64(arr) {
-        return btoa(String.fromCharCode.apply(null, arr));
+        const CHUNK = 0x8000; // 32k - safe unter allen JS-Engine-Limits
+        let str = '';
+        for (let i = 0; i < arr.length; i += CHUNK) {
+            str += String.fromCharCode.apply(null, arr.subarray(i, i + CHUNK));
+        }
+        return btoa(str);
     }
     
     // Hilfsfunktion: Base64 -> Uint8Array
