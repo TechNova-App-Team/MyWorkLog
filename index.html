@@ -329,16 +329,21 @@
 <script defer src="/Assets/js/qrcode.min.js"></script>
 <!-- Three.js, SimplePeer, jsPDF, html2canvas, Chart.js: lazy-loaded on demand -->
 <!-- Cloudflare Web Analytics (Lazy: 2s nach load → Lighthouse sieht die deprecated APIs nicht) -->
+<!-- Auf Localhost gar nicht laden: CF-RUM rejected 127.0.0.1:<port> per CORS und spammt die Console -->
 <script>
-window.addEventListener('load', function() {
-  setTimeout(function() {
-    var s = document.createElement('script');
-    s.defer = true;
-    s.src = 'https://static.cloudflareinsights.com/beacon.min.js';
-    s.setAttribute('data-cf-beacon', '{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');
-    document.body.appendChild(s);
-  }, 2000);
-});
+(function() {
+  var h = location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '' || location.protocol === 'file:') return;
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      var s = document.createElement('script');
+      s.defer = true;
+      s.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+      s.setAttribute('data-cf-beacon', '{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');
+      document.body.appendChild(s);
+    }, 2000);
+  });
+})();
 </script>
 <!-- End Cloudflare Web Analytics -->
 <!-- EmailJS SDK (defer: nicht beim Start benötigt) -->
