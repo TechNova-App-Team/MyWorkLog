@@ -11,7 +11,7 @@
 
 'use strict';
 
-const SW_VERSION  = 'v5.12.1';
+const SW_VERSION  = 'v5.12.2';
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
 const OFFLINE_URL = './offline/';
 const DEBUG       = true;
@@ -45,9 +45,11 @@ function isCacheable(url) {
 
 self.addEventListener('install', event => {
   log('Install', SW_VERSION);
-  // skipWaiting() sofort — verhindert Version-Mismatch (neue index.html + alter SW-Cache).
-  // apply() in onboarding.js funktioniert weiterhin für den Update-Banner-Flow.
-  self.skipWaiting();
+  // KEIN skipWaiting() hier — würde sonst jeden neuen SW automatisch aktivieren,
+  // controllerchange feuert, der Update-Banner erkennt das fälschlich als "neues Update"
+  // und zeigt sich nach jedem Apply wieder an (Endlosloop). Cache-Strategie ist sowieso
+  // cache:'reload' → bypassed Browser-Cache komplett, also keine Version-Mismatch-Gefahr.
+  // skipWaiting wird vom Banner-Apply-Flow via postMessage SKIP_WAITING getriggert.
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.add(OFFLINE_URL).catch(() => {}))

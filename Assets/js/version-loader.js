@@ -72,50 +72,18 @@ window.addEventListener('load', () => {
     if (APP_CONFIG.status === 'loading...') loadAppVersion();
 });
 
-// Handle version changes: notify SW and reload clients so users get newest production build
+// Handle version changes: nur lastSeenVersion tracken — KEIN Auto-SKIP_WAITING mehr.
+// Begründung: Der Banner-Flow in onboarding.js (updateManager) ist die einzige Source-of-Truth
+// für SW-Updates. Wenn hier parallel SKIP_WAITING + reload getriggert wird, gibt's einen
+// Race mit dem Banner (Doppelt-Reload, halb-gecachte Assets, CSS-Glitch). Der SW selbst
+// triggert updatefound → Banner zeigt sich → User klickt Apply → sauberer Reload.
 function handleVersionChange(newVersion) {
     try {
         const last = localStorage.getItem('lastSeenVersion');
-        // First time visit: just store
-        if (!last) {
+        if (!last || last !== newVersion) {
+            if (last) console.log(`[update] version changed: ${last} → ${newVersion} (Banner uebernimmt)`);
             localStorage.setItem('lastSeenVersion', newVersion);
-            return;
         }
-
-        if (last === newVersion) return;
-
-        // New version detected — attempt a seamless update
-        console.log(`[update] version changed: ${last} → ${newVersion}`);
-
-        // Listen for controller change to reload when new SW takes control
-        if (navigator.serviceWorker) {
-            navigator.serviceWorker.addEventListener('controllerchange', function() {
-                window.location.reload();
-            });
-
-            // Ask waiting worker to activate, or tell active controller to skip waiting
-            if (navigator.serviceWorker.getRegistration) {
-                navigator.serviceWorker.getRegistration().then(reg => {
-                    if (reg && reg.waiting) {
-                        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-                    } else if (navigator.serviceWorker.controller) {
-                        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-                    }
-                }).catch(() => {
-                    if (navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-                });
-            } else if (navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
-            }
-        }
-
-        // Also try clearing caches programmatically (best-effort)
-        if ('caches' in window) {
-            caches.keys().then(names => names.forEach(n => caches.delete(n))).catch(() => {});
-        }
-
-        // Persist new version so we don't loop
-        localStorage.setItem('lastSeenVersion', newVersion);
     } catch (err) {
         console.warn('handleVersionChange err', err);
     }

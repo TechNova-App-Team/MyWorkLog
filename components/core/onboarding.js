@@ -502,15 +502,10 @@ if ('serviceWorker' in navigator) {
         }
     });
 
-    // Listen for controller change → neuer SW hat übernommen → Banner zeigen
-    // hadController: true = Update (alter SW war Controller), false = Erstinstallation
-    const hadController = !!navigator.serviceWorker.controller;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('[PWA] Service Worker controller changed');
-        if (hadController && typeof updateManager !== 'undefined') {
-            updateManager.notifyUpdate(navigator.serviceWorker.controller);
-        }
-    });
+    // BEWUSST KEIN controllerchange→notifyUpdate-Listener mehr:
+    // Der hat in Kombi mit SW-skipWaiting() einen Banner-Loop verursacht
+    // (jeder install→activate triggerte ihn, auch nach User-Apply). Die kanonische
+    // Update-Detection läuft jetzt nur noch über updatefound+statechange.
 }
 
 // ===== INSTALL PROMPT HANDLER (Add to Home Screen) =====
@@ -1107,15 +1102,23 @@ const updateManager = (() => {
 
     function apply() {
         try { localStorage.setItem('mwl_upd_applying', 'true'); } catch(e) {}
-        // SW ruft skipWaiting() bereits im install-Event auf → controllerchange ist meist
-        // schon gefeuert, bevor der User klickt. Auf das Event WIEDER zu warten verhängt:
-        // es kommt nicht mehr → reload wird nie ausgelöst → "passiert nichts".
-        // → Best-effort SKIP_WAITING senden, dann unbedingt reloaden.
+        // SW wartet jetzt im install-Event (kein auto-skipWaiting mehr) → SKIP_WAITING
+        // postMessage triggert wirklich erst hier die Activation. Wir warten auf
+        // controllerchange (= neuer SW hat übernommen) BEVOR wir reloaden, sonst
+        // läuft der Reload unter dem alten Controller mit halb-gelöschtem Cache → CSS-Glitch.
+        // Fallback-Timeout für den Fall, dass controllerchange nie kommt (z.B. erster SW).
+        let reloaded = false;
+        const doReload = () => { if (reloaded) return; reloaded = true; location.reload(); };
+        navigator.serviceWorker.addEventListener('controllerchange', doReload, { once: true });
         if (newWorker && typeof newWorker.postMessage === 'function') {
             try { newWorker.postMessage({ type: 'SKIP_WAITING' }); } catch(e) {}
+        } else if (navigator.serviceWorker.controller) {
+            // Kein bekannter waiting-Worker (z.B. Banner kam via init() für altes reg.waiting,
+            // das schon weg ist) → schick's an den Controller als Fallback.
+            try { navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' }); } catch(e) {}
         }
-        // Kurzer Tick, damit postMessage rausgeht, dann hart reload.
-        setTimeout(function() { location.reload(); }, 80);
+        // Safety-Net: nach 1.5s reloaden falls controllerchange ausbleibt.
+        setTimeout(doReload, 1500);
     }
 
     function test() {
