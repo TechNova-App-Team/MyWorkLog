@@ -859,13 +859,21 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             <kbd>Ctrl K</kbd>
         </div>
 
-        <!-- Cloud Sync Chip — One-Click Upload -->
-        <div class="sidebar-cloud-chip" id="sidebarCloudChip" onclick="quickCloudSync(this)" title="Klick: Daten in die Cloud hochladen">
-            <span class="sidebar-cloud-icon" id="sidebarCloudIcon">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-            </span>
-            <span class="sidebar-cloud-text" id="sidebarCloudText">Cloud</span>
-            <span class="sidebar-cloud-sub" id="sidebarCloudSub">Lädt…</span>
+        <!-- Cloud Sync Chip — Split: Chip = aktuelle Aktion, Pfeil = Modus toggeln -->
+        <div class="sidebar-cloud-wrap" id="sidebarCloudWrap">
+            <div class="sidebar-cloud-chip" id="sidebarCloudChip" onclick="cloudChipAction()" title="Klick: Daten in die Cloud hochladen">
+                <span class="sidebar-cloud-icon" id="sidebarCloudIcon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                </span>
+                <span class="sidebar-cloud-text" id="sidebarCloudText">Cloud</span>
+                <span class="sidebar-cloud-sub" id="sidebarCloudSub">Lädt…</span>
+            </div>
+            <button class="sidebar-cloud-more" id="sidebarCloudMore" onclick="toggleCloudChipMode(event)" aria-label="Upload/Download umschalten" title="Modus wechseln: Upload ↔ Download">
+                <svg id="sidebarCloudModeIcon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="19" x2="12" y2="5"/>
+                    <polyline points="6 11 12 5 18 11"/>
+                </svg>
+            </button>
         </div>
 
         <!-- Scrollable Navigation Area -->
@@ -5675,24 +5683,29 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                     <!-- Cloud Buttons -->
                     <div style="display:flex; flex-direction:column; gap:10px;">
                         <button id="cloudSyncLoginBtn" class="settings-btn settings-btn-primary" style="width:100%; display:none;" onclick="openCloudLoginModal()">
-                            ☁️ Cloud Login
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 1 0 0-9h-1.8A7 7 0 1 0 4 14.9"/></svg>
+                            <span>Cloud Login</span>
                         </button>
-                        
+
                         <button id="cloudSyncLogoutBtn" class="settings-btn" style="width:100%; display:none;" onclick="handleCloudLogout()">
-                            🚪 Logout
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            <span>Logout</span>
                         </button>
-                        
+
                         <button id="cloudSyncUploadBtn" class="settings-btn" style="width:100%; opacity:0.5;" disabled onclick="handleCloudUpload()">
-                            ⬆️ In Cloud hochladen
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 13 12 9 16 13"/><line x1="12" y1="9" x2="12" y2="21"/></svg>
+                            <span>In Cloud hochladen</span>
                         </button>
-                        
+
                         <button id="cloudSyncDownloadBtn" class="settings-btn" style="width:100%; opacity:0.5;" disabled onclick="handleCloudDownload()">
-                            ⬇️ Von Cloud wiederherstellen
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 17 12 21 16 17"/><line x1="12" y1="9" x2="12" y2="21"/></svg>
+                            <span>Von Cloud wiederherstellen</span>
                         </button>
                     </div>
-                    
-                    <div class="settings-hint" style="margin-top:1.25rem;">
-                        ℹ️ Daten werden <strong>nicht</strong> automatisch synchronisiert. Nutze die Buttons zum manuellen Hoch- oder Runterladen.
+
+                    <div class="settings-hint" style="margin-top:1.25rem; display:flex; align-items:flex-start; gap:8px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:3px; opacity:0.7;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        <span>Daten werden <strong>nicht</strong> automatisch synchronisiert. Nutze die Buttons zum manuellen Hoch- oder Runterladen.</span>
                     </div>
 
                     <!-- ═══════════ API STATUS MONITOR ═══════════ -->
@@ -6890,8 +6903,12 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             <span class="mob-more-label">AI-Bot</span>
         </button>
         <button class="mob-more-item" onclick="if(typeof quickCloudSync==='function'){quickCloudSync(this); mobNavHideMore();}">
-            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg></span>
-            <span class="mob-more-label">Cloud Sync</span>
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 13 12 9 16 13"/><line x1="12" y1="9" x2="12" y2="21"/></svg></span>
+            <span class="mob-more-label">Cloud Upload</span>
+        </button>
+        <button class="mob-more-item" onclick="if(typeof quickCloudDownload==='function'){quickCloudDownload(); mobNavHideMore();}">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 17 12 21 16 17"/><line x1="12" y1="9" x2="12" y2="21"/></svg></span>
+            <span class="mob-more-label">Cloud Download</span>
         </button>
         <button class="mob-more-item" onclick="openSettings(); mobNavHideMore();">
             <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></span>

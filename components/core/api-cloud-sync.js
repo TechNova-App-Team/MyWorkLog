@@ -497,9 +497,35 @@
         }
     }
     
+    // SVG-Icons für State-Wechsel (kein Emoji)
+    const CLOUD_ICON_LOADING = '<svg class="cloud-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+    const CLOUD_ICON_SUCCESS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    const CLOUD_ICON_ERROR = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+
+    // Settings-Modal X-Button während Cloud-OP sperren — sonst bricht Sync ab
+    // wenn User mitten im Upload/Download das Modal schließt (saveSettings()
+    // überschreibt frisch geholte Cloud-Daten, Reload knallt mit halben State).
+    function lockSettingsClose(busy) {
+        const closeBtn = document.querySelector('#settingsModal .settings-close-btn');
+        if (!closeBtn) return;
+        if (busy) {
+            closeBtn.dataset.cloudBusy = '1';
+            closeBtn.setAttribute('disabled', 'disabled');
+            closeBtn.setAttribute('aria-disabled', 'true');
+            closeBtn.classList.add('settings-close-btn--locked');
+            closeBtn.setAttribute('title', 'Cloud-Sync läuft — bitte warten');
+        } else {
+            delete closeBtn.dataset.cloudBusy;
+            closeBtn.removeAttribute('disabled');
+            closeBtn.removeAttribute('aria-disabled');
+            closeBtn.classList.remove('settings-close-btn--locked');
+            closeBtn.setAttribute('title', 'Schließen');
+        }
+    }
+
     function cloudBtnSuccess(btn, originalHTML) {
         btn.disabled = true;
-        btn.innerHTML = '✅ Erfolgreich';
+        btn.innerHTML = CLOUD_ICON_SUCCESS + '<span>Erfolgreich</span>';
         btn.classList.add('cloud-btn-success');
         setTimeout(() => {
             btn.classList.remove('cloud-btn-success');
@@ -510,7 +536,7 @@
 
     function cloudBtnError(btn, originalHTML) {
         btn.disabled = true;
-        btn.innerHTML = '❌ Fehler';
+        btn.innerHTML = CLOUD_ICON_ERROR + '<span>Fehler</span>';
         btn.classList.add('cloud-btn-error');
         setTimeout(() => {
             btn.classList.remove('cloud-btn-error');
@@ -528,7 +554,8 @@
 
         const originalHTML = uploadBtn.innerHTML;
         uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '⏳ Lädt...';
+        uploadBtn.innerHTML = CLOUD_ICON_LOADING + '<span>Lädt hoch…</span>';
+        lockSettingsClose(true);
 
         try {
             console.log('[Upload] Starte Upload...');
@@ -539,6 +566,8 @@
         } catch (error) {
             console.error('[Upload] Fehler:', error);
             cloudBtnError(uploadBtn, originalHTML);
+        } finally {
+            lockSettingsClose(false);
         }
     }
 
@@ -551,16 +580,19 @@
 
         const originalHTML = downloadBtn.innerHTML;
         downloadBtn.disabled = true;
-        downloadBtn.innerHTML = '⏳ Lädt...';
+        downloadBtn.innerHTML = CLOUD_ICON_LOADING + '<span>Wiederherstellen…</span>';
+        lockSettingsClose(true);
 
         try {
             console.log('[Download] Starte Download...');
             await window.cloudSync.downloadFromCloud();
             cloudBtnSuccess(downloadBtn, originalHTML);
+            // Lock bleibt bis Reload — sonst kann User in den 2.4s schließen + saveSettings() würde frischen Cloud-State überschreiben
             setTimeout(() => location.reload(), 2400);
         } catch (error) {
             console.error('[Download] Fehler:', error);
             cloudBtnError(downloadBtn, originalHTML);
+            lockSettingsClose(false);
         }
     }
     
@@ -591,9 +623,19 @@
         if (chip.classList.contains('is-syncing') || chip.classList.contains('is-success') || chip.classList.contains('is-error')) {
             return; // Mid-action, lass die Animation laufen
         }
+        const wrap = document.getElementById('sidebarCloudWrap');
+        const icon = document.getElementById('sidebarCloudIcon');
         const text = document.getElementById('sidebarCloudText');
         const sub = document.getElementById('sidebarCloudSub');
         const loggedIn = !!(window.cloudSync && typeof window.cloudSync.isLoggedIn === 'function' && window.cloudSync.isLoggedIn());
+        // Mode aus localStorage (Default upload). Wrap-Class für Pfeil-Rotation.
+        const mode = (function(){ try { return localStorage.getItem('mwl_cloud_chip_mode') === 'download' ? 'download' : 'upload'; } catch(e) { return 'upload'; } })();
+        if (wrap) wrap.classList.toggle('mode-download', mode === 'download');
+
+        // Icon spiegelt immer den Modus (auch wenn nicht eingeloggt)
+        const ICON_UP = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 13 12 9 16 13"/><line x1="12" y1="9" x2="12" y2="21"/></svg>';
+        const ICON_DOWN = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 17 12 21 16 17"/><line x1="12" y1="9" x2="12" y2="21"/></svg>';
+        if (icon) icon.innerHTML = mode === 'download' ? ICON_DOWN : ICON_UP;
 
         chip.classList.remove('is-offline');
 
@@ -605,10 +647,29 @@
             return;
         }
 
+        if (mode === 'download') {
+            if (text) text.textContent = 'Wiederherstellen';
+            if (sub) sub.textContent = 'aus Cloud';
+            chip.title = 'Klick: Daten aus der Cloud wiederherstellen (überschreibt lokale Daten)';
+            return;
+        }
+
+        // Upload-Mode (Default)
         const last = localStorage.getItem('mwl_last_export');
         if (text) text.textContent = 'Sync';
         if (sub) sub.textContent = _formatRelativeTime(last);
         chip.title = last ? ('Klick: Jetzt syncen — letzter Upload ' + _formatRelativeTime(last)) : 'Klick: Erstes Mal in die Cloud hochladen';
+    }
+
+    // ─── Helper: Settings öffnen + Cloud-Tab aktivieren ────────────
+    // User-Wunsch: Nicht-eingeloggt-Klick auf Cloud-Chip soll in Settings führen
+    // (nicht Login-Modal direkt) — dort sieht User den vollen Cloud-Status.
+    function openSettingsCloudTab() {
+        if (typeof openSettings !== 'function') return;
+        openSettings(); // ruft intern switchSettingsTab('profile') auf
+        if (typeof switchSettingsTab === 'function') {
+            try { switchSettingsTab('cloud'); } catch (e) {} // sofort auf Cloud umschalten
+        }
     }
 
     async function quickCloudSync(triggerEl) {
@@ -616,16 +677,10 @@
         const sub = document.getElementById('sidebarCloudSub');
         const text = document.getElementById('sidebarCloudText');
 
-        if (!window.cloudSync) {
-            if (typeof showCustomMessage === 'function') {
-                showCustomMessage('☁️ Cloud nicht bereit', 'Bitte Seite neu laden und nochmal versuchen.', 'error');
-            }
-            return;
-        }
-
-        // Nicht eingeloggt → Login-Modal aufrufen
-        if (typeof window.cloudSync.isLoggedIn === 'function' && !window.cloudSync.isLoggedIn()) {
-            if (typeof openCloudLoginModal === 'function') openCloudLoginModal();
+        // Kein cloudSync = Supabase-SDK wurde nie geladen = User hat keine Session
+        // → genau wie "nicht eingeloggt" behandeln und zum Cloud-Tab führen.
+        if (!window.cloudSync || (typeof window.cloudSync.isLoggedIn === 'function' && !window.cloudSync.isLoggedIn())) {
+            openSettingsCloudTab();
             return;
         }
 
@@ -682,6 +737,325 @@
                 if (chip) chip.classList.remove('is-error');
                 updateCloudSyncChip();
             }, 2500);
+        }
+    }
+
+    // ─── CLOUD-RESTORE CONFIRM MODAL (modern, dark, SaaS-Vibe) ─────
+    // Eigenes Modal statt generischem showCustomConfirm — Brand-Konsistent.
+    // Returnt Promise<boolean>. Backdrop-Click + Escape = Abbrechen.
+    function _ensureCloudConfirmStyles() {
+        if (document.getElementById('cloudConfirmStyle')) return;
+        const style = document.createElement('style');
+        style.id = 'cloudConfirmStyle';
+        style.textContent = `
+            .cc-backdrop {
+                position: fixed; inset: 0; z-index: 10000;
+                background: rgba(3, 3, 5, 0.72);
+                backdrop-filter: blur(8px) saturate(140%);
+                -webkit-backdrop-filter: blur(8px) saturate(140%);
+                display: flex; align-items: center; justify-content: center;
+                padding: 20px;
+                opacity: 0;
+                transition: opacity 0.2s ease;
+            }
+            .cc-backdrop.show { opacity: 1; }
+            .cc-card {
+                width: 100%; max-width: 420px;
+                background: linear-gradient(180deg, #15151c 0%, #0f0f14 100%);
+                border: 1px solid rgba(255,255,255,0.08);
+                border-radius: 18px;
+                padding: 0;
+                box-shadow:
+                    0 24px 64px -12px rgba(0,0,0,0.7),
+                    0 0 0 1px rgba(255,255,255,0.02),
+                    inset 0 1px 0 0 rgba(255,255,255,0.04);
+                transform: translateY(16px) scale(0.96);
+                opacity: 0;
+                transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s ease;
+                overflow: hidden;
+                position: relative;
+            }
+            .cc-backdrop.show .cc-card {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            .cc-card::before {
+                content: '';
+                position: absolute; top: 0; left: 0; right: 0; height: 1px;
+                background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.5), transparent);
+            }
+            .cc-body {
+                padding: 28px 28px 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .cc-icon-ring {
+                width: 64px; height: 64px;
+                border-radius: 18px;
+                background: radial-gradient(circle at 50% 0%, rgba(var(--primary-rgb), 0.22), rgba(var(--primary-rgb), 0.06) 70%);
+                border: 1px solid rgba(var(--primary-rgb), 0.28);
+                display: flex; align-items: center; justify-content: center;
+                color: var(--primary);
+                margin-bottom: 18px;
+                position: relative;
+            }
+            .cc-icon-ring::after {
+                content: '';
+                position: absolute; inset: -1px;
+                border-radius: inherit;
+                background: linear-gradient(180deg, rgba(var(--primary-rgb), 0.18), transparent 60%);
+                opacity: 0.6;
+                pointer-events: none;
+            }
+            .cc-title {
+                font-size: 1.15rem;
+                font-weight: 700;
+                color: var(--text-main);
+                letter-spacing: -0.02em;
+                margin: 0 0 8px;
+                line-height: 1.25;
+            }
+            .cc-desc {
+                font-size: 0.875rem;
+                color: var(--text-muted);
+                line-height: 1.55;
+                margin: 0 0 22px;
+                max-width: 320px;
+            }
+            .cc-warning {
+                width: 100%;
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 12px 14px;
+                background: rgba(245, 158, 11, 0.08);
+                border: 1px solid rgba(245, 158, 11, 0.18);
+                border-radius: 12px;
+                text-align: left;
+                margin-bottom: 4px;
+            }
+            .cc-warning svg { flex-shrink: 0; color: #f59e0b; margin-top: 1px; }
+            .cc-warning-text {
+                font-size: 0.78rem;
+                color: #fbbf24;
+                line-height: 1.5;
+                font-weight: 500;
+            }
+            .cc-warning-text strong { color: #fde68a; font-weight: 700; }
+            .cc-footer {
+                padding: 22px 28px 24px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .cc-btn {
+                appearance: none;
+                border: 0;
+                padding: 12px 16px;
+                border-radius: 11px;
+                font-size: 0.875rem;
+                font-weight: 600;
+                font-family: inherit;
+                cursor: pointer;
+                letter-spacing: -0.01em;
+                transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                line-height: 1;
+            }
+            .cc-btn-ghost {
+                background: rgba(255,255,255,0.04);
+                color: var(--text-main);
+                border: 1px solid rgba(255,255,255,0.08);
+            }
+            .cc-btn-ghost:hover {
+                background: rgba(255,255,255,0.08);
+                border-color: rgba(255,255,255,0.15);
+            }
+            .cc-btn-primary {
+                background: var(--primary);
+                color: #fff;
+                box-shadow: 0 4px 16px -4px rgba(var(--primary-rgb), 0.5),
+                            inset 0 1px 0 0 rgba(255,255,255,0.18);
+            }
+            .cc-btn-primary:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 8px 22px -4px rgba(var(--primary-rgb), 0.65),
+                            inset 0 1px 0 0 rgba(255,255,255,0.22);
+                filter: brightness(1.08);
+            }
+            .cc-btn-primary:active {
+                transform: translateY(0);
+            }
+            .cc-btn:focus-visible {
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.35);
+            }
+            [data-theme="light"] .cc-card {
+                background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+                border-color: rgba(0,0,0,0.08);
+            }
+            [data-theme="light"] .cc-btn-ghost {
+                background: rgba(0,0,0,0.03);
+                border-color: rgba(0,0,0,0.08);
+            }
+            [data-theme="light"] .cc-btn-ghost:hover {
+                background: rgba(0,0,0,0.06);
+            }
+            @media (max-width: 480px) {
+                .cc-body { padding: 24px 22px 0; }
+                .cc-footer { padding: 18px 22px 22px; }
+                .cc-icon-ring { width: 56px; height: 56px; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function showCloudRestoreConfirm() {
+        _ensureCloudConfirmStyles();
+        return new Promise(resolve => {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'cc-backdrop';
+            backdrop.setAttribute('role', 'dialog');
+            backdrop.setAttribute('aria-modal', 'true');
+            backdrop.setAttribute('aria-labelledby', 'ccTitle');
+            backdrop.innerHTML = `
+                <div class="cc-card">
+                    <div class="cc-body">
+                        <div class="cc-icon-ring" aria-hidden="true">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/>
+                                <polyline points="8 17 12 21 16 17"/>
+                                <line x1="12" y1="9" x2="12" y2="21"/>
+                            </svg>
+                        </div>
+                        <h3 class="cc-title" id="ccTitle">Aus Cloud wiederherstellen</h3>
+                        <p class="cc-desc">Die Daten in der Cloud werden auf dieses Gerät geladen — als neuer aktueller Stand.</p>
+                        <div class="cc-warning">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 9v4"/><path d="M12 17h.01"/>
+                                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            </svg>
+                            <div class="cc-warning-text"><strong>Lokale Änderungen gehen verloren</strong>, wenn sie nicht vorher hochgeladen wurden.</div>
+                        </div>
+                    </div>
+                    <div class="cc-footer">
+                        <button type="button" class="cc-btn cc-btn-ghost" data-cc-action="cancel">Abbrechen</button>
+                        <button type="button" class="cc-btn cc-btn-primary" data-cc-action="confirm">Wiederherstellen</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(backdrop);
+            requestAnimationFrame(() => backdrop.classList.add('show'));
+
+            let resolved = false;
+            function close(result) {
+                if (resolved) return;
+                resolved = true;
+                backdrop.classList.remove('show');
+                document.removeEventListener('keydown', onKey);
+                setTimeout(() => { try { backdrop.remove(); } catch(e) {} }, 240);
+                resolve(result);
+            }
+            function onKey(e) {
+                if (e.key === 'Escape') close(false);
+                else if (e.key === 'Enter') close(true);
+            }
+            backdrop.addEventListener('click', e => {
+                if (e.target === backdrop) close(false);
+                const action = e.target.closest('[data-cc-action]');
+                if (action) close(action.dataset.ccAction === 'confirm');
+            });
+            document.addEventListener('keydown', onKey);
+            // Fokus auf primären Button für Tastatur-User
+            setTimeout(() => {
+                const btn = backdrop.querySelector('.cc-btn-primary');
+                if (btn) btn.focus();
+            }, 80);
+        });
+    }
+
+    // ─── QUICK CLOUD DOWNLOAD ──────────────────────────────────────
+    // Mirror von quickCloudSync, aber zieht Daten AUS der Cloud.
+    // Trigger: Chevron-Menu im Sidebar-Chip + Mobile-More-Sheet-Tile.
+    // Triggert nach Erfolg full-reload (genauso wie handleCloudDownload in Settings).
+    async function quickCloudDownload() {
+        const chip = document.getElementById('sidebarCloudChip');
+        const sub = document.getElementById('sidebarCloudSub');
+        const text = document.getElementById('sidebarCloudText');
+
+        // Kein cloudSync = nie eingeloggt = direkt zu Settings/Cloud-Tab
+        if (!window.cloudSync || (typeof window.cloudSync.isLoggedIn === 'function' && !window.cloudSync.isLoggedIn())) {
+            openSettingsCloudTab();
+            return;
+        }
+
+        // Sicherheitsabfrage — eigenes modernes Modal
+        const ok = await showCloudRestoreConfirm();
+        if (!ok) return;
+
+        if (chip) {
+            chip.classList.remove('is-success', 'is-error', 'is-offline');
+            chip.classList.add('is-syncing');
+        }
+        if (text) text.textContent = 'Lädt runter';
+        if (sub) sub.textContent = '…';
+
+        try {
+            await window.cloudSync.downloadFromCloud();
+
+            if (chip) {
+                chip.classList.remove('is-syncing');
+                chip.classList.add('is-success');
+            }
+            if (text) text.textContent = 'Wiederhergestellt';
+            if (sub) sub.textContent = 'Lade neu…';
+
+            // Voller Reload damit alle Komponenten neu rendern (gleiche Strategie wie Settings-Download)
+            setTimeout(() => location.reload(), 1200);
+        } catch (error) {
+            console.error('[QuickCloudDownload] Fehler:', error);
+            if (chip) {
+                chip.classList.remove('is-syncing');
+                chip.classList.add('is-error');
+            }
+            if (text) text.textContent = 'Fehler';
+            if (sub) sub.textContent = 'erneut?';
+            setTimeout(() => {
+                if (chip) chip.classList.remove('is-error');
+                updateCloudSyncChip();
+            }, 2500);
+        }
+    }
+
+    // ─── CHIP-MODE-TOGGLE (Upload ↔ Download) ──────────────────────
+    // Pfeil-Button switcht den Modus, Chip-Hauptklick führt aktuellen Modus aus.
+    // Modus wird in localStorage gemerkt, damit User-Präferenz Reload überlebt.
+    // Rendering läuft komplett über updateCloudSyncChip() — single source of truth.
+    const CLOUD_CHIP_MODE_KEY = 'mwl_cloud_chip_mode';
+
+    function getCloudChipMode() {
+        try { return localStorage.getItem(CLOUD_CHIP_MODE_KEY) === 'download' ? 'download' : 'upload'; }
+        catch (e) { return 'upload'; }
+    }
+
+    function toggleCloudChipMode(ev) {
+        if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+        const next = getCloudChipMode() === 'upload' ? 'download' : 'upload';
+        try { localStorage.setItem(CLOUD_CHIP_MODE_KEY, next); } catch (e) {}
+        updateCloudSyncChip();
+    }
+
+    // Dispatcher: Chip-Klick führt aktuellen Modus aus
+    function cloudChipAction() {
+        if (getCloudChipMode() === 'download') {
+            quickCloudDownload();
+        } else {
+            quickCloudSync(document.getElementById('sidebarCloudChip'));
         }
     }
 
@@ -769,9 +1143,13 @@
 
     // Expose
     window.quickCloudSync = quickCloudSync;
+    window.quickCloudDownload = quickCloudDownload;
     window.updateCloudSyncChip = updateCloudSyncChip;
     window.showCloudSyncPrompt = showCloudSyncPrompt;
     window.dismissCloudSyncPrompt = dismissCloudSyncPrompt;
+    window.toggleCloudChipMode = toggleCloudChipMode;
+    window.cloudChipAction = cloudChipAction;
+    window.openSettingsCloudTab = openSettingsCloudTab;
 
     function updateAchievements() {
         const achievements = data.achievements || [];
