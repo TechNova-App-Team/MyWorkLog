@@ -9,7 +9,7 @@
         untis: null,            // NEW: Untis integration data
         settings: { 
             name:'User', 
-            theme:'#a855f7',
+            theme:'#5578a8',
             themeMode: 'dark',
             hours:[0,8.75,8.75,8.75,8.75,4.5,0], 
             break:{thresh:6, min:[0, 15, 30, 30, 30, 30, 0]},
