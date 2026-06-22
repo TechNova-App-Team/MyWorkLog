@@ -41,6 +41,7 @@
             const perfData = calculatePerformanceData();
             const deepData = calculateDeepPerformanceData();
             renderPerformanceView(perfData, deepData);
+            try { updateUI(); } catch(e) {}
         }
         if (tabId === 'ihk') {
             renderIHKView();
@@ -53,7 +54,6 @@
         }
         if (tabId === 'history') {
             renderHistoryView();
-            try { updateUI(); } catch(e) {}
         }
         if (tabId === 'yearview') {
             renderYearView();
