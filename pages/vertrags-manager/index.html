@@ -819,6 +819,85 @@
             max-width: 320px;
             margin: 0 auto;
         }
+
+        /* ─── JOBS SWITCHER ─── */
+        .job-item {
+            display: flex; align-items: center; gap: 0.6rem;
+            padding: 0.6rem 0.7rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            margin-bottom: 0.3rem;
+        }
+        .job-item:last-child { margin-bottom: 0; }
+        .job-item:hover { background: rgba(255,255,255,0.04); border-color: var(--border); }
+        .job-item.active { background: var(--primary-dim); border-color: var(--border-primary); }
+        .job-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: var(--text-faint); flex-shrink: 0;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .job-item.active .job-dot {
+            background: var(--primary);
+            box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.5);
+        }
+        .job-info { flex: 1; min-width: 0; }
+        .job-company {
+            font-size: 0.8rem; font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .job-title-label {
+            font-size: 0.68rem; color: var(--text-muted);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .job-item.active .job-company { color: var(--primary); }
+        .job-del {
+            width: 22px; height: 22px; border-radius: 5px;
+            border: none; background: transparent;
+            color: var(--text-ghost); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; flex-shrink: 0; padding: 0;
+        }
+        .job-del:hover { background: rgba(239,68,68,0.15); color: var(--danger); }
+        .jobs-empty {
+            font-size: 0.78rem; color: var(--text-faint);
+            text-align: center; padding: 0.5rem 0 0.25rem;
+        }
+        .jobs-add-btn {
+            width: 100%; margin-top: 0.65rem;
+            padding: 0.5rem; border-radius: var(--radius-sm);
+            font-size: 0.78rem; font-weight: 600;
+            background: rgba(255,255,255,0.03);
+            border: 1px dashed var(--border);
+            color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+        .jobs-add-btn:hover {
+            border-color: var(--border-primary);
+            color: var(--primary);
+            background: var(--primary-dim);
+        }
+
+        /* ─── VAC SYNC STATUS ─── */
+        .vac-sync-row {
+            display: flex; align-items: center; gap: 0.45rem;
+            margin-bottom: 1rem;
+            padding: 0.45rem 0.8rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.72rem; font-weight: 500;
+            background: rgba(var(--success-rgb), 0.07);
+            border: 1px solid rgba(var(--success-rgb), 0.2);
+            color: var(--success);
+        }
+        .vac-sync-row.disconnected {
+            background: rgba(255,255,255,0.025);
+            border-color: var(--border);
+            color: var(--text-faint);
+        }
     </style>
 </head>
 <body>
@@ -898,19 +977,19 @@
                 <div class="illu-rows">
                     <div class="illu-row">
                         <span class="illu-row-lbl">Wochenarbeitszeit</span>
-                        <span class="illu-row-val">40 h</span>
+                        <span class="illu-row-val" id="illuWeekly">40 h</span>
                     </div>
                     <div class="illu-row">
                         <span class="illu-row-lbl">Urlaubsanspruch</span>
-                        <span class="illu-row-val">30 Tage</span>
+                        <span class="illu-row-val" id="illuVacation">30 Tage</span>
                     </div>
                     <div class="illu-row">
                         <span class="illu-row-lbl">Aktuelle Vergütung</span>
-                        <span class="illu-row-val accent">1.180 €</span>
+                        <span class="illu-row-val accent" id="illuSalary">1.180 €</span>
                     </div>
                     <div class="illu-row">
                         <span class="illu-row-lbl">Status</span>
-                        <span class="illu-row-val" style="color:var(--success)">Läuft</span>
+                        <span class="illu-row-val" id="illuStatus" style="color:var(--success)">Läuft</span>
                     </div>
                 </div>
             </div>
@@ -1017,10 +1096,14 @@
                             </span>
                             Urlaubsplan
                         </div>
-                        <button class="btn btn-ghost btn-sm" onclick="adjustVacation()">
+                        <button class="btn btn-ghost btn-sm" id="vacActionBtn" onclick="handleVacAction()">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                            Urlaub buchen
+                            <span id="vacActionLabel">Urlaub buchen</span>
                         </button>
+                    </div>
+                    <div class="vac-sync-row disconnected" id="vacSyncRow">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="vacSyncIcon"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <span id="vacSyncLabel">Kein Dashboard verbunden — manuelle Eingabe aktiv</span>
                     </div>
                     <div class="vac-stats">
                         <div class="data-cell">
@@ -1074,6 +1157,16 @@
 
             <!-- Sidebar -->
             <aside class="sidebar reveal reveal-4">
+                <!-- Jobs Switcher -->
+                <div class="side-card">
+                    <div class="side-card-title">Meine Jobs</div>
+                    <div id="jobsList"></div>
+                    <button class="jobs-add-btn" onclick="addNewJob()">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Neuer Job
+                    </button>
+                </div>
+
                 <!-- Contract Details -->
                 <div class="side-card">
                     <div class="side-card-title">Vertragsdetails</div>
@@ -1156,12 +1249,16 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label class="form-label">Ausbildungsdauer</label>
+                    <select class="form-select" id="durationYears" onchange="renderSalaryFields()">
+                        <option value="2">2 Jahre</option>
+                        <option value="3" selected>3 Jahre</option>
+                        <option value="4">4 Jahre</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label class="form-label">Gehalt (€ / Monat)</label>
-                    <div class="form-row-3">
-                        <input type="number" class="form-input" id="salary1" placeholder="1. Jahr" required>
-                        <input type="number" class="form-input" id="salary2" placeholder="2. Jahr" required>
-                        <input type="number" class="form-input" id="salary3" placeholder="3. Jahr" required>
-                    </div>
+                    <div id="salaryFieldsWrap"></div>
                 </div>
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center">
@@ -1337,225 +1434,382 @@
     <script>
         // ═══ VERTRAGS-MANAGER MODULE ═══
         const STORAGE_KEY = 'contract_manager_v2';
+        let appData = { contracts: [], activeContractId: null };
 
-        let contractData = {
-            company: '',
-            jobTitle: '',
-            startDate: '',
-            endDate: '',
-            weeklyHours: 40,
-            vacationDays: 30,
-            salaries: [0, 0, 0],
-            benefits: [],
-            vacationUsed: 0
-        };
+        // ─── UTILS ───
+        function esc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function getActive() {
+            if (!appData.contracts.length) return null;
+            return appData.contracts.find(c => c.id === appData.activeContractId)
+                || appData.contracts[0];
+        }
+
+        function getContractDur(c) { return parseFloat(c.durationYears) || 3; }
+        function getContractYears(c) { return Math.ceil(getContractDur(c)); }
+
+        function getCurrentYear(c) {
+            if (!c || !c.startDate) return 1;
+            const start = new Date(c.startDate);
+            const now = new Date();
+            const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+            return Math.max(1, Math.min(getContractYears(c), Math.floor(months / 12) + 1));
+        }
 
         // ─── SCROLL EFFECTS ───
         window.addEventListener('scroll', () => {
             const scrollTop = window.scrollY;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const prog = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-            document.getElementById('scrollProg').style.width = prog + '%';
-
-            const navbar = document.getElementById('navbar');
-            if (scrollTop > 20) navbar.classList.add('scrolled');
-            else navbar.classList.remove('scrolled');
+            const docH = document.documentElement.scrollHeight - window.innerHeight;
+            document.getElementById('scrollProg').style.width = (docH > 0 ? (scrollTop / docH) * 100 : 0) + '%';
+            document.getElementById('navbar').classList.toggle('scrolled', scrollTop > 20);
         });
 
         // ─── DATA ───
         function loadData() {
             const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) contractData = { ...contractData, ...JSON.parse(stored) };
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    if (parsed.company !== undefined) {
+                        // migrate old single-contract format
+                        const c = {
+                            id: 'c_migrated',
+                            company: parsed.company || '',
+                            jobTitle: parsed.jobTitle || '',
+                            startDate: parsed.startDate || '',
+                            endDate: parsed.endDate || '',
+                            weeklyHours: parsed.weeklyHours || 40,
+                            vacationDays: parsed.vacationDays || 30,
+                            durationYears: 3,
+                            salaries: parsed.salaries || [0, 0, 0],
+                            benefits: parsed.benefits || [],
+                            vacationUsed: parsed.vacationUsed || 0
+                        };
+                        appData = { contracts: [c], activeContractId: c.id };
+                        saveData();
+                    } else if (parsed.contracts) {
+                        appData = parsed;
+                    }
+                } catch (e) { /* ignore corrupt data */ }
+            }
             updateUI();
         }
 
         function saveData() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(contractData));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
         }
 
-        function updateUI() {
-            updateHero();
-            updateStats();
-            updateTimeline();
-            updateSalary();
-            updateVacation();
-            updateBenefits();
-            updateDetails();
+        // ─── JOB MANAGEMENT ───
+        function addNewJob() {
+            const c = {
+                id: 'c_' + Date.now(),
+                company: '', jobTitle: '',
+                startDate: '', endDate: '',
+                weeklyHours: 40, vacationDays: 30,
+                durationYears: 3,
+                salaries: [0, 0, 0],
+                benefits: [], vacationUsed: 0
+            };
+            appData.contracts.push(c);
+            appData.activeContractId = c.id;
+            saveData();
+            updateUI();
+            openContractModal();
         }
 
-        function updateHero() {
-            document.getElementById('companyNameHero').textContent = contractData.company || '—';
-            document.getElementById('jobTitleHero').textContent = contractData.jobTitle || '—';
+        function setActiveContract(id) {
+            appData.activeContractId = id;
+            saveData();
+            updateUI();
         }
 
-        function getCurrentYear() {
-            if (!contractData.startDate) return 1;
-            const start = new Date(contractData.startDate);
-            const now = new Date();
-            const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
-            return Math.min(Math.floor(months / 12) + 1, 3);
-        }
-
-        function updateStats() {
-            const currentYear = getCurrentYear();
-            const salary = contractData.salaries[currentYear - 1] || 0;
-            document.getElementById('currentSalaryDisplay').textContent = salary + ' €';
-            document.getElementById('weeklyHoursDisplay').textContent = contractData.weeklyHours + ' h';
-
-            if (contractData.endDate) {
-                const end = new Date(contractData.endDate);
-                const now = new Date();
-                const months = Math.max(0, Math.floor((end - now) / (1000 * 60 * 60 * 24 * 30)));
-                document.getElementById('remainingMonths').textContent = months;
-            }
-
-            const remaining = contractData.vacationDays - contractData.vacationUsed;
-            document.getElementById('vacationFree').textContent = remaining;
-            const percent = contractData.vacationDays > 0
-                ? Math.round((contractData.vacationUsed / contractData.vacationDays) * 100) : 0;
-            document.getElementById('vacationPercent').textContent = percent + '% genutzt';
-        }
-
-        function updateTimeline() {
-            const timeline = document.getElementById('contractTimeline');
-            if (!contractData.startDate) {
-                timeline.innerHTML = '<div class="empty"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><p>Bitte fülle deine Vertragsdaten aus, um den Verlauf zu sehen.</p></div>';
+        function deleteContract(id, e) {
+            e.stopPropagation();
+            if (appData.contracts.length <= 1) {
+                showToast('Mindestens ein Job muss bestehen bleiben', 'error');
                 return;
             }
+            if (!confirm('Diesen Job und alle zugehörigen Daten unwiderruflich löschen?')) return;
+            appData.contracts = appData.contracts.filter(c => c.id !== id);
+            if (appData.activeContractId === id) appData.activeContractId = appData.contracts[0].id;
+            saveData();
+            updateUI();
+            showToast('Job gelöscht', 'success');
+        }
 
-            const currentYear = getCurrentYear();
-            timeline.innerHTML = [1, 2, 3].map(y => {
-                const isDone = y < currentYear;
-                const isActive = y === currentYear;
-                const badge = isActive
-                    ? '<span class="tl-badge active">Aktuell</span>'
-                    : isDone
-                        ? '<span class="tl-badge done">Abgeschlossen</span>'
-                        : '<span class="tl-badge">Geplant</span>';
-                const statusText = isDone ? 'Abgeschlossen' : isActive ? 'Läuft' : 'Ausstehend';
-                return `
-                    <div class="tl-item ${isDone ? 'done' : ''}">
-                        <div class="tl-head">
-                            <span class="tl-year">${y}. Ausbildungsjahr</span>
-                            ${badge}
-                        </div>
-                        <div class="tl-cols">
-                            <div>
-                                <div class="tl-detail-lbl">Gehalt / Monat</div>
-                                <div class="tl-detail-val">${contractData.salaries[y - 1] || 0} €</div>
-                            </div>
-                            <div>
-                                <div class="tl-detail-lbl">Status</div>
-                                <div class="tl-detail-val">${statusText}</div>
-                            </div>
-                        </div>
-                    </div>`;
+        // ─── UI UPDATE ───
+        function updateUI() {
+            updateJobsList();
+            const c = getActive();
+            updateHero(c);
+            updateStats(c);
+            updateTimeline(c);
+            updateSalary(c);
+            updateVacation(c);
+            updateBenefits(c);
+            updateDetails(c);
+        }
+
+        function updateJobsList() {
+            const list = document.getElementById('jobsList');
+            if (!appData.contracts.length) {
+                list.innerHTML = '<div class="jobs-empty">Noch kein Job erfasst.</div>';
+                return;
+            }
+            const activeId = appData.activeContractId || appData.contracts[0].id;
+            const canDelete = appData.contracts.length > 1;
+            list.innerHTML = appData.contracts.map(c => `
+                <div class="job-item ${c.id === activeId ? 'active' : ''}" onclick="setActiveContract('${c.id}')">
+                    <div class="job-dot"></div>
+                    <div class="job-info">
+                        <div class="job-company">${esc(c.company || 'Neuer Job')}</div>
+                        <div class="job-title-label">${esc(c.jobTitle || '—')}</div>
+                    </div>
+                    ${canDelete ? `<button class="job-del" onclick="deleteContract('${c.id}',event)" title="Job löschen">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>` : ''}
+                </div>`).join('');
+        }
+
+        function updateHero(c) {
+            document.getElementById('companyNameHero').textContent = c ? (c.company || '—') : '—';
+            document.getElementById('jobTitleHero').textContent = c ? (c.jobTitle || '—') : '—';
+            if (c) {
+                const cy = getCurrentYear(c);
+                const salNow = (c.salaries[cy - 1] || 0).toLocaleString('de-DE');
+                const ended = c.endDate && new Date(c.endDate) < new Date();
+                document.getElementById('illuWeekly').textContent = c.weeklyHours + ' h';
+                document.getElementById('illuVacation').textContent = c.vacationDays + ' Tage';
+                document.getElementById('illuSalary').textContent = salNow + ' €';
+                const statusEl = document.getElementById('illuStatus');
+                statusEl.textContent = ended ? 'Beendet' : 'Läuft';
+                statusEl.style.color = ended ? 'var(--text-muted)' : 'var(--success)';
+            }
+        }
+
+        function updateStats(c) {
+            if (!c) {
+                ['currentSalaryDisplay','weeklyHoursDisplay','remainingMonths','vacationFree'].forEach(id => {
+                    document.getElementById(id).textContent = '—';
+                });
+                document.getElementById('vacationPercent').textContent = '0% genutzt';
+                return;
+            }
+            const cy = getCurrentYear(c);
+            const salary = c.salaries[cy - 1] || 0;
+            document.getElementById('currentSalaryDisplay').textContent = salary.toLocaleString('de-DE') + ' €';
+            document.getElementById('weeklyHoursDisplay').textContent = c.weeklyHours + ' h';
+            if (c.endDate) {
+                const months = Math.max(0, Math.floor((new Date(c.endDate) - new Date()) / (1000 * 60 * 60 * 24 * 30)));
+                document.getElementById('remainingMonths').textContent = months;
+            } else {
+                document.getElementById('remainingMonths').textContent = '—';
+            }
+            const remaining = (c.vacationDays || 0) - (c.vacationUsed || 0);
+            document.getElementById('vacationFree').textContent = remaining;
+            const pct = c.vacationDays > 0 ? Math.round((c.vacationUsed / c.vacationDays) * 100) : 0;
+            document.getElementById('vacationPercent').textContent = pct + '% genutzt';
+        }
+
+        function updateTimeline(c) {
+            const el = document.getElementById('contractTimeline');
+            if (!c || !c.startDate) {
+                el.innerHTML = '<div class="empty"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><p>Bitte fülle deine Vertragsdaten aus, um den Verlauf zu sehen.</p></div>';
+                return;
+            }
+            const totalYears = getContractYears(c);
+            const cy = getCurrentYear(c);
+            el.innerHTML = Array.from({ length: totalYears }, (_, i) => {
+                const y = i + 1;
+                const done = y < cy, active = y === cy;
+                const badge = active ? '<span class="tl-badge active">Aktuell</span>'
+                    : done ? '<span class="tl-badge done">Abgeschlossen</span>'
+                    : '<span class="tl-badge">Geplant</span>';
+                return `<div class="tl-item ${done ? 'done' : ''}">
+                    <div class="tl-head"><span class="tl-year">${y}. Ausbildungsjahr</span>${badge}</div>
+                    <div class="tl-cols">
+                        <div><div class="tl-detail-lbl">Gehalt / Monat</div><div class="tl-detail-val">${(c.salaries[i] || 0).toLocaleString('de-DE')} €</div></div>
+                        <div><div class="tl-detail-lbl">Status</div><div class="tl-detail-val">${done ? 'Abgeschlossen' : active ? 'Läuft' : 'Ausstehend'}</div></div>
+                    </div>
+                </div>`;
             }).join('');
         }
 
-        function updateSalary() {
-            const total = contractData.salaries.reduce((a, b) => a + b, 0) * 12;
+        function updateSalary(c) {
+            if (!c) {
+                document.getElementById('salaryGrid').innerHTML = '<div class="data-cell"><div class="data-cell-lbl">Keine Daten</div><div class="data-cell-val">—</div></div>';
+                return;
+            }
+            const dur = getContractDur(c);
+            const years = getContractYears(c);
+            const total = (c.salaries || []).slice(0, years).reduce((a, b) => a + (b * 12), 0);
             document.getElementById('salaryGrid').innerHTML =
-                [1, 2, 3].map(y => `
+                Array.from({ length: years }, (_, i) => `
                     <div class="data-cell">
-                        <div class="data-cell-lbl">${y}. Jahr</div>
-                        <div class="data-cell-val">${contractData.salaries[y - 1] || 0} €</div>
-                    </div>`).join('') + `
-                <div class="data-cell">
-                    <div class="data-cell-lbl">Gesamt (3 J.)</div>
+                        <div class="data-cell-lbl">${i + 1}. Jahr</div>
+                        <div class="data-cell-val">${(c.salaries[i] || 0).toLocaleString('de-DE')} €</div>
+                    </div>`).join('') +
+                `<div class="data-cell">
+                    <div class="data-cell-lbl">Gesamt (${dur} J.)</div>
                     <div class="data-cell-val accent">${total.toLocaleString('de-DE')} €</div>
                 </div>`;
         }
 
-        function updateVacation() {
-            const total = contractData.vacationDays;
-            const used = contractData.vacationUsed;
-            const available = total - used;
-            const percent = total > 0 ? Math.round((used / total) * 100) : 0;
+        // ─── DASHBOARD VACATION SYNC ───
+        function getDashboardVacation() {
+            try {
+                const raw = localStorage.getItem('tg_pro_data');
+                if (!raw) return null;
+                const data = JSON.parse(raw);
+                if (!data || !data.settings || !data.settings.vacation) return null;
+                const v = data.settings.vacation;
+                const mode = v.mode || 'days';
+                const currentYear = new Date().getFullYear();
 
-            document.getElementById('vacationTotal').textContent = total;
-            document.getElementById('vacationUsedVal').textContent = used;
-            document.getElementById('vacationAvailable').textContent = available;
-            document.getElementById('vacationProgressPercent').textContent = percent + '%';
-            document.getElementById('vacationProgressBar').style.width = percent + '%';
+                // Direkt aus Einträgen berechnen (kein Stale-Cache-Problem)
+                const vacEntries = (data.entries || []).filter(e =>
+                    e.type === 'vacation' &&
+                    e.expected > 0 &&
+                    e.date && e.date.startsWith(currentYear + '-')
+                );
+                const manual = parseFloat(v.usedManual || 0) || 0;
+                let used;
+                if (mode === 'hours') {
+                    const h = vacEntries.reduce((sum, e) => sum + (parseFloat(e.expected) || 0), 0);
+                    used = Math.round((h + manual) * 100) / 100;
+                } else {
+                    used = vacEntries.length + manual;
+                }
+                return { total: parseFloat(v.total) || 0, used, mode, year: currentYear };
+            } catch (e) { return null; }
         }
 
-        function updateBenefits() {
+        function updateVacation(c) {
+            const dash = getDashboardVacation();
+            const total = dash ? dash.total : (c ? (c.vacationDays || 0) : 0);
+            const used  = dash ? dash.used  : (c ? (c.vacationUsed || 0) : 0);
+            const available = total - used;
+            const pct = total > 0 ? Math.round((used / total) * 100) : 0;
+
+            document.getElementById('vacationTotal').textContent    = total;
+            document.getElementById('vacationUsedVal').textContent  = used;
+            document.getElementById('vacationAvailable').textContent = Math.max(0, available);
+            document.getElementById('vacationProgressPercent').textContent = pct + '%';
+            document.getElementById('vacationProgressBar').style.width = Math.min(100, pct) + '%';
+
+            // Sync status badge
+            const row  = document.getElementById('vacSyncRow');
+            const icon = document.getElementById('vacSyncIcon');
+            const lbl  = document.getElementById('vacSyncLabel');
+            const btn  = document.getElementById('vacActionBtn');
+            const btnLbl = document.getElementById('vacActionLabel');
+
+            if (dash) {
+                row.className = 'vac-sync-row';
+                icon.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+                lbl.textContent = 'Live aus Dashboard ' + dash.year + ' — ' + (dash.mode === 'hours' ? 'Stunden-Modus' : 'Tage-Modus');
+                if (btnLbl) btnLbl.textContent = 'Im Dashboard buchen';
+            } else {
+                row.className = 'vac-sync-row disconnected';
+                icon.innerHTML = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>';
+                lbl.textContent = 'Kein Dashboard verbunden — manuelle Eingabe aktiv';
+                if (btnLbl) btnLbl.textContent = 'Urlaub buchen';
+            }
+        }
+
+        function handleVacAction() {
+            if (getDashboardVacation()) {
+                window.location.href = '/';
+            } else {
+                adjustVacation();
+            }
+        }
+
+        function updateBenefits(c) {
             const grid = document.getElementById('benefitsGrid');
-            if (!contractData.benefits.length) {
+            if (!c || !c.benefits.length) {
                 grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg></div><p>Noch keine Benefits hinterlegt — füge z.B. Jobticket, Essenszuschuss oder VWL hinzu.</p></div>';
                 return;
             }
-            grid.innerHTML = contractData.benefits.map((b, i) => `
-                <div class="benefit-tile" title="${(b.description || '').replace(/"/g, '&quot;')}" onclick="removeBenefit(${i})">
+            grid.innerHTML = c.benefits.map((b, i) => `
+                <div class="benefit-tile" title="${esc(b.description || '')}" onclick="removeBenefit(${i})">
                     <div class="benefit-tile-icon">${b.icon || '🎁'}</div>
-                    <div class="benefit-tile-name">${b.name}</div>
+                    <div class="benefit-tile-name">${esc(b.name)}</div>
                 </div>`).join('');
         }
 
-        function updateDetails() {
-            const company = contractData.company || '—';
-            const start = contractData.startDate ? new Date(contractData.startDate).toLocaleDateString('de-DE') : '—';
-            const end = contractData.endDate ? new Date(contractData.endDate).toLocaleDateString('de-DE') : '—';
+        function updateDetails(c) {
+            const company = c ? (c.company || '—') : '—';
+            const start = c && c.startDate ? new Date(c.startDate).toLocaleDateString('de-DE') : '—';
+            const end = c && c.endDate ? new Date(c.endDate).toLocaleDateString('de-DE') : '—';
             document.getElementById('contractDetailsPanel').innerHTML = `
-                <div class="detail-row">
-                    <span class="detail-lbl">Unternehmen</span>
-                    <span class="detail-val" title="${company}">${company}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-lbl">Start</span>
-                    <span class="detail-val">${start}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-lbl">Ende</span>
-                    <span class="detail-val">${end}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-lbl">Arbeitszeit</span>
-                    <span class="detail-val">${contractData.weeklyHours} h/Wo</span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-lbl">Urlaub</span>
-                    <span class="detail-val">${contractData.vacationDays} Tage/Jahr</span>
-                </div>`;
+                <div class="detail-row"><span class="detail-lbl">Unternehmen</span><span class="detail-val" title="${esc(company)}">${esc(company)}</span></div>
+                <div class="detail-row"><span class="detail-lbl">Start</span><span class="detail-val">${start}</span></div>
+                <div class="detail-row"><span class="detail-lbl">Ende</span><span class="detail-val">${end}</span></div>
+                <div class="detail-row"><span class="detail-lbl">Arbeitszeit</span><span class="detail-val">${c ? c.weeklyHours : 0} h/Wo</span></div>
+                <div class="detail-row"><span class="detail-lbl">Urlaub</span><span class="detail-val">${c ? c.vacationDays : 0} Tage/Jahr</span></div>`;
+        }
+
+        // ─── SALARY FIELDS (DYNAMIC) ───
+        function renderSalaryFields(savedValues) {
+            const sel = document.getElementById('durationYears');
+            const dur = parseFloat(sel ? sel.value : 3) || 3;
+            const years = Math.ceil(dur);
+            const wrap = document.getElementById('salaryFieldsWrap');
+            if (!wrap) return;
+            const cols = years <= 2 ? 'repeat(2,1fr)' : 'repeat(3,1fr)';
+            wrap.style.cssText = `display:grid;gap:0.7rem;grid-template-columns:${cols}`;
+            wrap.innerHTML = Array.from({ length: years }, (_, i) => {
+                const val = (savedValues && savedValues[i] != null && savedValues[i] !== 0) ? savedValues[i] : '';
+                return `<input type="number" class="form-input" id="salary_y_${i + 1}" placeholder="${i + 1}. Jahr" value="${val}" min="0">`;
+            }).join('');
         }
 
         // ─── CONTRACT MODAL ───
         function openContractModal() {
-            document.getElementById('company').value      = contractData.company || '';
-            document.getElementById('jobTitle').value     = contractData.jobTitle || '';
-            document.getElementById('startDate').value    = contractData.startDate || '';
-            document.getElementById('endDate').value      = contractData.endDate || '';
-            document.getElementById('weeklyHours').value  = contractData.weeklyHours || 40;
-            document.getElementById('vacationDays').value = contractData.vacationDays || 30;
-            document.getElementById('salary1').value      = contractData.salaries[0] || '';
-            document.getElementById('salary2').value      = contractData.salaries[1] || '';
-            document.getElementById('salary3').value      = contractData.salaries[2] || '';
+            const c = getActive();
+            document.getElementById('company').value      = c ? (c.company || '') : '';
+            document.getElementById('jobTitle').value     = c ? (c.jobTitle || '') : '';
+            document.getElementById('startDate').value    = c ? (c.startDate || '') : '';
+            document.getElementById('endDate').value      = c ? (c.endDate || '') : '';
+            document.getElementById('weeklyHours').value  = c ? (c.weeklyHours || 40) : 40;
+            document.getElementById('vacationDays').value = c ? (c.vacationDays || 30) : 30;
+            const durSel = document.getElementById('durationYears');
+            if (durSel) durSel.value = c ? (c.durationYears || 3) : 3;
+            renderSalaryFields(c ? c.salaries : []);
             document.getElementById('contractModal').classList.add('active');
         }
         function closeContractModal() { document.getElementById('contractModal').classList.remove('active'); }
 
         function saveContract(e) {
             e.preventDefault();
-            contractData.company      = document.getElementById('company').value;
-            contractData.jobTitle     = document.getElementById('jobTitle').value;
-            contractData.startDate    = document.getElementById('startDate').value;
-            contractData.endDate      = document.getElementById('endDate').value;
-            contractData.weeklyHours  = parseFloat(document.getElementById('weeklyHours').value);
-            contractData.vacationDays = parseInt(document.getElementById('vacationDays').value);
-            contractData.salaries     = [
-                parseInt(document.getElementById('salary1').value) || 0,
-                parseInt(document.getElementById('salary2').value) || 0,
-                parseInt(document.getElementById('salary3').value) || 0
-            ];
+            const c = getActive();
+            if (!c) return;
+            const dur = parseFloat(document.getElementById('durationYears').value) || 3;
+            const years = Math.ceil(dur);
+            c.company      = document.getElementById('company').value.trim();
+            c.jobTitle     = document.getElementById('jobTitle').value.trim();
+            c.startDate    = document.getElementById('startDate').value;
+            c.endDate      = document.getElementById('endDate').value;
+            c.weeklyHours  = parseFloat(document.getElementById('weeklyHours').value) || 40;
+            c.vacationDays = parseInt(document.getElementById('vacationDays').value) || 30;
+            c.durationYears = dur;
+            c.salaries     = Array.from({ length: years }, (_, i) => {
+                const el = document.getElementById('salary_y_' + (i + 1));
+                return el ? (parseFloat(el.value) || 0) : 0;
+            });
             saveData(); updateUI(); closeContractModal();
             showToast('Vertragsdaten gespeichert', 'success');
         }
 
         // ─── CALCULATOR MODAL ───
         function openCalculatorModal() {
-            const salary = contractData.salaries[getCurrentYear() - 1] || 0;
-            document.getElementById('bruttoInput').value = salary;
+            const c = getActive();
+            document.getElementById('bruttoInput').value = c ? (c.salaries[getCurrentYear(c) - 1] || 0) : 0;
             calculateNet();
             document.getElementById('calculatorModal').classList.add('active');
         }
@@ -1578,8 +1832,10 @@
 
         function saveBenefit(e) {
             e.preventDefault();
-            contractData.benefits.push({
-                id:          Date.now().toString(),
+            const c = getActive();
+            if (!c) return;
+            c.benefits.push({
+                id: Date.now().toString(),
                 name:        document.getElementById('benefitName').value,
                 description: document.getElementById('benefitDesc').value,
                 icon:        document.getElementById('benefitIcon').value || '🎁'
@@ -1589,33 +1845,40 @@
         }
 
         function removeBenefit(index) {
-            if (!confirm('Benefit entfernen?')) return;
-            contractData.benefits.splice(index, 1);
+            const c = getActive();
+            if (!c || !confirm('Benefit entfernen?')) return;
+            c.benefits.splice(index, 1);
             saveData(); updateUI();
         }
 
         // ─── VACATION MODAL ───
         function adjustVacation() {
-            document.getElementById('vacationUsedInput').value = contractData.vacationUsed;
+            const c = getActive();
+            document.getElementById('vacationUsedInput').value = c ? (c.vacationUsed || 0) : 0;
             document.getElementById('vacationModal').classList.add('active');
         }
         function closeVacationModal() { document.getElementById('vacationModal').classList.remove('active'); }
 
         function saveVacation() {
+            const c = getActive();
+            if (!c) return;
             const val = parseInt(document.getElementById('vacationUsedInput').value) || 0;
-            contractData.vacationUsed = Math.max(0, Math.min(val, contractData.vacationDays));
+            c.vacationUsed = Math.max(0, Math.min(val, c.vacationDays));
             saveData(); updateUI(); closeVacationModal();
             showToast('Urlaub aktualisiert', 'success');
         }
 
         // ─── EXPORT ───
         function exportData() {
-            const json = JSON.stringify(contractData, null, 2);
+            const c = getActive();
+            const json = JSON.stringify(c || appData, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const url  = URL.createObjectURL(blob);
             const a    = document.createElement('a');
-            a.href = url; a.download = `vertrag-${new Date().toISOString().split('T')[0]}.json`;
-            a.click(); URL.revokeObjectURL(url);
+            a.href = url;
+            a.download = `vertrag-${(c && c.company ? c.company.toLowerCase().replace(/\s+/g,'-') : 'export')}-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
             showToast('Daten exportiert', 'success');
         }
 
@@ -1623,26 +1886,31 @@
         function showToast(msg, type = 'success') {
             const el = document.createElement('div');
             el.className = `toast toast-${type}`;
-            el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' + msg;
+            const icon = type === 'success'
+                ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+                : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+            el.innerHTML = icon + esc(msg);
             document.body.appendChild(el);
             setTimeout(() => el.remove(), 3000);
         }
 
-        // ─── KEYBOARD ───
+        // ─── KEYBOARD / BACKDROP ───
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
-                closeContractModal();
-                closeCalculatorModal();
-                closeBenefitsModal();
-                closeVacationModal();
+                closeContractModal(); closeCalculatorModal();
+                closeBenefitsModal(); closeVacationModal();
             }
         });
-
-        // ─── CLOSE ON BACKDROP CLICK ───
         document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', e => {
-                if (e.target === modal) modal.classList.remove('active');
-            });
+            modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
+        });
+
+        // Live-Sync: tg_pro_data Änderungen (Urlaub im Dashboard gebucht) sofort übernehmen
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'tg_pro_data') updateVacation(getActive());
+        });
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) updateVacation(getActive());
         });
 
         loadData();

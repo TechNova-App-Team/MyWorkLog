@@ -106,17 +106,19 @@
     }
 
     function recalculateVacationUsed() {
-        // Gleittage zählen NICHT als Urlaubstage (nur echte vacation-Einträge)
-        const vacationEntries = data.entries.filter(e => e.type === 'vacation' && e.expected > 0);
+        // Nur Einträge des aktuellen Kalenderjahres — Urlaubs-Anspruch ist jährlich
+        const currentYear = new Date().getFullYear();
+        const vacationEntries = data.entries.filter(e =>
+            e.type === 'vacation' &&
+            e.expected > 0 &&
+            e.date && e.date.startsWith(currentYear + '-')
+        );
         const manual = parseFloat(data.settings.vacation.usedManual || 0) || 0;
         if (getVacationMode() === 'hours') {
-            // Verbraucht in STUNDEN: Summe der expected-Stunden aller Urlaubseinträge + manueller Wert (Stunden)
             const autoUsedHours = vacationEntries.reduce((sum, e) => sum + (parseFloat(e.expected) || 0), 0);
             data.settings.vacation.used = Math.round((autoUsedHours + manual) * 100) / 100;
         } else {
-            // Verbraucht in TAGEN: 1 Eintrag = 1 Tag (Legacy)
-            const autoUsedDays = vacationEntries.length;
-            data.settings.vacation.used = autoUsedDays + manual;
+            data.settings.vacation.used = vacationEntries.length + manual;
         }
     }
     

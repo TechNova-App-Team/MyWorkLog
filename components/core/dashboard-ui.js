@@ -122,15 +122,17 @@
             projEl.title = `Prognose bis ${endStr} (30 Arbeitstage)\nGenauigkeit: ${confLabel} ${confidence} (${totalWorkDays} Tage Datenbasis)\nØ ${avgDiffPerWorkDay >= 0 ? '+' : ''}${(avgDiffPerWorkDay * 60).toFixed(0)} min/Tag`;
         }
 
-        const totalVacation = parseFloat(data.settings.vacation.total);
-        const usedVacation = data.settings.vacation.used;
-        const vacMode = (typeof getVacationMode === 'function') ? getVacationMode() : 'days';
-        const vacEl = document.getElementById('valVacationUsed');
-        const vacLabelEls = document.querySelectorAll('.kpi-stats__vacation-label');
+        const carriedOver    = parseFloat(data.settings.vacation.carriedOver || 0) || 0;
+        const totalVacation  = parseFloat(data.settings.vacation.total) + carriedOver;
+        const usedVacation   = data.settings.vacation.used;
+        const vacMode        = (typeof getVacationMode === 'function') ? getVacationMode() : 'days';
+        const unit           = vacMode === 'hours' ? 'h' : 'T';
+        const vacEl          = document.getElementById('valVacationUsed');
+        const vacLabelEls    = document.querySelectorAll('.kpi-stats__vacation-label');
         if (vacMode === 'hours') {
             const usedH = Math.round(usedVacation * 10) / 10;
-            const totH = Math.round(totalVacation * 10) / 10;
-            const refH = (typeof getVacationRefHours === 'function') ? getVacationRefHours() : 8;
+            const totH  = Math.round(totalVacation * 10) / 10;
+            const refH  = (typeof getVacationRefHours === 'function') ? getVacationRefHours() : 8;
             const eqDays = refH > 0 ? (usedVacation / refH).toFixed(1) : '—';
             const eqTotalDays = refH > 0 ? Math.round(totalVacation / refH) : '—';
             vacEl.innerText = `${usedH}h / ${totH}h`;
@@ -138,16 +140,94 @@
             vacLabelEls.forEach(el => { el.textContent = 'Urlaubsstunden'; });
         } else {
             vacEl.innerText = `${usedVacation} / ${totalVacation}`;
-            vacEl.title = '';
+            vacEl.title = carriedOver > 0 ? `inkl. ${carriedOver} Übertrag aus Vorjahr` : '';
             vacLabelEls.forEach(el => { el.textContent = 'Urlaubstage'; });
         }
         const vacPct = totalVacation > 0 ? (usedVacation / totalVacation) * 100 : 0;
         const vacBar = document.getElementById('vacationProgressBar');
         vacBar.style.width = `${Math.min(vacPct, 100)}%`;
-        // Smart color: green → yellow → red based on usage
         if (vacPct > 90) vacBar.style.background = 'var(--danger)';
         else if (vacPct > 70) vacBar.style.background = '#f59e0b';
         else vacBar.style.background = 'var(--success)';
+
+        // ─── VACATION PACING ───
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const endOfYear   = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+        const yearProgress = (now - startOfYear) / (endOfYear - startOfYear);
+        const yearPct      = Math.round(yearProgress * 100);
+        const pace = (yearProgress > 0.02 && totalVacation > 0) ? (vacPct / 100) / yearProgress : null;
+
+        const pacingBlock = document.getElementById('vacPacingBlock');
+        if (pacingBlock) {
+            pacingBlock.style.display = '';
+
+            const yearBar    = document.getElementById('vacYearBar');
+            const yearPctEl  = document.getElementById('vacYearPct');
+            const paceDot    = document.getElementById('vacPaceDot');
+            const paceLabel  = document.getElementById('vacPaceLabel');
+            const prognoseEl = document.getElementById('vacPacePrognose');
+            const coHint     = document.getElementById('vacCarriedOverHint');
+            const coVal      = document.getElementById('vacCarriedOverVal');
+            const arcFill    = document.getElementById('vacArcFill');
+            const arcPctTxt  = document.getElementById('vacArcPct');
+
+            if (yearBar) yearBar.style.width = yearPct + '%';
+            if (yearPctEl) yearPctEl.textContent = yearPct + '%';
+            // Arc: circumference = 2π×32 ≈ 201
+            if (arcFill) { const offset = 201 - (yearPct / 100) * 201; arcFill.style.strokeDashoffset = offset; }
+            if (arcPctTxt) arcPctTxt.textContent = yearPct + '%';
+
+            // Status
+            let statusText = 'Ausgeglichen', statusColor = 'var(--primary)';
+            if (pace !== null) {
+                if      (pace < 0.45) { statusText = 'Sehr sparsam';  statusColor = '#06b6d4'; }
+                else if (pace < 0.80) { statusText = 'Sparsam';       statusColor = 'var(--success)'; }
+                else if (pace < 1.20) { statusText = 'Ausgeglichen';  statusColor = 'var(--primary)'; }
+                else if (pace < 1.60) { statusText = 'Entspannt';     statusColor = '#f59e0b'; }
+                else                  { statusText = 'Kritisch';      statusColor = 'var(--danger)'; }
+            }
+            if (paceDot)   { paceDot.style.background = statusColor; paceDot.style.boxShadow = `0 0 5px ${statusColor}`; }
+            if (paceLabel) { paceLabel.textContent = statusText; paceLabel.style.color = statusColor; }
+
+            // Prognose
+            if (prognoseEl && pace !== null && yearProgress > 0.05) {
+                const projUsage   = usedVacation / yearProgress;
+                const projRemain  = Math.round((totalVacation - projUsage) * 10) / 10;
+                const u           = vacMode === 'hours' ? 'h' : 'T.';
+                if (projRemain > 0) {
+                    prognoseEl.textContent = `≈ +${projRemain}${u} übrig`;
+                    prognoseEl.style.color = 'var(--success)';
+                } else if (projRemain < 0) {
+                    prognoseEl.textContent = `≈ ${Math.abs(projRemain)}${u} fehlen`;
+                    prognoseEl.style.color = 'var(--danger)';
+                } else {
+                    prognoseEl.textContent = 'exakt aufgebraucht';
+                    prognoseEl.style.color = 'var(--text-faint)';
+                }
+            }
+
+            // Carry-over hint
+            if (coHint && coVal) {
+                if (carriedOver > 0) {
+                    coHint.style.display = '';
+                    coVal.textContent = carriedOver + (vacMode === 'hours' ? 'h' : ' Tage');
+                } else {
+                    coHint.style.display = 'none';
+                }
+            }
+
+            // History-view "Verbraucht" bar (different IDs to avoid duplicate-ID clash)
+            const histBar  = document.getElementById('vacHistBar');
+            const histUsed = document.getElementById('vacHistUsed');
+            if (histBar) {
+                histBar.style.width = Math.min(vacPct, 100) + '%';
+                histBar.style.background = vacPct > 90 ? 'var(--danger)' : vacPct > 70 ? '#f59e0b' : 'var(--primary)';
+            }
+            if (histUsed) {
+                const dashVacEl = document.getElementById('valVacationUsed');
+                if (dashVacEl) histUsed.textContent = dashVacEl.innerText;
+            }
+        }
 
         // Mini Week Progress Dots (Mo-Fr)
         if (typeof renderWeekDots === 'function') renderWeekDots();

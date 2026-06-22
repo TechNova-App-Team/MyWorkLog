@@ -235,8 +235,9 @@
             const oldBreakMin = data.settings.break.min || 30;
             data.settings.break.min = [0, oldBreakMin, oldBreakMin, oldBreakMin, oldBreakMin, 15, 0]; // 15 Min Pause für Freitag
         }
-        if(!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0, mode:'days'};
+        if(!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0, carriedOver:0, mode:'days'};
         if(typeof data.settings.vacation.mode === 'undefined') data.settings.vacation.mode = 'days';
+        if(typeof data.settings.vacation.carriedOver === 'undefined') data.settings.vacation.carriedOver = 0;
 
         // Zeit-Rundung: Default = aus (Backward-Compat). User schaltet in Settings ein.
         if(!data.settings.rounding) data.settings.rounding = { enabled:false, mode:'commercial', taktungMinutes:15 };

@@ -2776,6 +2776,74 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 </div>
             </div>
 
+            <!-- ── URLAUBS-PACING ── -->
+            <div id="vacPacingBlock" style="display:none; margin-bottom:1rem;">
+                <div class="vac-pacing-card">
+                    <!-- Left: Year arc -->
+                    <div class="vac-pacing-arc">
+                        <svg viewBox="0 0 80 80" class="vac-arc-svg">
+                            <circle class="vac-arc-bg" cx="40" cy="40" r="32" />
+                            <circle class="vac-arc-fill" id="vacArcFill" cx="40" cy="40" r="32"
+                                stroke-dasharray="201 201" stroke-dashoffset="201" />
+                            <text id="vacArcPct" class="vac-arc-pct" x="40" y="38" text-anchor="middle">0%</text>
+                            <text class="vac-arc-sub" x="40" y="52" text-anchor="middle">Jahresverlauf</text>
+                        </svg>
+                    </div>
+                    <!-- Right: Status + details -->
+                    <div class="vac-pacing-info">
+                        <div class="vac-pacing-status">
+                            <span id="vacPaceDot" class="vac-pace-dot"></span>
+                            <span id="vacPaceLabel" class="vac-pace-label">—</span>
+                            <span id="vacPacePrognose" class="vac-pace-prognose"></span>
+                        </div>
+                        <!-- Urlaubsbalken -->
+                        <div class="vac-pacing-bars">
+                            <div class="vac-bar-row">
+                                <span class="vac-bar-lbl">Verbraucht</span>
+                                <div class="vac-bar-track">
+                                    <div id="vacHistBar" class="vac-bar-fill vac-bar-used"></div>
+                                </div>
+                                <span id="vacHistUsed" class="vac-bar-val">—</span>
+                            </div>
+                            <div class="vac-bar-row">
+                                <span class="vac-bar-lbl">Jahresverlauf</span>
+                                <div class="vac-bar-track">
+                                    <div id="vacYearBar" class="vac-bar-fill vac-bar-year"></div>
+                                </div>
+                                <span id="vacYearPct" class="vac-bar-val">0%</span>
+                            </div>
+                        </div>
+                        <div id="vacCarriedOverHint" class="vac-carried-hint" style="display:none;">
+                            inkl. <strong><span id="vacCarriedOverVal">0</span></strong> Übertrag aus Vorjahr
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+            .vac-pacing-card{display:flex;align-items:center;gap:1.1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1rem 1.15rem;}
+            .vac-pacing-arc{flex-shrink:0;width:80px;height:80px;}
+            .vac-arc-svg{width:80px;height:80px;transform:rotate(-90deg);}
+            .vac-arc-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:6;}
+            .vac-arc-fill{fill:none;stroke:var(--primary);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 0.8s cubic-bezier(0.34,1.56,0.64,1),stroke 0.4s;}
+            .vac-arc-pct{fill:var(--text-main);font-size:13px;font-weight:700;font-family:'Inter',sans-serif;transform:rotate(90deg);transform-origin:40px 40px;}
+            .vac-arc-sub{fill:var(--text-muted);font-size:7px;font-family:'Inter',sans-serif;transform:rotate(90deg);transform-origin:40px 40px;}
+            .vac-pacing-info{flex:1;min-width:0;}
+            .vac-pacing-status{display:flex;align-items:center;gap:6px;margin-bottom:0.6rem;flex-wrap:wrap;}
+            .vac-pace-dot{width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;transition:background 0.3s,box-shadow 0.3s;}
+            .vac-pace-label{font-size:0.82rem;font-weight:700;color:var(--text-main);}
+            .vac-pace-prognose{font-size:0.75rem;color:var(--text-muted);margin-left:auto;}
+            .vac-pacing-bars{display:flex;flex-direction:column;gap:6px;}
+            .vac-bar-row{display:grid;grid-template-columns:76px 1fr 48px;align-items:center;gap:8px;}
+            .vac-bar-lbl{font-size:0.68rem;color:var(--text-muted);}
+            .vac-bar-track{height:6px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;}
+            .vac-bar-fill{height:100%;border-radius:99px;transition:width 0.6s ease;}
+            .vac-bar-used{background:var(--primary);}
+            .vac-bar-year{background:rgba(255,255,255,0.22);}
+            .vac-bar-val{font-size:0.7rem;color:var(--text-muted);text-align:right;white-space:nowrap;}
+            .vac-carried-hint{margin-top:6px;font-size:0.68rem;color:var(--text-muted);}
+            </style>
+
             <!-- ── STATS STRIP ── -->
             <div class="hl-stats">
                 <div class="hl-stat-card">

@@ -53,6 +53,7 @@
         }
         if (tabId === 'history') {
             renderHistoryView();
+            try { updateUI(); } catch(e) {}
         }
         if (tabId === 'yearview') {
             renderYearView();

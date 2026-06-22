@@ -401,19 +401,59 @@
     // ===== ERROR BOUNDARY / FALLBACK UI =====
     window.addEventListener('error', function(event) {
         console.error('🔴 Global Error:', event.message, event.filename, event.lineno);
-        const mainDiv = document.querySelector('.main') || document.body;
-        if (!mainDiv.querySelector('.error-fallback')) {
-            const errorUI = document.createElement('div');
-            errorUI.className = 'error-fallback';
-            errorUI.innerHTML = `
-                <div style="background: var(--bg-glass); border: 1px solid var(--danger); border-radius: var(--radius); padding: 2rem; margin: 2rem 0; text-align: center;">
-                    <h2 style="color: var(--danger); margin-bottom: 1rem;">⚠️ Oops! Etwas ist schief gelaufen</h2>
-                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Die App hat einen Fehler entdeckt. Bitte versuche die Seite zu aktualisieren. Oder Wende dich an den Support (support@myworklog.com).</p>
-                    <button onclick="location.reload()" style="background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600;">🔄 Seite aktualisieren</button>
-                </div>
-            `;
-            mainDiv.insertBefore(errorUI, mainDiv.firstChild);
-        }
+        if (document.querySelector('.mwl-error-overlay')) return;
+        const overlay = document.createElement('div');
+        overlay.className = 'mwl-error-overlay';
+        const msg = (event.message || 'Unbekannter Fehler').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const src = ((event.filename || '') + (event.lineno ? ':' + event.lineno : '')).replace(/</g,'&lt;');
+        overlay.innerHTML = `
+<style>
+.mwl-error-overlay{position:fixed;inset:0;z-index:99999;background:rgba(3,3,5,0.88);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);display:flex;align-items:center;justify-content:center;padding:1.5rem;animation:mwlErrFade 0.25s ease}
+@keyframes mwlErrFade{from{opacity:0}to{opacity:1}}
+.mwl-err-atmos{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.mwl-err-atmos::before{content:'';position:absolute;width:520px;height:520px;border-radius:50%;background:rgba(239,68,68,0.07);filter:blur(100px);top:-15%;right:-10%}
+.mwl-err-atmos::after{content:'';position:absolute;width:340px;height:340px;border-radius:50%;background:rgba(168,85,247,0.05);filter:blur(80px);bottom:-10%;left:-8%}
+.mwl-err-card{position:relative;background:linear-gradient(160deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01));border:1px solid rgba(239,68,68,0.2);border-top:1px solid rgba(239,68,68,0.45);border-radius:20px;padding:2.25rem 2rem 1.75rem;max-width:440px;width:100%;box-shadow:0 32px 80px rgba(0,0,0,0.55),0 0 0 1px rgba(239,68,68,0.05);animation:mwlErrSlide 0.4s cubic-bezier(0.16,1,0.3,1) 0.08s both;overflow:hidden}
+@keyframes mwlErrSlide{from{opacity:0;transform:translateY(18px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.mwl-err-card::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(239,68,68,0.6),transparent)}
+.mwl-err-icon{width:48px;height:48px;border-radius:13px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.22);display:flex;align-items:center;justify-content:center;color:#ef4444;margin-bottom:1.2rem}
+.mwl-err-title{font-family:'Inter',-apple-system,sans-serif;font-size:1.2rem;font-weight:700;letter-spacing:-0.025em;color:#f8fafc;margin-bottom:0.55rem;line-height:1.25}
+.mwl-err-sub{font-family:'Inter',-apple-system,sans-serif;font-size:0.86rem;color:#94a3b8;line-height:1.65;margin-bottom:1.6rem}
+.mwl-err-actions{display:flex;gap:0.6rem;flex-wrap:wrap}
+.mwl-err-primary{flex:1;min-width:140px;padding:0.65rem 1.15rem;background:#a855f7;color:#fff;border:none;border-radius:10px;font-family:'Inter',-apple-system,sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.45rem;transition:all 0.2s ease}
+.mwl-err-primary:hover{background:rgba(168,85,247,0.85);transform:translateY(-1px);box-shadow:0 8px 22px rgba(168,85,247,0.28)}
+.mwl-err-ghost{padding:0.65rem 1rem;background:rgba(255,255,255,0.03);color:#94a3b8;border:1px solid rgba(255,255,255,0.08);border-radius:10px;font-family:'Inter',-apple-system,sans-serif;font-size:0.85rem;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:0.4rem;transition:all 0.2s ease;text-decoration:none}
+.mwl-err-ghost:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.14);color:#f8fafc}
+.mwl-err-divider{height:1px;background:rgba(255,255,255,0.06);margin:1.25rem 0}
+.mwl-err-toggle{background:none;border:none;color:#475569;font-family:'Inter',-apple-system,sans-serif;font-size:0.73rem;cursor:pointer;padding:0;display:flex;align-items:center;gap:0.35rem;transition:color 0.2s}
+.mwl-err-toggle:hover{color:#94a3b8}
+.mwl-err-code{margin-top:0.7rem;padding:0.75rem 0.9rem;background:rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.05);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:0.68rem;color:#ef4444;line-height:1.55;word-break:break-all;display:none;white-space:pre-wrap}
+</style>
+<div class="mwl-err-atmos"></div>
+<div class="mwl-err-card">
+  <div class="mwl-err-icon">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+  </div>
+  <div class="mwl-err-title">Etwas ist schief gelaufen</div>
+  <div class="mwl-err-sub">Die App hat einen unerwarteten Fehler entdeckt. Eine Aktualisierung löst das meistens sofort — deine Daten bleiben erhalten.</div>
+  <div class="mwl-err-actions">
+    <button class="mwl-err-primary" onclick="location.reload()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+      Seite aktualisieren
+    </button>
+    <a class="mwl-err-ghost" href="mailto:support@myworklog.com">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+      Support
+    </a>
+  </div>
+  <div class="mwl-err-divider"></div>
+  <button class="mwl-err-toggle" onclick="var c=this.nextElementSibling;c.style.display=c.style.display==='block'?'none':'block';this.querySelector('svg').style.transform=c.style.display==='block'?'rotate(90deg)':''">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="transition:transform 0.2s"><path d="m9 18 6-6-6-6"/></svg>
+    Fehlerdetails
+  </button>
+  <div class="mwl-err-code">${msg}${src ? '\n' + src : ''}</div>
+</div>`;
+        document.body.appendChild(overlay);
     });
 
     window.addEventListener('unhandledrejection', function(event) {
