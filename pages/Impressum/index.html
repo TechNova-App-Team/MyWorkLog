@@ -491,37 +491,78 @@
     /* ─────────────────────────────────────────
        FLOATING STAT CARDS (parallax depth)
     ───────────────────────────────────────── */
-    .float-strip {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 1.2rem;
+    /* ── Manifest Table (ersetzt float-strip) ── */
+    .manifest-wrap {
       margin-bottom: 5rem;
+      border-top: 1px solid rgba(255,255,255,.07);
     }
-    .float-card {
-      background: linear-gradient(135deg, rgba(var(--primary-rgb),.15), rgba(8,6,18,.95));
-      border: 1px solid rgba(var(--primary-rgb),.22);
-      border-radius: 18px;
-      padding: 1.6rem 1.4rem;
-      position: relative; overflow: hidden;
-      animation: float-card var(--dur,6s) ease-in-out infinite;
-      animation-delay: var(--del,0s);
-    }
-    @keyframes float-card {
-      0%,100% { transform: translateY(0) rotate(calc(var(--rot,-.3) * 1deg)); }
-      50%      { transform: translateY(-8px) rotate(calc(var(--rot,.3) * -1deg)); }
-    }
-    .float-card::before {
-      content: ''; position: absolute; inset: 0;
-      background: radial-gradient(circle at 30% 0%, rgba(var(--primary-rgb),.1), transparent 60%);
-    }
-    .fc-num {
-      font-family: 'DM Serif Display', serif;
-      font-size: 2.4rem; line-height: 1;
-      background: linear-gradient(135deg, var(--p1), var(--p3));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    .manifest-row {
+      display: grid;
+      grid-template-columns: 180px 1fr auto;
+      align-items: center;
+      gap: 2rem;
+      padding: 1.5rem 0;
+      border-bottom: 1px solid rgba(255,255,255,.05);
       position: relative;
+      cursor: default;
+      opacity: 0;
+      transform: translateY(14px);
+      animation: mfst-in .55s cubic-bezier(.22,1,.36,1) forwards;
+      animation-delay: var(--d, 0s);
+      transition: background .25s;
     }
-    .fc-label { font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin-top: .3rem; }
+    .manifest-row:hover { background: rgba(255,255,255,.018); }
+    .manifest-row::before {
+      content: '';
+      position: absolute;
+      left: -2rem;
+      top: 0; bottom: 0;
+      width: 3px;
+      background: var(--ac, var(--p1));
+      border-radius: 0 2px 2px 0;
+      opacity: 0;
+      transition: opacity .3s, transform .3s;
+      transform: scaleY(.4);
+    }
+    .manifest-row:hover::before { opacity: 1; transform: scaleY(1); }
+    @keyframes mfst-in {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .mfst-val {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.2rem, 5.5vw, 4rem);
+      line-height: 1;
+      letter-spacing: -.03em;
+      background: linear-gradient(140deg, var(--text) 30%, rgba(var(--primary-rgb),.55) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      transition: transform .3s cubic-bezier(.22,1,.36,1);
+      white-space: nowrap;
+    }
+    .manifest-row:hover .mfst-val { transform: translateX(5px); }
+    .mfst-val--sm { font-size: clamp(1.5rem, 3.8vw, 2.8rem); }
+    .mfst-unit { font-size: .45em; vertical-align: super; opacity: .5; }
+    .mfst-info { display: flex; flex-direction: column; gap: .3rem; }
+    .mfst-label {
+      font-size: .72rem; font-weight: 800;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--text);
+    }
+    .mfst-sub { font-size: .82rem; color: var(--muted); line-height: 1.55; }
+    .mfst-idx {
+      font-family: 'DM Serif Display', serif;
+      font-size: .75rem; color: rgba(255,255,255,.1);
+      letter-spacing: .05em;
+      opacity: 0; transition: opacity .3s;
+      align-self: flex-start;
+      padding-top: .4rem;
+    }
+    .manifest-row:hover .mfst-idx { opacity: 1; }
+
+    @media (max-width: 640px) {
+      .manifest-row { grid-template-columns: 1fr; gap: .4rem; padding: 1.1rem 0; }
+      .mfst-idx { display: none; }
+      .mfst-val { font-size: clamp(1.9rem, 11vw, 2.8rem); }
+    }
 
 
     /* ─────────────────────────────────────────
@@ -607,24 +648,54 @@
     <p class="sec-desc">MyWorkLog ist ein privates Open-Source-Projekt. Hier findest du alle Pflichtangaben nach dem Digitale-Dienste-Gesetz.</p>
   </div>
 
-  <!-- Floating stat cards -->
-  <div class="float-strip sr d1">
-    <div class="float-card" style="--dur:5.5s; --del:0s; --rot:-.4;">
-      <div class="fc-num">100%</div>
-      <div class="fc-label">Open Source</div>
+  <!-- Manifest Table -->
+  <div class="manifest-wrap sr d1">
+
+    <div class="manifest-row" style="--d:.05s; --ac:var(--p1)">
+      <div class="mfst-val">100<span class="mfst-unit">%</span></div>
+      <div class="mfst-info">
+        <span class="mfst-label">Open Source</span>
+        <span class="mfst-sub">Vollständiger Quellcode öffentlich · MIT-Lizenz · keine versteckten Abhängigkeiten</span>
+      </div>
+      <span class="mfst-idx">01</span>
     </div>
-    <div class="float-card" style="--dur:7s; --del:-.8s; --rot:.3;">
-      <div class="fc-num">0€</div>
-      <div class="fc-label">Kosten für Nutzer</div>
+
+    <div class="manifest-row" style="--d:.15s; --ac:var(--success)">
+      <div class="mfst-val">0<span class="mfst-unit">€</span></div>
+      <div class="mfst-info">
+        <span class="mfst-label">Kosten für Nutzer</span>
+        <span class="mfst-sub">Kein Abo · keine Werbung · keine Datenverkäufe · für immer kostenlos</span>
+      </div>
+      <span class="mfst-idx">02</span>
     </div>
-    <div class="float-card" style="--dur:6.2s; --del:-1.4s; --rot:-.25;">
-      <div class="fc-num">DSGVO</div>
-      <div class="fc-label">Konform seit Tag 1</div>
+
+    <div class="manifest-row" style="--d:.25s; --ac:#06b6d4">
+      <div class="mfst-val mfst-val--sm">DSGVO</div>
+      <div class="mfst-info">
+        <span class="mfst-label">Konform seit Tag 1</span>
+        <span class="mfst-sub">Privacy by Design · alle Daten bleiben lokal im Browser · kein Tracking</span>
+      </div>
+      <span class="mfst-idx">03</span>
     </div>
-    <div class="float-card" style="--dur:8s; --del:-.4s; --rot:.4;">
-      <div class="fc-num">Dez '25</div>
-      <div class="fc-label">Online seit</div>
+
+    <div class="manifest-row" style="--d:.35s; --ac:var(--gold)">
+      <div class="mfst-val mfst-val--sm">Dez&nbsp;'25</div>
+      <div class="mfst-info">
+        <span class="mfst-label">Online seit</span>
+        <span class="mfst-sub">Gestartet als persönliches Azubi-Projekt · wächst seitdem kontinuierlich</span>
+      </div>
+      <span class="mfst-idx">04</span>
     </div>
+
+    <div class="manifest-row" style="--d:.45s; --ac:var(--p3)">
+      <div class="mfst-val mfst-val--sm" style="font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;letter-spacing:-.03em;line-height:1.1">Sven<br>Kunz</div>
+      <div class="mfst-info">
+        <span class="mfst-label">Anbieter &amp; Entwickler</span>
+        <span class="mfst-sub">Auszubildender · Baden-Württemberg, Deutschland · Privatperson</span>
+      </div>
+      <span class="mfst-idx">05</span>
+    </div>
+
   </div>
 
   <!-- Info cards -->
