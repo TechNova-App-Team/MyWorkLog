@@ -161,23 +161,37 @@
         if (pacingBlock) {
             pacingBlock.style.display = '';
 
-            const yearBar    = document.getElementById('vacYearBar');
-            const yearPctEl  = document.getElementById('vacYearPct');
-            const paceDot    = document.getElementById('vacPaceDot');
-            const paceLabel  = document.getElementById('vacPaceLabel');
-            const prognoseEl = document.getElementById('vacPacePrognose');
-            const coHint     = document.getElementById('vacCarriedOverHint');
-            const coVal      = document.getElementById('vacCarriedOverVal');
-            const arcFill    = document.getElementById('vacArcFill');
-            const arcPctTxt  = document.getElementById('vacArcPct');
+            const paceDot      = document.getElementById('vacPaceDot');
+            const paceLabel    = document.getElementById('vacPaceLabel');
+            const coHint       = document.getElementById('vacCarriedOverHint');
+            const coVal        = document.getElementById('vacCarriedOverVal');
+            // Left ring: Urlaub verbraucht %  (circumference 2π×50 ≈ 314)
+            const arcFill      = document.getElementById('vacArcFill');
+            const arcPctTxt    = document.getElementById('vacArcPct');
+            const arcDetail    = document.getElementById('vacArcDetail');
+            // Right ring: Jahresverlauf %
+            const yearArcFill  = document.getElementById('vacYearArcFill');
+            const yearArcPct   = document.getElementById('vacYearArcPct');
+            // Footer stats
+            const remainEl     = document.getElementById('vacRemainVal');
+            const prognoseYrEl = document.getElementById('vacPacePrognoseYear');
 
-            if (yearBar) yearBar.style.width = yearPct + '%';
-            if (yearPctEl) yearPctEl.textContent = yearPct + '%';
-            // Arc: circumference = 2π×32 ≈ 201
-            if (arcFill) { const offset = 201 - (yearPct / 100) * 201; arcFill.style.strokeDashoffset = offset; }
-            if (arcPctTxt) arcPctTxt.textContent = yearPct + '%';
+            const C = 314; // circumference r=50
+            const vacUsedPct = Math.round(vacPct);
 
-            // Status
+            // Left ring: vacation used
+            if (arcFill)   arcFill.style.strokeDashoffset   = C - (Math.min(vacUsedPct, 100) / 100) * C;
+            if (arcPctTxt) arcPctTxt.textContent = vacUsedPct + '%';
+            if (arcDetail) {
+                const dashVacEl = document.getElementById('valVacationUsed');
+                if (dashVacEl) arcDetail.textContent = dashVacEl.innerText;
+            }
+
+            // Right ring: year progress
+            if (yearArcFill) yearArcFill.style.strokeDashoffset = C - (yearPct / 100) * C;
+            if (yearArcPct)  yearArcPct.textContent = yearPct + '%';
+
+            // Status pill
             let statusText = 'Ausgeglichen', statusColor = 'var(--primary)';
             if (pace !== null) {
                 if      (pace < 0.45) { statusText = 'Sehr sparsam';  statusColor = '#06b6d4'; }
@@ -186,31 +200,30 @@
                 else if (pace < 1.60) { statusText = 'Entspannt';     statusColor = '#f59e0b'; }
                 else                  { statusText = 'Kritisch';      statusColor = 'var(--danger)'; }
             }
-            if (paceDot)   { paceDot.style.background = statusColor; paceDot.style.boxShadow = `0 0 5px ${statusColor}`; }
+            if (paceDot)   { paceDot.style.background = statusColor; paceDot.style.boxShadow = `0 0 8px ${statusColor}`; }
             if (paceLabel) { paceLabel.textContent = statusText; paceLabel.style.color = statusColor; }
 
-            // Aktueller Rest (tatsächlich verfügbar)
+            // Footer: aktuell verfügbar
             const actualRemain = Math.round((totalVacation - usedVacation) * 10) / 10;
-            const u = vacMode === 'hours' ? 'h' : 'T.';
-            if (prognoseEl) {
-                prognoseEl.textContent = `noch ${actualRemain}${u} frei`;
-                prognoseEl.style.color = actualRemain <= 0 ? 'var(--danger)' : 'var(--text-muted)';
+            const u = vacMode === 'hours' ? 'h' : ' T.';
+            if (remainEl) {
+                remainEl.textContent = actualRemain + u;
+                remainEl.style.color = actualRemain <= 0 ? 'var(--danger)' : 'var(--text-main)';
             }
 
-            // Jahresende-Prognose (separates Element)
-            const prognoseYearEl = document.getElementById('vacPacePrognoseYear');
-            if (prognoseYearEl && pace !== null && yearProgress > 0.05) {
+            // Footer: Jahresende-Prognose
+            if (prognoseYrEl && pace !== null && yearProgress > 0.05) {
                 const projUsage  = usedVacation / yearProgress;
                 const projRemain = Math.round((totalVacation - projUsage) * 10) / 10;
                 if (projRemain > 0) {
-                    prognoseYearEl.textContent = `Prognose 31.12.: +${projRemain}${u} ungenutzt`;
-                    prognoseYearEl.style.color = 'var(--success)';
+                    prognoseYrEl.textContent = '+' + projRemain + u + ' ungenutzt';
+                    prognoseYrEl.style.color = 'var(--success)';
                 } else if (projRemain < 0) {
-                    prognoseYearEl.textContent = `Prognose 31.12.: ${Math.abs(projRemain)}${u} fehlen`;
-                    prognoseYearEl.style.color = 'var(--danger)';
+                    prognoseYrEl.textContent = Math.abs(projRemain) + u + ' fehlen';
+                    prognoseYrEl.style.color = 'var(--danger)';
                 } else {
-                    prognoseYearEl.textContent = 'Prognose 31.12.: exakt aufgebraucht';
-                    prognoseYearEl.style.color = 'var(--text-muted)';
+                    prognoseYrEl.textContent = 'exakt aufgebraucht';
+                    prognoseYrEl.style.color = 'var(--text-muted)';
                 }
             }
 
@@ -222,18 +235,6 @@
                 } else {
                     coHint.style.display = 'none';
                 }
-            }
-
-            // History-view "Verbraucht" bar (different IDs to avoid duplicate-ID clash)
-            const histBar  = document.getElementById('vacHistBar');
-            const histUsed = document.getElementById('vacHistUsed');
-            if (histBar) {
-                histBar.style.width = Math.min(vacPct, 100) + '%';
-                histBar.style.background = vacPct > 90 ? 'var(--danger)' : vacPct > 70 ? '#f59e0b' : 'var(--primary)';
-            }
-            if (histUsed) {
-                const dashVacEl = document.getElementById('valVacationUsed');
-                if (dashVacEl) histUsed.textContent = dashVacEl.innerText;
             }
         }
 

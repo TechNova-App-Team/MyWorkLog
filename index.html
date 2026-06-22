@@ -1547,71 +1547,113 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
             </div>
 
             <!-- ── URLAUBS-PACING ── -->
-            <div id="vacPacingBlock" style="display:none; margin-bottom:1rem;">
-                <div class="vac-pacing-card">
-                    <!-- Left: Year arc -->
-                    <div class="vac-pacing-arc">
-                        <svg viewBox="0 0 80 80" class="vac-arc-svg">
-                            <circle class="vac-arc-bg" cx="40" cy="40" r="32" />
-                            <circle class="vac-arc-fill" id="vacArcFill" cx="40" cy="40" r="32"
-                                stroke-dasharray="201 201" stroke-dashoffset="201" />
-                            <text id="vacArcPct" class="vac-arc-pct" x="40" y="38" text-anchor="middle">0%</text>
-                            <text class="vac-arc-sub" x="40" y="52" text-anchor="middle">Jahresverlauf</text>
-                        </svg>
+            <div id="vacPacingBlock" style="display:none; margin-bottom:1.5rem;">
+                <div class="vacp-card">
+
+                    <!-- Header row -->
+                    <div class="vacp-header">
+                        <div class="vacp-title">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            Urlaubs-Pacing
+                        </div>
+                        <div class="vacp-status-pill">
+                            <span id="vacPaceDot" class="vacp-dot"></span>
+                            <span id="vacPaceLabel" class="vacp-status-lbl">—</span>
+                        </div>
                     </div>
-                    <!-- Right: Status + details -->
-                    <div class="vac-pacing-info">
-                        <div class="vac-pacing-status">
-                            <span id="vacPaceDot" class="vac-pace-dot"></span>
-                            <span id="vacPaceLabel" class="vac-pace-label">—</span>
-                            <span id="vacPacePrognose" class="vac-pace-prognose"></span>
-                        </div>
-                        <div class="vac-pacing-bars">
-                            <div class="vac-bar-row">
-                                <span class="vac-bar-lbl">Verbraucht</span>
-                                <div class="vac-bar-track">
-                                    <div id="vacHistBar" class="vac-bar-fill vac-bar-used"></div>
-                                </div>
-                                <span id="vacHistUsed" class="vac-bar-val">—</span>
+
+                    <!-- Two rings side by side -->
+                    <div class="vacp-rings">
+                        <!-- Left: Urlaub verbraucht -->
+                        <div class="vacp-ring-block">
+                            <div class="vacp-ring-wrap">
+                                <svg viewBox="0 0 120 120" class="vacp-svg">
+                                    <circle class="vacp-track" cx="60" cy="60" r="50"/>
+                                    <circle class="vacp-fill vacp-fill--used" id="vacArcFill" cx="60" cy="60" r="50"
+                                        stroke-dasharray="314 314" stroke-dashoffset="314"/>
+                                    <text id="vacArcPct" class="vacp-ring-pct" x="60" y="56" text-anchor="middle">0%</text>
+                                    <text class="vacp-ring-sub" x="60" y="74" text-anchor="middle">verbraucht</text>
+                                </svg>
                             </div>
-                            <div class="vac-bar-row">
-                                <span class="vac-bar-lbl">Jahresverlauf</span>
-                                <div class="vac-bar-track">
-                                    <div id="vacYearBar" class="vac-bar-fill vac-bar-year"></div>
-                                </div>
-                                <span id="vacYearPct" class="vac-bar-val">0%</span>
+                            <div class="vacp-ring-label">Urlaub</div>
+                            <div id="vacArcDetail" class="vacp-ring-detail">—</div>
+                        </div>
+
+                        <!-- VS divider -->
+                        <div class="vacp-vs">
+                            <div class="vacp-vs-bar"></div>
+                            <span class="vacp-vs-chip">vs</span>
+                            <div class="vacp-vs-bar"></div>
+                        </div>
+
+                        <!-- Right: Jahresverlauf -->
+                        <div class="vacp-ring-block">
+                            <div class="vacp-ring-wrap">
+                                <svg viewBox="0 0 120 120" class="vacp-svg">
+                                    <circle class="vacp-track" cx="60" cy="60" r="50"/>
+                                    <circle class="vacp-fill vacp-fill--year" id="vacYearArcFill" cx="60" cy="60" r="50"
+                                        stroke-dasharray="314 314" stroke-dashoffset="314"/>
+                                    <text id="vacYearArcPct" class="vacp-ring-pct" x="60" y="56" text-anchor="middle">0%</text>
+                                    <text class="vacp-ring-sub" x="60" y="74" text-anchor="middle">des Jahres</text>
+                                </svg>
                             </div>
+                            <div class="vacp-ring-label">Jahresverlauf</div>
+                            <div class="vacp-ring-detail">2026</div>
                         </div>
-                        <div id="vacPacePrognoseYear" class="vac-carried-hint" style="margin-top:5px;"></div>
-                        <div id="vacCarriedOverHint" class="vac-carried-hint" style="display:none;">
-                            inkl. <strong><span id="vacCarriedOverVal">0</span></strong> Übertrag aus Vorjahr
+                    </div>
+
+                    <!-- Footer stats row -->
+                    <div class="vacp-footer">
+                        <div class="vacp-footer-stat">
+                            <div id="vacRemainVal" class="vacp-footer-val">—</div>
+                            <div class="vacp-footer-lbl">noch verfügbar</div>
                         </div>
+                        <div class="vacp-footer-sep"></div>
+                        <div class="vacp-footer-stat">
+                            <div id="vacPacePrognoseYear" class="vacp-footer-val">—</div>
+                            <div class="vacp-footer-lbl">Prognose 31.12.</div>
+                        </div>
+                    </div>
+
+                    <div id="vacCarriedOverHint" class="vacp-carryover" style="display:none;">
+                        inkl. <strong><span id="vacCarriedOverVal">0</span></strong> Übertrag aus Vorjahr
                     </div>
                 </div>
             </div>
 
             <style>
-            .vac-pacing-card{display:flex;align-items:center;gap:1.1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1rem 1.15rem;}
-            .vac-pacing-arc{flex-shrink:0;width:80px;height:80px;}
-            .vac-arc-svg{width:80px;height:80px;transform:rotate(-90deg);}
-            .vac-arc-bg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:6;}
-            .vac-arc-fill{fill:none;stroke:var(--primary);stroke-width:6;stroke-linecap:round;transition:stroke-dashoffset 0.8s cubic-bezier(0.34,1.56,0.64,1),stroke 0.4s;}
-            .vac-arc-pct{fill:var(--text-main);font-size:13px;font-weight:700;font-family:'Inter',sans-serif;transform:rotate(90deg);transform-origin:40px 40px;}
-            .vac-arc-sub{fill:var(--text-muted);font-size:7px;font-family:'Inter',sans-serif;transform:rotate(90deg);transform-origin:40px 40px;}
-            .vac-pacing-info{flex:1;min-width:0;}
-            .vac-pacing-status{display:flex;align-items:center;gap:6px;margin-bottom:0.6rem;flex-wrap:wrap;}
-            .vac-pace-dot{width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;transition:background 0.3s,box-shadow 0.3s;}
-            .vac-pace-label{font-size:0.82rem;font-weight:700;color:var(--text-main);}
-            .vac-pace-prognose{font-size:0.75rem;color:var(--text-muted);margin-left:auto;}
-            .vac-pacing-bars{display:flex;flex-direction:column;gap:6px;}
-            .vac-bar-row{display:grid;grid-template-columns:76px 1fr 48px;align-items:center;gap:8px;}
-            .vac-bar-lbl{font-size:0.68rem;color:var(--text-muted);}
-            .vac-bar-track{height:6px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;}
-            .vac-bar-fill{height:100%;border-radius:99px;transition:width 0.6s ease;}
-            .vac-bar-used{background:var(--primary);}
-            .vac-bar-year{background:rgba(255,255,255,0.22);}
-            .vac-bar-val{font-size:0.7rem;color:var(--text-muted);text-align:right;white-space:nowrap;}
-            .vac-carried-hint{margin-top:6px;font-size:0.68rem;color:var(--text-muted);}
+            /* ── Urlaubs-Pacing Card ── */
+            .vacp-card{background:linear-gradient(145deg,rgba(168,85,247,0.07) 0%,rgba(255,255,255,0.02) 100%);border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:1.25rem 1.25rem 1rem;}
+            .vacp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+            .vacp-title{display:flex;align-items:center;gap:7px;font-size:0.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;}
+            .vacp-title svg{opacity:0.6;}
+            .vacp-status-pill{display:flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:99px;}
+            .vacp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s,box-shadow .3s;}
+            .vacp-status-lbl{font-size:0.78rem;font-weight:600;}
+            /* Rings */
+            .vacp-rings{display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:1.1rem;}
+            .vacp-ring-block{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
+            .vacp-ring-wrap{width:120px;height:120px;filter:drop-shadow(0 0 12px rgba(168,85,247,0.15));}
+            .vacp-svg{width:120px;height:120px;transform:rotate(-90deg);}
+            .vacp-track{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:9;}
+            .vacp-fill{fill:none;stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .9s cubic-bezier(.34,1.56,.64,1);}
+            .vacp-fill--used{stroke:var(--primary);}
+            .vacp-fill--year{stroke:rgba(255,255,255,0.28);}
+            .vacp-ring-pct{fill:var(--text-main);font-size:20px;font-weight:800;font-family:'Inter',sans-serif;transform:rotate(90deg);transform-origin:60px 60px;}
+            .vacp-ring-sub{fill:var(--text-muted);font-size:9.5px;font-family:'Inter',sans-serif;transform:rotate(90deg);transform-origin:60px 60px;}
+            .vacp-ring-label{font-size:0.72rem;font-weight:600;color:var(--text-main);}
+            .vacp-ring-detail{font-size:0.68rem;color:var(--text-muted);}
+            /* VS divider */
+            .vacp-vs{display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 6px;flex-shrink:0;}
+            .vacp-vs-bar{width:1px;height:36px;background:rgba(255,255,255,0.08);}
+            .vacp-vs-chip{font-size:0.62rem;font-weight:700;color:var(--text-muted);letter-spacing:.06em;padding:3px 7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);border-radius:4px;}
+            /* Footer */
+            .vacp-footer{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.75rem;padding:.9rem 0 0;border-top:1px solid rgba(255,255,255,0.07);}
+            .vacp-footer-sep{width:1px;height:34px;background:rgba(255,255,255,0.07);}
+            .vacp-footer-stat{text-align:center;}
+            .vacp-footer-val{font-size:1.05rem;font-weight:700;color:var(--text-main);}
+            .vacp-footer-lbl{font-size:0.63rem;color:var(--text-muted);margin-top:3px;text-transform:uppercase;letter-spacing:.04em;}
+            .vacp-carryover{margin-top:.75rem;font-size:.68rem;color:var(--text-muted);text-align:center;}
             </style>
 
             <!-- ─── KPI Stat Tiles ──────────────────────────────────── -->
