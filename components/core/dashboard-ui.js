@@ -189,20 +189,28 @@
             if (paceDot)   { paceDot.style.background = statusColor; paceDot.style.boxShadow = `0 0 5px ${statusColor}`; }
             if (paceLabel) { paceLabel.textContent = statusText; paceLabel.style.color = statusColor; }
 
-            // Prognose
-            if (prognoseEl && pace !== null && yearProgress > 0.05) {
-                const projUsage   = usedVacation / yearProgress;
-                const projRemain  = Math.round((totalVacation - projUsage) * 10) / 10;
-                const u           = vacMode === 'hours' ? 'h' : 'T.';
+            // Aktueller Rest (tatsächlich verfügbar)
+            const actualRemain = Math.round((totalVacation - usedVacation) * 10) / 10;
+            const u = vacMode === 'hours' ? 'h' : 'T.';
+            if (prognoseEl) {
+                prognoseEl.textContent = `noch ${actualRemain}${u} frei`;
+                prognoseEl.style.color = actualRemain <= 0 ? 'var(--danger)' : 'var(--text-muted)';
+            }
+
+            // Jahresende-Prognose (separates Element)
+            const prognoseYearEl = document.getElementById('vacPacePrognoseYear');
+            if (prognoseYearEl && pace !== null && yearProgress > 0.05) {
+                const projUsage  = usedVacation / yearProgress;
+                const projRemain = Math.round((totalVacation - projUsage) * 10) / 10;
                 if (projRemain > 0) {
-                    prognoseEl.textContent = `≈ +${projRemain}${u} übrig`;
-                    prognoseEl.style.color = 'var(--success)';
+                    prognoseYearEl.textContent = `Prognose 31.12.: +${projRemain}${u} ungenutzt`;
+                    prognoseYearEl.style.color = 'var(--success)';
                 } else if (projRemain < 0) {
-                    prognoseEl.textContent = `≈ ${Math.abs(projRemain)}${u} fehlen`;
-                    prognoseEl.style.color = 'var(--danger)';
+                    prognoseYearEl.textContent = `Prognose 31.12.: ${Math.abs(projRemain)}${u} fehlen`;
+                    prognoseYearEl.style.color = 'var(--danger)';
                 } else {
-                    prognoseEl.textContent = 'exakt aufgebraucht';
-                    prognoseEl.style.color = 'var(--text-faint)';
+                    prognoseYearEl.textContent = 'Prognose 31.12.: exakt aufgebraucht';
+                    prognoseYearEl.style.color = 'var(--text-muted)';
                 }
             }
 
