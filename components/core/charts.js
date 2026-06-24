@@ -726,6 +726,9 @@
             <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="5" fill="${lastColor}" opacity="0.9" style="animation: trendPulse 2s ease-in-out infinite;" />
             <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="10" fill="${lastColor}" opacity="0.15" style="animation: trendPulse 2s ease-in-out infinite;" />`;
         
+        // Disconnect stale ResizeObserver before overwriting innerHTML
+        if (c._trendResizeObserver) { c._trendResizeObserver.disconnect(); c._trendResizeObserver = null; }
+
         const svgOverflow = chartStyle.type === 'bar' ? 'overflow:hidden;' : '';
         c.innerHTML = `
             <svg class="trend-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%; height:100%; ${svgOverflow}" id="trendSvgMain">
@@ -849,8 +852,25 @@
                 svg.addEventListener('touchend', () => setTimeout(hideTooltip, 2000), { passive: true });
             }
         }
+
+        // Re-render when container resizes (fullscreen toggle, sidebar collapse, etc.)
+        if (typeof ResizeObserver !== 'undefined') {
+            let _lastW = w;
+            const _ro = new ResizeObserver(() => {
+                const newW = c.clientWidth;
+                if (Math.abs(newW - _lastW) > 2) {
+                    _lastW = newW;
+                    renderTrend(
+                        window._trendDataFull && window._trendDataFull.length ? window._trendDataFull : dataPoints,
+                        elementId, areaFill, chartStyle
+                    );
+                }
+            });
+            _ro.observe(c);
+            c._trendResizeObserver = _ro;
+        }
     }
-    
+
     function generateSmoothPath(dataPoints, subset, min, range, w, h) {
         let path = '';
         for (let i = 0; i < subset.length; i++) {
