@@ -235,9 +235,12 @@
             const oldBreakMin = data.settings.break.min || 30;
             data.settings.break.min = [0, oldBreakMin, oldBreakMin, oldBreakMin, oldBreakMin, 15, 0]; // 15 Min Pause für Freitag
         }
-        if(!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0, carriedOver:0, mode:'days'};
+        if(!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0, carriedOver:0, mode:'days', carryOverMax:null, lastRolloverYear:null, yearHistory:{}};
         if(typeof data.settings.vacation.mode === 'undefined') data.settings.vacation.mode = 'days';
         if(typeof data.settings.vacation.carriedOver === 'undefined') data.settings.vacation.carriedOver = 0;
+        if(typeof data.settings.vacation.carryOverMax === 'undefined') data.settings.vacation.carryOverMax = null;
+        if(typeof data.settings.vacation.lastRolloverYear === 'undefined') data.settings.vacation.lastRolloverYear = null;
+        if(typeof data.settings.vacation.yearHistory === 'undefined') data.settings.vacation.yearHistory = {};
 
         // Zeit-Rundung: Default = aus (Backward-Compat). User schaltet in Settings ein.
         if(!data.settings.rounding) data.settings.rounding = { enabled:false, mode:'commercial', taktungMinutes:15 };
@@ -323,6 +326,9 @@
             const m = document.getElementById('mainContent');
             if (m) m.style.transition = 'margin-left 0.3s ease-in-out';
         }));
+
+        // Jahreswechsel-Prüfung: Resturlaub automatisch übertragen
+        try { checkAndPerformYearRollover(); } catch(e) { console.warn('yearRollover error', e); }
 
         // Auto-Leerung des Papierkorbs beim Start und einmal täglich
         try { autoEmptyTrash(); } catch(e) { console.warn('autoEmptyTrash error', e); }

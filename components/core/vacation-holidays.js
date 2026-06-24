@@ -1,6 +1,127 @@
 // ═══ CORE: VACATION-HOLIDAYS ═══
     // --- VACATION & FEIERTAGS MANAGEMENT ---
 
+    // ─── JAHRESWECHSEL-LOGIK ────────────────────────────────────────────────
+
+    function checkAndPerformYearRollover() {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const vac = data.settings.vacation;
+
+        // Beim ersten Start: Jahr merken, kein Rollover
+        if (!vac.lastRolloverYear) {
+            vac.lastRolloverYear = currentYear;
+            return;
+        }
+
+        const lastProcessed = parseInt(vac.lastRolloverYear);
+        if (currentYear <= lastProcessed) return; // Noch kein Jahreswechsel
+
+        // Alle vergangenen Jahre verarbeiten (falls App mehrere Jahre nicht geöffnet)
+        for (let yr = lastProcessed; yr < currentYear; yr++) {
+            _processVacationYearRollover(yr);
+        }
+        vac.lastRolloverYear = currentYear;
+        save();
+    }
+
+    function _processVacationYearRollover(fromYear) {
+        const vac = data.settings.vacation;
+        const mode = getVacationMode();
+
+        // Verbrauchte Urlaubstage/-stunden des Jahres aus Einträgen
+        const yearEntries = data.entries.filter(e =>
+            e.type === 'vacation' && e.date && e.date.startsWith(fromYear + '-')
+        );
+        let usedFromEntries = 0;
+        if (mode === 'hours') {
+            usedFromEntries = yearEntries.reduce((s, e) => s + (parseFloat(e.expected) || 0), 0);
+        } else {
+            usedFromEntries = yearEntries.length;
+        }
+        usedFromEntries = Math.round(usedFromEntries * 100) / 100;
+
+        const usedManual  = parseFloat(vac.usedManual  || 0) || 0;
+        const totalUsed   = Math.round((usedFromEntries + usedManual) * 100) / 100;
+        const totalBudget = (parseFloat(vac.total || 0)) + (parseFloat(vac.carriedOver || 0));
+        const remaining   = Math.max(0, Math.round((totalBudget - totalUsed) * 100) / 100);
+
+        // Übertragslimit anwenden (null = unbegrenzt)
+        const maxCap = (vac.carryOverMax !== null && vac.carryOverMax !== undefined && !isNaN(parseFloat(vac.carryOverMax)))
+            ? parseFloat(vac.carryOverMax) : Infinity;
+        const newCarriedOver = Math.round(Math.min(remaining, maxCap) * 10) / 10;
+
+        // Jahr-Snapshot speichern
+        if (!vac.yearHistory) vac.yearHistory = {};
+        vac.yearHistory[fromYear] = {
+            total: parseFloat(vac.total || 0),
+            carriedIn: parseFloat(vac.carriedOver || 0),
+            usedManual,
+            usedFromEntries,
+            totalUsed,
+            remaining,
+            carriedOut: newCarriedOver,
+            capped: (maxCap < Infinity && remaining > maxCap),
+            mode
+        };
+
+        // Urlaubs-State für neues Jahr aktualisieren
+        vac.carriedOver  = newCarriedOver;
+        vac.usedManual   = 0; // Manuelle Korrekturen gelten nur fürs jeweilige Jahr
+
+        // Benachrichtigung
+        const u = mode === 'hours' ? 'h' : ' T.';
+        const cappedNote = vac.yearHistory[fromYear].capped
+            ? ` (auf ${maxCap}${u} begrenzt)`
+            : '';
+        setTimeout(() => {
+            try {
+                showCustomMessage(
+                    `Jahreswechsel ${fromYear}`,
+                    `${newCarriedOver}${u} Resturlaub aus ${fromYear} übernommen${cappedNote}. Bitte Jahresanspruch für ${fromYear + 1} in den Einstellungen prüfen.`,
+                    'info'
+                );
+            } catch(e) {}
+        }, 1500);
+    }
+
+    function renderVacationYearHistory() {
+        const el = document.getElementById('vacYearHistoryTable');
+        if (!el) return;
+        const vac = data.settings.vacation;
+        const hist = vac.yearHistory || {};
+        const years = Object.keys(hist).sort((a, b) => b - a);
+
+        if (!years.length) {
+            el.innerHTML = '<p style="font-size:.76rem;color:var(--text-muted);padding:.5rem 0">Noch keine abgeschlossenen Jahre vorhanden.</p>';
+            return;
+        }
+
+        const u = getVacationMode() === 'hours' ? 'h' : ' T.';
+        const rows = years.map(yr => {
+            const h = hist[yr];
+            const modeU = h.mode === 'hours' ? 'h' : ' T.';
+            const budget = h.total + h.carriedIn;
+            const pct = budget > 0 ? Math.round((h.totalUsed / budget) * 100) : 0;
+            const cappedIcon = h.capped ? ' <span title="Übertragslimit angewendet" style="color:#f59e0b;">⚠</span>' : '';
+            return `<tr class="vac-hist-row">
+                <td class="vac-hist-yr">${yr}</td>
+                <td>${h.total}${modeU}${h.carriedIn > 0 ? `<span class="vac-hist-co">+${h.carriedIn}${modeU}</span>` : ''}</td>
+                <td><span style="color:${pct > 90 ? 'var(--danger)' : pct > 70 ? '#f59e0b' : 'var(--success)'}">${h.totalUsed}${modeU}</span></td>
+                <td>${h.remaining}${modeU}</td>
+                <td><strong style="color:var(--primary)">${h.carriedOut}${modeU}</strong>${cappedIcon}</td>
+            </tr>`;
+        }).join('');
+
+        el.innerHTML = `
+            <table class="vac-hist-table">
+                <thead><tr>
+                    <th>Jahr</th><th>Anspruch</th><th>Verbraucht</th><th>Rest</th><th>Übertragen</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    }
+
     // Referenz: wie viele Sollstunden entsprechen "1 Urlaubstag"?
     // Wochenschnitt aller Werktage (Mo-Fr) mit hours > 0
     function getVacationRefHours() {

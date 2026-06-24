@@ -65,9 +65,13 @@
         if(confVacUsedEl) confVacUsedEl.value = data.settings.vacation.usedManual || 0;
         const confVacCarriedEl = document.getElementById('confVacationCarriedOver');
         if(confVacCarriedEl) confVacCarriedEl.value = data.settings.vacation.carriedOver || 0;
+        const confVacCarryMaxEl = document.getElementById('confVacationCarryOverMax');
+        if(confVacCarryMaxEl) confVacCarryMaxEl.value = data.settings.vacation.carryOverMax !== null && data.settings.vacation.carryOverMax !== undefined ? data.settings.vacation.carryOverMax : '';
 
         // Labels + Hint + Pro-Rata + Ref-Hours-Display refreshen (Listener sind inline im HTML)
         if (typeof refreshVacationModeUI === 'function') refreshVacationModeUI();
+        // Jahreshistorie rendern
+        if (typeof renderVacationYearHistory === 'function') renderVacationYearHistory();
 
         // Zeit-Rundung: Werte ins Form
         const r = (data.settings.rounding) || {};
@@ -156,6 +160,10 @@
         const confVacCarriedEl2 = document.getElementById('confVacationCarriedOver');
         const inputCarried = confVacCarriedEl2 ? parseFloat(confVacCarriedEl2.value) : 0;
         data.settings.vacation.carriedOver = isNaN(inputCarried) ? 0 : Math.max(0, inputCarried);
+
+        const confVacCarryMaxEl2 = document.getElementById('confVacationCarryOverMax');
+        const rawMax = confVacCarryMaxEl2 ? confVacCarryMaxEl2.value.trim() : '';
+        data.settings.vacation.carryOverMax = (rawMax === '' || isNaN(parseFloat(rawMax))) ? null : Math.max(0, parseFloat(rawMax));
 
         recalculateVacationUsed();
 
