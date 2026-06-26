@@ -1,8 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+/* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
     <title>MyWorkLog | Über uns</title>
     <meta name="description" content="MyWorkLog ist die kostenlose Zeiterfassungs-App für Azubis. Digitales Berichtsheft, Gleitzeitkonto, Überstundenrechner & Arbeitszeitnachweis – 100% offline, DSGVO-konform.">
     <meta name="keywords" content="Azubi Zeiterfassung, Berichtsheft digital, Gleitzeitkonto App, Ausbildung Arbeitszeitnachweis, Überstundenrechner Azubi, IHK Berichtsheft, Stundenkonto, Ausbildungsnachweis, Zeiterfassung Auszubildende, Arbeitszeit App kostenlos">

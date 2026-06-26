@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="de" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#030305">
+<title>Wartung läuft · MyWorkLog</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --bg-deep: #030305;
+    --bg-card: rgba(255,255,255,0.025);
+    --bg-elevated: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.06);
+    --border-strong: rgba(255,255,255,0.1);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --primary: #a855f7;
+    --primary-rgb: 168, 85, 247;
+    --primary-dim: rgba(168,85,247,0.15);
+    --amber: #f59e0b;
+    --amber-rgb: 245, 158, 11;
+    --success: #10b981;
+    --success-rgb: 16, 185, 129;
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--bg-deep);
+    color: var(--text-main);
+    font-family: var(--font-main);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    position: relative;
+    isolation: isolate;
+}
+
+/* ════════════════════════════════════════════
+   AMBIENT BACKGROUND
+   ════════════════════════════════════════════ */
+.ambient {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -2;
+    background:
+        radial-gradient(ellipse 700px 500px at 50% -5%, rgba(var(--amber-rgb), 0.06), transparent 55%),
+        radial-gradient(ellipse 900px 700px at 50% 110%, rgba(var(--primary-rgb), 0.05), transparent 60%);
+}
+
+.grain {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='4'/><feColorMatrix values='0 0 0 0 1, 0 0 0 0 1, 0 0 0 0 1, 0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+.scan {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 280px;
+    pointer-events: none;
+    z-index: -1;
+    background: linear-gradient(180deg, transparent 0%, rgba(var(--primary-rgb), 0.04) 50%, transparent 100%);
+    animation: scan 14s linear infinite;
+}
+@keyframes scan {
+    0%   { transform: translateY(-280px); }
+    100% { transform: translateY(110vh); }
+}
+
+/* ════════════════════════════════════════════
+   LAYOUT
+   ════════════════════════════════════════════ */
+.page {
+    width: 100%;
+    max-width: 580px;
+    margin: 0 auto;
+    padding: 32px 24px 48px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    gap: 32px;
+}
+
+@media (min-width: 640px) {
+    .page { padding: 48px 32px 64px; gap: 40px; }
+}
+
+/* ════════════════════════════════════════════
+   TOP BAR
+   ════════════════════════════════════════════ */
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-main);
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+}
+.brand-mark {
+    width: 9px;
+    height: 9px;
+    border-radius: 2.5px;
+    background: var(--primary);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12), 0 0 14px rgba(var(--primary-rgb), 0.45);
+    animation: breathe 3.2s ease-in-out infinite;
+}
+@keyframes breathe {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12), 0 0 14px rgba(var(--primary-rgb), 0.45); }
+    50%      { transform: scale(1.08); box-shadow: 0 0 0 5px rgba(var(--primary-rgb), 0.08), 0 0 22px rgba(var(--primary-rgb), 0.55); }
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px 6px 10px;
+    border-radius: 999px;
+    background: rgba(var(--amber-rgb), 0.08);
+    border: 1px solid rgba(var(--amber-rgb), 0.18);
+    color: var(--amber);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+.status-pill .dot {
+    position: relative;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--amber);
+    box-shadow: 0 0 8px rgba(var(--amber-rgb), 0.6);
+}
+.status-pill .dot::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: var(--amber);
+    opacity: 0.5;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+    0%   { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(2.4); opacity: 0; }
+}
+
+@media (max-width: 380px) {
+    .status-pill { font-size: 11px; padding: 5px 10px 5px 9px; }
+}
+
+/* ════════════════════════════════════════════
+   HERO
+   ════════════════════════════════════════════ */
+.hero { display: flex; flex-direction: column; gap: 20px; }
+
+.incident-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+    flex-wrap: wrap;
+}
+.incident-meta .sep { opacity: 0.4; }
+.incident-meta .id {
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.headline {
+    font-size: clamp(2rem, 7vw, 3rem);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+    color: var(--text-main);
+}
+.headline .accent {
+    background: linear-gradient(135deg, var(--text-main) 0%, var(--text-muted) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.description {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    max-width: 48ch;
+}
+
+/* ════════════════════════════════════════════
+   ETA CARD
+   ════════════════════════════════════════════ */
+.eta {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+}
+.eta::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(160deg, rgba(var(--amber-rgb), 0.25), transparent 35%, transparent 65%, rgba(var(--primary-rgb), 0.18));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.eta-label {
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+}
+
+.eta-time {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.eta-clock {
+    font-size: clamp(2.25rem, 8vw, 2.75rem);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.eta-suffix {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.eta-countdown {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.eta-progress {
+    margin-top: 18px;
+    height: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+}
+.eta-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--amber), rgba(var(--amber-rgb), 0.6));
+    border-radius: 999px;
+    transition: width 0.6s ease;
+    position: relative;
+}
+.eta-progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background: var(--amber);
+    box-shadow: 0 0 8px rgba(var(--amber-rgb), 0.7);
+    border-radius: 999px;
+}
+
+/* ════════════════════════════════════════════
+   LOG CARD
+   ════════════════════════════════════════════ */
+.log {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.log-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.012);
+}
+.log-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-main);
+    letter-spacing: -0.005em;
+}
+.log-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+}
+.log-live .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 6px rgba(var(--success-rgb), 0.6);
+    animation: pulseSmall 2s ease-in-out infinite;
+}
+@keyframes pulseSmall {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+}
+
+.log-list {
+    list-style: none;
+    padding: 10px 20px 14px;
+    position: relative;
+}
+
+.log-item {
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    position: relative;
+    min-height: 44px;
+}
+
+/* Connecting vertical rail */
+.log-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: calc(50% + 12px);
+    bottom: -12px;
+    width: 1.5px;
+    background: var(--border);
+    z-index: 0;
+}
+.log-item.done:not(:last-child)::after {
+    background: linear-gradient(180deg, rgba(var(--success-rgb), 0.4), var(--border));
+}
+.log-item.active:not(:last-child)::after {
+    background: linear-gradient(180deg, rgba(var(--amber-rgb), 0.35), var(--border));
+}
+
+.log-marker {
+    grid-column: 1;
+    position: relative;
+    z-index: 1;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--bg-deep);
+    border: 1.5px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    flex-shrink: 0;
+}
+.log-item.done .log-marker {
+    border-color: rgba(var(--success-rgb), 0.5);
+    background: rgba(var(--success-rgb), 0.08);
+    color: var(--success);
+}
+.log-item.active .log-marker {
+    border-color: rgba(var(--amber-rgb), 0.5);
+    background: rgba(var(--amber-rgb), 0.08);
+    color: var(--amber);
+    box-shadow: 0 0 0 4px rgba(var(--amber-rgb), 0.06);
+}
+.log-marker svg { width: 12px; height: 12px; display: block; }
+.log-item.pending .log-marker::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
+}
+
+/* Spinner for active step */
+.log-item.active .log-marker svg {
+    animation: rotate 0.9s linear infinite;
+}
+@keyframes rotate {
+    to { transform: rotate(360deg); }
+}
+
+.log-text {
+    font-size: 14px;
+    color: var(--text-main);
+    line-height: 1.4;
+    letter-spacing: -0.005em;
+}
+.log-item.pending .log-text { color: var(--text-muted); }
+.log-item.done .log-text { color: var(--text-muted); }
+.log-item.active .log-text { color: var(--text-main); font-weight: 500; }
+
+.log-time {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+    letter-spacing: 0.01em;
+    font-variant-numeric: tabular-nums;
+}
+.log-item.active .log-time { color: var(--amber); }
+
+/* ════════════════════════════════════════════
+   META GRID
+   ════════════════════════════════════════════ */
+.meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+.meta-cell {
+    background: var(--bg-deep);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.meta-label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    font-weight: 500;
+}
+.meta-value {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-main);
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 420px) {
+    .meta-cell { padding: 12px 14px; }
+    .meta-value { font-size: 12px; }
+}
+
+/* ════════════════════════════════════════════
+   ACTIONS
+   ════════════════════════════════════════════ */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    appearance: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    min-height: 44px;
+}
+.btn-primary {
+    background: var(--text-main);
+    color: var(--bg-deep);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.4) inset, 0 8px 24px -8px rgba(255,255,255,0.2);
+}
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.4) inset, 0 12px 28px -8px rgba(255,255,255,0.3);
+}
+.btn-primary:active { transform: translateY(0); }
+.btn-primary svg { width: 14px; height: 14px; }
+.btn-primary.refreshing svg { animation: rotate 0.7s linear; }
+
+.support-link {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.18s ease;
+    position: relative;
+}
+.support-link:hover { color: var(--text-main); }
+.support-link::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 16px;
+    bottom: -2px;
+    height: 1px;
+    background: currentColor;
+    opacity: 0;
+    transform: translateY(2px);
+    transition: all 0.2s ease;
+}
+.support-link:hover::after { opacity: 0.5; transform: translateY(0); }
+.support-link svg { width: 13px; height: 13px; opacity: 0.6; }
+
+/* ════════════════════════════════════════════
+   FOOTER
+   ════════════════════════════════════════════ */
+.footer {
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+}
+.footer .stage {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.footer .stage::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 6px rgba(var(--success-rgb), 0.5);
+}
+
+/* ════════════════════════════════════════════
+   FADE-IN STAGGER
+   ════════════════════════════════════════════ */
+.reveal {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: revealUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes revealUp {
+    to { opacity: 1; transform: translateY(0); }
+}
+.r1 { animation-delay: 0.02s; }
+.r2 { animation-delay: 0.10s; }
+.r3 { animation-delay: 0.18s; }
+.r4 { animation-delay: 0.26s; }
+.r5 { animation-delay: 0.36s; }
+.r6 { animation-delay: 0.48s; }
+.r7 { animation-delay: 0.60s; }
+.r8 { animation-delay: 0.72s; }
+
+.log-item {
+    opacity: 0;
+    animation: logSlide 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes logSlide {
+    from { opacity: 0; transform: translateX(-6px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+.log-item:nth-child(1) { animation-delay: 0.55s; }
+.log-item:nth-child(2) { animation-delay: 0.62s; }
+.log-item:nth-child(3) { animation-delay: 0.69s; }
+.log-item:nth-child(4) { animation-delay: 0.76s; }
+.log-item:nth-child(5) { animation-delay: 0.83s; }
+.log-item:nth-child(6) { animation-delay: 0.90s; }
+.log-item:nth-child(7) { animation-delay: 0.97s; }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    .reveal, .log-item { opacity: 1; transform: none; }
+}
+</style>
+</head>
+
+<body>
+<div class="ambient"></div>
+<div class="grain"></div>
+<div class="scan"></div>
+
+<div class="page">
+
+    <!-- TOP BAR -->
+    <header class="topbar reveal r1">
+        <a href="/" class="brand" aria-label="MyWorkLog">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <span class="brand-name">MyWorkLog</span>
+        </a>
+        <div class="status-pill" role="status">
+            <span class="dot" aria-hidden="true"></span>
+            <span>System Maintenance</span>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="incident-meta reveal r2">
+            <span class="id" data-incident-id>INC-2026.06.26-A</span>
+            <span class="sep">·</span>
+            <span>Geplante Wartung</span>
+            <span class="sep">·</span>
+            <span>Gestartet <span data-started>15:00</span></span>
+        </div>
+
+        <h1 class="headline reveal r3">
+            <span data-title>Kurze Wartung.</span><br>
+            <span class="accent">Gleich wieder da.</span>
+        </h1>
+
+        <p class="description reveal r4" data-description>
+            Wir spielen gerade ein Update ein. MyWorkLog ist in wenigen Minuten wieder erreichbar — deine lokal gespeicherten Daten bleiben unverändert.
+        </p>
+    </section>
+
+    <!-- ETA -->
+    <section class="eta reveal r5" aria-label="Voraussichtliche Verfügbarkeit">
+        <div class="eta-label">Voraussichtlich verfügbar</div>
+        <div class="eta-time">
+            <span class="eta-clock" data-eta-clock>15:30</span>
+            <span class="eta-suffix">Uhr</span>
+        </div>
+        <div class="eta-countdown" data-eta-countdown>noch wenige Minuten</div>
+        <div class="eta-progress" aria-hidden="true">
+            <div class="eta-progress-fill" data-eta-progress></div>
+        </div>
+    </section>
+
+    <!-- LIVE LOG -->
+    <section class="log reveal r6" aria-label="Wartungs-Protokoll">
+        <div class="log-head">
+            <span class="log-title">Wartungs-Protokoll</span>
+            <span class="log-live">
+                <span class="dot" aria-hidden="true"></span>
+                <span>Live</span>
+            </span>
+        </div>
+        <ul class="log-list" data-log-list>
+            <!-- Items werden aus JSON gerendert; Fallback unten -->
+            <li class="log-item done">
+                <span class="log-marker">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </span>
+                <span class="log-text">Konfiguration gesichert</span>
+                <span class="log-time">15:02</span>
+            </li>
+            <li class="log-item done">
+                <span class="log-marker">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </span>
+                <span class="log-text">Datenbank-Migration angewendet</span>
+                <span class="log-time">15:11</span>
+            </li>
+            <li class="log-item active">
+                <span class="log-marker">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+                </span>
+                <span class="log-text">Cache wird neu aufgebaut</span>
+                <span class="log-time">läuft</span>
+            </li>
+            <li class="log-item pending">
+                <span class="log-marker"></span>
+                <span class="log-text">Service-Worker aktualisieren</span>
+                <span class="log-time">—</span>
+            </li>
+            <li class="log-item pending">
+                <span class="log-marker"></span>
+                <span class="log-text">Health-Check</span>
+                <span class="log-time">—</span>
+            </li>
+        </ul>
+    </section>
+
+    <!-- META GRID -->
+    <section class="meta-grid reveal r7" aria-label="System-Information">
+        <div class="meta-cell">
+            <span class="meta-label">Version</span>
+            <span class="meta-value" data-version>v3.8.0</span>
+        </div>
+        <div class="meta-cell">
+            <span class="meta-label">Region</span>
+            <span class="meta-value" data-region>Frankfurt</span>
+        </div>
+        <div class="meta-cell">
+            <span class="meta-label">Status</span>
+            <span class="meta-value">In Progress</span>
+        </div>
+    </section>
+
+    <!-- ACTIONS -->
+    <div class="actions reveal r8">
+        <button type="button" class="btn btn-primary" data-recheck>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <span>Status erneut prüfen</span>
+        </button>
+        <a href="mailto:kontakt@myworklog.de" class="support-link" data-support-link>
+            <span>Support kontaktieren</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+        </a>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer reveal r8">
+        <span>© MyWorkLog · Geplante Wartung</span>
+        <span class="stage">Stage: Production</span>
+    </footer>
+
+</div>
+
+<!-- ════════════════════════════════════════════
+     THEME-FARBE-SYNC (PFLICHT — siehe CLAUDE.md)
+     ════════════════════════════════════════════ -->
+<script>
+(function() {
+    function applyTheme(hex) {
+        if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+        var r = parseInt(hex.slice(1,3), 16);
+        var g = parseInt(hex.slice(3,5), 16);
+        var b = parseInt(hex.slice(5,7), 16);
+        document.documentElement.style.setProperty('--primary', hex);
+        document.documentElement.style.setProperty('--primary-rgb', r + ',' + g + ',' + b);
+        document.documentElement.style.setProperty('--primary-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
+    }
+    function syncTheme() {
+        try {
+            var raw = localStorage.getItem('tg_pro_data');
+            if (!raw) return;
+            var data = JSON.parse(raw);
+            if (data && data.settings && data.settings.theme) applyTheme(data.settings.theme);
+        } catch (e) { /* ignore */ }
+    }
+    syncTheme();
+    window.addEventListener('storage', function(e) { if (e.key === 'tg_pro_data') syncTheme(); });
+    document.addEventListener('visibilitychange', function() { if (!document.hidden) syncTheme(); });
+})();
+</script>
+
+<!-- ════════════════════════════════════════════
+     MAINTENANCE DATA + COUNTDOWN + AUTO-RECHECK
+     ════════════════════════════════════════════ -->
+<script>
+(function() {
+    var CONFIG_URL = '/config/maintenance.json';
+    var RECHECK_MS = 30000;
+
+    var elTitle       = document.querySelector('[data-title]');
+    var elDescription = document.querySelector('[data-description]');
+    var elIncidentId  = document.querySelector('[data-incident-id]');
+    var elStarted     = document.querySelector('[data-started]');
+    var elEtaClock    = document.querySelector('[data-eta-clock]');
+    var elEtaCount    = document.querySelector('[data-eta-countdown]');
+    var elEtaProgress = document.querySelector('[data-eta-progress]');
+    var elLogList     = document.querySelector('[data-log-list]');
+    var elVersion     = document.querySelector('[data-version]');
+    var elRegion      = document.querySelector('[data-region]');
+    var elSupport     = document.querySelector('[data-support-link]');
+    var btnRecheck    = document.querySelector('[data-recheck]');
+
+    var state = { etaIso: null, startedIso: null };
+
+    function esc(s) {
+        var d = document.createElement('div');
+        d.textContent = s == null ? '' : String(s);
+        return d.innerHTML;
+    }
+    function fmtTime(iso) {
+        var d = new Date(iso);
+        if (isNaN(d)) return '';
+        return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    }
+    function buildIcon(status) {
+        if (status === 'done') {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        }
+        if (status === 'active') {
+            return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>';
+        }
+        return '';
+    }
+    function renderSteps(steps) {
+        if (!elLogList || !Array.isArray(steps) || !steps.length) return;
+        var html = steps.map(function(step) {
+            var status = (step.status === 'done' || step.status === 'active' || step.status === 'pending')
+                ? step.status : 'pending';
+            var time = step.time || '—';
+            var label = step.label || '';
+            return '<li class="log-item ' + status + '">' +
+                '<span class="log-marker">' + buildIcon(status) + '</span>' +
+                '<span class="log-text">' + esc(label) + '</span>' +
+                '<span class="log-time">' + esc(time) + '</span>' +
+            '</li>';
+        }).join('');
+        elLogList.innerHTML = html;
+    }
+
+    function applyConfig(cfg) {
+        if (!cfg || typeof cfg !== 'object') return;
+        if (elTitle && cfg.title) elTitle.textContent = cfg.title;
+        if (elDescription && cfg.description) elDescription.textContent = cfg.description;
+        if (elIncidentId && cfg.incidentId) elIncidentId.textContent = cfg.incidentId;
+        if (elVersion && cfg.version) elVersion.textContent = cfg.version;
+        if (elRegion && cfg.region) elRegion.textContent = cfg.region;
+        if (elSupport && cfg.supportEmail) elSupport.setAttribute('href', 'mailto:' + cfg.supportEmail);
+
+        state.startedIso = cfg.started || null;
+        state.etaIso = cfg.eta || null;
+
+        if (elStarted && state.startedIso) {
+            var s = fmtTime(state.startedIso);
+            if (s) elStarted.textContent = s;
+        }
+        if (elEtaClock && state.etaIso) {
+            var e = fmtTime(state.etaIso);
+            if (e) elEtaClock.textContent = e;
+        }
+        if (Array.isArray(cfg.steps)) renderSteps(cfg.steps);
+
+        updateCountdown();
+    }
+
+    function updateCountdown() {
+        if (!state.etaIso || !elEtaCount) return;
+        var eta = new Date(state.etaIso).getTime();
+        var started = state.startedIso ? new Date(state.startedIso).getTime() : (eta - 30 * 60 * 1000);
+        var now = Date.now();
+        var remaining = eta - now;
+
+        if (remaining <= 0) {
+            elEtaCount.textContent = 'in Kürze';
+            if (elEtaProgress) elEtaProgress.style.width = '98%';
+            return;
+        }
+        var mins = Math.ceil(remaining / 60000);
+        if (mins < 1) {
+            elEtaCount.textContent = 'in weniger als einer Minute';
+        } else if (mins === 1) {
+            elEtaCount.textContent = 'in 1 Minute';
+        } else if (mins < 60) {
+            elEtaCount.textContent = 'in ' + mins + ' Minuten';
+        } else {
+            var h = Math.floor(mins / 60);
+            var m = mins % 60;
+            elEtaCount.textContent = 'in ' + h + 'h ' + (m ? m + 'min' : '');
+        }
+
+        if (elEtaProgress && eta > started) {
+            var total = eta - started;
+            var elapsed = now - started;
+            var pct = Math.max(2, Math.min(98, (elapsed / total) * 100));
+            elEtaProgress.style.width = pct.toFixed(1) + '%';
+        }
+    }
+
+    function fetchConfig() {
+        return fetch(CONFIG_URL + '?t=' + Date.now(), { cache: 'no-store' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .catch(function() { return null; });
+    }
+
+    function checkAndApply() {
+        return fetchConfig().then(function(cfg) {
+            if (cfg && cfg.active === false) {
+                // Maintenance vorbei → zurück zur App
+                location.replace('/');
+                return;
+            }
+            if (cfg) applyConfig(cfg);
+        });
+    }
+
+    // Initial load
+    checkAndApply();
+
+    // Periodic recheck
+    setInterval(checkAndApply, RECHECK_MS);
+
+    // Countdown tick
+    setInterval(updateCountdown, 1000 * 20);
+
+    // Manual recheck
+    if (btnRecheck) {
+        btnRecheck.addEventListener('click', function() {
+            btnRecheck.classList.add('refreshing');
+            checkAndApply().then(function() {
+                setTimeout(function() { btnRecheck.classList.remove('refreshing'); }, 700);
+            });
+        });
+    }
+})();
+</script>
+
+<!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
+<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
+
+</body>
+</html>

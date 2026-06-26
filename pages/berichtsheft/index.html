@@ -1,8 +1,13 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+/* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
     <meta name="description" content="Berichtsheft Generator: IHK-konformes Berichtsheft erstellen mit lokaler KI. Automatische Einträge, Prüfungsvorbereitung, AES-256 verschlüsselt & DSGVO-konform.">
     <meta name="keywords" content="Berichtsheft Generator, IHK-konformes Berichtsheft, digitales Berichtsheft, Berichtsheft erstellen, Berichtsheft App, lokale KI Berichtsheft, Ausbildungsnachweis, IHK Berichtsheft, Auszubildende Berichtsheft, online Berichtsheft, Fachinformatiker Berichtsheft, Berichtsheft offline">
     <script defer src="../../../Assets/js/touch-mobile-optimizations.js"></script>

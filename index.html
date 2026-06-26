@@ -2,6 +2,11 @@
 <html lang="de" dir="ltr" prefix="og: https://ogp.me/ns#">
 <head>
 <script>if(location.pathname==='/index.html')location.replace(location.href.replace('/index.html','/')+''+location.search+location.hash);</script>
+<script>
+/* Maintenance-Gate: prüft /config/maintenance.json, leitet bei active:true auf /maintenance/ um.
+   Versteckt html bis Check resolved (max 1.2s), damit kein Flash. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c&&c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
 <script>(function(){
   // 1. Sidebar collapse pre-apply
   try{if(localStorage.getItem('sidebar_collapsed')==='true'&&window.innerWidth>=1024){document.documentElement.setAttribute('data-sb-pre-col','');}}catch(e){}
