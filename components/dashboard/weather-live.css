@@ -1340,15 +1340,19 @@
 .weather-live[data-condition="fog"] .ls-cottage       { opacity: 0.4; }
 .weather-live[data-condition="fog"] .ls-trees         { opacity: 0.6; }
 
-/* ═══ TREES bending in wind ═══ */
+/* ═══ TREES bending in wind ═══
+   Inner <g class="tree-pivot"> has no SVG transform — fill-box gives the path's
+   geometric bbox, with origin (50% 100%) = trunk base. CSS rotation pivots there.
+   The outer <g transform="translate(...)"> stays unaffected, so trees stay positioned. */
 .weather-landscape .tree-pivot {
     transform-box: fill-box;
+    transform-origin: 50% 100%;
     animation: treeSway var(--sway-dur, 3s) ease-in-out infinite;
     animation-delay: var(--sway-d, 0s);
 }
 @keyframes treeSway {
-    0%, 100% { transform: rotate(calc(var(--tree-sway, 1deg) * -1)); }
-    50%      { transform: rotate(var(--tree-sway, 1deg)); }
+    0%, 100% { transform: rotate(calc(var(--tree-sway, 0deg) * -1)); }
+    50%      { transform: rotate(var(--tree-sway, 0deg)); }
 }
 
 /* ═══ PLANE crossing the sky ═══ */

@@ -507,42 +507,63 @@
                         <path class="bird bird-3" d="M 0 0 q 3.5 -3.5 7 0 q 3.5 -3.5 7 0" transform="translate(220, 72)" />
                     </g>
 
-                    <!-- LAYER 4: Tree line — wind-swayable. Each tree wrapped in <g class="tree-pivot"> for nested sway. -->
+                    <!-- LAYER 4: Tree line — wind-swayable.
+                         Each tree uses nested groups: outer <g transform="translate"> positions the tree,
+                         inner <g class="tree-pivot"> rotates around its bbox bottom-center (the trunk base)
+                         via CSS transform-box:fill-box + transform-origin:50% 100%. -->
                     <g class="ls-trees">
-                        <g class="tree-pivot" style="transform-origin:60px 162px;--sway-dur:3.2s;--sway-d:0s">
-                            <path class="ls-tree-spruce" transform="translate(60,162)" d="M -6 0 L 6 0 L 0 -22 Z M -1 0 L 1 0 L 1 4 L -1 4 Z" />
-                        </g>
-                        <g class="tree-pivot" style="transform-origin:82px 164px;--sway-dur:2.8s;--sway-d:-0.6s">
-                            <path class="ls-tree-spruce" transform="translate(82,164)" d="M -5 0 L 5 0 L 0 -16 Z M -0.8 0 L 0.8 0 L 0.8 3.5 L -0.8 3.5 Z" />
-                        </g>
-                        <g class="tree-pivot" style="transform-origin:160px 159px;--sway-dur:3.6s;--sway-d:-1.2s">
-                            <g class="ls-tree-leafy" transform="translate(160,159)">
-                                <ellipse cx="0" cy="-12" rx="11" ry="9" />
-                                <rect x="-1.5" y="-4" width="3" height="6" />
+                        <g transform="translate(60,162)">
+                            <g class="tree-pivot" style="--sway-dur:3.2s;--sway-d:0s">
+                                <path class="ls-tree-spruce" d="M -6 0 L 6 0 L 0 -22 Z M -1 0 L 1 0 L 1 4 L -1 4 Z" />
                             </g>
                         </g>
-                        <g class="tree-pivot" style="transform-origin:250px 158px;--sway-dur:3.4s;--sway-d:-0.3s">
-                            <path class="ls-tree-spruce" transform="translate(250,158)" d="M -7 0 L 7 0 L 0 -25 Z M -1 0 L 1 0 L 1 4 L -1 4 Z" />
+                        <g transform="translate(82,164)">
+                            <g class="tree-pivot" style="--sway-dur:2.8s;--sway-d:-0.6s">
+                                <path class="ls-tree-spruce" d="M -5 0 L 5 0 L 0 -16 Z M -0.8 0 L 0.8 0 L 0.8 3.5 L -0.8 3.5 Z" />
+                            </g>
                         </g>
-                        <g class="tree-pivot" style="transform-origin:290px 161px;--sway-dur:2.6s;--sway-d:-0.9s">
-                            <path class="ls-tree-spruce" transform="translate(290,161)" d="M -4.5 0 L 4.5 0 L 0 -14 Z M -0.8 0 L 0.8 0 L 0.8 3 L -0.8 3 Z" />
+                        <g transform="translate(160,159)">
+                            <g class="tree-pivot" style="--sway-dur:3.6s;--sway-d:-1.2s">
+                                <g class="ls-tree-leafy">
+                                    <ellipse cx="0" cy="-12" rx="11" ry="9" />
+                                    <rect x="-1.5" y="-4" width="3" height="6" />
+                                </g>
+                            </g>
                         </g>
-                        <g class="tree-pivot" style="transform-origin:380px 162px;--sway-dur:4s;--sway-d:-1.8s">
-                            <g class="ls-tree-leafy" transform="translate(380,162)">
-                                <ellipse cx="0" cy="-15" rx="13" ry="11" />
-                                <rect x="-2" y="-6" width="4" height="8" />
+                        <g transform="translate(250,158)">
+                            <g class="tree-pivot" style="--sway-dur:3.4s;--sway-d:-0.3s">
+                                <path class="ls-tree-spruce" d="M -7 0 L 7 0 L 0 -25 Z M -1 0 L 1 0 L 1 4 L -1 4 Z" />
+                            </g>
+                        </g>
+                        <g transform="translate(290,161)">
+                            <g class="tree-pivot" style="--sway-dur:2.6s;--sway-d:-0.9s">
+                                <path class="ls-tree-spruce" d="M -4.5 0 L 4.5 0 L 0 -14 Z M -0.8 0 L 0.8 0 L 0.8 3 L -0.8 3 Z" />
+                            </g>
+                        </g>
+                        <g transform="translate(380,162)">
+                            <g class="tree-pivot" style="--sway-dur:4s;--sway-d:-1.8s">
+                                <g class="ls-tree-leafy">
+                                    <ellipse cx="0" cy="-15" rx="13" ry="11" />
+                                    <rect x="-2" y="-6" width="4" height="8" />
+                                </g>
                             </g>
                         </g>
                         <ellipse class="ls-bush" cx="430" cy="161" rx="9" ry="5" />
                         <ellipse class="ls-bush" cx="448" cy="162" rx="7" ry="4" />
-                        <g class="tree-pivot" style="transform-origin:620px 158px;--sway-dur:3.1s;--sway-d:-0.4s">
-                            <path class="ls-tree-spruce" transform="translate(620,158)" d="M -6.5 0 L 6.5 0 L 0 -20 Z M -1 0 L 1 0 L 1 4 L -1 4 Z" />
+                        <g transform="translate(620,158)">
+                            <g class="tree-pivot" style="--sway-dur:3.1s;--sway-d:-0.4s">
+                                <path class="ls-tree-spruce" d="M -6.5 0 L 6.5 0 L 0 -20 Z M -1 0 L 1 0 L 1 4 L -1 4 Z" />
+                            </g>
                         </g>
-                        <g class="tree-pivot" style="transform-origin:660px 162px;--sway-dur:2.9s;--sway-d:-1.5s">
-                            <path class="ls-tree-spruce" transform="translate(660,162)" d="M -5 0 L 5 0 L 0 -15 Z M -0.8 0 L 0.8 0 L 0.8 4 L -0.8 4 Z" />
+                        <g transform="translate(660,162)">
+                            <g class="tree-pivot" style="--sway-dur:2.9s;--sway-d:-1.5s">
+                                <path class="ls-tree-spruce" d="M -5 0 L 5 0 L 0 -15 Z M -0.8 0 L 0.8 0 L 0.8 4 L -0.8 4 Z" />
+                            </g>
                         </g>
-                        <g class="tree-pivot" style="transform-origin:710px 160px;--sway-dur:3.8s;--sway-d:-2.1s">
-                            <path class="ls-tree-spruce" transform="translate(710,160)" d="M -8 0 L 8 0 L 0 -28 Z M -1.5 0 L 1.5 0 L 1.5 5 L -1.5 5 Z" />
+                        <g transform="translate(710,160)">
+                            <g class="tree-pivot" style="--sway-dur:3.8s;--sway-d:-2.1s">
+                                <path class="ls-tree-spruce" d="M -8 0 L 8 0 L 0 -28 Z M -1.5 0 L 1.5 0 L 1.5 5 L -1.5 5 Z" />
+                            </g>
                         </g>
                         <ellipse class="ls-bush" cx="745" cy="163" rx="8" ry="4.5" />
                     </g>
@@ -1222,10 +1243,11 @@
         const w = Math.max(0, windKmh || 0);
         return Math.max(-90, Math.min(-6, -6 - w * 1.4)).toFixed(0) + 'px';
     }
-    // Calm = 0.5°, gusty = 7° → trees bend more in strong wind
+    // No wind = no sway (trees stay still). Above ~5 km/h, ramp up to 7° at gale-strength wind.
     function _windToTreeSway(windKmh) {
         const w = Math.max(0, Math.min(60, windKmh || 0));
-        return (0.5 + (w / 60) * 6.5).toFixed(2) + 'deg';
+        if (w < 5) return '0deg';
+        return (((w - 5) / 55) * 7).toFixed(2) + 'deg';
     }
 
     // Apply all dynamic CSS variables. Called on data refresh AND on the 5-min sky-tick.
