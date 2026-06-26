@@ -22,11 +22,21 @@
     }
 
     // --- CUSTOM COLOR PICKER FUNCTIONS (CLEAN & MODERN) ---
+    // Live-Preview während Drag: nur CSS-Variablen + Hex-Input updaten, KEIN save()/updateUI().
+    // Sonst triggert jeder `input`-Tick (60/sec) einen full LocalStorage-Write + Dashboard-Rebuild → Lag.
     function updateColorFromPicker() {
         const color = document.getElementById('customColorPicker').value;
-        document.getElementById('customColorHex').value = color.slice(1).toUpperCase();
-        document.getElementById('colorPreview').style.background = color;
-        // Sofort anwenden
+        const hexEl = document.getElementById('customColorHex');
+        if (hexEl) hexEl.value = color.slice(1).toUpperCase();
+        const prev = document.getElementById('colorPreview');
+        if (prev) prev.style.background = color;
+        applyTheme(color);
+        const metaTheme = document.querySelector('meta[name="theme-color"]');
+        if (metaTheme) metaTheme.content = color;
+    }
+    // Auf `change` (Drag-Ende) richtig persistieren.
+    function commitColorFromPicker() {
+        const color = document.getElementById('customColorPicker').value;
         setThemeColor(color);
     }
 

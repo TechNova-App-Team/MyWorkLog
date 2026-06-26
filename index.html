@@ -5243,21 +5243,36 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                                     }
                                 });
 
+                                // rAF-throttled sync — verhindert Doppel-Calls im selben Frame
+                                // (input-Handler + MutationObserver triggern beide auf jeden Drag-Tick)
+                                var syncQueued = false;
+                                function syncRAF(){
+                                    if (syncQueued) return;
+                                    syncQueued = true;
+                                    requestAnimationFrame(function(){ syncQueued = false; sync(); });
+                                }
+
                                 if (picker){
+                                    // `input` = Live-Preview während Drag (CSS-Vars only, kein save)
                                     picker.addEventListener('input', function(){
                                         if (typeof updateColorFromPicker === 'function') updateColorFromPicker();
+                                        // sync() NICHT direkt — MutationObserver (rAF-throttled) übernimmt
+                                    });
+                                    // `change` = Drag-Ende → richtig committen (save + updateUI)
+                                    picker.addEventListener('change', function(){
+                                        if (typeof commitColorFromPicker === 'function') commitColorFromPicker();
                                         sync();
                                     });
                                 }
                                 if (hexInput){
                                     hexInput.addEventListener('input', function(){
                                         if (typeof updateColorPickerFromHex === 'function') updateColorPickerFromHex();
-                                        sync();
+                                        syncRAF();
                                     });
                                 }
 
                                 try {
-                                    var obs = new MutationObserver(sync);
+                                    var obs = new MutationObserver(syncRAF);
                                     obs.observe(document.documentElement, { attributes:true, attributeFilter:['style','data-theme'] });
                                 } catch(e){}
 
