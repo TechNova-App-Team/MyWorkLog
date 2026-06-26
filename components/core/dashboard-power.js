@@ -197,6 +197,8 @@
         else d.pinned.push(id);
         syncCurrentToActivePreset();
         renderPinBadges();
+        // Sofort drag-Status updaten (sonst koennen Items trotz Pin verschoben werden)
+        blockDragForPinned();
         // Re-render edit-mode controls if active
         var container = document.getElementById('dashboardContainer');
         if (container && container.classList.contains('edit-mode')) renderPinButtons();
@@ -628,6 +630,45 @@
             '.lm-action-btn:hover{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.15);transform:translateY(-1px);}' +
             '.lm-action-btn svg{width:13px;height:13px;opacity:.7;}' +
             '@media(max-width:480px){.lm-modal{padding:0;}.lm-sheet{max-height:100vh;height:100vh;border-radius:0;}}' +
+            /* WIDGET MANAGER MODAL (z-index 100000 — UEBER settings) */
+            '#newWidgetManagerModal.wm-modal{display:none;position:fixed;inset:0;z-index:100000;align-items:center;justify-content:center;padding:16px;}' +
+            '#newWidgetManagerModal.wm-modal.active{display:flex;}' +
+            '.wm-backdrop{position:absolute;inset:0;background:rgba(3,3,5,.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}' +
+            '.wm-sheet{position:relative;width:100%;max-width:620px;max-height:88vh;overflow-y:auto;background:#0a0a12;border:1px solid rgba(255,255,255,.08);border-radius:16px;box-shadow:0 24px 56px -12px rgba(0,0,0,.6);color:var(--text-main,#f8fafc);font-family:var(--font-main,Inter,sans-serif);animation:wmIn .26s cubic-bezier(.22,1,.36,1);}' +
+            '@keyframes wmIn{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:translateY(0) scale(1);}}' +
+            '.wm-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;background:#0a0a12;z-index:1;}' +
+            '.wm-title{display:inline-flex;align-items:center;gap:10px;font-size:14px;font-weight:600;letter-spacing:-.01em;}' +
+            '.wm-title svg{color:var(--primary,#a855f7);}' +
+            '.wm-close{appearance:none;border:none;background:transparent;color:var(--text-muted,#94a3b8);cursor:pointer;padding:6px;border-radius:6px;transition:all .18s;display:flex;align-items:center;}' +
+            '.wm-close:hover{background:rgba(255,255,255,.06);color:var(--text-main,#f8fafc);}' +
+            '.wm-body{padding:16px 20px 24px;display:flex;flex-direction:column;gap:22px;}' +
+            '.wm-section{display:flex;flex-direction:column;gap:10px;}' +
+            '.wm-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;}' +
+            '.wm-section-title{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted,#94a3b8);font-weight:500;}' +
+            '.wm-section-meta{font-size:11px;color:var(--text-dim,#64748b);font-family:var(--font-mono,monospace);}' +
+            '.wm-list{display:flex;flex-direction:column;gap:6px;}' +
+            '.wm-item{display:flex;align-items:center;gap:14px;padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:10px;transition:all .18s;}' +
+            '.wm-item:hover{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);}' +
+            '.wm-item-pinned{border-color:rgba(var(--primary-rgb,168,85,247),.25);background:rgba(var(--primary-rgb,168,85,247),.04);}' +
+            '.wm-item-icon{width:40px;height:40px;border-radius:9px;background:rgba(var(--primary-rgb,168,85,247),.1);color:var(--primary,#a855f7);display:flex;align-items:center;justify-content:center;flex-shrink:0;}' +
+            '.wm-item-icon svg{width:18px;height:18px;}' +
+            '.wm-item-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}' +
+            '.wm-item-name{font-size:14px;font-weight:500;color:var(--text-main,#f8fafc);display:flex;align-items:center;gap:6px;}' +
+            '.wm-item-desc{font-size:12px;color:var(--text-muted,#94a3b8);line-height:1.4;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}' +
+            '.wm-pin-tag{display:inline-flex;align-items:center;color:var(--primary,#a855f7);}' +
+            '.wm-pin-tag svg{width:11px;height:11px;}' +
+            '.wm-item-actions{display:flex;align-items:center;gap:2px;flex-shrink:0;}' +
+            '.wm-icon-btn{appearance:none;border:none;background:transparent;color:var(--text-muted,#94a3b8);cursor:pointer;padding:7px;border-radius:6px;transition:all .18s;display:flex;align-items:center;justify-content:center;}' +
+            '.wm-icon-btn svg{width:14px;height:14px;}' +
+            '.wm-icon-btn:hover:not(:disabled){background:rgba(255,255,255,.06);color:var(--text-main,#f8fafc);}' +
+            '.wm-icon-btn:disabled{opacity:.3;cursor:not-allowed;}' +
+            '.wm-icon-btn.wm-pin-active{color:var(--primary,#a855f7);background:rgba(var(--primary-rgb,168,85,247),.12);}' +
+            '.wm-icon-btn.wm-danger:hover:not(:disabled){background:rgba(239,68,68,.12);color:#ef4444;}' +
+            '.wm-add-btn{appearance:none;border:1px solid rgba(var(--primary-rgb,168,85,247),.3);background:rgba(var(--primary-rgb,168,85,247),.12);color:var(--primary,#a855f7);font-family:inherit;font-size:12.5px;font-weight:500;padding:7px 12px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .18s;}' +
+            '.wm-add-btn:hover{background:rgba(var(--primary-rgb,168,85,247),.2);}' +
+            '.wm-add-btn svg{width:13px;height:13px;}' +
+            '.wm-empty{font-size:12.5px;color:var(--text-dim,#64748b);text-align:center;padding:18px;background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.06);border-radius:8px;}' +
+            '@media(max-width:480px){#newWidgetManagerModal.wm-modal{padding:0;}.wm-sheet{max-height:100vh;height:100vh;border-radius:0;}.wm-item{padding:10px 12px;}.wm-item-icon{width:36px;height:36px;}.wm-item-desc{display:none;}}' +
             /* Pin badge (normal view) */
             '.dashboard-pin-badge{position:absolute;top:8px;left:8px;width:22px;height:22px;border-radius:50%;background:rgba(var(--primary-rgb,168,85,247),.15);border:1px solid rgba(var(--primary-rgb,168,85,247),.35);color:var(--primary,#a855f7);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);z-index:10;pointer-events:none;}' +
             '.dashboard-pin-badge svg{width:11px;height:11px;}' +
@@ -677,8 +718,78 @@
     }
 
     // ──────────────────────────────────────────────
+    // WIDGET-ICON-MAP (Emojis → SVG)
+    // ──────────────────────────────────────────────
+    var ICON_MAP = {
+        'kpi-cards':         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+        'quick-actions':     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+        'charts':            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+        'entry-form':        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+        'last-activities':   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>',
+        'mood-tracker':      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>',
+        'productivity-score':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+        'quick-templates':   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>',
+        'weekly-goals':      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>'
+    };
+    var FALLBACK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="15" x2="15" y2="15"/></svg>';
+
+    function getWidgetIconSvg(widgetId) {
+        return ICON_MAP[widgetId] || FALLBACK_ICON;
+    }
+
+    // ──────────────────────────────────────────────
+    // MOVE WIDGET (Up/Down — click-Reorder als Alternative zum Drag)
+    // ──────────────────────────────────────────────
+    function moveDashboardWidget(widgetId, direction) {
+        var container = document.getElementById('dashboardContainer');
+        if (!container) return false;
+        var items = Array.from(container.querySelectorAll('.dashboard-item'));
+        items.sort(function(a, b) { return (parseInt(a.style.order) || 0) - (parseInt(b.style.order) || 0); });
+        var idx = items.findIndex(function(el) { return el.getAttribute('data-item-id') === widgetId; });
+        if (idx < 0) return false;
+        var newIdx = direction === 'up' ? idx - 1 : idx + 1;
+        if (newIdx < 0 || newIdx >= items.length) return false;
+        var tmp = items[idx]; items[idx] = items[newIdx]; items[newIdx] = tmp;
+        items.forEach(function(el, i) { el.style.order = i; });
+        // Save via direct flow (saveWidgetLayout pushed history + sync zum Preset)
+        if (typeof saveWidgetLayout === 'function') {
+            saveWidgetLayout(false);
+        } else {
+            var order = items.map(function(el){return el.getAttribute('data-item-id');}).filter(Boolean);
+            data.settings.widgetLayout = order;
+            try { localStorage.setItem('tt_dashboard_layout', JSON.stringify(order)); } catch (e) {}
+            safeSave();
+        }
+        return true;
+    }
+
+    // ──────────────────────────────────────────────
+    // ResizeObserver-Loop-Warning silencen (Browser-Quirk, harmlos)
+    // Tritt auf wenn Layout-Saves Chart-Resizes triggern → loop notification
+    // ──────────────────────────────────────────────
+    function silenceResizeObserverError() {
+        var pattern = /ResizeObserver loop (limit exceeded|completed with undelivered notifications)/;
+        window.addEventListener('error', function(e) {
+            if (e.message && pattern.test(e.message)) {
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                return false;
+            }
+        }, true);
+        // Auch fuer onerror-style
+        var oldOnError = window.onerror;
+        window.onerror = function(msg) {
+            if (typeof msg === 'string' && pattern.test(msg)) return true;
+            if (oldOnError) return oldOnError.apply(this, arguments);
+            return false;
+        };
+    }
+
+    // ──────────────────────────────────────────────
     // EXPOSE GLOBALS
     // ──────────────────────────────────────────────
+    window.getWidgetIconSvg = getWidgetIconSvg;
+    window.moveDashboardWidget = moveDashboardWidget;
     window.openLayoutManager = openLayoutManager;
     window.closeLayoutManager = closeLayoutManager;
     window.renderLayoutManager = renderLayoutManager;
@@ -702,6 +813,8 @@
     // INIT
     // ──────────────────────────────────────────────
     function init() {
+        // Suppressor SOFORT registrieren (auch ohne data) — sonst spammt es Console waehrend Load
+        silenceResizeObserverError();
         if (typeof data === 'undefined' || !data || !data.settings) {
             setTimeout(init, 250);
             return;

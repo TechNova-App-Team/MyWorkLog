@@ -102,7 +102,7 @@
                 console.log('Adding remove button to item', index, item.getAttribute('data-item-id'));
                 const removeBtn = document.createElement('button');
                 removeBtn.className = 'dashboard-item-remove-btn';
-                removeBtn.innerHTML = '🗑️';
+                removeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
                 removeBtn.title = 'Widget entfernen';
                 removeBtn.style.cssText = `
                     position: absolute;
@@ -117,7 +117,6 @@
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    font-size: 1rem;
                     cursor: pointer;
                     z-index: 100;
                     opacity: 0.9;
@@ -582,113 +581,150 @@
         }
     }
 
-    // NEUE FUNKTIONEN FÜR DEN NEUEN WIDGET MANAGER
+    // ============================================
+    // WIDGET MANAGER — class-based modal (z-Index ueber Settings)
+    // ============================================
     function openNewWidgetManager() {
-        console.log('Opening NEW widget manager');
         const modal = document.getElementById('newWidgetManagerModal');
-        if (modal) {
-            modal.style.display = 'flex';
-            console.log('New widget manager opened');
-            renderNewWidgetManager();
-        } else {
-            console.error('New widget manager modal not found');
+        if (!modal) { console.error('New widget manager modal not found'); return; }
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        renderNewWidgetManager();
+        // ESC to close
+        if (!modal._escHooked) {
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modal.classList.contains('active')) closeNewWidgetManager();
+            });
+            modal._escHooked = true;
         }
     }
 
     function closeNewWidgetManager() {
-        console.log('Closing NEW widget manager');
         const modal = document.getElementById('newWidgetManagerModal');
-        if (modal) {
-            modal.style.display = 'none';
-            console.log('New widget manager closed');
-        }
+        if (!modal) return;
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
     }
 
     function renderNewWidgetManager() {
-        console.log('Rendering NEW widget manager');
         const availableContainer = document.getElementById('newAvailableWidgets');
         const currentContainer = document.getElementById('newCurrentWidgets');
-        
-        if (!availableContainer || !currentContainer) {
-            console.error('New widget manager containers not found');
-            return;
-        }
-        
-        const dashboardContainer = document.getElementById('dashboardContainer');
-        const currentWidgets = dashboardContainer ? Array.from(dashboardContainer.querySelectorAll('.dashboard-item')).map(item => 
-            item.getAttribute('data-item-id')
-        ).filter(Boolean) : [];
+        const currentCountEl = document.getElementById('wmCurrentCount');
+        const availCountEl = document.getElementById('wmAvailCount');
+        if (!availableContainer || !currentContainer) return;
 
-        // Verfügbare Widgets anzeigen
-        availableContainer.innerHTML = '';
-        Object.keys(widgetLibrary).forEach(widgetId => {
-            if (!currentWidgets.includes(widgetId)) {
-                const widget = widgetLibrary[widgetId];
-                const widgetCard = document.createElement('div');
-                widgetCard.className = 'card';
-                widgetCard.style.cssText = `
-                    padding: 20px;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    border: 1px solid var(--border);
-                    background: var(--bg-glass);
-                    border-radius: 12px;
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                `;
-                widgetCard.onmouseover = () => widgetCard.style.transform = 'translateY(-2px)';
-                widgetCard.onmouseout = () => widgetCard.style.transform = 'translateY(0)';
-                widgetCard.onclick = () => addWidget(widgetId);
-                
-                widgetCard.innerHTML = `
-                    <div style="font-size: 2rem;">${widget.icon}</div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: var(--text-main); margin-bottom: 5px;">${widget.name}</div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted);">${widget.description}</div>
-                    </div>
-                    <button class="btn btn-ghost" style="padding: 8px 12px; font-size: 0.8rem;" onclick="event.stopPropagation(); addWidget('${widgetId}')">➕ Hinzufügen</button>
-                `;
-                availableContainer.appendChild(widgetCard);
-            }
-        });
-        
-        // Aktuelle Widgets anzeigen
+        const dashboardContainer = document.getElementById('dashboardContainer');
+        const items = dashboardContainer ? Array.from(dashboardContainer.querySelectorAll('.dashboard-item')) : [];
+        items.sort((a, b) => (parseInt(a.style.order) || 0) - (parseInt(b.style.order) || 0));
+        const currentWidgets = items.map(el => el.getAttribute('data-item-id')).filter(Boolean);
+        const isPinned = (id) => (typeof isWidgetPinned === 'function') ? isWidgetPinned(id) : false;
+        const iconFor = (id) => (typeof getWidgetIconSvg === 'function') ? getWidgetIconSvg(id) : '';
+
+        // Aktive Widgets
         currentContainer.innerHTML = '';
-        currentWidgets.forEach(widgetId => {
+        if (currentWidgets.length === 0) {
+            currentContainer.innerHTML = '<div class="wm-empty">Kein Widget aktiv — fuege unten eines hinzu.</div>';
+        }
+        currentWidgets.forEach((widgetId, idx) => {
             const widget = widgetLibrary[widgetId];
-            if (widget) {
-                const widgetCard = document.createElement('div');
-                widgetCard.className = 'card';
-                widgetCard.style.cssText = `
-                    padding: 20px;
-                    border: 1px solid var(--border);
-                    background: var(--bg-glass);
-                    border-radius: 12px;
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                `;
-                
-                widgetCard.innerHTML = `
-                    <div style="font-size: 2rem;">${widget.icon}</div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: var(--text-main); margin-bottom: 5px;">${widget.name}</div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted);">${widget.description}</div>
-                    </div>
-                    <button class="btn btn-ghost" style="padding: 8px 12px; font-size: 0.8rem; color: var(--danger);" onclick="removeWidget('${widgetId}')">✕ Entfernen</button>
-                `;
-                currentContainer.appendChild(widgetCard);
-            }
+            if (!widget) return;
+            const card = document.createElement('div');
+            card.className = 'wm-item' + (isPinned(widgetId) ? ' wm-item-pinned' : '');
+            const upDisabled = idx === 0 ? ' disabled' : '';
+            const downDisabled = idx === currentWidgets.length - 1 ? ' disabled' : '';
+            card.innerHTML = `
+                <div class="wm-item-icon">${iconFor(widgetId)}</div>
+                <div class="wm-item-info">
+                    <div class="wm-item-name">${widget.name}${isPinned(widgetId) ? ' <span class="wm-pin-tag" title="gepinnt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14l-1.5-3.5a2 2 0 0 1-.5-1.3V8a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4.2a2 2 0 0 1-.5 1.3L5 17z"/></svg></span>' : ''}</div>
+                    <div class="wm-item-desc">${widget.description}</div>
+                </div>
+                <div class="wm-item-actions">
+                    <button class="wm-icon-btn" title="Hoch" data-wm-up="${widgetId}"${upDisabled}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                    </button>
+                    <button class="wm-icon-btn" title="Runter" data-wm-down="${widgetId}"${downDisabled}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <button class="wm-icon-btn ${isPinned(widgetId) ? 'wm-pin-active' : ''}" title="${isPinned(widgetId) ? 'Pin lösen' : 'Anpinnen'}" data-wm-pin="${widgetId}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14l-1.5-3.5a2 2 0 0 1-.5-1.3V8a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v4.2a2 2 0 0 1-.5 1.3L5 17z"/></svg>
+                    </button>
+                    <button class="wm-icon-btn wm-danger" title="Entfernen" data-wm-remove="${widgetId}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                    </button>
+                </div>
+            `;
+            currentContainer.appendChild(card);
+        });
+
+        // Verfuegbare Widgets
+        availableContainer.innerHTML = '';
+        const available = Object.keys(widgetLibrary).filter(id => !currentWidgets.includes(id));
+        if (available.length === 0) {
+            availableContainer.innerHTML = '<div class="wm-empty">Alle verfuegbaren Widgets sind bereits aktiv.</div>';
+        }
+        available.forEach(widgetId => {
+            const widget = widgetLibrary[widgetId];
+            const card = document.createElement('div');
+            card.className = 'wm-item wm-item-available';
+            card.innerHTML = `
+                <div class="wm-item-icon">${iconFor(widgetId)}</div>
+                <div class="wm-item-info">
+                    <div class="wm-item-name">${widget.name}</div>
+                    <div class="wm-item-desc">${widget.description}</div>
+                </div>
+                <div class="wm-item-actions">
+                    <button class="wm-add-btn" data-wm-add="${widgetId}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <span>Hinzufügen</span>
+                    </button>
+                </div>
+            `;
+            availableContainer.appendChild(card);
+        });
+
+        // Counts
+        if (currentCountEl) currentCountEl.textContent = currentWidgets.length;
+        if (availCountEl) availCountEl.textContent = available.length;
+
+        // Wire actions via delegation
+        const wireBtn = (selector, handler) => {
+            (currentContainer.querySelectorAll(selector) || []).forEach(btn => {
+                btn.onclick = (e) => { e.stopPropagation(); handler(btn.getAttribute(selector.match(/data-wm-\w+/)[0].slice(1))); };
+            });
+            (availableContainer.querySelectorAll(selector) || []).forEach(btn => {
+                btn.onclick = (e) => { e.stopPropagation(); handler(btn.getAttribute(selector.match(/data-wm-\w+/)[0].slice(1))); };
+            });
+        };
+        currentContainer.querySelectorAll('[data-wm-up]').forEach(btn => {
+            btn.onclick = (e) => { e.stopPropagation(); if (!btn.disabled) { moveDashboardWidget(btn.getAttribute('data-wm-up'), 'up'); renderNewWidgetManager(); } };
+        });
+        currentContainer.querySelectorAll('[data-wm-down]').forEach(btn => {
+            btn.onclick = (e) => { e.stopPropagation(); if (!btn.disabled) { moveDashboardWidget(btn.getAttribute('data-wm-down'), 'down'); renderNewWidgetManager(); } };
+        });
+        currentContainer.querySelectorAll('[data-wm-pin]').forEach(btn => {
+            btn.onclick = (e) => { e.stopPropagation(); if (typeof togglePinWidget === 'function') { togglePinWidget(btn.getAttribute('data-wm-pin')); renderNewWidgetManager(); } };
+        });
+        currentContainer.querySelectorAll('[data-wm-remove]').forEach(btn => {
+            btn.onclick = (e) => { e.stopPropagation(); removeWidget(btn.getAttribute('data-wm-remove')); renderNewWidgetManager(); };
+        });
+        availableContainer.querySelectorAll('[data-wm-add]').forEach(btn => {
+            btn.onclick = (e) => { e.stopPropagation(); addWidget(btn.getAttribute('data-wm-add')); renderNewWidgetManager(); };
         });
     }
 
     function addRandomWidget() {
-        const widgets = Object.keys(widgetLibrary);
-        const randomWidget = widgets[Math.floor(Math.random() * widgets.length)];
-        addWidget(randomWidget);
+        const available = Object.keys(widgetLibrary).filter(id => {
+            const dc = document.getElementById('dashboardContainer');
+            if (!dc) return true;
+            return !dc.querySelector(`[data-item-id="${id}"]`);
+        });
+        if (available.length === 0) {
+            if (typeof showCustomMessage === 'function') showCustomMessage('Alles aktiv', 'Alle Widgets sind schon im Dashboard.', 'info');
+            return;
+        }
+        const pick = available[Math.floor(Math.random() * available.length)];
+        addWidget(pick);
         renderNewWidgetManager();
-        alert(`Zufälliges Widget hinzugefügt: ${randomWidget}`);
     }
 
     function getCurrentDashboardWidgets() {

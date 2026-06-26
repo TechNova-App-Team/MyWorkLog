@@ -1,29 +1,33 @@
     <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-    <!-- NEUES WIDGET MANAGER MODAL - SCHÖNES DESIGN -->
-    <div id="newWidgetManagerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 200; justify-content: center; align-items: center; backdrop-filter: blur(10px);">
-        <div style="background: var(--bg-glass); border: 1px solid var(--border); border-radius: 20px; padding: 30px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; color: var(--text-main); box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
-            <button onclick="closeNewWidgetManager()" style="position: absolute; top: 15px; right: 15px; background: transparent; color: var(--text-muted); border: none; font-size: 24px; cursor: pointer; padding: 5px; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='transparent'; this.style.color='var(--text-muted)'">×</button>
-            <h2 style="color: var(--primary); margin-top: 0; margin-bottom: 20px; font-size: 1.5rem;">📦 Widget Manager</h2>
-            <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 0.95rem;">Füge neue Widgets zu deinem Dashboard hinzu oder entferne vorhandene. Jedes Widget kann individuell konfiguriert werden.</p>
-            
-            <div style="margin: 25px 0;">
-                <h3 style="color: var(--text-main); margin-bottom: 15px; font-size: 1.1rem;">Verfügbare Widgets</h3>
-                <div id="newAvailableWidgets" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
-                    <!-- Widgets werden hier geladen -->
+    <!-- WIDGET MANAGER MODAL (Duplikat fuer sidebar component — siehe CLAUDE.md) -->
+    <div id="newWidgetManagerModal" class="wm-modal" role="dialog" aria-modal="true" aria-label="Widgets verwalten">
+        <div class="wm-backdrop" onclick="closeNewWidgetManager()"></div>
+        <div class="wm-sheet">
+            <div class="wm-head">
+                <div class="wm-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+                    <span>Widgets verwalten</span>
                 </div>
+                <button class="wm-close" onclick="closeNewWidgetManager()" aria-label="Schließen">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
             </div>
-            
-            <div style="margin: 25px 0;">
-                <h3 style="color: var(--text-main); margin-bottom: 15px; font-size: 1.1rem;">Aktuelle Dashboard-Widgets</h3>
-                <div id="newCurrentWidgets" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
-                    <!-- Widgets werden hier geladen -->
+            <div class="wm-body">
+                <div class="wm-section">
+                    <div class="wm-section-head">
+                        <span class="wm-section-title">Aktive Widgets</span>
+                        <span class="wm-section-meta"><span id="wmCurrentCount">0</span> aktiv</span>
+                    </div>
+                    <div class="wm-list" id="newCurrentWidgets"></div>
                 </div>
-            </div>
-            
-            <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border);">
-                <button onclick="addRandomWidget()" style="background: var(--success); color: white; border: none; padding: 12px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(16, 185, 129, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">➕ Zufälliges Widget hinzufügen</button>
-                <button onclick="closeNewWidgetManager()" style="background: var(--bg-sidebar); color: var(--text-main); border: 1px solid var(--border); padding: 12px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='var(--bg-sidebar)'">Schließen</button>
+                <div class="wm-section">
+                    <div class="wm-section-head">
+                        <span class="wm-section-title">Verfügbare Widgets</span>
+                        <span class="wm-section-meta"><span id="wmAvailCount">0</span> wählbar</span>
+                    </div>
+                    <div class="wm-list" id="newAvailableWidgets"></div>
+                </div>
             </div>
         </div>
     </div>
