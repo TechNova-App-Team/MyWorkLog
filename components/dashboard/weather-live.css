@@ -1173,7 +1173,18 @@
     .weather-character .char-body,
     .weather-character .char-shadow,
     .weather-character .char-sunscreen-spark,
-    .weather-character[data-shiver="1"] .char-body {
+    .weather-character[data-shiver="1"] .char-body,
+    .weather-character .char-arm-left,
+    .weather-character .char-eyes ellipse,
+    .weather-landscape .tree-pivot,
+    .weather-plane .plane-wrap,
+    .weather-tornado,
+    .weather-tornado .tornado-svg,
+    .weather-tornado .tornado-swirl,
+    .weather-landscape .ls-sheet-lightning,
+    .weather-landscape .firefly,
+    .weather-landscape .cottage-smoke ellipse,
+    .weather-landscape .ls-birds .bird {
         animation: none !important;
     }
 }
@@ -1329,6 +1340,184 @@
 .weather-live[data-condition="fog"] .ls-cottage       { opacity: 0.4; }
 .weather-live[data-condition="fog"] .ls-trees         { opacity: 0.6; }
 
+/* ═══ TREES bending in wind ═══ */
+.weather-landscape .tree-pivot {
+    transform-box: fill-box;
+    animation: treeSway var(--sway-dur, 3s) ease-in-out infinite;
+    animation-delay: var(--sway-d, 0s);
+}
+@keyframes treeSway {
+    0%, 100% { transform: rotate(calc(var(--tree-sway, 1deg) * -1)); }
+    50%      { transform: rotate(var(--tree-sway, 1deg)); }
+}
+
+/* ═══ PLANE crossing the sky ═══ */
+.weather-plane {
+    position: absolute;
+    top: 18%;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+}
+.weather-live[data-condition="clear-day"]  .weather-plane,
+.weather-live[data-condition="partly-day"] .weather-plane {
+    opacity: 1;
+}
+.weather-plane .plane-wrap {
+    position: absolute;
+    top: 0;
+    left: -10%;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    animation: planeCross 38s linear infinite;
+    animation-delay: 6s;
+}
+.weather-plane .plane-svg {
+    width: 56px;
+    height: 22px;
+    transform: scaleX(-1); /* facing right */
+}
+.weather-plane .plane-body,
+.weather-plane .plane-wing,
+.weather-plane .plane-tail {
+    fill: rgba(255, 255, 255, 0.78);
+    stroke: rgba(0, 0, 0, 0.18);
+    stroke-width: 0.4;
+}
+.weather-plane .plane-contrail {
+    width: 120px;
+    height: 3px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 40%, transparent 100%);
+    border-radius: 2px;
+    filter: blur(1.5px);
+    order: -1; /* contrail before plane */
+    margin-right: -8px;
+}
+@keyframes planeCross {
+    0%        { transform: translateX(0)      translateY(0); }
+    4%        { transform: translateX(2vw)    translateY(-2px); }
+    50%       { transform: translateX(60vw)   translateY(-8px); }
+    96%       { transform: translateX(118vw)  translateY(-12px); }
+    100%      { transform: translateX(120vw)  translateY(-12px); }
+}
+
+/* ═══ TORNADO (storm only, periodic) ═══ */
+.weather-tornado {
+    position: absolute;
+    bottom: 22%;
+    left: 10%;
+    width: 80px;
+    height: 200px;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+    transform-origin: 50% 100%;
+}
+.weather-live[data-condition="storm"] .weather-tornado {
+    opacity: 1;
+    animation: tornadoTraverse 22s ease-in-out infinite;
+    animation-delay: 4s;
+}
+.weather-tornado .tornado-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    animation: tornadoWobble 1.2s ease-in-out infinite;
+    transform-origin: 50% 100%;
+}
+.weather-tornado .tornado-body {
+    fill: rgba(40, 45, 60, 0.7);
+    filter: blur(0.6px);
+}
+.weather-tornado .tornado-swirl {
+    fill: none;
+    stroke: rgba(220, 225, 240, 0.55);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    animation: tornadoSwirlSpin 0.8s linear infinite;
+    transform-origin: 0 0;
+}
+.weather-tornado .tornado-swirl:nth-child(2) { animation-duration: 0.7s; }
+.weather-tornado .tornado-swirl:nth-child(3) { animation-duration: 0.6s; }
+.weather-tornado .tornado-swirl:nth-child(4) { animation-duration: 0.5s; }
+.weather-tornado .tornado-swirl:nth-child(5) { animation-duration: 0.4s; }
+
+@keyframes tornadoTraverse {
+    0%, 6%   { transform: translateX(0)      scaleX(1)  scaleY(0.8); opacity: 0; }
+    12%      { opacity: 1; }
+    50%      { transform: translateX(35vw)   scaleX(-1) scaleY(1.1); opacity: 1; }
+    88%      { opacity: 1; }
+    94%, 100%{ transform: translateX(70vw)   scaleX(1)  scaleY(0.8); opacity: 0; }
+}
+@keyframes tornadoWobble {
+    0%, 100% { transform: scaleX(1) skewX(-3deg); }
+    50%      { transform: scaleX(1) skewX(3deg); }
+}
+@keyframes tornadoSwirlSpin {
+    0%   { transform: scaleX(1); }
+    50%  { transform: scaleX(-1); }
+    100% { transform: scaleX(1); }
+}
+
+/* ═══ SHEET LIGHTNING behind mountains (storm only) ═══ */
+.weather-landscape .ls-sheet-lightning {
+    fill: rgba(220, 230, 255, 0);
+    opacity: 0;
+    mix-blend-mode: screen;
+}
+.weather-live[data-condition="storm"] .ls-sheet-lightning {
+    animation: sheetLightning 9s ease-in-out infinite;
+    animation-delay: 2s;
+}
+@keyframes sheetLightning {
+    0%, 70%    { fill: rgba(220, 230, 255, 0);   opacity: 0; }
+    71%        { fill: rgba(220, 230, 255, 0.65); opacity: 1; }
+    73%        { opacity: 0.2; }
+    74%        { opacity: 0.9; }
+    77%        { opacity: 0; }
+    100%       { opacity: 0; }
+}
+
+/* ═══ FIREFLIES (night only) ═══ */
+.weather-landscape .ls-fireflies {
+    opacity: 0;
+    transition: opacity 2s ease;
+}
+.weather-live[data-condition="clear-night"]  .ls-fireflies,
+.weather-live[data-condition="partly-night"] .ls-fireflies,
+.weather-live[data-condition="ambient"]      .ls-fireflies {
+    opacity: 1;
+}
+.weather-landscape .firefly {
+    fill: #d4ff64;
+    filter: drop-shadow(0 0 4px rgba(212, 255, 100, 0.95));
+    animation: fireflyFloat var(--ff-dur, 6s) ease-in-out infinite,
+               fireflyGlow  var(--ff-glow, 2s) ease-in-out infinite;
+}
+.weather-landscape .firefly-1 { --ff-dur: 7s;  --ff-glow: 1.8s; animation-delay: 0s,    -0.3s; }
+.weather-landscape .firefly-2 { --ff-dur: 9s;  --ff-glow: 2.4s; animation-delay: -1.5s, -1.1s; }
+.weather-landscape .firefly-3 { --ff-dur: 6s;  --ff-glow: 1.6s; animation-delay: -3s,   -0.5s; }
+.weather-landscape .firefly-4 { --ff-dur: 8s;  --ff-glow: 2.1s; animation-delay: -4.5s, -1.6s; }
+.weather-landscape .firefly-5 { --ff-dur: 7.5s;--ff-glow: 1.9s; animation-delay: -2.2s, -0.8s; }
+.weather-landscape .firefly-6 { --ff-dur: 6.5s;--ff-glow: 2.2s; animation-delay: -5s,   -1.4s; }
+
+@keyframes fireflyFloat {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    25%      { transform: translate3d(18px, -22px, 0); }
+    50%      { transform: translate3d(-12px, -38px, 0); }
+    75%      { transform: translate3d(-26px, -18px, 0); }
+}
+@keyframes fireflyGlow {
+    0%, 100% { opacity: 0.2; }
+    50%      { opacity: 1; }
+}
+
 /* ═══ CHARACTER — Flat illustration with skin/hair/face/clothes ═══ */
 
 .weather-character {
@@ -1384,6 +1573,31 @@
 .weather-character .char-body {
     transform-origin: 100px 305px;
     animation: charBreathe 4.5s ease-in-out infinite;
+}
+
+/* Occasional wave from the left hand — rare so it feels lifelike */
+.weather-character .char-arm-left {
+    transform-box: fill-box;
+    transform-origin: 75% 5%;
+    animation: charWave 18s ease-in-out infinite;
+    animation-delay: 5s;
+}
+@keyframes charWave {
+    0%, 6%        { transform: rotate(0deg); }
+    8%            { transform: rotate(-110deg); }
+    10%           { transform: rotate(-90deg); }
+    12%           { transform: rotate(-115deg); }
+    14%           { transform: rotate(-95deg); }
+    16%, 20%      { transform: rotate(-105deg); }
+    23%           { transform: rotate(0deg); }
+    100%          { transform: rotate(0deg); }
+}
+
+/* When umbrella is up, don't wave (would break the holding pose) */
+.weather-character[data-umbrella="1"] .char-arm-left,
+.weather-character[data-coat="1"] .char-arm-left {
+    animation: none;
+    transform: rotate(0deg);
 }
 .weather-character .char-shadow {
     animation: charShadow 4.5s ease-in-out infinite;
@@ -1632,7 +1846,18 @@
 .weather-live.is-paused .weather-motes .mote,
 .weather-live.is-paused .weather-character .char-body,
 .weather-live.is-paused .weather-character .char-shadow,
-.weather-live.is-paused .weather-character .char-sunscreen-spark {
+.weather-live.is-paused .weather-character .char-sunscreen-spark,
+.weather-live.is-paused .weather-character .char-arm-left,
+.weather-live.is-paused .weather-character .char-eyes ellipse,
+.weather-live.is-paused .tree-pivot,
+.weather-live.is-paused .weather-plane .plane-wrap,
+.weather-live.is-paused .weather-tornado,
+.weather-live.is-paused .weather-tornado .tornado-svg,
+.weather-live.is-paused .weather-tornado .tornado-swirl,
+.weather-live.is-paused .ls-sheet-lightning,
+.weather-live.is-paused .firefly,
+.weather-live.is-paused .cottage-smoke ellipse,
+.weather-live.is-paused .ls-birds .bird {
     animation-play-state: paused !important;
 }
 

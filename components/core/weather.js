@@ -507,34 +507,57 @@
                         <path class="bird bird-3" d="M 0 0 q 3.5 -3.5 7 0 q 3.5 -3.5 7 0" transform="translate(220, 72)" />
                     </g>
 
-                    <!-- LAYER 4: Tree line — mixed spruce + leafy + bush -->
+                    <!-- LAYER 4: Tree line — wind-swayable. Each tree wrapped in <g class="tree-pivot"> for nested sway. -->
                     <g class="ls-trees">
-                        <!-- Spruces (left cluster) -->
-                        <path class="ls-tree-spruce" transform="translate(60,162)" d="M -6 0 L 6 0 L 0 -22 Z M -1 0 L 1 0 L 1 4 L -1 4 Z" />
-                        <path class="ls-tree-spruce" transform="translate(82,164)" d="M -5 0 L 5 0 L 0 -16 Z M -0.8 0 L 0.8 0 L 0.8 3.5 L -0.8 3.5 Z" />
-                        <!-- Leafy tree (rounded canopy + trunk) -->
-                        <g class="ls-tree-leafy" transform="translate(160,159)">
-                            <ellipse cx="0" cy="-12" rx="11" ry="9" />
-                            <rect x="-1.5" y="-4" width="3" height="6" />
+                        <g class="tree-pivot" style="transform-origin:60px 162px;--sway-dur:3.2s;--sway-d:0s">
+                            <path class="ls-tree-spruce" transform="translate(60,162)" d="M -6 0 L 6 0 L 0 -22 Z M -1 0 L 1 0 L 1 4 L -1 4 Z" />
                         </g>
-                        <!-- More spruces -->
-                        <path class="ls-tree-spruce" transform="translate(250,158)" d="M -7 0 L 7 0 L 0 -25 Z M -1 0 L 1 0 L 1 4 L -1 4 Z" />
-                        <path class="ls-tree-spruce" transform="translate(290,161)" d="M -4.5 0 L 4.5 0 L 0 -14 Z M -0.8 0 L 0.8 0 L 0.8 3 L -0.8 3 Z" />
-                        <!-- Big leafy tree -->
-                        <g class="ls-tree-leafy" transform="translate(380,162)">
-                            <ellipse cx="0" cy="-15" rx="13" ry="11" />
-                            <rect x="-2" y="-6" width="4" height="8" />
+                        <g class="tree-pivot" style="transform-origin:82px 164px;--sway-dur:2.8s;--sway-d:-0.6s">
+                            <path class="ls-tree-spruce" transform="translate(82,164)" d="M -5 0 L 5 0 L 0 -16 Z M -0.8 0 L 0.8 0 L 0.8 3.5 L -0.8 3.5 Z" />
                         </g>
-                        <!-- Bushes -->
+                        <g class="tree-pivot" style="transform-origin:160px 159px;--sway-dur:3.6s;--sway-d:-1.2s">
+                            <g class="ls-tree-leafy" transform="translate(160,159)">
+                                <ellipse cx="0" cy="-12" rx="11" ry="9" />
+                                <rect x="-1.5" y="-4" width="3" height="6" />
+                            </g>
+                        </g>
+                        <g class="tree-pivot" style="transform-origin:250px 158px;--sway-dur:3.4s;--sway-d:-0.3s">
+                            <path class="ls-tree-spruce" transform="translate(250,158)" d="M -7 0 L 7 0 L 0 -25 Z M -1 0 L 1 0 L 1 4 L -1 4 Z" />
+                        </g>
+                        <g class="tree-pivot" style="transform-origin:290px 161px;--sway-dur:2.6s;--sway-d:-0.9s">
+                            <path class="ls-tree-spruce" transform="translate(290,161)" d="M -4.5 0 L 4.5 0 L 0 -14 Z M -0.8 0 L 0.8 0 L 0.8 3 L -0.8 3 Z" />
+                        </g>
+                        <g class="tree-pivot" style="transform-origin:380px 162px;--sway-dur:4s;--sway-d:-1.8s">
+                            <g class="ls-tree-leafy" transform="translate(380,162)">
+                                <ellipse cx="0" cy="-15" rx="13" ry="11" />
+                                <rect x="-2" y="-6" width="4" height="8" />
+                            </g>
+                        </g>
                         <ellipse class="ls-bush" cx="430" cy="161" rx="9" ry="5" />
                         <ellipse class="ls-bush" cx="448" cy="162" rx="7" ry="4" />
-                        <!-- More spruces (right cluster) -->
-                        <path class="ls-tree-spruce" transform="translate(620,158)" d="M -6.5 0 L 6.5 0 L 0 -20 Z M -1 0 L 1 0 L 1 4 L -1 4 Z" />
-                        <path class="ls-tree-spruce" transform="translate(660,162)" d="M -5 0 L 5 0 L 0 -15 Z M -0.8 0 L 0.8 0 L 0.8 4 L -0.8 4 Z" />
-                        <!-- Tall lone spruce -->
-                        <path class="ls-tree-spruce" transform="translate(710,160)" d="M -8 0 L 8 0 L 0 -28 Z M -1.5 0 L 1.5 0 L 1.5 5 L -1.5 5 Z" />
-                        <!-- Bushes right -->
+                        <g class="tree-pivot" style="transform-origin:620px 158px;--sway-dur:3.1s;--sway-d:-0.4s">
+                            <path class="ls-tree-spruce" transform="translate(620,158)" d="M -6.5 0 L 6.5 0 L 0 -20 Z M -1 0 L 1 0 L 1 4 L -1 4 Z" />
+                        </g>
+                        <g class="tree-pivot" style="transform-origin:660px 162px;--sway-dur:2.9s;--sway-d:-1.5s">
+                            <path class="ls-tree-spruce" transform="translate(660,162)" d="M -5 0 L 5 0 L 0 -15 Z M -0.8 0 L 0.8 0 L 0.8 4 L -0.8 4 Z" />
+                        </g>
+                        <g class="tree-pivot" style="transform-origin:710px 160px;--sway-dur:3.8s;--sway-d:-2.1s">
+                            <path class="ls-tree-spruce" transform="translate(710,160)" d="M -8 0 L 8 0 L 0 -28 Z M -1.5 0 L 1.5 0 L 1.5 5 L -1.5 5 Z" />
+                        </g>
                         <ellipse class="ls-bush" cx="745" cy="163" rx="8" ry="4.5" />
+                    </g>
+
+                    <!-- Sheet lightning silhouette behind mountains (storm only) -->
+                    <rect class="ls-sheet-lightning" x="0" y="40" width="800" height="140" />
+
+                    <!-- Fireflies floating in foreground (night only) -->
+                    <g class="ls-fireflies">
+                        <circle class="firefly firefly-1" cx="150" cy="200" r="1.6" />
+                        <circle class="firefly firefly-2" cx="280" cy="215" r="1.4" />
+                        <circle class="firefly firefly-3" cx="420" cy="195" r="1.8" />
+                        <circle class="firefly firefly-4" cx="560" cy="210" r="1.5" />
+                        <circle class="firefly firefly-5" cx="680" cy="200" r="1.6" />
+                        <circle class="firefly firefly-6" cx="350" cy="225" r="1.3" />
                     </g>
 
                     <!-- LAYER 5: Foreground hill (character standing zone) -->
@@ -674,20 +697,22 @@
                             <ellipse class="char-sunhat-band" cx="100" cy="50" rx="24" ry="3" />
                         </g>
 
-                        <!-- UMBRELLA (proper dome with ribs + handle) -->
+                        <!-- UMBRELLA (proper dome with 5 radial ribs splaying from tip + handle) -->
                         <g class="char-umbrella">
-                            <!-- Canopy with ribs -->
+                            <!-- Canopy -->
                             <path class="umbrella-canopy" d="M 30 50 Q 100 -25 170 50 Q 142 38 122 38 Q 100 38 78 38 Q 58 38 30 50 Z" />
-                            <!-- Rib lines -->
-                            <path class="umbrella-rib" d="M 50 47 L 75 -5" />
-                            <path class="umbrella-rib" d="M 100 38 L 100 -22" />
-                            <path class="umbrella-rib" d="M 150 47 L 125 -5" />
-                            <!-- Pole -->
+                            <!-- Ribs splay from peak (100, -22) down to bottom-edge attach points -->
+                            <path class="umbrella-rib" d="M 100 -22 L 35 48" />
+                            <path class="umbrella-rib" d="M 100 -22 L 70 41" />
+                            <path class="umbrella-rib" d="M 100 -22 L 100 40" />
+                            <path class="umbrella-rib" d="M 100 -22 L 130 41" />
+                            <path class="umbrella-rib" d="M 100 -22 L 165 48" />
+                            <!-- Pole from canopy underside to right hand -->
                             <line class="umbrella-pole" x1="100" y1="40" x2="144" y2="195" stroke-width="3" />
                             <!-- Handle hook -->
                             <path class="umbrella-handle" d="M 144 195 Q 152 200 148 207 Q 144 210 140 205" fill="none" stroke-width="3" />
                             <!-- Tip on top -->
-                            <circle class="umbrella-tip" cx="100" cy="-23" r="2" />
+                            <circle class="umbrella-tip" cx="100" cy="-23" r="2.5" />
                         </g>
 
                         <!-- SUNSCREEN sparkles -->
@@ -762,6 +787,28 @@
             </div>
             <div class="weather-lightning-bolts" aria-hidden="true"></div>
             <div class="weather-lightning" aria-hidden="true"></div>
+            <!-- Plane that crosses the sky on clear days -->
+            <div class="weather-plane" aria-hidden="true">
+                <div class="plane-wrap">
+                    <svg class="plane-svg" viewBox="0 0 60 22">
+                        <path class="plane-body"    d="M 4 11 L 32 9 L 48 6 L 55 11 L 48 16 L 32 13 L 4 11 Z" />
+                        <path class="plane-wing"    d="M 30 9 L 24 2 L 33 9 Z" />
+                        <path class="plane-wing"    d="M 30 13 L 24 20 L 33 13 Z" />
+                        <path class="plane-tail"    d="M 48 6 L 52 2 L 54 6 Z" />
+                    </svg>
+                    <span class="plane-contrail"></span>
+                </div>
+            </div>
+            <!-- Tornado funnel (storm only, fires intermittently) -->
+            <div class="weather-tornado" aria-hidden="true">
+                <svg class="tornado-svg" viewBox="-40 0 80 200">
+                    <path class="tornado-body" d="M -28 0 Q -10 10 -8 50 Q -4 100 -3 150 Q -2 180 0 195 L 4 195 Q 2 180 3 150 Q 4 100 8 50 Q 10 10 28 0 Z" />
+                    <path class="tornado-swirl" d="M -22 18 Q 0 28 22 18" />
+                    <path class="tornado-swirl" d="M -16 55 Q 0 65 16 55" />
+                    <path class="tornado-swirl" d="M -12 95 Q 0 102 12 95" />
+                    <path class="tornado-swirl" d="M -8  140 Q 0 145 8 140" />
+                </svg>
+            </div>
             ${buildLandscape()}
             <div class="weather-vignette" aria-hidden="true"></div>
             <div class="weather-content"></div>
@@ -1175,6 +1222,11 @@
         const w = Math.max(0, windKmh || 0);
         return Math.max(-90, Math.min(-6, -6 - w * 1.4)).toFixed(0) + 'px';
     }
+    // Calm = 0.5°, gusty = 7° → trees bend more in strong wind
+    function _windToTreeSway(windKmh) {
+        const w = Math.max(0, Math.min(60, windKmh || 0));
+        return (0.5 + (w / 60) * 6.5).toFixed(2) + 'deg';
+    }
 
     // Apply all dynamic CSS variables. Called on data refresh AND on the 5-min sky-tick.
     function _applyDynamicSky(widget, condition, windKmh) {
@@ -1192,6 +1244,7 @@
         widget.style.setProperty('--cloud-dur-c', dur.c);
         widget.style.setProperty('--rain-skew', _windToRainSkew(windKmh));
         widget.style.setProperty('--rain-drift', _windToRainDrift(windKmh));
+        widget.style.setProperty('--tree-sway', _windToTreeSway(windKmh));
     }
 
     // Character reaction logic. Items show/hide based on condition + temperature.
