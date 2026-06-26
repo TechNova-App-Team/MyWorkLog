@@ -316,16 +316,17 @@
         return html;
     }
 
-    // Three star layers with parallax depth.
+    // Three star layers with parallax depth. Restricted to the sky area (top 45%)
+    // so they don't show through the landscape.
     function buildStars(count) {
         let html = '';
         for (let i = 0; i < count; i++) {
-            const tier = i < count * 0.4 ? 'back' : (i < count * 0.8 ? 'mid' : 'front');
+            const tier = i < count * 0.45 ? 'back' : (i < count * 0.85 ? 'mid' : 'front');
             const x    = (Math.random() * 98).toFixed(1);
-            const y    = (Math.random() * 70).toFixed(1);
-            const dur  = (2 + Math.random() * 4).toFixed(2);
+            const y    = (Math.random() * 45).toFixed(1);
+            const dur  = (1.8 + Math.random() * 3.5).toFixed(2);
             const d    = (Math.random() * 5).toFixed(2);
-            const s    = tier === 'back' ? 1.2 : tier === 'mid' ? 1.8 : 2.5;
+            const s    = tier === 'back' ? 1.3 : tier === 'mid' ? 2 : 3.2;
             html += `<span class="star star--${tier}" style="left:${x}%;top:${y}%;--dur:${dur}s;--d:${d}s;--s:${s}px"></span>`;
         }
         return html;
@@ -405,8 +406,8 @@
         else if (condition === 'snow-heavy')         html = buildSnowflakes('heavy');
         else if (condition === 'splashes')           html = buildSplashes(12);
         else if (condition === 'splashes-heavy')     html = buildSplashes(18);
-        else if (condition === 'stars')              html = buildStars(60);
-        else if (condition === 'shooting')           html = buildShootingStars(3);
+        else if (condition === 'stars')              html = buildStars(140);
+        else if (condition === 'shooting')           html = buildShootingStars(5);
         else if (condition === 'lightning')          html = buildLightning(3);
         else if (condition === 'sunrays')            html = buildSunRays();
         else if (condition === 'motes')              html = buildDustMotes(18);
@@ -479,25 +480,33 @@
                     <!-- LAYER 3: Rolling hills with cottage at distance -->
                     <path class="ls-hills" d="M 0 165 Q 100 140 200 155 T 400 162 T 600 148 T 800 158 L 800 260 L 0 260 Z" />
 
-                    <!-- Cottage in mid-distance (with chimney smoke) -->
-                    <g class="ls-cottage" transform="translate(540,140)">
+                    <!-- Cottage in mid-distance (larger, more windows for warmth) -->
+                    <g class="ls-cottage" transform="translate(530,128)">
                         <!-- chimney smoke (animated) -->
                         <g class="cottage-smoke">
-                            <ellipse cx="12" cy="-8" rx="3" ry="2" />
-                            <ellipse cx="14" cy="-14" rx="3.5" ry="2.5" />
-                            <ellipse cx="11" cy="-20" rx="4" ry="3" />
+                            <ellipse cx="16" cy="-10" rx="3.5" ry="2.5" />
+                            <ellipse cx="18" cy="-17" rx="4" ry="3" />
+                            <ellipse cx="14" cy="-25" rx="5" ry="3.5" />
                         </g>
                         <!-- house body -->
-                        <rect x="0" y="0" width="22" height="14" />
+                        <rect x="0" y="0" width="32" height="22" />
                         <!-- roof -->
-                        <path d="M -2 0 L 11 -8 L 24 0 Z" />
+                        <path d="M -3 0 L 16 -12 L 35 0 Z" />
                         <!-- chimney -->
-                        <rect x="10" y="-6" width="4" height="6" />
+                        <rect x="14" y="-8" width="5" height="8" />
                         <!-- door -->
-                        <rect class="cottage-door" x="9" y="6" width="4" height="8" />
-                        <!-- window -->
-                        <rect class="cottage-window" x="3" y="3" width="3" height="3" />
-                        <rect class="cottage-window" x="16" y="3" width="3" height="3" />
+                        <rect class="cottage-door" x="13" y="11" width="6" height="11" />
+                        <!-- doorway warm glow (only at night) -->
+                        <rect class="cottage-door-glow" x="13" y="11" width="6" height="11" />
+                        <!-- windows: 2 ground floor + 1 attic -->
+                        <rect class="cottage-window" x="3" y="5" width="6" height="5" />
+                        <rect class="cottage-window" x="23" y="5" width="6" height="5" />
+                        <rect class="cottage-window cottage-window--attic" x="14" y="-5" width="4" height="4" />
+                        <!-- window cross-frames -->
+                        <line class="cottage-window-frame" x1="6" y1="5" x2="6" y2="10" />
+                        <line class="cottage-window-frame" x1="3" y1="7.5" x2="9" y2="7.5" />
+                        <line class="cottage-window-frame" x1="26" y1="5" x2="26" y2="10" />
+                        <line class="cottage-window-frame" x1="23" y1="7.5" x2="29" y2="7.5" />
                     </g>
 
                     <!-- Birds (V-shapes), visible on clear days -->
@@ -1215,16 +1224,17 @@
     }
 
     // Sun and moon opacity — fade across sunrise/sunset windows, capped per condition visibility.
+    // Moon ramps in earlier so stars + cottage lights are visible during dusk.
     function _getSunMoonOpacity(condition) {
         const { sunrise: R, sunset: S } = _sunTimes();
         const m = _nowMinutes();
         const sunRaw  = _smoothstep(R - 25, R + 25, m) * (1 - _smoothstep(S - 25, S + 25, m));
-        let moonRaw   = _smoothstep(S - 10, S + 50, m) + (1 - _smoothstep(R - 60, R - 10, m));
+        let moonRaw   = _smoothstep(S - 40, S + 30, m) + (1 - _smoothstep(R - 30, R + 20, m));
         moonRaw = Math.min(1, moonRaw);
         let sunCap = 0, moonCap = 0;
         if (condition === 'clear-day' || condition === 'clear-night') { sunCap = 1;    moonCap = 1; }
-        else if (condition === 'partly-day' || condition === 'partly-night') { sunCap = 0.7; moonCap = 0.6; }
-        else if (condition === 'ambient') { sunCap = 0; moonCap = 0.55; }
+        else if (condition === 'partly-day' || condition === 'partly-night') { sunCap = 0.75; moonCap = 0.85; }
+        else if (condition === 'ambient') { sunCap = 0; moonCap = 0.7; }
         // For cloudy/rain/storm/snow/fog: sun & moon stay hidden (0).
         return { sun: +(sunRaw * sunCap).toFixed(3), moon: +(moonRaw * moonCap).toFixed(3) };
     }

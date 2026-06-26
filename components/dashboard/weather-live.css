@@ -198,13 +198,13 @@
     50%      { opacity: 0.85; transform: rotate(var(--angle, 0deg)) scaleX(1.15); }
 }
 
-/* ───── LAYER 3 — Moon (surface + glow halo) ───── */
+/* ───── LAYER 3 — Moon (bigger, more dramatic) ───── */
 .weather-moon {
     position: absolute;
-    top: 14%;
-    right: 18%;
-    width: 88px;
-    height: 88px;
+    top: 12%;
+    right: 16%;
+    width: 110px;
+    height: 110px;
     z-index: 1;
     opacity: var(--moon-op, 0);
     transition: opacity 1.6s ease;
@@ -216,8 +216,11 @@
     inset: 0;
     border-radius: 50%;
     background:
-        radial-gradient(circle at 35% 35%, #f6f3ea 0%, #d4cfc0 60%, #9c9786 100%);
-    box-shadow: inset -10px -8px 18px rgba(0, 0, 0, 0.42);
+        radial-gradient(circle at 33% 33%, #fafaf0 0%, #e0dccc 45%, #b0aa98 85%, #888272 100%);
+    box-shadow:
+        inset -14px -10px 22px rgba(0, 0, 0, 0.5),
+        0 0 60px 12px rgba(240, 240, 255, 0.45),
+        0 0 130px 32px rgba(220, 230, 255, 0.25);
 }
 
 /* Craters via box-shadow on a single pseudo-element */
@@ -226,31 +229,33 @@
     position: absolute;
     top: 28%;
     left: 22%;
-    width: 7px;
-    height: 7px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.16);
+    background: rgba(0, 0, 0, 0.20);
     box-shadow:
-        15px 18px 0 -1px rgba(0, 0, 0, 0.14),
-        22px 6px 0 -2px rgba(0, 0, 0, 0.12),
-        7px 32px 0 -1px rgba(0, 0, 0, 0.14),
-        35px 22px 0 -3px rgba(0, 0, 0, 0.10),
-        28px 36px 0 -2px rgba(0, 0, 0, 0.12),
-        12px 10px 0 -3px rgba(0, 0, 0, 0.10);
+        20px 24px 0 -1px rgba(0, 0, 0, 0.18),
+        28px 8px 0 -2px rgba(0, 0, 0, 0.15),
+        9px 40px 0 -1px rgba(0, 0, 0, 0.18),
+        44px 28px 0 -3px rgba(0, 0, 0, 0.12),
+        36px 46px 0 -2px rgba(0, 0, 0, 0.16),
+        15px 14px 0 -4px rgba(0, 0, 0, 0.12),
+        50px 12px 0 -4px rgba(0, 0, 0, 0.10);
 }
 
 .weather-moon .moon-glow {
     position: absolute;
-    inset: -25%;
+    inset: -40%;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(230, 230, 250, 0.28) 0%, rgba(200, 200, 230, 0.10) 50%, transparent 75%);
-    filter: blur(8px);
-    animation: moonGlowPulse 7s ease-in-out infinite;
+    background:
+        radial-gradient(circle, rgba(235, 240, 255, 0.45) 0%, rgba(200, 215, 255, 0.18) 40%, rgba(180, 200, 255, 0.06) 65%, transparent 78%);
+    filter: blur(10px);
+    animation: moonGlowPulse 6s ease-in-out infinite;
 }
 
 @keyframes moonGlowPulse {
-    0%, 100% { opacity: 0.7; transform: scale(1); }
-    50%      { opacity: 1;   transform: scale(1.12); }
+    0%, 100% { opacity: 0.75; transform: scale(1); }
+    50%      { opacity: 1;    transform: scale(1.18); }
 }
 
 /* ───── LAYER 3b — Stars (three depth tiers) ───── */
@@ -273,11 +278,21 @@
     animation-delay: var(--d, 0s);
 }
 
-.weather-stars .star--back  { opacity: 0.55; box-shadow: 0 0 2px rgba(255, 255, 255, 0.6); }
-.weather-stars .star--mid   { opacity: 0.85; box-shadow: 0 0 4px rgba(255, 255, 255, 0.8); }
+.weather-stars .star--back  {
+    opacity: 0.7;
+    box-shadow: 0 0 3px rgba(255, 255, 255, 0.85), 0 0 6px rgba(200, 220, 255, 0.4);
+}
+.weather-stars .star--mid   {
+    opacity: 0.95;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 1), 0 0 10px rgba(200, 220, 255, 0.5);
+}
 .weather-stars .star--front {
     opacity: 1;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 1), 0 0 14px rgba(180, 200, 255, 0.6);
+    background: radial-gradient(circle, #fff 30%, rgba(220, 235, 255, 0.6) 70%, transparent);
+    box-shadow:
+        0 0 10px rgba(255, 255, 255, 1),
+        0 0 20px rgba(200, 220, 255, 0.75),
+        0 0 30px rgba(180, 210, 255, 0.4);
 }
 .weather-stars .star--front::before,
 .weather-stars .star--front::after {
@@ -285,23 +300,24 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
     transform-origin: 0 0;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8));
 }
 .weather-stars .star--front::before {
-    width: 12px;
-    height: 0.6px;
+    width: 18px;
+    height: 1px;
     transform: translate(-50%, -50%);
 }
 .weather-stars .star--front::after {
-    width: 12px;
-    height: 0.6px;
+    width: 18px;
+    height: 1px;
     transform: translate(-50%, -50%) rotate(90deg);
 }
 
 @keyframes starTwinkle {
-    0%, 100% { opacity: 0.25; transform: scale(0.7); }
-    50%      { opacity: 1;    transform: scale(1.25); }
+    0%, 100% { opacity: 0.4; transform: scale(0.65); }
+    50%      { opacity: 1;   transform: scale(1.35); }
 }
 
 /* ───── LAYER 3c — Shooting Stars (visible on clear/partly nights) ───── */
@@ -1232,15 +1248,45 @@
 /* ── COTTAGE ── */
 .weather-landscape .ls-cottage rect,
 .weather-landscape .ls-cottage path { fill: var(--landscape-cottage); }
-.weather-landscape .ls-cottage .cottage-window { fill: var(--landscape-warm); opacity: 0; transition: opacity 1.5s ease; }
-.weather-landscape .ls-cottage .cottage-door   { fill: rgba(0, 0, 0, 0.85); }
+.weather-landscape .ls-cottage .cottage-door   { fill: rgba(0, 0, 0, 0.92); }
+.weather-landscape .ls-cottage .cottage-window {
+    fill: var(--landscape-warm);
+    opacity: 0;
+    transition: opacity 1.5s ease;
+}
+.weather-landscape .ls-cottage .cottage-window-frame {
+    stroke: rgba(0, 0, 0, 0.55);
+    stroke-width: 0.4;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+}
+.weather-landscape .ls-cottage .cottage-door-glow {
+    fill: var(--landscape-warm);
+    opacity: 0;
+    transition: opacity 1.5s ease;
+    transform: translate(0.8px, 0) scale(0.7);
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+}
 
-/* Lit windows in the cottage at night/dusk only */
-.weather-live[data-condition="clear-night"] .cottage-window,
-.weather-live[data-condition="partly-night"] .cottage-window,
-.weather-live[data-condition="ambient"] .cottage-window {
-    opacity: 1;
-    filter: drop-shadow(0 0 4px rgba(255, 200, 120, 0.7));
+/* Visibility tied to moon-op so dusk/night ramps in matching the sky shift.
+   Drives intensity via JS-set --moon-op (matches sun/moon fade). */
+.weather-landscape .ls-cottage .cottage-window,
+.weather-landscape .ls-cottage .cottage-window-frame,
+.weather-landscape .ls-cottage .cottage-door-glow {
+    opacity: var(--moon-op, 0);
+}
+.weather-landscape .ls-cottage .cottage-window {
+    filter: drop-shadow(0 0 6px rgba(255, 195, 100, 0.95))
+            drop-shadow(0 0 14px rgba(255, 170, 60, 0.55));
+}
+.weather-landscape .ls-cottage .cottage-window--attic {
+    filter: drop-shadow(0 0 5px rgba(255, 200, 110, 0.9));
+    opacity: calc(var(--moon-op, 0) * 0.85);
+}
+.weather-landscape .ls-cottage .cottage-door-glow {
+    filter: blur(2px) drop-shadow(0 0 8px rgba(255, 180, 80, 0.6));
+    opacity: calc(var(--moon-op, 0) * 0.7);
 }
 
 /* Chimney smoke — drifts up and fades, only on cold-ish conditions */
@@ -1579,21 +1625,24 @@
     animation: charBreathe 4.5s ease-in-out infinite;
 }
 
-/* Occasional wave from the left hand — rare so it feels lifelike */
+/* Occasional wave from the left hand — arm clearly lifts above the head and swings */
 .weather-character .char-arm-left {
     transform-box: fill-box;
-    transform-origin: 75% 5%;
-    animation: charWave 18s ease-in-out infinite;
-    animation-delay: 5s;
+    transform-origin: 78% 6%;
+    animation: charWave 14s ease-in-out infinite;
+    animation-delay: 4s;
 }
 @keyframes charWave {
-    0%, 6%        { transform: rotate(0deg); }
-    8%            { transform: rotate(-110deg); }
-    10%           { transform: rotate(-90deg); }
-    12%           { transform: rotate(-115deg); }
-    14%           { transform: rotate(-95deg); }
-    16%, 20%      { transform: rotate(-105deg); }
-    23%           { transform: rotate(0deg); }
+    0%, 5%        { transform: rotate(0deg); }
+    7%            { transform: rotate(-90deg); }    /* lift to horizontal */
+    9%            { transform: rotate(-155deg); }   /* hand clearly above head */
+    11%           { transform: rotate(-135deg); }
+    13%           { transform: rotate(-165deg); }
+    15%           { transform: rotate(-140deg); }
+    17%           { transform: rotate(-160deg); }
+    19%           { transform: rotate(-145deg); }
+    21%           { transform: rotate(-90deg); }    /* lower toward horizontal */
+    24%           { transform: rotate(0deg); }      /* back to side */
     100%          { transform: rotate(0deg); }
 }
 
@@ -1815,7 +1864,7 @@
 .weather-live--modal .weather-forecast-day-icon { font-size: 1.5rem; }
 .weather-live--modal .weather-forecast-day-temps { font-size: 0.82rem; }
 .weather-live--modal .weather-sun  { width: 130px; height: 130px; top: 12%; right: 14%; }
-.weather-live--modal .weather-moon { width: 100px; height: 100px; top: 12%; right: 14%; }
+.weather-live--modal .weather-moon { width: 145px; height: 145px; top: 10%; right: 14%; }
 .weather-live--modal .weather-landscape { height: 52%; }
 .weather-live--modal .weather-character { width: 150px; height: 240px; bottom: 14px; right: 13%; }
 /* Reserve room at content's bottom so the character isn't covered by forecast strip. */
