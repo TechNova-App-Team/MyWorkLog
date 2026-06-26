@@ -856,14 +856,19 @@
         // Re-render when container resizes (fullscreen toggle, sidebar collapse, etc.)
         if (typeof ResizeObserver !== 'undefined') {
             let _lastW = w;
+            let _renderTimeout = null;
             const _ro = new ResizeObserver(() => {
                 const newW = c.clientWidth;
                 if (Math.abs(newW - _lastW) > 2) {
                     _lastW = newW;
-                    renderTrend(
-                        window._trendDataFull && window._trendDataFull.length ? window._trendDataFull : dataPoints,
-                        elementId, areaFill, chartStyle
-                    );
+                    // Debounce to prevent infinite loop
+                    clearTimeout(_renderTimeout);
+                    _renderTimeout = setTimeout(() => {
+                        renderTrend(
+                            window._trendDataFull && window._trendDataFull.length ? window._trendDataFull : dataPoints,
+                            elementId, areaFill, chartStyle
+                        );
+                    }, 100);
                 }
             });
             _ro.observe(c);
