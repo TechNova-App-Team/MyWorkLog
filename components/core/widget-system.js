@@ -48,6 +48,8 @@
     function saveWidgetLayout(notify = true) {
         const dashboard = document.getElementById('dashboardContainer');
         if (!dashboard) return;
+        // Snapshot BEFORE overwrite — so der Verlauf den vorigen Stand kennt
+        try { if (typeof pushDashboardHistory === 'function') pushDashboardHistory('vor Layout-Änderung'); } catch(e) {}
         // Sort by CSS visual order, not DOM order
         const items = Array.from(dashboard.querySelectorAll('.dashboard-item'));
         items.sort((a, b) => (parseInt(a.style.order) || 0) - (parseInt(b.style.order) || 0));
@@ -57,6 +59,8 @@
         // Remove pre-applied CLS order style now that inline styles take over
         const preStyle = document.getElementById('cls-dash-order');
         if (preStyle) preStyle.remove();
+        // Aktiven Preset mit aktuellem Stand synchronisieren
+        try { if (typeof syncCurrentToActivePreset === 'function') syncCurrentToActivePreset(); } catch(e) {}
         save();
         dashboardLayoutDirty = false;
         const statusEl = document.getElementById('editModeStatus');

@@ -145,11 +145,19 @@
         }
         
         items.forEach(item => {
-            // WICHTIG: Nur im Edit-Mode draggable machen!
-            item.draggable = true;
-            
+            const widgetId = item.getAttribute('data-item-id');
+            const pinned = (typeof isWidgetPinned === 'function') && isWidgetPinned(widgetId);
+            // Gepinnte Widgets: kein Drag erlauben
+            item.draggable = !pinned;
+            if (pinned) item.setAttribute('data-pinned', '1');
+            else item.removeAttribute('data-pinned');
+
             // Benutzerdefinierten Handler setzen (nicht addEventListener, um Duplikate zu vermeiden)
             item.ondragstart = (e) => {
+                if (item.getAttribute('data-pinned') === '1') {
+                    e.preventDefault();
+                    return false;
+                }
                 draggedItem = item;
                 item.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';
