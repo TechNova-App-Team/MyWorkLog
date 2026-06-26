@@ -1,24 +1,14 @@
-#################################################################
-#                                                                 #
-#                          MIT LICENSE                            #
-#                                                                 #
-#################################################################
+# MyWorkLog — License
 
-PROJECT: Time.Tracker.SingleFile
-DATE:    2025-11-27
-AUTHOR:  TechNova-App-Team (Sven Kunz)
+**Project:** MyWorkLog
+**Repository:** https://myworklog.de/
+**SPDX-License-Identifier:** MIT
 
 ---
 
-THIS FILE CONTAINS THE MIT LICENSE, PRESENTED IN A CLEAR, MODERN,
-HUMAN-FRIENDLY LAYOUT. IT ALSO PROVIDES GUIDANCE HOW TO USE AND
-APPLY THIS LICENSE IN YOUR GITHUB REPOSITORY.
+## MIT License
 
----
-
-MIT License
-
-Copyright (c) 2025 Time.Tracker.SingleFile Contributors
+Copyright (c) 2025–2026 Sven Kunz
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -40,132 +30,58 @@ THE SOFTWARE.
 
 ---
 
-## ⚠️ WICHTIGE ZUSATZBEDINGUNGEN (Supplementary Clause)
+## Scope of this License
 
-Obwohl die MIT-Lizenz sehr permissiv ist, gibt es folgende **EXPLIZITE AUSNAHMEN**:
+The MIT License above applies to the **source code** of this project — the
+JavaScript, HTML, CSS, configuration files, and build scripts contained in
+this repository.
 
-### ❌ NICHT unter dieser Lizenz (NOT included):
+The following are **not** licensed under MIT and remain reserved by their
+respective rights holders. These are protected under separate trademark,
+copyright, and design-protection law and are *not* license modifications.
 
-1. **Website Design & UI/UX**
-   - Das komplette Design dieser Website
-   - Brand Colors, Typography, Layout
-   - Visual Components & Design System
-   - → Kopieren der Website ist NICHT erlaubt
+### Trademarks and brand identity
 
-2. **Website Content & Branding**
-   - All descriptive text & marketing content
-   - MyWorkLog Brand Name & Logo
-   - Trademarks & Corporate Identity
-   - → Kommerzielle Verbreitung NICHT erlaubt
+- The name "MyWorkLog" and any confusingly similar variations
+- The MyWorkLog logo, favicon, and derivative marks
+- Brand colors, typography choices, and the visual identity used on
+  myworklog.de
 
-3. **Asset Files (wenn nicht explizit als Code)**
-   - Images, Graphics, Videos in /Grafiken
-   - Icons, Icons Bundles
-   - Proprietary Documentation
+The MIT License grants no rights to use these marks. Use of the MyWorkLog
+name or logo to identify your own product or service requires prior written
+permission from the copyright holder. See *Contact* below.
 
-### ✅ WAS erlaubt ist:
+### Visual assets and media
 
-- ✓ Quellcode (JavaScript, HTML, CSS) frei nutzen, modifizieren, weitergeben
-- ✓ Individual Code-Module extrahieren und in eigene Projekte einbinden
-- ✓ Kommerzielle Produkte mit diesem Code entwickeln
-- ✓ Verbessern des Codes via Pull Requests
+- Images, illustrations, screenshots, and videos located under `/Grafiken/`
+- Marketing copy, taglines, and product descriptions on myworklog.de
+- Long-form documentation prose under `/pages/` describing the product
 
-### Attribution Requirement:
+Unless an individual file states otherwise, these assets are © 2025–2026
+Sven Kunz, all rights reserved.
 
-Wenn du den Code nutzt, muss folgende Nennung erfolgen:
-```
-MyWorkLog © 2025 TechNova App Team. Licensed under MIT License.
-Original Project: https://myworklog.de/
-```
+### Third-party components
 
----
-
-## Violations & Enforcement
-
-Folgende Handlungen sind VERBOTEN und werden rechtlich verfolgt:
-
-- 🚫 Klonen & Neuveröffentlichen dieser Website als eigenes Produkt
-- 🚫 Verwenden des Brandnamens "MyWorkLog" ohne Genehmigung
-- 🚫 Kopieren von Design/UI ohne Attribution
-- 🚫 Claiming authorship des Original-Designs oder der Marke
-
-**Bei Verstößen:** Kontakt unter [DSGVO.html](../../DSGVO.html) oder [Impressum.html](../../Impressum.html)
+Portions of this project incorporate third-party software under their own
+licenses. Their original license headers remain intact and take precedence
+within the files they apply to. See `NOTICE.md` in this directory for the
+full attribution list.
 
 ---
 
-HOW THIS FILE IS STRUCTURED (QUICK GUIDE)
+## Attribution
 
-- Header: Project meta (project name, date, author). Replace if needed.
-- Official MIT text: Unmodified license body required for legal clarity.
-- Usage guidance: Short instructions for GitHub usage and committing.
+Attribution beyond what the MIT License requires is appreciated but not
+mandatory. If you wish to credit the project, the following form is
+preferred:
 
-RECOMMENDED: Keep the "Official MIT text" block untouched to ensure
-legal clarity. You may edit the small header metadata at the top
-(`PROJECT`, `DATE`, `AUTHOR`) to reflect your repo.
+> Based on MyWorkLog — https://myworklog.de — © 2025–2026 Sven Kunz, MIT License.
 
 ---
 
-HOW TO APPLY / ADD TO YOUR REPOSITORY
+## Contact
 
-1) If you want GitHub to detect the license automatically, create a file
-   named `LICENSE` or `LICENSE.md` in the repository root containing the
-   exact MIT text above.
+Licensing and trademark inquiries:
+https://myworklog.de/impressum/
 
-2) Example commands (PowerShell / Windows):
-
-```powershell
-# Add the license file to the repository, stage & commit
-cd "c:\Users\SvenK\Downloads\Zeit_Rechner"
-git add LICENSE.md
-git commit -m "chore: add MIT license"
-git push origin main
-```
-
-3) Replace copyright notice if you prefer a different year or owner:
-   - Find the line `Copyright (c) 2025 Time.Tracker.SingleFile Contributors`
-   - Replace `2025` with your year or range (e.g., `2022-2025`)
-   - Replace owner text with your name or organization.
-
-EXAMPLE (editable line):
-```
-Copyright (c) [YEAR] [OWNER NAME]
-```
-
----
-
-SHORT FAQ
-
-Q: Can I add a project description above the MIT text?
-A: Yes. Keep the license body intact. Any header/notes above are fine for
-   humans, but the legal text must remain unchanged for correct license
-   detection and legal clarity.
-
-Q: Is the MIT license permissive?
-A: Yes. MIT is a permissive license that allows broad reuse, including
-   commercial, as long as the original copyright and license text are
-   included in copies or substantial portions of the software.
-
-Q: Do I need to include a `LICENSE` and `LICENSE.md`?
-A: No. One file in the repository root is sufficient. GitHub recognizes
-   either `LICENSE` or `LICENSE.md`.
-
----
-
-SUGGESTED COMMIT MESSAGE EXAMPLES
-
-- "chore: add MIT license"
-- "docs: add license (MIT)"
-- "chore(license): apply MIT license to project"
-
----
-
-FINAL NOTES
-
-- This `LICENSE.md` is intentionally verbose and includes human-friendly
-  guidance. Keep the legal MIT text unchanged to avoid ambiguity.
-- If you want a minimal license file, replace the top header and notes
-  with only the official MIT text block.
-
-Thank you for using TimeTracker PRO. If you want, I can also create a
-machine-readable `LICENSE` file (plain text) without header extras, or
-update the copyright line to your name/year.
+Security disclosures are handled under `SECURITY.md` in this directory.
