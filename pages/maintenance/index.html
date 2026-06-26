@@ -109,8 +109,41 @@ body {
     gap: 32px;
 }
 
+.page-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
 @media (min-width: 640px) {
     .page { padding: 48px 32px 64px; gap: 40px; }
+    .page-grid { gap: 40px; }
+}
+
+@media (min-width: 960px) {
+    .page {
+        max-width: 1120px;
+        padding: 64px 56px 80px;
+        gap: 48px;
+    }
+    .page-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+        gap: 56px;
+        align-items: start;
+    }
+    .col-left, .col-right {
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        min-width: 0;
+    }
+    .headline { font-size: clamp(2.5rem, 3.4vw, 3.25rem); }
+}
+
+@media (min-width: 1180px) {
+    .page { max-width: 1180px; padding: 72px 64px 88px; }
+    .page-grid { gap: 72px; }
 }
 
 /* ════════════════════════════════════════════
@@ -663,6 +696,9 @@ body {
         </div>
     </header>
 
+    <div class="page-grid">
+    <div class="col-left">
+
     <!-- HERO -->
     <section class="hero">
         <div class="incident-meta reveal r2">
@@ -695,6 +731,21 @@ body {
             <div class="eta-progress-fill" data-eta-progress></div>
         </div>
     </section>
+
+    <!-- ACTIONS -->
+    <div class="actions reveal r8">
+        <button type="button" class="btn btn-primary" data-recheck>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <span>Status erneut prüfen</span>
+        </button>
+        <a href="mailto:kontakt@myworklog.de" class="support-link" data-support-link>
+            <span>Support kontaktieren</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+        </a>
+    </div>
+
+    </div><!-- /col-left -->
+    <div class="col-right">
 
     <!-- LIVE LOG -->
     <section class="log reveal r6" aria-label="Wartungs-Protokoll">
@@ -745,29 +796,20 @@ body {
     <section class="meta-grid reveal r7" aria-label="System-Information">
         <div class="meta-cell">
             <span class="meta-label">Version</span>
-            <span class="meta-value" data-version>v3.8.0</span>
+            <span class="meta-value" data-version>—</span>
         </div>
         <div class="meta-cell">
-            <span class="meta-label">Region</span>
-            <span class="meta-value" data-region>Frankfurt</span>
+            <span class="meta-label">Gestartet</span>
+            <span class="meta-value" data-started-rel>—</span>
         </div>
         <div class="meta-cell">
-            <span class="meta-label">Status</span>
-            <span class="meta-value">In Progress</span>
+            <span class="meta-label">Aktualisiert</span>
+            <span class="meta-value" data-last-check>gerade eben</span>
         </div>
     </section>
 
-    <!-- ACTIONS -->
-    <div class="actions reveal r8">
-        <button type="button" class="btn btn-primary" data-recheck>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
-            <span>Status erneut prüfen</span>
-        </button>
-        <a href="mailto:kontakt@myworklog.de" class="support-link" data-support-link>
-            <span>Support kontaktieren</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
-        </a>
-    </div>
+    </div><!-- /col-right -->
+    </div><!-- /page-grid -->
 
     <!-- FOOTER -->
     <footer class="footer reveal r8">
@@ -811,22 +853,27 @@ body {
 <script>
 (function() {
     var CONFIG_URL = '/config/maintenance.json';
+    var VERSION_URL = '/config/version.json';
     var RECHECK_MS = 30000;
+    var TICK_MS = 5000;
 
     var elTitle       = document.querySelector('[data-title]');
     var elDescription = document.querySelector('[data-description]');
     var elIncidentId  = document.querySelector('[data-incident-id]');
     var elStarted     = document.querySelector('[data-started]');
+    var elStartedRel  = document.querySelector('[data-started-rel]');
     var elEtaClock    = document.querySelector('[data-eta-clock]');
     var elEtaCount    = document.querySelector('[data-eta-countdown]');
     var elEtaProgress = document.querySelector('[data-eta-progress]');
+    var elEtaCard     = document.querySelector('.eta');
     var elLogList     = document.querySelector('[data-log-list]');
+    var elLogCard     = document.querySelector('.log');
     var elVersion     = document.querySelector('[data-version]');
-    var elRegion      = document.querySelector('[data-region]');
+    var elLastCheck   = document.querySelector('[data-last-check]');
     var elSupport     = document.querySelector('[data-support-link]');
     var btnRecheck    = document.querySelector('[data-recheck]');
 
-    var state = { etaIso: null, startedIso: null };
+    var state = { etaIso: null, startedIso: null, lastCheckTs: Date.now() };
 
     function esc(s) {
         var d = document.createElement('div');
@@ -838,6 +885,21 @@ body {
         if (isNaN(d)) return '';
         return d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
     }
+    function fmtRelativePast(ts) {
+        if (!ts) return '—';
+        var diff = Date.now() - ts;
+        if (diff < 0) diff = 0;
+        var s = Math.floor(diff / 1000);
+        if (s < 10) return 'gerade eben';
+        if (s < 60) return 'vor ' + s + 's';
+        var m = Math.floor(s / 60);
+        if (m < 60) return 'vor ' + m + ' Min';
+        var h = Math.floor(m / 60);
+        var rem = m % 60;
+        if (h < 24) return 'vor ' + h + 'h' + (rem ? ' ' + rem + 'min' : '');
+        var d = Math.floor(h / 24);
+        return 'vor ' + d + 'd';
+    }
     function buildIcon(status) {
         if (status === 'done') {
             return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
@@ -848,7 +910,12 @@ body {
         return '';
     }
     function renderSteps(steps) {
-        if (!elLogList || !Array.isArray(steps) || !steps.length) return;
+        if (!elLogList) return;
+        if (!Array.isArray(steps) || !steps.length) {
+            if (elLogCard) elLogCard.style.display = 'none';
+            return;
+        }
+        if (elLogCard) elLogCard.style.display = '';
         var html = steps.map(function(step) {
             var status = (step.status === 'done' || step.status === 'active' || step.status === 'pending')
                 ? step.status : 'pending';
@@ -868,8 +935,6 @@ body {
         if (elTitle && cfg.title) elTitle.textContent = cfg.title;
         if (elDescription && cfg.description) elDescription.textContent = cfg.description;
         if (elIncidentId && cfg.incidentId) elIncidentId.textContent = cfg.incidentId;
-        if (elVersion && cfg.version) elVersion.textContent = cfg.version;
-        if (elRegion && cfg.region) elRegion.textContent = cfg.region;
         if (elSupport && cfg.supportEmail) elSupport.setAttribute('href', 'mailto:' + cfg.supportEmail);
 
         state.startedIso = cfg.started || null;
@@ -879,13 +944,37 @@ body {
             var s = fmtTime(state.startedIso);
             if (s) elStarted.textContent = s;
         }
+        // ETA-Card komplett verstecken, wenn kein eta gesetzt
+        if (elEtaCard) elEtaCard.style.display = state.etaIso ? '' : 'none';
         if (elEtaClock && state.etaIso) {
             var e = fmtTime(state.etaIso);
             if (e) elEtaClock.textContent = e;
         }
-        if (Array.isArray(cfg.steps)) renderSteps(cfg.steps);
+        renderSteps(cfg.steps);
 
         updateCountdown();
+        updateLiveTimes();
+    }
+
+    function updateLiveTimes() {
+        if (elStartedRel) {
+            var startedTs = state.startedIso ? new Date(state.startedIso).getTime() : null;
+            elStartedRel.textContent = startedTs ? fmtRelativePast(startedTs) : '—';
+        }
+        if (elLastCheck) {
+            elLastCheck.textContent = fmtRelativePast(state.lastCheckTs);
+        }
+    }
+
+    function fetchVersion() {
+        fetch(VERSION_URL + '?t=' + Date.now(), { cache: 'no-store' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(v) {
+                if (v && v.version && elVersion) {
+                    elVersion.textContent = 'v' + String(v.version).replace(/^v/, '');
+                }
+            })
+            .catch(function() { /* silent — Version-Cell bleibt auf — */ });
     }
 
     function updateCountdown() {
@@ -934,18 +1023,22 @@ body {
                 location.replace('/');
                 return;
             }
-            if (cfg) applyConfig(cfg);
+            if (cfg) {
+                state.lastCheckTs = Date.now();
+                applyConfig(cfg);
+            }
         });
     }
 
     // Initial load
+    fetchVersion();
     checkAndApply();
 
     // Periodic recheck
     setInterval(checkAndApply, RECHECK_MS);
 
-    // Countdown tick
-    setInterval(updateCountdown, 1000 * 20);
+    // Countdown + Live-Times tick
+    setInterval(function() { updateCountdown(); updateLiveTimes(); }, TICK_MS);
 
     // Manual recheck
     if (btnRecheck) {
