@@ -1332,6 +1332,10 @@
         widget.style.setProperty('--rain-skew', _windToRainSkew(windKmh));
         widget.style.setProperty('--rain-drift', _windToRainDrift(windKmh));
         widget.style.setProperty('--tree-sway', _windToTreeSway(windKmh));
+        // Tornado only when it's actually stormy AND properly windy (≥40 km/h).
+        // Below that threshold a tornado is physically wrong even during a thunderstorm.
+        const tornadoActive = (condition === 'storm' && (windKmh || 0) >= 40) ? '1' : '0';
+        widget.dataset.tornado = tornadoActive;
     }
 
     // Character reaction logic. Items show/hide based on condition + temperature.
