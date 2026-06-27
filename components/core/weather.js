@@ -468,11 +468,13 @@
             <div class="weather-landscape" aria-hidden="true">
                 <svg class="landscape-svg" viewBox="0 0 800 260" preserveAspectRatio="xMidYMax slice">
                     <defs>
-                        <!-- Sheet-lightning gradient — bright at top, fades to transparent at bottom
-                             so the flash has no visible bottom edge -->
+                        <!-- Sheet-lightning gradient — soft glow concentrated in the middle of the
+                             landscape area, fades to transparent at BOTH top and bottom. No sharp edges
+                             so the flash has no visible rectangular line at the sky-to-landscape boundary. -->
                         <linearGradient id="sheetLightningGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%"   stop-color="rgb(255,255,255)" stop-opacity="1" />
-                            <stop offset="55%"  stop-color="rgb(220,230,255)" stop-opacity="0.65" />
+                            <stop offset="0%"   stop-color="rgb(255,255,255)" stop-opacity="0" />
+                            <stop offset="30%"  stop-color="rgb(245,250,255)" stop-opacity="0.7" />
+                            <stop offset="65%"  stop-color="rgb(210,225,255)" stop-opacity="0.45" />
                             <stop offset="100%" stop-color="rgb(180,200,230)" stop-opacity="0" />
                         </linearGradient>
                         <!-- Foreground clip — wet-ground tint only shows where there's actual ground -->
