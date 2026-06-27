@@ -288,11 +288,17 @@
 }
 .weather-stars .star--front {
     opacity: 1;
-    background: radial-gradient(circle, #fff 30%, rgba(220, 235, 255, 0.6) 70%, transparent);
+    background: radial-gradient(circle at center,
+        #fff 0%,
+        rgba(255, 255, 255, 0.92) 22%,
+        rgba(220, 235, 255, 0.55) 50%,
+        rgba(180, 210, 255, 0.18) 75%,
+        transparent 92%);
     box-shadow:
-        0 0 10px rgba(255, 255, 255, 1),
-        0 0 20px rgba(200, 220, 255, 0.75),
-        0 0 30px rgba(180, 210, 255, 0.4);
+        0 0 8px 1px rgba(255, 255, 255, 1),
+        0 0 20px 3px rgba(220, 235, 255, 0.75),
+        0 0 40px 6px rgba(180, 210, 255, 0.45),
+        0 0 70px 12px rgba(150, 180, 240, 0.22);
 }
 .weather-stars .star--front::before,
 .weather-stars .star--front::after {
@@ -300,18 +306,28 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+    /* Soft diamond-edge cross — bright in middle, fades to nothing at ends */
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.12) 12%,
+        rgba(255, 255, 255, 0.55) 32%,
+        rgba(255, 255, 255, 1) 50%,
+        rgba(255, 255, 255, 0.55) 68%,
+        rgba(255, 255, 255, 0.12) 88%,
+        transparent 100%);
     transform-origin: 0 0;
-    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8));
+    filter: blur(0.5px) drop-shadow(0 0 5px rgba(255, 255, 255, 1))
+            drop-shadow(0 0 12px rgba(200, 225, 255, 0.7));
+    border-radius: 1px;
 }
 .weather-stars .star--front::before {
-    width: 18px;
-    height: 1px;
+    width: 32px;
+    height: 1.6px;
     transform: translate(-50%, -50%);
 }
 .weather-stars .star--front::after {
-    width: 18px;
-    height: 1px;
+    width: 32px;
+    height: 1.6px;
     transform: translate(-50%, -50%) rotate(90deg);
 }
 
@@ -1191,6 +1207,7 @@
     .weather-character .char-sunscreen-spark,
     .weather-character[data-shiver="1"] .char-body,
     .weather-character .char-eyes ellipse,
+    .weather-character .char-head-group,
     .weather-landscape .tree-pivot,
     .weather-plane .plane-wrap,
     .weather-tornado,
@@ -1619,8 +1636,26 @@
     animation: charBreathe 4.5s ease-in-out infinite;
 }
 
-/* Arm stays at rest — character just breathes. Wave was unreadable
-   (looked like the arm goes through the head) so removed entirely. */
+/* Arms stay at rest — body just breathes. Wave was unreadable.
+   The head gets subtle "looking around" life instead — feels natural without unnatural arm motion. */
+
+.weather-character .char-head-group {
+    transform-box: fill-box;
+    transform-origin: 50% 95%;  /* pivot at chin/neck */
+    animation: headLife 13s ease-in-out infinite;
+}
+@keyframes headLife {
+    0%        { transform: rotate(0deg)    translateY(0); }
+    10%       { transform: rotate(-3deg)   translateY(0); }      /* turn left */
+    22%       { transform: rotate(-4deg)   translateY(-1px); }   /* look up-left */
+    32%       { transform: rotate(-1deg)   translateY(-0.5px); }
+    44%       { transform: rotate(2.5deg)  translateY(0); }      /* turn right */
+    56%       { transform: rotate(3.5deg)  translateY(-1.5px); } /* look up-right */
+    66%       { transform: rotate(1deg)    translateY(-0.5px); }
+    78%       { transform: rotate(0deg)    translateY(-2px); }   /* look straight up */
+    88%       { transform: rotate(0deg)    translateY(-0.5px); }
+    100%      { transform: rotate(0deg)    translateY(0); }
+}
 .weather-character .char-shadow {
     animation: charShadow 4.5s ease-in-out infinite;
     transform-origin: 100px 305px;
@@ -1870,6 +1905,7 @@
 .weather-live.is-paused .weather-character .char-shadow,
 .weather-live.is-paused .weather-character .char-sunscreen-spark,
 .weather-live.is-paused .weather-character .char-eyes ellipse,
+.weather-live.is-paused .weather-character .char-head-group,
 .weather-live.is-paused .tree-pivot,
 .weather-live.is-paused .weather-plane .plane-wrap,
 .weather-live.is-paused .weather-tornado,

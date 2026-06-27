@@ -326,7 +326,7 @@
             const y    = (Math.random() * 45).toFixed(1);
             const dur  = (1.8 + Math.random() * 3.5).toFixed(2);
             const d    = (Math.random() * 5).toFixed(2);
-            const s    = tier === 'back' ? 1.3 : tier === 'mid' ? 2 : 3.2;
+            const s    = tier === 'back' ? 1.3 : tier === 'mid' ? 2.2 : 4.5;
             html += `<span class="star star--${tier}" style="left:${x}%;top:${y}%;--dur:${dur}s;--d:${d}s;--s:${s}px"></span>`;
         }
         return html;
@@ -653,33 +653,24 @@
                             <!-- Neck -->
                             <path class="char-skin" d="M 92 110 L 92 126 Q 100 130 108 126 L 108 110 Z" />
 
-                            <!-- Head -->
-                            <ellipse class="char-skin char-head" cx="100" cy="78" rx="32" ry="36" />
-
-                            <!-- Hair (modern short style) -->
-                            <path class="char-hair" d="M 68 75 Q 65 50 90 40 Q 110 35 125 45 Q 135 55 134 75 Q 132 70 122 72 Q 110 70 100 73 Q 88 70 78 73 Q 72 75 68 75 Z" />
-
-                            <!-- Hair shadow on forehead -->
-                            <path class="char-hair-shadow" d="M 70 70 Q 100 80 132 72 L 132 78 Q 100 84 70 78 Z" />
-
-                            <!-- Face: eyes -->
-                            <g class="char-eyes">
-                                <ellipse cx="88" cy="80" rx="2.5" ry="3" />
-                                <ellipse cx="112" cy="80" rx="2.5" ry="3" />
+                            <!-- HEAD GROUP: head + hair + all face features.
+                                 Animated via CSS to gently turn / look around. Pivot at chin via fill-box + 50% 95%. -->
+                            <g class="char-head-group">
+                                <ellipse class="char-skin char-head" cx="100" cy="78" rx="32" ry="36" />
+                                <path class="char-hair" d="M 68 75 Q 65 50 90 40 Q 110 35 125 45 Q 135 55 134 75 Q 132 70 122 72 Q 110 70 100 73 Q 88 70 78 73 Q 72 75 68 75 Z" />
+                                <path class="char-hair-shadow" d="M 70 70 Q 100 80 132 72 L 132 78 Q 100 84 70 78 Z" />
+                                <g class="char-eyes">
+                                    <ellipse cx="88" cy="80" rx="2.5" ry="3" />
+                                    <ellipse cx="112" cy="80" rx="2.5" ry="3" />
+                                </g>
+                                <g class="char-eyebrows">
+                                    <path d="M 82 73 Q 88 70 94 73" />
+                                    <path d="M 106 73 Q 112 70 118 73" />
+                                </g>
+                                <path class="char-mouth" d="M 92 95 Q 100 100 108 95" />
+                                <circle class="char-cheek" cx="80" cy="92" r="4" />
+                                <circle class="char-cheek" cx="120" cy="92" r="4" />
                             </g>
-
-                            <!-- Eyebrows -->
-                            <g class="char-eyebrows">
-                                <path d="M 82 73 Q 88 70 94 73" />
-                                <path d="M 106 73 Q 112 70 118 73" />
-                            </g>
-
-                            <!-- Mouth (smile) -->
-                            <path class="char-mouth" d="M 92 95 Q 100 100 108 95" />
-
-                            <!-- Cheek blush (subtle) -->
-                            <circle class="char-cheek" cx="80" cy="92" r="4" />
-                            <circle class="char-cheek" cx="120" cy="92" r="4" />
                         </g>
 
                         <!-- COAT overlay (worn over shirt when cold) -->
