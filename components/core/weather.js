@@ -763,22 +763,23 @@
                             <ellipse class="char-sunhat-band" cx="100" cy="50" rx="24" ry="3" />
                         </g>
 
-                        <!-- UMBRELLA: clean dome with rib lines that CURVE along the canopy surface
-                             (instead of straight lines from peak to edge), proper J-handle, vertical pole -->
+                        <!-- UMBRELLA: realistic proportions (130w × 45h, ratio 0.35) — bezier control points
+                             tuned so the actual canopy peak is at y=-12, ribs end EXACTLY on the underside curve,
+                             tip sits at the visible peak (no floating dot) -->
                         <g class="char-umbrella">
-                            <!-- Canopy: smooth dome -->
-                            <path class="umbrella-canopy" d="M 28 38 Q 100 -32 172 38 Q 100 22 28 38 Z" />
-                            <!-- Curved rib lines following the canopy surface -->
-                            <path class="umbrella-rib" d="M 100 -32 Q 56 -2 28 36" />
-                            <path class="umbrella-rib" d="M 100 -32 Q 78 -2 65 35" />
-                            <path class="umbrella-rib" d="M 100 -32 L 100 30" />
-                            <path class="umbrella-rib" d="M 100 -32 Q 122 -2 135 35" />
-                            <path class="umbrella-rib" d="M 100 -32 Q 144 -2 172 36" />
-                            <!-- Tip at the very top -->
-                            <circle class="umbrella-tip" cx="100" cy="-32" r="3.5" />
-                            <!-- Pole going down to the right hand -->
-                            <line class="umbrella-pole" x1="100" y1="28" x2="138" y2="196" stroke-width="3" stroke-linecap="round" />
-                            <!-- Clean J-shaped handle -->
+                            <!-- Canopy: top dome + slight underside curve -->
+                            <path class="umbrella-canopy" d="M 35 33 Q 100 -57 165 33 Q 100 25 35 33 Z" />
+                            <!-- Ribs curve along the dome and land on the canopy bottom edge -->
+                            <path class="umbrella-rib" d="M 100 -12 Q 78 5 35 33" />
+                            <path class="umbrella-rib" d="M 100 -12 Q 89 0 67 30" />
+                            <path class="umbrella-rib" d="M 100 -12 L 100 29" />
+                            <path class="umbrella-rib" d="M 100 -12 Q 111 0 133 30" />
+                            <path class="umbrella-rib" d="M 100 -12 Q 122 5 165 33" />
+                            <!-- Tip at the actual visible canopy peak -->
+                            <circle class="umbrella-tip" cx="100" cy="-12" r="3" />
+                            <!-- Pole from canopy underside center to the right hand -->
+                            <line class="umbrella-pole" x1="100" y1="29" x2="138" y2="196" stroke-width="3" stroke-linecap="round" />
+                            <!-- J-shaped handle -->
                             <path class="umbrella-handle"
                                 d="M 138 196 Q 152 199 152 211 Q 152 222 140 222 Q 130 220 131 213"
                                 fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
