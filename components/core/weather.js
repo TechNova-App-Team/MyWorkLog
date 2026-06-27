@@ -468,15 +468,6 @@
             <div class="weather-landscape" aria-hidden="true">
                 <svg class="landscape-svg" viewBox="0 0 800 260" preserveAspectRatio="xMidYMax slice">
                     <defs>
-                        <!-- Sheet-lightning gradient — soft glow concentrated in the middle of the
-                             landscape area, fades to transparent at BOTH top and bottom. No sharp edges
-                             so the flash has no visible rectangular line at the sky-to-landscape boundary. -->
-                        <linearGradient id="sheetLightningGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%"   stop-color="rgb(255,255,255)" stop-opacity="0" />
-                            <stop offset="30%"  stop-color="rgb(245,250,255)" stop-opacity="0.7" />
-                            <stop offset="65%"  stop-color="rgb(210,225,255)" stop-opacity="0.45" />
-                            <stop offset="100%" stop-color="rgb(180,200,230)" stop-opacity="0" />
-                        </linearGradient>
                         <!-- Foreground clip — wet-ground tint only shows where there's actual ground -->
                         <clipPath id="foregroundClip">
                             <path d="M 0 210 Q 200 188 400 205 T 800 210 L 800 260 L 0 260 Z" />
@@ -600,9 +591,6 @@
                         <ellipse class="ls-bush" cx="745" cy="163" rx="8" ry="4.5" />
                     </g>
 
-                    <!-- Sheet lightning (storm only) — full-height with gradient that fades to
-                         transparent at the bottom, so the flash has no visible bottom edge. -->
-                    <rect class="ls-sheet-lightning" x="0" y="0" width="800" height="260" fill="url(#sheetLightningGrad)" />
 
                     <!-- Fireflies floating in foreground (night only) -->
                     <g class="ls-fireflies">
