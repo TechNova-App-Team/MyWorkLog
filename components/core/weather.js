@@ -467,6 +467,25 @@
         return `
             <div class="weather-landscape" aria-hidden="true">
                 <svg class="landscape-svg" viewBox="0 0 800 260" preserveAspectRatio="xMidYMax slice">
+                    <defs>
+                        <!-- Sheet-lightning gradient — bright at top, fades to transparent at bottom
+                             so the flash has no visible bottom edge -->
+                        <linearGradient id="sheetLightningGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%"   stop-color="rgb(255,255,255)" stop-opacity="1" />
+                            <stop offset="55%"  stop-color="rgb(220,230,255)" stop-opacity="0.65" />
+                            <stop offset="100%" stop-color="rgb(180,200,230)" stop-opacity="0" />
+                        </linearGradient>
+                        <!-- Foreground clip — wet-ground tint only shows where there's actual ground -->
+                        <clipPath id="foregroundClip">
+                            <path d="M 0 210 Q 200 188 400 205 T 800 210 L 800 260 L 0 260 Z" />
+                        </clipPath>
+                        <!-- Realistic dirt path gradient: lighter sand in middle of the path -->
+                        <linearGradient id="pathGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%"   stop-color="rgb(155,118,75)"  stop-opacity="0.6" />
+                            <stop offset="50%"  stop-color="rgb(210,178,135)" stop-opacity="0.92" />
+                            <stop offset="100%" stop-color="rgb(180,148,105)" stop-opacity="0.85" />
+                        </linearGradient>
+                    </defs>
                     <!-- LAYER 1: Distant mountains (lightest, smallest peaks) -->
                     <path class="ls-mountains-far" d="M 0 120 L 60 90 L 120 110 L 200 75 L 290 100 L 370 80 L 460 95 L 540 78 L 620 100 L 700 85 L 770 105 L 800 95 L 800 260 L 0 260 Z" />
 
@@ -577,8 +596,9 @@
                         <ellipse class="ls-bush" cx="745" cy="163" rx="8" ry="4.5" />
                     </g>
 
-                    <!-- Sheet lightning silhouette behind mountains (storm only) -->
-                    <rect class="ls-sheet-lightning" x="0" y="40" width="800" height="140" />
+                    <!-- Sheet lightning (storm only) — full-height with gradient that fades to
+                         transparent at the bottom, so the flash has no visible bottom edge. -->
+                    <rect class="ls-sheet-lightning" x="0" y="0" width="800" height="260" fill="url(#sheetLightningGrad)" />
 
                     <!-- Fireflies floating in foreground (night only) -->
                     <g class="ls-fireflies">
@@ -593,8 +613,32 @@
                     <!-- LAYER 5: Foreground hill (character standing zone) -->
                     <path class="ls-foreground" d="M 0 210 Q 200 188 400 205 T 800 210 L 800 260 L 0 260 Z" />
 
-                    <!-- Winding path on foreground -->
-                    <path class="ls-path" d="M 350 260 Q 360 245 380 235 Q 400 225 420 215 Q 440 208 460 207" />
+                    <!-- Realistic dirt path: tapered closed shape with perspective + soft shadow.
+                         Curves up from the foreground toward the cottage in the distance. -->
+                    <path class="ls-path-shadow" d="
+                        M 268 263
+                        Q 340 232 430 198
+                        Q 490 175 522 152
+                        L 528 154
+                        Q 498 178 438 202
+                        Q 348 235 274 264
+                        Z" />
+                    <path class="ls-path" d="
+                        M 280 262
+                        Q 348 234 432 200
+                        Q 488 178 518 156
+                        L 522 158
+                        Q 494 180 436 204
+                        Q 352 236 286 263
+                        Z" />
+                    <!-- A few footstep-darker speckles down the centre of the path -->
+                    <g class="ls-path-speckles">
+                        <ellipse cx="300" cy="252" rx="3" ry="1.4" />
+                        <ellipse cx="345" cy="238" rx="2.6" ry="1.2" />
+                        <ellipse cx="392" cy="222" rx="2.4" ry="1.1" />
+                        <ellipse cx="438" cy="206" rx="2.2" ry="1" />
+                        <ellipse cx="478" cy="190" rx="1.8" ry="0.9" />
+                    </g>
 
                     <!-- Small rocks scattered on foreground -->
                     <g class="ls-rocks">
@@ -608,8 +652,9 @@
                     <path class="ls-snow-ground" d="M 0 210 Q 200 188 400 205 T 800 210 L 800 222 Q 600 207 400 215 T 0 220 Z" />
                     <path class="ls-snow-hills"  d="M 0 165 Q 100 140 200 155 T 400 162 T 600 148 T 800 158 L 800 170 Q 600 156 400 168 T 0 173 Z" />
 
-                    <!-- Wet ground reflection (rain only) -->
-                    <rect class="ls-wet" x="0" y="208" width="800" height="55" />
+                    <!-- Wet ground reflection (rain only) — CLIPPED to foreground shape so the rect edges
+                         don't pop out as a visible rectangle during lightning flashes. -->
+                    <rect class="ls-wet" x="0" y="208" width="800" height="55" clip-path="url(#foregroundClip)" />
 
                     <!-- Fog haze occluding distant layers -->
                     <rect class="ls-fog-veil" x="0" y="60" width="800" height="120" />
@@ -718,22 +763,25 @@
                             <ellipse class="char-sunhat-band" cx="100" cy="50" rx="24" ry="3" />
                         </g>
 
-                        <!-- UMBRELLA (proper dome with 5 radial ribs splaying from tip + handle) -->
+                        <!-- UMBRELLA: clean dome with rib lines that CURVE along the canopy surface
+                             (instead of straight lines from peak to edge), proper J-handle, vertical pole -->
                         <g class="char-umbrella">
-                            <!-- Canopy -->
-                            <path class="umbrella-canopy" d="M 30 50 Q 100 -25 170 50 Q 142 38 122 38 Q 100 38 78 38 Q 58 38 30 50 Z" />
-                            <!-- Ribs splay from peak (100, -22) down to bottom-edge attach points -->
-                            <path class="umbrella-rib" d="M 100 -22 L 35 48" />
-                            <path class="umbrella-rib" d="M 100 -22 L 70 41" />
-                            <path class="umbrella-rib" d="M 100 -22 L 100 40" />
-                            <path class="umbrella-rib" d="M 100 -22 L 130 41" />
-                            <path class="umbrella-rib" d="M 100 -22 L 165 48" />
-                            <!-- Pole from canopy underside to right hand -->
-                            <line class="umbrella-pole" x1="100" y1="40" x2="144" y2="195" stroke-width="3" />
-                            <!-- Handle hook -->
-                            <path class="umbrella-handle" d="M 144 195 Q 152 200 148 207 Q 144 210 140 205" fill="none" stroke-width="3" />
-                            <!-- Tip on top -->
-                            <circle class="umbrella-tip" cx="100" cy="-23" r="2.5" />
+                            <!-- Canopy: smooth dome -->
+                            <path class="umbrella-canopy" d="M 28 38 Q 100 -32 172 38 Q 100 22 28 38 Z" />
+                            <!-- Curved rib lines following the canopy surface -->
+                            <path class="umbrella-rib" d="M 100 -32 Q 56 -2 28 36" />
+                            <path class="umbrella-rib" d="M 100 -32 Q 78 -2 65 35" />
+                            <path class="umbrella-rib" d="M 100 -32 L 100 30" />
+                            <path class="umbrella-rib" d="M 100 -32 Q 122 -2 135 35" />
+                            <path class="umbrella-rib" d="M 100 -32 Q 144 -2 172 36" />
+                            <!-- Tip at the very top -->
+                            <circle class="umbrella-tip" cx="100" cy="-32" r="3.5" />
+                            <!-- Pole going down to the right hand -->
+                            <line class="umbrella-pole" x1="100" y1="28" x2="138" y2="196" stroke-width="3" stroke-linecap="round" />
+                            <!-- Clean J-shaped handle -->
+                            <path class="umbrella-handle"
+                                d="M 138 196 Q 152 199 152 211 Q 152 222 140 222 Q 130 220 131 213"
+                                fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
                         </g>
 
                         <!-- SUNSCREEN sparkles -->

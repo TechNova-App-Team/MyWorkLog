@@ -1325,14 +1325,16 @@
     100% { transform: translateX(900px) translateY(0); }
 }
 
-/* ── PATH ── winding trail through foreground */
+/* ── PATH ── tapered dirt trail winding toward the cottage. Two layers + footstep speckles. */
+.weather-landscape .ls-path-shadow {
+    fill: rgba(60, 40, 25, 0.45);
+    filter: blur(2.5px);
+}
 .weather-landscape .ls-path {
-    fill: none;
-    stroke: var(--landscape-path);
-    stroke-width: 4;
-    stroke-linecap: round;
-    stroke-dasharray: 0 4;
-    opacity: 0.7;
+    fill: url(#pathGrad);
+}
+.weather-landscape .ls-path-speckles ellipse {
+    fill: rgba(110, 80, 50, 0.5);
 }
 
 /* ── SNOW caps + ground + hills accumulation ── */
@@ -1502,9 +1504,8 @@
     100% { transform: scaleX(1); }
 }
 
-/* ═══ SHEET LIGHTNING behind mountains (storm only) ═══ */
+/* ═══ SHEET LIGHTNING — gradient-filled (no visible bottom edge) ═══ */
 .weather-landscape .ls-sheet-lightning {
-    fill: rgba(220, 230, 255, 0);
     opacity: 0;
     mix-blend-mode: screen;
 }
@@ -1513,10 +1514,10 @@
     animation-delay: 2s;
 }
 @keyframes sheetLightning {
-    0%, 70%    { fill: rgba(220, 230, 255, 0);   opacity: 0; }
-    71%        { fill: rgba(220, 230, 255, 0.65); opacity: 1; }
-    73%        { opacity: 0.2; }
-    74%        { opacity: 0.9; }
+    0%, 70%    { opacity: 0; }
+    71%        { opacity: 0.85; }
+    73%        { opacity: 0.15; }
+    74%        { opacity: 0.95; }
     77%        { opacity: 0; }
     100%       { opacity: 0; }
 }
@@ -1684,12 +1685,13 @@
 }
 .weather-character .char-umbrella .umbrella-rib {
     fill: none;
-    stroke: rgba(255, 255, 255, 0.35);
-    stroke-width: 0.9;
+    stroke: rgba(255, 255, 255, 0.42);
+    stroke-width: 1.1;
+    stroke-linecap: round;
 }
 .weather-character .char-umbrella .umbrella-pole,
 .weather-character .char-umbrella .umbrella-handle {
-    stroke: #888;
+    stroke: #5a4f56;
     stroke-linecap: round;
 }
 .weather-character .char-umbrella .umbrella-tip {
