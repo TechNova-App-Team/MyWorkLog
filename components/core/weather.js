@@ -903,16 +903,28 @@
         if (!content) return;
         if (!weatherData || !weatherData.current) return;
 
-        const hour    = new Date().getHours();
+        // Real values from weatherData…
+        const minute  = _nowMinutes();   // honours demo time override
+        const hour    = Math.floor(minute / 60);
         const isNight = hour < 6 || hour >= 21;
         const code    = weatherData.current.weather_code;
-        const cond    = getWeatherCondition(code, isNight);
-        const meta    = getWeatherIcon(code, isNight);
-        const temp    = Math.round(weatherData.current.temperature_2m);
+        let cond      = getWeatherCondition(code, isNight);
+        let meta      = getWeatherIcon(code, isNight);
+        let temp      = Math.round(weatherData.current.temperature_2m);
+        let wind      = Math.round(weatherData.current.wind_speed_10m);
         const feels   = Math.round(weatherData.current.apparent_temperature);
         const hum     = Math.round(weatherData.current.relative_humidity_2m);
-        const wind    = Math.round(weatherData.current.wind_speed_10m);
-        const city    = weatherData.cityName || 'Dein Standort';
+        let city      = weatherData.cityName || 'Dein Standort';
+
+        // …optionally overridden by demo mode (set via window.weatherDemo.*).
+        if (_demoState && _demoState.cond) {
+            cond = _demoState.cond;
+            const demoCode = _DEMO_CODE_MAP[cond] || 0;
+            meta = getWeatherIcon(demoCode, isNight);
+            city = '🎬 Demo · ' + (_demoState.label || cond);
+        }
+        if (_demoState && _demoState.wind != null) wind = _demoState.wind;
+        if (_demoState && _demoState.temp != null) temp = _demoState.temp;
 
         // Slot in particles per condition. All layer hosts get refreshed on condition change.
         if (widget.dataset.condition !== cond) {
@@ -1143,7 +1155,11 @@
         if (hm) return (+hm[1]) * 60 + (+hm[2]);
         return null;
     }
-    function _nowMinutes() { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
+    function _nowMinutes() {
+        if (_demoState && _demoState.minute != null) return _demoState.minute;
+        const d = new Date();
+        return d.getHours() * 60 + d.getMinutes();
+    }
 
     // Sunrise/Sunset for today (from API, with seasonal fallback for cached/cold-start state).
     function _sunTimes() {
@@ -1378,6 +1394,131 @@
 
         Object.entries(reset).forEach(([k, v]) => char.dataset[k] = v);
     }
+
+    // ═══ DEMO MODE — console-triggerable for showing off ═══
+    // Type `weatherDemo.help()` in DevTools console to see all commands.
+    const _demoState = { cond: null, wind: null, temp: null, minute: null, label: null };
+    const _DEMO_CODE_MAP = {
+        'clear-day': 0, 'clear-night': 0, 'partly-day': 2, 'partly-night': 2,
+        'cloudy': 3, 'fog': 45, 'rain': 61, 'storm': 95, 'snow': 73
+    };
+
+    // Mock data used only if the user hasn't set up a location yet — lets demo work cold.
+    function _demoMockData() {
+        const d = new Date();
+        const days = Array.from({ length: 6 }, (_, i) => {
+            const dd = new Date(d); dd.setDate(d.getDate() + i);
+            return dd.toISOString().slice(0, 10);
+        });
+        return {
+            current: { temperature_2m: 20, apparent_temperature: 20, relative_humidity_2m: 60, weather_code: 0, wind_speed_10m: 5 },
+            daily: {
+                time: days,
+                weather_code: [0, 1, 2, 3, 61, 0],
+                temperature_2m_max: [22, 23, 21, 19, 18, 20],
+                temperature_2m_min: [12, 14, 13, 11, 10, 12],
+                sunrise: days.map(d => d + 'T05:42'),
+                sunset:  days.map(d => d + 'T21:30')
+            },
+            cityName: 'Demo'
+        };
+    }
+
+    function _demoApply(cond, wind, temp, minute, label) {
+        if (!weatherData) weatherData = _demoMockData();
+        _demoState.cond   = cond;
+        _demoState.wind   = wind;
+        _demoState.temp   = temp;
+        _demoState.minute = minute;
+        _demoState.label  = label;
+        const modal = document.getElementById('weatherModal');
+        if (modal && !modal.classList.contains('active')) {
+            openWeatherModal();
+        } else {
+            renderWeatherWidget();
+        }
+        // eslint-disable-next-line no-console
+        console.log('%c🎬 ' + label, 'background:#a855f7;color:#fff;padding:4px 10px;border-radius:6px;font-weight:600;font-size:13px');
+    }
+
+    window.weatherDemo = {
+        // ── Wetter-Conditions ──
+        sunny:     () => _demoApply('clear-day',    5, 22,  720,  'Sonnig'),
+        hot:       () => _demoApply('clear-day',    3, 34,  720,  'Heiß (Sonnenhut + Sonnencreme)'),
+        cool:      () => _demoApply('clear-day',    8, 18,  720,  'Mild (Sonnenbrille)'),
+        partly:    () => _demoApply('partly-day',   8, 22,  720,  'Heiter bis wolkig'),
+        cloudy:    () => _demoApply('cloudy',      15, 16,  720,  'Bewölkt'),
+        fog:       () => _demoApply('fog',          3, 10,  720,  'Nebel'),
+        rain:      () => _demoApply('rain',        12, 14,  720,  'Regen (Regenschirm)'),
+        heavyRain: () => _demoApply('rain',        32, 12,  720,  'Starkregen + Wind'),
+        storm:     () => _demoApply('storm',       18, 16, 1080,  'Gewitter (Lightning, kein Tornado)'),
+        tornado:   () => _demoApply('storm',       55, 16, 1080,  'TORNADO! (Storm + 55 km/h Wind)'),
+        snow:      () => _demoApply('snow',         8, -2,  720,  'Schnee (Wintermütze + Schal + Mantel)'),
+        winter:    () => _demoApply('snow',        25, -8,  720,  'Polarwinter (+ Shiver-Animation)'),
+
+        // ── Tageszeit ──
+        sunrise:   () => _demoApply('clear-day',    4, 14,  360,  'Sonnenaufgang'),
+        dawn:      () => _demoApply('clear-day',    3, 12,  330,  'Morgendämmerung'),
+        noon:      () => _demoApply('clear-day',    5, 26,  720,  'Mittag'),
+        sunset:    () => _demoApply('clear-day',    6, 21, 1230,  'Sonnenuntergang (golden hour)'),
+        dusk:      () => _demoApply('clear-day',    5, 18, 1290,  'Abenddämmerung'),
+        night:     () => _demoApply('clear-night',  3, 16, 1380,  'Sternenklare Nacht (Mond + Sterne)'),
+        midnight:  () => _demoApply('clear-night',  2, 14,    0,  'Mitternacht'),
+
+        // ── Reset ──
+        reset: () => {
+            _demoState.cond = _demoState.wind = _demoState.temp = _demoState.minute = _demoState.label = null;
+            try { getLocationAndWeather(); } catch (e) {}
+            renderWeatherWidget();
+            // eslint-disable-next-line no-console
+            console.log('%c✅ Demo OFF — echte Wetterdaten', 'background:#10b981;color:#fff;padding:4px 10px;border-radius:6px;font-weight:600;font-size:13px');
+        },
+
+        // ── Help ──
+        help: () => {
+            // eslint-disable-next-line no-console
+            console.log(
+                '%c🌤️ Weather Demo Commands\n\n' +
+                '%cWETTER:\n' +
+                '  weatherDemo.sunny()       Sonnig\n' +
+                '  weatherDemo.hot()         Heiß (≥28° → Sonnenhut + Sunscreen-Sparkles)\n' +
+                '  weatherDemo.cool()        Mild (≥20° → Sonnenbrille)\n' +
+                '  weatherDemo.partly()      Heiter bis wolkig\n' +
+                '  weatherDemo.cloudy()      Bewölkt\n' +
+                '  weatherDemo.fog()         Nebel\n' +
+                '  weatherDemo.rain()        Regen + Regenschirm\n' +
+                '  weatherDemo.heavyRain()   Starkregen mit Wind-Skew\n' +
+                '  weatherDemo.storm()       Gewitter mit Lightning\n' +
+                '  weatherDemo.tornado()     ⚠️ TORNADO (Storm + 55 km/h)\n' +
+                '  weatherDemo.snow()        Schnee + Wintermütze + Schal\n' +
+                '  weatherDemo.winter()      Polarwinter + Shivering\n\n' +
+                'TAGESZEIT:\n' +
+                '  weatherDemo.sunrise()     Sonnenaufgang\n' +
+                '  weatherDemo.dawn()        Morgendämmerung\n' +
+                '  weatherDemo.noon()        Mittag\n' +
+                '  weatherDemo.sunset()      Sonnenuntergang (golden hour)\n' +
+                '  weatherDemo.dusk()        Abenddämmerung\n' +
+                '  weatherDemo.night()       Sternenklare Nacht\n' +
+                '  weatherDemo.midnight()    Mitternacht\n\n' +
+                'RESET:\n' +
+                '  weatherDemo.reset()       Zurück zu echten Wetterdaten\n',
+                'font-size:16px;font-weight:bold;color:#a855f7',
+                'font-family:monospace;line-height:1.7;color:#1e293b'
+            );
+        }
+    };
+
+    // Console hint on first load
+    setTimeout(() => {
+        // eslint-disable-next-line no-console
+        console.log(
+            '%c🌤️ Weather Demo bereit %c· tippe %cweatherDemo.help()%c für alle Befehle',
+            'background:linear-gradient(135deg,#a855f7,#7c3aed);color:#fff;padding:4px 10px;border-radius:6px;font-weight:600',
+            'color:#94a3b8;font-size:12px',
+            'background:#1e293b;color:#fff;padding:2px 6px;border-radius:4px;font-family:monospace',
+            'color:#94a3b8;font-size:12px'
+        );
+    }, 2000);
 
     // 5-minute tick so the sky shifts even when no new weather data arrived.
     let _skyTimeInterval = null;
