@@ -1224,7 +1224,8 @@
     }
 
     // Sun and moon opacity — fade across sunrise/sunset windows, capped per condition visibility.
-    // Moon ramps in earlier so stars + cottage lights are visible during dusk.
+    // Even on cloudy/rain/snow nights the moon and stars stay visible (clouds drift in front);
+    // they only fully hide under heavy storm / dense fog. Sun stays mostly hidden in bad weather.
     function _getSunMoonOpacity(condition) {
         const { sunrise: R, sunset: S } = _sunTimes();
         const m = _nowMinutes();
@@ -1233,10 +1234,23 @@
         moonRaw = Math.min(1, moonRaw);
         let sunCap = 0, moonCap = 0;
         if (condition === 'clear-day' || condition === 'clear-night') { sunCap = 1;    moonCap = 1; }
-        else if (condition === 'partly-day' || condition === 'partly-night') { sunCap = 0.75; moonCap = 0.85; }
-        else if (condition === 'ambient') { sunCap = 0; moonCap = 0.7; }
-        // For cloudy/rain/storm/snow/fog: sun & moon stay hidden (0).
+        else if (condition === 'partly-day' || condition === 'partly-night') { sunCap = 0.75; moonCap = 0.9; }
+        else if (condition === 'cloudy')  { sunCap = 0.30; moonCap = 0.85; }
+        else if (condition === 'rain')    { sunCap = 0.15; moonCap = 0.60; }
+        else if (condition === 'storm')   { sunCap = 0;    moonCap = 0.40; }
+        else if (condition === 'snow')    { sunCap = 0.30; moonCap = 0.75; }
+        else if (condition === 'fog')     { sunCap = 0.35; moonCap = 0.55; }
+        else if (condition === 'ambient') { sunCap = 0;    moonCap = 0.70; }
         return { sun: +(sunRaw * sunCap).toFixed(3), moon: +(moonRaw * moonCap).toFixed(3) };
+    }
+
+    // Pure time-of-day "is it night" opacity. Independent of weather condition —
+    // used for things that should glow at night regardless of clouds (cottage lights, fireflies).
+    function _getNightOpacity() {
+        const { sunrise: R, sunset: S } = _sunTimes();
+        const m = _nowMinutes();
+        const night = _smoothstep(S - 60, S + 20, m) + (1 - _smoothstep(R - 20, R + 60, m));
+        return +Math.min(1, night).toFixed(3);
     }
 
     // Wind → cloud drift duration. Calm = slow drift, gale = sprint.
@@ -1271,6 +1285,7 @@
         widget.style.setProperty('--tint',  palette.tint);
         widget.style.setProperty('--sun-op', opac.sun);
         widget.style.setProperty('--moon-op', opac.moon);
+        widget.style.setProperty('--night-op', _getNightOpacity());
         widget.style.setProperty('--cloud-dur-a', dur.a);
         widget.style.setProperty('--cloud-dur-b', dur.b);
         widget.style.setProperty('--cloud-dur-c', dur.c);

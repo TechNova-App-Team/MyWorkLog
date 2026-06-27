@@ -1190,7 +1190,6 @@
     .weather-character .char-shadow,
     .weather-character .char-sunscreen-spark,
     .weather-character[data-shiver="1"] .char-body,
-    .weather-character .char-arm-left,
     .weather-character .char-eyes ellipse,
     .weather-landscape .tree-pivot,
     .weather-plane .plane-wrap,
@@ -1269,12 +1268,12 @@
     transform-origin: 50% 100%;
 }
 
-/* Visibility tied to moon-op so dusk/night ramps in matching the sky shift.
-   Drives intensity via JS-set --moon-op (matches sun/moon fade). */
+/* Cottage interior lights — tied to pure --night-op (time-of-day), NOT --moon-op.
+   That way the cottage glows at night even on overcast/stormy nights when the moon is hidden. */
 .weather-landscape .ls-cottage .cottage-window,
 .weather-landscape .ls-cottage .cottage-window-frame,
 .weather-landscape .ls-cottage .cottage-door-glow {
-    opacity: var(--moon-op, 0);
+    opacity: var(--night-op, 0);
 }
 .weather-landscape .ls-cottage .cottage-window {
     filter: drop-shadow(0 0 6px rgba(255, 195, 100, 0.95))
@@ -1282,11 +1281,11 @@
 }
 .weather-landscape .ls-cottage .cottage-window--attic {
     filter: drop-shadow(0 0 5px rgba(255, 200, 110, 0.9));
-    opacity: calc(var(--moon-op, 0) * 0.85);
+    opacity: calc(var(--night-op, 0) * 0.85);
 }
 .weather-landscape .ls-cottage .cottage-door-glow {
     filter: blur(2px) drop-shadow(0 0 8px rgba(255, 180, 80, 0.6));
-    opacity: calc(var(--moon-op, 0) * 0.7);
+    opacity: calc(var(--night-op, 0) * 0.7);
 }
 
 /* Chimney smoke — drifts up and fades, only on cold-ish conditions */
@@ -1534,15 +1533,10 @@
     100%       { opacity: 0; }
 }
 
-/* ═══ FIREFLIES (night only) ═══ */
+/* ═══ FIREFLIES — purely time-based, glow on any night (even stormy/cloudy ones) ═══ */
 .weather-landscape .ls-fireflies {
-    opacity: 0;
+    opacity: var(--night-op, 0);
     transition: opacity 2s ease;
-}
-.weather-live[data-condition="clear-night"]  .ls-fireflies,
-.weather-live[data-condition="partly-night"] .ls-fireflies,
-.weather-live[data-condition="ambient"]      .ls-fireflies {
-    opacity: 1;
 }
 .weather-landscape .firefly {
     fill: #d4ff64;
@@ -1625,33 +1619,8 @@
     animation: charBreathe 4.5s ease-in-out infinite;
 }
 
-/* Occasional wave from the left hand — arm clearly lifts above the head and swings */
-.weather-character .char-arm-left {
-    transform-box: fill-box;
-    transform-origin: 78% 6%;
-    animation: charWave 14s ease-in-out infinite;
-    animation-delay: 4s;
-}
-@keyframes charWave {
-    0%, 5%        { transform: rotate(0deg); }
-    7%            { transform: rotate(-90deg); }    /* lift to horizontal */
-    9%            { transform: rotate(-155deg); }   /* hand clearly above head */
-    11%           { transform: rotate(-135deg); }
-    13%           { transform: rotate(-165deg); }
-    15%           { transform: rotate(-140deg); }
-    17%           { transform: rotate(-160deg); }
-    19%           { transform: rotate(-145deg); }
-    21%           { transform: rotate(-90deg); }    /* lower toward horizontal */
-    24%           { transform: rotate(0deg); }      /* back to side */
-    100%          { transform: rotate(0deg); }
-}
-
-/* When umbrella is up, don't wave (would break the holding pose) */
-.weather-character[data-umbrella="1"] .char-arm-left,
-.weather-character[data-coat="1"] .char-arm-left {
-    animation: none;
-    transform: rotate(0deg);
-}
+/* Arm stays at rest — character just breathes. Wave was unreadable
+   (looked like the arm goes through the head) so removed entirely. */
 .weather-character .char-shadow {
     animation: charShadow 4.5s ease-in-out infinite;
     transform-origin: 100px 305px;
@@ -1900,7 +1869,6 @@
 .weather-live.is-paused .weather-character .char-body,
 .weather-live.is-paused .weather-character .char-shadow,
 .weather-live.is-paused .weather-character .char-sunscreen-spark,
-.weather-live.is-paused .weather-character .char-arm-left,
 .weather-live.is-paused .weather-character .char-eyes ellipse,
 .weather-live.is-paused .tree-pivot,
 .weather-live.is-paused .weather-plane .plane-wrap,
