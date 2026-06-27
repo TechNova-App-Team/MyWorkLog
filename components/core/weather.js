@@ -499,8 +499,10 @@
                     <!-- LAYER 3: Rolling hills with cottage at distance -->
                     <path class="ls-hills" d="M 0 165 Q 100 140 200 155 T 400 162 T 600 148 T 800 158 L 800 260 L 0 260 Z" />
 
-                    <!-- Cottage in mid-distance (larger, more windows for warmth) -->
-                    <g class="ls-cottage" transform="translate(530,128)">
+                    <!-- Cottage in mid-distance. transform tilts -3.7° around the bottom-center (16,22)
+                         so the foundation matches the hill slope (left side drops, right side rises).
+                         translate y=130 anchors the cottage flush on the hill curve at x=530..562. -->
+                    <g class="ls-cottage" transform="translate(530,130) rotate(-3.7 16 22)">
                         <!-- chimney smoke (animated) -->
                         <g class="cottage-smoke">
                             <ellipse cx="16" cy="-10" rx="3.5" ry="2.5" />
@@ -857,14 +859,30 @@
             </div>
             <div class="weather-lightning-bolts" aria-hidden="true"></div>
             <div class="weather-lightning" aria-hidden="true"></div>
-            <!-- Plane that crosses the sky on clear days -->
+            <!-- Plane that crosses the sky on clear days. Side-view commercial jet with
+                 cockpit windows, swept wing, horizontal stabilizer, vertical tail fin, and engine. -->
             <div class="weather-plane" aria-hidden="true">
                 <div class="plane-wrap">
-                    <svg class="plane-svg" viewBox="0 0 60 22">
-                        <path class="plane-body"    d="M 4 11 L 32 9 L 48 6 L 55 11 L 48 16 L 32 13 L 4 11 Z" />
-                        <path class="plane-wing"    d="M 30 9 L 24 2 L 33 9 Z" />
-                        <path class="plane-wing"    d="M 30 13 L 24 20 L 33 13 Z" />
-                        <path class="plane-tail"    d="M 48 6 L 52 2 L 54 6 Z" />
+                    <svg class="plane-svg" viewBox="0 -4 90 32">
+                        <!-- Vertical tail fin (sticking up from the back of the fuselage) -->
+                        <path class="plane-tail-fin"  d="M 70 9 L 80 -3 L 84 9 Z" />
+                        <!-- Fuselage: tapered nose, cylindrical body, slim tail -->
+                        <path class="plane-body"      d="M 2 14 Q 6 8 16 8 L 70 9 Q 80 10 86 13 L 88 14 L 86 15 Q 80 18 70 19 L 16 20 Q 6 20 2 14 Z" />
+                        <!-- Cockpit windshield -->
+                        <path class="plane-windows"   d="M 8 12 L 18 12 L 18 14.5 L 8 14.5 Z" />
+                        <!-- Passenger windows row -->
+                        <circle class="plane-window-dot" cx="26" cy="13.5" r="0.8" />
+                        <circle class="plane-window-dot" cx="33" cy="13.5" r="0.8" />
+                        <circle class="plane-window-dot" cx="40" cy="13.5" r="0.8" />
+                        <circle class="plane-window-dot" cx="47" cy="13.5" r="0.8" />
+                        <circle class="plane-window-dot" cx="54" cy="13.5" r="0.8" />
+                        <circle class="plane-window-dot" cx="61" cy="13.5" r="0.8" />
+                        <!-- Main swept wing (large, under fuselage) -->
+                        <path class="plane-wing"      d="M 30 16 L 24 28 L 52 28 L 46 16 Z" />
+                        <!-- Engine pod under the wing -->
+                        <ellipse class="plane-engine" cx="36" cy="22" rx="5" ry="2" />
+                        <!-- Horizontal tail stabilizer -->
+                        <path class="plane-stab"      d="M 74 14 L 70 8 L 84 8 L 80 14 Z" />
                     </svg>
                     <span class="plane-contrail"></span>
                 </div>
