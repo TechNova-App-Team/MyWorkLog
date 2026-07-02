@@ -1,571 +1,338 @@
-#################################################################
-#                                                                 #
-#                    SECURITY POLICY (SICHERHEIT)                 #
-#                                                                 #
-#################################################################
+# SECURITY POLICY
 
-**Language / Sprache:** [GERMAN (Deutsch)](#deutsch) | [ENGLISH](#english)
+**MyWorkLog** — Deutsche PWA für Azubi-Zeiterfassung
+**Aktuelle Version:** 3.9.2 · **Release:** 2026-06-19 · **Host:** myworklog.de (Cloudflare Pages)
+
+**Language / Sprache:** [Deutsch](#deutsch) · [English](#english)
 
 ---
 
 <a id="deutsch"></a>
 
-# SICHERHEITSPOLITIK & RESPONSIBLE DISCLOSURE
+## Sicherheitslücke gefunden?
 
-## Überblick
+**Bitte NICHT** über ein öffentliches GitHub-Issue melden.
 
-Die Sicherheit von Time.Tracker.SingleFile und seinen Nutzern ist uns sehr wichtig.
-Dieses Dokument erklärt wie wir mit Sicherheitsmeldungen umgehen und wie du
-Schwachstellen verantwortungsvoll melden kannst.
+Vertrauliche E-Mail an: **security@myworklog.de**
+Alternativ: `info@myworklog.de` mit Betreff `[SECURITY] <Kurztitel>`.
 
----
+### Was in die Meldung gehört
 
-## 🚨 Sicherheitslücke gefunden?
+- **Beschreibung** — Was ist das Problem? Welche Komponente/Route (`/`, `/pages/berichtsheft/`, `ai-proxy.myworklog.de`, Supabase-Sync, …)?
+- **Auswirkung** — Wer ist betroffen (alle Nutzer, nur mit Cloud-Sync, nur bei bestimmten Browsern)? Datenverlust möglich?
+- **Reproduktion** — Schritte, ggf. Payload, betroffene Version aus `config/version.json`.
+- **Vorschlag zur Behebung** — optional, aber hilfreich.
+- **Kontakt** — Name/Handle + E-Mail, falls Credits gewünscht sind.
 
-Bitte **NICHT** direkt ein öffentliches GitHub-Issue öffnen, da dies die
-Sicherheit aller Nutzer gefährden könnte.
+### Reaktionszeiten (Zielwerte, Einzelperson/Hobby-Projekt)
 
-### Schritt 1: Sichere Benachrichtigung
-
-Sende eine vertrauliche E-Mail an:
-
-```
-📧 security@Time.Tracker.SingleFile.XX
-   (Oder: support@Time.Tracker.SingleFile.XXX mit Subject: [SECURITY])
-```
-
-**Bitte folgende Informationen senden:**
-
-```
-Subject: [SECURITY] Vulnerability Report: <SHORT TITLE>
-
-Body:
-─────────────────────────────────────────────────────────────
-1. Beschreibung der Sicherheitslücke
-   (Kurz, was ist das Problem?)
-
-2. Auswirkungen
-   - Schweregrad: CRITICAL / HIGH / MEDIUM / LOW
-   - Betroffen: Alle Nutzer? Nur unter bestimmten Bedingungen?
-
-3. Reproduktion / Proof of Concept
-   Schritte zur Reproduktion:
-   - Schritt 1...
-   - Schritt 2...
-   - Schritt 3...
-
-4. Mögliche Behebung
-   (Optional, aber hilfreich!)
-
-5. Kontaktinformation
-   - Name / GitHub Benutzername
-   - E-Mail
-   - PGP-Schlüssel (falls verfügbar)
-─────────────────────────────────────────────────────────────
-```
-
-### Schritt 2: Bestätigung & Timeline
-
-```
-Erwartete Zeiträume:
-
-Innerhalb von 24h:   → Bestätigung des Empfangs
-                       "Wir haben deine Meldung erhalten"
-
-Innerhalb von 7 Tagen: → Bewertung & Zeitplan
-                         "High/Medium/Low Severity"
-                         "Patch target: X days"
-
-Innerhalb von 90 Tagen: → Fix oder Patch
-                          (Abhängig von Komplexität)
-
-Nach Release:         → Credits (Optional)
-                        "Danke an [Name] für Sicherheitsbericht"
-```
+| Schritt | Ziel |
+|---|---|
+| Eingangsbestätigung | ≤ 72 h |
+| Erste Bewertung + Schweregrad | ≤ 14 Tage |
+| Fix bzw. Advisory | ≤ 90 Tage (abhängig vom Schweregrad) |
 
 ---
 
-## Sicherheitsstufen & Priorität
+## Schweregrade
 
-```
-┌──────────┬────────────────────────────────────────┐
-│ Level    │ Beschreibung & Beispiele                │
-├──────────┼────────────────────────────────────────┤
-│ CRITICAL │ • Datenverlust, unbefugter Zugriff     │
-│          │ • Remote Code Execution (RCE)          │
-│          │ • Alle Nutzer betroffen                │
-│          │ Timeline: 24h Patch                     │
-├──────────┼────────────────────────────────────────┤
-│ HIGH     │ • Informationsleck (sensitive data)    │
-│          │ • XSS, Injection-Lücken                │
-│          │ • Viele Nutzer betroffen               │
-│          │ Timeline: 7 Tage Patch                 │
-├──────────┼────────────────────────────────────────┤
-│ MEDIUM   │ • Lokale Privilege Escalation          │
-│          │ • Fehlende Eingabevalidation           │
-│          │ • Spezifische Szenarien nötig          │
-│          │ Timeline: 30 Tage Patch                │
-├──────────┼────────────────────────────────────────┤
-│ LOW      │ • UI/UX Sicherheitsprobleme            │
-│          │ • DoS nur unter bestimmten Bedingungen │
-│          │ • Minimale Auswirkung                  │
-│          │ Timeline: 60 Tage oder mit nächstem Rel. │
-└──────────┴────────────────────────────────────────┘
-```
+| Level | Beispiele | Ziel-Timeline |
+|---|---|---|
+| **CRITICAL** | RCE im Worker, unautorisierter Fremd-Zugriff auf Supabase-Daten anderer Nutzer, Account-Übernahme | Hotfix asap |
+| **HIGH** | XSS mit Datenexfiltration, Cloud-Sync-Auth-Bypass, Schlüssel-Leak in Worker-Response, Bypass der WAF-Rate-Limits | 7 Tage |
+| **MEDIUM** | XSS in isoliertem Kontext ohne sensible Daten, fehlende Input-Validierung mit begrenzter Wirkung, Denial-of-UI | 30 Tage |
+| **LOW** | Kosmetische Auffälligkeiten, DoS nur unter Edge-Bedingungen, veraltete Third-Party-Version ohne bekannte Ausnutzung | Nächster Feature-Release |
 
 ---
 
-## Bekannte Sicherheitsaspekte & Mitigationen
+## Scope
 
-### LocalStorage-Sicherheit
+### Im Scope
 
-```
-Problem: Daten im Browser-LocalStorage nicht verschlüsselt
-Mitigation:
-├─ Nutzer speichern nur auf ihrem lokalen Gerät
-├─ Kein Datentransfer zu Servern
-├─ Nur "vertrauenswürdige" Geräte verwenden
-└─ Bei shared Computer: Private Window nutzen
+- `myworklog.de` und `*.myworklog.pages.dev` (SPA + alle `/pages/*/`)
+- Cloudflare Worker `ai-proxy.myworklog.de` (Berichtsheft-KI-Proxy)
+- Supabase-Cloud-Sync-Integration (Client-seitiger Code + genutzte Endpunkte)
+- Auslieferungs-Konfiguration: `_headers`, `_redirects`, `service-worker.js`, `manifest.json`
+- Verschlüsselter Backup-Export (`components/core/encrypted-backup.js`)
 
-Empfehlung für Nutzer:
-→ Keine hochsensiblen Daten eingeben
-→ Browser-Verlauf/Cache regelmäßig löschen
-→ Import-Backups sicher speichern (z.B. verschlüsselter USB)
-```
+### Außer Scope
 
-### XSS (Cross-Site Scripting)
-
-```
-Status: ✓ Mitigated (nur Vanilla JS, keine DOM-Injection)
-
-Schutzmaßnahmen:
-├─ innerHTML nicht mit User-Input
-├─ textContent für Benutzernamen
-├─ Keine eval() oder dynamische Skripte
-└─ Input Sanitization vor localStorage Speicherung
-
-Wenn du XSS findest:
-→ Melde es sofort (kritisch!)
-```
-
-### Input Validation
-
-```
-Durchgeführt für:
-├─ Datumeingaben: ISO-Format, Past/Future-Checks
-├─ Zahleneingaben: min/max Values, parseFloat Safety
-├─ Zeitauswahlformat: HH:MM Validation
-└─ Periodische Eingaben: Start < End
-
-Fehler melden: Wenn ein Input zu Crash oder Datenverlust führt
-```
+- Angriffe gegen Cloudflare-Infrastruktur selbst (bitte an Cloudflare)
+- Angriffe gegen Supabase-Infrastruktur (bitte an Supabase)
+- Social Engineering, physischer Zugriff
+- Fehlende Security-Header, die reine „Best Practice"-Empfehlungen ohne konkreten Angriffsvektor sind, ohne Proof-of-Concept
+- Selbst-XSS ohne Multiplikator (User klebt eigenen Code in DevTools)
+- Rate-Limit-Findings ohne Bypass (WAF ist bewusst 30/10min + 20/24h pro IP)
 
 ---
 
-## Aktuelle Versionsunterstützung
+## Datenfluss & Angriffsflächen
 
-```
-Version      │ Status              │ Support bis
-─────────────┼─────────────────────┼─────────────────
-2.0.0 (aktuell) │ ✓ Supported       │ Mindestens 1 Jahr
-1.5.0        │ ✓ Limited Support   │ 6 Monate
-1.0.0        │ ✗ End of Life       │ Kein Support
-```
+### Daten liegen primär beim Nutzer
 
-**Empfehlung:** Bitte upgrade auf die neuste Version für Sicherheits-Patches.
+- `localStorage`: `tg_pro_data` (Haupt-JSON), `tg_pro_data_backups` (10 Rolling-Backups), `tg_timer`/`tg_timer_log`
+- Kein Backend für die Kernfunktion — Zeiterfassung läuft komplett clientseitig
+- PWA + Service-Worker (`service-worker.js`) für Offline-Nutzung; Cache-Strategie `cache: 'reload'`, `max-age=0, must-revalidate` in `_headers`
 
----
+### Optionaler Cloud-Sync (Supabase)
 
-## Sicherheits-Best-Practices für Nutzer
+- Nutzerspezifisch, opt-in in den Einstellungen (Tab „Cloud")
+- Client authentifiziert sich per Supabase Auth; alle Requests laufen über TLS
+- Row Level Security auf Supabase-Seite trennt Nutzerdaten
+- Meldenswert: alles, was RLS aushebelt oder Fremdzeilen sichtbar/schreibbar macht
 
-```
-1. Regelmäßige Backups
-   → Export → JSON → Sicher speichern (USB, Cloud)
+### KI-Proxy (`ai-proxy.myworklog.de`)
 
-2. Gerätesicherheit
-   → Windows Defender aktiv
-   → Browser & OS up-to-date
-   → Firewall aktiviert
+- Cloudflare Worker, spricht mit OpenRouter (free tier)
+- **API-Keys ausschließlich in Cloudflare-Worker-Secrets** — nie im Frontend
+- CORS auf `localhost`, `127.0.0.1`, `myworklog.de`, `*.myworklog.pages.dev` beschränkt
+- Rate Limiting: Cloudflare WAF (Zone `myworklog.de`) — Burst 30/10min + Tageslimit 20/24h pro IP, mit `Retry-After`
+- Meldenswert: Key-Leak in Antworten, CORS-Bypass, Auth-Bypass, Prompt-Injection mit realem Impact über den KI-Output hinaus
 
-3. Daten-Hygiene
-   → Import nur von vertrauenswürdigen Quellen
-   → Backup-Dateien verschlüsseln (z.B. VeraCrypt)
-   → Alte Backups nach einiger Zeit löschen
+### Verschlüsselte Backups
 
-4. Nutzungssicherheit
-   → Kein Teilen des Exports mit anderen
-   → Private Fenster bei shared Computer
-   → Passwort-Manager für Login-Daten verwenden (falls future auth)
-```
+- `components/core/encrypted-backup.js` — Nutzer-Passphrase → WebCrypto (AES-GCM), Salt/IV pro Backup
+- Meldenswert: Fehler in KDF/IV-Handling, Downgrade, Möglichkeit zur Passphrase-Extraktion
 
 ---
 
-## Security Vulnerability Scan
+## Implementierte Schutzmaßnahmen
 
-```
-Durchgeführte Checks:
-
-□ Dependency Scanning (Libraries)
-  Status: N/A (Vanilla JS, keine npm Dependencies)
-  
-□ Code Quality & Security Linting
-  Status: Manual review
-  Tools empfohlen: ESLint, SonarQube (optional)
-
-□ OWASP Top 10 Checks
-  Status: Manual audit
-  ├─ Injection: ✓ (kein Server-Code)
-  ├─ XSS: ✓ (textContent, keine innerHTML)
-  ├─ Authentication: ✓ (Client-only, keine Auth nötig)
-  ├─ Sensitive Data: ✓ (LocalStorage, encrypted optional)
-  ├─ XML Entities: ✓ (n/a)
-  ├─ Broken Access: ✓ (n/a)
-  ├─ CSRF: ✓ (n/a, no server)
-  ├─ Deserialization: ✓ (JSON.parse nur auf trusted data)
-  ├─ Components: ✓ (manuelle audit)
-  └─ Logging: ✓ (Browser DevTools)
-
-□ Browser Compatibility
-  Status: Tested on Chrome, Firefox, Safari, Edge
-  IE 11: ✗ (nicht unterstützt)
-```
+- **DOMPurify 3.2.4** eingebunden für HTML-Sanitisierung
+- **`safeHTML()` / `esc()`** als Konvention für User-Input, statt roher `innerHTML`-Zuweisung (`CLAUDE.md → Sicherheit`)
+- **CSP** via `_headers` (bitte im Repo-Zustand prüfen, wird kontinuierlich verschärft)
+- **Kein `eval()`**, keine dynamische Code-Ausführung im Frontend
+- **`_headers`** setzt `Cache-Control: max-age=0, must-revalidate` auf HTML/CSS/JS ohne Fingerprinting (siehe `CLAUDE.md → Lessons Learned`)
+- **Service-Worker** nutzt `cache: 'reload'` — ignoriert den HTTP-Cache und liefert kein Stale-JS aus, wenn ein Sicherheits-Fix ausgerollt wird
+- **Cloud-Sync-Locks** — `lockSettingsClose()` verhindert Race-Conditions, die frisch geholte Cloud-Daten mit veraltetem Form-State überschreiben könnten
+- **WAF-Rate-Limiting** auf `ai-proxy.myworklog.de` (Burst + Tageskontingent)
 
 ---
 
-## Meldung von Sicherheits-Updates
+## Version-Support
 
-Wenn ein Sicherheits-Patch veröffentlicht wird, teilen wir folgende Info:
+| Version | Status | Support |
+|---|---|---|
+| 3.9.x (aktuell) | ✅ Supported | Aktiv gepatcht |
+| 3.7.x – 3.8.x | ⚠️ Nur kritische Fixes | Bis nächster Major |
+| < 3.7 | ❌ End of Life | Kein Support |
 
-```
-Beispiel Sicherheits-Advisory:
+**Empfehlung:** Da MyWorkLog eine PWA ist, holt sich der Browser Updates automatisch. Wenn ein „Update verfügbar"-Banner erscheint: einmal klicken, reload — fertig.
 
-ADVISORY: Time.Tracker.SingleFile Security Patch v1.0.1
-
-Type: XSS Vulnerability Fix
-Severity: MEDIUM
-CVE: N/A (kein CVE für Client-Only App)
-Affected Versions: 2.0.0
-Fixed in: 2.0.1
-Release Date: YYYY-MM-DD
-
-Description:
-Ein Sicherheitsforschter hat eine potenzielle XSS-Lücke gemeldet...
-
-Action Required:
-→ Update auf v2.0.1 (einfach Seite neuladen)
-→ Browser-Cache leeren (Ctrl+Shift+Del)
-
-Credits:
-→ Dank an [Name/Researcher] für die Meldung
-```
+Vollständige Versionshistorie: `config/version.json`.
 
 ---
 
-## Datenschutz & Anonymität
+## Advisory-Format (Beispiel)
 
 ```
-Deine Meldung ist sicher:
+MWL-ADVISORY-YYYY-NN
+Type:      z. B. XSS / Auth-Bypass / Info-Disclosure
+Severity:  CRITICAL / HIGH / MEDIUM / LOW
+Affected:  Versionen X.Y.Z – X.Y.Z
+Fixed in:  X.Y.Z (Release YYYY-MM-DD)
+Reporter:  <Name oder anonym>
 
-✓ Vertrauliche Behandlung während der Behebung
-✓ Du kannst anonym bleiben (optional)
-✓ Keine Veröffentlichung von Details vor Patch
-✓ Credits nur mit deiner Zustimmung
-✓ Wir teilen deine Kontaktdaten nicht mit Dritten
+Beschreibung:
+  Kurzbeschreibung ohne ausnutzbare Details, bis Fix ausgerollt.
+
+Empfohlene Aktion:
+  → App neu laden (holt via Service-Worker die neue Version)
+  → Optional: Browser-Cache leeren
 ```
+
+Veröffentlichung erfolgt nach Rollout des Fixes, um andere Nutzer nicht zu gefährden.
 
 ---
 
-## Kontakt & Support
+## Datenschutz der Meldung
 
-```
-Sicherheit:        security@Time.Tracker.SingleFile.XXX
-Allgemeiner Support: support@Time.Tracker.SingleFile.XXX
-GitHub Issues:      Bitte nur Non-Security Issues
-```
+- Meldungen werden vertraulich behandelt
+- Details werden vor dem Fix nicht veröffentlicht
+- Credits nur mit ausdrücklicher Zustimmung des Reporters
+- Anonyme Meldungen sind willkommen
+- Keine Weitergabe von Kontaktdaten an Dritte
+
+---
+
+## Safe Harbor
+
+Wer sich an diese Policy hält (kein Datenklau, keine Störung des Betriebs, keine Nutzung/Weitergabe fremder Daten), wird nicht rechtlich verfolgt. Der Betrieb der App ist ein Einzelprojekt — bitte fair testen, keine automatisierten Scans mit hoher Last gegen die Live-Domain.
+
+---
+
+## Kontakt
+
+- **Security:** `security@myworklog.de`
+- **Allgemein:** `info@myworklog.de`
+- **GitHub-Issues:** ausschließlich für Non-Security-Themen
 
 ---
 
 <a id="english"></a>
 
-# SECURITY POLICY & RESPONSIBLE DISCLOSURE
+## Found a Vulnerability?
 
-## Overview
+**Please DO NOT** open a public GitHub issue.
 
-The security of Time.Tracker.SingleFile and its users is very important to us.
-This document explains how we handle security reports and how you can
-responsibly disclose vulnerabilities.
+Confidential email to: **security@myworklog.de**
+Or: `info@myworklog.de` with subject `[SECURITY] <short title>`.
 
----
+### What to include
 
-## 🚨 Found a Security Vulnerability?
+- **Description** — Which component/route (`/`, `/pages/berichtsheft/`, `ai-proxy.myworklog.de`, Supabase sync, …)?
+- **Impact** — Who is affected? Data loss possible?
+- **Reproduction** — Steps, payload, affected version from `config/version.json`.
+- **Suggested fix** — optional but appreciated.
+- **Contact** — name/handle + email, if credits are wanted.
 
-Please **DO NOT** open a public GitHub issue, as this could endanger
-the security of all users.
+### Response times (targets, solo/hobby project)
 
-### Step 1: Secure Notification
-
-Send a confidential email to:
-
-```
-📧 security@Time.Tracker.SingleFile.XXX
-   (Or: support@Time.Tracker.SingleFile.XXX with Subject: [SECURITY])
-```
-
-**Please include the following information:**
-
-```
-Subject: [SECURITY] Vulnerability Report: <SHORT TITLE>
-
-Body:
-─────────────────────────────────────────────────────────────
-1. Description of Security Vulnerability
-   (Brief, what is the problem?)
-
-2. Impact
-   - Severity: CRITICAL / HIGH / MEDIUM / LOW
-   - Affected: All users? Only under specific conditions?
-
-3. Reproduction / Proof of Concept
-   Steps to reproduce:
-   - Step 1...
-   - Step 2...
-   - Step 3...
-
-4. Possible Fix
-   (Optional, but helpful!)
-
-5. Contact Information
-   - Name / GitHub username
-   - Email
-   - PGP key (if available)
-─────────────────────────────────────────────────────────────
-```
-
-### Step 2: Acknowledgment & Timeline
-
-```
-Expected timelines:
-
-Within 24h:   → Acknowledgment of receipt
-               "We received your report"
-
-Within 7 days: → Assessment & schedule
-               "High/Medium/Low Severity"
-               "Patch target: X days"
-
-Within 90 days: → Fix or Patch
-                 (Depending on complexity)
-
-After release: → Credits (Optional)
-               "Thanks to [Name] for security report"
-```
+| Step | Target |
+|---|---|
+| Acknowledgment | ≤ 72 h |
+| Initial assessment + severity | ≤ 14 days |
+| Fix or advisory | ≤ 90 days (depends on severity) |
 
 ---
 
-## Security Levels & Priority
+## Severity levels
 
-```
-┌──────────┬────────────────────────────────────────┐
-│ Level    │ Description & Examples                  │
-├──────────┼────────────────────────────────────────┤
-│ CRITICAL │ • Data loss, unauthorized access       │
-│          │ • Remote Code Execution (RCE)          │
-│          │ • All users affected                   │
-│          │ Timeline: 24h Patch                    │
-├──────────┼────────────────────────────────────────┤
-│ HIGH     │ • Information disclosure (sensitive)   │
-│          │ • XSS, Injection vulnerabilities       │
-│          │ • Many users affected                  │
-│          │ Timeline: 7 days Patch                 │
-├──────────┼────────────────────────────────────────┤
-│ MEDIUM   │ • Local Privilege Escalation           │
-│          │ • Missing Input Validation             │
-│          │ • Specific scenarios required          │
-│          │ Timeline: 30 days Patch                │
-├──────────┼────────────────────────────────────────┤
-│ LOW      │ • UI/UX Security Issues                │
-│          │ • DoS only under specific conditions   │
-│          │ • Minimal impact                       │
-│          │ Timeline: 60 days or next release      │
-└──────────┴────────────────────────────────────────┘
-```
+| Level | Examples | Target timeline |
+|---|---|---|
+| **CRITICAL** | RCE in the Worker, unauthorized cross-user access to Supabase data, account takeover | Hotfix asap |
+| **HIGH** | XSS with data exfiltration, cloud-sync auth bypass, secret leak in Worker response, WAF rate-limit bypass | 7 days |
+| **MEDIUM** | XSS in isolated context without sensitive data, missing input validation with limited impact, denial-of-UI | 30 days |
+| **LOW** | Cosmetic issues, edge-case DoS, outdated third-party version without known exploit | Next feature release |
 
 ---
 
-## Known Security Aspects & Mitigations
+## Scope
 
-### LocalStorage Security
+### In scope
 
-```
-Issue: Data in browser LocalStorage not encrypted
-Mitigation:
-├─ Users store only on their local device
-├─ No data transfer to servers
-├─ Use only on "trusted" devices
-└─ On shared computer: Use private window
+- `myworklog.de` and `*.myworklog.pages.dev` (SPA + all `/pages/*/`)
+- Cloudflare Worker `ai-proxy.myworklog.de` (Berichtsheft AI proxy)
+- Supabase cloud-sync integration (client-side code + used endpoints)
+- Delivery configuration: `_headers`, `_redirects`, `service-worker.js`, `manifest.json`
+- Encrypted backup export (`components/core/encrypted-backup.js`)
 
-Recommendation for users:
-→ Don't enter highly sensitive data
-→ Clear browser history/cache regularly
-→ Store import backups securely (e.g., encrypted USB)
-```
+### Out of scope
 
-### XSS (Cross-Site Scripting)
-
-```
-Status: ✓ Mitigated (Vanilla JS only, no DOM injection)
-
-Protections:
-├─ No innerHTML with user input
-├─ textContent for usernames
-├─ No eval() or dynamic scripts
-└─ Input sanitization before localStorage storage
-
-If you find XSS:
-→ Report it immediately (critical!)
-```
-
-### Input Validation
-
-```
-Implemented for:
-├─ Date input: ISO format, past/future checks
-├─ Number input: min/max values, parseFloat safety
-├─ Time format: HH:MM validation
-└─ Period input: Start < End validation
-
-Report if: An input causes crash or data loss
-```
+- Attacks against Cloudflare's own infrastructure (please report to Cloudflare)
+- Attacks against Supabase's own infrastructure (please report to Supabase)
+- Social engineering, physical access
+- Missing security headers as pure "best practice" without a concrete attack vector or proof-of-concept
+- Self-XSS with no multiplier (user pastes their own code in DevTools)
+- Rate-limit findings without an actual bypass (WAF is intentionally 30/10min + 20/24h per IP)
 
 ---
 
-## Current Version Support
+## Data flow & attack surface
 
-```
-Version      │ Status              │ Support until
-─────────────┼─────────────────────┼─────────────────
-2.0.0 (latest) │ ✓ Supported       │ At least 1 year
-1.5.0        │ ✓ Limited Support   │ 6 months
-1.0.0        │ ✗ End of Life       │ No support
-```
+### Data primarily stays with the user
 
-**Recommendation:** Please upgrade to the latest version for security patches.
+- `localStorage`: `tg_pro_data` (main JSON), `tg_pro_data_backups` (10 rolling backups), `tg_timer` / `tg_timer_log`
+- No backend for core functionality — time tracking runs entirely client-side
+- PWA + service worker (`service-worker.js`) for offline use; cache strategy `cache: 'reload'`, `max-age=0, must-revalidate` in `_headers`
 
----
+### Optional cloud sync (Supabase)
 
-## Security Best Practices for Users
+- Per-user, opt-in in settings (tab "Cloud")
+- Client authenticates via Supabase Auth; requests over TLS
+- Row Level Security on the Supabase side isolates user data
+- Report anything that bypasses RLS or makes other users' rows visible/writable
 
-```
-1. Regular Backups
-   → Export → JSON → Store securely (USB, Cloud)
+### AI proxy (`ai-proxy.myworklog.de`)
 
-2. Device Security
-   → Windows Defender active
-   → Browser & OS up-to-date
-   → Firewall enabled
+- Cloudflare Worker, talks to OpenRouter (free tier)
+- **API keys exclusively in Cloudflare Worker secrets** — never in the frontend
+- CORS restricted to `localhost`, `127.0.0.1`, `myworklog.de`, `*.myworklog.pages.dev`
+- Rate limiting: Cloudflare WAF (zone `myworklog.de`) — burst 30/10min + 20/24h per IP, with `Retry-After`
+- Report: key leaks in responses, CORS bypass, auth bypass, prompt injection with real impact beyond the AI output itself
 
-3. Data Hygiene
-   → Import only from trusted sources
-   → Encrypt backup files (e.g., VeraCrypt)
-   → Delete old backups after some time
+### Encrypted backups
 
-4. Usage Security
-   → Don't share exports with others
-   → Use private window on shared computer
-   → Use password manager for login data (if future auth)
-```
+- `components/core/encrypted-backup.js` — user passphrase → WebCrypto (AES-GCM), salt/IV per backup
+- Report: KDF/IV mistakes, downgrade, passphrase extraction paths
 
 ---
 
-## Security Vulnerability Scanning
+## Implemented mitigations
 
-```
-Performed Checks:
-
-□ Dependency Scanning (Libraries)
-  Status: N/A (Vanilla JS, no npm dependencies)
-  
-□ Code Quality & Security Linting
-  Status: Manual review
-  Tools recommended: ESLint, SonarQube (optional)
-
-□ OWASP Top 10 Checks
-  Status: Manual audit
-  ├─ Injection: ✓ (no server-side code)
-  ├─ XSS: ✓ (textContent, no innerHTML)
-  ├─ Authentication: ✓ (client-only, no auth needed)
-  ├─ Sensitive Data: ✓ (LocalStorage, encrypted optional)
-  ├─ XML Entities: ✓ (n/a)
-  ├─ Broken Access: ✓ (n/a)
-  ├─ CSRF: ✓ (n/a, no server)
-  ├─ Deserialization: ✓ (JSON.parse only on trusted data)
-  ├─ Components: ✓ (manual audit)
-  └─ Logging: ✓ (Browser DevTools)
-
-□ Browser Compatibility
-  Status: Tested on Chrome, Firefox, Safari, Edge
-  IE 11: ✗ (not supported)
-```
+- **DOMPurify 3.2.4** for HTML sanitization
+- **`safeHTML()` / `esc()`** as project convention for user input, instead of raw `innerHTML` (see `CLAUDE.md → Sicherheit`)
+- **CSP** via `_headers` (continuously tightened; check repo state)
+- **No `eval()`**, no dynamic code execution in the frontend
+- **`_headers`** sets `Cache-Control: max-age=0, must-revalidate` on non-fingerprinted HTML/CSS/JS (see `CLAUDE.md → Lessons Learned`)
+- **Service worker** uses `cache: 'reload'` — bypasses the HTTP cache, ensuring security fixes are actually picked up
+- **Cloud-sync locks** — `lockSettingsClose()` prevents races that would overwrite freshly downloaded cloud data with stale form state
+- **WAF rate limiting** on `ai-proxy.myworklog.de` (burst + daily quota)
 
 ---
 
-## Security Update Announcements
+## Version support
 
-When a security patch is released, we share this information:
+| Version | Status | Support |
+|---|---|---|
+| 3.9.x (current) | ✅ Supported | Actively patched |
+| 3.7.x – 3.8.x | ⚠️ Critical fixes only | Until next major |
+| < 3.7 | ❌ End of Life | No support |
+
+**Recommendation:** Because MyWorkLog is a PWA, the browser picks up updates automatically. When an "Update available" banner appears: click once, reload — done.
+
+Full version history: `config/version.json`.
+
+---
+
+## Advisory format (example)
 
 ```
-Example Security Advisory:
-
-ADVISORY: Time.Tracker.SingleFile Security Patch v1.0.1
-
-Type: XSS Vulnerability Fix
-Severity: MEDIUM
-CVE: N/A (no CVE for client-only app)
-Affected Versions: 2.0.0
-Fixed in: 2.0.1
-Release Date: YYYY-MM-DD
+MWL-ADVISORY-YYYY-NN
+Type:      e.g. XSS / auth bypass / info disclosure
+Severity:  CRITICAL / HIGH / MEDIUM / LOW
+Affected:  versions X.Y.Z – X.Y.Z
+Fixed in:  X.Y.Z (release YYYY-MM-DD)
+Reporter:  <name or anonymous>
 
 Description:
-A security researcher reported a potential XSS vulnerability...
+  Short description without exploitable details until the fix is rolled out.
 
-Action Required:
-→ Update to v2.0.1 (simply reload page)
-→ Clear browser cache (Ctrl+Shift+Del)
-
-Credits:
-→ Thanks to [Name/Researcher] for the report
+Recommended action:
+  → Reload the app (service worker fetches the new version)
+  → Optional: clear browser cache
 ```
+
+Published only after the fix is deployed, to avoid exposing other users.
 
 ---
 
-## Privacy & Anonymity
+## Report privacy
 
-```
-Your report is safe:
-
-✓ Confidential handling during fix
-✓ You can remain anonymous (optional)
-✓ No detail publication before patch
-✓ Credits only with your consent
-✓ We do not share your contact with third parties
-```
+- Reports are handled confidentially
+- Details are not published before the fix
+- Credits only with explicit consent
+- Anonymous reports welcome
+- Contact info is not shared with third parties
 
 ---
 
-## Contact & Support
+## Safe harbor
 
-```
-Security:       security@Time.Tracker.SingleFile.XXX
-General Support: support@Time.Tracker.SingleFile.XXX
-GitHub Issues:  Please only non-security issues
-```
+If you follow this policy (no data theft, no disruption, no use/redistribution of other users' data), no legal action will be taken. The project is run by a single person — please test fairly and don't blast automated scans at the live domain.
+
+---
+
+## Contact
+
+- **Security:** `security@myworklog.de`
+- **General:** `info@myworklog.de`
+- **GitHub issues:** non-security topics only
 
 ---
 
 <div align="center">
 
-**Thank you for helping us keep Time.Tracker.SingleFile secure.**
-
-*Your responsible disclosure makes our community safer.*
+**Thank you for helping keep MyWorkLog secure.**
 
 </div>
