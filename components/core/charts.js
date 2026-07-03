@@ -763,7 +763,7 @@
                     const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
                     const dateStr = dayNames[d.getDay()] + ', ' + d.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
                     const dpInfo = (typeof getEntryTypeInfo === 'function') ? getEntryTypeInfo(dp.type) : null;
-                    const typeLabel = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', gleittag: 'Gleittag', sick: 'Krank', holiday: 'Feiertag' };
+                    const typeLabel = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', gleittag: 'Gleittag', sick: 'Krank', holiday: 'Feiertag', korrektur: 'Korrektur' };
                     const emoji = (dpInfo && dpInfo.emoji) || typeEmojis[dp.type] || (String(dp.type).startsWith('custom-') ? '📌' : '📋');
                     
                     // Streak info

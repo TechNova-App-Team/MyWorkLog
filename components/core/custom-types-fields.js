@@ -9,7 +9,8 @@
         { id: 'vacation', label: 'Urlaub',       emoji: '🌴', color: '#10b981', description: 'Urlaubstage' },
         { id: 'gleittag', label: 'Gleittag',     emoji: '⚡', color: '#06b6d4', description: 'Gleittag (Überstundenabbau)' },
         { id: 'sick',     label: 'Krankheit',    emoji: '🤒', color: '#ef4444', description: 'Krankheitstage' },
-        { id: 'holiday',  label: 'Feiertag',     emoji: '🎉', color: '#f59e0b', description: 'Offizielle Feiertage' }
+        { id: 'holiday',  label: 'Feiertag',     emoji: '🎉', color: '#f59e0b', description: 'Offizielle Feiertage' },
+        { id: 'korrektur',label: 'Korrektur',    emoji: '⚖️', color: '#64748b', description: 'Manuelle Saldo-Korrektur (z.B. Angleichung ans Firmen-System)' }
     ];
 
     const CT_PRESET_COLORS = ['#a855f7','#3b82f6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6','#64748b'];
@@ -780,7 +781,9 @@
         const sel = document.getElementById('inpType');
         if (!sel) return;
         const previousValue = sel.value;
-        const types = getAllEntryTypes();
+        // 'korrektur' ist kein buchbarer Tages-Typ, sondern wird nur über die
+        // Saldo-Anpassung auf dem Gleitzeit-Card erzeugt → aus dem Eintrags-Dropdown raus.
+        const types = getAllEntryTypes().filter(t => t.id !== 'korrektur');
         sel.innerHTML = '';
         types.forEach(t => {
             const opt = document.createElement('option');

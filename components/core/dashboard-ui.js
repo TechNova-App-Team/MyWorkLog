@@ -30,6 +30,7 @@
             else if(e.type==='gleittag') { /* Gleittag: kein Urlaubstag, Überstunden werden in diff abgezogen */ }
             else if(e.type==='school') schoolSum += (e.expected || e.worked); // Schultag = voller Arbeitstag
             else if(e.type==='holiday' && entryYear === currentYear) holidaySum += e.worked;
+            else if(e.type==='korrektur') { /* neutral: nur e.diff zählt in den Gesamt-Saldo, kein Arbeitstag */ }
             else workSum += e.worked;
         });
         

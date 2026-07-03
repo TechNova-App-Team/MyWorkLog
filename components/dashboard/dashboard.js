@@ -445,6 +445,209 @@
         modal.classList.add('active');
     }
 
+    // ═══ NEW: Saldo-Korrektur (Gleitzeit manuell anpassen) ═══
+    // Roher Gesamt-Saldo = Summe aller e.diff (ohne Rundung – für exakte Korrektur-Mathematik)
+    function getRawSaldo() {
+        return (Array.isArray(data.entries) ? data.entries : []).reduce(function (s, e) { return s + (parseFloat(e.diff) || 0); }, 0);
+    }
+
+    function fmtSaldoHM(h) {
+        var sign = h < 0 ? '−' : '+';
+        var a = Math.abs(h);
+        var hh = Math.floor(a);
+        var mm = Math.round((a - hh) * 60);
+        if (mm === 60) { hh++; mm = 0; }
+        return sign + hh + 'h ' + mm + 'm';
+    }
+
+    function openSaldoAdjust() {
+        var raw = getRawSaldo();
+        var today = new Date().toISOString().split('T')[0];
+
+        var modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.id = 'saldoAdjustModal';
+        modal.style.zIndex = '100000';
+
+        modal.innerHTML =
+        '<style>' +
+        '.sadj-box{width:460px;max-width:calc(100vw - 32px);max-height:92vh;overflow-y:auto;background:#111118;border:1px solid var(--border-default,rgba(255,255,255,.08));border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.55);animation:bcsUp .28s cubic-bezier(.16,1,.3,1)}' +
+        '@keyframes bcsUp{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}' +
+        '.sadj-head{position:relative;padding:20px 22px;border-bottom:1px solid var(--border-subtle,rgba(255,255,255,.06))}' +
+        '.sadj-head h2{margin:0;font-size:1.05rem;font-weight:700;color:var(--text-main)}' +
+        '.sadj-head p{margin:3px 0 0;font-size:.78rem;color:var(--text-muted)}' +
+        '.sadj-x{position:absolute;top:16px;right:16px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border:1px solid var(--border-subtle,rgba(255,255,255,.06));border-radius:8px;color:var(--text-muted);cursor:pointer;transition:all .2s}' +
+        '.sadj-x:hover{background:rgba(255,255,255,.09);color:var(--text-main)}' +
+        '.sadj-body{padding:20px 22px;display:flex;flex-direction:column;gap:18px}' +
+        '.sadj-current{text-align:center;padding:16px;border-radius:12px;background:rgba(var(--primary-rgb),.06);border:1px solid rgba(var(--primary-rgb),.14)}' +
+        '.sadj-current small{display:block;font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);margin-bottom:5px}' +
+        '.sadj-current b{font-size:1.7rem;font-weight:800;font-family:var(--font-mono,monospace);color:var(--text-main)}' +
+        '.sadj-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:9px;display:block}' +
+        '.sadj-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:7px}' +
+        '.sadj-seg button{padding:10px;border:1px solid var(--border-subtle,rgba(255,255,255,.07));background:rgba(255,255,255,.02);border-radius:10px;color:var(--text-muted);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .18s}' +
+        '.sadj-seg button:hover{background:rgba(255,255,255,.05);color:var(--text-main)}' +
+        '.sadj-seg button.on{border-color:var(--primary);background:rgba(var(--primary-rgb),.12);color:var(--text-main)}' +
+        '.sadj-seg button.on.neg{border-color:var(--danger);background:rgba(239,68,68,.14);color:#fca5a5}' +
+        '.sadj-seg button.on.pos{border-color:var(--success);background:rgba(16,185,129,.14);color:#6ee7b7}' +
+        '.sadj-field label{display:block;font-size:.78rem;font-weight:600;color:var(--text-main);margin-bottom:6px}' +
+        '.sadj-inp{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--border-default,rgba(255,255,255,.1));background:rgba(255,255,255,.03);color:var(--text-main);font-size:.95rem;font-family:var(--font-mono,monospace);outline:none;transition:box-shadow .18s,border-color .18s}' +
+        '.sadj-inp:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.2)}' +
+        '.sadj-inp::-webkit-inner-spin-button{opacity:.5}' +
+        '.sadj-hm{display:grid;grid-template-columns:1fr 1fr;gap:10px}' +
+        '.sadj-note{font-family:var(--font-main,inherit)}' +
+        '.sadj-result{padding:14px 16px;border-radius:12px;background:rgba(255,255,255,.02);border:1px dashed var(--border-default,rgba(255,255,255,.12));display:flex;flex-direction:column;gap:6px}' +
+        '.sadj-result .r1{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;color:var(--text-muted)}' +
+        '.sadj-result .r1 b{font-family:var(--font-mono,monospace);font-size:.95rem}' +
+        '.sadj-result .rnew{display:flex;justify-content:space-between;align-items:center;font-size:.9rem;font-weight:700;color:var(--text-main);padding-top:6px;border-top:1px solid var(--border-subtle,rgba(255,255,255,.06))}' +
+        '.sadj-result .rnew b{font-family:var(--font-mono,monospace);font-size:1.15rem}' +
+        '.sadj-foot{display:flex;gap:10px;align-items:center;padding:15px 22px;border-top:1px solid var(--border-subtle,rgba(255,255,255,.06))}' +
+        '.sadj-btn{padding:10px 18px;border-radius:9px;font-size:.86rem;font-weight:600;cursor:pointer;transition:all .18s;border:1px solid transparent}' +
+        '.sadj-btn.ghost{background:rgba(255,255,255,.05);border-color:var(--border-default,rgba(255,255,255,.1));color:var(--text-main)}.sadj-btn.ghost:hover{background:rgba(255,255,255,.1)}' +
+        '.sadj-btn.primary{background:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(var(--primary-rgb),.32)}.sadj-btn.primary:hover{filter:brightness(1.08)}' +
+        '.sadj-btn.primary:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}' +
+        '.sadj-hide{display:none}' +
+        '[data-theme="light"] .sadj-box{background:#fff;border-color:rgba(0,0,0,.08)}' +
+        '[data-theme="light"] .sadj-head,[data-theme="light"] .sadj-foot{border-color:rgba(0,0,0,.07)}' +
+        '[data-theme="light"] .sadj-x,[data-theme="light"] .sadj-seg button,[data-theme="light"] .sadj-inp,[data-theme="light"] .sadj-result{background:rgba(0,0,0,.02);border-color:rgba(0,0,0,.1)}' +
+        '[data-theme="light"] .sadj-btn.ghost{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.12)}' +
+        '</style>' +
+        '<div class="sadj-box">' +
+            '<div class="sadj-head"><h2>Saldo anpassen</h2><p>Manuelle Korrektur, z.B. Angleichung ans Firmen-System</p>' +
+                '<button class="sadj-x" onclick="document.getElementById(\'saldoAdjustModal\').remove()" title="Schließen"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
+            '</div>' +
+            '<div class="sadj-body">' +
+                '<div class="sadj-current"><small>Aktueller Saldo</small><b id="sadjCurrent">' + (raw >= 0 ? '+' : '') + raw.toFixed(2) + 'h</b></div>' +
+                '<div><span class="sadj-label">Methode</span><div class="sadj-seg" id="sadjMode">' +
+                    '<button data-mode="diff" class="on">Differenz</button><button data-mode="target">Ziel-Saldo</button>' +
+                '</div></div>' +
+                // Differenz-Panel
+                '<div id="sadjDiffPanel">' +
+                    '<div class="sadj-seg" id="sadjSign" style="margin-bottom:12px">' +
+                        '<button data-sign="-1" class="on neg">− Abziehen</button><button data-sign="1">+ Hinzufügen</button>' +
+                    '</div>' +
+                    '<div class="sadj-hm">' +
+                        '<div class="sadj-field"><label>Stunden</label><input type="number" class="sadj-inp" id="sadjHours" min="0" step="1" placeholder="0" inputmode="numeric"></div>' +
+                        '<div class="sadj-field"><label>Minuten</label><input type="number" class="sadj-inp" id="sadjMins" min="0" max="59" step="1" placeholder="0" inputmode="numeric"></div>' +
+                    '</div>' +
+                '</div>' +
+                // Ziel-Panel
+                '<div id="sadjTargetPanel" class="sadj-hide"><div class="sadj-field"><label>Neuer Soll-Saldo (Stunden)</label><input type="number" class="sadj-inp" id="sadjTarget" step="0.01" placeholder="z.B. 22.47" inputmode="decimal"></div></div>' +
+                // Ergebnis
+                '<div class="sadj-result">' +
+                    '<div class="r1"><span>Korrektur-Buchung</span><b id="sadjCorr" style="color:var(--text-muted)">±0h 0m</b></div>' +
+                    '<div class="rnew"><span>Neuer Saldo</span><b id="sadjNew">' + (raw >= 0 ? '+' : '') + raw.toFixed(2) + 'h</b></div>' +
+                '</div>' +
+                // Notiz + Datum
+                '<div class="sadj-hm">' +
+                    '<div class="sadj-field"><label>Notiz</label><input type="text" class="sadj-inp sadj-note" id="sadjNote" placeholder="Grund" value="Angleichung Firmen-System"></div>' +
+                    '<div class="sadj-field"><label>Datum</label><input type="date" class="sadj-inp sadj-note" id="sadjDate" value="' + today + '"></div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="sadj-foot"><div style="flex:1"></div>' +
+                '<button class="sadj-btn ghost" id="sadjCancel">Abbrechen</button>' +
+                '<button class="sadj-btn primary" id="sadjSave" disabled>Buchen</button>' +
+            '</div>' +
+        '</div>';
+
+        document.body.appendChild(modal);
+        setupSaldoAdjust(modal, raw);
+    }
+
+    function setupSaldoAdjust(modal, raw) {
+        var $ = function (id) { return modal.querySelector('#' + id); };
+        var state = { mode: 'diff', sign: -1 };
+
+        function correctionValue() {
+            if (state.mode === 'target') {
+                var t = parseFloat($('sadjTarget').value);
+                if (isNaN(t)) return null;
+                return t - raw;
+            }
+            var h = parseInt($('sadjHours').value, 10) || 0;
+            var m = parseInt($('sadjMins').value, 10) || 0;
+            var mag = h + m / 60;
+            if (mag <= 0) return null;
+            return state.sign * mag;
+        }
+
+        function refresh() {
+            var corr = correctionValue();
+            var corrEl = $('sadjCorr'), newEl = $('sadjNew'), saveBtn = $('sadjSave');
+            if (corr === null || Math.abs(corr) < 0.0001) {
+                corrEl.textContent = '±0h 0m';
+                corrEl.style.color = 'var(--text-muted)';
+                newEl.textContent = (raw >= 0 ? '+' : '') + raw.toFixed(2) + 'h';
+                newEl.style.color = 'var(--text-main)';
+                saveBtn.disabled = true;
+                return;
+            }
+            var next = raw + corr;
+            corrEl.textContent = fmtSaldoHM(corr) + '  (' + (corr >= 0 ? '+' : '') + corr.toFixed(2) + 'h)';
+            corrEl.style.color = corr >= 0 ? 'var(--success)' : 'var(--danger)';
+            newEl.textContent = (next >= 0 ? '+' : '') + next.toFixed(2) + 'h';
+            newEl.style.color = next >= 0 ? 'var(--success)' : 'var(--danger)';
+            saveBtn.disabled = false;
+        }
+
+        // Methode umschalten
+        $('sadjMode').querySelectorAll('button').forEach(function (b) {
+            b.addEventListener('click', function () {
+                state.mode = b.getAttribute('data-mode');
+                $('sadjMode').querySelectorAll('button').forEach(function (x) { x.classList.toggle('on', x === b); });
+                $('sadjDiffPanel').classList.toggle('sadj-hide', state.mode !== 'diff');
+                $('sadjTargetPanel').classList.toggle('sadj-hide', state.mode !== 'target');
+                refresh();
+            });
+        });
+        // Vorzeichen
+        $('sadjSign').querySelectorAll('button').forEach(function (b) {
+            b.addEventListener('click', function () {
+                state.sign = parseInt(b.getAttribute('data-sign'), 10);
+                $('sadjSign').querySelectorAll('button').forEach(function (x) {
+                    var on = x === b;
+                    x.classList.toggle('on', on);
+                    x.classList.toggle('neg', on && state.sign === -1);
+                    x.classList.toggle('pos', on && state.sign === 1);
+                });
+                refresh();
+            });
+        });
+        ['sadjHours', 'sadjMins', 'sadjTarget'].forEach(function (id) { $(id).addEventListener('input', refresh); });
+
+        var close = function () { modal.remove(); };
+        $('sadjCancel').addEventListener('click', close);
+        modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+
+        $('sadjSave').addEventListener('click', function () {
+            var corr = correctionValue();
+            if (corr === null || Math.abs(corr) < 0.0001) return;
+            var note = ($('sadjNote').value || '').trim() || 'Saldo-Korrektur';
+            var date = $('sadjDate').value || new Date().toISOString().split('T')[0];
+            data.entries.push({
+                id: Date.now(),
+                date: date,
+                type: 'korrektur',
+                diff: Math.round(corr * 100) / 100,
+                worked: 0,
+                expected: 0,
+                isPeriod: true,
+                label: 'Korrektur: ' + note,
+                info: note,
+                breakMins: 0,
+                shiftEnd: '',
+                shiftWarning: false
+            });
+            save();
+            if (typeof updateDashboard === 'function') updateDashboard();
+            if (typeof createExplosion === 'function') createExplosion(window.innerWidth / 2, window.innerHeight / 2);
+            if (typeof showCustomMessage === 'function') showCustomMessage('Gebucht', 'Saldo-Korrektur ' + fmtSaldoHM(corr) + ' verbucht.', 'success');
+            modal.remove();
+        });
+
+        refresh();
+        setTimeout(function () { $('sadjHours').focus(); }, 60);
+    }
+
     function checkAndBookHolidays() {
         const bundesland = (data.settings && data.settings.bundesland) || '';
         if (!bundesland) {
