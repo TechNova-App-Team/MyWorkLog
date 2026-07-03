@@ -1,17 +1,8 @@
 // ═══ CORE: DASHBOARD-UI ═══
     // --- UI UPDATES (Dashboard) ---
     function updateUI() {
-        // Load bar chart settings
-        const barSettings = JSON.parse(localStorage.getItem('tt_bar_chart_settings') || '{"barHeight":32,"showLabels":true,"showAnimation":true,"borderRadius":8}');
-        const chartContainer = document.getElementById('donutChartContainer');
-        if (chartContainer) {
-            chartContainer.style.height = barSettings.barHeight + 'px';
-            chartContainer.style.borderRadius = barSettings.borderRadius + 'px';
-        }
-        const labels = document.querySelectorAll('.segment-label');
-        labels.forEach(label => {
-            label.style.display = barSettings.showLabels ? 'block' : 'none';
-        });
+        // Bar-Chart-Layout (Höhe/Radius/Gap/Labels/Glow) zentral anwenden
+        if (typeof applyBarChartSettings === 'function') applyBarChartSettings();
 
         // Weather-based greeting (calls updateGreetingWeather)
         updateGreetingWeather();

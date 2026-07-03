@@ -379,6 +379,25 @@
     // --- GLOBAL TREND STATE ---
     window._trendPeriod = 30;
     window._trendDataFull = [];
+    // ═══ Saldo-Trend Chart: zentrale Defaults (Backward-Compat + neue Optionen) ═══
+    var TREND_CHART_DEFAULTS = {
+        type: 'area-smooth',
+        color: 'var(--primary)',
+        animation: true,
+        animSpeed: 2000,      // ms – Dauer der Line-Draw/Bar-Grow-Animation
+        gradient: true,       // Flächen-Füllung bei area-Typen
+        glow: true,
+        glowIntensity: 6,     // px – Stärke des Glow/Neon-Scheins
+        rainbow: false,       // animierter Regenbogen-Verlauf auf der Linie
+        blur: false,          // weichgezeichnete („dreamy") Flächenfüllung
+        dots: false,          // sichtbare Datenpunkte
+        marker: true,         // pulsierender Punkt am aktuellen Wert
+        grid: true,           // horizontales Gitternetz
+        zeroLine: true,       // Nulllinie
+        lineWidth: 2.5,       // Linienstärke
+        lineStyle: 'solid'    // solid | dashed | dotted
+    };
+
     function renderTrend(dataPoints, elementId, areaFill = true, chartStyle = null, allEntries = null) {
         const c = document.getElementById(elementId);
         if(!c) return;
@@ -399,17 +418,10 @@
         // Lade oder nutze Default-Style
         if (!chartStyle) {
             const saved = localStorage.getItem('tt_chart_style');
-            chartStyle = saved ? JSON.parse(saved) : {
-                type: 'area-smooth',
-                color: 'var(--primary)',
-                animation: true,
-                gradient: true,
-                glow: true,
-                blur: false,
-                dots: false,
-                rainbow: false
-            };
+            chartStyle = saved ? JSON.parse(saved) : {};
         }
+        // Fehlende Keys mit Defaults auffüllen (alte gespeicherte Styles + neue Optionen)
+        chartStyle = Object.assign({}, TREND_CHART_DEFAULTS, chartStyle);
         
         // Slice by period for rich data, else last 30
         let subset;
@@ -551,21 +563,26 @@
         const getX = (i) => padLeft + (i / (vals.length - 1)) * chartW;
         const getY = (val) => padTop + (1 - (val - min) / range) * chartH;
         
-        // Zero line
+        // Zero line (zeroLineY wird für Gradient-Clipping IMMER berechnet,
+        // aber nur gezeichnet wenn der Toggle an ist)
         let zeroLineY = null;
         let zeroLineHtml = '';
         if (min < 0 && max > 0) {
             zeroLineY = getY(0);
-            zeroLineHtml = `<line x1="0" y1="${zeroLineY}" x2="${w}" y2="${zeroLineY}" class="trend-zero-line" />
-                <text x="${w - 4}" y="${zeroLineY - 4}" fill="rgba(255,255,255,0.25)" font-size="9" text-anchor="end" font-family="var(--font-mono)">0h</text>`;
+            if (chartStyle.zeroLine !== false) {
+                zeroLineHtml = `<line x1="0" y1="${zeroLineY}" x2="${w}" y2="${zeroLineY}" class="trend-zero-line" />
+                    <text x="${w - 4}" y="${zeroLineY - 4}" fill="rgba(255,255,255,0.25)" font-size="9" text-anchor="end" font-family="var(--font-mono)">0h</text>`;
+            }
         }
-        
+
         // Grid lines (horizontal)
         let gridHtml = '';
-        const gridSteps = 5;
-        for (let i = 0; i <= gridSteps; i++) {
-            const gy = padTop + (i / gridSteps) * chartH;
-            gridHtml += `<line x1="0" y1="${gy}" x2="${w}" y2="${gy}" stroke="rgba(255,255,255,0.04)" stroke-width="1" />`;
+        if (chartStyle.grid !== false) {
+            const gridSteps = 5;
+            for (let i = 0; i <= gridSteps; i++) {
+                const gy = padTop + (i / gridSteps) * chartH;
+                gridHtml += `<line x1="0" y1="${gy}" x2="${w}" y2="${gy}" stroke="rgba(255,255,255,0.04)" stroke-width="1" />`;
+            }
         }
         
         // Build path
@@ -610,121 +627,104 @@
         }
         const strokeColor = chartStyle.color.includes('var') ? 'var(--primary)' : chartStyle.color;
         
-        // Positive/negative gradient area fill (only for area/area-smooth types)
-        let areaHtml = '';
-        let defs = '';
+        // ============ DEFS (Filter + Gradienten) zentral aufbauen ============
         const isAreaType = chartStyle.type.includes('area');
-        
-        if (isAreaType) {
-            // Dual gradient: green above zero, red below
+        const showArea = isAreaType && chartStyle.gradient !== false;
+        let defsInner = '';
+
+        // Weichzeichner für „dreamy" Flächenfüllung
+        if (chartStyle.blur) {
+            defsInner += `<filter id="softblur" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="5" /></filter>`;
+        }
+        // Animierter Regenbogen-Verlauf für die Linie
+        if (chartStyle.rainbow) {
+            defsInner += `<linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#ef4444"/><stop offset="25%" stop-color="#f59e0b"/><stop offset="50%" stop-color="#10b981"/><stop offset="75%" stop-color="#06b6d4"/><stop offset="100%" stop-color="#a855f7"/></linearGradient>`;
+        }
+
+        // ============ FLÄCHEN-FÜLLUNG ============
+        let areaHtml = '';
+        const blurAttr = chartStyle.blur ? ' filter="url(#softblur)"' : '';
+        if (showArea) {
+            const closedPath = linePath + `L ${getX(vals.length - 1).toFixed(1)} ${h} L ${getX(0).toFixed(1)} ${h} Z`;
             if (zeroLineY !== null && isRichData) {
-                defs = `<defs>
-                    <linearGradient id="gradPos" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#10b981;stop-opacity:0.25" />
-                        <stop offset="100%" style="stop-color:#10b981;stop-opacity:0.02" />
-                    </linearGradient>
-                    <linearGradient id="gradNeg" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.02" />
-                        <stop offset="100%" style="stop-color:#ef4444;stop-opacity:0.25" />
-                    </linearGradient>
-                    <clipPath id="clipAbove"><rect x="0" y="0" width="${w}" height="${zeroLineY}" /></clipPath>
-                    <clipPath id="clipBelow"><rect x="0" y="${zeroLineY}" width="${w}" height="${h - zeroLineY}" /></clipPath>
-                    ${chartStyle.glow ? `<filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>` : ''}
-                </defs>`;
-                const closedPath = linePath + `L ${getX(vals.length - 1).toFixed(1)} ${h} L ${getX(0).toFixed(1)} ${h} Z`;
-                areaHtml = `<path d="${closedPath}" fill="url(#gradPos)" clip-path="url(#clipAbove)" />
-                    <path d="${closedPath}" fill="url(#gradNeg)" clip-path="url(#clipBelow)" />`;
+                // Dual-Gradient: grün über Null, rot darunter
+                defsInner += `<linearGradient id="gradPos" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#10b981;stop-opacity:0.25" /><stop offset="100%" style="stop-color:#10b981;stop-opacity:0.02" /></linearGradient>`
+                    + `<linearGradient id="gradNeg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.02" /><stop offset="100%" style="stop-color:#ef4444;stop-opacity:0.25" /></linearGradient>`
+                    + `<clipPath id="clipAbove"><rect x="0" y="0" width="${w}" height="${zeroLineY}" /></clipPath>`
+                    + `<clipPath id="clipBelow"><rect x="0" y="${zeroLineY}" width="${w}" height="${h - zeroLineY}" /></clipPath>`;
+                areaHtml = `<path d="${closedPath}" fill="url(#gradPos)" clip-path="url(#clipAbove)"${blurAttr} />`
+                    + `<path d="${closedPath}" fill="url(#gradNeg)" clip-path="url(#clipBelow)"${blurAttr} />`;
             } else {
-                defs = `<defs>
-                    <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:${colorHex};stop-opacity:0.3" />
-                        <stop offset="100%" style="stop-color:${colorHex};stop-opacity:0" />
-                    </linearGradient>
-                    ${chartStyle.glow ? `<filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>` : ''}
-                </defs>`;
-                const closedPath = linePath + `L ${getX(vals.length - 1).toFixed(1)} ${h} L ${getX(0).toFixed(1)} ${h} Z`;
-                areaHtml = `<path d="${closedPath}" fill="url(#grad)" />`;
+                defsInner += `<linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:${colorHex};stop-opacity:0.3" /><stop offset="100%" style="stop-color:${colorHex};stop-opacity:0" /></linearGradient>`;
+                areaHtml = `<path d="${closedPath}" fill="url(#grad)"${blurAttr} />`;
             }
         }
+
+        const defs = defsInner ? `<defs>${defsInner}</defs>` : '';
         
-        // Glow filter defs for non-area types (line, bar)
-        if (!defs && chartStyle.glow) {
-            defs = `<defs>${`<filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`}</defs>`;
-        }
-        
-        // Dots (interactive hit areas)
-        let dotsHtml = '';
+        // ============ Gemeinsame Linien-/Effekt-Parameter ============
+        const animSpeed = chartStyle.animSpeed || 2000;
+        const glowRad = chartStyle.glowIntensity || 6;
+        const lineWidthVal = (typeof chartStyle.lineWidth === 'number' ? chartStyle.lineWidth : (chartStyle.type === 'line' ? 3 : 2.5));
+        const dashMap = { solid: '', dashed: '8 6', dotted: '1 7' };
+        const dashArr = dashMap[chartStyle.lineStyle] || '';
+        const isSolidLine = !dashArr;
         const typeEmojis = { work: '💼', school: '📚', vacation: '🌴', gleittag: '⚡', sick: '💊', holiday: '🏖️' };
-        vals.forEach((val, i) => {
-            const x = getX(i);
-            const y = getY(val);
-            const dotColor = chartStyle.type.includes('bar') ? colorHex : strokeColor;
-            // Visible dot (small, colored by chart style)
-            dotsHtml += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${dotColor}" opacity="0.8" class="trend-dot-hover" data-idx="${i}" style="transition: all 0.15s ease;" />`;
-            // Invisible larger hit area
-            dotsHtml += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="12" fill="transparent" data-idx="${i}" style="cursor:pointer;" />`;
-        });
-        
-        // Animated line drawing
-        const animStyle = chartStyle.animation ? 'animation: drawLine 2s ease-in-out forwards;' : '';
-        const glowFilter = chartStyle.glow ? `filter: drop-shadow(0 0 6px ${colorHex}) drop-shadow(0 0 3px ${colorHex});` : '';
-        
-        // Multi-colored line path - use chart color throughout
-        let multiColorLine = '';
-        if (isRichData && vals.some(v => v < 0) && vals.some(v => v >= 0)) {
-            if (isSmooth) {
-                // Smooth bezier curve segments using chart color
-                for (let i = 1; i < vals.length; i++) {
-                    const x0 = getX(i - 1), y0 = getY(vals[i - 1]);
-                    const x1 = getX(i), y1 = getY(vals[i]);
-                    const cp1x = (x0 + x1) / 2, cp1y = y0;
-                    const cp2x = (x0 + x1) / 2, cp2y = y1;
-                    const segGlow = chartStyle.glow ? `filter: drop-shadow(0 0 4px ${colorHex});` : '';
-                    multiColorLine += `<path d="M ${x0.toFixed(1)} ${y0.toFixed(1)} C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${x1.toFixed(1)} ${y1.toFixed(1)}" fill="none" stroke="${strokeColor}" stroke-width="2.5" stroke-linecap="round" style="${segGlow}" />`;
-                }
-            } else {
-                // Straight line segments using chart color
-                for (let i = 1; i < vals.length; i++) {
-                    const x1 = getX(i - 1), y1 = getY(vals[i - 1]);
-                    const x2 = getX(i), y2 = getY(vals[i]);
-                    const segGlow = chartStyle.glow ? `filter: drop-shadow(0 0 4px ${colorHex});` : '';
-                    multiColorLine += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${strokeColor}" stroke-width="2.5" stroke-linecap="round" style="${segGlow}" />`;
-                }
-            }
+
+        // Datenpunkte – nur wenn aktiviert (dots-Toggle)
+        let dotsHtml = '';
+        if (chartStyle.dots && chartStyle.type !== 'bar') {
+            const dotColor = chartStyle.rainbow ? 'url(#rainbowGrad)' : strokeColor;
+            vals.forEach((val, i) => {
+                dotsHtml += `<circle cx="${getX(i).toFixed(1)}" cy="${getY(val).toFixed(1)}" r="3" fill="${dotColor}" opacity="0.85" class="trend-dot-hover" data-idx="${i}" style="transition: all 0.15s ease;" />`;
+            });
         }
-        
+
+        // Linien-Stroke, Glow, Animationen + Strich-Stil
+        const lineStroke = chartStyle.rainbow ? 'url(#rainbowGrad)' : strokeColor;
+        const glowFilter = (chartStyle.glow && !chartStyle.rainbow) ? `filter: drop-shadow(0 0 ${glowRad}px ${colorHex}) drop-shadow(0 0 ${(glowRad / 2).toFixed(1)}px ${colorHex});` : '';
+        const lineAnims = [];
+        if (chartStyle.animation) lineAnims.push(isSolidLine ? `drawLine ${animSpeed}ms ease-in-out forwards` : `fadeIn ${animSpeed}ms ease forwards`);
+        if (chartStyle.rainbow) lineAnims.push('rainbowShift 3s linear infinite');
+        const lineAnimCss = lineAnims.length ? `animation: ${lineAnims.join(', ')};` : '';
+        const dashAttr = dashArr ? ` stroke-dasharray="${dashArr}"` : '';
+
         // ============ BAR CHART MODE ============
         let barHtml = '';
         if (chartStyle.type === 'bar') {
             const barGap = 2;
             const barWidth = Math.max(2, (chartW / vals.length) - barGap);
             const baseY = zeroLineY !== null ? zeroLineY : (padTop + chartH);
+            const barAnimDur = chartStyle.animation ? Math.max(200, (animSpeed / 4) | 0) : 0;
             vals.forEach((val, i) => {
                 const x = padLeft + (i / vals.length) * chartW + barGap / 2;
                 const y = getY(val);
-                const barColor = colorHex;
+                const barColor = chartStyle.rainbow ? 'url(#rainbowGrad)' : colorHex;
                 const barTop = Math.min(y, baseY);
                 const barH = Math.max(1, Math.abs(y - baseY));
-                const glowStyle = chartStyle.glow ? `filter: drop-shadow(0 0 3px ${barColor});` : '';
-                barHtml += `<rect x="${x.toFixed(1)}" y="${barTop.toFixed(1)}" width="${barWidth.toFixed(1)}" height="${barH.toFixed(1)}" fill="${barColor}" opacity="0.85" rx="2" style="${glowStyle} transform-origin: ${x.toFixed(1)}px ${baseY.toFixed(1)}px; animation: barGrow 0.4s ease-out both; animation-delay: ${i * 12}ms;" data-idx="${i}" />`;
+                const glowStyle = (chartStyle.glow && !chartStyle.rainbow) ? `filter: drop-shadow(0 0 ${(glowRad / 2).toFixed(1)}px ${colorHex});` : '';
+                const barAnim = barAnimDur ? `transform-origin: ${x.toFixed(1)}px ${baseY.toFixed(1)}px; animation: barGrow ${barAnimDur}ms ease-out both; animation-delay: ${i * 12}ms;` : '';
+                barHtml += `<rect x="${x.toFixed(1)}" y="${barTop.toFixed(1)}" width="${barWidth.toFixed(1)}" height="${barH.toFixed(1)}" fill="${barColor}" opacity="0.85" rx="2" style="${glowStyle} ${barAnim}" data-idx="${i}" />`;
             });
         }
 
-        // Final line or multi-color
-        const lineWidth = chartStyle.type === 'line' ? '3' : '2.5';
-        const mainLine = chartStyle.type === 'bar' ? '' : (multiColorLine || `<path d="${linePath}" class="trend-line" stroke="${strokeColor}" stroke-width="${lineWidth}" fill="none" stroke-linecap="round" style="${animStyle} ${glowFilter}" />`);
-        
+        // ============ HAUPTLINIE ============
+        const mainLine = chartStyle.type === 'bar' ? '' : `<path d="${linePath}" class="trend-line" stroke="${lineStroke}" stroke-width="${lineWidthVal}" fill="none" stroke-linecap="round" stroke-linejoin="round"${dashAttr} style="${lineAnimCss} ${glowFilter}" />`;
+
         // Crosshair elements (updated on hover via JS)
         const crosshairHtml = `<line id="trendCrossV" class="trend-crosshair" x1="0" y1="0" x2="0" y2="${h}" style="display:none;" />
             <line id="trendCrossH" class="trend-crosshair" x1="0" y1="0" x2="${w}" y2="0" style="display:none;" />`;
-        
-        // Current position marker (pulsing dot on last point)
+
+        // Aktueller-Wert-Marker (pulsierend) – nur wenn aktiviert (marker-Toggle)
         const lastX = getX(vals.length - 1);
         const lastY = getY(vals[vals.length - 1]);
         const lastColor = vals[vals.length - 1] >= 0 ? '#10b981' : '#ef4444';
-        const currentMarker = chartStyle.type === 'bar' ? '' : `
-            <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="5" fill="${lastColor}" opacity="0.9" style="animation: trendPulse 2s ease-in-out infinite;" />
-            <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="10" fill="${lastColor}" opacity="0.15" style="animation: trendPulse 2s ease-in-out infinite;" />`;
+        // Moderner „Live"-Marker: ruhiger Solid-Dot mit weichem Glow + ein einzelner,
+        // sanft auslaufender Radar-Ping (statt des unruhigen Doppel-Pulses).
+        const currentMarker = (chartStyle.type === 'bar' || chartStyle.marker === false) ? '' : `
+            <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="4" fill="none" stroke="${lastColor}" stroke-width="1.5" class="trend-marker-ping" />
+            <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3.5" fill="${lastColor}" style="filter: drop-shadow(0 0 4px ${lastColor});" />
+            <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="1.4" fill="#fff" opacity="0.9" />`;
         
         // Disconnect stale ResizeObserver before overwriting innerHTML
         if (c._trendResizeObserver) { c._trendResizeObserver.disconnect(); c._trendResizeObserver = null; }
@@ -1155,6 +1155,19 @@
 
     // ═══ MODERN STACKED BAR CHART ═══
     function renderDonutModern(work, vac, sick, school, holiday) {
+        // Bar-Chart-Einstellungen laden (Höhe/Radius/Gap/Glow werden via applyBarChartSettings
+        // gesetzt; hier interessiert nur Animation an/aus + Tempo)
+        var barSettings;
+        try {
+            barSettings = JSON.parse(localStorage.getItem('tt_bar_chart_settings') || '{}');
+        } catch (e) { barSettings = {}; }
+        const animate = barSettings.showAnimation !== false; // Default: an
+        const animSpeed = typeof barSettings.animSpeed === 'number' ? barSettings.animSpeed : 800;
+        // Hover-Transitions (filter/transform/opacity) bleiben immer erhalten – nur die
+        // flex-Fill-Animation wird über den Toggle gesteuert.
+        const hoverTrans = 'filter .3s ease, transform .3s ease, opacity .3s ease';
+        const transitionCss = 'flex ' + animSpeed + 'ms cubic-bezier(0.34,1.56,0.64,1), ' + hoverTrans;
+
         const categories = [
             { id: 'donutWork', val: work, type: 'work', labelId: 'work-label' },
             { id: 'donutSchool', val: school, type: 'school', labelId: 'school-label' },
@@ -1181,14 +1194,11 @@
             if (!el) return;
 
             const percentage = (cat.val / total) * 100;
-            const delay = index * 80;
+            const delay = animate ? index * 80 : 0;
             const labelEl = document.getElementById(cat.labelId);
             const pillEl = labelEl ? labelEl.parentElement : null;
 
-            el.style.flex = '0 0 0%';
-
-            setTimeout(() => {
-                el.style.flex = `0 0 ${percentage}%`;
+            const applyLabel = () => {
                 if (labelEl && pillEl) {
                     if (percentage > 8) {
                         labelEl.textContent = percentage.toFixed(0) + '%';
@@ -1198,7 +1208,25 @@
                         pillEl.style.display = 'none';
                     }
                 }
-            }, delay);
+            };
+
+            if (animate) {
+                // Fill-Animation: sauber von 0 auf Zielwert (kein Rückwärts-Flackern
+                // bei Refresh) – Transition erst nach dem Reset aktivieren.
+                el.style.transition = 'none';
+                el.style.flex = '0 0 0%';
+                void el.offsetWidth; // Reflow erzwingen
+                setTimeout(() => {
+                    el.style.transition = transitionCss;
+                    el.style.flex = `0 0 ${percentage}%`;
+                    applyLabel();
+                }, delay);
+            } else {
+                // Animation aus: flex-Fill sofort (nur Hover-Transitions aktiv)
+                el.style.transition = hoverTrans;
+                el.style.flex = `0 0 ${percentage}%`;
+                applyLabel();
+            }
 
             el.dataset.value = cat.val.toFixed(1);
             el.dataset.percent = percentage.toFixed(1);

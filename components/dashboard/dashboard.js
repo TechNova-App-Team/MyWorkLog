@@ -534,145 +534,257 @@
         grid.innerHTML = html;
     }
 
-    function openChartStyleModal() {
-        const saved = localStorage.getItem('tt_chart_style');
-        const currentStyle = saved ? JSON.parse(saved) : {
-            type: 'area-smooth',
-            color: 'var(--primary)',
-            animation: true,
-            gradient: true,
-            glow: true,
-            blur: false,
-            dots: false,
-            rainbow: false
+    // ═══ Saldo-Trend: zentrale Defaults (spiegelt TREND_CHART_DEFAULTS aus charts.js) ═══
+    function getTrendChartDefaults() {
+        if (typeof TREND_CHART_DEFAULTS !== 'undefined') return Object.assign({}, TREND_CHART_DEFAULTS);
+        return { type:'area-smooth', color:'var(--primary)', animation:true, animSpeed:2000, gradient:true, glow:true, glowIntensity:6, rainbow:false, blur:false, dots:false, marker:true, grid:true, zeroLine:true, lineWidth:2.5, lineStyle:'solid' };
+    }
+    function getTrendChartStyle() {
+        var s = {};
+        try { var raw = localStorage.getItem('tt_chart_style'); if (raw) s = JSON.parse(raw) || {}; } catch (e) { s = {}; }
+        return Object.assign(getTrendChartDefaults(), s);
+    }
+
+    // ═══ NEW: Modern Saldo-Trend Konfigurations-Modal ═══
+    // seed (optional): Style zum Vorbelegen (z.B. Defaults beim Zurücksetzen) statt der
+    // gespeicherten Settings. Wird NICHT persistiert bis der User „Speichern" klickt.
+    function openChartStyleModal(seed) {
+        var current = seed ? Object.assign(getTrendChartDefaults(), seed) : getTrendChartStyle();
+        window.modalChartStyle = Object.assign({}, current);
+
+        var typeMeta = [
+            { id: 'line',        label: 'Linie',  svg: '<path d="M3 15l4-5 4 3 6-8"/>' },
+            { id: 'area',        label: 'Fläche', svg: '<path d="M3 15l4-5 4 3 6-8"/><path d="M3 15l4-5 4 3 6-8V19H3Z" fill="currentColor" stroke="none" opacity=".22"/>' },
+            { id: 'area-smooth', label: 'Smooth', svg: '<path d="M3 13c3 0 3-6 6-6s3 8 6 8 3-5 6-5"/>' },
+            { id: 'bar',         label: 'Balken', svg: '<rect x="3" y="10" width="3.5" height="9" rx="1"/><rect x="10" y="5" width="3.5" height="14" rx="1"/><rect x="17" y="13" width="3.5" height="6" rx="1"/>' }
+        ];
+        var lineStyleMeta = [
+            { id: 'solid',  label: 'Voll',       dash: '' },
+            { id: 'dashed', label: 'Gestrichelt', dash: '6 5' },
+            { id: 'dotted', label: 'Gepunktet',   dash: '1 6' }
+        ];
+        var colors = ['#a78bfa','#a855f7','#8b5cf6','#7c3aed','#6366f1','#4f46e5','#0ea5e9','#3b82f6','#06b6d4','#22d3ee','#10b981','#34d399','#06d6a0','#84cc16','#fbbf24','#f59e0b','#fb923c','#f97316','#ef4444','#f43f5e','#ec4899','#d946ef','#94a3b8','#ffffff'];
+
+        var seg = function (metaArr, activeId, cls, extra) {
+            return metaArr.map(function (m) {
+                var on = activeId === m.id;
+                return '<button type="button" class="tcs-seg' + (on ? ' on' : '') + '" data-' + cls + '="' + m.id + '">' + (extra ? extra(m) : m.label) + '</button>';
+            }).join('');
         };
-        
-        window.modalChartStyle = JSON.parse(JSON.stringify(currentStyle));
-        
-        const modal = document.createElement('div');
+
+        var modal = document.createElement('div');
         modal.className = 'modal active';
         modal.id = 'chartStyleModal';
-        modal.style.zIndex = '5000';
-        modal.style.animation = 'fadeIn 0.3s ease';
-        
-        modal.innerHTML = `
-            <div class="modal-box" style="width:580px; max-height:90vh; overflow-y:auto; animation: slideUp 0.3s ease; border-radius:16px; border:1px solid rgba(255,255,255,0.08); box-shadow:0 24px 80px rgba(0,0,0,0.5);">
-                <!-- Header -->
-                <div style="padding:1.75rem 2rem 1.5rem; border-bottom:1px solid rgba(255,255,255,0.06);">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <h2 style="margin:0 0 4px 0; font-size:1.2rem; font-weight:700; color:var(--text-main); letter-spacing:-0.02em;">Chart-Konfiguration</h2>
-                            <p style="margin:0; font-size:0.78rem; color:var(--text-muted); font-weight:400;">Visualisierung und Darstellung anpassen</p>
-                        </div>
-                        <button id="closeChartModal" onclick="document.getElementById('chartStyleModal').remove()" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.08); color:var(--text-muted); width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:10px; cursor:pointer; font-size:1.2rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='rgba(255,255,255,0.06)'; this.style.color='var(--text-muted)'">&times;</button>
-                    </div>
-                </div>
-                
-                <div style="padding:1.5rem 2rem 2rem;">
-                    <!-- Chart Type -->
-                    <div style="margin-bottom:1.75rem;">
-                        <div style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:10px;">Diagramm-Typ</div>
-                        <div id="chartTypeButtons" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;"></div>
-                    </div>
-                    
-                    <!-- Color -->
-                    <div style="margin-bottom:1.75rem;">
-                        <div style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:10px;">Akzentfarbe</div>
-                        <div id="colorButtons" style="display:flex; flex-direction:column;"></div>
-                    </div>
-                    
-                    <!-- Effects -->
-                    <div style="margin-bottom:1.75rem;">
-                        <div style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:10px;">Effekte</div>
-                        <div style="display:flex; flex-wrap:wrap; gap:6px;">
-                            <label class="csm-toggle" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); transition:all 0.2s; user-select:none;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=this.querySelector('input').checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)'">
-                                <input type="checkbox" id="gradientCheck" ${currentStyle.gradient ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary); flex-shrink:0;">
-                                <span style="font-size:0.8rem; font-weight:500; white-space:nowrap;">Gradient</span>
-                            </label>
-                            <label class="csm-toggle" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); transition:all 0.2s; user-select:none;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=this.querySelector('input').checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)'">
-                                <input type="checkbox" id="animationCheck" ${currentStyle.animation ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary); flex-shrink:0;">
-                                <span style="font-size:0.8rem; font-weight:500; white-space:nowrap;">Animation</span>
-                            </label>
-                            <label class="csm-toggle" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); transition:all 0.2s; user-select:none;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=this.querySelector('input').checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)'">
-                                <input type="checkbox" id="glowCheck" ${currentStyle.glow ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary); flex-shrink:0;">
-                                <span style="font-size:0.8rem; font-weight:500; white-space:nowrap;">Glow</span>
-                            </label>
-                            <label class="csm-toggle" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); transition:all 0.2s; user-select:none;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=this.querySelector('input').checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)'">
-                                <input type="checkbox" id="blurCheck" ${currentStyle.blur ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary); flex-shrink:0;">
-                                <span style="font-size:0.8rem; font-weight:500; white-space:nowrap;">Blur</span>
-                            </label>
-                            <label class="csm-toggle" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); transition:all 0.2s; user-select:none;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=this.querySelector('input').checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)'">
-                                <input type="checkbox" id="dotsCheck" ${currentStyle.dots ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary); flex-shrink:0;">
-                                <span style="font-size:0.8rem; font-weight:500; white-space:nowrap;">Punkte</span>
-                            </label>
-                            <label class="csm-toggle" style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:8px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background:rgba(255,255,255,0.03); transition:all 0.2s; user-select:none;" onmouseover="this.style.background='rgba(255,255,255,0.06)'" onmouseout="this.style.background=this.querySelector('input').checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)'">
-                                <input type="checkbox" id="rainbowCheck" ${currentStyle.rainbow ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary); flex-shrink:0;">
-                                <span style="font-size:0.8rem; font-weight:500; white-space:nowrap; background:linear-gradient(90deg,#ef4444,#f59e0b,#10b981,#06b6d4,#8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Rainbow</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <!-- Preview -->
-                    <div style="margin-bottom:1.5rem;">
-                        <div style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); margin-bottom:10px;">Vorschau</div>
-                        <div style="border:1px solid rgba(255,255,255,0.06); border-radius:12px; overflow:hidden;">
-                            <div id="chartPreview" style="height:150px; background:rgba(0,0,0,0.2); position:relative;"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Footer -->
-                    <div style="display:flex; gap:10px; justify-content:flex-end; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.06);">
-                        <button class="btn" id="chartCancelBtn" style="padding:10px 22px; background:transparent; border:1px solid rgba(255,255,255,0.12); border-radius:10px; cursor:pointer; color:var(--text-muted); font-size:0.82rem; font-weight:500; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.06)'; this.style.color='var(--text-main)'" onmouseout="this.style.background='transparent'; this.style.color='var(--text-muted)'">Abbrechen</button>
-                        <button class="btn btn-primary" id="chartSaveBtn" style="padding:10px 28px; background:var(--primary); border:none; border-radius:10px; cursor:pointer; color:#fff; font-size:0.82rem; font-weight:600; transition:all 0.2s; box-shadow:0 2px 12px rgba(var(--primary-rgb),0.3);" onmouseover="this.style.filter='brightness(1.15)'; this.style.boxShadow='0 4px 20px rgba(var(--primary-rgb),0.4)'" onmouseout="this.style.filter='brightness(1)'; this.style.boxShadow='0 2px 12px rgba(var(--primary-rgb),0.3)'">Speichern</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
+        modal.style.zIndex = '100000';
+
+        modal.innerHTML =
+        '<style>' +
+        '.tcs-box{width:520px;max-width:calc(100vw - 32px);max-height:92vh;overflow-y:auto;background:#111118;border:1px solid var(--border-default,rgba(255,255,255,.08));border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.55);animation:bcsUp .28s cubic-bezier(.16,1,.3,1)}' +
+        '@keyframes bcsUp{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}' +
+        '.tcs-head{position:relative;padding:20px 22px;border-bottom:1px solid var(--border-subtle,rgba(255,255,255,.06))}' +
+        '.tcs-head h2{margin:0;font-size:1.05rem;font-weight:700;color:var(--text-main);letter-spacing:-.01em}' +
+        '.tcs-head p{margin:3px 0 0;font-size:.78rem;color:var(--text-muted)}' +
+        '.tcs-x{position:absolute;top:16px;right:16px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border:1px solid var(--border-subtle,rgba(255,255,255,.06));border-radius:8px;color:var(--text-muted);cursor:pointer;transition:all .2s}' +
+        '.tcs-x:hover{background:rgba(255,255,255,.09);color:var(--text-main)}' +
+        '.tcs-body{padding:18px 22px;display:flex;flex-direction:column;gap:20px}' +
+        '.tcs-preview{border-radius:12px;overflow:hidden;border:1px solid var(--border-subtle,rgba(255,255,255,.06));background:rgba(0,0,0,.22)}' +
+        '.tcs-preview #chartPreview{height:150px;position:relative}' +
+        '.tcs-group-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:11px;display:block}' +
+        '.tcs-segrow{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:7px}' +
+        '.tcs-seg{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px 6px;border:1px solid var(--border-subtle,rgba(255,255,255,.07));background:rgba(255,255,255,.02);border-radius:10px;color:var(--text-muted);font-size:.76rem;font-weight:600;cursor:pointer;transition:all .18s}' +
+        '.tcs-seg:hover{background:rgba(255,255,255,.05);color:var(--text-main)}' +
+        '.tcs-seg.on{border-color:var(--primary);background:rgba(var(--primary-rgb),.12);color:var(--text-main)}' +
+        '.tcs-seg svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}' +
+        '.tcs-swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(30px,1fr));gap:7px}' +
+        '.tcs-sw{aspect-ratio:1;border-radius:8px;cursor:pointer;border:2px solid transparent;transition:transform .15s,box-shadow .15s;position:relative}' +
+        '.tcs-sw:hover{transform:scale(1.12)}' +
+        '.tcs-sw.on{border-color:#fff;box-shadow:0 0 0 2px rgba(var(--primary-rgb),.5)}' +
+        '.tcs-theme{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border-subtle,rgba(255,255,255,.07));background:rgba(255,255,255,.02);cursor:pointer;margin-bottom:9px;transition:all .18s}' +
+        '.tcs-theme:hover{background:rgba(255,255,255,.05)}' +
+        '.tcs-theme.on{border-color:var(--primary);background:rgba(var(--primary-rgb),.1)}' +
+        '.tcs-theme .dot{width:24px;height:24px;border-radius:7px;background:var(--primary);flex:0 0 24px}' +
+        '.tcs-theme b{font-size:.84rem;font-weight:600;color:var(--text-main)}' +
+        '.tcs-theme small{display:block;font-size:.7rem;color:var(--text-muted)}' +
+        '.tcs-row{display:flex;flex-direction:column;gap:9px}.tcs-row+.tcs-row{margin-top:14px}' +
+        '.tcs-rowhead{display:flex;justify-content:space-between;align-items:center}' +
+        '.tcs-rowhead label{font-size:.86rem;font-weight:600;color:var(--text-main)}' +
+        '.tcs-val{font-size:.8rem;font-weight:700;color:var(--primary);font-family:var(--font-mono,monospace)}' +
+        '.tcs-slider{width:100%;height:6px;border-radius:4px;background:rgba(var(--primary-rgb),.18);outline:none;-webkit-appearance:none;cursor:pointer}' +
+        '.tcs-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--primary);cursor:pointer;border:3px solid #111118;box-shadow:0 0 0 1px rgba(var(--primary-rgb),.5)}' +
+        '.tcs-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--primary);cursor:pointer;border:3px solid #111118}' +
+        '.tcs-slider:disabled{opacity:.4;cursor:not-allowed}' +
+        '.tcs-toggle{display:flex;align-items:center;gap:12px;padding:11px 13px;background:rgba(255,255,255,.02);border:1px solid var(--border-subtle,rgba(255,255,255,.06));border-radius:11px;cursor:pointer;transition:all .18s}' +
+        '.tcs-toggle:hover{background:rgba(255,255,255,.045)}' +
+        '.tcs-toggle+.tcs-toggle{margin-top:8px}' +
+        '.tcs-toggle .ic{width:32px;height:32px;flex:0 0 32px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:rgba(var(--primary-rgb),.1);color:var(--primary)}' +
+        '.tcs-toggle .ic svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}' +
+        '.tcs-toggle .txt{flex:1}.tcs-toggle .txt b{display:block;font-size:.86rem;font-weight:600;color:var(--text-main)}.tcs-toggle .txt small{font-size:.71rem;color:var(--text-muted)}' +
+        '.tcs-switch{position:relative;width:42px;height:24px;flex:0 0 42px;border-radius:999px;background:rgba(255,255,255,.12);transition:background .2s}' +
+        '.tcs-switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s cubic-bezier(.16,1,.3,1)}' +
+        '.tcs-toggle input{position:absolute;opacity:0;width:0;height:0}' +
+        '.tcs-toggle input:checked~.tcs-switch{background:var(--primary)}.tcs-toggle input:checked~.tcs-switch::after{transform:translateX(18px)}' +
+        '.tcs-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}' +
+        '.tcs-foot{display:flex;gap:10px;align-items:center;padding:15px 22px;border-top:1px solid var(--border-subtle,rgba(255,255,255,.06))}' +
+        '.tcs-reset{font-size:.8rem;font-weight:600;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:8px 4px}.tcs-reset:hover{color:var(--text-main)}' +
+        '.tcs-btn{padding:10px 18px;border-radius:9px;font-size:.86rem;font-weight:600;cursor:pointer;transition:all .18s;border:1px solid transparent}' +
+        '.tcs-btn.ghost{background:rgba(255,255,255,.05);border-color:var(--border-default,rgba(255,255,255,.1));color:var(--text-main)}.tcs-btn.ghost:hover{background:rgba(255,255,255,.1)}' +
+        '.tcs-btn.primary{background:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(var(--primary-rgb),.32)}.tcs-btn.primary:hover{filter:brightness(1.08)}' +
+        '.tcs-dim{transition:opacity .2s}' +
+        // Desktop: breiteres Modal + 2-Spalten-Layout (Preview über volle Breite)
+        '@media(min-width:760px){' +
+          '.tcs-box{width:840px}' +
+          '.tcs-body{display:grid;grid-template-columns:1fr 1fr;gap:22px 28px;align-items:start}' +
+          '.tcs-preview{grid-column:1 / -1}' +
+          '.tcs-preview #chartPreview{height:180px}' +
+        '}' +
+        '[data-theme="light"] .tcs-box{background:#fff;border-color:rgba(0,0,0,.08)}' +
+        '[data-theme="light"] .tcs-head,[data-theme="light"] .tcs-foot{border-color:rgba(0,0,0,.07)}' +
+        '[data-theme="light"] .tcs-x,[data-theme="light"] .tcs-seg,[data-theme="light"] .tcs-theme,[data-theme="light"] .tcs-toggle{background:rgba(0,0,0,.02);border-color:rgba(0,0,0,.08)}' +
+        '[data-theme="light"] .tcs-preview{background:rgba(0,0,0,.03)}' +
+        '[data-theme="light"] .tcs-switch{background:rgba(0,0,0,.18)}' +
+        '[data-theme="light"] .tcs-slider::-webkit-slider-thumb,[data-theme="light"] .tcs-slider::-moz-range-thumb{border-color:#fff}' +
+        '[data-theme="light"] .tcs-btn.ghost{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.12)}' +
+        '</style>' +
+        '<div class="tcs-box">' +
+            '<div class="tcs-head">' +
+                '<h2>Saldo Trend</h2><p>Diagramm-Stil, Effekte &amp; Animation anpassen</p>' +
+                '<button class="tcs-x" onclick="document.getElementById(\'chartStyleModal\').remove()" title="Schließen"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>' +
+            '</div>' +
+            '<div class="tcs-body">' +
+                '<div class="tcs-preview"><div id="chartPreview"></div></div>' +
+                '<div><span class="tcs-group-label">Diagramm-Typ</span><div class="tcs-segrow" id="tcsTypeRow">' +
+                    seg(typeMeta, current.type, 'type', function (m) { return '<svg viewBox="0 0 24 24">' + m.svg + '</svg>' + m.label; }) +
+                '</div></div>' +
+                '<div><span class="tcs-group-label">Farbe</span>' +
+                    '<button type="button" class="tcs-theme' + (current.color === 'var(--primary)' ? ' on' : '') + '" id="tcsThemeColor"><span class="dot"></span><span><b>Website-Farbe</b><small>Nutzt deinen Akzent aus den Einstellungen</small></span></button>' +
+                    '<div class="tcs-swatches" id="tcsSwatches">' +
+                        colors.map(function (c) { return '<button type="button" class="tcs-sw' + (current.color === c ? ' on' : '') + '" data-color="' + c + '" style="background:' + c + '" title="' + c + '"></button>'; }).join('') +
+                    '</div>' +
+                '</div>' +
+                '<div><span class="tcs-group-label">Linie</span>' +
+                    '<div class="tcs-row"><div class="tcs-rowhead"><label>Linienstärke</label><span class="tcs-val" id="tcsLwVal">' + current.lineWidth + 'px</span></div><input type="range" class="tcs-slider" id="tcsLw" min="1" max="5" step="0.5" value="' + current.lineWidth + '"></div>' +
+                    '<div class="tcs-row"><div class="tcs-rowhead"><label>Linienstil</label></div><div class="tcs-segrow" id="tcsLineStyleRow">' +
+                        seg(lineStyleMeta, current.lineStyle, 'linestyle', function (m) { return '<svg viewBox="0 0 40 12" style="width:40px;height:12px"><line x1="2" y1="6" x2="38" y2="6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"' + (m.dash ? ' stroke-dasharray="' + m.dash + '"' : '') + '/></svg>' + m.label; }) +
+                    '</div></div>' +
+                    '<div style="margin-top:14px"></div>' +
+                    '<label class="tcs-toggle"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="8" r="1.6"/><circle cx="19" cy="14" r="1.6"/></svg></span><span class="txt"><b>Datenpunkte</b><small>Punkt an jedem Messwert</small></span><input type="checkbox" id="tcsDots"' + (current.dots ? ' checked' : '') + '><span class="tcs-switch"></span></label>' +
+                    '<label class="tcs-toggle"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="9" opacity=".4"/></svg></span><span class="txt"><b>Aktueller-Wert-Puls</b><small>Pulsierender Punkt am letzten Wert</small></span><input type="checkbox" id="tcsMarker"' + (current.marker !== false ? ' checked' : '') + '><span class="tcs-switch"></span></label>' +
+                '</div>' +
+                '<div><span class="tcs-group-label">Effekte</span>' +
+                    '<label class="tcs-toggle"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 18l6-7 4 3 8-9"/><path d="M3 18h18" opacity=".4"/></svg></span><span class="txt"><b>Flächen-Gradient</b><small>Farbverlauf unter der Linie (Fläche/Smooth)</small></span><input type="checkbox" id="tcsGradient"' + (current.gradient !== false ? ' checked' : '') + '><span class="tcs-switch"></span></label>' +
+                    '<label class="tcs-toggle"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></span><span class="txt"><b>Glow / Neon</b><small>Leuchtender Schein um die Linie</small></span><input type="checkbox" id="tcsGlow"' + (current.glow !== false ? ' checked' : '') + '><span class="tcs-switch"></span></label>' +
+                    '<div class="tcs-row tcs-dim" id="tcsGlowRow" style="margin-top:12px"><div class="tcs-rowhead"><label>Glow-Intensität</label><span class="tcs-val" id="tcsGiVal">' + current.glowIntensity + '</span></div><input type="range" class="tcs-slider" id="tcsGi" min="2" max="16" step="1" value="' + current.glowIntensity + '"></div>' +
+                    '<label class="tcs-toggle" style="margin-top:12px"><span class="ic" style="background:linear-gradient(90deg,#ef4444,#f59e0b,#10b981,#06b6d4,#a855f7);color:#fff"><svg viewBox="0 0 24 24"><path d="M3 16a9 9 0 0118 0"/></svg></span><span class="txt"><b>Regenbogen</b><small>Animierter Farbverlauf auf der Linie</small></span><input type="checkbox" id="tcsRainbow"' + (current.rainbow ? ' checked' : '') + '><span class="tcs-switch"></span></label>' +
+                    '<label class="tcs-toggle"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 12h14M7 8h10M8 16h8" opacity=".7"/></svg></span><span class="txt"><b>Weichzeichnen</b><small>Verträumte, weiche Flächenfüllung</small></span><input type="checkbox" id="tcsBlur"' + (current.blur ? ' checked' : '') + '><span class="tcs-switch"></span></label>' +
+                '</div>' +
+                '<div><span class="tcs-group-label">Raster &amp; Achsen</span><div class="tcs-grid2">' +
+                    '<label class="tcs-toggle" style="margin:0"><span class="txt"><b>Gitternetz</b></span><input type="checkbox" id="tcsGrid"' + (current.grid !== false ? ' checked' : '') + '><span class="tcs-switch"></span></label>' +
+                    '<label class="tcs-toggle" style="margin:0"><span class="txt"><b>Nulllinie</b></span><input type="checkbox" id="tcsZero"' + (current.zeroLine !== false ? ' checked' : '') + '><span class="tcs-switch"></span></label>' +
+                '</div></div>' +
+                '<div><span class="tcs-group-label">Animation</span>' +
+                    '<label class="tcs-toggle"><span class="ic"><svg viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg></span><span class="txt"><b>Animation</b><small>Linie/Balken beim Laden aufbauen</small></span><input type="checkbox" id="tcsAnim"' + (current.animation !== false ? ' checked' : '') + '><span class="tcs-switch"></span></label>' +
+                    '<div class="tcs-row tcs-dim" id="tcsSpeedRow" style="margin-top:12px"><div class="tcs-rowhead"><label>Tempo</label><span class="tcs-val" id="tcsSpVal"></span></div><input type="range" class="tcs-slider" id="tcsSp" min="600" max="4000" step="100" value="' + current.animSpeed + '"></div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="tcs-foot">' +
+                '<button class="tcs-reset" id="tcsReset">Zurücksetzen</button><div style="flex:1"></div>' +
+                '<button class="tcs-btn ghost" id="tcsCancel">Abbrechen</button>' +
+                '<button class="tcs-btn primary" id="tcsSave">Speichern</button>' +
+            '</div>' +
+        '</div>';
+
         document.body.appendChild(modal);
-        
-        setupChartModalButtons(currentStyle);
-        
-        // Effect toggle handlers
-        const effectIds = ['gradientCheck', 'animationCheck', 'glowCheck', 'blurCheck', 'dotsCheck', 'rainbowCheck'];
-        const effectKeys = ['gradient', 'animation', 'glow', 'blur', 'dots', 'rainbow'];
-        effectIds.forEach((id, i) => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('change', (e) => {
-                    window.modalChartStyle[effectKeys[i]] = e.target.checked;
-                    // Update toggle visual
-                    const label = e.target.closest('.csm-toggle');
-                    if (label) label.style.background = e.target.checked ? 'rgba(var(--primary-rgb),0.08)' : 'rgba(255,255,255,0.03)';
-                    if (id === 'rainbowCheck' && e.target.checked && typeof createConfetti === 'function') {
-                        createConfetti(window.innerWidth / 2, window.innerHeight / 3, 20);
-                    }
-                    updateChartStylePreview(window.modalChartStyle);
-                });
-                // Set initial active state
-                if (el.checked) {
-                    const label = el.closest('.csm-toggle');
-                    if (label) label.style.background = 'rgba(var(--primary-rgb),0.08)';
-                }
-            }
+        setupTrendChartModal(modal);
+    }
+
+    function setupTrendChartModal(modal) {
+        var $ = function (id) { return modal.querySelector('#' + id); };
+        var s = window.modalChartStyle;
+
+        var speedLabel = function (ms) { return (ms <= 1000 ? 'Schnell' : ms >= 3000 ? 'Langsam' : 'Normal') + ' · ' + ms + 'ms'; };
+        var preview = function () { if (typeof updateChartStylePreview === 'function') updateChartStylePreview(window.modalChartStyle); };
+
+        function refreshDim() {
+            $('tcsGlowRow').style.opacity = s.glow ? '1' : '.4'; $('tcsGi').disabled = !s.glow;
+            $('tcsSpeedRow').style.opacity = s.animation ? '1' : '.4'; $('tcsSp').disabled = !s.animation;
+            $('tcsSpVal').textContent = speedLabel(s.animSpeed);
+        }
+
+        // Diagramm-Typ (segmented)
+        $('tcsTypeRow').querySelectorAll('[data-type]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                s.type = btn.getAttribute('data-type');
+                $('tcsTypeRow').querySelectorAll('.tcs-seg').forEach(function (b) { b.classList.toggle('on', b === btn); });
+                preview();
+            });
         });
-        
-        document.getElementById('chartSaveBtn').addEventListener('click', () => {
-            saveChartStyle();
+        // Linienstil (segmented)
+        $('tcsLineStyleRow').querySelectorAll('[data-linestyle]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                s.lineStyle = btn.getAttribute('data-linestyle');
+                $('tcsLineStyleRow').querySelectorAll('.tcs-seg').forEach(function (b) { b.classList.toggle('on', b === btn); });
+                preview();
+            });
+        });
+        // Farbe – Website-Farbe + Swatches
+        var paintColor = function () {
+            $('tcsThemeColor').classList.toggle('on', s.color === 'var(--primary)');
+            $('tcsSwatches').querySelectorAll('.tcs-sw').forEach(function (sw) { sw.classList.toggle('on', sw.getAttribute('data-color') === s.color); });
+        };
+        $('tcsThemeColor').addEventListener('click', function () { s.color = 'var(--primary)'; paintColor(); preview(); });
+        $('tcsSwatches').querySelectorAll('.tcs-sw').forEach(function (sw) {
+            sw.addEventListener('click', function () { s.color = sw.getAttribute('data-color'); paintColor(); preview(); });
+        });
+
+        // Slider: Linienstärke / Glow-Intensität / Tempo
+        $('tcsLw').addEventListener('input', function () { s.lineWidth = parseFloat(this.value); $('tcsLwVal').textContent = this.value + 'px'; preview(); });
+        $('tcsGi').addEventListener('input', function () { s.glowIntensity = parseInt(this.value, 10); $('tcsGiVal').textContent = this.value; preview(); });
+        $('tcsSp').addEventListener('input', function () { s.animSpeed = parseInt(this.value, 10); $('tcsSpVal').textContent = speedLabel(s.animSpeed); preview(); });
+
+        // Toggles
+        var wireToggle = function (id, key, onChange) {
+            $(id).addEventListener('change', function () {
+                s[key] = this.checked;
+                if (onChange) onChange(this.checked);
+                preview();
+            });
+        };
+        wireToggle('tcsDots', 'dots');
+        wireToggle('tcsMarker', 'marker');
+        wireToggle('tcsGradient', 'gradient');
+        wireToggle('tcsGlow', 'glow', refreshDim);
+        wireToggle('tcsBlur', 'blur');
+        wireToggle('tcsGrid', 'grid');
+        wireToggle('tcsZero', 'zeroLine');
+        wireToggle('tcsAnim', 'animation', refreshDim);
+        $('tcsRainbow').addEventListener('change', function () {
+            s.rainbow = this.checked;
+            if (this.checked && typeof createConfetti === 'function') createConfetti(window.innerWidth / 2, window.innerHeight / 3, 18);
+            preview();
+        });
+
+        // Reset: Modal mit Defaults neu aufbauen (noch nicht gespeichert)
+        $('tcsReset').addEventListener('click', function () {
+            modal.remove();
+            openChartStyleModal(getTrendChartDefaults());
+        });
+
+        // Abbrechen / Backdrop
+        var close = function () { modal.remove(); };
+        $('tcsCancel').addEventListener('click', close);
+        modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+
+        // Speichern
+        $('tcsSave').addEventListener('click', function () {
+            localStorage.setItem('tt_chart_style', JSON.stringify(window.modalChartStyle));
             if (typeof createExplosion === 'function') createExplosion(window.innerWidth / 2, window.innerHeight / 2);
-            document.getElementById('chartStyleModal').remove();
+            modal.remove();
             updateDashboard();
         });
-        
-        document.getElementById('chartCancelBtn').addEventListener('click', () => {
-            document.getElementById('chartStyleModal').remove();
-        });
-        
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.remove();
-        });
-        
-        setTimeout(() => updateChartStylePreview(currentStyle), 100);
+
+        refreshDim();
+        // Preview initial rendern (nach Layout, damit clientWidth stimmt)
+        setTimeout(preview, 60);
     }
 
     // ═══ NEW: Modern Donut Settings Modal ═══
@@ -783,64 +895,333 @@
         localStorage.removeItem('tt_donut_mode');
     }
 
-    function openDonutStyleModal() {
-        const saved = localStorage.getItem('tt_bar_chart_settings');
-        const currentSettings = saved ? JSON.parse(saved) : {
-            barHeight: 32,
-            showLabels: true,
-            showAnimation: true,
-            borderRadius: 8
-        };
+    // ═══ Balkendiagramm-Einstellungen: zentrale Defaults + Loader ═══
+    var BAR_CHART_DEFAULTS = {
+        barHeight: 32,
+        borderRadius: 8,
+        segmentGap: 0,
+        showLabels: true,
+        showAnimation: true,
+        animSpeed: 800,   // ms – Dauer der Fill-Animation
+        glow: false
+    };
 
-        window.modalBarSettings = { ...currentSettings };
+    function getBarChartSettings() {
+        var s = {};
+        try {
+            var saved = localStorage.getItem('tt_bar_chart_settings');
+            if (saved) s = JSON.parse(saved) || {};
+        } catch (e) { s = {}; }
+        return Object.assign({}, BAR_CHART_DEFAULTS, s);
+    }
 
-        const modal = document.createElement('div');
-        modal.className = 'modal active';
-        modal.id = 'donutStyleModal';
-        modal.style.zIndex = '5000';
-        modal.style.animation = 'fadeIn 0.3s ease';
-
-        modal.innerHTML = `<div class="modal-box" style="width:420px;animation:slideUp .3s;background:linear-gradient(135deg,rgba(var(--primary-rgb),.06) 0%,rgba(var(--primary-rgb),.02) 100%);border:1px solid var(--border-default);border-radius:16px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)"><div style="padding:1.5rem 2rem;border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(90deg,rgba(var(--primary-rgb),.1) 0%,transparent 100%)"><h2 style="margin:0;font-size:1.3rem;font-weight:900;color:var(--text-main)">📊 Balkendiagramm</h2><button onclick="document.getElementById('donutStyleModal').remove()" style="background:none;border:none;color:var(--text-muted);font-size:1.4rem;cursor:pointer;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:all .2s" onmouseover="this.style.background='rgba(255,255,255,.1)';this.style.color='var(--text-main)'" onmouseout="this.style.background='none';this.style.color='var(--text-muted)'">✕</button></div><div style="padding:2rem;display:flex;flex-direction:column;gap:1.5rem"><div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem"><span style="font-weight:700;font-size:.95rem;color:var(--text-main)">📏 Höhe: <span id="barHeightValue" style="color:var(--primary);font-family:var(--font-mono)">${currentSettings.barHeight}px</span></span></div><input type="range" id="barHeightSlider" min="20" max="50" value="${currentSettings.barHeight}" style="width:100%;height:7px;border-radius:4px;background:linear-gradient(to right,rgba(var(--primary-rgb),.2),rgba(var(--primary-rgb),.4));outline:none;-webkit-appearance:none;cursor:pointer" oninput="window.modalBarSettings.barHeight=parseInt(this.value);document.getElementById('barHeightValue').textContent=this.value+'px';applyBarChartSettings()"><style>input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--primary);cursor:pointer;box-shadow:0 0 8px rgba(var(--primary-rgb),.4)}input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--primary);cursor:pointer;border:none;box-shadow:0 0 8px rgba(var(--primary-rgb),.4)}</style></div><label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:13px 14px;background:rgba(var(--primary-rgb),.04);border:1.5px solid rgba(var(--primary-rgb),.12);border-radius:12px;transition:all .2s" onmouseover="this.style.background='rgba(var(--primary-rgb),.08)';this.style.borderColor='rgba(var(--primary-rgb),.25)'" onmouseout="this.style.background='rgba(var(--primary-rgb),.04)';this.style.borderColor='rgba(var(--primary-rgb),.12)'"><span style="font-size:1.6rem">📝</span><div style="flex:1"><div style="font-weight:700;color:var(--text-main);font-size:.95rem">Prozent anzeigen</div><div style="font-size:.7rem;color:var(--text-muted)">Im Balken</div></div><input type="checkbox" id="showLabelsCheck" ${currentSettings.showLabels ? 'checked' : ''} style="width:20px;height:20px;cursor:pointer;accent-color:var(--primary)"></label><label style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:13px 14px;background:rgba(var(--primary-rgb),.04);border:1.5px solid rgba(var(--primary-rgb),.12);border-radius:12px;transition:all .2s" onmouseover="this.style.background='rgba(var(--primary-rgb),.08)';this.style.borderColor='rgba(var(--primary-rgb),.25)'" onmouseout="this.style.background='rgba(var(--primary-rgb),.04)';this.style.borderColor='rgba(var(--primary-rgb),.12)'"><span style="font-size:1.6rem">⚡</span><div style="flex:1"><div style="font-weight:700;color:var(--text-main);font-size:.95rem">Sanfte Animation</div><div style="font-size:.7rem;color:var(--text-muted)">Beim Laden</div></div><input type="checkbox" id="showAnimationCheck" ${currentSettings.showAnimation ? 'checked' : ''} style="width:20px;height:20px;cursor:pointer;accent-color:var(--primary)"></label><div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem"><span style="font-weight:700;font-size:.95rem;color:var(--text-main)">🔘 Ecken: <span id="borderRadiusValue" style="color:var(--primary);font-family:var(--font-mono)">${currentSettings.borderRadius}px</span></span></div><input type="range" id="borderRadiusSlider" min="0" max="20" value="${currentSettings.borderRadius}" style="width:100%;height:7px;border-radius:4px;background:linear-gradient(to right,rgba(var(--primary-rgb),.2),rgba(var(--primary-rgb),.4));outline:none;-webkit-appearance:none;cursor:pointer" oninput="window.modalBarSettings.borderRadius=parseInt(this.value);document.getElementById('borderRadiusValue').textContent=this.value+'px';applyBarChartSettings()"></div><div style="display:flex;gap:10px;justify-content:flex-end;padding-top:1.5rem;border-top:1px solid var(--border-subtle);margin-top:.5rem"><button id="donutCancelBtn" onclick="document.getElementById('donutStyleModal').remove()" style="padding:10px 20px;background:rgba(255,255,255,.05);border:1px solid var(--border-default);border-radius:8px;color:var(--text-main);font-weight:600;cursor:pointer;transition:all .2s;font-size:.95rem" onmouseover="this.style.background='rgba(255,255,255,.10)';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,255,255,.05)';this.style.transform='translateY(0)'">Abbrechen</button><button id="donutSaveBtn" style="padding:10px 24px;background:linear-gradient(135deg,var(--primary),rgba(var(--primary-rgb),.8));border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;transition:all .2s;font-size:.95rem;box-shadow:0 4px 12px rgba(var(--primary-rgb),.3)" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(var(--primary-rgb),.4)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 12px rgba(var(--primary-rgb),.3)'">Speichern</button></div></div>`;
-
-        document.body.appendChild(modal);
-
-        // Setup checkbox handlers
-        document.getElementById('showLabelsCheck').addEventListener('change', (e) => {
-            window.modalBarSettings.showLabels = e.target.checked;
-            applyBarChartSettings();
+    // Wendet Layout-Settings (Höhe, Radius, Gap, Labels, Glow) direkt auf den echten Chart an.
+    // Wird sowohl live im Modal als auch bei jedem updateUI() aufgerufen.
+    function applyBarChartSettings(settings) {
+        // Ohne Argument: immer die GESPEICHERTEN Settings (nie window.modalBarSettings –
+        // das enthält u.U. noch nicht committete Live-Edits eines offenen Modals).
+        var s = settings || getBarChartSettings();
+        var container = document.getElementById('donutChartContainer');
+        if (container) {
+            container.style.height = s.barHeight + 'px';
+            container.style.borderRadius = s.borderRadius + 'px';
+            container.style.gap = (s.segmentGap || 0) + 'px';
+            // Glow als Schein um den ganzen Balken (per-Segment würde vom overflow:hidden
+            // des Containers weggeschnitten).
+            var baseShadow = 'inset 0 2px 4px rgba(0,0,0,0.2)';
+            container.style.boxShadow = s.glow
+                ? baseShadow + ', 0 0 22px rgba(var(--primary-rgb),0.42)'
+                : baseShadow;
+        }
+        document.querySelectorAll('.segment-label').forEach(function (label) {
+            label.style.display = s.showLabels ? 'block' : 'none';
         });
-        document.getElementById('showAnimationCheck').addEventListener('change', (e) => {
-            window.modalBarSettings.showAnimation = e.target.checked;
-        });
-
-        // Save button handler
-        document.getElementById('donutSaveBtn').addEventListener('click', () => {
-            localStorage.setItem('tt_bar_chart_settings', JSON.stringify(window.modalBarSettings));
-            createExplosion(window.innerWidth / 2, window.innerHeight / 2);
-            document.getElementById('donutStyleModal').remove();
-            updateDashboard();
-        });
-
-        // Cancel button handler
-        document.getElementById('donutCancelBtn').addEventListener('click', () => {
-            document.getElementById('donutStyleModal').remove();
-        });
-
-        // Close on backdrop click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.remove();
+        // Bei Segment-Abstand bekommen die Segmente eigene abgerundete Ecken.
+        document.querySelectorAll('#donutChartContainer .donut-segment').forEach(function (seg) {
+            seg.style.borderRadius = (s.segmentGap > 0 ? Math.min(s.borderRadius, 6) : 0) + 'px';
         });
     }
 
-    function applyBarChartSettings() {
-        if (!window.modalBarSettings) return;
-        const container = document.getElementById('donutChartContainer');
-        if (container) container.style.height = window.modalBarSettings.barHeight + 'px';
+    // ═══ NEW: Modern Balkendiagramm-Einstellungen Modal ═══
+    function openDonutStyleModal() {
+        var current = getBarChartSettings();
+        window.modalBarSettings = Object.assign({}, current);
+        window._barSettingsSnapshot = Object.assign({}, current); // für Abbrechen-Restore
 
-        const labels = document.querySelectorAll('.segment-label');
-        labels.forEach(label => {
-            label.style.display = window.modalBarSettings.showLabels ? 'block' : 'none';
+        var modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.id = 'donutStyleModal';
+        modal.style.zIndex = '100000';
+
+        modal.innerHTML =
+        '<style>' +
+        '.bcs-box{width:460px;max-width:calc(100vw - 32px);max-height:90vh;overflow-y:auto;background:#111118;border:1px solid var(--border-default,rgba(255,255,255,.08));border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,.55);animation:bcsUp .28s cubic-bezier(.16,1,.3,1)}' +
+        '@keyframes bcsUp{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}' +
+        '.bcs-head{position:relative;padding:20px 22px;border-bottom:1px solid var(--border-subtle,rgba(255,255,255,.06))}' +
+        '.bcs-head h2{margin:0;font-size:1.05rem;font-weight:700;color:var(--text-main);letter-spacing:-.01em}' +
+        '.bcs-head p{margin:3px 0 0;font-size:.78rem;color:var(--text-muted)}' +
+        '.bcs-x{position:absolute;top:16px;right:16px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.04);border:1px solid var(--border-subtle,rgba(255,255,255,.06));border-radius:8px;color:var(--text-muted);cursor:pointer;transition:all .2s}' +
+        '.bcs-x:hover{background:rgba(255,255,255,.09);color:var(--text-main)}' +
+        '.bcs-body{padding:20px 22px;display:flex;flex-direction:column;gap:22px}' +
+        '.bcs-preview{padding:16px;border-radius:12px;background:rgba(255,255,255,.02);border:1px solid var(--border-subtle,rgba(255,255,255,.06))}' +
+        '.bcs-preview-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}' +
+        '.bcs-preview-top span{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted)}' +
+        '.bcs-replay{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:600;color:var(--primary);background:rgba(var(--primary-rgb),.1);border:1px solid rgba(var(--primary-rgb),.22);border-radius:7px;padding:4px 9px;cursor:pointer;transition:all .18s}' +
+        '.bcs-replay:hover{background:rgba(var(--primary-rgb),.18)}' +
+        '.bcs-replay svg{width:12px;height:12px}' +
+        '.bcs-bar{width:100%;display:flex;overflow:hidden;background:rgba(255,255,255,.04);box-shadow:inset 0 2px 4px rgba(0,0,0,.2)}' +
+        '.bcs-seg{height:100%;flex:0 0 0%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:rgba(255,255,255,.92)}' +
+        '.bcs-group-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:12px;display:block}' +
+        '.bcs-row{display:flex;flex-direction:column;gap:9px}' +
+        '.bcs-row+.bcs-row{margin-top:16px}' +
+        '.bcs-rowhead{display:flex;justify-content:space-between;align-items:center}' +
+        '.bcs-rowhead label{font-size:.86rem;font-weight:600;color:var(--text-main)}' +
+        '.bcs-val{font-size:.8rem;font-weight:700;color:var(--primary);font-family:var(--font-mono,monospace)}' +
+        '.bcs-slider{width:100%;height:6px;border-radius:4px;background:rgba(var(--primary-rgb),.18);outline:none;-webkit-appearance:none;cursor:pointer}' +
+        '.bcs-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--primary);cursor:pointer;border:3px solid #111118;box-shadow:0 0 0 1px rgba(var(--primary-rgb),.5)}' +
+        '.bcs-slider::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--primary);cursor:pointer;border:3px solid #111118}' +
+        '.bcs-slider:disabled{opacity:.4;cursor:not-allowed}' +
+        '.bcs-toggle{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,255,255,.02);border:1px solid var(--border-subtle,rgba(255,255,255,.06));border-radius:11px;cursor:pointer;transition:all .18s}' +
+        '.bcs-toggle:hover{background:rgba(255,255,255,.045);border-color:var(--border-default,rgba(255,255,255,.1))}' +
+        '.bcs-toggle+.bcs-toggle{margin-top:9px}' +
+        '.bcs-toggle .bcs-ic{width:34px;height:34px;flex:0 0 34px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:rgba(var(--primary-rgb),.1);color:var(--primary)}' +
+        '.bcs-toggle .bcs-ic svg{width:17px;height:17px}' +
+        '.bcs-toggle .bcs-txt{flex:1}' +
+        '.bcs-toggle .bcs-txt b{display:block;font-size:.87rem;font-weight:600;color:var(--text-main)}' +
+        '.bcs-toggle .bcs-txt small{font-size:.72rem;color:var(--text-muted)}' +
+        '.bcs-switch{position:relative;width:42px;height:24px;flex:0 0 42px;border-radius:999px;background:rgba(255,255,255,.12);transition:background .2s}' +
+        '.bcs-switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s cubic-bezier(.16,1,.3,1)}' +
+        '.bcs-toggle input{position:absolute;opacity:0;width:0;height:0}' +
+        '.bcs-toggle input:checked~.bcs-switch{background:var(--primary)}' +
+        '.bcs-toggle input:checked~.bcs-switch::after{transform:translateX(18px)}' +
+        '.bcs-foot{display:flex;gap:10px;align-items:center;padding:16px 22px;border-top:1px solid var(--border-subtle,rgba(255,255,255,.06))}' +
+        '.bcs-reset{font-size:.8rem;font-weight:600;color:var(--text-muted);background:none;border:none;cursor:pointer;padding:8px 4px;transition:color .18s}' +
+        '.bcs-reset:hover{color:var(--text-main)}' +
+        '.bcs-btn{padding:10px 18px;border-radius:9px;font-size:.86rem;font-weight:600;cursor:pointer;transition:all .18s;border:1px solid transparent}' +
+        '.bcs-btn.ghost{background:rgba(255,255,255,.05);border-color:var(--border-default,rgba(255,255,255,.1));color:var(--text-main)}' +
+        '.bcs-btn.ghost:hover{background:rgba(255,255,255,.1)}' +
+        '.bcs-btn.primary{background:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(var(--primary-rgb),.32)}' +
+        '.bcs-btn.primary:hover{filter:brightness(1.08);box-shadow:0 6px 20px rgba(var(--primary-rgb),.42)}' +
+        '.bcs-animrow{transition:opacity .2s}' +
+        // Desktop: breiteres Modal + 2-Spalten-Layout (Vorschau über volle Breite)
+        '@media(min-width:640px){' +
+          '.bcs-box{width:680px}' +
+          '.bcs-body{display:grid;grid-template-columns:1fr 1fr;gap:22px 28px;align-items:start}' +
+          '.bcs-preview{grid-column:1 / -1}' +
+        '}' +
+        // Light-Theme-Overrides (SPA unterstützt [data-theme="light"])
+        '[data-theme="light"] .bcs-box{background:#fff;border-color:rgba(0,0,0,.08)}' +
+        '[data-theme="light"] .bcs-head,[data-theme="light"] .bcs-foot{border-color:rgba(0,0,0,.07)}' +
+        '[data-theme="light"] .bcs-x,[data-theme="light"] .bcs-preview,[data-theme="light"] .bcs-toggle{background:rgba(0,0,0,.02);border-color:rgba(0,0,0,.08)}' +
+        '[data-theme="light"] .bcs-toggle:hover{background:rgba(0,0,0,.04)}' +
+        '[data-theme="light"] .bcs-bar{background:rgba(0,0,0,.05)}' +
+        '[data-theme="light"] .bcs-switch{background:rgba(0,0,0,.18)}' +
+        '[data-theme="light"] .bcs-slider::-webkit-slider-thumb,[data-theme="light"] .bcs-slider::-moz-range-thumb{border-color:#fff}' +
+        '[data-theme="light"] .bcs-btn.ghost{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.12)}' +
+        '[data-theme="light"] .bcs-btn.ghost:hover{background:rgba(0,0,0,.08)}' +
+        '[data-theme="light"] .bcs-seg{color:#fff}' +
+        '</style>' +
+        '<div class="bcs-box">' +
+            '<div class="bcs-head">' +
+                '<h2>Arbeitszeit-Verteilung</h2>' +
+                '<p>Darstellung des Balkendiagramms anpassen</p>' +
+                '<button class="bcs-x" onclick="document.getElementById(\'donutStyleModal\').remove()" title="Schließen">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>' +
+                '</button>' +
+            '</div>' +
+            '<div class="bcs-body">' +
+                // Live-Vorschau
+                '<div class="bcs-preview">' +
+                    '<div class="bcs-preview-top">' +
+                        '<span>Vorschau</span>' +
+                        '<button class="bcs-replay" id="bcsReplay"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Abspielen</button>' +
+                    '</div>' +
+                    '<div class="bcs-bar" id="bcsPreviewBar"></div>' +
+                '</div>' +
+                // Darstellung
+                '<div>' +
+                    '<span class="bcs-group-label">Darstellung</span>' +
+                    '<div class="bcs-row">' +
+                        '<div class="bcs-rowhead"><label>Balkenhöhe</label><span class="bcs-val" id="bcsHeightVal">' + current.barHeight + 'px</span></div>' +
+                        '<input type="range" class="bcs-slider" id="bcsHeight" min="16" max="56" value="' + current.barHeight + '">' +
+                    '</div>' +
+                    '<div class="bcs-row">' +
+                        '<div class="bcs-rowhead"><label>Eckenradius</label><span class="bcs-val" id="bcsRadiusVal">' + current.borderRadius + 'px</span></div>' +
+                        '<input type="range" class="bcs-slider" id="bcsRadius" min="0" max="24" value="' + current.borderRadius + '">' +
+                    '</div>' +
+                    '<div class="bcs-row">' +
+                        '<div class="bcs-rowhead"><label>Segment-Abstand</label><span class="bcs-val" id="bcsGapVal">' + current.segmentGap + 'px</span></div>' +
+                        '<input type="range" class="bcs-slider" id="bcsGap" min="0" max="10" value="' + current.segmentGap + '">' +
+                    '</div>' +
+                '</div>' +
+                // Optionen
+                '<div>' +
+                    '<span class="bcs-group-label">Optionen</span>' +
+                    '<label class="bcs-toggle">' +
+                        '<span class="bcs-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6M12 4v16"/></svg></span>' +
+                        '<span class="bcs-txt"><b>Prozente im Balken</b><small>Zahl direkt im Segment anzeigen</small></span>' +
+                        '<input type="checkbox" id="bcsLabels"' + (current.showLabels ? ' checked' : '') + '><span class="bcs-switch"></span>' +
+                    '</label>' +
+                    '<label class="bcs-toggle">' +
+                        '<span class="bcs-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></svg></span>' +
+                        '<span class="bcs-txt"><b>Sanfte Animation</b><small>Balken füllen sich beim Laden</small></span>' +
+                        '<input type="checkbox" id="bcsAnim"' + (current.showAnimation ? ' checked' : '') + '><span class="bcs-switch"></span>' +
+                    '</label>' +
+                    '<label class="bcs-toggle">' +
+                        '<span class="bcs-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg></span>' +
+                        '<span class="bcs-txt"><b>Glow-Effekt</b><small>Leuchtender Schein um die Segmente</small></span>' +
+                        '<input type="checkbox" id="bcsGlow"' + (current.glow ? ' checked' : '') + '><span class="bcs-switch"></span>' +
+                    '</label>' +
+                '</div>' +
+                // Animationstempo (nur relevant wenn Animation an)
+                '<div class="bcs-animrow" id="bcsAnimRow">' +
+                    '<span class="bcs-group-label">Animation</span>' +
+                    '<div class="bcs-row">' +
+                        '<div class="bcs-rowhead"><label>Tempo</label><span class="bcs-val" id="bcsSpeedVal"></span></div>' +
+                        '<input type="range" class="bcs-slider" id="bcsSpeed" min="300" max="1600" step="50" value="' + current.animSpeed + '">' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div class="bcs-foot">' +
+                '<button class="bcs-reset" id="bcsReset">Zurücksetzen</button>' +
+                '<div style="flex:1"></div>' +
+                '<button class="bcs-btn ghost" id="bcsCancel">Abbrechen</button>' +
+                '<button class="bcs-btn primary" id="bcsSave">Speichern</button>' +
+            '</div>' +
+        '</div>';
+
+        document.body.appendChild(modal);
+        setupDonutStyleModal(modal);
+    }
+
+    function setupDonutStyleModal(modal) {
+        var speedLabel = function (ms) {
+            if (ms <= 500) return 'Schnell';
+            if (ms >= 1300) return 'Langsam';
+            return 'Normal';
+        };
+        var $ = function (id) { return modal.querySelector('#' + id); };
+
+        function refreshAnimRow() {
+            var on = window.modalBarSettings.showAnimation;
+            var row = $('bcsAnimRow');
+            row.style.opacity = on ? '1' : '.45';
+            $('bcsSpeed').disabled = !on;
+            $('bcsSpeedVal').textContent = speedLabel(window.modalBarSettings.animSpeed) + ' · ' + window.modalBarSettings.animSpeed + 'ms';
+        }
+
+        function renderPreview(animate) {
+            var bar = $('bcsPreviewBar');
+            if (!bar) return;
+            var s = window.modalBarSettings;
+            bar.style.height = s.barHeight + 'px';
+            bar.style.borderRadius = s.borderRadius + 'px';
+            bar.style.gap = s.segmentGap + 'px';
+            var baseShadow = 'inset 0 2px 4px rgba(0,0,0,0.2)';
+            bar.style.boxShadow = s.glow ? baseShadow + ', 0 0 22px rgba(var(--primary-rgb),0.42)' : baseShadow;
+            var sample = [
+                { pct: 58, color: 'var(--primary)' },
+                { pct: 20, color: 'var(--school)' },
+                { pct: 12, color: 'var(--success)' },
+                { pct: 6, color: 'var(--danger)' },
+                { pct: 4, color: 'var(--holiday)' }
+            ];
+            bar.innerHTML = '';
+            var segEls = [];
+            sample.forEach(function (seg) {
+                var el = document.createElement('div');
+                el.className = 'bcs-seg';
+                el.style.background = seg.color;
+                el.style.borderRadius = (s.segmentGap > 0 ? Math.min(s.borderRadius, 6) : 0) + 'px';
+                el.style.transition = s.showAnimation ? ('flex ' + s.animSpeed + 'ms cubic-bezier(.34,1.56,.64,1)') : 'none';
+                el.textContent = (s.showLabels && seg.pct > 8) ? seg.pct + '%' : '';
+                el.style.flex = '0 0 0%';
+                bar.appendChild(el);
+                segEls.push({ el: el, pct: seg.pct });
+            });
+            var fill = function () {
+                segEls.forEach(function (o) { o.el.style.flex = '0 0 ' + o.pct + '%'; });
+            };
+            if (animate && s.showAnimation) {
+                requestAnimationFrame(function () { requestAnimationFrame(fill); });
+            } else {
+                segEls.forEach(function (o) { o.el.style.transition = 'none'; o.el.style.flex = '0 0 ' + o.pct + '%'; });
+            }
+        }
+
+        // Slider: Höhe / Radius / Gap  → live auf echten Chart + Vorschau
+        var wire = function (id, valId, key, unit) {
+            $(id).addEventListener('input', function () {
+                window.modalBarSettings[key] = parseInt(this.value, 10);
+                $(valId).textContent = this.value + (unit || '');
+                applyBarChartSettings(window.modalBarSettings);
+                renderPreview(false);
+            });
+        };
+        wire('bcsHeight', 'bcsHeightVal', 'barHeight', 'px');
+        wire('bcsRadius', 'bcsRadiusVal', 'borderRadius', 'px');
+        wire('bcsGap', 'bcsGapVal', 'segmentGap', 'px');
+
+        $('bcsSpeed').addEventListener('input', function () {
+            window.modalBarSettings.animSpeed = parseInt(this.value, 10);
+            $('bcsSpeedVal').textContent = speedLabel(window.modalBarSettings.animSpeed) + ' · ' + this.value + 'ms';
+            renderPreview(false);
         });
+
+        // Toggles
+        $('bcsLabels').addEventListener('change', function () {
+            window.modalBarSettings.showLabels = this.checked;
+            applyBarChartSettings(window.modalBarSettings);
+            renderPreview(false);
+        });
+        $('bcsAnim').addEventListener('change', function () {
+            window.modalBarSettings.showAnimation = this.checked;
+            refreshAnimRow();
+            renderPreview(this.checked);
+        });
+        $('bcsGlow').addEventListener('change', function () {
+            window.modalBarSettings.glow = this.checked;
+            applyBarChartSettings(window.modalBarSettings);
+            renderPreview(false);
+        });
+
+        // Replay-Button
+        $('bcsReplay').addEventListener('click', function () { renderPreview(true); });
+
+        // Reset
+        $('bcsReset').addEventListener('click', function () {
+            window.modalBarSettings = Object.assign({}, BAR_CHART_DEFAULTS);
+            var s = window.modalBarSettings;
+            $('bcsHeight').value = s.barHeight; $('bcsHeightVal').textContent = s.barHeight + 'px';
+            $('bcsRadius').value = s.borderRadius; $('bcsRadiusVal').textContent = s.borderRadius + 'px';
+            $('bcsGap').value = s.segmentGap; $('bcsGapVal').textContent = s.segmentGap + 'px';
+            $('bcsSpeed').value = s.animSpeed;
+            $('bcsLabels').checked = s.showLabels;
+            $('bcsAnim').checked = s.showAnimation;
+            $('bcsGlow').checked = s.glow;
+            refreshAnimRow();
+            applyBarChartSettings(s);
+            renderPreview(true);
+        });
+
+        // Abbrechen: Snapshot wiederherstellen (live-Änderungen verwerfen)
+        var revert = function () {
+            applyBarChartSettings(window._barSettingsSnapshot);
+            modal.remove();
+        };
+        $('bcsCancel').addEventListener('click', revert);
+        modal.addEventListener('click', function (e) { if (e.target === modal) revert(); });
+
+        // Speichern
+        $('bcsSave').addEventListener('click', function () {
+            localStorage.setItem('tt_bar_chart_settings', JSON.stringify(window.modalBarSettings));
+            if (typeof createExplosion === 'function') createExplosion(window.innerWidth / 2, window.innerHeight / 2);
+            modal.remove();
+            updateDashboard();
+        });
+
+        refreshAnimRow();
+        renderPreview(true);
     }
 
     function cancelDashboardEditMode() {
