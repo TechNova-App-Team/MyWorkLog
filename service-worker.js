@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * TimeTracker Service Worker — v5.12.4
+ * TimeTracker Service Worker — Version aus ?v=<version.json> (siehe SW_VERSION unten)
  * ============================================================
  * Strategie: Network-First für alle eigenen Assets (JS/CSS/HTML).
  * → Immer frisch vom Server (ETag-Prüfung via cache:'no-cache')
@@ -11,7 +11,14 @@
 
 'use strict';
 
-const SW_VERSION  = 'v5.14.0';
+// SW-Version wird aus dem Registrierungs-Query gelesen (`service-worker.js?v=<version>`),
+// den onboarding.js aus config/version.json füllt. So gibt es EINE Quelle der Wahrheit:
+// nur version.json bumpen → Registrierungs-URL ändert sich → neuer SW installiert sich →
+// liest hier automatisch dieselbe Version. Kein manueller SW-Bump mehr nötig.
+const SW_VERSION  = (function () {
+  try { return new URL(self.location.href).searchParams.get('v') || 'dev'; }
+  catch (e) { return 'dev'; }
+})();
 const CACHE_NAME  = `tt-cache-${SW_VERSION}`;
 const OFFLINE_URL = './offline/';
 const DEBUG       = true;
@@ -91,6 +98,11 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
+  // Nur http/https verarbeiten. chrome-extension://, data:, blob:, ws: etc. lassen sich
+  // nicht in die Cache API legen → c.put() wirft "Request scheme ... is unsupported".
+  // Solche Requests (z.B. von Browser-Extensions) einfach durchreichen.
+  if (!/^https?:$/.test(new URL(request.url).protocol)) return;
+
   // HTML-Navigation: Network-First mit cache:'reload' → bypassed Browser-HTTP-Cache komplett.
   // Verhindert, dass bei Cloudflare-Deployments ein 304-Hit alten HTML-Content liefert.
   if (request.mode === 'navigate') {
@@ -99,7 +111,7 @@ self.addEventListener('fetch', event => {
         .then(response => {
           if (response.status === 200) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then(c => c.put(request, clone));
+            caches.open(CACHE_NAME).then(c => c.put(request, clone)).catch(() => {});
           }
           return response;
         })
@@ -128,7 +140,7 @@ self.addEventListener('fetch', event => {
       .then(response => {
         if (response.status === 200) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then(c => c.put(request, clone));
+          caches.open(CACHE_NAME).then(c => c.put(request, clone)).catch(() => {});
         }
         return response;
       })

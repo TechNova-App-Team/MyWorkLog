@@ -17,7 +17,7 @@
         }
         
         // Draft persistence key
-        const DRAFT_KEY = 'tt_entry_draft';
+        const DRAFT_KEY = 'mwl_entry_draft';
 
         // Load draft (if any) and populate inputs
         function loadDraft() {

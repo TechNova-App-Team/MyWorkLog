@@ -113,11 +113,11 @@
             document.body.style.backgroundImage = 'radial-gradient(circle at 15% 15%, rgba(var(--primary-rgb), 0.08), transparent 40%), radial-gradient(circle at 85% 85%, rgba(var(--primary-rgb), 0.05), transparent 40%)';
             showCustomMessage('🌙 Dark Mode', 'Aktiviert', 'info');
         }
-        localStorage.setItem('tt_theme', theme);
+        localStorage.setItem('mwl_theme', theme);
     }
 
     // Load theme on init
-    const savedTheme = localStorage.getItem('tt_theme') || 'dark';
+    const savedTheme = localStorage.getItem('mwl_theme') || 'dark';
     if (savedTheme === 'light') {
         setTheme('light');
     }
@@ -238,14 +238,14 @@
         // Trigger Notification bei neuer Best-Streak (EINMALIG PRO TAG)
         if (streak.current > 0 && streak.current === streak.best && streak.current > 1) {
             const today = new Date().toISOString().split('T')[0];
-            const lastNotificationDate = localStorage.getItem('tt_last_streak_notification_date');
-            const lastNotificationValue = localStorage.getItem('tt_last_streak_notification_value');
+            const lastNotificationDate = localStorage.getItem('mwl_last_streak_notification_date');
+            const lastNotificationValue = localStorage.getItem('mwl_last_streak_notification_value');
             
             // Nur anzeigen, wenn es heute noch nicht angezeigt wurde oder der Streak höher ist
             if (lastNotificationDate !== today || parseInt(lastNotificationValue || '0') < streak.best) {
                 showSmartNotification('🔥 Neue Best-Streak!', `${streak.current} Tage in Folge mit Soll erfüllt!`, 'success');
-                localStorage.setItem('tt_last_streak_notification_date', today);
-                localStorage.setItem('tt_last_streak_notification_value', streak.best.toString());
+                localStorage.setItem('mwl_last_streak_notification_date', today);
+                localStorage.setItem('mwl_last_streak_notification_value', streak.best.toString());
             }
         }
     }

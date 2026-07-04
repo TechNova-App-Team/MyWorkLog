@@ -213,7 +213,7 @@
         document.getElementById('inpHours').value = '';
         document.getElementById('inpProject').value = ''; // NEU
         document.getElementById('inpNotes').value = ''; // NEU
-        try { if (typeof clearDraft === 'function') clearDraft(); else localStorage.removeItem('tt_entry_draft'); } catch(e) { /* ignore */ }
+        try { if (typeof clearDraft === 'function') clearDraft(); else localStorage.removeItem('mwl_entry_draft'); } catch(e) { /* ignore */ }
         
         // Neu laden der Historie, falls gerade aktiv
         if (document.getElementById('view-history').classList.contains('active')) {
@@ -424,25 +424,6 @@
         // Hint-Banner für Multi-Day-Buchung nur bei Urlaub anzeigen
         const hint = document.getElementById('vacationMultiHint');
         if (hint) hint.style.display = (t === 'vacation') ? 'flex' : 'none';
-    }
-
-    function openCorrection(type) {
-        const modal = document.getElementById('corrModal');
-        const sel = document.getElementById('corrSelect');
-        sel.innerHTML = '';
-        const now = new Date();
-        if(type === 'week') {
-            for(let i=0; i<20; i++) {
-                let d = new Date(now); d.setDate(d.getDate() - i*7);
-                sel.add(new Option(`KW ${getWeek(d)}`, `KW ${getWeek(d)}`));
-            }
-        } else {
-            for(let i=0; i<12; i++) {
-                let d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-                sel.add(new Option(d.toLocaleDateString('de-DE',{month:'long', year:'numeric'}), d.toISOString()));
-            }
-        }
-        modal.classList.add('active');
     }
 
     // ═══ NEW: Saldo-Korrektur (Gleitzeit manuell anpassen) ═══
@@ -744,7 +725,7 @@
     }
     function getTrendChartStyle() {
         var s = {};
-        try { var raw = localStorage.getItem('tt_chart_style'); if (raw) s = JSON.parse(raw) || {}; } catch (e) { s = {}; }
+        try { var raw = localStorage.getItem('mwl_chart_style'); if (raw) s = JSON.parse(raw) || {}; } catch (e) { s = {}; }
         return Object.assign(getTrendChartDefaults(), s);
     }
 
@@ -979,7 +960,7 @@
 
         // Speichern
         $('tcsSave').addEventListener('click', function () {
-            localStorage.setItem('tt_chart_style', JSON.stringify(window.modalChartStyle));
+            localStorage.setItem('mwl_chart_style', JSON.stringify(window.modalChartStyle));
             if (typeof createExplosion === 'function') createExplosion(window.innerWidth / 2, window.innerHeight / 2);
             modal.remove();
             updateDashboard();
@@ -1078,24 +1059,24 @@
         button.style.borderColor = 'var(--primary)';
         button.style.background = 'rgba(var(--primary-rgb), 0.1)';
         button.style.color = 'var(--text-main)';
-        localStorage.setItem('tt_donut_mode', mode);
+        localStorage.setItem('mwl_donut_mode', mode);
     }
 
     function saveDonutSettings() {
         const settings = {
             animated: document.getElementById('donutAnimCheck').checked,
             glow: document.getElementById('donutGlowCheck').checked,
-            mode: localStorage.getItem('tt_donut_mode') || 'percentage'
+            mode: localStorage.getItem('mwl_donut_mode') || 'percentage'
         };
-        localStorage.setItem('tt_donut_settings', JSON.stringify(settings));
+        localStorage.setItem('mwl_donut_settings', JSON.stringify(settings));
         updateDashboard();
     }
 
     function resetDonutSettings() {
         document.getElementById('donutAnimCheck').checked = true;
         document.getElementById('donutGlowCheck').checked = true;
-        localStorage.removeItem('tt_donut_settings');
-        localStorage.removeItem('tt_donut_mode');
+        localStorage.removeItem('mwl_donut_settings');
+        localStorage.removeItem('mwl_donut_mode');
     }
 
     // ═══ Balkendiagramm-Einstellungen: zentrale Defaults + Loader ═══
@@ -1112,7 +1093,7 @@
     function getBarChartSettings() {
         var s = {};
         try {
-            var saved = localStorage.getItem('tt_bar_chart_settings');
+            var saved = localStorage.getItem('mwl_bar_chart_settings');
             if (saved) s = JSON.parse(saved) || {};
         } catch (e) { s = {}; }
         return Object.assign({}, BAR_CHART_DEFAULTS, s);
@@ -1417,7 +1398,7 @@
 
         // Speichern
         $('bcsSave').addEventListener('click', function () {
-            localStorage.setItem('tt_bar_chart_settings', JSON.stringify(window.modalBarSettings));
+            localStorage.setItem('mwl_bar_chart_settings', JSON.stringify(window.modalBarSettings));
             if (typeof createExplosion === 'function') createExplosion(window.innerWidth / 2, window.innerHeight / 2);
             modal.remove();
             updateDashboard();

@@ -52,7 +52,10 @@ function updateVersionElements() {
     document.querySelectorAll('[data-app-version]').forEach(el => {
         el.textContent = `v${APP_CONFIG.version}`;
     });
-    
+
+    // Aktive Service-Worker-Version daneben anzeigen (Update-Diagnose)
+    updateSwVersionDisplay();
+
     // Update title if it contains VERSION placeholder
     const titleEl = document.querySelector('title');
     if (titleEl && titleEl.innerHTML.includes('VERSION')) {
@@ -62,6 +65,65 @@ function updateVersionElements() {
     // Log to console
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
         console.log('📦 App Configuration:', APP_CONFIG);
+    }
+}
+
+// ===== Service-Worker-Version im Footer (Update-Diagnose) =====
+// Fragt den aktiven SW nach seiner Version (GET_VERSION → VERSION_INFO). Weil der SW
+// mit `service-worker.js?v=<version.json>` registriert wird und seine Version aus dem
+// Query liest, MUSS SW-Version == App-Version sein, sobald das Update vollständig aktiv ist.
+// Grün ✓ = synchron/geladen. Amber ⟳ = neuer SW noch nicht aktiv (kurz warten / Reload).
+function normVer(v) { return String(v == null ? '' : v).replace(/^v/i, '').trim(); }
+
+function queryServiceWorkerVersion() {
+    return new Promise(function (resolve) {
+        try {
+            if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) { resolve(null); return; }
+            let done = false;
+            function handler(e) {
+                if (e.data && e.data.type === 'VERSION_INFO') {
+                    done = true;
+                    navigator.serviceWorker.removeEventListener('message', handler);
+                    resolve(e.data.version);
+                }
+            }
+            navigator.serviceWorker.addEventListener('message', handler);
+            navigator.serviceWorker.controller.postMessage({ type: 'GET_VERSION' });
+            setTimeout(function () {
+                if (!done) { navigator.serviceWorker.removeEventListener('message', handler); resolve(null); }
+            }, 1500);
+        } catch (e) { resolve(null); }
+    });
+}
+
+function updateSwVersionDisplay() {
+    const badges = document.querySelectorAll('.sw-version-badge');
+    if (!badges.length) return;
+    const appV = normVer(APP_CONFIG && APP_CONFIG.version);
+    queryServiceWorkerVersion().then(function (swVersion) {
+        badges.forEach(function (b) {
+            if (!swVersion) {
+                b.textContent = '· SW –';
+                b.className = 'sw-version-badge sw-unknown';
+                b.title = 'Kein aktiver Service Worker (z.B. erster Besuch, SW installiert noch).';
+                return;
+            }
+            const sw = normVer(swVersion);
+            const match = sw === appV;
+            b.textContent = '· SW v' + sw + (match ? ' ✓' : ' ⟳');
+            b.className = 'sw-version-badge ' + (match ? 'sw-ok' : 'sw-pending');
+            b.title = match
+                ? 'Service Worker aktuell (v' + sw + ') — Update vollständig geladen.'
+                : 'Update lädt noch: App v' + appV + ', aktiver SW v' + sw + '. Nach kurzem Warten oder Reload gleichen sie sich an.';
+        });
+    });
+}
+
+// Neu abfragen, sobald ein SW die Kontrolle übernimmt / bereit ist
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', function () { setTimeout(updateSwVersionDisplay, 300); });
+    if (navigator.serviceWorker.ready && typeof navigator.serviceWorker.ready.then === 'function') {
+        navigator.serviceWorker.ready.then(function () { setTimeout(updateSwVersionDisplay, 300); });
     }
 }
 

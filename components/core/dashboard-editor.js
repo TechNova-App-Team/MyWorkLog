@@ -65,7 +65,7 @@
         }
     }
     function resetDashboardLayout() {
-        localStorage.removeItem('tt_dashboard_layout');
+        localStorage.removeItem('mwl_dashboard_layout');
         // Also clear the widgetLayout stored in settings so applyWidgetLayout does not re-apply a saved custom layout
         if (data && data.settings) {
             delete data.settings.widgetLayout;
@@ -230,7 +230,7 @@
         }).filter(Boolean);
         
         if (order.length > 0) {
-            localStorage.setItem('tt_dashboard_layout', JSON.stringify(order));
+            localStorage.setItem('mwl_dashboard_layout', JSON.stringify(order));
             console.log('✅ Dashboard layout saved:', order);
         }
     }
@@ -243,7 +243,7 @@
         
         // Wait a tick for DOM to be ready
         setTimeout(() => {
-            const savedOrder = localStorage.getItem('tt_dashboard_layout');
+            const savedOrder = localStorage.getItem('mwl_dashboard_layout');
             if (savedOrder) {
                 try {
                     const order = JSON.parse(savedOrder);
@@ -298,7 +298,7 @@
             defaultEnabled: true,
             html: `
                 <div class="kpi-grid" id="dashboardGrid">
-                    <div class="card kpi-card" onclick="openCorrection('week')">
+                    <div class="card kpi-card">
                         <div class="progress-ring">
                             <svg width="100" height="100">
                                 <circle class="ring-bg" cx="50" cy="50" r="44"></circle>
@@ -310,7 +310,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card kpi-card" onclick="openCorrection('month')">
+                    <div class="card kpi-card">
                         <div class="progress-ring">
                             <svg width="100" height="100">
                                 <circle class="ring-bg" cx="50" cy="50" r="44"></circle>
@@ -354,7 +354,7 @@
             defaultEnabled: true,
             html: `
                 <div class="quick-actions" id="cmdBar">
-                    <button onclick="openCorrection('month')">
+                    <button onclick="openSaldoAdjust()">
                         <span class="cmd-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M3 6h18M3 18h18"/></svg></span>
                         <span class="cmd-label">Saldo</span>
                     </button>
@@ -800,7 +800,7 @@
                 badge.textContent = todayEntry.worked.toFixed(1) + 'h';
                 badge.style.background = 'rgba(16, 185, 129, 0.2)';
                 badge.style.color = '#10b981';
-                todayBtn.onclick = () => openCorrection('week');
+                todayBtn.onclick = () => quickAddEntry(new Event('click'));
             } else {
                 badge.textContent = 'offen';
                 badge.style.background = 'rgba(245, 158, 11, 0.2)';

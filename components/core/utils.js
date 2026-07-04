@@ -373,21 +373,6 @@
             }
         }
     }
-    function saveCorrection() {
-        const val = parseFloat(document.getElementById('corrVal').value);
-        if(!val) return;
-        const sel = document.getElementById('corrSelect');
-        data.entries.push({
-            id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
-            isPeriod: true,
-            label: `Korrektur: ${sel.value}`,
-            diff: val, worked:0, expected:0, type:'work', info:'Manuelle Korrektur',
-            breakMins: 0, shiftEnd: '', shiftWarning: false
-        });
-        save();
-        document.getElementById('corrModal').classList.remove('active');
-    }
     function closeBackupMenu() {
         if (window.backupMenuElement) {
             window.backupMenuElement.remove();

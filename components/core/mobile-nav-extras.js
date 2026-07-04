@@ -267,7 +267,7 @@
                 let draftStart = null;
                 let draftDate = null;
                 // Primär: direkt aus localStorage lesen (zuverlässig, auch wenn DOM-Input leer)
-                const draftRaw = localStorage.getItem('tt_entry_draft');
+                const draftRaw = localStorage.getItem('mwl_entry_draft');
                 if (draftRaw) {
                     const draft = JSON.parse(draftRaw);
                     draftStart = draft.start || null;
@@ -380,15 +380,15 @@
         const totalDiff = data.entries.reduce((sum, e) => sum + (e.diff || 0), 0);
         
         // 100h Überstunden
-        if (totalDiff >= 100 && totalDiff < 101 && !localStorage.getItem('tt_milestone_100h')) {
+        if (totalDiff >= 100 && totalDiff < 101 && !localStorage.getItem('mwl_milestone_100h')) {
             showSmartNotification('🎉 MEGA!', 'Du hast 100h Überstunden erreicht! 🚀', 'success');
-            localStorage.setItem('tt_milestone_100h', 'shown');
+            localStorage.setItem('mwl_milestone_100h', 'shown');
         }
 
         // 50h Überstunden
-        if (totalDiff >= 50 && totalDiff < 51 && !localStorage.getItem('tt_milestone_50h')) {
+        if (totalDiff >= 50 && totalDiff < 51 && !localStorage.getItem('mwl_milestone_50h')) {
             showSmartNotification('🎊 Wow!', '50h Überstunden - Das ist beeindruckend! 💪', 'success');
-            localStorage.setItem('tt_milestone_50h', 'shown');
+            localStorage.setItem('mwl_milestone_50h', 'shown');
         }
     }
 

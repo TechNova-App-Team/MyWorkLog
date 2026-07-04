@@ -46,7 +46,8 @@
                 countDays++; 
             }
 
-            if(d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) {
+            // Korrektur zählt NUR in den Gesamt-Saldo (oben), nicht in die Wochen-/Monats-Ringe
+            if(e.type !== 'korrektur' && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) {
                 month += e.diff;
                 if(getWeek(d) === getWeek(now)) week += e.diff;
             }

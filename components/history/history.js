@@ -104,35 +104,30 @@
             </div>`;
         };
 
+        // Entrance-Animation NUR bei Erst-Befüllung, nicht bei jedem Filter-Rerender
+        // (sonst faded die ganze Liste bei jeder Interaktion neu ein → wirkt wie Lag).
+        const hadRows = historyListEl.querySelector('.entry-row') !== null;
         historyListEl.innerHTML = filteredData.map(createRow).join('');
+        if (!hadRows) {
+            historyListEl.classList.add('entry-list-animate-in');
+            setTimeout(() => historyListEl.classList.remove('entry-list-animate-in'), 500);
+        }
 
         // Highlight entry if one is pending
         if (window.pendingHighlightId) {
-            console.log('⭐ PENDING HIGHLIGHT ID:', window.pendingHighlightId);
             setTimeout(() => {
-                const selector = `[data-entry-id="${window.pendingHighlightId}"]`;
-                console.log('🔍 SEARCHING FOR:', selector);
-                const entryEl = document.querySelector(selector);
-                console.log('🔍 FOUND:', entryEl ? 'YES!' : 'NO');
+                const entryEl = document.querySelector(`[data-entry-id="${window.pendingHighlightId}"]`);
                 if (entryEl) {
-                    console.log('✨ ADDING HIGHLIGHT CLASS');
                     entryEl.classList.add('entry-highlight');
-                    console.log('✨ CLASS ADDED:', entryEl.classList.toString());
                     entryEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                    // Remove highlight after 3 seconds
                     setTimeout(() => {
-                        console.log('✨ REMOVING HIGHLIGHT AFTER 3S');
                         entryEl.classList.remove('entry-highlight');
                         window.pendingHighlightId = null;
                     }, 3000);
                 } else {
-                    console.warn('❌ ELEMENT NOT FOUND!');
-                    console.log('📋 ALL data-entry-id VALUES:', Array.from(document.querySelectorAll('[data-entry-id]')).map(el => el.getAttribute('data-entry-id')));
+                    window.pendingHighlightId = null;
                 }
             }, 50);
-        } else {
-            console.log('⭐ NO PENDING HIGHLIGHT');
         }
     }
 

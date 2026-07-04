@@ -134,7 +134,7 @@
         d.activePresetId = id;
         d.pinned = (p.pinned || []).slice();
         data.settings.widgetLayout = (p.layout || []).slice();
-        try { localStorage.setItem('tt_dashboard_layout', JSON.stringify(data.settings.widgetLayout)); } catch (e) {}
+        try { localStorage.setItem('mwl_dashboard_layout', JSON.stringify(data.settings.widgetLayout)); } catch (e) {}
 
         applyPresetToDashboard(p);
         safeSave();
@@ -291,7 +291,7 @@
         pushHistory('vor Wiederherstellung');
         data.settings.widgetLayout = (snap.layout || []).slice();
         d.pinned = (snap.pinned || []).slice();
-        try { localStorage.setItem('tt_dashboard_layout', JSON.stringify(data.settings.widgetLayout)); } catch (e) {}
+        try { localStorage.setItem('mwl_dashboard_layout', JSON.stringify(data.settings.widgetLayout)); } catch (e) {}
 
         var p = currentPreset();
         applyPresetToDashboard({ layout: data.settings.widgetLayout, pinned: d.pinned });
@@ -757,7 +757,7 @@
         } else {
             var order = items.map(function(el){return el.getAttribute('data-item-id');}).filter(Boolean);
             data.settings.widgetLayout = order;
-            try { localStorage.setItem('tt_dashboard_layout', JSON.stringify(order)); } catch (e) {}
+            try { localStorage.setItem('mwl_dashboard_layout', JSON.stringify(order)); } catch (e) {}
             safeSave();
         }
         return true;

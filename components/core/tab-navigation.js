@@ -127,32 +127,20 @@
 
     // Navigate to history view and highlight a specific entry
     window.goToHistoryAndHighlight = function(entryId) {
-        console.log('🎯 goToHistoryAndHighlight CALLED with ID:', entryId);
-
         // Set the ID to highlight
         window.pendingHighlightId = entryId;
-        console.log('💾 window.pendingHighlightId SET to:', window.pendingHighlightId);
 
         switchTab('history');
-        console.log('📍 SWITCHED TO HISTORY TAB');
 
         // Clear any date filters to show ALL entries
         const dateInput = document.getElementById('historyFilterStart');
         const dateInputEnd = document.getElementById('historyFilterEnd');
-        console.log('🔧 Filters found:', dateInput ? 'YES' : 'NO');
 
         if (dateInput && dateInputEnd) {
             dateInput.value = '';
             dateInputEnd.value = '';
-            console.log('🔧 FILTERS CLEARED');
-            // Trigger re-render with the filter change
             renderHistoryView();
-            console.log('🔧 renderHistoryView() CALLED');
         } else {
-            // If filters don't exist, just re-render
-            setTimeout(() => {
-                console.log('🔧 renderHistoryView() CALLED (delayed)');
-                renderHistoryView();
-            }, 100);
+            setTimeout(renderHistoryView, 100);
         }
     }

@@ -55,7 +55,7 @@
         items.sort((a, b) => (parseInt(a.style.order) || 0) - (parseInt(b.style.order) || 0));
         const order = items.map(el => el.getAttribute('data-item-id')).filter(Boolean);
         data.settings.widgetLayout = order;
-        localStorage.setItem('tt_dashboard_layout', JSON.stringify(order));
+        localStorage.setItem('mwl_dashboard_layout', JSON.stringify(order));
         // Remove pre-applied CLS order style now that inline styles take over
         const preStyle = document.getElementById('cls-dash-order');
         if (preStyle) preStyle.remove();
@@ -295,7 +295,7 @@
                     }
                 });
                 
-                localStorage.removeItem('tt_dashboard_layout');
+                localStorage.removeItem('mwl_dashboard_layout');
                 saveDashboardLayout();
                 renderWidgetManager();
                 updateDashboard();

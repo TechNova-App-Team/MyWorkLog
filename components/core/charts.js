@@ -417,7 +417,7 @@
         
         // Lade oder nutze Default-Style
         if (!chartStyle) {
-            const saved = localStorage.getItem('tt_chart_style');
+            const saved = localStorage.getItem('mwl_chart_style');
             chartStyle = saved ? JSON.parse(saved) : {};
         }
         // Fehlende Keys mit Defaults auffüllen (alte gespeicherte Styles + neue Optionen)
@@ -1003,7 +1003,7 @@
     
     function saveChartStyle() {
         if (window.modalChartStyle) {
-            localStorage.setItem('tt_chart_style', JSON.stringify(window.modalChartStyle));
+            localStorage.setItem('mwl_chart_style', JSON.stringify(window.modalChartStyle));
         }
     }
     
@@ -1033,7 +1033,7 @@
     
     function renderDonutPreview(work, school, vac, sick, holiday, donutStyle = null) {
         if (!donutStyle) {
-            const saved = localStorage.getItem('tt_donut_style');
+            const saved = localStorage.getItem('mwl_donut_style');
             donutStyle = saved ? JSON.parse(saved) : {
                 strokeWidth: 12,
                 glow: true,
@@ -1068,14 +1068,14 @@
     
     function saveDonutStyle() {
         if (window.modalDonutStyle) {
-            localStorage.setItem('tt_donut_style', JSON.stringify(window.modalDonutStyle));
+            localStorage.setItem('mwl_donut_style', JSON.stringify(window.modalDonutStyle));
             console.log('✅ Donut style saved!', window.modalDonutStyle);
         }
     }
     
     function renderDonut(work, vac, sick, school, holiday) {
         // Load donut style from localStorage
-        const saved = localStorage.getItem('tt_donut_style');
+        const saved = localStorage.getItem('mwl_donut_style');
         const donutStyle = saved ? JSON.parse(saved) : {
             strokeWidth: 12,
             glow: true,
@@ -1159,7 +1159,7 @@
         // gesetzt; hier interessiert nur Animation an/aus + Tempo)
         var barSettings;
         try {
-            barSettings = JSON.parse(localStorage.getItem('tt_bar_chart_settings') || '{}');
+            barSettings = JSON.parse(localStorage.getItem('mwl_bar_chart_settings') || '{}');
         } catch (e) { barSettings = {}; }
         const animate = barSettings.showAnimation !== false; // Default: an
         const animSpeed = typeof barSettings.animSpeed === 'number' ? barSettings.animSpeed : 800;

@@ -7,13 +7,41 @@
    Versteckt html bis Check resolved (max 1.2s), damit kein Flash. */
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c&&c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
+<script>
+/* Einmalige Migration alter TimeTracker-Keys (tt_) → MyWorkLog (mwl_). Läuft VOR dem
+   Pre-Apply/Init unten (das die Keys liest). Idempotent: nach der Migration gibt es keine
+   tt_-Keys mehr → bestehende User behalten Layout, Theme, Chart-Settings usw. */
+(function(){
+  try{
+    var m={
+      tt_dashboard_layout:'mwl_dashboard_layout', tt_chart_style:'mwl_chart_style',
+      tt_donut_style:'mwl_donut_style', tt_bar_chart_settings:'mwl_bar_chart_settings',
+      tt_entry_draft:'mwl_entry_draft', tt_donut_mode:'mwl_donut_mode',
+      tt_donut_settings:'mwl_donut_settings', tt_theme:'mwl_theme',
+      tt_last_streak_notification_date:'mwl_last_streak_notification_date',
+      tt_last_streak_notification_value:'mwl_last_streak_notification_value',
+      tt_milestone_100h:'mwl_milestone_100h', tt_milestone_50h:'mwl_milestone_50h',
+      tt_last_export:'mwl_last_export'
+    };
+    for(var o in m){ var v=localStorage.getItem(o); if(v===null) continue;
+      if(localStorage.getItem(m[o])===null) localStorage.setItem(m[o],v);
+      localStorage.removeItem(o); }
+    // Prefix-Keys: tt_export_reminder_shown_<datum>
+    for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i);
+      if(k&&k.indexOf('tt_export_reminder_shown_')===0){
+        var nk='mwl_export_reminder_shown_'+k.slice(25);
+        if(localStorage.getItem(nk)===null) localStorage.setItem(nk,localStorage.getItem(k));
+        localStorage.removeItem(k); } }
+  }catch(e){}
+})();
+</script>
 <script>(function(){
   // 1. Sidebar collapse pre-apply
   try{if(localStorage.getItem('sidebar_collapsed')==='true'&&window.innerWidth>=1024){document.documentElement.setAttribute('data-sb-pre-col','');}}catch(e){}
   // 2. Dashboard widget order pre-apply
   try{
     var tgd=JSON.parse(localStorage.getItem('tg_pro_data')||'null');
-    var wl=(tgd&&tgd.settings&&Array.isArray(tgd.settings.widgetLayout))?tgd.settings.widgetLayout:JSON.parse(localStorage.getItem('tt_dashboard_layout')||'null');
+    var wl=(tgd&&tgd.settings&&Array.isArray(tgd.settings.widgetLayout))?tgd.settings.widgetLayout:JSON.parse(localStorage.getItem('mwl_dashboard_layout')||'null');
     if(Array.isArray(wl)&&wl.length){
       var wR=wl.map(function(id,i){return '#dashboardContainer [data-item-id="'+id+'"]{order:'+i+'}'}).join('');
       var wS=document.createElement('style');wS.id='cls-dash-order';wS.textContent=wR;document.head.appendChild(wS);
@@ -990,7 +1018,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         <div class="sidebar-footer" id="sidebarFooter" onclick="toggleProfilePopover(event)" style="cursor:pointer;" title="Profil & Einstellungen">
             <div class="sidebar-footer-avatar" id="sidebarAvatar">SK</div>
             <div class="sidebar-footer-info">
-                <div class="sidebar-footer-version" data-app-version>v3.11.0</div>
+                <div class="sidebar-footer-version"><span data-app-version>v3.11.0</span><span class="sw-version-badge" title="Service-Worker-Version"></span></div>
                 <div class="sidebar-footer-label" id="sidebarNetLabel">© MyWorkLog</div>
             </div>
             <!-- Profile Popover -->
@@ -1080,7 +1108,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                     <div class="kpi-grid" id="dashboardGrid">
 
                         <!-- KPI: Woche -->
-                        <div class="card kpi-card kpi-card--ring" onclick="openCorrection('week')">
+                        <div class="card kpi-card kpi-card--ring">
                             <div class="kpi-card__header">
                                 <span class="kpi-card__tag">Woche</span>
                                 <span class="kpi-card__indicator"></span>
@@ -1098,7 +1126,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         </div>
 
                         <!-- KPI: Monat -->
-                        <div class="card kpi-card kpi-card--ring" onclick="openCorrection('month')">
+                        <div class="card kpi-card kpi-card--ring">
                             <div class="kpi-card__header">
                                 <span class="kpi-card__tag">Monat</span>
                                 <span class="kpi-card__indicator"></span>
@@ -1204,7 +1232,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 <!-- ═══ COMMAND BAR ═══ -->
                 <div class="dashboard-item" data-item-id="quick-actions">
                     <div class="quick-actions" id="cmdBar">
-                        <button onclick="openCorrection('month')">
+                        <button onclick="openSaldoAdjust()">
                             <span class="cmd-icon">
                                 <svg viewBox="0 0 24 24"><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
                             </span>
@@ -2926,6 +2954,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                     <button class="hl-pill hl-pill-gleittag"  onclick="hlSetType('gleittag', this)">⚡ Gleittag</button>
                     <button class="hl-pill hl-pill-sick"      onclick="hlSetType('sick', this)">🤒 Krank</button>
                     <button class="hl-pill hl-pill-holiday"   onclick="hlSetType('holiday', this)">🎉 Feiertag</button>
+                    <button class="hl-pill hl-pill-korrektur" onclick="hlSetType('korrektur', this)">⚖️ Korrektur</button>
                 </div>
 
                 <!-- Hidden real select (driven by pills) -->
@@ -6202,18 +6231,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         </div>
     </div>
 
-    <div class="modal" id="corrModal">
-        <div class="modal-box" style="width:500px; padding:2rem;">
-            <h3 style="margin-top:0; margin-bottom:1rem;">Korrektur buchen</h3>
-            <p style="color:var(--text-muted); margin-bottom:1.5rem; font-size:0.9rem;">Manuelle Buchung auf das Gleitzeitkonto.</p>
-            <select id="corrSelect" class="glass-select" style="margin-bottom:15px;"></select>
-            <input type="number" id="corrVal" class="glass-input" placeholder="Stunden (+/-)" step="0.1" style="margin-bottom:2rem;">
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-primary" onclick="saveCorrection()" style="flex:1;">Buchen</button>
-                <button class="btn" style="flex:1; background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.4); color:#fff;" onclick="document.getElementById('corrModal').classList.remove('active')">Abbrechen</button>
-            </div>
-        </div>
-    </div>
 
     <!-- CUSTOM MODAL SYSTEM (Glassmorphism) -->
     <div class="modal" id="customMessageModal">
