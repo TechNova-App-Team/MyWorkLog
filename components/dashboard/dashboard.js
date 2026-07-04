@@ -1417,16 +1417,6 @@
         toggleDashboardEditMode();
     }
 
-    function openSkillCardModal() {
-        const modal = document.getElementById('skillCardModal');
-        modal.style.display = 'flex';
-        modal.classList.add('active');
-        // Hide share button if Web Share API not available
-        const shareBtn = document.getElementById('skillCardShareBtn');
-        if (shareBtn) shareBtn.style.display = navigator.share ? 'block' : 'none';
-        renderSkillCard();
-    }
-
     function openQuickHelp(context) {
         try {
             const modal = document.getElementById('quickHelpModal');

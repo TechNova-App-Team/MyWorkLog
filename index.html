@@ -1252,12 +1252,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             </span>
                             <span class="cmd-label">Settings</span>
                         </button>
-                        <button onclick="openMoreActionsModal()">
-                            <span class="cmd-icon">
-                                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-                            </span>
-                            <span class="cmd-label">Mehr</span>
-                        </button>
                     </div>
                 </div>
 
@@ -3914,20 +3908,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
     </main>
 
-    <!-- Focus Mode Overlay (NEU: KRASS MODERN!) -->
-    <div id="focusModeOverlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--bg-deep); z-index:9999; display:none; flex-direction:column; justify-content:center; align-items:center; color:var(--text-main); font-family:var(--font-main);">
-        <div style="text-align:center; max-width:600px; padding:2rem;">
-            <h1 style="font-size:3rem; margin-bottom:1rem; color:var(--primary);">🎯 FOKUS MODUS</h1>
-            <p id="focusQuote" style="font-size:1.5rem; margin-bottom:2rem; font-style:italic;">"Erfolg ist die Summe kleiner Anstrengungen, die Tag für Tag wiederholt werden."</p>
-            <div style="font-size:4rem; font-weight:800; margin-bottom:1rem; font-family:var(--font-mono);" id="focusTimer">25:00</div>
-            <div style="display:flex; gap:1rem; justify-content:center;">
-                <button id="focusStartBtn" class="btn btn-primary" onclick="startFocusTimer()">▶ Start</button>
-                <button id="focusPauseBtn" class="btn" style="background:#d97706;" onclick="pauseFocusTimer()" disabled>⏸️ Pause</button>
-                <button id="focusResetBtn" class="btn" onclick="resetFocusTimer()">🔄 Reset</button>
-                <button class="btn" style="background:#ef4444;" onclick="exitFocusMode()">❌ Exit</button>
-            </div>
-        </div>
-    </div>
 
     <!-- DSGVO/Privacy Modal -->
     <div class="modal" id="privacyModal" style="display:none;">
@@ -6785,73 +6765,6 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 <div style="display:flex; gap:8px;">
                     <button class="btn" onclick="trashBulkRestore()">Wiederherstellen (Markierte)</button>
                     <button class="btn btn-danger" onclick="trashBulkDeleteConfirm()">Löschen (Markierte)</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Break Settings Modal -->
-    <div class="modal" id="breakSettingsModal" style="display:none;">
-        <div class="modal-box" style="width:90%; max-width:400px; padding:24px; backdrop-filter:blur(20px); border-radius:16px; border:1px solid rgba(var(--primary-rgb), 0.3); position:relative;">
-            <h3 style="margin:0 0 20px 0; color:var(--primary);">🔔 Break Reminder Einstellungen</h3>
-            
-            <div style="display:flex; flex-direction:column; gap:16px;">
-                <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                    <input type="checkbox" id="breakEnabledCheckbox" onchange="toggleBreakEnabled()" />
-                    <span>Break Reminders aktivieren</span>
-                </label>
-                
-                <div>
-                    <label for="breakIntervalSlider" style="display:block; margin-bottom:8px;">Intervall: <span id="intervalValue">2</span> Stunden</label>
-                    <input type="range" id="breakIntervalSlider" min="1" max="4" value="2" step="0.5" style="width:100%;" oninput="updateIntervalDisplay()" disabled />
-                </div>
-                
-                <div style="display:flex; gap:10px; justify-content:flex-end;">
-                    <button class="btn" onclick="closeBreakSettingsModal()">Abbrechen</button>
-                    <button class="btn btn-primary" onclick="saveBreakSettings()">Speichern</button>
-                </div>
-            </div>
-            
-            <button class="modal-close-x" aria-label="Schließen" onclick="closeBreakSettingsModal()" title="Schließen">×</button>
-        </div>
-    </div>
-
-    <!-- More Actions Modal -->
-    <div class="modal" id="moreActionsModal" style="display:none;">
-        <div class="modal-box" style="width:90%; max-width:350px; padding:24px; backdrop-filter:blur(20px); border-radius:16px; border:1px solid rgba(var(--primary-rgb), 0.3); position:relative;">
-            <h3 style="margin:0 0 20px 0; color:var(--primary);">⋯ Weitere Aktionen</h3>
-            
-            <div style="display:grid; grid-template-columns: 1fr; gap:12px;">
-                <button class="btn btn-ghost" onclick="openBreakSettingsModal(); closeMoreActionsModal()" style="display:flex; align-items:center; gap:10px; justify-content:flex-start;">
-                    <svg viewBox="0 0 24 24" style="width:20px; height:20px; flex-shrink:0;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    <span>Break Settings</span>
-                </button>
-                <button class="btn btn-ghost" onclick="openSkillCardModal(); closeMoreActionsModal()" style="display:flex; align-items:center; gap:10px; justify-content:flex-start;">
-                    <svg viewBox="0 0 24 24" style="width:20px; height:20px; flex-shrink:0;"><rect x="2" y="3" width="20" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 8h3M14 8h3M7 14h8M7 18h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                    <span>Skill-Card</span>
-                </button>
-                <button class="btn btn-ghost" onclick="startFocusMode(); closeMoreActionsModal()" style="display:flex; align-items:center; gap:10px; justify-content:flex-start;">
-                    <svg viewBox="0 0 24 24" style="width:20px; height:20px; flex-shrink:0;"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
-                    <span>Focus</span>
-                </button>
-            </div>
-            
-            <button class="modal-close-x" aria-label="Schließen" onclick="closeMoreActionsModal()" title="Schließen">×</button>
-        </div>
-    </div>
-
-    <!-- Azubi Skill-Card Modal -->
-    <div class="modal" id="skillCardModal" style="display:none;">
-        <div class="modal-box" style="width:90%; max-width:420px; padding:0; backdrop-filter:blur(24px); border-radius:20px; border:1px solid rgba(var(--primary-rgb),0.25); position:relative; overflow:hidden; background:rgba(12,12,16,0.95);">
-            <div style="padding:20px 24px 12px; display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="margin:0; font-size:1rem; font-weight:700; color:var(--text-main);">🃏 Deine Azubi Skill-Card</h3>
-                <button class="modal-close-x" aria-label="Schließen" onclick="closeSkillCardModal()" title="Schließen">×</button>
-            </div>
-            <div style="padding:8px 24px 20px; display:flex; flex-direction:column; align-items:center; gap:16px;">
-                <canvas id="skillCardCanvas" width="360" height="520" style="border-radius:14px; max-width:100%; height:auto;"></canvas>
-                <div style="display:flex; gap:10px; width:100%;">
-                    <button class="btn btn-primary" onclick="downloadSkillCard()" style="flex:1; background:var(--primary); padding:10px; border-radius:12px; font-weight:600; font-size:0.85rem;">📥 Speichern</button>
-                    <button class="btn btn-primary" id="skillCardShareBtn" onclick="shareSkillCard()" style="flex:1; background:linear-gradient(135deg, #06b6d4, var(--primary)); padding:10px; border-radius:12px; font-weight:600; font-size:0.85rem;">📤 Teilen</button>
                 </div>
             </div>
         </div>
