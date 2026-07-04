@@ -456,34 +456,43 @@
             const lowest = min;
             const avgDaily = diffs.length > 0 ? diffs.reduce((s,v) => s+v, 0) / diffs.length : 0;
             
+            // Icon-Helper: Lucide-Style SVG statt Emoji (farbcodiert)
+            const TREND_C = { up:'#10b981', down:'#ef4444', flat:'#94a3b8', low:'#10b981', mid:'#f59e0b', high:'#ef4444' };
+            const svgIcon = (d, color) => '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:5px;flex-shrink:0">' + d + '</svg>';
+            const ICON_UP = '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>';
+            const ICON_DOWN = '<polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/><polyline points="16 17 22 17 22 11"/>';
+            const ICON_FLAT = '<line x1="2" y1="12" x2="22" y2="12"/><polyline points="18 8 22 12 18 16"/><polyline points="6 8 2 12 6 16"/>';
+            const ICON_PULSE = '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>';
+
             // Trend direction: compare last 7 vs previous 7
-            let direction = '↔️';
+            let dirIcon = '', dirLabel = '—';
             if (vals.length >= 14) {
                 const recent7 = vals.slice(-7);
                 const prev7 = vals.slice(-14, -7);
                 const recentAvg = recent7.reduce((s,v)=>s+v,0)/7;
                 const prevAvg = prev7.reduce((s,v)=>s+v,0)/7;
                 const delta = recentAvg - prevAvg;
-                if (delta > 1) direction = '🚀 Steigend';
-                else if (delta > 0.2) direction = '📈 Leicht ↑';
-                else if (delta < -1) direction = '📉 Fallend';
-                else if (delta < -0.2) direction = '📉 Leicht ↓';
-                else direction = '↔️ Stabil';
+                if (delta > 1) { dirIcon = svgIcon(ICON_UP, TREND_C.up); dirLabel = 'Steigend'; }
+                else if (delta > 0.2) { dirIcon = svgIcon(ICON_UP, TREND_C.up); dirLabel = 'Leicht ↑'; }
+                else if (delta < -1) { dirIcon = svgIcon(ICON_DOWN, TREND_C.down); dirLabel = 'Fallend'; }
+                else if (delta < -0.2) { dirIcon = svgIcon(ICON_DOWN, TREND_C.down); dirLabel = 'Leicht ↓'; }
+                else { dirIcon = svgIcon(ICON_FLAT, TREND_C.flat); dirLabel = 'Stabil'; }
             } else if (vals.length >= 2) {
-                direction = vals[vals.length-1] > vals[0] ? '📈 Positiv' : '📉 Negativ';
+                if (vals[vals.length-1] > vals[0]) { dirIcon = svgIcon(ICON_UP, TREND_C.up); dirLabel = 'Positiv'; }
+                else { dirIcon = svgIcon(ICON_DOWN, TREND_C.down); dirLabel = 'Negativ'; }
             }
-            
+
             // Volatility (standard deviation of daily diffs)
-            let volatility = '—';
+            let volIcon = '', volLabel = '—';
             if (diffs.length > 1) {
                 const mean = diffs.reduce((s,v)=>s+v,0)/diffs.length;
                 const variance = diffs.reduce((s,v)=>s+(v-mean)**2,0)/diffs.length;
                 const stdDev = Math.sqrt(variance);
-                if (stdDev < 0.3) volatility = '🟢 Niedrig';
-                else if (stdDev < 0.8) volatility = '🟡 Mittel';
-                else volatility = '🔴 Hoch';
+                if (stdDev < 0.3) { volIcon = svgIcon(ICON_PULSE, TREND_C.low); volLabel = 'Niedrig'; }
+                else if (stdDev < 0.8) { volIcon = svgIcon(ICON_PULSE, TREND_C.mid); volLabel = 'Mittel'; }
+                else { volIcon = svgIcon(ICON_PULSE, TREND_C.high); volLabel = 'Hoch'; }
             }
-            
+
             const statEl = (id, text, colorClass) => {
                 const el = document.getElementById(id);
                 if (el) {
@@ -491,12 +500,19 @@
                     el.className = 'trend-stat-value' + (colorClass ? ' ' + colorClass : '');
                 }
             };
+            const statElHTML = (id, html) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = html; // nur interne Literale (SVG + fixe Labels), kein User-Input
+                    el.className = 'trend-stat-value';
+                }
+            };
             statEl('trendStatCurrent', (current >= 0 ? '+' : '') + current.toFixed(1) + 'h', current >= 0 ? 'trend-stat-positive' : 'trend-stat-negative');
             statEl('trendStatHigh', '+' + highest.toFixed(1) + 'h', 'trend-stat-positive');
             statEl('trendStatLow', (lowest >= 0 ? '+' : '') + lowest.toFixed(1) + 'h', lowest < 0 ? 'trend-stat-negative' : '');
             statEl('trendStatAvgDaily', (avgDaily >= 0 ? '+' : '') + avgDaily.toFixed(2) + 'h', avgDaily >= 0 ? 'trend-stat-positive' : 'trend-stat-negative');
-            statEl('trendStatDirection', direction, '');
-            statEl('trendStatVolatility', volatility, '');
+            statElHTML('trendStatDirection', dirIcon + dirLabel);
+            statElHTML('trendStatVolatility', volIcon + volLabel);
         }
         
         const h = 220;
