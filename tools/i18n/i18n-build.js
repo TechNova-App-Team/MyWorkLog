@@ -194,6 +194,11 @@ function cmdRender(src, enJsonPath, outHtml, canonicalEn, canonicalDe, phrasesPa
   const en = JSON.parse(fs.readFileSync(enJsonPath, 'utf8'));
   const doc = dom.window.document;
 
+  // Sprach-Promo ist ein Discovery-Nudge NUR für die deutsche Seite → auf /en/ raus
+  // (früh entfernen, damit sein Text nicht als "fehlend" im Walk auftaucht).
+  const promo = doc.getElementById('mwlLangPromo');
+  if (promo) promo.remove();
+
   let translated = 0, missing = 0;
   const missingKeys = [];
   walk(dom, 'app', ({ el, textNode, key, type, attr, text }) => {
