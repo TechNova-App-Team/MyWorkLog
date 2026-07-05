@@ -1,0 +1,25 @@
+#!/bin/sh
+# ═══ i18n AUTO-BUILD HOOK ═══
+# Regeneriert die englischen /en/-Seiten automatisch, sobald eine deutsche
+# Quelle (oder ein Übersetzungs-Dict) im Commit steckt. Du musst nie manuell
+# `npm run i18n:build` aufrufen — und NIE /en/ von Hand editieren.
+# Aktiviert via: git config core.hooksPath tools/git-hooks  (läuft auch als npm postinstall).
+
+changed=$(git diff --cached --name-only --diff-filter=ACM)
+echo "$changed" | grep -qE '^(index\.html|pages/|tools/i18n/dict/)' || exit 0
+
+if [ ! -d node_modules/jsdom ]; then
+  echo "[i18n] WARNUNG: jsdom fehlt (führe 'npm install' aus) — /en/ NICHT regeneriert."
+  exit 0
+fi
+
+echo "[i18n] deutsche Quelle geändert → regeneriere /en/ …"
+if ! npm run --silent i18n:build; then
+  echo "[i18n] ✗ Build fehlgeschlagen — Commit abgebrochen. Fehler oben prüfen."
+  exit 1
+fi
+
+# frisch generierte Artefakte mit einstagen
+git add en Assets/i18n 2>/dev/null
+echo "[i18n] ✓ /en/ aktualisiert und mit-committed."
+exit 0
