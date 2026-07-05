@@ -1577,13 +1577,13 @@
   box-shadow:0 6px 20px -8px rgba(var(--primary-rgb),0.5);
 }
 .mwl-lang-promo:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
-/* rotierender Schein = das eine Signatur-Element, dezent */
+/* Signatur: ein einziger, ruhiger Licht-Sweep — NUR beim Hover, kein Dauerloop */
 .mwl-lang-promo-glow{
-  position:absolute; inset:-60%; z-index:-1; pointer-events:none; border-radius:inherit;
-  background:conic-gradient(from 0deg, transparent 0deg, rgba(var(--primary-rgb),0.22) 35deg, transparent 90deg);
-  animation:mwlPromoSpin 7s linear infinite;
+  position:absolute; top:0; bottom:0; left:-45%; width:38%; z-index:-1; pointer-events:none;
+  background:linear-gradient(105deg, transparent, rgba(255,255,255,0.11), transparent);
+  transform:translateX(0); transition:transform .7s cubic-bezier(.22,.61,.36,1);
 }
-@keyframes mwlPromoSpin{ to{ transform:rotate(360deg); } }
+.mwl-lang-promo:hover .mwl-lang-promo-glow{ transform:translateX(380%); }
 .mwl-lang-promo-icon{
   flex:0 0 auto; width:30px; height:30px; display:grid; place-items:center;
   border-radius:9px; color:var(--primary); background:rgba(var(--primary-rgb),0.13);
@@ -1606,4 +1606,4 @@
 .mwl-lang-promo-x:hover{ opacity:1; background:rgba(255,255,255,0.07); }
 .mwl-lang-promo-x svg{ width:12px; height:12px; }
 .sidebar.collapsed .mwl-lang-promo{ display:none; }
-@media (prefers-reduced-motion: reduce){ .mwl-lang-promo-glow{ animation:none; } }
+@media (prefers-reduced-motion: reduce){ .mwl-lang-promo-glow{ display:none; } }
