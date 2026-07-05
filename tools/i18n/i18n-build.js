@@ -258,6 +258,24 @@ function cmdRender(src, enJsonPath, outHtml, canonicalEn, canonicalDe, phrasesPa
     add('x-default', canonicalDe);
   }
 
+  // Sprach-Umschalter umdrehen: DE-Quelle zeigt "English → /en/",
+  // die generierte EN-Seite zeigt "Deutsch → /".
+  const langItem = doc.getElementById('langSwitchItem');
+  if (langItem) {
+    langItem.setAttribute('href', '/');
+    langItem.setAttribute('hreflang', 'de');
+    const lbl = doc.getElementById('langSwitchLabel');
+    if (lbl) lbl.textContent = 'Deutsch';
+  }
+
+  // Runtime-Übersetzer für JS-generierten Text (nur auf /en/ aktiv, prüft lang="en").
+  if (!doc.querySelector('script[src="/Assets/js/i18n-runtime.js"]')) {
+    const rt = doc.createElement('script');
+    rt.setAttribute('src', '/Assets/js/i18n-runtime.js');
+    rt.setAttribute('defer', '');
+    doc.body.appendChild(rt);
+  }
+
   let out = '<!DOCTYPE html>\n' + dom.serialize();
   fs.mkdirSync(path.dirname(outHtml), { recursive: true });
   fs.writeFileSync(outHtml, out, 'utf8');
