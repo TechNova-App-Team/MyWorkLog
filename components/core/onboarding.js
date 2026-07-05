@@ -219,10 +219,11 @@ function setupPWABasePath() {
         // Ensure root path is '/'
         if (!p) p = '/';
 
-        // Set the manifest link to the computed path (helps GitHub Pages and local servers)
+        // Manifest liegt IMMER im Root (Cloudflare root-domain). Absolute Pfad, sonst
+        // bricht es auf Unterpfaden wie /en/ (→ /en/manifest.json 404).
         const manifestLink = document.querySelector('link[rel="manifest"]');
         if (manifestLink) {
-            manifestLink.href = p + 'manifest.json';
+            manifestLink.href = '/manifest.json';
         }
 
         // Expose for debugging/status
@@ -261,8 +262,9 @@ if ('serviceWorker' in navigator) {
                 console.warn('[PWA] Could not fetch version.json:', e);
             }
 
-            // Service Worker im Root mit Cache-Buster (Query-Parameter erzwingt neuen Download)
-            const swUrl = `./service-worker.js?v=${versionCacheBuster}`;
+            // Service Worker im Root mit Cache-Buster (Query-Parameter erzwingt neuen Download).
+            // ABSOLUT: auf Unterpfaden wie /en/ würde './' zu /en/service-worker.js → 404.
+            const swUrl = `/service-worker.js?v=${versionCacheBuster}`;
 
             console.log('[PWA] Registering service worker at', swUrl, 'scope:', scope);
             const manifestLink = document.querySelector('link[rel="manifest"]');
@@ -682,7 +684,7 @@ window.checkPWAStatus = checkPWAStatus;
 
 // ===== ADVANCED NETWORK MONITOR =====
 const networkMonitor = (() => {
-    const PING_URL = './manifest.json';
+    const PING_URL = '/manifest.json';
     const INTERVAL_ON = 30000;
     const INTERVAL_OFF = 5000;
     const MAX_LOG = 100;
