@@ -48,7 +48,21 @@
     'Saldo': 'Balance',
     // Manuelles App-Update (updateManager.forceUpdate → showToast)
     'App wird aktualisiert': 'Updating app',
-    'Neue Version wird geladen – die Seite lädt gleich neu.': 'Loading the new version – the page will reload shortly.'
+    'Neue Version wird geladen – die Seite lädt gleich neu.': 'Loading the new version – the page will reload shortly.',
+    // Wochentage (Chart-Achsen, Tages-Labels, JS-generiert)
+    'Montag': 'Monday', 'Dienstag': 'Tuesday', 'Mittwoch': 'Wednesday',
+    'Donnerstag': 'Thursday', 'Freitag': 'Friday', 'Samstag': 'Saturday', 'Sonntag': 'Sunday',
+    'Mo': 'Mon', 'Di': 'Tue', 'Mi': 'Wed', 'Do': 'Thu', 'Fr': 'Fri', 'Sa': 'Sat', 'So': 'Sun',
+    // Monate (Charts, Datums-Labels)
+    'Januar': 'January', 'Februar': 'February', 'März': 'March', 'April': 'April',
+    'Mai': 'May', 'Juni': 'June', 'Juli': 'July', 'August': 'August',
+    'September': 'September', 'Oktober': 'October', 'November': 'November', 'Dezember': 'December',
+    // Häufige Toast-/Status-Wörter (JS-generiert quer über Tool-Seiten)
+    'Gespeichert': 'Saved', 'Gespeichert!': 'Saved!', 'Gelöscht': 'Deleted', 'Kopiert': 'Copied',
+    'Kopiert!': 'Copied!', 'Fehler': 'Error', 'Erfolg': 'Success', 'Fertig': 'Done',
+    'Abgebrochen': 'Cancelled', 'Rückgängig': 'Undo', 'Vollständig': 'Complete',
+    'Unvollständig': 'Incomplete', 'Unterschrieben': 'Signed', 'In Bearbeitung': 'In progress',
+    'Offen': 'Open', 'Erledigt': 'Done', 'Alle': 'All'
   };
 
   // Attribute, die ebenfalls Nutzertext tragen können
