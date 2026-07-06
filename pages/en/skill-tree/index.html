@@ -1,6 +1,5 @@
-﻿<!DOCTYPE html>
-<html lang="de">
-<head>
+<!DOCTYPE html>
+<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 
@@ -8,13 +7,13 @@
 /* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
-<title>MyWorkLog | Skill-Tree</title>
-<link rel="canonical" href="https://myworklog.de/skill-tree">
-<link rel="alternate" hreflang="de" href="https://myworklog.de/skill-tree">
-<link rel="alternate" hreflang="en" href="https://myworklog.de/en/skill-tree">
-<link rel="alternate" hreflang="x-default" href="https://myworklog.de/skill-tree">
-<script defer src="../../../../Assets/js/icons.js"></script>
-<script defer src="../../../../Assets/js/touch-mobile-optimizations.js"></script>
+<title>MyWorkLog | Skill Tree</title>
+<link rel="canonical" href="https://myworklog.de/en/skill-tree">
+
+
+
+<script defer="" src="../../../../Assets/js/icons.js"></script>
+<script defer="" src="../../../../Assets/js/touch-mobile-optimizations.js"></script>
 <style>
 /* ══════════════════════════════════════════════════
    CSS VARIABLES
@@ -323,40 +322,40 @@ body{
     .scan-box{padding:24px 16px;}
 }
 </style>
-</head>
+<link rel="alternate" hreflang="de" href="https://myworklog.de/skill-tree"><link rel="alternate" hreflang="en" href="https://myworklog.de/en/skill-tree"><link rel="alternate" hreflang="x-default" href="https://myworklog.de/skill-tree"></head>
 <body>
 
 <!-- ════════════ LOADING ════════════ -->
 <div class="loading-screen" id="loadingScreen">
     <div class="loading-spinner"></div>
-    <div class="loading-text">Skill-Baum wird geladen…</div>
+    <div class="loading-text">Loading skill tree…</div>
 </div>
 
 <!-- ════════════ TOP BAR ════════════ -->
 <div class="top-bar">
     <div class="top-bar-left">
-        <button class="back-btn" onclick="history.back()" title="Zurück">←</button>
-        <h1>🌳 <span class="glow">Skill-Baum</span></h1>
+        <button class="back-btn" onclick="history.back()" title="Back">←</button>
+        <h1>🌳 <span class="glow">Skill tree</span></h1>
     </div>
     <div class="top-bar-right">
         <div class="level-badge">
             <span>⚡</span>
-            <span>Gesamt Lv.</span>
+            <span>Total lv.</span>
             <span class="lvl" id="totalLevel">1</span>
             <span class="xp-text" id="totalXpText">0 XP</span>
         </div>
-        <button class="top-btn" id="btnScan" onclick="openScanModal()" title="Berichtsheft scannen">
+        <button class="top-btn" id="btnScan" onclick="openScanModal()" title="Scan report book">
             🔍
             <div class="scan-pulse"></div>
         </button>
-        <button class="top-btn" onclick="openManualAdd()" title="Manuell XP vergeben">+</button>
+        <button class="top-btn" onclick="openManualAdd()" title="Award XP manually">+</button>
     </div>
 </div>
 
 <!-- ════════════ 3D CANVAS ════════════ -->
 <canvas id="canvas3d"></canvas>
 <div class="canvas-overlay">
-    <div class="hint" id="canvasHint">Klicke auf einen Skill-Knoten oder nutze Mausrad zum Zoomen</div>
+    <div class="hint" id="canvasHint">Click a skill node or use the mouse wheel to zoom</div>
 </div>
 
 <!-- ════════════ SIDE PANEL ════════════ -->
@@ -381,7 +380,7 @@ body{
     <div class="sp-xp-text" id="spXpText">0 / 100 XP</div>
 
     <div class="sp-section">
-        <div class="sp-section-title">XP-Verlauf</div>
+        <div class="sp-section-title">XP history</div>
         <div id="spHistory"></div>
     </div>
 </div>
@@ -394,14 +393,14 @@ body{
 <!-- ════════════ SCAN MODAL ════════════ -->
 <div class="scan-overlay" id="scanOverlay">
     <div class="scan-box">
-        <h2>🔍 Berichtsheft-Scan</h2>
-        <p>Die lokale KI analysiert deine Berichtsheft-Einträge und vergibt automatisch XP auf erkannte Skills.</p>
+        <h2>🔍 Report-book scan</h2>
+        <p>The local AI analyzes your report-book entries and automatically awards XP for detected skills.</p>
         <div class="scan-progress"><div class="scan-progress-fill" id="scanProgressFill"></div></div>
-        <div class="scan-status" id="scanStatus">Bereit zum Scannen</div>
+        <div class="scan-status" id="scanStatus">Ready to scan</div>
         <div class="scan-results" id="scanResults"></div>
         <div class="scan-actions">
-            <button class="btn-scan btn-scan-secondary" onclick="closeScanModal()">Schließen</button>
-            <button class="btn-scan btn-scan-primary" id="btnStartScan" onclick="startScan()">🚀 Scan starten</button>
+            <button class="btn-scan btn-scan-secondary" onclick="closeScanModal()">Close</button>
+            <button class="btn-scan btn-scan-primary" id="btnStartScan" onclick="startScan()">🚀 Start scan</button>
         </div>
     </div>
 </div>
@@ -1348,5 +1347,6 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
-<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
-</html>
+<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
+
+<script src="/Assets/js/i18n-runtime.js" defer=""></script></body></html>
