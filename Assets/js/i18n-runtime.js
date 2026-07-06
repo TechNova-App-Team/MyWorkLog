@@ -45,7 +45,10 @@
     'Soll': 'Target',
     'Ist': 'Actual',
     'Differenz': 'Difference',
-    'Saldo': 'Balance'
+    'Saldo': 'Balance',
+    // Manuelles App-Update (updateManager.forceUpdate → showToast)
+    'App wird aktualisiert': 'Updating app',
+    'Neue Version wird geladen – die Seite lädt gleich neu.': 'Loading the new version – the page will reload shortly.'
   };
 
   // Attribute, die ebenfalls Nutzertext tragen können

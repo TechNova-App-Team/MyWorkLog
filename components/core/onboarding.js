@@ -939,7 +939,57 @@ const updateManager = (() => {
         if (b) { b.classList.add('visible'); console.log('✅ Update-Banner Test angezeigt'); }
     }
 
-    return { init, notifyUpdate, dismiss, apply, test };
+    // Manuelles Hard-Update: vom User aus dem Profil-Menü ausgelöst (Ersatz für Strg+R).
+    // Zwingt den SW nach einer neuen Version zu suchen, aktiviert sie (SKIP_WAITING)
+    // und lädt frisch neu. Findet sich keine neue Version → trotzdem sauberer Reload.
+    function forceUpdate() {
+        try { localStorage.setItem('mwl_upd_applying', 'true'); } catch(e) {}
+        // Banner wegräumen falls sichtbar
+        try { dismiss(); } catch(e) {}
+
+        // Self-contained Spin-Keyframe (unabhängig von dashboard.css) — einmal injizieren.
+        if (!document.getElementById('mwl-upd-spin-style')) {
+            const st = document.createElement('style');
+            st.id = 'mwl-upd-spin-style';
+            st.textContent = '@keyframes mwl-upd-spin{to{transform:rotate(360deg)}}';
+            document.head.appendChild(st);
+        }
+        // Rotierendes Lucide-Refresh-SVG (kein Emoji, akzentfarben, signalisiert „läuft").
+        const spinIcon = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary);display:block;animation:mwl-upd-spin 0.9s linear infinite;transform-origin:center;"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>';
+
+        if (typeof showToast === 'function') {
+            showToast('App wird aktualisiert', 'Neue Version wird geladen – die Seite lädt gleich neu.', 'info', spinIcon, 4000);
+        }
+
+        let reloaded = false;
+        const doReload = () => { if (reloaded) return; reloaded = true; location.reload(); };
+
+        if (!('serviceWorker' in navigator)) { setTimeout(doReload, 300); return; }
+
+        // Neuer SW übernimmt → sofort reloaden (frischer Controller, kein Stale-Mix).
+        navigator.serviceWorker.addEventListener('controllerchange', doReload, { once: true });
+
+        navigator.serviceWorker.getRegistration().then(reg => {
+            if (!reg) { return; }
+            const skip = (w) => { if (w) { try { w.postMessage({ type: 'SKIP_WAITING' }); } catch(e) {} } };
+            // Erst nach Updates suchen, dann einen wartenden/gerade installierenden SW aktivieren.
+            return reg.update().then(() => {
+                if (reg.waiting) { skip(reg.waiting); return; }
+                const inst = reg.installing;
+                if (inst) {
+                    inst.addEventListener('statechange', () => {
+                        if (inst.state === 'installed') skip(reg.waiting || inst);
+                    });
+                }
+                // Kein neuer SW → controllerchange feuert nicht, der Safety-Timeout unten reloaded.
+            });
+        }).catch(() => {});
+
+        // Safety-Net: nach 2s in jedem Fall neu laden (deckt den „keine neue Version"-Fall ab).
+        setTimeout(doReload, 2000);
+    }
+
+    return { init, notifyUpdate, dismiss, apply, test, forceUpdate };
 })();
 
 // Initialize monitors with retry logic
