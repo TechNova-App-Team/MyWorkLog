@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+/* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
+    <title>MyWorkLog | Offline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #030305 0%, #1a1a2e 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .offline-container {
+            background: rgba(22, 22, 26, 0.65);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .offline-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .status-message {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .details {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: left;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            line-height: 1.8;
+        }
+
+        .details strong {
+            color: #f8fafc;
+            display: block;
+            margin-bottom: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .details strong:first-child {
+            margin-top: 0;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #a855f7, #06b6d4);
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(168, 85, 247, 0.5);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #f8fafc;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .footer-text {
+            font-size: 0.8rem;
+            color: #475569;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+<link rel="canonical" href="https://myworklog.de/en/offline"><link rel="alternate" hreflang="de" href="https://myworklog.de/offline"><link rel="alternate" hreflang="en" href="https://myworklog.de/en/offline"><link rel="alternate" hreflang="x-default" href="https://myworklog.de/offline"></head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        <h1>Connection lost</h1>
+
+        <div class="status-indicator">
+            <div class="pulse"></div>
+            Offline-Modus
+        </div>
+
+        <p class="status-message">
+            It looks like you're currently offline. Good news: TimeTracker works offline too! Your data stays safe on your device.
+        </p>
+
+        <div class="details">
+            <strong>💾 What works offline:</strong>
+            <ul style="margin-left: 20px; margin-top: 0.5rem;">
+                <li>Start &amp; stop timer</li>
+                <li>Create time entries</li>
+                <li>View dashboard &amp; statistics</li>
+                <li>Export backup</li>
+            </ul>
+
+            <strong>⚠️ What doesn't work:</strong>
+            <ul style="margin-left: 20px; margin-top: 0.5rem;">
+                <li>Cloud sync (if enabled)</li>
+                <li>external API connections</li>
+            </ul>
+
+            <strong>✔️ Tip:</strong>
+            Your changes are saved locally and synced automatically as soon as you're back online!
+        </div>
+
+        <div class="button-group">
+            <button class="btn btn-secondary" onclick="window.history.back();">
+                ← Back
+            </button>
+            <button class="btn btn-primary" onclick="checkConnection();">
+                🔄 Try again
+            </button>
+        </div>
+
+        <div class="footer-text">
+            Connection status is monitored automatically
+        </div>
+    </div>
+
+    <script>
+        // Check connection periodically
+        function checkConnection() {
+            fetch('/manifest.json', { method: 'HEAD' })
+                .then(() => {
+                    // Online wieder hergestellt
+                    document.body.innerHTML = '<div style="padding:20px; text-align:center; color:#10b981; font-size:1.2rem;">✅ Verbindung wiederhergestellt! Seite wird aktualisiert...</div>';
+                    setTimeout(() => location.reload(), 1500);
+                })
+                .catch(() => {
+                    // Immer noch offline
+                    alert('⚠️ Immer noch offline. Bitte überprüfe deine Internetverbindung.');
+                });
+        }
+
+        // Auto-check every 5 seconds
+        setInterval(checkConnection, 5000);
+
+        // Check online event
+        window.addEventListener('online', () => {
+            document.body.innerHTML = '<div style="padding:20px; text-align:center; color:#10b981; font-size:1.2rem;">✅ Verbindung wiederhergestellt! Seite wird aktualisiert...</div>';
+            setTimeout(() => location.reload(), 1500);
+        });
+    </script>
+
+
+<script src="/Assets/js/i18n-runtime.js" defer=""></script></body></html>
