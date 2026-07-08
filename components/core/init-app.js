@@ -235,6 +235,8 @@
             const oldBreakMin = data.settings.break.min || 30;
             data.settings.break.min = [0, oldBreakMin, oldBreakMin, oldBreakMin, oldBreakMin, 15, 0]; // 15 Min Pause für Freitag
         }
+        // Jobs-Migration: mind. Hauptjob anlegen (nutzt Legacy hours/break)
+        try { if (typeof migrateJobs === 'function') migrateJobs(); } catch(e) { console.warn('migrateJobs error', e); }
         if(!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0, carriedOver:0, mode:'days', carryOverMax:null, lastRolloverYear:null, yearHistory:{}};
         if(typeof data.settings.vacation.mode === 'undefined') data.settings.vacation.mode = 'days';
         if(typeof data.settings.vacation.carriedOver === 'undefined') data.settings.vacation.carriedOver = 0;
@@ -320,6 +322,8 @@
         setThemeMode(data.settings.themeMode);
         // Split-Shift-Normalisierung: Altbestand reparieren (Tagessoll pro Tag nur einmal zählen)
         try { if (typeof dedupeDayExpected === 'function' && dedupeDayExpected()) { save(); } } catch(e) { console.warn('dedupeDayExpected error', e); }
+        // Job-Auswahl im Erfassen-Formular befüllen
+        try { if (typeof populateJobSelect === 'function') populateJobSelect(); } catch(e) {}
         window._clsBC = 'before-updateUI';
         updateUI();
         window._clsBC = 'after-updateUI';

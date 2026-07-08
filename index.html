@@ -1475,7 +1475,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
                             <div class="entry-form__time-row">
                                 <div class="entry-form__time-group">
-                                    <input type="time" id="inpStart" class="glass-input" placeholder="Start">
+                                    <input type="time" id="inpStart" class="glass-input" placeholder="Start" oninput="if(typeof autoSelectJobByStart==='function'){autoSelectJobByStart();updateBreakPlaceholder();}">
                                     <button id="btnNowStart" class="btn btn-ghost entry-form__now-btn">Jetzt</button>
                                 </div>
                                 <div class="entry-form__time-group">
@@ -1484,6 +1484,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                                 </div>
                             </div>
 
+                            <div id="jobSelectRow" style="display:none;">
+                                <select id="inpJob" class="glass-select" aria-label="Job" onchange="if(typeof onJobManualChange==='function'){onJobManualChange();updateBreakPlaceholder();}"></select>
+                            </div>
                             <input type="number" id="inpBreak"   class="glass-input" min="0" step="5" inputmode="numeric" placeholder="Pause automatisch (Min)" aria-label="Pause in Minuten" title="Leer = automatische Pause laut Einstellungen. Wert (auch 0) = exakt diese Pause für diesen Eintrag.">
                             <input type="number" id="inpHours"   class="glass-input" step="0.25" placeholder="Stunden manuell...">
                             <input type="text"   id="inpProject" class="glass-input" placeholder="Projekt / Kunde (z.B. Alpha-Migration)">
@@ -1779,6 +1782,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 </div>
                 <div class="stacked-bar-chart" id="chartWeeklyPerformance"></div>
             </div>
+
+            <!-- ─── Statistik pro Job (nur bei 2+ Jobs) ─────────────── -->
+            <div id="jobStatsContainer" style="display:none;"></div>
 
             <!-- ─── Projekt + Saldo-Trend ───────────────────────────── -->
             <div class="perf-grid-2">
@@ -5439,7 +5445,14 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                 
                 <!-- Tab: Arbeitszeiten -->
                 <div id="settings-tab-work" class="settings-tab-content" style="display:none;">
-                    
+
+                    <!-- Jobs -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Jobs</div>
+                        <p class="settings-hint" style="margin-bottom:1rem;">Mehrere Arbeitsverhältnisse mit eigenem Soll, eigener Pause &amp; getrenntem Saldo. Jeder Job kann ein Zeitfenster haben — beim Eintragen wird der Job dann automatisch anhand der Startzeit vorgewählt (manuell änderbar).</p>
+                        <div id="jobManagerContainer"></div>
+                    </div>
+
                     <!-- Break Threshold -->
                     <div class="settings-section">
                         <div class="settings-section-title">Automatische Pause</div>
@@ -6623,6 +6636,13 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             <option value="holiday">🎉 Feiertag</option>
                         </select>
                     </div>
+                    <div class="edit-field" id="editJobRow" style="display:none;">
+                        <label class="edit-label">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                            Job
+                        </label>
+                        <select id="editInpJob" class="edit-select" onchange="recalcEditWorked()"></select>
+                    </div>
                 </div>
 
                 <!-- Zeit-Sektion (nur für Arbeit sichtbar) -->
@@ -6858,6 +6878,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     <script defer src="/components/core/state-config.js"></script>
     <script defer src="/components/core/modal-dialogs.js"></script>
     <script defer src="/components/core/utils.js"></script>
+    <script defer src="/components/jobs/jobs.js"></script>
     <script defer src="/components/core/storage-save.js"></script>
     <script defer src="/components/core/entry-edit.js"></script>
     <script defer src="/components/core/trash.js"></script>

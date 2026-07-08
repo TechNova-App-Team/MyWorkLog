@@ -45,6 +45,18 @@
         document.getElementById('editInpEnd').value = displayEnd;
         document.getElementById('editInpBreak').value = entry.breakMins || '';
 
+        // Job-Auswahl (nur bei mehreren Jobs sichtbar)
+        try {
+            const editJobRow = document.getElementById('editJobRow');
+            const editJobSel = document.getElementById('editInpJob');
+            if (editJobSel && typeof getJobs === 'function') {
+                const jobs = getJobs();
+                editJobSel.innerHTML = jobs.map(function(j){ return '<option value="'+j.id+'">'+(typeof esc==='function'?esc(j.name):j.name)+'</option>'; }).join('');
+                editJobSel.value = (typeof getEntryJobId === 'function') ? getEntryJobId(entry) : (entry.jobId || 'primary');
+                if (editJobRow) editJobRow.style.display = (jobs.length > 1) ? '' : 'none';
+            }
+        } catch(e) {}
+
         // Advanced fields
         document.getElementById('editInpExpected').value = entry.expected || '';
         document.getElementById('editInpDiff').value = entry.diff !== undefined ? (entry.diff >= 0 ? '+' : '') + entry.diff.toFixed(2) + 'h' : '';
@@ -145,10 +157,18 @@
         const dateVal = document.getElementById('editInpDate').value;
         if (dateVal) {
             const dayIndex = new Date(dateVal).getDay();
-            const expected = parseFloat(document.getElementById('editInpExpected').value) || data.settings.hours[dayIndex] || 0;
+            const expected = parseFloat(document.getElementById('editInpExpected').value) || editJobHoursDefault(dayIndex) || 0;
             const diff = netHours - expected;
             document.getElementById('editInpDiff').value = (diff >= 0 ? '+' : '') + diff.toFixed(2) + 'h';
         }
+    }
+
+    // Soll-Default für den im Edit-Modal gewählten Job (fällt auf Legacy zurück)
+    function editJobHoursDefault(dayIndex) {
+        const sel = document.getElementById('editInpJob');
+        const jid = sel && sel.value ? sel.value : 'primary';
+        if (typeof getJobHours === 'function') return getJobHours(jid, dayIndex);
+        return (data.settings.hours && data.settings.hours[dayIndex]) || 0;
     }
 
     function editHoursManualChanged() {
@@ -159,7 +179,7 @@
             const dateVal = document.getElementById('editInpDate').value;
             if (dateVal) {
                 const dayIndex = new Date(dateVal).getDay();
-                const expected = parseFloat(document.getElementById('editInpExpected').value) || data.settings.hours[dayIndex] || 0;
+                const expected = parseFloat(document.getElementById('editInpExpected').value) || editJobHoursDefault(dayIndex) || 0;
                 const diff = parseFloat(val) - expected;
                 document.getElementById('editInpDiff').value = (diff >= 0 ? '+' : '') + diff.toFixed(2) + 'h';
             }
@@ -210,18 +230,27 @@
         if (newEnd) { entry.shiftEnd = entry.end = newEnd; entry.endIsRaw = true; }
         entry.breakMins = newBreak;
 
+        // Job (falls Auswahl vorhanden)
+        const editJobSelSave = document.getElementById('editInpJob');
+        if (editJobSelSave && editJobSelSave.value && typeof getJobs === 'function' && getJobs().some(function(j){ return j.id === editJobSelSave.value; })) {
+            entry.jobId = editJobSelSave.value;
+        }
+        const entryJobId = (typeof getEntryJobId === 'function') ? getEntryJobId(entry) : (entry.jobId || 'primary');
+
         // Calculate expected if not manually set
         const dayIndex = new Date(newDate).getDay();
+        const jobDaySoll = (typeof getJobHours === 'function') ? getJobHours(entryJobId, dayIndex) : (data.settings.hours[dayIndex] || 0);
         if (!isNaN(newExpected)) {
             // Manuell gesetzt → exakt übernehmen
             entry.expected = newExpected;
         } else {
-            // Auto: Split-Shift/Wiederanmeldung — trägt ein anderer Eintrag am selben Tag
+            // Auto: Split-Shift/Wiederanmeldung — trägt ein anderer Eintrag am selben Tag & JOB
             // schon das Tagessoll, zählt dieser Eintrag als reine Zusatzzeit (expected 0).
             const dayAlreadyCounted = (Array.isArray(data.entries) ? data.entries : []).some(function(e) {
-                return e && e.id !== entry.id && e.date === newDate && (parseFloat(e.expected) || 0) > 0;
+                const ejob = (typeof getEntryJobId === 'function') ? getEntryJobId(e) : 'primary';
+                return e && e.id !== entry.id && e.date === newDate && ejob === entryJobId && (parseFloat(e.expected) || 0) > 0;
             });
-            entry.expected = dayAlreadyCounted ? 0 : (data.settings.hours[dayIndex] || 0);
+            entry.expected = dayAlreadyCounted ? 0 : jobDaySoll;
         }
 
         // Type-specific logic

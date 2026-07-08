@@ -418,5 +418,8 @@
 
         // Mood Overview rendern (Stimmungs-Übersicht im Performance Tab)
         renderMoodOverview();
+
+        // Statistik pro Job (nur sichtbar bei 2+ Jobs)
+        try { if (typeof renderJobBreakdown === 'function') renderJobBreakdown(); } catch(e) { console.warn('renderJobBreakdown error', e); }
     }
 

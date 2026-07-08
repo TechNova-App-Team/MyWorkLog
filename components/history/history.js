@@ -60,6 +60,11 @@
         };
         const isEN = document.documentElement.lang === 'en';
 
+        // Job-Badge nur zeigen, wenn mehrere Jobs existieren
+        const showJobBadge = (typeof hasMultipleJobs === 'function') && hasMultipleJobs();
+        const jobNameOf = (e) => (typeof getJobName === 'function') ? getJobName((typeof getEntryJobId === 'function') ? getEntryJobId(e) : 'primary') : '';
+        const jobColorOf = (e) => (typeof getJobColor === 'function') ? getJobColor((typeof getEntryJobId === 'function') ? getEntryJobId(e) : 'primary') : '#a855f7';
+
         // Zusatzzeit-Erkennung: arbeits-artige Einträge mit expected 0, deren Tagessoll
         // bereits ein anderer Eintrag desselben Tages trägt (Split-Shift). Aus VOLLEN Daten
         // abgeleitet (nicht nur gefiltert), damit der Badge auch bei aktivem Filter stimmt.
@@ -125,6 +130,7 @@
                     <span class="er-info">${info || '—'}</span>
                     <div class="er-tags">
                         <span class="er-badge type-${e.type}">${label}</span>
+                        ${showJobBadge ? `<span class="er-badge er-badge--job" style="background:${jobColorOf(e)}22;color:${jobColorOf(e)}">${esc(jobNameOf(e))}</span>` : ''}
                         ${additionalIds.has(e.id) ? `<span class="er-badge er-badge--additional" title="${isEN ? 'Daily target already counted on the main entry of this day' : 'Tagessoll bereits beim Haupt-Eintrag dieses Tages gezählt'}">↪ ${isEN ? 'Additional time' : 'Zusatzzeit'}</span>` : ''}
                         ${e.project ? `<span class="er-project">${esc(e.project)}</span>` : ''}
                         ${e.mood ? `<span class="er-mood">${e.mood}</span>` : ''}

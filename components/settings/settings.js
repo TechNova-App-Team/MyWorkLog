@@ -106,6 +106,9 @@
 
         // === NEU: Team Features laden ===
         loadTeamSettings();
+
+        // Job-Manager rendern
+        try { if (typeof renderJobManager === 'function') renderJobManager(); } catch(e) { console.warn('renderJobManager error', e); }
     }
 
     function closeSettings() { saveSettings(); }
@@ -115,6 +118,9 @@
         // Job
         const confJobSaveEl = document.getElementById('confJob');
         if (confJobSaveEl) data.settings.job = confJobSaveEl.value;
+        // Jobs aus dem Job-Manager einlesen + Formular-Auswahl aktualisieren
+        try { if (typeof collectJobManager === 'function') collectJobManager(); } catch(e) { console.warn('collectJobManager error', e); }
+        try { if (typeof populateJobSelect === 'function') populateJobSelect(); } catch(e) {}
         // Update sidebar avatar with new name
         try { updateSidebarAvatar(); } catch(e) {}
         // Shortcuts setting

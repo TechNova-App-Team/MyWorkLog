@@ -34,14 +34,17 @@
         const date = new Date(dateStr);
         let worked = 0;
         let dayIndex = date.getDay();
-        let expected = data.settings.hours[dayIndex] || 0;
+        // Job für diesen Eintrag (Dropdown; default 'primary'). Soll/Pause kommen vom Job.
+        const entryJobId = (typeof getFormJobId === 'function') ? getFormJobId() : 'primary';
+        let expected = (typeof getJobHours === 'function') ? getJobHours(entryJobId, dayIndex) : (data.settings.hours[dayIndex] || 0);
 
-        // Split-Shift / Wiederanmeldung: Wenn der Tag schon einen Eintrag hat, der das
-        // Tagessoll trägt (expected > 0), darf ein WEITERER Arbeits-Eintrag NICHT nochmal
+        // Split-Shift / Wiederanmeldung: Wenn der Tag für DIESEN JOB schon einen Eintrag hat,
+        // der das Tagessoll trägt (expected > 0), darf ein WEITERER Arbeits-Eintrag NICHT nochmal
         // das volle Soll abziehen — sonst kippt der Saldo (z.B. -8,3h für 30 Min "Nacharbeit").
         // Der zweite Block zählt dann als reine Zusatz-Arbeitszeit (expected 0 → diff = worked).
         const dayAlreadyCounted = (Array.isArray(data.entries) ? data.entries : []).some(function(e) {
-            return e && e.date === dateStr && e.id !== editId && (parseFloat(e.expected) || 0) > 0;
+            const ejob = (typeof getEntryJobId === 'function') ? getEntryJobId(e) : 'primary';
+            return e && e.date === dateStr && e.id !== editId && ejob === entryJobId && (parseFloat(e.expected) || 0) > 0;
         });
 
         let info = notes; // info wird zur Notiz, da Zeit jetzt getrennt ist
@@ -62,11 +65,12 @@
                 let hoursDiff = (d2 - d1) / 3.6e6;
                 if(hoursDiff < 0) hoursDiff += 24;
                 
-                // Hole Pausenzeit für diesen Wochentag
-                const breakMinutesForDay = Array.isArray(data.settings.break.min) 
-                    ? data.settings.break.min[dayIndex] 
-                    : data.settings.break.min; // Fallback für alte Daten
-                
+                // Hole Pausenzeit für diesen Wochentag (aus dem gewählten Job)
+                const jobBreak = (typeof getJobBreak === 'function') ? getJobBreak(entryJobId) : data.settings.break;
+                const breakMinutesForDay = Array.isArray(jobBreak.min)
+                    ? jobBreak.min[dayIndex]
+                    : jobBreak.min; // Fallback für alte Daten
+
                 if(hasBreakOverride) {
                     // User hat die tatsächliche Pause manuell gesetzt → exakt abziehen, Schwelle ignorieren
                     breakMinutes = breakOverride;
@@ -74,7 +78,7 @@
                     info = breakMinutes > 0
                         ? `${start} - ${end} (${breakMinutes}m Pause) | ${info}`
                         : `${start} - ${end} (keine Pause) | ${info}`;
-                } else if(data.settings.break.thresh > 0 && hoursDiff >= data.settings.break.thresh) {
+                } else if(jobBreak.thresh > 0 && hoursDiff >= jobBreak.thresh) {
                     breakMinutes = breakMinutesForDay;
                     hoursDiff -= (breakMinutes / 60);
                     info = `${start} - ${end} (${breakMinutes}m Pause) | ${info}`; // Zeitdetails im Info behalten
@@ -96,16 +100,17 @@
                  // Präzise Pausenlogik: Abzug der gemessenen Pausenzeit
                  h -= (timer.breakTime / 3.6e6); // Abzug der im Timer gemessenen Pausenzeit (NEU)
 
-                 // Hole Pausenzeit für diesen Wochentag
-                 const breakMinutesForDay = Array.isArray(data.settings.break.min) 
-                    ? data.settings.break.min[dayIndex] 
-                    : data.settings.break.min; // Fallback für alte Daten
-                 
+                 // Hole Pausenzeit für diesen Wochentag (aus dem gewählten Job)
+                 const jobBreakT = (typeof getJobBreak === 'function') ? getJobBreak(entryJobId) : data.settings.break;
+                 const breakMinutesForDay = Array.isArray(jobBreakT.min)
+                    ? jobBreakT.min[dayIndex]
+                    : jobBreakT.min; // Fallback für alte Daten
+
                  // Automatischer Abzug der Mindestpause (falls Timer-Pausen < Mindestpause)
                  const minBreakRequired = breakMinutesForDay;
                  const timerBreakMinutes = timer.breakTime / 60000;
 
-                 if (h * 60 >= data.settings.break.thresh * 60 && timerBreakMinutes < minBreakRequired) {
+                 if (h * 60 >= jobBreakT.thresh * 60 && timerBreakMinutes < minBreakRequired) {
                     const additionalBreakMs = (minBreakRequired - timerBreakMinutes) * 60000;
                     h -= (additionalBreakMs / 3.6e6);
                     breakMinutes = minBreakRequired;
@@ -207,10 +212,11 @@
 
         const entry = {
             id: editId || Date.now(),
-            date: dateStr, type, worked, expected, 
-            diff: diff, 
-            info, 
+            date: dateStr, type, worked, expected,
+            diff: diff,
+            info,
             isPeriod: false,
+            jobId: entryJobId,
             breakMins: breakMinutes,
             shiftStart: shiftStart,
             shiftEnd: shiftEnd,
@@ -273,6 +279,7 @@
         document.getElementById('inpEnd').value = '';
         document.getElementById('inpHours').value = '';
         const inpBreakReset = document.getElementById('inpBreak'); if (inpBreakReset) inpBreakReset.value = '';
+        try { if (typeof resetJobSelection === 'function') resetJobSelection(); } catch(e) {}
         document.getElementById('inpProject').value = ''; // NEU
         document.getElementById('inpNotes').value = ''; // NEU
     }
@@ -296,9 +303,14 @@
     // Rein subtraktiv & idempotent: fügt nie ein Soll hinzu, ändert keine Urlaub/Krank/Feiertag-Einträge.
     function dedupeDayExpected() {
         if (!Array.isArray(data.entries)) return false;
+        // Gruppierung pro (Tag + Job): jeder Job zählt sein Tagessoll einmal pro Tag.
         const byDate = {};
         data.entries.forEach(function(e) {
-            if (e && e.date) { (byDate[e.date] = byDate[e.date] || []).push(e); }
+            if (e && e.date) {
+                const jid = (typeof getEntryJobId === 'function') ? getEntryJobId(e) : 'primary';
+                const key = e.date + '|' + jid;
+                (byDate[key] = byDate[key] || []).push(e);
+            }
         });
         let changed = false;
         Object.keys(byDate).forEach(function(d) {
@@ -517,6 +529,15 @@
             inpBreakEl.disabled = disableTime;
             inpBreakEl.style.display = disableTime ? 'none' : '';
         }
+        // Job-Auswahl nur bei Zeit-Typen (und nur wenn mehrere Jobs existieren)
+        try {
+            if (typeof populateJobSelect === 'function') populateJobSelect();
+            const jobRow = document.getElementById('jobSelectRow');
+            if (jobRow) {
+                const multi = (typeof hasMultipleJobs === 'function') && hasMultipleJobs();
+                jobRow.style.display = (!disableTime && multi) ? '' : 'none';
+            }
+        } catch (e) {}
         updateBreakPlaceholder();
 
         // Hint-Banner für Multi-Day-Buchung nur bei Urlaub anzeigen
@@ -532,7 +553,8 @@
         try {
             const dateStr = document.getElementById('inpDate').value;
             const dayIndex = dateStr ? new Date(dateStr).getDay() : new Date().getDay();
-            const brk = data.settings && data.settings.break;
+            const jid = (typeof getFormJobId === 'function') ? getFormJobId() : 'primary';
+            const brk = (typeof getJobBreak === 'function') ? getJobBreak(jid) : (data.settings && data.settings.break);
             const autoMin = brk ? (Array.isArray(brk.min) ? brk.min[dayIndex] : brk.min) : 0;
             const thresh = brk ? brk.thresh : 0;
             const en = document.documentElement.lang === 'en';
