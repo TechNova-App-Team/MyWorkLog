@@ -640,17 +640,16 @@ const OfflineDataManager = {
 window.addEventListener('online', () => {
     console.log('[PWA] Online wieder hergestellt — synchronisiere Daten...');
     OfflineDataManager.processPendingActions();
-    if (window.location.pathname.includes('offline.html')) {
+    // Nur falls der SW als LETZTER Ausweg die /offline/-Infoseite ausgeliefert hat
+    // (nie-besuchte Route offline geöffnet): zurück in die App.
+    if (window.location.pathname.indexOf('/offline') === 0) {
         location.href = '/';
     }
 });
 
-// Wenn Offline wird: zur offline.html umleiten
-window.addEventListener('offline', () => {
-    if (!window.location.pathname.includes('offline.html')) {
-        location.href = '/offline/';
-    }
-});
+// KEIN Redirect zur Offline-Seite mehr, wenn die Verbindung abreißt — die App ist
+// per Service-Worker gecacht und läuft offline einfach weiter. Der Netzwerk-Status-
+// Indikator (netStatus) signalisiert den Offline-Zustand.
 
 // Run on load
 initAutoInstallPrompt();

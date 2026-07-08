@@ -213,11 +213,8 @@
         // EmailJS init (deferred SDK ist jetzt geladen)
         try { if (typeof emailjs !== 'undefined') emailjs.init('dLaRbQLynU5R8A0ti'); } catch(e) {}
 
-        // Check offline on startup
-        if (!navigator.onLine && !window.location.pathname.includes('offline.html')) {
-            window.location.href = '/offline/';
-            return;
-        }
+        // Offline beim Start ist KEIN Grund umzuleiten — die App ist per Service-Worker
+        // gecacht und voll offline nutzbar. Der Netzwerk-Status-Indikator zeigt Offline an.
         window._clsBC = 'data-loaded';
         if(localStorage.getItem('tg_pro_data')) data = JSON.parse(localStorage.getItem('tg_pro_data'));
         
@@ -237,6 +234,8 @@
         }
         // Jobs-Migration: mind. Hauptjob anlegen (nutzt Legacy hours/break)
         try { if (typeof migrateJobs === 'function') migrateJobs(); } catch(e) { console.warn('migrateJobs error', e); }
+        // Arbeitszeit-Verteilung: Berechnungseinheit (Stunden = Default/Legacy, oder Tage)
+        if (data.settings.distributionUnit !== 'days' && data.settings.distributionUnit !== 'hours') data.settings.distributionUnit = 'hours';
         if(!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0, carriedOver:0, mode:'days', carryOverMax:null, lastRolloverYear:null, yearHistory:{}};
         if(typeof data.settings.vacation.mode === 'undefined') data.settings.vacation.mode = 'days';
         if(typeof data.settings.vacation.carriedOver === 'undefined') data.settings.vacation.carriedOver = 0;

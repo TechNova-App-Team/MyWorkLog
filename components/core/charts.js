@@ -1184,6 +1184,11 @@
         const hoverTrans = 'filter .3s ease, transform .3s ease, opacity .3s ease';
         const transitionCss = 'flex ' + animSpeed + 'ms cubic-bezier(0.34,1.56,0.64,1), ' + hoverTrans;
 
+        // Einheit: Stunden (Default) oder distinkte Tage — steuert nur die ANZEIGE-Formatierung
+        const useDays = (typeof data !== 'undefined' && data.settings && data.settings.distributionUnit === 'days');
+        const isEN = document.documentElement.lang === 'en';
+        const fmtVal = (v) => useDays ? (Math.round(v) + (isEN ? ' d' : ' T.')) : (v.toFixed(1) + 'h');
+
         const categories = [
             { id: 'donutWork', val: work, type: 'work', labelId: 'work-label' },
             { id: 'donutSchool', val: school, type: 'school', labelId: 'school-label' },
@@ -1194,11 +1199,15 @@
 
         const total = work + vac + sick + school + holiday || 1;
 
+        // Untertitel spiegelt die gewählte Einheit
+        const subEl = document.getElementById('donutSubtitle');
+        if (subEl) subEl.textContent = useDays ? (isEN ? 'Split by days' : 'Aufteilung in Tagen') : (isEN ? 'Split by hours' : 'Aufteilung in Stunden');
+
         // Update center info
         const mainCat = categories.reduce((a, b) => a.val > b.val ? a : b);
         const centerEl = document.getElementById('donutCenterValue');
         const centerLabel = document.getElementById('donutCenterLabel');
-        if (centerEl) centerEl.textContent = mainCat.val.toFixed(1);
+        if (centerEl) centerEl.textContent = useDays ? String(Math.round(mainCat.val)) : mainCat.val.toFixed(1);
         if (centerLabel) {
             const labels = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', sick: 'Krank', holiday: 'Feiertag' };
             centerLabel.textContent = labels[mainCat.type];
@@ -1253,7 +1262,7 @@
         categories.forEach(cat => {
             const valEl = document.getElementById(`val-${cat.type}`);
             const pctEl = document.getElementById(`pct-${cat.type}`);
-            if (valEl) valEl.textContent = cat.val.toFixed(1) + 'h';
+            if (valEl) valEl.textContent = fmtVal(cat.val);
             if (pctEl) pctEl.textContent = ((cat.val / total) * 100).toFixed(1) + '%';
         });
     }

@@ -13,8 +13,10 @@
         const now = new Date();
         const currentYear = now.getFullYear(); // Für Jahr-spezifische Statistiken
         let week=0, month=0, total=0, totalWorked=0, countDays=0;
-        let sickSum=0, vacSum=0, workSum=0, schoolSum=0, holidaySum=0; 
-        let usedVacationDays = 0; 
+        let sickSum=0, vacSum=0, workSum=0, schoolSum=0, holidaySum=0;
+        // Parallel: distinkte Tage pro Kategorie (für Verteilung im Tage-Modus)
+        const sickDaysSet=new Set(), vacDaysSet=new Set(), workDaysSet=new Set(), schoolDaysSet=new Set(), holidayDaysSet=new Set();
+        let usedVacationDays = 0;
         let trendData = [];
         let runningTotal = 0;
 
@@ -25,13 +27,13 @@
             runningTotal += e.diff;
             trendData.push({ date: e.date, diff: e.diff, total: runningTotal, type: e.type, worked: e.worked });
             // Nur Arbeits-Summen den aktuellen Trend trennen (für alle Jahre)
-            if(e.type==='sick') sickSum += e.worked;
-            else if(e.type==='vacation' && entryYear === currentYear) { vacSum += e.worked; usedVacationDays += (typeof getVacationMode === 'function' && getVacationMode() === 'hours') ? (parseFloat(e.expected) || 0) : 1; }
+            if(e.type==='sick') { sickSum += e.worked; sickDaysSet.add(e.date); }
+            else if(e.type==='vacation' && entryYear === currentYear) { vacSum += e.worked; vacDaysSet.add(e.date); usedVacationDays += (typeof getVacationMode === 'function' && getVacationMode() === 'hours') ? (parseFloat(e.expected) || 0) : 1; }
             else if(e.type==='gleittag') { /* Gleittag: kein Urlaubstag, Überstunden werden in diff abgezogen */ }
-            else if(e.type==='school') schoolSum += (e.expected || e.worked); // Schultag = voller Arbeitstag
-            else if(e.type==='holiday' && entryYear === currentYear) holidaySum += e.worked;
+            else if(e.type==='school') { schoolSum += (e.expected || e.worked); schoolDaysSet.add(e.date); } // Schultag = voller Arbeitstag
+            else if(e.type==='holiday' && entryYear === currentYear) { holidaySum += e.worked; holidayDaysSet.add(e.date); }
             else if(e.type==='korrektur') { /* neutral: nur e.diff zählt in den Gesamt-Saldo, kein Arbeitstag */ }
-            else workSum += e.worked;
+            else { workSum += e.worked; workDaysSet.add(e.date); }
         });
         
         data.settings.vacation.used = usedVacationDays + parseFloat(data.settings.vacation.usedManual || 0);
@@ -236,7 +238,12 @@
 
         renderLists();
         renderTrend(trendData, 'trendChart', true, null, ascEntries);
-        renderDonutModern(workSum, vacSum, sickSum, schoolSum, holidaySum);
+        // Arbeitszeit-Verteilung wahlweise in Stunden (Default) oder distinkten Tagen
+        if ((data.settings.distributionUnit || 'hours') === 'days') {
+            renderDonutModern(workDaysSet.size, vacDaysSet.size, sickDaysSet.size, schoolDaysSet.size, holidayDaysSet.size);
+        } else {
+            renderDonutModern(workSum, vacSum, sickSum, schoolSum, holidaySum);
+        }
         
         // Update NEW Features
         if (typeof updateDailySummary === 'function') updateDailySummary();

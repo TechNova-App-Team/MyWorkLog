@@ -1273,6 +1273,8 @@
     // ═══ NEW: Modern Balkendiagramm-Einstellungen Modal ═══
     function openDonutStyleModal() {
         var current = getBarChartSettings();
+        var enD = document.documentElement.lang === 'en';
+        var curUnit = (data.settings && data.settings.distributionUnit === 'days') ? 'days' : 'hours';
         window.modalBarSettings = Object.assign({}, current);
         window._barSettingsSnapshot = Object.assign({}, current); // für Abbrechen-Restore
 
@@ -1330,6 +1332,8 @@
         '.bcs-btn.ghost:hover{background:rgba(255,255,255,.1)}' +
         '.bcs-btn.primary{background:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(var(--primary-rgb),.32)}' +
         '.bcs-btn.primary:hover{filter:brightness(1.08);box-shadow:0 6px 20px rgba(var(--primary-rgb),.42)}' +
+        '.bcs-unit-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}' +
+        '.bcs-unit-btn.active:hover{filter:brightness(1.08);background:var(--primary)}' +
         '.bcs-animrow{transition:opacity .2s}' +
         // Desktop: breiteres Modal + 2-Spalten-Layout (Vorschau über volle Breite)
         '@media(min-width:640px){' +
@@ -1401,6 +1405,15 @@
                         '<input type="checkbox" id="bcsGlow"' + (current.glow ? ' checked' : '') + '><span class="bcs-switch"></span>' +
                     '</label>' +
                 '</div>' +
+                // Berechnungs-Einheit (Stunden vs. Tage)
+                '<div>' +
+                    '<span class="bcs-group-label">' + (enD ? 'Distribution basis' : 'Berechnung der Verteilung') + '</span>' +
+                    '<div id="bcsUnitSeg" style="display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;">' +
+                        '<button type="button" class="bcs-btn ghost bcs-unit-btn' + (curUnit === 'hours' ? ' active' : '') + '" data-unit="hours">' + (enD ? 'Hours' : 'Stunden') + '</button>' +
+                        '<button type="button" class="bcs-btn ghost bcs-unit-btn' + (curUnit === 'days' ? ' active' : '') + '" data-unit="days">' + (enD ? 'Days' : 'Tage') + '</button>' +
+                    '</div>' +
+                    '<p style="font-size:.72rem;color:var(--text-muted);margin:8px 0 0;line-height:1.5;">' + (enD ? 'Hours: share of logged hours. Days: share of recorded days — closer to the IHK absence-days logic.' : 'Stunden: Anteil an geloggten Stunden. Tage: Anteil an erfassten Tagen — näher an der IHK-Fehltage-Logik.') + '</p>' +
+                '</div>' +
                 // Animationstempo (nur relevant wenn Animation an)
                 '<div class="bcs-animrow" id="bcsAnimRow">' +
                     '<span class="bcs-group-label">Animation</span>' +
@@ -1429,6 +1442,21 @@
             return 'Normal';
         };
         var $ = function (id) { return modal.querySelector('#' + id); };
+
+        // Berechnungs-Einheit (Stunden/Tage): sofort anwenden (eigenständige Einstellung,
+        // unabhängig vom Speichern der visuellen Balken-Settings)
+        modal.querySelectorAll('.bcs-unit-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var unit = btn.getAttribute('data-unit') === 'days' ? 'days' : 'hours';
+                if (!data.settings) data.settings = {};
+                data.settings.distributionUnit = unit;
+                modal.querySelectorAll('.bcs-unit-btn').forEach(function (b) {
+                    b.classList.toggle('active', b.getAttribute('data-unit') === unit);
+                });
+                try { save(); } catch (e) {}
+                try { updateUI(); } catch (e) {}
+            });
+        });
 
         function refreshAnimRow() {
             var on = window.modalBarSettings.showAnimation;
