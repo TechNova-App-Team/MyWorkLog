@@ -58,6 +58,50 @@
             }
             return !String(id).startsWith('custom-');
         };
+        const isEN = document.documentElement.lang === 'en';
+
+        // Zusatzzeit-Erkennung: arbeits-artige Einträge mit expected 0, deren Tagessoll
+        // bereits ein anderer Eintrag desselben Tages trägt (Split-Shift). Aus VOLLEN Daten
+        // abgeleitet (nicht nur gefiltert), damit der Badge auch bei aktivem Filter stimmt.
+        const additionalIds = new Set();
+        const allByDate = {};
+        (Array.isArray(data.entries) ? data.entries : []).forEach((e) => {
+            if (e && e.date) { (allByDate[e.date] = allByDate[e.date] || []).push(e); }
+        });
+        Object.keys(allByDate).forEach((d) => {
+            const list = allByDate[d];
+            const hasCarrier = list.some((e) => countsAsWork(e.type) && (parseFloat(e.expected) || 0) > 0);
+            if (!hasCarrier) return;
+            list.forEach((e) => {
+                if (countsAsWork(e.type) && (parseFloat(e.expected) || 0) === 0 && (parseFloat(e.worked) || 0) > 0) {
+                    additionalIds.add(e.id);
+                }
+            });
+        });
+
+        // Tages-Summen (nur sichtbare/gefilterte Einträge) — für die Tages-Header-Zeile
+        const dayAgg = {};
+        filteredData.forEach((e) => {
+            const g = dayAgg[e.date] || (dayAgg[e.date] = { count: 0, sumDiff: 0 });
+            g.count++;
+            if (countsAsWork(e.type)) g.sumDiff += (parseFloat(e.diff) || 0);
+        });
+
+        const dayHeaderRow = (dateISO, sumDiff) => {
+            const dt = new Date(dateISO + 'T00:00:00');
+            const wd = dt.toLocaleDateString(isEN ? 'en-GB' : 'de-DE', { weekday: 'long' });
+            const ds = dt.toLocaleDateString(isEN ? 'en-GB' : 'de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+            const pos = sumDiff >= 0;
+            const col = pos ? 'var(--success)' : 'var(--danger)';
+            const sign = pos ? '+' : '';
+            const lbl = isEN ? 'Day balance' : 'Tages-Saldo';
+            return `
+            <div class="entry-day-header">
+                <span class="edh-date">${esc(wd)}, ${ds}</span>
+                <span class="edh-sum" style="color:${col}">${lbl} ${sign}${sumDiff.toFixed(2)}h</span>
+            </div>`;
+        };
+
         const createRow = (e) => {
             const isWorkRel = countsAsWork(e.type);
             const diffColor = isWorkRel ? (e.diff >= 0 ? '#10b981' : '#ef4444') : '#64748b';
@@ -81,6 +125,7 @@
                     <span class="er-info">${info || '—'}</span>
                     <div class="er-tags">
                         <span class="er-badge type-${e.type}">${label}</span>
+                        ${additionalIds.has(e.id) ? `<span class="er-badge er-badge--additional" title="${isEN ? 'Daily target already counted on the main entry of this day' : 'Tagessoll bereits beim Haupt-Eintrag dieses Tages gezählt'}">↪ ${isEN ? 'Additional time' : 'Zusatzzeit'}</span>` : ''}
                         ${e.project ? `<span class="er-project">${esc(e.project)}</span>` : ''}
                         ${e.mood ? `<span class="er-mood">${e.mood}</span>` : ''}
                         ${e.shiftWarning ? '<span class="er-warn">⚠ MAX</span>' : ''}
@@ -107,7 +152,19 @@
         // Entrance-Animation NUR bei Erst-Befüllung, nicht bei jedem Filter-Rerender
         // (sonst faded die ganze Liste bei jeder Interaktion neu ein → wirkt wie Lag).
         const hadRows = historyListEl.querySelector('.entry-row') !== null;
-        historyListEl.innerHTML = filteredData.map(createRow).join('');
+        // Rendern mit Tages-Header VOR dem ersten Eintrag eines Tages — aber nur, wenn der Tag
+        // mehr als einen Eintrag hat (Split-Shift). Einzel-Tage bleiben wie gehabt.
+        let html = '';
+        let lastDate = null;
+        filteredData.forEach((e) => {
+            if (e.date !== lastDate) {
+                lastDate = e.date;
+                const agg = dayAgg[e.date];
+                if (agg && agg.count >= 2) html += dayHeaderRow(e.date, agg.sumDiff);
+            }
+            html += createRow(e);
+        });
+        historyListEl.innerHTML = html;
         if (!hadRows) {
             historyListEl.classList.add('entry-list-animate-in');
             setTimeout(() => historyListEl.classList.remove('entry-list-animate-in'), 500);

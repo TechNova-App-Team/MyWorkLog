@@ -318,6 +318,8 @@
         window._clsBC = 'before-setThemeMode';
         if (!data.settings.themeMode) data.settings.themeMode = 'dark';
         setThemeMode(data.settings.themeMode);
+        // Split-Shift-Normalisierung: Altbestand reparieren (Tagessoll pro Tag nur einmal zählen)
+        try { if (typeof dedupeDayExpected === 'function' && dedupeDayExpected()) { save(); } } catch(e) { console.warn('dedupeDayExpected error', e); }
         window._clsBC = 'before-updateUI';
         updateUI();
         window._clsBC = 'after-updateUI';

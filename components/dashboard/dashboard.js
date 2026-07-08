@@ -18,7 +18,13 @@
         const start = document.getElementById('inpStart').value;
         const end = document.getElementById('inpEnd').value;
         const direct = document.getElementById('inpHours').value;
-        
+
+        // Pausen-Override: leer = Auto (Wochentag-Einstellung), Zahl (auch 0) = exakt diese Pause für diesen Eintrag
+        const breakOverrideEl = document.getElementById('inpBreak');
+        const breakOverrideRaw = breakOverrideEl ? breakOverrideEl.value.trim() : '';
+        const hasBreakOverride = breakOverrideRaw !== '' && !isNaN(parseFloat(breakOverrideRaw));
+        const breakOverride = hasBreakOverride ? Math.max(0, parseFloat(breakOverrideRaw)) : null;
+
         // NEU: Projekt & Info/Notiz
         const project = document.getElementById('inpProject').value.trim(); 
         const notes = document.getElementById('inpNotes').value.trim();
@@ -27,8 +33,17 @@
         
         const date = new Date(dateStr);
         let worked = 0;
-        let dayIndex = date.getDay(); 
+        let dayIndex = date.getDay();
         let expected = data.settings.hours[dayIndex] || 0;
+
+        // Split-Shift / Wiederanmeldung: Wenn der Tag schon einen Eintrag hat, der das
+        // Tagessoll trägt (expected > 0), darf ein WEITERER Arbeits-Eintrag NICHT nochmal
+        // das volle Soll abziehen — sonst kippt der Saldo (z.B. -8,3h für 30 Min "Nacharbeit").
+        // Der zweite Block zählt dann als reine Zusatz-Arbeitszeit (expected 0 → diff = worked).
+        const dayAlreadyCounted = (Array.isArray(data.entries) ? data.entries : []).some(function(e) {
+            return e && e.date === dateStr && e.id !== editId && (parseFloat(e.expected) || 0) > 0;
+        });
+
         let info = notes; // info wird zur Notiz, da Zeit jetzt getrennt ist
         let diff = 0; 
         
@@ -52,7 +67,14 @@
                     ? data.settings.break.min[dayIndex] 
                     : data.settings.break.min; // Fallback für alte Daten
                 
-                if(data.settings.break.thresh > 0 && hoursDiff >= data.settings.break.thresh) {
+                if(hasBreakOverride) {
+                    // User hat die tatsächliche Pause manuell gesetzt → exakt abziehen, Schwelle ignorieren
+                    breakMinutes = breakOverride;
+                    hoursDiff -= (breakMinutes / 60);
+                    info = breakMinutes > 0
+                        ? `${start} - ${end} (${breakMinutes}m Pause) | ${info}`
+                        : `${start} - ${end} (keine Pause) | ${info}`;
+                } else if(data.settings.break.thresh > 0 && hoursDiff >= data.settings.break.thresh) {
                     breakMinutes = breakMinutesForDay;
                     hoursDiff -= (breakMinutes / 60);
                     info = `${start} - ${end} (${breakMinutes}m Pause) | ${info}`; // Zeitdetails im Info behalten
@@ -103,10 +125,23 @@
                  displayTimerTime(0);
 
             } else { shakeInputError('inpStart', 'inpEnd', 'inpHours'); return; }
-            
+
+            // Zusatz-Block am selben Tag → Soll nur einmal zählen (siehe dayAlreadyCounted oben)
+            if (dayAlreadyCounted) {
+                expected = 0;
+                info = `${info} | ↪ Zusatzzeit (Soll bereits gezählt)`.replace(/^ \| /, '');
+                const enMsg = document.documentElement.lang === 'en';
+                showCustomMessage(
+                    enMsg ? 'ℹ️ Additional time' : 'ℹ️ Zusatzzeit',
+                    enMsg
+                        ? 'The daily target for this day is already covered by another entry. This entry counts as pure additional working time.'
+                        : 'Für diesen Tag ist das Tagessoll bereits durch einen anderen Eintrag gezählt. Dieser Eintrag zählt als reine Zusatz-Arbeitszeit.',
+                    'info'
+                );
+            }
             diff = worked - expected;
 
-        } else if (type === 'school') { 
+        } else if (type === 'school') {
             const SCHOOL_HOURS = 6.75;
             
             if (dayIndex === 3) {
@@ -149,6 +184,7 @@
                 let d2 = new Date(`2000-01-01T${end}`);
                 let hoursDiff = (d2 - d1) / 3.6e6;
                 if (hoursDiff < 0) hoursDiff += 24;
+                if (hasBreakOverride) { breakMinutes = breakOverride; hoursDiff -= (breakMinutes / 60); }
                 worked = hoursDiff;
                 info = `${cName} ${start}-${end} (${worked.toFixed(2)}h) | ${info}`;
             } else if (direct) {
@@ -159,6 +195,10 @@
                 info = `${cName} | ${info}`;
             }
             // Wenn countsAsWork → wie Arbeit: diff = worked - expected. Sonst neutral (diff=0).
+            if (cInfo && cInfo.countsAsWork === true && dayAlreadyCounted) {
+                expected = 0; // Zusatz-Block am selben Tag → Soll nur einmal zählen
+                info = `${info} | ↪ Zusatzzeit (Soll bereits gezählt)`.replace(/^ \| /, '');
+            }
             diff = (cInfo && cInfo.countsAsWork === true) ? (worked - expected) : 0;
         }
         
@@ -200,6 +240,7 @@
         }
         
         data.entries.sort((a,b) => new Date(b.date) - new Date(a.date));
+        try { dedupeDayExpected(); } catch(e) {}
         save();
 
         // Mood Selector nach Eintrag (nur wenn aktiviert)
@@ -211,6 +252,7 @@
         document.getElementById('inpStart').value = '';
         document.getElementById('inpEnd').value = '';
         document.getElementById('inpHours').value = '';
+        const inpBreakClr = document.getElementById('inpBreak'); if (inpBreakClr) inpBreakClr.value = '';
         document.getElementById('inpProject').value = ''; // NEU
         document.getElementById('inpNotes').value = ''; // NEU
         try { if (typeof clearDraft === 'function') clearDraft(); else localStorage.removeItem('mwl_entry_draft'); } catch(e) { /* ignore */ }
@@ -230,8 +272,56 @@
         document.getElementById('inpStart').value = '';
         document.getElementById('inpEnd').value = '';
         document.getElementById('inpHours').value = '';
+        const inpBreakReset = document.getElementById('inpBreak'); if (inpBreakReset) inpBreakReset.value = '';
         document.getElementById('inpProject').value = ''; // NEU
         document.getElementById('inpNotes').value = ''; // NEU
+    }
+
+    // Trägt ein Eintrag das Tagessoll wie ein Arbeitstag? (Arbeit + Custom-Types mit countsAsWork)
+    function entryCarriesDaySoll(e) {
+        if (!e) return false;
+        if (e.type === 'work') return true;
+        if (typeof e.type === 'string' && e.type.indexOf('custom-') === 0) {
+            const ci = (typeof getEntryTypeInfo === 'function') ? getEntryTypeInfo(e.type) : null;
+            return !!(ci && ci.countsAsWork === true);
+        }
+        return false;
+    }
+
+    // Split-Shift-Normalisierung: Pro Kalendertag darf das Tagessoll (expected) NUR EINMAL
+    // abgezogen werden. Hat ein Tag mehrere Arbeits-Einträge, die alle das volle Soll tragen
+    // (z.B. Hauptschicht + kurzer Nacharbeits-Block nach Wiederanmeldung), behält der Haupt-
+    // Eintrag (frühester Start, sonst größte Ist-Zeit) das Soll — die übrigen zählen als reine
+    // Zusatzzeit (expected 0 → diff = worked). Repariert auch ALTBESTAND beim App-Start.
+    // Rein subtraktiv & idempotent: fügt nie ein Soll hinzu, ändert keine Urlaub/Krank/Feiertag-Einträge.
+    function dedupeDayExpected() {
+        if (!Array.isArray(data.entries)) return false;
+        const byDate = {};
+        data.entries.forEach(function(e) {
+            if (e && e.date) { (byDate[e.date] = byDate[e.date] || []).push(e); }
+        });
+        let changed = false;
+        Object.keys(byDate).forEach(function(d) {
+            const carriers = byDate[d].filter(function(e) { return (parseFloat(e.expected) || 0) > 0; });
+            if (carriers.length < 2) return;
+            // Nur automatisch dedupen, wenn ALLE Soll-Träger arbeits-artig sind
+            // (Urlaub/Krank/Feiertag/Gleittag-Logik nicht anfassen).
+            if (!carriers.every(entryCarriesDaySoll)) return;
+            carriers.sort(function(a, b) {
+                const sa = a.shiftStart || a.start || '99:99';
+                const sb = b.shiftStart || b.start || '99:99';
+                if (sa !== sb) return sa < sb ? -1 : 1;
+                return (parseFloat(b.worked) || 0) - (parseFloat(a.worked) || 0);
+            });
+            for (let i = 1; i < carriers.length; i++) {
+                const e = carriers[i];
+                e.expected = 0;
+                e.diff = (parseFloat(e.worked) || 0);
+                e.timestamp = Date.now();
+                changed = true;
+            }
+        });
+        return changed;
     }
 
     function timerAction(act) {
@@ -421,9 +511,41 @@
         // Manuelle Stunden für alles außer Tages-Pauschalen (Urlaub/Krank/Gleittag/Feiertag).
         document.getElementById('inpHours').disabled = (t === 'gleittag' || t === 'vacation' || t === 'sick' || t === 'holiday');
 
+        // Pausen-Override nur bei Zeit-Typen (Arbeit/Custom) sinnvoll
+        const inpBreakEl = document.getElementById('inpBreak');
+        if (inpBreakEl) {
+            inpBreakEl.disabled = disableTime;
+            inpBreakEl.style.display = disableTime ? 'none' : '';
+        }
+        updateBreakPlaceholder();
+
         // Hint-Banner für Multi-Day-Buchung nur bei Urlaub anzeigen
         const hint = document.getElementById('vacationMultiHint');
         if (hint) hint.style.display = (t === 'vacation') ? 'flex' : 'none';
+    }
+
+    // Placeholder des Pausen-Felds zeigt die automatische Pause für den gewählten Wochentag,
+    // damit klar ist, was passiert, wenn man das Feld leer lässt.
+    function updateBreakPlaceholder() {
+        const inpBreakEl = document.getElementById('inpBreak');
+        if (!inpBreakEl) return;
+        try {
+            const dateStr = document.getElementById('inpDate').value;
+            const dayIndex = dateStr ? new Date(dateStr).getDay() : new Date().getDay();
+            const brk = data.settings && data.settings.break;
+            const autoMin = brk ? (Array.isArray(brk.min) ? brk.min[dayIndex] : brk.min) : 0;
+            const thresh = brk ? brk.thresh : 0;
+            const en = document.documentElement.lang === 'en';
+            if (autoMin > 0 && thresh > 0) {
+                inpBreakEl.placeholder = en
+                    ? `Break automatic: ${autoMin} min (from ${thresh}h)`
+                    : `Pause automatisch: ${autoMin} Min (ab ${thresh}h)`;
+            } else {
+                inpBreakEl.placeholder = en ? 'Break automatic: none' : 'Pause automatisch: keine';
+            }
+        } catch (e) {
+            inpBreakEl.placeholder = document.documentElement.lang === 'en' ? 'Break automatic (min)' : 'Pause automatisch (Min)';
+        }
     }
 
     // ═══ NEW: Saldo-Korrektur (Gleitzeit manuell anpassen) ═══

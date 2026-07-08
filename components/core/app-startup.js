@@ -38,6 +38,7 @@
                 const start = document.getElementById('inpStart'); if (start && draft.start) start.value = draft.start;
                 const end = document.getElementById('inpEnd'); if (end && draft.end) end.value = draft.end;
                 const hours = document.getElementById('inpHours'); if (hours && draft.hours) hours.value = draft.hours;
+                const brk = document.getElementById('inpBreak'); if (brk && draft.breakMins) brk.value = draft.breakMins;
                 const notes = document.getElementById('inpNotes'); if (notes && draft.notes) notes.value = draft.notes;
             } catch (e) {
                 console.warn('Failed to load draft:', e);
@@ -54,6 +55,7 @@
                     start: document.getElementById('inpStart')?.value || '',
                     end: document.getElementById('inpEnd')?.value || '',
                     hours: document.getElementById('inpHours')?.value || '',
+                    breakMins: document.getElementById('inpBreak')?.value || '',
                     notes: document.getElementById('inpNotes')?.value || ''
                 };
                 localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
@@ -98,6 +100,7 @@
                 document.getElementById('inpStart').value = draft.start || '';
                 document.getElementById('inpEnd').value = draft.end || '';
                 document.getElementById('inpHours').value = draft.hours || '';
+                const brkR = document.getElementById('inpBreak'); if (brkR) brkR.value = draft.breakMins || '';
                 document.getElementById('inpNotes').value = draft.notes || '';
                 // After restoring, remove the draft (Wiederherstellen löscht Entwurf)
                 clearDraft();
@@ -118,7 +121,7 @@
 
         // Attach listeners to save draft on change/input (using Event Delegation for robustness)
         function attachDraftListeners() {
-            const ids = ['inpDate','inpType','inpProject','inpStart','inpEnd','inpHours','inpNotes'];
+            const ids = ['inpDate','inpType','inpProject','inpStart','inpEnd','inpHours','inpBreak','inpNotes'];
             document.addEventListener('input', (e) => {
                 if (ids.includes(e.target.id)) {
                     saveDraft();

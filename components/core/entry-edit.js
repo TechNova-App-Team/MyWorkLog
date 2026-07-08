@@ -212,7 +212,17 @@
 
         // Calculate expected if not manually set
         const dayIndex = new Date(newDate).getDay();
-        entry.expected = !isNaN(newExpected) ? newExpected : (data.settings.hours[dayIndex] || 0);
+        if (!isNaN(newExpected)) {
+            // Manuell gesetzt → exakt übernehmen
+            entry.expected = newExpected;
+        } else {
+            // Auto: Split-Shift/Wiederanmeldung — trägt ein anderer Eintrag am selben Tag
+            // schon das Tagessoll, zählt dieser Eintrag als reine Zusatzzeit (expected 0).
+            const dayAlreadyCounted = (Array.isArray(data.entries) ? data.entries : []).some(function(e) {
+                return e && e.id !== entry.id && e.date === newDate && (parseFloat(e.expected) || 0) > 0;
+            });
+            entry.expected = dayAlreadyCounted ? 0 : (data.settings.hours[dayIndex] || 0);
+        }
 
         // Type-specific logic
         if (newType === 'school') {
@@ -234,6 +244,9 @@
 
         // Update timestamp for sync
         entry.timestamp = Date.now();
+
+        // Split-Shift-Normalisierung: Tagessoll pro Tag nur einmal zählen
+        try { if (typeof dedupeDayExpected === 'function') dedupeDayExpected(); } catch(e) {}
 
         save();
         closeEditModal();
