@@ -1452,19 +1452,28 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             </div>
 
                             <div class="entry-form__header">
-                                <h2 class="entry-form__title">Eintrag erfassen</h2>
+                                <span class="entry-form__badge" aria-hidden="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+                                </span>
+                                <div class="entry-form__heading">
+                                    <h2 class="entry-form__title">Eintrag erfassen</h2>
+                                    <p class="entry-form__subtitle">Zeiten buchen &amp; Tag erfassen</p>
+                                </div>
                                 <button class="help-slim" title="Hilfe" onclick="openQuickHelp('entry')">?</button>
                             </div>
 
-                            <div class="entry-form__row">
-                                <input type="date" id="inpDate" class="glass-input" aria-label="Datum" onchange="if(typeof updateBreakPlaceholder==='function')updateBreakPlaceholder()">
-                                <select id="inpType" class="glass-select" onchange="toggleTimeInputs()" aria-label="Eintragstyp">
-                                    <option value="work">Arbeit</option>
-                                    <option value="school">Berufsschule</option>
-                                    <option value="vacation">Urlaub</option>
-                                    <option value="gleittag">Gleittag</option>
-                                    <option value="sick">Krank</option>
-                                </select>
+                            <div class="entry-form__field">
+                                <label class="entry-form__label" for="inpDate">Datum &amp; Typ</label>
+                                <div class="entry-form__row">
+                                    <input type="date" id="inpDate" class="glass-input" aria-label="Datum" onchange="if(typeof updateBreakPlaceholder==='function')updateBreakPlaceholder()">
+                                    <select id="inpType" class="glass-select" onchange="toggleTimeInputs()" aria-label="Eintragstyp">
+                                        <option value="work">Arbeit</option>
+                                        <option value="school">Berufsschule</option>
+                                        <option value="vacation">Urlaub</option>
+                                        <option value="gleittag">Gleittag</option>
+                                        <option value="sick">Krank</option>
+                                    </select>
+                                </div>
                             </div>
 
                             <div id="vacationMultiHint" style="display:none; margin: 6px 0 2px; padding: 12px 14px; border-radius: 12px; background: rgba(var(--primary-rgb), 0.06); border: 1px solid rgba(var(--primary-rgb), 0.18); align-items:center; gap:12px; flex-wrap:wrap;">
@@ -1473,31 +1482,68 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                                 <button type="button" class="btn btn-primary" style="font-size:0.78rem; padding:8px 14px;" onclick="openVacationPicker('vacation')">📅 Mehrere Tage planen…</button>
                             </div>
 
-                            <div class="entry-form__time-row">
-                                <div class="entry-form__time-group">
-                                    <input type="time" id="inpStart" class="glass-input" placeholder="Start" oninput="if(typeof autoSelectJobByStart==='function'){autoSelectJobByStart();updateBreakPlaceholder();}">
-                                    <button id="btnNowStart" class="btn btn-ghost entry-form__now-btn">Jetzt</button>
+                            <div class="entry-form__field">
+                                <div class="entry-form__label-row">
+                                    <label class="entry-form__label" for="inpStart">Zeitraum</label>
+                                    <span class="entry-form__duration is-empty" id="entryDurationBadge" title="Netto-Arbeitszeit (Pause abgezogen)">–</span>
                                 </div>
-                                <div class="entry-form__time-group">
-                                    <input type="time" id="inpEnd" class="glass-input" placeholder="Ende">
-                                    <button id="btnNowEnd" class="btn btn-ghost entry-form__now-btn">Jetzt</button>
+                                <div class="entry-form__time-row">
+                                    <div class="entry-form__time-group">
+                                        <input type="time" id="inpStart" class="glass-input" placeholder="Start" oninput="if(typeof autoSelectJobByStart==='function'){autoSelectJobByStart();updateBreakPlaceholder();}">
+                                        <button id="btnNowStart" class="btn btn-ghost entry-form__now-btn">Jetzt</button>
+                                    </div>
+                                    <span class="entry-form__time-sep" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>
+                                    </span>
+                                    <div class="entry-form__time-group">
+                                        <input type="time" id="inpEnd" class="glass-input" placeholder="Ende" oninput="if(typeof updateEntryDuration==='function')updateEntryDuration()">
+                                        <button id="btnNowEnd" class="btn btn-ghost entry-form__now-btn">Jetzt</button>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div id="jobSelectRow" style="display:none;">
+                            <div class="entry-form__field" id="jobSelectRow" style="display:none;">
+                                <label class="entry-form__label" for="inpJob">Job</label>
                                 <select id="inpJob" class="glass-select" aria-label="Job" onchange="if(typeof onJobManualChange==='function'){onJobManualChange();updateBreakPlaceholder();}"></select>
                             </div>
-                            <input type="number" id="inpBreak"   class="glass-input" min="0" step="5" inputmode="numeric" placeholder="Pause automatisch (Min)" aria-label="Pause in Minuten" title="Leer = automatische Pause laut Einstellungen. Wert (auch 0) = exakt diese Pause für diesen Eintrag.">
-                            <input type="number" id="inpHours"   class="glass-input" step="0.25" placeholder="Stunden manuell...">
-                            <input type="text"   id="inpProject" class="glass-input" placeholder="Projekt / Kunde (z.B. Alpha-Migration)">
-                            <input type="text"   id="inpNotes"   class="glass-input" placeholder="Notizen (z.B. Bugfix in Modul X)">
+
+                            <button type="button" class="entry-form__more" id="entryMoreToggle" aria-expanded="false" aria-controls="entryDetails" onclick="toggleEntryDetails()">
+                                <svg class="entry-form__more-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/></svg>
+                                <span class="entry-form__more-label">Weitere Details</span>
+                                <span class="entry-form__more-hint">Pause · Stunden · Projekt · Notiz</span>
+                                <svg class="entry-form__more-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+
+                            <div class="entry-form__details" id="entryDetails">
+                                <div class="entry-form__details-inner">
+                                    <div class="entry-form__field" id="breakFieldWrap">
+                                        <label class="entry-form__label" for="inpBreak">Pause</label>
+                                        <input type="number" id="inpBreak"   class="glass-input" min="0" step="5" inputmode="numeric" placeholder="Pause automatisch (Min)" aria-label="Pause in Minuten" title="Leer = automatische Pause laut Einstellungen. Wert (auch 0) = exakt diese Pause für diesen Eintrag." oninput="if(typeof updateEntryDuration==='function')updateEntryDuration()">
+                                    </div>
+                                    <div class="entry-form__field">
+                                        <label class="entry-form__label" for="inpHours">Stunden manuell</label>
+                                        <input type="number" id="inpHours"   class="glass-input" step="0.25" placeholder="z.B. 7.5">
+                                    </div>
+                                    <div class="entry-form__field">
+                                        <label class="entry-form__label" for="inpProject">Projekt / Kunde</label>
+                                        <input type="text"   id="inpProject" class="glass-input" placeholder="z.B. Alpha-Migration">
+                                    </div>
+                                    <div class="entry-form__field">
+                                        <label class="entry-form__label" for="inpNotes">Notizen</label>
+                                        <input type="text"   id="inpNotes"   class="glass-input" placeholder="z.B. Bugfix in Modul X">
+                                    </div>
+                                </div>
+                            </div>
 
                             <div class="entry-form__actions">
                                 <button id="voiceBtn" class="btn btn-ghost entry-form__voice-btn" onclick="startVoiceInput()">
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
                                     Stimme
                                 </button>
-                                <button id="mainBtn" class="btn btn-primary entry-form__submit" onclick="handleEntry()">Eintrag speichern</button>
+                                <button id="mainBtn" class="btn btn-primary entry-form__submit" onclick="handleEntry()">
+                                    <svg class="entry-form__submit-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                    <span id="mainBtnLabel">Eintrag speichern</span>
+                                </button>
                                 <button id="cancelBtn" class="btn entry-form__cancel" onclick="resetEdit()">Abbrechen</button>
                             </div>
 

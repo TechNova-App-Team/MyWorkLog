@@ -261,6 +261,8 @@
         const inpBreakClr = document.getElementById('inpBreak'); if (inpBreakClr) inpBreakClr.value = '';
         document.getElementById('inpProject').value = ''; // NEU
         document.getElementById('inpNotes').value = ''; // NEU
+        if (typeof toggleEntryDetails === 'function') toggleEntryDetails(false);
+        if (typeof updateEntryDuration === 'function') updateEntryDuration();
         try { if (typeof clearDraft === 'function') clearDraft(); else localStorage.removeItem('mwl_entry_draft'); } catch(e) { /* ignore */ }
         
         // Neu laden der Historie, falls gerade aktiv
@@ -273,7 +275,9 @@
 
     function resetEdit() {
         editId = null;
-        document.getElementById('mainBtn').innerText = "Eintrag speichern";
+        const mainBtnLbl = document.getElementById('mainBtnLabel');
+        if (mainBtnLbl) mainBtnLbl.innerText = (document.documentElement.lang === 'en') ? 'Save entry' : 'Eintrag speichern';
+        else document.getElementById('mainBtn').innerText = "Eintrag speichern";
         document.getElementById('cancelBtn').style.display = "none";
         document.getElementById('inpStart').value = '';
         document.getElementById('inpEnd').value = '';
@@ -282,6 +286,8 @@
         try { if (typeof resetJobSelection === 'function') resetJobSelection(); } catch(e) {}
         document.getElementById('inpProject').value = ''; // NEU
         document.getElementById('inpNotes').value = ''; // NEU
+        if (typeof toggleEntryDetails === 'function') toggleEntryDetails(false);
+        if (typeof updateEntryDuration === 'function') updateEntryDuration();
     }
 
     // Trägt ein Eintrag das Tagessoll wie ein Arbeitstag? (Arbeit + Custom-Types mit countsAsWork)
@@ -513,6 +519,56 @@
         }
     }
 
+    // Optionale Detail-Felder (Pause/Stunden/Projekt/Notiz) ein-/ausklappen.
+    // force===true/false erzwingt Zustand; ohne Argument wird umgeschaltet.
+    function toggleEntryDetails(force) {
+        const details = document.getElementById('entryDetails');
+        const toggle = document.getElementById('entryMoreToggle');
+        if (!details) return;
+        const willOpen = (typeof force === 'boolean') ? force : !details.classList.contains('is-open');
+        details.classList.toggle('is-open', willOpen);
+        if (toggle) toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    }
+
+    // Live-Vorschau der Netto-Arbeitszeit (Start→Ende minus Pause), spiegelt exakt
+    // die Buchungslogik aus handleEntry(). Nur bei Zeit-Typen (Arbeit/Custom).
+    function updateEntryDuration() {
+        const badge = document.getElementById('entryDurationBadge');
+        if (!badge) return;
+        function setEmpty() { badge.textContent = '–'; badge.classList.add('is-empty'); }
+        try {
+            const type = document.getElementById('inpType').value;
+            const isCustom = String(type).startsWith('custom-');
+            if (!(type === 'work' || isCustom)) { setEmpty(); return; }
+            const start = document.getElementById('inpStart').value;
+            const end = document.getElementById('inpEnd').value;
+            if (!start || !end) { setEmpty(); return; }
+            let h = (new Date('2000-01-01T' + end) - new Date('2000-01-01T' + start)) / 3.6e6;
+            if (isNaN(h)) { setEmpty(); return; }
+            if (h < 0) h += 24;
+            const dateStr = document.getElementById('inpDate').value;
+            const dayIndex = dateStr ? new Date(dateStr).getDay() : new Date().getDay();
+            const jid = (typeof getFormJobId === 'function') ? getFormJobId() : 'primary';
+            const brk = (typeof getJobBreak === 'function') ? getJobBreak(jid) : (data.settings && data.settings.break);
+            const brkOvEl = document.getElementById('inpBreak');
+            const brkOvRaw = brkOvEl ? brkOvEl.value.trim() : '';
+            let breakMin = 0;
+            if (brkOvRaw !== '' && !isNaN(parseFloat(brkOvRaw))) {
+                breakMin = Math.max(0, parseFloat(brkOvRaw));
+            } else if (brk && brk.thresh > 0 && h >= brk.thresh) {
+                breakMin = Array.isArray(brk.min) ? (brk.min[dayIndex] || 0) : (brk.min || 0);
+            }
+            let net = h - breakMin / 60;
+            if (net < 0) net = 0;
+            let hh = Math.floor(net);
+            let mm = Math.round((net - hh) * 60);
+            if (mm === 60) { hh++; mm = 0; }
+            if (hh === 0 && mm === 0) { setEmpty(); return; }
+            badge.textContent = (mm === 0) ? (hh + 'h') : (hh + 'h ' + (mm < 10 ? '0' + mm : mm) + 'm');
+            badge.classList.remove('is-empty');
+        } catch (e) { setEmpty(); }
+    }
+
     function toggleTimeInputs() {
         const t = document.getElementById('inpType').value;
         const els = [document.getElementById('inpStart'), document.getElementById('inpEnd')];
@@ -527,7 +583,9 @@
         const inpBreakEl = document.getElementById('inpBreak');
         if (inpBreakEl) {
             inpBreakEl.disabled = disableTime;
-            inpBreakEl.style.display = disableTime ? 'none' : '';
+            // Ganzes Feld (Label + Input) ein-/ausblenden, damit kein Waisen-Label bleibt.
+            const breakWrap = document.getElementById('breakFieldWrap');
+            (breakWrap || inpBreakEl).style.display = disableTime ? 'none' : '';
         }
         // Job-Auswahl nur bei Zeit-Typen (und nur wenn mehrere Jobs existieren)
         try {
@@ -568,6 +626,7 @@
         } catch (e) {
             inpBreakEl.placeholder = document.documentElement.lang === 'en' ? 'Break automatic (min)' : 'Pause automatisch (Min)';
         }
+        if (typeof updateEntryDuration === 'function') updateEntryDuration();
     }
 
     // ═══ NEW: Saldo-Korrektur (Gleitzeit manuell anpassen) ═══
@@ -2093,6 +2152,8 @@
             el = document.getElementById('inpProject'); if (el) el.value = project;
             el = document.getElementById('inpNotes');   if (el) el.value = notes;
             if (typeof toggleTimeInputs === 'function') toggleTimeInputs();
+            // Detail-Felder aufklappen, wenn die Spracheingabe Projekt/Notiz/Stunden gefüllt hat.
+            if ((project || notes || (hours && !startTime)) && typeof toggleEntryDetails === 'function') toggleEntryDetails(true);
 
             // ── Feedback als Chips ──
             var chips = {};

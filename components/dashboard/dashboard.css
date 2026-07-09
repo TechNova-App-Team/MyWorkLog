@@ -1617,27 +1617,185 @@
         .entry-form {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.95rem;
         }
+        /* Ruhigere, kompaktere Inputs nur im Erfassen-Formular (global bleibt 16px). */
+        .entry-form .glass-input,
+        .entry-form .glass-select {
+            padding: 13px 14px;
+            font-size: 0.9rem;
+            border-radius: 11px;
+            background: var(--bg-inset);
+        }
+        .entry-form .glass-input::placeholder { color: var(--text-muted); opacity: 0.65; }
+        /* ── Header mit Icon-Badge ── */
         .entry-form__header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            padding-bottom: 2px;
+        }
+        .entry-form__badge {
+            flex-shrink: 0;
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.12);
+            border: 1px solid rgba(var(--primary-rgb), 0.22);
+        }
+        .entry-form__heading {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            flex: 1;
+            min-width: 0;
         }
         .entry-form__title {
-            font-size: 0.92rem;
-            font-weight: 600;
+            font-size: 1rem;
+            font-weight: 650;
             margin: 0;
             letter-spacing: -0.02em;
             color: var(--text-main);
+            line-height: 1.15;
+        }
+        .entry-form__subtitle {
+            font-size: 0.74rem;
+            font-weight: 500;
+            margin: 0;
+            color: var(--text-muted);
+            line-height: 1.2;
         }
         .entry-form__row {
             display: flex;
             gap: 10px;
         }
+        /* ── Labeled field group (label above the control) ── */
+        .entry-form__field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .entry-form__label {
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding-left: 2px;
+        }
+        .entry-form__label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        /* ── Live-Netto-Dauer (Signature) ── */
+        .entry-form__duration {
+            font-family: var(--font-mono, 'JetBrains Mono', monospace);
+            font-size: 0.74rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 0.01em;
+            padding: 3px 9px;
+            border-radius: 999px;
+            color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.12);
+            border: 1px solid rgba(var(--primary-rgb), 0.22);
+            transition: color var(--dur-fast) var(--ease-out),
+                        background var(--dur-fast) var(--ease-out),
+                        border-color var(--dur-fast) var(--ease-out),
+                        opacity var(--dur-fast) var(--ease-out);
+        }
+        .entry-form__duration.is-empty {
+            color: var(--text-muted);
+            background: transparent;
+            border-color: var(--border-default);
+            opacity: 0.7;
+        }
+        /* ── Zeitraum-Verbinder (Pfeil) ── */
+        .entry-form__time-sep {
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            color: var(--text-muted);
+            opacity: 0.55;
+        }
+        /* ── "Weitere Details" reveal toggle ── */
+        .entry-form__more {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-default);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: var(--font-main);
+            cursor: pointer;
+            transition: background var(--dur-fast) var(--ease-out),
+                        border-color var(--dur-fast) var(--ease-out);
+        }
+        .entry-form__more:hover {
+            background: rgba(var(--primary-rgb), 0.06);
+            border-color: rgba(var(--primary-rgb), 0.25);
+        }
+        .entry-form__more[aria-expanded="true"] {
+            background: rgba(var(--primary-rgb), 0.06);
+            border-color: rgba(var(--primary-rgb), 0.20);
+        }
+        .entry-form__more:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px var(--primary-dim);
+        }
+        .entry-form__more-icon { flex-shrink: 0; color: var(--text-muted); }
+        .entry-form__more-label { flex-shrink: 0; }
+        .entry-form__more-hint {
+            flex: 1;
+            min-width: 0;
+            text-align: right;
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .entry-form__more-chevron {
+            flex-shrink: 0;
+            color: var(--text-muted);
+            transition: transform var(--dur-normal) var(--ease-out);
+        }
+        .entry-form__more[aria-expanded="true"] .entry-form__more-chevron {
+            transform: rotate(180deg);
+        }
+        /* ── Collapsible details panel (smooth height via grid rows) ── */
+        .entry-form__details {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows var(--dur-normal) var(--ease-out);
+        }
+        .entry-form__details.is-open {
+            grid-template-rows: 1fr;
+        }
+        .entry-form__details-inner {
+            overflow: hidden;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+        .entry-form__details.is-open .entry-form__details-inner {
+            padding-top: 2px;
+        }
         .entry-form__time-row {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
         }
         .entry-form__time-group {
@@ -1645,13 +1803,27 @@
             gap: 6px;
             align-items: center;
             flex: 1;
+            min-width: 0;
         }
         .entry-form__now-btn {
-            padding: 8px 10px !important;
-            font-size: 0.7rem !important;
+            padding: 8px 11px !important;
+            font-size: 0.68rem !important;
             font-weight: 600 !important;
-            letter-spacing: 0.01em !important;
+            letter-spacing: 0.02em !important;
+            text-transform: uppercase;
             flex-shrink: 0;
+            color: var(--text-muted) !important;
+            background: transparent !important;
+            border: 1px solid var(--border-default) !important;
+            border-radius: 9px !important;
+            transition: color var(--dur-fast) var(--ease-out),
+                        background var(--dur-fast) var(--ease-out),
+                        border-color var(--dur-fast) var(--ease-out) !important;
+        }
+        .entry-form__now-btn:hover {
+            color: var(--primary) !important;
+            background: rgba(var(--primary-rgb), 0.08) !important;
+            border-color: rgba(var(--primary-rgb), 0.28) !important;
         }
         @keyframes time-set-glow {
             0%   { box-shadow: 0 0 0 0 rgba(74,222,128,0), border-color: var(--border); }
@@ -1830,9 +2002,20 @@
         }
         .entry-form__submit {
             flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             font-size: 0.85rem !important;
             font-weight: 600 !important;
+            padding: 13px 16px !important;
+            border-radius: 11px !important;
+            box-shadow: 0 6px 18px -8px rgba(var(--primary-rgb), 0.6);
         }
+        .entry-form__submit:hover {
+            box-shadow: 0 8px 22px -8px rgba(var(--primary-rgb), 0.75);
+        }
+        .entry-form__submit-icon { flex-shrink: 0; opacity: 0.95; }
         .entry-form__cancel {
             background: var(--bg-inset);
             border: 1px solid var(--border-default);
@@ -2885,6 +3068,7 @@
                 flex-direction: column;
             }
             .entry-form__time-group { flex: 1; }
+            .entry-form__more-hint { display: none; }
             .quick-actions {
                 border-radius: 10px;
                 padding: 2px;
@@ -2900,6 +3084,9 @@
             .kpi-grid {
                 grid-template-columns: 1fr;
             }
+            /* Zeitraum-Pfeil auf kleinen Phones ausblenden — Zeit-Inputs bleiben nebeneinander. */
+            .entry-form__time-sep { display: none; }
+            .entry-form__time-row { gap: 6px; }
             .gleitzeit-hero-value {
                 font-size: 2.4rem;
             }
