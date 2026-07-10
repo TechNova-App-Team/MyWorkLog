@@ -584,6 +584,8 @@
         const modal = document.getElementById('newWidgetManagerModal');
         if (!modal) { console.error('New widget manager modal not found'); return; }
         modal.classList.add('active');
+        // Inline-Style display:none aus dem HTML schlägt die .active-Regel — hier explizit ueberschreiben
+        modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         renderNewWidgetManager();
         // ESC to close
@@ -599,6 +601,7 @@
         const modal = document.getElementById('newWidgetManagerModal');
         if (!modal) return;
         modal.classList.remove('active');
+        modal.style.display = 'none';
         document.body.style.overflow = '';
     }
 
