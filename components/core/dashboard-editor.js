@@ -55,6 +55,9 @@
                 console.log('Removing remove button');
                 btn.remove();
             });
+
+            // Auch die Pin-Stecknadel-Buttons entfernen (werden von renderPinButtons beim Betreten gesetzt)
+            container.querySelectorAll('.dashboard-item-pin-btn').forEach(btn => btn.remove());
             
             // If layout was modified while editing, save the final order now (quietly)
             if (dashboardLayoutDirty) {
