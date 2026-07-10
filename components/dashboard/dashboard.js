@@ -30,7 +30,15 @@
         const notes = document.getElementById('inpNotes').value.trim();
 
         if(!dateStr) { shakeInputError('inpDate'); return; }
-        
+
+        // Custom Fields einsammeln + Pflichtfelder prüfen (bevor irgendetwas gespeichert wird)
+        const cfResult = (typeof collectEntryCustomFieldValues === 'function')
+            ? collectEntryCustomFieldValues() : { ok: true, values: {} };
+        if (!cfResult.ok) {
+            showCustomMessage('Pflichtfeld fehlt', `„${cfResult.missing}" muss ausgefüllt werden`, 'error');
+            return;
+        }
+
         const date = new Date(dateStr);
         let worked = 0;
         let dayIndex = date.getDay();
@@ -225,6 +233,7 @@
             endIsRaw: true,
             shiftWarning: shiftWarning,
             project: project, // NEU: Projekt/Kunde
+            customFieldValues: cfResult.values, // NEU: User-definierte Custom Fields
             timestamp: Date.now(), // P2P: Versionskontrolle für Smart Sync
             breakLog: breakLog, // NEU: Detailliertes Pausenlog
             mood: '' // NEU: Mood Tracker
@@ -261,6 +270,7 @@
         const inpBreakClr = document.getElementById('inpBreak'); if (inpBreakClr) inpBreakClr.value = '';
         document.getElementById('inpProject').value = ''; // NEU
         document.getElementById('inpNotes').value = ''; // NEU
+        if (typeof renderEntryCustomFields === 'function') renderEntryCustomFields(false); // Custom Fields leeren
         if (typeof toggleEntryDetails === 'function') toggleEntryDetails(false);
         if (typeof updateEntryDuration === 'function') updateEntryDuration();
         try { if (typeof clearDraft === 'function') clearDraft(); else localStorage.removeItem('mwl_entry_draft'); } catch(e) { /* ignore */ }
@@ -286,6 +296,7 @@
         try { if (typeof resetJobSelection === 'function') resetJobSelection(); } catch(e) {}
         document.getElementById('inpProject').value = ''; // NEU
         document.getElementById('inpNotes').value = ''; // NEU
+        if (typeof renderEntryCustomFields === 'function') renderEntryCustomFields(false); // Custom Fields leeren
         if (typeof toggleEntryDetails === 'function') toggleEntryDetails(false);
         if (typeof updateEntryDuration === 'function') updateEntryDuration();
     }

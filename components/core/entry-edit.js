@@ -71,6 +71,7 @@
         populateProjectOptions();
         editTypeChanged();
         recalcEditWorked();
+        if (typeof renderEditCustomFields === 'function') renderEditCustomFields(entry);
 
         document.getElementById('editEntryModal').classList.add('active');
     }
@@ -224,6 +225,9 @@
         entry.project = newProject || undefined;
         entry.info = newInfo || undefined;
         entry.mood = newMood || undefined;
+        if (typeof collectEditCustomFieldValues === 'function') {
+            entry.customFieldValues = collectEditCustomFieldValues();
+        }
 
         // Time data
         if (newStart) entry.shiftStart = entry.start = newStart;

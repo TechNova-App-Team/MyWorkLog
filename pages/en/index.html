@@ -1452,7 +1452,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                                 <label class="entry-form__label" for="inpDate">Date &amp; type</label>
                                 <div class="entry-form__row">
                                     <input type="date" id="inpDate" class="glass-input" aria-label="Date" onchange="if(typeof updateBreakPlaceholder==='function')updateBreakPlaceholder()">
-                                    <select id="inpType" class="glass-select" onchange="toggleTimeInputs()" aria-label="Entry type">
+                                    <select id="inpType" class="glass-select" onchange="toggleTimeInputs();if(typeof renderEntryCustomFields==='function')renderEntryCustomFields()" aria-label="Entry type">
                                         <option value="work">Work</option>
                                         <option value="school">Vocational school</option>
                                         <option value="vacation">Vacation</option>
@@ -1492,6 +1492,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                                 <label class="entry-form__label" for="inpJob">Job</label>
                                 <select id="inpJob" class="glass-select" aria-label="Job" onchange="if(typeof onJobManualChange==='function'){onJobManualChange();updateBreakPlaceholder();}"></select>
                             </div>
+
+                            <!-- Custom Fields (user-definiert, je nach Eintragstyp) — immer sichtbar, nicht im Detail-Collapse -->
+                            <div id="entryCustomFields" style="display:none;"></div>
 
                             <button type="button" class="entry-form__more" id="entryMoreToggle" aria-expanded="false" aria-controls="entryDetails" onclick="toggleEntryDetails()">
                                 <svg class="entry-form__more-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="4" x2="14" y2="4"></line><line x1="10" y1="4" x2="3" y2="4"></line><line x1="21" y1="12" x2="12" y2="12"></line><line x1="8" y1="12" x2="3" y2="12"></line><line x1="21" y1="20" x2="16" y2="20"></line><line x1="12" y1="20" x2="3" y2="20"></line><line x1="14" y1="2" x2="14" y2="6"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="16" y1="18" x2="16" y2="22"></line></svg>
@@ -6646,7 +6649,7 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
                             Typ
                         </label>
-                        <select id="editInpType" class="edit-select" onchange="editTypeChanged()">
+                        <select id="editInpType" class="edit-select" onchange="editTypeChanged();if(typeof renderEditCustomFields==='function')renderEditCustomFields()">
                             <option value="work">💼 Work</option>
                             <option value="school">📚 Vocational school</option>
                             <option value="vacation">🌴 Vacation</option>
@@ -6732,6 +6735,11 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
                         </label>
                         <textarea id="editInpNotes" class="edit-textarea" placeholder="e.g. bugfix in module X, meeting with client..."></textarea>
                     </div>
+                </div>
+
+                <!-- Custom Fields (user-definiert, je nach Eintragstyp) -->
+                <div class="edit-row" id="editCustomFieldsRow" style="display:none;">
+                    <div id="editCustomFields" style="width:100%;"></div>
                 </div>
 
                 <!-- Erweiterte Optionen (kollabierbar) -->

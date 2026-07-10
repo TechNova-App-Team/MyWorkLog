@@ -239,6 +239,18 @@
         if (e.info)    rows.push(['Notiz', esc(e.info)]);
         if (e.project) rows.push(['Projekt', esc(e.project)]);
         if (e.mood)    rows.push(['Stimmung', e.mood]);
+        // Custom Fields (user-definiert)
+        if (e.customFieldValues && typeof e.customFieldValues === 'object') {
+            const defs = Array.isArray(data.customFields) ? data.customFields : [];
+            Object.keys(e.customFieldValues).forEach(fid => {
+                const def = defs.find(f => f.id === fid);
+                const label = def ? def.label : fid;
+                let val = e.customFieldValues[fid];
+                if (val === true) val = '✓';
+                else if (val === false || val === '' || val == null) return;
+                rows.push([esc(String(label)), esc(String(val))]);
+            });
+        }
         if (e.shiftWarning) rows.push(['Warnung', '⚠️ Über 10h']);
 
         document.getElementById('edRows').innerHTML = rows.length

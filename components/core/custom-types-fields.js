@@ -551,6 +551,7 @@
         save();
         showCustomMessage('Custom Field erstellt', `"${label}" hinzugefügt`, 'success');
         renderCustomFieldsManager();
+        if (typeof renderEntryCustomFields === 'function') renderEntryCustomFields();
         return true;
     }
 
@@ -568,6 +569,7 @@
                 save();
                 showCustomMessage('Gelöscht', `"${deleted.label}" entfernt`, 'success');
                 renderCustomFieldsManager();
+                if (typeof renderEntryCustomFields === 'function') renderEntryCustomFields();
             }
         );
     }
@@ -744,6 +746,169 @@
         return form;
     }
 
+    // ═══ Custom Fields im Eintrags-Formular (Erfassen + Edit) ═══
+    // Bis hierher wurden Custom Fields nur in den Settings definiert & gelistet, aber NIRGENDS
+    // ins Eintrags-Formular gerendert oder mit einem Eintrag gespeichert. Das passiert jetzt hier.
+
+    // Felder, die für einen Eintragstyp gelten ('all' + typ-spezifische).
+    function getCustomFieldsForType(typeId) {
+        if (!Array.isArray(data.customFields)) return [];
+        return data.customFields.filter(f => f && (f.entryType === 'all' || f.entryType === typeId));
+    }
+
+    // Baut die Input-Elemente in einen Container. opts steuert CSS-Klassen (Erfassen vs. Edit-Modal).
+    function cfBuildInputs(container, fields, values, opts) {
+        opts = opts || {};
+        const inputCls  = opts.inputClass  || 'glass-input';
+        const selectCls = opts.selectClass || 'glass-select';
+        const wrapCls   = opts.wrapClass   || 'entry-form__field';
+        const labelCls  = opts.labelClass  || 'entry-form__label';
+        const prefix    = opts.prefix      || 'cf';
+        values = values || {};
+        container.innerHTML = '';
+
+        fields.forEach(f => {
+            const wrap = ctEl('div', wrapCls);
+            wrap.setAttribute('data-cf-wrap', f.id);
+            const inputId = `${prefix}__${f.id}`;
+            const val = values[f.id];
+
+            if (f.type === 'checkbox') {
+                // Checkbox: Box + Label in einer Zeile
+                const row = ctEl('label', labelCls);
+                row.style.display = 'flex';
+                row.style.alignItems = 'center';
+                row.style.gap = '8px';
+                row.style.cursor = 'pointer';
+                const box = document.createElement('input');
+                box.type = 'checkbox';
+                box.id = inputId;
+                box.style.width = '15px';
+                box.style.height = '15px';
+                box.style.accentColor = 'var(--primary)';
+                box.checked = (val === true || val === 'true');
+                box.setAttribute('data-cf-id', f.id);
+                box.setAttribute('data-cf-type', 'checkbox');
+                if (f.required) box.setAttribute('data-cf-required', '1');
+                const span = document.createElement('span');
+                span.textContent = f.label + (f.required ? ' *' : '');
+                row.appendChild(box);
+                row.appendChild(span);
+                wrap.appendChild(row);
+            } else {
+                const label = ctEl('label', labelCls);
+                label.setAttribute('for', inputId);
+                label.textContent = f.label + (f.required ? ' *' : '');
+                wrap.appendChild(label);
+
+                let input;
+                if (f.type === 'select') {
+                    input = document.createElement('select');
+                    input.className = selectCls;
+                    const empty = document.createElement('option');
+                    empty.value = ''; empty.textContent = '—';
+                    input.appendChild(empty);
+                    (f.options || []).forEach(o => {
+                        const op = document.createElement('option');
+                        op.value = o; op.textContent = o;
+                        if (val === o) op.selected = true;
+                        input.appendChild(op);
+                    });
+                } else {
+                    input = document.createElement('input');
+                    input.type = (f.type === 'number') ? 'number' : 'text';
+                    input.className = inputCls;
+                    if (val != null && val !== '') input.value = val;
+                }
+                input.id = inputId;
+                input.setAttribute('data-cf-id', f.id);
+                input.setAttribute('data-cf-type', f.type);
+                if (f.required) input.setAttribute('data-cf-required', '1');
+                wrap.appendChild(input);
+            }
+            container.appendChild(wrap);
+        });
+    }
+
+    // Liest die aktuellen Werte + prüft Pflichtfelder. → { ok, values, missing }
+    function cfCollect(container) {
+        const out = {};
+        let missing = null;
+        if (!container) return { ok: true, values: out };
+        container.querySelectorAll('[data-cf-id]').forEach(el => {
+            const fid = el.getAttribute('data-cf-id');
+            const t = el.getAttribute('data-cf-type');
+            const req = el.getAttribute('data-cf-required') === '1';
+            let v;
+            if (t === 'checkbox') {
+                v = el.checked;
+                if (req && v !== true && !missing) missing = cfLabelOf(el, fid);
+                if (v) out[fid] = true;
+            } else {
+                v = (el.value || '').trim();
+                if (req && !v && !missing) missing = cfLabelOf(el, fid);
+                if (v !== '') out[fid] = (t === 'number') ? v : v;
+            }
+        });
+        return { ok: !missing, values: out, missing };
+    }
+
+    function cfLabelOf(el, fallback) {
+        const wrap = el.closest('[data-cf-wrap]');
+        const lbl = wrap ? wrap.querySelector('label, span') : null;
+        return (lbl && lbl.textContent ? lbl.textContent.replace(/\s*\*$/, '') : fallback);
+    }
+
+    // — Erfassen-Formular —
+    function renderEntryCustomFields(preserve) {
+        const c = document.getElementById('entryCustomFields');
+        if (!c) return;
+        const sel = document.getElementById('inpType');
+        const typeId = sel ? sel.value : 'all';
+        const fields = getCustomFieldsForType(typeId);
+        if (!fields.length) { c.style.display = 'none'; c.innerHTML = ''; return; }
+        const vals = (preserve === false) ? {} : cfCollect(c).values;
+        cfBuildInputs(c, fields, vals, { prefix: 'cf' });
+        c.style.display = 'flex';
+        c.style.flexDirection = 'column';
+        c.style.gap = '0.85rem';
+    }
+
+    function collectEntryCustomFieldValues() {
+        return cfCollect(document.getElementById('entryCustomFields'));
+    }
+
+    // — Edit-Modal —
+    function renderEditCustomFields(entry) {
+        const c = document.getElementById('editCustomFields');
+        const row = document.getElementById('editCustomFieldsRow');
+        if (!c) return;
+        const sel = document.getElementById('editInpType');
+        const typeId = sel ? sel.value : (entry ? entry.type : 'all');
+        const fields = getCustomFieldsForType(typeId);
+        if (!fields.length) {
+            c.style.display = 'none'; c.innerHTML = '';
+            if (row) row.style.display = 'none';
+            return;
+        }
+        // Gespeicherte Werte des Eintrags + aktuell getippte (bei Typ-Wechsel) mergen.
+        const stored = (entry && entry.customFieldValues) || {};
+        const current = cfCollect(c).values;
+        const vals = Object.assign({}, stored, current);
+        cfBuildInputs(c, fields, vals, {
+            prefix: 'ecf', inputClass: 'edit-input', selectClass: 'edit-select',
+            wrapClass: 'edit-field full', labelClass: 'edit-label'
+        });
+        c.style.display = 'flex';
+        c.style.flexDirection = 'column';
+        c.style.gap = '14px';
+        if (row) row.style.display = '';
+    }
+
+    function collectEditCustomFieldValues() {
+        return cfCollect(document.getElementById('editCustomFields')).values;
+    }
+
     // ═══ Helpers ═══
     function ctEl(tag, cls) {
         const el = document.createElement(tag);
@@ -827,6 +992,9 @@
 
         // Entry-Form select
         refreshEntryTypeSelect();
+
+        // Custom Fields im Erfassen-Formular (Scope hängt am gewählten Typ)
+        if (typeof renderEntryCustomFields === 'function') renderEntryCustomFields();
 
         // Dashboard activity timeline re-render
         if (typeof renderLists === 'function') {
