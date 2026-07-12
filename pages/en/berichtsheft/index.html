@@ -8764,12 +8764,15 @@ ${lines.join('\n')}
 [KRITISCH — ANTWORT-FORMAT]
 Antwort = JSON-ARRAY mit GENAU ${options.selectedDays.length} VOLLSTÄNDIGEN Tag-Objekten. Jedes Element MUSS alle 5 Felder enthalten: day, entries, hours, isSchoolDay, schoolTopic.
 
-✓ RICHTIG (vollständige Struktur):
+✓ RICHTIG (nur die STRUKTUR nachbauen — der Inhalt ist ein Beispiel eines anderen Berufs und wird NIEMALS wörtlich übernommen):
 [
-  {"day":"Montag","entries":["Tätigkeit 1","Tätigkeit 2","Tätigkeit 3"],"hours":8,"isSchoolDay":false,"schoolTopic":null},
-  {"day":"Dienstag","entries":["…","…","…"],"hours":8,"isSchoolDay":false,"schoolTopic":null}
-  … (gesamt ${options.selectedDays.length} Tage)
+  {"day":"Montag","entries":["Wartungsprotokolle der Vorwoche gesichtet und ausgewertet","Defekte Baugruppe ausgetauscht und Funktionstest durchgeführt","Ergebnisse im Prüfbericht dokumentiert"],"hours":8,"isSchoolDay":false,"schoolTopic":null},
+  {"day":"Dienstag","entries":["Bauteile nach technischer Zeichnung vorbereitet","Montage der Baugruppe unter Anleitung durchgeführt","Maßhaltigkeit mit Messschieber kontrolliert"],"hours":8,"isSchoolDay":false,"schoolTopic":null}
 ]
+(Insgesamt ${options.selectedDays.length} Tage — jeder Tag mit 3-5 EIGENEN, konkreten Tätigkeiten.)
+
+✗ VERBOTEN: Platzhalter als Inhalt. Kein "…", kein "...", kein "Tätigkeit 1", kein "TODO", kein leerer String.
+   Jeder entries-Eintrag ist ein vollständiger, konkreter Satz in Partizip-Form.
 
 ✗ FALSCH:  {"day":"Montag",...}                ← einzelnes Objekt
 ✗ FALSCH:  {"days":[…]}                        ← verschachtelt
@@ -8854,6 +8857,31 @@ ${aufgabenBlock}
             }
 
             return str;
+        }
+
+        // Schneidet den Root-Wert exakt aus: vom ersten [ oder { bis zur PASSENDEN
+        // Schlussklammer. Nötig weil Modelle gern ein zweites Array oder Prosa
+        // anhängen — ein naives lastIndexOf(']') klebt beides zu "[A][B]" zusammen
+        // und JSON.parse stirbt mit "non-whitespace character after JSON".
+        // Bleibt die Klammer offen (echte Truncation), gibt's den Rest zurück —
+        // _repairJSON schließt dann auf.
+        function _sliceRootJSON(str) {
+            const a = str.indexOf('['), o = str.indexOf('{');
+            const start = a === -1 ? o : (o === -1 ? a : Math.min(a, o));
+            if (start === -1) return str;
+
+            const open = str[start], close = open === '[' ? ']' : '}';
+            let depth = 0, inStr = false, escaped = false;
+            for (let i = start; i < str.length; i++) {
+                const ch = str[i];
+                if (escaped) { escaped = false; continue; }
+                if (ch === '\\') { if (inStr) escaped = true; continue; }
+                if (ch === '"') { inStr = !inStr; continue; }
+                if (inStr) continue;
+                if (ch === open) depth++;
+                else if (ch === close && --depth === 0) return str.slice(start, i + 1);
+            }
+            return str.slice(start);
         }
 
         async function generateWithCloud(professionId, options) {
@@ -8964,15 +8992,8 @@ ${aufgabenBlock}
                 jsonStr = jsonStr.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
             }
 
-            // LFM-Truncation-Fix: ROOT-Bracket bestimmen anhand des ERSTEN { oder [.
-            // (Wenn wir einfach den ersten [ nehmen, schnappen wir uns ein entries-Array
-            // mitten im Day-Objekt — Bug bei Single-Object-Responses.)
-            const _aStart = jsonStr.indexOf('['), _aEnd = jsonStr.lastIndexOf(']');
-            const _oStart = jsonStr.indexOf('{'), _oEnd = jsonStr.lastIndexOf('}');
-            const _arrayIsRoot  = _aStart !== -1 && (_oStart === -1 || _aStart < _oStart);
-            const _objectIsRoot = !_arrayIsRoot && _oStart !== -1;
-            if (_arrayIsRoot  && _aEnd > _aStart)      jsonStr = jsonStr.slice(_aStart, _aEnd + 1);
-            else if (_objectIsRoot && _oEnd > _oStart) jsonStr = jsonStr.slice(_oStart, _oEnd + 1);
+            // Root-Wert exakt ausschneiden (erstes [ oder { → passende Schlussklammer).
+            jsonStr = _sliceRootJSON(jsonStr);
 
             // Pre-Fix bekannte Modell-Bugs VOR JSON.parse:
             // 1. Multi-day in einem Objekt — dup-keys werden von JSON.parse stillschweigend
@@ -8996,7 +9017,8 @@ ${aufgabenBlock}
                 try {
                     daysData = JSON.parse(_repairJSON(jsonStr));
                 } catch (repairErr) {
-                    console.error('[AIStudio] JSON nicht reparierbar:', repairErr.message, '\nRaw:', jsonStr.slice(0, 300));
+                    console.error('[AIStudio] JSON nicht reparierbar:', repairErr.message);
+                    console.error('[AIStudio] Roh-Antwort des Modells (vollständig):\n' + textContent);
                     throw new Error('Cloud-KI hat ungültiges JSON zurückgegeben. Bitte nochmals versuchen.');
                 }
             }
@@ -9089,15 +9111,27 @@ ${aufgabenBlock}
             const _validItems = daysData.filter(_isDayShaped).length;
             const _tooFew = daysData.length < expectedDays;
             const _wrongShape = _validItems < daysData.length;
-            if ((_tooFew || _wrongShape) && !options._isRetry) {
-                const _reason = _wrongShape
+
+            // Schwache Free-Modelle schreiben gern die Format-Vorlage ab statt Inhalte zu
+            // liefern ("…", "...", "Tätigkeit 1"). Als Woche wertlos → wie Struktur-Fehler
+            // behandeln und den Retry mit explizitem Hinweis fahren.
+            const _isPlaceholder = (s) => typeof s !== 'string' ||
+                s.replace(/[.…\s]/g, '') === '' ||
+                /^(t[äa]tigkeit|aufgabe|eintrag|todo|tbd)\s*\d*$/i.test(s.trim());
+            const _hasPlaceholders = daysData.some(d =>
+                d && Array.isArray(d.entries) && d.entries.some(_isPlaceholder));
+
+            if ((_tooFew || _wrongShape || _hasPlaceholders) && !options._isRetry) {
+                const _reason = _hasPlaceholders
+                    ? `Die entries enthielten Platzhalter (z.B. "…" oder "Tätigkeit 1") statt echter Tätigkeiten.`
+                    : _wrongShape
                     ? `Items im Array waren keine vollständigen Tag-Objekte (es fehlte "day").`
                     : `Antwort enthielt nur ${daysData.length} statt ${expectedDays} Tage.`;
                 console.warn(`[AIStudio] Retry — ${_reason}`);
                 return generateWithCloud(professionId, {
                     ...options,
                     _isRetry: true,
-                    _retryHint: `${_reason} Diesmal MUSS die Antwort ein JSON-ARRAY mit GENAU ${expectedDays} VOLLSTÄNDIGEN Tag-Objekten sein — jedes Element {"day":"…","entries":[…],"hours":8,"isSchoolDay":…,"schoolTopic":…}.`,
+                    _retryHint: `${_reason} Diesmal MUSS die Antwort ein JSON-ARRAY mit GENAU ${expectedDays} VOLLSTÄNDIGEN Tag-Objekten sein — jedes Element mit den Feldern day, entries, hours, isSchoolDay, schoolTopic. Jeder entries-Eintrag ist ein AUSGESCHRIEBENER, konkreter Satz in Partizip-Form (z.B. "Kundenanfragen im Ticketsystem erfasst und priorisiert") — NIEMALS Platzhalter wie "…", "..." oder "Tätigkeit 1".`,
                 });
             }
 
