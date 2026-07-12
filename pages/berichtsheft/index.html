@@ -8891,6 +8891,20 @@ ${aufgabenBlock}
             return str.slice(start);
         }
 
+        // Schwache Free-Modelle escapen die STRUKTUR-Quotes (\" wo " hingehört), lassen
+        // dabei einzelne Quotes ganz weg (`entries\:` statt `"entries":`) und hängen
+        // Envelope-Reste an (`"}]"}`). Das Ergebnis ist unparsebar und desynct jeden
+        // String-bewussten Scanner.
+        // NUR als Fallback benutzen (siehe Parse-Kaskade): die Normalisierung opfert
+        // legitime Escapes im Fließtext zugunsten einer intakten Struktur.
+        // Der Key-Fix ist absichtlich auf die bekannten Schema-Keys begrenzt — ein
+        // generisches /"(\w+):/ würde Werte wie "Thema: Netzwerk" zerlegen.
+        function _deEscapeStructural(str) {
+            return str
+                .replace(/\\(?=["':,\[\]{}])/g, '')
+                .replace(/"(day|entries|hours|isSchoolDay|schoolTopic)\s*:/g, '"$1":');
+        }
+
         async function generateWithCloud(professionId, options) {
             // ✦ Krank/Urlaub/Feiertag-Tage NICHT von Cloud generieren lassen — werden später injiziert.
             const _origSelectedDays = options.selectedDays || [];
@@ -9010,24 +9024,33 @@ ${aufgabenBlock}
                 jsonStr = '[' + jsonStr.replace(/,\s*("day"\s*:\s*")/g, '},{$1') + ']';
                 console.warn('[AIStudio] Pre-Fix: multi-day-object → array');
             }
-            // 2. Doppel-Escape von Struktur-Quotes (Modell schreibt \" wo " hingehört).
-            if (/\\":|:\\"/.test(jsonStr)) {
-                jsonStr = jsonStr.replace(/\\":/g, '":').replace(/:\\"/g, ':"');
-                console.warn('[AIStudio] Pre-Fix: unescaped structural quotes');
-            }
+            // (Der frühere Pre-Fix für Struktur-Quotes ist raus: er ersetzte nur \": und :\",
+            //  ließ Reste wie `entries\:` stehen und erzeugte damit "Bad escaped character".
+            //  Ersetzt durch die de-escape-Stufe der Parse-Kaskade unten.)
 
-            let daysData;
-            try {
-                daysData = JSON.parse(jsonStr);
-            } catch (parseErr) {
-                console.warn('[AIStudio] JSON.parse fehlgeschlagen, versuche Reparatur…', parseErr.message);
+            // Parse-Kaskade — jede Stufe ein härterer Reparatur-Versuch.
+            // Die de-escape-Stufen setzen bewusst auf textContent auf (nicht auf jsonStr):
+            // bei kaputtem Escaping desynct der Klammer-Scanner, also erst normalisieren,
+            // dann neu schneiden.
+            let daysData, _parseErr = null;
+            const _attempts = [
+                ['direkt',           () => jsonStr],
+                ['repair',           () => _repairJSON(jsonStr)],
+                ['de-escape',        () => _sliceRootJSON(_deEscapeStructural(textContent))],
+                ['de-escape+repair', () => _repairJSON(_sliceRootJSON(_deEscapeStructural(textContent)))],
+            ];
+            for (const [_stage, _build] of _attempts) {
                 try {
-                    daysData = JSON.parse(_repairJSON(jsonStr));
-                } catch (repairErr) {
-                    console.error('[AIStudio] JSON nicht reparierbar:', repairErr.message);
-                    console.error('[AIStudio] Roh-Antwort des Modells (vollständig):\n' + textContent);
-                    throw new Error('Cloud-KI hat ungültiges JSON zurückgegeben. Bitte nochmals versuchen.');
-                }
+                    daysData = JSON.parse(_build());
+                    if (_stage !== 'direkt') console.warn(`[AIStudio] JSON gerettet via Stufe "${_stage}".`);
+                    _parseErr = null;
+                    break;
+                } catch (e) { _parseErr = e; }
+            }
+            if (_parseErr) {
+                console.error('[AIStudio] JSON nicht reparierbar:', _parseErr.message);
+                console.error('[AIStudio] Roh-Antwort des Modells (vollständig):\n' + textContent);
+                throw new Error('Cloud-KI hat ungültiges JSON zurückgegeben. Bitte nochmals versuchen.');
             }
 
             // Tolerantes Parsing: kleine Modelle liefern oft EIN Objekt statt Array,
