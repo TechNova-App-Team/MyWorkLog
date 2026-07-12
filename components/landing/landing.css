@@ -97,19 +97,62 @@
     .vi-end{text-align:center}
     .vi-end-t{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(3.5rem,12vw,7rem);font-weight:900;letter-spacing:-.04em;margin-bottom:3rem;text-shadow:0 0 60px rgba(var(--primary-rgb),0.2)}
 
-    /* — CTA BUTTON — */
-    .vi-btn{position:relative;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;display:inline-flex;align-items:center;gap:1rem;padding:1rem 2rem;font-size:.95rem;font-weight:600;letter-spacing:.01em;color:#fff;background:rgba(168,85,247,0.18);border:1px solid rgba(168,85,247,0.45);border-radius:10px;cursor:pointer;overflow:hidden;box-shadow:0 2px 16px rgba(168,85,247,0.12),inset 0 1px 0 rgba(255,255,255,0.06);transition:background .22s ease,border-color .22s ease,box-shadow .22s ease,transform .18s ease;animation:none}
-    /* Top-edge highlight */
-    .vi-btn::before{content:'';position:absolute;top:0;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent);pointer-events:none}
-    .vi-btn:hover{background:rgba(168,85,247,0.28);border-color:rgba(168,85,247,0.7);box-shadow:0 6px 28px rgba(168,85,247,0.22),inset 0 1px 0 rgba(255,255,255,0.08);transform:translateY(-2px)}
-    .vi-btn:active{transform:translateY(0);transition:transform .06s}
+    /* — CTA BUTTON —
+       Idee: Der Button IST die vollendete Fortschrittsleiste. Das Intro führt über
+       7 Szenen die 2px-Leiste unten (.vi-prog-bar) auf 100 % — hier am Ende trägt
+       der Button exakt denselben Verlauf und wird zur Tür. Beim Hover füllt sich
+       seine untere Hairline von links nach rechts: der letzte Millimeter des Wegs.
+       Farben über --primary-rgb: vorher war 168,85,247 hart verdrahtet, dadurch
+       blieb der Button lila, egal welchen Akzent der User in den Settings wählt. */
+    .vi-btn{
+      position:relative;
+      display:inline-flex;align-items:center;justify-content:center;gap:.8rem;
+      min-height:54px;padding:0 1.9rem;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+      font-size:1rem;font-weight:600;letter-spacing:.005em;color:#fff;
+      background:linear-gradient(135deg,var(--primary),#ec4899);
+      border:0;border-radius:12px;cursor:pointer;overflow:hidden;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.22),
+                 0 10px 30px -8px rgba(var(--primary-rgb),0.55);
+      transition:transform .18s cubic-bezier(.22,1,.36,1),
+                 box-shadow .22s ease,
+                 filter .22s ease;
+    }
+    /* Signature: die Leiste erreicht 100 % */
+    .vi-btn::after{
+      content:'';position:absolute;left:0;right:0;bottom:0;height:2px;
+      background:rgba(255,255,255,0.92);
+      transform:scaleX(0);transform-origin:left center;
+      transition:transform .38s cubic-bezier(.22,1,.36,1);
+    }
+    .vi-btn:hover{
+      transform:translateY(-2px);filter:brightness(1.06);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.28),
+                 0 16px 40px -10px rgba(var(--primary-rgb),0.7);
+    }
+    .vi-btn:hover::after,.vi-btn:focus-visible::after{transform:scaleX(1)}
+    .vi-btn:active{transform:translateY(0) scale(.985);transition:transform .07s ease}
+    .vi-btn:focus-visible{
+      outline:none;
+      box-shadow:0 0 0 3px rgba(var(--primary-rgb),0.45),
+                 0 0 0 5px rgba(255,255,255,0.14),
+                 0 10px 30px -8px rgba(var(--primary-rgb),0.55);
+    }
     .vi-btn-text{position:relative;z-index:1;white-space:nowrap}
-    /* Arrow */
-    .vi-btn-arrow{position:relative;z-index:1;background:none;border-radius:0;margin-left:.25rem;width:auto;height:auto;display:flex;align-items:center;flex-shrink:0;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
-    .vi-btn-arrow svg{display:block;stroke:rgba(255,255,255,0.6);transition:stroke .22s ease}
-    .vi-btn:hover .vi-btn-arrow{transform:translateX(4px)}
-    .vi-btn:hover .vi-btn-arrow svg{stroke:#fff}
+    .vi-btn-arrow{position:relative;z-index:1;display:flex;align-items:center;flex-shrink:0;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+    .vi-btn-arrow svg{display:block;stroke:#fff}
+    .vi-btn:hover .vi-btn-arrow,.vi-btn:focus-visible .vi-btn-arrow{transform:translateX(5px)}
     .vi-end::after{display:none}
+
+    /* Handy: volle Breite, Daumen-freundlich */
+    @media(max-width:520px){
+      .vi-btn{width:min(320px,86vw);padding:0 1.5rem;min-height:56px}
+    }
+    @media(prefers-reduced-motion:reduce){
+      .vi-btn,.vi-btn::after,.vi-btn-arrow{transition:none}
+      .vi-btn:hover{transform:none;filter:none}
+      .vi-btn:hover .vi-btn-arrow,.vi-btn:focus-visible .vi-btn-arrow{transform:none}
+    }
 
     @keyframes viFadeOut{to{opacity:0}}
 
