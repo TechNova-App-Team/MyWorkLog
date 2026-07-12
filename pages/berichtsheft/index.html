@@ -3601,11 +3601,11 @@ Beispiel:
                                             <div class="ais-test-phase-deet-h">KI-Modelle (automatischer Fallback)</div>
                                             <ul>
                                                 <li><strong>Primary:</strong> GPT-OSS 120B — beste Qualität bei Multi-Beruf &amp; Tagesvariation</li>
-                                                <li><strong>Fallback 1:</strong> Nemotron 3 Nano 30B — schnell &amp; robust bei JSON-Struktur</li>
-                                                <li><strong>Fallback 2:</strong> LFM 1.2B Instruct — Notnagel, immer verfügbar</li>
+                                                <li><strong>Fallback 1:</strong> LFM 1.2B Instruct — klein, aber im Test überraschend stark</li>
+                                                <li><strong>Fallback 2:</strong> Nemotron 3 Nano 30B — Notnagel, immer verfügbar</li>
                                             </ul>
                                             <div class="ais-test-phase-deet-body" style="margin-top:6px;">
-                                                Wenn das Primary-Modell ausfällt (z.B. Rate-Limit) wird automatisch das nächste angesprochen — du merkst nichts davon.
+                                                Wenn ein Modell ausfällt (z.B. Rate-Limit) oder eine unbrauchbare Antwort liefert, wird automatisch das nächste angesprochen — du merkst nichts davon.
                                             </div>
                                         </div>
                                         <div>
@@ -9006,6 +9006,15 @@ ${aufgabenBlock}
             const data = await response.json();
             const textContent = data?.candidates?.[0]?.content?.parts?.[0]?.text;
             if (!textContent) throw new Error('Leere Antwort von Cloud-KI.');
+
+            // Welches Modell hat geantwortet? (Worker setzt modelVersion + X-MWL-Model.)
+            // X-MWL-Salvage=1 heißt: KEIN Modell lieferte sauberes JSON, der Worker gibt
+            // die am wenigsten kaputte Antwort zur Client-Reparatur zurück.
+            if (response.headers.get('X-MWL-Salvage') === '1') {
+                console.warn(`[AIStudio] Worker-Salvage: kein Modell lieferte valides JSON (zuletzt ${data.modelVersion || '?'}) — Repair-Kaskade übernimmt.`);
+            } else if (data.modelVersion) {
+                console.log(`[AIStudio] Antwort von Modell: ${data.modelVersion}`);
+            }
 
             // Parse JSON from response (may be wrapped in markdown code block)
             let jsonStr = textContent.trim();
