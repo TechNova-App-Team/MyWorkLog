@@ -8,6 +8,20 @@
 changed=$(git diff --cached --name-only --diff-filter=ACM)
 # pages/en/* ist GENERIERTE Ausgabe → ausschließen, sonst triggert sich der Hook selbst
 sources=$(echo "$changed" | grep -vE '^pages/en/')
+
+# ═══ ASSET-STAMPING ═══
+# Cloudflare liefert /Assets/* mit max-age=86400 aus (Dashboard-Regel, NICHT _headers).
+# Ohne Versions-Query im HTML sehen Nutzer nach einem Deploy bis zu 24h altes JS/CSS.
+# Bei jedem Version-Bump alle Asset-Referenzen neu stempeln.
+if echo "$sources" | grep -qE '^config/version\.json'; then
+  echo "[stamp] Version gebumpt → stemple Asset-URLs …"
+  if ! node tools/stamp-assets.js; then
+    echo "[stamp] ✗ Stamping fehlgeschlagen — Commit abgebrochen."
+    exit 1
+  fi
+  git add index.html pages 2>/dev/null
+fi
+
 echo "$sources" | grep -qE '^(index\.html|pages/|tools/i18n/dict/)' || exit 0
 
 if [ ! -d node_modules/jsdom ]; then
@@ -20,6 +34,10 @@ if ! npm run --silent i18n:build; then
   echo "[i18n] ✗ Build fehlgeschlagen — Commit abgebrochen. Fehler oben prüfen."
   exit 1
 fi
+
+# Der i18n-Build generiert /en/ aus der deutschen Quelle neu — die Stempel wandern
+# dabei mit. Danach nochmal drueber, damit auch frisch erzeugte Dateien sauber sind.
+node tools/stamp-assets.js > /dev/null 2>&1
 
 # frisch generierte Artefakte mit einstagen (EN-Seiten liegen unter pages/en/*,
 # weil die Cloudflare-Rewrite-Regel /en/ intern auf /pages/en/ mappt)
