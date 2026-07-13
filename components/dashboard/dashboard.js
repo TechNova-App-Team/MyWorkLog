@@ -258,6 +258,14 @@
         try { dedupeDayExpected(); } catch(e) {}
         save();
 
+        // Nur Kategorien zaehlen — nie Zeiten, Projekte oder Notizen
+        if (typeof mwlEvent === 'function') {
+            mwlEvent(editId ? 'entry_updated' : 'entry_created', {
+                entry_type: type,
+                source: start && end ? 'zeitspanne' : (direct ? 'manuell' : 'timer'),
+            });
+        }
+
         // Mood Selector nach Eintrag (nur wenn aktiviert)
         if (!editId && data.settings.moodSelectorEnabled !== false) {
             openMoodSelector(entry.id);
@@ -355,6 +363,7 @@
 
     function timerAction(act) {
         const now = Date.now();
+        if (typeof mwlEvent === 'function') mwlEvent('timer_action', { action: act });
         if (act === 'start') {
             if (!timer.running) { 
                 timer.start = now; 

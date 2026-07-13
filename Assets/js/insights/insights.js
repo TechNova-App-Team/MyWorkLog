@@ -7,6 +7,18 @@ let currentRange = 7;
 // =========================================
 //  HELPERS
 // =========================================
+// Standalone-Seite: utils.js der SPA laeuft hier nicht, esc() also selbst mitbringen.
+// Pflicht — Laender-, Stadt- und Event-Namen kommen aus PostHog und landen in innerHTML.
+function esc(s) {
+    if (s == null) return '';
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function fmt(n) {
     if (n == null) return '0';
     if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
@@ -281,9 +293,11 @@ function isIrrelevantPage(path) {
     return false;
 }
 
-// Normalize path: collapse index.html, strip hashes/query, unify base path
+// Normalize path: collapse index.html, strip hashes/query
+// Frueher wurde "/" auf "/MyWorkLog/" umgeschrieben — ein GitHub-Pages-Relikt.
+// Auf der eigenen Domain ist die Startseite schlicht "/".
 function normalizePath(path) {
-    if (!path) return '/MyWorkLog/';
+    if (!path) return '/';
     // Remove hash fragments entirely
     var hashIdx = path.indexOf('#');
     if (hashIdx !== -1) path = path.substring(0, hashIdx);
@@ -292,8 +306,9 @@ function normalizePath(path) {
     if (qIdx !== -1) path = path.substring(0, qIdx);
     // /index.html → /  (collapse index.html to directory)
     path = path.replace(/\/index\.html$/i, '/');
-    // Normalize bare "/" or empty to the actual site root "/MyWorkLog/"
-    if (path === '/' || path === '') path = '/MyWorkLog/';
+    // Legacy-Basepath aus der GitHub-Pages-Zeit einsammeln
+    path = path.replace(/^\/MyWorkLog(\/|$)/i, '/');
+    if (path === '') path = '/';
     // Ensure starts with /
     if (path[0] !== '/') path = '/' + path;
     return path;
@@ -547,7 +562,7 @@ function renderExpandedTable(tableId, data) {
 
         return '<tr>' +
             '<td class="rank">' + (i + 1) + '</td>' +
-            '<td title="' + label + '">' + shortLabel + '</td>' +
+            '<td title="' + esc(label) + '">' + esc(shortLabel) + '</td>' +
             '<td class="value">' + fmt(pageviews) + '</td>' +
             '<td>' + fmt(visitors) + '</td>' +
             '<td>' + bounceRate + '</td>' +
@@ -573,7 +588,7 @@ function renderSimpleTable(tableId, data, labelFn, colorClass) {
 
     tbody.innerHTML = data.map(function(item, i) {
         var pct = total > 0 ? ((item.y / total) * 100).toFixed(1) : 0;
-        var label = labelFn(item.x || '(unbekannt)');
+        var label = esc(labelFn(item.x || '(unbekannt)'));
         return '<tr>' +
             '<td class="rank">' + (i + 1) + '</td>' +
             '<td>' + label + '</td>' +
@@ -599,7 +614,7 @@ function renderSimpleTableNoRank(tableId, data, labelFn, colorClass) {
 
     tbody.innerHTML = data.map(function(item) {
         var pct = total > 0 ? ((item.y / total) * 100).toFixed(1) : 0;
-        var label = labelFn(item.x || '(unbekannt)');
+        var label = esc(labelFn(item.x || '(unbekannt)'));
         return '<tr>' +
             '<td>' + label + '</td>' +
             '<td class="value">' + fmt(item.y) + '</td>' +
@@ -771,6 +786,376 @@ function hideSkeletons() {
 }
 
 // =========================================
+//  RENDER: Aktivitäts-Puls (7 Wochentage × 24 Stunden)
+// =========================================
+var PULSE_DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
+function renderActivityPulse(activity) {
+    var el = document.getElementById('activityPulse');
+    if (!el) return;
+
+    if (!activity || !activity.length) {
+        el.innerHTML = '<p class="ch-empty">Noch keine Aktivitätsdaten</p>';
+        return;
+    }
+
+    // dow: 1=Mo … 7=So  →  Index 0..6
+    var grid = [];
+    for (var d = 0; d < 7; d++) {
+        grid.push(new Array(24).fill(0));
+    }
+    var max = 0;
+    var peak = { pv: 0, dow: 0, hour: 0 };
+
+    activity.forEach(function(a) {
+        var di = (a.dow || 1) - 1;
+        var hi = a.hour || 0;
+        if (di < 0 || di > 6 || hi < 0 || hi > 23) return;
+        var pv = a.pageviews || 0;
+        grid[di][hi] = pv;
+        if (pv > max) max = pv;
+        if (pv > peak.pv) peak = { pv: pv, dow: di, hour: hi };
+    });
+
+    // 5 Stufen. Alles > 0 bekommt mindestens Stufe 1 — sonst verschwinden
+    // einzelne Aufrufe optisch komplett und die Karte lügt.
+    function level(v) {
+        if (v <= 0) return 0;
+        if (max <= 1) return 4;
+        var r = v / max;
+        if (r <= 0.25) return 1;
+        if (r <= 0.5)  return 2;
+        if (r <= 0.75) return 3;
+        return 4;
+    }
+
+    var html = '<div class="pulse-hours">';
+    for (var h = 0; h < 24; h++) {
+        html += '<span class="pulse-hour">' + (h % 3 === 0 ? h : '') + '</span>';
+    }
+    html += '</div>';
+
+    for (var dd = 0; dd < 7; dd++) {
+        html += '<div class="pulse-row">';
+        html += '<span class="pulse-day">' + PULSE_DAYS[dd] + '</span>';
+        html += '<div class="pulse-cells">';
+        for (var hh = 0; hh < 24; hh++) {
+            var v = grid[dd][hh];
+            html += '<span class="pulse-cell" data-lvl="' + level(v) + '" title="' +
+                    PULSE_DAYS[dd] + ' ' + hh + ':00 — ' + fmt(v) + ' Aufrufe"></span>';
+        }
+        html += '</div></div>';
+    }
+
+    el.innerHTML = html;
+
+    var peakEl = document.getElementById('pulsePeak');
+    if (peakEl && peak.pv > 0) {
+        peakEl.textContent = 'Spitze: ' + PULSE_DAYS[peak.dow] + ' ' + peak.hour + ':00 (' + fmt(peak.pv) + ')';
+    }
+}
+
+// =========================================
+//  RENDER: Karten (Welt + Deutschland)
+// =========================================
+var _mapData = { countries: [], regions: [], cities: [] };
+
+function _mapShade(ratio) {
+    // 0 → leere Fläche, 1 → volle Akzentfarbe. Nie ganz transparent, damit
+    // Länder mit wenig Traffic nicht wie "keine Daten" aussehen.
+    if (ratio <= 0) return 'rgba(255,255,255,0.045)';
+    var a = 0.18 + ratio * 0.72;
+    return 'rgba(167,139,250,' + a.toFixed(3) + ')';
+}
+
+function _renderMapSvg(containerId, geo, valueByKey, labelByKey, cities) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    if (!geo || !geo.paths) {
+        el.innerHTML = '<p class="ch-empty">Kartendaten nicht geladen</p>';
+        return;
+    }
+
+    var max = 0;
+    Object.keys(valueByKey).forEach(function(k) {
+        if (valueByKey[k] > max) max = valueByKey[k];
+    });
+
+    var out = '';
+    geo.paths.forEach(function(p) {
+        var v = valueByKey[p.id] || 0;
+        var ratio = max > 0 ? v / max : 0;
+        var label = labelByKey[p.id] || p.name || p.id;
+        out += '<path d="' + p.d + '"' +
+               ' fill="' + _mapShade(ratio) + '"' +
+               ' stroke="rgba(255,255,255,0.10)" stroke-width="0.6"' +
+               ' class="map-shape' + (v > 0 ? ' has-data' : '') + '"' +
+               ' data-label="' + esc(label) + '"' +
+               ' data-value="' + v + '"></path>';
+    });
+
+    // Städte-Marker: nur wenn die Karte Koordinaten projizieren kann (Weltkarte)
+    if (cities && cities.length) {
+        cities.forEach(function(c) {
+            if (c.x == null || c.y == null) return;
+            var r = 2 + Math.min(4, (c.visitors || 1));
+            out += '<circle cx="' + c.x + '" cy="' + c.y + '" r="' + r + '"' +
+                   ' class="map-city" data-label="' + esc(c.city) + '"' +
+                   ' data-value="' + (c.visitors || 0) + '"></circle>';
+        });
+    }
+
+    el.innerHTML = '<svg viewBox="' + geo.viewBox + '" xmlns="http://www.w3.org/2000/svg" ' +
+                   'preserveAspectRatio="xMidYMid meet" class="map-svg">' + out + '</svg>';
+
+    _bindMapTooltip(el);
+}
+
+function _bindMapTooltip(el) {
+    var tip = document.getElementById('mapTooltip');
+    if (!tip) return;
+
+    el.querySelectorAll('.map-shape, .map-city').forEach(function(node) {
+        node.addEventListener('mouseenter', function(e) {
+            var label = node.getAttribute('data-label');
+            var val = node.getAttribute('data-value');
+            tip.innerHTML = '<strong>' + label + '</strong><span>' + fmt(+val) + ' Besucher</span>';
+            tip.classList.add('show');
+            _moveTip(e, tip, el);
+        });
+        node.addEventListener('mousemove', function(e) { _moveTip(e, tip, el); });
+        node.addEventListener('mouseleave', function() { tip.classList.remove('show'); });
+    });
+}
+
+function _moveTip(e, tip, stage) {
+    var r = stage.getBoundingClientRect();
+    tip.style.left = (e.clientX - r.left) + 'px';
+    tip.style.top  = (e.clientY - r.top) + 'px';
+}
+
+// Equal-Earth-Projektion — MUSS identisch zu tools/geo/build-maps.js sein,
+// sonst landen die Städte-Marker neben der Karte.
+function _projectEqualEarth(lon, lat) {
+    var A1 = 1.340264, A2 = -0.081106, A3 = 0.000893, A4 = 0.003796;
+    var l = lon * Math.PI / 180;
+    var p = lat * Math.PI / 180;
+    var th = Math.asin((Math.sqrt(3) / 2) * Math.sin(p));
+    var th2 = th * th, th6 = th2 * th2 * th2;
+    var den = 3 * (9 * A4 * th6 * th2 + 7 * A3 * th6 + 3 * A2 * th2 + A1);
+    var x = 2 * Math.sqrt(3) * l * Math.cos(th) / den;
+    var y = A4 * th6 * th2 * th + A3 * th6 * th + A2 * th2 * th + A1 * th;
+    return [x, -y];
+}
+
+// Die Weltkarte wurde beim Bauen auf viewBox 0..1000 normiert. Um Städte
+// hineinzusetzen, brauchen wir dieselbe Normierung — die Eckpunkte der
+// Projektion sind konstant, also einmal ausrechnen.
+var _worldBounds = null;
+function _worldExtent() {
+    if (_worldBounds) return _worldBounds;
+    var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (var lon = -180; lon <= 180; lon += 2) {
+        for (var lat = -90; lat <= 90; lat += 2) {
+            var p = _projectEqualEarth(lon, lat);
+            if (p[0] < minX) minX = p[0];
+            if (p[0] > maxX) maxX = p[0];
+            if (p[1] < minY) minY = p[1];
+            if (p[1] > maxY) maxY = p[1];
+        }
+    }
+    _worldBounds = { minX: minX, maxX: maxX, minY: minY, maxY: maxY };
+    return _worldBounds;
+}
+
+function renderMaps(countries, regions, cities) {
+    _mapData.countries = countries || [];
+    _mapData.regions   = regions   || [];
+    _mapData.cities    = cities    || [];
+
+    // ── Weltkarte ──
+    var cVals = {}, cLabels = {};
+    (countries || []).forEach(function(c) {
+        if (!c.code) return;
+        cVals[c.code]   = c.visitors || 0;
+        cLabels[c.code] = c.country || c.code;
+    });
+
+    // Städte-Marker auf Weltkoordinaten projizieren.
+    // ACHTUNG: Die Karte wurde OHNE Antarktis gebaut, deshalb kann die
+    // rechnerische Extent-Box nicht 1:1 verwendet werden — wir nehmen die
+    // tatsächlich verbaute viewBox als Referenz.
+    var cityMarkers = [];
+    var world = window.__GEO_WORLD__;
+    if (world && cities && cities.length) {
+        var vb = world.viewBox.split(' ').map(Number);   // [0,0,W,H]
+        var W = vb[2], H = vb[3];
+        var ext = _worldExtent();
+        var scale = W / (ext.maxX - ext.minX);
+        cities.forEach(function(c) {
+            if (c.lat == null || c.lon == null) return;
+            var p = _projectEqualEarth(c.lon, c.lat);
+            var x = (p[0] - ext.minX) * scale;
+            var y = (p[1] - ext.minY) * scale;
+            if (x < 0 || x > W || y < 0 || y > H) return;
+            cityMarkers.push({ x: x.toFixed(1), y: y.toFixed(1), city: c.city, visitors: c.visitors });
+        });
+    }
+
+    _renderMapSvg('mapWorld', world, cVals, cLabels, cityMarkers);
+
+    // ── Deutschland ──
+    var rVals = {}, rLabels = {};
+    (regions || []).forEach(function(r) {
+        if (!r.id) return;
+        rVals[r.id]   = r.visitors || 0;
+        rLabels[r.id] = r.region || r.id;
+    });
+    // Labels aus der Kartendatei bevorzugen — sie sind deutsch,
+    // PostHog liefert englische Namen ("Bavaria").
+    var deGeo = window.__GEO_DE__;
+    if (deGeo && deGeo.paths) {
+        deGeo.paths.forEach(function(p) {
+            if (p.name) rLabels[p.id] = p.name;
+        });
+    }
+    _renderMapSvg('mapDE', deGeo, rVals, rLabels, null);
+
+    // ── Seiten-Tabellen ──
+    renderSimpleTableNoRank('countriesTable',
+        (countries || []).map(function(c) { return { x: c.country, y: c.visitors }; }),
+        function(x) { return x; }, 'green');
+
+    renderSimpleTableNoRank('regionsTable',
+        (regions || []).map(function(r) {
+            return { x: rLabels[r.id] || r.region, y: r.visitors };
+        }),
+        function(x) { return x; }, 'purple');
+
+    renderMapLegend(Math.max.apply(null, [0].concat((countries || []).map(function(c) { return c.visitors || 0; }))));
+}
+
+function renderMapLegend(max) {
+    var el = document.getElementById('mapLegend');
+    if (!el) return;
+    if (!max) { el.innerHTML = ''; return; }
+    var steps = [0, 0.25, 0.5, 0.75, 1];
+    var cells = steps.map(function(s) {
+        return '<span class="map-legend-cell" style="background:' + _mapShade(s) + '"></span>';
+    }).join('');
+    el.innerHTML = '<span class="map-legend-label">0</span>' + cells +
+                   '<span class="map-legend-label">' + fmt(max) + '</span>';
+}
+
+function switchMap(which) {
+    document.querySelectorAll('.map-switch-btn').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.map === which);
+    });
+    var w = document.getElementById('mapWorld');
+    var d = document.getElementById('mapDE');
+    if (w) w.classList.toggle('active', which === 'world');
+    if (d) d.classList.toggle('active', which === 'de');
+
+    var head = document.getElementById('mapSideHead');
+    if (head) head.textContent = which === 'de' ? 'Bundesländer' : 'Länder';
+
+    var ct = document.getElementById('countriesTable');
+    var rt = document.getElementById('regionsTable');
+    if (ct) ct.style.display = which === 'de' ? 'none' : '';
+    if (rt) rt.style.display = which === 'de' ? '' : 'none';
+
+    var maxVal = which === 'de'
+        ? Math.max.apply(null, [0].concat(_mapData.regions.map(function(r) { return r.visitors || 0; })))
+        : Math.max.apply(null, [0].concat(_mapData.countries.map(function(c) { return c.visitors || 0; })));
+    renderMapLegend(maxVal);
+}
+
+// =========================================
+//  RENDER: Web Vitals (LCP)
+// =========================================
+var VITAL_COLORS = {
+    'Good': '#34d399',
+    'Needs': '#fbbf24',
+    'Poor': '#f87171',
+};
+
+function _vitalColor(rating) {
+    if (/good/i.test(rating)) return VITAL_COLORS.Good;
+    if (/needs/i.test(rating)) return VITAL_COLORS.Needs;
+    return VITAL_COLORS.Poor;
+}
+
+function renderVitals(lcp) {
+    var card = document.getElementById('vitalsCard');
+    var bar  = document.getElementById('vitalsBar');
+    var tbody = document.querySelector('#vitalsTable tbody');
+
+    if (!lcp || !lcp.length) {
+        // Ehrlich bleiben: leerer Block statt erfundener Werte
+        if (bar) bar.innerHTML = '';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem;">Noch keine Messwerte — Web Vitals werden erst seit dem letzten Update erfasst.</td></tr>';
+        return;
+    }
+
+    var total = lcp.reduce(function(s, l) { return s + (l.sessions || 0); }, 0);
+
+    if (bar) {
+        bar.innerHTML = lcp.map(function(l) {
+            var pct = total > 0 ? (l.sessions / total * 100) : 0;
+            return '<span class="vitals-seg" style="width:' + pct.toFixed(1) + '%;background:' + _vitalColor(l.rating) + '"' +
+                   ' title="' + esc(l.rating) + ': ' + fmt(l.sessions) + '"></span>';
+        }).join('');
+    }
+
+    if (tbody) {
+        tbody.innerHTML = lcp.map(function(l) {
+            var pct = total > 0 ? (l.sessions / total * 100).toFixed(1) : 0;
+            return '<tr>' +
+                '<td><span class="vitals-dot" style="background:' + _vitalColor(l.rating) + '"></span>' + esc(l.rating) + '</td>' +
+                '<td class="value">' + fmt(l.sessions) + '</td>' +
+                '<td>' + (l.avgMs ? (l.avgMs / 1000).toFixed(2) + 's' : '—') + '</td>' +
+                '<td>' + pct + '%<div class="progress-bar"><div class="progress-fill purple" style="width:' + pct + '%"></div></div></td>' +
+            '</tr>';
+        }).join('');
+    }
+    if (card) card.style.display = '';
+}
+
+// =========================================
+//  RENDER: Feature-Nutzung (Custom Events)
+// =========================================
+// Event-Namen sind technische Keys — hier bekommen sie ein lesbares Label.
+var EVENT_LABELS = {
+    'entry_created': 'Eintrag erstellt',
+    'entry_updated': 'Eintrag bearbeitet',
+    'timer_action':  'Timer benutzt',
+    'data_exported': 'Daten exportiert',
+};
+
+function renderCustomEvents(events) {
+    var tbody = document.querySelector('#eventsTable tbody');
+    if (!tbody) return;
+
+    if (!events || !events.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem;">Noch keine Events — die Feature-Erfassung läuft erst seit dem letzten Update.</td></tr>';
+        return;
+    }
+
+    var total = events.reduce(function(s, e) { return s + (e.count || 0); }, 0);
+
+    tbody.innerHTML = events.map(function(e, i) {
+        var pct = total > 0 ? ((e.count / total) * 100).toFixed(1) : 0;
+        var label = EVENT_LABELS[e.name] || e.name;
+        return '<tr>' +
+            '<td class="rank">' + (i + 1) + '</td>' +
+            '<td>' + esc(label) + '</td>' +
+            '<td class="value">' + fmt(e.count) + '</td>' +
+            '<td>' + pct + '%<div class="progress-bar"><div class="progress-fill yellow" style="width:' + pct + '%"></div></div></td>' +
+        '</tr>';
+    }).join('');
+}
+
+// =========================================
 //  LOAD ALL DATA — PostHog via Worker-Proxy
 // =========================================
 async function loadAll() {
@@ -823,11 +1208,15 @@ async function loadAll() {
         var channels = d.channels            || [];
         var utm      = d.utm                 || {};
         var countries= d.countries           || [];
+        var regions  = d.regions             || [];
+        var cities   = d.cities              || [];
+        var langs    = d.languages           || [];
         var browsers = d.browsers            || [];
         var os       = d.os                  || [];
         var devices  = d.devices             || [];
-        var screens  = d.screenSizes         || [];
-        var viewports= d.viewports           || [];
+        var resolut  = d.resolutions         || [];
+        var activity = d.activity            || [];
+        var custEv   = d.customEvents        || [];
         var nvr      = d.newVsReturning      || [];
         var durBkts  = d.sessionDurationBuckets || [];
         var pvpSess  = d.pageviewsPerSession || [];
@@ -935,24 +1324,34 @@ async function loadAll() {
             filterBotMetrics(os.map(function(o) { return { x: o.os, y: o.visitors }; })),
             function(x) { return x; }, 'cyan');
 
-        // ── Screen Sizes ───────────────────────────────────────────────────
+        // ── Auflösungen (exakt statt Buckets) ──────────────────────────────
         renderSimpleTableNoRank('screensTable',
-            screens.map(function(s) { return { x: s.size, y: s.visitors }; }),
+            resolut.map(function(s) { return { x: s.res, y: s.visitors }; }),
             function(x) { return x; }, 'purple');
 
-        // ── Geo: Countries ─────────────────────────────────────────────────
-        renderSimpleTableNoRank('countriesTable',
-            countries.map(function(c) { return { x: c.country, y: c.visitors }; }),
-            function(x) { return x; }, 'green');
-        renderSimpleTableNoRank('citiesTable', [], function(x) { return x; }, 'yellow');
+        // ── Geo: Karten + Städte ───────────────────────────────────────────
+        renderMaps(countries, regions, cities);
+        renderSimpleTableNoRank('citiesTable',
+            cities.map(function(c) { return { x: c.city, y: c.visitors }; }),
+            function(x) { return x; }, 'yellow');
 
-        // ── Languages (nicht verfügbar via PostHog) ────────────────────────
-        renderSimpleTableNoRank('languagesTable', [], function(x) { return x; }, 'cyan');
+        // ── Sprachen ───────────────────────────────────────────────────────
+        renderSimpleTableNoRank('languagesTable',
+            langs.map(function(l) { return { x: l.lang, y: l.visitors }; }),
+            langName, 'cyan');
 
-        // ── Events Tab: Session Duration Buckets ───────────────────────────
-        renderSimpleTable('eventsTable',
+        // ── Session-Verhalten ──────────────────────────────────────────────
+        renderSimpleTableNoRank('durationTable',
             durBkts.map(function(b) { return { x: b.bucket, y: b.sessions }; }),
             function(x) { return x; }, 'yellow');
+        renderSimpleTableNoRank('pagesPerSessionTable',
+            pvpSess.map(function(b) { return { x: b.bucket, y: b.sessions }; }),
+            function(x) { return x; }, 'green');
+
+        // ── Aktivitäts-Puls, Ladeperformance, Feature-Nutzung ──────────────
+        renderActivityPulse(activity);
+        renderVitals(lcp);
+        renderCustomEvents(custEv);
 
         // ── Insights ───────────────────────────────────────────────────────
         var insights = generateInsights(

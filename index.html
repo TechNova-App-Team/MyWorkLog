@@ -10,7 +10,19 @@
     autocapture: false,
     capture_pageview: true,
     capture_pageleave: true,
+    capture_performance: true,   // Web Vitals (LCP/CLS/INP) — reine Messwerte, keine Personendaten
   });
+
+  /* mwlEvent(name, props) — Feature-Nutzung zaehlen, damit das Analytics-Dashboard
+     zeigen kann WAS genutzt wird, nicht nur DASS jemand da war.
+     Regeln: nur Zaehl-Events, NIE Inhalte (keine Zeiten, Notizen, Namen, Betraege).
+     Properties duerfen nur Kategorien/Booleans/Zahlen sein. */
+  window.mwlEvent = function (name, props) {
+    try {
+      if (typeof posthog === 'undefined' || !posthog.capture) return;
+      posthog.capture(name, props || {});
+    } catch (e) { /* Tracking darf die App nie kippen */ }
+  };
 </script>
 <script>
 /* Maintenance-Gate: prüft /config/maintenance.json, leitet bei active:true auf /maintenance/ um.

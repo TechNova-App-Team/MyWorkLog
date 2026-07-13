@@ -137,6 +137,7 @@
     }
 
     function exportData(format) {
+        if (typeof mwlEvent === 'function') mwlEvent('data_exported', { format: format });
         if (format === 'json') {
              const backup = collectFullBackup();
              const a = document.createElement('a');

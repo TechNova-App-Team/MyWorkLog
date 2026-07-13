@@ -175,7 +175,7 @@
             <div class="kpi-icon">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </div>
-            <div class="kpi-label">Bandwidth</div>
+            <div class="kpi-label">Ø Session-Dauer</div>
             <div class="kpi-value" id="kpiDuration">—</div>
             <div class="kpi-sub" id="kpiTotalTime"></div>
         </article>
@@ -184,7 +184,7 @@
             <div class="kpi-icon">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
             </div>
-            <div class="kpi-label">Cache Hit Rate</div>
+            <div class="kpi-label">Bounce Rate</div>
             <div class="kpi-value" id="kpiBounce">—</div>
             <div class="kpi-trend neutral" id="kpiBouncesTrend">—</div>
         </article>
@@ -317,6 +317,33 @@
         </div>
     </div>
 
+    <!-- ══════ AKTIVITÄTS-PULS ══════
+         7 Wochentage × 24 Stunden. Eine App zur Arbeitszeit-Erfassung sollte zeigen
+         können, zu welchen Arbeitszeiten sie selbst benutzt wird. -->
+    <div class="section-card section-gap fade-in">
+        <div class="card-head">
+            <div class="card-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                Aktivitäts-Puls
+            </div>
+            <span class="badge">Wochentag × Stunde</span>
+        </div>
+        <p class="card-note">Wann die App tatsächlich benutzt wird. Jede Zelle ist eine Stunde an einem Wochentag — je heller, desto mehr Aufrufe.</p>
+        <div class="pulse-wrap">
+            <div class="pulse-grid" id="activityPulse"></div>
+        </div>
+        <div class="pulse-legend">
+            <span class="pulse-legend-label">weniger</span>
+            <span class="pulse-legend-cell" data-lvl="0"></span>
+            <span class="pulse-legend-cell" data-lvl="1"></span>
+            <span class="pulse-legend-cell" data-lvl="2"></span>
+            <span class="pulse-legend-cell" data-lvl="3"></span>
+            <span class="pulse-legend-cell" data-lvl="4"></span>
+            <span class="pulse-legend-label">mehr</span>
+            <span class="pulse-peak" id="pulsePeak"></span>
+        </div>
+    </div>
+
     <!-- ══════ INSIGHTS ══════ -->
     <div class="section-card section-gap fade-in">
         <div class="card-head">
@@ -357,11 +384,11 @@
             </button>
             <button class="tab-btn" onclick="switchTab(this,'channels')">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.99 12 19.79 19.79 0 0 1 1.93 3.36 2 2 0 0 1 3.9 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9"/></svg>
-                HTTP Status
+                Channels
             </button>
             <button class="tab-btn" onclick="switchTab(this,'titles')">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="18" x2="18" y2="18"/></svg>
-                Cache
+                UTM-Quellen
             </button>
         </div>
 
@@ -400,7 +427,7 @@
         <div class="tab-content" id="tab-channels">
             <div class="table-scroll">
                 <table class="data-table" id="channelsTable">
-                    <thead><tr><th>#</th><th>Status</th><th>Requests</th><th>Anteil</th></tr></thead>
+                    <thead><tr><th>#</th><th>Channel</th><th>Sessions</th><th>Anteil</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -408,7 +435,7 @@
         <div class="tab-content" id="tab-titles">
             <div class="table-scroll">
                 <table class="data-table" id="titlesTable">
-                    <thead><tr><th>#</th><th>Cache-Status</th><th>Requests</th><th>Anteil</th></tr></thead>
+                    <thead><tr><th>#</th><th>UTM-Quelle</th><th>Sessions</th><th>Anteil</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -422,8 +449,8 @@
             <button class="tab-btn">Entry Pages</button>
             <button class="tab-btn">Exit Pages</button>
             <button class="tab-btn">Referrers</button>
-            <button class="tab-btn">HTTP Status</button>
-            <button class="tab-btn">Cache</button>
+            <button class="tab-btn">Channels</button>
+            <button class="tab-btn">UTM-Quellen</button>
         </div>
         <div>
             <div class="skeleton-table-row"><div class="skeleton-table-cell" style="width:26px"></div><div class="skeleton-table-cell" style="flex:1"></div><div class="skeleton-table-cell" style="width:68px"></div><div class="skeleton-table-cell" style="width:68px"></div><div class="skeleton-table-cell" style="width:68px"></div></div>
@@ -475,22 +502,45 @@
         </div>
     </div>
 
-    <!-- ══════ GEO ══════ -->
-    <div class="grid-2 section-gap fade-in">
-        <div class="section-card">
-            <div class="card-head">
-                <div class="card-title">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                    Länder
-                </div>
+    <!-- ══════ KARTEN ══════
+         Weltkarte (ISO-A2) + Deutschland nach Bundesland (ISO 3166-2).
+         Pfade kommen aus /Assets/js/insights/geo-maps.js, generiert aus Natural Earth. -->
+    <div class="section-card section-gap fade-in">
+        <div class="card-head">
+            <div class="card-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                Herkunft
             </div>
-            <div class="table-scroll">
-                <table class="data-table" id="countriesTable">
-                    <thead><tr><th>Land</th><th>Besucher</th><th>Anteil</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+            <div class="map-switch" id="mapSwitch">
+                <button class="map-switch-btn active" data-map="world" onclick="switchMap('world')">Welt</button>
+                <button class="map-switch-btn" data-map="de" onclick="switchMap('de')">Deutschland</button>
             </div>
         </div>
+        <div class="map-layout">
+            <div class="map-stage">
+                <div class="map-view active" id="mapWorld"></div>
+                <div class="map-view" id="mapDE"></div>
+                <div class="map-tooltip" id="mapTooltip"></div>
+            </div>
+            <div class="map-side">
+                <div class="map-side-head" id="mapSideHead">Länder</div>
+                <div class="map-legend" id="mapLegend"></div>
+                <div class="table-scroll map-side-table">
+                    <table class="data-table" id="countriesTable">
+                        <thead><tr><th>Land</th><th>Besucher</th><th>Anteil</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                    <table class="data-table" id="regionsTable" style="display:none;">
+                        <thead><tr><th>Bundesland</th><th>Besucher</th><th>Anteil</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════ GEO ══════ -->
+    <div class="grid-2 section-gap fade-in">
         <div class="section-card">
             <div class="card-head">
                 <div class="card-title">
@@ -539,18 +589,70 @@
         </div>
     </div>
 
-    <!-- ══════ EVENTS ══════ -->
-    <div class="section-card section-gap fade-in">
+    <!-- ══════ SESSION-VERHALTEN ══════ -->
+    <div class="grid-2 section-gap fade-in">
+        <div class="section-card">
+            <div class="card-head">
+                <div class="card-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Verweildauer
+                </div>
+            </div>
+            <div class="table-scroll">
+                <table class="data-table" id="durationTable">
+                    <thead><tr><th>Dauer</th><th>Sessions</th><th>Anteil</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="section-card">
+            <div class="card-head">
+                <div class="card-title">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    Seiten pro Session
+                </div>
+            </div>
+            <div class="table-scroll">
+                <table class="data-table" id="pagesPerSessionTable">
+                    <thead><tr><th>Seiten</th><th>Sessions</th><th>Anteil</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════ LADEPERFORMANCE (Web Vitals) ══════ -->
+    <div class="section-card section-gap fade-in" id="vitalsCard">
         <div class="card-head">
             <div class="card-title">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                Custom Events
+                Ladeperformance
+            </div>
+            <span class="badge">LCP</span>
+        </div>
+        <p class="card-note">Largest Contentful Paint — wie lange es dauert, bis der größte sichtbare Inhalt steht. Gemessen bei echten Nutzern, nicht im Labor.</p>
+        <div class="vitals-bar" id="vitalsBar"></div>
+        <div class="table-scroll">
+            <table class="data-table" id="vitalsTable">
+                <thead><tr><th>Bewertung</th><th>Sessions</th><th>Ø Zeit</th><th>Anteil</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ══════ FEATURE-NUTZUNG (Custom Events) ══════ -->
+    <div class="section-card section-gap fade-in">
+        <div class="card-head">
+            <div class="card-title">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                Feature-Nutzung
             </div>
             <span class="badge">Events</span>
         </div>
+        <p class="card-note">Welche Funktionen tatsächlich benutzt werden. Gezählt werden nur Aktionen — keine Inhalte, keine Zeiten, keine Notizen.</p>
         <div class="table-scroll">
             <table class="data-table" id="eventsTable">
-                <thead><tr><th>#</th><th>Event Name</th><th>Anzahl</th><th>Anteil</th></tr></thead>
+                <thead><tr><th>#</th><th>Aktion</th><th>Anzahl</th><th>Anteil</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -636,6 +738,7 @@
 })();
 </script>
 
+<script src="/Assets/js/insights/geo-maps.js"></script>
 <script src="/Assets/js/insights/insights.js"></script>
 
 <script>
