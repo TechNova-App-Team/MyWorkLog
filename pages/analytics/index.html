@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script defer src="/Assets/js/touch-mobile-optimizations.js"></script>
-    <link rel="stylesheet" href="/Assets/css/analytics/analytics.css">
+    <link rel="stylesheet" href="/Assets/css/insights/insights.css">
 </head>
 <body>
 
@@ -119,6 +119,21 @@
             </div>
         </div>
     </div>
+
+    <!-- ══════ ADBLOCK-BLOCKED NOTICE ══════
+         Wird vom Inline-Guard vor </body> eingeblendet, wenn insights.js nicht laeuft.
+         Texte bewusst statisch im HTML (nicht per JS gebaut) — so greift die i18n-Pipeline. -->
+    <div class="config-notice" id="scriptBlockedNotice" style="display:none;">
+        <div class="config-inner" style="border-left:3px solid #ef4444; padding-left:14px;">
+            <svg class="config-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+            <div class="config-body">
+                <h4 style="color:#ef4444;">Statistik-Script vom Adblocker blockiert</h4>
+                <p>Ein Browser-Adblocker (uBlock Origin, AdGuard, Brave Shields) filtert das Script dieser Seite weg. Deshalb bleiben alle Werte leer.<br>
+                <span style="opacity:0.5; font-size:0.68rem;">Blocker für myworklog.de deaktivieren oder die Seite in einem privaten Fenster öffnen.</span></p>
+            </div>
+        </div>
+    </div>
+    <span id="labelBlocked" hidden>Blockiert</span>
 
     <!-- ══════ TRANSPARENCY NOTE ══════ -->
     <div class="transparency-strip">
@@ -621,7 +636,33 @@
 })();
 </script>
 
-<script src="/Assets/js/analytics/analytics.js"></script>
+<script src="/Assets/js/insights/insights.js"></script>
+
+<script>
+/* Adblock-Guard — MUSS inline bleiben (externe Datei waere selbst blockierbar).
+   Filterlisten wie EasyPrivacy blocken Script-URLs nach Namensmuster. Wird das
+   Statistik-Script weggefiltert, laeuft NICHTS: kein Fetch, kein Fehler, und die
+   Seite steht still auf ihrem statischen "Verbinde…"-Default. Genau das ist
+   passiert (Regel: /analytics/analytics.js). Der Guard macht dieses stille
+   Scheitern sichtbar, statt den User raten zu lassen. */
+(function () {
+    window.addEventListener('load', function () {
+        setTimeout(function () {
+            if (typeof window.loadAll === 'function') return;  // Script lief — alles gut
+
+            var dot = document.getElementById('liveDot');
+            if (dot) dot.className = 'live-dot error';
+
+            var label   = document.getElementById('liveLabel');
+            var blocked = document.getElementById('labelBlocked');
+            if (label && blocked) label.textContent = blocked.textContent;
+
+            var notice = document.getElementById('scriptBlockedNotice');
+            if (notice) notice.style.display = 'block';
+        }, 1500);
+    });
+})();
+</script>
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
 <script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
 </html>
