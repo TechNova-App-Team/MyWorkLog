@@ -780,14 +780,39 @@ async function loadAll() {
     setLiveStatus('connecting');
     showSkeletons();
 
+    var noticeEl = document.getElementById('adblockNotice');
+    if (noticeEl) noticeEl.style.display = 'none';
+    var detailEl = document.getElementById('errorDetail');
+    if (detailEl) detailEl.style.display = 'none';
+
+    // Ohne Timeout haengt ein stiller Proxy-Stall die Seite dauerhaft im Ladezustand
+    var ctrl = new AbortController();
+    var timeoutId = setTimeout(function() { ctrl.abort(); }, 30000);
+
     try {
-        var res = await fetch(CF_PROXY + '?range=' + currentRange, { cache: 'no-store' });
+        var res;
+        try {
+            res = await fetch(CF_PROXY + '?range=' + currentRange, { cache: 'no-store', signal: ctrl.signal });
+        } catch (netErr) {
+            if (netErr.name === 'AbortError') throw new Error('Zeitüberschreitung: Backend hat nach 30s nicht geantwortet.');
+            throw new Error('Netzwerkfehler: ' + netErr.message + ' (Adblocker? Offline?)');
+        } finally {
+            clearTimeout(timeoutId);
+        }
+
         if (!res.ok) {
             var errTxt = await res.text().catch(function() { return ''; });
-            throw new Error('HTTP ' + res.status + ': ' + errTxt.slice(0, 200));
+            var errMsg = errTxt;
+            try { errMsg = JSON.parse(errTxt).error || errTxt; } catch (e) { /* Rohtext */ }
+            throw new Error('HTTP ' + res.status + ' — ' + String(errMsg).slice(0, 300));
         }
         var d = await res.json();
         if (d.error) throw new Error(d.error);
+
+        // Teilausfaelle: Seite rendert, aber die kaputten Queries stehen in der Console
+        if (d._errors) {
+            console.warn('Analytics: Teil-Queries fehlgeschlagen:', d._errors);
+        }
 
         var sum      = d.summary             || {};
         var series   = d.series              || [];
@@ -970,6 +995,11 @@ async function loadAll() {
         hideSkeletons();
         var adEl = document.getElementById('adblockNotice');
         if (adEl) adEl.style.display = 'block';
+        var detEl = document.getElementById('errorDetail');
+        if (detEl) {
+            detEl.textContent = err.message || String(err);
+            detEl.style.display = 'block';
+        }
     }
 
     if (btn) { btn.disabled = false; btn.innerHTML = '🔄 Aktualisieren'; }
