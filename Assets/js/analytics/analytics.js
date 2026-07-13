@@ -771,7 +771,7 @@ function hideSkeletons() {
 }
 
 // =========================================
-//  LOAD ALL DATA — Cloudflare Web Analytics via Worker-Proxy
+//  LOAD ALL DATA — PostHog via Worker-Proxy
 // =========================================
 async function loadAll() {
     var btn = document.getElementById('refreshBtn');
@@ -789,139 +789,175 @@ async function loadAll() {
         var d = await res.json();
         if (d.error) throw new Error(d.error);
 
-        var rum  = d.rum  || {};
-        var zone = d.zone || {};
+        var sum      = d.summary             || {};
+        var series   = d.series              || [];
+        var topPages = d.topPages            || [];
+        var entry    = d.entryPages          || [];
+        var exit     = d.exitPages           || [];
+        var refs     = d.referrers           || [];
+        var channels = d.channels            || [];
+        var utm      = d.utm                 || {};
+        var countries= d.countries           || [];
+        var browsers = d.browsers            || [];
+        var os       = d.os                  || [];
+        var devices  = d.devices             || [];
+        var screens  = d.screenSizes         || [];
+        var viewports= d.viewports           || [];
+        var nvr      = d.newVsReturning      || [];
+        var durBkts  = d.sessionDurationBuckets || [];
+        var pvpSess  = d.pageviewsPerSession || [];
+        var lcp      = (d.webVitals && d.webVitals.lcp) || [];
 
-        // ── Active (RUM letzte 5 min) ──
-        var activeEl = document.getElementById('activeUsers');
-        if (activeEl) activeEl.innerHTML =
-            '<div class="live-dot" style="width:8px;height:8px;"></div> ' + ((rum.active && rum.active.visits) || 0) + ' aktiv';
+        // ── KPI Hauptmetriken ──────────────────────────────────────────────
+        var pv       = sum.pageviews       || 0;
+        var visitors = sum.visitors        || 0;
+        var sessions = sum.sessions        || 0;
+        var bounce   = sum.bounceRate      || 0;   // 0–1
+        var avgDur   = sum.avgSessionDuration || 0; // string "Xs" or seconds
 
-        // ── Totals — RUM für Pageviews/Sessions, Zone für Unique Visitors ──
-        var pv = (rum.total && rum.total.pageviews) || 0;
-        var visits = (rum.total && rum.total.visits) || 0;
-        var visitors = (zone.total && zone.total.uniqueVisitors) || visits;
+        var pvEl      = document.getElementById('kpiPageviews');
+        var visEl     = document.getElementById('kpiVisitors');
+        var visitsEl  = document.getElementById('kpiVisits');
+        if (pvEl)     { pvEl.textContent = fmt(pv);       animateValue(pvEl, pv, ''); }
+        if (visEl)    { visEl.textContent = fmt(visitors); animateValue(visEl, visitors, ''); }
+        if (visitsEl) { visitsEl.textContent = fmt(sessions); animateValue(visitsEl, sessions, ''); }
 
-        var pvEl = document.getElementById('kpiPageviews');
-        var visEl = document.getElementById('kpiVisitors');
-        var visitsEl = document.getElementById('kpiVisits');
-        if (pvEl) pvEl.textContent = fmt(pv);
-        if (visEl) visEl.textContent = fmt(visitors);
-        if (visitsEl) visitsEl.textContent = fmt(visits);
-        animateValue(pvEl, pv, '');
-        animateValue(visEl, visitors, '');
-        animateValue(visitsEl, visits, '');
+        // Pages / Session
+        var pps    = sessions > 0 ? (pv / sessions) : 0;
+        var ppsEl  = document.getElementById('kpiPagesPerSession');
+        var ppsSub = document.getElementById('kpiPagesPerSessionSub');
+        if (ppsEl)  ppsEl.textContent  = pps.toFixed(1);
+        if (ppsSub) ppsSub.textContent = fmt(pv) + ' Seiten / ' + fmt(sessions) + ' Sessions';
 
-        // ── Pages/Session ──
-        var pps = visits > 0 ? (pv / visits) : 0;
-        var ppsEl = document.getElementById('kpiPagesPerSession');
-        var ppsSubEl = document.getElementById('kpiPagesPerSessionSub');
-        if (ppsEl) ppsEl.textContent = pps.toFixed(1);
-        if (ppsSubEl) ppsSubEl.textContent = fmt(pv) + ' Seiten / ' + fmt(visits) + ' Sessions';
-
-        // ── CACHE HIT RATE (Tile war "Bounce Rate") ──
-        var chr = zone.cacheHitRate || 0;
+        // Bounce Rate
         var bounceEl = document.getElementById('kpiBounce');
-        if (bounceEl) bounceEl.textContent = chr.toFixed(1) + '%';
+        if (bounceEl) bounceEl.textContent = (bounce * 100).toFixed(1) + '%';
 
-        // ── BANDWIDTH (Tile war "Verweildauer") ──
-        var bytes = (zone.total && zone.total.bytes) || 0;
-        var cachedBytes = (zone.total && zone.total.cachedBytes) || 0;
-        var durEl = document.getElementById('kpiDuration');
-        var totalTimeEl = document.getElementById('kpiTotalTime');
-        if (durEl) durEl.textContent = fmtBytes(bytes);
-        if (totalTimeEl) totalTimeEl.textContent = 'Davon gecacht: ' + fmtBytes(cachedBytes);
+        // Avg Session Duration
+        var durEl      = document.getElementById('kpiDuration');
+        var totalTimeEl= document.getElementById('kpiTotalTime');
+        var durDisplay = typeof avgDur === 'string' ? avgDur : fmtDuration(avgDur);
+        if (durEl)       durEl.textContent      = durDisplay;
+        if (totalTimeEl) totalTimeEl.textContent = 'Ø pro Session';
 
-        // ── Engagement (vereinfacht: Pages/Session) ──
-        var engScore = Math.min(100, Math.round((pps / 5) * 100));
-        var engEl = document.getElementById('kpiEngagement');
+        // Engagement Score (basiert auf Bounce Rate + Pages/Session)
+        var engScore = Math.min(100, Math.round(((1 - bounce) * 0.5 + Math.min(pps / 5, 1) * 0.5) * 100));
+        var engEl    = document.getElementById('kpiEngagement');
         var engSubEl = document.getElementById('kpiEngagementSub');
-        if (engEl) engEl.textContent = engScore + '%';
-        if (engSubEl) {
-            engSubEl.textContent = engScore >= 75 ? 'Hervorragend' :
-                                   engScore >= 50 ? 'Gut' :
-                                   engScore >= 25 ? 'Ausbaufähig' : 'Niedrig';
+        if (engEl)    engEl.textContent    = engScore + '%';
+        if (engSubEl) engSubEl.textContent = engScore >= 75 ? 'Hervorragend' :
+                                              engScore >= 50 ? 'Gut' :
+                                              engScore >= 25 ? 'Ausbaufähig' : 'Niedrig';
+
+        // Neue vs. Wiederkehrende Besucher (Active Users Badge)
+        var activeEl = document.getElementById('activeUsers');
+        if (activeEl) {
+            var newU = nvr.find(function(r) { return r.type === 'Neu'; });
+            activeEl.innerHTML = '<div class="live-dot" style="width:8px;height:8px;"></div> '
+                + (newU ? fmt(newU.visitors) + ' neu' : '–');
         }
 
-        // ── Trends: brauchen 2. GraphQL-Query für Vorperiode → später ──
-        ['kpiPageviewsTrend','kpiVisitorsTrend','kpiVisitsTrend','kpiBouncesTrend'].forEach(function(id) {
-            var el = document.getElementById(id);
-            if (el) { el.className = 'kpi-trend neutral'; el.textContent = '--'; }
-        });
+        // ── Trend Indikatoren ──────────────────────────────────────────────
+        setTrend('kpiPageviewsTrend', sum.pageviews,  sum.pageviewsPrev);
+        setTrend('kpiVisitorsTrend',  sum.visitors,   sum.visitorsPrev);
+        setTrend('kpiVisitsTrend',    sum.sessions,   sum.sessionsPrev);
+        setTrend('kpiBouncesTrend',   sum.bounceRate, sum.bounceRatePrev);
 
-        // ── Time Series (RUM) ──
-        var seriesPV  = (rum.series || []).map(function(s) { return { x: s.ts, y: s.pageviews || 0 }; });
-        var seriesSes = (rum.series || []).map(function(s) { return { x: s.ts, y: s.visits || 0 }; });
+        // ── Zeitreihe Charts ───────────────────────────────────────────────
+        var seriesPV  = series.map(function(s) { return { x: s.ts, y: s.pageviews || 0 }; });
+        var seriesSes = series.map(function(s) { return { x: s.ts, y: s.sessions  || 0 }; });
         if (currentRange >= 30 && currentRange <= 90) {
             seriesPV  = aggregateWeekly(seriesPV);
             seriesSes = aggregateWeekly(seriesSes);
         }
         renderBarChartDual('pageviewsChart', seriesPV, seriesSes);
-        renderBarChartSingle('visitorsChart', seriesSes);
+        renderBarChartSingle('visitorsChart', series.map(function(s) { return { x: s.ts, y: s.visitors || 0 }; }));
 
-        // ── Top Pages (RUM) ──
-        var topPages = (rum.paths || []).map(function(p) {
-            return {
-                name: p.name,
-                pageviews: p.pageviews || 0,
-                visitors: 0,
-                visits: p.visits || 0,
-                bounces: 0,
-                totaltime: 0,
-            };
-        });
-        topPages = cleanExpandedPageData(topPages);
-        renderExpandedTable('topPagesTable', topPages);
+        // ── Top Pages ──────────────────────────────────────────────────────
+        var topPagesNorm = cleanExpandedPageData(topPages.map(function(p) {
+            return { name: p.path, pageviews: p.pageviews, visitors: p.visitors, visits: p.sessions || 0, bounces: 0, totaltime: 0 };
+        }));
+        renderExpandedTable('topPagesTable', topPagesNorm);
 
-        // ── Entry/Exit: CF liefert das nicht ──
-        renderSimpleTable('entryPagesTable', [], function(x) { return x || '/'; }, 'green');
-        renderSimpleTable('exitPagesTable',  [], function(x) { return x || '/'; }, 'cyan');
+        // ── Entry / Exit Pages ─────────────────────────────────────────────
+        renderSimpleTable('entryPagesTable',
+            entry.map(function(p) { return { x: p.path, y: p.entries }; }),
+            function(x) { return x || '/'; }, 'green');
+        renderSimpleTable('exitPagesTable',
+            exit.map(function(p) { return { x: p.path, y: p.exits }; }),
+            function(x) { return x || '/'; }, 'cyan');
 
-        // ── Referrers (RUM) ──
-        renderSimpleTable('referrersTable', rum.referers || [], function(x) { return x; }, 'purple');
+        // ── Referrers ──────────────────────────────────────────────────────
+        renderSimpleTable('referrersTable',
+            refs.map(function(r) { return { x: r.source, y: r.visitors }; }),
+            function(x) { return x; }, 'purple');
 
-        // ── HTTP Status Codes (Zone) → Channels-Tab umgewidmet ──
-        renderSimpleTable('channelsTable', zone.statusCodes || [], function(x) { return 'HTTP ' + x; }, 'yellow');
+        // ── Channels ───────────────────────────────────────────────────────
+        renderSimpleTable('channelsTable',
+            channels.map(function(c) { return { x: c.channel, y: c.sessions }; }),
+            function(x) { return x; }, 'yellow');
 
-        // ── Cache Breakdown (Zone) → Titles-Tab umgewidmet ──
-        renderSimpleTable('titlesTable', zone.cacheBreakdown || [], function(x) { return x; }, 'purple');
+        // ── UTM → Titles Tab ───────────────────────────────────────────────
+        var utmData = (utm.sources || []).map(function(u) { return { x: u.value, y: u.sessions }; });
+        renderSimpleTable('titlesTable', utmData, function(x) { return x; }, 'purple');
 
-        // ── Audience (RUM) ──
-        renderDevicesDonut(rum.devices || []);
-        var browsers = filterBotMetrics(rum.browsers || []);
-        var os       = filterBotMetrics(rum.os       || []);
-        renderSimpleTableNoRank('browsersTable', browsers, function(x) { return x; }, 'purple');
-        renderSimpleTableNoRank('osTable',       os,       function(x) { return x; }, 'cyan');
+        // ── Audience: Devices, Browsers, OS ───────────────────────────────
+        renderDevicesDonut(devices.map(function(d) { return { x: d.device, y: d.visitors }; }));
+        renderSimpleTableNoRank('browsersTable',
+            filterBotMetrics(browsers.map(function(b) { return { x: b.browser, y: b.visitors }; })),
+            function(x) { return x; }, 'purple');
+        renderSimpleTableNoRank('osTable',
+            filterBotMetrics(os.map(function(o) { return { x: o.os, y: o.visitors }; })),
+            function(x) { return x; }, 'cyan');
 
-        // ── Geo: RUM-Countries primär, Zone-Countries als Fallback ──
-        var rumCountries = rum.countries || [];
-        var countries = rumCountries.length > 0 ? rumCountries : (zone.countries || []);
-        renderSimpleTableNoRank('countriesTable', countries, countryName, 'green');
-        renderSimpleTableNoRank('citiesTable',    [], function(x) { return x; }, 'yellow');
+        // ── Screen Sizes ───────────────────────────────────────────────────
+        renderSimpleTableNoRank('screensTable',
+            screens.map(function(s) { return { x: s.size, y: s.visitors }; }),
+            function(x) { return x; }, 'purple');
 
-        // ── Nicht verfügbar ──
-        renderSimpleTableNoRank('languagesTable', [], langName, 'cyan');
-        renderSimpleTableNoRank('screensTable',   [], function(x) { return x; }, 'purple');
-        renderSimpleTable('eventsTable',    [], function(x) { return x; }, 'yellow');
+        // ── Geo: Countries ─────────────────────────────────────────────────
+        renderSimpleTableNoRank('countriesTable',
+            countries.map(function(c) { return { x: c.country, y: c.visitors }; }),
+            function(x) { return x; }, 'green');
+        renderSimpleTableNoRank('citiesTable', [], function(x) { return x; }, 'yellow');
 
-        // ── Insights ──
+        // ── Languages (nicht verfügbar via PostHog) ────────────────────────
+        renderSimpleTableNoRank('languagesTable', [], function(x) { return x; }, 'cyan');
+
+        // ── Events Tab: Session Duration Buckets ───────────────────────────
+        renderSimpleTable('eventsTable',
+            durBkts.map(function(b) { return { x: b.bucket, y: b.sessions }; }),
+            function(x) { return x; }, 'yellow');
+
+        // ── Insights ───────────────────────────────────────────────────────
         var insights = generateInsights(
-            { pageviews: pv, visitors: visitors, visits: visits, bounces: 0, totaltime: 0 },
-            null,
-            rum.devices || [],
+            { pageviews: pv, visitors: visitors, visits: sessions, bounces: Math.round(bounce * sessions), totaltime: (typeof avgDur === 'number' ? avgDur * sessions : 0) },
+            { pageviews: sum.pageviewsPrev || 0, visitors: sum.visitorsPrev || 0, visits: sum.sessionsPrev || 0, bounces: 0, totaltime: 0 },
+            devices.map(function(d) { return { x: d.device, y: d.visitors }; }),
             { pageviews: seriesPV, sessions: seriesSes },
-            topPages
+            topPagesNorm
         );
-        // Zusätzliche CF-spezifische Insights
-        if (zone.total && zone.total.requests > 0) {
-            insights.unshift({ icon: '⚡', text: '<strong>' + chr.toFixed(0) + '%</strong> Cache Hit Rate — ' + fmtBytes(cachedBytes) + ' direkt vom CF Edge geliefert.' });
+
+        // Zusätzliche PostHog Insights
+        if (lcp.length > 0) {
+            var goodLcp = lcp.find(function(l) { return l.rating && l.rating.includes('Good'); });
+            if (goodLcp) {
+                var goodPct = lcp.reduce(function(s, l) { return s + l.sessions; }, 0);
+                goodPct = goodPct > 0 ? Math.round(goodLcp.sessions / goodPct * 100) : 0;
+                insights.unshift({ icon: '⚡', text: '<strong>' + goodPct + '% gute LCP-Werte</strong> — Seite lädt schnell für die meisten Nutzer.' });
+            }
         }
-        if (bytes > 0) {
-            insights.push({ icon: '📊', text: '<strong>' + fmtBytes(bytes) + '</strong> Gesamt-Traffic über das CF Edge.' });
+        if (nvr.length > 0) {
+            var retU = nvr.find(function(r) { return r.type === 'Wiederkehrend'; });
+            if (retU && retU.visitors > 0) {
+                var retPct = Math.round(retU.visitors / visitors * 100);
+                insights.push({ icon: '🔄', text: '<strong>' + retPct + '% wiederkehrende Nutzer</strong> — die App bindet ihre User.' });
+            }
         }
+
         renderInsights(insights);
 
-        // ── Timestamp ──
+        // ── Timestamp ──────────────────────────────────────────────────────
         var lu = document.getElementById('lastUpdated');
         if (lu) lu.textContent = 'Zuletzt aktualisiert: ' + new Date().toLocaleString('de-DE');
 
