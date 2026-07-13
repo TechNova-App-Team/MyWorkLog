@@ -786,6 +786,61 @@ function hideSkeletons() {
 }
 
 // =========================================
+//  RENDER: Sparkline (Mini-Trend in der KPI-Karte)
+// =========================================
+// Bewusst ohne Achsen, Gitter und Labels — eine Sparkline zeigt die FORM
+// des Verlaufs, nicht seine Werte. Die exakte Zahl steht daneben in der Kachel.
+function renderSparkline(containerId, points, color) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+
+    // Unter 2 Punkten gibt es keinen Verlauf. Dann die Kachel NICHT mit einer
+    // leeren Flaeche aufblaehen — Platz komplett rausnehmen.
+    if (!points || points.length < 2) {
+        el.innerHTML = '';
+        el.style.display = 'none';
+        return;
+    }
+    el.style.display = '';
+
+    var W = 100, H = 26, PAD = 2;
+    var max = 0, min = Infinity;
+    points.forEach(function(v) {
+        if (v > max) max = v;
+        if (v < min) min = v;
+    });
+    if (max === min) { max = min + 1; }
+
+    var n = points.length;
+    var uid = containerId;
+    var xs = function(i) { return (i / (n - 1)) * W; };
+    var ys = function(v) { return H - PAD - ((v - min) / (max - min)) * (H - PAD * 2); };
+
+    var line = '', area = '';
+    points.forEach(function(v, i) {
+        var x = xs(i).toFixed(1), y = ys(v).toFixed(1);
+        line += (i === 0 ? 'M' : 'L') + x + ' ' + y;
+    });
+    area = line + 'L' + W + ' ' + H + 'L0 ' + H + 'Z';
+
+    var lastX = xs(n - 1).toFixed(1);
+    var lastY = ys(points[n - 1]).toFixed(1);
+
+    el.innerHTML =
+        '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" class="spark-svg" aria-hidden="true">' +
+            '<defs><linearGradient id="sp' + uid + '" x1="0" y1="0" x2="0" y2="1">' +
+                '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.28"/>' +
+                '<stop offset="100%" stop-color="' + color + '" stop-opacity="0"/>' +
+            '</linearGradient></defs>' +
+            '<path d="' + area + '" fill="url(#sp' + uid + ')"/>' +
+            '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="1.6" ' +
+                'stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
+            '<circle cx="' + lastX + '" cy="' + lastY + '" r="1.8" fill="' + color + '" ' +
+                'vector-effect="non-scaling-stroke"/>' +
+        '</svg>';
+}
+
+// =========================================
 //  RENDER: Aktivitäts-Puls (7 Wochentage × 24 Stunden)
 // =========================================
 var PULSE_DAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
@@ -860,15 +915,63 @@ function renderActivityPulse(activity) {
 // =========================================
 var _mapData = { countries: [], regions: [], cities: [] };
 
-function _mapShade(ratio) {
-    // 0 → leere Fläche, 1 → volle Akzentfarbe. Nie ganz transparent, damit
-    // Länder mit wenig Traffic nicht wie "keine Daten" aussehen.
-    if (ratio <= 0) return 'rgba(255,255,255,0.045)';
-    var a = 0.18 + ratio * 0.72;
-    return 'rgba(167,139,250,' + a.toFixed(3) + ')';
+// Sequential-Rampe: EINE Hue, dunkel → hell. Diskrete Stufen statt stufenlosem
+// Alpha-Verlauf — Stufen sind ablesbar, ein Verlauf ist es nicht (die Legende
+// kann sonst nichts erklären). "Keine Daten" ist bewusst neutral-grau und NICHT
+// die hellste/dunkelste Stufe der Rampe, sonst liest man 0 als Wert.
+var MAP_EMPTY = 'rgba(255,255,255,0.05)';
+var MAP_RAMP = [
+    '#2b2150',   // 1 — kaum Traffic
+    '#453081',
+    '#6344b8',
+    '#8b64e3',
+    '#b794f6',   // 5 — Spitze
+];
+
+// Gleiche Klassengrenzen fuer Karte und Legende — sonst luegt die Legende.
+function _mapBucket(v, max) {
+    if (!v || v <= 0 || max <= 0) return -1;
+    var r = v / max;
+    if (r <= 0.2) return 0;
+    if (r <= 0.4) return 1;
+    if (r <= 0.6) return 2;
+    if (r <= 0.8) return 3;
+    return 4;
 }
 
-function _renderMapSvg(containerId, geo, valueByKey, labelByKey, cities) {
+function _mapShade(v, max) {
+    var b = _mapBucket(v, max);
+    return b < 0 ? MAP_EMPTY : MAP_RAMP[b];
+}
+
+// Gradnetz — gibt der Karte kartografische Glaubwuerdigkeit statt "Klumpen im Nichts"
+function _graticule(project, ext, scale, W, H) {
+    var out = '';
+    function pt(lon, lat) {
+        var p = project(lon, lat);
+        return [((p[0] - ext.minX) * scale).toFixed(1), ((p[1] - ext.minY) * scale).toFixed(1)];
+    }
+    var lon, lat, d, i;
+    for (lon = -150; lon <= 150; lon += 30) {
+        d = '';
+        for (lat = -90; lat <= 90; lat += 5) {
+            var a = pt(lon, lat);
+            d += (d ? 'L' : 'M') + a[0] + ' ' + a[1];
+        }
+        out += '<path d="' + d + '" class="map-grat"/>';
+    }
+    for (lat = -60; lat <= 80; lat += 30) {
+        d = '';
+        for (lon = -180; lon <= 180; lon += 5) {
+            var b = pt(lon, lat);
+            d += (d ? 'L' : 'M') + b[0] + ' ' + b[1];
+        }
+        out += '<path d="' + d + '" class="map-grat"/>';
+    }
+    return '<g class="map-graticule">' + out + '</g>';
+}
+
+function _renderMapSvg(containerId, geo, valueByKey, labelByKey, cities, graticule) {
     var el = document.getElementById(containerId);
     if (!el) return;
     if (!geo || !geo.paths) {
@@ -881,32 +984,66 @@ function _renderMapSvg(containerId, geo, valueByKey, labelByKey, cities) {
         if (valueByKey[k] > max) max = valueByKey[k];
     });
 
-    var out = '';
+    var vb = geo.viewBox.split(' ').map(Number);
+    var uid = containerId;
+
+    var defs =
+        '<defs>' +
+            '<radialGradient id="ocean' + uid + '" cx="50%" cy="42%" r="72%">' +
+                '<stop offset="0%" stop-color="rgba(129,140,248,0.09)"/>' +
+                '<stop offset="100%" stop-color="rgba(129,140,248,0)"/>' +
+            '</radialGradient>' +
+            '<filter id="glow' + uid + '" x="-60%" y="-60%" width="220%" height="220%">' +
+                '<feGaussianBlur stdDeviation="2.2" result="b"/>' +
+                '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>' +
+            '</filter>' +
+        '</defs>';
+
+    var ocean = '<rect x="0" y="0" width="' + vb[2] + '" height="' + vb[3] + '" fill="url(#ocean' + uid + ')"/>';
+
+    var shapes = '';
     geo.paths.forEach(function(p) {
         var v = valueByKey[p.id] || 0;
-        var ratio = max > 0 ? v / max : 0;
         var label = labelByKey[p.id] || p.name || p.id;
-        out += '<path d="' + p.d + '"' +
-               ' fill="' + _mapShade(ratio) + '"' +
-               ' stroke="rgba(255,255,255,0.10)" stroke-width="0.6"' +
+        shapes += '<path d="' + p.d + '"' +
+               ' fill="' + _mapShade(v, max) + '"' +
                ' class="map-shape' + (v > 0 ? ' has-data' : '') + '"' +
                ' data-label="' + esc(label) + '"' +
                ' data-value="' + v + '"></path>';
     });
 
-    // Städte-Marker: nur wenn die Karte Koordinaten projizieren kann (Weltkarte)
+    // Städte-Marker. Die staerkste Stadt bekommt einen pulsierenden Ring —
+    // EIN Akzent, nicht alle, sonst flimmert die halbe Karte.
+    var markers = '';
     if (cities && cities.length) {
+        var top = cities.reduce(function(a, b) {
+            return (b.visitors || 0) > (a.visitors || 0) ? b : a;
+        }, cities[0]);
+
         cities.forEach(function(c) {
             if (c.x == null || c.y == null) return;
-            var r = 2 + Math.min(4, (c.visitors || 1));
-            out += '<circle cx="' + c.x + '" cy="' + c.y + '" r="' + r + '"' +
-                   ' class="map-city" data-label="' + esc(c.city) + '"' +
-                   ' data-value="' + (c.visitors || 0) + '"></circle>';
+            var isTop = (c === top);
+            var r = 2.2 + Math.min(3.4, Math.sqrt(c.visitors || 1) * 1.4);
+            if (isTop) {
+                markers += '<circle cx="' + c.x + '" cy="' + c.y + '" r="' + r.toFixed(1) + '"' +
+                           ' class="map-city-pulse"></circle>';
+            }
+            markers += '<circle cx="' + c.x + '" cy="' + c.y + '" r="' + r.toFixed(1) + '"' +
+                       ' class="map-city' + (isTop ? ' is-top' : '') + '"' +
+                       (isTop ? ' filter="url(#glow' + uid + ')"' : '') +
+                       ' data-label="' + esc(c.city) + '"' +
+                       ' data-value="' + (c.visitors || 0) + '"></circle>';
         });
     }
 
+    var grat = graticule || '';
+
     el.innerHTML = '<svg viewBox="' + geo.viewBox + '" xmlns="http://www.w3.org/2000/svg" ' +
-                   'preserveAspectRatio="xMidYMid meet" class="map-svg">' + out + '</svg>';
+                   'preserveAspectRatio="xMidYMid meet" class="map-svg">' +
+                   defs + ocean + grat +
+                   '<g class="map-shapes">' + shapes + '</g>' +
+                   '<g class="map-cities">' + markers + '</g>' +
+                   '</svg>';
 
     _bindMapTooltip(el);
 }
@@ -914,6 +1051,7 @@ function _renderMapSvg(containerId, geo, valueByKey, labelByKey, cities) {
 function _bindMapTooltip(el) {
     var tip = document.getElementById('mapTooltip');
     if (!tip) return;
+    var svg = el.querySelector('svg');
 
     el.querySelectorAll('.map-shape, .map-city').forEach(function(node) {
         node.addEventListener('mouseenter', function(e) {
@@ -921,10 +1059,17 @@ function _bindMapTooltip(el) {
             var val = node.getAttribute('data-value');
             tip.innerHTML = '<strong>' + label + '</strong><span>' + fmt(+val) + ' Besucher</span>';
             tip.classList.add('show');
+            // Fokus/Kontext: das Gehoverte bleibt, der Rest tritt zurueck.
+            if (svg) svg.classList.add('is-focused');
+            node.classList.add('is-hot');
             _moveTip(e, tip, el);
         });
         node.addEventListener('mousemove', function(e) { _moveTip(e, tip, el); });
-        node.addEventListener('mouseleave', function() { tip.classList.remove('show'); });
+        node.addEventListener('mouseleave', function() {
+            tip.classList.remove('show');
+            if (svg) svg.classList.remove('is-focused');
+            node.classList.remove('is-hot');
+        });
     });
 }
 
@@ -1002,7 +1147,13 @@ function renderMaps(countries, regions, cities) {
         });
     }
 
-    _renderMapSvg('mapWorld', world, cVals, cLabels, cityMarkers);
+    var grat = '';
+    if (world) {
+        var wvb = world.viewBox.split(' ').map(Number);
+        var we = _worldExtent();
+        grat = _graticule(_projectEqualEarth, we, wvb[2] / (we.maxX - we.minX), wvb[2], wvb[3]);
+    }
+    _renderMapSvg('mapWorld', world, cVals, cLabels, cityMarkers, grat);
 
     // ── Deutschland ──
     var rVals = {}, rLabels = {};
@@ -1039,11 +1190,14 @@ function renderMapLegend(max) {
     var el = document.getElementById('mapLegend');
     if (!el) return;
     if (!max) { el.innerHTML = ''; return; }
-    var steps = [0, 0.25, 0.5, 0.75, 1];
-    var cells = steps.map(function(s) {
-        return '<span class="map-legend-cell" style="background:' + _mapShade(s) + '"></span>';
+    // Zeigt exakt die Stufen, die die Karte auch benutzt (_mapBucket).
+    var cells = MAP_RAMP.map(function(c, i) {
+        var lo = i === 0 ? 1 : Math.ceil(max * (i * 0.2));
+        var hi = Math.round(max * ((i + 1) * 0.2));
+        return '<span class="map-legend-cell" style="background:' + c + '"' +
+               ' title="' + lo + (hi > lo ? '–' + hi : '') + ' Besucher"></span>';
     }).join('');
-    el.innerHTML = '<span class="map-legend-label">0</span>' + cells +
+    el.innerHTML = '<span class="map-legend-label">1</span>' + cells +
                    '<span class="map-legend-label">' + fmt(max) + '</span>';
 }
 
@@ -1286,6 +1440,11 @@ async function loadAll() {
         }
         renderBarChartDual('pageviewsChart', seriesPV, seriesSes);
         renderBarChartSingle('visitorsChart', series.map(function(s) { return { x: s.ts, y: s.visitors || 0 }; }));
+
+        // ── Sparklines in den KPI-Kacheln ──────────────────────────────────
+        renderSparkline('sparkPageviews', series.map(function(s) { return s.pageviews || 0; }), '#a78bfa');
+        renderSparkline('sparkVisitors',  series.map(function(s) { return s.visitors  || 0; }), '#34d399');
+        renderSparkline('sparkSessions',  series.map(function(s) { return s.sessions  || 0; }), '#22d3ee');
 
         // ── Top Pages ──────────────────────────────────────────────────────
         var topPagesNorm = cleanExpandedPageData(topPages.map(function(p) {
