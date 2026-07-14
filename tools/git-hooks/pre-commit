@@ -15,9 +15,24 @@
 
 changed=$(git diff --cached --name-only --diff-filter=ACM)
 
+# ═══ 0. AUFRÄUMEN ═══
+# index.html und pages/en/ sind generierte Artefakte (.gitignore). Der Hook MUSS
+# sie bauen — der i18n-Renderer backt /en/ per jsdom aus der fertigen index.html.
+# Aber er hinterlässt sie nicht: Waren sie vorher nicht da, sind sie hinterher
+# auch wieder weg. Dein Arbeitsordner bleibt sauber.
+# Zum lokalen Testen im Browser bewusst erzeugen:  npm run build:index
+HAD_INDEX=0; [ -f index.html ] && HAD_INDEX=1
+HAD_EN=0;    [ -d pages/en ]   && HAD_EN=1
+
+cleanup() {
+  [ "$HAD_INDEX" -eq 0 ] && rm -f index.html
+  [ "$HAD_EN" -eq 0 ] && rm -rf pages/en
+  return 0
+}
+trap cleanup EXIT
+
 # ═══ 1. INDEX-BUILD ═══
-# Immer — idempotent, schreibt nur bei echter Aenderung. Haelt die lokale
-# index.html mit index.template.html + components/**/*.html in Sync.
+# Idempotent — schreibt nur bei echter Änderung.
 if ! node tools/build-index.js; then
   echo "[build-index] ✗ Build fehlgeschlagen — Commit abgebrochen."
   echo "              Pruefe die @include-Marker in index.template.html."
