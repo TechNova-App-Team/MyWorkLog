@@ -24,7 +24,7 @@
             'monthcompare': 'Monats-Vergleich & Detailanalyse',
             'weekview': 'Wochenansicht',
             'aibot': 'AI-Bot Assistent',
-            'support': 'Unterstützung',
+            'support': 'Support',
             'analytics-pro': 'Analytics Pro',
             'aufgaben': 'Aufgaben',
             'aufgaben-tab': 'Aufgaben',

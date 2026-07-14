@@ -454,7 +454,7 @@
         { id: 'weekview',     label: 'Wochenansicht',     icon: getIconSvgById('weekview'), group: 'Navigation', action: () => switchTab('weekview') },
         { id: 'school',       label: 'Berufsschule',      icon: getIconSvgById('school'), group: 'Navigation', action: () => switchTab('school') },
         { id: 'aibot',        label: 'AI-Bot',            icon: getIconSvgById('aibot'), group: 'Navigation', action: () => switchTab('aibot') },
-        { id: 'support',      label: 'Unterstützung',     icon: getIconSvgById('support'), group: 'Navigation', action: () => switchTab('support') },
+        { id: 'support',      label: 'Support',           icon: getIconSvgById('support'), group: 'Navigation', action: () => switchTab('support') },
         { id: 'analytics-pro', label: 'Analytics Pro',     icon: getIconSvgById('analytics-pro'), group: 'Navigation', action: () => switchTab('analytics-pro') },
         { id: 'aufgaben-tab', label: 'Aufgaben (Dashboard)',     icon: getIconSvgById('aufgaben'), group: 'Navigation', action: () => switchTab('aufgaben') },
         // Tools
