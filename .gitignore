@@ -161,6 +161,23 @@ docker-compose.override.yml
 # Repo ist ÖFFENTLICH. Worker-Quellcode bleibt lokal.
 workers/
 
+# ─── GENERIERTE ARTEFAKTE ─────────────────────
+# Werden beim Deploy von Cloudflare aus den Quellen gebaut (npm run build).
+# Nicht committen — sonst laege der Code doppelt im Repo.
+#
+# ⚠️ Der fuehrende Slash ist PFLICHT: "index.html" wuerde auch saemtliche
+#    pages/*/index.html erschlagen (alle 16 Standalone-Seiten!).
+# ⚠️ KEINE Inline-Kommentare hinter dem Pattern — .gitignore kennt die nicht,
+#    das "#" wird Teil des Patterns und die Regel greift stillschweigend nicht.
+
+# gebaut aus index.template.html + components/**/*.html
+/index.html
+
+# gebaut aus den deutschen Quellen + tools/i18n/dict/
+/pages/en/
+
+# Lokal bauen: npm run build:index  (laeuft auch als postinstall)
+
 # ─── Hier NICHT ignorieren (Whitelist) ────────
 # Falls obige Patterns zu breit greifen:
 !Rechtliches/SECURITY.md
