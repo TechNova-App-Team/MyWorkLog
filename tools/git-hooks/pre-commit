@@ -5,10 +5,12 @@
 #   2. ?v=-Stempel  ← config/version.json                             (stamp-assets)
 #   3. /en/-Seiten  ← deutsche Quellen + Dicts                        (i18n:build)
 #
-# REIHENFOLGE IST KRITISCH: stamp → build-index → i18n.
-#   • stamp vor build-index, damit die Stempel aus dem TEMPLATE in die index.html wandern
-#     (stempelte man nur index.html, würde der nächste Rebuild sie wieder überschreiben).
-#   • build-index vor i18n, weil i18n /en/ aus der fertigen index.html backt.
+# REIHENFOLGE IST KRITISCH: build-index → stamp → i18n → stamp.
+#   • build-index zuerst: index.html existiert im frischen Checkout (Cloudflare) gar nicht.
+#   • stamp danach: stempelt index.html UND index.template.html. Nur das Artefakt zu
+#     stempeln reicht nicht — der nächste Rebuild würde die ?v= aus dem Template zurückholen.
+#   • i18n nach build-index, weil es /en/ per jsdom aus der fertigen index.html backt.
+#   • stamp am Ende nochmal: der i18n-Renderer injiziert i18n-runtime.js ungestempelt.
 #
 # Aktiviert via: git config core.hooksPath tools/git-hooks (läuft als npm postinstall).
 
@@ -33,7 +35,14 @@ if echo "$sources" | grep -qE '^index\.html$'; then
   fi
 fi
 
-# ═══ 1. ASSET-STAMPING ═══
+# ═══ 1. INDEX-BUILD ═══
+# Idempotent: schreibt nur, wenn sich wirklich etwas ändert.
+if ! node tools/build-index.js; then
+  echo "[build-index] ✗ Build fehlgeschlagen — Commit abgebrochen."
+  exit 1
+fi
+
+# ═══ 2. ASSET-STAMPING ═══
 # Cloudflare liefert /Assets/* mit max-age=86400 aus (Dashboard-Regel, NICHT _headers).
 # Ohne Versions-Query im HTML sehen Nutzer nach einem Deploy bis zu 24h altes JS/CSS.
 if echo "$sources" | grep -qE '^config/version\.json'; then
@@ -42,15 +51,9 @@ if echo "$sources" | grep -qE '^config/version\.json'; then
     echo "[stamp] ✗ Stamping fehlgeschlagen — Commit abgebrochen."
     exit 1
   fi
-  git add index.html index.template.html components pages 2>/dev/null
+  git add index.template.html components pages 2>/dev/null
 fi
 
-# ═══ 2. INDEX-BUILD ═══
-# Idempotent: schreibt nur, wenn sich wirklich etwas ändert.
-if ! node tools/build-index.js; then
-  echo "[build-index] ✗ Build fehlgeschlagen — Commit abgebrochen."
-  exit 1
-fi
 git add index.html 2>/dev/null
 
 # index.html kann durch Stamping/Build gerade erst dazugekommen sein → neu einlesen

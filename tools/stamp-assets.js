@@ -22,6 +22,9 @@ const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/version.json'
 const RE = /(\s(?:src|href)=")(\/(?:Assets|components)\/[^"?]+\.(?:js|css))(?:\?v=[^"]*)?(")/g;
 
 function stampFile(file) {
+  // index.html existiert im frischen Checkout (Cloudflare) noch nicht — sie wird
+  // erst von build-index.js erzeugt. Fehlende Dateien sind kein Fehler.
+  if (!fs.existsSync(file)) return 0;
   const raw = fs.readFileSync(file, 'utf8');
   const out = raw.replace(RE, (_m, pre, url, post) => pre + url + '?v=' + version + post);
   if (out === raw) return 0;
