@@ -7,7 +7,11 @@
 -->
 <script>if(location.pathname==='/index.html')location.replace(location.href.replace('/index.html','/')+''+location.search+location.hash);</script>
 <script>
-  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+" (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+" (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+  // Das Snippet laedt array.js NICHT vom api_host, sondern vom Asset-Host:
+  // eu.i.posthog.com -> eu-assets.i.posthog.com (PostHogs CDN). Der api_host ist der
+  // Ingestion-Endpoint; statische Dateien von dort zu ziehen ist Legacy und flakey
+  // (503er). Beide Hosts stehen in der CSP. Events gehen weiterhin an den api_host.
   posthog.init('phc_yU64gT44sK6HkU4EvRote7oHGLiL9UhJgL6TXu2BRhUZ', {
     api_host: 'https://eu.i.posthog.com',
     person_profiles: 'never',
@@ -381,18 +385,18 @@
 </script>
 
 <!-- Preload External CDN Resources (für bessere Performance) -->
-<link rel="preload" as="script" href="/Assets/js/qrcode.min.js?v=3.19.8">
+<link rel="preload" as="script" href="/Assets/js/qrcode.min.js?v=3.19.9">
 <!-- Chart.js: lazy-loaded on demand by analytics-pro-engine -->
 
 
 
 <!-- Local Scripts (defer für korrektes Laden) -->
-<script defer="" src="/Assets/js/version-loader.js?v=3.19.8"></script>
-<script defer="" src="/Assets/js/shortcuts.js?v=3.19.8"></script>
-<script defer="" src="/Assets/js/touch-mobile-optimizations.js?v=3.19.8"></script>
-<script defer="" src="/Assets/js/pinch-zoom.js?v=3.19.8"></script>
+<script defer="" src="/Assets/js/version-loader.js?v=3.19.9"></script>
+<script defer="" src="/Assets/js/shortcuts.js?v=3.19.9"></script>
+<script defer="" src="/Assets/js/touch-mobile-optimizations.js?v=3.19.9"></script>
+<script defer="" src="/Assets/js/pinch-zoom.js?v=3.19.9"></script>
 <!-- External CDN Scripts (nur was beim Start wirklich gebraucht wird) -->
-<script defer="" src="/Assets/js/qrcode.min.js?v=3.19.8"></script>
+<script defer="" src="/Assets/js/qrcode.min.js?v=3.19.9"></script>
 <!-- Three.js, SimplePeer, jsPDF, html2canvas, Chart.js: lazy-loaded on demand -->
 <!-- Cloudflare Web Analytics (Lazy: 2s nach load → Lighthouse sieht die deprecated APIs nicht) -->
 <!-- Auf Localhost gar nicht laden: CF-RUM rejected 127.0.0.1:<port> per CORS und spammt die Console -->
@@ -435,50 +439,50 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
 <!-- Supabase JS: lazy-loaded by supabase-config.js only when session exists -->
 <!-- Supabase Integration (NACH Supabase JS) -->
-<script defer="" src="/Assets/js/Cloud/supabase-integration.js?v=3.19.8"></script>
-<script defer="" src="/Assets/js/Cloud/supabase-ui.js?v=3.19.8"></script>
+<script defer="" src="/Assets/js/Cloud/supabase-integration.js?v=3.19.9"></script>
+<script defer="" src="/Assets/js/Cloud/supabase-ui.js?v=3.19.9"></script>
 <!-- Deine Config (ZULETZT, optional - in .gitignore für Sicherheit) -->
 <script defer="" src="/config/supabase-config.js"></script>
 
 
     <!-- ═══ Component CSS (externalized) ═══ -->
     <!-- Critical — block render until loaded -->
-    <link rel="stylesheet" href="/components/core/core.css?v=3.19.8">
-    <link rel="stylesheet" href="/components/core/alerts.css?v=3.19.8">
-    <link rel="stylesheet" href="/components/dashboard/dashboard.css?v=3.19.8">
-    <link rel="stylesheet" href="/components/dashboard/weather-live.css?v=3.19.8">
-    <link rel="stylesheet" href="/components/modals/modals.css?v=3.19.8">
-    <link rel="stylesheet" href="/components/sidebar/sidebar.css?v=3.19.8">
-    <link rel="stylesheet" href="/components/core/misc.css?v=3.19.8">
-    <link rel="stylesheet" href="/components/mobile-nav/mobile-nav.css?v=3.19.8">
-    <link rel="stylesheet" href="/components/core/layout-fix.css?v=3.19.8">
+    <link rel="stylesheet" href="/components/core/core.css?v=3.19.9">
+    <link rel="stylesheet" href="/components/core/alerts.css?v=3.19.9">
+    <link rel="stylesheet" href="/components/dashboard/dashboard.css?v=3.19.9">
+    <link rel="stylesheet" href="/components/dashboard/weather-live.css?v=3.19.9">
+    <link rel="stylesheet" href="/components/modals/modals.css?v=3.19.9">
+    <link rel="stylesheet" href="/components/sidebar/sidebar.css?v=3.19.9">
+    <link rel="stylesheet" href="/components/core/misc.css?v=3.19.9">
+    <link rel="stylesheet" href="/components/mobile-nav/mobile-nav.css?v=3.19.9">
+    <link rel="stylesheet" href="/components/core/layout-fix.css?v=3.19.9">
     <!-- Non-critical — async load (view-specific, not needed for first paint) -->
-    <link rel="stylesheet" href="/components/performance/performance.css?v=3.19.8" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/components/performance/performance.css?v=3.19.8"></noscript>
-    <link rel="stylesheet" href="/components/ihk/ihk.css?v=3.19.8" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/components/ihk/ihk.css?v=3.19.8"></noscript>
-    <link rel="stylesheet" href="/components/school/school.css?v=3.19.8" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/components/school/school.css?v=3.19.8"></noscript>
-    <link rel="stylesheet" href="/components/goals/goals.css?v=3.19.8" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/components/goals/goals.css?v=3.19.8"></noscript>
-    <link rel="stylesheet" href="/components/weekview/weekview.css?v=3.19.8" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/components/weekview/weekview.css?v=3.19.8"></noscript>
-    <link rel="stylesheet" href="/components/history/history.css?v=3.19.8" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/components/history/history.css?v=3.19.8"></noscript>
-    <link rel="stylesheet" href="/components/analytics-pro/analytics-pro.css?v=3.19.8" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/components/analytics-pro/analytics-pro.css?v=3.19.8"></noscript>
-    <link rel="stylesheet" href="/components/nfc/nfc.css?v=3.19.8" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/components/nfc/nfc.css?v=3.19.8"></noscript>
+    <link rel="stylesheet" href="/components/performance/performance.css?v=3.19.9" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/performance/performance.css?v=3.19.9"></noscript>
+    <link rel="stylesheet" href="/components/ihk/ihk.css?v=3.19.9" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/ihk/ihk.css?v=3.19.9"></noscript>
+    <link rel="stylesheet" href="/components/school/school.css?v=3.19.9" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/school/school.css?v=3.19.9"></noscript>
+    <link rel="stylesheet" href="/components/goals/goals.css?v=3.19.9" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/goals/goals.css?v=3.19.9"></noscript>
+    <link rel="stylesheet" href="/components/weekview/weekview.css?v=3.19.9" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/weekview/weekview.css?v=3.19.9"></noscript>
+    <link rel="stylesheet" href="/components/history/history.css?v=3.19.9" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/history/history.css?v=3.19.9"></noscript>
+    <link rel="stylesheet" href="/components/analytics-pro/analytics-pro.css?v=3.19.9" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/analytics-pro/analytics-pro.css?v=3.19.9"></noscript>
+    <link rel="stylesheet" href="/components/nfc/nfc.css?v=3.19.9" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/nfc/nfc.css?v=3.19.9"></noscript>
     <style>.nfc-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;z-index:9998;transition:opacity 0.25s ease}.nfc-overlay.active{opacity:1;pointer-events:all}</style>
-    <link rel="stylesheet" href="/components/settings/settings.css?v=3.19.8" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/components/settings/settings.css?v=3.19.8"></noscript>
-    <link rel="stylesheet" href="/components/settings/settings-inline.css?v=3.19.8" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/components/settings/settings-inline.css?v=3.19.8"></noscript>
-    <link rel="stylesheet" href="/components/settings/custom-tab.css?v=3.19.8" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/components/settings/custom-tab.css?v=3.19.8"></noscript>
-    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=3.19.8" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=3.19.8"></noscript>
-    <link rel="stylesheet" href="/components/untis/untis.css?v=3.19.8">
+    <link rel="stylesheet" href="/components/settings/settings.css?v=3.19.9" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/settings/settings.css?v=3.19.9"></noscript>
+    <link rel="stylesheet" href="/components/settings/settings-inline.css?v=3.19.9" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/settings/settings-inline.css?v=3.19.9"></noscript>
+    <link rel="stylesheet" href="/components/settings/custom-tab.css?v=3.19.9" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/settings/custom-tab.css?v=3.19.9"></noscript>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=3.19.9" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=3.19.9"></noscript>
+    <link rel="stylesheet" href="/components/untis/untis.css?v=3.19.9">
     <!-- Google Fonts: preconnect + async (DM Serif Display + Plus Jakarta Sans for support view) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
@@ -696,9 +700,9 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
     </div>
   </div>
 
-    <link rel="stylesheet" href="/components/landing/landing.css?v=3.19.8">
+    <link rel="stylesheet" href="/components/landing/landing.css?v=3.19.9">
 
-    <script defer="" src="/components/landing/landing.js?v=3.19.8"></script>
+    <script defer="" src="/components/landing/landing.js?v=3.19.9"></script>
 </div>
 
 
@@ -6933,64 +6937,64 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 
     <!-- ═══ Component JS (externalized) ═══ -->
     <!-- Core Module (aufgeteilt in logische Dateien) -->
-    <script defer="" src="/components/core/state-config.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/modal-dialogs.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/utils.js?v=3.19.8"></script>
-    <script defer="" src="/components/jobs/jobs.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/storage-save.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/entry-edit.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/trash.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/tab-navigation.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/school-grades.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/timer.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/vacation-holidays.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/weather.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/dashboard-ui.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/charts.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/history-export.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/export-advanced.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/emoji-picker.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/custom-types-fields.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/encrypted-backup.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/settings-panel.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/theme-colors.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/p2p-sync.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/school-rules.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/onboarding-tour.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/alerts-toasts.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/year-month-stats.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/app-startup.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/dashboard-editor.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/navbar-sidebar.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/widget-system.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/dashboard-power.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/dashboard-extras.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/mini-calendar-week.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/analytics-pro-engine.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/galaxy-ultra-engine.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/support-feedback.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/mobile-nav-extras.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/api-cloud-sync.js?v=3.19.8"></script>
-    <script defer="" src="/components/core/init-app.js?v=3.19.8"></script>
-    <script defer="" src="/components/dashboard/dashboard.js?v=3.19.8"></script>
-    <script defer="" src="/components/performance/performance.js?v=3.19.8"></script>
-    <script defer="" src="/components/ihk/ihk.js?v=3.19.8"></script>
-    <script defer="" src="/components/school/school.js?v=3.19.8"></script>
-    <script defer="" src="/components/goals/goals.js?v=3.19.8"></script>
-    <script defer="" src="/components/yearview/yearview.js?v=3.19.8"></script>
-    <script defer="" src="/components/monthcompare/monthcompare.js?v=3.19.8"></script>
-    <script defer="" src="/components/weekview/weekview.js?v=3.19.8"></script>
-    <script defer="" src="/components/history/history.js?v=3.19.8"></script>
+    <script defer="" src="/components/core/state-config.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/modal-dialogs.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/utils.js?v=3.19.9"></script>
+    <script defer="" src="/components/jobs/jobs.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/storage-save.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/entry-edit.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/trash.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/tab-navigation.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/school-grades.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/timer.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/vacation-holidays.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/weather.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/dashboard-ui.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/charts.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/history-export.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/export-advanced.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/emoji-picker.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/custom-types-fields.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/encrypted-backup.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/settings-panel.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/theme-colors.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/p2p-sync.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/school-rules.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/onboarding-tour.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/alerts-toasts.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/year-month-stats.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/app-startup.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/dashboard-editor.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/navbar-sidebar.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/widget-system.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/dashboard-power.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/dashboard-extras.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/mini-calendar-week.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/analytics-pro-engine.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/galaxy-ultra-engine.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/support-feedback.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/mobile-nav-extras.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/api-cloud-sync.js?v=3.19.9"></script>
+    <script defer="" src="/components/core/init-app.js?v=3.19.9"></script>
+    <script defer="" src="/components/dashboard/dashboard.js?v=3.19.9"></script>
+    <script defer="" src="/components/performance/performance.js?v=3.19.9"></script>
+    <script defer="" src="/components/ihk/ihk.js?v=3.19.9"></script>
+    <script defer="" src="/components/school/school.js?v=3.19.9"></script>
+    <script defer="" src="/components/goals/goals.js?v=3.19.9"></script>
+    <script defer="" src="/components/yearview/yearview.js?v=3.19.9"></script>
+    <script defer="" src="/components/monthcompare/monthcompare.js?v=3.19.9"></script>
+    <script defer="" src="/components/weekview/weekview.js?v=3.19.9"></script>
+    <script defer="" src="/components/history/history.js?v=3.19.9"></script>
 
-    <script defer="" src="/components/support/support.js?v=3.19.8"></script>
-    <script defer="" src="/components/analytics-pro/analytics-pro.js?v=3.19.8"></script>
-    <script defer="" src="/components/modals/modals.js?v=3.19.8"></script>
-    <script defer="" src="/components/bbig-scanner/bbig-scanner.js?v=3.19.8"></script>
-    <script defer="" src="/components/settings/settings.js?v=3.19.8"></script>
-    <script defer="" src="/components/sidebar/sidebar.js?v=3.19.8"></script>
-    <script defer="" src="/components/untis/untis.js?v=3.19.8"></script>
+    <script defer="" src="/components/support/support.js?v=3.19.9"></script>
+    <script defer="" src="/components/analytics-pro/analytics-pro.js?v=3.19.9"></script>
+    <script defer="" src="/components/modals/modals.js?v=3.19.9"></script>
+    <script defer="" src="/components/bbig-scanner/bbig-scanner.js?v=3.19.9"></script>
+    <script defer="" src="/components/settings/settings.js?v=3.19.9"></script>
+    <script defer="" src="/components/sidebar/sidebar.js?v=3.19.9"></script>
+    <script defer="" src="/components/untis/untis.js?v=3.19.9"></script>
 <!-- Ensure touch-mobile-optimizations is loaded as a fallback -->
-    <script defer="" src="/components/core/onboarding.js?v=3.19.8"></script>
+    <script defer="" src="/components/core/onboarding.js?v=3.19.9"></script>
 
 <!-- Mobile Bottom Navigation Bar — SaaS Rework -->
 <div class="mobile-bottom-nav" id="mobileBottomNav">
@@ -7276,13 +7280,13 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
 </div>
 
     <!-- NFC MODULE -->
-    <script defer="" src="/components/nfc/nfc.js?v=3.19.8"></script>
+    <script defer="" src="/components/nfc/nfc.js?v=3.19.9"></script>
 
     <!-- GHOST MODE / BOSS KEY SCRIPT -->
-    <script defer="" src="/components/core/extra.js?v=3.19.8"></script>
+    <script defer="" src="/components/core/extra.js?v=3.19.9"></script>
 
     <!-- AUTO-CAMOUFLAGE / TAB-VERSTECKER -->
-    <script defer="" src="/components/core/camo.js?v=3.19.8"></script>
+    <script defer="" src="/components/core/camo.js?v=3.19.9"></script>
 
     <!-- ENTRY DETAIL BOTTOM SHEET -->
     <div class="ed-backdrop" id="entryDetailBackdrop" onclick="closeEntryDetail()"></div>
@@ -7407,4 +7411,4 @@ function esc(s) { var d = document.createElement('div'); d.appendChild(document.
         document.addEventListener('DOMContentLoaded', function() { setTimeout(attachMobAccordion, 600); });
     </script>
 
-<script src="/Assets/js/i18n-runtime.js?v=3.19.8" defer=""></script></body></html>
+<script src="/Assets/js/i18n-runtime.js?v=3.19.9" defer=""></script></body></html>
