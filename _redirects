@@ -1,25 +1,37 @@
 # ========================================================
 # 0. SECURITY BLOCKS — Dev-/Internal-Files niemals ausliefern.
 #    Greift VOR allen anderen Regeln (erste passende Regel gewinnt).
-#    Auch wenn so eine Datei versehentlich im Deploy landet: 404.
+#
+#    ⚠️ STATUS 404 GEHT HIER NICHT. Cloudflare Pages erlaubt in _redirects nur
+#    200/301/302/303/307/308 — alles andere wird beim Deploy STILL IGNORIERT
+#    ("Invalid redirect rule" im Build-Log). Diese Regeln standen bis 2026-07-15
+#    auf 404 und haben deshalb NIE gegriffen. Jetzt 302 → die Datei wird nicht
+#    ausgeliefert, der Client landet auf der 404-Seite.
+#
+#    Zweite Verteidigungslinie: tools/prune-deploy.js löscht Quellen & Tooling
+#    schon vor dem Upload aus dem Deploy (läuft nur auf Cloudflare).
 # ========================================================
 
-/*.py        /404.html  404
-/*.sh        /404.html  404
-/*.bak       /404.html  404
-/*.log       /404.html  404
-/*.tmp       /404.html  404
-/*.env       /404.html  404
-/.env        /404.html  404
-/.env.*      /404.html  404
-/.git/*      /404.html  404
-/.gitignore  /404.html  404
-/.gitattributes /404.html 404
-/.eslintrc*  /404.html  404
-/.vscode/*   /404.html  404
-/.idea/*     /404.html  404
-/CLAUDE.md   /404.html  404
-/SECURITY-FIX.md /404.html 404
+/*.py        /404.html  302
+/*.sh        /404.html  302
+/*.bak       /404.html  302
+/*.log       /404.html  302
+/*.tmp       /404.html  302
+/*.env       /404.html  302
+/.env        /404.html  302
+/.env.*      /404.html  302
+/.git/*      /404.html  302
+/.gitignore  /404.html  302
+/.gitattributes /404.html 302
+/.eslintrc*  /404.html  302
+/.vscode/*   /404.html  302
+/.idea/*     /404.html  302
+/CLAUDE.md   /404.html  302
+/SECURITY-FIX.md /404.html 302
+/package.json /404.html 302
+/package-lock.json /404.html 302
+/index.template.html /404.html 302
+/index.template /404.html 302
 
 # ========================================================
 # 1. 301 REDIRECTS (Alte HTML-Pfade & Trailing Slashes auf Clean URLs)
