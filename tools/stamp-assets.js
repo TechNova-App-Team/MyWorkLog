@@ -59,4 +59,16 @@ for (const f of files) {
   if (n) { touched++; refs += n; }
 }
 
+// package.json-Version an config/version.json angleichen. Sie war bis v3.19.7 auf
+// 3.13.1 eingefroren — sichtbar im Cloudflare-Build-Log ("MyWorkLog@3.13.1"), was
+// beim Debuggen in die Irre fuehrt. config/version.json bleibt die einzige Quelle.
+const pkgPath = path.join(ROOT, 'package.json');
+const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+if (pkg.version !== version) {
+  const old = pkg.version;
+  pkg.version = version;
+  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+  console.log('stamp-assets: package.json ' + old + ' → ' + version);
+}
+
 console.log('stamp-assets: v' + version + ' → ' + refs + ' Referenzen in ' + touched + ' Datei(en)');
