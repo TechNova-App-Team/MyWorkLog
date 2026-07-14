@@ -39,7 +39,16 @@ function walk(dir, acc) {
   return acc;
 }
 
-const files = [path.join(ROOT, 'index.html'), ...walk(path.join(ROOT, 'pages'), [])];
+// index.html ist GENERIERT (tools/build-index.js). Die Quelle — index.template.html —
+// muss mitgestempelt werden, sonst kippen die ?v=-Stempel beim naechsten Rebuild auf
+// den alten Stand zurueck und die 24h-Cache-Falle ist wieder da. components/ laeuft
+// vorsorglich mit, falls dort mal eine Asset-Referenz landet.
+const files = [
+  path.join(ROOT, 'index.html'),
+  path.join(ROOT, 'index.template.html'),
+  ...walk(path.join(ROOT, 'components'), []),
+  ...walk(path.join(ROOT, 'pages'), []),
+];
 
 let touched = 0, refs = 0;
 for (const f of files) {

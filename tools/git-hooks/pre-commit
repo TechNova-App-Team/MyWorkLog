@@ -1,27 +1,63 @@
 #!/bin/sh
-# ═══ i18n AUTO-BUILD HOOK ═══
-# Regeneriert die englischen /en/-Seiten automatisch, sobald eine deutsche
-# Quelle (oder ein Übersetzungs-Dict) im Commit steckt. Du musst nie manuell
-# `npm run i18n:build` aufrufen — und NIE /en/ von Hand editieren.
-# Aktiviert via: git config core.hooksPath tools/git-hooks  (läuft auch als npm postinstall).
+# ═══ AUTO-BUILD HOOK ═══
+# Drei generierte Artefakte werden hier automatisch erzeugt und mit-committed:
+#   1. index.html   ← index.template.html + components/<x>/<x>.html   (build-index)
+#   2. ?v=-Stempel  ← config/version.json                             (stamp-assets)
+#   3. /en/-Seiten  ← deutsche Quellen + Dicts                        (i18n:build)
+#
+# REIHENFOLGE IST KRITISCH: stamp → build-index → i18n.
+#   • stamp vor build-index, damit die Stempel aus dem TEMPLATE in die index.html wandern
+#     (stempelte man nur index.html, würde der nächste Rebuild sie wieder überschreiben).
+#   • build-index vor i18n, weil i18n /en/ aus der fertigen index.html backt.
+#
+# Aktiviert via: git config core.hooksPath tools/git-hooks (läuft als npm postinstall).
 
 changed=$(git diff --cached --name-only --diff-filter=ACM)
 # pages/en/* ist GENERIERTE Ausgabe → ausschließen, sonst triggert sich der Hook selbst
 sources=$(echo "$changed" | grep -vE '^pages/en/')
 
-# ═══ ASSET-STAMPING ═══
+# ═══ GUARD: index.html ist GENERIERT ═══
+# Wer sie direkt editiert, verliert die Änderung beim nächsten Build. Lieber hier
+# abbrechen als still überschreiben.
+if echo "$sources" | grep -qE '^index\.html$'; then
+  if ! echo "$sources" | grep -qE '^(index\.template\.html|components/.*\.html|config/version\.json)$'; then
+    if ! node tools/build-index.js --check; then
+      echo ""
+      echo "[build-index] ✗ index.html wurde direkt bearbeitet — Commit abgebrochen."
+      echo "              Diese Datei ist GENERIERT. Deine Änderung ginge beim nächsten"
+      echo "              Build verloren. Bearbeite stattdessen:"
+      echo "                • components/<name>/<name>.html  (Views, Sidebar, Modals)"
+      echo "                • index.template.html            (Head, Shell, Script-Tags)"
+      exit 1
+    fi
+  fi
+fi
+
+# ═══ 1. ASSET-STAMPING ═══
 # Cloudflare liefert /Assets/* mit max-age=86400 aus (Dashboard-Regel, NICHT _headers).
 # Ohne Versions-Query im HTML sehen Nutzer nach einem Deploy bis zu 24h altes JS/CSS.
-# Bei jedem Version-Bump alle Asset-Referenzen neu stempeln.
 if echo "$sources" | grep -qE '^config/version\.json'; then
   echo "[stamp] Version gebumpt → stemple Asset-URLs …"
   if ! node tools/stamp-assets.js; then
     echo "[stamp] ✗ Stamping fehlgeschlagen — Commit abgebrochen."
     exit 1
   fi
-  git add index.html pages 2>/dev/null
+  git add index.html index.template.html components pages 2>/dev/null
 fi
 
+# ═══ 2. INDEX-BUILD ═══
+# Idempotent: schreibt nur, wenn sich wirklich etwas ändert.
+if ! node tools/build-index.js; then
+  echo "[build-index] ✗ Build fehlgeschlagen — Commit abgebrochen."
+  exit 1
+fi
+git add index.html 2>/dev/null
+
+# index.html kann durch Stamping/Build gerade erst dazugekommen sein → neu einlesen
+changed=$(git diff --cached --name-only --diff-filter=ACM)
+sources=$(echo "$changed" | grep -vE '^pages/en/')
+
+# ═══ 3. i18n /en/ ═══
 echo "$sources" | grep -qE '^(index\.html|pages/|tools/i18n/dict/)' || exit 0
 
 if [ ! -d node_modules/jsdom ]; then

@@ -1,4 +1,4 @@
-        <div id="view-dashboard" class="view-section active">
+<div id="view-dashboard" class="view-section active">
 
             <!-- Edit Mode Controls -->
             <div id="dashboardEditControls" style="display:flex; gap:10px; margin-bottom:1.25rem; opacity:0; pointer-events:none; transition:opacity 0.3s;">
@@ -15,6 +15,7 @@
                         <div class="card kpi-card kpi-card--ring">
                             <div class="kpi-card__header">
                                 <span class="kpi-card__tag">Woche</span>
+                                <span class="kpi-card__indicator"></span>
                             </div>
                             <div class="progress-ring">
                                 <svg width="100" height="100">
@@ -32,6 +33,7 @@
                         <div class="card kpi-card kpi-card--ring">
                             <div class="kpi-card__header">
                                 <span class="kpi-card__tag">Monat</span>
+                                <span class="kpi-card__indicator"></span>
                             </div>
                             <div class="progress-ring">
                                 <svg width="100" height="100">
@@ -48,7 +50,7 @@
                         <!-- KPI: Gleitzeit Redesign -->
                         <div class="card gz-card-v2">
                             <!-- Main Container -->
-                            <div class="gz-container">
+                            <div class="gz-container" style="gap:0.6rem;">
                                 <!-- Header Section -->
                                 <div class="gz-header-section">
                                     <div class="gz-label">GLEITZEIT</div>
@@ -58,7 +60,7 @@
                                 </div>
 
                                 <!-- Main Value with Visual Indicator -->
-                                <div class="gz-main-section">
+                                <div class="gz-main-section" style="position:relative;">
                                     <div class="gz-balance-visual">
                                         <svg class="gz-scale-icon" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet">
                                             <!-- Scale Base -->
@@ -79,35 +81,30 @@
                                         <div class="gz-value-label">Aktueller Saldo</div>
                                         <div class="gz-value-display" id="valTotal">+0.0h</div>
                                     </div>
+                                    <!-- Prognose Top Right -->
+                                    <div style="position:absolute;top:0.5rem;right:0.75rem;text-align:center;">
+                                        <div style="font-size:0.75rem;font-weight:700;color:var(--primary);font-family:'JetBrains Mono';"><span id="valProjected">+0h</span> (6W)</div>
+                                    </div>
                                 </div>
 
                                 <!-- Divider -->
-                                <div class="gz-divider-modern"></div>
+                                <div class="gz-divider-modern" style="height:0.5px;margin:0.2rem 0;"></div>
 
-                                <!-- Forecast Section -->
-                                <div class="gz-forecast-section">
-                                    <div class="gz-forecast-header">
-                                        <span class="gz-forecast-icon">📊</span>
-                                        <span class="gz-forecast-label">Prognose</span>
-                                        <span class="gz-forecast-timeframe">6W</span>
+                                <!-- Streak Section - Ultra Minimal -->
+                                <div style="display:flex;gap:0.5rem;justify-content:space-between;align-items:center;">
+                                    <div style="display:flex;align-items:center;gap:0.4rem;padding:0.4rem 0.6rem;background:rgba(var(--primary-rgb),0.08);border-radius:6px;flex:1;">
+                                        <span id="streakEmoji" style="font-size:1rem;">🔥</span>
+                                        <div style="flex:1;">
+                                            <div style="font-size:0.6rem;color:var(--text-muted);">Serie</div>
+                                            <div id="streakCount" style="font-size:0.9rem;font-weight:700;color:var(--primary);">0</div>
+                                        </div>
                                     </div>
-                                    <div class="gz-forecast-value" id="valProjected">+0h</div>
-                                    <div class="gz-forecast-bar">
-                                        <div class="gz-forecast-fill" style="width: 0%;"></div>
-                                    </div>
-                                </div>
-
-                                <!-- Streak Section -->
-                                <div class="gz-streak-section">
-                                    <div class="gz-streak-item gz-streak-current">
-                                        <div class="gz-streak-label">🔥 Aktuelle Serie</div>
-                                        <div class="gz-streak-value" id="streakCount">0</div>
-                                        <div class="gz-streak-subtext">Tage</div>
-                                    </div>
-                                    <div class="gz-streak-item gz-streak-best">
-                                        <div class="gz-streak-label">🏆 Bester Rekord</div>
-                                        <div class="gz-streak-value" id="streakBest">0</div>
-                                        <div class="gz-streak-subtext">Tage</div>
+                                    <div style="display:flex;align-items:center;gap:0.4rem;padding:0.4rem 0.6rem;background:rgba(var(--primary-rgb),0.08);border-radius:6px;flex:1;">
+                                        <span style="font-size:1rem;opacity:0.6;">→</span>
+                                        <div style="flex:1;">
+                                            <div style="font-size:0.6rem;color:var(--text-muted);">Best</div>
+                                            <div id="streakBest" style="font-size:0.9rem;font-weight:700;color:var(--primary);">0</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -121,7 +118,7 @@
                             <div class="kpi-stats__value" id="valAvg">0.0h</div>
                             <div class="kpi-stats__label">pro Tag</div>
                             <div class="kpi-stats__divider"></div>
-                            <div class="kpi-stats__vacation">
+                            <div class="kpi-stats__vacation" onclick="openVacationPicker('vacation')" style="cursor:pointer;" title="Urlaub planen — mehrere Tage oder Zeiträume">
                                 <div class="kpi-stats__vacation-header">
                                     <span class="kpi-stats__vacation-label">Urlaubstage</span>
                                     <span id="valVacationUsed" class="kpi-stats__vacation-count">0 / 30</span>
@@ -157,7 +154,6 @@
                                 <svg viewBox="0 0 24 24"><path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 018 4"/><path d="M5 19.5C5.5 18 6 15 6 12"/><path d="M21 12c0 1.5-.5 3-1.5 4.5"/><path d="M12 2c2 2 3 5 3 10"/><path d="M12 2c-2 2-3 5-3 10"/><path d="M18 22l4-4-4-4"/><path d="M22 18h-7"/></svg>
                             </span>
                             <span class="cmd-label">NFC</span>
-                            <span class="nfc-new-badge">NEU</span>
                         </button>
                         <button onclick="window.location.href='/berichtsheft/'">
                             <span class="cmd-icon">
@@ -199,7 +195,6 @@
                                     </button>
                                 </div>
                             </div>
-                            <!-- Stats Summary Bar -->
                             <div class="trend-stats-bar" id="trendStatsBar">
                                 <div class="trend-stat">
                                     <span class="trend-stat-label">Aktuell</span>
@@ -226,56 +221,61 @@
                                     <span class="trend-stat-value" id="trendStatVolatility">—</span>
                                 </div>
                             </div>
-                            <!-- Chart Area -->
                             <div class="trend-container-wrapper">
                                 <div class="trend-y-axis" id="trendYAxis"></div>
                                 <div class="trend-container" id="trendChart" style="cursor:crosshair;"></div>
                             </div>
                             <div class="trend-x-axis" id="trendXAxis"></div>
-                            <!-- Hover Tooltip -->
                             <div class="trend-tooltip" id="trendTooltip" style="display:none;"></div>
                         </div>
 
                         <!-- ═══ MODERNE VERTEILUNG DONUT ═══ -->
                         <div class="card chart-card donut-redesign">
                             <div class="chart-header">
-                                <div class="chart-header-top">
+                                <div>
                                     <div class="chart-title">Arbeitszeit-Verteilung</div>
-                                    <button class="btn btn-ghost chart-config-btn donut-settings-btn" onclick="openDonutSettingsModal()" title="Einstellungen">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-                                    </button>
+                                    <div class="chart-sub" id="donutSubtitle">Wöchentliche Aufteilung</div>
                                 </div>
-                                <div class="chart-sub" id="donutSubtitle">Wöchentliche Aufteilung</div>
+                                <button class="btn btn-ghost chart-config-btn" onclick="openDonutStyleModal()" title="Donut-Stil anpassen">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                                </button>
                             </div>
 
-                            <!-- NEW: Donut mit Center Info -->
-                            <div class="donut-wrapper" id="donutWrapper">
-                                <div class="donut-center-info" id="donutCenterInfo">
-                                    <div class="center-value" id="donutCenterValue">—</div>
+                            <!-- MODERN STACKED BAR CHART - Alle Kategorien sichtbar! -->
+                            <div class="donut-wrapper" id="donutWrapper" style="flex-direction: column; height: auto; padding: 1rem 0;">
+                                <div class="donut-center-info" id="donutCenterInfo" style="position: static; transform: none; margin-bottom: 1rem; text-align: center;">
+                                    <div class="center-value" id="donutCenterValue" style="font-size: 1.5rem;">—</div>
                                     <div class="center-label" id="donutCenterLabel">Gesamt</div>
-                                    <div class="center-unit">Stunden</div>
                                 </div>
-                                <svg id="donutSvg" class="donut-svg" width="180" height="180" viewBox="0 0 100 100" style="transform: rotate(-90deg);">
-                                    <defs>
-                                        <filter id="donutGlow" x="-50%" y="-50%" width="200%" height="200%">
-                                            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
-                                            <feMerge>
-                                                <feMergeNode in="coloredBlur"/>
-                                                <feMergeNode in="SourceGraphic"/>
-                                            </feMerge>
-                                        </filter>
-                                    </defs>
-                                    <!-- Background -->
-                                    <circle cx="50" cy="50" r="38" fill="transparent" stroke="rgba(255,255,255,0.04)" stroke-width="11"></circle>
-                                    <!-- Segments (clockwise) -->
-                                    <circle id="donutWork" cx="50" cy="50" r="38" fill="transparent" stroke="var(--primary)" stroke-width="11" stroke-dasharray="0 251" filter="url(#donutGlow)"></circle>
-                                    <circle id="donutSchool" cx="50" cy="50" r="38" fill="transparent" stroke="var(--school)" stroke-width="11" stroke-dasharray="0 251" filter="url(#donutGlow)"></circle>
-                                    <circle id="donutVac" cx="50" cy="50" r="38" fill="transparent" stroke="var(--success)" stroke-width="11" stroke-dasharray="0 251" filter="url(#donutGlow)"></circle>
-                                    <circle id="donutSick" cx="50" cy="50" r="38" fill="transparent" stroke="var(--danger)" stroke-width="11" stroke-dasharray="0 251" filter="url(#donutGlow)"></circle>
-                                    <circle id="donutHoliday" cx="50" cy="50" r="38" fill="transparent" stroke="var(--holiday)" stroke-width="11" stroke-dasharray="0 251" filter="url(#donutGlow)"></circle>
-                                </svg>
-                                <!-- Hover Tooltip für Segments -->
-                                <div class="donut-tooltip" id="donutTooltip" style="display:none;"></div>
+
+                                <!-- Stacked Progress Bar -->
+                                <div id="donutChartContainer" style="width: 100%; height: 32px; background: rgba(255,255,255,0.04); border-radius: 8px; overflow: hidden; display: flex; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                                    <div id="donutWork" class="donut-segment" style="background: var(--primary); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('work')" onmouseout="clearDonutHighlight()" title="Arbeit">
+                                        <div class="segment-label" style="display: none; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
+                                            <span id="work-label"></span>
+                                        </div>
+                                    </div>
+                                    <div id="donutSchool" class="donut-segment" style="background: var(--school); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('school')" onmouseout="clearDonutHighlight()" title="Schule">
+                                        <div class="segment-label" style="display: none; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
+                                            <span id="school-label"></span>
+                                        </div>
+                                    </div>
+                                    <div id="donutVac" class="donut-segment" style="background: var(--success); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('vacation')" onmouseout="clearDonutHighlight()" title="Urlaub">
+                                        <div class="segment-label" style="display: none; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
+                                            <span id="vac-label"></span>
+                                        </div>
+                                    </div>
+                                    <div id="donutSick" class="donut-segment" style="background: var(--danger); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('sick')" onmouseout="clearDonutHighlight()" title="Krank">
+                                        <div class="segment-label" style="display: none; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
+                                            <span id="sick-label"></span>
+                                        </div>
+                                    </div>
+                                    <div id="donutHoliday" class="donut-segment" style="background: var(--holiday); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('holiday')" onmouseout="clearDonutHighlight()" title="Feiertag">
+                                        <div class="segment-label" style="display: none; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
+                                            <span id="holiday-label"></span>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- NEW: Modern Data Cards Legend -->
@@ -330,48 +330,114 @@
                 <div class="dashboard-item" data-item-id="entry-form">
                     <div class="card input-wrapper">
                         <div class="entry-form">
+
+                            <!-- Setup hint for new users (hidden by default, shown via JS) -->
+                            <div id="setupHintBanner" class="setup-hint-banner" style="display:none;">
+                                <div class="setup-hint-icon">⚙️</div>
+                                <div class="setup-hint-content">
+                                    <div class="setup-hint-title">Einrichtung empfohlen</div>
+                                    <div class="setup-hint-text">Damit die App deine Stunden korrekt berechnet, richte bitte deine <strong>Arbeitszeiten</strong> und <strong>Schultage</strong> in den Einstellungen ein.</div>
+                                    <button class="setup-hint-btn" onclick="openSettings(); switchSettingsTab('work');">Jetzt einrichten →</button>
+                                </div>
+                                <button class="setup-hint-close" onclick="dismissSetupHint()" title="Schließen">✕</button>
+                            </div>
+
                             <div class="entry-form__header">
-                                <h2 class="entry-form__title">Eintrag erfassen</h2>
+                                <span class="entry-form__badge" aria-hidden="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+                                </span>
+                                <div class="entry-form__heading">
+                                    <h2 class="entry-form__title">Eintrag erfassen</h2>
+                                    <p class="entry-form__subtitle">Zeiten buchen &amp; Tag erfassen</p>
+                                </div>
                                 <button class="help-slim" title="Hilfe" onclick="openQuickHelp('entry')">?</button>
                             </div>
 
-                            <div class="entry-form__row">
-                                <input type="date" id="inpDate" class="glass-input">
-                                <select id="inpType" class="glass-select" onchange="toggleTimeInputs()">
-                                    <option value="work">Arbeit</option>
-                                    <option value="school">Berufsschule</option>
-                                    <option value="vacation">Urlaub</option>
-                                    <option value="gleittag">Gleittag</option>
-                                    <option value="sick">Krank</option>
-                                </select>
-                            </div>
-
-                            <div class="entry-form__time-row">
-                                <div class="entry-form__time-group">
-                                    <input type="time" id="inpStart" class="glass-input" placeholder="Start">
-                                    <button id="btnNowStart" class="btn btn-ghost entry-form__now-btn">Jetzt</button>
-                                </div>
-                                <div class="entry-form__time-group">
-                                    <input type="time" id="inpEnd" class="glass-input" placeholder="Ende">
-                                    <button id="btnNowEnd" class="btn btn-ghost entry-form__now-btn">Jetzt</button>
+                            <div class="entry-form__field">
+                                <label class="entry-form__label" for="inpDate">Datum &amp; Typ</label>
+                                <div class="entry-form__row">
+                                    <input type="date" id="inpDate" class="glass-input" aria-label="Datum" onchange="if(typeof updateBreakPlaceholder==='function')updateBreakPlaceholder()">
+                                    <select id="inpType" class="glass-select" onchange="toggleTimeInputs();if(typeof renderEntryCustomFields==='function')renderEntryCustomFields()" aria-label="Eintragstyp">
+                                        <option value="work">Arbeit</option>
+                                        <option value="school">Berufsschule</option>
+                                        <option value="vacation">Urlaub</option>
+                                        <option value="gleittag">Gleittag</option>
+                                        <option value="sick">Krank</option>
+                                    </select>
                                 </div>
                             </div>
 
-                            <input type="number" id="inpHours"   class="glass-input" step="0.25" placeholder="Stunden manuell...">
-                            <input type="text"   id="inpProject" class="glass-input" placeholder="Projekt / Kunde (z.B. Alpha-Migration)">
-                            <input type="text"   id="inpNotes"   class="glass-input" placeholder="Notizen (z.B. Bugfix in Modul X)">
+                            <div id="vacationMultiHint" style="display:none; margin: 6px 0 2px; padding: 12px 14px; border-radius: 12px; background: rgba(var(--primary-rgb), 0.06); border: 1px solid rgba(var(--primary-rgb), 0.18); align-items:center; gap:12px; flex-wrap:wrap;">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                <span style="font-size:0.82rem; color: var(--text-main); flex:1; min-width:0;">Mehrere Urlaubstage auf einmal — Wochenenden &amp; Feiertage werden automatisch übersprungen.</span>
+                                <button type="button" class="btn btn-primary" style="font-size:0.78rem; padding:8px 14px;" onclick="openVacationPicker('vacation')">📅 Mehrere Tage planen…</button>
+                            </div>
+
+                            <div class="entry-form__field">
+                                <div class="entry-form__label-row">
+                                    <label class="entry-form__label" for="inpStart">Zeitraum</label>
+                                    <span class="entry-form__duration is-empty" id="entryDurationBadge" title="Netto-Arbeitszeit (Pause abgezogen)">–</span>
+                                </div>
+                                <div class="entry-form__time-row">
+                                    <div class="entry-form__time-group">
+                                        <input type="time" id="inpStart" class="glass-input" placeholder="Start" oninput="if(typeof autoSelectJobByStart==='function'){autoSelectJobByStart();updateBreakPlaceholder();}">
+                                        <button id="btnNowStart" class="btn btn-ghost entry-form__now-btn">Jetzt</button>
+                                    </div>
+                                    <span class="entry-form__time-sep" aria-hidden="true">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>
+                                    </span>
+                                    <div class="entry-form__time-group">
+                                        <input type="time" id="inpEnd" class="glass-input" placeholder="Ende" oninput="if(typeof updateEntryDuration==='function')updateEntryDuration()">
+                                        <button id="btnNowEnd" class="btn btn-ghost entry-form__now-btn">Jetzt</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="entry-form__field" id="jobSelectRow" style="display:none;">
+                                <label class="entry-form__label" for="inpJob">Job</label>
+                                <select id="inpJob" class="glass-select" aria-label="Job" onchange="if(typeof onJobManualChange==='function'){onJobManualChange();updateBreakPlaceholder();}"></select>
+                            </div>
+
+                            <!-- Custom Fields (user-definiert, je nach Eintragstyp) — immer sichtbar, nicht im Detail-Collapse -->
+                            <div id="entryCustomFields" style="display:none;"></div>
+
+                            <button type="button" class="entry-form__more" id="entryMoreToggle" aria-expanded="false" aria-controls="entryDetails" onclick="toggleEntryDetails()">
+                                <svg class="entry-form__more-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/></svg>
+                                <span class="entry-form__more-label">Weitere Details</span>
+                                <span class="entry-form__more-hint">Pause · Stunden · Projekt · Notiz</span>
+                                <svg class="entry-form__more-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+
+                            <div class="entry-form__details" id="entryDetails">
+                                <div class="entry-form__details-inner">
+                                    <div class="entry-form__field" id="breakFieldWrap">
+                                        <label class="entry-form__label" for="inpBreak">Pause</label>
+                                        <input type="number" id="inpBreak"   class="glass-input" min="0" step="5" inputmode="numeric" placeholder="Pause automatisch (Min)" aria-label="Pause in Minuten" title="Leer = automatische Pause laut Einstellungen. Wert (auch 0) = exakt diese Pause für diesen Eintrag." oninput="if(typeof updateEntryDuration==='function')updateEntryDuration()">
+                                    </div>
+                                    <div class="entry-form__field">
+                                        <label class="entry-form__label" for="inpHours">Stunden manuell</label>
+                                        <input type="number" id="inpHours"   class="glass-input" step="0.25" placeholder="z.B. 7.5">
+                                    </div>
+                                    <div class="entry-form__field">
+                                        <label class="entry-form__label" for="inpProject">Projekt / Kunde</label>
+                                        <input type="text"   id="inpProject" class="glass-input" placeholder="z.B. Alpha-Migration">
+                                    </div>
+                                    <div class="entry-form__field">
+                                        <label class="entry-form__label" for="inpNotes">Notizen</label>
+                                        <input type="text"   id="inpNotes"   class="glass-input" placeholder="z.B. Bugfix in Modul X">
+                                    </div>
+                                </div>
+                            </div>
 
                             <div class="entry-form__actions">
-                                <button id="voiceBtn" class="entry-form__voice-btn" onclick="startVoiceInput()">
-                                    <span class="vbtn-ring r1"></span>
-                                    <span class="vbtn-ring r2"></span>
-                                    <span class="vbtn-ring r3"></span>
-                                    <span class="vbtn-icon">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                                    </span>
-                                    <span class="vbtn-label">Stimme</span>
+                                <button id="voiceBtn" class="btn btn-ghost entry-form__voice-btn" onclick="startVoiceInput()">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                                    Stimme
                                 </button>
-                                <button id="mainBtn" class="btn btn-primary entry-form__submit" onclick="handleEntry()">Eintrag speichern</button>
+                                <button id="mainBtn" class="btn btn-primary entry-form__submit" onclick="handleEntry()">
+                                    <svg class="entry-form__submit-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                    <span id="mainBtnLabel">Eintrag speichern</span>
+                                </button>
                                 <button id="cancelBtn" class="btn entry-form__cancel" onclick="resetEdit()">Abbrechen</button>
                             </div>
 
@@ -385,7 +451,7 @@
                         <!-- Timer -->
                         <div class="timer-box" id="timerBox">
                             <div class="timer-box__header">
-                                <span class="timer-box__label">Live Tracker</span>
+                                <span class="timer-box__label">Live</span>
                                 <button class="help-slim" title="Hilfe" onclick="openQuickHelp('timer')">?</button>
                             </div>
                             <div class="timer-display" id="timerDisplay">00:00:00</div>
@@ -402,24 +468,42 @@
                     </div>
                 </div>
 
-                <!-- ═══ LETZTE AKTIVITÄTEN ═══ -->
+                <!-- ═══ LETZTE AKTIVITÄTEN NEU ═══ -->
                 <div class="dashboard-item" data-item-id="last-activities">
-                    <div class="activities-container">
-                        <div class="activities-header">
-                            <h2 class="activities-title">Letzte Aktivitäten</h2>
-                            <div class="activities-nav">
-                                <button class="carousel-btn carousel-prev" id="carouselPrev" onclick="activityCarouselPrev()" title="Vorheriger">‹</button>
-                                <span class="carousel-counter" id="carouselCounter">0 / 0</span>
-                                <button class="carousel-btn carousel-next" id="carouselNext" onclick="activityCarouselNext()" title="Nächster">›</button>
+                    <div class="card activities-card-new">
+                        <div class="activities-header-new">
+                            <div class="activities-header-content">
+                                <div class="activities-title-container">
+                                    <svg class="activities-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                                        <polyline points="17 6 23 6 23 12"></polyline>
+                                    </svg>
+                                    <div>
+                                        <div class="activities-title-new">Letzte Aktivitäten</div>
+                                        <div class="activities-meta">Deine Arbeitszeiteinträge (14 Tage)</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="carousel-wrapper">
-                            <div class="carousel-track" id="entryListShort"></div>
+
+                        <!-- Day Tabs -->
+                        <div class="day-tabs-container">
+                            <div class="day-tabs" id="dayTabsList"></div>
                         </div>
-                        <div class="carousel-dots" id="carouselDots"></div>
-                        <div class="activities-empty" id="activitiesEmpty" style="display:none;">
-                            <div class="empty-icon">📋</div>
-                            <p class="empty-text">Keine Aktivitäten vorhanden</p>
+
+                        <!-- Activities Timeline -->
+                        <div class="activities-timeline" id="entryListShort"></div>
+
+                        <!-- Empty State -->
+                        <div class="activities-empty" id="activitiesEmpty">
+                            <div class="empty-state">
+                                <svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                </svg>
+                                <div class="empty-text">Keine Aktivitäten vorhanden</div>
+                                <div class="empty-subtext">Starten Sie mit einer neuen Arbeitszeiteintrag</div>
+                            </div>
                         </div>
                     </div>
                 </div>

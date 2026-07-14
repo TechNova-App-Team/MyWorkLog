@@ -1,17 +1,16 @@
-        <div id="view-support" class="view-section">
+<div id="view-support" class="view-section">
 
         <!-- ══════════════════════════════════════════════════════
              SUPPORT PAGE — PARALLAX UI
              Styles scoped to #view-support to avoid leaking.
         ══════════════════════════════════════════════════════ -->
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
             /* ── layout wrapper ── */
             #view-support {
                 padding: 0 !important;
                 position: relative;
-                overflow: hidden;
+                overflow-x: hidden;
+                overflow-y: visible;
             }
 
             /* ── parallax sections ── */
@@ -379,19 +378,6 @@
             .sp-float-row { display: flex; gap: 1rem; }
             .sp-float-row .sp-float-card { flex: 1; }
 
-            /* ── FOOTER strip ── */
-            .sp-footer {
-                border-top: 1px solid rgba(255,255,255,.06);
-                padding: 1.8rem 2.2rem;
-                display: flex; flex-wrap: wrap;
-                align-items: center; justify-content: space-between; gap: 1rem;
-            }
-            .sp-footer-links { display: flex; gap: 1.4rem; flex-wrap: wrap; }
-            .sp-footer-links a {
-                color: var(--text-muted); text-decoration: none;
-                font-size: .78rem; transition: color .22s;
-            }
-            .sp-footer-links a:hover { color: var(--primary); }
         </style>
 
         <!-- ══ PARALLAX HERO ══════════════════════════════ -->
@@ -477,7 +463,7 @@
         <div class="sp-divider sp-section-alt"><div class="sp-divider-line"></div></div>
 
         <!-- ══ FEEDBACK ══════════════════════════════════ -->
-        <div class="sp-section sp-section-alt">
+        <div id="supportFeedbackSection" class="sp-section sp-section-alt">
             <span class="sp-label sp-sr">Feedback</span>
             <h2 class="sp-section-title sp-sr sp-sr-d1">Wie fandest du <em>MyWorkLog?</em></h2>
             <p class="sp-section-desc sp-sr sp-sr-d2">Dein Feedback hilft uns, besser zu werden — ehrlich und direkt.</p>
@@ -521,7 +507,7 @@
                         style="margin-top:3px; accent-color:var(--primary); min-width:16px; min-height:16px; cursor:pointer;">
                     <label for="feedbackDSGVOConsent" style="font-size:.72rem; color:var(--text-muted); line-height:1.5; cursor:pointer;">
                         Ich stimme zu, dass mein Feedback über <strong>EmailJS</strong> an den Entwickler gesendet wird.
-                        <a href="Pages/DE-Gestz/DSGVO.html" target="_blank" style="color:var(--primary); text-decoration:underline;">Datenschutzerklärung</a>
+                        <a href="/Impressum/" target="_blank" style="color:var(--primary); text-decoration:underline;">Datenschutzerklärung</a>
                     </label>
                 </div>
                 <div style="display:flex; justify-content:flex-end; margin-top:10px;">
@@ -540,23 +526,15 @@
             <p class="sp-section-desc sp-sr sp-sr-d2">Was sich zuletzt getan hat — immer transparent.</p>
 
             <div class="sp-changelog-wrap sp-sr sp-sr-d2">
-                <!-- Wird automatisch aus config/version.json (changelog) befüllt — siehe renderSupportChangelog() in index.html. Nicht hardcoden! -->
+                <!-- Wird automatisch aus config/version.json (changelog) befüllt — siehe renderSupportChangelog() unten. Nicht hardcoden! -->
                 <div id="supportChangelog">
                     <div class="sp-cl-empty" style="font-size:.82rem; color:var(--text-muted); padding:10px;">Lädt aktuelle Änderungen…</div>
                 </div>
             </div>
         </div>
 
-        <!-- ══ FOOTER STRIP ═══════════════════════════════ -->
-        <div class="sp-footer">
-            <span style="font-size:.78rem; color:var(--text-muted); opacity:.6;">MyWorkLog — Made with ❤️ for Azubis</span>
-            <div class="sp-footer-links">
-                <a href="./Impressum/" target="_blank" rel="noopener noreferrer">Impressum</a>
-                <a href="./DSGVO/" target="_blank" rel="noopener noreferrer">Datenschutz</a>
-                <a href="./about/" target="_blank" rel="noopener noreferrer">Über uns</a>
-                <a href="https://github.com/TechNova-App-Team/MyWorkLog" target="_blank" rel="noopener noreferrer">GitHub</a>
-            </div>
-        </div>
+        <!-- ══ FOOTER ════════════════════════════════════ -->
+        <div id="support-footer"></div>
 
         <!-- ══ PARALLAX & REVEAL JS ════════════════════════ -->
         <script>
@@ -632,7 +610,66 @@
                     setTimeout(observeSupportItems, 80);
                 }
             }
+
+            /* ── Changelog aus config/version.json (single source of truth) ── */
+            function clEsc(s) {
+                return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+                });
+            }
+            function clCmpVer(a, b) {
+                var pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
+                for (var i = 0; i < Math.max(pa.length, pb.length); i++) {
+                    var d = (pa[i] || 0) - (pb[i] || 0);
+                    if (d) return d;
+                }
+                return 0;
+            }
+            function renderSupportChangelog() {
+                var host = document.getElementById('supportChangelog');
+                if (!host) return;
+                var accents = ['var(--primary)', 'var(--success)', 'var(--school)', 'var(--holiday)', 'var(--danger)', 'var(--text-muted)'];
+                var bgs = ['rgba(var(--primary-rgb),.05)', 'rgba(16,185,129,.05)', 'rgba(59,130,246,.05)', 'rgba(245,158,11,.05)', 'rgba(239,68,68,.05)', 'rgba(148,163,184,.05)'];
+                fetch('/config/version.json', { cache: 'no-cache' })
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        var cl = data && data.changelog;
+                        if (!cl || typeof cl !== 'object') { host.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">Keine Änderungshistorie verfügbar.</div>'; return; }
+                        var versions = Object.keys(cl).sort(function(a, b) { return clCmpVer(b, a); });
+                        var MAX = 8;
+                        var html = versions.slice(0, MAX).map(function(v, i) {
+                            var accent = accents[i % accents.length];
+                            var bg = bgs[i % bgs.length];
+                            var text = String(cl[v] || '').trim();
+                            /* Erster Satz = Titel (falls kurz genug), Rest = Detail */
+                            var title = 'Version ' + v, body = text;
+                            var dot = text.indexOf('. ');
+                            if (dot > 0 && dot <= 90) { title = text.slice(0, dot); body = text.slice(dot + 2); }
+                            var bodyHtml = body ? '<div style="font-size:.78rem; color:var(--text-muted); margin-top:3px; line-height:1.55;">' + clEsc(body) + '</div>' : '';
+                            return '<div style="display:flex; gap:12px; align-items:flex-start; padding:10px; border-radius:10px; background:' + bg + '; border-left:3px solid ' + accent + ';">'
+                                + '<div style="font-size:.7rem; color:var(--text-muted); min-width:60px; font-family:var(--font-mono); padding-top:2px;">v' + clEsc(v) + '</div>'
+                                + '<div style="min-width:0;"><div style="font-weight:600; font-size:.88rem; color:var(--text-main);">' + clEsc(title) + '</div>' + bodyHtml + '</div>'
+                                + '</div>';
+                        }).join('');
+                        host.innerHTML = html || '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">Keine Änderungshistorie verfügbar.</div>';
+                    })
+                    .catch(function() {
+                        host.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">Änderungshistorie konnte nicht geladen werden.</div>';
+                    });
+            }
+            renderSupportChangelog();
         })();
+        </script>
+        <script>
+        fetch('/pages/footer/footer.html')
+            .then(function(r) { return r.text(); })
+            .then(function(html) {
+                var ph = document.getElementById('support-footer');
+                if (!ph) return;
+                var tmpl = document.createElement('template');
+                tmpl.innerHTML = html;
+                ph.replaceWith(tmpl.content);
+            });
         </script>
 
         </div>

@@ -1,0 +1,1431 @@
+﻿<!DOCTYPE html>
+<html lang="de" dir="ltr" prefix="og: https://ogp.me/ns#">
+<head>
+<!--
+  ⚠️  index.html IST GENERIERT — NICHT HIER EDITIEREN.
+  Quelle: index.template.html  +  components/<name>/<name>.html
+  Bauen:  npm run build:index   (läuft auch automatisch im Pre-Commit-Hook)
+-->
+<script>if(location.pathname==='/index.html')location.replace(location.href.replace('/index.html','/')+''+location.search+location.hash);</script>
+<script>
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+" (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+  posthog.init('phc_yU64gT44sK6HkU4EvRote7oHGLiL9UhJgL6TXu2BRhUZ', {
+    api_host: 'https://eu.i.posthog.com',
+    person_profiles: 'never',
+    autocapture: false,
+    capture_pageview: true,
+    capture_pageleave: true,
+    capture_performance: true,   // Web Vitals (LCP/CLS/INP) — reine Messwerte, keine Personendaten
+    // PostHog-Default waere 'localStorage+cookie' → setzt einen First-Party-Cookie.
+    // Die Seite verspricht an mehreren Stellen "cookie-frei" und faehrt bewusst ohne
+    // Cookie-Banner. Nur-localStorage haelt das Versprechen und erkennt wiederkehrende
+    // Besucher genauso — der Cookie braeuchte es nur fuer Subdomain-uebergreifendes
+    // Tracking, das hier niemand will.
+    persistence: 'localStorage',
+  });
+
+  /* mwlEvent(name, props) — Feature-Nutzung zaehlen, damit das Analytics-Dashboard
+     zeigen kann WAS genutzt wird, nicht nur DASS jemand da war.
+     Regeln: nur Zaehl-Events, NIE Inhalte (keine Zeiten, Notizen, Namen, Betraege).
+     Properties duerfen nur Kategorien/Booleans/Zahlen sein. */
+  window.mwlEvent = function (name, props) {
+    try {
+      if (typeof posthog === 'undefined' || !posthog.capture) return;
+      posthog.capture(name, props || {});
+    } catch (e) { /* Tracking darf die App nie kippen */ }
+  };
+</script>
+<script>
+/* Maintenance-Gate: prüft /config/maintenance.json, leitet bei active:true auf /maintenance/ um.
+   Versteckt html bis Check resolved (max 1.2s), damit kein Flash. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c&&c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
+<script>
+/* Einmalige Migration alter TimeTracker-Keys (tt_) → MyWorkLog (mwl_). Läuft VOR dem
+   Pre-Apply/Init unten (das die Keys liest). Idempotent: nach der Migration gibt es keine
+   tt_-Keys mehr → bestehende User behalten Layout, Theme, Chart-Settings usw. */
+(function(){
+  try{
+    var m={
+      tt_dashboard_layout:'mwl_dashboard_layout', tt_chart_style:'mwl_chart_style',
+      tt_donut_style:'mwl_donut_style', tt_bar_chart_settings:'mwl_bar_chart_settings',
+      tt_entry_draft:'mwl_entry_draft', tt_donut_mode:'mwl_donut_mode',
+      tt_donut_settings:'mwl_donut_settings', tt_theme:'mwl_theme',
+      tt_last_streak_notification_date:'mwl_last_streak_notification_date',
+      tt_last_streak_notification_value:'mwl_last_streak_notification_value',
+      tt_milestone_100h:'mwl_milestone_100h', tt_milestone_50h:'mwl_milestone_50h',
+      tt_last_export:'mwl_last_export'
+    };
+    for(var o in m){ var v=localStorage.getItem(o); if(v===null) continue;
+      if(localStorage.getItem(m[o])===null) localStorage.setItem(m[o],v);
+      localStorage.removeItem(o); }
+    // Prefix-Keys: tt_export_reminder_shown_<datum>
+    for(var i=localStorage.length-1;i>=0;i--){ var k=localStorage.key(i);
+      if(k&&k.indexOf('tt_export_reminder_shown_')===0){
+        var nk='mwl_export_reminder_shown_'+k.slice(25);
+        if(localStorage.getItem(nk)===null) localStorage.setItem(nk,localStorage.getItem(k));
+        localStorage.removeItem(k); } }
+  }catch(e){}
+})();
+</script>
+<script>(function(){
+  // 1. Sidebar collapse pre-apply
+  try{if(localStorage.getItem('sidebar_collapsed')==='true'&&window.innerWidth>=1024){document.documentElement.setAttribute('data-sb-pre-col','');}}catch(e){}
+  // 2. Dashboard widget order pre-apply
+  try{
+    var tgd=JSON.parse(localStorage.getItem('tg_pro_data')||'null');
+    var wl=(tgd&&tgd.settings&&Array.isArray(tgd.settings.widgetLayout))?tgd.settings.widgetLayout:JSON.parse(localStorage.getItem('mwl_dashboard_layout')||'null');
+    if(Array.isArray(wl)&&wl.length){
+      var wR=wl.map(function(id,i){return '#dashboardContainer [data-item-id="'+id+'"]{order:'+i+'}'}).join('');
+      var wS=document.createElement('style');wS.id='cls-dash-order';wS.textContent=wR;document.head.appendChild(wS);
+    }
+  }catch(e){}
+  // 3. Nav section collapsed pre-apply
+  try{
+    var ss=JSON.parse(localStorage.getItem('sidebar_sections')||'{}');
+    var cg=Object.keys(ss).filter(function(k){return ss[k]===false;});
+    if(cg.length){
+      var sR=cg.map(function(k){return 'html[data-sb-pre-sec] .nav-section-group[data-group="'+k+'"]{max-height:0!important;opacity:0!important;transition:none!important}'}).join('');
+      var sS=document.createElement('style');sS.id='cls-nav-sec';sS.textContent=sR;document.head.appendChild(sS);
+      document.documentElement.setAttribute('data-sb-pre-sec','');
+    }
+  }catch(e){}
+  // 4. Pre-apply full-width for mobile/tablet (<1024px) — prevents margin-left shift when init-app.js adds full-width class
+  try{if(window.innerWidth<1024){document.documentElement.setAttribute('data-pre-fw','');}}catch(e){}
+  // 5. Lock sidebar+mainContent position before any CSS loads — eliminates CLS from flex-flow reflow
+  try{
+    var _sbC2=localStorage.getItem('sidebar_collapsed')==='true';
+    var _sbW=_sbC2?64:220;
+    var _ml2=window.innerWidth>=1024?_sbW:0;
+    var _css='.sidebar{position:fixed!important;top:0;left:0;height:100%!important;width:'+_sbW+'px!important;z-index:100!important}';
+    if(_ml2>0){_css+='#mainContent{margin-left:'+_ml2+'px!important;width:calc(100% - '+_ml2+'px)!important}';}
+    var _mS3=document.createElement('style');_mS3.id='cls-main-pos';_mS3.textContent=_css;document.head.appendChild(_mS3);
+  }catch(e){}
+})();</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+<title>MyWorkLog</title>
+<meta name="description" content="MyWorkLog: Die kostenlose Azubi Zeiterfassung App. Digitales Berichtsheft, Gleitzeitkonto, Überstundenrechner & Arbeitszeitnachweis für Auszubildende. 100% offline, kein Server, DSGVO-konform. Perfekt für Fachinformatiker, kaufmännische & gewerbliche Ausbildung. Mit KI-Assistent & Cloud Sync.">
+<meta name="keywords" content="Azubi Zeiterfassung, Berichtsheft digital, Gleitzeitkonto, Ausbildung Arbeitszeitnachweis, Überstunden Azubi, Arbeitszeit App, Berichtsheft App, Zeiterfassung Auszubildende, Gleitzeitkonto App, Ausbildungsnachweis digital, IHK Berichtsheft, Stundenkonto Azubi, Arbeitszeiten erfassen, Zeiterfassung kostenlos, Azubi App, Fachinformatiker Berichtsheft, Ausbildung Zeitkonto, PWA Zeiterfassung, Arbeitszeitrechner, Stempeluhr App, Ausbildungsnachweis IHK, Zeitkonto Azubi, Berichtsheft online, Arbeitszeit dokumentieren">
+<meta name="theme-color" content="#a855f7">
+<meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+<meta name="author" content="TechNova App Team">
+<meta name="color-scheme" content="dark light">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="bingbot" content="index, follow">
+<meta name="rating" content="general">
+<meta name="referrer" content="origin-when-cross-origin">
+<meta name="format-detection" content="telephone=no">
+<meta name="generator" content="MyWorkLog v3.11.0">
+
+<!-- ===== CANONICAL & ALTERNATE ===== -->
+<link rel="canonical" href="https://myworklog.de/">
+<link rel="alternate" hreflang="de" href="https://myworklog.de/">
+<link rel="alternate" hreflang="en" href="https://myworklog.de/en/">
+<link rel="alternate" hreflang="x-default" href="https://myworklog.de/">
+<link rel="sitemap" type="application/xml" href="/sitemap.xml">
+<link rel="author" href="/config/humans.txt">
+<link rel="license" href="/Rechtliches/LICENSE.md">
+
+<!-- ===== PWA MANIFEST & META TAGS ===== -->
+<link rel="manifest" href="/manifest.json" crossorigin="use-credentials">
+
+<!-- Favicons & Icons -->
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="icon" type="image/jpg" href="/Grafiken/image.jpg">
+<link rel="apple-touch-icon" sizes="180x180" href="/Grafiken/image.jpg">
+<meta name="msapplication-TileColor" content="#a855f7">
+<meta name="msapplication-TileImage" content="/Grafiken/image.jpg">
+<meta name="msapplication-config" content="./browserconfig.xml">
+
+<!-- iOS PWA Support -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MyWorkLog">
+
+<!-- Android PWA Support -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="MyWorkLog">
+
+<!-- Security Headers -->
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://esm.run https://unpkg.com https://static.cloudflareinsights.com https://eu.i.posthog.com https://eu-assets.i.posthog.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' data: https://fonts.gstatic.com;
+  img-src 'self' data: blob: https:;
+  connect-src 'self' https://*.supabase.co https://cloudflareinsights.com https://api.emailjs.com https://cdn.jsdelivr.net https://esm.run https://unpkg.com https://www.google.com https://nominatim.openstreetmap.org https://api.open-meteo.com https://*.myworklog.workers.dev https://*.webuntis.com https://eu.i.posthog.com https://eu-assets.i.posthog.com wss:;
+  media-src 'self' data:;
+  worker-src 'self' blob:;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+">
+
+<!-- ===== OpenGraph Meta Tags (Social Sharing — Facebook, LinkedIn, WhatsApp, Telegram, Discord) ===== -->
+<meta property="og:title" content="MyWorkLog – Kostenlose Azubi Zeiterfassung & Berichtsheft">
+<meta property="og:description" content="Kostenlose Zeiterfassung für Auszubildende: Digitales Berichtsheft, Gleitzeitkonto, Überstundenrechner & KI-Assistent. 100% offline, DSGVO-konform. Perfekt für Fachinformatiker & kaufmännische Ausbildung.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://myworklog.de/">
+<meta property="og:site_name" content="MyWorkLog">
+<meta property="og:locale" content="de_DE">
+<meta property="og:image" content="https://myworklog.de/Grafiken/icon-512.png">
+<meta property="og:image:secure_url" content="https://myworklog.de/Grafiken/icon-512.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:image:alt" content="MyWorkLog Dashboard – Zeiterfassung, Timer & KPI-Übersicht für Azubis">
+<meta property="og:determiner" content="">
+
+<!-- ===== Twitter/X Card Meta Tags ===== -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@TechNovaTeam">
+<meta name="twitter:creator" content="@TechNovaTeam">
+<meta name="twitter:title" content="MyWorkLog – Kostenlose Azubi Zeiterfassung & Berichtsheft">
+<meta name="twitter:description" content="Digitales Berichtsheft, Gleitzeitkonto, Überstundenrechner & KI-Assistent. Offline-first, DSGVO-konform. Für Fachinformatiker & kaufmännische Auszubildende.">
+<meta name="twitter:image" content="https://myworklog.de/Grafiken/icon-512.png">
+<meta name="twitter:image:alt" content="MyWorkLog Dashboard – Timer, Analytics & Zeiterfassung für Auszubildende">
+
+<!-- ===== JSON-LD Structured Data — Google Rich Results ===== -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://myworklog.de/#app",
+      "name": "MyWorkLog",
+      "alternateName": ["MyWorkLog Zeiterfassung", "MyWorkLog Berichtsheft", "Azubi Zeiterfassung App"],
+      "url": "https://myworklog.de/",
+      "description": "Kostenlose Zeiterfassung für Auszubildende: Digitales Berichtsheft, Gleitzeitkonto, Überstundenrechner, KI-Assistent & Cloud Sync. 100% offline, DSGVO-konform.",
+      "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "Zeiterfassung",
+      "operatingSystem": "Web, Windows, macOS, Linux, iOS, Android",
+      "browserRequirements": "Requires Chrome 90+, Firefox 88+, Safari 14+ or Edge 90+",
+      "softwareVersion": "3.5.3",
+      "datePublished": "2025-01-01",
+      "dateModified": "2026-03-10",
+      "inLanguage": "de",
+      "isAccessibleForFree": true,
+      "license": "https://opensource.org/licenses/MIT",
+      "installUrl": "https://myworklog.de/",
+      "image": {
+        "@type": "ImageObject",
+        "url": "https://myworklog.de/Grafiken/icon-512.png",
+        "width": 512,
+        "height": 512,
+        "caption": "MyWorkLog Dashboard – Zeiterfassung, Timer & KPI-Übersicht für Azubis"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock",
+        "description": "Komplett kostenlos – Open Source (MIT Lizenz)"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "50",
+        "bestRating": "5",
+        "worstRating": "1"
+      },
+      "featureList": [
+        "Live Timer mit Echtzeit-Anzeige",
+        "Digitales IHK Berichtsheft",
+        "Gleitzeitkonto & Überstundenrechner",
+        "Lokales LLM (on-device via WebGPU)",
+        "Cloud Sync via Supabase",
+        "PWA – Offline-first & installierbar",
+        "AES-256-GCM verschlüsselte Backups",
+        "P2P Synchronisation (WebRTC)",
+        "PDF, Excel, CSV & iCalendar Export",
+        "Dark Mode & Light Mode",
+        "DSGVO-konform",
+        "Aufgaben Manager mit Kategorien",
+        "Advanced Analytics mit 3D Visualisierung"
+      ],
+      "author": {
+        "@type": "Organization",
+        "@id": "https://myworklog.de/#organization"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "@id": "https://myworklog.de/#organization"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://myworklog.de/#organization",
+      "name": "TechNova App Team",
+      "url": "https://myworklog.de/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://myworklog.de/Grafiken/icon-192.png",
+        "width": 192,
+        "height": 192
+      },
+      "sameAs": [
+        "https://github.com/TechNova-App-Team/MyWorkLog"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "email": "support@technova-apps.de",
+        "availableLanguage": ["German", "English"]
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://myworklog.de/#website",
+      "name": "MyWorkLog",
+      "url": "https://myworklog.de/",
+      "description": "Kostenlose Azubi Zeiterfassung mit digitalem Berichtsheft, Gleitzeitkonto & KI-Assistent",
+      "inLanguage": "de",
+      "publisher": {
+        "@type": "Organization",
+        "@id": "https://myworklog.de/#organization"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://myworklog.de/?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://myworklog.de/#webpage",
+      "url": "https://myworklog.de/",
+      "name": "MyWorkLog – Kostenlose Azubi Zeiterfassung, Berichtsheft & Gleitzeitkonto",
+      "description": "MyWorkLog: Die kostenlose Azubi Zeiterfassung App. Digitales Berichtsheft, Gleitzeitkonto, Überstundenrechner & KI-Assistent. Offline, DSGVO-konform.",
+      "isPartOf": { "@id": "https://myworklog.de/#website" },
+      "about": { "@id": "https://myworklog.de/#app" },
+      "inLanguage": "de",
+      "datePublished": "2025-01-01",
+      "dateModified": "2026-03-10",
+      "breadcrumb": {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://myworklog.de/"
+          }
+        ]
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Was ist MyWorkLog?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "MyWorkLog ist eine kostenlose Progressive Web App (PWA) für Azubi-Zeiterfassung. Sie bietet digitales Berichtsheft, Gleitzeitkonto, Überstundenrechner, KI-Assistenten und Cloud-Sync. Funktioniert 100% offline und ist DSGVO-konform."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Ist MyWorkLog kostenlos?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ja, MyWorkLog ist komplett kostenlos und Open Source (MIT Lizenz). Keine versteckten Kosten, keine Werbung. Alle Daten bleiben lokal auf deinem Gerät."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Funktioniert MyWorkLog offline?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ja! MyWorkLog ist eine Offline-First PWA mit Service Worker. Einmal geladen funktioniert die App komplett ohne Internetverbindung. Daten werden lokal im Browser gespeichert."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Ist MyWorkLog DSGVO-konform?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ja, MyWorkLog speichert alle Daten standardmäßig nur lokal auf deinem Gerät (LocalStorage). Cloud-Sync ist optional und nur mit ausdrücklicher Einwilligung. Keine Tracking-Cookies, keine Werbung."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Kann ich MyWorkLog auf meinem Handy installieren?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ja! MyWorkLog ist eine installierbare PWA. Öffne myworklog.de in Chrome oder Safari, tippe auf 'Zum Startbildschirm hinzufügen' – fertig. Die App läuft dann wie eine native App."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      "name": "MyWorkLog Source Code",
+      "codeRepository": "https://github.com/TechNova-App-Team/MyWorkLog",
+      "programmingLanguage": ["JavaScript", "HTML", "CSS"],
+      "runtimePlatform": "Web Browser",
+      "license": "https://opensource.org/licenses/MIT",
+      "author": {
+        "@type": "Organization",
+        "@id": "https://myworklog.de/#organization"
+      }
+    }
+  ]
+}
+</script>
+
+<!-- Preload External CDN Resources (für bessere Performance) -->
+<link rel="preload" as="script" href="/Assets/js/qrcode.min.js?v=3.19.6">
+<!-- Chart.js: lazy-loaded on demand by analytics-pro-engine -->
+
+
+
+<!-- Local Scripts (defer für korrektes Laden) -->
+<script defer src="/Assets/js/version-loader.js?v=3.19.6"></script>
+<script defer src="/Assets/js/shortcuts.js?v=3.19.6"></script>
+<script defer src="/Assets/js/touch-mobile-optimizations.js?v=3.19.6"></script>
+<script defer src="/Assets/js/pinch-zoom.js?v=3.19.6"></script>
+<!-- External CDN Scripts (nur was beim Start wirklich gebraucht wird) -->
+<script defer src="/Assets/js/qrcode.min.js?v=3.19.6"></script>
+<!-- Three.js, SimplePeer, jsPDF, html2canvas, Chart.js: lazy-loaded on demand -->
+<!-- Cloudflare Web Analytics (Lazy: 2s nach load → Lighthouse sieht die deprecated APIs nicht) -->
+<!-- Auf Localhost gar nicht laden: CF-RUM rejected 127.0.0.1:<port> per CORS und spammt die Console -->
+<script>
+(function() {
+  var h = location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '' || location.protocol === 'file:') return;
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      var s = document.createElement('script');
+      s.defer = true;
+      s.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+      s.setAttribute('data-cf-beacon', '{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');
+      document.body.appendChild(s);
+    }, 2000);
+  });
+})();
+</script>
+<!-- End Cloudflare Web Analytics -->
+<!-- EmailJS SDK (defer: nicht beim Start benötigt) -->
+<script defer src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" id="emailjs-sdk"></script>
+<!-- DOMPurify - XSS Sanitizer (defer: safeHTML hat Null-Check) -->
+<script defer src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
+<script>
+/** Safe innerHTML helper – sanitizes HTML before DOM injection */
+function safeHTML(html) { return typeof DOMPurify !== 'undefined' ? DOMPurify.sanitize(html, { USE_PROFILES: { html: true } }) : ''; }
+/** Escape user text for safe interpolation into HTML templates */
+function esc(s) { var d = document.createElement('div'); d.appendChild(document.createTextNode(s == null ? '' : String(s))); return d.innerHTML; }
+</script>
+
+<!-- Console Gate: Production-silent, dev-mode via localStorage -->
+<script>
+(function(){
+    var n=function(){};
+    if(localStorage.getItem('__dev')!=='1'){
+        console.log=n;console.info=n;console.debug=n;console.warn=n;console.trace=n;
+    }
+})();
+</script>
+
+<!-- Supabase JS: lazy-loaded by supabase-config.js only when session exists -->
+<!-- Supabase Integration (NACH Supabase JS) -->
+<script defer src="/Assets/js/Cloud/supabase-integration.js?v=3.19.6"></script>
+<script defer src="/Assets/js/Cloud/supabase-ui.js?v=3.19.6"></script>
+<!-- Deine Config (ZULETZT, optional - in .gitignore für Sicherheit) -->
+<script defer src="/config/supabase-config.js"></script>
+
+
+    <!-- ═══ Component CSS (externalized) ═══ -->
+    <!-- Critical — block render until loaded -->
+    <link rel="stylesheet" href="/components/core/core.css?v=3.19.6">
+    <link rel="stylesheet" href="/components/core/alerts.css?v=3.19.6">
+    <link rel="stylesheet" href="/components/dashboard/dashboard.css?v=3.19.6">
+    <link rel="stylesheet" href="/components/dashboard/weather-live.css?v=3.19.6">
+    <link rel="stylesheet" href="/components/modals/modals.css?v=3.19.6">
+    <link rel="stylesheet" href="/components/sidebar/sidebar.css?v=3.19.6">
+    <link rel="stylesheet" href="/components/core/misc.css?v=3.19.6">
+    <link rel="stylesheet" href="/components/mobile-nav/mobile-nav.css?v=3.19.6">
+    <link rel="stylesheet" href="/components/core/layout-fix.css?v=3.19.6">
+    <!-- Non-critical — async load (view-specific, not needed for first paint) -->
+    <link rel="stylesheet" href="/components/performance/performance.css?v=3.19.6" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/performance/performance.css?v=3.19.6"></noscript>
+    <link rel="stylesheet" href="/components/ihk/ihk.css?v=3.19.6" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/ihk/ihk.css?v=3.19.6"></noscript>
+    <link rel="stylesheet" href="/components/school/school.css?v=3.19.6" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/school/school.css?v=3.19.6"></noscript>
+    <link rel="stylesheet" href="/components/goals/goals.css?v=3.19.6" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/goals/goals.css?v=3.19.6"></noscript>
+    <link rel="stylesheet" href="/components/weekview/weekview.css?v=3.19.6" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/weekview/weekview.css?v=3.19.6"></noscript>
+    <link rel="stylesheet" href="/components/history/history.css?v=3.19.6" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/history/history.css?v=3.19.6"></noscript>
+    <link rel="stylesheet" href="/components/analytics-pro/analytics-pro.css?v=3.19.6" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/analytics-pro/analytics-pro.css?v=3.19.6"></noscript>
+    <link rel="stylesheet" href="/components/nfc/nfc.css?v=3.19.6" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/nfc/nfc.css?v=3.19.6"></noscript>
+    <style>.nfc-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;z-index:9998;transition:opacity 0.25s ease}.nfc-overlay.active{opacity:1;pointer-events:all}</style>
+    <link rel="stylesheet" href="/components/settings/settings.css?v=3.19.6" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/settings/settings.css?v=3.19.6"></noscript>
+    <link rel="stylesheet" href="/components/settings/settings-inline.css?v=3.19.6" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/settings/settings-inline.css?v=3.19.6"></noscript>
+    <link rel="stylesheet" href="/components/settings/custom-tab.css?v=3.19.6" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/settings/custom-tab.css?v=3.19.6"></noscript>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=3.19.6" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=3.19.6"></noscript>
+    <link rel="stylesheet" href="/components/untis/untis.css?v=3.19.6">
+    <!-- Google Fonts: preconnect + async (DM Serif Display + Plus Jakarta Sans for support view) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
+
+</head>
+<body>
+    <!-- Network Status Indicator -->
+    <div class="net-status" id="netStatus">
+        <div class="net-status-pill" id="netStatusPill" onclick="networkMonitor.togglePanel()">
+            <div class="net-status-dot online" id="netDot"></div>
+            <span class="net-status-label" id="netLabel">Online</span>
+            <span class="net-status-latency" id="netLatency"></span>
+            <div class="net-queue-badge" id="netQueueBadge" style="display:none;">0</div>
+        </div>
+        <div class="net-status-panel" id="netPanel">
+            <div class="net-panel-title">
+                <span>Netzwerk</span>
+                <span style="cursor:pointer;color:#64748b;font-size:15px;" onclick="networkMonitor.togglePanel()">&times;</span>
+            </div>
+            <div class="net-panel-row"><span class="net-panel-key">Status</span><span class="net-panel-val" id="npStatus">Online</span></div>
+            <div class="net-panel-row"><span class="net-panel-key">Latenz</span><span class="net-panel-val" id="npLatency">&mdash;</span></div>
+            <div class="net-panel-row"><span class="net-panel-key">Verbindung</span><span class="net-panel-val" id="npConnection">&mdash;</span></div>
+            <div class="net-panel-row"><span class="net-panel-key">Downlink</span><span class="net-panel-val" id="npDownlink">&mdash;</span></div>
+            <div class="net-panel-row"><span class="net-panel-key">Online seit</span><span class="net-panel-val" id="npUptime">&mdash;</span></div>
+            <div class="net-panel-row"><span class="net-panel-key">Letzter Check</span><span class="net-panel-val" id="npLastCheck">&mdash;</span></div>
+            <div class="net-panel-row"><span class="net-panel-key">Qualität</span><span class="net-panel-val" id="npQuality">&mdash;</span></div>
+            <div class="net-quality-bar"><div class="net-quality-fill" id="npQualityBar" style="width:100%;background:#10b981;"></div></div>
+            <div class="net-panel-row" id="npQueueRow" style="display:none;"><span class="net-panel-key">Offline-Queue</span><span class="net-panel-val" id="npQueue">0 ausstehend</span></div>
+            <div style="margin-top:10px;display:flex;gap:6px;">
+                <button style="flex:1;padding:6px 0;font-size:10.5px;background:rgba(255,255,255,0.04);color:#94a3b8;border:1px solid rgba(255,255,255,0.06);border-radius:7px;cursor:pointer;font-weight:600;font-family:var(--font-main);transition:all 0.15s;" onclick="networkMonitor.checkNow()" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">Jetzt prüfen</button>
+                <button style="flex:1;padding:6px 0;font-size:10.5px;background:rgba(255,255,255,0.04);color:#94a3b8;border:1px solid rgba(255,255,255,0.06);border-radius:7px;cursor:pointer;font-weight:600;font-family:var(--font-main);transition:all 0.15s;" onclick="networkMonitor.showLog()" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">Verlauf</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Toast -->
+    <div class="upd-toast" id="updateBanner">
+        <div class="upd-toast-card">
+            <div class="upd-toast-top">
+                <div class="upd-toast-icon">
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <div class="upd-toast-body">
+                    <p class="upd-toast-title">Update verfügbar</p>
+                    <p class="upd-toast-desc">Eine neue Version ist bereit.</p>
+                </div>
+                <button class="upd-toast-close" onclick="updateManager.dismiss()">&times;</button>
+            </div>
+            <div class="upd-toast-btns">
+                <button class="upd-toast-btn upd-toast-btn-secondary" onclick="updateManager.dismiss()">Später</button>
+                <button class="upd-toast-btn upd-toast-btn-primary" onclick="updateManager.apply()">Jetzt aktualisieren</button>
+            </div>
+        </div>
+    </div>
+
+<!-- Fallback für deaktiviertes JavaScript -->
+<noscript>
+    <div style="background:#1a1a2e;color:#f8fafc;padding:3rem;text-align:center;font-family:system-ui;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <h1 style="font-size:2rem;margin-bottom:1rem;background:linear-gradient(135deg,var(--primary),#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">MyWorkLog</h1>
+        <p style="font-size:1.1rem;color:#94a3b8;max-width:500px;">Diese App benötigt JavaScript, um zu funktionieren. Bitte aktiviere JavaScript in deinen Browser-Einstellungen und lade die Seite neu.</p>
+    </div>
+</noscript>
+
+<!-- Skip-to-content für Barrierefreiheit -->
+<a href="#mainContent" class="skip-link">Zum Inhalt springen</a>
+
+<!-- VIDEO INTRO -->
+<div id="pro-intro" style="display: none;">
+  <div class="vi-scroll">
+    <div class="vi-stick">
+
+      <!-- Video Background -->
+      <video class="vi-bg" muted playsinline preload="auto" id="viBgVid"
+        poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1' height='1'%3E%3Crect fill='%23080810' width='1' height='1'/%3E%3C/svg%3E">
+        <source src="/Grafiken/intro.mp4" type="video/mp4">
+      </video>
+      <div class="vi-dim"></div>
+
+      <!-- S1: BRAND SLAM -->
+      <div class="vi-s vi-s-slam" data-s="0" data-e="0.13">
+        <h1 class="vi-logo">MyWorkLog</h1>
+        <div class="vi-sub-row"><span class="vi-typed" id="viTyped"></span><span class="vi-caret">|</span></div>
+        <span class="vi-ver">v3.11.0</span>
+      </div>
+
+      <!-- S2: LIVE CODE -->
+      <div class="vi-s" data-s="0.12" data-e="0.29">
+        <div class="vi-box">
+          <div class="vi-box-bar">
+            <span class="vi-dot" style="background:#ff5f57"></span>
+            <span class="vi-dot" style="background:#febc2e"></span>
+            <span class="vi-dot" style="background:#28c840"></span>
+            <span class="vi-box-tab">&#128196; myworklog.config.js</span>
+          </div>
+          <div class="vi-box-body vi-code">
+            <div class="vi-cl" style="transition-delay:.0s"><span class="vi-ln"> 1</span> <span class="vi-kw">const</span> app = {</div>
+            <div class="vi-cl" style="transition-delay:.1s"><span class="vi-ln"> 2</span> &nbsp;&nbsp;name: <span class="vi-str">'MyWorkLog'</span>,</div>
+            <div class="vi-cl" style="transition-delay:.19s"><span class="vi-ln"> 3</span> &nbsp;&nbsp;version: <span class="vi-str">'3.11.0'</span>,</div>
+            <div class="vi-cl" style="transition-delay:.28s"><span class="vi-ln"> 4</span> &nbsp;&nbsp;lines: <span class="vi-num">120.558</span>,</div>
+            <div class="vi-cl" style="transition-delay:.37s"><span class="vi-ln"> 5</span> &nbsp;&nbsp;features: <span class="vi-num">202</span>,</div>
+            <div class="vi-cl" style="transition-delay:.46s"><span class="vi-ln"> 6</span> &nbsp;&nbsp;frameworks: <span class="vi-num">0</span>,</div>
+            <div class="vi-cl" style="transition-delay:.64s"><span class="vi-ln"> 8</span> &nbsp;&nbsp;ghostMode: <span class="vi-bool">true</span>,</div>
+            <div class="vi-cl" style="transition-delay:.73s"><span class="vi-ln"> 9</span> &nbsp;&nbsp;offline: <span class="vi-bool">true</span>,</div>
+            <div class="vi-cl" style="transition-delay:.82s"><span class="vi-ln">10</span> &nbsp;&nbsp;encryption: <span class="vi-str">'AES-256-GCM'</span></div>
+            <div class="vi-cl" style="transition-delay:.91s"><span class="vi-ln">11</span> };</div>
+            <div class="vi-cl" style="transition-delay:1s"><span class="vi-ln">12</span> <span class="vi-blink">&#9608;</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- S3: KILLER STATS -->
+      <div class="vi-s" data-s="0.28" data-e="0.43">
+        <div class="vi-stats">
+          <div class="vi-stat" style="transition-delay:0s">
+            <div class="vi-stat-row"><span class="vi-stat-num" data-target="120558">0</span><span class="vi-stat-suf">+</span></div>
+            <span class="vi-stat-lbl">Zeilen Code</span>
+            <span class="vi-stat-tag">Pure Vanilla JS &mdash; kein Framework.</span>
+          </div>
+          <div class="vi-stat" style="transition-delay:.2s">
+            <div class="vi-stat-row"><span class="vi-stat-num" data-target="568">0</span><span class="vi-stat-suf"></span></div>
+            <span class="vi-stat-lbl">Commits</span>
+            <span class="vi-stat-tag">Continuous Development</span>
+          </div>
+          <div class="vi-stat" style="transition-delay:.4s">
+            <div class="vi-stat-row"><span class="vi-stat-num" data-target="100">0</span><span class="vi-stat-suf">%</span></div>
+            <span class="vi-stat-lbl">Offline</span>
+            <span class="vi-stat-tag">Kein Internet? Kein Problem.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- S4: GHOST MODE WOW -->
+      <div class="vi-s" data-s="0.42" data-e="0.57">
+        <div class="vi-ghost">
+          <p class="vi-ghost-q" style="transition-delay:0s">Dein Chef kommt? &#128064;</p>
+          <div class="vi-ghost-demo" style="transition-delay:.35s">
+            <div class="vi-ghost-fake">
+              <div class="vi-ghost-top">&#128202; Arbeitszeiterfassung_2026.xlsx &mdash; Microsoft Excel</div>
+              <div class="vi-ghost-grid">
+                <div class="vi-gh"></div><div class="vi-gh">A</div><div class="vi-gh">B</div><div class="vi-gh">C</div><div class="vi-gh">D</div>
+                <div class="vi-gr">1</div><div class="vi-gc">Montag</div><div class="vi-gc">08:00</div><div class="vi-gc">16:30</div><div class="vi-gc">8.5h</div>
+                <div class="vi-gr">2</div><div class="vi-gc">Dienstag</div><div class="vi-gc">07:45</div><div class="vi-gc">16:15</div><div class="vi-gc">8.5h</div>
+                <div class="vi-gr">3</div><div class="vi-gc">Mittwoch</div><div class="vi-gc">08:15</div><div class="vi-gc">16:45</div><div class="vi-gc">8.5h</div>
+              </div>
+            </div>
+          </div>
+          <p class="vi-ghost-p" style="transition-delay:.7s">One Click. Alles weg. Dein Geheimnis. &#128556;</p>
+        </div>
+      </div>
+
+      <!-- S5: FEATURE BARRAGE -->
+      <div class="vi-s" data-s="0.56" data-e="0.72">
+        <div class="vi-feat">
+          <p class="vi-feat-title" style="transition-delay:0s">Was steckt drin?</p>
+          <div class="vi-pills">
+            <span class="vi-pill" style="transition-delay:.12s">&#128260; P2P Sync</span>
+            <span class="vi-pill" style="transition-delay:.18s">&#128274; AES-256 Backups</span>
+            <span class="vi-pill" style="transition-delay:.24s">&#127795; RPG Skill-Tree</span>
+            <span class="vi-pill" style="transition-delay:.30s">&#128203; Berichtsheft</span>
+            <span class="vi-pill" style="transition-delay:.36s">&#9878;&#65039; Rechte-Checker</span>
+            <span class="vi-pill" style="transition-delay:.42s">&#127908; Spracheingabe</span>
+            <span class="vi-pill" style="transition-delay:.48s">&#128202; Analytics Pro</span>
+            <span class="vi-pill" style="transition-delay:.54s">&#127813; Pomodoro</span>
+            <span class="vi-pill" style="transition-delay:.60s">&#128188; Vertrags-Manager</span>
+            <span class="vi-pill" style="transition-delay:.66s">&#9729;&#65039; Cloud Sync</span>
+            <span class="vi-pill" style="transition-delay:.72s">&#128197; iCal Export</span>
+            <span class="vi-pill" style="transition-delay:.78s">&#127891; IHK Lernkarten</span>
+            <span class="vi-pill" style="transition-delay:.84s">🕐 Live Zeittracking</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- S6: TERMINAL FLEX -->
+      <div class="vi-s" data-s="0.71" data-e="0.86">
+        <div class="vi-box">
+          <div class="vi-box-bar">
+            <span class="vi-dot" style="background:#ff5f57"></span>
+            <span class="vi-dot" style="background:#febc2e"></span>
+            <span class="vi-dot" style="background:#28c840"></span>
+            <span class="vi-box-tab">terminal &mdash; performance</span>
+          </div>
+          <div class="vi-box-body vi-term">
+            <p class="vi-tl" style="transition-delay:.0s"><span class="vi-pr">$</span> lighthouse --perf</p>
+            <p class="vi-tl vi-out" style="transition-delay:.1s">Performance: <span class="vi-g">98</span>/100</p>
+            <p class="vi-tl" style="transition-delay:.22s"><span class="vi-pr">$</span> du -sh MyWorkLog/</p>
+            <p class="vi-tl vi-out" style="transition-delay:.32s">2.4M total &mdash; zero node_modules</p>
+            <p class="vi-tl" style="transition-delay:.44s"><span class="vi-pr">$</span> cat security.log</p>
+            <p class="vi-tl vi-out" style="transition-delay:.52s">&#10003; AES-256-GCM encryption</p>
+            <p class="vi-tl vi-out" style="transition-delay:.58s">&#10003; DOMPurify XSS protection</p>
+            <p class="vi-tl vi-out" style="transition-delay:.64s">&#10003; Strict CSP headers</p>
+            <p class="vi-tl" style="transition-delay:.76s"><span class="vi-pr">$</span> echo "status"</p>
+            <p class="vi-tl vi-out vi-g" style="transition-delay:.86s">&#10003; All systems operational</p>
+            <p class="vi-blink">&#9608;</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- S7: CTA SLAM -->
+      <div class="vi-s vi-s-slam" data-s="0.85" data-e="1.0">
+        <div class="vi-end">
+          <p class="vi-end-t">Bereit?</p>
+          <button class="vi-btn" onclick="finishIntro()">
+            <span class="vi-btn-text">&nbsp;Los geht's&nbsp;</span>
+            <span aria-hidden="true" class="vi-btn-hover">&nbsp;Los geht's&nbsp;</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress -->
+      <div class="vi-prog"><div class="vi-prog-bar" id="viProgBar"></div></div>
+
+      <!-- Skip -->
+      <button class="vi-skip" onclick="finishIntro()" aria-label="Skip Intro">&#10005;</button>
+    </div>
+  </div>
+
+    <link rel="stylesheet" href="/components/landing/landing.css?v=3.19.6">
+
+    <script defer src="/components/landing/landing.js?v=3.19.6"></script>
+</div>
+
+
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- WIDGET MANAGER MODAL (z-Index ueberlagert Settings) -->
+    <div id="newWidgetManagerModal" class="wm-modal" role="dialog" aria-modal="true" aria-label="Widgets verwalten" style="display:none;">
+        <div class="wm-backdrop" onclick="closeNewWidgetManager()"></div>
+        <div class="wm-sheet">
+            <div class="wm-head">
+                <div class="wm-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+                    <span>Widgets verwalten</span>
+                </div>
+                <button class="wm-close" onclick="closeNewWidgetManager()" aria-label="Schließen">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="wm-body">
+                <div class="wm-section">
+                    <div class="wm-section-head">
+                        <span class="wm-section-title">Aktive Widgets</span>
+                        <span class="wm-section-meta"><span id="wmCurrentCount">0</span> aktiv</span>
+                    </div>
+                    <div class="wm-list" id="newCurrentWidgets"></div>
+                </div>
+                <div class="wm-section">
+                    <div class="wm-section-head">
+                        <span class="wm-section-title">Verfügbare Widgets</span>
+                        <span class="wm-section-meta"><span id="wmAvailCount">0</span> wählbar</span>
+                    </div>
+                    <div class="wm-list" id="newAvailableWidgets"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GHOST MODE / BOSS KEY OVERLAY -->
+    <div id="ghostModeOverlay">
+        <div class="ghost-toolbar">
+            <span>Datei</span><span>Start</span><span>Einfügen</span><span>Seitenlayout</span><span>Formeln</span><span>Daten</span><span>Überprüfen</span><span>Ansicht</span>
+            <span class="ghost-title">Arbeitszeiterfassung_2026.xlsx — Microsoft Excel</span>
+        </div>
+        <div class="ghost-ribbon">
+            <button class="ghost-ribbon-btn">📋 Einfügen</button>
+            <div class="ghost-ribbon-sep"></div>
+            <button class="ghost-ribbon-btn"><b>F</b></button>
+            <button class="ghost-ribbon-btn"><i>K</i></button>
+            <button class="ghost-ribbon-btn"><u>U</u></button>
+            <div class="ghost-ribbon-sep"></div>
+            <button class="ghost-ribbon-btn">Σ AutoSumme</button>
+            <button class="ghost-ribbon-btn">↕ Sortieren</button>
+            <div class="ghost-ribbon-sep"></div>
+            <button class="ghost-ribbon-btn">% Prozent</button>
+            <button class="ghost-ribbon-btn">.00 Dezimal</button>
+        </div>
+        <div class="ghost-formula-bar">
+            <span class="ghost-cell-ref">D4</span>
+            <span class="ghost-fx">fx</span>
+            <input class="ghost-formula-input" value="=SUMME(D2:D3)" readonly tabindex="-1">
+        </div>
+        <div class="ghost-sheet-wrap">
+            <table class="ghost-sheet" id="ghostSheetTable"></table>
+        </div>
+        <div class="ghost-statusbar">
+            <span>Bereit</span>
+            <span>Mittelwert: 7,85 &nbsp; Anzahl: 24 &nbsp; Summe: 188,4</span>
+        </div>
+    </div>
+
+    <!-- Ghost Mode: VS Code Skin -->
+    <div id="ghostModeVSCode">
+        <div class="vsc-titlebar">
+            <div class="vsc-titlebar-left">
+                <span class="vsc-menu-item">File</span>
+                <span class="vsc-menu-item">Edit</span>
+                <span class="vsc-menu-item">Selection</span>
+                <span class="vsc-menu-item">View</span>
+                <span class="vsc-menu-item">Go</span>
+                <span class="vsc-menu-item">Run</span>
+                <span class="vsc-menu-item">Terminal</span>
+                <span class="vsc-menu-item">Help</span>
+            </div>
+            <div class="vsc-titlebar-center">server-migration.tsx — MyProject</div>
+            <div class="vsc-titlebar-right">
+                <span class="vsc-win-btn">─</span>
+                <span class="vsc-win-btn">□</span>
+                <span class="vsc-win-btn vsc-close">✕</span>
+            </div>
+        </div>
+        <div class="vsc-main">
+            <div class="vsc-activitybar">
+                <div class="vsc-act-icon vsc-act-active">📄</div>
+                <div class="vsc-act-icon">🔍</div>
+                <div class="vsc-act-icon">🔀</div>
+                <div class="vsc-act-icon">🐛</div>
+                <div class="vsc-act-icon">📦</div>
+                <div class="vsc-act-icon" style="margin-top:auto;">⚙️</div>
+            </div>
+            <div class="vsc-sidebar">
+                <div class="vsc-sidebar-title">EXPLORER</div>
+                <div class="vsc-tree">
+                    <div class="vsc-tree-folder">▾ src</div>
+                    <div class="vsc-tree-file vsc-tree-active">&nbsp;&nbsp;server-migration.tsx</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;api-controller.ts</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;database-service.ts</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;auth-middleware.ts</div>
+                    <div class="vsc-tree-folder">▸ components</div>
+                    <div class="vsc-tree-folder">▸ hooks</div>
+                    <div class="vsc-tree-folder">▸ utils</div>
+                    <div class="vsc-tree-folder">▾ config</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;webpack.config.js</div>
+                    <div class="vsc-tree-file">&nbsp;&nbsp;tsconfig.json</div>
+                    <div class="vsc-tree-folder">▸ tests</div>
+                    <div class="vsc-tree-folder">▸ node_modules</div>
+                </div>
+            </div>
+            <div class="vsc-editor-area">
+                <div class="vsc-tabs">
+                    <div class="vsc-tab vsc-tab-active"><span class="vsc-tab-icon">TS</span> server-migration.tsx <span class="vsc-tab-close">✕</span></div>
+                    <div class="vsc-tab"><span class="vsc-tab-icon">TS</span> api-controller.ts</div>
+                    <div class="vsc-tab"><span class="vsc-tab-icon">JS</span> webpack.config.js</div>
+                </div>
+                <div class="vsc-editor" id="vscEditorContent"></div>
+            </div>
+        </div>
+        <div class="vsc-statusbar">
+            <div class="vsc-sb-left">
+                <span class="vsc-sb-item vsc-sb-branch">🔀 main</span>
+                <span class="vsc-sb-item">0 ⚠️ 0 ❌</span>
+            </div>
+            <div class="vsc-sb-right">
+                <span class="vsc-sb-item">Ln 42, Col 18</span>
+                <span class="vsc-sb-item">Spaces: 2</span>
+                <span class="vsc-sb-item">UTF-8</span>
+                <span class="vsc-sb-item">TypeScript React</span>
+                <span class="vsc-sb-item">Prettier</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panic Button — HIDDEN by default, only shown via JS after intro -->
+    <button class="ghost-panic-btn" id="ghostPanicBtn" onclick="toggleGhostMode()" aria-label="Ghost Mode" style="display:none">
+        <svg class="ghost-panic-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 9a7 7 0 0 1 14 0v11l-2-2-2 2-2-2-2 2-2-2-2 2-2-2z"/>
+            <circle cx="9.5" cy="10" r="1" fill="currentColor" stroke="none"/>
+            <circle cx="14.5" cy="10" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+        <span class="ghost-panic-tooltip">Ghost Mode <kbd>Strg+Shift+K</kbd></span>
+    </button>
+
+    <!-- PWA INSTALL BANNER -->
+    <div class="pwa-install-banner" id="pwaInstallBanner">
+        <div class="pwa-install-banner-inner">
+            <div class="pwa-install-icon">📲</div>
+            <div class="pwa-install-text">
+                <strong>MyWorkLog installieren</strong>
+                <span>Als App auf dem Homescreen — schneller, offline, kein Browser nötig</span>
+                <div class="pwa-ios-steps" id="pwaIOSHint" style="display:none;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    Tippe auf <strong style="margin:0 3px;">Teilen</strong> → <strong style="margin:0 3px;">Zum Home-Bildschirm</strong>
+                </div>
+            </div>
+            <div class="pwa-install-actions">
+                <button class="pwa-install-btn pwa-install-btn-primary" id="pwaInstallBtn" onclick="pwaInstallBannerInstall()">Installieren</button>
+                <button class="pwa-install-btn pwa-install-btn-dismiss" onclick="pwaInstallBannerDismiss()">Später</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMMAND PALETTE -->
+    <div class="cmd-palette-overlay" id="cmdPalette">
+        <div class="cmd-palette">
+            <div class="cmd-palette-input-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="cmd-palette-input" id="cmdPaletteInput" type="text" placeholder="Seite suchen, navigieren…" autocomplete="off" spellcheck="false">
+                <button class="cmd-palette-close-btn" onclick="closeCmdPalette()" title="Schließen" aria-label="Suche schließen">✕</button>
+            </div>
+            <div class="cmd-palette-results" id="cmdPaletteResults"></div>
+            <div class="cmd-palette-footer">
+                <span><kbd>↑</kbd><kbd>↓</kbd> navigieren</span>
+                <span><kbd>↵</kbd> öffnen</span>
+                <span><kbd>esc</kbd> schließen</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- @include components/sidebar/sidebar.html -->
+
+    <!-- Sidebar floating expand button (shown when sidebar is collapsed on desktop) -->
+    <button class="sidebar-expand-float" id="sidebarExpandFloat" onclick="toggleSidebarCollapse()" title="Sidebar ausklappen (Ctrl+B)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M13 9l3 3-3 3"/></svg>
+    </button>
+
+    <!-- Ambient Background Orbs -->
+    <div class="ambient-orbs" id="ambientOrbs" aria-hidden="true">
+        <div class="ambient-orb orb-1"></div>
+        <div class="ambient-orb orb-2"></div>
+        <div class="ambient-orb orb-3"></div>
+    </div>
+
+    <main class="main" id="mainContent">
+        <button id="mobileMenuToggle" onclick="toggleSidebar()">☰</button>
+        
+        <header class="header">
+            <div>
+                <div class="greeting" id="userGreeting">Willkommen</div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <h1 class="page-title">Übersicht</h1>
+                    <button class="help-slim" title="Hilfe" onclick="openQuickHelp('global')">?</button>
+                </div>
+            </div>
+            <div class="date-badge" id="currentDate"></div>
+<script>(function(){var d=new Date();var wd=d.toLocaleDateString('de-DE',{weekday:'short'}).replace('.','').toUpperCase();var dm=d.toLocaleDateString('de-DE',{day:'numeric',month:'short'}).replace('.','').trim();document.getElementById('currentDate').innerHTML='<span class="date-badge__day">'+wd+'</span><span class="date-badge__sep">/</span><span class="date-badge__date">'+dm+'</span>';})();</script>
+        </header>
+
+        <!-- @include components/dashboard/dashboard.html -->
+
+        <!-- @include components/performance/performance.html -->
+        
+
+        <!-- @include components/ihk/ihk.html -->
+        
+        <!-- @include components/school/school.html -->
+        
+        <!-- @include components/goals/goals.html -->
+
+        <!-- @include components/yearview/yearview.html -->
+
+        <!-- @include components/monthcompare/monthcompare.html -->
+
+        <!-- ============================================ -->
+        <!-- WOCHENANSICHT TAB -->
+        <!-- ============================================ -->
+        <!-- @include components/weekview/weekview.html -->
+
+        <!-- @include components/history/history.html -->
+
+
+        <!-- @include components/support/support.html -->
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- ──  ANALYTICS PRO — Premium Data Viz Suite  ── -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <!-- @include components/analytics-pro/analytics-pro.html -->
+
+    </main>
+
+
+    <!-- DSGVO/Privacy Modal -->
+    <!-- @include components/modals/modals.html -->
+
+    <!-- ═══ Component JS (externalized) ═══ -->
+    <!-- Core Module (aufgeteilt in logische Dateien) -->
+    <script defer src="/components/core/state-config.js?v=3.19.6"></script>
+    <script defer src="/components/core/modal-dialogs.js?v=3.19.6"></script>
+    <script defer src="/components/core/utils.js?v=3.19.6"></script>
+    <script defer src="/components/jobs/jobs.js?v=3.19.6"></script>
+    <script defer src="/components/core/storage-save.js?v=3.19.6"></script>
+    <script defer src="/components/core/entry-edit.js?v=3.19.6"></script>
+    <script defer src="/components/core/trash.js?v=3.19.6"></script>
+    <script defer src="/components/core/tab-navigation.js?v=3.19.6"></script>
+    <script defer src="/components/core/school-grades.js?v=3.19.6"></script>
+    <script defer src="/components/core/timer.js?v=3.19.6"></script>
+    <script defer src="/components/core/vacation-holidays.js?v=3.19.6"></script>
+    <script defer src="/components/core/weather.js?v=3.19.6"></script>
+    <script defer src="/components/core/dashboard-ui.js?v=3.19.6"></script>
+    <script defer src="/components/core/charts.js?v=3.19.6"></script>
+    <script defer src="/components/core/history-export.js?v=3.19.6"></script>
+    <script defer src="/components/core/export-advanced.js?v=3.19.6"></script>
+    <script defer src="/components/core/emoji-picker.js?v=3.19.6"></script>
+    <script defer src="/components/core/custom-types-fields.js?v=3.19.6"></script>
+    <script defer src="/components/core/encrypted-backup.js?v=3.19.6"></script>
+    <script defer src="/components/core/settings-panel.js?v=3.19.6"></script>
+    <script defer src="/components/core/theme-colors.js?v=3.19.6"></script>
+    <script defer src="/components/core/p2p-sync.js?v=3.19.6"></script>
+    <script defer src="/components/core/school-rules.js?v=3.19.6"></script>
+    <script defer src="/components/core/onboarding-tour.js?v=3.19.6"></script>
+    <script defer src="/components/core/alerts-toasts.js?v=3.19.6"></script>
+    <script defer src="/components/core/year-month-stats.js?v=3.19.6"></script>
+    <script defer src="/components/core/app-startup.js?v=3.19.6"></script>
+    <script defer src="/components/core/dashboard-editor.js?v=3.19.6"></script>
+    <script defer src="/components/core/navbar-sidebar.js?v=3.19.6"></script>
+    <script defer src="/components/core/widget-system.js?v=3.19.6"></script>
+    <script defer src="/components/core/dashboard-power.js?v=3.19.6"></script>
+    <script defer src="/components/core/dashboard-extras.js?v=3.19.6"></script>
+    <script defer src="/components/core/mini-calendar-week.js?v=3.19.6"></script>
+    <script defer src="/components/core/analytics-pro-engine.js?v=3.19.6"></script>
+    <script defer src="/components/core/galaxy-ultra-engine.js?v=3.19.6"></script>
+    <script defer src="/components/core/support-feedback.js?v=3.19.6"></script>
+    <script defer src="/components/core/mobile-nav-extras.js?v=3.19.6"></script>
+    <script defer src="/components/core/api-cloud-sync.js?v=3.19.6"></script>
+    <script defer src="/components/core/init-app.js?v=3.19.6"></script>
+    <script defer src="/components/dashboard/dashboard.js?v=3.19.6"></script>
+    <script defer src="/components/performance/performance.js?v=3.19.6"></script>
+    <script defer src="/components/ihk/ihk.js?v=3.19.6"></script>
+    <script defer src="/components/school/school.js?v=3.19.6"></script>
+    <script defer src="/components/goals/goals.js?v=3.19.6"></script>
+    <script defer src="/components/yearview/yearview.js?v=3.19.6"></script>
+    <script defer src="/components/monthcompare/monthcompare.js?v=3.19.6"></script>
+    <script defer src="/components/weekview/weekview.js?v=3.19.6"></script>
+    <script defer src="/components/history/history.js?v=3.19.6"></script>
+
+    <script defer src="/components/support/support.js?v=3.19.6"></script>
+    <script defer src="/components/analytics-pro/analytics-pro.js?v=3.19.6"></script>
+    <script defer src="/components/modals/modals.js?v=3.19.6"></script>
+    <script defer src="/components/bbig-scanner/bbig-scanner.js?v=3.19.6"></script>
+    <script defer src="/components/settings/settings.js?v=3.19.6"></script>
+    <script defer src="/components/sidebar/sidebar.js?v=3.19.6"></script>
+    <script defer src="/components/untis/untis.js?v=3.19.6"></script>
+<!-- Ensure touch-mobile-optimizations is loaded as a fallback -->
+    <script defer src="/components/core/onboarding.js?v=3.19.6"></script>
+
+<!-- Mobile Bottom Navigation Bar — SaaS Rework -->
+<div class="mobile-bottom-nav" id="mobileBottomNav">
+    <!-- Handle to hide nav (tap or swipe down) -->
+    <div class="mob-nav-handle" id="mobNavHandle" onclick="mobNavToggleHide()" title="Navigation ausblenden">
+        <div class="mob-nav-handle-pill"></div>
+    </div>
+
+    <div class="mobile-bottom-nav-inner" id="mobNavInner">
+        <!-- Sliding active pill indicator -->
+        <div class="mob-nav-indicator" id="mobNavIndicator"></div>
+
+        <button class="mob-nav-btn active" onclick="mobNavSwitch('dashboard')" id="mobNav-dashboard" aria-label="Dashboard">
+            <span class="mob-nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg>
+            </span>
+            <span class="mob-nav-label">Dashboard</span>
+        </button>
+
+        <button class="mob-nav-btn" onclick="mobNavSwitch('performance')" id="mobNav-performance" aria-label="Analyse">
+            <span class="mob-nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M6 20V12"/><path d="M10 20V7"/><path d="M14 20V4"/><path d="M18 20V10"/></svg>
+            </span>
+            <span class="mob-nav-label">Analyse</span>
+        </button>
+
+        <button class="mob-nav-btn" onclick="(function(){ try{ localStorage.setItem('sidebar_keep_closed','true'); }catch(e){} window.location.href='/berichtsheft/'; })()" aria-label="Berichtsheft">
+            <span class="mob-nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h-1.5a2 2 0 00-4 0H8a2 2 0 00-2 2v14a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="10" y1="9" x2="14" y2="9"/><line x1="10" y1="13" x2="14" y2="13"/></svg>
+            </span>
+            <span class="mob-nav-label">Bericht</span>
+        </button>
+
+        <button class="mob-nav-btn" onclick="mobNavSwitch('history')" id="mobNav-history" aria-label="Verlauf">
+            <span class="mob-nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2.5"/></svg>
+            </span>
+            <span class="mob-nav-label">Verlauf</span>
+        </button>
+
+        <button class="mob-nav-btn" onclick="mobNavShowMore()" id="mobNav-more" aria-label="Mehr">
+            <span class="mob-nav-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+            </span>
+            <span class="mob-nav-label">Mehr</span>
+        </button>
+    </div>
+
+    <!-- Hidden sync stubs — keep IDs for switchTab() / mobNavSwitch() JS compatibility -->
+    <button class="mob-nav-btn mob-nav-hidden-sync" id="mobNav-yearview" aria-hidden="true" tabindex="-1"></button>
+    <button class="mob-nav-btn mob-nav-hidden-sync" id="mobNav-goals" aria-hidden="true" tabindex="-1"></button>
+    <button class="mob-nav-btn mob-nav-hidden-sync" id="mobNav-berichtsheft" aria-hidden="true" tabindex="-1"></button>
+    <button class="mob-nav-btn mob-nav-hidden-sync" id="mobNav-school" aria-hidden="true" tabindex="-1"></button>
+    <button class="mob-nav-btn mob-nav-hidden-sync" id="mobNav-ihk" aria-hidden="true" tabindex="-1"></button>
+    <button class="mob-nav-btn mob-nav-hidden-sync" id="mobNav-monthcompare" aria-hidden="true" tabindex="-1"></button>
+    <button class="mob-nav-btn mob-nav-hidden-sync" id="mobNav-weekview" aria-hidden="true" tabindex="-1"></button>
+    <button class="mob-nav-btn mob-nav-hidden-sync" id="mobNav-aibot" aria-hidden="true" tabindex="-1"></button>
+    <button class="mob-nav-btn mob-nav-hidden-sync" id="mobNav-analytics-pro" aria-hidden="true" tabindex="-1"></button>
+    <button class="mob-nav-btn mob-nav-hidden-sync" id="mobNav-aufgaben" aria-hidden="true" tabindex="-1"></button>
+</div>
+
+<!-- More Sheet Backdrop -->
+<div class="mob-more-overlay" id="mobMoreOverlay" onclick="mobNavHideMore()"></div>
+
+<!-- More Bottom Sheet -->
+<div class="mob-more-sheet" id="mobMoreSheet">
+    <div class="mob-more-sheet-handle"></div>
+    <div class="mob-more-header">
+        <span class="mob-more-title">Alle Seiten</span>
+        <button class="mob-more-close" onclick="mobNavHideMore()" aria-label="Schließen">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+    </div>
+    <div class="mob-more-grid">
+        <button class="mob-more-item" onclick="mobNavSwitch('yearview'); mobNavHideMore();">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16"/><path d="M10 3v4"/><path d="M14 3v4"/></svg></span>
+            <span class="mob-more-label">Jahresansicht</span>
+        </button>
+        <button class="mob-more-item" onclick="mobNavSwitch('goals'); mobNavHideMore();">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><path d="M12 5v2"/><path d="M12 17v2"/><path d="M5 12h2"/><path d="M17 12h2"/></svg></span>
+            <span class="mob-more-label">Ziele</span>
+        </button>
+        <button class="mob-more-item" onclick="mobNavSwitch('school'); mobNavHideMore();">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M4 9v7a8 8 0 0016 0V9"/></svg></span>
+            <span class="mob-more-label">Berufsschule</span>
+        </button>
+        <button class="mob-more-item" onclick="mobNavSwitch('ihk'); mobNavHideMore();">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3.5 9.74-7 11-3.5-1.26-7-6-7-11V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>
+            <span class="mob-more-label">IHK</span>
+        </button>
+        <button class="mob-more-item" onclick="mobNavSwitch('monthcompare'); mobNavHideMore();">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M9 5v4"/><path d="M15 5v4"/></svg></span>
+            <span class="mob-more-label">Monatsansicht</span>
+        </button>
+        <button class="mob-more-item" onclick="mobNavSwitch('weekview'); mobNavHideMore();">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 5v4"/><path d="M16 5v4"/></svg></span>
+            <span class="mob-more-label">Wochenansicht</span>
+        </button>
+        <button class="mob-more-item" onclick="mobNavSwitch('aibot'); mobNavHideMore();">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="7" width="14" height="10" rx="2"/><line x1="4" y1="10" x2="3" y2="10"/><line x1="20" y1="10" x2="21" y2="10"/><circle cx="9" cy="12" r="1.2" fill="currentColor"/><circle cx="15" cy="12" r="1.2" fill="currentColor"/><path d="M9 15h6"/></svg></span>
+            <span class="mob-more-label">AI-Bot</span>
+        </button>
+        <button class="mob-more-item" onclick="if(typeof quickCloudSync==='function'){quickCloudSync(this); mobNavHideMore();}">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 13 12 9 16 13"/><line x1="12" y1="9" x2="12" y2="21"/></svg></span>
+            <span class="mob-more-label">Cloud Upload</span>
+        </button>
+        <button class="mob-more-item" onclick="if(typeof quickCloudDownload==='function'){quickCloudDownload(); mobNavHideMore();}">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 17 12 21 16 17"/><line x1="12" y1="9" x2="12" y2="21"/></svg></span>
+            <span class="mob-more-label">Cloud Download</span>
+        </button>
+        <button class="mob-more-item" onclick="openSettings(); mobNavHideMore();">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></span>
+            <span class="mob-more-label">Einstellungen</span>
+        </button>
+        <button class="mob-more-item" onclick="openCmdPalette(); mobNavHideMore();">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+            <span class="mob-more-label">Suche</span>
+        </button>
+        <button class="mob-more-item" onclick="toggleSidebar(); mobNavHideMore();">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg></span>
+            <span class="mob-more-label">Sidebar</span>
+        </button>
+        <button class="mob-more-item mob-more-item-hide" onclick="mobNavHideNav(); mobNavHideMore();">
+            <span class="mob-more-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg></span>
+            <span class="mob-more-label">Ausblenden</span>
+        </button>
+    </div>
+</div>
+
+<!-- Floating restore button (shown when nav is hidden) -->
+<button class="mob-nav-restore" id="mobNavRestoreBtn" onclick="mobNavShowNav()" aria-label="Navigation anzeigen">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18"/><path d="M3 6h18"/><path d="M3 18h18"/></svg>
+</button>
+
+<!-- ═══ NFC MODAL ═══ -->
+<div id="nfcModal" class="nfc-overlay" onclick="if(event.target===this)closeNFCModal()">
+  <div class="nfc-modal">
+
+    <!-- Header -->
+    <div class="nfc-modal-hdr">
+      <div class="nfc-modal-hdr-left">
+        <div class="nfc-hdr-icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 018 4"/><path d="M5 19.5C5.5 18 6 15 6 12"/>
+            <path d="M21 12c0 1.5-.5 3-1.5 4.5"/><path d="M12 2c2 2 3 5 3 10"/><path d="M12 2c-2 2-3 5-3 10"/>
+            <path d="M18 22l4-4-4-4"/><path d="M22 18h-7"/>
+          </svg>
+        </div>
+        <span>NFC Chip Scanner</span>
+      </div>
+      <button class="nfc-close" onclick="closeNFCModal()">&times;</button>
+    </div>
+
+    <!-- View: iOS -->
+    <div id="nfcViewIOS" class="nfc-view">
+      <div class="nfc-ios-box">
+        <div class="nfc-platform-pill ios">iOS Safari</div>
+        <div class="nfc-ios-graphic">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+        <p class="nfc-ios-title">NFC-Schreiben nicht verfügbar</p>
+        <p class="nfc-ios-body">iOS Safari unterstützt Web NFC nicht. NFC-Chips können nur über Apps oder Android+Chrome programmiert werden.</p>
+        <div class="nfc-info-box">
+          <strong>Tipp für iPhone-Nutzer</strong>
+          Du kannst NFC-Tags mit der "Kurzbefehle"-App lesen – aber nicht über den Browser schreiben. Bitte an einem Android-Gerät einrichten.
+        </div>
+      </div>
+    </div>
+
+    <!-- View: Kein NFC-Support -->
+    <div id="nfcViewNoSupport" class="nfc-view">
+      <div class="nfc-ios-box">
+        <div class="nfc-platform-pill desktop">Desktop / Browser</div>
+        <div class="nfc-ios-graphic">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <p class="nfc-ios-title">Browser unterstützt kein NFC</p>
+        <p class="nfc-ios-body">Die Web NFC API ist nur in <strong>Chrome auf Android</strong> verfügbar (Chrome 89+).</p>
+        <div class="nfc-info-box">
+          <strong>Was tun?</strong>
+          App auf deinem Android-Handy in Chrome öffnen und dort den Chip einmalig programmieren.
+        </div>
+      </div>
+    </div>
+
+    <!-- View: Setup (Ersteinrichtung) -->
+    <div id="nfcViewSetup" class="nfc-view">
+      <div class="nfc-platform-pill android">Android Chrome ✓</div>
+      <p class="nfc-setup-intro">Programmiere deinen NFC-Chip einmalig. Danach reicht ein Antippen zum Ein- und Ausstempeln — ohne die App manuell öffnen zu müssen.</p>
+
+      <div class="nfc-steps">
+        <div class="nfc-step">
+          <div class="nfc-step-n">1</div>
+          <div class="nfc-step-txt"><strong>Button drücken</strong>Auf "Chip programmieren" tippen</div>
+        </div>
+        <div class="nfc-step">
+          <div class="nfc-step-n">2</div>
+          <div class="nfc-step-txt"><strong>Handy an Chip halten</strong>Handy vibriert kurz → Chip sofort ranhalten</div>
+        </div>
+        <div class="nfc-step">
+          <div class="nfc-step-n">3</div>
+          <div class="nfc-step-txt"><strong>Fertig!</strong>App öffnet sich automatisch bei jedem nächsten Scan</div>
+        </div>
+      </div>
+
+      <div class="nfc-scan-zone" id="nfcScanZone">
+        <div class="nfc-ring r1"></div>
+        <div class="nfc-ring r2"></div>
+        <div class="nfc-ring r3"></div>
+        <div class="nfc-chip-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="5" y="5" width="14" height="14" rx="2"/>
+            <path d="M9 9h6v6H9z"/>
+            <path d="M9 1v4M15 1v4M9 19v4M15 19v4M1 9h4M1 15h4M19 9h4M19 15h4"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="nfc-pwa-hint">
+        <div class="nfc-pwa-hint-icon">💡</div>
+        <div class="nfc-pwa-hint-text">
+          <strong>Immer Chrome?</strong> App in Chrome als PWA installieren —
+          dann öffnet Android jeden Chip-Scan direkt in der App, ohne Browser-Auswahl.
+          <br><span style="opacity:.6;">Chrome → Menü (⋮) → "Zum Startbildschirm hinzufügen"</span>
+        </div>
+      </div>
+
+      <p class="nfc-write-status-text" id="nfcWriteStatus">Bereit zum Programmieren</p>
+
+      <button id="nfcWriteBtn" class="btn btn-primary" style="width:100%; margin-top:0.25rem;" onclick="nfcWriteChip()">
+        Chip programmieren
+      </button>
+    </div>
+
+    <!-- View: Status (Chip bereits programmiert) -->
+    <div id="nfcViewStatus" class="nfc-view">
+
+      <div class="nfc-status-cards">
+        <div class="nfc-stat-card">
+          <div class="nfc-stat-label">Letzter Scan</div>
+          <div class="nfc-stat-value" id="nfcStatLastScan">—</div>
+        </div>
+        <div class="nfc-stat-card">
+          <div class="nfc-stat-label">Letzte Aktion</div>
+          <div class="nfc-stat-value" id="nfcStatLastAction">—</div>
+        </div>
+      </div>
+
+      <div class="nfc-next-action-banner checkin" id="nfcNextActionBanner">
+        <span class="nfc-next-icon">▶</span>
+        <span class="nfc-next-text">Nächster Scan: Einstempeln</span>
+      </div>
+
+      <!-- Scan-Log -->
+      <div class="nfc-feedback-log" id="nfcFeedbackLog">
+        <div class="nfc-log-entry">
+          <span class="nfc-log-msg" style="opacity:.3;width:100%;text-align:center;">Noch keine Scan-Ereignisse</span>
+        </div>
+      </div>
+
+      <!-- Chip-Metadaten & Aktionen -->
+      <div class="nfc-chip-meta">
+        <span id="nfcChipMeta">Chip-Datum unbekannt</span>
+        <button class="nfc-reprogram-link" onclick="nfcShowView('nfcViewSetup')">↺ Neu schreiben</button>
+        <button class="nfc-reprogram-link" onclick="nfcResetChip()">✕ Reset</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- NFC Scan-Feedback Overlay (Vollbild-Flash bei jedem Scan) -->
+<div id="nfcScanOverlay" class="nfc-scan-overlay">
+  <div class="nfc-scan-result-icon"></div>
+  <div class="nfc-scan-result-title"></div>
+  <div class="nfc-scan-result-time"></div>
+</div>
+
+<!-- Break Warning Banner -->
+<div class="break-warning-banner" id="breakWarningBanner" onclick="this.classList.remove('visible')">
+    ⚠️ <span id="breakWarningText">Du arbeitest seit 6h ohne Pause!</span>
+</div>
+
+    <!-- NFC MODULE -->
+    <script defer src="/components/nfc/nfc.js?v=3.19.6"></script>
+
+    <!-- GHOST MODE / BOSS KEY SCRIPT -->
+    <script defer src="/components/core/extra.js?v=3.19.6"></script>
+
+    <!-- AUTO-CAMOUFLAGE / TAB-VERSTECKER -->
+    <script defer src="/components/core/camo.js?v=3.19.6"></script>
+
+    <!-- ENTRY DETAIL BOTTOM SHEET -->
+    <div class="ed-backdrop" id="entryDetailBackdrop" onclick="closeEntryDetail()"></div>
+    <div class="ed-sheet" id="entryDetailSheet">
+        <div class="ed-handle"></div>
+        <div class="ed-header">
+            <div class="ed-type-icon" id="edTypeIcon">💼</div>
+            <div class="ed-header-text">
+                <div class="ed-type-label" id="edTypeLabel">Arbeit</div>
+                <div class="ed-date-line" id="edDateLine">—</div>
+            </div>
+            <button class="ed-close-btn" onclick="closeEntryDetail()" aria-label="Schließen">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <div class="ed-hero">
+            <div class="ed-stat-card">
+                <div class="ed-stat-val" id="edHours">—</div>
+                <div class="ed-stat-lbl">Stunden</div>
+            </div>
+            <div class="ed-stat-card">
+                <div class="ed-stat-val" id="edDiff">—</div>
+                <div class="ed-stat-lbl">Saldo</div>
+            </div>
+        </div>
+        <div class="ed-rows" id="edRows"></div>
+        <div class="ed-footer">
+            <button class="ed-btn ed-btn-edit" id="edEditBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Bearbeiten
+            </button>
+            <button class="ed-btn ed-btn-delete" id="edDeleteBtn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Löschen
+            </button>
+        </div>
+    </div>
+
+    <!-- MOBILE ACCORDION: Tap = nur Icon+Datum + Buttons sichtbar, kein Springen -->
+    <style>
+        @media (max-width: 768px) {
+            .entry-row {
+                cursor: pointer;
+                position: relative;
+            }
+
+            /* Kompakteres Icon + Datum */
+            .er-left {
+                padding: 12px 4px 12px 10px !important;
+                gap: 8px !important;
+                min-width: auto !important;
+            }
+            .er-icon-wrap {
+                width: 34px !important;
+                height: 34px !important;
+                font-size: 1rem !important;
+            }
+            .er-date {
+                font-size: 0.82rem !important;
+            }
+            .er-weekday {
+                font-size: 0.62rem !important;
+            }
+
+            /* Kompaktere Stunden/Diff Anzeige */
+            .er-right {
+                padding: 12px 10px !important;
+                gap: 6px !important;
+            }
+            .er-hours {
+                font-size: 0.95rem !important;
+            }
+            .er-diff {
+                font-size: 0.7rem !important;
+                padding: 3px 7px !important;
+            }
+
+            /* Buttons komplett weg im Normalzustand */
+            .entry-row .er-actions {
+                display: none !important;
+            }
+
+            /* Beim Klick: Alles außer Icon+Datum unsichtbar, aber Größe bleibt! */
+            .entry-row.mob-open .er-mid {
+                visibility: hidden;
+            }
+            .entry-row.mob-open .er-hours,
+            .entry-row.mob-open .er-h-unit,
+            .entry-row.mob-open .er-diff {
+                visibility: hidden;
+            }
+
+            /* Buttons absolut positioniert rechts — kein Layout-Shift */
+            .entry-row.mob-open .er-actions {
+                display: flex !important;
+                position: absolute;
+                right: 16px;
+                top: 50%;
+                transform: translateY(-50%);
+                gap: 8px;
+                opacity: 1 !important;
+            }
+        }
+    </style>
+    <script>
+        function attachMobAccordion() {
+            document.querySelectorAll('.entry-row').forEach(function(row) {
+                if (row._mobAccordion) return; // nicht doppelt
+                row._mobAccordion = true;
+                row.addEventListener('click', function(e) {
+                    if (window.innerWidth > 768) return;
+                    if (e.target.closest('.btn-icon')) return;
+                    this.classList.toggle('mob-open');
+                });
+            });
+        }
+        const _origRender = window.renderHistoryView;
+        window.renderHistoryView = function() {
+            _origRender.apply(this, arguments);
+            attachMobAccordion();
+        };
+        document.addEventListener('DOMContentLoaded', function() { setTimeout(attachMobAccordion, 600); });
+    </script>
+</body>
