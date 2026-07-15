@@ -216,7 +216,8 @@
         // Offline beim Start ist KEIN Grund umzuleiten — die App ist per Service-Worker
         // gecacht und voll offline nutzbar. Der Netzwerk-Status-Indikator zeigt Offline an.
         window._clsBC = 'data-loaded';
-        if(localStorage.getItem('tg_pro_data')) data = JSON.parse(localStorage.getItem('tg_pro_data'));
+        const _loadedData = loadPersistedData();
+        if(_loadedData) data = _loadedData;
         
         if(!data.settings) data.settings = {};
         if(!Array.isArray(data.settings.hours)) data.settings.hours = [0,8.75,8.75,8.75,8.75,4.5,0];
@@ -413,6 +414,15 @@
 
         // NFC: URL-Parameter prüfen (?nfc=1 kommt vom NFC-Chip-Scan)
         try { if (typeof checkNFCUrlParam === 'function') checkNFCUrlParam(); } catch(e) { console.warn('NFC init failed', e); }
+
+        // Auto-Recovery-Status an den User melden (loadPersistedData hat evtl. eingegriffen)
+        try {
+            if (window._mwlRecoveredFromBackup && typeof showCustomMessage === 'function') {
+                showCustomMessage('🛟 Daten wiederhergestellt', 'Deine gespeicherten Daten waren beschädigt und wurden automatisch aus einem lokalen Backup wiederhergestellt (Stand: ' + window._mwlRecoveredFromBackup + '). Bitte prüfe, ob alles vollständig ist.', 'warning');
+            } else if (window._mwlDataCorrupted && typeof showCustomMessage === 'function') {
+                showCustomMessage('⚠️ Daten beschädigt', 'Deine lokal gespeicherten Daten konnten nicht gelesen werden und es war kein lokales Backup verfügbar. Lade deine Daten aus der Cloud, um sie wiederherzustellen.', 'error');
+            }
+        } catch(e) { console.warn('recovery notice failed', e); }
 
     });
 

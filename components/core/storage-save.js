@@ -44,7 +44,28 @@
             console.warn('⚠️ Backup snapshot failed:', e);
         }
 
-        localStorage.setItem('tg_pro_data', JSON.stringify(data));
+        // Haupt-Write muss robust sein: ein uncaught Throw hier (z.B. QuotaExceededError)
+        // ließe die neueste Änderung verloren gehen und riss früher den Aufrufer mit.
+        try {
+            localStorage.setItem('tg_pro_data', JSON.stringify(data));
+        } catch (e) {
+            console.error('❌ Speichern fehlgeschlagen (localStorage voll?):', e);
+            // Platz schaffen: die 10 Voll-Backups sind der größte Speicherfresser → eindampfen
+            try {
+                const trimmed = JSON.parse(localStorage.getItem('tg_pro_data_backups') || '[]').slice(-3);
+                localStorage.setItem('tg_pro_data_backups', JSON.stringify(trimmed));
+            } catch (_) {
+                try { localStorage.removeItem('tg_pro_data_backups'); } catch (__) {}
+            }
+            try {
+                localStorage.setItem('tg_pro_data', JSON.stringify(data));
+            } catch (e2) {
+                console.error('❌ Speichern endgültig fehlgeschlagen:', e2);
+                if (typeof showCustomMessage === 'function') {
+                    showCustomMessage('⚠️ Speicher voll', 'Deine Änderung konnte nicht gespeichert werden — der lokale Speicher ist voll. Bitte exportiere ein Backup und leere den Papierkorb.', 'error');
+                }
+            }
+        }
         checkAlertsThresholds();
         checkOvertimeAlert();
         updateUI(); 

@@ -32,6 +32,43 @@
             goals: []
         } 
     };
+    // Resilienter Loader: parst tg_pro_data und heilt bei Korruption automatisch aus dem
+    // letzten gültigen Backup. Verhindert, dass ein einziger kaputter localStorage-Key die
+    // gesamte App-Initialisierung wirft — Symptom war: App lädt Daten nicht, Hard-Reload
+    // hilft nicht, nur Cloud-Reload/Neuanlage. Rückgabe: geparstes Objekt oder null (→ Default).
+    function loadPersistedData() {
+        const raw = localStorage.getItem('tg_pro_data');
+        if (!raw) return null; // frischer Start — Default-data bleibt bestehen
+
+        try {
+            return JSON.parse(raw);
+        } catch (e) {
+            console.error('❌ tg_pro_data ist beschädigt — versuche Auto-Recovery aus Backup:', e);
+        }
+
+        // Korruption: neuestes gültiges Backup suchen (Array chronologisch, neuestes zuletzt)
+        try {
+            const backups = JSON.parse(localStorage.getItem('tg_pro_data_backups') || '[]');
+            for (let i = backups.length - 1; i >= 0; i--) {
+                const snap = backups[i];
+                if (snap && snap.data && Array.isArray(snap.data.entries)) {
+                    // Kaputten Key mit dem Backup heilen, damit der nächste Reload wieder sauber lädt
+                    try { localStorage.setItem('tg_pro_data', JSON.stringify(snap.data)); } catch (_) {}
+                    window._mwlRecoveredFromBackup = snap.ts ? new Date(snap.ts).toLocaleString('de-DE') : 'unbekannt';
+                    console.warn('✅ Daten aus lokalem Backup wiederhergestellt (Stand: ' + window._mwlRecoveredFromBackup + ')');
+                    return snap.data;
+                }
+            }
+        } catch (e2) {
+            console.error('❌ Backup-Recovery fehlgeschlagen:', e2);
+        }
+
+        // Nichts wiederherstellbar: kaputten Key NICHT überschreiben (User kann noch aus der
+        // Cloud laden), aber App startet mit Default statt zu crashen.
+        window._mwlDataCorrupted = true;
+        return null;
+    }
+
     let timer = { id:null, start:0, paused:0, running:false, log:[], breakTime: 0 };
     let editId = null;
     let isSidebarOpen = true;

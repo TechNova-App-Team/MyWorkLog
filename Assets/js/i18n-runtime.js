@@ -62,7 +62,16 @@
     'Kopiert!': 'Copied!', 'Fehler': 'Error', 'Erfolg': 'Success', 'Fertig': 'Done',
     'Abgebrochen': 'Cancelled', 'Rückgängig': 'Undo', 'Vollständig': 'Complete',
     'Unvollständig': 'Incomplete', 'Unterschrieben': 'Signed', 'In Bearbeitung': 'In progress',
-    'Offen': 'Open', 'Erledigt': 'Done', 'Alle': 'All'
+    'Offen': 'Open', 'Erledigt': 'Done', 'Alle': 'All',
+    // Auto-Recovery / Speicher-Toasts (state-config.js loadPersistedData, storage-save.js save).
+    // Titel sind emoji-frei, weil showCustomMessage das Leading-Emoji strippt (cleanTitle).
+    // Der „aus Backup wiederhergestellt"-Body interpoliert einen Zeitstempel → nicht exakt
+    // matchbar → bleibt auf /en/ deutsch (seltener Recovery-Fall, Titel übersetzt trotzdem).
+    'Daten wiederhergestellt': 'Data recovered',
+    'Daten beschädigt': 'Data corrupted',
+    'Deine lokal gespeicherten Daten konnten nicht gelesen werden und es war kein lokales Backup verfügbar. Lade deine Daten aus der Cloud, um sie wiederherzustellen.': 'Your locally stored data could not be read and no local backup was available. Load your data from the cloud to restore it.',
+    'Speicher voll': 'Storage full',
+    'Deine Änderung konnte nicht gespeichert werden — der lokale Speicher ist voll. Bitte exportiere ein Backup und leere den Papierkorb.': 'Your change could not be saved — local storage is full. Please export a backup and empty the trash.'
   };
 
   // Attribute, die ebenfalls Nutzertext tragen können

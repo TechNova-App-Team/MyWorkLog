@@ -1,10 +1,10 @@
 // ═══ CORE: APP-STARTUP ═══
     // ===== INITIALIZATION (NEU) =====
     function initializeApp() {
-        // Load data from localStorage
-        const saved = localStorage.getItem('tg_pro_data');
+        // Load data from localStorage (resilient: heilt bei Korruption aus Backup)
+        const saved = loadPersistedData();
         if (saved) {
-            data = JSON.parse(saved);
+            data = saved;
         }
         
         // Initialize Alerts System
