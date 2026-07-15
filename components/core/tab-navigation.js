@@ -1,6 +1,11 @@
 // ═══ CORE: TAB-NAVIGATION ═══
     // --- TAB LOGIC ---
     function switchTab(tabId) {
+        // Feature-Nutzung zaehlen — nur der View-Name (Kategorie), nie Inhalte.
+        // switchTab wird ausschliesslich durch echte Navigation getriggert (Dashboard
+        // ist per HTML default aktiv, kein Auto-Call beim Start) → kein Rausch-Event.
+        if (typeof mwlEvent === 'function') mwlEvent('feature_genutzt', { feature: tabId });
+
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         

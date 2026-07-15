@@ -329,6 +329,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 
 window.addEventListener('appinstalled', () => {
     console.log('[PWA] App installed successfully');
+    if (typeof mwlEvent === 'function') mwlEvent('pwa_installiert', {});
     deferredPrompt = null;
     // Hide PWA section after install
     hidePWAInstallSection();
