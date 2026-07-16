@@ -3,7 +3,7 @@
  * build-maps.js — erzeugt Assets/js/insights/geo-maps.js
  * =====================================================
  * Quelle: Natural Earth (public domain, naturalearthdata.com).
- *   - ne_110m_admin_0_countries.geojson   → Weltkarte, Key = ISO-A2
+ *   - ne_50m_admin_0_countries.geojson   → Weltkarte, Key = ISO-A2
  *   - ne_10m_admin_1_states_provinces.geojson → Deutschland, Key = ISO 3166-2 (DE-BY, …)
  *
  * Warum selbst generieren statt fertige SVG einbinden: Lizenz ist eindeutig (gemeinfrei),
@@ -122,7 +122,12 @@ function buildPaths(features, project, opts) {
     return Object.assign({ id: key, d }, extra);
   });
 
-  return { viewBox: '0 0 ' + W + ' ' + H, paths };
+  // Projektions-Extent der TATSAECHLICHEN Landmasse mitgeben. Die Frontend-
+  // Städte-Marker muessen mit exakt DIESER Box normiert werden — nicht mit den
+  // theoretischen Globus-Ecken (-180..180 / -90..90), die offenes Meer sind und
+  // die Marker sonst konstant nach rechts verschieben.
+  const bounds = { minX: minX, minY: minY, maxX: maxX, maxY: maxY };
+  return { viewBox: '0 0 ' + W + ' ' + H, bounds: bounds, paths };
 }
 
 // ── Deutsche Labels fuer die Bundeslaender ──────────────────────────────────
@@ -160,8 +165,10 @@ const world = buildPaths(
   }),
   equalEarth,
   {
-    tol: 0.004,
-    minArea: 0.00008,
+    // 50m-Quelle @ tol 0.0016: glatte Konturen bis ~10x Zoom auf der Analytics-Karte,
+    // ohne die Datei zu sprengen (110m @ 0.004 war bei starkem Zoom kantig).
+    tol: 0.0016,
+    minArea: 0.00003,
     keyFn: f => f.properties.ISO_A2 || f.properties.iso_a2,
     extraFn: f => ({ name: f.properties.NAME || f.properties.name }),
   }

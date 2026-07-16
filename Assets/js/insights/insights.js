@@ -1012,64 +1012,271 @@ function _renderMapSvg(containerId, geo, valueByKey, labelByKey, cities, graticu
                ' data-value="' + v + '"></path>';
     });
 
-    // Städte-Marker. Die staerkste Stadt bekommt einen pulsierenden Ring —
-    // EIN Akzent, nicht alle, sonst flimmert die halbe Karte.
-    var markers = '';
-    if (cities && cities.length) {
-        var top = cities.reduce(function(a, b) {
-            return (b.visitors || 0) > (a.visitors || 0) ? b : a;
-        }, cities[0]);
+    var grat = graticule || '';
 
-        cities.forEach(function(c) {
-            if (c.x == null || c.y == null) return;
-            var isTop = (c === top);
-            var r = 2.2 + Math.min(3.4, Math.sqrt(c.visitors || 1) * 1.4);
-            if (isTop) {
-                markers += '<circle cx="' + c.x + '" cy="' + c.y + '" r="' + r.toFixed(1) + '"' +
-                           ' class="map-city-pulse"></circle>';
+    // Städte numerisch aufbereiten — Clustering + Marker rechnen in viewBox-
+    // Einheiten und werden bei jeder Zoom-Stufe neu erzeugt (siehe _renderCities).
+    var pts = [];
+    (cities || []).forEach(function(c) {
+        if (c.x == null || c.y == null) return;
+        pts.push({ x: +c.x, y: +c.y, city: c.city, visitors: +c.visitors || 0 });
+    });
+
+    // Zoom-/Pan-Zustand haengt am Container — jede Ansicht (Welt/DE) merkt sich ihre eigene.
+    el._mapState = { k: 1, x: 0, y: 0, W: vb[2], H: vb[3], uid: uid, cities: pts, citiesRAF: 0 };
+
+    el.innerHTML =
+        '<svg viewBox="' + geo.viewBox + '" xmlns="http://www.w3.org/2000/svg" ' +
+        'preserveAspectRatio="xMidYMid meet" class="map-svg">' +
+            defs +
+            '<g class="map-zoom">' +
+                ocean + grat +
+                '<g class="map-shapes">' + shapes + '</g>' +
+                '<g class="map-cities"></g>' +
+            '</g>' +
+        '</svg>';
+
+    // Bedien-Overlay: Zoom-Buttons + dezenter Hinweis (nur die aktive Ansicht ist sichtbar).
+    el.insertAdjacentHTML('beforeend',
+        '<div class="map-controls">' +
+            '<button type="button" class="map-ctrl" data-zoom="in" aria-label="Vergrößern" title="Vergrößern">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="6" x2="12" y2="18"/><line x1="6" y1="12" x2="18" y2="12"/></svg>' +
+            '</button>' +
+            '<button type="button" class="map-ctrl" data-zoom="out" aria-label="Verkleinern" title="Verkleinern">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="12" x2="18" y2="12"/></svg>' +
+            '</button>' +
+            '<button type="button" class="map-ctrl" data-zoom="reset" aria-label="Zurücksetzen" title="Zurücksetzen">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>' +
+            '</button>' +
+        '</div>' +
+        '<div class="map-hint" aria-hidden="true">Zum Zoomen scrollen · Ziehen zum Verschieben</div>');
+
+    _bindMapTooltip(el);
+    _renderCities(el);
+    _attachMapZoom(el);
+}
+
+// Greedy-Proximity-Clustering: staerkste Stadt zuerst, sie zieht alle Nachbarn
+// innerhalb von "thresh" (viewBox-Einheiten) an sich. thresh schrumpft beim
+// Zoom → dichte Ballungen brechen automatisch in Einzelstaedte auf.
+function _clusterCities(cities, thresh) {
+    var sorted = cities.slice().sort(function(a, b) { return b.visitors - a.visitors; });
+    var used = new Array(sorted.length);
+    var out = [];
+    var t2 = thresh * thresh;
+    for (var i = 0; i < sorted.length; i++) {
+        if (used[i]) continue;
+        used[i] = true;
+        var seed = sorted[i];
+        var members = [seed];
+        var total = seed.visitors;
+        for (var j = i + 1; j < sorted.length; j++) {
+            if (used[j]) continue;
+            var dx = sorted[j].x - seed.x, dy = sorted[j].y - seed.y;
+            if (dx * dx + dy * dy <= t2) {
+                used[j] = true;
+                members.push(sorted[j]);
+                total += sorted[j].visitors;
             }
-            markers += '<circle cx="' + c.x + '" cy="' + c.y + '" r="' + r.toFixed(1) + '"' +
-                       ' class="map-city' + (isTop ? ' is-top' : '') + '"' +
-                       (isTop ? ' filter="url(#glow' + uid + ')"' : '') +
-                       ' data-label="' + esc(c.city) + '"' +
-                       ' data-value="' + (c.visitors || 0) + '"></circle>';
+        }
+        out.push({ x: seed.x, y: seed.y, total: total, count: members.length, members: members });
+    }
+    return out;
+}
+
+// Zeichnet die Städte-Ebene fuer die aktuelle Zoom-Stufe neu. Marker-Radien
+// werden per /k gegengerechnet, damit die Punkte in JEDER Zoom-Stufe gleich
+// gross (und antippbar) bleiben, statt zu Riesen-Klecksen aufzublasen.
+function _renderCities(el) {
+    var st = el && el._mapState;
+    if (!st) return;
+    var g = el.querySelector('.map-cities');
+    if (!g) return;
+    if (!st.cities.length) { g.innerHTML = ''; return; }
+
+    var k = st.k;
+    var clusters = _clusterCities(st.cities, 26 / k);
+
+    var top = null;
+    clusters.forEach(function(c) { if (!top || c.total > top.total) top = c; });
+
+    var html = '';
+    clusters.forEach(function(cl) {
+        var isTop = (cl === top);
+        var many = cl.count > 1;
+        var scr = many
+            ? 3.4 + Math.min(9, Math.sqrt(cl.total) * 1.5)
+            : 3.0 + Math.min(6, Math.sqrt(cl.total) * 1.3);
+        var r  = (scr / k).toFixed(2);
+        var cx = cl.x.toFixed(2), cy = cl.y.toFixed(2);
+
+        if (isTop) {
+            html += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" class="map-city-pulse"></circle>';
+        }
+        if (many) {
+            html += '<circle cx="' + cx + '" cy="' + cy + '" r="' + ((scr + 2.8) / k).toFixed(2) + '" class="map-cluster-ring"></circle>';
+        }
+        html += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '"' +
+                ' class="map-city' + (isTop ? ' is-top' : '') + (many ? ' is-cluster' : '') + '"' +
+                (isTop ? ' filter="url(#glow' + st.uid + ')"' : '') +
+                ' data-city="' + esc(cl.members[0].city || '') + '"' +
+                ' data-more="' + (cl.count - 1) + '"' +
+                ' data-value="' + cl.total + '"></circle>';
+    });
+    g.innerHTML = html;
+}
+
+// Zoom-/Pan-Controller. Rad = Zoom auf Cursor, Ziehen = Pan, zwei Finger =
+// Pinch, Doppelklick = rein. Marker werden rAF-gedrosselt neu geclustert.
+function _attachMapZoom(el) {
+    var st = el && el._mapState;
+    if (!st) return;
+    var svg = el.querySelector('svg');
+    var zg  = el.querySelector('.map-zoom');
+    if (!svg || !zg) return;
+
+    var MINK = 1, MAXK = 10;   // darueber liefert der 110m-Datensatz kein echtes Kontur-Detail mehr
+
+    function clampPan() {
+        if (st.k < MINK) st.k = MINK;
+        if (st.k > MAXK) st.k = MAXK;
+        var minX = st.W * (1 - st.k), minY = st.H * (1 - st.k);
+        if (st.x > 0) st.x = 0; if (st.x < minX) st.x = minX;
+        if (st.y > 0) st.y = 0; if (st.y < minY) st.y = minY;
+    }
+    function applyTransform() {
+        clampPan();
+        zg.setAttribute('transform', 'translate(' + st.x.toFixed(2) + ' ' + st.y.toFixed(2) + ') scale(' + st.k.toFixed(4) + ')');
+        el.classList.toggle('is-zoomed', st.k > 1.001);
+    }
+    function scheduleCities() {
+        if (st.citiesRAF) return;
+        st.citiesRAF = requestAnimationFrame(function() { st.citiesRAF = 0; _renderCities(el); });
+    }
+    function toUser(cx, cy) {
+        var m = svg.getScreenCTM();
+        if (!m) return null;
+        var p = svg.createSVGPoint();
+        p.x = cx; p.y = cy;
+        return p.matrixTransform(m.inverse());
+    }
+    function zoomAt(cx, cy, factor) {
+        var u = toUser(cx, cy);
+        if (!u) return;
+        var px = (u.x - st.x) / st.k, py = (u.y - st.y) / st.k;
+        st.k *= factor;
+        if (st.k < MINK) st.k = MINK; if (st.k > MAXK) st.k = MAXK;
+        st.x = u.x - st.k * px;
+        st.y = u.y - st.k * py;
+        applyTransform();
+        scheduleCities();
+    }
+    function centerZoom(factor) {
+        var r = svg.getBoundingClientRect();
+        zoomAt(r.left + r.width / 2, r.top + r.height / 2, factor);
+    }
+
+    svg.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.18 : 1 / 1.18);
+    }, { passive: false });
+
+    var pointers = {}, pcount = 0, lastDist = 0;
+    svg.addEventListener('pointerdown', function(e) {
+        try { svg.setPointerCapture(e.pointerId); } catch (_) {}
+        if (!pointers[e.pointerId]) pcount++;
+        pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+        lastDist = 0;
+    });
+    svg.addEventListener('pointermove', function(e) {
+        var prev = pointers[e.pointerId];
+        if (!prev) return;
+        pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+        if (pcount >= 2) {
+            var ids = Object.keys(pointers);
+            var a = pointers[ids[0]], b = pointers[ids[1]];
+            var dist = Math.hypot(a.x - b.x, a.y - b.y);
+            if (lastDist) zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, dist / lastDist);
+            lastDist = dist;
+        } else if (pcount === 1 && st.k > 1.001) {
+            var m = svg.getScreenCTM();
+            if (!m) return;
+            st.x += (e.clientX - prev.x) / m.a;
+            st.y += (e.clientY - prev.y) / m.d;
+            applyTransform();
+        }
+    });
+    function endPointer(e) {
+        if (pointers[e.pointerId]) { delete pointers[e.pointerId]; pcount--; }
+        if (pcount < 2) lastDist = 0;
+        if (pcount < 0) pcount = 0;
+    }
+    svg.addEventListener('pointerup', endPointer);
+    svg.addEventListener('pointercancel', endPointer);
+    svg.addEventListener('dblclick', function(e) { e.preventDefault(); zoomAt(e.clientX, e.clientY, 1.6); });
+
+    var ctr = el.querySelector('.map-controls');
+    if (ctr) {
+        ctr.addEventListener('click', function(e) {
+            var btn = e.target.closest && e.target.closest('[data-zoom]');
+            if (!btn) return;
+            var z = btn.getAttribute('data-zoom');
+            if (z === 'in') centerZoom(1.5);
+            else if (z === 'out') centerZoom(1 / 1.5);
+            else { st.k = 1; st.x = 0; st.y = 0; applyTransform(); scheduleCities(); }
         });
     }
 
-    var grat = graticule || '';
-
-    el.innerHTML = '<svg viewBox="' + geo.viewBox + '" xmlns="http://www.w3.org/2000/svg" ' +
-                   'preserveAspectRatio="xMidYMid meet" class="map-svg">' +
-                   defs + ocean + grat +
-                   '<g class="map-shapes">' + shapes + '</g>' +
-                   '<g class="map-cities">' + markers + '</g>' +
-                   '</svg>';
-
-    _bindMapTooltip(el);
+    applyTransform();
 }
 
+// Delegation statt Einzel-Listener: die Städte-Ebene wird beim Zoomen staendig
+// neu gezeichnet — ein einmal am Container gebundener Handler faengt Länder
+// (statisch) UND Cluster (dynamisch) ab, ohne Listener zu leaken.
 function _bindMapTooltip(el) {
     var tip = document.getElementById('mapTooltip');
-    if (!tip) return;
+    if (!tip || el._tipBound) return;
+    el._tipBound = true;
     var svg = el.querySelector('svg');
+    var hot = null;
 
-    el.querySelectorAll('.map-shape, .map-city').forEach(function(node) {
-        node.addEventListener('mouseenter', function(e) {
-            var label = node.getAttribute('data-label');
-            var val = node.getAttribute('data-value');
-            tip.innerHTML = '<strong>' + label + '</strong><span>' + fmt(+val) + ' Besucher</span>';
-            tip.classList.add('show');
-            // Fokus/Kontext: das Gehoverte bleibt, der Rest tritt zurueck.
-            if (svg) svg.classList.add('is-focused');
-            node.classList.add('is-hot');
-            _moveTip(e, tip, el);
-        });
-        node.addEventListener('mousemove', function(e) { _moveTip(e, tip, el); });
-        node.addEventListener('mouseleave', function() {
-            tip.classList.remove('show');
-            if (svg) svg.classList.remove('is-focused');
-            node.classList.remove('is-hot');
-        });
+    function show(node, e) {
+        var head, city = node.getAttribute('data-city');
+        if (city !== null) {                       // Städte-Cluster
+            var more = +node.getAttribute('data-more') || 0;
+            head = esc(city) + (more > 0 ? ' <span class="mt-more">+' + more + '</span>' : '');
+        } else {                                   // Land / Bundesland
+            head = esc(node.getAttribute('data-label') || '');
+        }
+        var val = +node.getAttribute('data-value') || 0;
+        tip.innerHTML = '<strong>' + head + '</strong>' +
+                        '<span><b>' + fmt(val) + '</b> <em>Besucher</em></span>';
+        tip.classList.add('show');
+        if (svg) svg.classList.add('is-focused');
+        if (hot && hot !== node) hot.classList.remove('is-hot');
+        node.classList.add('is-hot');
+        hot = node;
+        _moveTip(e, tip, el);
+    }
+    function hide() {
+        tip.classList.remove('show');
+        if (svg) svg.classList.remove('is-focused');
+        if (hot) { hot.classList.remove('is-hot'); hot = null; }
+    }
+
+    el.addEventListener('mouseover', function(e) {
+        var node = e.target.closest && e.target.closest('.map-shape, .map-city');
+        if (node) show(node, e);
+    });
+    el.addEventListener('mousemove', function(e) {
+        if (tip.classList.contains('show')) _moveTip(e, tip, el);
+    });
+    el.addEventListener('mouseout', function(e) {
+        var node = e.target.closest && e.target.closest('.map-shape, .map-city');
+        if (!node) return;
+        var to = e.relatedTarget;
+        if (to && to.closest && to.closest('.map-shape, .map-city')) return; // Wechsel zwischen Markern
+        hide();
     });
 }
 
@@ -1135,7 +1342,11 @@ function renderMaps(countries, regions, cities) {
     if (world && cities && cities.length) {
         var vb = world.viewBox.split(' ').map(Number);   // [0,0,W,H]
         var W = vb[2], H = vb[3];
-        var ext = _worldExtent();
+        // Die Marker MUESSEN mit derselben Box normiert werden, mit der die
+        // Karte gebaut wurde (Extent der echten Landmasse). world.bounds kommt
+        // aus build-maps.js; _worldExtent() (Globus-Ecken) ist nur Fallback fuer
+        // alte geo-Dateien ohne bounds — es schiebt die Marker sonst nach rechts.
+        var ext = world.bounds || _worldExtent();
         var scale = W / (ext.maxX - ext.minX);
         cities.forEach(function(c) {
             if (c.lat == null || c.lon == null) return;
@@ -1150,7 +1361,7 @@ function renderMaps(countries, regions, cities) {
     var grat = '';
     if (world) {
         var wvb = world.viewBox.split(' ').map(Number);
-        var we = _worldExtent();
+        var we = world.bounds || _worldExtent();
         grat = _graticule(_projectEqualEarth, we, wvb[2] / (we.maxX - we.minX), wvb[2], wvb[3]);
     }
     _renderMapSvg('mapWorld', world, cVals, cLabels, cityMarkers, grat);

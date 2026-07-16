@@ -63,6 +63,12 @@
     'Abgebrochen': 'Cancelled', 'Rückgängig': 'Undo', 'Vollständig': 'Complete',
     'Unvollständig': 'Incomplete', 'Unterschrieben': 'Signed', 'In Bearbeitung': 'In progress',
     'Offen': 'Open', 'Erledigt': 'Done', 'Alle': 'All',
+    // Analytics-Karte „Herkunft" (insights.js: Tooltip, Zoom-Steuerung, Hinweis)
+    'Besucher': 'Visitors',
+    'Vergrößern': 'Zoom in',
+    'Verkleinern': 'Zoom out',
+    'Zurücksetzen': 'Reset',
+    'Zum Zoomen scrollen · Ziehen zum Verschieben': 'Scroll to zoom · drag to pan',
     // Auto-Recovery / Speicher-Toasts (state-config.js loadPersistedData, storage-save.js save).
     // Titel sind emoji-frei, weil showCustomMessage das Leading-Emoji strippt (cleanTitle).
     // Der „aus Backup wiederhergestellt"-Body interpoliert einen Zeitstempel → nicht exakt
