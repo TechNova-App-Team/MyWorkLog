@@ -1435,18 +1435,30 @@
     // NEU: Berechnung der Deep Performance Metriken
     function calculateDeepPerformanceMetrics(entries) {
         const workEntries = entries.filter(e => e.type === 'work' && e.worked > 0);
-        let totalStartMinutes = 0;
-        let startCount = 0;
         let totalFocusHours = 0;
         let focusCount = 0;
 
+        // 1. Ø Arbeitsbeginn — nur der FRÜHESTE Start je Arbeitstag (pro Job) zählt.
+        // Sonst verfälschen Zusatzzeit-/Split-Shift-Einträge (z.B. 16:15-16:47 am selben
+        // Tag) den Schnitt, obwohl sie kein neuer Arbeitsbeginn sind.
+        const earliestStartPerDay = {};
         workEntries.forEach(e => {
-            // 1. Ø Arbeitsbeginn
             if (e.shiftStart && e.shiftStart.includes(':')) {
                 const [h, m] = e.shiftStart.split(':').map(Number);
-                totalStartMinutes += (h * 60 + m);
-                startCount++;
+                const mins = h * 60 + m;
+                if (Number.isNaN(mins)) return;
+                const jobId = (typeof getEntryJobId === 'function') ? getEntryJobId(e) : 'primary';
+                const key = e.date + '|' + jobId;
+                if (earliestStartPerDay[key] === undefined || mins < earliestStartPerDay[key]) {
+                    earliestStartPerDay[key] = mins;
+                }
             }
+        });
+        const startValues = Object.values(earliestStartPerDay);
+        const totalStartMinutes = startValues.reduce((a, b) => a + b, 0);
+        const startCount = startValues.length;
+
+        workEntries.forEach(e => {
 
             // 2. Ø Längste Fokusphase
             if (e.breakLog && e.breakLog.length > 0) {
