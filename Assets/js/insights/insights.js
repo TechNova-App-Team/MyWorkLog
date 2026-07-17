@@ -1661,11 +1661,40 @@ function renderVitals(lcp) {
 // =========================================
 // Event-Namen sind technische Keys — hier bekommen sie ein lesbares Label.
 var EVENT_LABELS = {
-    'entry_created': 'Eintrag erstellt',
-    'entry_updated': 'Eintrag bearbeitet',
-    'timer_action':  'Timer benutzt',
-    'data_exported': 'Daten exportiert',
+    'entry_created':  'Eintrag erstellt',
+    'entry_updated':  'Eintrag bearbeitet',
+    'timer_action':   'Timer benutzt',
+    'data_exported':  'Daten exportiert',
+    'pwa_installiert': 'App installiert',
 };
+
+// 'feature_genutzt' wird backendseitig als 'feature_genutzt::<view>' geliefert.
+// Hier bekommt jeder View-Name sein lesbares Label (deckt sich mit switchTab-Titeln).
+var FEATURE_LABELS = {
+    'dashboard':     'Übersicht',
+    'history':       'Historie',
+    'performance':   'Performance',
+    'ihk':           'IHK / Karriere',
+    'school':        'Berufsschule',
+    'goals':         'Ziele',
+    'yearview':      'Jahresübersicht',
+    'monthcompare':  'Monats-Vergleich',
+    'weekview':      'Wochenansicht',
+    'aibot':         'AI-Bot',
+    'support':       'Support',
+    'analytics-pro': 'Analytics Pro',
+    'aufgaben':      'Aufgaben',
+    'aufgaben-tab':  'Aufgaben',
+};
+
+// Technischen Event-Key → lesbares Label. Splittet die 'feature_genutzt::<view>'-Rows.
+function eventLabel(name) {
+    if (name && name.indexOf('feature_genutzt::') === 0) {
+        var view = name.slice('feature_genutzt::'.length);
+        return 'Ansicht: ' + (FEATURE_LABELS[view] || view);
+    }
+    return EVENT_LABELS[name] || name;
+}
 
 function renderCustomEvents(events) {
     var tbody = document.querySelector('#eventsTable tbody');
@@ -1680,7 +1709,7 @@ function renderCustomEvents(events) {
 
     tbody.innerHTML = events.map(function(e, i) {
         var pct = total > 0 ? ((e.count / total) * 100).toFixed(1) : 0;
-        var label = EVENT_LABELS[e.name] || e.name;
+        var label = eventLabel(e.name);
         return '<tr>' +
             '<td class="rank">' + (i + 1) + '</td>' +
             '<td>' + esc(label) + '</td>' +

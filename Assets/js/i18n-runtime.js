@@ -69,6 +69,26 @@
     'Verkleinern': 'Zoom out',
     'Zurücksetzen': 'Reset',
     'Zum Zoomen scrollen · Ziehen zum Verschieben': 'Scroll to zoom · drag to pan',
+    // Feature-Nutzung / Custom-Events (insights.js EVENT_LABELS + eventLabel())
+    'Eintrag erstellt': 'Entry created',
+    'Eintrag bearbeitet': 'Entry edited',
+    'Timer benutzt': 'Timer used',
+    'Daten exportiert': 'Data exported',
+    'App installiert': 'App installed',
+    'Ansicht: Übersicht': 'View: Overview',
+    'Ansicht: Historie': 'View: History',
+    'Ansicht: Performance': 'View: Performance',
+    'Ansicht: IHK / Karriere': 'View: IHK / Career',
+    'Ansicht: Berufsschule': 'View: Vocational school',
+    'Ansicht: Ziele': 'View: Goals',
+    'Ansicht: Jahresübersicht': 'View: Year overview',
+    'Ansicht: Monats-Vergleich': 'View: Month comparison',
+    'Ansicht: Wochenansicht': 'View: Week view',
+    'Ansicht: AI-Bot': 'View: AI bot',
+    'Ansicht: Support': 'View: Support',
+    'Ansicht: Analytics Pro': 'View: Analytics Pro',
+    'Ansicht: Aufgaben': 'View: Tasks',
+    'Noch keine Events — die Feature-Erfassung läuft erst seit dem letzten Update.': 'No events yet — feature tracking only started with the latest update.',
     // Auto-Recovery / Speicher-Toasts (state-config.js loadPersistedData, storage-save.js save).
     // Titel sind emoji-frei, weil showCustomMessage das Leading-Emoji strippt (cleanTitle).
     // Der „aus Backup wiederhergestellt"-Body interpoliert einen Zeitstempel → nicht exakt
