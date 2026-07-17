@@ -100,7 +100,7 @@ function langName(code) {
     } catch { return code; }
 }
 
-const DEVICE_ICONS = { 'desktop': '🖥️', 'mobile': '📱', 'tablet': '📱', 'laptop': '💻' };
+// (Geräte-Icons als SVG in renderDevicesDonut — siehe DEVICE_SVG. Keine Emojis.)
 const DEVICE_COLORS = { 'desktop': 'var(--primary)', 'mobile': 'var(--success)', 'tablet': 'var(--warning)', 'laptop': 'var(--info)' };
 
 // =========================================
@@ -127,6 +127,28 @@ function animateValue(el, target, suffix, duration) {
 // =========================================
 //  INSIGHTS ENGINE
 // =========================================
+// SVG-Icons (Lucide-Style) statt Emojis — färben sich via currentColor mit der
+// Tonalität der Karte (siehe tone-* in renderInsights). Keine Emojis im UI.
+function icSvg(inner) {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + inner + '</svg>';
+}
+var INSIGHT_ICONS = {
+    trendUp:   icSvg('<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>'),
+    trendDown: icSvg('<polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>'),
+    bars:      icSvg('<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'),
+    target:    icSvg('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'),
+    alert:     icSvg('<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'),
+    clock:     icSvg('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'),
+    smartphone:icSvg('<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>'),
+    monitor:   icSvg('<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>'),
+    layers:    icSvg('<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>'),
+    award:     icSvg('<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>'),
+    calendar:  icSvg('<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'),
+    info:      icSvg('<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>'),
+    zap:       icSvg('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'),
+    refresh:   icSvg('<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>')
+};
+
 function generateInsights(stats, prevStats, devices, pageviewsData, topPages) {
     var insights = [];
     var pv = extractVal(stats.pageviews);
@@ -141,11 +163,11 @@ function generateInsights(stats, prevStats, devices, pageviewsData, topPages) {
         if (ppv > 0) {
             var change = ((pv - ppv) / ppv * 100).toFixed(0);
             if (change > 10) {
-                insights.push({ icon: '📈', text: '<strong>Traffic ↑' + change + '%</strong> im Vergleich zum Vorzeitraum — starkes Wachstum!' });
+                insights.push({ icon: INSIGHT_ICONS.trendUp, tone: 'good', text: '<strong>Traffic ↑' + change + '%</strong> im Vergleich zum Vorzeitraum — starkes Wachstum!' });
             } else if (change < -10) {
-                insights.push({ icon: '📉', text: 'Traffic <strong>↓' + Math.abs(change) + '%</strong> im Vergleich zum Vorzeitraum. Evtl. saisonale Schwankung.' });
+                insights.push({ icon: INSIGHT_ICONS.trendDown, tone: 'bad', text: 'Traffic <strong>↓' + Math.abs(change) + '%</strong> im Vergleich zum Vorzeitraum. Evtl. saisonale Schwankung.' });
             } else {
-                insights.push({ icon: '📊', text: 'Traffic ist <strong>stabil</strong> im Vergleich zum Vorzeitraum (' + (change >= 0 ? '+' : '') + change + '%).' });
+                insights.push({ icon: INSIGHT_ICONS.bars, tone: 'info', text: 'Traffic ist <strong>stabil</strong> im Vergleich zum Vorzeitraum (' + (change >= 0 ? '+' : '') + change + '%).' });
             }
         }
     }
@@ -153,17 +175,17 @@ function generateInsights(stats, prevStats, devices, pageviewsData, topPages) {
     // Bounce rate insight
     var br = visits > 0 ? (bounces / visits * 100) : 0;
     if (br < 30) {
-        insights.push({ icon: '🎯', text: 'Bounce Rate nur <strong>' + br.toFixed(0) + '%</strong> — Nutzer interagieren aktiv mit der App!' });
+        insights.push({ icon: INSIGHT_ICONS.target, tone: 'good', text: 'Bounce Rate nur <strong>' + br.toFixed(0) + '%</strong> — Nutzer interagieren aktiv mit der App!' });
     } else if (br > 60) {
-        insights.push({ icon: '⚠️', text: 'Bounce Rate bei <strong>' + br.toFixed(0) + '%</strong> — viele Nutzer verlassen die Seite sofort.' });
+        insights.push({ icon: INSIGHT_ICONS.alert, tone: 'warn', text: 'Bounce Rate bei <strong>' + br.toFixed(0) + '%</strong> — viele Nutzer verlassen die Seite sofort.' });
     }
 
     // Average time insight
     var avgTime = visits > 0 ? totaltime / visits : 0;
     if (avgTime > 300) {
-        insights.push({ icon: '⏱️', text: 'Nutzer verbringen durchschnittlich <strong>' + fmtDuration(avgTime) + '</strong> — hohe Engagement-Zeit!' });
+        insights.push({ icon: INSIGHT_ICONS.clock, tone: 'good', text: 'Nutzer verbringen durchschnittlich <strong>' + fmtDuration(avgTime) + '</strong> — hohe Engagement-Zeit!' });
     } else if (avgTime > 60) {
-        insights.push({ icon: '⏱️', text: 'Ø Verweildauer: <strong>' + fmtDuration(avgTime) + '</strong> pro Session.' });
+        insights.push({ icon: INSIGHT_ICONS.clock, tone: 'info', text: 'Ø Verweildauer: <strong>' + fmtDuration(avgTime) + '</strong> pro Session.' });
     }
 
     // Devices insight
@@ -172,33 +194,33 @@ function generateInsights(stats, prevStats, devices, pageviewsData, topPages) {
         var mobile = devices.find(function(d) { return d.x === 'mobile'; });
         var mobilePct = mobile ? ((mobile.y / totalDevices) * 100).toFixed(0) : 0;
         if (mobilePct > 50) {
-            insights.push({ icon: '📱', text: '<strong>' + mobilePct + '% mobile Nutzer</strong> — die PWA wird hauptsächlich am Handy genutzt.' });
+            insights.push({ icon: INSIGHT_ICONS.smartphone, tone: 'info', text: '<strong>' + mobilePct + '% mobile Nutzer</strong> — die PWA wird hauptsächlich am Handy genutzt.' });
         } else if (mobilePct > 0) {
-            insights.push({ icon: '🖥️', text: '<strong>' + (100 - mobilePct) + '% Desktop</strong>, ' + mobilePct + '% Mobile — ausgewogene Nutzung.' });
+            insights.push({ icon: INSIGHT_ICONS.monitor, tone: 'info', text: '<strong>' + (100 - mobilePct) + '% Desktop</strong>, ' + mobilePct + '% Mobile — ausgewogene Nutzung.' });
         }
     }
 
     // Pages/session insight
     var pps = visits > 0 ? (pv / visits) : 0;
     if (pps > 3) {
-        insights.push({ icon: '🔥', text: '<strong>' + pps.toFixed(1) + ' Seiten pro Session</strong> — Nutzer erkunden verschiedene Features.' });
+        insights.push({ icon: INSIGHT_ICONS.layers, tone: 'good', text: '<strong>' + pps.toFixed(1) + ' Seiten pro Session</strong> — Nutzer erkunden verschiedene Features.' });
     }
 
     // Top page insight
     if (topPages && topPages.length > 0) {
         var top = topPages[0];
         var topPct = pv > 0 ? ((top.pageviews || top.y || 0) / pv * 100).toFixed(0) : 0;
-        insights.push({ icon: '🏆', text: 'Beliebteste Seite: <strong>' + (top.name || top.x) + '</strong> mit ' + topPct + '% aller Aufrufe.' });
+        insights.push({ icon: INSIGHT_ICONS.award, tone: 'info', text: 'Beliebteste Seite: <strong>' + (top.name || top.x) + '</strong> mit ' + topPct + '% aller Aufrufe.' });
     }
 
     // Total time insight
     if (totaltime > 3600) {
         var hrs = (totaltime / 3600).toFixed(1);
-        insights.push({ icon: '📅', text: 'Insgesamt <strong>' + hrs + ' Stunden</strong> Nutzungszeit im ausgewählten Zeitraum.' });
+        insights.push({ icon: INSIGHT_ICONS.calendar, tone: 'info', text: 'Insgesamt <strong>' + hrs + ' Stunden</strong> Nutzungszeit im ausgewählten Zeitraum.' });
     }
 
     if (insights.length === 0) {
-        insights.push({ icon: '📊', text: 'Noch nicht genug Daten für automatische Insights. Schau in ein paar Tagen nochmal rein!' });
+        insights.push({ icon: INSIGHT_ICONS.info, tone: 'info', text: 'Noch nicht genug Daten für automatische Insights. Schau in ein paar Tagen nochmal rein!' });
     }
 
     return insights;
@@ -208,7 +230,8 @@ function renderInsights(insights) {
     var el = document.getElementById('insightsGrid');
     if (!el) return;
     el.innerHTML = insights.map(function(ins) {
-        return '<div class="insight-item"><div class="insight-icon">' + ins.icon + '</div><div class="insight-text">' + ins.text + '</div></div>';
+        var tone = ins.tone ? ' tone-' + ins.tone : '';
+        return '<div class="insight-item"><div class="insight-icon' + tone + '">' + ins.icon + '</div><div class="insight-text">' + ins.text + '</div></div>';
     }).join('');
 }
 
@@ -780,7 +803,14 @@ function renderDevicesDonut(data) {
 
     var PALETTE  = { desktop: '#a78bfa', mobile: '#34d399', tablet: '#fbbf24', laptop: '#22d3ee' };
     var FALLBACK = ['#a78bfa', '#34d399', '#fbbf24', '#22d3ee', '#f87171'];
-    var ICONS    = { desktop: '🖥️', mobile: '📱', tablet: '📱', laptop: '💻' };
+    // Geräte-Icons als SVG (Lucide, currentColor) statt Emoji.
+    var ICONS = {
+        desktop: icSvg('<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>'),
+        laptop:  icSvg('<path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9"/><line x1="2" y1="20" x2="22" y2="20"/>'),
+        mobile:  icSvg('<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>'),
+        tablet:  icSvg('<rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>')
+    };
+    var ICON_FALLBACK = icSvg('<circle cx="12" cy="12" r="8"/>');
 
     // SVG donut geometry
     var SZ    = 160;                      // SVG canvas size
@@ -803,7 +833,7 @@ function renderDevicesDonut(data) {
         var pct    = d.y / total;
         var segLen = Math.max(3, pct * CIRC - GAP); // visible length minus gap
         var pctStr = (pct * 100).toFixed(1);
-        var icon   = ICONS[d.x] || '●';
+        var icon   = ICONS[d.x] || ICON_FALLBACK;
 
         // stroke-dasharray: [visible dash] [invisible gap filling the rest]
         // stroke-dashoffset: negative = shift start of pattern forward along path
@@ -821,7 +851,7 @@ function renderDevicesDonut(data) {
 
         rows += '<div class="dl-row">' +
             '<span class="dl-dot" style="background:' + color + '"></span>' +
-            '<span class="dl-name">' + icon + ' ' + (d.x || '?') + '</span>' +
+            '<span class="dl-name"><span class="dl-ic">' + icon + '</span>' + (d.x || '?') + '</span>' +
             '<span class="dl-pct">' + pctStr + '%</span>' +
             '<span class="dl-cnt">' + fmt(d.y) + '</span>' +
         '</div>';
@@ -887,14 +917,18 @@ function setLiveStatus(status) {
     var label = document.getElementById('liveLabel');
     if (!dot || !label) return;
     dot.className = 'live-dot';
+    var EN = document.documentElement.lang === 'en';
     if (status === 'live') {
         label.textContent = 'Live';
     } else if (status === 'error') {
         dot.classList.add('error');
-        label.textContent = 'Offline';
+        label.textContent = EN ? 'Offline' : 'Offline';
+    } else if (status === 'stale') {
+        dot.classList.add('connecting');
+        label.textContent = EN ? 'Cached' : 'Cache';
     } else {
         dot.classList.add('connecting');
-        label.textContent = 'Verbinde…';
+        label.textContent = EN ? 'Connecting…' : 'Verbinde…';
     }
 }
 
@@ -1659,9 +1693,82 @@ function renderCustomEvents(events) {
 // =========================================
 //  LOAD ALL DATA — PostHog via Worker-Proxy
 // =========================================
+// Resilienz gegen PostHog-Rate-Limits (429): Der Proxy fächert ~22 HogQL-Queries
+// auf; PostHog drosselt sie im Burst. Statt eine leere Seite zu zeigen, cachen
+// wir die letzte gute Antwort (pro Range) und rendern sie bei Drosselung erneut,
+// mit Hinweis + Countdown + Auto-Retry nach dem Retry-Fenster.
+var _analyticsLoading = false;
+var _analyticsRetryTimer = null;
+var _analyticsCountdownTimer = null;
+
+function analyticsCacheKey() { return 'mwl_an_cache_' + currentRange; }
+function saveAnalyticsCache(d) {
+    try { sessionStorage.setItem(analyticsCacheKey(), JSON.stringify({ ts: Date.now(), data: d })); } catch (e) { /* voll/aus */ }
+}
+function loadAnalyticsCache() {
+    try { var raw = sessionStorage.getItem(analyticsCacheKey()); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+}
+function payloadHasData(d) {
+    if (!d) return false;
+    var s = d.summary || {};
+    return !!(s.pageviews || s.visitors || s.sessions) || (Array.isArray(d.series) && d.series.length > 0);
+}
+function errorsAreThrottle(errs) {
+    if (!errs) return false;
+    return Object.keys(errs).some(function (k) { return /\b429\b|throttl/i.test(String(errs[k])); });
+}
+function parseRetrySeconds(errs) {
+    var max = 0;
+    Object.keys(errs || {}).forEach(function (k) {
+        var m = String(errs[k]).match(/in\s+(\d+)\s+second/i);
+        if (m) max = Math.max(max, parseInt(m[1], 10));
+    });
+    return Math.min(Math.max(max || 120, 15), 900); // 15 s … 15 min
+}
+function clearAnalyticsRetry() {
+    if (_analyticsRetryTimer) { clearTimeout(_analyticsRetryTimer); _analyticsRetryTimer = null; }
+    if (_analyticsCountdownTimer) { clearInterval(_analyticsCountdownTimer); _analyticsCountdownTimer = null; }
+}
+// Zeigt die „Backend ausgelastet"-Notice + Countdown und plant den Auto-Retry.
+function enterBackendBusy(secs, staleTs) {
+    var EN = document.documentElement.lang === 'en';
+    clearAnalyticsRetry();
+    var el = document.getElementById('adblockNotice');
+    if (el) {
+        el.style.display = 'block';
+        var h = el.querySelector('h4');
+        var p = el.querySelector('p');
+        if (h) h.textContent = EN ? 'Backend is busy' : 'Backend ausgelastet';
+        if (p) {
+            p.innerHTML =
+                (EN ? 'The analytics backend (PostHog) is rate-limiting requests right now.'
+                    : 'Das Analytics-Backend (PostHog) drosselt gerade die Anfragen.') +
+                (staleTs ? '<br><span style="opacity:0.6;">' +
+                    (EN ? 'Showing cached data from ' : 'Zwischengespeicherte Daten von ') +
+                    new Date(staleTs).toLocaleTimeString(EN ? 'en-GB' : 'de-DE') + '</span>' : '');
+        }
+    }
+    var det = document.getElementById('errorDetail');
+    if (det) {
+        det.style.display = 'block';
+        var left = secs;
+        var tick = function () {
+            det.textContent = (EN ? 'Retrying in ' : 'Neuer Versuch in ') + Math.max(0, left) + ' s …';
+            left--;
+        };
+        tick();
+        _analyticsCountdownTimer = setInterval(tick, 1000);
+    }
+    _analyticsRetryTimer = setTimeout(function () { loadAll(); }, (secs + 2) * 1000);
+}
+
 async function loadAll() {
+    if (_analyticsLoading) return;   // kein überlappender 22-Query-Burst (verschärft die Drosselung)
+    _analyticsLoading = true;
+    clearAnalyticsRetry();
+
     var btn = document.getElementById('refreshBtn');
-    if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Laden...'; }
+    if (btn) { btn.disabled = true; btn.innerHTML = '<svg class="an-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg> Laden…'; }
 
     setLiveStatus('connecting');
     showSkeletons();
@@ -1698,6 +1805,32 @@ async function loadAll() {
         // Teilausfaelle: Seite rendert, aber die kaputten Queries stehen in der Console
         if (d._errors) {
             console.warn('Analytics: Teil-Queries fehlgeschlagen:', d._errors);
+        }
+
+        // Rate-Limit-Resilienz: Kommt die Antwort inhaltsleer zurück, weil PostHog
+        // mit 429 gedrosselt hat, KEIN leeres Dashboard zeigen — stattdessen die
+        // letzte gute Antwort aus dem Cache durch den normalen Render-Pfad schicken
+        // (+ Hinweis + Auto-Retry). Ohne Cache: nur Hinweis + Retry, nichts leeren.
+        var _stale = false;
+        if (!payloadHasData(d)) {
+            if (errorsAreThrottle(d._errors)) {
+                var _secs  = parseRetrySeconds(d._errors);
+                var _cache = loadAnalyticsCache();
+                if (_cache && payloadHasData(_cache.data)) {
+                    enterBackendBusy(_secs, _cache.ts);
+                    d = _cache.data;
+                    _stale = true;
+                } else {
+                    enterBackendBusy(_secs, null);
+                    setLiveStatus('error');
+                    hideSkeletons();
+                    return; // finally setzt Button + Loading-Flag zurück
+                }
+            }
+            // nicht gedrosselt + leer = echt (noch) keine Daten → normal rendern
+        } else {
+            saveAnalyticsCache(d);
+            clearAnalyticsRetry();
         }
 
         var sum      = d.summary             || {};
@@ -1885,14 +2018,14 @@ async function loadAll() {
             if (goodLcp) {
                 var goodPct = lcp.reduce(function(s, l) { return s + l.sessions; }, 0);
                 goodPct = goodPct > 0 ? Math.round(goodLcp.sessions / goodPct * 100) : 0;
-                insights.unshift({ icon: '⚡', text: '<strong>' + goodPct + '% gute LCP-Werte</strong> — Seite lädt schnell für die meisten Nutzer.' });
+                insights.unshift({ icon: INSIGHT_ICONS.zap, tone: 'good', text: '<strong>' + goodPct + '% gute LCP-Werte</strong> — Seite lädt schnell für die meisten Nutzer.' });
             }
         }
         if (nvr.length > 0) {
             var retU = nvr.find(function(r) { return r.type === 'Wiederkehrend'; });
             if (retU && retU.visitors > 0) {
                 var retPct = Math.round(retU.visitors / visitors * 100);
-                insights.push({ icon: '🔄', text: '<strong>' + retPct + '% wiederkehrende Nutzer</strong> — die App bindet ihre User.' });
+                insights.push({ icon: INSIGHT_ICONS.refresh, tone: 'good', text: '<strong>' + retPct + '% wiederkehrende Nutzer</strong> — die App bindet ihre User.' });
             }
         }
 
@@ -1902,23 +2035,35 @@ async function loadAll() {
         var lu = document.getElementById('lastUpdated');
         if (lu) lu.textContent = 'Zuletzt aktualisiert: ' + new Date().toLocaleString('de-DE');
 
-        setLiveStatus('live');
+        setLiveStatus(_stale ? 'stale' : 'live');
         hideSkeletons();
 
     } catch (err) {
         console.error('Analytics Error:', err);
+        clearAnalyticsRetry();
         setLiveStatus('error');
         hideSkeletons();
+        var _en = document.documentElement.lang === 'en';
         var adEl = document.getElementById('adblockNotice');
-        if (adEl) adEl.style.display = 'block';
+        if (adEl) {
+            adEl.style.display = 'block';
+            var _h = adEl.querySelector('h4');
+            var _p = adEl.querySelector('p');
+            if (_h) _h.textContent = _en ? 'Analytics backend not reachable' : 'Analytics-Backend nicht erreichbar';
+            if (_p) _p.textContent = _en ? 'Could not connect to the analytics backend.' : 'Die Verbindung zum Analytics-Backend konnte nicht hergestellt werden.';
+        }
         var detEl = document.getElementById('errorDetail');
         if (detEl) {
             detEl.textContent = err.message || String(err);
             detEl.style.display = 'block';
         }
+    } finally {
+        _analyticsLoading = false;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Aktualisieren';
+        }
     }
-
-    if (btn) { btn.disabled = false; btn.innerHTML = '🔄 Aktualisieren'; }
 }
 
 // =========================================
