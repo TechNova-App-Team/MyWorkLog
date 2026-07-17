@@ -3,6 +3,133 @@
         .modal.active { display: flex !important; animation: fadeIn 0.2s ease; }
 
 
+        /* ══════ QUICK HELP MODAL (Clean SaaS, Dark) ══════ */
+        /* Inhalt wird von openQuickHelp() gerendert. Signature: Icon-Tile + Keycaps. */
+        .modal-box.qh-box {
+            position: relative;
+            width: 100%;
+            max-width: 460px;
+            padding: 1.5rem 1.5rem 1.25rem;
+            background: linear-gradient(180deg, #16161d, #101015);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+            animation: qhPop 0.24s cubic-bezier(0.16,1,0.3,1);
+        }
+        @keyframes qhPop { from { opacity:0; transform: translateY(10px) scale(0.985); } to { opacity:1; transform:none; } }
+
+        .qh-close {
+            position: absolute; top: 14px; right: 14px;
+            width: 32px; height: 32px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: transparent; color: var(--text-muted);
+            border: 1px solid transparent; border-radius: 9px;
+            cursor: pointer; transition: all 0.18s ease;
+        }
+        .qh-close svg { width: 17px; height: 17px; }
+        .qh-close:hover { background: rgba(255,255,255,0.06); color: var(--text-main); }
+
+        /* Header: Icon-Tile + Titel/Untertitel */
+        .qh-head { display: flex; align-items: center; gap: 14px; padding-right: 34px; }
+        .qh-icon {
+            flex-shrink: 0;
+            width: 46px; height: 46px;
+            display: grid; place-items: center;
+            border-radius: 13px;
+            color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.12);
+            border: 1px solid rgba(var(--primary-rgb), 0.28);
+        }
+        .qh-icon svg { width: 23px; height: 23px; }
+        .qh-title { font-size: 1.1rem; font-weight: 650; color: var(--text-main); line-height: 1.2; }
+        .qh-sub { font-size: 0.82rem; color: var(--text-muted); margin-top: 3px; line-height: 1.35; }
+
+        /* Body */
+        .qh-body { margin-top: 1.35rem; display: flex; flex-direction: column; gap: 1.25rem; }
+        .qh-group-label {
+            font-size: 0.68rem; font-weight: 600; letter-spacing: 0.07em;
+            text-transform: uppercase; color: var(--text-muted);
+            opacity: 0.75; margin-bottom: 0.6rem;
+        }
+
+        /* Punkt-Liste (dezenter Dot statt Emoji/Disc) */
+        .qh-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.55rem; }
+        .qh-item {
+            position: relative; padding-left: 18px;
+            font-size: 0.88rem; line-height: 1.45; color: var(--text-muted);
+        }
+        .qh-item::before {
+            content: ''; position: absolute; left: 2px; top: 0.5em;
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--primary);
+        }
+        .qh-item strong { color: var(--text-main); font-weight: 600; }
+
+        /* Tastenkürzel — echte Keycaps */
+        .qh-keys { display: flex; flex-direction: column; gap: 0.55rem; }
+        .qh-key-row { display: flex; align-items: center; gap: 12px; }
+        .qh-caps { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+        .qh-kbd {
+            font-family: var(--font-mono), 'JetBrains Mono', monospace;
+            font-size: 0.72rem; font-weight: 600;
+            min-width: 20px; padding: 3px 7px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-main);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-bottom-width: 2px; border-radius: 6px;
+        }
+        .qh-plus { color: var(--text-muted); font-size: 0.72rem; opacity: 0.6; }
+        .qh-key-desc { font-size: 0.86rem; color: var(--text-muted); }
+
+        /* Footer */
+        .qh-foot {
+            display: flex; justify-content: flex-end; align-items: center; gap: 0.6rem;
+            margin-top: 1.5rem; padding-top: 1.15rem;
+            border-top: 1px solid rgba(255,255,255,0.07);
+        }
+        .qh-btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            font-family: inherit; font-size: 0.85rem; font-weight: 550;
+            padding: 0.55rem 1rem; border-radius: 10px;
+            cursor: pointer; transition: all 0.18s ease; border: 1px solid transparent;
+        }
+        .qh-btn svg { width: 15px; height: 15px; }
+        .qh-btn-ghost {
+            background: transparent; color: var(--text-muted);
+            border-color: rgba(255,255,255,0.12);
+        }
+        .qh-btn-ghost:hover { color: var(--text-main); background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
+        .qh-btn-primary {
+            background: var(--primary); color: #fff;
+            box-shadow: 0 6px 18px rgba(var(--primary-rgb), 0.28);
+        }
+        .qh-btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+        .qh-btn:focus-visible, .qh-close:focus-visible {
+            outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.35);
+        }
+
+        /* Light-Theme */
+        [data-theme="light"] .modal-box.qh-box {
+            background: #ffffff; border-color: rgba(0,0,0,0.08);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.18);
+        }
+        [data-theme="light"] .qh-close:hover { background: rgba(0,0,0,0.05); }
+        [data-theme="light"] .qh-kbd { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.15); }
+        [data-theme="light"] .qh-foot { border-top-color: rgba(0,0,0,0.08); }
+        [data-theme="light"] .qh-btn-ghost { border-color: rgba(0,0,0,0.14); }
+        [data-theme="light"] .qh-btn-ghost:hover { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.25); }
+
+        @media (max-width: 520px) {
+            .modal-box.qh-box { max-width: 100%; padding: 1.25rem 1.15rem 1.1rem; border-radius: 16px; }
+            .qh-key-row { flex-wrap: wrap; gap: 6px 10px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .modal-box.qh-box { animation: none; }
+            .qh-btn-primary:hover { transform: none; }
+        }
+
+
         /* ===== HOLIDAY CONFIRM MODAL ===== */
         .holiday-modal-overlay {
             position: fixed; inset: 0;

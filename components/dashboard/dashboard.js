@@ -1668,167 +1668,185 @@
         toggleDashboardEditMode();
     }
 
+    // Sprachbewusst: das Hilfe-Panel wird komplett per JS gebaut, die statische
+    // i18n-Pipeline erfasst JS nicht → Texte hier direkt zweisprachig halten.
+    function qhL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
+
+    // Lucide-Style Icons (Stroke 1.5, currentColor) pro Hilfe-Kontext — keine Emojis.
+    var QH_ICONS = {
+        dashboard:   '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+        performance: '<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+        entry:       '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+        timer:       '<line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="12" y1="14" y2="9"/><circle cx="12" cy="14" r="8"/>',
+        ihk:         '<path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c3 2.5 9 2.5 12 0v-5"/>',
+        school:      '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+        goals:       '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+        calendar:    '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>',
+        history:     '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
+        support:     '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><line x1="5.6" y1="5.6" x2="9.5" y2="9.5"/><line x1="14.5" y1="14.5" x2="18.4" y2="18.4"/><line x1="14.5" y1="9.5" x2="18.4" y2="5.6"/><line x1="5.6" y1="18.4" x2="9.5" y2="14.5"/>',
+        help:        '<circle cx="12" cy="12" r="9"/><path d="M9.2 9a2.8 2.8 0 0 1 5.4 1c0 1.9-2.8 2.8-2.8 2.8"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+    };
+
+    // Content-Modell pro Kontext. group.kind: 'list' (Punkte) | 'keys' (Tastenkürzel).
+    function buildQuickHelpContent(context) {
+        if (context === 'entry') {
+            return {
+                icon: 'entry',
+                title: qhL('Eintrag erfassen', 'Log an entry'),
+                sub: qhL('Zeiten in wenigen Sekunden buchen', 'Book your time in seconds'),
+                groups: [
+                    { kind: 'list', label: qhL('So geht\'s', 'How it works'), items: [
+                        { lead: qhL('Datum & Typ', 'Date & type'), text: qhL('Arbeit, Schule, Urlaub oder Krank wählen.', 'Pick work, school, vacation or sick.') },
+                        { lead: qhL('Zeitraum', 'Time span'), text: qhL('Start/Ende eintragen oder Stunden direkt (z.B. 7.5).', 'Enter start/end or hours directly (e.g. 7.5).') },
+                        { text: qhL('Die „Jetzt“-Buttons setzen die aktuelle Uhrzeit ein.', 'The “Now” buttons insert the current time.') },
+                        { text: qhL('Entwürfe werden automatisch gesichert und lassen sich wiederherstellen.', 'Drafts are saved automatically and can be restored.') }
+                    ]},
+                    { kind: 'keys', label: qhL('Kürzel', 'Shortcut'), items: [
+                        { keys: ['Ctrl', 'Enter'], text: qhL('Eintrag sofort speichern', 'Save entry instantly') }
+                    ]}
+                ]
+            };
+        }
+        if (context === 'timer') {
+            return {
+                icon: 'timer',
+                title: qhL('Live-Timer', 'Live timer'),
+                sub: qhL('Laufende Sessions automatisch messen', 'Track running sessions automatically'),
+                groups: [
+                    { kind: 'list', label: qhL('Gut zu wissen', 'Good to know'), items: [
+                        { text: qhL('Beim Stoppen wird die gemessene Zeit als Eintrag übernommen.', 'On stop, the measured time becomes an entry.') },
+                        { text: qhL('Pausen werden erfasst und Mindestpausen bei Bedarf abgezogen.', 'Breaks are tracked and minimum breaks deducted when needed.') },
+                        { text: qhL('Timer für lange Sessions, Start/Ende-Felder für kurze Fixbuchungen.', 'Timer for long sessions, start/end fields for quick fixes.') }
+                    ]},
+                    { kind: 'keys', label: qhL('Kürzel', 'Shortcuts'), items: [
+                        { keys: ['Ctrl', 'Space'], text: qhL('Starten / pausieren', 'Start / pause') },
+                        { keys: ['Ctrl', 'Shift', 'Space'], text: qhL('Stoppen & speichern', 'Stop & save') }
+                    ]}
+                ]
+            };
+        }
+
+        // Kontext 'global' → View-spezifische Hilfe
+        var active = document.querySelector('.view-section.active');
+        var aid = active ? active.id : null;
+        switch (aid) {
+            case 'view-dashboard':
+                return { icon: 'dashboard', title: qhL('Dashboard', 'Dashboard'),
+                    sub: qhL('Deine wichtigsten Kennzahlen auf einen Blick', 'Your key metrics at a glance'),
+                    groups: [{ kind: 'list', label: qhL('Was du hier siehst', 'What you see here'), items: [
+                        { lead: qhL('Saldo & KPI', 'Balance & KPI'), text: qhL('Überblick über Soll, Ist und Gleitzeit.', 'Target, actual and flextime overview.') },
+                        { lead: qhL('Projektverteilung', 'Project split'), text: qhL('Welche Projekte deine Zeit verbrauchen.', 'Which projects consume your time.') },
+                        { lead: qhL('Schnellaktionen', 'Quick actions'), text: qhL('Timer starten oder direkt einen Eintrag anlegen.', 'Start the timer or add an entry directly.') }
+                    ]}]};
+            case 'view-performance':
+                return { icon: 'performance', title: qhL('Performance', 'Performance'),
+                    sub: qhL('Trends und Muster in deinen Zeiten', 'Trends and patterns in your hours'),
+                    groups: [{ kind: 'list', label: qhL('Analysen', 'Analytics'), items: [
+                        { text: qhL('Trendlinien, Heatmaps und Projektverteilungen.', 'Trend lines, heatmaps and project splits.') },
+                        { text: qhL('Zeiträume oder Projekte über Filter eingrenzen.', 'Narrow by time range or project using filters.') },
+                        { text: qhL('Diagramme antippen für Detailinfos.', 'Tap charts for detailed info.') }
+                    ]}]};
+            case 'view-ihk':
+                return { icon: 'ihk', title: qhL('IHK & Ausbildung', 'IHK & training'),
+                    sub: qhL('Prüfungsdaten und Ausbildungsfortschritt', 'Exam data and training progress'),
+                    groups: [{ kind: 'list', label: qhL('Wofür', 'What for'), items: [
+                        { text: qhL('Prüfungstermine und Noten eintragen, Fortschritt berechnen.', 'Enter exam dates and grades, track progress.') },
+                        { text: qhL('Hilft bei Audit- und Nachweiszwecken.', 'Useful for audits and documentation.') }
+                    ]}]};
+            case 'view-school':
+                return { icon: 'school', title: qhL('Berufsschule', 'Vocational school'),
+                    sub: qhL('Schultage und Stunden verwalten', 'Manage school days and hours'),
+                    groups: [{ kind: 'list', label: qhL('Funktionen', 'Features'), items: [
+                        { text: qhL('Schultage werden erkannt und Stunden automatisch zugeordnet.', 'School days are detected and hours assigned automatically.') },
+                        { text: qhL('Manuelle Einträge für Sonderfälle möglich.', 'Manual entries possible for special cases.') }
+                    ]}]};
+            case 'view-goals':
+                return { icon: 'goals', title: qhL('Ziele', 'Goals'),
+                    sub: qhL('Persönliche Zeit- und Wochenziele', 'Personal time and weekly goals'),
+                    groups: [{ kind: 'list', label: qhL('Funktionen', 'Features'), items: [
+                        { text: qhL('Zielvorgaben erstellen und Fortschritt verfolgen.', 'Set targets and track progress.') },
+                        { text: qhL('Prognosen zeigen Planabweichungen früh.', 'Forecasts surface deviations early.') }
+                    ]}]};
+            case 'view-yearview':
+            case 'view-monthcompare':
+                return { icon: 'calendar', title: qhL('Jahres- & Monatsansicht', 'Year & month view'),
+                    sub: qhL('Leistung über längere Zeiträume', 'Performance over longer periods'),
+                    groups: [{ kind: 'list', label: qhL('Was du hier siehst', 'What you see here'), items: [
+                        { text: qhL('Heatmaps und Monatsvergleiche für Trends.', 'Heatmaps and month comparisons for trends.') },
+                        { text: qhL('Auf einen Tag tippen für die Detailansicht.', 'Tap a day for the detail view.') }
+                    ]}]};
+            case 'view-history':
+                return { icon: 'history', title: qhL('Historie', 'History'),
+                    sub: qhL('Alle Einträge durchsuchen und pflegen', 'Browse and manage all entries'),
+                    groups: [{ kind: 'list', label: qhL('Funktionen', 'Features'), items: [
+                        { text: qhL('Nach Datum, Projekt oder Typ filtern.', 'Filter by date, project or type.') },
+                        { text: qhL('Einträge bearbeiten oder exportieren.', 'Edit or export entries.') }
+                    ]}]};
+            case 'view-support':
+                return { icon: 'support', title: qhL('Support', 'Support'),
+                    sub: qhL('Hilfe, Feedback und Kontakt', 'Help, feedback and contact'),
+                    groups: [{ kind: 'list', label: qhL('Optionen', 'Options'), items: [
+                        { text: qhL('Fehler melden, Feedback geben oder die Doku lesen.', 'Report bugs, send feedback or read the docs.') }
+                    ]}]};
+            default:
+                return { icon: 'help', title: qhL('Schnell-Hilfe', 'Quick help'),
+                    sub: qhL('Die wichtigsten Aktionen', 'The most important actions'),
+                    groups: [{ kind: 'keys', label: qhL('Tastenkürzel', 'Keyboard shortcuts'), items: [
+                        { keys: ['Ctrl', 'Space'], text: qhL('Timer starten / pausieren', 'Start / pause timer') },
+                        { keys: ['Ctrl', 'Shift', 'Space'], text: qhL('Timer stoppen & speichern', 'Stop & save timer') },
+                        { keys: ['Ctrl', 'Enter'], text: qhL('Formular speichern', 'Save form') }
+                    ]}]};
+        }
+    }
+
+    function renderQuickHelpGroup(g) {
+        var label = '<div class="qh-group-label">' + esc(g.label) + '</div>';
+        if (g.kind === 'keys') {
+            var rows = g.items.map(function (it) {
+                var caps = it.keys.map(function (k, i) {
+                    return (i ? '<span class="qh-plus">+</span>' : '') + '<kbd class="qh-kbd">' + esc(k) + '</kbd>';
+                }).join('');
+                return '<div class="qh-key-row"><span class="qh-caps">' + caps + '</span>' +
+                       '<span class="qh-key-desc">' + esc(it.text) + '</span></div>';
+            }).join('');
+            return '<div class="qh-group">' + label + '<div class="qh-keys">' + rows + '</div></div>';
+        }
+        var lis = g.items.map(function (it) {
+            var lead = it.lead ? '<strong>' + esc(it.lead) + '</strong> ' : '';
+            return '<li class="qh-item"><span>' + lead + esc(it.text) + '</span></li>';
+        }).join('');
+        return '<div class="qh-group">' + label + '<ul class="qh-list">' + lis + '</ul></div>';
+    }
+
     function openQuickHelp(context) {
         try {
-            const modal = document.getElementById('quickHelpModal');
-            const titleEl = modal.querySelector('h3');
-            const bodyEl = modal.querySelector('.modal-box > div:nth-child(2)');
+            var modal = document.getElementById('quickHelpModal');
+            var host = modal ? modal.querySelector('.qh-render') : null;
+            if (!modal || !host) return;
 
-            // Default content
-            let title = '❓ Schnell-Hilfe';
-            let html = '';
+            var c = buildQuickHelpContent(context);
+            var svg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" ' +
+                      'stroke-linecap="round" stroke-linejoin="round">' + (QH_ICONS[c.icon] || QH_ICONS.help) + '</svg>';
 
-            if (context === 'entry') {
-                title = '✍️ Hilfe: Eintrag erfassen';
-                html = `
-                    <p style="margin:0 0 8px 0;">So erstellst du einen Eintrag:</p>
-                    <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
-                        <li>Wähle das Datum und den Typ (Arbeit / Schule / Urlaub / Krank).</li>
-                        <li>Nutze die <strong>Jetzt</strong>-Buttons neben Start/Ende für die aktuelle Uhrzeit.</li>
-                        <li>Oder gib Stunden manuell ein (z.B. 7.5).</li>
-                        <li>Drücke <strong>Ctrl/Cmd+Enter</strong> zum schnellen Speichern.</li>
-                    </ul>
-                    <p style="margin:0; color:var(--text-muted);">Entwürfe werden automatisch gespeichert. Mit <em>Wiederherstellen</em> lädst du den Entwurf (danach wird er gelöscht).</p>
-                `;
-            } else if (context === 'timer') {
-                title = '⏱️ Hilfe: Live Timer';
-                html = `
-                    <p style="margin:0 0 8px 0;">Der Live-Tracker misst deine Arbeitszeit:</p>
-                    <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
-                        <li><strong>Ctrl + Space</strong> Timer starten/pausieren, <strong>Ctrl + Shift + Space</strong> Timer stoppen & speichern</li>
-                        <li>Beim Stoppen kannst du die gemessene Zeit als Eintrag speichern.</li>
-                        <li>Pausen werden automatisch erfasst und ggf. Mindestpausen abgezogen.</li>
-                    </ul>
-                    <p style="margin:0; color:var(--text-muted);">Tipp: Nutze den Timer für längere Sessions, und die Start/Ende-Felder für kurze Fix-Buchungen.</p>
-                `;
-            } else { // global or default - show page-specific help when possible
-                const active = document.querySelector('.view-section.active');
-                const aid = active ? active.id : null;
-
-                switch(aid) {
-                    case 'view-dashboard':
-                        title = '📊 Hilfe: Dashboard';
-                        html = `
-                            <p style="margin:0 0 8px 0;">Das Dashboard zeigt deine wichtigsten Kennzahlen:</p>
-                            <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
-                                <li><strong>Saldo & KPI</strong> - Überblick über Soll/Ist und Gleitzeit.</li>
-                                <li><strong>Projektverteilung</strong> - Welche Projekte verbrauchen Zeit.</li>
-                                <li><strong>Schnellaktionen</strong> - Direkt Timer starten oder Einträge anlegen.</li>
-                            </ul>
-                        `;
-                        break;
-                    case 'view-performance':
-                        title = '📈 Hilfe: Performance';
-                        html = `
-                            <p style="margin:0 0 8px 0;">Hier findest du Analysen und Muster:</p>
-                            <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
-                                <li>Trendlinien, Heatmaps und Projektverteilungen.</li>
-                                <li>Nutze Filter, um Zeiträume oder Projekte einzugrenzen.</li>
-                                <li>Klicke Diagramme für Detailinfos.</li>
-                            </ul>
-                        `;
-                        break;
-                    case 'view-prognose':
-                        title = '🔮 Hilfe: Prognose & Planung';
-                        html = `
-                            <p style="margin:0 0 8px 0;">Plane deine nächsten Wochen und simuliere Saldo-Änderungen:</p>
-                            <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
-                                <li>Markiere Tage als Urlaub/Schule/Krank und sieh sofort die Auswirkung.</li>
-                                <li>Verwende verschiedene Szenarien, um das Jahresziel zu erreichen.</li>
-                            </ul>
-                        `;
-                        break;
-                    case 'view-ihk':
-                        title = '🎓 Hilfe: IHK & Ausbildung';
-                        html = `
-                            <p style="margin:0 0 8px 0;">Alles rund um deine Ausbildung und Prüfungsdaten:</p>
-                            <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
-                                <li>Trage Prüfungsdaten und Noten ein, um Fortschritt zu berechnen.</li>
-                                <li>Die Sektion hilft bei Audit- und Nachweiszwecken.</li>
-                            </ul>
-                        `;
-                        break;
-                    case 'view-school':
-                        title = '🏫 Hilfe: Berufsschule';
-                        html = `
-                            <p style="margin:0 0 8px 0;">Berufsschul- und Stundenverwaltung:</p>
-                            <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
-                                <li>Automatische Erkennung von Schultagen und Zuordnung von Stunden.</li>
-                                <li>Manuelle Einträge möglich für Sonderfälle.</li>
-                            </ul>
-                        `;
-                        break;
-                    case 'view-goals':
-                        title = '🎯 Hilfe: Ziele';
-                        html = `
-                            <p style="margin:0 0 8px 0;">Setze persönliche Zeit- und Wochenziele:</p>
-                            <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
-                                <li>Erstelle Zielvorgaben und verfolge den Fortschritt.</li>
-                                <li>Nutze Prognosen, um Planabweichungen zu erkennen.</li>
-                            </ul>
-                        `;
-                        break;
-                    case 'view-yearview':
-                    case 'view-monthcompare':
-                        title = '📅 Hilfe: Jahres-/Monatsansicht';
-                        html = `
-                            <p style="margin:0 0 8px 0;">Zeige deine Leistung über längere Zeiträume:</p>
-                            <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
-                                <li>Heatmaps und Monatsvergleiche für Trendanalyse.</li>
-                                <li>Klicke auf Tage für Detailansichten.</li>
-                            </ul>
-                        `;
-                        break;
-                    case 'view-history':
-                        title = '📜 Hilfe: Historie';
-                        html = `
-                            <p style="margin:0 0 8px 0;">Alle Einträge und Filteroptionen:</p>
-                            <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
-                                <li>Filtern nach Datum, Projekt oder Typ.</li>
-                                <li>Einträge bearbeiten oder exportieren.</li>
-                            </ul>
-                        `;
-                        break;
-                    case 'view-support':
-                        title = '🛠️ Hilfe & Support';
-                        html = `
-                            <p style="margin:0 0 8px 0;">Support- und Kontaktoptionen:</p>
-                            <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
-                                <li>Fehler melden, Feedback geben oder Dokumentation lesen.</li>
-                            </ul>
-                        `;
-                        break;
-                    default:
-                        title = '❓ Schnell-Hilfe';
-                        html = `
-                            <p style="margin:0 0 8px 0;">Kurze Übersicht wichtiger Aktionen:</p>
-                            <ul style="margin:0 0 12px 18px; color:var(--text-muted);">
-                                <li><strong>S</strong> : Timer starten</li>
-                                <li><strong>P</strong> : Timer pausieren</li>
-                                <li><strong>E</strong> : Timer stoppen</li>
-                                <li><strong>Ctrl/Cmd+Enter</strong> : Formular speichern</li>
-                            </ul>
-                            <p style="margin:0; color:var(--text-muted);">Klicke 'Tour starten' um die Einführung zu sehen.</p>
-                        `;
-                }
-            }
-
-            // Inject content into modal
-            if (titleEl) titleEl.innerText = title;
-            // Replace the second child (body) content inside modal-box
-            const modalBox = document.querySelector('#quickHelpModal .modal-box');
-            if (modalBox) {
-                // Keep header and buttons, but replace the content area (which starts at index 1)
-                // The structure is: modal-box > [header div, content div]
-                const children = modalBox.children;
-                if (children.length >= 2) {
-                    children[1].innerHTML = html + `
-                        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
-                            <button class="btn" onclick="startOnboardingTour()">Tour starten</button>
-                            <button class="btn btn-primary" onclick="closeQuickHelp()">Schließen</button>
-                        </div>`;
-                }
-            }
+            host.innerHTML =
+                '<button class="qh-close" onclick="closeQuickHelp()" aria-label="' + qhL('Schließen', 'Close') + '">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                '</button>' +
+                '<div class="qh-head">' +
+                    '<div class="qh-icon">' + svg + '</div>' +
+                    '<div class="qh-head-text">' +
+                        '<div class="qh-title">' + esc(c.title) + '</div>' +
+                        '<div class="qh-sub">' + esc(c.sub) + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="qh-body">' + c.groups.map(renderQuickHelpGroup).join('') + '</div>' +
+                '<div class="qh-foot">' +
+                    '<button class="qh-btn qh-btn-ghost" onclick="startOnboardingTour()">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>' +
+                        qhL('Tour starten', 'Start tour') +
+                    '</button>' +
+                    '<button class="qh-btn qh-btn-primary" onclick="closeQuickHelp()">' + qhL('Verstanden', 'Got it') + '</button>' +
+                '</div>';
 
             modal.classList.add('active');
         } catch (e) { console.warn('openQuickHelp error', e); }
