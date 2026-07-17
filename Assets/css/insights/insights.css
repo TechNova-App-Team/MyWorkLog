@@ -1202,6 +1202,113 @@ a:hover { color: #c4b5fd; }
     color: var(--text);
 }
 
+/* ── Städte: Länder-Chip-Filter (Signatur) + City-Grid ──────────────────
+   Vollbreite Karte. Chips = ein Tap statt Dropdown, alle Länder sichtbar.
+   Grid füllt die Breite → 30 Städte in ~3 Spalten statt endlosem Scroll. */
+.chip-rail {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px 2px 14px;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+}
+.chip-rail::-webkit-scrollbar { height: 6px; }
+.chip-rail::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+
+.geo-chip {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 999px;
+    padding: 7px 12px;
+    color: rgba(232,230,240,0.6);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    scroll-snap-align: start;
+    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.geo-chip:hover { color: var(--text); background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); }
+.geo-chip:focus-visible { outline: 2px solid rgba(167,139,250,0.7); outline-offset: 1px; }
+.geo-chip .chip-flag { display: inline-flex; align-items: center; font-size: 0.92rem; }
+.geo-chip .chip-flag svg { display: block; }
+.geo-chip .chip-count {
+    color: var(--sub);
+    font-size: 0.6rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.06);
+    padding: 2px 7px;
+    border-radius: 999px;
+}
+.geo-chip.active {
+    background: rgba(167,139,250,0.92);
+    border-color: transparent;
+    color: #14101f;
+    font-weight: 600;
+}
+.geo-chip.active .chip-count { background: rgba(20,16,31,0.18); color: #14101f; }
+
+.city-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+    gap: 2px 26px;
+    max-height: 430px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding-right: 2px;
+}
+.city-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 6px;
+    padding: 9px 10px;
+    border-radius: 10px;
+    transition: background 0.15s ease;
+}
+.city-row:hover { background: rgba(255,255,255,0.03); }
+.city-name {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+.city-name .cn-flag { font-size: 0.95rem; flex: 0 0 auto; }
+.city-name .cn-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.city-val { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600; color: var(--text); }
+.city-bar {
+    grid-column: 1 / -1;
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.05);
+    overflow: hidden;
+}
+.city-bar > i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(167,139,250,0.45), rgba(167,139,250,0.95));
+}
+.city-empty {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+}
+
 
 /* ────────────────────────────────────────────
    16. DONUT CHART  (SVG arc-path based)

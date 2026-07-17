@@ -623,6 +623,142 @@ function renderSimpleTableNoRank(tableId, data, labelFn, colorClass) {
     }).join('');
 }
 
+// Verweildauer-Buckets nach echter Zeit sortieren (kleinste → größte Dauer),
+// NICHT nach Session-Anzahl. So liest sich die Tabelle als Verteilung und man
+// sieht, in welchem Zeitfenster die meisten Nutzer liegen. Parst die Untergrenze
+// des Bucket-Labels ("0-10s", "10-30s", "1-3min", "30min+", "1-2h") in Sekunden.
+function durationBucketSeconds(label) {
+    if (label == null) return Infinity;
+    var s = String(label).toLowerCase();
+    var m = s.match(/(\d+(?:[.,]\d+)?)/);
+    if (!m) return Infinity;
+    var n = parseFloat(m[1].replace(',', '.'));
+    if (/\b\d+\s*(h|std|stunde|hour)/.test(s)) return n * 3600;
+    if (/min/.test(s)) return n * 60;
+    return n; // Sekunden (Default)
+}
+
+// Erste Zahl aus einem Label ziehen ("3-5", "6+", "1" → 3, 6, 1).
+// Für "Seiten pro Session": aufsteigend nach Seitenzahl statt nach Session-Anzahl.
+function firstNumber(label) {
+    if (label == null) return Infinity;
+    var m = String(label).match(/(\d+(?:[.,]\d+)?)/);
+    return m ? parseFloat(m[1].replace(',', '.')) : Infinity;
+}
+
+// Auflösung ("1920x1080") in Pixelfläche für "kleinster → größter Screen".
+function resolutionArea(label) {
+    if (label == null) return Infinity;
+    var m = String(label).toLowerCase().match(/(\d+)\s*[x×]\s*(\d+)/);
+    if (m) return parseInt(m[1], 10) * parseInt(m[2], 10);
+    var w = String(label).match(/(\d+)/); // Fallback: nur eine Zahl → nach Breite
+    return w ? parseInt(w[1], 10) : Infinity;
+}
+
+// =========================================
+//  RENDER: Städte — Länder-Chips + City-Grid
+//  Vollbreite Karte. Chips filtern nach Land (ein Tap, alle sichtbar), die
+//  Städte füllen als responsives Grid die Breite. Flaggen-Emoji je Stadt/Land.
+// =========================================
+var _citiesData = { cities: [], names: {}, active: '' };
+
+// Globus-Icon (Lucide-Style, wie im „Herkunft"-Titel) für den „Alle"-Chip —
+// SVG statt Emoji, damit es sich im Aktiv-Zustand mit einfärbt (currentColor).
+var GLOBE_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+
+// ISO-A2-Code → Flaggen-Emoji (Regional Indicator Symbols). Kein Asset-Load.
+function flagEmoji(code) {
+    if (!code || !/^[a-zA-Z]{2}$/.test(code)) return '🏳️';
+    var cc = code.toUpperCase();
+    return String.fromCodePoint(0x1F1E6 + cc.charCodeAt(0) - 65, 0x1F1E6 + cc.charCodeAt(1) - 65);
+}
+
+function renderCities(cities, countries) {
+    _citiesData.cities = (cities || []).slice().sort(function(a, b) {
+        return (b.visitors || 0) - (a.visitors || 0);
+    });
+    _citiesData.names  = {};
+    (countries || []).forEach(function(c) {
+        if (c.code) _citiesData.names[c.code] = c.country || c.code;
+    });
+    _citiesData.active = ''; // frische Daten → zurück auf „Alle"
+
+    var badge = document.getElementById('citiesBadge');
+    if (badge) {
+        var n = _citiesData.cities.length;
+        var EN = document.documentElement.lang === 'en';
+        badge.textContent = n + ' ' + (EN ? (n === 1 ? 'city' : 'cities') : (n === 1 ? 'Stadt' : 'Städte'));
+    }
+    renderCityChips();
+    renderCityGrid();
+}
+
+// Chip-Leiste: „Alle" + je Land (Flagge · Name · Besucher), nach Besuchern sortiert.
+function renderCityChips() {
+    var host = document.getElementById('cityCountryChips');
+    if (!host) return;
+    var EN = document.documentElement.lang === 'en';
+    var byCode = {};
+    _citiesData.cities.forEach(function(c) {
+        var k = c.code || '??';
+        byCode[k] = (byCode[k] || 0) + (c.visitors || 0);
+    });
+    var codes = Object.keys(byCode).sort(function(a, b) { return byCode[b] - byCode[a]; });
+    var total = _citiesData.cities.reduce(function(s, c) { return s + (c.visitors || 0); }, 0);
+
+    var chips = [chipHTML('', GLOBE_SVG, EN ? 'All' : 'Alle', total)];
+    codes.forEach(function(code) {
+        chips.push(chipHTML(code, flagEmoji(code), _citiesData.names[code] || code, byCode[code]));
+    });
+    host.innerHTML = chips.join('');
+}
+
+function chipHTML(code, flag, label, count) {
+    var on = _citiesData.active === code;
+    return '<button type="button" class="geo-chip' + (on ? ' active' : '') + '"' +
+        ' aria-pressed="' + (on ? 'true' : 'false') + '"' +
+        " onclick=\"filterCities('" + esc(code) + "')\">" +
+        '<span class="chip-flag">' + flag + '</span>' + esc(label) +
+        '<span class="chip-count">' + fmt(count) + '</span></button>';
+}
+
+function filterCities(code) {
+    _citiesData.active = code || '';
+    renderCityChips();
+    renderCityGrid();
+}
+
+// City-Grid nach aktivem Land. Balken skalieren zum globalen Max (vergleichbar
+// über Länder hinweg); Prozent im Tooltip bleibt relativ zu ALLEN Städten, damit
+// der Anteil einer Stadt beim Filtern nicht springt.
+function renderCityGrid() {
+    var host = document.getElementById('citiesGrid');
+    if (!host) return;
+    var EN = document.documentElement.lang === 'en';
+    var all = _citiesData.cities;
+    var grandTotal = all.reduce(function(s, c) { return s + (c.visitors || 0); }, 0);
+    var maxV = all.reduce(function(m, c) { return Math.max(m, c.visitors || 0); }, 0) || 1;
+    var pick = _citiesData.active;
+    var list = pick ? all.filter(function(c) { return (c.code || '') === pick; }) : all;
+
+    if (!list.length) {
+        host.innerHTML = '<p class="city-empty">' + (EN ? 'No data' : 'Keine Daten') + '</p>';
+        return;
+    }
+    host.innerHTML = list.map(function(c) {
+        var v = c.visitors || 0;
+        var pct = grandTotal > 0 ? ((v / grandTotal) * 100).toFixed(1) : '0';
+        var w = Math.max(4, (v / maxV) * 100);
+        var title = fmt(v) + ' ' + (EN ? 'visitors' : 'Besucher') + ' · ' + pct + '%';
+        return '<div class="city-row" title="' + esc(title) + '">' +
+            '<span class="city-name"><span class="cn-flag">' + flagEmoji(c.code) + '</span>' +
+                '<span class="cn-txt">' + esc(c.city || (EN ? '(unknown)' : '(unbekannt)')) + '</span></span>' +
+            '<span class="city-val">' + fmt(v) + '</span>' +
+            '<span class="city-bar"><i style="width:' + w.toFixed(1) + '%"></i></span>' +
+        '</div>';
+    }).join('');
+}
+
 // =========================================
 //  RENDER: Donut Chart (Devices)
 //  Uses stroke-dasharray on SVG circles — bulletproof across all browsers
@@ -1695,15 +1831,18 @@ async function loadAll() {
             function(x) { return x; }, 'cyan');
 
         // ── Auflösungen (exakt statt Buckets) ──────────────────────────────
+        // Nach echter Bildschirmgröße sortieren (kleinster → größter Screen),
+        // nicht nach Besucher-Zahl.
+        var resSorted = resolut.slice().sort(function(a, b) {
+            return resolutionArea(a.res) - resolutionArea(b.res);
+        });
         renderSimpleTableNoRank('screensTable',
-            resolut.map(function(s) { return { x: s.res, y: s.visitors }; }),
+            resSorted.map(function(s) { return { x: s.res, y: s.visitors }; }),
             function(x) { return x; }, 'purple');
 
         // ── Geo: Karten + Städte ───────────────────────────────────────────
         renderMaps(countries, regions, cities);
-        renderSimpleTableNoRank('citiesTable',
-            cities.map(function(c) { return { x: c.city, y: c.visitors }; }),
-            function(x) { return x; }, 'yellow');
+        renderCities(cities, countries);
 
         // ── Sprachen ───────────────────────────────────────────────────────
         renderSimpleTableNoRank('languagesTable',
@@ -1711,11 +1850,19 @@ async function loadAll() {
             langName, 'cyan');
 
         // ── Session-Verhalten ──────────────────────────────────────────────
+        // Nach echter Dauer sortieren (aufsteigend), nicht nach Session-Zahl —
+        // damit die Verweildauer als Verteilung lesbar ist.
+        var durSorted = durBkts.slice().sort(function(a, b) {
+            return durationBucketSeconds(a.bucket) - durationBucketSeconds(b.bucket);
+        });
         renderSimpleTableNoRank('durationTable',
-            durBkts.map(function(b) { return { x: b.bucket, y: b.sessions }; }),
+            durSorted.map(function(b) { return { x: b.bucket, y: b.sessions }; }),
             function(x) { return x; }, 'yellow');
+        var pvpSorted = pvpSess.slice().sort(function(a, b) {
+            return firstNumber(a.bucket) - firstNumber(b.bucket);
+        });
         renderSimpleTableNoRank('pagesPerSessionTable',
-            pvpSess.map(function(b) { return { x: b.bucket, y: b.sessions }; }),
+            pvpSorted.map(function(b) { return { x: b.bucket, y: b.sessions }; }),
             function(x) { return x; }, 'green');
 
         // ── Aktivitäts-Puls, Ladeperformance, Feature-Nutzung ──────────────
