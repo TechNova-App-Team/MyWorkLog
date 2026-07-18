@@ -118,7 +118,7 @@
             const weekday   = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {weekday:'short'});
             const dateShort = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'2-digit'});
             return `
-            <div class="entry-row type-${e.type}" data-entry-id="${e.id}">
+            <div class="entry-row type-${e.type}" data-entry-id="${e.id}" onclick="openEntryDetail(${e.id})">
                 <div class="er-left">
                     <div class="er-icon-wrap type-${e.type}">${icon}</div>
                     <div class="er-date-col">
@@ -141,16 +141,19 @@
                     <div class="er-hours">${e.worked.toFixed(1)}<span class="er-h-unit">h</span></div>
                     <div class="er-diff" style="color:${diffColor};background:${diffBg}">${diffStr}</div>
                     <div class="er-actions">
-                        <button class="btn-icon" onclick="openEntryDetail(${e.id})" title="Details">
+                        <button class="btn-icon" onclick="event.stopPropagation();openEntryDetail(${e.id})" title="Details">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         </button>
-                        <button class="btn-icon" onclick="editEntry(${e.id})" title="Bearbeiten">
+                        <button class="btn-icon" onclick="event.stopPropagation();editEntry(${e.id})" title="Bearbeiten">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         </button>
-                        <button class="btn-icon danger" onclick="delEntry(${e.id})" title="Löschen">
+                        <button class="btn-icon danger" onclick="event.stopPropagation();delEntry(${e.id})" title="Löschen">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                         </button>
                     </div>
+                    <span class="er-chevron" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </span>
                 </div>
             </div>`;
         };

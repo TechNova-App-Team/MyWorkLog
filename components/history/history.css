@@ -518,6 +518,15 @@
 }
 .entry-row:hover .er-actions { opacity: 1; }
 
+/* Chevron: nur auf Touch-Geräten sichtbar (Tap-auf-Zeile öffnet Detail-Sheet). */
+.er-chevron {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
 .btn-icon {
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.09);
@@ -610,6 +619,25 @@
     .hl-topbar-right { width: 100%; justify-content: flex-end; }
     .hl-filter-row { flex-direction: column; align-items: stretch; }
     .hl-filter-search { min-width: 0; }
+}
+
+/* ─── Touch-Geräte: keine Hover → ganze Zeile antippbar öffnet das Detail-Sheet ───
+   (die Hover-Only-Action-Buttons wären am Handy nie sichtbar → Bearbeiten/Löschen
+   unerreichbar. Stattdessen tippt man die Zeile an; Edit/Delete liegen im Sheet.) */
+@media (hover: none) {
+    .entry-row { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .entry-row:active {
+        background: rgba(var(--primary-rgb), 0.08);
+        border-color: rgba(var(--primary-rgb), 0.2);
+        transform: scale(0.995);
+    }
+    /* Hover-Reveal greift auf Touch nie → ausblenden, damit kein toter Klickbereich bleibt. */
+    .er-actions { display: none; }
+    .er-chevron { display: flex; }
+    /* Rechte Spalte kompakter, seit die Buttons weg sind. */
+    .er-right { gap: 8px; padding: 14px 14px; }
+    .er-left { min-width: 0; padding: 14px 14px; }
+    .er-mid { padding: 14px 14px; }
 }
 
 /* ─── Entry Detail Bottom Sheet ─── */
