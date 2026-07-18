@@ -11,6 +11,15 @@ function nfcGetWriteUrl() {
     return 'https://myworklog.de/?nfc=1';
 }
 
+// SVG-Glyph pro Aktions-Typ (Lucide-Stil, currentColor) — keine Emojis (Projekt-Konvention).
+function nfcIconSVG(kind, size) {
+    const s = size || 15;
+    if (kind === 'checkin')  return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>`;
+    if (kind === 'checkout') return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2.5"/></svg>`;
+    if (kind === 'ignored')  return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>`;
+    return '';
+}
+
 // ─── Modal-Steuerung ───────────────────────────────────────────────────────
 
 function openNFCModal() {
@@ -161,7 +170,7 @@ function nfcUpdateStatusView() {
     if (lastActionEl) {
         if (session.lastAction) {
             const isIn = session.lastAction === 'checkin';
-            lastActionEl.textContent = isIn ? '▶ Eingestempelt' : '■ Ausgestempelt';
+            lastActionEl.innerHTML = `<span class="nfc-stat-ico">${nfcIconSVG(isIn ? 'checkin' : 'checkout', 13)}</span>${isIn ? 'Eingestempelt' : 'Ausgestempelt'}`;
             lastActionEl.style.color = isIn ? '#86efac' : '#fdba74';
         } else {
             lastActionEl.textContent = '—';
@@ -174,7 +183,7 @@ function nfcUpdateStatusView() {
         nextBanner.className = 'nfc-next-action-banner ' + (willCheckIn ? 'checkin' : 'checkout');
         const iconEl = nextBanner.querySelector('.nfc-next-icon');
         const textEl = nextBanner.querySelector('.nfc-next-text');
-        if (iconEl) iconEl.textContent = willCheckIn ? '▶' : '■';
+        if (iconEl) iconEl.innerHTML = nfcIconSVG(willCheckIn ? 'checkin' : 'checkout', 15);
         if (textEl) textEl.textContent = willCheckIn
             ? 'Nächster Scan: Einstempeln'
             : 'Nächster Scan: Ausstempeln';
@@ -393,12 +402,16 @@ function nfcFlash(type, icon, title, subtitle) {
     const titleEl = overlay.querySelector('.nfc-scan-result-title');
     const timeEl  = overlay.querySelector('.nfc-scan-result-time');
 
-    overlay.className = 'nfc-scan-overlay show flash-' + type;
-    if (iconEl)  iconEl.textContent  = icon;
+    // Reset → Reflow → Show: erzwingt einen sauberen Neustart aller Keyframes,
+    // auch wenn kurz hintereinander gescannt wird.
+    overlay.className = 'nfc-scan-overlay';
+    if (iconEl)  iconEl.innerHTML   = nfcIconSVG(type) || (icon || '');
     if (titleEl) titleEl.textContent = title;
     if (timeEl)  timeEl.textContent  = subtitle || '';
+    void overlay.offsetWidth; // reflow
+    overlay.className = 'nfc-scan-overlay show flash-' + type;
 
-    setTimeout(() => overlay.className = 'nfc-scan-overlay', 2000);
+    setTimeout(() => overlay.className = 'nfc-scan-overlay', 2200);
 }
 
 // ─── URL-Parameter beim Start prüfen ─────────────────────────────────────
