@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
@@ -8,7 +8,7 @@
 /* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
-    <meta name="description" content="IT Professional Hub — Skill Tree & Fachinformatiker Academy. Dein Portal für Ausbildung und Skill-Entwicklung">
+    <meta name="description" content="IT Professional Hub — Skill Tree & Fachinformatiker Academy. Dein Portal für Ausbildung und Skill-Entwicklung in MyWorkLog.">
     <title>MyWorkLog | IT Professional Hub</title>
     <link rel="canonical" href="https://myworklog.de/it-landing">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/it-landing">
@@ -16,666 +16,380 @@
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/it-landing">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
 
         :root {
-            --bg-base:      #030305;
-            --bg-card:      rgba(255, 255, 255, 0.025);
-            --bg-hover:     rgba(168, 85, 247, 0.055);
-            --border:       rgba(255, 255, 255, 0.06);
-            --border-mid:   rgba(255, 255, 255, 0.10);
-            --border-purple: rgba(168, 85, 247, 0.38);
-            --border-green:  rgba(16, 185, 129, 0.38);
-            --text-primary:   #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted:     #475569;
-            --primary:       #a855f7;
-            --primary-light: #c084fc;
-            --primary-glow:  rgba(168, 85, 247, 0.12);
-            --green:         #10b981;
-            --green-glow:    rgba(16, 185, 129, 0.10);
-            --amber:         #f59e0b;
+            --bg-deep:      #030305;
+            --bg-surface:   rgba(255, 255, 255, 0.022);
+            --bg-card:      rgba(255, 255, 255, 0.032);
+            --bg-hover:     rgba(255, 255, 255, 0.05);
+            --border:       rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --text-main:    #f8fafc;
+            --text-muted:   #94a3b8;
+            --text-dim:     #64748b;
+            --primary:      #a855f7;
+            --primary-rgb:  168, 85, 247;
+            --primary-dim:  rgba(168, 85, 247, 0.15);
+            --success:      #10b981;
+            --success-rgb:  16, 185, 129;
+            --amber:        #f59e0b;
+            --radius:       16px;
+            --radius-sm:    10px;
+            --font-main:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono:    'JetBrains Mono', 'Roboto Mono', monospace;
         }
 
         body {
-            font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
-            background: var(--bg-base);
-            color: var(--text-primary);
+            font-family: var(--font-main);
+            background: var(--bg-deep);
+            color: var(--text-main);
             min-height: 100vh;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* ── BACKGROUND ── */
-        .bg-dots {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            background-image: radial-gradient(circle, rgba(168,85,247,0.03) 1px, transparent 1px);
-            background-size: 30px 30px;
-            pointer-events: none;
+        /* ── Ambient background ── */
+        .bg-glow {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 50% -8%, rgba(var(--primary-rgb), 0.10) 0%, transparent 65%),
+                radial-gradient(ellipse 50% 40% at 90% 15%, rgba(var(--primary-rgb), 0.04) 0%, transparent 60%);
         }
 
-        .bg-radial {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(168,85,247,0.07) 0%, transparent 70%);
-            pointer-events: none;
-        }
-
-        /* ── PAGE ── */
+        /* ── Layout ── */
         .page {
-            position: relative;
-            z-index: 1;
-            max-width: 1180px;
-            margin: 0 auto;
-            padding: 72px 24px 56px;
+            position: relative; z-index: 1;
+            max-width: 1080px; margin: 0 auto;
+            padding: 68px 24px 64px;
         }
 
-        /* ── HERO ── */
-        .hero {
-            margin-bottom: 56px;
-            animation: fadeUp 0.65s ease-out both;
+        /* ── Top row: brand + back ── */
+        .top {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 52px;
+            animation: fadeUp 0.5s ease-out both;
         }
-
-        .hero-breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            margin-bottom: 28px;
+        .brand { display: flex; align-items: center; gap: 11px; }
+        .brand-mark {
+            width: 34px; height: 34px; border-radius: 9px;
+            background: linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb), 0.55));
+            box-shadow: 0 0 22px rgba(var(--primary-rgb), 0.35);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
-
-        .breadcrumb-text {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            font-weight: 500;
-            color: var(--primary-light);
-            letter-spacing: 0.09em;
-            text-transform: uppercase;
+        .brand-mark svg { width: 18px; height: 18px; color: #fff; }
+        .brand-name { font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em; }
+        .brand-name span { color: var(--text-dim); font-weight: 500; }
+        .back-link {
+            display: inline-flex; align-items: center; gap: 7px;
+            font-size: 13px; font-weight: 500; color: var(--text-muted);
+            text-decoration: none; padding: 8px 14px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border); background: var(--bg-surface);
+            transition: color 0.18s ease, border-color 0.18s ease, background 0.18s ease;
         }
+        .back-link:hover { color: var(--text-main); border-color: var(--border-hover); background: var(--bg-hover); }
+        .back-link svg { width: 15px; height: 15px; }
 
-        .breadcrumb-line {
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, rgba(168,85,247,0.35) 0%, transparent 70%);
+        /* ── Hero ── */
+        .hero { margin-bottom: 40px; animation: fadeUp 0.55s 0.05s ease-out both; }
+        .eyebrow {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 12px; font-weight: 600; color: var(--primary);
+            padding: 5px 12px; border-radius: 999px;
+            background: var(--primary-dim); border: 1px solid rgba(var(--primary-rgb), 0.25);
+            margin-bottom: 22px;
         }
-
-        .breadcrumb-chip {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            color: var(--text-muted);
-            border: 1px solid var(--border-mid);
-            padding: 3px 9px;
-            border-radius: 3px;
-            letter-spacing: 0.05em;
-            flex-shrink: 0;
-        }
-
-        .hero-content {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 40px;
-            align-items: end;
-        }
-
-        @media (max-width: 700px) {
-            .hero-content { grid-template-columns: 1fr; }
-        }
-
-        .hero-title {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: clamp(3.4rem, 9vw, 6rem);
-            font-weight: 700;
-            line-height: 0.93;
-            letter-spacing: -0.01em;
-            text-transform: uppercase;
-            color: var(--text-primary);
+        .eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+        .hero h1 {
+            font-size: clamp(2.3rem, 6vw, 3.4rem);
+            font-weight: 800; letter-spacing: -0.03em; line-height: 1.04;
             margin-bottom: 18px;
         }
-
-        .hero-title .accent { color: var(--primary); }
-
-        .hero-desc {
-            font-size: 14.5px;
-            line-height: 1.7;
-            color: var(--text-secondary);
-            max-width: 500px;
-            font-weight: 400;
+        .hero h1 .accent {
+            background: linear-gradient(120deg, var(--primary), rgba(var(--primary-rgb), 0.7));
+            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 16px; line-height: 1.65; color: var(--text-muted);
+            max-width: 560px;
         }
 
-        .hero-meta {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 6px;
-            padding-bottom: 4px;
-            flex-shrink: 0;
+        /* ── Live stat row ── */
+        .stats {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+            margin-bottom: 40px;
+            animation: fadeUp 0.55s 0.12s ease-out both;
+        }
+        .stat {
+            background: var(--bg-surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 18px 18px;
+        }
+        .stat-val {
+            font-size: 27px; font-weight: 800; letter-spacing: -0.02em; line-height: 1;
+            margin-bottom: 7px; font-variant-numeric: tabular-nums;
+        }
+        .stat-val.primary { color: var(--primary); }
+        .stat-val.amber { color: var(--amber); }
+        .stat-label { font-size: 12px; color: var(--text-dim); font-weight: 500; }
+        @media (max-width: 620px) { .stats { grid-template-columns: 1fr 1fr; } }
+
+        /* ── Path cards ── */
+        .paths {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+            margin-bottom: 44px;
+        }
+        @media (max-width: 760px) { .paths { grid-template-columns: 1fr; } }
+
+        .path {
+            position: relative; display: flex; flex-direction: column;
+            border: 1px solid var(--border); border-radius: var(--radius);
+            background: var(--bg-card); overflow: hidden;
+            text-decoration: none; color: inherit;
+            padding: 26px 26px 22px;
+            transition: border-color 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease;
+            animation: fadeUp 0.55s ease-out both;
+        }
+        .path:nth-child(1) { animation-delay: 0.18s; }
+        .path:nth-child(2) { animation-delay: 0.26s; }
+        .path:hover {
+            border-color: var(--border-hover); transform: translateY(-3px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+        }
+        .path::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, var(--pc, var(--primary)), transparent 85%);
+            opacity: 0.8;
+        }
+        .path-head { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+        .path-icon {
+            width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--pc-dim, var(--primary-dim));
+            border: 1px solid var(--pc-border, rgba(var(--primary-rgb), 0.25));
+        }
+        .path-icon svg { width: 23px; height: 23px; color: var(--pc, var(--primary)); }
+        .path-tag {
+            font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+            color: var(--pc, var(--primary)); margin-bottom: 4px;
+        }
+        .path-name { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+        .path-desc { font-size: 14px; line-height: 1.6; color: var(--text-muted); margin-bottom: 18px; }
+
+        /* live progress bar inside card */
+        .path-progress { margin-bottom: 18px; }
+        .path-progress-top {
+            display: flex; align-items: baseline; justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .path-progress-label { font-size: 12px; color: var(--text-dim); font-weight: 500; }
+        .path-progress-val {
+            font-size: 13px; font-weight: 700; color: var(--pc, var(--primary));
+            font-variant-numeric: tabular-nums;
+        }
+        .path-bar { height: 7px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
+        .path-bar-fill {
+            height: 100%; border-radius: 6px; width: 0%;
+            background: linear-gradient(90deg, var(--pc, var(--primary)), rgba(var(--pc-rgb, var(--primary-rgb)), 0.6));
+            transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        @media (max-width: 700px) {
-            .hero-meta { flex-direction: row; align-items: center; }
+        .path-features { list-style: none; margin-bottom: 22px; display: flex; flex-direction: column; gap: 9px; }
+        .path-features li { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted); }
+        .path-features svg { width: 15px; height: 15px; color: var(--pc, var(--primary)); flex-shrink: 0; }
+
+        .path-cta {
+            margin-top: auto; display: flex; align-items: center; justify-content: space-between;
+            padding-top: 16px; border-top: 1px solid var(--border);
         }
-
-        .meta-value {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 48px;
-            font-weight: 700;
-            color: rgba(168, 85, 247, 0.15);
-            line-height: 1;
-            letter-spacing: -0.02em;
-        }
-
-        .meta-label {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 10px;
-            color: var(--text-muted);
-            letter-spacing: 0.07em;
-            text-transform: uppercase;
-        }
-
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(18px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ── MODULE CARDS ── */
-        .modules {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 48px;
-        }
-
-        @media (max-width: 760px) {
-            .modules { grid-template-columns: 1fr; }
-        }
-
-        .module {
-            position: relative;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--bg-card);
-            overflow: hidden;
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            transition: border-color 0.22s ease, background 0.22s ease, transform 0.22s ease;
-            animation: fadeUp 0.65s ease-out both;
-        }
-
-        .module:nth-child(1) { animation-delay: 0.12s; }
-        .module:nth-child(2) { animation-delay: 0.22s; }
-
-        .module.purple:hover {
-            border-color: var(--border-purple);
-            background: var(--bg-hover);
-            transform: translateY(-2px);
-        }
-
-        .module.green:hover {
-            border-color: var(--border-green);
-            background: rgba(16,185,129,0.04);
-            transform: translateY(-2px);
-        }
-
-        /* Scan line hover effect */
-        .module::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 60%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.02), transparent);
-            transition: left 0.55s ease;
-            pointer-events: none;
-        }
-
-        .module:hover::after { left: 140%; }
-
-        /* Top accent line */
-        .module-bar {
-            height: 2px;
-            width: 100%;
-            flex-shrink: 0;
-        }
-
-        .module.purple .module-bar {
-            background: linear-gradient(90deg, var(--primary) 0%, rgba(168,85,247,0.1) 100%);
-        }
-
-        .module.green .module-bar {
-            background: linear-gradient(90deg, var(--green) 0%, rgba(16,185,129,0.1) 100%);
-        }
-
-        /* Number decoration */
-        .module-num {
-            position: absolute;
-            bottom: 12px;
-            right: 20px;
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 120px;
-            font-weight: 800;
-            line-height: 1;
-            color: rgba(255,255,255,0.018);
-            letter-spacing: -0.03em;
-            user-select: none;
-            pointer-events: none;
-        }
-
-        .module-body {
-            padding: 26px 26px 0;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .module-head {
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            margin-bottom: 18px;
-        }
-
-        .module-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 7px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .module.purple .module-icon {
-            background: var(--primary-glow);
-            border: 1px solid rgba(168,85,247,0.22);
-        }
-
-        .module.green .module-icon {
-            background: var(--green-glow);
-            border: 1px solid rgba(16,185,129,0.22);
-        }
-
-        .module-icon svg { width: 20px; height: 20px; }
-
-        .module.purple .module-icon svg { color: var(--primary-light); }
-        .module.green  .module-icon svg { color: var(--green); }
-
-        .module-info { flex: 1; }
-
-        .module-tag {
-            display: inline-block;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 9.5px;
-            font-weight: 500;
-            letter-spacing: 0.09em;
-            text-transform: uppercase;
-            padding: 2.5px 7px;
-            border-radius: 3px;
-            margin-bottom: 7px;
-        }
-
-        .module.purple .module-tag {
-            background: var(--primary-glow);
-            color: var(--primary-light);
-            border: 1px solid rgba(168,85,247,0.22);
-        }
-
-        .module.green .module-tag {
-            background: var(--green-glow);
-            color: var(--green);
-            border: 1px solid rgba(16,185,129,0.22);
-        }
-
-        .module-name {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
-            color: var(--text-primary);
-            line-height: 1;
-        }
-
-        .module-desc {
-            font-size: 13.5px;
-            color: var(--text-secondary);
-            line-height: 1.68;
-            margin-bottom: 20px;
-        }
-
-        .module-features {
-            display: flex;
-            flex-direction: column;
-            border-top: 1px solid var(--border);
-        }
-
-        .feat-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            padding: 9px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .feat-row:last-child { border-bottom: none; }
-
-        .feat-pip {
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .module.purple .feat-pip { background: var(--primary); }
-        .module.green  .feat-pip { background: var(--green); }
-
-        .module-foot {
-            padding: 14px 26px 18px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-top: 1px solid var(--border);
-            margin-top: 18px;
-        }
-
-        .module-cta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.07em;
-            text-transform: uppercase;
+        .path-cta-text {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 14px; font-weight: 600; color: var(--pc, var(--primary));
             transition: gap 0.2s ease;
         }
-
-        .module.purple .module-cta { color: var(--primary-light); }
-        .module.green  .module-cta { color: var(--green); }
-
-        .module:hover .module-cta { gap: 13px; }
-
-        .cta-arrow {
-            font-size: 15px;
-            line-height: 1;
-            transition: transform 0.2s ease;
+        .path:hover .path-cta-text { gap: 12px; }
+        .path-cta-text svg { width: 16px; height: 16px; }
+        .path-status {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 11px; color: var(--text-dim); font-weight: 500;
+        }
+        .path-status .pip {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--success); box-shadow: 0 0 7px rgba(var(--success-rgb), 0.7);
         }
 
-        .module:hover .cta-arrow { transform: translateX(3px); }
-
-        .module-status {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 9.5px;
-            color: var(--text-muted);
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
+        /* ── Feature strip ── */
+        .strip {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+            background: var(--border); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden;
+            animation: fadeUp 0.55s 0.34s ease-out both;
         }
-
-        .status-pip {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
+        @media (max-width: 620px) { .strip { grid-template-columns: 1fr; } }
+        .strip-item { background: var(--bg-deep); padding: 22px 22px; display: flex; gap: 14px; align-items: flex-start; }
+        .strip-icon {
+            width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--primary-dim); border: 1px solid rgba(var(--primary-rgb), 0.2);
         }
+        .strip-icon svg { width: 18px; height: 18px; color: var(--primary); }
+        .strip-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .strip-sub { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
 
-        .module.purple .status-pip { background: var(--primary); opacity: 0.6; }
-        .module.green  .status-pip { background: var(--green);   opacity: 0.6; }
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: rgba(var(--primary-rgb), 0.25); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(var(--primary-rgb), 0.45); }
 
-        /* ── METRICS ── */
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 48px;
-            animation: fadeUp 0.65s 0.34s ease-out both;
-        }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
-        @media (max-width: 600px) {
-            .metrics { grid-template-columns: 1fr 1fr; }
-        }
-
-        .metric {
-            padding: 22px 20px;
-            border-right: 1px solid var(--border);
-        }
-
-        .metric:last-child { border-right: none; }
-
-        @media (max-width: 600px) {
-            .metric:nth-child(2) { border-right: none; }
-            .metric:nth-child(3) { border-top: 1px solid var(--border); }
-            .metric:nth-child(4) { border-top: 1px solid var(--border); border-right: none; }
-        }
-
-        .metric-label {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 9.5px;
-            color: var(--text-muted);
-            letter-spacing: 0.09em;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-
-        .metric-val {
-            font-family: 'Barlow Condensed', sans-serif;
-            font-size: 38px;
-            font-weight: 700;
-            line-height: 1;
-            letter-spacing: -0.01em;
-        }
-
-        .metric-val.purple { color: var(--primary-light); }
-        .metric-val.green  { color: var(--green); }
-        .metric-val.amber  { color: var(--amber); }
-        .metric-val.plain  { color: var(--text-primary); font-size: 22px; line-height: 1.65; }
-
-        .metric-sub {
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 5px;
-        }
-
-        /* ── SCROLLBAR ── */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: var(--bg-base); }
-        ::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.2); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(168,85,247,0.4); }
-
-        /* ── RESPONSIVE ── */
-        @media (max-width: 640px) {
-            .page { padding: 44px 16px 40px; }
-            .hero { margin-bottom: 40px; }
-            .hero-title { font-size: 3rem; }
-            .module-body { padding: 20px 20px 0; }
-            .module-foot { padding: 12px 20px 16px; }
-            .metric { padding: 16px 14px; }
-            .metric-val { font-size: 30px; }
+        @media (max-width: 560px) {
+            .page { padding: 40px 16px 44px; }
+            .top { margin-bottom: 36px; }
+            .hero { margin-bottom: 32px; }
+            .stat-val { font-size: 22px; }
+            .path { padding: 22px 20px 18px; }
         }
     </style>
 </head>
 <body>
-    <div class="bg-dots"></div>
-    <div class="bg-radial"></div>
+    <div class="bg-glow"></div>
 
     <main class="page">
 
+        <!-- Top -->
+        <div class="top">
+            <div class="brand">
+                <span class="brand-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+                </span>
+                <span class="brand-name">IT Hub <span>· MyWorkLog</span></span>
+            </div>
+            <a href="/" class="back-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                Zur App
+            </a>
+        </div>
+
         <!-- Hero -->
         <section class="hero">
-            <div class="hero-breadcrumb">
-                <span class="breadcrumb-text">// learning.platform</span>
-                <div class="breadcrumb-line"></div>
-                <span class="breadcrumb-chip">v3.5.3</span>
+            <span class="eyebrow"><span class="eyebrow-dot"></span>Lernplattform</span>
+            <h1>Dein <span class="accent">IT-Entwicklungspfad</span><br>an einem Ort.</h1>
+            <p>Zwei aufeinander abgestimmte Wege: gamifiziertes Skill-Tracking und ein strukturiertes Fachinformatiker-Lernprogramm — vollständig in dein MyWorkLog-Ökosystem integriert und offline nutzbar.</p>
+        </section>
+
+        <!-- Live stats -->
+        <section class="stats">
+            <div class="stat">
+                <div class="stat-val primary" id="stSkillLvl">1</div>
+                <div class="stat-label">Skill-Level</div>
             </div>
-            <div class="hero-content">
-                <div>
-                    <h1 class="hero-title">
-                        IT Professional<br>
-                        <span class="accent">Development</span> Hub
-                    </h1>
-                    <p class="hero-desc">
-                        Wähle deinen Entwicklungspfad: Gamifiziertes Skill-Tracking oder strukturiertes Fachinformatiker-Lernprogramm — vollständig integriert in dein MyWorkLog Ökosystem.
-                    </p>
-                </div>
-                <div class="hero-meta">
-                    <span class="meta-value">02</span>
-                    <span class="meta-label">Module aktiv</span>
-                </div>
+            <div class="stat">
+                <div class="stat-val" id="stSkillXp">0</div>
+                <div class="stat-label">Gesammelte XP</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" id="stFiPct">0%</div>
+                <div class="stat-label">FI-Fortschritt</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val amber" id="stStreak">0</div>
+                <div class="stat-label">Tage Lernserie</div>
             </div>
         </section>
 
-        <!-- Module Cards -->
-        <section class="modules">
+        <!-- Path cards -->
+        <section class="paths">
 
             <!-- Skill Tree -->
-            <a href="/skill-tree/" class="module purple">
-                <div class="module-bar"></div>
-                <div class="module-num">01</div>
-                <div class="module-body">
-                    <div class="module-head">
-                        <div class="module-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="4" r="2"/>
-                                <circle cx="5" cy="20" r="2"/>
-                                <circle cx="19" cy="20" r="2"/>
-                                <path d="M12 6v5M9.5 18.5l-2.5-2M14.5 18.5l2.5-2M12 11l-3.5 5.5M12 11l3.5 5.5"/>
-                            </svg>
-                        </div>
-                        <div class="module-info">
-                            <div class="module-tag">Skill Tracking</div>
-                            <div class="module-name">Skill Tree</div>
-                        </div>
-                    </div>
-
-                    <p class="module-desc">
-                        Visualisiere und tracke deine technischen Kompetenzen in einem strukturierten Fähigkeitenbaum. KI-gestützte Empfehlungen für deinen nächsten Entwicklungsschritt.
-                    </p>
-
-                    <div class="module-features">
-                        <div class="feat-row">
-                            <div class="feat-pip"></div>
-                            <span>Kompetenzbaum mit Level-Tracking</span>
-                        </div>
-                        <div class="feat-row">
-                            <div class="feat-pip"></div>
-                            <span>KI-Mentoring &amp; personalisierte Lernpfade</span>
-                        </div>
-                        <div class="feat-row">
-                            <div class="feat-pip"></div>
-                            <span>Skill-Erkennung &amp; Zertifizierungs-Badges</span>
-                        </div>
-                        <div class="feat-row">
-                            <div class="feat-pip"></div>
-                            <span>Fortschritts-Dashboard &amp; Achievements</span>
-                        </div>
+            <a href="/skill-tree/" class="path" style="--pc: var(--primary); --pc-dim: var(--primary-dim); --pc-border: rgba(var(--primary-rgb),0.25); --pc-rgb: var(--primary-rgb);">
+                <div class="path-head">
+                    <span class="path-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v4M10.5 13.5 6.8 16.6M13.5 13.5l3.7 3.1"/></svg>
+                    </span>
+                    <div>
+                        <div class="path-tag">Skill-Tracking</div>
+                        <div class="path-name">Skill-Baum</div>
                     </div>
                 </div>
-                <div class="module-foot">
-                    <div class="module-cta">
-                        Skill Tree öffnen
-                        <span class="cta-arrow">→</span>
+                <p class="path-desc">Verfolge deine technischen Kompetenzen in einem übersichtlichen Baum. Sammle XP aus deinem Berichtsheft und steige Level für Level auf.</p>
+
+                <div class="path-progress">
+                    <div class="path-progress-top">
+                        <span class="path-progress-label">Nächstes Level</span>
+                        <span class="path-progress-val" id="skillPct">0%</span>
                     </div>
-                    <div class="module-status">
-                        <div class="status-pip"></div>
-                        Active
-                    </div>
+                    <div class="path-bar"><div class="path-bar-fill" id="skillBar"></div></div>
+                </div>
+
+                <ul class="path-features">
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>6 Kompetenz-Zweige mit Level-Tracking</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Automatische XP aus dem Berichtsheft</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Detail-Ansicht mit XP-Verlauf</li>
+                </ul>
+
+                <div class="path-cta">
+                    <span class="path-cta-text">Skill-Baum öffnen
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </span>
+                    <span class="path-status"><span class="pip"></span>Aktiv</span>
                 </div>
             </a>
 
             <!-- FI Academy -->
-            <a href="/Fachinformatiker/" class="module green">
-                <div class="module-bar"></div>
-                <div class="module-num">02</div>
-                <div class="module-body">
-                    <div class="module-head">
-                        <div class="module-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/>
-                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
-                                <line x1="8" y1="7" x2="16" y2="7"/>
-                                <line x1="8" y1="11" x2="13" y2="11"/>
-                            </svg>
-                        </div>
-                        <div class="module-info">
-                            <div class="module-tag">IHK-Konform</div>
-                            <div class="module-name">FI Academy</div>
-                        </div>
-                    </div>
-
-                    <p class="module-desc">
-                        Strukturiertes Lernprogramm für Fachinformatiker-Ausbildung. Vollständige IHK-Themenbereiche mit Modulprüfungen, Karteikarten und Lernfortschritt-Tracking.
-                    </p>
-
-                    <div class="module-features">
-                        <div class="feat-row">
-                            <div class="feat-pip"></div>
-                            <span>5 Ausbildungs-Phasen mit Roadmap</span>
-                        </div>
-                        <div class="feat-row">
-                            <div class="feat-pip"></div>
-                            <span>12+ Module mit Prüfungs-Quiz</span>
-                        </div>
-                        <div class="feat-row">
-                            <div class="feat-pip"></div>
-                            <span>Karteikarten &amp; Cheat Sheets</span>
-                        </div>
-                        <div class="feat-row">
-                            <div class="feat-pip"></div>
-                            <span>Fortschritts-Tracking &amp; Lernserie</span>
-                        </div>
+            <a href="/Fachinformatiker/" class="path" style="--pc: var(--primary); --pc-dim: var(--primary-dim); --pc-border: rgba(var(--primary-rgb),0.25); --pc-rgb: var(--primary-rgb);">
+                <div class="path-head">
+                    <span class="path-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                    </span>
+                    <div>
+                        <div class="path-tag">IHK-konform</div>
+                        <div class="path-name">FI Academy</div>
                     </div>
                 </div>
-                <div class="module-foot">
-                    <div class="module-cta">
-                        FI Academy starten
-                        <span class="cta-arrow">→</span>
+                <p class="path-desc">Strukturiertes Lernprogramm für die Fachinformatiker-Ausbildung: Roadmap, Module, Karteikarten, Cheat Sheets und Prüfungs-Quiz — mit Fortschritts-Tracking.</p>
+
+                <div class="path-progress">
+                    <div class="path-progress-top">
+                        <span class="path-progress-label">Ausbildungs-Fortschritt</span>
+                        <span class="path-progress-val" id="fiPct2">0%</span>
                     </div>
-                    <div class="module-status">
-                        <div class="status-pip"></div>
-                        Active
-                    </div>
+                    <div class="path-bar"><div class="path-bar-fill" id="fiBar"></div></div>
+                </div>
+
+                <ul class="path-features">
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Roadmap mit Ausbildungs-Phasen</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Module, Karteikarten & Cheat Sheets</li>
+                    <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Prüfungs-Quiz & Lernserie</li>
+                </ul>
+
+                <div class="path-cta">
+                    <span class="path-cta-text">FI Academy starten
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                    </span>
+                    <span class="path-status"><span class="pip"></span>Aktiv</span>
                 </div>
             </a>
 
         </section>
 
-        <!-- Metrics -->
-        <section class="metrics">
-            <div class="metric">
-                <div class="metric-label">Learning Paths</div>
-                <div class="metric-val purple" id="cnt-paths">2</div>
-                <div class="metric-sub">Verfügbare Module</div>
+        <!-- Feature strip -->
+        <section class="strip">
+            <div class="strip-item">
+                <span class="strip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></span>
+                <div><div class="strip-title">Voll offline</div><div class="strip-sub">Läuft als PWA komplett ohne Internet — deine Daten bleiben lokal im Browser.</div></div>
             </div>
-            <div class="metric">
-                <div class="metric-label">Offline Support</div>
-                <div class="metric-val green">100%</div>
-                <div class="metric-sub">PWA-Ready</div>
+            <div class="strip-item">
+                <span class="strip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></span>
+                <div><div class="strip-title">Synchron</div><div class="strip-sub">Fortschritt und XP fließen aus deinem Berichtsheft und der Zeiterfassung ein.</div></div>
             </div>
-            <div class="metric">
-                <div class="metric-label">Init Time</div>
-                <div class="metric-val amber">&lt;1ms</div>
-                <div class="metric-sub">Keine Load-Zeit</div>
-            </div>
-            <div class="metric">
-                <div class="metric-label">Data Sync</div>
-                <div class="metric-val plain">Echtzeit</div>
-                <div class="metric-sub">Cloud-Synchron</div>
+            <div class="strip-item">
+                <span class="strip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span>
+                <div><div class="strip-title">Sofort startklar</div><div class="strip-sub">Keine Anmeldung, keine Ladezeit — einfach loslegen und lernen.</div></div>
             </div>
         </section>
 
@@ -684,33 +398,86 @@
     <!-- Shared Footer -->
     <div id="page-footer"></div>
 
+    <!-- Theme-Sync: übernimmt die Akzentfarbe aus den App-Einstellungen -->
     <script>
-        // Counter animation
-        function animateCounter(el, from, to, duration) {
-            var start = performance.now();
+    (function() {
+        function applyTheme(hex) {
+            if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+            var r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+            document.documentElement.style.setProperty('--primary', hex);
+            document.documentElement.style.setProperty('--primary-rgb', r + ',' + g + ',' + b);
+            document.documentElement.style.setProperty('--primary-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
+        }
+        function syncTheme() {
+            try {
+                var raw = localStorage.getItem('tg_pro_data');
+                if (!raw) return;
+                var data = JSON.parse(raw);
+                if (data && data.settings && data.settings.theme) applyTheme(data.settings.theme);
+            } catch (e) { /* ignore */ }
+        }
+        syncTheme();
+        window.addEventListener('storage', function(e) { if (e.key === 'tg_pro_data') syncTheme(); });
+        document.addEventListener('visibilitychange', function() { if (!document.hidden) syncTheme(); });
+    })();
+    </script>
+
+    <!-- Live progress from localStorage -->
+    <script>
+    (function() {
+        function xpForLevel(lvl) { return Math.floor(100 * Math.pow(1.25, lvl - 1)); }
+        function levelFromXp(xp) {
+            var lvl = 1, needed = 100;
+            while (xp >= needed) { xp -= needed; lvl++; needed = xpForLevel(lvl); }
+            return { level: lvl, currentXp: xp, nextXp: needed };
+        }
+        function animateCount(el, to, duration, suffix) {
+            var start = performance.now(), from = 0;
             function step(now) {
-                var elapsed = Math.min((now - start) / duration, 1);
-                var eased = 1 - Math.pow(1 - elapsed, 3);
-                el.textContent = Math.round(from + (to - from) * eased);
-                if (elapsed < 1) requestAnimationFrame(step);
+                var t = Math.min((now - start) / duration, 1);
+                var eased = 1 - Math.pow(1 - t, 3);
+                el.textContent = Math.round(from + (to - from) * eased) + (suffix || '');
+                if (t < 1) requestAnimationFrame(step);
             }
             requestAnimationFrame(step);
         }
 
-        var observer = new IntersectionObserver(function(entries) {
-            entries.forEach(function(entry) {
-                if (entry.isIntersecting) {
-                    var el = document.getElementById('cnt-paths');
-                    if (el) animateCounter(el, 0, 2, 600);
-                    observer.disconnect();
-                }
-            });
-        }, { threshold: 0.5 });
+        // Skill-Tree data
+        var skillLvl = 1, skillTotal = 0, skillPct = 0;
+        try {
+            var st = JSON.parse(localStorage.getItem('mwl_skill_tree') || '{}');
+            if (st && st.skills) { for (var k in st.skills) skillTotal += (st.skills[k].xp || 0); }
+            var info = levelFromXp(skillTotal);
+            skillLvl = info.level;
+            skillPct = info.nextXp ? Math.round((info.currentXp / info.nextXp) * 100) : 0;
+        } catch (e) {}
 
-        var metricsEl = document.querySelector('.metrics');
-        if (metricsEl) observer.observe(metricsEl);
+        // FI Academy summary (written by the FI page)
+        var fiPct = 0, streak = 0;
+        try {
+            var fi = JSON.parse(localStorage.getItem('fia_summary') || '{}');
+            if (fi) { fiPct = Math.max(0, Math.min(100, Math.round(fi.pct || 0))); streak = fi.streak || 0; }
+        } catch (e) {}
+        try {
+            if (!streak) { var s = JSON.parse(localStorage.getItem('fia_streak') || '{}'); streak = (s && s.count) || 0; }
+        } catch (e) {}
 
-        // Load shared footer
+        animateCount(document.getElementById('stSkillLvl'), skillLvl, 700);
+        animateCount(document.getElementById('stSkillXp'), skillTotal, 900);
+        document.getElementById('stFiPct').textContent = fiPct + '%';
+        animateCount(document.getElementById('stStreak'), streak, 700);
+
+        document.getElementById('skillPct').textContent = skillPct + '%';
+        document.getElementById('fiPct2').textContent = fiPct + '%';
+        setTimeout(function() {
+            document.getElementById('skillBar').style.width = skillPct + '%';
+            document.getElementById('fiBar').style.width = fiPct + '%';
+        }, 150);
+    })();
+    </script>
+
+    <!-- Load shared footer -->
+    <script>
         fetch('/pages/footer/footer.html')
             .then(function(r) { return r.text(); })
             .then(function(html) {
@@ -721,6 +488,8 @@
                 ph.replaceWith(tmpl.content);
             });
     </script>
-<!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
-<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
+
+    <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
+    <script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
+</body>
 </html>
