@@ -2098,8 +2098,108 @@ async function loadAll() {
 // =========================================
 //  INIT
 // =========================================
+// =========================================
+//  LIVE-AKTIVITÄT — Echtzeit-Ticker
+//  Eigener leichter Endpunkt (?feed), unabhaengig vom 30-Query-loadAll.
+//  Zeigt die letzten anonymen Seitenaufrufe + Ladezeit; pollt alle 20s,
+//  pausiert im Hintergrund-Tab (spart Worker-Quota).
+// =========================================
+var _liveFeedSeen = {};       // "ts|path" -> true, um frisch reingekommene Zeilen zu markieren
+var _liveFeedTimer = null;
+var _liveFeedFirstLoad = true;
+
+function fmtRelTime(unixSec, EN) {
+    var diff = Math.floor(Date.now() / 1000) - unixSec;
+    if (diff < 0) diff = 0;
+    if (diff < 10) return EN ? 'just now' : 'gerade eben';
+    if (diff < 60) return EN ? diff + 's ago' : 'vor ' + diff + ' Sek';
+    var m = Math.floor(diff / 60);
+    if (m < 60)    return EN ? m + ' min ago' : 'vor ' + m + ' Min';
+    var h = Math.floor(m / 60);
+    if (h < 24)    return EN ? h + 'h ago' : 'vor ' + h + ' Std';
+    var d = Math.floor(h / 24);
+    return EN ? d + 'd ago' : 'vor ' + d + ' Tg';
+}
+
+function latencyClass(ms) {
+    if (ms < 1000) return 'fast';
+    if (ms < 2500) return 'mid';
+    return 'slow';
+}
+
+function fmtLatency(ms) {
+    return ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : Math.round(ms) + 'ms';
+}
+
+function renderLiveFeed(events) {
+    var ul = document.getElementById('liveFeed');
+    if (!ul) return;
+    var EN = document.documentElement.lang === 'en';
+
+    if (!events || !events.length) {
+        if (_liveFeedFirstLoad) {
+            ul.innerHTML = '<li class="live-feed-empty">' + (EN ? 'Waiting for activity…' : 'Warte auf Aktivität…') + '</li>';
+        }
+        return;
+    }
+
+    var shown = events.slice(0, 12);
+    ul.innerHTML = shown.map(function(e) {
+        var key   = e.ts + '|' + e.path;
+        var isNew = !_liveFeedFirstLoad && !_liveFeedSeen[key];
+        var flag  = e.cc ? flagEmoji(e.cc) : '🏳️';
+        var lat   = (e.latencyMs != null && e.latencyMs > 0)
+            ? '<span class="lf-latency ' + latencyClass(e.latencyMs) + '">' + esc(fmtLatency(e.latencyMs)) + '</span>'
+            : '';
+        var device = e.device ? '<span class="lf-device">' + esc(e.device) + '</span>' : '';
+        return '<li class="live-feed-row' + (isNew ? ' lf-new' : '') + '">'
+            + '<span class="lf-time">' + esc(fmtRelTime(e.ts, EN)) + '</span>'
+            + '<span class="lf-flag">' + flag + '</span>'
+            + '<span class="lf-path">' + esc(e.path) + '</span>'
+            + '<span class="lf-meta">' + device + lat + '</span>'
+            + '</li>';
+    }).join('');
+
+    _liveFeedSeen = {};
+    shown.forEach(function(e) { _liveFeedSeen[e.ts + '|' + e.path] = true; });
+    _liveFeedFirstLoad = false;
+}
+
+async function loadLiveFeed() {
+    if (document.hidden) return;   // kein Polling im Hintergrund
+    if (!document.getElementById('liveFeed')) return;
+    try {
+        var res = await fetch(CF_PROXY + '?feed=1', { cache: 'no-store' });
+        if (!res.ok) return;
+        var d = await res.json();
+        if (d && Array.isArray(d.events)) {
+            renderLiveFeed(d.events);
+        } else if (d && d.summary) {
+            // Der deployte Worker kennt den ?feed-Endpunkt noch nicht und liefert
+            // stattdessen die volle Range-Analyse zurück. Dann NICHT alle 20s den
+            // schweren 30-Query-Endpunkt hämmern — Ticker still abschalten.
+            if (_liveFeedTimer) { clearInterval(_liveFeedTimer); _liveFeedTimer = null; }
+            var card = document.getElementById('liveFeedCard');
+            if (card) card.style.display = 'none';
+        }
+    } catch (e) {
+        /* Netzfehler/Adblock: still — der Ticker ist Beiwerk, darf die Seite nie stören */
+    }
+}
+
+function startLiveFeed() {
+    if (!document.getElementById('liveFeed')) return;
+    loadLiveFeed();
+    if (_liveFeedTimer) clearInterval(_liveFeedTimer);
+    _liveFeedTimer = setInterval(loadLiveFeed, 20000);
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) loadLiveFeed();   // beim Zurückkommen sofort auffrischen
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     loadAll();
+    startLiveFeed();
 
     // Scroll-to-top visibility
     var scrollBtn = document.getElementById('scrollTopBtn');
