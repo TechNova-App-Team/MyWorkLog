@@ -17,7 +17,13 @@
  *
  * SICHERHEIT: Laeuft AUSSCHLIESSLICH auf Cloudflare (CF_PAGES=1). Lokal passiert
  * nichts — sonst wuerde ein `npm run build` die eigenen Quellen loeschen.
- * Erzwingen (z.B. zum Testen) mit --force.
+ *
+ * ⚠️ --force LOESCHT SOFORT UND ECHT. Wer nur sehen will, WAS entfernt wuerde,
+ * nimmt --dry-run (loescht nichts). Am 2026-07-22 hat ein `--force --dry-run`
+ * echte Dateien vernichtet, weil es --dry-run damals nicht gab und unbekannte
+ * Flags still ignoriert wurden — CLAUDE.md und README´s/ stehen in .gitignore
+ * und waren damit unwiederbringlich weg. Deshalb: unbekannte Flags brechen jetzt
+ * ab, und --dry-run gewinnt immer gegen --force.
  */
 'use strict';
 
@@ -26,9 +32,26 @@ const path = require('path');
 
 const ROOT = path.resolve(__dirname, '..');
 const onCF = process.env.CF_PAGES === '1' || process.env.CF_PAGES === 'true';
-const forced = process.argv.includes('--force');
 
-if (!onCF && !forced) {
+// Unbekannte Flags sind ein Abbruchgrund: ein stillschweigend ignoriertes
+// --dry-run hat hier schon einmal Dateien gekostet.
+const KNOWN_FLAGS = ['--force', '--dry-run'];
+const unknown = process.argv.slice(2).filter((a) => !KNOWN_FLAGS.includes(a));
+if (unknown.length) {
+  console.error('[prune] ABBRUCH — unbekanntes Flag: ' + unknown.join(' '));
+  console.error('[prune] Erlaubt: ' + KNOWN_FLAGS.join(' | '));
+  process.exit(1);
+}
+
+const dryRun = process.argv.includes('--dry-run');
+// --dry-run gewinnt immer: "zeig mir was passieren wuerde" darf nie loeschen.
+const forced = process.argv.includes('--force') && !dryRun;
+
+if (dryRun) {
+  console.log('[prune] DRY-RUN — es wird NICHTS geloescht, nur aufgelistet.\n');
+}
+
+if (!onCF && !forced && !dryRun) {
   console.log('[prune] übersprungen (nicht auf Cloudflare — lokale Quellen bleiben unangetastet).');
   process.exit(0);
 }
@@ -53,8 +76,8 @@ let removed = 0;
 function rm(rel) {
   const p = path.join(ROOT, rel);
   if (!fs.existsSync(p)) return;
-  fs.rmSync(p, { recursive: true, force: true });
-  console.log('[prune] entfernt: ' + rel);
+  if (!dryRun) fs.rmSync(p, { recursive: true, force: true });
+  console.log('[prune] ' + (dryRun ? 'wuerde entfernen' : 'entfernt') + ': ' + rel);
   removed++;
 }
 
@@ -64,8 +87,9 @@ function pruneFragments(dir) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) pruneFragments(p);
     else if (e.name.endsWith('.html')) {
-      fs.rmSync(p, { force: true });
-      console.log('[prune] entfernt: ' + path.relative(ROOT, p).replace(/\\/g, '/'));
+      if (!dryRun) fs.rmSync(p, { force: true });
+      console.log('[prune] ' + (dryRun ? 'wuerde entfernen' : 'entfernt') + ': '
+        + path.relative(ROOT, p).replace(/\\/g, '/'));
       removed++;
     }
   }
