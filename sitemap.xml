@@ -3,16 +3,28 @@
 <!--
   MyWorkLog — XML Sitemap
   Site:        https://myworklog.de/
-  Last build:  2026-07-02
-  Language:    de-DE (single-language site)
+  Last build:  2026-07-22
+  Sprachen:    de-DE (Quelle) + en (statisch generiert unter /en/)
   Robots:      /robots.txt
-  Notes:       Enthält alle vorhandenen /pages/*/ zzgl. Homepage.
-               ACHTUNG: analytics/repo-report/offline/Weihnachten
-               stehen in robots.txt unter Disallow — Google meldet sie dann als
-               "Submitted URL blocked by robots.txt". maintenance/ und
-               schatten-berichtsheft/ tragen noindex → "Submitted URL marked
-               noindex". Wenn diese Konflikte weg sollen: robots.txt entsprechend
-               lockern bzw. noindex entfernen.
+
+  ══ REGELN FÜR DIESE DATEI ══════════════════════════════════════════
+  1. NUR URLs MIT abschliessendem Slash. Die Slash-Form ist die einzige,
+     die live 200 liefert — /berichtsheft (ohne Slash) antwortet mit 308
+     auf /pages/berichtsheft/. Eine URL ohne Slash hier = Google meldet
+     "Seite mit Weiterleitung" und indexiert NICHT.
+  2. Jede URL hier MUSS sich selbst als <link rel="canonical"> ausweisen.
+     Sitemap-URL != Canonical => Google verwirft die Seite als
+     "Alternative Seite mit richtigem kanonischem Tag".
+  3. KEINE Seiten aufnehmen, die in robots.txt unter Disallow stehen
+     oder ein noindex tragen — das sind garantierte GSC-Fehler.
+     Bewusst NICHT enthalten:
+       /analytics/  /repo-report/  /offline/  /Weihnachten/  → robots.txt Disallow
+       /maintenance/                                          → meta noindex
+       /schatten-berichtsheft/                                → hat noch keine
+                                                 SEO-Meta (Canonical/Description)
+  4. DE und EN verweisen wechselseitig aufeinander. Beide Richtungen
+     müssen identische hreflang-Tripel tragen, sonst ignoriert Google sie.
+  ════════════════════════════════════════════════════════════════════
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml"
@@ -23,10 +35,10 @@
   <!-- ══════════════════════════════════════════════════════════════ -->
   <url>
     <loc>https://myworklog.de/</loc>
-    <lastmod>2026-07-05</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/"/>
     <image:image>
@@ -36,15 +48,12 @@
     </image:image>
   </url>
 
-  <!-- ══════════════════════════════════════════════════════════════ -->
-  <!-- HOMEPAGE (EN) — englische Version, statisch generiert         -->
-  <!-- ══════════════════════════════════════════════════════════════ -->
   <url>
     <loc>https://myworklog.de/en/</loc>
-    <lastmod>2026-07-05</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/"/>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/"/>
   </url>
@@ -54,11 +63,11 @@
   <!-- ══════════════════════════════════════════════════════════════ -->
   <url>
     <loc>https://myworklog.de/berichtsheft/</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/berichtsheft/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/berichtsheft"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/berichtsheft/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/berichtsheft/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/berichtsheft/"/>
     <image:image>
       <image:loc>https://myworklog.de/Grafiken/icon-512.png</image:loc>
@@ -68,12 +77,22 @@
   </url>
 
   <url>
+    <loc>https://myworklog.de/en/berichtsheft/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/berichtsheft/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/berichtsheft/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/berichtsheft/"/>
+  </url>
+
+  <url>
     <loc>https://myworklog.de/rechte-checker/</loc>
-    <lastmod>2026-06-29</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/rechte-checker/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/rechte-checker"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/rechte-checker/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/rechte-checker/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/rechte-checker/"/>
     <image:image>
       <image:loc>https://myworklog.de/Grafiken/icon-512.png</image:loc>
@@ -83,22 +102,42 @@
   </url>
 
   <url>
+    <loc>https://myworklog.de/en/rechte-checker/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/rechte-checker/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/rechte-checker/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/rechte-checker/"/>
+  </url>
+
+  <url>
     <loc>https://myworklog.de/aufgaben/</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/aufgaben/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/aufgaben"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/aufgaben/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/aufgaben/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/aufgaben/"/>
+  </url>
+
+  <url>
+    <loc>https://myworklog.de/en/aufgaben/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/aufgaben/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/aufgaben/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/aufgaben/"/>
   </url>
 
   <url>
     <loc>https://myworklog.de/fahrtkosten/</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/fahrtkosten/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/fahrtkosten"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/fahrtkosten/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/fahrtkosten/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/fahrtkosten/"/>
     <image:image>
       <image:loc>https://myworklog.de/Grafiken/icon-512.png</image:loc>
@@ -108,12 +147,22 @@
   </url>
 
   <url>
+    <loc>https://myworklog.de/en/fahrtkosten/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/fahrtkosten/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/fahrtkosten/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/fahrtkosten/"/>
+  </url>
+
+  <url>
     <loc>https://myworklog.de/vertrags-manager/</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/vertrags-manager/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/vertrags-manager"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/vertrags-manager/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/vertrags-manager/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/vertrags-manager/"/>
     <image:image>
       <image:loc>https://myworklog.de/Grafiken/icon-512.png</image:loc>
@@ -123,12 +172,32 @@
   </url>
 
   <url>
+    <loc>https://myworklog.de/en/vertrags-manager/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/vertrags-manager/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/vertrags-manager/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/vertrags-manager/"/>
+  </url>
+
+  <url>
     <loc>https://myworklog.de/archflow/</loc>
-    <lastmod>2026-07-02</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/archflow/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/archflow"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/archflow/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/archflow/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/archflow/"/>
+  </url>
+
+  <url>
+    <loc>https://myworklog.de/en/archflow/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.65</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/archflow/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/archflow/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/archflow/"/>
   </url>
 
@@ -137,11 +206,11 @@
   <!-- ══════════════════════════════════════════════════════════════ -->
   <url>
     <loc>https://myworklog.de/Fachinformatiker/</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/Fachinformatiker/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/Fachinformatiker"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/Fachinformatiker/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/Fachinformatiker/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/Fachinformatiker/"/>
     <image:image>
       <image:loc>https://myworklog.de/Grafiken/icon-512.png</image:loc>
@@ -151,22 +220,52 @@
   </url>
 
   <url>
+    <loc>https://myworklog.de/en/Fachinformatiker/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.65</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/Fachinformatiker/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/Fachinformatiker/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/Fachinformatiker/"/>
+  </url>
+
+  <url>
     <loc>https://myworklog.de/skill-tree/</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/skill-tree/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/skill-tree"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/skill-tree/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/skill-tree/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/skill-tree/"/>
+  </url>
+
+  <url>
+    <loc>https://myworklog.de/en/skill-tree/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/skill-tree/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/skill-tree/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/skill-tree/"/>
   </url>
 
   <url>
     <loc>https://myworklog.de/it-landing/</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.65</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/it-landing/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/it-landing"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/it-landing/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/it-landing/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/it-landing/"/>
+  </url>
+
+  <url>
+    <loc>https://myworklog.de/en/it-landing/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.55</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/it-landing/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/it-landing/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/it-landing/"/>
   </url>
 
@@ -175,66 +274,22 @@
   <!-- ══════════════════════════════════════════════════════════════ -->
   <url>
     <loc>https://myworklog.de/about/</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/about/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/about"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/about/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/about/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/about/"/>
   </url>
 
-  <!-- ══════════════════════════════════════════════════════════════ -->
-  <!-- INTERNE / UTILITY-SEITEN                                       -->
-  <!-- Konflikt-Warnung: siehe Kommentar im Header                    -->
-  <!-- ══════════════════════════════════════════════════════════════ -->
   <url>
-    <loc>https://myworklog.de/analytics/</loc>
-    <lastmod>2026-07-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/analytics/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/analytics"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/analytics/"/>
-  </url>
-
-  <url>
-    <loc>https://myworklog.de/repo-report/</loc>
-    <lastmod>2026-07-02</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/repo-report/"/>
-  </url>
-
-  <url>
-    <loc>https://myworklog.de/schatten-berichtsheft/</loc>
-    <lastmod>2026-07-02</lastmod>
+    <loc>https://myworklog.de/en/about/</loc>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/schatten-berichtsheft/"/>
-  </url>
-
-  <url>
-    <loc>https://myworklog.de/offline/</loc>
-    <lastmod>2026-07-02</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/offline/"/>
-  </url>
-
-  <url>
-    <loc>https://myworklog.de/maintenance/</loc>
-    <lastmod>2026-07-02</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/maintenance/"/>
-  </url>
-
-  <url>
-    <loc>https://myworklog.de/Weihnachten/</loc>
-    <lastmod>2026-07-02</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.2</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/Weihnachten/"/>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/about/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/about/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/about/"/>
   </url>
 
   <!-- ══════════════════════════════════════════════════════════════ -->
@@ -242,21 +297,41 @@
   <!-- ══════════════════════════════════════════════════════════════ -->
   <url>
     <loc>https://myworklog.de/DSGVO/</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/DSGVO/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/DSGVO"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/DSGVO/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/DSGVO/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/DSGVO/"/>
+  </url>
+
+  <url>
+    <loc>https://myworklog.de/en/DSGVO/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.25</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/DSGVO/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/DSGVO/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/DSGVO/"/>
   </url>
 
   <url>
     <loc>https://myworklog.de/Impressum/</loc>
-    <lastmod>2026-06-26</lastmod>
+    <lastmod>2026-07-22</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
-    <xhtml:link rel="alternate" hreflang="de-DE" href="https://myworklog.de/Impressum/"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/Impressum"/>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/Impressum/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/Impressum/"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/Impressum/"/>
+  </url>
+
+  <url>
+    <loc>https://myworklog.de/en/Impressum/</loc>
+    <lastmod>2026-07-22</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.25</priority>
+    <xhtml:link rel="alternate" hreflang="de" href="https://myworklog.de/Impressum/"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://myworklog.de/en/Impressum/"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://myworklog.de/Impressum/"/>
   </url>
 
