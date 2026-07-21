@@ -15,13 +15,13 @@ Lokal-first · Offline-fähig · DSGVO-konform · 100% kostenlos
 <br>
 
 [![Live](https://img.shields.io/badge/myworklog.de-online-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
-[![Version](https://img.shields.io/badge/version-3.12.0-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](https://github.com/TechNova-App-Team/MyWorkLog/releases)
+[![Version](https://img.shields.io/badge/version-4.1.7-7c3aed?style=for-the-badge&logo=git&logoColor=white&labelColor=0a0a12)](https://github.com/TechNova-App-Team/MyWorkLog/releases)
 [![PWA](https://img.shields.io/badge/PWA-Ready-10b981?style=for-the-badge&logo=pwa&logoColor=white&labelColor=0a0a12)](https://myworklog.de/)
 [![License](https://img.shields.io/badge/License-MIT-eab308?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=0a0a12)](Rechtliches/LICENSE.md)
 
 <br>
 
-[Live Demo](https://myworklog.de/) · [Berichtsheft](https://myworklog.de/berichtsheft/) · [Aufgaben](https://myworklog.de/aufgaben/) · [Rechte-Checker](https://myworklog.de/rechte-checker/) · [Architektur](https://myworklog.de/archflow/)
+[Live](https://myworklog.de/) · [Berichtsheft](https://myworklog.de/berichtsheft/) · [Aufgaben](https://myworklog.de/aufgaben/) · [Rechte-Checker](https://myworklog.de/rechte-checker/) · [Architektur](https://myworklog.de/archflow/)
 
 <br>
 
@@ -67,7 +67,6 @@ Die App läuft als Vanilla-HTML/CSS/JS-PWA komplett im Browser. Daten liegen lok
 
 ### AI
 - Cloud-KI via OpenRouter-Proxy (kein eigener Key nötig)
-- Lokales WebLLM on-device (WebGPU)
 - Spracheingabe für Timer & Chat
 - Pattern Recognition & Smart Insights
 
@@ -128,7 +127,7 @@ npm run lint
 
 ```
 MyWorkLog/
-├─ index.html              SPA-Hauptdatei (~5500 Zeilen)
+├─ index.template.html     index.html builder
 ├─ service-worker.js       Offline-Cache, Push-Notifications
 ├─ manifest.json           PWA-Metadata, Shortcuts, Icons
 │
@@ -150,6 +149,7 @@ MyWorkLog/
 │  ├─ skill-tree/          RPG-Gamification
 │  ├─ analytics/           Advanced Analytics
 │  ├─ archflow/            Architektur-Visualisierung
+│  ├─ en/                  Englische Version
 │  └─ ...
 │
 ├─ Assets/                 Statische Ressourcen (css, js, icons)
@@ -175,7 +175,6 @@ MyWorkLog/
 | **Storage** | `localStorage` mit JSON-Schema + Backup-Rotation (10×) |
 | **Cloud-Sync** (optional) | Supabase (Auth + Postgres + RLS) |
 | **AI-Proxy** | Cloudflare Worker → OpenRouter (Free Tier) |
-| **On-Device AI** | WebLLM (WebGPU) |
 | **PWA** | Service Worker + Web App Manifest |
 | **Sicherheit** | DOMPurify 3.2.4, AES-256-GCM Backup-Encryption |
 | **P2P** | WebRTC via SimplePeer + TURN |
@@ -219,17 +218,14 @@ PWA-Install funktioniert auf allen Modern-Browsers. WebGPU für On-Device-LLM nu
 Aktuelle Version: **v3.5.4** (Release 2026-05-31)
 
 ```
-3.5.4   SW Update-Mechanismus: Network-First, Cache-Clear on Update
-3.5.3   Cloud Backup Alerts, Spracheingabe Enhanced
-3.5.0   Untis Integration, IT Professional Hub, Schatten-Berichtsheft
-3.4.0   Fahrtkosten, Rechte-Checker, Skill-Tree, Analytics Pro
-3.3.2   Aufgaben Manager, SEO, Notifications
-3.2.0   P2P Sync, TURN, Cloud Sync
-3.1.0   Cloud-Sync via Supabase
-3.0.0   IndexedDB Migration
+4.1.7   Der komplette IT-Lernbereich wurde von Grund auf neu gestaltet
+4.1.6   Der NFC-Bereich (Chip-Scanner) hat ein großes optisches Upgrade bekommen
+4.1.5   Im Verlauf ließen sich auf Handy und Tablet keine Einträge bearbeiten, ansehen oder löschen
+4.1.4   Die kleinen Hilfe-Fenster hinter den „?“-Knöpfen wurden überarbeitet
+...
 ```
 
-Vollständige Liste in `config/version.json`.
+Vollständige Liste in `config/version.json` oder auf https://myworklog.de/ -> Support.
 
 ---
 
