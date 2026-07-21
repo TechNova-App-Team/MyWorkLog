@@ -464,6 +464,7 @@ function initAutoInstallPrompt() {
     const cooldownPassed = Date.now() - dismissedAt > dismissCooldown;
 
     if (isStandalone) return; // Already installed as PWA
+    if (localStorage.getItem('pwa_banner_never') === 'true') return; // Permanently opted out
     if (wasDismissed && !cooldownPassed) return; // Dismissed recently
 
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -582,6 +583,12 @@ function pwaInstallBannerDismiss() {
         banner.classList.remove('visible');
         setTimeout(function(){ banner.style.display = 'none'; }, 500);
     }
+}
+
+// Permanent opt-out: banner never shows again (guarded in initPWABanner)
+function pwaInstallBannerNever() {
+    try { localStorage.setItem('pwa_banner_never', 'true'); } catch (e) {}
+    pwaInstallBannerDismiss();
 }
 
 // ===== PWA OFFLINE-DATEN TRACKING =====
