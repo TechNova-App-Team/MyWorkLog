@@ -10,7 +10,7 @@
 </script>
     <meta name="description" content="Berichtsheft Generator: IHK-konformes Berichtsheft erstellen mit lokaler KI. Automatische Einträge, Prüfungsvorbereitung, AES-256 verschlüsselt & DSGVO-konform.">
     <meta name="keywords" content="Berichtsheft Generator, IHK-konformes Berichtsheft, digitales Berichtsheft, Berichtsheft erstellen, Berichtsheft App, lokale KI Berichtsheft, Ausbildungsnachweis, IHK Berichtsheft, Auszubildende Berichtsheft, online Berichtsheft, Fachinformatiker Berichtsheft, Berichtsheft offline">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=4.1.17"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=4.1.18"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -2205,35 +2205,10 @@
         .ais-week-textarea::placeholder { color: var(--text-dim); font-style: italic; }
 
         /* ═══ Aufgaben-Pipe Banner (Wochenansicht → Berichtsheft) ═══ */
-        .ais-aufgaben-banner {
-            margin: 10px 16px 0; padding: 12px 14px;
-            display: flex; align-items: center; gap: 12px;
-            background: linear-gradient(135deg, rgba(139,92,246,0.08) 0%, rgba(99,102,241,0.06) 100%);
-            border: 1px solid rgba(139,92,246,0.25);
-            border-radius: 14px;
-            transition: border-color 0.2s ease, background 0.2s ease;
-        }
-        .ais-aufgaben-banner:hover { border-color: rgba(139,92,246,0.4); }
-        .ais-aufgaben-banner-icon {
-            flex-shrink: 0; width: 36px; height: 36px;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(139,92,246,0.15); border-radius: 10px;
-            color: #a78bfa;
-        }
-        .ais-aufgaben-banner-text { flex: 1; min-width: 0; }
-        .ais-aufgaben-banner-title {
-            font-size: 0.82rem; font-weight: 700; color: var(--text-main);
-            line-height: 1.3;
-        }
-        .ais-aufgaben-banner-title span {
-            display: inline-block; min-width: 18px;
-            padding: 1px 6px; border-radius: 6px;
-            background: var(--primary); color: white;
-            font-size: 0.74rem; margin-right: 2px;
-        }
-        .ais-aufgaben-banner-sub {
-            font-size: 0.7rem; color: var(--text-muted);
-            margin-top: 2px; line-height: 1.3;
+        /* Zahl im Sub-Text der Quellen-Karten (Aufgaben-Anzahl) */
+        .ais-track-hdr-sub span {
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-weight: 700; color: var(--text-secondary);
         }
         .ais-aufgaben-toggle {
             position: relative; flex-shrink: 0;
@@ -2891,7 +2866,7 @@
             color: var(--text-main);
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=4.1.17"></script>
+    <script defer src="/Assets/js/ph-init.js?v=4.1.18"></script>
 </head>
 <body>
     <!-- ===== SVG ICON SPRITE ===== -->
@@ -3844,26 +3819,30 @@ Beispiel:
                 </div>
 
                 <!-- ✦ Aufgaben-Pipe Banner: zeigt sich nur wenn Tasks in /pages/aufgaben/ existieren -->
-                <div class="ais-aufgaben-banner" id="aisAufgabenBanner" style="display:none;">
-                    <div class="ais-aufgaben-banner-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
-                            <polyline points="9 14 11 16 15 12"/>
-                        </svg>
-                    </div>
-                    <div class="ais-aufgaben-banner-text">
-                        <div class="ais-aufgaben-banner-title">
-                            <span id="aisAufgabenBadge">0</span> Aufgaben aus deiner Wochenansicht gefunden
+                <div class="ais-track" id="aisAufgabenBanner" style="display:none;">
+                    <div class="ais-track-hdr">
+                        <div class="ais-track-hdr-icon">
+                            <svg class="ais-track-hdr-svg" viewBox="0 0 24 24">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                                <polyline points="9 14 11 16 15 12"/>
+                            </svg>
                         </div>
-                        <div class="ais-aufgaben-banner-sub">KI nutzt deine echten Aufgaben als Grundlage statt zu erfinden</div>
+                        <div class="ais-track-hdr-text">
+                            <div class="ais-track-hdr-title">
+                                Geplante Aufgaben <span class="ais-track-kw">Aufgaben-Seite</span>
+                            </div>
+                            <div class="ais-track-hdr-sub" id="aisAufgabenSub">
+                                <span id="aisAufgabenBadge">0</span> Aufgaben aus deiner Wochenplanung
+                            </div>
+                        </div>
+                        <label class="ais-aufgaben-toggle" title="Wochenplanung als Grundlage nutzen">
+                            <input type="checkbox" id="aisUseAufgabenChk" onchange="AIStudio.toggleAufgaben(this.checked)">
+                            <span class="ais-aufgaben-toggle-sw"></span>
+                        </label>
                     </div>
-                    <label class="ais-aufgaben-toggle">
-                        <input type="checkbox" id="aisUseAufgabenChk" onchange="AIStudio.toggleAufgaben(this.checked)">
-                        <span class="ais-aufgaben-toggle-sw"></span>
-                    </label>
                 </div>
 
                 <!-- ✦ Tracking-Pipe: echte Projekte/Notizen aus der Zeiterfassung dieser KW -->
@@ -3874,7 +3853,7 @@ Beispiel:
                         </div>
                         <div class="ais-track-hdr-text">
                             <div class="ais-track-hdr-title">
-                                Deine Woche <span class="ais-track-kw" id="aisTrackKw">KW –</span>
+                                Erfasste Zeiten <span class="ais-track-kw" id="aisTrackKw">KW –</span>
                             </div>
                             <div class="ais-track-hdr-sub" id="aisTrackSub">Aus deiner Zeiterfassung</div>
                         </div>
@@ -7462,18 +7441,23 @@ Beispiel:
             }
         }
 
-        // Aufgaben-Badge aktualisieren: zeigt wieviele Tasks gefunden wurden
+        // Aufgaben-Karte aktualisieren: Anzahl gefundener Tasks + Zustand des Toggles.
+        // Gleiche Sub-Zeilen-Logik wie bei den erfassten Zeiten (aus/an), damit beide
+        // Quellen-Karten identisch lesen.
         function _updateAufgabenBadge() {
-            const badge = document.getElementById('aisAufgabenBadge');
             const banner = document.getElementById('aisAufgabenBanner');
-            if (!badge || !banner) return;
+            const sub = document.getElementById('aisAufgabenSub');
+            if (!banner || !sub) return;
             const { total } = _loadAufgabenForWeek();
             if (total === 0) {
                 banner.style.display = 'none';
                 return;
             }
             banner.style.display = '';
-            badge.textContent = total;
+            banner.classList.toggle('active', !!state.useAufgaben);
+            sub.innerHTML = `<span id="aisAufgabenBadge">${total}</span> ` + (state.useAufgaben
+                ? L('Aufgaben gehen als Grundlage an die KI', 'tasks go to the AI as the basis')
+                : L('Aufgaben aus deiner Wochenplanung', 'tasks from your weekly planning'));
         }
 
         // ═══════════════════════════════════════
@@ -8838,13 +8822,15 @@ Beispiel:
         function toggleAufgaben(checked) {
             state.useAufgaben = !!checked;
             try { localStorage.setItem(STORAGE_KEYS.useAufgaben, state.useAufgaben ? '1' : '0'); } catch(e) {}
-            const banner = document.getElementById('aisAufgabenBanner');
-            if (banner) banner.classList.toggle('active', state.useAufgaben);
+            _updateAufgabenBadge();
             if (state.useAufgaben) {
                 const { total } = _loadAufgabenForWeek();
                 showToast(total > 0
-                    ? `📋 ${total} Aufgaben werden bei der nächsten Generierung berücksichtigt`
-                    : 'Keine Aufgaben gefunden — Wochenansicht zuerst befüllen', total > 0 ? 'success' : 'warning');
+                    ? L(`${total} geplante Aufgaben werden bei der nächsten Generierung berücksichtigt`,
+                        `${total} planned tasks will be used in the next generation`)
+                    : L('Keine Aufgaben gefunden — Wochenplanung zuerst befüllen',
+                        'No tasks found — fill in your weekly planning first'),
+                    total > 0 ? 'success' : 'warning');
             }
         }
 
@@ -8902,15 +8888,16 @@ Beispiel:
             }
             card.style.display = '';
             card.classList.toggle('active', !!state.useTracking);
-            if (kwEl) kwEl.textContent = 'KW ' + week.kw;
+            if (kwEl) kwEl.textContent = L('KW ', 'CW ') + week.kw;
 
             const selected = [0,1,2,3,4].reduce((n, i) => n + _selectedTrackingForDay(i, week).length, 0);
             if (subEl) {
-                subEl.textContent = state.useTracking
-                    ? L(`${selected} von ${week.total} Angaben gehen an die KI`,
-                        `${selected} of ${week.total} details go to the AI`)
-                    : L(`${week.days} erfasste Tage, ${week.total} Angaben aus Projekt & Notizen`,
-                        `${week.days} logged days, ${week.total} details from projects & notes`);
+                // Aus-Zustand nennt die Quelle, An-Zustand den Anteil — wie bei den Aufgaben.
+                subEl.innerHTML = state.useTracking
+                    ? `<span>${selected}</span> ` + L(`von ${week.total} Angaben gehen an die KI`,
+                                                      `of ${week.total} details go to the AI`)
+                    : `<span>${week.total}</span> ` + L('Angaben aus deiner Zeiterfassung',
+                                                        'details from your time tracking');
             }
             if (!state.useTracking) { body.innerHTML = ''; return; }
 
@@ -10559,8 +10546,8 @@ ${trackingBlock}${aufgabenBlock}
     </script>
 
     <!-- BBiG-Live-Scanner -->
-    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=4.1.17">
-    <script src="/components/bbig-scanner/bbig-scanner.js?v=4.1.17"></script>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=4.1.18">
+    <script src="/components/bbig-scanner/bbig-scanner.js?v=4.1.18"></script>
     <script>
         if (typeof initBbigBerichtsheft === 'function') {
             if (document.readyState === 'loading') {
