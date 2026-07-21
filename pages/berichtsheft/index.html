@@ -10,7 +10,7 @@
 </script>
     <meta name="description" content="Berichtsheft Generator: IHK-konformes Berichtsheft erstellen mit lokaler KI. Automatische Einträge, Prüfungsvorbereitung, AES-256 verschlüsselt & DSGVO-konform.">
     <meta name="keywords" content="Berichtsheft Generator, IHK-konformes Berichtsheft, digitales Berichtsheft, Berichtsheft erstellen, Berichtsheft App, lokale KI Berichtsheft, Ausbildungsnachweis, IHK Berichtsheft, Auszubildende Berichtsheft, online Berichtsheft, Fachinformatiker Berichtsheft, Berichtsheft offline">
-    <script defer src="../../../Assets/js/touch-mobile-optimizations.js"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=4.1.17"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -754,6 +754,28 @@
             display: none; margin-bottom: 16px;
         }
         .daily-fields.active { display: block; }
+        .daily-fields-head {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; flex-wrap: wrap; margin-bottom: 0.75rem;
+        }
+        .daily-fill-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 10px;
+            background: rgba(var(--primary-rgb), 0.08);
+            border: 1px solid rgba(var(--primary-rgb), 0.28);
+            border-radius: var(--radius-xs);
+            color: var(--primary-light);
+            font-family: var(--font-main); font-size: 0.74rem; font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .daily-fill-btn:hover {
+            background: rgba(var(--primary-rgb), 0.15);
+            border-color: rgba(var(--primary-rgb), 0.5);
+        }
+        .daily-fill-btn:focus-visible {
+            outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
+        }
         .daily-row {
             padding: 12px 0; border-bottom: 1px solid var(--border);
         }
@@ -2234,6 +2256,161 @@
         }
         .ais-aufgaben-toggle input:checked + .ais-aufgaben-toggle-sw { background: var(--primary); }
         .ais-aufgaben-toggle input:checked + .ais-aufgaben-toggle-sw::before { transform: translateX(16px); }
+        .ais-aufgaben-toggle input:focus-visible + .ais-aufgaben-toggle-sw {
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.35);
+        }
+
+        /* ═══ Tracking-Pipe: Wochen-Strip aus der echten Zeiterfassung ═══ */
+        .ais-track {
+            margin: 10px 16px 0;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            overflow: hidden;
+            transition: border-color 0.2s ease;
+        }
+        .ais-track.active { border-color: rgba(var(--primary-rgb), 0.35); }
+        .ais-track-hdr {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 14px;
+        }
+        .ais-track-hdr-icon {
+            flex-shrink: 0; width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(var(--primary-rgb), 0.12);
+            border-radius: 10px;
+            color: var(--primary);
+        }
+        .ais-track-hdr-svg {
+            width: 19px; height: 19px;
+            stroke: currentColor; stroke-width: 1.5; fill: none;
+            stroke-linecap: round; stroke-linejoin: round;
+        }
+        .ais-track-hdr-text { flex: 1; min-width: 0; }
+        .ais-track-hdr-title {
+            display: flex; align-items: center; gap: 7px;
+            font-size: 0.82rem; font-weight: 700; color: var(--text-main); line-height: 1.3;
+        }
+        .ais-track-kw {
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 0.66rem; font-weight: 700;
+            padding: 1px 6px; border-radius: 5px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border-light);
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
+        }
+        .ais-track-hdr-sub {
+            font-size: 0.7rem; color: var(--text-muted);
+            margin-top: 2px; line-height: 1.35;
+        }
+        .ais-track-body { display: none; border-top: 1px solid var(--border-light); }
+        .ais-track.active .ais-track-body { display: block; }
+
+        /* Ein Tag = eine Zeile: Kürzel · Stunden · Chips */
+        .ais-track-day {
+            display: grid;
+            grid-template-columns: 78px 1fr;
+            gap: 10px;
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .ais-track-day:last-child { border-bottom: none; }
+        .ais-track-day.is-empty { opacity: 0.45; }
+        .ais-track-day-meta { display: flex; flex-direction: column; gap: 3px; padding-top: 2px; }
+        .ais-track-day-name {
+            font-size: 0.72rem; font-weight: 700; color: var(--text-secondary);
+            display: flex; align-items: baseline; gap: 5px;
+        }
+        .ais-track-day-date {
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 0.6rem; font-weight: 500; color: var(--text-dim);
+        }
+        .ais-track-day-hours {
+            font-family: 'JetBrains Mono', ui-monospace, monospace;
+            font-size: 0.68rem; font-weight: 700; color: var(--primary);
+            font-variant-numeric: tabular-nums;
+        }
+        .ais-track-day-badge {
+            display: inline-flex; align-items: center; align-self: flex-start;
+            font-size: 0.6rem; font-weight: 700;
+            padding: 1px 6px; border-radius: 5px;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .ais-track-day-badge.st-urlaub   { background: rgba(16,185,129,0.14); color: #6ee7b7; }
+        .ais-track-day-badge.st-krank    { background: rgba(239,68,68,0.14);  color: #fca5a5; }
+        .ais-track-day-badge.st-feiertag { background: rgba(251,191,36,0.14); color: #fcd34d; }
+        .ais-track-day-badge.st-schule   { background: rgba(59,130,246,0.14); color: #93c5fd; }
+        .ais-track-day-badge.st-frei     { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+
+        .ais-track-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; }
+        .ais-track-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            max-width: 100%;
+            padding: 5px 9px 5px 7px;
+            background: rgba(var(--primary-rgb), 0.1);
+            border: 1px solid rgba(var(--primary-rgb), 0.3);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-family: inherit; font-size: 0.72rem; line-height: 1.35;
+            text-align: left; cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+        }
+        .ais-track-chip:hover { border-color: rgba(var(--primary-rgb), 0.55); }
+        .ais-track-chip:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.25);
+        }
+        .ais-track-chip.off {
+            background: rgba(255,255,255,0.03);
+            border-color: var(--border-light);
+            color: var(--text-dim);
+            text-decoration: line-through;
+            text-decoration-color: rgba(255,255,255,0.25);
+        }
+        .ais-track-chip-mark {
+            flex-shrink: 0; width: 13px; height: 13px;
+            stroke: currentColor; stroke-width: 2.4; fill: none;
+            stroke-linecap: round; stroke-linejoin: round;
+            color: var(--primary);
+        }
+        .ais-track-chip.off .ais-track-chip-mark { color: var(--text-dim); opacity: 0.5; }
+        .ais-track-chip-lbl {
+            font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.05em; color: var(--text-dim); flex-shrink: 0;
+        }
+        .ais-track-chip-txt {
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            max-width: 26ch;
+        }
+        .ais-track-none {
+            font-size: 0.7rem; color: var(--text-dim); font-style: italic; padding-top: 4px;
+        }
+        .ais-track-foot {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            padding: 9px 14px;
+            border-top: 1px solid var(--border-light);
+            background: rgba(255,255,255,0.015);
+        }
+        .ais-track-foot-txt { font-size: 0.68rem; color: var(--text-muted); line-height: 1.35; }
+        .ais-track-foot-btn {
+            flex-shrink: 0;
+            background: none; border: 1px solid var(--border-light);
+            border-radius: 7px; padding: 4px 9px;
+            color: var(--text-muted); font-family: inherit;
+            font-size: 0.68rem; font-weight: 600; cursor: pointer;
+            transition: border-color 0.15s ease, color 0.15s ease;
+        }
+        .ais-track-foot-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--text-main); }
+        .ais-track-foot-btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.25);
+        }
+        @media (max-width: 480px) {
+            .ais-track-day { grid-template-columns: 1fr; gap: 6px; }
+            .ais-track-day-meta { flex-direction: row; align-items: center; gap: 8px; }
+            .ais-track-chip-txt { max-width: 20ch; }
+        }
 
         /* ═══ Tag-Status Cycle-Button (Krank/Urlaub/Feiertag) ═══ */
         .ais-day-note { position: relative; }
@@ -2714,7 +2891,7 @@
             color: var(--text-main);
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=4.1.16"></script>
+    <script defer src="/Assets/js/ph-init.js?v=4.1.17"></script>
 </head>
 <body>
     <!-- ===== SVG ICON SPRITE ===== -->
@@ -3066,7 +3243,14 @@ Beispiel:
 
                 <!-- ===== DAILY FIELDS ===== -->
                 <div class="daily-fields" id="dailyFieldsGroup">
-                    <label class="form-label" style="margin-bottom: 0.75rem;">Tägliche Tätigkeiten (IHK-Format)</label>
+                    <div class="daily-fields-head">
+                        <label class="form-label" style="margin-bottom:0;">Tägliche Tätigkeiten (IHK-Format)</label>
+                        <button type="button" class="daily-fill-btn" id="dailyFillBtn" onclick="fillDailyFromTracking()"
+                                title="Projekte, Notizen und Stunden dieser Woche aus der Zeiterfassung übernehmen">
+                            <svg class="icon icon-sm"><use href="#i-clock"/></svg>
+                            Aus Zeiterfassung füllen
+                        </button>
+                    </div>
                     <div id="dailyFieldsContainer"></div>
                     <div class="daily-total-bar">
                         <span>Gesamt:</span>
@@ -3564,7 +3748,7 @@ Beispiel:
                         <div class="ais-settings-row" style="margin-top:10px;">
                             <div class="ais-setting">
                                 <label>Kalenderwoche</label>
-                                <input type="number" id="aisCalendarWeek" min="1" max="53" placeholder="Auto">
+                                <input type="number" id="aisCalendarWeek" min="1" max="53" placeholder="Auto" oninput="AIStudio.onWeekChange()">
                             </div>
                             <div class="ais-setting">
                                 <label>Komplexität</label>
@@ -3682,6 +3866,26 @@ Beispiel:
                     </label>
                 </div>
 
+                <!-- ✦ Tracking-Pipe: echte Projekte/Notizen aus der Zeiterfassung dieser KW -->
+                <div class="ais-track" id="aisTrackCard" style="display:none;">
+                    <div class="ais-track-hdr">
+                        <div class="ais-track-hdr-icon">
+                            <svg class="ais-track-hdr-svg"><use href="#i-clock"/></svg>
+                        </div>
+                        <div class="ais-track-hdr-text">
+                            <div class="ais-track-hdr-title">
+                                Deine Woche <span class="ais-track-kw" id="aisTrackKw">KW –</span>
+                            </div>
+                            <div class="ais-track-hdr-sub" id="aisTrackSub">Aus deiner Zeiterfassung</div>
+                        </div>
+                        <label class="ais-aufgaben-toggle" title="Zeiterfassung als Grundlage nutzen">
+                            <input type="checkbox" id="aisUseTrackingChk" onchange="AIStudio.toggleTracking(this.checked)">
+                            <span class="ais-aufgaben-toggle-sw"></span>
+                        </label>
+                    </div>
+                    <div class="ais-track-body" id="aisTrackBody"></div>
+                </div>
+
                 <!-- Generate Button mit Progress-as-Fill -->
                 <button class="ais-mega-btn" id="aisGenerateBtn" onclick="AIStudio.generate()">
                     <span class="ais-mega-fill" aria-hidden="true"></span>
@@ -3747,6 +3951,11 @@ Beispiel:
         /* ═══════════════════════════════════════════════════════════
            BERICHTSHEFT ENGINE v2.0 — Premium JavaScript
            ═══════════════════════════════════════════════════════════ */
+
+        // Sprach-Helper für JS-generierten Text. Die statische i18n-Pipeline erfasst nur
+        // Text, der im HTML steht — zur Laufzeit gebaute Sätze (mit Zahlen drin) muss der
+        // Code selbst umschalten. i18n-runtime.js matcht nur exakte, feste Strings.
+        function L(de, en) { return document.documentElement.lang === 'en' ? en : de; }
 
         // ===== CONSTANTS & STATE =====
         const STORAGE_KEY = 'berichtsheft_reports';
@@ -4283,13 +4492,23 @@ Beispiel:
             return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
         }
 
-        function getWeekDates(weekNum) {
-            const year = new Date().getFullYear();
-            const jan1 = new Date(year, 0, 1);
-            const days = (weekNum - 1) * 7;
-            const monday = new Date(year, 0, 1 + days + (8 - jan1.getDay()) % 7);
+        // Montag einer ISO-Kalenderwoche. Muss die exakte Umkehrung von getWeekNumber()
+        // sein — die alte Jan-1-Rechnung lag je nach Jahr eine Woche daneben (2026:
+        // KW 30 → 27.07. statt 20.07.), wodurch Berichte unter falschen Daten landeten.
+        // Durchgehend UTC, weil toISOString() bei lokalen Mitternachts-Daten in MESZ
+        // sonst auf den Vortag rutscht.
+        function isoWeekMonday(year, week) {
+            const jan4 = new Date(Date.UTC(year, 0, 4));
+            const dow = jan4.getUTCDay() || 7; // Mo=1 … So=7
+            const monday = new Date(jan4);
+            monday.setUTCDate(jan4.getUTCDate() - dow + 1 + (week - 1) * 7);
+            return monday;
+        }
+
+        function getWeekDates(weekNum, year) {
+            const monday = isoWeekMonday(year || new Date().getFullYear(), weekNum);
             const friday = new Date(monday);
-            friday.setDate(monday.getDate() + 4);
+            friday.setUTCDate(monday.getUTCDate() + 4);
             return {
                 monday: monday.toISOString().split('T')[0],
                 friday: friday.toISOString().split('T')[0]
@@ -5515,6 +5734,86 @@ Beispiel:
         // AUTO-FILL FROM TIMETRACKER
         // ═══════════════════════════════════════
 
+        // Eine erfasste Woche → Text pro Wochentag. Nutzt die Tracking-Pipe des AI Studios,
+        // damit Bulk-Import und Modal-Button exakt dasselbe Ergebnis liefern.
+        // Liefert {texts:{monday:'…'}, hours:{monday:7.5}, total, found}
+        function _trackingToDailyText(kw, year) {
+            const empty = { texts: {}, hours: {}, total: 0, found: 0 };
+
+            // AIStudio ist ein const weiter unten im selben Script — beim Aufruf längst
+            // initialisiert, aber der TDZ-Zugriff soll nie den ganzen Import reißen.
+            let week = null;
+            try { week = AIStudio.loadTrackingForWeek(kw, year); } catch (e) { return empty; }
+            if (!week || !week.hasData) return empty;
+
+            const STATUS_TEXT = {
+                urlaub:   L('URLAUB', 'VACATION'),
+                krank:    L('KRANK', 'SICK'),
+                feiertag: L('FEIERTAG', 'PUBLIC HOLIDAY'),
+            };
+            const texts = {}, hours = {};
+            let total = 0;
+
+            DAYS.forEach((d, i) => {
+                const day = week.perDay[i];
+                if (!day) { texts[d.key] = ''; hours[d.key] = 0; return; }
+
+                hours[d.key] = day.hours;
+                total += day.hours;
+
+                const noActivity = L('keine Tätigkeiten', 'no activities');
+                if (day.status && STATUS_TEXT[day.status]) {
+                    texts[d.key] = `— ${STATUS_TEXT[day.status]} — ${noActivity}`;
+                    return;
+                }
+                if (day.isFrei) { texts[d.key] = `— ${L('GLEITTAG', 'FLEX DAY')} — ${noActivity}`; return; }
+
+                const lines = day.items.map(it =>
+                    it.kind === 'notiz' ? '• ' + it.text : `• ${it.label}: ${it.text}`
+                );
+                if (lines.length === 0 && day.isSchool) {
+                    lines.push(L('• Berufsschule besucht', '• Attended vocational school'));
+                }
+                texts[d.key] = lines.join('\n');
+            });
+
+            return { texts, hours, total: Math.round(total * 100) / 100, found: week.total, days: week.days };
+        }
+
+        // Modal-Button „Aus Zeiterfassung füllen" — füllt die Tagesfelder der eingestellten KW.
+        function fillDailyFromTracking() {
+            const kw = parseInt(document.getElementById('reportWeek')?.value, 10) || getWeekNumber(new Date());
+            const year = new Date().getFullYear();
+            const { texts, hours, total, found, days } = _trackingToDailyText(kw, year);
+
+            if (!days) {
+                showToast(L(`Für KW ${kw} sind keine Zeiten erfasst.`, `No times logged for week ${kw}.`), 'info');
+                return;
+            }
+
+            let filled = 0;
+            DAYS.forEach((d, i) => {
+                const ta = document.getElementById(`daily_${i}`);
+                if (ta && texts[d.key]) {
+                    // Bestehenden Text nicht überschreiben, sondern ergänzen
+                    ta.value = ta.value.trim() ? ta.value.trim() + '\n' + texts[d.key] : texts[d.key];
+                    ta.dispatchEvent(new Event('input'));
+                    filled++;
+                }
+                const inp = document.getElementById(`daily_hours_${i}`);
+                if (inp && hours[d.key] > 0) inp.value = hours[d.key];
+            });
+
+            if (typeof updateDailyTotalHours === 'function') updateDailyTotalHours();
+
+            showToast(found > 0
+                ? L(`KW ${kw}: ${found} Angaben aus ${days} Tagen übernommen`,
+                    `Week ${kw}: ${found} details from ${days} days taken over`)
+                : L(`KW ${kw}: ${total} Std. übernommen — keine Projekte oder Notizen hinterlegt`,
+                    `Week ${kw}: ${total} hrs taken over — no projects or notes recorded`),
+                found > 0 ? 'success' : 'info');
+        }
+
         function autoFillFromTimeTracker() {
             const timeTrackerData = localStorage.getItem('tg_pro_data');
             if (!timeTrackerData) {
@@ -5555,11 +5854,14 @@ Beispiel:
                 const exists = reports.some(r => r.week === group.week);
                 if (exists) return;
 
-                const { monday, friday } = getWeekDates(group.week);
-                const activities = group.entries
-                    .filter(e => e.type === 'work')
-                    .map(e => `• Arbeitszeit erfasst: ${e.worked} Std.${e.notes ? ' — ' + e.notes : ''}`)
-                    .join('\n');
+                const { monday, friday } = getWeekDates(group.week, group.year);
+
+                // Projekte, Notizen und Custom-Fields pro Tag statt „• Arbeitszeit erfasst".
+                const daily = _trackingToDailyText(group.week, group.year);
+                const hasContent = daily.found > 0;
+                const activities = hasContent
+                    ? combineDailyToWeeklyText(daily.texts)
+                    : '• Arbeitszeiten wurden erfasst';
 
                 reports.push({
                     id: Date.now().toString() + imported,
@@ -5568,9 +5870,14 @@ Beispiel:
                     dateFrom: monday,
                     dateTo: friday,
                     department: '',
-                    activities: activities || '• Arbeitszeiten wurden erfasst',
+                    activities: activities,
+                    // Im Tagesmodus anlegen, wenn echte Tagesinhalte da sind — sonst bleibt
+                    // der Bericht ein Textblock und die Tagesfelder wären beim Öffnen leer.
+                    mode: hasContent ? 'daily' : 'weekly',
+                    dailyActivities: hasContent ? daily.texts : null,
+                    dailyHours: hasContent ? daily.hours : null,
                     school: '',
-                    hours: group.totalHours,
+                    hours: hasContent ? daily.total : group.totalHours,
                     status: 'incomplete',
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
@@ -6394,6 +6701,8 @@ Beispiel:
             useCloud: 'ais_use_cloud',
             profile: 'ais_user_profile_v2',
             useAufgaben: 'ais_use_aufgaben',
+            useTracking: 'ais_use_tracking',
+            trackingOff: 'ais_tracking_off',
             sundayReminder: 'ais_sunday_reminder',
             lastReminderKW: 'ais_last_reminder_kw',
             aiSettings: 'ais_ai_settings_v1', // Tage/Schultage/Variation/Komplexität gebündelt
@@ -6423,6 +6732,9 @@ Beispiel:
             dayNotes: {},
             lehrjahr: 2,
             useAufgaben: false,         // ✦ Aufgaben-Pipe: Tasks aus /pages/aufgaben/ in Prompt einspeisen
+            useTracking: false,         // ✦ Tracking-Pipe: Projekt/Notizen aus der Zeiterfassung nutzen
+            trackingOff: new Set(),     // ✦ abgewählte Tracking-Fundstücke (Key: "dayIdx|kind|text")
+            trackingWeek: null,         // ✦ zuletzt geladene Tracking-Woche (Cache für Render + Prompt)
             dayStatus: {},              // ✦ {0: 'krank'|'urlaub'|'feiertag'} pro Wochentag-Index
             sundayReminder: false,      // ✦ Sonntag 18 Uhr Push-Reminder
         };
@@ -7164,6 +7476,191 @@ Beispiel:
             badge.textContent = total;
         }
 
+        // ═══════════════════════════════════════
+        // TRACKING-PIPE: echte Zeiterfassung (tg_pro_data) als Grundlage
+        // ═══════════════════════════════════════
+        // Liest die Einträge der Ziel-KW aus der Haupt-App und macht daraus pro Wochentag
+        // auswählbare Fundstücke: Projekt/Kunde, Notiz (aus e.info geparst), Custom-Fields.
+        // Damit muss der User der KI nicht nochmal erklären, was er die Woche gemacht hat.
+
+        const TRACKING_STORAGE_KEY = 'tg_pro_data';
+
+        // Entry-Typ → Tag-Status im Berichtsheft. 'gleittag' bewusst NICHT gemappt:
+        // ein Gleittag ist kein Berichts-Inhalt, der Tag wird stattdessen abgewählt.
+        const TRACKING_STATUS_MAP = { vacation: 'urlaub', sick: 'krank', holiday: 'feiertag' };
+
+        function _ymdUTC(d) {
+            return d.getUTCFullYear() + '-' +
+                   String(d.getUTCMonth() + 1).padStart(2, '0') + '-' +
+                   String(d.getUTCDate()).padStart(2, '0');
+        }
+
+        // Die Notiz des Users steckt nicht in einem eigenen Feld, sondern hinten in e.info:
+        //   "08:00 - 16:30 (30m Pause) | Bugfix in Modul X | ↪ Zusatzzeit (Soll bereits gezählt)"
+        // Segment 0 ist immer die generierte Zeit-/Typ-Meta, ↪-Segmente sind System-Marker.
+        function _extractEntryNote(entry) {
+            if (!entry) return '';
+            if (typeof entry.notes === 'string' && entry.notes.trim()) return entry.notes.trim();
+            const raw = typeof entry.info === 'string' ? entry.info : '';
+            if (!raw) return '';
+            return raw.split('|')
+                .slice(1)
+                .map(s => s.trim())
+                .filter(s => s && s.charAt(0) !== '↪')
+                .join(' · ')
+                .trim();
+        }
+
+        function _emptyTrackingWeek(kw, year) {
+            const perDay = {};
+            for (let i = 0; i < 5; i++) perDay[i] = null;
+            return { perDay, total: 0, days: 0, kw, year, hasData: false };
+        }
+
+        // Liefert {perDay: {0..4: dayObj|null}, total, days, kw, year}
+        // dayObj = {date, dateLabel, items:[{kind,label,text}], hours, status, isSchool, isFrei, typeLabel}
+        function _loadTrackingForWeek(kw, year) {
+            const targetKw = parseInt(kw, 10) || getWeekNumber(new Date());
+            const targetYear = parseInt(year, 10) || new Date().getFullYear();
+            const empty = _emptyTrackingWeek(targetKw, targetYear);
+
+            let data;
+            try {
+                const raw = localStorage.getItem(TRACKING_STORAGE_KEY);
+                if (!raw) return empty;
+                data = JSON.parse(raw);
+            } catch (e) {
+                console.warn('[AIStudio] Zeiterfassung konnte nicht gelesen werden:', e);
+                return empty;
+            }
+            if (!data || !Array.isArray(data.entries) || data.entries.length === 0) return empty;
+
+            // Custom-Field-Labels auflösen (data.customFields = [{id,label,type,…}])
+            const fieldLabels = {};
+            if (Array.isArray(data.customFields)) {
+                data.customFields.forEach(f => { if (f && f.id) fieldLabels[f.id] = f.label || ''; });
+            }
+            // Job-Namen nur bei Multi-Job als Kontext mitgeben
+            const jobs = (data.settings && Array.isArray(data.settings.jobs)) ? data.settings.jobs : [];
+            const multiJob = jobs.length > 1;
+            const jobNames = {};
+            jobs.forEach(j => { if (j && j.id) jobNames[j.id] = j.name || ''; });
+
+            // Mo–Fr der Ziel-KW als YYYY-MM-DD
+            const monday = isoWeekMonday(targetYear, targetKw);
+            const dateOfDay = {};
+            for (let i = 0; i < 5; i++) {
+                const d = new Date(monday);
+                d.setUTCDate(monday.getUTCDate() + i);
+                dateOfDay[i] = _ymdUTC(d);
+            }
+
+            const perDay = {};
+            for (let i = 0; i < 5; i++) perDay[i] = null;
+            let total = 0;
+            let dayCount = 0;
+
+            for (let i = 0; i < 5; i++) {
+                const dateStr = dateOfDay[i];
+                const dayEntries = data.entries.filter(e => e && e.date === dateStr);
+                if (dayEntries.length === 0) continue;
+
+                const items = [];
+                const seen = new Set();
+                let hours = 0;
+                let status = '';
+                let isSchool = false;
+                let isFrei = false;
+                let typeLabel = '';
+
+                const push = (kind, label, text) => {
+                    const clean = String(text == null ? '' : text).trim().replace(/\s+/g, ' ');
+                    if (!clean || clean.length > 200) return;
+                    const key = kind + '|' + clean.toLowerCase();
+                    if (seen.has(key)) return;
+                    seen.add(key);
+                    items.push({ kind, label, text: clean });
+                };
+
+                dayEntries.forEach(e => {
+                    hours += parseFloat(e.worked) || 0;
+
+                    if (TRACKING_STATUS_MAP[e.type]) status = TRACKING_STATUS_MAP[e.type];
+                    else if (e.type === 'school') isSchool = true;
+                    else if (e.type === 'gleittag') isFrei = true;
+
+                    push('projekt', 'Projekt', e.project);
+                    push('notiz', 'Notiz', _extractEntryNote(e));
+
+                    if (e.customFieldValues && typeof e.customFieldValues === 'object') {
+                        Object.keys(e.customFieldValues).forEach(fid => {
+                            const val = e.customFieldValues[fid];
+                            if (val === true) push('feld', fieldLabels[fid] || 'Feld', fieldLabels[fid] || 'Ja');
+                            else if (val !== false) push('feld', fieldLabels[fid] || 'Feld', val);
+                        });
+                    }
+
+                    if (multiJob) {
+                        const jn = jobNames[e.jobId || 'primary'];
+                        if (jn) push('job', 'Job', jn);
+                    }
+                });
+
+                // Ein Gleittag ohne echte Arbeit ist ein freier Tag — kein Status, kein Inhalt.
+                if (isFrei && items.length === 0 && hours === 0) typeLabel = 'Gleittag';
+                else isFrei = false;
+
+                const dObj = new Date(dateStr + 'T00:00:00');
+                perDay[i] = {
+                    date: dateStr,
+                    dateLabel: isNaN(dObj) ? dateStr : dObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }),
+                    items,
+                    hours: Math.round(hours * 100) / 100,
+                    status,
+                    isSchool,
+                    isFrei,
+                    typeLabel,
+                };
+                total += items.length;
+                dayCount++;
+            }
+
+            return { perDay, total, days: dayCount, kw: targetKw, year: targetYear, hasData: dayCount > 0 };
+        }
+
+        // Nur die vom User angewählten Fundstücke — state.trackingOff hält die ABGEWÄHLTEN.
+        function _trackingItemKey(dayIdx, item) {
+            return dayIdx + '|' + item.kind + '|' + item.text.toLowerCase();
+        }
+
+        function _selectedTrackingForDay(dayIdx, week) {
+            const day = week && week.perDay ? week.perDay[dayIdx] : null;
+            if (!day) return [];
+            return day.items.filter(it => !state.trackingOff.has(_trackingItemKey(dayIdx, it)));
+        }
+
+        // Für Prompt + lokale Engine: {0: ["Projekt: X", "Notiz: Y"], …}
+        function _trackingPerDayText(week) {
+            const out = { 0: [], 1: [], 2: [], 3: [], 4: [] };
+            if (!week || !week.perDay) return out;
+            for (let i = 0; i < 5; i++) {
+                out[i] = _selectedTrackingForDay(i, week).map(it => it.label + ': ' + it.text);
+            }
+            return out;
+        }
+
+        // Payload für Cloud-Prompt und lokale Engine — null, wenn nichts angewählt ist.
+        function _buildTrackingPayload() {
+            const week = state.trackingWeek;
+            if (!week || !week.hasData) return null;
+            const perDay = _trackingPerDayText(week);
+            const total = Object.keys(perDay).reduce((n, k) => n + perDay[k].length, 0);
+            if (total === 0) return null;
+            const hours = {};
+            for (let i = 0; i < 5; i++) hours[i] = week.perDay[i] ? week.perDay[i].hours : 0;
+            return { perDay, hours, total, kw: week.kw };
+        }
+
         function generateDayEntries(professionId, options = {}) {
             const {
                 yearNum = 2,
@@ -7178,6 +7675,7 @@ Beispiel:
                 humanStyle = false,
                 customPrompt = '',
                 aufgabenForDay = null,  // ✦ Aufgaben-Pipe: ["Switch konfigurieren", ...] für diesen Tag
+                trackingForDay = null,  // ✦ Tracking-Pipe: ["Projekt: Alpha", "Notiz: Bugfix …"] für diesen Tag
             } = options;
 
             const prof = PROFESSIONS[professionId];
@@ -7200,6 +7698,19 @@ Beispiel:
             const entries = [];
             const usedVerbs = [];
             const usedObjects = [];
+
+            // ✦ Tracking-Pipe: was wirklich erfasst wurde, steht ganz oben und kommt vollständig rein.
+            //   Die lokale Engine kann nicht umformulieren — der Original-Wortlaut ist hier
+            //   ohnehin die ehrlichere Angabe als eine generierte Floskel.
+            if (Array.isArray(trackingForDay) && trackingForDay.length > 0) {
+                trackingForDay.slice(0, 4).forEach(fact => {
+                    const txt = String(fact).replace(/^(Projekt|Notiz|Job):\s*/, '').trim();
+                    if (!txt) return;
+                    if (entries.some(e => e.toLowerCase().includes(txt.toLowerCase()))) return;
+                    entries.push('• ' + txt);
+                    excludePhrases.push(txt);
+                });
+            }
 
             // ✦ Aufgaben-Pipe: User-Tasks aus Wochenansicht VORRANG (1-2 pro Tag, random ausgewählt).
             //   Werden 1:1 als Bullet-Eintrag übernommen — User kann inline editieren.
@@ -7409,21 +7920,25 @@ Beispiel:
 
             // ✦ Aufgaben-Pipe: User-Toggle entscheidet ob /pages/aufgaben/ Tasks eingespeist werden
             const aufgabenData = state.useAufgaben ? _loadAufgabenForWeek() : null;
+            // ✦ Tracking-Pipe: echte Projekte/Notizen aus der Zeiterfassung
+            const trackingData = state.useTracking ? _buildTrackingPayload() : null;
 
             for (const dayIdx of selectedDays) {
                 // ✦ Krank/Urlaub/Feiertag: AI-Generierung überspringen, Tag als Status markieren
                 const dayStatus = state.dayStatus[dayIdx];
                 if (dayStatus && DAY_STATUS_LABELS[dayStatus]) {
+                    // Krank/Urlaub/Feiertag = bezahlt. Echte Stunden aus der Zeiterfassung, sonst 8h.
+                    const statusHours = _trackingHoursForDay(dayIdx) || 8;
                     week.days.push({
                         index: dayIdx,
                         name: DAY_NAMES[dayIdx],
                         entries: [],
-                        hours: 8, // Krank/Urlaub/Feiertag = bezahlt mit 8h
+                        hours: statusHours,
                         isSchoolDay: false,
                         schoolTopic: null,
                         dayStatus,
                     });
-                    week.totalHours += 8;
+                    week.totalHours += statusHours;
                     continue;
                 }
 
@@ -7439,6 +7954,7 @@ Beispiel:
                     customPrompt: '',                                // im day-fn (Wochenebene erledigt)
                     injectedCustomEntry: _customAssignment.get(dayIdx) || null,
                     aufgabenForDay: aufgabenData ? aufgabenData.perDay[dayIdx] : null,
+                    trackingForDay: trackingData ? trackingData.perDay[dayIdx] : null,
                     writeStyle,
                     activeTheme,
                     humanStyle,
@@ -7448,7 +7964,8 @@ Beispiel:
                     index: dayIdx,
                     name: DAY_NAMES[dayIdx],
                     entries: result.entries,
-                    hours: result.hours || 8,
+                    // Echte erfasste Stunden schlagen den 8h-Default der Engine
+                    hours: _trackingHoursForDay(dayIdx) || result.hours || 8,
                     isSchoolDay: result.isSchoolDay,
                     schoolTopic: result.schoolTopic || null,
                 };
@@ -7860,15 +8377,24 @@ Beispiel:
             // ✦ Aufgaben-Pipe + Sonntag-Reminder + AI-Settings Restore
             try {
                 state.useAufgaben    = localStorage.getItem(STORAGE_KEYS.useAufgaben) === '1';
+                state.useTracking    = localStorage.getItem(STORAGE_KEYS.useTracking) === '1';
                 state.sundayReminder = localStorage.getItem(STORAGE_KEYS.sundayReminder) === '1';
+                const offRaw = localStorage.getItem(STORAGE_KEYS.trackingOff);
+                if (offRaw) {
+                    const arr = JSON.parse(offRaw);
+                    if (Array.isArray(arr)) state.trackingOff = new Set(arr);
+                }
             } catch(e) {}
             setTimeout(() => {
                 const auChk = document.getElementById('aisUseAufgabenChk');
                 if (auChk) auChk.checked = state.useAufgaben;
+                const trChk = document.getElementById('aisUseTrackingChk');
+                if (trChk) trChk.checked = state.useTracking;
                 const srChk = document.getElementById('aisSundayReminderChk');
                 if (srChk) srChk.checked = state.sundayReminder;
                 _loadAiSettings(); // Tage/Schultage/Variation/Komplexität
                 _updateAufgabenBadge();
+                _refreshTracking();
                 _updateReminderHelp();
                 if (state.sundayReminder && 'Notification' in window && Notification.permission === 'granted') {
                     _scheduleSundayCheck();
@@ -7895,6 +8421,8 @@ Beispiel:
             updateSchoolDayChips();
             // ✦ Aufgaben-Badge bei jedem Öffnen aktualisieren (User hat ggf. Tasks geändert)
             _updateAufgabenBadge();
+            // ✦ Zeiterfassung neu einlesen — der User hat seit dem letzten Öffnen ggf. gebucht
+            _refreshTracking();
         }
 
         function close() {
@@ -8318,6 +8846,233 @@ Beispiel:
                     ? `📋 ${total} Aufgaben werden bei der nächsten Generierung berücksichtigt`
                     : 'Keine Aufgaben gefunden — Wochenansicht zuerst befüllen', total > 0 ? 'success' : 'warning');
             }
+        }
+
+        // ═══════════════════════════════════════
+        // TRACKING-PIPE: UI (Wochen-Strip + Chip-Auswahl)
+        // ═══════════════════════════════════════
+
+        const TRACK_DAY_SHORT = ['Mo', 'Di', 'Mi', 'Do', 'Fr'];
+        const TRACK_DAY_LONG  = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+
+        function _trackEsc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function _trackHours(h) {
+            return (Math.round(h * 10) / 10).toFixed(1).replace('.', ',') + ' h';
+        }
+
+        // KW, auf die sich die Tracking-Daten beziehen: Feld im AI Studio, sonst aktuelle Woche.
+        function _currentTrackingKw() {
+            const raw = parseInt(document.getElementById('aisCalendarWeek')?.value, 10);
+            if (raw >= 1 && raw <= 53) return raw;
+            return getWeekNumber(new Date());
+        }
+
+        function _saveTrackingOff() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.trackingOff, JSON.stringify([...state.trackingOff]));
+            } catch (e) {}
+        }
+
+        // Lädt die Woche neu und rendert. reason='kw' → Auswahl zurücksetzen (andere Woche, andere Daten).
+        function _refreshTracking(reason) {
+            const kw = _currentTrackingKw();
+            const prev = state.trackingWeek;
+            if (reason === 'kw' && prev && prev.kw !== kw) state.trackingOff.clear();
+            state.trackingWeek = _loadTrackingForWeek(kw, new Date().getFullYear());
+            _renderTrackingCard();
+        }
+
+        function _renderTrackingCard() {
+            const card = document.getElementById('aisTrackCard');
+            const body = document.getElementById('aisTrackBody');
+            const kwEl = document.getElementById('aisTrackKw');
+            const subEl = document.getElementById('aisTrackSub');
+            if (!card || !body) return;
+
+            const week = state.trackingWeek;
+            // Ohne erfasste Tage gibt es nichts zu übernehmen — Karte bleibt weg.
+            if (!week || !week.hasData) {
+                card.style.display = 'none';
+                return;
+            }
+            card.style.display = '';
+            card.classList.toggle('active', !!state.useTracking);
+            if (kwEl) kwEl.textContent = 'KW ' + week.kw;
+
+            const selected = [0,1,2,3,4].reduce((n, i) => n + _selectedTrackingForDay(i, week).length, 0);
+            if (subEl) {
+                subEl.textContent = state.useTracking
+                    ? L(`${selected} von ${week.total} Angaben gehen an die KI`,
+                        `${selected} of ${week.total} details go to the AI`)
+                    : L(`${week.days} erfasste Tage, ${week.total} Angaben aus Projekt & Notizen`,
+                        `${week.days} logged days, ${week.total} details from projects & notes`);
+            }
+            if (!state.useTracking) { body.innerHTML = ''; return; }
+
+            const rows = [];
+            for (let i = 0; i < 5; i++) {
+                const day = week.perDay[i];
+                const badge = (() => {
+                    if (!day) return '';
+                    if (day.status === 'urlaub')   return '<span class="ais-track-day-badge st-urlaub">Urlaub</span>';
+                    if (day.status === 'krank')    return '<span class="ais-track-day-badge st-krank">Krank</span>';
+                    if (day.status === 'feiertag') return '<span class="ais-track-day-badge st-feiertag">Feiertag</span>';
+                    if (day.isFrei)                return '<span class="ais-track-day-badge st-frei">Gleittag</span>';
+                    if (day.isSchool)              return '<span class="ais-track-day-badge st-schule">Schule</span>';
+                    return '';
+                })();
+
+                let right;
+                if (!day) {
+                    right = `<div class="ais-track-none">${L('Kein Eintrag erfasst', 'Nothing logged')}</div>`;
+                } else if (day.items.length === 0) {
+                    // An Fehl-, Schul- und Gleittagen ist „nichts erfasst" der Normalfall —
+                    // das Badge sagt bereits alles, ein Hinweis wäre nur Rauschen.
+                    right = (day.status || day.isSchool || day.isFrei)
+                        ? ''
+                        : `<div class="ais-track-none">${L('Zeit erfasst, aber kein Projekt und keine Notiz', 'Time logged, but no project or note')}</div>`;
+                } else {
+                    right = '<div class="ais-track-chips">' + day.items.map((it, idx) => {
+                        const off = state.trackingOff.has(_trackingItemKey(i, it));
+                        return `<button type="button" class="ais-track-chip${off ? ' off' : ''}"
+                                    onclick="AIStudio.toggleTrackingItem(${i},${idx})"
+                                    aria-pressed="${off ? 'false' : 'true'}"
+                                    title="${_trackEsc(it.label + ': ' + it.text)}">
+                                    <svg class="ais-track-chip-mark"><use href="#${off ? 'i-plus' : 'i-check'}"/></svg>
+                                    <span class="ais-track-chip-lbl">${_trackEsc(it.label)}</span>
+                                    <span class="ais-track-chip-txt">${_trackEsc(it.text)}</span>
+                                </button>`;
+                    }).join('') + '</div>';
+                }
+
+                rows.push(`
+                    <div class="ais-track-day${day ? '' : ' is-empty'}">
+                        <div class="ais-track-day-meta">
+                            <div class="ais-track-day-name">${TRACK_DAY_SHORT[i]}${day ? ` <span class="ais-track-day-date">${_trackEsc(day.dateLabel)}</span>` : ''}</div>
+                            ${day && day.hours > 0 ? `<div class="ais-track-day-hours">${_trackHours(day.hours)}</div>` : ''}
+                            ${badge}
+                        </div>
+                        ${right}
+                    </div>`);
+            }
+
+            const allOff = selected === 0;
+            rows.push(`
+                <div class="ais-track-foot">
+                    <span class="ais-track-foot-txt">${L('Stunden, Schul- und Fehltage werden mit übernommen.', 'Hours, school days and days off are carried over too.')}</span>
+                    <button type="button" class="ais-track-foot-btn" onclick="AIStudio.toggleAllTracking()">
+                        ${allOff ? L('Alle auswählen', 'Select all') : L('Alle abwählen', 'Deselect all')}
+                    </button>
+                </div>`);
+
+            body.innerHTML = rows.join('');
+        }
+
+        // ✦ Tracking-Pipe: Toggle ein/aus
+        function toggleTracking(checked) {
+            state.useTracking = !!checked;
+            try { localStorage.setItem(STORAGE_KEYS.useTracking, state.useTracking ? '1' : '0'); } catch (e) {}
+            _refreshTracking();
+            if (state.useTracking) {
+                const applied = _applyTrackingPrefill();
+                const week = state.trackingWeek;
+                const n = week ? week.total : 0;
+                const extra = applied ? L(' — Stunden und Tage angepasst', ' — hours and days adjusted') : '';
+                showToast(n > 0
+                    ? L(`${n} Angaben aus deiner Zeiterfassung übernommen${extra}`,
+                        `${n} details taken from your time tracking${extra}`)
+                    : L('Zeiten gefunden, aber keine Projekte oder Notizen hinterlegt',
+                        'Times found, but no projects or notes recorded'),
+                    n > 0 ? 'success' : 'info');
+            }
+        }
+
+        function toggleTrackingItem(dayIdx, itemIdx) {
+            const day = state.trackingWeek?.perDay?.[dayIdx];
+            const item = day?.items?.[itemIdx];
+            if (!item) return;
+            const key = _trackingItemKey(dayIdx, item);
+            if (state.trackingOff.has(key)) state.trackingOff.delete(key);
+            else state.trackingOff.add(key);
+            _saveTrackingOff();
+            _renderTrackingCard();
+        }
+
+        function toggleAllTracking() {
+            const week = state.trackingWeek;
+            if (!week) return;
+            const selected = [0,1,2,3,4].reduce((n, i) => n + _selectedTrackingForDay(i, week).length, 0);
+            if (selected === 0) {
+                // Nur die Keys dieser Woche freigeben — Auswahl anderer Wochen bleibt bestehen.
+                for (let i = 0; i < 5; i++) {
+                    (week.perDay[i]?.items || []).forEach(it => state.trackingOff.delete(_trackingItemKey(i, it)));
+                }
+            } else {
+                for (let i = 0; i < 5; i++) {
+                    (week.perDay[i]?.items || []).forEach(it => state.trackingOff.add(_trackingItemKey(i, it)));
+                }
+            }
+            _saveTrackingOff();
+            _renderTrackingCard();
+        }
+
+        // KW-Feld geändert → andere Woche, andere Daten.
+        function onWeekChange() {
+            _refreshTracking('kw');
+            if (state.useTracking) _applyTrackingPrefill();
+        }
+
+        // Übernimmt echte Stunden, Fehltage und Schultage in die Generator-Einstellungen.
+        // Nur Vorbelegung — der User kann alles danach weiter von Hand ändern.
+        function _applyTrackingPrefill() {
+            const week = state.trackingWeek;
+            if (!week || !week.hasData) return false;
+            let changed = false;
+
+            const days = [];
+            for (let i = 0; i < 5; i++) {
+                const day = week.perDay[i];
+                if (!day || day.isFrei) continue; // kein Eintrag / Gleittag → nichts zu berichten
+                days.push(i);
+
+                if (day.status && DAY_STATUS_LABELS[day.status]) {
+                    if (state.dayStatus[i] !== day.status) { setDayStatus(i, day.status); changed = true; }
+                } else if (state.dayStatus[i]) {
+                    setDayStatus(i, ''); changed = true;
+                }
+            }
+
+            if (days.length > 0 && days.join() !== state.selectedDays.join()) {
+                state.selectedDays = days;
+                changed = true;
+            }
+
+            const schoolDays = days.filter(i => week.perDay[i] && week.perDay[i].isSchool);
+            if (schoolDays.join() !== state.schoolDayIndices.join()) {
+                state.schoolDayIndices = schoolDays;
+                changed = true;
+            }
+
+            if (changed) {
+                document.querySelectorAll('.ais-day-chip[data-day]').forEach(c => {
+                    c.classList.toggle('selected', state.selectedDays.includes(parseInt(c.dataset.day)));
+                });
+                updateSchoolDayChips();
+                _saveAiSettings();
+            }
+            return changed;
+        }
+
+        // Echte Stunden eines Tages (0 = nichts erfasst → Aufrufer nimmt seinen Default)
+        function _trackingHoursForDay(dayIdx) {
+            if (!state.useTracking) return 0;
+            const day = state.trackingWeek?.perDay?.[dayIdx];
+            return day && day.hours > 0 ? day.hours : 0;
         }
 
         // ✦ Krank/Urlaub/Feiertag: Status für einen Tag setzen
@@ -8746,6 +9501,34 @@ Beispiel:
                 ? `[ACHTUNG — VORHERIGER VERSUCH FALSCH] ${options._retryHint}\n\n`
                 : '';
 
+            // ✦ Tracking-Pipe: was der User laut Zeiterfassung wirklich gemacht hat.
+            //   Steht über der Aufgaben-Pipe: Aufgaben sind geplant, das hier ist passiert.
+            let trackingBlock = '';
+            if (options.trackingData && options.trackingData.total > 0) {
+                const per = options.trackingData.perDay || {};
+                const lines = [];
+                options.selectedDays.forEach(d => {
+                    const facts = per[d] || [];
+                    if (facts.length === 0) return;
+                    const hrs = options.trackingData.hours && options.trackingData.hours[d];
+                    const hrsTxt = hrs > 0 ? ` [${hrs} h erfasst]` : '';
+                    lines.push(`  · ${DAY_NAMES[d]}${hrsTxt}: ${facts.join(' | ')}`);
+                });
+                if (lines.length > 0) {
+                    trackingBlock = `
+
+[ECHTE ZEITERFASSUNG — HÖCHSTE PRIORITÄT, noch vor allen anderen Inhalts-Regeln]
+Das hat der User laut seiner eigenen Zeiterfassung tatsächlich getan. Diese Angaben sind KEINE Erfindung und müssen im Bericht ankommen:
+- Jede genannte Angabe des Tages MUSS in den entries dieses Tages auftauchen — umformuliert in IHK-Partizip-Form, aber inhaltlich unverändert.
+- Projekt- und Kundennamen aus diesem Block wörtlich übernehmen. Sie sind echt und von der [ANTI-HALLUZINATION]-Regel ausgenommen.
+- Danach mit passenden Tätigkeiten zum Beruf auffüllen, bis der Tag 3-5 Einträge hat.
+- Nichts hinzuerfinden, was den echten Angaben widerspricht.
+
+${lines.join('\n')}
+`;
+                }
+            }
+
             // ✦ Aufgaben-Pipe: Real-Tasks aus /pages/aufgaben/ als Anchor in den Prompt einspeisen
             let aufgabenBlock = '';
             if (options.aufgabenData && options.aufgabenData.total > 0) {
@@ -8797,7 +9580,7 @@ Kein Markdown. Kein Text drumherum. Antwort beginnt mit [ und endet mit ].
 - ${writeStyleHint}
 - Korrekte Fachbegriffe. Keine Einleitung/Fazit/Bewertung.
 
-[ANTI-HALLUZINATION] Niemals erfinden: IP-Adressen, Personennamen (Herr/Frau X), Firmennamen (XY GmbH), Geldbeträge, Ticket-Nummern, konkrete Versions-/Modellnummern. Ausnahme: nur was unten in [VORGABEN] steht.
+[ANTI-HALLUZINATION] Niemals erfinden: IP-Adressen, Personennamen (Herr/Frau X), Firmennamen (XY GmbH), Geldbeträge, Ticket-Nummern, konkrete Versions-/Modellnummern. Ausnahme: was unten in [VORGABEN] oder [ECHTE ZEITERFASSUNG] steht — das sind echte Angaben des Users und darf wörtlich übernommen werden.
 
 [INHALT]
 - 3-5 Einträge/Tag, immer hours=8 (Schultag: 8h Schule oder 6h+2h Betrieb).
@@ -8818,7 +9601,7 @@ Tag-spezifische Stichpunkte (Pattern "Montag: X" / "Dienstag: Y") MÜSSEN in die
 "nur X" = wirklich nur X. "kein X" = wirklich kein X. Stichworte → IHK-Einträge im Stil oben.
 ` : ''}
 [FACHVOKABULAR] ${prof ? `${profName} — Tools (wenn passend): ${(prof.tools || []).slice(0, 14).join(', ')}` : profName}
-${aufgabenBlock}
+${trackingBlock}${aufgabenBlock}
 [AUFTRAG] Genau ${options.selectedDays.length} Array-Elemente für: ${daysList}. KW ${options.calendarWeek || 'beliebig'}.`;
 
             return systemPrompt;
@@ -8929,16 +9712,18 @@ ${aufgabenBlock}
                     timestamp: Date.now(),
                     source: 'status-only',
                     days: _statusDays.map(d => ({
-                        index: d, name: DAY_NAMES[d], entries: [], hours: 8,
+                        index: d, name: DAY_NAMES[d], entries: [], hours: _trackingHoursForDay(d) || 8,
                         isSchoolDay: false, schoolTopic: null, dayStatus: _dayStatus[d],
                     })),
-                    totalHours: _statusDays.length * 8,
+                    totalHours: _statusDays.reduce((n, d) => n + (_trackingHoursForDay(d) || 8), 0),
                 };
                 return week;
             }
 
             // Aufgaben-Daten laden falls Toggle on
             const aufgabenData = options.useAufgaben ? _loadAufgabenForWeek() : null;
+            // ✦ Tracking-Daten (echte Projekte/Notizen) falls Toggle on
+            const trackingData = options.useTracking ? _buildTrackingPayload() : null;
 
             // Cloud-Call nur mit Normal-Tagen + Aufgaben-Block.
             // Schultage rausfiltern die gleichzeitig Status-Tage sind.
@@ -8949,6 +9734,7 @@ ${aufgabenBlock}
                 selectedDays: _normalDays,
                 schoolDayIndices: _validSchoolIdxs,
                 aufgabenData,
+                trackingData,
             };
             const prompt = _buildCloudPrompt(professionId, cloudOptions);
             const requestBody = {
@@ -9203,7 +9989,8 @@ ${aufgabenBlock}
                     index: dayIdx,
                     name: dayName,
                     entries: Array.isArray(dayData.entries) ? dayData.entries : [],
-                    hours: dayData.hours || 8,
+                    // Echte erfasste Stunden schlagen den Schätzwert der KI
+                    hours: _trackingHoursForDay(dayIdx) || dayData.hours || 8,
                     isSchoolDay: !!dayData.isSchoolDay,
                     schoolTopic: dayData.schoolTopic || null,
                 };
@@ -9266,16 +10053,17 @@ ${aufgabenBlock}
             const DAY_NAMES_2 = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag'];
             if (_statusDays.length > 0) {
                 _statusDays.forEach(d => {
+                    const statusHours = _trackingHoursForDay(d) || 8;
                     week.days.push({
                         index: d,
                         name: DAY_NAMES_2[d],
                         entries: [],
-                        hours: 8,
+                        hours: statusHours,
                         isSchoolDay: false,
                         schoolTopic: null,
                         dayStatus: _dayStatus[d],
                     });
-                    week.totalHours += 8;
+                    week.totalHours += statusHours;
                 });
                 week.days.sort((a, b) => a.index - b.index);
             }
@@ -9447,8 +10235,9 @@ ${aufgabenBlock}
                     writeStyle: state.writeStyle || 'ihk',
                     activeTheme: state.activeTheme || null,
                     humanStyle: state.humanStyle || false,
-                    // ✦ Aufgaben-Pipe + Krank/Urlaub: an Cloud + Local weiterreichen
+                    // ✦ Aufgaben-Pipe + Tracking-Pipe + Krank/Urlaub: an Cloud + Local weiterreichen
                     useAufgaben: !!state.useAufgaben,
+                    useTracking: !!state.useTracking,
                     dayStatus: { ...state.dayStatus },
                 };
 
@@ -9542,6 +10331,7 @@ ${aufgabenBlock}
                 dayIndex: day.index,
                 isSchoolDay: day.isSchoolDay,
                 excludePhrases: [...state.usedPhrases],
+                trackingForDay: state.useTracking ? (_buildTrackingPayload()?.perDay[day.index] || null) : null,
             });
 
             state.generatedEntries.days[dayArrayIndex].entries = result.entries;
@@ -9608,6 +10398,7 @@ ${aufgabenBlock}
                     writeStyle: state.writeStyle || 'ihk',
                     activeTheme: state.activeTheme || null,
                     humanStyle: state.humanStyle || false,
+                    useTracking: !!state.useTracking,
                 });
 
                 const newDay = result.days.find(d => d.index === dayIdx) || result.days[0];
@@ -9733,6 +10524,12 @@ ${aufgabenBlock}
             _pickBeruf,
             // ✦ Aufgaben-Pipe + Krank/Urlaub + Sonntag-Reminder + Settings-Persist
             toggleAufgaben,
+            // ✦ Tracking-Pipe: echte Zeiterfassung als Grundlage
+            toggleTracking,
+            toggleTrackingItem,
+            toggleAllTracking,
+            onWeekChange,
+            loadTrackingForWeek: _loadTrackingForWeek, // vom Bericht-Modal genutzt
             setDayStatus,
             cycleDayStatus,
             toggleSundayReminder,
@@ -9762,8 +10559,8 @@ ${aufgabenBlock}
     </script>
 
     <!-- BBiG-Live-Scanner -->
-    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=4.1.16">
-    <script src="/components/bbig-scanner/bbig-scanner.js?v=4.1.16"></script>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=4.1.17">
+    <script src="/components/bbig-scanner/bbig-scanner.js?v=4.1.17"></script>
     <script>
         if (typeof initBbigBerichtsheft === 'function') {
             if (document.readyState === 'loading') {
@@ -10222,6 +11019,27 @@ ${aufgabenBlock}
             }
         })();
     </script>
+<!-- Theme-Farbe der App nachziehen: Standalone-Seiten laufen ausserhalb der SPA und
+     bleiben sonst hartcodiert Lila, egal welchen Akzent der User gewaehlt hat. -->
+<script>
+(function() {
+    function applyTheme(hex) {
+        if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+        var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+        document.documentElement.style.setProperty('--primary', hex);
+        document.documentElement.style.setProperty('--primary-rgb', r+','+g+','+b);
+        document.documentElement.style.setProperty('--primary-dim', 'rgba('+r+','+g+','+b+',0.15)');
+    }
+    function syncTheme() {
+        try { var raw=localStorage.getItem('tg_pro_data'); if(!raw)return;
+              var d=JSON.parse(raw); if(d&&d.settings&&d.settings.theme) applyTheme(d.settings.theme); } catch(e){}
+    }
+    syncTheme();
+    window.addEventListener('storage', function(e){ if(e.key==='tg_pro_data') syncTheme(); });
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) syncTheme(); });
+})();
+</script>
+
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
 <script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
 </html>

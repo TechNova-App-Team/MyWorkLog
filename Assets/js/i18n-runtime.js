@@ -32,6 +32,8 @@
     'Offizielle Feiertage': 'Official public holidays',
     'Manuelle Saldo-Korrektur (z.B. Angleichung ans Firmen-System)': 'Manual balance correction (e.g. aligning with the company system)',
     // Häufige dynamische Kurz-Labels
+    'Projekt': 'Project',
+    'Notiz': 'Note',
     'Gesamt': 'Total',
     'Stunden': 'Hours',
     'Heute': 'Today',
