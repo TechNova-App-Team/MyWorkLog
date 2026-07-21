@@ -41,16 +41,33 @@ function loadAppVersion() {
     })(0);
 }
 
+// "2026-07-21" -> "21. Juli 2026" (Format der bisher hartcodierten Footer-Angabe)
+const GERMAN_MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+function formatGermanDate(iso) {
+    if (!iso) return '';
+    const parts = String(iso).split('-');
+    if (parts.length !== 3) return iso;
+    const day = parseInt(parts[2], 10);
+    const monthIdx = parseInt(parts[1], 10) - 1;
+    if (isNaN(day) || monthIdx < 0 || monthIdx > 11) return iso;
+    return `${day}. ${GERMAN_MONTHS[monthIdx]} ${parts[0]}`;
+}
+
 // Update all elements with [data-version] attribute
 function updateVersionElements() {
     // Update version display elements
     document.querySelectorAll('[data-version]').forEach(el => {
         el.textContent = APP_CONFIG.version;
     });
-    
+
     // Update version in footer/about sections
     document.querySelectorAll('[data-app-version]').forEach(el => {
         el.textContent = `v${APP_CONFIG.version}`;
+    });
+
+    // Update release date in footer ("Zuletzt aktualisiert: ...")
+    document.querySelectorAll('[data-release-date]').forEach(el => {
+        el.textContent = formatGermanDate(APP_CONFIG.releaseDate);
     });
 
     // Aktive Service-Worker-Version daneben anzeigen (Update-Diagnose)
