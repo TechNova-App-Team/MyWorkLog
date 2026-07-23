@@ -21,12 +21,27 @@ const version = JSON.parse(fs.readFileSync(path.join(ROOT, 'config/version.json'
 // Nur eigene Assets. CDN-URLs und alles mit eigener Query bleiben unangetastet.
 const RE = /(\s(?:src|href)=")(\/(?:Assets|components)\/[^"?]+\.(?:js|css))(?:\?v=[^"]*)?(")/g;
 
+// Versionsnummern, die im HTML stehen MUESSEN und daher unweigerlich veralten:
+//  - <meta name="generator">: Crawler lesen statisches HTML, JS kommt zu spaet.
+//  - Fallback-Text in [data-app-version]/[data-version]: was vor dem version.json-
+//    Fetch kurz sichtbar ist (Sidebar-Footer, Intro-Badge). version-loader.js
+//    ueberschreibt es zur Laufzeit — falsch ist es trotzdem, wenn es einfriert.
+// Bis v4.1.19 stand hier ueberall noch 3.11.0. Statt jedes Vorkommen von Hand zu
+// pflegen, zieht der Build sie an config/version.json an — wie schon package.json.
+const VERSION_RES = [
+  /(<meta\s+name="generator"\s+content="MyWorkLog v)\d+\.\d+\.\d+(")/g,
+  // [^>]* deckt weitere Attribute hinter dem Marker ab (z.B. translate="no").
+  /(\sdata-app-version(?:="[^"]*")?[^>]*>\s*v)\d+\.\d+\.\d+(\s*<)/g,
+  /(\sdata-version(?:="[^"]*")?[^>]*>\s*)\d+\.\d+\.\d+(\s*<)/g,
+];
+
 function stampFile(file) {
   // index.html existiert im frischen Checkout (Cloudflare) noch nicht — sie wird
   // erst von build-index.js erzeugt. Fehlende Dateien sind kein Fehler.
   if (!fs.existsSync(file)) return 0;
   const raw = fs.readFileSync(file, 'utf8');
-  const out = raw.replace(RE, (_m, pre, url, post) => pre + url + '?v=' + version + post);
+  let out = raw.replace(RE, (_m, pre, url, post) => pre + url + '?v=' + version + post);
+  for (const re of VERSION_RES) out = out.replace(re, (_m, pre, post) => pre + version + post);
   if (out === raw) return 0;
   fs.writeFileSync(file, out);
   return (out.match(new RegExp('\\?v=' + version.replace(/\./g, '\\.'), 'g')) || []).length;

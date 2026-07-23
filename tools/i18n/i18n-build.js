@@ -111,6 +111,12 @@ function walk(dom, namespaceDefault, cb) {
     const el = tn.parentElement;
     if (!el || SKIP_TAGS.has(el.tagName)) continue;
     if (el.closest('script, style, svg, code, template, noscript')) continue;
+    // translate="no" (Standard-HTML) = bewusster Opt-out. Gedacht fuer Text, der
+    // nicht uebersetzbar ist UND sich regelmaessig aendert — v.a. die Versions-
+    // Fallbacks in [data-app-version]/[data-version]. Ohne das wandert die Version
+    // in den Key (proIntro.v4119) und JEDER Bump erzeugt einen neuen, "fehlenden"
+    // Key, an dem der Pre-Commit-Hook abbricht.
+    if (el.closest('[translate="no"]')) continue;
 
     const elemChildren = Array.from(el.childNodes).filter((x) => x.nodeType === 1);
     const textChildren = Array.from(el.childNodes).filter((x) => x.nodeType === 3 && x.textContent.trim().length > 0);
@@ -177,6 +183,7 @@ function phrasePass(dom, phrases) {
     const el = tn.parentElement;
     if (!el || SKIP_TAGS.has(el.tagName)) continue;
     if (el.closest('script, style, svg, code, template, noscript')) continue;
+    if (el.closest('[translate="no"]')) continue;
     const orig = tn.textContent;
     const norm = orig.trim().replace(/\s+/g, ' ');
     if (Object.prototype.hasOwnProperty.call(phrases, norm)) {
