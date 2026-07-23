@@ -1,7 +1,13 @@
 /* === BASE === */
     #pro-intro{position:fixed;inset:0;z-index:99999;background:#080810;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;color:#fff;scrollbar-width:none;-ms-overflow-style:none}
     #pro-intro::-webkit-scrollbar{display:none}
-    #pro-intro *{box-sizing:border-box;margin:0;padding:0}
+    /* Reset OHNE padding:0 — `#pro-intro *` hat Spezifitaet (1,0,0) und schlaegt damit
+       JEDE .vi-*-Klassenregel, egal in welcher Reihenfolge. Solange padding:0 hier
+       drinstand, war jedes Padding weiter unten in dieser Datei wirkungslos: Code-Box,
+       Terminal, Fenster-Leiste, Ghost-Kopfzeile, Pills und CTA-Button lagen alle
+       bündig am Rand. Listen (die einzigen Elemente mit nennenswertem UA-Padding)
+       kommen im Intro nicht vor, das Weglassen ist also folgenlos. */
+    #pro-intro *{box-sizing:border-box;margin:0}
     .vi-scroll{position:relative;height:700vh}
     .vi-stick{position:sticky;top:0;width:100%;height:100vh;overflow:hidden}
 
@@ -24,6 +30,19 @@
     /* === SKIP === */
     .vi-skip{position:absolute;top:1.2rem;right:1.2rem;z-index:50;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.3);font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:system-ui;transition:all .2s}
     .vi-skip:hover{color:#fff;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2)}
+    .vi-skip svg{width:15px;height:15px;display:block}
+
+    /* === ICONS ===
+       Alle Intro-Icons sind inline-SVG (Lucide-Style, currentColor) — nie Emojis:
+       Emojis faerben sich nicht mit dem Theme und rendern auf jedem OS anders.
+       Chip-artige Container werden inline-flex, damit Icon und Label auf einer
+       Grundlinie sitzen; in Fliesstext bleibt das SVG inline und skaliert per em
+       mit der clamp()-Schriftgroesse mit. */
+    .vi-box-tab svg,.vi-ghost-top svg{width:11px;height:11px;flex-shrink:0}
+    .vi-pill svg{width:14px;height:14px;flex-shrink:0}
+    .vi-ghost-q svg,.vi-ghost-p svg{display:inline-block;vertical-align:-.12em;margin-left:.18em}
+    .vi-ghost-q svg{width:.72em;height:.72em;opacity:.75}
+    .vi-ghost-p svg{width:1.05em;height:1.05em;opacity:.8}
 
     /* ===== S1: BRAND SLAM ===== */
     .vi-logo{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(4rem,14vw,9rem);font-weight:900;letter-spacing:-.05em;text-align:center;color:#fff;text-shadow:0 0 60px rgba(var(--primary-rgb),0.25)}
@@ -37,7 +56,7 @@
     .vi-box{background:rgba(10,10,18,0.92);border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden;max-width:540px;width:92%;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
     .vi-box-bar{padding:.6rem .9rem;display:flex;align-items:center;gap:7px;border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.015)}
     .vi-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-    .vi-box-tab{margin-left:auto;font-size:.65rem;color:rgba(255,255,255,0.2);letter-spacing:.06em}
+    .vi-box-tab{margin-left:auto;font-size:.65rem;color:rgba(255,255,255,0.2);letter-spacing:.06em;display:inline-flex;align-items:center;gap:.4em}
     .vi-box-body{padding:1.2rem 1.1rem .9rem;font-size:clamp(.76rem,1.3vw,.88rem);line-height:1.85}
     .vi-code{font-family:'SF Mono','Fira Code','Cascadia Code',monospace}
 
@@ -69,7 +88,7 @@
     .vi-ghost-demo{opacity:0;transform:translateY(30px) scale(.95);transition:opacity .4s ease,transform .5s cubic-bezier(.22,1,.36,1)}
     .vi-s.on .vi-ghost-demo{opacity:1;transform:translateY(0) scale(1)}
     .vi-ghost-fake{background:#1a1a2e;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
-    .vi-ghost-top{padding:.5rem .8rem;font-size:.6rem;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.05);font-family:system-ui}
+    .vi-ghost-top{padding:.5rem .8rem;font-size:.6rem;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.05);font-family:system-ui;display:flex;align-items:center;gap:.45em}
     .vi-ghost-grid{display:grid;grid-template-columns:2.5rem 1fr 1fr 1fr 1fr;font-size:.65rem;color:rgba(255,255,255,0.45);font-family:system-ui}
     .vi-gh{padding:.3rem .5rem;background:rgba(255,255,255,0.03);font-weight:600;color:rgba(255,255,255,0.25);text-align:center;border-bottom:1px solid rgba(255,255,255,0.04)}
     .vi-gr{padding:.3rem .4rem;background:rgba(255,255,255,0.02);color:rgba(255,255,255,0.2);text-align:center;font-weight:600;border-right:1px solid rgba(255,255,255,0.04)}
@@ -81,7 +100,7 @@
     .vi-feat-title{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(1.4rem,4vw,2.2rem);font-weight:800;letter-spacing:-.02em;opacity:0;transform:translateY(20px);transition:opacity .3s ease,transform .35s ease}
     .vi-s.on .vi-feat-title{opacity:1;transform:translateY(0)}
     .vi-pills{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
-    .vi-pill{padding:.5rem 1rem;font-size:clamp(.68rem,1.2vw,.8rem);background:rgba(var(--primary-rgb),0.08);border:1px solid rgba(var(--primary-rgb),0.15);border-radius:100px;color:rgba(255,255,255,0.7);white-space:nowrap;opacity:0;transform:translateY(22px) scale(.9);transition:opacity .3s ease,transform .35s cubic-bezier(.22,1,.36,1)}
+    .vi-pill{padding:.5rem 1rem;font-size:clamp(.68rem,1.2vw,.8rem);background:rgba(var(--primary-rgb),0.08);border:1px solid rgba(var(--primary-rgb),0.15);border-radius:100px;color:rgba(255,255,255,0.7);white-space:nowrap;display:inline-flex;align-items:center;gap:.45rem;opacity:0;transform:translateY(22px) scale(.9);transition:opacity .3s ease,transform .35s cubic-bezier(.22,1,.36,1)}
     .vi-s.on .vi-pill{opacity:1;transform:translateY(0) scale(1)}
     .vi-pill:hover{background:rgba(var(--primary-rgb),0.15);border-color:rgba(var(--primary-rgb),0.3);color:#fff}
 
