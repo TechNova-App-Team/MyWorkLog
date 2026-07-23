@@ -10,7 +10,7 @@
 </script>
     <meta name="description" content="Berichtsheft Generator: IHK-konformes Berichtsheft erstellen mit lokaler KI. Automatische Einträge, Prüfungsvorbereitung, AES-256 verschlüsselt & DSGVO-konform.">
     <meta name="keywords" content="Berichtsheft Generator, IHK-konformes Berichtsheft, digitales Berichtsheft, Berichtsheft erstellen, Berichtsheft App, lokale KI Berichtsheft, Ausbildungsnachweis, IHK Berichtsheft, Auszubildende Berichtsheft, online Berichtsheft, Fachinformatiker Berichtsheft, Berichtsheft offline">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=4.1.21"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=4.1.22"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -582,6 +582,100 @@
         .empty-text {
             font-size: 0.85rem; color: var(--text-muted);
             max-width: 380px; margin: 0 auto 20px; line-height: 1.6;
+        }
+
+        /* --- SCHATTEN-BERICHTSHEFT: EINSTIEGSKARTE ---
+           Erklaert per Gegenueberstellung, warum es zwei Hefte gibt: links das
+           unterschriebene, rechts das versiegelte. Die Crimson-Toene sind die
+           Identitaetsfarbe der Zielseite (/schatten-berichtsheft/) — die Karte
+           sieht damit aus wie das, wohin sie fuehrt. Nur hier lokal definiert,
+           nicht als globales Token, weil sie sonst mit --danger konkurriert. */
+        .sb-entry {
+            --sb: 255, 45, 85;
+            margin-top: 20px; padding: 26px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            border-left: 2px solid rgba(var(--sb), 0.45);
+        }
+        .sb-entry-title {
+            font-family: var(--font-display);
+            font-size: 1.18rem; font-weight: 600; letter-spacing: -0.015em;
+            color: var(--text-main); margin: 0 0 6px;
+        }
+        .sb-entry-lead {
+            font-size: 0.88rem; color: var(--text-secondary);
+            margin: 0 0 20px; line-height: 1.6;
+        }
+
+        /* Gegenueberstellung */
+        .sb-split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .sb-doc {
+            padding: 16px; border-radius: var(--radius-sm);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+        }
+        .sb-doc-sealed {
+            background: rgba(var(--sb), 0.045);
+            border-color: rgba(var(--sb), 0.18);
+        }
+        .sb-doc-tag {
+            display: inline-block; font-family: var(--font-mono);
+            font-size: 0.62rem; letter-spacing: 0.09em; text-transform: uppercase;
+            color: var(--text-dim); margin-bottom: 8px;
+        }
+        .sb-doc-sealed .sb-doc-tag { color: rgba(var(--sb), 0.85); }
+        .sb-doc-name {
+            font-family: var(--font-display); font-size: 0.95rem; font-weight: 600;
+            color: var(--text-main); margin: 0 0 5px;
+        }
+        .sb-doc-desc {
+            font-size: 0.81rem; color: var(--text-muted);
+            line-height: 1.55; margin: 0 0 14px;
+        }
+        /* Die Zeilen sind die eigentliche Aussage: links lesbar, rechts geschwaerzt. */
+        .sb-doc-lines { display: flex; flex-direction: column; gap: 5px; }
+        .sb-line { height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.10); }
+        .sb-line-short { width: 55%; }
+        .sb-doc-sealed .sb-line { background: rgba(var(--sb), 0.30); filter: blur(1.5px); }
+
+        .sb-entry-body {
+            font-size: 0.85rem; color: var(--text-secondary);
+            line-height: 1.7; margin: 20px 0 0; max-width: 62ch;
+        }
+        .sb-entry-foot {
+            display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+            margin-top: 20px; padding-top: 18px;
+            border-top: 1px solid var(--border);
+        }
+        .sb-entry-btn {
+            display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
+            padding: 10px 18px; border-radius: var(--radius-sm);
+            background: rgba(var(--sb), 0.12);
+            border: 1px solid rgba(var(--sb), 0.35);
+            color: #ff8fa6; font-size: 0.85rem; font-weight: 600;
+            text-decoration: none; transition: all 0.2s ease;
+        }
+        .sb-entry-btn:hover {
+            background: rgba(var(--sb), 0.2);
+            border-color: rgba(var(--sb), 0.55);
+            color: #ffb3c2;
+        }
+        .sb-entry-btn:focus-visible {
+            outline: 2px solid rgba(var(--sb), 0.7); outline-offset: 2px;
+        }
+        .sb-entry-note {
+            font-size: 0.76rem; color: var(--text-dim);
+            line-height: 1.55; margin: 0; flex: 1 1 260px;
+        }
+        @media (max-width: 640px) {
+            .sb-entry { padding: 18px; }
+            .sb-split { grid-template-columns: 1fr; }
+            .sb-entry-foot { gap: 12px; }
+            .sb-entry-btn { width: 100%; justify-content: center; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .sb-entry-btn { transition: none; }
         }
 
         /* --- MODAL --- */
@@ -2866,7 +2960,7 @@
             color: var(--text-main);
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=4.1.21"></script>
+    <script defer src="/Assets/js/ph-init.js?v=4.1.22"></script>
 </head>
 <body>
     <!-- ===== SVG ICON SPRITE ===== -->
@@ -3118,6 +3212,45 @@
                 </button>
             </div>
         </div>
+
+        <!-- ===== SCHATTEN-BERICHTSHEFT: EINSTIEG ===== -->
+        <!-- Bis v4.1.21 nur per 5x-Klick auf den Seitentitel erreichbar — praktisch
+             unauffindbar. Die Karte erklaert vor allem das WARUM: das Berichtsheft
+             unterschreibt der Betrieb, deshalb braucht es einen zweiten, privaten Ort. -->
+        <section class="sb-entry" aria-labelledby="sbEntryTitle">
+            <h2 class="sb-entry-title" id="sbEntryTitle">Nicht alles gehört ins Berichtsheft.</h2>
+            <p class="sb-entry-lead">Dein Berichtsheft unterschreibt dein Betrieb. Manches kannst du da schlecht reinschreiben.</p>
+
+            <div class="sb-split">
+                <div class="sb-doc">
+                    <span class="sb-doc-tag">Unterschrieben</span>
+                    <h3 class="sb-doc-name">Berichtsheft</h3>
+                    <p class="sb-doc-desc">Was du gelernt hast. Ausbilder und IHK lesen mit.</p>
+                    <div class="sb-doc-lines" aria-hidden="true">
+                        <span class="sb-line"></span><span class="sb-line"></span><span class="sb-line sb-line-short"></span>
+                    </div>
+                </div>
+
+                <div class="sb-doc sb-doc-sealed">
+                    <span class="sb-doc-tag">Verschlüsselt</span>
+                    <h3 class="sb-doc-name">Schatten-Berichtsheft</h3>
+                    <p class="sb-doc-desc">Was schiefgelaufen ist. Nur du kommst dran.</p>
+                    <div class="sb-doc-lines" aria-hidden="true">
+                        <span class="sb-line"></span><span class="sb-line"></span><span class="sb-line sb-line-short"></span>
+                    </div>
+                </div>
+            </div>
+
+            <p class="sb-entry-body">Überstunden, die niemand aufschreibt. Aufgaben, die nichts mit deinem Beruf zu tun haben. Sprüche, die keine mehr sind. Wenn du das später mit deinem Ausbilder, der JAV, der IHK oder einem Anwalt klären willst, zählt vor allem eins: dass du es damals notiert hast — mit Datum.</p>
+
+            <div class="sb-entry-foot">
+                <a href="/schatten-berichtsheft/" class="sb-entry-btn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    Schatten-Berichtsheft öffnen
+                </a>
+                <p class="sb-entry-note">Beim ersten Öffnen legst du ein Passwort fest. Alles wird damit auf deinem Gerät verschlüsselt — vergisst du es, sind die Einträge weg.</p>
+            </div>
+        </section>
     </div>
 
     </div><!-- /page-wrap -->
@@ -10546,8 +10679,8 @@ ${trackingBlock}${aufgabenBlock}
     </script>
 
     <!-- BBiG-Live-Scanner -->
-    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=4.1.21">
-    <script src="/components/bbig-scanner/bbig-scanner.js?v=4.1.21"></script>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=4.1.22">
+    <script src="/components/bbig-scanner/bbig-scanner.js?v=4.1.22"></script>
     <script>
         if (typeof initBbigBerichtsheft === 'function') {
             if (document.readyState === 'loading') {
