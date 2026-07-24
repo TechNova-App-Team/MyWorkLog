@@ -81,6 +81,41 @@
     'Perfekter Tag.': 'Perfect day.',
     'Alles erledigt.': 'All done.',
 
+    // ─── Saldo-Korrektur-Dialog (dashboard.js, komplett JS-gebaut) ───
+    'Saldo anpassen': 'Adjust balance',
+    'Manuelle Korrektur, z.B. Angleichung ans Firmen-System':
+      'Manual correction, e.g. to match the company system',
+    'Aktueller Saldo': 'Current balance',
+    'Methode': 'Method',
+    'Ziel-Saldo': 'Target balance',
+    '− Abziehen': '− Subtract',
+    '+ Hinzufügen': '+ Add',
+    'Minuten': 'Minutes',
+    'Neuer Soll-Saldo (Stunden)': 'New target balance (hours)',
+    'Korrektur-Buchung': 'Correction entry',
+    'Neuer Saldo': 'New balance',
+    'Grund': 'Reason',
+    'Angleichung Firmen-System': 'Aligned with company system',
+    'Buchen': 'Book',
+    'Datum': 'Date',
+
+    // ─── Fahrtkosten-Seite (JS-gerendert) ───
+    'Kurze Pendelstrecke ✓': 'Short commute ✓',
+    'Mittlere Pendelstrecke': 'Medium commute',
+    'Lange Pendelstrecke': 'Long commute',
+    'KM / TAG': 'KM / DAY',
+    'Startadresse (Zuhause)': 'Start address (home)',
+    'Zieladresse (Betrieb / Berufsschule)': 'Destination (workplace / vocational school)',
+    'Zugverbindung suchen': 'Find a train connection',
+    'Fernbus-Verbindung': 'Long-distance coach',
+    'Mitfahrgelegenheit finden': 'Find a rideshare',
+    'Fahrrad-Route planen': 'Plan a cycling route',
+    '49€ Monatsticket Info': 'About the €49 monthly ticket',
+    'Auto': 'Car',
+    'Fahrrad': 'Bicycle',
+    'Zu Fuß': 'On foot',
+    'Öffentlich': 'Public transport',
+
     // ─── Sidebar- und Command-Palette-Labels ───
     // Die Sidebar wird aus data.settings.nav gerendert, die Labels liegen also
     // in den NUTZERDATEN und nicht im HTML — die statische Pipeline kann sie
@@ -332,6 +367,27 @@
     [/\bGuten Abend\b/g, 'Good evening'],
     [/\bGute Nacht\b/g, 'Good night'],
     [/\bWetter anzeigen\b/g, 'Show weather'],
+    // Eintragstypen NUR verankert ersetzen — hinter dem Typ-Emoji oder als
+    // Segment zwischen Trennzeichen. Freistehend waeren sie zu gefaehrlich
+    // (siehe Kommentar bei den geloeschten WORD_RULES).
+    [/([\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]️?\s*)Berufsschule\b/gu, '$1Vocational school'],
+    [/([\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]️?\s*)Feiertag\b/gu, '$1Holiday'],
+    [/([\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]️?\s*)Urlaub\b/gu, '$1Vacation'],
+    [/([\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]️?\s*)Arbeit\b/gu, '$1Work'],
+    [/([\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]️?\s*)Schule\b/gu, '$1School'],
+    [/([\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]️?\s*)Krank\b/gu, '$1Sick'],
+    [/([+\-][\d.,]+h) Saldo\b/g, '$1 balance'],
+    // Wetter-Karte (weather.js)
+    [/\bGefühlt ([\d.,-]+)°/g, 'Feels like $1°'],
+    [/\bGefühlt\b/g, 'Feels like'],
+    [/\bFeuchte\b/g, 'Humidity'],
+    // Cloud-Buttons (api-cloud-sync.js)
+    [/\bWiederherstellen…/g, 'Restoring…'],
+    [/\bWiederherstellen\b/g, 'Restore'],
+    // Export-Meldung (history-export.js)
+    [/\bExport gestartet\b/g, 'Export started'],
+    [/Export von (\d+) gefilterten Einträgen als (\w+) wird vorbereitet/g,
+      'Preparing an export of $1 filtered entries as $2'],
     // Eintrag-Info-Texte: von der App erzeugt und im Eintrag gespeichert
     // (e.info), tauchen in Historie, Tooltips und Detail-Ansicht auf.
     [/\bManuell \(/g, 'Manual ('],
@@ -391,9 +447,7 @@
     [/\bSamstag: Tätigkeiten beschreiben/g, 'Saturday: describe your activities'],
     // Saldo-/Kennzahl-Tooltips
     [/Ø Saldo:/g, 'Avg. balance:'],
-    // klein geschrieben: taucht mitten im Satz auf ("12 days | +3.5h balance").
-    // Alleinstehend als Label greift stattdessen der MAP-Eintrag „Saldo".
-    [/\bSaldo\b/g, 'balance'],
+    [/\bSaldo:/g, 'Balance:'],
     [/\bKein Eintrag\b/g, 'No entry'],
     [/\bvon ([\d.,]+)h Soll\b/g, 'of $1h target'],
     [/\b(\d+) Schule · (\d+) Krank\b/g, '$1 school · $2 sick'],
@@ -452,47 +506,37 @@
   // ersetzen, entstuende Denglisch ("Dein Vacation ist gestrichen!"), also
   // schlimmer als unuebersetzt. Deshalb greifen sie nur bei kurzen Labels
   // und Tooltips: hoechstens 6 Woerter, kein Satzzeichen am Ende.
-  var WORD_RULES = [
-    [/\bPause\b/g, 'break'],
-    [/\bFeiertag\b/g, 'Holiday'],
-    [/\bUrlaub\b/g, 'Vacation'],
-    [/\bBerufsschule\b/g, 'Vocational school'],
-    [/\bSchule\b/g, 'School'],
-    [/\bArbeit\b/g, 'Work'],
-    [/\bKrank\b/g, 'Sick'],
-    [/\bStunden\b/g, 'hours'],
-    [/\bTage\b/g, 'days'],
-    [/\bSoll\b/g, 'Target'],
-    [/\bMontag\b/g, 'Monday'], [/\bDienstag\b/g, 'Tuesday'], [/\bMittwoch\b/g, 'Wednesday'],
-    [/\bDonnerstag\b/g, 'Thursday'], [/\bFreitag\b/g, 'Friday'],
-    [/\bSamstag\b/g, 'Saturday'], [/\bSonntag\b/g, 'Sunday']
-  ];
-  function isShortLabel(s) {
-    if (s.length > 60) return false;
-    if (/[.!?]\s/.test(s)) return false;           // enthaelt einen Satzumbruch
-    if (/[.!?]["'»]?$/.test(s)) return false;      // endet als Satz → kein Label
-    return s.split(/\s+/).length <= 6;
-  }
+  // ─── Frueher: WORD_RULES (freie Einzelwoerter, begrenzt auf kurze Labels) ───
+  // Ersatzlos gestrichen. Die Laengenheuristik war nicht zu retten: "Saldo
+  // anpassen" und "Zieladresse (Betrieb / Berufsschule)" sind kurze Labels und
+  // wurden zu "balance anpassen" bzw. "Zieladresse (Betrieb / Vocational
+  // school)" — halb uebersetzt ist schlechter als gar nicht. Ein Einzelwort
+  // ohne Kontext laesst sich nicht sicher ersetzen; jeder Fall, der es
+  // wirklich braucht, steht jetzt als VERANKERTE Regel in RULES (Emoji davor,
+  // Trennzeichen, Zahl daneben). Was dort nicht steht, bleibt deutsch — das
+  // ist die ehrlichere Anzeige und faellt beim DE/EN-Vergleich sofort auf.
 
   // Billiger Vorfilter, damit nicht jeder Textknoten durch alle Regeln muss.
   // Bewusst AUS DEN REGELN ABGELEITET statt handgepflegt: eine handgepflegte
   // Stichwortliste vergisst garantiert einen Trigger, und die betroffene Regel
   // feuert dann nie — genau daran blieb document.title ("MyWorkLog | Daten-
   // Analyse & Historie") deutsch. So ist der Filter per Konstruktion korrekt.
+  // Achtung: Regeln mit \u{…}-Escapes brauchen das u-Flag. Ohne das Flag ist
+  // \u{1F300} ein ungueltiger Quantifier — new RegExp wirft, und weil das auf
+  // Modul-Ebene passiert, stirbt der komplette Uebersetzer lautlos (kein
+  // Console-Fehler in der Seite, nur: nichts wird mehr uebersetzt).
+  // Deshalb: erst mit u versuchen, dann ohne, im Zweifel Filter abschalten.
+  var ALWAYS = { test: function () { return true; } };
   function buildTrigger(rules) {
-    return new RegExp(rules.map(function (r) { return '(?:' + r[0].source + ')'; }).join('|'));
+    var src = rules.map(function (r) { return '(?:' + r[0].source + ')'; }).join('|');
+    try { return new RegExp(src, 'u'); } catch (e) { /* weiter unten */ }
+    try { return new RegExp(src); } catch (e) { return ALWAYS; }
   }
   var RULE_TRIGGER = buildTrigger(RULES);
-  var WORD_TRIGGER = null; // lazy, WORD_RULES ist unten definiert
 
   function applyRules(s) {
-    if (WORD_TRIGGER === null) WORD_TRIGGER = buildTrigger(WORD_RULES);
-    if (RULE_TRIGGER.test(s)) {
-      for (var i = 0; i < RULES.length; i++) s = s.replace(RULES[i][0], RULES[i][1]);
-    }
-    if (isShortLabel(s) && WORD_TRIGGER.test(s)) {
-      for (var j = 0; j < WORD_RULES.length; j++) s = s.replace(WORD_RULES[j][0], WORD_RULES[j][1]);
-    }
+    if (!RULE_TRIGGER.test(s)) return s;
+    for (var i = 0; i < RULES.length; i++) s = s.replace(RULES[i][0], RULES[i][1]);
     return s;
   }
 
