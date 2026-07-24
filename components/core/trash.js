@@ -29,7 +29,7 @@
         if (!Array.isArray(data.trash) || data.trash.length === 0) {
             list.innerHTML = `
                 <div class="trash-empty">
-                    <div style="font-size:2.25rem;">🧹</div>
+                    <div style="color:var(--text-muted);"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></div>
                     <h4>Papierkorb ist leer</h4>
                     <p>Keine kürzlichen Löschungen. Gelöschte Einträge erscheinen hier und können wiederhergestellt werden.</p>
                     <div style="display:flex; gap:10px; margin-top:8px;">
@@ -57,8 +57,10 @@
             row.style.cssText = 'display:flex; gap:12px; align-items:center; background:transparent; padding:8px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.02);';
 
             const typeIcon = document.createElement('div');
-            typeIcon.style.cssText = 'width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.25rem; background:linear-gradient(135deg, rgba(var(--primary-rgb),0.06), rgba(var(--primary-rgb),0.03)); border:1px solid rgba(var(--primary-rgb),0.12);';
-            typeIcon.innerText = getTypeEmoji(entry.type || 'work');
+            typeIcon.className = 'type-tile';
+            typeIcon.style.cssText = 'width:48px; height:48px;';
+            typeIcon.style.setProperty('--type-rgb', (typeof getTypeRgb === 'function') ? getTypeRgb(entry.type || 'work') : '148,163,184');
+            typeIcon.innerHTML = (typeof getTypeIconHTML === 'function') ? getTypeIconHTML(entry.type || 'work', 20) : '';
 
             const body = document.createElement('div');
             body.style.flex = '1';
@@ -81,13 +83,13 @@
 
             const restoreBtn = document.createElement('button');
             restoreBtn.className = 'btn btn-ghost';
-            restoreBtn.textContent = '↩️';
+            restoreBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>';
             restoreBtn.title = 'Wiederherstellen';
             restoreBtn.onclick = () => { restoreSingleTrash(parseInt(checkbox.dataset.trashIndex)); };
 
             const delBtn = document.createElement('button');
             delBtn.className = 'btn btn-danger';
-            delBtn.textContent = '🗑️';
+            delBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
             delBtn.title = 'Löschen';
             delBtn.onclick = () => { trashDeleteConfirm(parseInt(checkbox.dataset.trashIndex)); };
 
@@ -114,7 +116,7 @@
         save();
         renderTrashModal();
         if (document.getElementById('view-history').classList.contains('active')) renderHistoryView();
-        showCustomMessage('↩️ Wiederhergestellt', 'Eintrag wurde wiederhergestellt.', 'success');
+        showCustomMessage('Wiederhergestellt', 'Eintrag wurde wiederhergestellt.', 'success');
     }
 
     function trashDeleteConfirm(trashIndex) {
@@ -124,9 +126,8 @@
     }
 
     function showModernPermanentDeleteConfirm(entry, trashIndex) {
-        const info = (typeof getEntryTypeInfo === 'function') ? getEntryTypeInfo(entry.type) : null;
-        const label = info ? (String(info.label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim() || info.label || entry.type) : ({work:'Arbeit', school:'Schule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'}[entry.type] || entry.type);
-        const icon  = info ? (info.emoji || '📋') : ({work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'}[entry.type] || '📋');
+        const label = (typeof getTypeLabel === 'function') ? getTypeLabel(entry.type) : entry.type;
+        const icon  = (typeof getTypeIconHTML === 'function') ? getTypeIconHTML(entry.type, 30) : '';
         const dateStr = new Date(entry.date + 'T00:00:00').toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'2-digit'});
 
         const overlay = document.createElement('div');
@@ -189,10 +190,10 @@
 
         sheet.innerHTML = `
             <div style="text-align: center; margin-bottom: 24px;">
-                <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: rgba(239, 68, 68, 0.2); border-radius: 18px; margin: 0 auto 16px; font-size: 32px;">${icon}</div>
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: rgba(239, 68, 68, 0.2); border-radius: 18px; margin: 0 auto 16px; font-size: 32px; color: #ef4444;">${icon}</div>
                 <h2 style="color: #ef4444; margin: 0 0 8px 0; font-size: 1.4rem; font-weight: 700;">Endgültig löschen?</h2>
                 <p style="color: var(--text-muted); margin: 0 0 8px 0; font-size: 0.95rem;">${label} • ${dateStr}</p>
-                <p style="color: #ef4444; margin: 0; font-size: 0.85rem; font-weight: 600;">⚠️ Diese Aktion kann nicht rückgängig gemacht werden</p>
+                <p style="color: #ef4444; margin: 0; font-size: 0.85rem; font-weight: 600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Diese Aktion kann nicht rückgängig gemacht werden</p>
             </div>
 
             <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
@@ -209,7 +210,7 @@
             <div style="display: flex; gap: 12px; margin-bottom: 20px;">
                 <button class="btn-perm-cancel" style="flex: 1; padding: 14px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text-main); border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 1rem;">Abbrechen</button>
                 <button class="btn-perm-confirm" style="flex: 1; padding: 14px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95)); border: none; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <span>🗑️ Endgültig löschen</span>
+                    <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Endgültig löschen</span>
                 </button>
             </div>
         `;
@@ -276,28 +277,28 @@
         }
         // Remove restored indexes from trash (reverse order to avoid index shift)
         for (const i of indexes.sort((a,b)=>b-a)) { data.trash.splice(i,1); }
-        save(); renderTrashModal(); if (document.getElementById('view-history').classList.contains('active')) renderHistoryView(); showCustomMessage('✅ Wiederherstellt', 'Markierte Einträge wiederhergestellt.', 'success');
+        save(); renderTrashModal(); if (document.getElementById('view-history').classList.contains('active')) renderHistoryView(); showCustomMessage('Wiederhergestellt', 'Markierte Einträge wiederhergestellt.', 'success');
     }
 
     function trashBulkDeleteConfirm() {
-        showCustomConfirm('🗑️ Markierte Einträge löschen?', 'Markierte Einträge werden unwiderruflich gelöscht. Fortfahren?', () => {
+        showCustomConfirm('Markierte Einträge löschen?', 'Markierte Einträge werden unwiderruflich gelöscht. Fortfahren?', () => {
             const list = document.getElementById('trashList'); if (!list) return; const checkboxes = Array.from(list.querySelectorAll('input[type="checkbox"]')).filter(cb => cb.checked);
             const indexes = checkboxes.map(cb => parseInt(cb.dataset.trashIndex)).sort((a,b)=>b-a);
             for (const i of indexes) data.trash.splice(i,1);
-            save(); renderTrashModal(); showCustomMessage('✅ Gelöscht', 'Markierte Einträge wurden gelöscht.', 'success');
+            save(); renderTrashModal(); showCustomMessage('Gelöscht', 'Markierte Einträge wurden gelöscht.', 'success');
         }, null);
     }
 
     function emptyTrashConfirm() {
-        showCustomConfirm('🧹 Papierkorb jetzt leeren?', 'Alle Einträge im Papierkorb werden dauerhaft gelöscht. Fortfahren?', () => {
+        showCustomConfirm('Papierkorb jetzt leeren?', 'Alle Einträge im Papierkorb werden dauerhaft gelöscht. Fortfahren?', () => {
             data.trash = [];
-            save(); renderTrashModal(); showCustomMessage('✅ Papierkorb geleert', 'Alle Einträge wurden gelöscht.', 'success');
+            save(); renderTrashModal(); showCustomMessage('Papierkorb geleert', 'Alle Einträge wurden gelöscht.', 'success');
         }, null);
     }
 
     function saveTrashAutoDays() {
         const v = parseInt(document.getElementById('trashAutoDaysInput').value,10) || 0;
-        data.settings.trashAutoEmptyDays = v; save(); showCustomMessage('✅ Gespeichert', `Auto-Leerung nach ${v} Tagen eingestellt.`, 'success');
+        data.settings.trashAutoEmptyDays = v; save(); showCustomMessage('Gespeichert', `Auto-Leerung nach ${v} Tagen eingestellt.`, 'success');
     }
 
     function autoEmptyTrash() {
@@ -345,7 +346,7 @@
         }
 
         toast.innerHTML = `
-            <span style="font-size: 1.3rem;">✓</span>
+            <span style="display:inline-grid;place-items:center;color:#10b981;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
             <span style="color: var(--text-main); font-weight: 600;">Eintrag gelöscht</span>
         `;
 

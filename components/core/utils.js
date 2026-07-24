@@ -55,10 +55,9 @@
     }
 
     function showModernDeleteConfirm(entry, id) {
-        const info = (typeof getEntryTypeInfo === 'function') ? getEntryTypeInfo(entry.type) : null;
-        const isCustom = String(entry.type).startsWith('custom-');
-        const label = info ? (String(info.label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim() || info.label || entry.type) : ({work:'Arbeit', school:'Schule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'}[entry.type] || (isCustom ? 'Eigener Typ' : entry.type));
-        const icon  = info ? (info.emoji || '📋') : ({work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'}[entry.type] || (isCustom ? '📌' : '📋'));
+        const label = (typeof getTypeLabel === 'function') ? getTypeLabel(entry.type) : entry.type;
+        // Typ-Icon im Danger-Ton — die rote Kachel sagt „wird gelöscht", das Icon sagt „was".
+        const icon  = (typeof getTypeIconHTML === 'function') ? getTypeIconHTML(entry.type, 28) : '';
         const dateStr = new Date(entry.date + 'T00:00:00').toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'2-digit'});
 
         const overlay = document.createElement('div');
@@ -130,7 +129,7 @@
 
         sheet.innerHTML = `
             <div style="text-align: center; margin-bottom: 24px;">
-                <div style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: rgba(239, 68, 68, 0.15); border-radius: 16px; margin: 0 auto 16px; font-size: 28px;">${icon}</div>
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: rgba(239, 68, 68, 0.15); border-radius: 16px; margin: 0 auto 16px; font-size: 28px; color: #ef4444;">${icon}</div>
                 <h2 style="color: #ef4444; margin: 0 0 8px 0; font-size: 1.3rem; font-weight: 700;">Eintrag löschen?</h2>
                 <p style="color: var(--text-muted); margin: 0; font-size: 0.95rem;">${label} • ${dateStr}</p>
             </div>
@@ -149,12 +148,12 @@
             <div style="display: flex; gap: 12px; margin-bottom: 20px;">
                 <button class="btn-delete-cancel" style="flex: 1; padding: 14px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); color: var(--text-main); border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 1rem;">Abbrechen</button>
                 <button class="btn-delete-confirm" style="flex: 1; padding: 14px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9)); border: none; color: white; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    <span>🗑️ Löschen</span>
+                    <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg> Löschen</span>
                 </button>
             </div>
 
             <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 12px; background: rgba(168, 85, 247, 0.08); border-radius: 10px;">
-                ↩️ Du kannst den Eintrag danach noch wiederherstellen
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg> Du kannst den Eintrag danach noch wiederherstellen
             </div>
         `;
 
@@ -247,10 +246,10 @@
 
         toast.innerHTML = `
             <div style="flex: 1; color: var(--text-main); font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 1.2rem;">✓</span>
+                <span style="display:inline-grid;place-items:center;color:#10b981;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
                 <span>Eintrag gelöscht</span>
             </div>
-            <button id="undoBtn" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(168, 85, 247, 0.15)); border: 1px solid rgba(168, 85, 247, 0.3); color: var(--primary); padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 700; transition: all 0.2s ease; white-space: nowrap;">↩️ Rückgängig</button>
+            <button id="undoBtn" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(168, 85, 247, 0.15)); border: 1px solid rgba(168, 85, 247, 0.3); color: var(--primary); padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 700; transition: all 0.2s ease; white-space: nowrap;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg> Rückgängig</button>
         `;
 
         document.body.appendChild(toast);
@@ -352,7 +351,7 @@
             renderHistoryView();
         }
 
-        showCustomMessage('↩️ Wiederhergestellt', 'Eintrag wurde wiederhergestellt.', 'success');
+        showCustomMessage('Wiederhergestellt', 'Eintrag wurde wiederhergestellt.', 'success');
     }
     
 

@@ -205,6 +205,9 @@
     flex-wrap: wrap;
 }
 .hl-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     padding: 5px 12px;
     border-radius: 20px;
     font-size: 0.75rem;
@@ -217,6 +220,15 @@
     transition: all 0.18s ease;
     white-space: nowrap;
 }
+/* Typ-Symbol in der Typ-Farbe; im aktiven Zustand liegt es auf farbigem Grund
+   und erbt deshalb das Weiss der Pille. */
+.hl-pill-icon {
+    display: grid;
+    place-items: center;
+    color: rgb(var(--type-rgb, var(--primary-rgb)));
+    margin-left: -2px;
+}
+.hl-pill.active .hl-pill-icon { color: inherit; }
 .hl-pill:hover {
     background: rgba(255,255,255,0.07);
     color: var(--text-main);
@@ -227,13 +239,14 @@
     color: #fff;
     box-shadow: 0 2px 10px rgba(var(--primary-rgb), 0.3);
 }
-.hl-pill-work.active    { background: var(--primary); border-color: var(--primary); box-shadow: 0 2px 10px rgba(var(--primary-rgb),.35); }
-.hl-pill-school.active  { background: #06b6d4; border-color: #06b6d4; box-shadow: 0 2px 10px rgba(6,182,212,.35); }
-.hl-pill-vacation.active{ background: #10b981; border-color: #10b981; box-shadow: 0 2px 10px rgba(16,185,129,.35); }
-.hl-pill-gleittag.active{ background: #f59e0b; border-color: #f59e0b; box-shadow: 0 2px 10px rgba(245,158,11,.35); }
-.hl-pill-sick.active    { background: #ef4444; border-color: #ef4444; box-shadow: 0 2px 10px rgba(239,68,68,.35); }
-.hl-pill-holiday.active { background: #ec4899; border-color: #ec4899; box-shadow: 0 2px 10px rgba(236,72,153,.35); }
-.hl-pill-korrektur.active { background: #64748b; border-color: #64748b; box-shadow: 0 2px 10px rgba(100,116,139,.35); }
+/* Aktive Pille in der Typ-Farbe — --type-rgb setzt refreshTypeAffectedUI() am Icon,
+   die Pille selbst erbt es über den gemeinsamen Elternwert. Ersetzt die vierte
+   hardcodierte Farbtabelle (Schule war hier cyan, Feiertag pink). */
+.hl-pill[class*="hl-pill-"].active {
+    background: rgb(var(--type-rgb, var(--primary-rgb)));
+    border-color: rgb(var(--type-rgb, var(--primary-rgb)));
+    box-shadow: 0 2px 10px rgba(var(--type-rgb, var(--primary-rgb)), .35);
+}
 
 /* Filter Row */
 .hl-filter-row {
@@ -339,23 +352,12 @@
     border-right: 1px solid rgba(255,255,255,0.05);
     flex-shrink: 0;
 }
+/* Farbe/Hintergrund kommen aus .type-tile + --type-rgb (core.css) — auch für
+   eigene Typen, die vorher durch das Raster der festen Klassen gefallen sind. */
 .er-icon-wrap {
     width: 40px;
     height: 40px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.15rem;
-    flex-shrink: 0;
 }
-.er-icon-wrap.type-work     { background: rgba(var(--primary-rgb), 0.15); }
-.er-icon-wrap.type-school   { background: rgba(6,182,212,0.15); }
-.er-icon-wrap.type-vacation { background: rgba(16,185,129,0.15); }
-.er-icon-wrap.type-gleittag { background: rgba(245,158,11,0.15); }
-.er-icon-wrap.type-sick     { background: rgba(239,68,68,0.15); }
-.er-icon-wrap.type-holiday  { background: rgba(236,72,153,0.15); }
-.er-icon-wrap.type-korrektur{ background: rgba(100,116,139,0.16); }
 
 .er-date-col {
     display: flex;
@@ -411,12 +413,13 @@
     white-space: nowrap;
     flex-shrink: 0;
 }
-.er-badge.type-work     { background: rgba(var(--primary-rgb),.15); color: var(--primary); }
-.er-badge.type-school   { background: rgba(6,182,212,.15);  color: #06b6d4; }
-.er-badge.type-vacation { background: rgba(16,185,129,.15); color: #10b981; }
-.er-badge.type-gleittag { background: rgba(245,158,11,.15); color: #f59e0b; }
-.er-badge.type-sick     { background: rgba(239,68,68,.15);  color: #ef4444; }
-.er-badge.type-holiday  { background: rgba(236,72,153,.15); color: #ec4899; }
+/* Farbe kommt aus --type-rgb der Zeile (= Typ-Farbe aus dem Datenmodell). Vorher
+   stand hier eine dritte, abweichende Farbtabelle: Schule cyan statt blau,
+   Feiertag pink statt amber — und eigene Typen bekamen gar keine Farbe. */
+.er-badge[class*="type-"] {
+    background: rgba(var(--type-rgb, var(--primary-rgb)), .15);
+    color: rgb(var(--type-rgb, var(--primary-rgb)));
+}
 .er-badge--additional {
     background: rgba(var(--primary-rgb), 0.12);
     color: var(--primary);
@@ -695,11 +698,6 @@
     width: 46px;
     height: 46px;
     border-radius: 13px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    flex-shrink: 0;
 }
 .ed-header-text { flex: 1; min-width: 0; }
 .ed-type-label {

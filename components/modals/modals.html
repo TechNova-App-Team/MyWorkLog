@@ -1852,9 +1852,9 @@
                 <div id="settings-tab-custom" class="settings-tab-content" style="display:none;">
                     
                     <div class="settings-info">
-                        <strong>✨ Eigene Eintrag-Typen</strong> — z.B. 🏋️ Fitness, 🎓 Training, 🤝 Meetings<br>
-                        <strong>📋 Custom Fields</strong> — z.B. Projekt, Client, Billable<br>
-                        <strong>⚡ Workflow Rules</strong> — Automatische Validierung & Auto-Fill
+                        <strong>Eigene Eintrag-Typen</strong> — z.B. Fitness, Training, Meetings<br>
+                        <strong>Custom Fields</strong> — z.B. Projekt, Client, Billable<br>
+                        <strong>Workflow Rules</strong> — Automatische Validierung &amp; Auto-Fill
                     </div>
 
                     <!-- Entry Types -->
@@ -2517,13 +2517,15 @@
                 <div style="margin-bottom:1.5rem;">
                     <label style="display:block; font-size:0.85rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem; font-weight:600; letter-spacing:0.5px;">🏷️ Eintrag-Typ</label>
                     <select id="iCalTypeFilter" class="glass-input" style="width:100%; padding:10px 12px; border-radius:10px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:#fff; font-size:0.95rem; cursor:pointer;">
+                        <!-- Filter-Select bewusst ohne Icons: ein <option> kann nur Text,
+                             und ein Picker im Modal wäre für einen Export-Filter Overkill. -->
                         <option value="all" selected>Alle Typen</option>
-                        <option value="work">⏱️ Arbeit</option>
-                        <option value="school">🎓 Schule</option>
-                        <option value="vacation">🏖️ Urlaub</option>
-                        <option value="gleittag">⚡ Gleittag</option>
-                        <option value="sick">🤒 Krankheit</option>
-                        <option value="holiday">🎉 Feiertag</option>
+                        <option value="work">Arbeit</option>
+                        <option value="school">Schule</option>
+                        <option value="vacation">Urlaub</option>
+                        <option value="gleittag">Gleittag</option>
+                        <option value="sick">Krankheit</option>
+                        <option value="holiday">Feiertag</option>
                     </select>
                 </div>
 
@@ -2659,14 +2661,24 @@
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
                             Typ
                         </label>
-                        <select id="editInpType" class="edit-select" onchange="editTypeChanged();if(typeof renderEditCustomFields==='function')renderEditCustomFields()">
-                            <option value="work">💼 Arbeit</option>
-                            <option value="school">📚 Berufsschule</option>
-                            <option value="vacation">🌴 Urlaub</option>
-                            <option value="gleittag">⚡ Gleittag</option>
-                            <option value="sick">💊 Krank</option>
-                            <option value="holiday">🎉 Feiertag</option>
-                        </select>
+                        <!-- Typ-Picker: das native <select> bleibt Wert-Quelle (entry-edit.js
+                             liest/setzt .value), sichtbar ist die Listbox mit SVG-Icons. -->
+                        <div class="type-picker">
+                            <select id="editInpType" class="edit-select type-picker__native" onchange="editTypeChanged();if(typeof renderEditCustomFields==='function')renderEditCustomFields()" tabindex="-1">
+                                <option value="work">Arbeit</option>
+                                <option value="school">Berufsschule</option>
+                                <option value="vacation">Urlaub</option>
+                                <option value="gleittag">Gleittag</option>
+                                <option value="sick">Krank</option>
+                                <option value="holiday">Feiertag</option>
+                            </select>
+                            <button type="button" class="type-picker__trigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-label="Eintragstyp">
+                                <span class="type-picker__icon type-tile" aria-hidden="true"></span>
+                                <span class="type-picker__value">Arbeit</span>
+                                <svg class="type-picker__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                            </button>
+                            <div class="type-picker__panel" role="listbox" aria-label="Eintragstyp"></div>
+                        </div>
                     </div>
                     <div class="edit-field" id="editJobRow" style="display:none;">
                         <label class="edit-label">
@@ -2819,7 +2831,10 @@
     <div class="modal" id="trashModal" style="display:none;">
         <div class="modal-box" style="width:90%; max-width:920px; padding:1.25rem 1.5rem; background:var(--bg-glass); backdrop-filter: blur(20px); border:1px solid rgba(var(--primary-rgb),0.12); border-radius:18px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                <h3 style="margin:0; color:var(--primary);">🗑️ Papierkorb</h3>
+                <h3 style="margin:0; color:var(--primary); display:flex; align-items:center; gap:9px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    <span>Papierkorb</span>
+                </h3>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <button class="btn btn-ghost" onclick="closeTrashModal()">Schließen</button>
                     <button class="btn btn-danger" onclick="emptyTrashConfirm()">Papierkorb leeren</button>

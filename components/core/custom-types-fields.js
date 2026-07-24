@@ -5,7 +5,10 @@
 
     const DEFAULT_ENTRY_TYPES = [
         { id: 'work',     label: 'Arbeit',       emoji: '💼', color: '#a855f7', description: 'Normale Arbeitszeit' },
-        { id: 'school',   label: 'Berufsschule', emoji: '📚', color: '#3b82f6', description: 'Berufsschule / Noten' },
+        // Diese Farben sind die EINE Quelle für Icon-Kachel, Badge, Zeilenrahmen und
+        // Filter-Pill (siehe --type-rgb). Sie spiegeln die Tokens aus core.css —
+        // gleittag bleibt bewusst cyan, sonst wäre es von holiday nicht unterscheidbar.
+        { id: 'school',   label: 'Berufsschule', emoji: '📚', color: '#2563eb', description: 'Berufsschule / Noten' },
         { id: 'vacation', label: 'Urlaub',       emoji: '🌴', color: '#10b981', description: 'Urlaubstage' },
         { id: 'gleittag', label: 'Gleittag',     emoji: '⚡', color: '#06b6d4', description: 'Gleittag (Überstundenabbau)' },
         { id: 'sick',     label: 'Krankheit',    emoji: '🤒', color: '#ef4444', description: 'Krankheitstage' },
@@ -84,11 +87,44 @@
     // Alles andere zeichnet SVG.
     function getTypeIconHTML(typeId, size) {
         const info = getEntryTypeInfo(typeId);
-        const userEmoji = isDefaultType(typeId)
-            ? (((data && data.entryTypeOverrides) || {})[typeId] || {}).emoji
-            : (info && info.emoji);
+        const def = DEFAULT_ENTRY_TYPES.find(t => t.id === typeId);
+        let userEmoji;
+        if (def) {
+            // Nur ein vom Werks-Emoji ABWEICHENDER Override zählt als bewusste Wahl.
+            // Wer im Typ-Manager nur die Farbe ändert, schreibt das Default-Emoji mit in
+            // den Override — das darf das SVG nicht verdrängen.
+            const ovr = ((data && data.entryTypeOverrides) || {})[typeId] || {};
+            if (ovr.emoji && ovr.emoji !== def.emoji) userEmoji = ovr.emoji;
+        } else {
+            userEmoji = info && info.emoji;
+        }
         if (userEmoji) return `<span class="type-icon type-icon--emoji" aria-hidden="true">${esc(userEmoji)}</span>`;
         return getTypeIconSvg(typeId, size);
+    }
+
+    // Typ-Farbe als "r,g,b" für --type-rgb an Icon-Kacheln. Ein unbekannter Typ
+    // (gelöschter Custom-Type, Eintrag bleibt) bekommt neutrales Slate statt zu werfen.
+    function getTypeRgb(typeId) {
+        try { return hexToRgbStr(getTypeColor(typeId)); } catch (e) { return '148,163,184'; }
+    }
+
+    // Fertige Icon-Kachel: Wrapper mit Typ-Farbe + Icon. Für Listen, Karten, Badges.
+    // extraClass hängt die vorhandene Wrapper-Klasse des jeweiligen Views mit rein.
+    function getTypeIconTile(typeId, size, extraClass) {
+        return `<span class="type-tile ${extraClass || ''}" style="--type-rgb:${getTypeRgb(typeId)}" aria-hidden="true">`
+             + `${getTypeIconHTML(typeId, size)}</span>`;
+    }
+
+    // Label ohne führendes Emoji, mit Fallback für unbekannte/gelöschte Typen.
+    function getTypeLabel(typeId) {
+        const info = getEntryTypeInfo(typeId);
+        if (info) {
+            const clean = ctCleanLabel(info.label, '');
+            if (clean) return clean;
+        }
+        if (String(typeId).startsWith('custom-')) return 'Eigener Typ';
+        return ({ work: 'Arbeit', school: 'Berufsschule', vacation: 'Urlaub', gleittag: 'Gleittag',
+                  sick: 'Krankheit', holiday: 'Feiertag', korrektur: 'Korrektur' })[typeId] || typeId;
     }
 
     // ═══ Override CRUD für Standard-Typen ═══
@@ -131,8 +167,8 @@
 
     // ═══ Core CRUD ═══
     function createCustomType(label, emoji, color, description, countsAsWork) {
-        if (!label || !emoji || !color) {
-            showCustomMessage('Fehler', 'Label, Emoji und Farbe sind erforderlich', 'error');
+        if (!label || !color) {
+            showCustomMessage('Fehler', 'Name und Farbe sind erforderlich', 'error');
             return false;
         }
         if (!Array.isArray(data.customEntryTypes)) data.customEntryTypes = [];
@@ -140,8 +176,8 @@
         const id = `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         data.customEntryTypes.push({
             id,
-            label: `${emoji} ${label}`,
-            emoji,
+            label: emoji ? `${emoji} ${label}` : label,
+            emoji: emoji || '',
             color,
             description: description || '',
             countsAsWork: !!countsAsWork,
@@ -255,10 +291,12 @@
     function ctTypeRow(type, kind) {
         const row = ctEl('div', 'ct-row');
         const color = sanitizeColor(type.color);
+        // Zeigt exakt das, was der Typ in der App zeichnet: SVG, oder das Emoji,
+        // das der User hier selbst gesetzt hat.
         const emojiBox = ctEl('div', 'ct-row-emoji');
         emojiBox.dataset.tint = '1';
         emojiBox.style.setProperty('--tint-rgb', hexToRgbStr(color));
-        emojiBox.textContent = type.emoji || '•';
+        emojiBox.innerHTML = getTypeIconHTML(type.id, 17);
 
         const info = ctEl('div', 'ct-row-info');
         const lbl = ctEl('div', 'ct-row-label');
@@ -348,12 +386,12 @@
 
             <div class="ct-form-row">
                 <div class="ct-field">
-                    <label class="ct-field-label">Emoji</label>
+                    <label class="ct-field-label">Emoji (optional)</label>
                     <button type="button" class="ct-emoji-trigger" data-field="emoji-trigger">
                         <div class="ct-emoji-display ct-emoji-empty" data-field="emoji-display">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
                         </div>
-                        <span class="ct-emoji-hint">Klick zum Auswählen</span>
+                        <span class="ct-emoji-hint">Ohne Auswahl: Symbol in deiner Farbe</span>
                         <span class="ct-emoji-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
                     </button>
                 </div>
@@ -460,10 +498,8 @@
                 labelInp.focus();
                 return;
             }
-            if (!state.emoji) {
-                showCustomMessage('Emoji fehlt', 'Bitte wähle ein Emoji aus', 'error');
-                return;
-            }
+            // Emoji ist optional — ohne eins zeichnet die App das Typ-Symbol in der
+            // gewählten Farbe (getTypeIconHTML).
 
             const desc = form.querySelector('[data-field="desc"]').value.trim();
             const counts = form.querySelector('[data-field="counts"]').checked;
@@ -483,8 +519,8 @@
                 });
             } else {
                 editCustomType(editingId, {
-                    label: `${state.emoji} ${label}`,
-                    emoji: state.emoji,
+                    label: state.emoji ? `${state.emoji} ${label}` : label,
+                    emoji: state.emoji || '',
                     color: state.color,
                     description: desc,
                     countsAsWork: counts
@@ -1005,15 +1041,26 @@
     // Aktualisiert alle Orte mit hardcoded Type-Emojis/Labels, damit Standard-Overrides
     // sofort sichtbar werden (Historie-Pills, Dashboard-Aktivitäten, History-Filter-Select).
     function refreshTypeAffectedUI() {
-        // History Pills (index.html: .hl-type-pills) — update inner text.
-        const pillMap = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', gleittag: 'Gleittag', sick: 'Krank', holiday: 'Feiertag' };
+        // History Pills (.hl-type-pills) — Icon als SVG, Label separat (sonst kippt die
+        // i18n-Pipeline: ein Element mit SVG-Kind ist „gemischter Inhalt" und wird still
+        // übersprungen). Das Label NUR anfassen, wenn der User es wirklich umbenannt hat —
+        // sonst würde die englische Übersetzung mit jedem Refresh wieder deutsch.
+        const pillMap = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', gleittag: 'Gleittag', sick: 'Krank', holiday: 'Feiertag', korrektur: 'Korrektur' };
         Object.keys(pillMap).forEach(id => {
             const pill = document.querySelector(`.hl-pill.hl-pill-${id}`);
             if (!pill) return;
             const info = getEntryTypeInfo(id);
             if (!info) return;
-            const cleanLabel = String(info.label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim() || pillMap[id];
-            pill.textContent = `${info.emoji || ''} ${cleanLabel}`.trim();
+            // --type-rgb an der PILLE (nicht am Icon) — das Icon erbt es, und der
+            // aktive Zustand färbt Hintergrund/Rahmen daraus.
+            pill.style.setProperty('--type-rgb', getTypeRgb(id));
+            const iconEl = pill.querySelector('.hl-pill-icon');
+            if (iconEl) iconEl.innerHTML = getTypeIconHTML(id, 14);
+            const override = ((data && data.entryTypeOverrides) || {})[id];
+            if (override && override.label) {
+                const labelEl = pill.querySelector('.hl-pill-label');
+                if (labelEl) labelEl.textContent = ctCleanLabel(override.label, pillMap[id]);
+            }
         });
 
         // History Filter Select
@@ -1047,3 +1094,211 @@
     window.addEventListener('DOMContentLoaded', () => {
         setTimeout(refreshTypeAffectedUI, 300);
     });
+
+    // ═══ TYP-PICKER MODULE ═══
+    // Sichtbare Listbox über einem nativen <select>. Grund: ein <option> rendert nur
+    // Text — für SVG-Icons statt Emojis braucht es eigenes Markup. Das <select> bleibt
+    // im DOM (display:none) und BLEIBT die Wert-Quelle: aller Bestandscode, der
+    // .value liest oder setzt, läuft unverändert weiter.
+    //
+    // Markup pro Picker (siehe dashboard.html / modals.html):
+    //   .type-picker > select.type-picker__native
+    //                > button.type-picker__trigger > .type-picker__icon + .type-picker__value
+    //                > .type-picker__panel
+    (function () {
+        'use strict';
+
+        const CHECK_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+            + 'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+
+        let openPickerEl = null;   // höchstens einer offen
+        let activeIndex = -1;
+
+        function parts(picker) {
+            return {
+                sel:     picker.querySelector('select'),
+                trigger: picker.querySelector('.type-picker__trigger'),
+                icon:    picker.querySelector('.type-picker__icon'),
+                label:   picker.querySelector('.type-picker__value'),
+                panel:   picker.querySelector('.type-picker__panel')
+            };
+        }
+
+        function iconHTML(id, size) {
+            try { return getTypeIconHTML(id, size); }
+            catch (e) { return ''; } // Daten noch nicht geladen → leere Kachel statt Absturz
+        }
+
+        function paintTile(tile, typeId) {
+            const rgb = getTypeRgb(typeId);
+            if (rgb) tile.style.setProperty('--type-rgb', rgb); else tile.style.removeProperty('--type-rgb');
+            tile.innerHTML = iconHTML(typeId, 16);
+        }
+
+        // Baut die Optionen aus den <option>s des Selects nach (inkl. Custom-Types).
+        function renderPicker(picker) {
+            const { sel, panel } = parts(picker);
+            if (!sel || !panel) return;
+            panel.innerHTML = '';
+            Array.from(sel.options).forEach((opt, i) => {
+                const row = document.createElement('button');
+                row.type = 'button';
+                row.className = 'type-option';
+                row.setAttribute('role', 'option');
+                row.setAttribute('aria-selected', opt.value === sel.value ? 'true' : 'false');
+                row.dataset.value = opt.value;
+
+                const tile = document.createElement('span');
+                tile.className = 'type-option__icon type-tile';
+                paintTile(tile, opt.value);
+
+                const txt = document.createElement('span');
+                txt.className = 'type-option__label';
+                txt.textContent = opt.textContent;
+
+                const check = document.createElement('span');
+                check.className = 'type-option__check';
+                check.innerHTML = CHECK_SVG;
+
+                row.append(tile, txt, check);
+                row.addEventListener('click', () => choose(picker, opt.value));
+                row.addEventListener('mouseenter', () => highlight(picker, i, false));
+                panel.appendChild(row);
+            });
+            syncTrigger(picker);
+        }
+
+        // Spiegelt den aktuellen Select-Wert in Trigger + Häkchen.
+        function syncTrigger(picker) {
+            const { sel, icon, label, panel } = parts(picker);
+            if (!sel || !icon || !label) return;
+            const opt = sel.options[sel.selectedIndex] || sel.options[0];
+            if (!opt) return;
+            label.textContent = opt.textContent;
+            paintTile(icon, opt.value);
+            if (panel) panel.querySelectorAll('.type-option').forEach(o => {
+                o.setAttribute('aria-selected', o.dataset.value === sel.value ? 'true' : 'false');
+            });
+        }
+
+        function choose(picker, value) {
+            const { sel } = parts(picker);
+            if (!sel) return;
+            sel.value = value; // Mirror unten ruft syncTrigger()
+            sel.dispatchEvent(new Event('change', { bubbles: true })); // toggleTimeInputs() & Co.
+            closePicker(true);
+        }
+
+        function highlight(picker, i, focus) {
+            const { panel } = parts(picker);
+            if (!panel) return;
+            const opts = panel.querySelectorAll('.type-option');
+            if (!opts.length) return;
+            activeIndex = (i + opts.length) % opts.length;
+            opts.forEach((o, n) => o.classList.toggle('is-active', n === activeIndex));
+            if (focus) opts[activeIndex].focus();
+        }
+
+        function openPicker(picker) {
+            const { panel, sel, trigger } = parts(picker);
+            if (!panel || !trigger) return;
+            if (openPickerEl && openPickerEl !== picker) closePicker(false);
+            picker.classList.add('is-open');
+            trigger.setAttribute('aria-expanded', 'true');
+            openPickerEl = picker;
+
+            // Platz messen und ggf. nach oben klappen. Die mobile Bottom-Nav liegt
+            // über dem Inhalt — ihre Höhe zählt nicht als freier Platz.
+            const r = picker.getBoundingClientRect();
+            const nav = document.querySelector('.mobile-bottom-nav, .mobile-bottom-nav-inner');
+            const navH = (nav && getComputedStyle(nav).display !== 'none') ? nav.getBoundingClientRect().height + 8 : 0;
+            const spaceBelow = window.innerHeight - r.bottom - navH - 12;
+            const spaceAbove = r.top - 12;
+            const need = Math.min(panel.scrollHeight + 12, 320);
+            const up = spaceBelow < need && spaceAbove > spaceBelow;
+            picker.classList.toggle('is-up', up);
+            // Nie über den Rand: Panel scrollt lieber intern.
+            panel.style.maxHeight = Math.max(150, Math.min(320, up ? spaceAbove : spaceBelow)) + 'px';
+
+            highlight(picker, Math.max(0, sel ? sel.selectedIndex : 0), true);
+            document.addEventListener('mousedown', onDocDown, true);
+        }
+
+        function closePicker(refocus) {
+            const picker = openPickerEl;
+            if (!picker) return;
+            const { trigger } = parts(picker);
+            picker.classList.remove('is-open', 'is-up');
+            if (trigger) {
+                trigger.setAttribute('aria-expanded', 'false');
+                if (refocus) trigger.focus();
+            }
+            openPickerEl = null;
+            document.removeEventListener('mousedown', onDocDown, true);
+        }
+
+        function onDocDown(e) {
+            if (openPickerEl && !openPickerEl.contains(e.target)) closePicker(false);
+        }
+
+        function onTriggerKey(picker, e) {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openPicker(picker);
+            }
+        }
+
+        function onPanelKey(picker, e) {
+            const { panel } = parts(picker);
+            const count = panel ? panel.querySelectorAll('.type-option').length : 0;
+            if (!count) return;
+            switch (e.key) {
+                case 'ArrowDown': e.preventDefault(); highlight(picker, activeIndex + 1, true); break;
+                case 'ArrowUp':   e.preventDefault(); highlight(picker, activeIndex - 1, true); break;
+                case 'Home':      e.preventDefault(); highlight(picker, 0, true); break;
+                case 'End':       e.preventDefault(); highlight(picker, count - 1, true); break;
+                case 'Escape':    e.preventDefault(); closePicker(true); break;
+                case 'Tab':       closePicker(false); break;
+                default: break;
+            }
+        }
+
+        // Bestandscode setzt sel.value direkt (Voice-Input, Draft-Restore, NFC, Edit-Modal,
+        // resetEdit). Ein `change` feuert dabei NICHT — deshalb hängen wir uns einmalig in
+        // den value-Setter dieser Instanz, statt jeden Aufrufer anzufassen.
+        function bindValueMirror(picker, sel) {
+            if (sel._typePickerBound) return;
+            sel._typePickerBound = true;
+            const desc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+            if (desc && desc.get && desc.set) {
+                Object.defineProperty(sel, 'value', {
+                    configurable: true,
+                    enumerable: true,
+                    get() { return desc.get.call(this); },
+                    set(v) { desc.set.call(this, v); syncTrigger(picker); }
+                });
+            }
+            sel.addEventListener('change', () => syncTrigger(picker));
+        }
+
+        function initPicker(picker) {
+            const { sel, trigger, panel } = parts(picker);
+            if (!sel || !trigger || !panel || picker._inited) return;
+            picker._inited = true;
+            bindValueMirror(picker, sel);
+            trigger.addEventListener('click', () => {
+                picker.classList.contains('is-open') ? closePicker(false) : openPicker(picker);
+            });
+            trigger.addEventListener('keydown', (e) => onTriggerKey(picker, e));
+            panel.addEventListener('keydown', (e) => onPanelKey(picker, e));
+            renderPicker(picker);
+        }
+
+        function initAll()   { document.querySelectorAll('.type-picker').forEach(initPicker); }
+        function renderAll() { document.querySelectorAll('.type-picker').forEach(p => { initPicker(p); renderPicker(p); }); }
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAll);
+        else initAll();
+
+        window.renderEntryTypePicker = renderAll;
+    })();

@@ -33,13 +33,7 @@
         }
 
         // Dynamic lookup — Custom-Types + Overrides + Orphan-Fallback.
-        const lookupIcon = (id) => {
-            if (typeof getEntryTypeInfo === 'function') {
-                const i = getEntryTypeInfo(id);
-                if (i && i.emoji) return i.emoji;
-            }
-            return ({work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'}[id] || (String(id).startsWith('custom-') ? '📌' : '📋'));
-        };
+        const lookupIcon = (id) => (typeof getTypeIconTile === 'function') ? getTypeIconTile(id, 18, 'er-icon-wrap') : '';
         const lookupLabel = (id) => {
             if (typeof getEntryTypeInfo === 'function') {
                 const i = getEntryTypeInfo(id);
@@ -118,9 +112,9 @@
             const weekday   = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {weekday:'short'});
             const dateShort = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'2-digit'});
             return `
-            <div class="entry-row type-${e.type}" data-entry-id="${e.id}" onclick="openEntryDetail(${e.id})">
+            <div class="entry-row type-${e.type}" data-entry-id="${e.id}" style="--type-rgb:${(typeof getTypeRgb === 'function') ? getTypeRgb(e.type) : '148,163,184'}" onclick="openEntryDetail(${e.id})">
                 <div class="er-left">
-                    <div class="er-icon-wrap type-${e.type}">${icon}</div>
+                    ${icon}
                     <div class="er-date-col">
                         <span class="er-weekday">${weekday}</span>
                         <span class="er-date">${dateShort}</span>
@@ -208,19 +202,7 @@
         // Dynamic lookup — Custom-Types + Overrides + Orphan-Fallback.
         const lkInfo = (typeof getEntryTypeInfo === 'function') ? getEntryTypeInfo(e.type) : null;
         const isCustom = String(e.type).startsWith('custom-');
-        const fallbackIcons  = {work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'};
-        const fallbackLabels = {work:'Arbeit', school:'Berufsschule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'};
-        const fallbackBg     = {work:'rgba(168,85,247,0.15)', school:'rgba(6,182,212,0.15)', vacation:'rgba(16,185,129,0.15)', gleittag:'rgba(245,158,11,0.15)', sick:'rgba(239,68,68,0.15)', holiday:'rgba(236,72,153,0.15)'};
-        const iconEmoji = (lkInfo && lkInfo.emoji) || fallbackIcons[e.type] || (isCustom ? '📌' : '📋');
-        const cleanLabel = lkInfo ? (String(lkInfo.label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim() || fallbackLabels[e.type]) : (isCustom ? 'Eigener Typ' : (fallbackLabels[e.type] || e.type));
-        // Custom-Color → tinted Hintergrund. Fallback auf Default-Map.
-        let bgStyle = fallbackBg[e.type] || 'rgba(255,255,255,0.08)';
-        if (lkInfo && lkInfo.color) {
-            const hex = String(lkInfo.color).replace('#','');
-            const full = hex.length === 3 ? hex.split('').map(x => x+x).join('') : hex.slice(0,6);
-            const r = parseInt(full.slice(0,2),16), g = parseInt(full.slice(2,4),16), b = parseInt(full.slice(4,6),16);
-            if (!isNaN(r+g+b)) bgStyle = `rgba(${r},${g},${b},0.15)`;
-        }
+        const cleanLabel = (typeof getTypeLabel === 'function') ? getTypeLabel(e.type) : e.type;
         const isWorkRel = !isCustom || (lkInfo && lkInfo.countsAsWork === true);
 
         const weekday  = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {weekday:'long'});
@@ -229,8 +211,8 @@
         const diffColor= isWorkRel ? (e.diff >= 0 ? '#34d399' : '#f87171') : '#94a3b8';
 
         const icon = document.getElementById('edTypeIcon');
-        icon.textContent = iconEmoji;
-        icon.style.background = bgStyle;
+        icon.innerHTML = (typeof getTypeIconHTML === 'function') ? getTypeIconHTML(e.type, 26) : '';
+        icon.style.setProperty('--type-rgb', (typeof getTypeRgb === 'function') ? getTypeRgb(e.type) : '148,163,184');
         document.getElementById('edTypeLabel').textContent = cleanLabel;
         document.getElementById('edDateLine').textContent  = weekday + ' · ' + dateStr;
         document.getElementById('edHours').textContent = e.worked.toFixed(1) + 'h';

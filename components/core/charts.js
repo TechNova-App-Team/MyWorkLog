@@ -52,88 +52,72 @@
         entriesByDate: {}
     };
 
-    function renderLists() {
-        // Dynamic lookup via getEntryTypeInfo → respektiert User-Overrides + Custom-Types.
-        // Bei Orphan-IDs (Custom-Typ wurde gelöscht, Eintrag bleibt) → graceful fallback.
-        const lookupIcon  = (id) => {
-            if (typeof getEntryTypeInfo === 'function') {
-                const info = getEntryTypeInfo(id);
-                if (info && info.emoji) return info.emoji;
-            }
-            return ({work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'}[id] || (String(id).startsWith('custom-') ? '📌' : '📋'));
-        };
-        const lookupLabel = (id) => {
-            if (typeof getEntryTypeInfo === 'function') {
-                const info = getEntryTypeInfo(id);
-                if (info) {
-                    const clean = String(info.label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim();
-                    if (clean) return clean;
-                }
-            }
-            if (String(id).startsWith('custom-')) return 'Eigener Typ';
-            return ({work:'Arbeit', school:'Schule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'}[id]) || id;
-        };
-        const countsAsWork = (id) => {
-            // Standards zählen alle (work hat Diff, andere fixe Logik in handleEntry).
-            // Custom-Types: explizit via flag.
-            if (typeof getEntryTypeInfo === 'function') {
-                const info = getEntryTypeInfo(id);
-                if (info && String(id).startsWith('custom-')) return info.countsAsWork === true;
-            }
-            return !String(id).startsWith('custom-');
-        };
+    // ═══ AKTIVITÄTS-KARTE (Dashboard „Letzte Aktivitäten") ═══
+    // Eine Quelle für Erst-Render UND Tab-Wechsel — vorher stand dieselbe Karte
+    // zweimal im File und ist beim Ändern zwangsläufig auseinandergelaufen.
+    const ACT_ICON_CLOCK = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>';
+    // Tooltip-Marker im Saldo-Trend (Streak positiv/negativ)
+    const TT_ICON_OK   = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;color:#10b981"><path d="M20 6 9 17l-5-5"/></svg>';
+    const TT_ICON_WARN = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;color:#f59e0b"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+    const ACT_ICON_TAG   = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><circle cx="7.5" cy="7.5" r="1"/></svg>';
 
-        function formatRelativeTime(dateStr) {
-            const d = new Date(dateStr + 'T00:00:00');
-            const now = new Date();
-            const diffMs = now - d;
-            const diffHours = Math.floor(diffMs / (1000*60*60));
-            const diffDays = Math.floor(diffMs / (1000*60*60*24));
-            if (diffHours < 1) return 'gerade eben';
-            if (diffHours < 24) return `vor ${diffHours}h`;
-            if (diffDays === 0) return 'heute';
-            if (diffDays === 1) return 'gestern';
-            if (diffDays < 7) return `vor ${diffDays}d`;
-            return d.toLocaleDateString('de-DE', {month:'short', day:'numeric'});
+    // Zählt der Typ in die Arbeitszeit-Bilanz? Standards ja, Custom-Types nur per Flag.
+    function activityCountsAsWork(id) {
+        if (typeof getEntryTypeInfo === 'function') {
+            const info = getEntryTypeInfo(id);
+            if (info && String(id).startsWith('custom-')) return info.countsAsWork === true;
         }
+        return !String(id).startsWith('custom-');
+    }
 
-        const createActivityCard = (e) => {
-            const icon = lookupIcon(e.type);
-            const label = lookupLabel(e.type);
-            const relTime = formatRelativeTime(e.date);
-            const notes = e.isPeriod ? (e.label || '') : (e.info || '');
-            const dayIndex = new Date(e.date).getDay();
-            const expected = e.expected !== undefined ? e.expected : (data.settings?.hours?.[dayIndex] || 8);
-            const diffHours = e.diff !== undefined ? e.diff : ((e.worked || 0) - expected);
-            const diffSign = diffHours >= 0 ? '+' : '';
-            const diffColor = diffHours > 0 ? '#10b981' : (diffHours < 0 ? '#ef4444' : '#6b7280');
-            const isWorkRelevant = countsAsWork(e.type);
-            const diffHtml = isWorkRelevant
-                ? `<div style="font-weight:600; color:${diffColor}; font-size:0.9rem; min-width:50px; text-align:right;">${diffSign}${diffHours.toFixed(1)}h</div>`
-                : `<div style="font-weight:500; color:#64748b; font-size:0.9rem; min-width:50px; text-align:right;" title="Zählt nicht in die Arbeitszeit-Bilanz">—</div>`;
+    function activityRelativeTime(dateStr) {
+        const d = new Date(dateStr + 'T00:00:00');
+        const diffMs = new Date() - d;
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays  = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        if (diffHours < 1) return 'gerade eben';
+        if (diffHours < 24) return `vor ${diffHours}h`;
+        if (diffDays === 1) return 'gestern';
+        if (diffDays < 7) return `vor ${diffDays}d`;
+        return d.toLocaleDateString('de-DE', { month: 'short', day: 'numeric' });
+    }
 
-            return `
-                <div class="activity-item type-${e.type}" data-entry-id="${e.id}" style="cursor: pointer;">
-                    <div class="activity-card-header">
-                        <span class="activity-icon">${icon}</span>
-                        <div class="activity-header-info">
-                            <span class="activity-type-label">${label}</span>
-                            <span class="activity-time">${relTime}</span>
-                        </div>
-                        ${diffHtml}
+    function createActivityCard(e) {
+        const icon  = (typeof getTypeIconTile === 'function') ? getTypeIconTile(e.type, 20, 'activity-icon') : '';
+        const label = (typeof getTypeLabel === 'function') ? getTypeLabel(e.type) : e.type;
+        const notes = e.isPeriod ? (e.label || '') : (e.info || '');
+        const dayIndex = new Date(e.date).getDay();
+        const expected = e.expected !== undefined ? e.expected : (data.settings?.hours?.[dayIndex] || 8);
+        const diffHours = e.diff !== undefined ? e.diff : ((e.worked || 0) - expected);
+        const diffSign = diffHours >= 0 ? '+' : '';
+        const diffColor = diffHours > 0 ? '#10b981' : (diffHours < 0 ? '#ef4444' : '#6b7280');
+        const diffHtml = activityCountsAsWork(e.type)
+            ? `<div style="font-weight:600; color:${diffColor}; font-size:0.9rem; min-width:50px; text-align:right;">${diffSign}${diffHours.toFixed(1)}h</div>`
+            : `<div style="font-weight:500; color:#64748b; font-size:0.9rem; min-width:50px; text-align:right;" title="Zählt nicht in die Arbeitszeit-Bilanz">—</div>`;
+
+        return `
+            <div class="activity-item type-${e.type}" data-entry-id="${e.id}" style="cursor: pointer;">
+                <div class="activity-card-header">
+                    ${icon}
+                    <div class="activity-header-info">
+                        <span class="activity-type-label">${esc(label)}</span>
+                        <span class="activity-time">${activityRelativeTime(e.date)}</span>
                     </div>
-                    <div class="activity-content">
-                        <div class="activity-main">${e.isPeriod ? esc(e.label || 'Periode') : esc(e.info || 'Arbeitszeit')}</div>
-                        <div class="activity-details">
-                            <span class="activity-hours">⏱️ ${e.worked.toFixed(2)}h</span>
-                            ${e.project ? `<span class="activity-project">📌 ${esc(e.project)}</span>` : ''}
-                            ${notes && !e.isPeriod ? `<div class="activity-note">"${esc(notes)}"</div>` : ''}
-                        </div>
+                    ${diffHtml}
+                </div>
+                <div class="activity-content">
+                    <div class="activity-main">${e.isPeriod ? esc(e.label || 'Periode') : esc(e.info || 'Arbeitszeit')}</div>
+                    <div class="activity-details">
+                        <span class="activity-hours">${ACT_ICON_CLOCK} ${e.worked.toFixed(2)}h</span>
+                        ${e.project ? `<span class="activity-project">${ACT_ICON_TAG} ${esc(e.project)}</span>` : ''}
+                        ${notes && !e.isPeriod ? `<div class="activity-note">"${esc(notes)}"</div>` : ''}
                     </div>
                 </div>
-            `;
-        };
+            </div>
+        `;
+    }
 
+    function renderLists() {
         const trackEl = document.getElementById('entryListShort');
         const emptyEl = document.getElementById('activitiesEmpty');
         const dayTabsEl = document.getElementById('dayTabsList');
@@ -214,78 +198,6 @@
                 }
             }
         });
-
-        // Update activities — dynamic lookup mit Orphan-Fallback + countsAsWork-Flag.
-        const lookupIcon2 = (id) => {
-            if (typeof getEntryTypeInfo === 'function') {
-                const info = getEntryTypeInfo(id);
-                if (info && info.emoji) return info.emoji;
-            }
-            return ({work:'💼', school:'📚', vacation:'🌴', gleittag:'⚡', sick:'🤒', holiday:'🎉'}[id] || (String(id).startsWith('custom-') ? '📌' : '📋'));
-        };
-        const lookupLabel2 = (id) => {
-            if (typeof getEntryTypeInfo === 'function') {
-                const info = getEntryTypeInfo(id);
-                if (info) {
-                    const clean = String(info.label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim();
-                    if (clean) return clean;
-                }
-            }
-            if (String(id).startsWith('custom-')) return 'Eigener Typ';
-            return ({work:'Arbeit', school:'Schule', vacation:'Urlaub', gleittag:'Gleittag', sick:'Krank', holiday:'Feiertag'}[id]) || id;
-        };
-        const countsAsWork2 = (id) => {
-            if (typeof getEntryTypeInfo === 'function') {
-                const info = getEntryTypeInfo(id);
-                if (info && String(id).startsWith('custom-')) return info.countsAsWork === true;
-            }
-            return !String(id).startsWith('custom-');
-        };
-
-        const createActivityCard = (e) => {
-            const icon = lookupIcon2(e.type);
-            const label = lookupLabel2(e.type);
-            const formatRelativeTime = (dateStr) => {
-                const d = new Date(dateStr + 'T00:00:00');
-                const now = new Date();
-                const diffDays = Math.floor((now - d) / (1000*60*60*24));
-                if (diffDays === 0) return 'heute';
-                if (diffDays === 1) return 'gestern';
-                return d.toLocaleDateString('de-DE', {month:'short', day:'numeric'});
-            };
-            const relTime = formatRelativeTime(e.date);
-            const notes = e.isPeriod ? (e.label || '') : (e.info || '');
-            const dayIndex = new Date(e.date).getDay();
-            const expected = e.expected !== undefined ? e.expected : (data.settings?.hours?.[dayIndex] || 8);
-            const diffHours = e.diff !== undefined ? e.diff : ((e.worked || 0) - expected);
-            const diffSign = diffHours >= 0 ? '+' : '';
-            const diffColor = diffHours > 0 ? '#10b981' : (diffHours < 0 ? '#ef4444' : '#6b7280');
-            const isWorkRelevant = countsAsWork2(e.type);
-            const diffHtml = isWorkRelevant
-                ? `<div style="font-weight:600; color:${diffColor}; font-size:0.9rem; min-width:50px; text-align:right;">${diffSign}${diffHours.toFixed(1)}h</div>`
-                : `<div style="font-weight:500; color:#64748b; font-size:0.9rem; min-width:50px; text-align:right;" title="Zählt nicht in die Arbeitszeit-Bilanz">—</div>`;
-
-            return `
-                <div class="activity-item type-${e.type}" data-entry-id="${e.id}" style="cursor: pointer;">
-                    <div class="activity-card-header">
-                        <span class="activity-icon">${icon}</span>
-                        <div class="activity-header-info">
-                            <span class="activity-type-label">${label}</span>
-                            <span class="activity-time">${relTime}</span>
-                        </div>
-                        ${diffHtml}
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-main">${e.isPeriod ? esc(e.label || 'Periode') : esc(e.info || 'Arbeitszeit')}</div>
-                        <div class="activity-details">
-                            <span class="activity-hours">⏱️ ${e.worked.toFixed(2)}h</span>
-                            ${e.project ? `<span class="activity-project">📌 ${esc(e.project)}</span>` : ''}
-                            ${notes && !e.isPeriod ? `<div class="activity-note">"${esc(notes)}"</div>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-        };
 
         const activities = window.activityDayTabs.entriesByDate[date] || [];
         trackEl.innerHTML = activities.map(createActivityCard).join('');
@@ -685,7 +597,6 @@
         const dashMap = { solid: '', dashed: '8 6', dotted: '1 7' };
         const dashArr = dashMap[chartStyle.lineStyle] || '';
         const isSolidLine = !dashArr;
-        const typeEmojis = { work: '💼', school: '📚', vacation: '🌴', gleittag: '⚡', sick: '💊', holiday: '🏖️' };
 
         // Datenpunkte – nur wenn aktiviert (dots-Toggle)
         let dotsHtml = '';
@@ -778,10 +689,9 @@
                     const d = new Date(dp.date);
                     const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
                     const dateStr = dayNames[d.getDay()] + ', ' + d.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-                    const dpInfo = (typeof getEntryTypeInfo === 'function') ? getEntryTypeInfo(dp.type) : null;
-                    const typeLabel = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', gleittag: 'Gleittag', sick: 'Krank', holiday: 'Feiertag', korrektur: 'Korrektur' };
-                    const emoji = (dpInfo && dpInfo.emoji) || typeEmojis[dp.type] || (String(dp.type).startsWith('custom-') ? '📌' : '📋');
-                    
+                    const typeIcon  = (typeof getTypeIconHTML === 'function') ? getTypeIconHTML(dp.type, 13) : '';
+                    const typeName  = (typeof getTypeLabel === 'function') ? getTypeLabel(dp.type) : dp.type;
+
                     // Streak info
                     let streak = 0;
                     const isPos = dp.diff >= 0;
@@ -795,8 +705,8 @@
                         <div class="tt-row"><span class="tt-label">Saldo</span><span class="tt-val ${val >= 0 ? 'tt-positive' : 'tt-negative'}">${val >= 0 ? '+' : ''}${val.toFixed(2)}h</span></div>
                         <div class="tt-row"><span class="tt-label">Tages-Diff</span><span class="tt-val ${dp.diff >= 0 ? 'tt-positive' : 'tt-negative'}">${dp.diff >= 0 ? '+' : ''}${dp.diff.toFixed(2)}h</span></div>
                         <div class="tt-row"><span class="tt-label">Gearbeitet</span><span class="tt-val">${dp.worked.toFixed(1)}h</span></div>
-                        <div class="tt-row"><span class="tt-label">Streak</span><span class="tt-val">${streak}× ${isPos ? '✅' : '⚠️'}</span></div>
-                        <div style="margin-top:4px;"><span class="tt-type-badge">${emoji} ${typeLabel[dp.type] || dp.type}</span></div>
+                        <div class="tt-row"><span class="tt-label">Streak</span><span class="tt-val">${streak}× ${isPos ? TT_ICON_OK : TT_ICON_WARN}</span></div>
+                        <div style="margin-top:4px;"><span class="tt-type-badge" style="--type-rgb:${(typeof getTypeRgb === 'function') ? getTypeRgb(dp.type) : 'var(--primary-rgb)'}">${typeIcon} ${esc(typeName)}</span></div>
                     `;
                     
                     // Position tooltip
@@ -1542,16 +1452,6 @@
         return colors[type] || '#666';
     }
     
-    function getTypeEmoji(type) {
-        const emojis = {
-            'work': '💼',
-            'school': '📚',
-            'vacation': '🌴',
-            'gleittag': '⚡',
-            'sick': '💊',
-            'holiday': '🏖️',
-            'reset': '❌'
-        };
-        return emojis[type] || '?';
-    }
-    
+    // getTypeEmoji() stand hier als zweite, veraltete Kopie (sick: 💊 statt 🤒) und wurde
+    // beim Laden von custom-types-fields.js ohnehin überschrieben. Icons kommen jetzt aus
+    // getTypeIconHTML()/getTypeIconTile() dort.
