@@ -296,6 +296,15 @@
     [/Konsistenz-Score/g, 'Consistency score'],
     [/Deine produktivste Woche/g, 'Your most productive week'],
     [/Jahresende Prognose/g, 'Year-end forecast'],
+    // Begruessung im Dashboard-Kopf (weather.js updateGreetingWeather).
+    // Muss eine Regel sein, kein MAP-Eintrag: der Nutzername haengt im selben
+    // Textknoten ("Guten Abend, Sven") und darf natuerlich nicht angefasst werden.
+    [/\bGuten Morgen\b/g, 'Good morning'],
+    [/\bGuten Vormittag\b/g, 'Good morning'],
+    [/\bGuten Nachmittag\b/g, 'Good afternoon'],
+    [/\bGuten Abend\b/g, 'Good evening'],
+    [/\bGute Nacht\b/g, 'Good night'],
+    [/\bWetter anzeigen\b/g, 'Show weather'],
     // Relative Zeitangaben (utils.js formatRelativeTime & Co.)
     [/\bvor (\d+) Sekunden?\b/g, '$1s ago'],
     [/\bvor (\d+) Min\.?\b/g, '$1 min ago'],
