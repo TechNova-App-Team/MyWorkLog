@@ -245,6 +245,19 @@ function cmdRender(src, enJsonPath, outHtml, canonicalEn, canonicalDe, phrasesPa
     if (v && m) m.setAttribute('content', v);
   }
 
+  // Structured Data: JSON-LD steht in <script> und wird vom Walk uebersprungen
+  // (SKIP_TAGS). Ein Block mit data-ld-id="faq" laesst sich deshalb ueber
+  // "__jsonLd": { "faq": { … } } in den Overrides gegen die englische Fassung
+  // tauschen. Ohne __jsonLd bleibt alles unveraendert.
+  const ldOverrides = getDeep(en, '__jsonLd');
+  if (ldOverrides && typeof ldOverrides === 'object') {
+    doc.querySelectorAll('script[type="application/ld+json"][data-ld-id]').forEach((s) => {
+      const val = ldOverrides[s.getAttribute('data-ld-id')];
+      if (val === undefined || val === null) return;
+      s.textContent = typeof val === 'string' ? val : JSON.stringify(val, null, 2);
+    });
+  }
+
   // Canonical + og:url → englische URL
   if (canonicalEn) {
     upsertLink(doc, 'link[rel="canonical"]', { rel: 'canonical', href: canonicalEn });
