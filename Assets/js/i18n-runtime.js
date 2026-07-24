@@ -81,6 +81,33 @@
     'Perfekter Tag.': 'Perfect day.',
     'Alles erledigt.': 'All done.',
 
+    // ─── Sidebar- und Command-Palette-Labels ───
+    // Die Sidebar wird aus data.settings.nav gerendert, die Labels liegen also
+    // in den NUTZERDATEN und nicht im HTML — die statische Pipeline kann sie
+    // gar nicht sehen. Deshalb hier.
+    'Verlauf': 'History',
+    'Fahrtkosten': 'Commuting costs',
+    'Jahresansicht': 'Year view',
+    'Monatsansicht': 'Month view',
+    'Monatvergleich': 'Month comparison',
+    'Neu': 'New',
+    'Anleitung / Tour': 'Guide / tour',
+    'Untis Import': 'Untis import',
+    'Aufgaben Manager': 'Task manager',
+    'Aufgaben (Dashboard)': 'Tasks (dashboard)',
+    'Skill-Baum': 'Skill tree',
+    'Ausbildungshilfe': 'Apprenticeship help',
+    'Vertrags-Manager': 'Contract manager',
+    'Repo-Analyse': 'Repo analysis',
+    'Backup / Export': 'Backup / export',
+
+    // ─── Saldo-Trend-Karte (charts.js renderTrend: Richtung + Volatilitaet) ───
+    'Steigend': 'Rising', 'Fallend': 'Falling', 'Stabil': 'Stable',
+    'Leicht ↑': 'Slightly ↑', 'Leicht ↓': 'Slightly ↓',
+    'Positiv': 'Positive', 'Negativ': 'Negative',
+    'Niedrig': 'Low', 'Mittel': 'Medium', 'Hoch': 'High',
+    // ─── Urlaubs-KPI (dashboard-ui.js) ───
+    'Urlaubsstunden': 'Vacation hours',
     // ─── Settings: Typ-/Feld-Manager und Cloud-Tab (JS-gerendert) ───
     'Noch keine abgeschlossenen Jahre vorhanden.': 'No completed years yet.',
     'Deine Typen': 'Your types',
@@ -305,6 +332,44 @@
     [/\bGuten Abend\b/g, 'Good evening'],
     [/\bGute Nacht\b/g, 'Good night'],
     [/\bWetter anzeigen\b/g, 'Show weather'],
+    // Eintrag-Info-Texte: von der App erzeugt und im Eintrag gespeichert
+    // (e.info), tauchen in Historie, Tooltips und Detail-Ansicht auf.
+    [/\bManuell \(/g, 'Manual ('],
+    [/\bKrankmeldung\b/g, 'Sick note'],
+    [/\bKrankheit\b/g, 'Sickness'],
+    [/\bUrlaubstag\b/g, 'Vacation day'],
+    [/\bBerufsschule - /g, 'Vocational school – '],
+    [/([\d.,]+)h Unterricht → ([\d.,]+)h angerechnet/g, '$1h of lessons → $2h credited'],
+    [/\bUngerade\b/g, 'odd week'],
+    [/\bGerade\b/g, 'even week'],
+    [/inkl\. ([\d.,]+) Übertrag aus Vorjahr/g, 'incl. $1 carried over from last year'],
+    [/([\d.,]+h) ungenutzt/g, '$1 unused'],
+    [/Ø ([\d.,]+)h gearbeitet um/g, 'avg. $1h worked at'],
+    [/\bHoch: /g, 'High: '],
+    [/\bTief: /g, 'Low: '],
+    [/\(Vormonat\)/g, '(previous month)'],
+    [/\(Aktuell\)/g, '(current)'],
+    [/\bAktuelle Streak\b/g, 'Current streak'],
+    [/\bGearbeitet\b/g, 'Worked'],
+    [/\bArbeitstage\b/g, 'Working days'],
+    [/\bFortschritt\b/g, 'Progress'],
+    [/\bWochenende\b/g, 'Weekend'],
+    [/\bSupport & Community\b/g, 'Support & community'],
+    [/\bAktualisieren\b/g, 'Refresh'],
+    [/(\w{2}): Eingetragen/g, '$1: logged'],
+    [/⚠️ Leicht negativ/g, '⚠️ Slightly negative'],
+    [/\bLeicht positiv\b/g, 'Slightly positive'],
+    [/\bSehr positiv\b/g, 'Very positive'],
+    [/\bUnbekannt\b/g, 'Unknown'],
+    // Wochentage und Monate auch INNERHALB laengerer Texte ("Berufsschule -
+    // Mittwoch (…)", "Juni (Vormonat)"). Eindeutig deutsch, koennen also nicht
+    // versehentlich englischen Text treffen — deshalb hier statt in WORD_RULES.
+    [/\bMontag\b/g, 'Monday'], [/\bDienstag\b/g, 'Tuesday'], [/\bMittwoch\b/g, 'Wednesday'],
+    [/\bDonnerstag\b/g, 'Thursday'], [/\bFreitag\b/g, 'Friday'],
+    [/\bSamstag\b/g, 'Saturday'], [/\bSonntag\b/g, 'Sunday'],
+    [/\bJanuar\b/g, 'January'], [/\bFebruar\b/g, 'February'], [/\bMärz\b/g, 'March'],
+    [/\bJuni\b/g, 'June'], [/\bJuli\b/g, 'July'], [/\bOktober\b/g, 'October'],
+    [/\bDezember\b/g, 'December'],
     // Relative Zeitangaben (utils.js formatRelativeTime & Co.)
     [/\bvor (\d+) Sekunden?\b/g, '$1s ago'],
     [/\bvor (\d+) Min\.?\b/g, '$1 min ago'],
@@ -350,7 +415,13 @@
       'Update still loading: app $1, active SW $2. They line up after a short wait or a reload.'],
     // Wochen-/Monats-Labels
     [/\bWoche (\d+)\b/g, 'Week $1'],
-    [/\bKW (\d+)\b/g, 'CW $1'],
+    [/\bKW ?(\d+)\b/g, 'CW $1'],
+    [/● Aktiv\b/g, '● Active'],
+    [/\b1\. Weihnachtstag\b/g, 'Christmas Day'],
+    [/\b2\. Weihnachtstag\b/g, 'Boxing Day'],
+    [/\b(\d+) Krankheitstage?\b/g, '$1 sick days'],
+    [/\b(\d+) Urlaubstage?\b/g, '$1 vacation days'],
+    [/\b(\d+) Feiertage?\b/g, '$1 public holidays'],
     [/\b(\d+) Monate aktiv\b/g, '$1 months active'],
     [/\b(\d+) Monate\b/g, '$1 months'],
     [/\bGesamt \((\d+) J\.\)/g, 'Total ($1 yrs)'],
