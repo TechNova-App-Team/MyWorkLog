@@ -57,6 +57,40 @@
         return (info && info.color) || '#888';
     }
 
+    // ═══ Typ-Icons (Lucide-Style SVG) ═══
+    // Die Emojis der DEFAULT_ENTRY_TYPES bleiben im Datenmodell (Export, Alt-Daten,
+    // Emoji-Picker im Typ-Manager) — in der UI zeichnen wir aber SVG. Pfade sind
+    // konstante Literale, deshalb via innerHTML unbedenklich.
+    const TYPE_ICON_PATHS = {
+        work:      '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+        school:    '<path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12.5V17c0 1.66 2.69 3 6 3s6-1.34 6-3v-4.5"/><path d="M22 10v6"/>',
+        vacation:  '<path d="M22 12a10 10 0 0 0-20 0Z"/><path d="M12 12v7a2 2 0 0 0 4 0"/><path d="M12 2v2"/>',
+        gleittag:  '<path d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z"/>',
+        sick:      '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
+        holiday:   '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>',
+        korrektur: '<path d="M12 3v18"/><path d="M3 7h3c2 0 4-1 6-2 2 1 4 2 6 2h3"/><path d="m6 7-3 7h6Z"/><path d="m18 7-3 7h6Z"/><path d="M7 21h10"/>',
+        _fallback: '<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><circle cx="7.5" cy="7.5" r="1"/>'
+    };
+
+    function getTypeIconSvg(typeId, size) {
+        const paths = TYPE_ICON_PATHS[typeId] || TYPE_ICON_PATHS._fallback;
+        const s = size || 16;
+        return `<svg class="type-icon" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" `
+             + `stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+    }
+
+    // Icon fürs Eintrags-UI. Ein Emoji kommt nur dann zurück, wenn der User selbst
+    // eins gesetzt hat (eigener Typ oder Override) — das ist Nutzer-DATEN, kein UI-Icon.
+    // Alles andere zeichnet SVG.
+    function getTypeIconHTML(typeId, size) {
+        const info = getEntryTypeInfo(typeId);
+        const userEmoji = isDefaultType(typeId)
+            ? (((data && data.entryTypeOverrides) || {})[typeId] || {}).emoji
+            : (info && info.emoji);
+        if (userEmoji) return `<span class="type-icon type-icon--emoji" aria-hidden="true">${esc(userEmoji)}</span>`;
+        return getTypeIconSvg(typeId, size);
+    }
+
     // ═══ Override CRUD für Standard-Typen ═══
     function setDefaultTypeOverride(id, updates) {
         if (!isDefaultType(id)) return false;
@@ -953,11 +987,18 @@
         types.forEach(t => {
             const opt = document.createElement('option');
             opt.value = t.id;
-            const cleanLabel = String(t.label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim() || t.label || t.id;
-            opt.textContent = `${t.emoji || ''} ${cleanLabel}`.trim();
+            // Kein Emoji-Prefix: das Icon zeichnet der Typ-Picker als SVG.
+            opt.textContent = ctCleanLabel(t.label, t.id);
             sel.appendChild(opt);
         });
         if (types.some(t => t.id === previousValue)) sel.value = previousValue;
+        if (typeof renderEntryTypePicker === 'function') renderEntryTypePicker();
+    }
+
+    // Entfernt ein evtl. vorangestelltes Emoji aus einem Typ-Label.
+    function ctCleanLabel(label, fallback) {
+        return String(label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim()
+            || String(label || '').trim() || fallback || '';
     }
 
     // ═══ Affected UI Refresh ═══

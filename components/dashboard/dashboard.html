@@ -333,7 +333,9 @@
 
                             <!-- Setup hint for new users (hidden by default, shown via JS) -->
                             <div id="setupHintBanner" class="setup-hint-banner" style="display:none;">
-                                <div class="setup-hint-icon">⚙️</div>
+                                <div class="setup-hint-icon" aria-hidden="true">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                </div>
                                 <div class="setup-hint-content">
                                     <div class="setup-hint-title">Einrichtung empfohlen</div>
                                     <div class="setup-hint-text">Damit die App deine Stunden korrekt berechnet, richte bitte deine <strong>Arbeitszeiten</strong> und <strong>Schultage</strong> in den Einstellungen ein.</div>
@@ -357,20 +359,33 @@
                                 <label class="entry-form__label" for="inpDate">Datum &amp; Typ</label>
                                 <div class="entry-form__row">
                                     <input type="date" id="inpDate" class="glass-input" aria-label="Datum" onchange="if(typeof updateBreakPlaceholder==='function')updateBreakPlaceholder()">
-                                    <select id="inpType" class="glass-select" onchange="toggleTimeInputs();if(typeof renderEntryCustomFields==='function')renderEntryCustomFields()" aria-label="Eintragstyp">
-                                        <option value="work">Arbeit</option>
-                                        <option value="school">Berufsschule</option>
-                                        <option value="vacation">Urlaub</option>
-                                        <option value="gleittag">Gleittag</option>
-                                        <option value="sick">Krank</option>
-                                    </select>
+                                    <!-- Typ-Picker: das native <select> bleibt Wert-Quelle (alle .value-Zugriffe),
+                                         sichtbar ist die Listbox darüber — nur die kann SVG-Icons zeigen. -->
+                                    <div class="type-picker" id="entryTypePicker">
+                                        <select id="inpType" class="glass-select type-picker__native" onchange="toggleTimeInputs();if(typeof renderEntryCustomFields==='function')renderEntryCustomFields()" aria-label="Eintragstyp" tabindex="-1">
+                                            <option value="work">Arbeit</option>
+                                            <option value="school">Berufsschule</option>
+                                            <option value="vacation">Urlaub</option>
+                                            <option value="gleittag">Gleittag</option>
+                                            <option value="sick">Krank</option>
+                                        </select>
+                                        <button type="button" class="type-picker__trigger" id="entryTypeTrigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="entryTypeList" aria-label="Eintragstyp">
+                                            <span class="type-picker__icon" id="entryTypeIcon" aria-hidden="true"></span>
+                                            <span class="type-picker__value" id="entryTypeLabel">Arbeit</span>
+                                            <svg class="type-picker__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                                        </button>
+                                        <div class="type-picker__panel" id="entryTypeList" role="listbox" aria-label="Eintragstyp"></div>
+                                    </div>
                                 </div>
                             </div>
 
                             <div id="vacationMultiHint" style="display:none; margin: 6px 0 2px; padding: 12px 14px; border-radius: 12px; background: rgba(var(--primary-rgb), 0.06); border: 1px solid rgba(var(--primary-rgb), 0.18); align-items:center; gap:12px; flex-wrap:wrap;">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                                 <span style="font-size:0.82rem; color: var(--text-main); flex:1; min-width:0;">Mehrere Urlaubstage auf einmal — Wochenenden &amp; Feiertage werden automatisch übersprungen.</span>
-                                <button type="button" class="btn btn-primary" style="font-size:0.78rem; padding:8px 14px;" onclick="openVacationPicker('vacation')">📅 Mehrere Tage planen…</button>
+                                <button type="button" class="btn btn-primary entry-form__plan-btn" onclick="openVacationPicker('vacation')">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>
+                                    Mehrere Tage planen…
+                                </button>
                             </div>
 
                             <div class="entry-form__field">
