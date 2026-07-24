@@ -586,7 +586,7 @@
 
         html += `<div>
             <div class="untis-section-header">
-                <span class="untis-section-label">Heute — ${DAYS_FULL[now.getDay()]}, ${now.toLocaleDateString('de-DE',{day:'2-digit',month:'long'})}</span>
+                <span class="untis-section-label">Heute — ${DAYS_FULL[now.getDay()]}, ${now.toLocaleDateString(mwlLocale(),{day:'2-digit',month:'long'})}</span>
                 <div class="untis-section-line"></div>
             </div>
             <div class="untis-today-hero">${_currentCard(current, now)}${_nextCard(upcoming, now)}</div>
@@ -726,7 +726,7 @@
         const el = document.getElementById('untis-last-updated');
         if (!el) return;
         const now = new Date();
-        el.textContent = `Aktualisiert ${now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})}`;
+        el.textContent = `Aktualisiert ${now.toLocaleTimeString(mwlLocale(),{hour:'2-digit',minute:'2-digit'})}`;
     }
 
     // ════════════════════════════════════════════════════════════════════

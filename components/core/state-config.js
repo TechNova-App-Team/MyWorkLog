@@ -54,7 +54,7 @@
                 if (snap && snap.data && Array.isArray(snap.data.entries)) {
                     // Kaputten Key mit dem Backup heilen, damit der nächste Reload wieder sauber lädt
                     try { localStorage.setItem('tg_pro_data', JSON.stringify(snap.data)); } catch (_) {}
-                    window._mwlRecoveredFromBackup = snap.ts ? new Date(snap.ts).toLocaleString('de-DE') : 'unbekannt';
+                    window._mwlRecoveredFromBackup = snap.ts ? new Date(snap.ts).toLocaleString(mwlLocale()) : 'unbekannt';
                     console.warn('✅ Daten aus lokalem Backup wiederhergestellt (Stand: ' + window._mwlRecoveredFromBackup + ')');
                     return snap.data;
                 }

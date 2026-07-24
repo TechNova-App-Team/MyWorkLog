@@ -9,7 +9,7 @@
         const lbl = document.getElementById('wvWeekLabel');
         const rng = document.getElementById('wvDateRange');
         if (lbl) lbl.textContent = `KW ${kwNum} · ${monday.getFullYear()}`;
-        if (rng) rng.textContent = `${monday.toLocaleDateString('de-DE', {day:'2-digit',month:'short'})} – ${sunday.toLocaleDateString('de-DE', {day:'2-digit',month:'short',year:'numeric'})}`;
+        if (rng) rng.textContent = `${monday.toLocaleDateString(mwlLocale(), {day:'2-digit',month:'short'})} – ${sunday.toLocaleDateString(mwlLocale(), {day:'2-digit',month:'short',year:'numeric'})}`;
 
         const entries = getWeekEntries(monday);
         const tw = calcWeekStats(entries);
@@ -116,7 +116,7 @@
                 // Left: day label
                 html += `<div>
                     <div class="wv-day-name">${dayNames[i]}</div>
-                    <div class="wv-day-date">${dayDate.toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}</div>
+                    <div class="wv-day-date">${dayDate.toLocaleDateString(mwlLocale(), {day:'2-digit', month:'2-digit'})}</div>
                 </div>`;
 
                 if (entry) {

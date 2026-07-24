@@ -375,7 +375,7 @@
                             <div style="font-weight:600; color:${diffColor}; font-size:0.9rem;">${diffSign}${diffHours.toFixed(1)}h</div>
                         </div>
                         <div style="font-size:0.8rem; color:var(--text-muted);">
-                            ${new Date(entry.date).toLocaleDateString('de-DE')} • ${entry.worked.toFixed(1)}h • ${entry.type}
+                            ${new Date(entry.date).toLocaleDateString(mwlLocale())} • ${entry.worked.toFixed(1)}h • ${entry.type}
                         </div>
                     </div>
                 `;

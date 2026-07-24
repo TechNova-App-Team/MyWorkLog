@@ -633,6 +633,12 @@
                 fetch('/config/version.json', { cache: 'no-cache' })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
+                        /* Auf /en/ die englische Fassung nehmen, wenn sie fuer die
+                           jeweilige Version gepflegt ist — sonst faellt jeder
+                           einzelne Eintrag auf den deutschen Text zurueck.
+                           So bricht eine fehlende Uebersetzung nie die Liste. */
+                        var isEN = document.documentElement.lang === 'en';
+                        var clEN = (isEN && data && data.changelog_en) || null;
                         var cl = data && data.changelog;
                         if (!cl || typeof cl !== 'object') { host.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">Keine Änderungshistorie verfügbar.</div>'; return; }
                         var versions = Object.keys(cl).sort(function(a, b) { return clCmpVer(b, a); });
@@ -640,7 +646,7 @@
                         var html = versions.slice(0, MAX).map(function(v, i) {
                             var accent = accents[i % accents.length];
                             var bg = bgs[i % bgs.length];
-                            var text = String(cl[v] || '').trim();
+                            var text = String((clEN && clEN[v]) || cl[v] || '').trim();
                             /* Erster Satz = Titel (falls kurz genug), Rest = Detail */
                             var title = 'Version ' + v, body = text;
                             var dot = text.indexOf('. ');

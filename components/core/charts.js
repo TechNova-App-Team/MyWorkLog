@@ -42,7 +42,7 @@
         const diffDays = Math.round((now - d) / (1000*60*60*24));
         if (diffDays > 0 && diffDays <= 7) return `vor ${diffDays}d`;
         if (diffDays > 7 && diffDays <= 14) return 'letzte Woche';
-        return d.toLocaleDateString('de-DE');
+        return d.toLocaleDateString(mwlLocale());
     }
 
     // ═══ ACTIVITY DAY TABS STATE ═══
@@ -79,7 +79,7 @@
         if (diffHours < 24) return `vor ${diffHours}h`;
         if (diffDays === 1) return 'gestern';
         if (diffDays < 7) return `vor ${diffDays}d`;
-        return d.toLocaleDateString('de-DE', { month: 'short', day: 'numeric' });
+        return d.toLocaleDateString(mwlLocale(), { month: 'short', day: 'numeric' });
     }
 
     function createActivityCard(e) {
@@ -160,7 +160,7 @@
         // Render day tabs
         const dayTabsHtml = uniqueDates.map((date, idx) => {
             const dateObj = new Date(date + 'T00:00:00');
-            const dayName = dateObj.toLocaleDateString('de-DE', {weekday:'short'}).toUpperCase();
+            const dayName = dateObj.toLocaleDateString(mwlLocale(), {weekday:'short'}).toUpperCase();
             const dayNum = dateObj.getDate();
             const isActive = idx === 0 ? 'active' : '';
             return `
@@ -472,14 +472,14 @@
                 let lastLabel = '';
                 for (let i = 0; i < subset.length; i += step) {
                     const d = new Date(subset[i].date);
-                    const label = d.toLocaleDateString('de-DE', dateFormat);
+                    const label = d.toLocaleDateString(mwlLocale(), dateFormat);
                     if (label !== lastLabel) {
                         xHtml += `<span>${label}</span>`;
                         lastLabel = label;
                     }
                 }
                 // Always show last date
-                const lastLabel2 = lastDate.toLocaleDateString('de-DE', dateFormat);
+                const lastLabel2 = lastDate.toLocaleDateString(mwlLocale(), dateFormat);
                 if (lastLabel !== lastLabel2) {
                     xHtml += `<span>${lastLabel2}</span>`;
                 }
@@ -688,7 +688,7 @@
                     
                     const d = new Date(dp.date);
                     const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
-                    const dateStr = dayNames[d.getDay()] + ', ' + d.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+                    const dateStr = dayNames[d.getDay()] + ', ' + d.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'long', year: 'numeric' });
                     const typeIcon  = (typeof getTypeIconHTML === 'function') ? getTypeIconHTML(dp.type, 13) : '';
                     const typeName  = (typeof getTypeLabel === 'function') ? getTypeLabel(dp.type) : dp.type;
 

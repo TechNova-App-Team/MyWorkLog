@@ -14,8 +14,8 @@
     <link rel="alternate" hreflang="de" href="https://myworklog.de/vertrags-manager/">
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/vertrags-manager/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/vertrags-manager/">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=4.1.28"></script>
-    <script defer src="/Assets/js/version-loader.js?v=4.1.28"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=4.1.29"></script>
+    <script defer src="/Assets/js/version-loader.js?v=4.1.29"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -909,7 +909,7 @@
             color: var(--text-faint);
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=4.1.28"></script>
+    <script defer src="/Assets/js/ph-init.js?v=4.1.29"></script>
 </head>
 <body>
     <!-- Background -->
@@ -1592,7 +1592,7 @@
             document.getElementById('jobTitleHero').textContent = c ? (c.jobTitle || '—') : '—';
             if (c) {
                 const cy = getCurrentYear(c);
-                const salNow = (c.salaries[cy - 1] || 0).toLocaleString('de-DE');
+                const salNow = (c.salaries[cy - 1] || 0).toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'));
                 const ended = c.endDate && new Date(c.endDate) < new Date();
                 document.getElementById('illuWeekly').textContent = c.weeklyHours + ' h';
                 document.getElementById('illuVacation').textContent = c.vacationDays + ' Tage';
@@ -1613,7 +1613,7 @@
             }
             const cy = getCurrentYear(c);
             const salary = c.salaries[cy - 1] || 0;
-            document.getElementById('currentSalaryDisplay').textContent = salary.toLocaleString('de-DE') + ' €';
+            document.getElementById('currentSalaryDisplay').textContent = salary.toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE')) + ' €';
             document.getElementById('weeklyHoursDisplay').textContent = c.weeklyHours + ' h';
             if (c.endDate) {
                 const months = Math.max(0, Math.floor((new Date(c.endDate) - new Date()) / (1000 * 60 * 60 * 24 * 30)));
@@ -1644,7 +1644,7 @@
                 return `<div class="tl-item ${done ? 'done' : ''}">
                     <div class="tl-head"><span class="tl-year">${y}. Ausbildungsjahr</span>${badge}</div>
                     <div class="tl-cols">
-                        <div><div class="tl-detail-lbl">Gehalt / Monat</div><div class="tl-detail-val">${(c.salaries[i] || 0).toLocaleString('de-DE')} €</div></div>
+                        <div><div class="tl-detail-lbl">Gehalt / Monat</div><div class="tl-detail-val">${(c.salaries[i] || 0).toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'))} €</div></div>
                         <div><div class="tl-detail-lbl">Status</div><div class="tl-detail-val">${done ? 'Abgeschlossen' : active ? 'Läuft' : 'Ausstehend'}</div></div>
                     </div>
                 </div>`;
@@ -1663,11 +1663,11 @@
                 Array.from({ length: years }, (_, i) => `
                     <div class="data-cell">
                         <div class="data-cell-lbl">${i + 1}. Jahr</div>
-                        <div class="data-cell-val">${(c.salaries[i] || 0).toLocaleString('de-DE')} €</div>
+                        <div class="data-cell-val">${(c.salaries[i] || 0).toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'))} €</div>
                     </div>`).join('') +
                 `<div class="data-cell">
                     <div class="data-cell-lbl">Gesamt (${dur} J.)</div>
-                    <div class="data-cell-val accent">${total.toLocaleString('de-DE')} €</div>
+                    <div class="data-cell-val accent">${total.toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'))} €</div>
                 </div>`;
         }
 
@@ -1756,8 +1756,8 @@
 
         function updateDetails(c) {
             const company = c ? (c.company || '—') : '—';
-            const start = c && c.startDate ? new Date(c.startDate).toLocaleDateString('de-DE') : '—';
-            const end = c && c.endDate ? new Date(c.endDate).toLocaleDateString('de-DE') : '—';
+            const start = c && c.startDate ? new Date(c.startDate).toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE')) : '—';
+            const end = c && c.endDate ? new Date(c.endDate).toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE')) : '—';
             document.getElementById('contractDetailsPanel').innerHTML = `
                 <div class="detail-row"><span class="detail-lbl">Unternehmen</span><span class="detail-val" title="${esc(company)}">${esc(company)}</span></div>
                 <div class="detail-row"><span class="detail-lbl">Start</span><span class="detail-val">${start}</span></div>

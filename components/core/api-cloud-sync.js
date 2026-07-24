@@ -296,7 +296,7 @@
             }
             
             // Last checked
-            document.getElementById('apiLastChecked').textContent = 'Zuletzt geprüft: ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('apiLastChecked').textContent = 'Zuletzt geprüft: ' + new Date().toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' });
         }
     };
     

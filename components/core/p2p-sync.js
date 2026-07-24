@@ -145,7 +145,7 @@
     function p2pLog(msg) {
         const logEl = document.getElementById('p2pLogContent');
         if (!logEl) return;
-        const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const time = new Date().toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const line = document.createElement('div');
         line.style.marginBottom = '3px';
         line.textContent = `[${time}] ${msg}`;
@@ -198,7 +198,7 @@
         if (p2pSync.lastSyncTime && lastSyncEl) {
             lastSyncEl.style.display = '';
             const timeEl = document.getElementById('p2pLastSyncTime');
-            if (timeEl) timeEl.textContent = new Date(p2pSync.lastSyncTime).toLocaleString('de-DE');
+            if (timeEl) timeEl.textContent = new Date(p2pSync.lastSyncTime).toLocaleString(mwlLocale());
         }
     }
 

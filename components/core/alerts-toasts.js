@@ -114,7 +114,7 @@
                 el.textContent = 'Noch kein Backup erstellt';
             } else {
                 const d = new Date(last);
-                el.textContent = d.toLocaleString('de-DE');
+                el.textContent = d.toLocaleString(mwlLocale());
             }
         } catch (e) { console.warn('updateAlertExportInfo failed', e); }
     }
@@ -142,7 +142,7 @@
     
     function checkAlertsThresholds() {
         const now = new Date();
-        const today = now.toLocaleDateString('de-DE');
+        const today = now.toLocaleDateString('de-DE');  // bewusst fix: dient als Dedup-Schluessel, darf nicht mit der Sprache wechseln
         let newAlertsCreated = false;
         
         // 1. Prüfe positives Saldo
@@ -403,8 +403,8 @@
             message: message,
             type: severity,
             icon: icon,
-            date: new Date().toLocaleDateString('de-DE'),
-            time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+            date: new Date().toLocaleDateString(mwlLocale()),
+            time: new Date().toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' }),
             timestamp: Date.now(),
             isRead: false
         };

@@ -128,7 +128,7 @@
     function showModernPermanentDeleteConfirm(entry, trashIndex) {
         const label = (typeof getTypeLabel === 'function') ? getTypeLabel(entry.type) : entry.type;
         const icon  = (typeof getTypeIconHTML === 'function') ? getTypeIconHTML(entry.type, 30) : '';
-        const dateStr = new Date(entry.date + 'T00:00:00').toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'2-digit'});
+        const dateStr = new Date(entry.date + 'T00:00:00').toLocaleDateString(mwlLocale(), {day:'2-digit', month:'2-digit', year:'2-digit'});
 
         const overlay = document.createElement('div');
         overlay.className = 'delete-permanent-overlay';

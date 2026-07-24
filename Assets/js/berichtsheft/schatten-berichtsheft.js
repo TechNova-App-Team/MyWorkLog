@@ -1,3 +1,9 @@
+// Locale-Helfer: diese Datei laeuft auf einer Standalone-Seite ohne utils.js.
+// Faellt auf die globale Funktion zurueck, wenn sie doch vorhanden ist.
+var mwlLocale = window.mwlLocale || function () {
+    return document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE';
+};
+
 // ═══════════════════════════════════════════════════════
 //  SCHATTEN-BERICHTSHEFT — AES-256-GCM ENCRYPTED VAULT
 // ═══════════════════════════════════════════════════════
@@ -462,8 +468,8 @@ function buildProtocol(exportEntries) {
     lines.push('  Vertrauliches Dokumentationsprotokoll');
     lines.push('═══════════════════════════════════════════════');
     lines.push('');
-    lines.push('Erstellt am: ' + now.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' }));
-    lines.push('Uhrzeit:     ' + now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }));
+    lines.push('Erstellt am: ' + now.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'long', year: 'numeric' }));
+    lines.push('Uhrzeit:     ' + now.toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' }));
     lines.push('Einträge:    ' + exportEntries.length);
     if (exportEntries.length > 0) {
         const dates = exportEntries.map(e => e.date).sort();
@@ -564,7 +570,7 @@ function exportAsPDF() {
     html += '</style></head><body>';
 
     html += '<h1>IHK-Beschwerde-Protokoll</h1>';
-    html += '<div class="meta">Erstellt: ' + now.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' }) + ' um ' + now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr</div>';
+    html += '<div class="meta">Erstellt: ' + now.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'long', year: 'numeric' }) + ' um ' + now.toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' }) + ' Uhr</div>';
 
     // Summary
     const dates = exportEntries.map(e => e.date).sort();
@@ -634,7 +640,7 @@ function escapeHtml(str) {
 
 function formatDate(dateStr) {
     try {
-        return new Date(dateStr + 'T00:00:00').toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return new Date(dateStr + 'T00:00:00').toLocaleDateString(mwlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
     } catch(e) { return dateStr; }
 }
 

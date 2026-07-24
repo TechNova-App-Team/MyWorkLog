@@ -75,7 +75,7 @@
           if(!start) start=ts;
           var p=Math.min((ts-start)/dur,1);
           var ease=1-Math.pow(1-p,3);
-          el.textContent=Math.floor(ease*target).toLocaleString('de-DE');
+          el.textContent=Math.floor(ease*target).toLocaleString(mwlLocale());
           if(p<1) requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);

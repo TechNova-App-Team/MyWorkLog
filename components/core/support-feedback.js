@@ -286,7 +286,7 @@
     function buildFeedbackData(message, rating) {
         const emojis = ['—', '😞', '😕', '😐', '😊', '🤩'];
         const userName = data.settings.name || 'Anonym';
-        const dateStr = new Date().toLocaleString('de-DE');
+        const dateStr = new Date().toLocaleString(mwlLocale());
 
         if (feedbackDataMode === 'full') {
             const stats = gatherAppStats();

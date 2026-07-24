@@ -205,7 +205,7 @@
         // Für jeden Monat
         for (let month = 0; month < 12; month++) {
             const monthDate = new Date(year, month, 1);
-            const monthName = monthDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+            const monthName = monthDate.toLocaleDateString(mwlLocale(), { month: 'long', year: 'numeric' });
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             
             html += `<div>
@@ -317,7 +317,7 @@
         const maxMonth = Math.max(...Object.values(yearStats.daysByMonth).map(m => m.worked));
         const bestMonth = Object.entries(yearStats.daysByMonth).find(([_, m]) => m.worked === maxMonth);
         if (bestMonth) {
-            const monthName = new Date(year, parseInt(bestMonth[0]), 1).toLocaleDateString('de-DE', { month: 'long' });
+            const monthName = new Date(year, parseInt(bestMonth[0]), 1).toLocaleDateString(mwlLocale(), { month: 'long' });
             insights.push({
                 icon: '🏆',
                 title: 'Dein stärkster Monat',

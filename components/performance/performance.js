@@ -49,7 +49,7 @@
         for (let i = 0; i < 12; i++) {
             const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
-            monthlyTrend[monthKey] = { diff: 0, label: monthDate.toLocaleDateString('de-DE', { month: 'short', year: '2-digit' }) };
+            monthlyTrend[monthKey] = { diff: 0, label: monthDate.toLocaleDateString(mwlLocale(), { month: 'short', year: '2-digit' }) };
         }
         
         data.entries.forEach(e => {

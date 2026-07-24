@@ -173,7 +173,7 @@
             apCharts.overviewSaldo = new Chart(ctx1.getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: last30.map(function(e){ var dt = new Date(e.date); return dt.toLocaleDateString('de-DE', {day:'2-digit', month:'short'}); }),
+                    labels: last30.map(function(e){ var dt = new Date(e.date); return dt.toLocaleDateString(mwlLocale(), {day:'2-digit', month:'short'}); }),
                     datasets: [{
                         label: 'Saldo',
                         data: last30.map(function(e){ return parseFloat(e.saldo.toFixed(2)); }),
@@ -270,7 +270,7 @@
                 var iso = date.toISOString().split('T')[0];
                 var h = hoursMap[iso] || 0;
                 var level = h === 0 ? 0 : h < 4 ? 1 : h < 7 ? 2 : h < 9 ? 3 : 4;
-                html += '<div class="ap-heatmap-cell" data-level="' + level + '" title="' + date.toLocaleDateString('de-DE') + ': ' + h.toFixed(1) + 'h"></div>';
+                html += '<div class="ap-heatmap-cell" data-level="' + level + '" title="' + date.toLocaleDateString(mwlLocale()) + ': ' + h.toFixed(1) + 'h"></div>';
             }
         }
 
@@ -316,7 +316,7 @@
             apCharts.saldo = new Chart(ctx.getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: sliced.map(function(e){ return new Date(e.date).toLocaleDateString('de-DE', {day:'2-digit',month:'short'}); }),
+                    labels: sliced.map(function(e){ return new Date(e.date).toLocaleDateString(mwlLocale(), {day:'2-digit',month:'short'}); }),
                     datasets: [{
                         label: 'Kumulierter Saldo',
                         data: saldoData,
@@ -348,7 +348,7 @@
             apCharts.dailyDiff = new Chart(ctx2.getContext('2d'), {
                 type: 'bar',
                 data: {
-                    labels: sliced.map(function(e){ return new Date(e.date).toLocaleDateString('de-DE', {day:'2-digit',month:'short'}); }),
+                    labels: sliced.map(function(e){ return new Date(e.date).toLocaleDateString(mwlLocale(), {day:'2-digit',month:'short'}); }),
                     datasets: [{
                         label: 'Tages-Diff',
                         data: sliced.map(function(e){ return parseFloat((e.diff||0).toFixed(2)); }),
@@ -421,7 +421,7 @@
                 mdate.setDate(mdate.getDate() + w * 7);
                 var m = mdate.getMonth();
                 if (m !== lastMonth) {
-                    monthHtml += '<div style="font-size:0.6rem;color:' + d.textColor + ';text-align:center;">' + mdate.toLocaleDateString('de-DE',{month:'short'}) + '</div>';
+                    monthHtml += '<div style="font-size:0.6rem;color:' + d.textColor + ';text-align:center;">' + mdate.toLocaleDateString(mwlLocale(),{month:'short'}) + '</div>';
                     lastMonth = m;
                 } else {
                     monthHtml += '<div></div>';
@@ -436,7 +436,7 @@
                     var iso = date.toISOString().split('T')[0];
                     var h = hoursMap[iso] || 0;
                     var level = h === 0 ? 0 : h < 4 ? 1 : h < 7 ? 2 : h < 9 ? 3 : 4;
-                    html += '<div class="ap-heatmap-cell" data-level="' + level + '" title="' + date.toLocaleDateString('de-DE') + ': ' + h.toFixed(1) + 'h"></div>';
+                    html += '<div class="ap-heatmap-cell" data-level="' + level + '" title="' + date.toLocaleDateString(mwlLocale()) + ': ' + h.toFixed(1) + 'h"></div>';
                 }
             }
             html += '<div class="ap-heatmap-legend" style="grid-column: 1/-1;">Weniger ';
@@ -457,7 +457,7 @@
             apCharts.hoursPerDay = new Chart(ctx.getContext('2d'), {
                 type: 'bar',
                 data: {
-                    labels: last60.map(function(e){ return new Date(e.date).toLocaleDateString('de-DE', {day:'2-digit',month:'short'}); }),
+                    labels: last60.map(function(e){ return new Date(e.date).toLocaleDateString(mwlLocale(), {day:'2-digit',month:'short'}); }),
                     datasets: [{
                         label: 'Stunden',
                         data: last60.map(function(e){ return parseFloat((e.worked||0).toFixed(2)); }),
@@ -506,8 +506,8 @@
 
             statsEl.innerHTML =
                 '<div class="ap-kpi-row" style="margin:0;">' +
-                '<div class="ap-kpi"><div class="ap-kpi-value">' + maxStreak + '</div><div class="ap-kpi-label">Längster Streak</div><div class="ap-kpi-sub">' + (longestStart ? new Date(longestStart).toLocaleDateString('de-DE',{day:'2-digit',month:'short'}) + ' – ' + new Date(longestEnd).toLocaleDateString('de-DE',{day:'2-digit',month:'short'}) : '—') + '</div></div>' +
-                '<div class="ap-kpi"><div class="ap-kpi-value">' + maxHours.toFixed(1) + 'h</div><div class="ap-kpi-label">Rekord-Tag</div><div class="ap-kpi-sub">' + (maxEntry ? new Date(maxEntry.date).toLocaleDateString('de-DE') : '—') + '</div></div>' +
+                '<div class="ap-kpi"><div class="ap-kpi-value">' + maxStreak + '</div><div class="ap-kpi-label">Längster Streak</div><div class="ap-kpi-sub">' + (longestStart ? new Date(longestStart).toLocaleDateString(mwlLocale(),{day:'2-digit',month:'short'}) + ' – ' + new Date(longestEnd).toLocaleDateString(mwlLocale(),{day:'2-digit',month:'short'}) : '—') + '</div></div>' +
+                '<div class="ap-kpi"><div class="ap-kpi-value">' + maxHours.toFixed(1) + 'h</div><div class="ap-kpi-label">Rekord-Tag</div><div class="ap-kpi-sub">' + (maxEntry ? new Date(maxEntry.date).toLocaleDateString(mwlLocale()) : '—') + '</div></div>' +
                 '<div class="ap-kpi"><div class="ap-kpi-value">' + totalDays + '</div><div class="ap-kpi-label">Aktive Tage</div><div class="ap-kpi-sub">Einzigartige Tage</div></div>' +
                 '</div>';
         }
@@ -637,7 +637,7 @@
         var monthKeys = Object.keys(monthMap).sort();
         var monthLabels = monthKeys.map(function(k) {
             var parts = k.split('-');
-            return new Date(parseInt(parts[0]), parseInt(parts[1])-1).toLocaleDateString('de-DE', {month:'short', year:'2-digit'});
+            return new Date(parseInt(parts[0]), parseInt(parts[1])-1).toLocaleDateString(mwlLocale(), {month:'short', year:'2-digit'});
         });
 
         // Stacked bar chart
@@ -788,7 +788,7 @@
                 data: {
                     labels: allMonths.map(function(m) {
                         var parts = m.split('-');
-                        return new Date(parseInt(parts[0]), parseInt(parts[1])-1).toLocaleDateString('de-DE', {month:'short', year:'2-digit'});
+                        return new Date(parseInt(parts[0]), parseInt(parts[1])-1).toLocaleDateString(mwlLocale(), {month:'short', year:'2-digit'});
                     }),
                     datasets: top5.map(function(item, i) {
                         var name = item[0];
@@ -1373,7 +1373,7 @@
                         var ud = obj.userData;
                         var typeLabels = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', sick: 'Krank', holiday: 'Feiertag', gleittag: 'Gleittag' };
                         if (info) {
-                            info.innerHTML = '<b>' + ud.dayName + ', ' + new Date(ud.date).toLocaleDateString('de-DE') + '</b> &nbsp;|&nbsp; ' +
+                            info.innerHTML = '<b>' + ud.dayName + ', ' + new Date(ud.date).toLocaleDateString(mwlLocale()) + '</b> &nbsp;|&nbsp; ' +
                                 (typeLabels[ud.type] || ud.type) + ' &nbsp;|&nbsp; ' +
                                 ud.hours.toFixed(2) + 'h / ' + ud.expected.toFixed(2) + 'h &nbsp;|&nbsp; ' +
                                 '<span style="color:' + (ud.diff >= 0 ? '#22c55e' : '#ef4444') + ';">' + (ud.diff >= 0 ? '+' : '') + ud.diff.toFixed(2) + 'h</span>' +
@@ -2585,7 +2585,7 @@
                     var ud = hit.userData;
                     var typeLabels = {work:'Arbeit',school:'Schule',vacation:'Urlaub',sick:'Krank',holiday:'Feiertag',gleittag:'Gleittag'};
                     if(infoEl){
-                        infoEl.innerHTML = '<div class="apgx-info-row"><span class="apgx-info-date">' + ud.dayName + ', ' + new Date(ud.date).toLocaleDateString('de-DE') + '</span><span class="apgx-info-type">' + (typeLabels[ud.type]||ud.type) + '</span></div>' +
+                        infoEl.innerHTML = '<div class="apgx-info-row"><span class="apgx-info-date">' + ud.dayName + ', ' + new Date(ud.date).toLocaleDateString(mwlLocale()) + '</span><span class="apgx-info-type">' + (typeLabels[ud.type]||ud.type) + '</span></div>' +
                             '<div class="apgx-info-row"><span class="apgx-info-hours">' + ud.hours.toFixed(2)+'h / '+ud.expected.toFixed(2)+'h</span>' +
                             '<span class="apgx-info-diff" style="color:'+(ud.diff>=0?'#22c55e':'#ef4444')+'">'+(ud.diff>=0?'+':'')+ud.diff.toFixed(2)+'h</span>' +
                             (ud.project ? '<span class="apgx-info-project">'+safeHTML(ud.project)+'</span>' : '') +

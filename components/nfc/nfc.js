@@ -191,7 +191,7 @@ function nfcUpdateStatusView() {
 
     if (chipMetaEl && chipWritten) {
         chipMetaEl.textContent = 'Chip seit: ' +
-            new Date(parseInt(chipWritten)).toLocaleDateString('de-DE');
+            new Date(parseInt(chipWritten)).toLocaleDateString(mwlLocale());
     }
 
     renderNFCLog();
@@ -211,7 +211,7 @@ function renderNFCLog() {
 
     logEl.innerHTML = logs.slice(-10).reverse().map(e => `
         <div class="nfc-log-entry">
-            <span class="nfc-log-time">${new Date(e.ts).toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'})}</span>
+            <span class="nfc-log-time">${new Date(e.ts).toLocaleTimeString(mwlLocale(), {hour:'2-digit',minute:'2-digit'})}</span>
             <span class="nfc-log-msg">${esc ? esc(e.msg) : e.msg}</span>
         </div>
     `).join('');
@@ -253,7 +253,7 @@ function handleNFCScan() {
 
         // Verzögerte Warnung damit die Flash-Anzeige zuerst sichtbar ist
         setTimeout(() => {
-            const fmt = new Date(missedDate + 'T12:00:00').toLocaleDateString('de-DE', {
+            const fmt = new Date(missedDate + 'T12:00:00').toLocaleDateString(mwlLocale(), {
                 weekday: 'short', day: 'numeric', month: 'short'
             });
             _nfcToast(
@@ -279,7 +279,7 @@ function _doCheckIn(now, today, session) {
     timerAction('start');
 
     const startVal = new Date().toTimeString().slice(0, 5); // HH:MM
-    const timeStr  = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const timeStr  = new Date().toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' });
 
     // Start-Zeit in der Session sichern — überlebt den Seiten-Reload beim Ausstempeln
     session.lastScan    = now;
@@ -303,7 +303,7 @@ function _doCheckIn(now, today, session) {
 
 function _doCheckOut(now, today, session) {
     const endVal  = new Date().toTimeString().slice(0, 5);
-    const timeStr = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    const timeStr = new Date().toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' });
 
     // Session aktualisieren
     session.lastScan   = now;

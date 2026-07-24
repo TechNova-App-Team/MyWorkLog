@@ -927,8 +927,8 @@
 
         const listHtml = pendingHolidays.map((h, i) => {
             const d = new Date(h.date);
-            const dayName = d.toLocaleDateString('de-DE', { weekday: 'short' });
-            const dateStr = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const dayName = d.toLocaleDateString(mwlLocale(), { weekday: 'short' });
+            const dateStr = d.toLocaleDateString(mwlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' });
             return `<label class="holiday-check-item">
                 <input type="checkbox" checked data-holiday-idx="${i}">
                 <span class="holiday-check-mark"></span>

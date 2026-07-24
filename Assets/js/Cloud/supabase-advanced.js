@@ -1,3 +1,9 @@
+// Locale-Helfer: diese Datei laeuft auf einer Standalone-Seite ohne utils.js.
+// Faellt auf die globale Funktion zurueck, wenn sie doch vorhanden ist.
+var mwlLocale = window.mwlLocale || function () {
+    return document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE';
+};
+
 // ============================================================================
 // 1. CUSTOM SYNCHRONISIERUNGS-LOGIK
 // ============================================================================
@@ -348,7 +354,7 @@ class BackupRestoreManager {
                     name: backup.name,
                     timestamp: backup.timestamp,
                     size: backup.size,
-                    date: new Date(backup.timestamp).toLocaleString('de-DE')
+                    date: new Date(backup.timestamp).toLocaleString(mwlLocale())
                 });
             }
         }

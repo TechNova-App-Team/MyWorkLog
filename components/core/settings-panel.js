@@ -354,7 +354,7 @@
         if (lastEl) {
             if (backups.length > 0) {
                 const d = new Date(backups[0].ts);
-                lastEl.textContent = d.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+                lastEl.textContent = d.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'short' });
             } else {
                 lastEl.textContent = '—';
             }
@@ -392,8 +392,8 @@
         // Modern card layout for recovery modal
         const modernHtml = backups.map(b => {
             const dt = new Date(b.ts);
-            const dateStr = dt.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
-            const timeStr = dt.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = dt.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
+            const timeStr = dt.toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' });
             const entries = (b.data && b.data.entries) ? b.data.entries.length : '?';
             return `<div class="recovery-backup-item">
                 <div class="recovery-backup-dot"></div>

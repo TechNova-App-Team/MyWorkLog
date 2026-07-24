@@ -12,7 +12,7 @@
     <link rel="alternate" hreflang="de" href="https://myworklog.de/aufgaben/">
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/aufgaben/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/aufgaben/">
-    <script defer src="/Assets/js/version-loader.js?v=4.1.28"></script>
+    <script defer src="/Assets/js/version-loader.js?v=4.1.29"></script>
     <meta name="description" content="Aufgabenverwaltung für Azubis: Kategorien, Wochenplanung, Streaks und Reminder — kostenlos & offline nutzbar.">
     <meta name="theme-color" content="#0a0a12">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -346,7 +346,7 @@
     ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:99px;}
     ::-webkit-scrollbar-thumb:hover{background:var(--border-hover);}
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=4.1.28"></script>
+    <script defer src="/Assets/js/ph-init.js?v=4.1.29"></script>
 </head>
 <body>
 <div class="page">
@@ -757,7 +757,7 @@ function buildTaskHTML(t,ti,ci,states){
     if(t.days&&t.days.length)tags.push('<span class="t-tag tt-dy">'+t.days.map(function(d){return DAY_NAMES[d];}).join(', ')+'</span>');
     if(t.recurring&&t.recurring!=='none')tags.push('<span class="t-tag tt-rc">'+(RECUR_LABEL[t.recurring]||t.recurring)+'</span>');
     if(t.reminder)tags.push('<span class="t-tag tt-rm">'+esc(t.reminder)+'</span>');
-    if(t.due){var dd=new Date(t.due+'T00:00:00'),td=new Date();td.setHours(0,0,0,0);var ov=dd<td&&!done;tags.push('<span class="t-tag tt-due'+(ov?' ov':'')+'">'+dd.toLocaleDateString('de-DE',{day:'numeric',month:'short'})+'</span>');}
+    if(t.due){var dd=new Date(t.due+'T00:00:00'),td=new Date();td.setHours(0,0,0,0);var ov=dd<td&&!done;tags.push('<span class="t-tag tt-due'+(ov?' ov':'')+'">'+dd.toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'),{day:'numeric',month:'short'})+'</span>');}
     var subs=t.subtasks||[];
     var subHTML='<div class="sub-list">'+subs.map(function(s,si){return '<div class="sub-row'+(s.done?' done':'')+'"><div class="sub-cb" onclick="toggleSub('+ci+','+ti+','+si+')"></div><span class="sub-lbl">'+esc(s.name)+'</span><button class="sub-del" onclick="delSub('+ci+','+ti+','+si+')" aria-label="Löschen">'+SVG_X+'</button></div>';}).join('')+'<input class="sub-add-inp" placeholder="+ Unteraufgabe…" onkeydown="if(event.key===\'Enter\')addSub('+ci+','+ti+',this)"></div>';
     return '<div class="t-wrap"><div class="t-row'+(done?' done':'')+'" id="t-'+t.id+'"><div class="t-cb" onclick="toggleTask(\''+t.id+'\','+ci+')"></div><div class="t-content"><span class="t-txt">'+esc(t.name)+'</span>'+(tags.length?'<div class="t-tags">'+tags.join('')+'</div>':'')+'</div><div class="t-acts"><button class="t-act" onclick="openTaskEdit('+ci+','+ti+')" title="Bearbeiten" aria-label="Bearbeiten">'+SVG_EDIT+'</button><button class="t-act del" onclick="deleteTask('+ci+','+ti+')" title="Löschen" aria-label="Löschen">'+SVG_TRASH+'</button></div></div>'+subHTML+'</div>';
@@ -1092,7 +1092,7 @@ document.addEventListener('keydown',function(e){
 
 loadTheme();load();checkAutoReset();render();setupReminderChecks();
 document.getElementById('view-mode-btn').textContent=viewMode==='manual'?'Heute':'Woche';
-document.getElementById('today-label').textContent=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+document.getElementById('today-label').textContent=new Date().toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'),{weekday:'long',day:'numeric',month:'long'});
 document.getElementById('cat-name').addEventListener('keydown',function(e){if(e.key==='Enter')saveCategory();});
 </script>
 

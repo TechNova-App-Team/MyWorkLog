@@ -839,7 +839,7 @@ const networkMonitor = (() => {
         const npC = el('npConnection'); if (npC) { const m = {'4g':'LTE/4G','3g':'3G','2g':'2G','slow-2g':'Langsam','wifi':'WLAN'}; npC.textContent = m[s.connType] || s.connType || '\u2014'; }
         const npD = el('npDownlink'); if (npD) npD.textContent = s.downlink ? s.downlink + ' Mbps' : '\u2014';
         const npU = el('npUptime'); if (npU) npU.textContent = s.onlineSince ? fmtDur(Date.now() - s.onlineSince) : '\u2014';
-        const npT = el('npLastCheck'); if (npT) npT.textContent = s.lastCheck ? new Date(s.lastCheck).toLocaleTimeString('de-DE') : '\u2014';
+        const npT = el('npLastCheck'); if (npT) npT.textContent = s.lastCheck ? new Date(s.lastCheck).toLocaleTimeString(mwlLocale()) : '\u2014';
         const npQ = el('npQuality');
         if (npQ) {
             const lab = {excellent:'Exzellent',good:'Gut',moderate:'Mittel',poor:'Schlecht',offline:'Offline',unknown:'\u2014'};
@@ -870,7 +870,7 @@ const networkMonitor = (() => {
         if (s.log.length === 0) { if (typeof showCustomMessage === 'function') showCustomMessage('Netzwerk-Verlauf', 'Noch keine Eintr\u00e4ge.', 'info'); return; }
         const ico = {ping:'\u25cf',fail:'\u25cb',online:'\u25b2',offline:'\u25bc',queue:'\u25c6'};
         const rows = s.log.slice(0, 30).map(e => {
-            const t = new Date(e.t).toLocaleTimeString('de-DE');
+            const t = new Date(e.t).toLocaleTimeString(mwlLocale());
             return '<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:11.5px;"><span style="color:#64748b;font-family:var(--font-mono);min-width:62px;">' + t + '</span><span style="color:#94a3b8;">' + (ico[e.type]||'\u00b7') + '</span><span style="color:#e2e8f0;">' + e.msg + '</span></div>';
         }).join('');
         const ov = document.createElement('div');

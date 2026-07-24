@@ -88,8 +88,8 @@
 
         const dayHeaderRow = (dateISO, sumDiff) => {
             const dt = new Date(dateISO + 'T00:00:00');
-            const wd = dt.toLocaleDateString(isEN ? 'en-GB' : 'de-DE', { weekday: 'long' });
-            const ds = dt.toLocaleDateString(isEN ? 'en-GB' : 'de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+            const wd = dt.toLocaleDateString(mwlLocale(), { weekday: 'long' });
+            const ds = dt.toLocaleDateString(mwlLocale(), { day: '2-digit', month: '2-digit', year: '2-digit' });
             const pos = sumDiff >= 0;
             const col = pos ? 'var(--success)' : 'var(--danger)';
             const sign = pos ? '+' : '';
@@ -109,8 +109,8 @@
             const info      = e.isPeriod ? esc(e.label) : esc(e.info || '');
             const label     = lookupLabel(e.type);
             const icon      = lookupIcon(e.type);
-            const weekday   = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {weekday:'short'});
-            const dateShort = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'2-digit'});
+            const weekday   = new Date(e.date + 'T00:00:00').toLocaleDateString(mwlLocale(), {weekday:'short'});
+            const dateShort = new Date(e.date + 'T00:00:00').toLocaleDateString(mwlLocale(), {day:'2-digit', month:'2-digit', year:'2-digit'});
             return `
             <div class="entry-row type-${e.type}" data-entry-id="${e.id}" style="--type-rgb:${(typeof getTypeRgb === 'function') ? getTypeRgb(e.type) : '148,163,184'}" onclick="openEntryDetail(${e.id})">
                 <div class="er-left">
@@ -205,8 +205,8 @@
         const cleanLabel = (typeof getTypeLabel === 'function') ? getTypeLabel(e.type) : e.type;
         const isWorkRel = !isCustom || (lkInfo && lkInfo.countsAsWork === true);
 
-        const weekday  = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {weekday:'long'});
-        const dateStr  = new Date(e.date + 'T00:00:00').toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'numeric'});
+        const weekday  = new Date(e.date + 'T00:00:00').toLocaleDateString(mwlLocale(), {weekday:'long'});
+        const dateStr  = new Date(e.date + 'T00:00:00').toLocaleDateString(mwlLocale(), {day:'2-digit', month:'2-digit', year:'numeric'});
         const diffStr  = isWorkRel ? ((e.diff >= 0 ? '+' : '') + e.diff.toFixed(2) + 'h') : '—';
         const diffColor= isWorkRel ? (e.diff >= 0 ? '#34d399' : '#f87171') : '#94a3b8';
 

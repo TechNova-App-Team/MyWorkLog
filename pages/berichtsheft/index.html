@@ -10,7 +10,7 @@
 </script>
     <meta name="description" content="Berichtsheft Generator: IHK-konformes Berichtsheft erstellen mit lokaler KI. Automatische Einträge, Prüfungsvorbereitung, AES-256 verschlüsselt & DSGVO-konform.">
     <meta name="keywords" content="Berichtsheft Generator, IHK-konformes Berichtsheft, digitales Berichtsheft, Berichtsheft erstellen, Berichtsheft App, lokale KI Berichtsheft, Ausbildungsnachweis, IHK Berichtsheft, Auszubildende Berichtsheft, online Berichtsheft, Fachinformatiker Berichtsheft, Berichtsheft offline">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=4.1.28"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=4.1.29"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -2960,7 +2960,7 @@
             color: var(--text-main);
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=4.1.28"></script>
+    <script defer src="/Assets/js/ph-init.js?v=4.1.29"></script>
 </head>
 <body>
     <!-- ===== SVG ICON SPRITE ===== -->
@@ -4573,7 +4573,7 @@ Beispiel:
         function formatDate(dateStr) {
             if (!dateStr) return '-';
             const d = new Date(dateStr);
-            return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            return d.toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'), { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
         function populateYearFilter() {
@@ -5194,7 +5194,7 @@ Beispiel:
                 </div>` : '';
 
             const footerHtml = showFooter ? `
-                <div class="doc-footer">MyWorkLog · Erstellt am ${new Date().toLocaleDateString('de-DE')} · Ausbildungsnachweis gem. §14 BBiG</div>` : '';
+                <div class="doc-footer">MyWorkLog · Erstellt am ${new Date().toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'))} · Ausbildungsnachweis gem. §14 BBiG</div>` : '';
 
             document.getElementById('pdfDocPreview').innerHTML = `
                 <div class="doc-header">
@@ -5614,7 +5614,7 @@ Beispiel:
                 doc.setFontSize(6); doc.setFont(undefined,'normal');
                 doc.setTextColor(...T.footerC);
                 doc.text(
-                    `MyWorkLog · Ausbildungsnachweis KW${report.week}/${report.year} · Erstellt: ${new Date().toLocaleDateString('de-DE')} · §14 BBiG`,
+                    `MyWorkLog · Ausbildungsnachweis KW${report.week}/${report.year} · Erstellt: ${new Date().toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'))} · §14 BBiG`,
                     PW/2, PH - 5, { align:'center' }
                 );
             }
@@ -5696,7 +5696,7 @@ Beispiel:
             doc.text('MyWorkLog Professionelle Ausbildungsdokumentation', pageWidth / 2, pageHeight - 15, { align: 'center' });
             doc.setFontSize(7);
             doc.setTextColor(80, 80, 100);
-            doc.text(`Erstellt: ${new Date().toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+            doc.text(`Erstellt: ${new Date().toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'), { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
             
             // ═══════════════════════════════════════════════════════
             // TABLE OF CONTENTS
@@ -6573,7 +6573,7 @@ Beispiel:
             container.innerHTML = DAYS.map((day, i) => {
                 const dayDate = new Date(monDate);
                 dayDate.setDate(monDate.getDate() + i);
-                const dateStr = dayDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+                const dateStr = dayDate.toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'), { day: '2-digit', month: '2-digit' });
 
                 return `
                     <div class="daily-day-block">
@@ -7730,7 +7730,7 @@ Beispiel:
                 const dObj = new Date(dateStr + 'T00:00:00');
                 perDay[i] = {
                     date: dateStr,
-                    dateLabel: isNaN(dObj) ? dateStr : dObj.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }),
+                    dateLabel: isNaN(dObj) ? dateStr : dObj.toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'), { day: '2-digit', month: '2-digit' }),
                     items,
                     hours: Math.round(hours * 100) / 100,
                     status,
@@ -8320,7 +8320,7 @@ Beispiel:
                 .map((item, i) => {
                     const origIdx = state.generationHistory.length - 1 - i;
                     const date = new Date(item.timestamp);
-                    const dateStr = date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                    const dateStr = date.toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'), { day: '2-digit', month: '2-digit', year: '2-digit' }) + ' ' + date.toLocaleTimeString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'), { hour: '2-digit', minute: '2-digit' });
                     const preview = item.days?.[0]?.entries?.[0]?.replace('• ', '') || 'Kein Inhalt';
                     return `
                         <div class="ais-history-item" id="ais-hist-${origIdx}" onclick="AIStudio.loadFromHistory(${origIdx})">
@@ -8694,8 +8694,8 @@ Beispiel:
             if (!AI_TEST_PHASE_UNTIL) return '--';
             const d = new Date(AI_TEST_PHASE_UNTIL);
             if (isNaN(d.getTime())) return '--';
-            return d.toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long' }) +
-                   ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
+            return d.toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'), { weekday: 'long', day: '2-digit', month: 'long' }) +
+                   ', ' + d.toLocaleTimeString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'), { hour: '2-digit', minute: '2-digit' }) + ' Uhr';
         }
 
         // ═══════════════════════════════════════
@@ -10679,8 +10679,8 @@ ${trackingBlock}${aufgabenBlock}
     </script>
 
     <!-- BBiG-Live-Scanner -->
-    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=4.1.28">
-    <script src="/components/bbig-scanner/bbig-scanner.js?v=4.1.28"></script>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=4.1.29">
+    <script src="/components/bbig-scanner/bbig-scanner.js?v=4.1.29"></script>
     <script>
         if (typeof initBbigBerichtsheft === 'function') {
             if (document.readyState === 'loading') {

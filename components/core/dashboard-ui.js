@@ -113,7 +113,7 @@
             // Konfidenz-Label basierend auf Datenmenge
             const confidence = totalWorkDays >= 60 ? '●●●' : totalWorkDays >= 40 ? '●●○' : '●○○';
             const confLabel = totalWorkDays >= 60 ? 'Hoch' : totalWorkDays >= 40 ? 'Mittel' : 'Niedrig';
-            const endStr = forecastEnd.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+            const endStr = forecastEnd.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'short' });
             projEl.title = `Prognose bis ${endStr} (30 Arbeitstage)\nGenauigkeit: ${confLabel} ${confidence} (${totalWorkDays} Tage Datenbasis)\nØ ${avgDiffPerWorkDay >= 0 ? '+' : ''}${(avgDiffPerWorkDay * 60).toFixed(0)} min/Tag`;
         }
 

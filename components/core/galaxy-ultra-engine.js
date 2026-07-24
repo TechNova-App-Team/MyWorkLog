@@ -524,7 +524,7 @@
                 project: e.project || '',
                 val: Math.max(1, hours * 2),
                 color: nodeColor,
-                label: new Date(e.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })
+                label: new Date(e.date).toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'short' })
             };
         });
 
@@ -1497,7 +1497,7 @@
                     var ud = hit.userData;
                     var typeLabels = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', sick: 'Krank', holiday: 'Feiertag', gleittag: 'Gleittag' };
                     if (infoEl) {
-                        infoEl.innerHTML = '<div class="apgx-info-row"><span class="apgx-info-date">' + ud.dayName + ', ' + new Date(ud.date).toLocaleDateString('de-DE') + '</span><span class="apgx-info-type">' + (typeLabels[ud.type] || ud.type) + '</span></div>' +
+                        infoEl.innerHTML = '<div class="apgx-info-row"><span class="apgx-info-date">' + ud.dayName + ', ' + new Date(ud.date).toLocaleDateString(mwlLocale()) + '</span><span class="apgx-info-type">' + (typeLabels[ud.type] || ud.type) + '</span></div>' +
                             '<div class="apgx-info-row"><span class="apgx-info-hours">' + ud.hours.toFixed(2) + 'h / ' + ud.expected.toFixed(2) + 'h</span>' +
                             '<span class="apgx-info-diff" style="color:' + (ud.diff >= 0 ? '#22c55e' : '#ef4444') + '">' + (ud.diff >= 0 ? '+' : '') + ud.diff.toFixed(2) + 'h</span>' +
                             (ud.project ? '<span class="apgx-info-project">' + safeHTML(ud.project) + '</span>' : '') +

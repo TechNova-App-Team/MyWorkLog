@@ -363,7 +363,7 @@
         renderTimerLogBar(); 
 
         function _updateDate() {
-            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('de-DE', {weekday:'long', day:'2-digit', month:'long'});
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString(mwlLocale(), {weekday:'long', day:'2-digit', month:'long'});
         }
         _updateDate();
         setInterval(_updateDate, 1000);

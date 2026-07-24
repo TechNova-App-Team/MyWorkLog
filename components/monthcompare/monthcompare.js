@@ -12,7 +12,7 @@
                 const date = new Date(currentYear, m, 1);
                 const option = document.createElement('option');
                 option.value = m;
-                const monthName = date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+                const monthName = date.toLocaleDateString(mwlLocale(), { month: 'long', year: 'numeric' });
                 option.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
                 select.appendChild(option);
             }

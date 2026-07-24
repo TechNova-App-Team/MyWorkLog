@@ -1,3 +1,9 @@
+// Locale-Helfer: diese Datei laeuft auf einer Standalone-Seite ohne utils.js.
+// Faellt auf die globale Funktion zurueck, wenn sie doch vorhanden ist.
+var mwlLocale = window.mwlLocale || function () {
+    return document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE';
+};
+
 // =========================================
 //  KONFIGURATION
 // =========================================
@@ -1774,7 +1780,7 @@ function enterBackendBusy(secs, staleTs) {
                     : 'Das Analytics-Backend (PostHog) drosselt gerade die Anfragen.') +
                 (staleTs ? '<br><span style="opacity:0.6;">' +
                     (EN ? 'Showing cached data from ' : 'Zwischengespeicherte Daten von ') +
-                    new Date(staleTs).toLocaleTimeString(EN ? 'en-GB' : 'de-DE') + '</span>' : '');
+                    new Date(staleTs).toLocaleTimeString(mwlLocale()) + '</span>' : '');
         }
     }
     var det = document.getElementById('errorDetail');
@@ -2062,7 +2068,7 @@ async function loadAll() {
 
         // ── Timestamp ──────────────────────────────────────────────────────
         var lu = document.getElementById('lastUpdated');
-        if (lu) lu.textContent = 'Zuletzt aktualisiert: ' + new Date().toLocaleString('de-DE');
+        if (lu) lu.textContent = 'Zuletzt aktualisiert: ' + new Date().toLocaleString(mwlLocale());
 
         setLiveStatus(_stale ? 'stale' : 'live');
         hideSkeletons();

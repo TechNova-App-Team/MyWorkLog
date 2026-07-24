@@ -79,7 +79,7 @@
         const tlEnd        = document.getElementById('mcTimelineEnd');
         const markerZP     = document.getElementById('mcMarkerZwischen');
 
-        const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('de-DE', { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
+        const fmt = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString(mwlLocale(), { day:'2-digit', month:'2-digit', year:'numeric' }) : '—';
 
         if (tlStart) tlStart.textContent = fmt(start);
         if (tlEnd)   tlEnd.textContent   = fmt(end);

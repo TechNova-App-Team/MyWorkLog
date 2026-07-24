@@ -892,7 +892,7 @@
         const month = miniCalViewMonth;
 
         // Month label
-        const monthName = new Date(year, month, 1).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+        const monthName = new Date(year, month, 1).toLocaleDateString(mwlLocale(), { month: 'long', year: 'numeric' });
         monthEl.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
         // Build entry map for this month
@@ -2021,7 +2021,7 @@
 
             var rec = new SR();
             window._voiceRecognition = rec;
-            rec.lang = 'de-DE';
+            rec.lang = mwlLocale();
             rec.interimResults = true;
             rec.continuous = true;
             rec.maxAlternatives = 1;

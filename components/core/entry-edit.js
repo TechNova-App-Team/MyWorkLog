@@ -65,7 +65,7 @@
 
         // Update subtitle with entry date
         const dateObj = new Date(entry.date);
-        const dateStr = dateObj.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+        const dateStr = dateObj.toLocaleDateString(mwlLocale(), { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
         document.getElementById('editModalSubtitle').textContent = dateStr;
 
         populateProjectOptions();

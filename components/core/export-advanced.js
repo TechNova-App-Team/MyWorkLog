@@ -192,7 +192,7 @@
         }).join('');
 
         const now = new Date();
-        const dateStr = now.toLocaleDateString('de-DE', { day:'2-digit', month:'long', year:'numeric' });
+        const dateStr = now.toLocaleDateString(mwlLocale(), { day:'2-digit', month:'long', year:'numeric' });
 
         const html = '<!DOCTYPE html>\n'
         + '<html lang="de">\n<head>\n<meta charset="UTF-8">\n'
@@ -236,7 +236,7 @@
         + (projRows ? '<h2>\ud83c\udfe2 Projekt-Verteilung<\/h2>\n<div class="card"><table><thead><tr><th>Projekt<\/th><th style="text-align:right;">Stunden<\/th><th style="text-align:right;">Anteil<\/th><\/tr><\/thead><tbody>' + projRows + '<\/tbody><\/table><\/div>\n' : '')
         + '\n<h2>\ud83d\udcdd Letzte 50 Eintr\u00e4ge<\/h2>\n<div class="card"><table><thead><tr><th>Datum<\/th><th>Typ<\/th><th style="text-align:right;">Stunden<\/th><th style="text-align:right;">Saldo<\/th><th>Projekt<\/th><\/tr><\/thead>'
         + '<tbody>' + entryRows + '<\/tbody><\/table><\/div>\n\n'
-        + '<div class="footer">MyWorkLog MAX Report \u00b7 Generiert am ' + now.toLocaleString('de-DE') + ' \u00b7 myworklog.de<\/div>\n'
+        + '<div class="footer">MyWorkLog MAX Report \u00b7 Generiert am ' + now.toLocaleString(mwlLocale()) + ' \u00b7 myworklog.de<\/div>\n'
         + '<\/body>\n<\/html>';
 
         const blob = new Blob([html], { type: 'text/html;charset=utf-8' });

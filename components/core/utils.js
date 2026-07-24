@@ -1,4 +1,17 @@
 // ═══ CORE: UTILS ═══
+    // --- SPRACHE / LOCALE ---
+    // Monats- und Wochentagsnamen, Datums- und Zahlenformate kamen aus ~80
+    // hartcodierten Locale-Literalen — auf /en/ stand deshalb ueberall "März"
+    // und "24.07.2026". Diese eine Funktion ist jetzt die Quelle; jeder
+    // toLocale*-Aufruf, der Text FUER DEN NUTZER erzeugt, ruft sie auf.
+    // Ausnahme: Datums-Strings, die als Schluessel dienen (Dedup, Storage),
+    // bleiben bewusst hartcodiert — sonst wechselt der Schluessel mit der Sprache.
+    var MWL_LOCALE_DE = 'de' + '-DE';
+    function mwlLocale() {
+        return document.documentElement.lang === 'en' ? 'en-GB' : MWL_LOCALE_DE;
+    }
+    window.mwlLocale = mwlLocale;
+
     // --- HILFSFUNKTIONEN (Unverändert) ---
     function isOddWeek(d) { return getWeek(d) % 2 !== 0; }
 
@@ -58,7 +71,7 @@
         const label = (typeof getTypeLabel === 'function') ? getTypeLabel(entry.type) : entry.type;
         // Typ-Icon im Danger-Ton — die rote Kachel sagt „wird gelöscht", das Icon sagt „was".
         const icon  = (typeof getTypeIconHTML === 'function') ? getTypeIconHTML(entry.type, 28) : '';
-        const dateStr = new Date(entry.date + 'T00:00:00').toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit', year:'2-digit'});
+        const dateStr = new Date(entry.date + 'T00:00:00').toLocaleDateString(mwlLocale(), {day:'2-digit', month:'2-digit', year:'2-digit'});
 
         const overlay = document.createElement('div');
         overlay.className = 'delete-confirm-overlay';
