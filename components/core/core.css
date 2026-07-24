@@ -1264,7 +1264,7 @@
 
         /* Kompakte Variante: eine Zeile, ohne Titel */
         .data-note-compact {
-            grid-template-columns: 26px 1fr;
+            grid-template-columns: 26px 1fr auto;
             gap: 11px;
             padding: 11px 14px;
             border-radius: 12px;
@@ -1313,8 +1313,42 @@
         }
         .data-note-action svg { width: 14px; height: 14px; flex-shrink: 0; }
 
+        /* "Nicht mehr anzeigen" — leiser als die Aktionen, aber kein Icon-X:
+           der Klick blendet den Hinweis ueberall aus, das muss lesbar dastehen. */
+        .data-note-dismiss {
+            align-self: center;
+            padding: 7px 6px;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.45);
+            font-family: inherit;
+            font-size: 0.76rem;
+            font-weight: 600;
+            white-space: nowrap;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: color 0.2s ease, background 0.2s ease;
+        }
+        .data-note-dismiss:hover {
+            color: rgba(255,255,255,0.85);
+            background: rgba(245,158,11,0.08);
+        }
+        .data-note-page .data-note-dismiss { color: var(--text-muted); }
+        .data-note-page .data-note-dismiss:hover { color: var(--text-main); }
+        .data-note-dismiss:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.25);
+        }
+
         @media (max-width: 540px) {
             .data-note { padding: 14px 15px; gap: 12px; grid-template-columns: 30px 1fr; }
             .data-note-icon { width: 30px; height: 30px; }
             .data-note-action { flex: 1 1 auto; justify-content: center; }
+            /* Kompakt-Variante: Button unter den Text statt in eine dritte Spalte */
+            .data-note-compact { grid-template-columns: 26px 1fr; }
+            .data-note-compact .data-note-dismiss {
+                grid-column: 2 / -1;
+                justify-self: start;
+                padding-left: 0;
+            }
         }

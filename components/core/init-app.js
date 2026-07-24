@@ -327,6 +327,8 @@
         window._clsBC = 'before-updateUI';
         updateUI();
         window._clsBC = 'after-updateUI';
+        // Datensicherungs-Hinweis: ausgeblendet, wenn der User ihn weggeklickt hat
+        try { if (typeof applyDataNoticeVisibility === 'function') applyDataNoticeVisibility(); } catch(e) {}
         // Re-enable sidebar collapse transition after initial layout settles
         requestAnimationFrame(() => requestAnimationFrame(() => {
             const m = document.getElementById('mainContent');
