@@ -48,7 +48,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <!-- Structured Data: FAQPage -->
-    <script type="application/ld+json">
+    <script type="application/ld+json" data-ld-id="faq">
     {
       "@context": "https://schema.org",
       "@type": "FAQPage",
@@ -117,7 +117,7 @@
     </script>
 
     <!-- Structured Data: WebApplication -->
-    <script type="application/ld+json">
+    <script type="application/ld+json" data-ld-id="webapp">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
@@ -142,7 +142,7 @@
     </script>
 
     <!-- Structured Data: BreadcrumbList -->
-    <script type="application/ld+json">
+    <script type="application/ld+json" data-ld-id="breadcrumb">
     {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
@@ -1186,7 +1186,7 @@
             clip: rect(0,0,0,0); white-space: nowrap; border: 0;
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=4.1.32"></script>
+    <script defer src="/Assets/js/ph-init.js?v=4.1.33"></script>
 </head>
 <body>
     <!-- ═══════════════ AMBIENT ═══════════════ -->
@@ -1410,6 +1410,9 @@
     // ═══════════════════════════════════════════
     //  LEGAL DATABASE – BBiG & Co.
     // ═══════════════════════════════════════════
+    // ═══ i18n: englische Laufzeit (nur auf /en/ aktiv, sonst gibt RL immer DE zurück) ═══
+    function RL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
+
     const SCENARIOS = [
         // ──────── ARBEITSZEIT ────────
         {
@@ -3583,9 +3586,9 @@ Mit freundlichen Grüßen
     let searchMode = 'smart'; // 'smart' | 'exact' | 'llm'
 
     const MODE_CONFIG = {
-        smart: { icon: '🧠', label: 'Smart', cls: 'mode-smart', placeholder: "Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'" },
-        exact: { icon: '🔍', label: 'Exakt', cls: 'mode-exact', placeholder: "Szenario suchen… z.B. Überstunden, Urlaub, Putzen" },
-        llm:   { icon: '🤖', label: 'AI',    cls: 'mode-llm',   placeholder: "Frag den AI-Rechtsberater… z.B. 'Darf mein Chef mir Kündigung androhen wenn ich krank bin?'" }
+        smart: { icon: '🧠', label: RL('Smart', 'Smart'), cls: 'mode-smart', placeholder: RL("Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'", "Describe your problem… e.g. 'My boss wants me to come in on Saturday'") },
+        exact: { icon: '🔍', label: RL('Exakt', 'Exact'), cls: 'mode-exact', placeholder: RL("Szenario suchen… z.B. Überstunden, Urlaub, Putzen", "Search a scenario… e.g. overtime, holiday, cleaning") },
+        llm:   { icon: '🤖', label: 'AI',    cls: 'mode-llm',   placeholder: RL("Frag den AI-Rechtsberater… z.B. 'Darf mein Chef mir Kündigung androhen wenn ich krank bin?'", "Ask the AI legal advisor… e.g. 'Can my boss threaten me with dismissal when I am off sick?'") }
     };
 
     function toggleModeMenu() {
@@ -3646,9 +3649,9 @@ Mit freundlichen Grüßen
         const top = results.results.slice(0, 5);
         let html = '';
         if (typoCorrection) {
-            html += `<div class="ai-typo-hint">✨ Meintest du "${escapeHtml(typoCorrection)}"?</div>`;
+            html += `<div class="ai-typo-hint">${RL('✨ Meintest du', '✨ Did you mean')} "${escapeHtml(typoCorrection)}"?</div>`;
         }
-        html += '<div class="ai-suggest-header">🧠 Smart-Ergebnis</div>';
+        html += '<div class="ai-suggest-header">' + RL('🧠 Smart-Ergebnis', '🧠 Smart result') + '</div>';
         top.forEach(r => {
             const s = SCENARIOS.find(x => x.id === r.id);
             if (!s) return;
@@ -3658,7 +3661,7 @@ Mit freundlichen Grüßen
                     <div class="ai-suggest-title">${escapeHtml(s.title)}</div>
                     <div class="ai-suggest-meta">
                         <span>${getCatLabel(s.cat)}</span>
-                        <span class="ai-suggest-match">${r.matchType} • ${r.score}%</span>
+                        <span class="ai-suggest-match">${RL(r.matchType, { 'Keyword': 'Keyword', 'Fuzzy': 'Fuzzy', 'Textanalyse': 'Text analysis', 'Textsuche': 'Text search' }[r.matchType] || r.matchType)} • ${r.score}%</span>
                     </div>
                 </div>
             </div>`;
@@ -3716,40 +3719,40 @@ Mit freundlichen Grüßen
         customUrl.style.display = (prov === 'custom') ? 'block' : 'none';
         const providers = {
             openai: {
-                hint: '💡 Hol dir einen Key auf <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. <strong>gpt-4o-mini</strong> ist günstig & schnell.',
+                hint: RL('💡 Hol dir einen Key auf <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. <strong>gpt-4o-mini</strong> ist günstig & schnell.', '💡 Get a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. <strong>gpt-4o-mini</strong> is cheap & fast.'),
                 placeholder: 'gpt-4o-mini'
             },
             claude: {
-                hint: '💡 Key holen auf <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. <strong>claude-sonnet-4-20250514</strong> empfohlen.',
+                hint: RL('💡 Key holen auf <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. <strong>claude-sonnet-4-20250514</strong> empfohlen.', '💡 Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. <strong>claude-sonnet-4-20250514</strong> recommended.'),
                 placeholder: 'claude-sonnet-4-20250514'
             },
             gemini: {
-                hint: '💡 Key holen auf <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. <strong>gemini-2.0-flash</strong> ist schnell.<br>⚠️ Free-Tier: 15 Req/Min. Für höhere Limits: <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Billing aktivieren</a> im Google Cloud Projekt.',
+                hint: RL('💡 Key holen auf <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. <strong>gemini-2.0-flash</strong> ist schnell.<br>⚠️ Free-Tier: 15 Req/Min. Für höhere Limits: <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Billing aktivieren</a> im Google Cloud Projekt.', '💡 Get a key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. <strong>gemini-2.0-flash</strong> is fast.<br>⚠️ Free tier: 15 req/min. For higher limits: <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">enable billing</a> in your Google Cloud project.'),
                 placeholder: 'gemini-2.0-flash'
             },
             groq: {
-                hint: '💡 <strong>Groq ist komplett kostenlos!</strong> Key holen auf <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>. Empfohlen: <strong>llama-3.3-70b-versatile</strong>',
+                hint: RL('💡 <strong>Groq ist komplett kostenlos!</strong> Key holen auf <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>. Empfohlen: <strong>llama-3.3-70b-versatile</strong>', '💡 <strong>Groq is completely free!</strong> Get a key at <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>. Recommended: <strong>llama-3.3-70b-versatile</strong>'),
                 placeholder: 'llama-3.3-70b-versatile'
             },
             mistral: {
-                hint: '💡 Key holen auf <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai</a>. <strong>mistral-large-latest</strong> ist top.',
+                hint: RL('💡 Key holen auf <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai</a>. <strong>mistral-large-latest</strong> ist top.', '💡 Get a key at <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai</a>. <strong>mistral-large-latest</strong> is great.'),
                 placeholder: 'mistral-large-latest'
             },
             deepseek: {
-                hint: '💡 Super günstig! Key auf <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a>. <strong>deepseek-chat</strong> empfohlen.',
+                hint: RL('💡 Super günstig! Key auf <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a>. <strong>deepseek-chat</strong> empfohlen.', '💡 Very cheap! Get a key at <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a>. <strong>deepseek-chat</strong> recommended.'),
                 placeholder: 'deepseek-chat'
             },
             openrouter: {
-                hint: '💡 <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a> – viele Modelle, manche kostenlos. Versuche <strong>meta-llama/llama-3.3-70b-instruct</strong>',
+                hint: RL('💡 <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a> – viele Modelle, manche kostenlos. Versuche <strong>meta-llama/llama-3.3-70b-instruct</strong>', '💡 <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a> – many models, some free. Try <strong>meta-llama/llama-3.3-70b-instruct</strong>'),
                 placeholder: 'meta-llama/llama-3.3-70b-instruct'
             },
             xai: {
-                hint: '💡 Key auf <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a>. <strong>grok-3-mini-fast</strong> empfohlen.',
+                hint: RL('💡 Key auf <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a>. <strong>grok-3-mini-fast</strong> empfohlen.', '💡 Get a key at <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a>. <strong>grok-3-mini-fast</strong> recommended.'),
                 placeholder: 'grok-3-mini-fast'
             },
             custom: {
-                hint: '💡 Jede OpenAI-kompatible API (z.B. LM Studio, Ollama, vLLM). Trage die Base URL ein.',
-                placeholder: 'z.B. llama3'
+                hint: RL('💡 Jede OpenAI-kompatible API (z.B. LM Studio, Ollama, vLLM). Trage die Base URL ein.', '💡 Any OpenAI-compatible API (e.g. LM Studio, Ollama, vLLM). Enter the base URL.'),
+                placeholder: RL('z.B. llama3', 'e.g. llama3')
             }
         };
         const p = providers[prov] || providers.custom;
@@ -3784,22 +3787,41 @@ Mit freundlichen Grüßen
         if (desc) {
             if (hasKey) {
                 const provNames = {openai:'OpenAI',claude:'Claude',gemini:'Gemini',groq:'Groq',mistral:'Mistral',deepseek:'DeepSeek',openrouter:'OpenRouter',xai:'Grok',custom:'Custom'};
-                desc.textContent = (provNames[cfg.provider] || cfg.provider) + ' verbunden';
+                desc.textContent = (provNames[cfg.provider] || cfg.provider) + RL(' verbunden', ' connected');
             } else {
-                desc.textContent = 'API-Key benötigt';
+                desc.textContent = RL('API-Key benötigt', 'API key required');
             }
         }
     }
 
     // Build the system prompt with full scenario context
     function buildLlmSystemPrompt() {
+        const en = document.documentElement.lang === 'en';
         let scenarioCtx = SCENARIOS.map(s => {
-            return `[${s.id}] Kategorie: ${getCatLabel(s.cat)} | Titel: ${s.title} | ${s.desc}\n` +
-                   `Urteil: ${s.verdictShort}\nDetails: ${s.verdictDetail}\n` +
-                   `Gesetze: ${(s.laws||[]).map(l => l.title + ': ' + l.text).join('\n')}\n` +
-                   `Tipps: ${(s.tips||[]).join('; ')}\n` +
-                   `E-Mail Betreff: ${s.email?.subject || '-'}\nE-Mail Vorlage: ${s.email?.body || '-'}`;
+            return `[${s.id}] ${en ? 'Category' : 'Kategorie'}: ${getCatLabel(s.cat)} | ${en ? 'Title' : 'Titel'}: ${s.title} | ${s.desc}\n` +
+                   `${en ? 'Verdict' : 'Urteil'}: ${s.verdictShort}\n${en ? 'Details' : 'Details'}: ${s.verdictDetail}\n` +
+                   `${en ? 'Laws' : 'Gesetze'}: ${(s.laws||[]).map(l => l.title + ': ' + l.text).join('\n')}\n` +
+                   `${en ? 'Tips' : 'Tipps'}: ${(s.tips||[]).join('; ')}\n` +
+                   `${en ? 'Email subject' : 'E-Mail Betreff'}: ${s.email?.subject || '-'}\n${en ? 'Email template' : 'E-Mail Vorlage'}: ${s.email?.body || '-'}`;
         }).join('\n\n---\n\n');
+
+        if (en) {
+            return `You are the "Trainee Rights Advisor" on the website myworklog.de. You help trainees and apprentices in Germany understand their rights.
+
+IMPORTANT:
+- Always answer in English, in a friendly and understandable way.
+- German labour law still applies to English-speaking trainees in Germany. You know the BBiG (Vocational Training Act), JArbSchG (Youth Employment Protection Act), ArbZG (Working Hours Act), BUrlG (Federal Leave Act), AGG (General Equal Treatment Act) and EntgFG (Continued Remuneration Act).
+- Always cite the exact section (§) when possible; keep the original German statute abbreviations.
+- If the user has a concrete problem, give a clear assessment ("No, your boss may not do that" / "Yes, under certain conditions" / "It depends").
+- Where appropriate, offer to generate a polite email template the trainee can send to their boss.
+- Point out that your information does not replace legal advice.
+- Format with Markdown: **bold**, lists, etc.
+- Keep it short but complete. Maximum 300 words.
+
+Here is the full database of scenarios that exist on the website. Use it as your knowledge base and refer to matching scenarios:
+
+${scenarioCtx}`;
+        }
 
         return `Du bist der "Azubi-Rechtsberater" auf der Website myworklog.de. Du hilfst Auszubildenden in Deutschland, ihre Rechte zu verstehen.
 
@@ -3866,7 +3888,7 @@ ${scenarioCtx}`;
         area.classList.add('active');
         body.innerHTML = `<div class="llm-loading">
             <div class="llm-loading-dots"><span></span><span></span><span></span></div>
-            Denkt nach…
+            ${RL('Denkt nach…', 'Thinking…')}
         </div>`;
         actions.innerHTML = '';
 
@@ -3936,7 +3958,7 @@ ${scenarioCtx}`;
             // Auto-retry once on 429 after short delay
             if (resp.status === 429) {
                 console.log('[LLM] 429 rate limit – retrying in 3s...');
-                body.querySelector('.llm-loading')?.insertAdjacentHTML('beforeend', '<br><small style="opacity:.7">Rate-Limit... automatischer Retry in 3s</small>');
+                body.querySelector('.llm-loading')?.insertAdjacentHTML('beforeend', '<br><small style="opacity:.7">' + RL('Rate-Limit... automatischer Retry in 3s', 'Rate limit... automatic retry in 3s') + '</small>');
                 await new Promise(r => setTimeout(r, 3000));
                 resp = await fetch(endpoint, {
                     method: 'POST',
@@ -3949,25 +3971,31 @@ ${scenarioCtx}`;
 
             if (!resp.ok) {
                 const err = await resp.text();
-                let msg = 'API-Fehler: ' + resp.status;
+                let msg = RL('API-Fehler: ', 'API error: ') + resp.status;
                 console.log('[LLM] Error body:', err);
                 if (resp.status === 401 || resp.status === 403) {
-                    msg = 'Ungültiger API-Key. Öffne ⚙️ Einstellungen um ihn zu ändern.';
+                    msg = RL('Ungültiger API-Key. Öffne ⚙️ Einstellungen um ihn zu ändern.', 'Invalid API key. Open ⚙️ Settings to change it.');
                 } else if (resp.status === 429) {
                     if (prov === 'gemini') {
-                        msg = '⏱️ <strong>Gemini Rate-Limit erreicht (429).</strong><br><br>' +
+                        msg = RL('⏱️ <strong>Gemini Rate-Limit erreicht (429).</strong><br><br>' +
                               '<strong>Mögliche Ursachen:</strong><br>' +
                               '• Free-Tier: Nur 15 Requests/Min – warte kurz und versuch nochmal<br>' +
                               '• Paid-Tier: Prüfe ob <strong>Billing</strong> im <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Google Cloud Console</a> aktiv ist<br>' +
                               '• Der API-Key muss zu einem Projekt mit aktivierter Abrechnung gehören<br><br>' +
-                              '💡Tipp:</strong> <a href="https://console.groq.com" target="_blank" rel="noopener"><strong>Groq</strong></a> ist kostenlos & hat großzügige Limits.';
+                              '💡Tipp:</strong> <a href="https://console.groq.com" target="_blank" rel="noopener"><strong>Groq</strong></a> ist kostenlos & hat großzügige Limits.',
+                              '⏱️ <strong>Gemini rate limit reached (429).</strong><br><br>' +
+                              '<strong>Possible causes:</strong><br>' +
+                              '• Free tier: only 15 requests/min – wait a moment and try again<br>' +
+                              '• Paid tier: check whether <strong>billing</strong> is active in the <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Google Cloud Console</a><br>' +
+                              '• The API key must belong to a project with billing enabled<br><br>' +
+                              '💡 Tip:</strong> <a href="https://console.groq.com" target="_blank" rel="noopener"><strong>Groq</strong></a> is free & has generous limits.');
                     } else {
-                        msg = '⏱️ Rate-Limit erreicht. Warte ein paar Sekunden und versuch es nochmal.';
+                        msg = RL('⏱️ Rate-Limit erreicht. Warte ein paar Sekunden und versuch es nochmal.', '⏱️ Rate limit reached. Wait a few seconds and try again.');
                     }
                 } else if (resp.status === 400) {
-                    msg = '⚠️ Ungültiges Request-Format. Prüf ob Model & Einstellungen richtig sind. <br><small>Details: ' + err.slice(0, 200) + '</small>';
+                    msg = RL('⚠️ Ungültiges Request-Format. Prüf ob Model & Einstellungen richtig sind. <br><small>Details: ', '⚠️ Invalid request format. Check that the model & settings are correct. <br><small>Details: ') + err.slice(0, 200) + '</small>';
                 } else if (resp.status >= 500) {
-                    msg = '🔴 Server-Fehler (' + resp.status + '). Anbieter ist gerade überlastet. Versuch später nochmal.';
+                    msg = RL('🔴 Server-Fehler (' + resp.status + '). Anbieter ist gerade überlastet. Versuch später nochmal.', '🔴 Server error (' + resp.status + '). The provider is currently overloaded. Try again later.');
                 }
                 throw new Error(msg);
             }
@@ -3975,11 +4003,11 @@ ${scenarioCtx}`;
             const data = await resp.json();
             let content;
             if (prov === 'claude') {
-                content = data.content?.[0]?.text || 'Keine Antwort erhalten.';
+                content = data.content?.[0]?.text || RL('Keine Antwort erhalten.', 'No response received.');
             } else if (prov === 'gemini') {
-                content = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Keine Antwort erhalten.';
+                content = data.candidates?.[0]?.content?.parts?.[0]?.text || RL('Keine Antwort erhalten.', 'No response received.');
             } else {
-                content = data.choices?.[0]?.message?.content || 'Keine Antwort erhalten.';
+                content = data.choices?.[0]?.message?.content || RL('Keine Antwort erhalten.', 'No response received.');
             }
             renderLlmResponse(content, userQuery);
         } catch (e) {
@@ -3987,20 +4015,20 @@ ${scenarioCtx}`;
             console.error('[LLM] Query error:', e.message, e);
             body.innerHTML = `<div style="color:var(--danger)">
                 <p style="margin-bottom:12px;"><strong>❌ ${escapeHtml(e.message)}</strong></p>
-                <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:14px;">🔍 Browser Console (F12) zeigt Details</p>
+                <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:14px;">${RL('🔍 Browser Console (F12) zeigt Details', '🔍 The browser console (F12) shows details')}</p>
                 <div style="background:rgba(var(--danger-rgb),0.05);border:1px solid rgba(var(--danger-rgb),0.2);border-radius:8px;padding:12px;font-size:0.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:14px;">
-                    <strong style="color:var(--text);">Tipps zum Troubleshooting:</strong>
+                    <strong style="color:var(--text);">${RL('Tipps zum Troubleshooting:', 'Troubleshooting tips:')}</strong>
                     <ul style="list-style-type:none;padding:0;margin:8px 0 0 0;">
-                        <li>✓ Prüfe dein API-Key – ist er gültig und hab richtig reinkopiert?</li>
-                        <li>✓ Überprüfe den Provider – stimmt die Auswahl zu deinem Key?</li>
-                        <li>✓ Checke deinen Account-Status (Guthaben, aktiv, nicht gebannt)</li>
-                        <li>✓ Falls Gemini: Nutze Groq statt – kostenlos & zuverlässiger</li>
-                        <li>✓ Versuch es später nochmal – Server könnte kurzzeitig ausfallen</li>
+                        <li>${RL('✓ Prüfe dein API-Key – ist er gültig und hab richtig reinkopiert?', '✓ Check your API key – is it valid and copied in correctly?')}</li>
+                        <li>${RL('✓ Überprüfe den Provider – stimmt die Auswahl zu deinem Key?', '✓ Check the provider – does the selection match your key?')}</li>
+                        <li>${RL('✓ Checke deinen Account-Status (Guthaben, aktiv, nicht gebannt)', '✓ Check your account status (credit, active, not banned)')}</li>
+                        <li>${RL('✓ Falls Gemini: Nutze Groq statt – kostenlos & zuverlässiger', '✓ If Gemini: use Groq instead – free & more reliable')}</li>
+                        <li>${RL('✓ Versuch es später nochmal – Server könnte kurzzeitig ausfallen', '✓ Try again later – the server might be briefly down')}</li>
                     </ul>
                 </div>
             </div>`;
-            actions.innerHTML = `<button class="llm-action-chip" onclick="openLlmKeyModal()">⚙️ Key ändern</button>
-                <button class="llm-action-chip" onclick="closeLlmResponse()" style="color:var(--text-dim);">✕ Schließen</button>`;
+            actions.innerHTML = `<button class="llm-action-chip" onclick="openLlmKeyModal()">${RL('⚙️ Key ändern', '⚙️ Change key')}</button>
+                <button class="llm-action-chip" onclick="closeLlmResponse()" style="color:var(--text-dim);">${RL('✕ Schließen', '✕ Close')}</button>`;
         }
     }
 
@@ -4021,11 +4049,11 @@ ${scenarioCtx}`;
             .replace(/\n/g, '<br>');
         html = '<p>' + html + '</p>';
 
-        // Detect email blocks ("Betreff:" or "Sehr geehrte")
-        html = html.replace(/(Betreff:.+?)(<\/p>|$)/gs, (match) => {
+        // Detect email blocks ("Betreff:" / "Subject:")
+        html = html.replace(/((?:Betreff|Subject):.+?)(<\/p>|$)/gs, (match) => {
             const id = 'llm_email_' + Date.now();
             return `<div class="llm-email-block" id="${id}">
-                <button class="llm-email-copy" onclick="copyLlmEmail('${id}')">📋 Kopieren</button>
+                <button class="llm-email-copy" onclick="copyLlmEmail('${id}')">${RL('📋 Kopieren', '📋 Copy')}</button>
                 ${match}
             </div>`;
         });
@@ -4047,12 +4075,12 @@ ${scenarioCtx}`;
         });
         const emailChip = document.createElement('button');
         emailChip.className = 'llm-action-chip';
-        emailChip.textContent = '📧 E-Mail generieren';
-        emailChip.addEventListener('click', () => queryLlm('Erstelle eine höfliche E-Mail für folgendes Problem: ' + originalQuery));
+        emailChip.textContent = RL('📧 E-Mail generieren', '📧 Generate email');
+        emailChip.addEventListener('click', () => queryLlm(RL('Erstelle eine höfliche E-Mail für folgendes Problem: ', 'Write a polite email for the following problem: ') + originalQuery));
         actions.appendChild(emailChip);
         const settingsChip = document.createElement('button');
         settingsChip.className = 'llm-action-chip';
-        settingsChip.textContent = '⚙️ Einstellungen';
+        settingsChip.textContent = RL('⚙️ Einstellungen', '⚙️ Settings');
         settingsChip.addEventListener('click', () => openLlmKeyModal());
         actions.appendChild(settingsChip);
     }
@@ -4065,10 +4093,10 @@ ${scenarioCtx}`;
     function copyLlmEmail(elemId) {
         const el = document.getElementById(elemId);
         if (!el) return;
-        const text = el.innerText.replace('📋 Kopieren', '').trim();
+        const text = el.innerText.replace(RL('📋 Kopieren', '📋 Copy'), '').trim();
         navigator.clipboard.writeText(text).then(() => {
             const btn = el.querySelector('.llm-email-copy');
-            if (btn) { btn.textContent = '✅ Kopiert!'; setTimeout(() => btn.textContent = '📋 Kopieren', 2000); }
+            if (btn) { btn.textContent = RL('✅ Kopiert!', '✅ Copied!'); setTimeout(() => btn.textContent = RL('📋 Kopieren', '📋 Copy'), 2000); }
         });
     }
 
@@ -4081,12 +4109,27 @@ ${scenarioCtx}`;
     // ═══════════════════════════════════════════
     //  INIT
     // ═══════════════════════════════════════════
-    document.addEventListener('DOMContentLoaded', () => {
+    function bootRightsChecker() {
         document.getElementById('statTotal').textContent = SCENARIOS.length;
         renderScenarios();
         initSearch();
         initFilters();
         updateLlmBtnState();
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        // Deutsche Seite: sofort rendern. /en/: erst die englische Datenschicht laden.
+        if (document.documentElement.lang !== 'en') { bootRightsChecker(); return; }
+        const applyEn = () => {
+            try { if (window.RC_EN && window.RC_EN.apply) window.RC_EN.apply(SCENARIOS, KEYWORD_MAP); }
+            catch (e) { console.error('[rc-en] apply failed', e); }
+            bootRightsChecker();
+        };
+        if (window.RC_EN) { applyEn(); return; }
+        const s = document.createElement('script');
+        s.src = '/pages/rechte-checker/rc-en.js';
+        s.onload = applyEn;
+        s.onerror = () => { console.warn('[rc-en] load failed, falling back to German data'); bootRightsChecker(); };
+        document.head.appendChild(s);
     });
 
     // ═══════════════════════════════════════════
@@ -4148,7 +4191,7 @@ ${scenarioCtx}`;
                     </div>
                     <div class="scenario-footer">
                         <div class="scenario-law">${escapeHtml(s.law)}</div>
-                        <div class="scenario-severity" aria-label="Schweregrad ${s.severity} von 3">${severityDots}</div>
+                        <div class="scenario-severity" aria-label="${RL('Schweregrad ' + s.severity + ' von 3', 'Severity ' + s.severity + ' of 3')}">${severityDots}</div>
                     </div>
                 </article>
             `;
@@ -4156,6 +4199,10 @@ ${scenarioCtx}`;
     }
 
     function getCatLabel(cat) {
+        if (document.documentElement.lang === 'en') {
+            const en = { arbeitszeit: 'Working hours', taetigkeit: 'Duties', urlaub: 'Vacation', schule: 'Vocational school', geld: 'Pay', kuendigung: 'Termination', mobbing: 'Bullying', sicherheit: 'Safety', ausbildung: 'Training', mitbestimmung: 'Co-determination' };
+            return en[cat] || cat;
+        }
         const map = { arbeitszeit: 'Arbeitszeit', taetigkeit: 'Tätigkeiten', urlaub: 'Urlaub', schule: 'Berufsschule', geld: 'Vergütung', kuendigung: 'Kündigung', mobbing: 'Mobbing' };
         return map[cat] || cat;
     }
@@ -4248,7 +4295,7 @@ ${scenarioCtx}`;
 
         // Verdict box
         html += `<div class="verdict-box ${s.verdict}">
-            <div class="verdict-label">${s.verdict === 'nein' ? '❌ Das darf der Chef NICHT' : s.verdict === 'jein' ? '⚠️ Kommt drauf an…' : '✅ Das ist erlaubt'}</div>
+            <div class="verdict-label">${s.verdict === 'nein' ? RL('❌ Das darf der Chef NICHT', '❌ The boss may NOT do that') : s.verdict === 'jein' ? RL('⚠️ Kommt drauf an…', '⚠️ It depends…') : RL('✅ Das ist erlaubt', '✅ This is allowed')}</div>
             <div class="verdict-text">${escapeHtml(s.verdictShort)}</div>
             <div class="verdict-detail">${escapeHtml(s.verdictDetail)}</div>
         </div>`;
@@ -4269,7 +4316,7 @@ ${scenarioCtx}`;
         // Tips
         if (s.tips && s.tips.length) {
             html += `<div class="tips-section">
-                <div class="tips-title">💡 Was du tun kannst</div>`;
+                <div class="tips-title">${RL('💡 Was du tun kannst', '💡 What you can do')}</div>`;
             s.tips.forEach((tip, i) => {
                 html += `<div class="tip-item">
                     <div class="tip-num">${i + 1}</div>
@@ -4284,12 +4331,12 @@ ${scenarioCtx}`;
             html += `<div class="email-section">
                 <button class="email-btn" onclick="toggleEmail('${s.id}')">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                    E-Mail-Vorlage generieren
+                    ${RL('E-Mail-Vorlage generieren', 'Generate email template')}
                 </button>
                 <div class="email-output" id="emailOutput_${s.id}">
                     <div class="email-output-header">
-                        <div class="email-output-title">📧 Betreff: ${escapeHtml(s.email.subject)}</div>
-                        <button class="email-copy-btn" onclick="copyEmail('${s.id}')">📋 Kopieren</button>
+                        <div class="email-output-title">${RL('📧 Betreff: ', '📧 Subject: ')}${escapeHtml(s.email.subject)}</div>
+                        <button class="email-copy-btn" onclick="copyEmail('${s.id}')">${RL('📋 Kopieren', '📋 Copy')}</button>
                     </div>
                     <div class="email-text" id="emailText_${s.id}">${escapeHtml(s.email.body)}</div>
                 </div>
@@ -4329,12 +4376,12 @@ ${scenarioCtx}`;
     function copyEmail(id) {
         const s = SCENARIOS.find(x => x.id === id);
         if (!s || !s.email) return;
-        const text = 'Betreff: ' + s.email.subject + '\n\n' + s.email.body;
+        const text = RL('Betreff: ', 'Subject: ') + s.email.subject + '\n\n' + s.email.body;
         navigator.clipboard.writeText(text).then(() => {
             const btn = document.querySelector('#emailOutput_' + id + ' .email-copy-btn');
             if (btn) {
                 const original = btn.textContent;
-                btn.textContent = '✅ Kopiert!';
+                btn.textContent = RL('✅ Kopiert!', '✅ Copied!');
                 btn.style.color = 'var(--success)';
                 setTimeout(() => {
                     btn.textContent = original;
