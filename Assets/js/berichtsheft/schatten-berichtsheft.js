@@ -4,6 +4,10 @@ var mwlLocale = window.mwlLocale || function () {
     return document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE';
 };
 
+// i18n-Helfer: gibt auf /en/ (<html lang="en">) den englischen Text zurueck,
+// sonst den deutschen. Diese Datei laeuft auf DE- und EN-Seite.
+function L(de, en) { return document.documentElement.lang === 'en' ? en : de; }
+
 // ═══════════════════════════════════════════════════════
 //  SCHATTEN-BERICHTSHEFT — AES-256-GCM ENCRYPTED VAULT
 // ═══════════════════════════════════════════════════════
@@ -14,23 +18,23 @@ const SALT_LENGTH = 32;
 const IV_LENGTH = 12;
 
 const CATEGORIES = {
-    verbal: { label: 'Verbale Belästigung', icon: '🗣️' },
-    neglect: { label: 'Ausbildungspflicht vernachlässigt', icon: '🚫' },
-    overtime: { label: 'Überstunden / Arbeitszeitverstöße', icon: '⏰' },
-    mobbing: { label: 'Mobbing / Ausgrenzung', icon: '😢' },
-    safety: { label: 'Arbeitsschutz-Verstoß', icon: '⚡' },
-    discrimination: { label: 'Diskriminierung', icon: '🚷' },
-    documentation: { label: 'Fehlende Dokumentation', icon: '📝' },
-    positive: { label: 'Positiver Fortschritt', icon: '✅' },
-    other: { label: 'Sonstiges', icon: '📌' },
+    verbal: { label: L('Verbale Belästigung', 'Verbal harassment'), icon: '🗣️' },
+    neglect: { label: L('Ausbildungspflicht vernachlässigt', 'Training duty neglected'), icon: '🚫' },
+    overtime: { label: L('Überstunden / Arbeitszeitverstöße', 'Overtime / working-time violations'), icon: '⏰' },
+    mobbing: { label: L('Mobbing / Ausgrenzung', 'Bullying / exclusion'), icon: '😢' },
+    safety: { label: L('Arbeitsschutz-Verstoß', 'Occupational-safety violation'), icon: '⚡' },
+    discrimination: { label: L('Diskriminierung', 'Discrimination'), icon: '🚷' },
+    documentation: { label: L('Fehlende Dokumentation', 'Missing documentation'), icon: '📝' },
+    positive: { label: L('Positiver Fortschritt', 'Positive progress'), icon: '✅' },
+    other: { label: L('Sonstiges', 'Other'), icon: '📌' },
 };
 
 const SEVERITY_LABELS = {
-    critical: '🔴 Kritisch',
-    high: '🟠 Hoch',
-    medium: '🔵 Mittel',
-    low: '🟢 Niedrig',
-    note: '⚪ Notiz'
+    critical: L('🔴 Kritisch', '🔴 Critical'),
+    high: L('🟠 Hoch', '🟠 High'),
+    medium: L('🔵 Mittel', '🔵 Medium'),
+    low: L('🟢 Niedrig', '🟢 Low'),
+    note: L('⚪ Notiz', '⚪ Note')
 };
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3, note: 4 };
@@ -131,7 +135,7 @@ async function createVault(password) {
 
 async function unlockVault(password) {
     const vault = getVault();
-    if (!vault) throw new Error('Kein Tresor gefunden');
+    if (!vault) throw new Error(L('Kein Tresor gefunden', 'No vault found'));
 
     const salt = b64ToU8(vault.salt);
     const key = await deriveKey(password, salt);
@@ -142,7 +146,7 @@ async function unlockVault(password) {
         entries = JSON.parse(plaintext);
         derivedKey = key;
     } catch(e) {
-        throw new Error('Falsches Passwort');
+        throw new Error(L('Falsches Passwort', 'Wrong password'));
     }
 }
 
@@ -178,15 +182,15 @@ async function handleUnlock() {
     const pw = document.getElementById('pwInput').value;
     const errEl = document.getElementById('lockError');
     const btn = document.getElementById('unlockBtn');
-    if (!pw) { errEl.textContent = 'Bitte Passwort eingeben'; return; }
-    btn.disabled = true; btn.textContent = '⏳ Entschlüssle...';
+    if (!pw) { errEl.textContent = L('Bitte Passwort eingeben', 'Please enter a password'); return; }
+    btn.disabled = true; btn.textContent = L('⏳ Entschlüssle...', '⏳ Decrypting...');
     try {
         await unlockVault(pw);
         document.getElementById('pwInput').value = '';
         enterApp();
     } catch (e) {
         errEl.textContent = '❌ ' + e.message;
-        btn.disabled = false; btn.textContent = '🔓 Entsperren';
+        btn.disabled = false; btn.textContent = L('🔓 Entsperren', '🔓 Unlock');
     }
 }
 
@@ -194,15 +198,15 @@ async function handleSetup() {
     const pw = document.getElementById('newPwInput').value;
     const confirm = document.getElementById('confirmPwInput').value;
     const errEl = document.getElementById('setupError');
-    if (pw.length < 8) { errEl.textContent = 'Mindestens 8 Zeichen'; return; }
-    if (calcPwStrength(pw) < 2) { errEl.textContent = 'Passwort zu schwach — verwende Groß/Kleinbuchstaben, Zahlen und Sonderzeichen'; return; }
-    if (pw !== confirm) { errEl.textContent = 'Passwörter stimmen nicht überein'; return; }
+    if (pw.length < 8) { errEl.textContent = L('Mindestens 8 Zeichen', 'At least 8 characters'); return; }
+    if (calcPwStrength(pw) < 2) { errEl.textContent = L('Passwort zu schwach — verwende Groß/Kleinbuchstaben, Zahlen und Sonderzeichen', 'Password too weak — use upper/lowercase letters, numbers and special characters'); return; }
+    if (pw !== confirm) { errEl.textContent = L('Passwörter stimmen nicht überein', 'Passwords do not match'); return; }
     try {
         await createVault(pw);
         document.getElementById('newPwInput').value = '';
         document.getElementById('confirmPwInput').value = '';
         enterApp();
-        showToast('🛡️ Tresor erstellt — dein Schatten-Berichtsheft ist bereit');
+        showToast(L('🛡️ Tresor erstellt — dein Schatten-Berichtsheft ist bereit', '🛡️ Vault created — your shadow report book is ready'));
     } catch (e) {
         errEl.textContent = '❌ ' + e.message;
     }
@@ -233,7 +237,7 @@ function lockApp() {
         document.getElementById('mainApp').style.display = '';
         initLockScreen();
     }, 600);
-    showToast('🔒 Tresor gesperrt');
+    showToast(L('🔒 Tresor gesperrt', '🔒 Vault locked'));
 }
 
 function togglePwVis(inputId, btn) {
@@ -261,7 +265,7 @@ function startSessionTimer() {
         const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
         const m = Math.floor(elapsed / 60);
         const s = elapsed % 60;
-        el.textContent = 'Sitzung: ' + m + ':' + String(s).padStart(2, '0');
+        el.textContent = L('Sitzung: ', 'Session: ') + m + ':' + String(s).padStart(2, '0');
     }, 1000);
 }
 
@@ -279,7 +283,7 @@ function selectSeverity(sev) {
 }
 
 function openNewEntry() {
-    document.getElementById('entryModalTitle').textContent = '✍️ Neuer Eintrag';
+    document.getElementById('entryModalTitle').textContent = L('✍️ Neuer Eintrag', '✍️ New entry');
     document.getElementById('entryEditId').value = '';
     document.getElementById('entryDate').value = new Date().toISOString().slice(0, 10);
     document.getElementById('entryTime').value = new Date().toTimeString().slice(0, 5);
@@ -294,7 +298,7 @@ function openNewEntry() {
 function openEditEntry(id) {
     const entry = entries.find(e => e.id === id);
     if (!entry) return;
-    document.getElementById('entryModalTitle').textContent = '✏️ Eintrag bearbeiten';
+    document.getElementById('entryModalTitle').textContent = L('✏️ Eintrag bearbeiten', '✏️ Edit entry');
     document.getElementById('entryEditId').value = id;
     document.getElementById('entryDate').value = entry.date;
     document.getElementById('entryTime').value = entry.time || '';
@@ -313,8 +317,8 @@ async function saveEntry() {
     const text = document.getElementById('entryText').value.trim();
     const witnesses = document.getElementById('entryWitnesses').value.trim();
 
-    if (!date) { showToast('⚠️ Datum fehlt'); return; }
-    if (!text) { showToast('⚠️ Beschreibung fehlt'); return; }
+    if (!date) { showToast(L('⚠️ Datum fehlt', '⚠️ Date missing')); return; }
+    if (!text) { showToast(L('⚠️ Beschreibung fehlt', '⚠️ Description missing')); return; }
 
     const editId = document.getElementById('entryEditId').value;
 
@@ -347,7 +351,7 @@ async function saveEntry() {
     closeModal('entryModal');
     renderEntries();
     updateStats();
-    showToast(editId ? '✏️ Eintrag aktualisiert & verschlüsselt' : '🔐 Eintrag verschlüsselt gespeichert');
+    showToast(editId ? L('✏️ Eintrag aktualisiert & verschlüsselt', '✏️ Entry updated & encrypted') : L('🔐 Eintrag verschlüsselt gespeichert', '🔐 Entry saved encrypted'));
 }
 
 function confirmDelete(id) {
@@ -358,7 +362,7 @@ function confirmDelete(id) {
         closeModal('deleteModal');
         renderEntries();
         updateStats();
-        showToast('🗑️ Eintrag gelöscht');
+        showToast(L('🗑️ Eintrag gelöscht', '🗑️ Entry deleted'));
     };
 }
 
@@ -386,9 +390,9 @@ function renderEntries() {
 
     if (filtered.length === 0) {
         list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📓</div><h3>' +
-            (entries.length === 0 ? 'Noch keine Einträge' : 'Keine Treffer') +
+            (entries.length === 0 ? L('Noch keine Einträge', 'No entries yet') : L('Keine Treffer', 'No matches')) +
             '</h3><p>' +
-            (entries.length === 0 ? 'Erstelle deinen ersten vertraulichen Eintrag mit dem Button oben.' : 'Ändere die Filter oder den Suchbegriff.') +
+            (entries.length === 0 ? L('Erstelle deinen ersten vertraulichen Eintrag mit dem Button oben.', 'Create your first confidential entry with the button above.') : L('Ändere die Filter oder den Suchbegriff.', 'Change the filters or the search term.')) +
             '</p></div>';
         return;
     }
@@ -398,12 +402,12 @@ function renderEntries() {
         const sevClass = 'sev-' + e.severity;
         const dateStr = formatDate(e.date);
         const witnessHtml = (e.witnesses && e.witnesses.length) ?
-            '<div class="entry-witnesses">👥 Zeugen: ' + escapeHtml(e.witnesses.join(', ')) + '</div>' : '';
+            '<div class="entry-witnesses">👥 ' + L('Zeugen: ', 'Witnesses: ') + escapeHtml(e.witnesses.join(', ')) + '</div>' : '';
 
         return '<div class="entry-card" data-severity="' + e.severity + '">' +
             '<div class="entry-header">' +
                 '<div><span class="entry-date">' + dateStr + '</span>' +
-                (e.time ? ' <span class="entry-time">' + e.time + ' Uhr</span>' : '') +
+                (e.time ? ' <span class="entry-time">' + e.time + L(' Uhr', '') + '</span>' : '') +
                 '</div>' +
                 '<span class="entry-severity ' + sevClass + '">' + (SEVERITY_LABELS[e.severity] || e.severity) + '</span>' +
             '</div>' +
@@ -411,7 +415,7 @@ function renderEntries() {
             '<div class="entry-text">' + escapeHtml(e.text) + '</div>' +
             witnessHtml +
             '<div class="entry-actions">' +
-                '<button class="btn btn-sm btn-primary" onclick="openEditEntry(\'' + e.id + '\')">✏️ Bearbeiten</button>' +
+                '<button class="btn btn-sm btn-primary" onclick="openEditEntry(\'' + e.id + '\')">✏️ ' + L('Bearbeiten', 'Edit') + '</button>' +
                 '<button class="btn btn-sm btn-danger" onclick="confirmDelete(\'' + e.id + '\')">🗑️</button>' +
             '</div>' +
         '</div>';
@@ -436,7 +440,7 @@ function updateStats() {
 
 function populateCategoryFilter() {
     const sel = document.getElementById('filterCategory');
-    sel.innerHTML = '<option value="all">Alle Kategorien</option>';
+    sel.innerHTML = '<option value="all">' + L('Alle Kategorien', 'All categories') + '</option>';
     Object.entries(CATEGORIES).forEach(([k, v]) => {
         sel.innerHTML += '<option value="' + k + '">' + v.icon + ' ' + v.label + '</option>';
     });
@@ -464,22 +468,22 @@ function buildProtocol(exportEntries) {
     const now = new Date();
     const lines = [];
     lines.push('═══════════════════════════════════════════════');
-    lines.push('  IHK-BESCHWERDE-PROTOKOLL');
-    lines.push('  Vertrauliches Dokumentationsprotokoll');
+    lines.push(L('  IHK-BESCHWERDE-PROTOKOLL', '  IHK COMPLAINT RECORD'));
+    lines.push(L('  Vertrauliches Dokumentationsprotokoll', '  Confidential documentation record'));
     lines.push('═══════════════════════════════════════════════');
     lines.push('');
-    lines.push('Erstellt am: ' + now.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'long', year: 'numeric' }));
-    lines.push('Uhrzeit:     ' + now.toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' }));
-    lines.push('Einträge:    ' + exportEntries.length);
+    lines.push(L('Erstellt am: ', 'Created on:  ') + now.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'long', year: 'numeric' }));
+    lines.push(L('Uhrzeit:     ', 'Time:        ') + now.toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' }));
+    lines.push(L('Einträge:    ', 'Entries:     ') + exportEntries.length);
     if (exportEntries.length > 0) {
         const dates = exportEntries.map(e => e.date).sort();
-        lines.push('Zeitraum:    ' + formatDate(dates[0]) + ' — ' + formatDate(dates[dates.length - 1]));
+        lines.push(L('Zeitraum:    ', 'Period:      ') + formatDate(dates[0]) + ' — ' + formatDate(dates[dates.length - 1]));
     }
     lines.push('');
-    lines.push('Schweregrad-Zusammenfassung:');
+    lines.push(L('Schweregrad-Zusammenfassung:', 'Severity summary:'));
     ['critical', 'high', 'medium', 'low', 'note'].forEach(sev => {
         const c = exportEntries.filter(e => e.severity === sev).length;
-        if (c > 0) lines.push('  ' + SEVERITY_LABELS[sev] + ': ' + c + ' Einträge');
+        if (c > 0) lines.push('  ' + SEVERITY_LABELS[sev] + ': ' + c + L(' Einträge', c === 1 ? ' entry' : ' entries'));
     });
     lines.push('');
     lines.push('───────────────────────────────────────────────');
@@ -487,16 +491,16 @@ function buildProtocol(exportEntries) {
 
     exportEntries.forEach((e, i) => {
         const cat = CATEGORIES[e.category] || CATEGORIES.other;
-        lines.push('▸ VORFALL #' + (i + 1));
-        lines.push('  Datum:       ' + formatDate(e.date) + (e.time ? ', ' + e.time + ' Uhr' : ''));
-        lines.push('  Schwere:     ' + (SEVERITY_LABELS[e.severity] || e.severity));
-        lines.push('  Kategorie:   ' + cat.icon + ' ' + cat.label);
+        lines.push(L('▸ VORFALL #', '▸ INCIDENT #') + (i + 1));
+        lines.push(L('  Datum:       ', '  Date:        ') + formatDate(e.date) + (e.time ? ', ' + e.time + L(' Uhr', '') : ''));
+        lines.push(L('  Schwere:     ', '  Severity:    ') + (SEVERITY_LABELS[e.severity] || e.severity));
+        lines.push(L('  Kategorie:   ', '  Category:    ') + cat.icon + ' ' + cat.label);
         lines.push('');
-        lines.push('  Beschreibung:');
+        lines.push(L('  Beschreibung:', '  Description:'));
         e.text.split('\n').forEach(line => lines.push('    ' + line));
         if (e.witnesses && e.witnesses.length) {
             lines.push('');
-            lines.push('  Zeugen: ' + e.witnesses.join(', '));
+            lines.push(L('  Zeugen: ', '  Witnesses: ') + e.witnesses.join(', '));
         }
         lines.push('');
         lines.push('───────────────────────────────────────────────');
@@ -504,13 +508,13 @@ function buildProtocol(exportEntries) {
     });
 
     lines.push('');
-    lines.push('HINWEIS: Dieses Protokoll wurde automatisch aus einem');
-    lines.push('AES-256 verschlüsselten lokalen Speicher generiert.');
-    lines.push('Die Einträge wurden zeitnah zu den dokumentierten');
-    lines.push('Vorfällen erstellt (Erstelldatum in Metadaten vorhanden).');
+    lines.push(L('HINWEIS: Dieses Protokoll wurde automatisch aus einem', 'NOTE: This record was generated automatically from an'));
+    lines.push(L('AES-256 verschlüsselten lokalen Speicher generiert.', 'AES-256 encrypted local storage.'));
+    lines.push(L('Die Einträge wurden zeitnah zu den dokumentierten', 'The entries were created close in time to the documented'));
+    lines.push(L('Vorfällen erstellt (Erstelldatum in Metadaten vorhanden).', 'incidents (creation date available in the metadata).'));
     lines.push('');
     lines.push('═══════════════════════════════════════════════');
-    lines.push('  Generiert von MyWorkLog · Schatten-Berichtsheft');
+    lines.push(L('  Generiert von MyWorkLog · Schatten-Berichtsheft', '  Generated by MyWorkLog · Shadow Report Book'));
     lines.push('═══════════════════════════════════════════════');
 
     return lines.join('\n');
@@ -519,7 +523,7 @@ function buildProtocol(exportEntries) {
 function generatePreview() {
     const exportEntries = getExportEntries();
     if (exportEntries.length === 0) {
-        document.getElementById('exportPreview').textContent = '⚠️ Keine Einträge im gewählten Zeitraum/Filter gefunden.';
+        document.getElementById('exportPreview').textContent = L('⚠️ Keine Einträge im gewählten Zeitraum/Filter gefunden.', '⚠️ No entries found in the selected period/filter.');
         return;
     }
     document.getElementById('exportPreview').textContent = buildProtocol(exportEntries);
@@ -527,25 +531,25 @@ function generatePreview() {
 
 function exportAsText() {
     const exportEntries = getExportEntries();
-    if (exportEntries.length === 0) { showToast('⚠️ Keine Einträge zum Exportieren'); return; }
+    if (exportEntries.length === 0) { showToast(L('⚠️ Keine Einträge zum Exportieren', '⚠️ No entries to export')); return; }
     const text = buildProtocol(exportEntries);
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'IHK-Beschwerde-Protokoll_' + new Date().toISOString().slice(0, 10) + '.txt';
+    a.download = L('IHK-Beschwerde-Protokoll_', 'IHK-Complaint-Record_') + new Date().toISOString().slice(0, 10) + '.txt';
     a.click();
     URL.revokeObjectURL(url);
-    showToast('📄 Protokoll als TXT heruntergeladen');
+    showToast(L('📄 Protokoll als TXT heruntergeladen', '📄 Record downloaded as TXT'));
 }
 
 function exportAsPDF() {
     const exportEntries = getExportEntries();
-    if (exportEntries.length === 0) { showToast('⚠️ Keine Einträge zum Exportieren'); return; }
+    if (exportEntries.length === 0) { showToast(L('⚠️ Keine Einträge zum Exportieren', '⚠️ No entries to export')); return; }
 
     // Build HTML for PDF print
     const now = new Date();
-    let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>IHK-Beschwerde-Protokoll</title>';
+    let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + L('IHK-Beschwerde-Protokoll', 'IHK Complaint Record') + '</title>';
     html += '<style>';
     html += 'body{font-family:Segoe UI,system-ui,sans-serif;color:#1a1a2e;margin:0;padding:40px 50px;font-size:11pt;line-height:1.6}';
     html += 'h1{font-size:18pt;color:#6d28d9;border-bottom:3px solid #a855f7;padding-bottom:8px;margin-bottom:6px}';
@@ -569,14 +573,14 @@ function exportAsPDF() {
     html += '@page{margin:20mm 15mm}';
     html += '</style></head><body>';
 
-    html += '<h1>IHK-Beschwerde-Protokoll</h1>';
-    html += '<div class="meta">Erstellt: ' + now.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'long', year: 'numeric' }) + ' um ' + now.toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' }) + ' Uhr</div>';
+    html += '<h1>' + L('IHK-Beschwerde-Protokoll', 'IHK Complaint Record') + '</h1>';
+    html += '<div class="meta">' + L('Erstellt: ', 'Created: ') + now.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'long', year: 'numeric' }) + L(' um ', ' at ') + now.toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' }) + L(' Uhr', '') + '</div>';
 
     // Summary
     const dates = exportEntries.map(e => e.date).sort();
     html += '<div class="summary">';
-    html += '<strong>' + exportEntries.length + ' dokumentierte Vorfälle</strong>';
-    html += ' im Zeitraum ' + formatDate(dates[0]) + ' — ' + formatDate(dates[dates.length - 1]) + '<br>';
+    html += '<strong>' + exportEntries.length + L(' dokumentierte Vorfälle', ' documented incidents') + '</strong>';
+    html += L(' im Zeitraum ', ' in the period ') + formatDate(dates[0]) + ' — ' + formatDate(dates[dates.length - 1]) + '<br>';
     ['critical', 'high', 'medium', 'low'].forEach(sev => {
         const c = exportEntries.filter(e => e.severity === sev).length;
         if (c > 0) html += (SEVERITY_LABELS[sev] || sev) + ': ' + c + ' &nbsp;|&nbsp; ';
@@ -588,33 +592,33 @@ function exportAsPDF() {
         const cat = CATEGORIES[e.category] || CATEGORIES.other;
         html += '<div class="incident">';
         html += '<div class="incident-header">';
-        html += '<span class="incident-num">Vorfall #' + (i + 1) + '</span>';
-        html += '<span class="incident-date">' + formatDate(e.date) + (e.time ? ', ' + e.time + ' Uhr' : '') + '</span>';
+        html += '<span class="incident-num">' + L('Vorfall #', 'Incident #') + (i + 1) + '</span>';
+        html += '<span class="incident-date">' + formatDate(e.date) + (e.time ? ', ' + e.time + L(' Uhr', '') : '') + '</span>';
         html += '<span class="badge badge-' + e.severity + '">' + (SEVERITY_LABELS[e.severity] || e.severity) + '</span>';
         html += '</div>';
         html += '<div class="cat">' + cat.icon + ' ' + cat.label + '</div>';
         html += '<div class="text">' + escapeHtml(e.text) + '</div>';
         if (e.witnesses && e.witnesses.length) {
-            html += '<div class="witnesses">👥 Zeugen: ' + escapeHtml(e.witnesses.join(', ')) + '</div>';
+            html += '<div class="witnesses">👥 ' + L('Zeugen: ', 'Witnesses: ') + escapeHtml(e.witnesses.join(', ')) + '</div>';
         }
         html += '</div>';
     });
 
     // Signature area
     html += '<div class="sig">';
-    html += '<div class="sig-block">Ort, Datum</div>';
-    html += '<div class="sig-block">Unterschrift Auszubildende/r</div>';
+    html += '<div class="sig-block">' + L('Ort, Datum', 'Place, date') + '</div>';
+    html += '<div class="sig-block">' + L('Unterschrift Auszubildende/r', 'Signature of trainee') + '</div>';
     html += '</div>';
 
-    html += '<div class="footer">Dieses Protokoll wurde automatisch aus einem AES-256 verschlüsselten lokalen Speicher generiert.<br>';
-    html += 'Die Einträge wurden zeitnah zu den dokumentierten Vorfällen erstellt. · MyWorkLog Schatten-Berichtsheft</div>';
+    html += '<div class="footer">' + L('Dieses Protokoll wurde automatisch aus einem AES-256 verschlüsselten lokalen Speicher generiert.', 'This record was generated automatically from an AES-256 encrypted local storage.') + '<br>';
+    html += L('Die Einträge wurden zeitnah zu den dokumentierten Vorfällen erstellt. · MyWorkLog Schatten-Berichtsheft', 'The entries were created close in time to the documented incidents. · MyWorkLog Shadow Report Book') + '</div>';
     html += '</body></html>';
 
     const printWin = window.open('', '_blank');
     printWin.document.write(html);
     printWin.document.close();
     printWin.onload = () => { printWin.print(); };
-    showToast('📑 PDF wird in neuem Tab generiert');
+    showToast(L('📑 PDF wird in neuem Tab generiert', '📑 PDF is being generated in a new tab'));
 }
 
 function openExportModal() {
@@ -624,7 +628,7 @@ function openExportModal() {
         document.getElementById('exportFrom').value = dates[0];
         document.getElementById('exportTo').value = dates[dates.length - 1];
     }
-    document.getElementById('exportPreview').textContent = 'Klicke "Vorschau" um das Protokoll zu generieren.';
+    document.getElementById('exportPreview').textContent = L('Klicke "Vorschau" um das Protokoll zu generieren.', 'Click "Preview" to generate the record.');
     openModal('exportModal');
 }
 
