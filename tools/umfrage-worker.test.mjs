@@ -159,6 +159,41 @@ await check('falsche Methode -> 405', async () => {
   eq((await call(env, req)).status, 405);
 });
 
+
+await check('Nutzungs-Angaben werden gespeichert', async () => {
+  const env = { UMFRAGE: makeKV() };
+  await call(env, post({ id: 'nutzung0001', features: ['ki_stark'], price: '1_3',
+                         nutzungJetzt: 'woechentlich', nutzungDann: 'taeglich' }));
+  const m = env.UMFRAGE._store.get('vote:nutzung0001').metadata;
+  eq(m.n, 'woechentlich'); eq(m.d, 'taeglich');
+});
+
+await check('erfundene Nutzungs-Stufe wird zu null', async () => {
+  const env = { UMFRAGE: makeKV() };
+  await call(env, post({ id: 'nutzungbad1', price: '0', nutzungJetzt: 'stuendlich', nutzungDann: 'nie_wieder' }));
+  const m = env.UMFRAGE._store.get('vote:nutzungbad1').metadata;
+  eq(m.n, null); eq(m.d, null);
+});
+
+await check('nur Nutzungs-Antwort reicht als Stimme', async () => {
+  const env = { UMFRAGE: makeKV() };
+  const r = await call(env, post({ id: 'nurnutzung1', features: [], price: null, nutzungJetzt: 'taeglich' }));
+  eq(r.status, 200);
+});
+
+await check('Nutzung wird in der Auswertung gezaehlt', async () => {
+  const env = { UMFRAGE: makeKV(), UMFRAGE_SECRET: 'geheim' };
+  await call(env, post({ id: 'nz00000001', nutzungJetzt: 'selten',       nutzungDann: 'taeglich' }));
+  await call(env, post({ id: 'nz00000002', nutzungJetzt: 'woechentlich', nutzungDann: 'taeglich' }));
+  await call(env, post({ id: 'nz00000003', nutzungJetzt: 'woechentlich', nutzungDann: 'woechentlich' }));
+  const req = new Request('https://x/umfrage?results=geheim', { method: 'GET' });
+  const j = await (await call(env, req, 'https://x/umfrage?results=geheim')).json();
+  eq(j.nutzungJetzt.woechentlich, 2);
+  eq(j.nutzungJetzt.selten, 1);
+  eq(j.nutzungDann.taeglich, 2);
+  eq(j.nutzungDann.monatlich, 0);
+});
+
 console.log(`\n${pass} bestanden, ${fail} fehlgeschlagen\n`);
 fs.unlinkSync(tmp);
 process.exit(fail ? 1 : 0);

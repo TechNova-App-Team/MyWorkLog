@@ -46,15 +46,22 @@
     function umfReadAnswers() {
         const features = [...document.querySelectorAll('#umfFeatures input[type="checkbox"]:checked')]
             .map(c => c.value);
-        const priceEl = document.querySelector('#umfPrice input[name="umfPreis"]:checked');
-        return { features: features, price: priceEl ? priceEl.value : null };
+        const pick = (sel) => { const el = document.querySelector(sel); return el ? el.value : null; };
+        return {
+            features:     features,
+            price:        pick('#umfPrice input[name="umfPreis"]:checked'),
+            // Zweimal dieselbe Skala: der Vergleich jetzt/dann ist die Aussage,
+            // nicht der Einzelwert.
+            nutzungJetzt: pick('#umfNutzungJetzt input[name="umfJetzt"]:checked'),
+            nutzungDann:  pick('#umfNutzungDann input[name="umfDann"]:checked')
+        };
     }
 
     async function submitUmfrage() {
         const btn = document.getElementById('umfSubmit');
         const ans = umfReadAnswers();
 
-        if (!ans.features.length && !ans.price) {
+        if (!ans.features.length && !ans.price && !ans.nutzungJetzt && !ans.nutzungDann) {
             umfShowFail('Bitte wähle mindestens eine Antwort aus.');
             return;
         }
@@ -75,7 +82,11 @@
             const res = await fetch(UMFRAGE_ENDPOINT, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ v: 1, id: voteId, features: ans.features, price: ans.price })
+                body: JSON.stringify({
+                    v: 1, id: voteId,
+                    features: ans.features, price: ans.price,
+                    nutzungJetzt: ans.nutzungJetzt, nutzungDann: ans.nutzungDann
+                })
             });
 
             if (!res.ok) {

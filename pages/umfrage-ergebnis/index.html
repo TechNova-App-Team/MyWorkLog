@@ -124,6 +124,12 @@
         border: 1px solid rgba(239,68,68,0.2);
         color: #fca5a5;
     }
+    .erg-delta {
+        margin-top: 1rem; padding-top: 0.9rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.82rem; line-height: 1.6; color: var(--text-muted);
+    }
+    .erg-delta b { color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums; }
     .erg-hint { font-size: 0.78rem; color: var(--text-muted); line-height: 1.6; margin-top: 0.85rem; }
     .erg-hint code {
         font-family: var(--font-mono, monospace); font-size: 0.76rem;
@@ -165,6 +171,15 @@
             <div id="ergFeatures"></div>
         </div>
         <div class="erg-card">
+            <div class="erg-label">Nutzung heute</div>
+            <div id="ergNutzungJetzt"></div>
+        </div>
+        <div class="erg-card">
+            <div class="erg-label">Nutzung mit den Verbesserungen</div>
+            <div id="ergNutzungDann"></div>
+            <div class="erg-delta" id="ergDelta"></div>
+        </div>
+        <div class="erg-card">
             <div class="erg-label">Zahlungsbereitschaft pro Monat</div>
             <div id="ergPrices"></div>
         </div>
@@ -195,6 +210,17 @@
         ki_limit:      'Kein Tageslimit',
         keine:         'Nichts davon (soll frei bleiben)'
     };
+    var N_LABEL = {
+        taeglich:       'Täglich',
+        mehrmals_woche: 'Mehrmals die Woche',
+        woechentlich:   'Einmal pro Woche',
+        monatlich:      'Alle paar Wochen',
+        selten:         'Selten bis nie'
+    };
+    // Fuer den Vergleich: Nutzungen pro Woche, grob. Nur zum Bilden EINES
+    // Mittelwerts gedacht — nicht als exakte Zahl verkaufen.
+    var N_PRO_WOCHE = { taeglich: 5, mehrmals_woche: 3, woechentlich: 1, monatlich: 0.3, selten: 0 };
+
     var P_LABEL = {
         '0':        'Nichts',
         '1_3':      '1–3 €',
@@ -225,6 +251,28 @@
         }).join('');
     }
 
+    // Gewichteter Schnitt beider Verteilungen. Sagt in einem Satz, ob die
+    // Verbesserungen ueberhaupt mehr Nutzung versprechen.
+    function schnitt(counts) {
+        var n = 0, sum = 0;
+        Object.keys(N_PRO_WOCHE).forEach(function (k) {
+            var c = counts[k] || 0; n += c; sum += c * N_PRO_WOCHE[k];
+        });
+        return n ? sum / n : null;
+    }
+    function deltaText(jetzt, dann) {
+        var a = schnitt(jetzt), b = schnitt(dann);
+        if (a === null || b === null) return 'Noch zu wenige Antworten für einen Vergleich.';
+        var diff = b - a;
+        var richtung = diff > 0.15 ? 'mehr' : (diff < -0.15 ? 'weniger' : 'unverändert');
+        var z = function (n) { return n.toFixed(1).replace('.', ','); };  // deutsches Dezimalkomma
+        return 'Im Schnitt <b>' + z(a) + '×</b> pro Woche heute gegen <b>' + z(b)
+             + '×</b> mit den Verbesserungen — also ' + (richtung === 'unverändert'
+                ? '<b>praktisch unverändert</b>. Das ist das eigentliche Signal: die Ideen würden die Nutzung nicht erhöhen.'
+                : '<b>' + z(Math.abs(diff)) + '× ' + richtung + '</b> pro Woche.')
+             + ' Grobe Schätzung aus den Stufen, keine exakte Messung.';
+    }
+
     function show(id, on) { var el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; }
     function fail(msg) {
         document.getElementById('ergErrorText').textContent = msg;
@@ -250,6 +298,9 @@
             document.getElementById('ergTotal').textContent = d.total || 0;
             renderRows(document.getElementById('ergFeatures'), d.features || {}, F_LABEL, d.total || 0);
             renderRows(document.getElementById('ergPrices'),   d.prices   || {}, P_LABEL, d.total || 0);
+            renderRows(document.getElementById('ergNutzungJetzt'), d.nutzungJetzt || {}, N_LABEL, d.total || 0);
+            renderRows(document.getElementById('ergNutzungDann'),  d.nutzungDann  || {}, N_LABEL, d.total || 0);
+            document.getElementById('ergDelta').innerHTML = deltaText(d.nutzungJetzt || {}, d.nutzungDann || {});
             document.getElementById('ergStand').textContent =
                 'Stand: ' + new Date(d.abgerufen || Date.now()).toLocaleString('de-DE')
                 + '. Prozente beziehen sich auf alle Stimmen; bei der oberen Frage war Mehrfachauswahl möglich, '
