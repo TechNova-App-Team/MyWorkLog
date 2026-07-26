@@ -330,10 +330,10 @@
                         <div style="font-size:2.8rem; font-weight:800; color:var(--primary); margin:10px 0; font-family:var(--font-mono); letter-spacing:-2px;" id="valTotal">+0.0h</div>
                         <div style="font-size:0.8rem; color:var(--text-muted);">Prognose: <span id="valProjected" style="color:var(--text-main)">0h</span></div>
                         <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:6px; font-size:0.8rem;">
-                            <span id="streakEmoji" class="streak-active" style="font-size:1rem;">🔥</span>
+                            <span id="streakEmoji" class="gz-streak-icon streak-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span>
                             <span style="color:var(--text-muted);">Streak:</span>
                             <span id="streakCount" style="color:var(--success); font-weight:800;">0</span>
-                            <span style="font-size:0.7rem; color:var(--text-muted);" id="streakBest">Best: 0</span>
+                            <span style="font-size:0.7rem; color:var(--text-muted);">Best: <span id="streakBest">0</span></span>
                         </div>
                     </div>
                     <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
