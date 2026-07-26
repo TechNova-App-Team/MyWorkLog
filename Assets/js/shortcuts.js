@@ -2,6 +2,27 @@
 // SHORTCUTS CONFIGURATION SYSTEM
 // ============================================
 
+// ─────────────────────────────────────────────────────────────
+// EINE Quelle der Wahrheit für ALLE globalen keydown-Handler.
+// Default ist AUS — nur ein explizites `true` schaltet Kürzel ein.
+// Jeder globale Handler im Projekt MUSS das hier abfragen:
+//   ShortcutManager (hier) · S/P/E + Ctrl+Enter (app-startup.js)
+//   Ctrl+K (navbar-sidebar.js) · Ctrl+B (sidebar.js) · Ctrl+Shift+K (extra.js)
+// `data` ist ein globales `let` aus state-config.js (nicht auf window),
+// deshalb try/catch: vor dessen Initialisierung wirft schon der Zugriff (TDZ).
+// ─────────────────────────────────────────────────────────────
+function shortcutsEnabled() {
+    try {
+        return !!(data && data.settings && data.settings.shortcutsEnabled === true);
+    } catch (e) {
+        return false; // noch nicht geladen → im Zweifel aus
+    }
+}
+window.shortcutsEnabled = shortcutsEnabled;
+
+// Fallback für Shortcuts aus localStorage, die noch kein `allowInInput`-Flag tragen
+const DEFAULT_ALLOW_IN_INPUT = ['data.save', 'search.open', 'ghost.toggle'];
+
 const defaultShortcuts = {
     // TIMER CONTROL
     'timer.toggle': {
@@ -91,7 +112,8 @@ const defaultShortcuts = {
         name: 'Speichern',
         category: 'Daten',
         keys: ['ctrl', 's'],
-        action: 'save'
+        action: 'save',
+        allowInInput: true
     },
     'data.export': {
         name: 'Daten exportieren (JSON)',
@@ -112,15 +134,17 @@ const defaultShortcuts = {
         name: 'Suche öffnen',
         category: 'Suche',
         keys: ['ctrl', 'f'],
-        action: 'openSearch'
+        action: 'openSearch',
+        allowInInput: true
     },
 
     // GHOST MODE
     'ghost.toggle': {
-        name: 'Ghost Mode 👻',
+        name: 'Ghost Mode',
         category: 'Stealth',
         keys: ['ctrl', 'shift', 'k'],
-        action: 'toggleGhostMode'
+        action: 'toggleGhostMode',
+        allowInInput: true
     }
 };
 
@@ -159,27 +183,30 @@ class ShortcutManager {
 
     handleKeyPress(event) {
         if (!this.enabled) return;
-        
-        // Ignoriere Eingaben in Textfeldern (außer bei bestimmten Shortcuts)
-        if (['input', 'textarea'].includes(event.target.tagName.toLowerCase())) {
-            // Nur spezifische Shortcuts in Eingabefeldern erlauben
-            const allowedInInput = ['data.save', 'search.open', 'ghost.toggle'];
-            const matchedShortcut = Object.entries(this.shortcuts).find(([_, sc]) => 
-                this.keysMatch(event, sc.keys)
-            );
-            if (!matchedShortcut || !allowedInInput.includes(matchedShortcut[0])) {
-                return;
-            }
-        }
+        // Master-Schalter aus den Settings. Ohne das feuerte hier JEDER Ctrl-Shortcut
+        // (Ctrl+R, Ctrl+F, Ctrl+S, Ctrl+1…5, Delete) weiter, obwohl der Toggle aus war.
+        if (!shortcutsEnabled()) return;
 
         // Finde den passenden Shortcut
-        for (const [id, shortcut] of Object.entries(this.shortcuts)) {
-            if (this.keysMatch(event, shortcut.keys)) {
-                event.preventDefault();
-                this.executeAction(id, shortcut);
-                return;
-            }
+        const match = Object.entries(this.shortcuts).find(([_, sc]) =>
+            Array.isArray(sc.keys) && this.keysMatch(event, sc.keys)
+        );
+        if (!match) return;
+
+        const [id, shortcut] = match;
+
+        // In Eingabefeldern nur, was ausdrücklich freigegeben ist. Explizite
+        // User-Wahl schlägt die Default-Liste (Checkbox im Shortcut-Editor).
+        const tag = (event.target && event.target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea') {
+            const allowed = (typeof shortcut.allowInInput === 'boolean')
+                ? shortcut.allowInInput
+                : DEFAULT_ALLOW_IN_INPUT.includes(id);
+            if (!allowed) return;
         }
+
+        event.preventDefault();
+        this.executeAction(id, shortcut);
     }
 
     keysMatch(event, keys) {
@@ -235,7 +262,10 @@ class ShortcutManager {
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(168, 85, 247, 0.9);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(var(--primary-rgb), 0.9);
             color: white;
             padding: 8px 16px;
             border-radius: 8px;
@@ -245,7 +275,8 @@ class ShortcutManager {
             animation: fadeOut 1s ease-out forwards;
             animation-delay: 0.5s;
         `;
-        feedback.textContent = `⌨️ ${name}`;
+        feedback.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M10 14h4"/></svg><span></span>';
+        feedback.querySelector('span').textContent = name;
         document.body.appendChild(feedback);
         
         setTimeout(() => feedback.remove(), 1500);

@@ -381,7 +381,7 @@
     }
     function updateShortcutsPanelVisibility() {
         const panel = document.getElementById('shortcutsPanel');
-        const isEnabled = data.settings.shortcutsEnabled !== false;
+        const isEnabled = data.settings.shortcutsEnabled === true;
         
         if (panel) {
             if (isEnabled) {

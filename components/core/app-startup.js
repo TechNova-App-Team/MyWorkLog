@@ -189,8 +189,8 @@
 
         // --- Keyboard Shortcuts ---
         document.addEventListener('keydown', (e) => {
-            // Allow disabling shortcuts via settings
-            if (data && data.settings && data.settings.shortcutsEnabled === false) return;
+            // Master-Schalter (shortcuts.js) — Default AUS
+            if (typeof shortcutsEnabled !== 'function' || !shortcutsEnabled()) return;
             // Ctrl/Cmd + Enter -> save entry (allow from inputs)
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault();
@@ -206,7 +206,10 @@
                 if (tag === 'INPUT' && (type === 'text' || type === 'search' || type === 'email' || type === 'tel' || type === 'password')) return;
             }
 
-            // Global single-key shortcuts
+            // Global single-key shortcuts — ausschliesslich ohne Modifier.
+            // Ohne diese Sperre feuerte jedes Ctrl+S / Ctrl+E / Ctrl+P / Alt+S
+            // zusätzlich den Timer (Doppel-Trigger neben dem ShortcutManager).
+            if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
             const key = e.key.toLowerCase();
             if (key === 's') { e.preventDefault(); timerAction('start'); if (typeof showCustomMessage === 'function') showCustomMessage('▶ Timer', 'Start', 'info'); }
             else if (key === 'p') { e.preventDefault(); timerAction('pause'); if (typeof showCustomMessage === 'function') showCustomMessage('II Timer', 'Pause', 'info'); }

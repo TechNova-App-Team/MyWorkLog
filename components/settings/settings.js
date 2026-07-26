@@ -21,13 +21,18 @@
         // Shortcuts checkbox
         const confShortcutsEl = document.getElementById('confShortcuts'); 
         if (confShortcutsEl) {
-            confShortcutsEl.checked = (data.settings.shortcutsEnabled !== false);
-            // Echtzeit-Update wenn sich das Häkchen ändert
-            confShortcutsEl.addEventListener('change', (e) => {
-                data.settings.shortcutsEnabled = !!e.target.checked;
-                updateShortcutsPanelVisibility();
-                save(); // Persistiere nur diese Einstellung ohne Modal zu schließen
-            });
+            // Default AUS: nur ein explizites true hakt an (siehe shortcutsEnabled())
+            confShortcutsEl.checked = (data.settings.shortcutsEnabled === true);
+            // Echtzeit-Update wenn sich das Häkchen ändert — nur EINMAL verdrahten,
+            // openSettings() läuft bei jedem Öffnen erneut (sonst n× save() pro Klick)
+            if (!confShortcutsEl.dataset.wired) {
+                confShortcutsEl.dataset.wired = '1';
+                confShortcutsEl.addEventListener('change', (e) => {
+                    data.settings.shortcutsEnabled = !!e.target.checked;
+                    updateShortcutsPanelVisibility();
+                    save(); // Persistiere nur diese Einstellung ohne Modal zu schließen
+                });
+            }
             // Initiale Sichtbarkeit setzen
             updateShortcutsPanelVisibility();
         }

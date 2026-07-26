@@ -216,12 +216,15 @@ window._clsBC='extra.js-start';(function initGhostMode() {
 
         // Global Keyboard Shortcut: Ctrl+Shift+K
         document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.shiftKey && e.key === 'K') {
+            // Aktivierung nur bei aktiviertem Master-Schalter (shortcuts.js, Default AUS).
+            // Ghost Mode bleibt über Command-Palette + Panic-Button erreichbar.
+            const scOn = (typeof shortcutsEnabled === 'function') && shortcutsEnabled();
+            if (scOn && e.ctrlKey && e.shiftKey && e.key === 'K') {
                 e.preventDefault();
                 e.stopPropagation();
                 toggleGhostMode();
             }
-            // Also allow Escape to exit Ghost Mode
+            // Escape zum Verlassen IMMER erlauben — sonst sitzt man im Ghost Mode fest
             if (e.key === 'Escape' && ghostActive) {
                 e.preventDefault();
                 e.stopPropagation();

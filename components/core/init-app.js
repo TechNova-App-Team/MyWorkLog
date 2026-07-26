@@ -282,7 +282,7 @@
         }
         
         if(!data.settings.goals) data.settings.goals = [];
-        if (typeof data.settings.shortcutsEnabled === 'undefined') data.settings.shortcutsEnabled = true;
+        if (typeof data.settings.shortcutsEnabled === 'undefined') data.settings.shortcutsEnabled = false;
         if (typeof data.settings.moodSelectorEnabled === 'undefined') data.settings.moodSelectorEnabled = true;
         if(!data.settings.job) data.settings.job = '';
         

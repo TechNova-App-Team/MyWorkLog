@@ -566,6 +566,9 @@
 
     // Global Ctrl+K / ⌘K shortcut
     document.addEventListener('keydown', (e) => {
+        // Master-Schalter (shortcuts.js) — Default AUS. Palette bleibt per
+        // Sidebar-Button / Mobile-Nav erreichbar, kein Lockout.
+        if (typeof shortcutsEnabled !== 'function' || !shortcutsEnabled()) return;
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
             const overlay = document.getElementById('cmdPalette');

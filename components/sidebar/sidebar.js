@@ -91,6 +91,8 @@
         } catch(e) {}
         // Ctrl+B shortcut
         document.addEventListener('keydown', function(e) {
+            // Master-Schalter (shortcuts.js) — Default AUS
+            if (typeof shortcutsEnabled !== 'function' || !shortcutsEnabled()) return;
             if ((e.ctrlKey || e.metaKey) && e.key === 'b' && window.innerWidth >= 1024) {
                 e.preventDefault();
                 toggleSidebarCollapse();
