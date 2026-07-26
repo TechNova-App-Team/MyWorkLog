@@ -124,7 +124,40 @@
         document.getElementById('p2pStep1Dot').className = 'p2p-step-dot active';
         document.getElementById('p2pStep2Dot').className = 'p2p-step-dot';
         document.getElementById('p2pStep3Dot').className = 'p2p-step-dot';
-        document.getElementById('p2pWizardSubtitle').textContent = 'Wähle eine Rolle';
+        document.getElementById('p2pWizardSubtitle').textContent = 'Rolle wählen';
+
+        // Auch die Zwischenzustände zurücksetzen — sonst zeigt ein zweiter Versuch
+        // nach einem Fehlschlag noch den alten Code, die alte Statuszeile usw.
+        const clear = (id, prop, val) => { const el = document.getElementById(id); if (el) el[prop] = val; };
+        const hide  = (id) => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
+        const show  = (id) => { const el = document.getElementById(id); if (el) el.style.display = ''; };
+
+        show('p2pHostSpinner');
+        hide('p2pHostReady');
+        hide('p2pOfferCodeBox');
+        hide('p2pClientGathering');
+        hide('p2pAnswerCodeBox');
+        hide('p2pHostConnecting');
+        clear('p2pOfferCode', 'value', '');
+        clear('p2pAnswerCode', 'value', '');
+        clear('p2pOfferInput', 'value', '');
+        clear('p2pAnswerInput', 'value', '');
+        clear('p2pHostIceSummary', 'textContent', '');
+        clear('p2pClientIceSummary', 'textContent', '');
+        clear('p2pLogContent', 'textContent', '');
+        ['p2pHostGatherBar', 'p2pClientGatherBar', 'p2pSyncBar'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.style.width = '0%';
+        });
+
+        const cBtn = document.getElementById('p2pClientConnectBtn');
+        if (cBtn) { cBtn.disabled = false; cBtn.textContent = 'Code verarbeiten'; }
+        const hBtn = document.getElementById('p2pHostConnectBtn');
+        if (hBtn) { hBtn.disabled = false; hBtn.textContent = 'Verbindung herstellen'; hBtn.style.opacity = '1'; hBtn.style.cursor = 'pointer'; }
+
+        p2pSync.offerGenerated = false;
+        p2pSync.answerGenerated = false;
+        p2pSync.answerApplied = false;
+        if (p2pSync._connectBarInterval) { clearInterval(p2pSync._connectBarInterval); p2pSync._connectBarInterval = null; }
     }
 
     function p2pShowStep(step) {
@@ -181,17 +214,17 @@
         const quickEl = document.getElementById('p2pQuickActions');
         const lastSyncEl = document.getElementById('p2pLastSync');
 
+        // Farben kommen aus dem CSS (data-state), nicht aus Inline-Styles —
+        // sonst kleben Hex-Werte im JS und folgen dem Theme nicht.
         if (connected) {
             if (statusEl) statusEl.textContent = 'Verbunden';
-            if (statusEl) statusEl.style.color = '#10b981';
-            if (dotEl) { dotEl.style.background = '#10b981'; dotEl.style.boxShadow = '0 0 8px rgba(16,185,129,0.5)'; }
-            if (peersEl) { peersEl.textContent = '1 Peer'; peersEl.style.color = '#10b981'; }
+            if (dotEl) dotEl.dataset.state = 'on';
+            if (peersEl) { peersEl.textContent = '1 Gerät'; peersEl.dataset.state = 'on'; }
             if (quickEl) quickEl.style.display = 'grid';
         } else {
             if (statusEl) statusEl.textContent = 'Nicht verbunden';
-            if (statusEl) statusEl.style.color = 'var(--text-muted)';
-            if (dotEl) { dotEl.style.background = '#6b7280'; dotEl.style.boxShadow = 'none'; }
-            if (peersEl) { peersEl.textContent = 'Offline'; peersEl.style.color = 'var(--text-muted)'; }
+            if (dotEl) dotEl.dataset.state = '';
+            if (peersEl) { peersEl.textContent = 'Offline'; peersEl.dataset.state = ''; }
             if (quickEl) quickEl.style.display = 'none';
         }
 
@@ -203,25 +236,22 @@
     }
 
     // === ICE CONFIG (shared) ===
+    // 🔴 Jeder Eintrag hier kostet Wartezeit: mit trickle:false gibt SimplePeer den
+    // Code ERST raus, wenn das ICE-Gathering über ALLE Server durch ist. Ein Ziel,
+    // das nicht antwortet, blockiert den kompletten Handshake.
+    // Gemessen (Chrome, gathering bis 'complete'):
+    //   leer .......................... 0.1s
+    //   nur Google-STUN ............... 0.1s
+    //   metered.ca (5 Einträge) ....... 0.3s
+    //   freeturn.net (3 Einträge) .... 22.2s   ← deshalb entfernt
+    // Neue Server nur nach derselben Messung aufnehmen (p2pMeasureIceServers()).
     function p2pGetIceConfig() {
         return {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' },
-                { urls: 'stun:stun3.l.google.com:19302' },
-                { urls: 'stun:freeturn.net:5349' },
+                { urls: 'stun:stun.cloudflare.com:3478' },
                 { urls: 'stun:stun.relay.metered.ca:80' },
-                {
-                    urls: 'turn:freeturn.net:5349',
-                    username: 'free',
-                    credential: 'free'
-                },
-                {
-                    urls: 'turns:freeturn.net:5349',
-                    username: 'free',
-                    credential: 'free'
-                },
                 {
                     urls: 'turn:global.relay.metered.ca:80',
                     username: 'e8dd65b92a0d1172e8810b28',
@@ -247,6 +277,62 @@
         };
     }
 
+    // Obergrenze fürs ICE-Gathering. Läuft die ab, wird der Code aus der bis dahin
+    // gesammelten localDescription gebaut statt weiter auf 'complete' zu warten.
+    const P2P_GATHER_TIMEOUT = 5000;
+    // Obergrenze für den Verbindungsaufbau nach dem Antwort-Code. ICE meldet bei
+    // striktem NAT oft weder 'connected' noch 'failed' — ohne Limit hängt die UI.
+    const P2P_CONNECT_TIMEOUT = 25000;
+
+    // Verbindungsversuch abbrechen und die UI zurück in einen bedienbaren Zustand
+    // bringen (vorher blieb der Button für immer deaktiviert).
+    function p2pAbortConnect(reason) {
+        const diag = p2pSync.iceDiag || { host: 0, srflx: 0, relay: 0 };
+        const connectBtn = document.getElementById('p2pHostConnectBtn');
+        if (connectBtn) {
+            connectBtn.disabled = false;
+            connectBtn.textContent = 'Erneut versuchen';
+            connectBtn.style.opacity = '1';
+            connectBtn.style.cursor = 'pointer';
+        }
+        const connectingDiv = document.getElementById('p2pHostConnecting');
+        if (connectingDiv) connectingDiv.style.display = 'none';
+        p2pSync.answerApplied = false; // Retry erlauben
+
+        p2pLog('Abbruch: ' + reason);
+        showCustomMessage('Verbindung fehlgeschlagen',
+            reason + '. ' + (diag.relay
+                ? 'Ein Relay war verfügbar, die Gegenstelle war aber nicht erreichbar. Sind beide Codes frisch und vom richtigen Gerät?'
+                : 'Es stand kein Relay-Server bereit, deshalb geht es nur direkt — dafür müssen beide Geräte im selben Netzwerk sein. Alternativ VPN ausschalten.'),
+            'error');
+    }
+
+    // Diagnose-Helfer: misst pro Server-Gruppe, wie lange Gathering braucht.
+    // Konsole: await p2pMeasureIceServers()
+    async function p2pMeasureIceServers(groups) {
+        const list = groups || [
+            ['leer', null],
+            ['App-Config', p2pGetIceConfig().iceServers]
+        ];
+        const out = [];
+        for (const [label, iceServers] of list) {
+            const pc = new RTCPeerConnection(iceServers ? { iceServers } : undefined);
+            pc.createDataChannel('probe');
+            const t0 = Date.now();
+            let done = false;
+            await new Promise(async (res) => {
+                const to = setTimeout(res, 40000);
+                pc.onicecandidate = (e) => { if (!e.candidate) { done = true; clearTimeout(to); res(); } };
+                try { await pc.setLocalDescription(await pc.createOffer()); } catch (e) { clearTimeout(to); res(); }
+            });
+            const cands = (pc.localDescription && pc.localDescription.sdp.match(/a=candidate:/g) || []).length;
+            pc.close();
+            out.push({ label, sekunden: ((Date.now() - t0) / 1000).toFixed(1), fertig: done, kandidaten: cands });
+        }
+        console.table(out);
+        return out;
+    }
+
     // === ICE DIAGNOSTICS ===
     function p2pAnalyzeSDP(sdp) {
         if (!sdp) return { host: 0, srflx: 0, relay: 0, total: 0 };
@@ -262,7 +348,7 @@
 
     async function p2pTestTURN() {
         console.log('🧪 TURN Server Test gestartet...');
-        p2pLog('🧪 Teste TURN Server...');
+        p2pLog('Teste Relay-Server …');
         const config = p2pGetIceConfig();
         const pc = new RTCPeerConnection(config);
         pc.createDataChannel('turntest');
@@ -276,8 +362,8 @@
                 const result = { ...candidates, working: candidates.relay > 0, details: relayDetails };
                 console.log('🧪 TURN Test Ergebnis:', result);
                 p2pLog(result.working
-                    ? `✅ TURN OK: ${candidates.relay} Relay, ${candidates.srflx} STUN, ${candidates.host} Host`
-                    : `⚠️ TURN fehlgeschlagen: nur ${candidates.srflx} STUN, ${candidates.host} Host (kein Relay)`);
+                    ? `Relay OK: ${candidates.relay} Relay, ${candidates.srflx} STUN, ${candidates.host} lokal`
+                    : `Kein Relay: ${candidates.srflx} STUN, ${candidates.host} lokal`);
                 resolve(result);
             }, 8000);
 
@@ -295,8 +381,8 @@
                     const result = { ...candidates, working: candidates.relay > 0, details: relayDetails };
                     console.log('🧪 TURN Test Ergebnis:', result);
                     p2pLog(result.working
-                        ? `✅ TURN OK: ${candidates.relay} Relay, ${candidates.srflx} STUN, ${candidates.host} Host`
-                        : `⚠️ Kein TURN Relay: ${candidates.srflx} STUN, ${candidates.host} Host`);
+                        ? `Relay OK: ${candidates.relay} Relay, ${candidates.srflx} STUN, ${candidates.host} lokal`
+                        : `Kein Relay: ${candidates.srflx} STUN, ${candidates.host} lokal`);
                     resolve(result);
                 }
             };
@@ -308,10 +394,112 @@
                 clearTimeout(timeout);
                 pc.close();
                 console.error('🧪 TURN Test Error:', e);
-                p2pLog('❌ TURN Test fehlgeschlagen: ' + e.message);
+                p2pLog('Relay-Test fehlgeschlagen: ' + e.message);
                 resolve({ ...candidates, working: false, error: e.message });
             }
         });
+    }
+
+    // === ICE-GATHERING: TIMEOUT + LIVE-FEEDBACK ===
+    // Kern des Fixes. Mit trickle:false feuert SimplePeer 'signal' erst, wenn das
+    // Gathering über ALLE ICE-Server durch ist — hängt einer, gibt es nie einen Code
+    // und der User sieht endlos einen Spinner ("da passiert nix").
+    // Deshalb: `publish` wird genau EINMAL aufgerufen, je nachdem was zuerst kommt —
+    // SimplePeers 'signal' oder der Timeout (dann aus der bis dahin gefüllten
+    // localDescription, die alle bereits gesammelten Kandidaten enthält).
+    function p2pAwaitLocalDescription(peer, kind, publish) {
+        const pc = peer._pc;
+        const cands = { host: 0, srflx: 0, relay: 0 };
+        const t0 = Date.now();
+        let fired = false;
+
+        function finish(signalData, viaTimeout) {
+            if (fired || !signalData) return;
+            fired = true;
+            clearTimeout(timer);
+            clearInterval(ticker);
+            const diag = p2pAnalyzeSDP(signalData.sdp);
+            // Der Timeout-Pfad liest die Kandidaten aus dem SDP; wenn dort (noch)
+            // keine stehen, sind die live gezählten die ehrlichere Zahl.
+            if (!diag.total && (cands.host + cands.srflx + cands.relay)) {
+                diag.host = cands.host; diag.srflx = cands.srflx; diag.relay = cands.relay;
+                diag.total = cands.host + cands.srflx + cands.relay;
+            }
+            publish(signalData, diag, viaTimeout, ((Date.now() - t0) / 1000).toFixed(1));
+        }
+
+        if (pc) {
+            pc.addEventListener('icecandidate', (e) => {
+                if (!e.candidate) return;
+                const c = e.candidate.candidate || '';
+                if (c.includes('typ relay')) cands.relay++;
+                else if (c.includes('typ srflx')) cands.srflx++;
+                else if (c.includes('typ host')) cands.host++;
+            });
+        }
+
+        const ticker = setInterval(() => {
+            p2pRenderGathering(kind, (Date.now() - t0) / 1000, cands);
+        }, 200);
+        p2pRenderGathering(kind, 0, cands);
+
+        const timer = setTimeout(() => {
+            const ld = pc && pc.localDescription;
+            if (ld && ld.type) {
+                console.warn('[P2P] ICE-Gathering nach ' + P2P_GATHER_TIMEOUT + 'ms nicht fertig — nutze die bisher gesammelten Kandidaten.');
+                p2pLog('Gathering abgekürzt nach ' + (P2P_GATHER_TIMEOUT / 1000) + 's');
+                finish({ type: ld.type, sdp: ld.sdp }, true);
+            }
+        }, P2P_GATHER_TIMEOUT);
+
+        peer.on('signal', (signalData) => finish(signalData, false));
+    }
+
+    // Fortschritt während des Gatherings: echte Kandidatenzahl statt Fake-Balken.
+    function p2pRenderGathering(kind, secs, cands) {
+        const total = cands.host + cands.srflx + cands.relay;
+        const el = document.getElementById(kind === 'offer' ? 'p2pHostGatherStatus' : 'p2pClientGatherStatus');
+        if (el) {
+            el.textContent = total
+                ? 'Netzwerkwege gefunden: ' + total + '  ·  ' + secs.toFixed(1) + 's'
+                : 'Suche Netzwerkwege …  ' + secs.toFixed(1) + 's';
+        }
+        const bar = document.getElementById(kind === 'offer' ? 'p2pHostGatherBar' : 'p2pClientGatherBar');
+        if (bar) bar.style.width = Math.min(100, (secs * 1000 / P2P_GATHER_TIMEOUT) * 100) + '%';
+    }
+
+    // Sprach-Helfer für JS-erzeugte Texte (die statische i18n-Pipeline erfasst JS
+    // nicht). Gleiches Muster wie L() in jobs.js, aber lokal — nicht auf die
+    // Ladereihenfolge einer anderen Komponente verlassen.
+    function p2pL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
+
+    // ICE-Zustände in Klartext. Rohnamen wie 'checking' sagen dem User nichts.
+    // Direkt zweisprachig, weil der Wert in längere Strings eingesetzt wird
+    // ("Netzwerk: …") — ein MAP-Eintrag greift dort nicht, der braucht den
+    // ganzen Textknoten.
+    function p2pIceLabel(state) {
+        return ({
+            'new':          p2pL('wird vorbereitet', 'getting ready'),
+            'checking':     p2pL('Route wird gesucht', 'looking for a route'),
+            'connected':    p2pL('verbunden', 'connected'),
+            'completed':    p2pL('verbunden', 'connected'),
+            'failed':       p2pL('fehlgeschlagen', 'failed'),
+            'disconnected': p2pL('unterbrochen', 'interrupted'),
+            'closed':       p2pL('geschlossen', 'closed')
+        })[state] || state;
+    }
+
+    // Ein SDP ohne einen einzigen Kandidaten kann NIE eine Verbindung aufbauen.
+    // Vorher wurde so ein toter Code trotzdem ausgegeben — der Gegenpart wartete
+    // dann ewig. Jetzt: Klartext statt unbrauchbarem Code.
+    function p2pReportNoCandidates(diag) {
+        const msg = 'Der Browser hat keinen einzigen Netzwerkweg gefunden (0 Kandidaten). '
+            + 'Ein Verbindungscode wäre wertlos. Häufige Ursachen: WebRTC ist im Browser '
+            + 'oder per Erweiterung/Richtlinie deaktiviert, ein VPN blockiert es, oder das '
+            + 'Netzwerk lässt UDP nicht zu.';
+        console.error('[P2P] 0 ICE-Kandidaten — Abbruch.', diag);
+        p2pLog('Abbruch: keine Netzwerkwege gefunden');
+        showCustomMessage('Keine Verbindung möglich', msg, 'error');
     }
 
     // === STEP 1: HOST - Create Offer ===
@@ -322,7 +510,7 @@
         p2pSync.iceDiag = { host: 0, srflx: 0, relay: 0 };
         p2pShowStep(2);
         document.getElementById('p2pWizStep2Host').style.display = '';
-        document.getElementById('p2pWizardSubtitle').textContent = 'Schritt 1/2 — Einladungscode';
+        document.getElementById('p2pWizardSubtitle').textContent = 'Sendet · Code weitergeben';
 
         // Destroy old peer if exists
         if (p2pSync.peer) { try { p2pSync.peer.destroy(); } catch(e){} p2pSync.peer = null; }
@@ -343,25 +531,22 @@
         // WICHTIG: Erst Events registrieren, DANN peer zuweisen
         p2pSetupPeerEvents(peer);
 
-        peer.on('signal', async (signalData) => {
-            // trickle:false → nur 1 Signal mit allen ICE Candidates
-            if (p2pSync.offerGenerated) {
-                console.log('⏭️ Host: Doppeltes Signal ignoriert (Offer bereits generiert)');
-                return;
-            }
+        p2pAwaitLocalDescription(peer, 'offer', async (signalData, sdpDiag, viaTimeout, secs) => {
+            if (p2pSync.offerGenerated) return;
             p2pSync.offerGenerated = true;
 
-            // ICE Diagnostik: SDP auf Relay-Kandidaten prüfen
-            const sdpDiag = p2pAnalyzeSDP(signalData.sdp);
-            console.log(`📡 Host: Offer-Signal generiert. SDP type: ${signalData.type}`);
-            console.log(`🧊 ICE Candidates im SDP: ${sdpDiag.total} total → Host: ${sdpDiag.host}, STUN: ${sdpDiag.srflx}, RELAY: ${sdpDiag.relay}`);
-            if (sdpDiag.relay === 0) {
-                console.warn('⚠️ KEIN RELAY Candidate im Offer! TURN-Server funktionieren möglicherweise nicht.');
-                p2pLog('⚠️ Kein TURN-Relay — nur direkte Verbindung möglich');
-            } else {
-                p2pLog(`✅ ${sdpDiag.relay} TURN-Relay Candidate(s) gefunden`);
-            }
+            console.log(`📡 Host: Offer nach ${secs}s (${viaTimeout ? 'Timeout-Pfad' : 'Gathering komplett'})`);
+            console.log(`🧊 ICE: ${sdpDiag.total} total → Host: ${sdpDiag.host}, STUN: ${sdpDiag.srflx}, RELAY: ${sdpDiag.relay}`);
             p2pSync.iceDiag = sdpDiag;
+
+            if (!sdpDiag.total) {
+                document.getElementById('p2pHostSpinner').style.display = 'none';
+                p2pReportNoCandidates(sdpDiag);
+                return;
+            }
+            p2pLog(sdpDiag.relay
+                ? sdpDiag.relay + ' Relay-Weg(e) verfügbar'
+                : 'Kein Relay — Verbindung nur direkt oder im selben Netz');
 
             try {
                 const payload = {
@@ -379,13 +564,26 @@
                 document.getElementById('p2pHostReady').style.display = '';
                 document.getElementById('p2pOfferCodeBox').style.display = '';
                 document.getElementById('p2pOfferCode').value = compressed;
+                p2pSetIceSummary('p2pHostIceSummary', sdpDiag);
             } catch (e) {
                 console.error('❌ Offer-Kompression fehlgeschlagen:', e);
-                showCustomMessage('❌ Fehler', 'Konnte Einladungscode nicht erstellen: ' + e.message, 'error');
+                showCustomMessage('Code fehlgeschlagen', 'Der Einladungscode konnte nicht erstellt werden: ' + e.message, 'error');
             }
         });
 
         p2pSync.peer = peer;
+    }
+
+    // Kleine, ehrliche Zusammenfassung der Netzwerkwege unter dem Code.
+    function p2pSetIceSummary(elId, diag) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        const parts = [];
+        if (diag.host) parts.push(diag.host + '× lokal');
+        if (diag.srflx) parts.push(diag.srflx + '× über STUN');
+        if (diag.relay) parts.push(diag.relay + '× über Relay');
+        el.textContent = parts.length ? parts.join('  ·  ') : 'keine Netzwerkwege';
+        el.dataset.warn = diag.relay ? '' : '1';
     }
 
     // === STEP 1: CLIENT - Paste Offer ===
@@ -393,7 +591,7 @@
         p2pSync.role = 'client';
         p2pShowStep(2);
         document.getElementById('p2pWizStep2Client').style.display = '';
-        document.getElementById('p2pWizardSubtitle').textContent = 'Schritt 1/2 — Code eingeben';
+        document.getElementById('p2pWizardSubtitle').textContent = 'Empfängt · Code eingeben';
     }
 
     // === STEP 2: CLIENT - Process Offer & Generate Answer ===
@@ -405,12 +603,12 @@
 
         const input = document.getElementById('p2pOfferInput').value.trim();
         if (!input) {
-            showCustomMessage('❌ Fehler', 'Bitte füge den Einladungscode ein.', 'error');
+            showCustomMessage('Code fehlt', 'Füge den Einladungscode vom anderen Gerät ein.', 'error');
             return;
         }
 
         const btn = document.getElementById('p2pClientConnectBtn');
-        btn.textContent = '⏳ Verarbeite...';
+        btn.textContent = 'Verarbeite …';
         btn.disabled = true;
 
         try {
@@ -439,25 +637,29 @@
             // WICHTIG: Events zuerst registrieren
             p2pSetupPeerEvents(peer);
 
-            peer.on('signal', async (signalData) => {
-                // trickle:false → nur 1 answer Signal
-                if (p2pSync.answerGenerated) {
-                    console.log('⏭️ Client: Doppeltes Signal ignoriert (Answer bereits generiert)');
-                    return;
-                }
+            const gatherBox = document.getElementById('p2pClientGathering');
+            if (gatherBox) gatherBox.style.display = '';
+
+            p2pAwaitLocalDescription(peer, 'answer', async (signalData, sdpDiag, viaTimeout, secs) => {
+                if (p2pSync.answerGenerated) return;
                 p2pSync.answerGenerated = true;
 
-                // ICE Diagnostik: SDP auf Relay-Kandidaten prüfen
-                const sdpDiag = p2pAnalyzeSDP(signalData.sdp);
-                console.log(`📡 Client: Answer-Signal generiert. SDP type: ${signalData.type}`);
-                console.log(`🧊 ICE Candidates im SDP: ${sdpDiag.total} total → Host: ${sdpDiag.host}, STUN: ${sdpDiag.srflx}, RELAY: ${sdpDiag.relay}`);
-                if (sdpDiag.relay === 0) {
-                    console.warn('⚠️ KEIN RELAY Candidate im Answer! TURN-Server funktionieren möglicherweise nicht.');
-                    p2pLog('⚠️ Kein TURN-Relay — nur direkte Verbindung möglich');
-                } else {
-                    p2pLog(`✅ ${sdpDiag.relay} TURN-Relay Candidate(s) gefunden`);
-                }
+                console.log(`📡 Client: Answer nach ${secs}s (${viaTimeout ? 'Timeout-Pfad' : 'Gathering komplett'})`);
+                console.log(`🧊 ICE: ${sdpDiag.total} total → Host: ${sdpDiag.host}, STUN: ${sdpDiag.srflx}, RELAY: ${sdpDiag.relay}`);
                 p2pSync.iceDiag = sdpDiag;
+
+                if (gatherBox) gatherBox.style.display = 'none';
+
+                if (!sdpDiag.total) {
+                    p2pReportNoCandidates(sdpDiag);
+                    p2pSync.answerGenerated = false;
+                    btn.textContent = 'Code verarbeiten';
+                    btn.disabled = false;
+                    return;
+                }
+                p2pLog(sdpDiag.relay
+                    ? sdpDiag.relay + ' Relay-Weg(e) verfügbar'
+                    : 'Kein Relay — Verbindung nur direkt oder im selben Netz');
 
                 try {
                     const payload = {
@@ -474,10 +676,11 @@
                     // Show answer code
                     document.getElementById('p2pAnswerCodeBox').style.display = '';
                     document.getElementById('p2pAnswerCode').value = compressed;
-                    btn.textContent = '✅ Answer generiert';
+                    p2pSetIceSummary('p2pClientIceSummary', sdpDiag);
+                    btn.textContent = 'Antwort-Code erzeugt';
                 } catch (e) {
                     console.error('❌ Answer-Kompression fehlgeschlagen:', e);
-                    showCustomMessage('❌ Fehler', 'Answer-Code konnte nicht erstellt werden.', 'error');
+                    showCustomMessage('Code fehlgeschlagen', 'Der Antwort-Code konnte nicht erstellt werden.', 'error');
                 }
             });
 
@@ -495,8 +698,8 @@
 
         } catch (e) {
             console.error('❌ Offer-Verarbeitung fehlgeschlagen:', e);
-            showCustomMessage('❌ Ungültiger Code', 'Der Einladungscode konnte nicht verarbeitet werden: ' + e.message, 'error');
-            btn.textContent = '🔗 Code verarbeiten';
+            showCustomMessage('Code ungültig', 'Der Einladungscode konnte nicht gelesen werden: ' + e.message, 'error');
+            btn.textContent = 'Code verarbeiten';
             btn.disabled = false;
         }
     }
@@ -505,12 +708,12 @@
     async function p2pHostProcessAnswer() {
         const input = document.getElementById('p2pAnswerInput').value.trim();
         if (!input) {
-            showCustomMessage('❌ Fehler', 'Bitte füge den Antwort-Code ein.', 'error');
+            showCustomMessage('Code fehlt', 'Füge den Antwort-Code vom anderen Gerät ein.', 'error');
             return;
         }
 
         if (p2pSync.answerApplied) {
-            showCustomMessage('⚠️ Bereits verarbeitet', 'Der Antwort-Code wurde bereits eingegeben. Starte neu falls nötig.', 'warning');
+            showCustomMessage('Schon verarbeitet', 'Dieser Antwort-Code wurde bereits angewendet. Starte den Vorgang neu, wenn die Verbindung nicht steht.', 'warning');
             return;
         }
 
@@ -545,30 +748,31 @@
             // Show loading UI
             const connectBtn = document.getElementById('p2pHostConnectBtn');
             const connectingDiv = document.getElementById('p2pHostConnecting');
-            if (connectBtn) { connectBtn.disabled = true; connectBtn.textContent = '⏳ Verbinde...'; connectBtn.style.opacity = '0.6'; connectBtn.style.cursor = 'not-allowed'; }
+            if (connectBtn) { connectBtn.disabled = true; connectBtn.textContent = 'Verbinde …'; connectBtn.style.opacity = '0.6'; connectBtn.style.cursor = 'not-allowed'; }
             if (connectingDiv) connectingDiv.style.display = '';
 
-            // Animate progress bar
+            // Echter ICE-Zustand + verstrichene Zeit statt Fake-Balken (der lief
+            // stur auf 90%, egal ob die Verbindung stand oder längst tot war).
+            const connT0 = Date.now();
             p2pSync._connectBarInterval = setInterval(() => {
-                const bar = document.getElementById('p2pHostConnectBar');
                 const status = document.getElementById('p2pHostConnectStatus');
-                if (!bar) return;
-                const current = parseFloat(bar.style.width) || 0;
-                if (current < 90) {
-                    bar.style.width = (current + 2) + '%';
+                const secs = (Date.now() - connT0) / 1000;
+                const st = (p2pSync.peer && p2pSync.peer._pc) ? p2pSync.peer._pc.iceConnectionState : 'new';
+                if (status) status.textContent = p2pIceLabel(st) + '  ·  ' + secs.toFixed(0) + 's';
+
+                // Harte Obergrenze: ohne sie hängt der Spinner endlos, wenn ICE
+                // weder 'connected' noch 'failed' meldet (häufig bei striktem NAT).
+                if (!p2pSync.connected && secs > P2P_CONNECT_TIMEOUT / 1000) {
+                    clearInterval(p2pSync._connectBarInterval);
+                    p2pSync._connectBarInterval = null;
+                    p2pAbortConnect('Zeitüberschreitung nach ' + Math.round(P2P_CONNECT_TIMEOUT / 1000) + 's');
                 }
-                // Show ICE state if available
-                if (p2pSync.peer && p2pSync.peer._pc && status) {
-                    const iceState = p2pSync.peer._pc.iceConnectionState;
-                    const stateLabels = { 'new': 'Initialisiere...', 'checking': 'Suche Route...', 'connected': 'Verbunden!', 'completed': 'Verbunden!', 'failed': 'Fehlgeschlagen', 'disconnected': 'Getrennt', 'closed': 'Geschlossen' };
-                    status.textContent = stateLabels[iceState] || 'Verbinde...';
-                    if (iceState === 'failed') { status.style.color = '#f87171'; bar.style.background = '#ef4444'; }
-                }
-            }, 300);
+            }, 250);
 
             const devInfo = document.getElementById('p2pDeviceInfo');
             if (devInfo) {
-                devInfo.textContent = `Verbunden mit: ${answerPayload.n || 'Unbekannt'} (${answerPayload.d || '?'})`;
+                // Noch NICHT verbunden — nur die Gegenstelle ist bekannt.
+                devInfo.textContent = `Gegenstelle: ${answerPayload.n || 'Unbekannt'} (${answerPayload.d || '?'})`;
                 devInfo.style.display = '';
             }
 
@@ -579,7 +783,7 @@
 
         } catch (e) {
             console.error('❌ Answer-Verarbeitung fehlgeschlagen:', e);
-            showCustomMessage('❌ Fehler', e.message, 'error');
+            showCustomMessage('Verbindung fehlgeschlagen', e.message, 'error');
             p2pSync.answerApplied = false; // allow retry
         }
     }
@@ -591,7 +795,7 @@
             if (peer._pc) {
                 peer._pc.addEventListener('iceconnectionstatechange', () => {
                     console.log(`🧊 ICE Connection: ${peer._pc.iceConnectionState}`);
-                    p2pLog(`🧊 ICE: ${peer._pc.iceConnectionState}`);
+                    p2pLog('Netzwerk: ' + p2pIceLabel(peer._pc.iceConnectionState));
                 });
                 peer._pc.addEventListener('icegatheringstatechange', () => {
                     console.log(`🧊 ICE Gathering: ${peer._pc.iceGatheringState}`);
@@ -620,12 +824,12 @@
             // Show step 3
             p2pShowStep(3);
             document.getElementById('p2pWizStep3').style.display = '';
-            document.getElementById('p2pWizardSubtitle').textContent = 'Verbunden!';
+            document.getElementById('p2pWizardSubtitle').textContent = 'Verbunden';
 
             // Update settings UI
             p2pUpdateConnectionUI(true);
 
-            showCustomMessage('✅ P2P Verbunden!', 'Direkte Verbindung hergestellt. Daten werden synchronisiert...', 'success');
+            showCustomMessage('Verbunden', 'Direkte Verbindung steht. Daten werden übertragen.', 'success');
 
             // Start heartbeat
             p2pStartHeartbeat();
@@ -635,7 +839,7 @@
                 setTimeout(() => p2pExecuteSync(), 500);
             }
 
-            p2pLog('✅ Verbindung hergestellt');
+            p2pLog('Verbindung hergestellt');
         });
 
         peer.on('data', (rawData) => {
@@ -649,12 +853,12 @@
 
         peer.on('error', (err) => {
             console.error('❌ P2P Peer Error:', err);
-            p2pLog('❌ Fehler: ' + err.message);
+            p2pLog('Fehler: ' + err.message);
             // Clear connecting animation
             if (p2pSync._connectBarInterval) { clearInterval(p2pSync._connectBarInterval); p2pSync._connectBarInterval = null; }
             // Reset connect button
             const connectBtn = document.getElementById('p2pHostConnectBtn');
-            if (connectBtn) { connectBtn.disabled = false; connectBtn.textContent = '🔗 Verbindung herstellen'; connectBtn.style.opacity = '1'; connectBtn.style.cursor = 'pointer'; }
+            if (connectBtn) { connectBtn.disabled = false; connectBtn.textContent = 'Verbindung herstellen'; connectBtn.style.opacity = '1'; connectBtn.style.cursor = 'pointer'; }
             const connectingDiv = document.getElementById('p2pHostConnecting');
             if (connectingDiv) connectingDiv.style.display = 'none';
             // Allow retry
@@ -663,17 +867,16 @@
             if (err.message === 'Connection failed.' || err.code === 'ERR_ICE_CONNECTION_FAILURE') {
                 const diag = p2pSync.iceDiag || { host: '?', srflx: '?', relay: '?' };
                 const hasRelay = diag.relay > 0;
-                const diagText = `\n\n📊 Diagnostik: Host=${diag.host}, STUN=${diag.srflx}, RELAY=${diag.relay}`;
+                const diagText = `\n\nNetzwerkwege: ${diag.host} lokal, ${diag.srflx} über STUN, ${diag.relay} über Relay`;
                 const turnHint = hasRelay
-                    ? '\n• TURN-Relay war verfügbar, aber Verbindung schlug trotzdem fehl'
-                    : '\n• ⚠️ KEIN TURN-Relay verfügbar — TURN-Server antwortet nicht';
+                    ? '\n• Ein Relay war verfügbar, die Gegenstelle blieb aber unerreichbar'
+                    : '\n• Kein Relay verfügbar — dann klappt es nur im selben Netzwerk';
 
-                showCustomMessage('❌ Verbindung fehlgeschlagen',
-                    'Die P2P-Verbindung konnte nicht hergestellt werden.' + turnHint + '\n' +
-                    '• Firewall oder striktes NAT blockiert die Verbindung\n' +
-                    '• VPN aktiv? Bitte deaktivieren\n' +
-                    '• Beide Geräte im selben WLAN? Dann sollte es direkt gehen\n\n' +
-                    'Tipp: Öffne die Konsole (F12) → teste mit p2pTestTURN()' + diagText, 'error');
+                showCustomMessage('Verbindung fehlgeschlagen',
+                    'Die direkte Verbindung kam nicht zustande.' + turnHint + '\n' +
+                    '• Firewall oder striktes NAT blockiert den Aufbau\n' +
+                    '• VPN aktiv? Dann ausschalten und neu versuchen\n' +
+                    '• Beide Geräte im selben WLAN? Dann sollte es direkt gehen' + diagText, 'error');
                 console.error('🔍 P2P Diagnostik:', diag);
             }
         });
@@ -684,7 +887,7 @@
             p2pStopHeartbeat();
             if (p2pSync._connectBarInterval) { clearInterval(p2pSync._connectBarInterval); p2pSync._connectBarInterval = null; }
             p2pUpdateConnectionUI(false);
-            p2pLog('🔴 Verbindung getrennt');
+            p2pLog('Verbindung getrennt');
         });
     }
 
@@ -719,7 +922,7 @@
             return;
         }
 
-        p2pLog('📤 Starte Sync...');
+        p2pLog('Starte Übertragung …');
         p2pUpdateProgress(10, 'Bereite Daten vor...');
 
         // Prepare sync package
@@ -769,14 +972,14 @@
                 p2pUpdateProgress(progress, `Sende Chunk ${idx + 1}/${chunks.length}...`);
                 p2pSync.syncStats.sent += chunk.length;
                 p2pUpdateStats();
-                p2pLog(`📦 Chunk ${idx + 1}/${chunks.length} gesendet (${chunk.length} Einträge)`);
+                p2pLog(`Paket ${idx + 1}/${chunks.length} gesendet (${chunk.length} Einträge)`);
 
                 if (idx === chunks.length - 1) {
                     // Final chunk sent
                     setTimeout(() => {
                         p2pSendMessage({ type: 'sync-complete', timestamp: Date.now() });
                         p2pUpdateProgress(95, 'Warte auf Bestätigung...');
-                        p2pLog('📤 Alle Daten gesendet, warte auf ACK...');
+                        p2pLog('Alle Daten gesendet, warte auf Bestätigung …');
                     }, 100);
                 }
             }, idx * 150); // 150ms delay between chunks
@@ -786,7 +989,7 @@
         if (entries.length === 0) {
             p2pSendMessage({ type: 'sync-complete', timestamp: Date.now(), empty: true });
             p2pUpdateProgress(95, 'Keine Einträge zum Senden');
-            p2pLog('ℹ️ Keine Einträge vorhanden');
+            p2pLog('Keine Einträge vorhanden');
         }
     }
 
@@ -811,7 +1014,7 @@
 
             case 'sync-handshake':
                 console.log('🤝 Sync-Handshake empfangen:', msg);
-                p2pLog(`🤝 Handshake von "${msg.deviceName}" (${msg.entryCount} Einträge)`);
+                p2pLog(`Gegenstelle "${msg.deviceName}" meldet ${msg.entryCount} Einträge`);
                 p2pReceivedChunks = [];
                 p2pExpectedChunks = 0;
                 p2pUpdateProgress(15, 'Handshake empfangen...');
@@ -826,19 +1029,19 @@
 
                 const progress = 20 + ((msg.chunkIndex + 1) / msg.totalChunks) * 60;
                 p2pUpdateProgress(progress, `Empfange ${msg.chunkIndex + 1}/${msg.totalChunks}...`);
-                p2pLog(`📥 Chunk ${msg.chunkIndex + 1}/${msg.totalChunks} empfangen`);
+                p2pLog(`Paket ${msg.chunkIndex + 1}/${msg.totalChunks} empfangen`);
                 break;
 
             case 'sync-complete':
                 console.log('✅ Sync-Complete empfangen. Merging', p2pReceivedChunks.length, 'Einträge...');
                 p2pUpdateProgress(85, 'Merge läuft...');
-                p2pLog('🔄 Starte Smart-Merge...');
+                p2pLog('Führe Einträge zusammen …');
 
                 const mergeResult = p2pSmartMerge(p2pReceivedChunks);
                 p2pSync.syncStats.merged = mergeResult.new + mergeResult.updated;
                 p2pUpdateStats();
 
-                p2pLog(`✅ Merge: ${mergeResult.new} neu, ${mergeResult.updated} aktualisiert, ${mergeResult.skipped} übersprungen`);
+                p2pLog(`Zusammengeführt: ${mergeResult.new} neu, ${mergeResult.updated} aktualisiert, ${mergeResult.skipped} unverändert`);
 
                 // Send ACK
                 p2pSendMessage({
@@ -853,9 +1056,9 @@
                 localStorage.setItem('p2p_lastSync', p2pSync.lastSyncTime);
 
                 p2pUpdateProgress(100, 'Sync abgeschlossen!');
-                p2pLog('🎉 Synchronisation erfolgreich abgeschlossen!');
+                p2pLog('Synchronisation abgeschlossen');
 
-                showCustomMessage('✅ Sync erfolgreich!',
+                showCustomMessage('Synchronisiert',
                     `${mergeResult.new} neue & ${mergeResult.updated} aktualisierte Einträge empfangen.`, 'success');
 
                 // Update all UI
@@ -867,12 +1070,12 @@
             case 'sync-ack':
                 console.log('✅ Sync-ACK empfangen:', msg);
                 p2pUpdateProgress(100, 'Bestätigt!');
-                p2pLog(`✅ Empfänger bestätigt: ${msg.received} empfangen, ${msg.merged} gemergt`);
+                p2pLog(`Gegenstelle bestätigt: ${msg.received} empfangen, ${msg.merged} übernommen`);
                 p2pSync.lastSyncTime = Date.now();
                 localStorage.setItem('p2p_lastSync', p2pSync.lastSyncTime);
                 p2pUpdateConnectionUI(true);
 
-                showCustomMessage('✅ Sync bestätigt!',
+                showCustomMessage('Übertragung bestätigt',
                     `${msg.received} Einträge erfolgreich übertragen. ${msg.merged} gemergt.`, 'success');
                 break;
 
@@ -933,7 +1136,7 @@
     // === USER ACTIONS ===
     function p2pManualSync() {
         if (!p2pSync.connected) {
-            showCustomMessage('⚠️ Nicht verbunden', 'Stelle zuerst eine P2P-Verbindung her.', 'warning');
+            showCustomMessage('Nicht verbunden', 'Stelle zuerst eine Verbindung zu einem Gerät her.', 'warning');
             return;
         }
         p2pSync.syncStats = { sent: 0, received: 0, merged: 0 };
@@ -957,31 +1160,31 @@
             p2pWizardReset();
         }
 
-        showCustomMessage('🔴 Getrennt', 'P2P-Verbindung wurde beendet.', 'info');
+        showCustomMessage('Getrennt', 'Die Verbindung wurde beendet.', 'info');
     }
 
     function p2pCopyOffer() {
         const code = document.getElementById('p2pOfferCode').value;
         navigator.clipboard.writeText(code).then(() => {
-            showCustomMessage('📋 Kopiert!', 'Einladungscode in die Zwischenablage kopiert.', 'success');
+            showCustomMessage('Kopiert', 'Einladungscode liegt in der Zwischenablage.', 'success');
         }).catch(() => {
             // Fallback
             const el = document.getElementById('p2pOfferCode');
             el.select();
             document.execCommand('copy');
-            showCustomMessage('📋 Kopiert!', 'Einladungscode kopiert (Fallback).', 'success');
+            showCustomMessage('Kopiert', 'Einladungscode liegt in der Zwischenablage.', 'success');
         });
     }
 
     function p2pCopyAnswer() {
         const code = document.getElementById('p2pAnswerCode').value;
         navigator.clipboard.writeText(code).then(() => {
-            showCustomMessage('📋 Kopiert!', 'Antwort-Code in die Zwischenablage kopiert.', 'success');
+            showCustomMessage('Kopiert', 'Antwort-Code liegt in der Zwischenablage.', 'success');
         }).catch(() => {
             const el = document.getElementById('p2pAnswerCode');
             el.select();
             document.execCommand('copy');
-            showCustomMessage('📋 Kopiert!', 'Antwort-Code kopiert (Fallback).', 'success');
+            showCustomMessage('Kopiert', 'Antwort-Code liegt in der Zwischenablage.', 'success');
         });
     }
 

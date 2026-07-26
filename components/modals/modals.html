@@ -94,195 +94,218 @@
 
     <!-- P2P Sync Wizard Modal -->
     <div class="modal" id="p2pWizardModal">
-        <div class="modal-box" style="width:95%; max-width:580px; padding:0; max-height:90vh; overflow:hidden; border-radius:20px; border:1px solid rgba(var(--primary-rgb),0.3); background:linear-gradient(145deg, #0f0a18 0%, #1a1025 50%, #0f0a18 100%);">
-            
-            <!-- Wizard Header -->
-            <div style="padding:1.5rem 2rem 1rem; border-bottom:1px solid rgba(var(--primary-rgb),0.15); position:relative; overflow:hidden;">
-                <div style="position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg, transparent, var(--primary), #7c3aed, transparent);"></div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <h3 style="margin:0; font-size:1.2rem; font-weight:700; color:#fff;">🔗 P2P Sync</h3>
-                        <p style="margin:4px 0 0; font-size:0.75rem; color:var(--text-muted);" id="p2pWizardSubtitle">Wähle eine Rolle</p>
+        <div class="modal-box">
+
+            <!-- Kopf -->
+            <div class="p2p-head">
+                <div class="p2p-head-row">
+                    <div class="p2p-title">
+                        <div class="p2p-head-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        </div>
+                        <div>
+                            <h3>Geräte verbinden</h3>
+                            <p id="p2pWizardSubtitle">Rolle wählen</p>
+                        </div>
                     </div>
-                    <button onclick="closeP2PWizard()" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#fff; width:36px; height:36px; border-radius:10px; cursor:pointer; font-size:1.2rem; display:flex; align-items:center; justify-content:center; transition:all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">&times;</button>
+                    <button class="p2p-btn p2p-btn--ghost" onclick="closeP2PWizard()" aria-label="Schließen" style="width:32px; height:32px; padding:0;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
                 </div>
-                <!-- Step Indicator -->
-                <div style="display:flex; gap:6px; margin-top:1rem;" id="p2pStepIndicator">
+                <div class="p2p-steps" id="p2pStepIndicator">
                     <div class="p2p-step-dot active" id="p2pStep1Dot"></div>
                     <div class="p2p-step-dot" id="p2pStep2Dot"></div>
                     <div class="p2p-step-dot" id="p2pStep3Dot"></div>
                 </div>
             </div>
 
-            <!-- Wizard Body -->
-            <div style="padding:1.5rem 2rem; overflow-y:auto; max-height:calc(90vh - 120px);" id="p2pWizardBody">
-                
-                <!-- Step 1: Choose Role -->
+            <!-- Körper -->
+            <div class="p2p-body" id="p2pWizardBody">
+
+                <!-- Schritt 1: Rolle wählen -->
                 <div id="p2pWizStep1">
-                    <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem; line-height:1.6;">
-                        Verbinde zwei Geräte direkt miteinander — ohne Server, ohne Cloud. Alles bleibt verschlüsselt zwischen dir und deinem Gerät.
+                    <p class="p2p-lead">
+                        Überträgt Einträge direkt von einem Gerät zum anderen. Die Verbindung läuft
+                        ohne Server: ein Gerät erzeugt einen Code, das andere gibt ihn ein.
                     </p>
-                    <div style="display:grid; gap:12px;">
-                        <button onclick="p2pStartHost()" style="background:linear-gradient(135deg, rgba(var(--primary-rgb),0.15) 0%, rgba(124,58,237,0.1) 100%); border:1px solid rgba(var(--primary-rgb),0.3); border-radius:14px; padding:1.25rem; text-align:left; cursor:pointer; transition:all 0.3s; color:#fff;" onmouseover="this.style.borderColor='rgba(var(--primary-rgb),0.6)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(var(--primary-rgb),0.3)';this.style.transform='none'">
-                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                                <span style="font-size:1.5rem;">📤</span>
-                                <span style="font-weight:700; font-size:1rem;">Daten senden</span>
-                            </div>
-                            <p style="margin:0; font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
-                                Erstellt einen Einladungscode. Das andere Gerät bekommt deine Einträge.
-                            </p>
+                    <div class="p2p-roles">
+                        <button class="p2p-role" onclick="p2pStartHost()">
+                            <span class="p2p-role-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            </span>
+                            <span>
+                                <span class="p2p-role-name">Dieses Gerät sendet</span>
+                                <p class="p2p-role-desc">Erzeugt den Einladungscode. Deine Einträge gehen an das andere Gerät.</p>
+                            </span>
                         </button>
-                        <button onclick="p2pStartClient()" style="background:linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.08) 100%); border:1px solid rgba(16,185,129,0.3); border-radius:14px; padding:1.25rem; text-align:left; cursor:pointer; transition:all 0.3s; color:#fff;" onmouseover="this.style.borderColor='rgba(16,185,129,0.6)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(16,185,129,0.3)';this.style.transform='none'">
-                            <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                                <span style="font-size:1.5rem;">📥</span>
-                                <span style="font-weight:700; font-size:1rem;">Daten empfangen</span>
-                            </div>
-                            <p style="margin:0; font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
-                                Gib den Einladungscode vom anderen Gerät ein, um die Daten zu empfangen.
-                            </p>
+                        <button class="p2p-role" onclick="p2pStartClient()">
+                            <span class="p2p-role-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            </span>
+                            <span>
+                                <span class="p2p-role-name">Dieses Gerät empfängt</span>
+                                <p class="p2p-role-desc">Du gibst den Code des anderen Geräts ein und bekommst dessen Einträge.</p>
+                            </span>
                         </button>
                     </div>
-                    <div style="margin-top:1.5rem; padding:1rem; background:rgba(var(--primary-rgb),0.06); border-radius:10px; border:1px solid rgba(var(--primary-rgb),0.1);">
-                        <p style="margin:0; font-size:0.75rem; color:var(--text-muted); line-height:1.5;">
-                            🔒 <strong style="color:var(--primary);">100% Serverless</strong> — WebRTC P2P-Verbindung direkt zwischen deinen Geräten. Keine Daten verlassen deine Kontrolle. Die Codes werden nur zur Verbindungsherstellung genutzt.
-                        </p>
+                    <div class="p2p-note">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span><strong>Ohne Zwischenstation.</strong> Die Übertragung läuft direkt zwischen beiden Geräten und ist unterwegs verschlüsselt. Die Codes dienen nur dem Verbindungsaufbau und enthalten keine Einträge.</span>
                     </div>
                 </div>
 
-                <!-- Step 2a: Host - Show Offer Code -->
+                <!-- Schritt 2a: Sender — Code zeigen -->
                 <div id="p2pWizStep2Host" style="display:none;">
-                    <div style="text-align:center; margin-bottom:1.25rem;">
-                        <div id="p2pHostSpinner" style="margin:0 auto 1rem;">
-                            <div style="width:48px; height:48px; border:3px solid rgba(var(--primary-rgb),0.2); border-top-color:var(--primary); border-radius:50%; animation:p2pSpin 0.8s linear infinite; margin:0 auto;"></div>
-                            <p style="color:var(--text-muted); font-size:0.85rem; margin-top:0.75rem;">Generiere sicheren Verbindungscode...</p>
+                    <div id="p2pHostSpinner">
+                        <div class="p2p-phase">
+                            <div class="p2p-spinner"></div>
+                            <div>
+                                <div class="p2p-phase-title">Verbindungscode wird erzeugt</div>
+                                <p class="p2p-phase-sub" id="p2pHostGatherStatus">Suche Netzwerkwege …</p>
+                            </div>
                         </div>
-                        <div id="p2pHostReady" style="display:none;">
-                            <div style="font-size:2.5rem; margin-bottom:0.5rem;">📡</div>
-                            <p style="color:var(--primary); font-weight:600; font-size:0.95rem; margin-bottom:0.25rem;">Einladungscode bereit!</p>
-                            <p style="color:var(--text-muted); font-size:0.8rem;">Kopiere diesen Code und öffne ihn auf dem anderen Gerät.</p>
+                        <div class="p2p-gather-track"><div id="p2pHostGatherBar"></div></div>
+                    </div>
+
+                    <div id="p2pHostReady" style="display:none;">
+                        <div class="p2p-phase">
+                            <div class="p2p-check">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                            </div>
+                            <div>
+                                <div class="p2p-phase-title">Code bereit</div>
+                                <p class="p2p-phase-sub">Kopiere ihn und gib ihn auf dem anderen Gerät ein.</p>
+                            </div>
                         </div>
                     </div>
-                    
+
                     <div id="p2pOfferCodeBox" style="display:none;">
-                        <div style="position:relative;">
-                            <textarea id="p2pOfferCode" readonly style="width:100%; height:100px; background:rgba(0,0,0,0.4); border:1px solid rgba(var(--primary-rgb),0.2); border-radius:10px; color:var(--primary); font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all;"></textarea>
-                            <button onclick="p2pCopyOffer()" style="position:absolute; top:8px; right:8px; background:rgba(var(--primary-rgb),0.2); border:1px solid rgba(var(--primary-rgb),0.3); color:#fff; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:600; transition:all 0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb),0.4)'" onmouseout="this.style.background='rgba(var(--primary-rgb),0.2)'">📋 Kopieren</button>
+                        <div class="p2p-field">
+                            <div class="p2p-field-head">
+                                <span class="p2p-field-label">Schritt 1 — Einladungscode</span>
+                                <button class="p2p-btn p2p-btn--ghost" onclick="p2pCopyOffer()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    Kopieren
+                                </button>
+                            </div>
+                            <textarea id="p2pOfferCode" class="p2p-code" readonly aria-label="Einladungscode"></textarea>
+                            <div class="p2p-ice-summary" id="p2pHostIceSummary"></div>
                         </div>
-                    </div>
 
-                    <div style="margin-top:1.25rem; padding:1rem; background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.15); border-radius:10px;">
-                        <p style="margin:0 0 0.75rem; font-size:0.85rem; font-weight:600; color:#fbbf24;">⏳ Warte auf Antwort-Code</p>
-                        <p style="margin:0 0 0.75rem; font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
-                            Nachdem das andere Gerät deinen Code eingegeben hat, erhältst du dort einen <strong style="color:#fff;">Antwort-Code</strong>. Füge ihn hier ein:
-                        </p>
-                        <textarea id="p2pAnswerInput" placeholder="Antwort-Code hier einfügen..." style="width:100%; height:80px; background:rgba(0,0,0,0.3); border:1px solid rgba(16,185,129,0.2); border-radius:10px; color:#10b981; font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all;"></textarea>
-                        <button onclick="p2pHostProcessAnswer()" id="p2pHostConnectBtn" style="width:100%; margin-top:10px; background:linear-gradient(135deg, #10b981, #059669); border:none; color:#fff; padding:12px; border-radius:10px; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">🔗 Verbindung herstellen</button>
-                        <div id="p2pHostConnecting" style="display:none; margin-top:12px; text-align:center;">
-                            <div style="display:inline-flex; align-items:center; gap:10px; padding:10px 20px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); border-radius:10px;">
-                                <div style="width:16px; height:16px; border:2px solid rgba(16,185,129,0.3); border-top-color:#10b981; border-radius:50%; animation:p2pSpin 0.8s linear infinite;"></div>
-                                <span id="p2pHostConnectStatus" style="font-size:0.8rem; color:#10b981;">Verbinde...</span>
+                        <div class="p2p-field">
+                            <div class="p2p-field-head">
+                                <span class="p2p-field-label">Schritt 2 — Antwort-Code einfügen</span>
                             </div>
-                            <div style="margin-top:8px; height:3px; background:rgba(255,255,255,0.05); border-radius:2px; overflow:hidden;">
-                                <div id="p2pHostConnectBar" style="height:100%; width:0%; background:linear-gradient(90deg, #10b981, var(--primary)); border-radius:2px; transition:width 0.5s ease;"></div>
-                            </div>
+                            <textarea id="p2pAnswerInput" class="p2p-input" placeholder="Antwort-Code vom anderen Gerät" aria-label="Antwort-Code"></textarea>
+                        </div>
+
+                        <button class="p2p-btn p2p-btn--primary" onclick="p2pHostProcessAnswer()" id="p2pHostConnectBtn">Verbindung herstellen</button>
+
+                        <div class="p2p-conn" id="p2pHostConnecting" style="display:none;">
+                            <div class="p2p-spinner"></div>
+                            <span class="p2p-conn-label" id="p2pHostConnectStatus">wird vorbereitet</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 2b: Client - Paste Offer & Show Answer -->
+                <!-- Schritt 2b: Empfänger — Code eingeben, Antwort zeigen -->
                 <div id="p2pWizStep2Client" style="display:none;">
-                    <div style="text-align:center; margin-bottom:1rem;">
-                        <div style="font-size:2.5rem; margin-bottom:0.5rem;">📥</div>
-                        <p style="color:#10b981; font-weight:600; font-size:0.95rem;">Einladungscode eingeben</p>
-                        <p style="color:var(--text-muted); font-size:0.8rem;">Füge den Code vom sendenden Gerät ein:</p>
+                    <div class="p2p-field">
+                        <div class="p2p-field-head">
+                            <span class="p2p-field-label">Schritt 1 — Einladungscode einfügen</span>
+                        </div>
+                        <textarea id="p2pOfferInput" class="p2p-input" placeholder="Einladungscode vom sendenden Gerät" aria-label="Einladungscode"></textarea>
                     </div>
 
-                    <textarea id="p2pOfferInput" placeholder="Einladungscode hier einfügen..." style="width:100%; height:100px; background:rgba(0,0,0,0.3); border:1px solid rgba(var(--primary-rgb),0.2); border-radius:10px; color:var(--primary); font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all; margin-bottom:12px;"></textarea>
-                    <button onclick="p2pClientProcessOffer()" id="p2pClientConnectBtn" style="width:100%; background:linear-gradient(135deg, var(--primary), #7c3aed); border:none; color:#fff; padding:12px; border-radius:10px; font-weight:700; font-size:0.9rem; cursor:pointer; transition:all 0.2s;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">🔗 Code verarbeiten</button>
+                    <button class="p2p-btn p2p-btn--primary" onclick="p2pClientProcessOffer()" id="p2pClientConnectBtn">Code verarbeiten</button>
 
-                    <!-- Answer display (hidden initially) -->
+                    <div id="p2pClientGathering" style="display:none; margin-top:1rem;">
+                        <div class="p2p-phase">
+                            <div class="p2p-spinner"></div>
+                            <div>
+                                <div class="p2p-phase-title">Antwort-Code wird erzeugt</div>
+                                <p class="p2p-phase-sub" id="p2pClientGatherStatus">Suche Netzwerkwege …</p>
+                            </div>
+                        </div>
+                        <div class="p2p-gather-track"><div id="p2pClientGatherBar"></div></div>
+                    </div>
+
                     <div id="p2pAnswerCodeBox" style="display:none; margin-top:1.25rem;">
-                        <div style="padding:1rem; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.2); border-radius:10px;">
-                            <p style="margin:0 0 0.75rem; font-size:0.85rem; font-weight:600; color:#10b981;">✅ Antwort-Code generiert!</p>
-                            <p style="margin:0 0 0.75rem; font-size:0.8rem; color:var(--text-muted); line-height:1.5;">
-                                Kopiere diesen Code und füge ihn auf dem <strong style="color:#fff;">sendenden Gerät</strong> ein:
-                            </p>
-                            <div style="position:relative;">
-                                <textarea id="p2pAnswerCode" readonly style="width:100%; height:80px; background:rgba(0,0,0,0.4); border:1px solid rgba(16,185,129,0.2); border-radius:10px; color:#10b981; font-family:monospace; font-size:0.7rem; padding:12px; resize:none; word-break:break-all;"></textarea>
-                                <button onclick="p2pCopyAnswer()" style="position:absolute; top:8px; right:8px; background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.3); color:#fff; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:600; transition:all 0.2s;" onmouseover="this.style.background='rgba(16,185,129,0.4)'" onmouseout="this.style.background='rgba(16,185,129,0.2)'">📋 Kopieren</button>
+                        <div class="p2p-field" style="margin-bottom:0;">
+                            <div class="p2p-field-head">
+                                <span class="p2p-field-label">Schritt 2 — Antwort-Code</span>
+                                <button class="p2p-btn p2p-btn--ghost" onclick="p2pCopyAnswer()">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    Kopieren
+                                </button>
                             </div>
-                            <div style="margin-top:1rem; text-align:center;">
-                                <div style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; background:rgba(251,191,36,0.08); border-radius:8px;">
-                                    <div style="width:8px; height:8px; border-radius:50%; background:#fbbf24; animation:p2pPulse 1.5s infinite;"></div>
-                                    <span style="font-size:0.8rem; color:#fbbf24;">Warte auf Verbindung...</span>
-                                </div>
-                            </div>
+                            <textarea id="p2pAnswerCode" class="p2p-code" readonly aria-label="Antwort-Code"></textarea>
+                            <div class="p2p-ice-summary" id="p2pClientIceSummary"></div>
+                        </div>
+                        <div class="p2p-note">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                            <span>Diesen Code auf dem <strong>sendenden Gerät</strong> einfügen und dort auf „Verbindung herstellen“ tippen. Danach geht es hier automatisch weiter.</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 3: Connected! -->
+                <!-- Schritt 3: verbunden -->
                 <div id="p2pWizStep3" style="display:none;">
-                    <div style="text-align:center; padding:1rem 0;">
-                        <div style="font-size:3rem; margin-bottom:0.75rem;" id="p2pConnAnim">🎉</div>
-                        <h3 style="color:#10b981; margin:0 0 0.5rem; font-size:1.2rem; font-weight:700;">Verbunden!</h3>
-                        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">P2P-Verbindung hergestellt. Daten werden synchronisiert.</p>
-                    </div>
-
-                    <!-- Sync Progress -->
-                    <div id="p2pSyncProgress" style="margin-bottom:1.25rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <span style="font-size:0.8rem; color:var(--text-muted);">Sync-Fortschritt</span>
-                            <span id="p2pSyncPercent" style="font-size:0.8rem; font-weight:700; color:var(--primary);">0%</span>
+                    <div class="p2p-connected-head">
+                        <div class="p2p-connected-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
                         </div>
-                        <div style="height:6px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden;">
-                            <div id="p2pSyncBar" style="height:100%; width:0%; background:linear-gradient(90deg, var(--primary), #10b981); border-radius:3px; transition:width 0.4s ease;"></div>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; margin-top:6px;">
-                            <span id="p2pSyncStatus" style="font-size:0.75rem; color:var(--text-muted);">Starte...</span>
-                            <span id="p2pSyncSpeed" style="font-size:0.75rem; color:var(--text-muted);"></span>
+                        <div>
+                            <div class="p2p-connected-title">Verbunden</div>
+                            <p class="p2p-connected-sub">Die Einträge werden übertragen.</p>
                         </div>
                     </div>
 
-                    <!-- Sync Stats -->
-                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:1.25rem;">
-                        <div style="background:rgba(var(--primary-rgb),0.08); border:1px solid rgba(var(--primary-rgb),0.15); border-radius:10px; padding:12px; text-align:center;">
-                            <div id="p2pStatSent" style="font-size:1.2rem; font-weight:800; color:var(--primary);">0</div>
-                            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Gesendet</div>
+                    <div id="p2pSyncProgress">
+                        <div class="p2p-progress-head">
+                            <span>Übertragung</span>
+                            <span class="p2p-progress-pct" id="p2pSyncPercent">0%</span>
                         </div>
-                        <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.15); border-radius:10px; padding:12px; text-align:center;">
-                            <div id="p2pStatReceived" style="font-size:1.2rem; font-weight:800; color:#10b981;">0</div>
-                            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Empfangen</div>
-                        </div>
-                        <div style="background:rgba(251,191,36,0.08); border:1px solid rgba(251,191,36,0.15); border-radius:10px; padding:12px; text-align:center;">
-                            <div id="p2pStatMerged" style="font-size:1.2rem; font-weight:800; color:#fbbf24;">0</div>
-                            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">Gemergt</div>
+                        <div class="p2p-progress-track"><div id="p2pSyncBar"></div></div>
+                        <div class="p2p-progress-foot">
+                            <span id="p2pSyncStatus">Startet …</span>
+                            <span id="p2pSyncSpeed"></span>
                         </div>
                     </div>
 
-                    <!-- Sync Log -->
-                    <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.05); border-radius:10px; padding:12px; max-height:150px; overflow-y:auto;" id="p2pSyncLog">
-                        <div style="font-size:0.75rem; color:var(--text-muted); font-family:monospace;" id="p2pLogContent">
-                            <div>⏳ Initialisiere Sync...</div>
+                    <div class="p2p-stats">
+                        <div class="p2p-stat">
+                            <div class="p2p-stat-num" id="p2pStatSent">0</div>
+                            <div class="p2p-stat-label">Gesendet</div>
+                        </div>
+                        <div class="p2p-stat">
+                            <div class="p2p-stat-num" id="p2pStatReceived">0</div>
+                            <div class="p2p-stat-label">Empfangen</div>
+                        </div>
+                        <div class="p2p-stat">
+                            <div class="p2p-stat-num" id="p2pStatMerged">0</div>
+                            <div class="p2p-stat-label">Übernommen</div>
                         </div>
                     </div>
 
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:1.25rem;">
-                        <button onclick="p2pManualSync()" style="background:rgba(var(--primary-rgb),0.15); border:1px solid rgba(var(--primary-rgb),0.3); color:#fff; padding:10px; border-radius:10px; cursor:pointer; font-weight:600; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(var(--primary-rgb),0.25)'" onmouseout="this.style.background='rgba(var(--primary-rgb),0.15)'">🔄 Nochmal syncen</button>
-                        <button onclick="p2pDisconnect()" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#f87171; padding:10px; border-radius:10px; cursor:pointer; font-weight:600; font-size:0.85rem; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.2)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'">❌ Trennen</button>
+                    <div class="p2p-log" id="p2pSyncLog">
+                        <div id="p2pLogContent"><div>Verbindung hergestellt</div></div>
+                    </div>
+
+                    <div class="p2p-btn-row" style="margin-top:1.25rem;">
+                        <button class="p2p-btn" onclick="p2pManualSync()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                            Erneut übertragen
+                        </button>
+                        <button class="p2p-btn p2p-btn--danger" onclick="p2pDisconnect()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                            Trennen
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <style>
-        @keyframes p2pSpin { to { transform: rotate(360deg); } }
-        @keyframes p2pPulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-        .p2p-step-dot { height:4px; flex:1; border-radius:2px; background:rgba(255,255,255,0.08); transition:all 0.4s ease; }
-        .p2p-step-dot.active { background:linear-gradient(90deg, var(--primary), #7c3aed); }
-        .p2p-step-dot.done { background:#10b981; }
-    </style>
 
     <!-- GHOST MODE / BOSS KEY STYLES -->
     <style id="ghost-mode-styles">
@@ -1911,64 +1934,76 @@
                 <div id="settings-tab-team" class="settings-tab-content" style="display:none;">
                     
                     <div class="settings-info">
-                        Team-Features für Echtzeit-Zusammenarbeit, gemeinsame Dashboards und Live-Notifications.
+                        Überträgt deine Einträge direkt zwischen zwei Geräten — zum Beispiel vom Handy
+                        auf den Laptop. Es gibt kein gemeinsames Konto und keine Benachrichtigungen an
+                        andere: die Daten bleiben bei dir, es kommt nur ein zweites Gerät dazu.
                     </div>
 
                     <!-- P2P Sync -->
                     <div class="settings-section">
-                        <div class="settings-section-title">P2P Geräte-Sync (WebRTC)</div>
-                        
-                        <!-- Connection Status -->
-                        <div style="margin-bottom:1rem; padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.06);">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <div id="p2pStatusDot" style="width:10px; height:10px; border-radius:50%; background:#6b7280; transition:all 0.3s;"></div>
+                        <div class="settings-section-title">Geräte-Sync</div>
+
+                        <!-- Verbindungsstatus -->
+                        <div class="p2p-status-card">
+                            <div class="p2p-status-row">
+                                <div class="p2p-status-left">
+                                    <div class="p2p-status-dot" id="p2pStatusDot"></div>
                                     <div>
-                                        <span id="p2pStatus" style="font-weight:600; color:var(--text-muted); font-size:0.85rem;">Nicht verbunden</span>
-                                        <div id="p2pDeviceInfo" style="font-size:0.7rem; color:var(--text-muted); margin-top:2px; display:none;"></div>
+                                        <div class="p2p-status-name" id="p2pStatus">Nicht verbunden</div>
+                                        <div class="p2p-status-sub" id="p2pDeviceInfo" style="display:none;"></div>
                                     </div>
                                 </div>
-                                <span id="connectedPeers" style="color:var(--text-muted); font-size:0.75rem; background:rgba(255,255,255,0.05); padding:3px 10px; border-radius:6px;">Offline</span>
+                                <span class="p2p-status-badge" id="connectedPeers">Offline</span>
                             </div>
-                            <!-- Last Sync Info -->
-                            <div id="p2pLastSync" style="display:none; font-size:0.7rem; color:var(--text-muted); padding-top:8px; border-top:1px solid rgba(255,255,255,0.05);">
-                                Letzter Sync: <span id="p2pLastSyncTime">—</span>
+                            <div class="p2p-status-foot" id="p2pLastSync" style="display:none;">
+                                Letzte Übertragung: <span id="p2pLastSyncTime">—</span>
                             </div>
                         </div>
 
-                        <!-- Main Action Button -->
-                        <button class="settings-btn" onclick="openP2PWizard()" style="width:100%; padding:14px; font-size:0.95rem; font-weight:600; background:linear-gradient(135deg, rgba(var(--primary-rgb),0.15), rgba(124,58,237,0.1)); border:1px solid rgba(var(--primary-rgb),0.3); border-radius:12px; margin-bottom:1rem; transition:all 0.3s;" onmouseover="this.style.borderColor='rgba(var(--primary-rgb),0.5)'" onmouseout="this.style.borderColor='rgba(var(--primary-rgb),0.3)'">
-                            🔗 Geräte verbinden
+                        <button class="p2p-btn" onclick="openP2PWizard()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                            Gerät verbinden
                         </button>
 
-                        <!-- Quick Actions (visible when connected) -->
-                        <div id="p2pQuickActions" style="display:none; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1rem;">
-                            <button class="settings-btn" onclick="p2pManualSync()" style="padding:10px;">🔄 Sync</button>
-                            <button class="settings-btn" onclick="p2pDisconnect()" style="padding:10px; color:#f87171;">❌ Trennen</button>
+                        <!-- Nur bei bestehender Verbindung -->
+                        <div class="p2p-btn-row" id="p2pQuickActions" style="display:none; margin-top:10px;">
+                            <button class="p2p-btn" onclick="p2pManualSync()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                                Übertragen
+                            </button>
+                            <button class="p2p-btn p2p-btn--danger" onclick="p2pDisconnect()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                                Trennen
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Sync Settings -->
+                    <!-- Sync-Einstellungen -->
                     <div class="settings-section">
-                        <div class="settings-section-title">Sync-Einstellungen</div>
-                        
-                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-                            <input type="checkbox" id="p2pAutoSync" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
-                            <label style="color:var(--text-main); font-size:0.85rem; cursor:pointer;">Auto-Sync bei Verbindung</label>
+                        <div class="settings-section-title">Übertragung</div>
+
+                        <div class="p2p-toggle-row">
+                            <input type="checkbox" id="p2pAutoSync" checked>
+                            <label for="p2pAutoSync">Sofort übertragen, sobald die Verbindung steht</label>
                         </div>
 
-                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-                            <input type="checkbox" id="p2pOfflineQueue" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
-                            <label style="color:var(--text-main); font-size:0.85rem; cursor:pointer;">Offline-Queue (bei Verbindungsverlust)</label>
+                        <div class="p2p-toggle-row">
+                            <input type="checkbox" id="p2pOfflineQueue" checked>
+                            <label for="p2pOfflineQueue">Änderungen bei Verbindungsverlust vormerken</label>
                         </div>
 
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <input type="checkbox" id="p2pEncryption" checked style="width:16px; height:16px; cursor:pointer; accent-color:var(--primary);">
-                            <label style="color:var(--text-main); font-size:0.85rem; cursor:pointer;">🔒 Ende-zu-Ende Verschlüsselung</label>
+                        <div class="p2p-toggle-row">
+                            <input type="checkbox" id="p2pEncryption" checked>
+                            <label for="p2pEncryption">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                Ende-zu-Ende verschlüsseln
+                            </label>
                         </div>
 
-                        <div class="settings-hint" style="margin-top:1rem;">
-                            P2P = direkte Verbindung via WebRTC. Keine zentralen Server, kein Tracking. 3-Schritt Handshake: Einladen → Antworten → Verbunden.
+                        <div class="settings-hint" style="margin-top:0.85rem;">
+                            Die Übertragung läuft direkt zwischen deinen Geräten, ohne zentralen Server.
+                            Ablauf: Code erzeugen, Code eingeben, Antwort-Code zurückgeben. Klappt der Aufbau
+                            nicht, sind meist strenge Firewalls oder ein VPN im Weg.
                         </div>
                     </div>
                 </div>

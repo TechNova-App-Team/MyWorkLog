@@ -1377,3 +1377,415 @@
             font-weight: 900;
         }
         .modal-close-x:focus { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb),0.12); }
+
+        /* ══════════════════════════════════════════════════════════════
+           P2P GERÄTE-SYNC — Wizard + Settings-Sektion
+           Clean Enterprise SaaS (dark). Regeln: nur Tokens, EIN Akzent
+           (--primary), Semantik-Farben nur für Zustand (success/danger/
+           warn), Radien 14px Karte / 10px innen / 8px Input+Button.
+           Keine Emojis, keine Purple-Gradients, kein Fake-Fortschritt.
+           ══════════════════════════════════════════════════════════════ */
+        #p2pWizardModal .modal-box {
+            width: 100%;
+            max-width: 560px;
+            padding: 0;
+            max-height: 90vh;
+            overflow: hidden;
+            background: #101015;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+        }
+
+        /* ── Kopf ── */
+        .p2p-head {
+            padding: 1.25rem 1.5rem 1rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.015);
+        }
+        .p2p-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+        .p2p-head-icon {
+            width: 34px; height: 34px;
+            flex-shrink: 0;
+            border-radius: 9px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-main);
+        }
+        .p2p-head-icon svg { width: 17px; height: 17px; }
+        .p2p-title { display: flex; align-items: center; gap: 11px; }
+        .p2p-title h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 650;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+        }
+        .p2p-title p { margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted); }
+
+        /* ── Schrittanzeige ── */
+        .p2p-steps { display: flex; gap: 5px; margin-top: 1rem; }
+        .p2p-step-dot {
+            height: 3px; flex: 1;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.07);
+            transition: background 0.3s ease;
+        }
+        .p2p-step-dot.active { background: var(--primary); }
+        .p2p-step-dot.done   { background: rgba(var(--primary-rgb), 0.4); }
+
+        /* ── Körper ── */
+        .p2p-body { padding: 1.5rem; overflow-y: auto; max-height: calc(90vh - 132px); }
+        .p2p-lead {
+            margin: 0 0 1.25rem;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        /* ── Rollenauswahl ── */
+        .p2p-roles { display: grid; gap: 10px; }
+        .p2p-role {
+            display: flex; align-items: flex-start; gap: 13px;
+            width: 100%;
+            padding: 1rem;
+            text-align: left;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .p2p-role:hover { background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14); }
+        .p2p-role:active { transform: scale(0.995); }
+        .p2p-role:focus-visible {
+            outline: none;
+            border-color: rgba(var(--primary-rgb), 0.5);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
+        }
+        .p2p-role-icon {
+            width: 32px; height: 32px;
+            flex-shrink: 0;
+            border-radius: 8px;
+            background: rgba(var(--primary-rgb), 0.1);
+            border: 1px solid rgba(var(--primary-rgb), 0.2);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--primary);
+        }
+        .p2p-role-icon svg { width: 16px; height: 16px; }
+        .p2p-role-name { font-size: 0.9rem; font-weight: 600; letter-spacing: -0.01em; }
+        .p2p-role-desc { margin: 3px 0 0; font-size: 0.78rem; line-height: 1.5; color: var(--text-muted); }
+
+        /* ── Hinweisblock (neutral / warnend) ── */
+        .p2p-note {
+            display: flex; gap: 10px;
+            margin-top: 1.25rem;
+            padding: 0.85rem 1rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.78rem;
+            line-height: 1.55;
+            color: var(--text-muted);
+        }
+        .p2p-note svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; color: var(--text-muted); }
+        .p2p-note strong { color: var(--text-main); font-weight: 600; }
+        .p2p-note[data-tone="warn"] {
+            background: rgba(234,179,8,0.05);
+            border-color: rgba(234,179,8,0.18);
+        }
+        .p2p-note[data-tone="warn"] svg { color: #eab308; }
+
+        /* ── Phasen-Kopf (Gathering / bereit) ── */
+        .p2p-phase { display: flex; align-items: center; gap: 11px; margin-bottom: 1rem; }
+        .p2p-spinner {
+            width: 17px; height: 17px;
+            flex-shrink: 0;
+            border: 2px solid rgba(var(--primary-rgb), 0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: p2pSpin 0.7s linear infinite;
+        }
+        .p2p-phase-title { font-size: 0.88rem; font-weight: 600; color: var(--text-main); }
+        .p2p-phase-sub { margin: 2px 0 0; font-size: 0.76rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+        .p2p-check {
+            width: 22px; height: 22px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: rgba(16,185,129,0.12);
+            border: 1px solid rgba(16,185,129,0.3);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--success);
+        }
+        .p2p-check svg { width: 12px; height: 12px; }
+
+        /* Echter Gathering-Fortschritt (zeitbasiert, mit Kandidatenzahl daneben) */
+        .p2p-gather-track {
+            height: 2px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 1px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        .p2p-gather-track > div {
+            height: 100%; width: 0%;
+            background: var(--primary);
+            border-radius: 1px;
+            transition: width 0.2s linear;
+        }
+
+        /* ── Code-Feld ── */
+        .p2p-field { margin-bottom: 1rem; }
+        .p2p-field-head {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 1rem; margin-bottom: 7px;
+        }
+        .p2p-field-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-muted);
+        }
+        .p2p-code, .p2p-input {
+            display: block;
+            width: 100%;
+            padding: 11px 12px;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-family: var(--font-mono, monospace);
+            font-size: 0.7rem;
+            line-height: 1.5;
+            resize: none;
+            word-break: break-all;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .p2p-code { height: 84px; color: var(--text-muted); }
+        .p2p-input { height: 76px; }
+        .p2p-input::placeholder { color: rgba(255,255,255,0.28); }
+        .p2p-code:focus, .p2p-input:focus {
+            outline: none;
+            border-color: rgba(var(--primary-rgb), 0.45);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+        }
+        .p2p-ice-summary {
+            margin-top: 6px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+        .p2p-ice-summary[data-warn="1"] { color: #eab308; }
+
+        /* ── Buttons ── */
+        .p2p-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+            width: 100%;
+            padding: 11px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .p2p-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .p2p-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+        .p2p-btn:active:not(:disabled) { transform: translateY(1px); }
+        .p2p-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2); }
+        .p2p-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .p2p-btn--primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+        .p2p-btn--primary:hover:not(:disabled) {
+            background: rgba(var(--primary-rgb), 0.85);
+            border-color: rgba(var(--primary-rgb), 0.85);
+        }
+        .p2p-btn--danger { color: var(--danger); }
+        .p2p-btn--danger:hover:not(:disabled) { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.28); }
+        .p2p-btn--ghost {
+            width: auto;
+            padding: 6px 11px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .p2p-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        /* ── Verbindungs-Statuszeile (Signature) ── */
+        .p2p-conn {
+            display: flex; align-items: center; gap: 10px;
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .p2p-conn-label { font-size: 0.78rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+        /* ── Stufe 3: verbunden ── */
+        .p2p-connected-head { display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; }
+        .p2p-connected-badge {
+            width: 34px; height: 34px;
+            flex-shrink: 0;
+            border-radius: 9px;
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.28);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--success);
+        }
+        .p2p-connected-badge svg { width: 17px; height: 17px; }
+        .p2p-connected-title { font-size: 0.95rem; font-weight: 650; color: var(--text-main); letter-spacing: -0.01em; }
+        .p2p-connected-sub { margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted); }
+
+        .p2p-progress-head {
+            display: flex; align-items: baseline; justify-content: space-between;
+            margin-bottom: 7px;
+        }
+        .p2p-progress-head span:first-child { font-size: 0.78rem; color: var(--text-muted); }
+        .p2p-progress-pct {
+            font-size: 0.82rem; font-weight: 700; color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+        }
+        .p2p-progress-track {
+            height: 4px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .p2p-progress-track > div {
+            height: 100%; width: 0%;
+            background: var(--primary);
+            border-radius: 2px;
+            transition: width 0.35s ease;
+        }
+        .p2p-progress-foot {
+            display: flex; justify-content: space-between; gap: 1rem;
+            margin-top: 6px;
+            font-size: 0.73rem;
+            color: var(--text-muted);
+        }
+
+        /* Zahlen-Kacheln: kein Kartenrahmen je Zahl, nur Trennlinien (ruhiger) */
+        .p2p-stats {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            margin: 1.25rem 0;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .p2p-stat { padding: 11px 12px; text-align: center; border-left: 1px solid var(--border); }
+        .p2p-stat:first-child { border-left: none; }
+        .p2p-stat-num {
+            font-size: 1.05rem; font-weight: 700; color: var(--text-main);
+            font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+        }
+        .p2p-stat-label {
+            margin-top: 2px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+        }
+
+        .p2p-log {
+            padding: 11px 12px;
+            max-height: 132px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.28);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: var(--font-mono, monospace);
+            font-size: 0.72rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        /* ══════ Settings-Tab: P2P-Status ══════ */
+        .p2p-status-card {
+            padding: 1rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 0.85rem;
+        }
+        .p2p-status-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .p2p-status-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .p2p-status-dot {
+            width: 8px; height: 8px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: all 0.25s ease;
+        }
+        .p2p-status-dot[data-state="on"] {
+            background: var(--success);
+            box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+        }
+        .p2p-status-name { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+        .p2p-status-sub { margin-top: 2px; font-size: 0.72rem; color: var(--text-muted); }
+        .p2p-status-badge {
+            flex-shrink: 0;
+            padding: 3px 9px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .p2p-status-badge[data-state="on"] {
+            background: rgba(16,185,129,0.1);
+            border-color: rgba(16,185,129,0.25);
+            color: var(--success);
+        }
+        .p2p-status-foot {
+            margin-top: 9px; padding-top: 9px;
+            border-top: 1px solid var(--border);
+            font-size: 0.72rem; color: var(--text-muted);
+        }
+
+        /* Schalter-Zeilen im Sync-Einstellungs-Block */
+        .p2p-toggle-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .p2p-toggle-row:last-of-type { border-bottom: none; }
+        .p2p-toggle-row input[type="checkbox"] {
+            width: 15px; height: 15px;
+            flex-shrink: 0;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+        .p2p-toggle-row label {
+            font-size: 0.84rem;
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .p2p-toggle-row label svg { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+
+        @keyframes p2pSpin { to { transform: rotate(360deg); } }
+
+        /* Handy: Buttons volle Breite */
+        @media (max-width: 560px) {
+            .p2p-body { padding: 1.25rem; }
+            .p2p-head { padding: 1.1rem 1.25rem 0.9rem; }
+            .p2p-btn-row { grid-template-columns: 1fr; }
+        }
+
+        /* Kein Motion für Nutzer, die das abgewählt haben */
+        @media (prefers-reduced-motion: reduce) {
+            .p2p-spinner { animation: none; border-top-color: rgba(var(--primary-rgb), 0.5); }
+            .p2p-gather-track > div, .p2p-progress-track > div { transition: none; }
+        }

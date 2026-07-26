@@ -13,6 +13,53 @@
 
   // Deutsch → Englisch. Nur ANZEIGE-Strings (App-Logik keyt auf IDs, nicht Labels).
   var MAP = {
+    // ── P2P Geräte-Sync (p2p-sync.js baut das komplett in JS) ──
+    // Geprüft: 'Verbunden'/'Nicht verbunden' kommen NUR in p2p-sync.js vor,
+    // 'Offline' ist in beiden Sprachen gleich. Keine Kollision mit anderen Modals.
+    'Verbunden': 'Connected',
+    'Nicht verbunden': 'Not connected',
+    'Rolle wählen': 'Pick a role',
+    'Sendet · Code weitergeben': 'Sending · pass the code on',
+    'Empfängt · Code eingeben': 'Receiving · enter the code',
+    'Verbindung herstellen': 'Connect',
+    'Erneut versuchen': 'Try again',
+    'Code verarbeiten': 'Use this code',
+    'Verarbeite …': 'Working …',
+    'Verbinde …': 'Connecting …',
+    'Antwort-Code erzeugt': 'Reply code created',
+    '1 Gerät': '1 device',
+    'keine Netzwerkwege': 'no network routes',
+    // ICE-Zustände NICHT hier: p2pIceLabel() liefert sie über p2pL() direkt
+    // englisch, weil sie in längere Strings eingesetzt werden ("Netzwerk: …")
+    // und ein MAP-Eintrag immer den ganzen Textknoten braucht.
+    // Log- und Meldungstexte
+    'Verbindung hergestellt': 'Connection established',
+    'Verbindung getrennt': 'Connection closed',
+    'Kein Relay verfügbar': 'No relay available',
+    'Starte Übertragung …': 'Starting transfer …',
+    'Führe Einträge zusammen …': 'Merging entries …',
+    'Synchronisation abgeschlossen': 'Transfer complete',
+    'Alle Daten gesendet, warte auf Bestätigung …': 'All data sent, waiting for confirmation …',
+    'Keine Einträge vorhanden': 'No entries yet',
+    'Abbruch: keine Netzwerkwege gefunden': 'Stopped: no network routes found',
+    'Teste Relay-Server …': 'Testing relay servers …',
+    'Getrennt': 'Disconnected',
+    'Kopiert': 'Copied',
+    'Code fehlt': 'Code missing',
+    'Code ungültig': 'Invalid code',
+    'Code fehlgeschlagen': 'Could not create code',
+    'Schon verarbeitet': 'Already used',
+    'Keine Verbindung möglich': 'Cannot connect',
+    'Verbindung fehlgeschlagen': 'Connection failed',
+    'Synchronisiert': 'Synced',
+    'Übertragung bestätigt': 'Transfer confirmed',
+    'Direkte Verbindung steht. Daten werden übertragen.': 'Direct connection is up. Data is being transferred.',
+    'Die Verbindung wurde beendet.': 'The connection was closed.',
+    'Einladungscode liegt in der Zwischenablage.': 'The invite code is on your clipboard.',
+    'Antwort-Code liegt in der Zwischenablage.': 'The reply code is on your clipboard.',
+    'Füge den Einladungscode vom anderen Gerät ein.': 'Paste the invite code from the other device.',
+    'Füge den Antwort-Code vom anderen Gerät ein.': 'Paste the reply code from the other device.',
+    'Stelle zuerst eine Verbindung zu einem Gerät her.': 'Connect to a device first.',
     // Eintrag-Typen (custom-types-fields.js DEFAULT_ENTRY_TYPES + typeLabels-Maps)
     'Arbeit': 'Work',
     'Schule': 'School',
@@ -361,6 +408,54 @@
   // ("vor 2d", "Ø Saldo: +1.5h"), braucht ein Muster. Reihenfolge zählt:
   // spezifische Regeln vor allgemeinen, sonst frisst die allgemeine zuerst.
   var RULES = [
+    // ── P2P Geräte-Sync: Texte mit eingesetzten Zahlen (können nicht ins MAP) ──
+    // 🔴 Jede Zeile aus p2pLog() traegt ein Zeitstempel-Praefix "[HH:MM:SS] ".
+    // Ein reines ^-Anker-Muster trifft deshalb NIE — die Gruppe (TS)? faengt es
+    // ab und gibt es unveraendert zurueck. Gilt fuer jede neue Log-Regel hier.
+    [/^(\[\d\d:\d\d:\d\d\] )?Verbindung hergestellt$/g, '$1Connection established'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Verbindung getrennt$/g, '$1Connection closed'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Starte Übertragung …$/g, '$1Starting transfer …'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Führe Einträge zusammen …$/g, '$1Merging entries …'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Synchronisation abgeschlossen$/g, '$1Transfer complete'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Alle Daten gesendet, warte auf Bestätigung …$/g,
+      '$1All data sent, waiting for confirmation …'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Keine Einträge vorhanden$/g, '$1No entries yet'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Kein Relay verfügbar$/g, '$1No relay available'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Teste Relay-Server …$/g, '$1Testing relay servers …'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Abbruch: keine Netzwerkwege gefunden$/g,
+      '$1Stopped: no network routes found'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Abbruch: Zeitüberschreitung nach (\d+)s$/g,
+      '$1Stopped: timed out after $2s'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Gathering abgekürzt nach (\d+)s$/g,
+      '$1Route search cut short after $2s'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Paket (\d+)\/(\d+) gesendet \((\d+) Einträge\)$/g,
+      '$1Packet $2/$3 sent ($4 entries)'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Paket (\d+)\/(\d+) empfangen$/g, '$1Packet $2/$3 received'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Gegenstelle "(.+)" meldet (\d+) Einträge$/g,
+      '$1Peer "$2" reports $3 entries'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Zusammengeführt: (\d+) neu, (\d+) aktualisiert, (\d+) unverändert$/g,
+      '$1Merged: $2 new, $3 updated, $4 unchanged'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Gegenstelle bestätigt: (\d+) empfangen, (\d+) übernommen$/g,
+      '$1Peer confirmed: $2 received, $3 applied'],
+    [/^(\[\d\d:\d\d:\d\d\] )?(\d+) Relay-Weg\(e\) verfügbar$/g, '$1$2 relay route(s) available'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Kein Relay — Verbindung nur direkt oder im selben Netz$/g,
+      '$1No relay — direct connection or same network only'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Relay OK: (\d+) Relay, (\d+) STUN, (\d+) lokal$/g,
+      '$1Relay OK: $2 relay, $3 STUN, $4 local'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Kein Relay: (\d+) STUN, (\d+) lokal$/g,
+      '$1No relay: $2 STUN, $3 local'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Netzwerk: (.+)$/g, '$1Network: $2'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Fehler: (.+)$/g, '$1Error: $2'],
+    [/^(\[\d\d:\d\d:\d\d\] )?Relay-Test fehlgeschlagen: (.+)$/g, '$1Relay test failed: $2'],
+    // Statuszeilen ausserhalb des Logs (kein Zeitstempel)
+    [/^Suche Netzwerkwege …\s+([\d.,]+)s$/g, 'Looking for network routes …  $1s'],
+    [/^Netzwerkwege gefunden: (\d+)\s+·\s+([\d.,]+)s$/g, 'Network routes found: $1  ·  $2s'],
+    [/(\d+)× lokal/g, '$1× local'],
+    [/(\d+)× über STUN/g, '$1× via STUN'],
+    [/(\d+)× über Relay/g, '$1× via relay'],
+    [/^Gegenstelle: (.+)$/g, 'Peer: $1'],
+    [/^Letzte Übertragung:$/g, 'Last transfer:'],
+
     // ── Ganze Saetze zuerst ── sonst zerlegt eine Wort-Regel weiter unten den
     // Satz ("Saldo" → "balance") und das Satz-Muster trifft nicht mehr.
     [/Du arbeitest durchschnittlich ([\d.,]+) Stunden pro Monat\./g,
