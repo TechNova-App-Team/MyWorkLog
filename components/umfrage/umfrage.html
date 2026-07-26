@@ -1,0 +1,121 @@
+<!-- ═══ UMFRAGE: Welche Funktion ist Geld wert? ═══ -->
+<div class="modal" id="umfrageModal">
+    <div class="modal-box umf-box">
+
+        <div class="umf-head">
+            <div class="umf-head-row">
+                <div class="umf-title">
+                    <div class="umf-head-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="4" width="3" height="14"/></svg>
+                    </div>
+                    <div>
+                        <h3>Wie soll es weitergehen?</h3>
+                        <p>Zwei Fragen, keine Anmeldung</p>
+                    </div>
+                </div>
+                <button class="umf-x" onclick="closeUmfrage()" aria-label="Schließen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="umf-body">
+
+            <!-- Fragen -->
+            <div id="umfForm">
+                <p class="umf-lead">
+                    MyWorkLog ist kostenlos und soll es im Kern auch bleiben. Manches kostet
+                    aber laufend Geld — vor allem die KI, die dein Berichtsheft formuliert.
+                    Damit ich weiß, wo sich das lohnt: was wäre dir davon etwas wert?
+                </p>
+
+                <div class="umf-q">
+                    <div class="umf-q-label">Welche Funktion wäre dir Geld wert?</div>
+                    <div class="umf-q-hint">Mehrfachauswahl möglich</div>
+                    <div class="umf-opts" id="umfFeatures">
+                        <label class="umf-opt">
+                            <input type="checkbox" value="ki">
+                            <span class="umf-opt-text">
+                                <span class="umf-opt-name">Stärkere KI fürs Berichtsheft</span>
+                                <span class="umf-opt-desc">Bessere Formulierungen, weniger Nacharbeit</span>
+                            </span>
+                        </label>
+                        <label class="umf-opt">
+                            <input type="checkbox" value="cloud">
+                            <span class="umf-opt-text">
+                                <span class="umf-opt-name">Cloud-Sync über mehrere Geräte</span>
+                                <span class="umf-opt-desc">Einträge automatisch auf Handy und PC</span>
+                            </span>
+                        </label>
+                        <label class="umf-opt">
+                            <input type="checkbox" value="auswertung">
+                            <span class="umf-opt-text">
+                                <span class="umf-opt-name">Erweiterte Auswertungen</span>
+                                <span class="umf-opt-desc">Mehr Statistiken, längere Zeiträume</span>
+                            </span>
+                        </label>
+                        <label class="umf-opt">
+                            <input type="checkbox" value="export">
+                            <span class="umf-opt-text">
+                                <span class="umf-opt-name">Export für die IHK</span>
+                                <span class="umf-opt-desc">Fertiges PDF im Prüfungs-Format</span>
+                            </span>
+                        </label>
+                        <label class="umf-opt">
+                            <input type="checkbox" value="keine">
+                            <span class="umf-opt-text">
+                                <span class="umf-opt-name">Nichts davon</span>
+                                <span class="umf-opt-desc">Soll komplett kostenlos bleiben</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="umf-q">
+                    <div class="umf-q-label">Was wäre dir das im Monat wert?</div>
+                    <div class="umf-q-hint">Eine Antwort</div>
+                    <div class="umf-opts umf-opts--row" id="umfPrice">
+                        <label class="umf-chip"><input type="radio" name="umfPreis" value="0"><span>Nichts</span></label>
+                        <label class="umf-chip"><input type="radio" name="umfPreis" value="1_3"><span>1–3 €</span></label>
+                        <label class="umf-chip"><input type="radio" name="umfPreis" value="3_5"><span>3–5 €</span></label>
+                        <label class="umf-chip"><input type="radio" name="umfPreis" value="5_10"><span>5–10 €</span></label>
+                        <label class="umf-chip"><input type="radio" name="umfPreis" value="einmalig"><span>Lieber einmalig</span></label>
+                    </div>
+                </div>
+
+                <div class="umf-note">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>Es werden nur diese zwei Antworten übertragen. Kein Name, keine E-Mail, keine Einträge. Nichts davon ist verbindlich.</span>
+                </div>
+
+                <button class="umf-btn umf-btn--primary" id="umfSubmit" onclick="submitUmfrage()">Antwort senden</button>
+                <button class="umf-btn umf-btn--quiet" onclick="dismissUmfrage()">Nicht teilnehmen</button>
+            </div>
+
+            <!-- Danach -->
+            <div id="umfDone" style="display:none;">
+                <div class="umf-done">
+                    <div class="umf-done-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <div class="umf-done-title">Danke, angekommen</div>
+                    <p class="umf-done-text">Das hilft mir bei der Entscheidung. Was auch rauskommt: die Zeiterfassung selbst bleibt kostenlos.</p>
+                </div>
+                <button class="umf-btn" onclick="closeUmfrage()">Schließen</button>
+            </div>
+
+            <!-- Fehlgeschlagen -->
+            <div id="umfFail" style="display:none;">
+                <div class="umf-note" data-tone="warn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span id="umfFailText">Konnte nicht gesendet werden.</span>
+                </div>
+                <div class="umf-btn-row">
+                    <button class="umf-btn umf-btn--primary" onclick="submitUmfrage()">Nochmal versuchen</button>
+                    <button class="umf-btn" onclick="closeUmfrage()">Später</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

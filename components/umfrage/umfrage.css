@@ -1,0 +1,218 @@
+/* ═══ UMFRAGE MODULE ═══
+   Clean Enterprise SaaS (dark). Nur Tokens, EIN Akzent (--primary),
+   Radien 16 Box / 12 Karte / 8 Input+Button. Keine Emojis.        */
+
+#umfrageModal .modal-box.umf-box {
+    width: 100%;
+    max-width: 540px;
+    padding: 0;
+    max-height: 90vh;
+    overflow: hidden;
+    background: #101015;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+}
+
+.umf-head {
+    padding: 1.25rem 1.5rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+}
+.umf-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.umf-title { display: flex; align-items: center; gap: 11px; }
+.umf-head-icon {
+    width: 34px; height: 34px; flex-shrink: 0;
+    border-radius: 9px;
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 1px solid rgba(var(--primary-rgb), 0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--primary);
+}
+.umf-head-icon svg { width: 17px; height: 17px; }
+.umf-title h3 { margin: 0; font-size: 1rem; font-weight: 650; color: var(--text-main); letter-spacing: -0.01em; }
+.umf-title p  { margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted); }
+.umf-x {
+    width: 32px; height: 32px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.umf-x svg { width: 15px; height: 15px; }
+.umf-x:hover { background: rgba(255,255,255,0.08); color: var(--text-main); }
+.umf-x:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2); }
+
+.umf-body { padding: 1.5rem; overflow-y: auto; max-height: calc(90vh - 110px); }
+.umf-lead { margin: 0 0 1.5rem; font-size: 0.85rem; line-height: 1.65; color: var(--text-muted); }
+
+.umf-q { margin-bottom: 1.5rem; }
+.umf-q-label { font-size: 0.88rem; font-weight: 600; color: var(--text-main); letter-spacing: -0.01em; }
+.umf-q-hint  { margin-top: 2px; font-size: 0.74rem; color: var(--text-muted); }
+.umf-opts { display: grid; gap: 8px; margin-top: 0.85rem; }
+.umf-opts--row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Mehrfachauswahl-Zeilen */
+.umf-opt {
+    display: flex; align-items: flex-start; gap: 11px;
+    padding: 11px 13px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.umf-opt:hover { background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14); }
+.umf-opt input[type="checkbox"] {
+    width: 15px; height: 15px; margin-top: 2px;
+    flex-shrink: 0; cursor: pointer;
+    accent-color: var(--primary);
+}
+.umf-opt:has(input:checked) {
+    background: rgba(var(--primary-rgb), 0.07);
+    border-color: rgba(var(--primary-rgb), 0.35);
+}
+.umf-opt:focus-within { box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2); }
+.umf-opt-text { display: block; min-width: 0; }
+.umf-opt-name { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+.umf-opt-desc { display: block; margin-top: 2px; font-size: 0.76rem; line-height: 1.45; color: var(--text-muted); }
+
+/* Preis-Chips */
+.umf-chip {
+    position: relative;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.umf-chip:hover { background: rgba(255,255,255,0.06); color: var(--text-main); }
+.umf-chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+.umf-chip:has(input:checked) {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+.umf-chip:focus-within { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2); }
+
+.umf-note {
+    display: flex; gap: 10px;
+    margin-bottom: 1.25rem;
+    padding: 0.85rem 1rem;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.76rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+}
+.umf-note svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; }
+.umf-note[data-tone="warn"] { background: rgba(234,179,8,0.05); border-color: rgba(234,179,8,0.18); }
+.umf-note[data-tone="warn"] svg { color: #eab308; }
+
+.umf-btn {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    width: 100%;
+    padding: 11px 16px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.umf-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+.umf-btn:active:not(:disabled) { transform: translateY(1px); }
+.umf-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2); }
+.umf-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.umf-btn--primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.umf-btn--primary:hover:not(:disabled) {
+    background: rgba(var(--primary-rgb), 0.85);
+    border-color: rgba(var(--primary-rgb), 0.85);
+}
+.umf-btn--quiet { background: none; border-color: transparent; color: var(--text-muted); }
+.umf-btn--quiet:hover { background: rgba(255,255,255,0.04); border-color: transparent; color: var(--text-main); }
+.umf-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.umf-btn-row .umf-btn { margin-bottom: 0; }
+
+/* Danke-Zustand */
+.umf-done { text-align: center; padding: 0.5rem 0 1.5rem; }
+.umf-done-badge {
+    width: 40px; height: 40px; margin: 0 auto 0.85rem;
+    border-radius: 11px;
+    background: rgba(16,185,129,0.1);
+    border: 1px solid rgba(16,185,129,0.28);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--success);
+}
+.umf-done-badge svg { width: 19px; height: 19px; }
+.umf-done-title { font-size: 0.98rem; font-weight: 650; color: var(--text-main); letter-spacing: -0.01em; }
+.umf-done-text { margin: 5px 0 0; font-size: 0.82rem; line-height: 1.6; color: var(--text-muted); }
+
+/* ── Banner im Dashboard ── */
+.umf-banner {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 1rem 1.1rem;
+    margin-bottom: 1rem;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+}
+.umf-banner-icon {
+    width: 32px; height: 32px; flex-shrink: 0;
+    border-radius: 9px;
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 1px solid rgba(var(--primary-rgb), 0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--primary);
+}
+.umf-banner-icon svg { width: 16px; height: 16px; }
+.umf-banner-content { flex: 1; min-width: 0; }
+.umf-banner-title { font-size: 0.88rem; font-weight: 650; color: var(--text-main); letter-spacing: -0.01em; }
+.umf-banner-text  { margin-top: 3px; font-size: 0.8rem; line-height: 1.55; color: var(--text-muted); }
+.umf-banner-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0.85rem; }
+.umf-banner-btn {
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--primary);
+    background: var(--primary);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.umf-banner-btn:hover { background: rgba(var(--primary-rgb), 0.85); }
+.umf-banner-btn--quiet {
+    background: none;
+    border-color: var(--border);
+    color: var(--text-muted);
+}
+.umf-banner-btn--quiet:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
+.umf-banner-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2); }
+
+@media (max-width: 560px) {
+    .umf-body { padding: 1.25rem; }
+    .umf-head { padding: 1.1rem 1.25rem 1rem; }
+    .umf-btn-row { grid-template-columns: 1fr; }
+    /* Chips volle Zeile teilen statt zu quetschen */
+    .umf-opts--row { display: grid; grid-template-columns: 1fr 1fr; }
+    .umf-chip { text-align: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .umf-opt, .umf-chip, .umf-btn, .umf-x, .umf-banner-btn { transition: none; }
+}
