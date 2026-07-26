@@ -278,6 +278,60 @@
     'Könnte besser sein': 'Could be better',
     'Neutral': 'Neutral',
 
+    // ─── Saldo-Trend Diagramm-Einstellungen (openChartStyleModal, dashboard.js) ───
+    // Komplett JS-gebaut (Template-Strings), deshalb hier und nicht im Dict.
+    'Saldo Trend': 'Balance trend',
+    'Diagramm-Stil, Effekte & Animation anpassen': 'Adjust chart style, effects and animation',
+    'Diagramm-Typ': 'Chart type',
+    'Linie': 'Line',
+    'Fläche': 'Area',
+    'Balken': 'Bars',
+    'Farbe': 'Color',
+    'Website-Farbe': 'Website color',
+    'Nutzt deinen Akzent aus den Einstellungen': 'Uses your accent color from Settings',
+    'Linienstärke': 'Line width',
+    'Linienstil': 'Line style',
+    'Voll': 'Solid',
+    'Gestrichelt': 'Dashed',
+    'Gepunktet': 'Dotted',
+    'Datenpunkte': 'Data points',
+    'Punkt an jedem Messwert': 'Dot at every data point',
+    'Aktueller-Wert-Puls': 'Current-value pulse',
+    'Pulsierender Punkt am letzten Wert': 'Pulsing dot on the latest value',
+    'Effekte': 'Effects',
+    'Flächen-Gradient': 'Area gradient',
+    'Farbverlauf unter der Linie (Fläche/Smooth)': 'Color gradient below the line (area/smooth)',
+    'Glow / Neon': 'Glow / neon',
+    'Leuchtender Schein um die Linie': 'Glowing halo around the line',
+    'Glow-Intensität': 'Glow intensity',
+    'Regenbogen': 'Rainbow',
+    'Animierter Farbverlauf auf der Linie': 'Animated color gradient on the line',
+    'Weichzeichnen': 'Soft blur',
+    'Verträumte, weiche Flächenfüllung': 'Dreamy, soft area fill',
+    'Raster & Achsen': 'Grid & axes',
+    'Gitternetz': 'Grid',
+    'Nulllinie': 'Zero line',
+    'Linie/Balken beim Laden aufbauen': 'Draw the line/bars on load',
+    'Tempo': 'Speed',
+
+    // ─── Arbeitszeit-Verteilung Balken-Einstellungen (openDonutStyleModal, dashboard.js) ───
+    // Teilt sich Animation/Tempo/Fusszeile mit dem Trend-Modal oben.
+    'Arbeitszeit-Verteilung': 'Working time distribution',
+    'Darstellung des Balkendiagramms anpassen': 'Adjust the bar chart appearance',
+    'Vorschau': 'Preview',
+    'Abspielen': 'Play',
+    'Darstellung': 'Appearance',
+    'Balkenhöhe': 'Bar height',
+    'Eckenradius': 'Corner radius',
+    'Segment-Abstand': 'Segment gap',
+    'Optionen': 'Options',
+    'Prozente im Balken': 'Percentages inside the bar',
+    'Zahl direkt im Segment anzeigen': 'Show the number inside the segment',
+    'Sanfte Animation': 'Smooth animation',
+    'Balken füllen sich beim Laden': 'Bars fill up on load',
+    'Glow-Effekt': 'Glow effect',
+    'Leuchtender Schein um die Segmente': 'Glowing halo around the segments',
+
     // ─── Deutsche Feiertage (vacation-holidays.js) ───
     'Neujahr': "New Year's Day",
     'Heilige Drei Könige': 'Epiphany',
@@ -497,7 +551,12 @@
     [/\b(\d+) Aufgaben\b/g, '$1 tasks'],
     [/\b(\d+) Stunden\b/g, '$1 hours'],
     [/\b(\d+) von (\d+) Wochen dokumentiert\b/g, '$1 of $2 weeks documented'],
-    [/\b(\d+)\/(\d+) heute\b/g, '$1/$2 today']
+    [/\b(\d+)\/(\d+) heute\b/g, '$1/$2 today'],
+    // Tempo-Label im Diagramm-Modal (speedLabel() in dashboard.js): "Schnell · 800ms".
+    // Verankert an " · <n>ms", damit das nackte Wort nirgends sonst getroffen wird.
+    // "Normal" braucht keine Regel — im Englischen identisch.
+    [/\bSchnell · (\d+)ms/g, 'Fast · $1ms'],
+    [/\bLangsam · (\d+)ms/g, 'Slow · $1ms']
   ];
 
   // ─── Einzelwort-Regeln: NUR fuer kurze Labels ──────────────────────────
