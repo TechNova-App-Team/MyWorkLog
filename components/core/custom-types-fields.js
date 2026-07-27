@@ -75,8 +75,58 @@
         _fallback: '<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><circle cx="7.5" cy="7.5" r="1"/>'
     };
 
-    function getTypeIconSvg(typeId, size) {
-        const paths = TYPE_ICON_PATHS[typeId] || TYPE_ICON_PATHS._fallback;
+    // Auswählbare Symbole für eigene Typen. Ohne diese Liste bekamen ALLE eigenen Typen
+    // dasselbe _fallback-Etikett — sie konnten also nie so aussehen wie die Standard-Typen,
+    // die je ein eigenes Icon haben. Lucide-Stil, damit sie sich nicht beißen.
+    const CT_ICON_LIBRARY = [
+        { id: 'tag',       label: 'Etikett', labelEn: 'Label',    path: TYPE_ICON_PATHS._fallback },
+        { id: 'dumbbell',  label: 'Fitness', labelEn: 'Fitness',    path: '<path d="M14.4 14.4 9.6 9.6"/><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/><path d="m21.5 21.5-1.4-1.4"/><path d="M3.9 3.9 2.5 2.5"/><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/>' },
+        { id: 'heart',     label: 'Gesundheit', labelEn: 'Health', path: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>' },
+        { id: 'car',       label: 'Fahrt', labelEn: 'Drive',      path: '<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>' },
+        { id: 'train',     label: 'Bahn', labelEn: 'Train',       path: '<rect x="4" y="3" width="16" height="16" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><path d="M8 15h.01"/><path d="M16 15h.01"/>' },
+        { id: 'plane',     label: 'Reise', labelEn: 'Travel',      path: '<path d="M17.8 19.2 16 11l3.5-3.5a2.1 2.1 0 0 0-3-3L13 8 4.8 6.2a1 1 0 0 0-.9 1.7l4.6 3.4-2.2 2.2-2.3-.6a1 1 0 0 0-1 1.6l2.4 2.4 2.4 2.4a1 1 0 0 0 1.6-1l-.6-2.3 2.2-2.2 3.4 4.6a1 1 0 0 0 1.7-.9Z"/>' },
+        { id: 'home',      label: 'Homeoffice', labelEn: 'Home office', path: '<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>' },
+        { id: 'users',     label: 'Meeting', labelEn: 'Meeting',    path: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' },
+        { id: 'user',      label: 'Coaching', labelEn: 'Coaching',   path: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>' },
+        { id: 'presenta',  label: 'Schulung', labelEn: 'Training',   path: '<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/>' },
+        { id: 'book',      label: 'Lernen', labelEn: 'Studying',     path: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>' },
+        { id: 'code',      label: 'Entwicklung', labelEn: 'Development',path: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>' },
+        { id: 'terminal',  label: 'Technik', labelEn: 'Tech',    path: '<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>' },
+        { id: 'server',    label: 'Server', labelEn: 'Server',     path: '<rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01"/><path d="M6 18h.01"/>' },
+        { id: 'wrench',    label: 'Wartung', labelEn: 'Maintenance',    path: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>' },
+        { id: 'hardhat',   label: 'Baustelle', labelEn: 'Site',  path: '<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1z"/><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><path d="M14 6a6 6 0 0 1 6 6v3"/>' },
+        { id: 'phone',     label: 'Telefonat', labelEn: 'Call',  path: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>' },
+        { id: 'mail',      label: 'Post', labelEn: 'Mail',       path: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>' },
+        { id: 'folder',    label: 'Projekt', labelEn: 'Project',    path: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>' },
+        { id: 'clipboard', label: 'Doku', labelEn: 'Docs',       path: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M8 11h8"/><path d="M8 16h5"/>' },
+        { id: 'coffee',    label: 'Pause', labelEn: 'Break',      path: '<path d="M10 2v2"/><path d="M14 2v2"/><path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h12z"/><path d="M17 9h1a3 3 0 0 1 0 6h-1"/>' },
+        { id: 'moon',      label: 'Nachtschicht', labelEn: 'Night shift',path:'<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>' },
+        { id: 'sun',       label: 'Frühschicht', labelEn: 'Early shift',path: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.3 17.7-1.4 1.4"/><path d="m19.1 4.9-1.4 1.4"/>' },
+        { id: 'clock',     label: 'Bereitschaft', labelEn: 'On call',path:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>' },
+        { id: 'truck',     label: 'Lieferung', labelEn: 'Delivery',  path: '<path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/>' },
+        { id: 'star',      label: 'Wichtig', labelEn: 'Important',    path: '<path d="M11.5 3.1a.5.5 0 0 1 .9 0l2.3 4.6 5.1.7a.5.5 0 0 1 .3.9l-3.7 3.6.9 5a.5.5 0 0 1-.8.5L12 16.1l-4.5 2.4a.5.5 0 0 1-.8-.5l.9-5-3.7-3.6a.5.5 0 0 1 .3-.9l5.1-.7z"/>' }
+    ];
+
+    // Lokaler i18n-Helfer. Die Icon-Namen bewusst NICHT ins globale MAP von
+    // i18n-runtime.js: „Pause", „Projekt", „Server", „Post" kommen anderswo in der App
+    // vor und wuerden dort mit uebersetzt — ein MAP-Eintrag greift auf JEDEN Textknoten.
+    function ctL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
+
+    // Platzhalter im Emoji-Feld (leerer Zustand) — stand vorher mehrfach inline.
+    const CT_EMOJI_PLACEHOLDER_SVG =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" '
+      + 'stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/>'
+      + '<line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>';
+
+    function ctIconPath(iconId) {
+        const found = iconId && CT_ICON_LIBRARY.find(i => i.id === iconId);
+        return found ? found.path : null;
+    }
+
+    function getTypeIconSvg(typeId, size, iconId) {
+        // Explizit gewähltes Symbol schlägt das typ-eigene; sonst das Werks-Icon des
+        // Standard-Typs, sonst das neutrale Etikett.
+        const paths = ctIconPath(iconId) || TYPE_ICON_PATHS[typeId] || TYPE_ICON_PATHS._fallback;
         const s = size || 16;
         return `<svg class="type-icon" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" `
              + `stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
@@ -85,21 +135,37 @@
     // Icon fürs Eintrags-UI. Ein Emoji kommt nur dann zurück, wenn der User selbst
     // eins gesetzt hat (eigener Typ oder Override) — das ist Nutzer-DATEN, kein UI-Icon.
     // Alles andere zeichnet SVG.
+    // Welches Emoji gilt als bewusste Wahl des Users? Bei Standard-Typen nur eins, das
+    // vom Werks-Emoji ABWEICHT — wer im Typ-Manager nur die Farbe ändert, schreibt das
+    // Default-Emoji mit in den Override, und das darf das SVG nicht verdrängen.
+    function ctUserEmoji(typeId, info, def) {
+        if (def) {
+            const ovr = ((data && data.entryTypeOverrides) || {})[typeId] || {};
+            return (ovr.emoji && ovr.emoji !== def.emoji) ? ovr.emoji : '';
+        }
+        return (info && info.emoji) || '';
+    }
+
+    // 'svg' | 'emoji'. iconMode ist die ausdrückliche Wahl im Typ-Manager. Typen von vor
+    // dieser Einstellung haben kein Feld — dort entscheidet weiterhin, ob ein eigenes
+    // Emoji hinterlegt ist. So sieht Bestand unverändert aus.
+    function ctIconMode(typeId, info, def) {
+        const explicit = info && info.iconMode;
+        if (explicit === 'svg' || explicit === 'emoji') return explicit;
+        return ctUserEmoji(typeId, info, def) ? 'emoji' : 'svg';
+    }
+
     function getTypeIconHTML(typeId, size) {
         const info = getEntryTypeInfo(typeId);
         const def = DEFAULT_ENTRY_TYPES.find(t => t.id === typeId);
-        let userEmoji;
-        if (def) {
-            // Nur ein vom Werks-Emoji ABWEICHENDER Override zählt als bewusste Wahl.
-            // Wer im Typ-Manager nur die Farbe ändert, schreibt das Default-Emoji mit in
-            // den Override — das darf das SVG nicht verdrängen.
-            const ovr = ((data && data.entryTypeOverrides) || {})[typeId] || {};
-            if (ovr.emoji && ovr.emoji !== def.emoji) userEmoji = ovr.emoji;
-        } else {
-            userEmoji = info && info.emoji;
+
+        if (ctIconMode(typeId, info, def) === 'emoji') {
+            const em = ctUserEmoji(typeId, info, def);
+            // Emoji-Modus ohne hinterlegtes Emoji faellt bewusst auf SVG zurueck, statt
+            // eine leere Kachel zu zeichnen.
+            if (em) return `<span class="type-icon type-icon--emoji" aria-hidden="true">${esc(em)}</span>`;
         }
-        if (userEmoji) return `<span class="type-icon type-icon--emoji" aria-hidden="true">${esc(userEmoji)}</span>`;
-        return getTypeIconSvg(typeId, size);
+        return getTypeIconSvg(typeId, size, info && info.icon);
     }
 
     // Typ-Farbe als "r,g,b" für --type-rgb an Icon-Kacheln. Ein unbekannter Typ
@@ -166,18 +232,22 @@
     }
 
     // ═══ Core CRUD ═══
-    function createCustomType(label, emoji, color, description, countsAsWork) {
+    function createCustomType(label, emoji, color, description, countsAsWork, iconMode, icon) {
         if (!label || !color) {
             showCustomMessage('Fehler', 'Name und Farbe sind erforderlich', 'error');
             return false;
         }
         if (!Array.isArray(data.customEntryTypes)) data.customEntryTypes = [];
 
+        // Ohne Angabe wie bisher: Emoji da -> Emoji-Modus, sonst Symbol.
+        const mode = (iconMode === 'emoji' || iconMode === 'svg') ? iconMode : (emoji ? 'emoji' : 'svg');
         const id = `custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         data.customEntryTypes.push({
             id,
-            label: emoji ? `${emoji} ${label}` : label,
+            label: (mode === 'emoji' && emoji) ? `${emoji} ${label}` : label,
             emoji: emoji || '',
+            iconMode: mode,
+            icon: icon || '',
             color,
             description: description || '',
             countsAsWork: !!countsAsWork,
@@ -385,15 +455,30 @@
             </div>
 
             <div class="ct-form-row">
-                <div class="ct-field">
-                    <label class="ct-field-label">Emoji (optional)</label>
-                    <button type="button" class="ct-emoji-trigger" data-field="emoji-trigger">
-                        <div class="ct-emoji-display ct-emoji-empty" data-field="emoji-display">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-                        </div>
-                        <span class="ct-emoji-hint">Ohne Auswahl: Symbol in deiner Farbe</span>
-                        <span class="ct-emoji-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-                    </button>
+                <div class="ct-field ct-field--wide">
+                    <label class="ct-field-label">Icon</label>
+                    <div class="ct-seg" role="tablist" data-field="icon-seg">
+                        <button type="button" class="ct-seg-btn ct-seg-active" role="tab" data-mode="svg">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><circle cx="7.5" cy="7.5" r="1"/></svg>
+                            Symbol
+                        </button>
+                        <button type="button" class="ct-seg-btn" role="tab" data-mode="emoji">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                            Emoji
+                        </button>
+                    </div>
+
+                    <div class="ct-icon-grid" data-field="icon-grid"></div>
+
+                    <div data-field="emoji-pane" style="display:none;">
+                        <button type="button" class="ct-emoji-trigger" data-field="emoji-trigger">
+                            <div class="ct-emoji-display ct-emoji-empty" data-field="emoji-display">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                            </div>
+                            <span class="ct-emoji-hint">${ctL('Klick zum Auswählen', 'Click to choose')}</span>
+                            <span class="ct-emoji-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                        </button>
+                    </div>
                 </div>
                 <div class="ct-field">
                     <label class="ct-field-label">Farbe</label>
@@ -435,7 +520,7 @@
         `;
 
         // State im Form-Node selbst speichern, damit ctFormSetMode (Modul-extern) darauf zugreifen kann.
-        form._ctState = { emoji: '', color: '#a855f7', editingId: null };
+        form._ctState = { emoji: '', color: '#a855f7', editingId: null, iconMode: 'svg', icon: '' };
 
         const labelInp     = form.querySelector('[data-field="label"]');
         const colorRow     = form.querySelector('[data-field="color-row"]');
@@ -443,30 +528,57 @@
         const colorHexLbl  = form.querySelector('[data-field="color-hex"]');
         const emojiTrig    = form.querySelector('[data-field="emoji-trigger"]');
         const emojiDisp    = form.querySelector('[data-field="emoji-display"]');
+        const iconGrid     = form.querySelector('[data-field="icon-grid"]');
+        const iconSeg      = form.querySelector('[data-field="icon-seg"]');
+        const emojiPane    = form.querySelector('[data-field="emoji-pane"]');
         const cancelBtn    = form.querySelector('[data-action="cancel"]');
         const saveBtn      = form.querySelector('[data-action="save"]');
 
-        // Color swatches
+        // — Symbol-Auswahl —
+        CT_ICON_LIBRARY.forEach(ic => {
+            const tile = ctEl('button', 'ct-icon-tile');
+            tile.type = 'button';
+            const name = ctL(ic.label, ic.labelEn || ic.label);
+            tile.title = name;
+            tile.setAttribute('aria-label', name);
+            tile.dataset.icon = ic.id;
+            tile.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" `
+                           + `stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ic.path}</svg>`;
+            tile.onclick = () => {
+                form._ctState.icon = ic.id;
+                ctSyncIconTiles(form);
+            };
+            iconGrid.appendChild(tile);
+        });
+
+        // Die Kacheln tragen die gewählte Typ-Farbe — genau das macht den Unterschied
+        // zwischen "irgendein Symbol" und "sieht aus wie die Standard-Typen".
+        function applyColor(c) {
+            form._ctState.color = c;
+            colorHexLbl.textContent = c.toUpperCase();
+            colorRow.querySelectorAll('.ct-color-swatch').forEach(x => x.classList.toggle('ct-color-active', x.dataset.color === c));
+            iconGrid.style.setProperty('--type-rgb', hexToRgbStr(c));
+        }
+        form._ctApplyColor = applyColor;
+
         CT_PRESET_COLORS.forEach(c => {
             const sw = ctEl('button', 'ct-color-swatch');
             sw.type = 'button';
             sw.style.background = c;
             sw.title = c;
             sw.dataset.color = c;
-            sw.onclick = () => {
-                form._ctState.color = c;
-                colorPicker.value = c;
-                colorHexLbl.textContent = c.toUpperCase();
-                colorRow.querySelectorAll('.ct-color-swatch').forEach(x => x.classList.toggle('ct-color-active', x.dataset.color === c));
-            };
+            sw.onclick = () => { colorPicker.value = c; applyColor(c); };
             colorRow.appendChild(sw);
         });
 
-        colorPicker.oninput = (e) => {
-            form._ctState.color = e.target.value;
-            colorHexLbl.textContent = e.target.value.toUpperCase();
-            colorRow.querySelectorAll('.ct-color-swatch').forEach(x => x.classList.toggle('ct-color-active', x.dataset.color === e.target.value));
-        };
+        // input = nur Live-Vorschau (idempotent, kein I/O). Gespeichert wird erst beim
+        // Speichern-Klick — 'input' feuert bei einem Farbrad 60x/sek.
+        colorPicker.oninput = (e) => applyColor(e.target.value);
+
+        // — Modus-Umschaltung —
+        iconSeg.querySelectorAll('.ct-seg-btn').forEach(btn => {
+            btn.onclick = () => ctSetIconMode(form, btn.dataset.mode);
+        });
 
         emojiTrig.id = emojiTrig.id || `emojiTrig-${Date.now()}`;
         emojiTrig.onclick = (e) => {
@@ -477,9 +589,10 @@
             }
             openEmojiPicker(emojiTrig, (em) => {
                 form._ctState.emoji = em;
+                form._ctState.iconMode = 'emoji';
                 emojiDisp.classList.remove('ct-emoji-empty');
                 emojiDisp.textContent = em;
-                emojiTrig.querySelector('.ct-emoji-hint').textContent = 'Geändert?';
+                emojiTrig.querySelector('.ct-emoji-hint').textContent = ctL('Klick zum Ändern', 'Click to change');
             });
         };
 
@@ -508,22 +621,30 @@
             // Reset edit state BEFORE CRUD (das löst Re-Render aus → Form-Node wird ersetzt).
             _ctEditingId = null;
 
+            // Im Symbol-Modus wandert das Emoji NICHT ins Label — sonst stünde es wieder
+            // vor dem Namen, obwohl gerade ein SVG gewählt wurde.
+            const useEmoji = state.iconMode === 'emoji' && !!state.emoji;
+
             if (editingId === null) {
-                createCustomType(label, state.emoji, state.color, desc, counts);
+                createCustomType(label, state.emoji, state.color, desc, counts, state.iconMode, state.icon);
             } else if (isDefaultType(editingId)) {
                 setDefaultTypeOverride(editingId, {
                     emoji: state.emoji,
                     color: state.color,
                     description: desc,
-                    label: label
+                    label: label,
+                    iconMode: state.iconMode,
+                    icon: state.icon || ''
                 });
             } else {
                 editCustomType(editingId, {
-                    label: state.emoji ? `${state.emoji} ${label}` : label,
+                    label: useEmoji ? `${state.emoji} ${label}` : label,
                     emoji: state.emoji || '',
                     color: state.color,
                     description: desc,
-                    countsAsWork: counts
+                    countsAsWork: counts,
+                    iconMode: state.iconMode,
+                    icon: state.icon || ''
                 });
             }
 
@@ -534,19 +655,43 @@
         return form;
     }
 
+    // Markiert die gewaehlte Kachel. Ist keine gesetzt, bleibt die Auswahl bewusst leer —
+    // dann zeichnet die App das Werks-Icon des Typs bzw. das neutrale Etikett.
+    function ctSyncIconTiles(form) {
+        const sel = form._ctState.icon || '';
+        form.querySelectorAll('.ct-icon-tile').forEach(t => {
+            t.classList.toggle('ct-icon-active', t.dataset.icon === sel);
+            t.setAttribute('aria-pressed', t.dataset.icon === sel ? 'true' : 'false');
+        });
+    }
+
+    function ctSetIconMode(form, mode) {
+        const m = mode === 'emoji' ? 'emoji' : 'svg';
+        form._ctState.iconMode = m;
+        form.querySelectorAll('[data-field="icon-seg"] .ct-seg-btn').forEach(b => {
+            const on = b.dataset.mode === m;
+            b.classList.toggle('ct-seg-active', on);
+            b.setAttribute('aria-selected', on ? 'true' : 'false');
+        });
+        form.querySelector('[data-field="icon-grid"]').style.display = m === 'svg' ? '' : 'none';
+        form.querySelector('[data-field="emoji-pane"]').style.display = m === 'emoji' ? '' : 'none';
+    }
+
     function ctFormReset(form) {
         if (!form) return;
-        form._ctState = { emoji: '', color: '#a855f7', editingId: null };
+        form._ctState = { emoji: '', color: '#a855f7', editingId: null, iconMode: 'svg', icon: '' };
         form.querySelector('[data-field="label"]').value = '';
         form.querySelector('[data-field="desc"]').value = '';
         form.querySelector('[data-field="counts"]').checked = false;
         form.querySelector('[data-field="counts-row"]').style.display = '';
         form.querySelector('[data-field="color-custom"]').value = '#a855f7';
-        form.querySelector('[data-field="color-hex"]').textContent = '#A855F7';
+        if (form._ctApplyColor) form._ctApplyColor('#a855f7');
+        ctSetIconMode(form, 'svg');
+        ctSyncIconTiles(form);
         const disp = form.querySelector('[data-field="emoji-display"]');
         disp.classList.add('ct-emoji-empty');
-        disp.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>';
-        form.querySelector('[data-field="emoji-trigger"] .ct-emoji-hint').textContent = 'Klick zum Auswählen';
+        disp.innerHTML = CT_EMOJI_PLACEHOLDER_SVG;
+        form.querySelector('[data-field="emoji-trigger"] .ct-emoji-hint').textContent = ctL('Klick zum Auswählen', 'Click to choose');
         form.querySelector('[data-field="form-title"]').textContent = 'Neuer Eintrag-Typ';
         form.querySelector('[data-field="save-label"]').textContent = 'Speichern';
         form.querySelectorAll('.ct-color-swatch').forEach(sw => sw.classList.toggle('ct-color-active', sw.dataset.color === '#a855f7'));
@@ -568,10 +713,15 @@
 
         const cleanLabel = String(info.label || '').replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}]\s*/u, '').trim() || info.label || '';
 
+        const def = DEFAULT_ENTRY_TYPES.find(t => t.id === typeId);
         form._ctState = {
             emoji: info.emoji || '',
             color: sanitizeColor(info.color),
-            editingId: typeId
+            editingId: typeId,
+            // Bestand ohne iconMode-Feld: dieselbe Herleitung wie beim Zeichnen, damit
+            // das Formular zeigt, was in der App tatsaechlich zu sehen ist.
+            iconMode: ctIconMode(typeId, info, def),
+            icon: info.icon || ''
         };
 
         form.querySelector('[data-field="label"]').value = cleanLabel;
@@ -586,15 +736,18 @@
         if (info.emoji) {
             disp.classList.remove('ct-emoji-empty');
             disp.textContent = info.emoji;
-            form.querySelector('[data-field="emoji-trigger"] .ct-emoji-hint').textContent = 'Geändert?';
+            form.querySelector('[data-field="emoji-trigger"] .ct-emoji-hint').textContent = ctL('Klick zum Ändern', 'Click to change');
         } else {
             disp.classList.add('ct-emoji-empty');
+            disp.innerHTML = CT_EMOJI_PLACEHOLDER_SVG;
+            form.querySelector('[data-field="emoji-trigger"] .ct-emoji-hint').textContent = ctL('Klick zum Auswählen', 'Click to choose');
         }
 
-        const hexUp = sanitizeColor(info.color).toUpperCase();
+        ctSetIconMode(form, form._ctState.iconMode);
+        ctSyncIconTiles(form);
+
         form.querySelector('[data-field="color-custom"]').value = sanitizeColor(info.color);
-        form.querySelector('[data-field="color-hex"]').textContent = hexUp;
-        form.querySelectorAll('.ct-color-swatch').forEach(sw => sw.classList.toggle('ct-color-active', sw.dataset.color === sanitizeColor(info.color)));
+        if (form._ctApplyColor) form._ctApplyColor(sanitizeColor(info.color));
 
         form.querySelector('[data-field="form-title"]').textContent = isStd ? `„${cleanLabel}" anpassen` : `„${cleanLabel}" bearbeiten`;
         form.querySelector('[data-field="save-label"]').textContent = 'Übernehmen';

@@ -258,6 +258,8 @@
         .ct-form-row:last-of-type { margin-bottom: 14px; }
 
         .ct-field { flex: 1; min-width: 0; }
+        /* Das Symbol-Raster braucht mehr Breite als die Farbwahl daneben. */
+        .ct-field--wide { flex: 1.7; }
         .ct-field-label {
             display: block;
             font-size: 0.68rem;
@@ -288,6 +290,92 @@
             box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
         }
         .ct-textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+
+        /* — Icon: Modus-Umschalter — */
+        .ct-seg {
+            display: flex;
+            gap: 3px;
+            padding: 3px;
+            background: #0a0a0e;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .ct-seg-btn {
+            flex: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 7px 10px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+        .ct-seg-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+        .ct-seg-btn:hover { color: var(--text-main); }
+        .ct-seg-btn.ct-seg-active {
+            background: rgba(var(--primary-rgb), 0.16);
+            color: var(--primary);
+        }
+        .ct-seg-btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.45);
+        }
+
+        /* — Icon: Symbol-Auswahl — */
+        .ct-icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+            gap: 6px;
+            max-height: 168px;
+            overflow-y: auto;
+            padding: 8px;
+            background: #0a0a0e;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            /* Faellt auf Slate zurueck, bis applyColor() die Typ-Farbe setzt. */
+            --type-rgb: 148,163,184;
+        }
+        .ct-icon-grid::-webkit-scrollbar { width: 6px; }
+        .ct-icon-grid::-webkit-scrollbar-track { background: transparent; }
+        .ct-icon-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        .ct-icon-tile {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: rgba(var(--type-rgb), 0.1);
+            color: rgb(var(--type-rgb));
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+        .ct-icon-tile svg { width: 17px; height: 17px; }
+        .ct-icon-tile:active { transform: scale(0.94); }
+        .ct-icon-tile.ct-icon-active {
+            background: rgba(var(--type-rgb), 0.22);
+            border-color: rgb(var(--type-rgb));
+        }
+        .ct-icon-tile:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.45);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .ct-icon-tile:hover { background: rgba(var(--type-rgb), 0.2); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .ct-icon-tile { transition: none; }
+            .ct-icon-tile:active { transform: none; }
+        }
 
         /* — Emoji-Picker Trigger — */
         .ct-emoji-trigger {
