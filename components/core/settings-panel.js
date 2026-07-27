@@ -339,73 +339,93 @@
     }
     
     /* ===== Backups helper functions (for debugging & restore) ===== */
-    function renderBackupsList() {
-        const container = document.getElementById('backupsList');
-        const container2 = document.getElementById('recoveryBackupsList');
-        const backups = JSON.parse(localStorage.getItem('tg_pro_data_backups') || '[]').slice().reverse();
 
-        // Update stat cards
+    // Lokaler i18n-Helfer: Die Backup-Liste wird komplett per JS gebaut und von der
+    // statischen /en/-Pipeline nicht erfasst. Bewusst lokal definiert statt aus einer
+    // anderen Komponente geliehen (Ladereihenfolge), vgl. p2pL() in p2p-sync.js.
+    function recL(de, en) {
+        try { return document.documentElement.lang === 'en' ? en : de; } catch (e) { return de; }
+    }
+
+    // Im Ernstfall zählt das Alter eines Backups, nicht sein Kalenderdatum.
+    function recRelativeAge(ts) {
+        if (!ts) return '—';
+        var diff = Date.now() - ts;
+        if (diff < 0) diff = 0;
+        var m = Math.floor(diff / 60000);
+        if (m < 1) return recL('gerade eben', 'just now');
+        if (m < 60) return recL('vor ' + m + ' Min', m + ' min ago');
+        var h = Math.floor(m / 60);
+        if (h < 24) return recL('vor ' + h + ' Std', h + 'h ago');
+        var d = Math.floor(h / 24);
+        return recL('vor ' + d + ' Tag' + (d === 1 ? '' : 'en'), d + 'd ago');
+    }
+
+    const REC_ICONS = {
+        restore: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+        merge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>',
+        download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+        empty: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>'
+    };
+
+    function renderBackupsList() {
+        const list = document.getElementById('recoveryBackupsList');
+        const backups = JSON.parse(localStorage.getItem('tg_pro_data_backups') || '[]').slice().reverse();
+        const current = (data && data.entries) ? data.entries.length : 0;
+
         const countEl = document.getElementById('recoveryBackupCount');
         const lastEl = document.getElementById('recoveryLastBackup');
         const entryEl = document.getElementById('recoveryEntryCount');
         const badgeEl = document.getElementById('recoveryBadgeCount');
         if (countEl) countEl.textContent = backups.length;
         if (badgeEl) badgeEl.textContent = backups.length;
-        if (lastEl) {
-            if (backups.length > 0) {
-                const d = new Date(backups[0].ts);
-                lastEl.textContent = d.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'short' });
-            } else {
-                lastEl.textContent = '—';
-            }
-        }
-        if (entryEl) {
-            const total = (data && data.entries) ? data.entries.length : 0;
-            entryEl.textContent = total;
-        }
+        if (entryEl) entryEl.textContent = current;
+        if (lastEl) lastEl.textContent = backups.length ? recRelativeAge(backups[0].ts) : '—';
 
-        if(backups.length === 0) {
-            const emptyHtml = `<div style="text-align:center; padding:28px 16px; color:rgba(255,255,255,0.35);">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.3; margin-bottom:8px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                <div style="font-size:0.85rem; font-weight:500;">Keine Backups vorhanden</div>
-                <div style="font-size:0.72rem; margin-top:4px; opacity:0.6;">Backups werden automatisch erstellt</div>
-            </div>`;
-            if(container) container.innerHTML = emptyHtml;
-            if(container2) container2.innerHTML = emptyHtml;
+        if (!list) return;
+
+        if (backups.length === 0) {
+            list.innerHTML = '<div class="recovery-empty">' + REC_ICONS.empty +
+                '<span class="recovery-empty-title">' + recL('Noch keine Backups', 'No backups yet') + '</span>' +
+                '<span class="recovery-empty-hint">' + recL('MyWorkLog legt bei jeder Änderung automatisch eines an.', 'MyWorkLog creates one automatically on every change.') + '</span>' +
+                '</div>';
             return;
         }
 
-        // Legacy list for old backupsList container
-        const legacyHtml = backups.map(b => {
-            const dt = new Date(b.ts).toLocaleString();
-            return `<div style="display:flex; gap:8px; align-items:center; justify-content:space-between; padding:6px 8px; border-radius:8px; background:rgba(255,255,255,0.02); margin-bottom:8px;">
-                        <div style="flex:1; font-size:0.9rem; color:var(--text-main);">${dt}</div>
-                        <div style="display:flex; gap:6px;">
-                            <button class="btn" onclick="restoreBackup(${b.ts})">↺ Restore</button>
-                            <button class="btn" onclick="mergeBackup(${b.ts})">🔀 Merge</button>
-                            <button class="btn btn-secondary" onclick="downloadBackup(${b.ts})">⬇️ JSON</button>
-                        </div>
-                    </div>`;
-        }).join('');
-        if(container) container.innerHTML = legacyHtml;
-
-        // Modern card layout for recovery modal
-        const modernHtml = backups.map(b => {
-            const dt = new Date(b.ts);
+        list.innerHTML = backups.map(function (b, i) {
+            const ts = Number(b.ts);
+            const dt = new Date(ts);
             const dateStr = dt.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
             const timeStr = dt.toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' });
-            const entries = (b.data && b.data.entries) ? b.data.entries.length : '?';
-            return `<div class="recovery-backup-item">
-                <div class="recovery-backup-dot"></div>
-                <div class="recovery-backup-date">${dateStr} <span style="color:rgba(255,255,255,0.35); font-weight:400;">${timeStr}</span> <span style="font-size:0.7rem; color:rgba(var(--primary-rgb),0.7); margin-left:4px;">${entries} Einträge</span></div>
-                <div class="recovery-backup-actions">
-                    <button class="recovery-backup-btn restore" onclick="restoreBackup(${b.ts})" title="Wiederherstellen">↺ Restore</button>
-                    <button class="recovery-backup-btn merge" onclick="mergeBackup(${b.ts})" title="Non-destructive Merge">⇄ Merge</button>
-                    <button class="recovery-backup-btn" onclick="downloadBackup(${b.ts})" title="Als JSON herunterladen">↓ JSON</button>
-                </div>
-            </div>`;
+            const has = (b.data && Array.isArray(b.data.entries)) ? b.data.entries.length : null;
+
+            // Delta gegen den aktuellen Stand — die eigentliche Entscheidungshilfe vor dem
+            // Wiederherstellen ("hat dieser Stand mehr oder weniger als ich jetzt?").
+            let delta = '';
+            if (has !== null) {
+                const d = has - current;
+                if (d > 0) delta = ' <span class="recovery-tl-delta up">+' + d + '</span>';
+                else if (d < 0) delta = ' <span class="recovery-tl-delta down">' + d + '</span>';
+                else delta = ' <span class="recovery-tl-delta">±0</span>';
+            }
+
+            return '<div class="recovery-tl-item' + (i === 0 ? ' is-latest' : '') + '" style="--i:' + i + '">' +
+                '<div class="recovery-tl-rail"><span class="recovery-tl-dot"></span></div>' +
+                '<div class="recovery-tl-main">' +
+                    '<div class="recovery-tl-age">' + recRelativeAge(ts) +
+                        (i === 0 ? '<span class="recovery-tl-latest">' + recL('Neuestes', 'Latest') + '</span>' : '') +
+                    '</div>' +
+                    '<div class="recovery-tl-meta">' + dateStr + ', ' + timeStr + ' · ' +
+                        (has === null ? '?' : has) + ' ' + recL('Einträge', 'entries') + delta +
+                    '</div>' +
+                '</div>' +
+                '<div class="recovery-tl-actions">' +
+                    '<button class="recovery-tl-btn primary" onclick="restoreBackup(' + ts + ')" title="' + recL('Diesen Stand vollständig übernehmen', 'Replace current data with this state') + '">' + REC_ICONS.restore + recL('Wiederherstellen', 'Restore') + '</button>' +
+                    '<button class="recovery-tl-btn" onclick="mergeBackup(' + ts + ')" title="' + recL('Nur fehlende Einträge ergänzen, nichts überschreiben', 'Only add missing entries, overwrite nothing') + '">' + REC_ICONS.merge + recL('Ergänzen', 'Merge') + '</button>' +
+                    '<button class="recovery-tl-btn" onclick="downloadBackup(' + ts + ')" title="' + recL('Als JSON-Datei sichern', 'Save as JSON file') + '">' + REC_ICONS.download + 'JSON</button>' +
+                '</div>' +
+            '</div>';
         }).join('');
-        if(container2) container2.innerHTML = modernHtml;
     }
 
     function restoreBackup(ts) {
@@ -546,10 +566,15 @@
     }
 
     function clearOldBackups() {
-        if(!confirm('Alle lokalen Backups löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) return;
-        localStorage.removeItem('tg_pro_data_backups');
-        renderBackupsList();
-        showCustomMessage('🧹 Gelöscht', 'Alle Backups wurden entfernt.', 'success');
+        showCustomConfirm(
+            'Alle Backups löschen?',
+            'Die gespeicherten Stände werden endgültig entfernt. Deine aktuellen Einträge bleiben unberührt.',
+            function () {
+                localStorage.removeItem('tg_pro_data_backups');
+                renderBackupsList();
+                showCustomMessage('🧹 Gelöscht', 'Alle Backups wurden entfernt.', 'success');
+            }
+        );
     }
 
     // Load data from tg_pro_data in localStorage and apply to current session
@@ -557,8 +582,14 @@
         const raw = localStorage.getItem('tg_pro_data');
         if(!raw) return showCustomMessage('ℹ️ Keine Daten', 'Kein `tg_pro_data` im localStorage gefunden.', 'info');
 
-        if(!confirm('Daten aus localStorage laden? Aktuelle Sitzung wird überschrieben.')) return;
+        showCustomConfirm(
+            'Gespeicherte Daten neu laden?',
+            'Die aktuelle Sitzung wird durch den gespeicherten Stand ersetzt. Nicht gespeicherte Änderungen gehen dabei verloren.',
+            function () { applyLocalData(raw); }
+        );
+    }
 
+    function applyLocalData(raw) {
         try {
             const parsed = JSON.parse(raw);
             if(!parsed || typeof parsed !== 'object') throw new Error('Ungültiges Format');
