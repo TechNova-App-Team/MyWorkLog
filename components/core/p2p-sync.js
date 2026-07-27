@@ -1194,3 +1194,164 @@
     function closeJoinModal() { closeP2PWizard(); }
     function joinP2PTeam() { openP2PWizard(); }
     function stopP2PShare() { p2pDisconnect(); }
+
+    // === QR-CODE (optional, Anzeige-Seite) ===
+    // Die Lib (Assets/js/qrcode.min.js) kann NUR erzeugen, nicht lesen. Gescannt wird
+    // deshalb mit der Kamera-App des anderen Geraets: der QR enthaelt einen Deep-Link
+    // auf diese Seite, der Code steckt im Hash. Ein eigener Scanner im Modal wuerde
+    // einen Decoder brauchen (BarcodeDetector fehlt auf Desktop-Chrome).
+    // Geladen wird erst beim Aufklappen — vorher hing die Lib per preload+defer an
+    // JEDEM Seitenaufruf, ohne je instanziiert zu werden.
+    let _p2pQrLoading = null;
+
+    function p2pLoadQrLib() {
+        if (typeof QRCode !== 'undefined') return Promise.resolve();
+        if (_p2pQrLoading) return _p2pQrLoading;
+        _p2pQrLoading = new Promise(function (resolve, reject) {
+            // stamp-assets.js stempelt nur .html — den ?v= deshalb von einem bereits
+            // gestempelten Script-Tag abschauen, statt hier eine Version zu pflegen.
+            let v = '';
+            try {
+                const stamped = document.querySelector('script[src*="/Assets/js/"][src*="?v="]');
+                if (stamped) v = '?v=' + new URL(stamped.src, location.href).searchParams.get('v');
+            } catch (e) { /* ohne Stempel laden ist ok, der SW cached nach Version */ }
+            const s = document.createElement('script');
+            s.src = '/Assets/js/qrcode.min.js' + v;
+            s.onload = function () { resolve(); };
+            s.onerror = function () {
+                _p2pQrLoading = null;
+                reject(new Error('QR-Bibliothek konnte nicht geladen werden'));
+            };
+            document.head.appendChild(s);
+        });
+        return _p2pQrLoading;
+    }
+
+    function p2pQrLink(code) {
+        // Hash statt Query: das SDP enthaelt lokale IP-Adressen, und ein Fragment
+        // wird nicht an den Server gesendet.
+        return location.origin + location.pathname + '#p2p=' + code;
+    }
+
+    // Beide Codes zusammen: welcher Block gehoert zu welchem Feld
+    const P2P_QR_TARGETS = {
+        offer:  { code: 'p2pOfferCode',  box: 'p2pOfferQrBox',  canvas: 'p2pOfferQrCanvas',  btn: 'p2pOfferQrBtn' },
+        answer: { code: 'p2pAnswerCode', box: 'p2pAnswerQrBox', canvas: 'p2pAnswerQrCanvas', btn: 'p2pAnswerQrBtn' }
+    };
+
+    async function p2pToggleQr(which) {
+        const t = P2P_QR_TARGETS[which];
+        if (!t) return;
+        const box = document.getElementById(t.box);
+        const btn = document.getElementById(t.btn);
+        if (!box) return;
+
+        const offen = box.style.display !== 'none' && box.style.display !== '';
+        if (offen) {
+            box.style.display = 'none';
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+            return;
+        }
+
+        const code = (document.getElementById(t.code) || {}).value || '';
+        if (!code) return;
+
+        box.style.display = 'block';
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+
+        const host = document.getElementById(t.canvas);
+        if (!host) return;
+        host.innerHTML = '<span class="p2p-qr-loading">' + p2pL('QR-Code wird erzeugt …', 'Generating QR code …') + '</span>';
+
+        try {
+            await p2pLoadQrLib();
+            const link = p2pQrLink(code);
+            host.innerHTML = '';
+            // Level L: der Code ist mit ~700–1100 Zeichen lang, hoehere Fehlerkorrektur
+            // kostet Kapazitaet und macht die Module noch kleiner (= schlechter scannbar).
+            // 420px ist kein Deko-Wert: bei 703 Zeichen entstehen 130x130 Module, auf
+            // 260px waeren das 2 px/Modul — Handykameras brauchen ~3. 1:1 rendern und
+            // NICHT herunterskalieren, sonst werden die Modulkanten uneben.
+            new QRCode(host, {
+                text: link,
+                width: 420,
+                height: 420,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.L
+            });
+        } catch (e) {
+            console.error('[P2P] QR fehlgeschlagen:', e);
+            host.innerHTML = '<span class="p2p-qr-loading">' +
+                p2pL('QR-Code nicht verfügbar — bitte den Code kopieren.',
+                     'QR code unavailable — please copy the code instead.') + '</span>';
+        }
+    }
+
+    // === DEEP-LINK: #p2p=<code> ===
+    async function p2pHandleDeepLink() {
+        const m = (location.hash || '').match(/[#&]p2p=([A-Za-z0-9\-_]+)/);
+        if (!m) return;
+        const code = m[1];
+
+        // Hash sofort entfernen: der Code enthaelt lokale IP-Adressen aus dem SDP und
+        // hat in History, Bookmarks und im Referrer nichts verloren.
+        try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+
+        let payload;
+        try {
+            payload = await p2pDecompress(code);
+        } catch (e) {
+            showCustomMessage(
+                p2pL('Code unlesbar', 'Unreadable code'),
+                p2pL('Der gescannte Code konnte nicht gelesen werden. Bitte den Code stattdessen kopieren und einfügen.',
+                     'The scanned code could not be read. Please copy and paste the code instead.'),
+                'error');
+            return;
+        }
+
+        if (payload && payload.t === 'answer') {
+            // Der Antwort-Code gehoert zum Host — und der braucht sein Peer-Objekt aus
+            // DIESEM Tab. Nach einem Reload ist es weg, dann hilft nur Einfuegen.
+            if (p2pSync.role === 'host' && p2pSync.peer) {
+                openP2PWizard_keepState();
+                const inp = document.getElementById('p2pAnswerInput');
+                if (inp) inp.value = code;
+                p2pHostProcessAnswer();
+            } else {
+                showCustomMessage(
+                    p2pL('Einladung nicht mehr offen', 'Invitation no longer open'),
+                    p2pL('Dieser Antwort-Code gehört zu einer Einladung, die in diesem Tab nicht mehr läuft. Starte die Einladung neu oder füge den Code von Hand ein.',
+                         'This answer code belongs to an invitation that is no longer running in this tab. Start the invitation again or paste the code manually.'),
+                    'info');
+            }
+            return;
+        }
+
+        // Standardfall: Einladung gescannt -> direkt in die Empfaenger-Rolle
+        openP2PWizard();
+        p2pStartClient();
+        const inp = document.getElementById('p2pOfferInput');
+        if (inp) inp.value = code;
+        p2pClientProcessOffer();
+    }
+
+    // Wie openP2PWizard, aber OHNE p2pWizardReset() — sonst wirft der Reset den
+    // laufenden Host-Zustand weg, den der Antwort-Code gerade braucht.
+    function openP2PWizard_keepState() {
+        const modal = document.getElementById('p2pWizardModal');
+        if (modal) modal.classList.add('active');
+    }
+
+    // Kaltstart (per Kamera-App geoeffnet) UND Hash-Wechsel im schon offenen Tab —
+    // Android fokussiert beim Scannen oft den bestehenden Tab, dann laedt nichts neu.
+    window.addEventListener('hashchange', function () { p2pHandleDeepLink(); });
+
+    // Bewusst 'load' und nicht 'DOMContentLoaded': der Client-Pfad liest data.settings,
+    // und `data` ist ein let aus state-config.js — vor seiner Initialisierung wirft
+    // schon der Zugriff (TDZ). 'load' liegt sicher hinter der App-Init.
+    if (document.readyState === 'complete') {
+        setTimeout(p2pHandleDeepLink, 0);
+    } else {
+        window.addEventListener('load', function () { p2pHandleDeepLink(); });
+    }

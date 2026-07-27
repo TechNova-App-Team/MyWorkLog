@@ -183,12 +183,22 @@
                         <div class="p2p-field">
                             <div class="p2p-field-head">
                                 <span class="p2p-field-label">Schritt 1 — Einladungscode</span>
-                                <button class="p2p-btn p2p-btn--ghost" onclick="p2pCopyOffer()">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                                    Kopieren
-                                </button>
+                                <div class="p2p-field-actions">
+                                    <button class="p2p-btn p2p-btn--ghost" id="p2pOfferQrBtn" onclick="p2pToggleQr('offer')" aria-expanded="false" aria-controls="p2pOfferQrBox">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M20 14v.01M14 20v.01M20 20v.01"/></svg>
+                                        QR-Code
+                                    </button>
+                                    <button class="p2p-btn p2p-btn--ghost" onclick="p2pCopyOffer()">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                        Kopieren
+                                    </button>
+                                </div>
                             </div>
                             <textarea id="p2pOfferCode" class="p2p-code" readonly aria-label="Einladungscode"></textarea>
+                            <div class="p2p-qr" id="p2pOfferQrBox" style="display:none;">
+                                <div class="p2p-qr-plate" id="p2pOfferQrCanvas"></div>
+                                <p class="p2p-qr-hint">Mit der Kamera des anderen Geräts scannen — der Link öffnet MyWorkLog dort direkt mit diesem Code.</p>
+                            </div>
                             <div class="p2p-ice-summary" id="p2pHostIceSummary"></div>
                         </div>
 
@@ -234,12 +244,22 @@
                         <div class="p2p-field" style="margin-bottom:0;">
                             <div class="p2p-field-head">
                                 <span class="p2p-field-label">Schritt 2 — Antwort-Code</span>
-                                <button class="p2p-btn p2p-btn--ghost" onclick="p2pCopyAnswer()">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                                    Kopieren
-                                </button>
+                                <div class="p2p-field-actions">
+                                    <button class="p2p-btn p2p-btn--ghost" id="p2pAnswerQrBtn" onclick="p2pToggleQr('answer')" aria-expanded="false" aria-controls="p2pAnswerQrBox">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M20 14v.01M14 20v.01M20 20v.01"/></svg>
+                                        QR-Code
+                                    </button>
+                                    <button class="p2p-btn p2p-btn--ghost" onclick="p2pCopyAnswer()">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                        Kopieren
+                                    </button>
+                                </div>
                             </div>
                             <textarea id="p2pAnswerCode" class="p2p-code" readonly aria-label="Antwort-Code"></textarea>
+                            <div class="p2p-qr" id="p2pAnswerQrBox" style="display:none;">
+                                <div class="p2p-qr-plate" id="p2pAnswerQrCanvas"></div>
+                                <p class="p2p-qr-hint">Nur nützlich, wenn das sendende Gerät scannen kann und die Einladung dort noch offen ist. Sonst den Code kopieren.</p>
+                            </div>
                             <div class="p2p-ice-summary" id="p2pClientIceSummary"></div>
                         </div>
                         <div class="p2p-note">
