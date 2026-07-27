@@ -11,9 +11,6 @@
 
     const UMF_LS_VOTED     = 'mwl_umfrage_voted';
     const UMF_LS_DISMISSED = 'mwl_umfrage_dismissed';
-    // Erst zeigen, wenn die App wirklich benutzt wird — sonst fragt man Leute,
-    // die die Funktionen noch nie gesehen haben.
-    const UMF_MIN_ENTRIES  = 5;
 
     function umfHasVoted()    { try { return !!localStorage.getItem(UMF_LS_VOTED); }     catch (e) { return false; } }
     function umfDismissed()   { try { return !!localStorage.getItem(UMF_LS_DISMISSED); } catch (e) { return false; } }
@@ -124,15 +121,16 @@
         if (el) el.style.display = '';
     }
 
-    // ── Banner im Dashboard ───────────────────────────────────────
+    // ── Banner (Dashboard + Berichtsheft) ─────────────────────────
     // Sichtbarkeit hat EINE Funktion, die nach jeder Aenderung laeuft —
-    // nicht darauf verlassen, dass ein anderer Pfad das nachholt.
+    // nicht darauf verlassen, dass ein anderer Pfad das nachholt. Bewusst
+    // ohne Nutzungs-Schwelle: soll sofort sichtbar sein, egal ob neuer
+    // oder bestehender User (und die Berichtsheft-Seite hat kein globales
+    // `data` der SPA, auf das man hier warten koennte).
     function umfApplyBanner() {
         const banner = document.getElementById('umfrageBanner');
         if (!banner) return;
-        let genugDaten = false;
-        try { genugDaten = !!(data && Array.isArray(data.entries) && data.entries.length >= UMF_MIN_ENTRIES); } catch (e) {}
-        const zeigen = genugDaten && !umfHasVoted() && !umfDismissed();
+        const zeigen = !umfHasVoted() && !umfDismissed();
         banner.style.display = zeigen ? 'flex' : 'none';
     }
 
@@ -142,6 +140,6 @@
     window.submitUmfrage   = submitUmfrage;
     window.umfApplyBanner  = umfApplyBanner;
 
-    document.addEventListener('DOMContentLoaded', function () {
-        setTimeout(umfApplyBanner, 1200);
-    });
+    // Script laedt per `defer`, DOM ist beim Ausfuehren bereits geparst —
+    // direkt aufrufen statt auf ein Event zu warten, das laengst passiert ist.
+    umfApplyBanner();

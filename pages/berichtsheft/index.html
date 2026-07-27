@@ -2961,6 +2961,7 @@
         }
     </style>
     <script defer src="/Assets/js/ph-init.js?v=4.3.0"></script>
+    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=4.3.0">
 </head>
 <body>
     <!-- ===== SVG ICON SPRITE ===== -->
@@ -3042,6 +3043,21 @@
     </header>
 
     <div class="container">
+
+        <!-- Umfrage-Banner (Sichtbarkeit: umfApplyBanner() in umfrage.js) -->
+        <div id="umfrageBanner" class="umf-banner" style="display:none;">
+            <div class="umf-banner-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="4" width="3" height="14"/></svg>
+            </div>
+            <div class="umf-banner-content">
+                <div class="umf-banner-title">Kurze Frage zur Zukunft der App</div>
+                <div class="umf-banner-text">Die Zeiterfassung bleibt kostenlos. Aber wäre dir eine stärkere KI fürs Berichtsheft etwas wert? Zwei Fragen, keine Anmeldung.</div>
+                <div class="umf-banner-actions">
+                    <button class="umf-banner-btn" onclick="openUmfrage()">Antworten</button>
+                    <button class="umf-banner-btn umf-banner-btn--quiet" onclick="dismissUmfrage()">Nein danke</button>
+                </div>
+            </div>
+        </div>
 
         <!-- ===== MODE TOGGLE ===== -->
         <div class="mode-toggle-wrap">
@@ -3430,6 +3446,161 @@ Beispiel:
             <div class="template-grid" id="templateGrid"></div>
         </div>
     </div>
+
+    <!-- ═══ UMFRAGE: Welche Funktion ist Geld wert? ═══ -->
+    <div class="modal" id="umfrageModal">
+        <div class="modal-box umf-box">
+
+            <div class="umf-head">
+                <div class="umf-head-row">
+                    <div class="umf-title">
+                        <div class="umf-head-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="4" width="3" height="14"/></svg>
+                        </div>
+                        <div>
+                            <h3>Wie soll es weitergehen?</h3>
+                            <p>Vier kurze Fragen, keine Anmeldung</p>
+                        </div>
+                    </div>
+                    <button class="umf-x" onclick="closeUmfrage()" aria-label="Schließen">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="umf-body">
+
+                <!-- Fragen -->
+                <div id="umfForm">
+                    <p class="umf-lead">
+                        Zeiterfassung, Cloud-Sync, Auswertungen und der PDF-Export bleiben kostenlos —
+                        daran ändert sich nichts. Nur die KI, die dein Berichtsheft formuliert, kostet
+                        laufend Geld. Deshalb geht es hier ausschließlich um sie. Die Punkte unten sind
+                        Ideen, noch nichts davon existiert.
+                    </p>
+
+                    <div class="umf-q">
+                        <div class="umf-q-label">Wie oft schreibst du gerade am Berichtsheft?</div>
+                        <div class="umf-q-hint">Eine Antwort</div>
+                        <div class="umf-opts umf-opts--row" id="umfNutzungJetzt">
+                            <label class="umf-chip"><input type="radio" name="umfJetzt" value="taeglich"><span>Täglich</span></label>
+                            <label class="umf-chip"><input type="radio" name="umfJetzt" value="mehrmals_woche"><span>Mehrmals die Woche</span></label>
+                            <label class="umf-chip"><input type="radio" name="umfJetzt" value="woechentlich"><span>Einmal pro Woche</span></label>
+                            <label class="umf-chip"><input type="radio" name="umfJetzt" value="monatlich"><span>Alle paar Wochen</span></label>
+                            <label class="umf-chip"><input type="radio" name="umfJetzt" value="selten"><span>Selten bis nie</span></label>
+                        </div>
+                    </div>
+
+                    <div class="umf-q">
+                        <div class="umf-q-label">Was wäre dir beim KI-Berichtsheft Geld wert?</div>
+                        <div class="umf-q-hint">Mehrfachauswahl möglich</div>
+                        <div class="umf-opts" id="umfFeatures">
+                            <label class="umf-opt">
+                                <input type="checkbox" value="ki_stark">
+                                <span class="umf-opt-text">
+                                    <span class="umf-opt-name">Deutlich stärkere KI</span>
+                                    <span class="umf-opt-desc">Formulierungen, die du so übernehmen kannst, statt sie nachzubauen</span>
+                                </span>
+                            </label>
+                            <label class="umf-opt">
+                                <input type="checkbox" value="ki_stil">
+                                <span class="umf-opt-text">
+                                    <span class="umf-opt-name">KI schreibt wie du</span>
+                                    <span class="umf-opt-desc">Lernt aus deinen bisherigen Wochen, damit es nicht nach Maschine klingt</span>
+                                </span>
+                            </label>
+                            <label class="umf-opt">
+                                <input type="checkbox" value="ki_pruefung">
+                                <span class="umf-opt-text">
+                                    <span class="umf-opt-name">Prüfungs-Check</span>
+                                    <span class="umf-opt-desc">Prüft, ob die Woche zum Ausbildungsrahmenplan passt und dem Ausbilder standhält</span>
+                                </span>
+                            </label>
+                            <label class="umf-opt">
+                                <input type="checkbox" value="ki_mehrwochen">
+                                <span class="umf-opt-text">
+                                    <span class="umf-opt-name">Mehrere Wochen auf einmal</span>
+                                    <span class="umf-opt-desc">Ganzen Monat in einem Durchlauf statt Woche für Woche</span>
+                                </span>
+                            </label>
+                            <label class="umf-opt">
+                                <input type="checkbox" value="ki_limit">
+                                <span class="umf-opt-text">
+                                    <span class="umf-opt-name">Kein Tageslimit</span>
+                                    <span class="umf-opt-desc">So oft neu generieren wie du willst, ohne Wartezeit</span>
+                                </span>
+                            </label>
+                            <label class="umf-opt">
+                                <input type="checkbox" value="keine">
+                                <span class="umf-opt-text">
+                                    <span class="umf-opt-name">Nichts davon</span>
+                                    <span class="umf-opt-desc">Die KI soll bleiben wie sie ist, kostenlos</span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="umf-q">
+                        <div class="umf-q-label">Und wie oft, wenn es das Angekreuzte gäbe?</div>
+                        <div class="umf-q-hint">Eine Antwort — ehrlich geschätzt, auch wenn sich nichts ändert</div>
+                        <div class="umf-opts umf-opts--row" id="umfNutzungDann">
+                            <label class="umf-chip"><input type="radio" name="umfDann" value="taeglich"><span>Täglich</span></label>
+                            <label class="umf-chip"><input type="radio" name="umfDann" value="mehrmals_woche"><span>Mehrmals die Woche</span></label>
+                            <label class="umf-chip"><input type="radio" name="umfDann" value="woechentlich"><span>Einmal pro Woche</span></label>
+                            <label class="umf-chip"><input type="radio" name="umfDann" value="monatlich"><span>Alle paar Wochen</span></label>
+                            <label class="umf-chip"><input type="radio" name="umfDann" value="selten"><span>Selten bis nie</span></label>
+                        </div>
+                    </div>
+
+                    <div class="umf-q">
+                        <div class="umf-q-label">Was wäre dir das im Monat wert?</div>
+                        <div class="umf-q-hint">Eine Antwort</div>
+                        <div class="umf-opts umf-opts--row" id="umfPrice">
+                            <label class="umf-chip"><input type="radio" name="umfPreis" value="0"><span>Nichts</span></label>
+                            <label class="umf-chip"><input type="radio" name="umfPreis" value="1_3"><span>1–3 €</span></label>
+                            <label class="umf-chip"><input type="radio" name="umfPreis" value="3_5"><span>3–5 €</span></label>
+                            <label class="umf-chip"><input type="radio" name="umfPreis" value="5_10"><span>5–10 €</span></label>
+                            <label class="umf-chip"><input type="radio" name="umfPreis" value="einmalig"><span>Lieber einmalig</span></label>
+                        </div>
+                    </div>
+
+                    <div class="umf-note">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <span>Es werden nur diese vier Antworten übertragen. Kein Name, keine E-Mail, keine Einträge. Nichts davon ist verbindlich.</span>
+                    </div>
+
+                    <button class="umf-btn umf-btn--primary" id="umfSubmit" onclick="submitUmfrage()">Antwort senden</button>
+                    <button class="umf-btn umf-btn--quiet" onclick="dismissUmfrage()">Nicht teilnehmen</button>
+                </div>
+
+                <!-- Danach -->
+                <div id="umfDone" style="display:none;">
+                    <div class="umf-done">
+                        <div class="umf-done-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div class="umf-done-title">Danke, angekommen</div>
+                        <p class="umf-done-text">Das hilft mir bei der Entscheidung. Was auch rauskommt: die Zeiterfassung selbst bleibt kostenlos.</p>
+                    </div>
+                    <button class="umf-btn" onclick="closeUmfrage()">Schließen</button>
+                </div>
+
+                <!-- Fehlgeschlagen -->
+                <div id="umfFail" style="display:none;">
+                    <div class="umf-note" data-tone="warn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span id="umfFailText">Konnte nicht gesendet werden.</span>
+                    </div>
+                    <div class="umf-btn-row">
+                        <button class="umf-btn umf-btn--primary" onclick="submitUmfrage()">Nochmal versuchen</button>
+                        <button class="umf-btn" onclick="closeUmfrage()">Später</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script defer src="/components/umfrage/umfrage.js?v=4.3.0"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
