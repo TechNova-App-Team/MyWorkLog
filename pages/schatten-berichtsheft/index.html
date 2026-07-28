@@ -42,7 +42,7 @@
     <meta name="twitter:image" content="https://myworklog.de/Grafiken/icon-512.png">
 
     <!-- Fuellt Version + "Zuletzt aktualisiert" im geteilten Footer -->
-    <script defer src="/Assets/js/version-loader.js?v=4.7.0"></script>
+    <script defer src="/Assets/js/version-loader.js?v=4.8.0"></script>
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="/Grafiken/image.jpg">
@@ -191,14 +191,14 @@
             --font-body: 'Outfit', sans-serif;
             --font-mono: 'Fira Code', monospace;
 
-            --r-xs: 6px;
-            --r-sm: 10px;
-            --r-md: 14px;
-            --r-lg: 20px;
-            --r-xl: 28px;
+            --r-xs: 4px;
+            --r-sm: 6px;
+            --r-md: 8px;
+            --r-lg: 12px;
+            --r-xl: 16px;
 
-            --shadow-md: 0 8px 32px rgba(0,0,0,0.55);
-            --shadow-lg: 0 24px 64px rgba(0,0,0,0.65);
+            --shadow-md: 0 6px 20px rgba(0,0,0,0.45);
+            --shadow-lg: 0 16px 40px rgba(0,0,0,0.55);
         }
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -228,36 +228,10 @@
             mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, black 20%, transparent 100%);
         }
 
-        .bg-orb {
-            position: absolute; border-radius: 50%; pointer-events: none;
-            filter: blur(90px);
-        }
-        .bg-orb-1 {
-            width: 640px; height: 640px;
-            background: radial-gradient(circle, rgba(255,45,85,0.1) 0%, transparent 65%);
-            top: -18%; left: -8%;
-            animation: orbA 26s ease-in-out infinite alternate;
-        }
-        .bg-orb-2 {
-            width: 520px; height: 520px;
-            background: radial-gradient(circle, rgba(168,85,247,0.07) 0%, transparent 65%);
-            bottom: -12%; right: -4%;
-            animation: orbB 32s ease-in-out infinite alternate;
-        }
-        .bg-orb-3 {
-            width: 400px; height: 400px;
-            background: radial-gradient(circle, rgba(255,179,71,0.055) 0%, transparent 65%);
-            top: 45%; right: 22%;
-            animation: orbC 21s ease-in-out infinite alternate;
-        }
-        @keyframes orbA { from { transform: translate(0,0); } to { transform: translate(45px,32px); } }
-        @keyframes orbB { from { transform: translate(0,0); } to { transform: translate(-35px,-42px); } }
-        @keyframes orbC { from { transform: translate(0,0); } to { transform: translate(22px,-28px); } }
-
         .bg-topline {
             position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent 0%, var(--red) 40%, var(--violet) 70%, transparent 100%);
-            opacity: 0.5;
+            background: var(--red);
+            opacity: 0.35;
         }
 
         /* ══════════════════════════════════════════════
@@ -316,14 +290,7 @@
         .lock-card::before {
             content: '';
             position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent 0%, var(--red) 35%, var(--violet) 65%, transparent 100%);
-        }
-        .lock-card::after {
-            content: '';
-            position: absolute; bottom: -30px; right: -30px;
-            width: 120px; height: 120px;
-            background: radial-gradient(circle, rgba(255,45,85,0.06) 0%, transparent 70%);
-            border-radius: 50%; pointer-events: none;
+            background: rgba(var(--red-rgb), 0.4);
         }
 
         /* Animated SVG lock icon */
@@ -333,12 +300,12 @@
         }
         .lock-svg { width: 108px; height: 108px; }
 
-        .svg-lock-body { filter: drop-shadow(0 0 8px rgba(255,45,85,0.4)); }
+        .svg-lock-body { filter: drop-shadow(0 0 3px rgba(255,45,85,0.2)); }
         .svg-lock-body.pulse-once { animation: lockPulseOnce 0.7s ease-out; }
         @keyframes lockPulseOnce {
-            0% { filter: drop-shadow(0 0 8px rgba(255,45,85,0.4)); }
-            40% { filter: drop-shadow(0 0 22px rgba(255,45,85,0.85)); }
-            100% { filter: drop-shadow(0 0 8px rgba(255,45,85,0.4)); }
+            0% { filter: drop-shadow(0 0 3px rgba(255,45,85,0.2)); }
+            40% { filter: drop-shadow(0 0 10px rgba(255,45,85,0.5)); }
+            100% { filter: drop-shadow(0 0 3px rgba(255,45,85,0.2)); }
         }
 
         /* Lock text */
@@ -350,8 +317,7 @@
             text-transform: uppercase;
             letter-spacing: 0.04em; line-height: 1;
             text-align: center; margin-bottom: 0.4rem;
-            background: linear-gradient(135deg, var(--text-0) 45%, rgba(255,45,85,0.9) 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            color: var(--text-0);
         }
         .lock-sub {
             text-align: center; color: var(--text-2);
@@ -422,10 +388,10 @@
             position: relative; overflow: hidden;
         }
         .lock-btn-primary {
-            background: linear-gradient(135deg, #ff2d55 0%, #c0226b 60%, #a855f7 100%);
-            color: #fff; box-shadow: 0 4px 20px rgba(255,45,85,0.28);
+            background: var(--red);
+            color: #fff; box-shadow: 0 2px 10px rgba(255,45,85,0.18);
         }
-        .lock-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255,45,85,0.42); }
+        .lock-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(255,45,85,0.24); }
         .lock-btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
         .lock-btn-secondary {
             background: transparent; border: 1px solid var(--border);
@@ -517,11 +483,11 @@
         .btn:active { transform: none; }
 
         .btn-cta {
-            background: linear-gradient(135deg, var(--red) 0%, #c0226b 100%);
+            background: var(--red);
             border-color: transparent; color: #fff;
-            box-shadow: 0 2px 14px rgba(var(--red-rgb),0.25);
+            box-shadow: 0 1px 8px rgba(var(--red-rgb),0.16);
         }
-        .btn-cta:hover { box-shadow: 0 5px 22px rgba(var(--red-rgb),0.42); transform: translateY(-2px); }
+        .btn-cta:hover { box-shadow: 0 3px 12px rgba(var(--red-rgb),0.24); transform: translateY(-1px); }
 
         .btn-danger { background: rgba(var(--red-rgb),0.08); border-color: rgba(var(--red-rgb),0.2); color: var(--red); }
         .btn-danger:hover { background: rgba(var(--red-rgb),0.14); border-color: rgba(var(--red-rgb),0.33); }
@@ -646,8 +612,8 @@
         .entry-card::before {
             content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
         }
-        .entry-card[data-severity="critical"]::before { background: var(--red); box-shadow: 0 0 14px rgba(var(--red-rgb),0.65); }
-        .entry-card[data-severity="high"]::before { background: var(--amber); box-shadow: 0 0 10px rgba(var(--amber-rgb),0.45); }
+        .entry-card[data-severity="critical"]::before { background: var(--red); }
+        .entry-card[data-severity="high"]::before { background: var(--amber); }
         .entry-card[data-severity="medium"]::before { background: var(--blue); }
         .entry-card[data-severity="low"]::before { background: var(--teal); }
         .entry-card[data-severity="note"]::before { background: rgba(var(--muted-rgb),0.5); }
@@ -656,7 +622,7 @@
             background: rgba(12,5,10,0.96);
             border-color: rgba(var(--red-rgb),0.09);
         }
-        .entry-card[data-severity="critical"]:hover { border-color: rgba(var(--red-rgb),0.18); box-shadow: 0 8px 32px rgba(var(--red-rgb),0.08); }
+        .entry-card[data-severity="critical"]:hover { border-color: rgba(var(--red-rgb),0.18); box-shadow: var(--shadow-md); }
 
         .entry-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 9px; }
         .entry-header-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -783,7 +749,7 @@
 
         .modal::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, var(--red), var(--violet), transparent);
+            background: rgba(var(--red-rgb), 0.35);
         }
 
         .modal-head {
@@ -1081,7 +1047,7 @@
             .entry-card::before { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=4.7.0"></script>
+    <script defer src="/Assets/js/ph-init.js?v=4.8.0"></script>
 </head>
 <body>
 
@@ -1090,9 +1056,6 @@
      ══════════════════════════════════════════ -->
 <div class="bg-canvas" aria-hidden="true">
     <div class="bg-grid"></div>
-    <div class="bg-orb bg-orb-1"></div>
-    <div class="bg-orb bg-orb-2"></div>
-    <div class="bg-orb bg-orb-3"></div>
     <div class="bg-topline"></div>
 </div>
 
@@ -1522,7 +1485,8 @@
                     <label class="form-label">Kategorie</label>
                     <select class="form-select" id="entryCategory" onchange="renderCategoryFields(this.value)">
                         <option value="verbal">Verbale Belästigung / Anschreien</option>
-                        <option value="neglect">Ausbildungspflicht vernachlässigt</option>
+                        <option value="neglect">Ausbildungspflicht vernachlässigt (zu wenig Anleitung)</option>
+                    <option value="unrelated">Ausbildungsfremde Tätigkeiten (falsche Aufgaben)</option>
                         <option value="overtime">Überstunden / Arbeitszeitverstöße</option>
                         <option value="mobbing">Mobbing / Ausgrenzung</option>
                         <option value="safety">Arbeitsschutz-Verstoß</option>
@@ -1723,7 +1687,8 @@
                 <label class="form-label">Kategorie</label>
                 <select class="form-select" id="escalationCategorySelect">
                     <option value="verbal">Verbale Belästigung / Anschreien</option>
-                    <option value="neglect">Ausbildungspflicht vernachlässigt</option>
+                    <option value="neglect">Ausbildungspflicht vernachlässigt (zu wenig Anleitung)</option>
+                    <option value="unrelated">Ausbildungsfremde Tätigkeiten (falsche Aufgaben)</option>
                     <option value="overtime">Überstunden / Arbeitszeitverstöße</option>
                     <option value="mobbing">Mobbing / Ausgrenzung</option>
                     <option value="safety">Arbeitsschutz-Verstoß</option>
@@ -1756,7 +1721,7 @@
       var t=document.createElement('template'); t.innerHTML=html; ph.replaceWith(t.content);
     });
 </script>
-<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=4.7.0"></script>
+<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=4.8.0"></script>
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
 <script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
 </html>

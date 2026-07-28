@@ -21,6 +21,7 @@ const IV_LENGTH = 12;
 const CATEGORY_ICONS = {
     verbal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
     neglect: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><line x1="9" y1="7" x2="15" y2="13"></line><line x1="15" y1="7" x2="9" y2="13"></line></svg>',
+    unrelated: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73Z"></path><path d="m3.3 7 8.7 5 8.7-5"></path><path d="M12 22V12"></path></svg>',
     overtime: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
     mobbing: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="17" y1="8" x2="22" y2="13"></line><line x1="22" y1="8" x2="17" y2="13"></line></svg>',
     safety: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
@@ -32,7 +33,8 @@ const CATEGORY_ICONS = {
 
 const CATEGORIES = {
     verbal: { label: L('Verbale Belästigung', 'Verbal harassment'), icon: CATEGORY_ICONS.verbal },
-    neglect: { label: L('Ausbildungspflicht vernachlässigt', 'Training duty neglected'), icon: CATEGORY_ICONS.neglect },
+    neglect: { label: L('Ausbildungspflicht vernachlässigt (zu wenig Anleitung)', 'Training duty neglected (too little guidance)'), icon: CATEGORY_ICONS.neglect },
+    unrelated: { label: L('Ausbildungsfremde Tätigkeiten (falsche Aufgaben)', 'Non-training tasks (work unrelated to training)'), icon: CATEGORY_ICONS.unrelated },
     overtime: { label: L('Überstunden / Arbeitszeitverstöße', 'Overtime / working-time violations'), icon: CATEGORY_ICONS.overtime },
     mobbing: { label: L('Mobbing / Ausgrenzung', 'Bullying / exclusion'), icon: CATEGORY_ICONS.mobbing },
     safety: { label: L('Arbeitsschutz-Verstoß', 'Occupational-safety violation'), icon: CATEGORY_ICONS.safety },
@@ -81,8 +83,14 @@ const CATEGORY_FIELDS = {
         ] },
     ],
     neglect: [
-        { key: 'missingSince', label: L('Fehlt seit', 'Missing since'), type: 'date' },
+        { key: 'missingSince', label: L('Anleitung fehlt seit', 'Guidance missing since'), type: 'date' },
         { key: 'affectedArea', label: L('Betroffener Ausbildungsbereich', 'Affected training area'), type: 'text' },
+    ],
+    unrelated: [
+        { key: 'taskType', label: L('Welche Tätigkeit?', 'Which task?'), type: 'text', placeholder: L('z.B. Lager, Botengänge, Reinigung …', 'e.g. warehouse, errands, cleaning …') },
+        { key: 'frequency', label: L('Häufigkeit', 'Frequency'), type: 'select', options: [
+            ['once', L('Einmalig', 'One-off')], ['repeated', L('Wiederholt', 'Repeated')], ['ongoing', L('Dauerhaft', 'Ongoing')]
+        ] },
     ],
     overtime: [
         { key: 'hours', label: L('Anzahl Stunden', 'Number of hours'), type: 'number', placeholder: '2.5' },
@@ -119,7 +127,7 @@ const CATEGORY_FIELDS = {
         { key: 'location', label: L('Ort', 'Location'), type: 'text' },
     ],
     documentation: [
-        { key: 'missingSince', label: L('Fehlt seit', 'Missing since'), type: 'date' },
+        { key: 'missingSince', label: L('Dokumentation fehlt seit', 'Documentation missing since'), type: 'date' },
         { key: 'impact', label: L('Auswirkung', 'Impact'), type: 'text' },
     ],
     positive: [
@@ -1005,6 +1013,10 @@ const TEMPLATES = {
         'Welche Ausbildungsinhalte fehlten in diesem Zeitraum?\n___\n\nSeit wann?\n___\n\nWurde das angesprochen? Bei wem, mit welcher Reaktion?\n___',
         'Which training content was missing in this period?\n___\n\nSince when?\n___\n\nWas this raised? With whom, what reaction?\n___'
     ),
+    unrelated: L(
+        'Welche Tätigkeit wurde dir aufgetragen?\n___\n\nWas hat sie mit deinem Ausbildungsrahmenplan zu tun (falls nichts: das notieren)?\n___\n\nWie lange / wie oft?\n___\n\nWurde das angesprochen? Bei wem, mit welcher Reaktion?\n___',
+        'Which task were you given?\n___\n\nHow does it relate to your training curriculum (if not at all: note that)?\n___\n\nHow long / how often?\n___\n\nWas this raised? With whom, what reaction?\n___'
+    ),
     overtime: L(
         'Angeordnet von wem?\n___\n\nDauer der Überstunden (von/bis)?\n___\n\nAusgleich zugesagt (Freizeit/Geld)? Ja/Nein\n___\n\nWar es Ausnahme oder Muster?\n___',
         'Ordered by whom?\n___\n\nDuration of overtime (from/to)?\n___\n\nCompensation promised (time off/pay)? Yes/No\n___\n\nWas it an exception or a pattern?\n___'
@@ -1065,6 +1077,14 @@ const ESCALATION = {
             L('Fehlende Ausbildungsinhalte mit Zeitraum dokumentieren — der Ausbildungsrahmenplan der IHK zeigt, was in diesem Ausbildungsjahr vorgesehen wäre.', 'Document the missing training content with the time period — the IHK training framework shows what should be covered in this training year.'),
             L('Das Thema im nächsten Berichtsheft-Gespräch mit dem Ausbilder ansprechen.', 'Raise the topic in the next training-record discussion with the trainer.'),
             L('Bei anhaltender Vernachlässigung die IHK-Ausbildungsberatung kontaktieren — sie kann vermitteln oder prüfen.', 'If neglect continues, contact the chamber of commerce training advisory — they can mediate or investigate.'),
+        ],
+    },
+    unrelated: {
+        contacts: [L('IHK-Ausbildungsberatung', 'Chamber of commerce training advisory'), L('JAV / Betriebsrat', 'JAV / works council')],
+        steps: [
+            L('Die Tätigkeit mit Zeitraum und Häufigkeit dokumentieren — und ob sie im Ausbildungsrahmenplan vorkommt.', 'Document the task with time period and frequency — and whether it appears in the training curriculum.'),
+            L('Das Thema im nächsten Ausbildungsgespräch ansprechen: Ausbildungsfremde Aufgaben dürfen nur in engem Rahmen anfallen.', 'Raise the topic in the next training discussion: non-training tasks may only make up a small part of the work.'),
+            L('Hält es an, die IHK-Ausbildungsberatung informieren — sie prüft, ob der Ausbildungsrahmenplan eingehalten wird.', 'If it continues, inform the chamber of commerce training advisory — they check whether the training curriculum is being followed.'),
         ],
     },
     overtime: {
