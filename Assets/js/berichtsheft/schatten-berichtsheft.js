@@ -52,7 +52,20 @@ const SEVERITY_LABELS = {
     note: L('Notiz', 'Note')
 };
 
-const SEVERITY_COLORS = { critical: 'var(--red)', high: 'var(--amber)', medium: 'var(--blue)', low: 'var(--teal)', note: 'var(--text-2)' };
+// Schweregrad ist eine geordnete Skala, kein Satz gleichrangiger Kategorien —
+// fuenf Farbtoene waren deshalb sachlich falsch UND auf dunklem Grund nicht
+// sicher unterscheidbar (validate_palette: warme 5er-Rampe ΔE 10.6 → FAIL).
+// Jetzt: zwei Status-Farben fuer die zwei Stufen, die auffallen MUESSEN, ein
+// Neutral fuer die Mitte, und die unteren beiden tragen Form statt Farbe
+// (Ring statt Fuellung, siehe .entry-dot in index.html). Das Label steht
+// immer daneben, Farbe traegt nie allein die Bedeutung.
+const SEVERITY_COLORS = {
+    critical: 'var(--sev-critical)',
+    high: 'var(--sev-high)',
+    medium: 'var(--sev-medium)',
+    low: 'rgba(var(--sev-medium-rgb), 0.45)',
+    note: 'var(--text-3)'
+};
 
 const UI_ICONS = {
     edit: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"></path></svg>',
@@ -65,11 +78,15 @@ const UI_ICONS = {
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3, note: 4 };
 
+// Status ist eine Bearbeitungs-Stufe, kein Alarm — deshalb neutral bis auf
+// „eskaliert". Vorher lag hier eine zweite, unabhaengige Farbskala
+// (blau/amber/teal) neben der Schweregrad-Skala; zwei Farbsysteme
+// nebeneinander sind auf einer Karte nicht mehr lesbar.
 const STATUS_META = {
-    open: { label: L('Offen', 'Open'), color: 'var(--text-2)' },
-    raised: { label: L('Angesprochen', 'Raised'), color: 'var(--blue)' },
-    escalated: { label: L('Eskaliert', 'Escalated'), color: 'var(--amber)' },
-    resolved: { label: L('Gelöst', 'Resolved'), color: 'var(--teal)' },
+    open: { label: L('Offen', 'Open'), color: 'var(--text-3)' },
+    raised: { label: L('Angesprochen', 'Raised'), color: 'var(--text-1)' },
+    escalated: { label: L('Eskaliert', 'Escalated'), color: 'var(--sev-high)' },
+    resolved: { label: L('Gelöst', 'Resolved'), color: 'var(--sev-medium)' },
 };
 const STATUS_ORDER = ['open', 'raised', 'escalated', 'resolved'];
 
@@ -448,8 +465,13 @@ function enterApp() {
     document.getElementById('lockScreen').classList.add('hidden');
     document.getElementById('mainApp').classList.add('visible');
     document.getElementById('sessionTimer').style.display = 'flex';
+    // Aktenzeichen UND die Vertraulichkeits-Aussage — der frueher dauerhaft
+    // eingeblendete VERTRAULICH-Banner ist entfallen, seine eine echte
+    // Information steht jetzt hier in der Kopfzeile.
     const caseId = getCaseId();
-    if (caseId) document.getElementById('headerCaseId').textContent = caseId;
+    document.getElementById('headerCaseId').textContent = caseId
+        ? caseId + L(' · lokal verschlüsselt', ' · encrypted locally')
+        : L('Lokal verschlüsselt · AES-256-GCM', 'Encrypted locally · AES-256-GCM');
     sessionStart = Date.now();
     startSessionTimer();
     resetAutoLock();
@@ -886,32 +908,47 @@ function renderEntries() {
                 '<div class="entry-details-row"><dt>' + escapeHtml(d.label) + '</dt><dd>' + escapeHtml(d.value) + '</dd></div>'
             ).join('') + '</dl>' : '';
 
+        // Zeitleiste statt loser Kartenliste: der Punkt traegt den Schweregrad,
+        // die Linie dahinter die Chronologie. Der Punkt liegt als Geschwister
+        // NEBEN .entry-body, nicht darin — sonst schnitte das Karten-Padding
+        // ihn von der Linie ab.
         return '<div class="entry-card" data-severity="' + e.severity + '">' +
-            '<div class="entry-header">' +
-                '<div><span class="entry-date">' + dateStr + '</span>' +
-                (e.time ? ' <span class="entry-time">' + e.time + L(' Uhr', '') + '</span>' : '') +
+            '<span class="entry-dot" aria-hidden="true"></span>' +
+            '<div class="entry-body">' +
+                '<div class="entry-header">' +
+                    '<div class="entry-meta"><span class="entry-date">' + dateStr + '</span>' +
+                    (e.time ? '<span class="entry-time">' + e.time + L(' Uhr', '') + '</span>' : '') +
+                    '</div>' +
+                    '<div class="entry-header-badges"><span class="entry-severity ' + sevClass + '">' + (SEVERITY_LABELS[e.severity] || e.severity) + '</span>' + statusHtml + '</div>' +
                 '</div>' +
-                '<div class="entry-header-badges"><span class="entry-severity ' + sevClass + '">' + (SEVERITY_LABELS[e.severity] || e.severity) + '</span>' + statusHtml + '</div>' +
-            '</div>' +
-            '<div class="entry-category"><span class="cat-icon">' + cat.icon + '</span>' + cat.label + '</div>' +
-            '<div class="entry-text">' + escapeHtml(e.text) + '</div>' +
-            detailsHtml +
-            attachHtml +
-            witnessHtml +
-            '<div class="entry-actions">' +
-                '<button class="btn btn-sm btn-primary" onclick="openEditEntry(\'' + e.id + '\')">' + UI_ICONS.edit + ' ' + L('Bearbeiten', 'Edit') + '</button>' +
-                '<button class="btn btn-sm btn-icon" onclick="openEscalationModal(\'' + e.category + '\')" title="' + L('Was tun? Anlaufstellen', 'What to do? Contacts') + '">' + UI_ICONS.info + '</button>' +
-                revisionHtml +
-                '<button class="btn btn-sm btn-icon btn-danger" onclick="confirmDelete(\'' + e.id + '\')" title="' + L('Löschen', 'Delete') + '">' + UI_ICONS.trash + '</button>' +
+                '<div class="entry-category"><span class="cat-icon">' + cat.icon + '</span>' + cat.label + '</div>' +
+                '<div class="entry-text">' + escapeHtml(e.text) + '</div>' +
+                detailsHtml +
+                attachHtml +
+                witnessHtml +
+                '<div class="entry-actions">' +
+                    '<button class="btn btn-sm" onclick="openEditEntry(\'' + e.id + '\')">' + UI_ICONS.edit + ' ' + L('Bearbeiten', 'Edit') + '</button>' +
+                    '<button class="btn btn-sm btn-icon" onclick="openEscalationModal(\'' + e.category + '\')" title="' + L('Was tun? Anlaufstellen', 'What to do? Contacts') + '" aria-label="' + L('Was tun? Anlaufstellen', 'What to do? Contacts') + '">' + UI_ICONS.info + '</button>' +
+                    revisionHtml +
+                    '<button class="btn btn-sm btn-icon btn-danger" onclick="confirmDelete(\'' + e.id + '\')" title="' + L('Löschen', 'Delete') + '" aria-label="' + L('Eintrag löschen', 'Delete entry') + '">' + UI_ICONS.trash + '</button>' +
+                '</div>' +
             '</div>' +
         '</div>';
     }).join('');
 }
 
 function updateStats() {
+    const critical = entries.filter(e => e.severity === 'critical').length;
+    const high = entries.filter(e => e.severity === 'high').length;
+
     document.getElementById('statTotal').textContent = entries.length;
-    document.getElementById('statCritical').textContent = entries.filter(e => e.severity === 'critical').length;
-    document.getElementById('statHigh').textContent = entries.filter(e => e.severity === 'high').length;
+    document.getElementById('statCritical').textContent = critical;
+    document.getElementById('statHigh').textContent = high;
+
+    // Eine rote 0 behauptet einen Alarm, den es nicht gibt — bei Null faellt
+    // die Status-Farbe auf neutral zurueck (CSS: .stat-num[data-zero]).
+    document.getElementById('statCritical').toggleAttribute('data-zero', critical === 0);
+    document.getElementById('statHigh').toggleAttribute('data-zero', high === 0);
 
     if (entries.length > 0) {
         const dates = entries.map(e => e.date).sort();
