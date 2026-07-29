@@ -444,6 +444,11 @@
                 modal.style.display = 'none';
             }, 300);
         }
+        // Sidebar-Bug-Fix: Stelle sicher, dass die Sidebar nach Modal-Schließen sichtbar ist
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar && sidebar.classList.contains('hidden')) {
+            sidebar.classList.remove('hidden');
+        }
         localStorage.setItem('privacy_acknowledged', 'true');
     }
 
