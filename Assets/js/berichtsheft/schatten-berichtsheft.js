@@ -1315,23 +1315,26 @@ function exportAsText() {
 
 // ═════════════════════════════════════════
 //  PDF-/DRUCK-EXPORT
-//  Das Papier ist ein anderes Medium als die App: es wird oft schwarzweiss
-//  auf einem Bürodrucker ausgegeben. Deshalb traegt hier die FORM den
-//  Schweregrad (Fuellung → Rahmen → nackter Text), Farbe ist nur Zugabe.
-//  Die Druckfarben sind gegen Weiss gerechnet, nicht vom Bildschirm
-//  uebernommen: das dunkle Rot/Amber der App liegt auf Papier bei ΔE 11.3
-//  (kaum unterscheidbar), #b3261e/#b8860b/#5f6672 besteht mit ΔE 20.9
-//  normal / 14.9 deutan (scripts/validate_palette.js --mode light).
+//  Gleiche Sprache wie die App, nur auf Weiss: Inter, Haarlinien, viel Luft,
+//  dieselbe Schweregrad-Kennzeichnung, dieselbe Zeitleiste. KEINE
+//  Serifen-Amtsoptik — das Dokument soll erkennbar aus dieser App stammen.
+//
+//  Was vom Papier trotzdem verlangt wird und deshalb bleibt:
+//  · print-color-adjust (Chrome druckt Hintergruende sonst nicht mit)
+//  · Form als zweite Ebene neben der Farbe (viele drucken schwarzweiss)
+//  · das Dokument druckt sich selbst, wenn Schrift und Bilder geladen sind
 // ═════════════════════════════════════════
 
-// Druckfarben: bewusst NICHT die Bildschirm-Tokens (die sind gegen eine
-// dunkle Flaeche gerechnet und auf Weiss zu blass bzw. zu aehnlich).
+// Farbtoene der App. Auf Weiss geprueft (validate_palette --mode light):
+// ΔE 18.1 normal / 10.4 deutan — sie halten sich auch auf Papier auseinander.
+// Der Kontrast-WARN fuer Amber ist der Grund, warum die Beschriftung NICHT
+// in der Akzentfarbe steht, sondern dunkel auf getoentem Grund.
 const PRINT_SEV = {
-    critical: { color: '#b3261e', form: 'solid' },   // gefuellt  — sticht auch in s/w heraus
-    high:     { color: '#b8860b', form: 'strong' },  // 1.5px Rahmen
-    medium:   { color: '#5f6672', form: 'outline' }, // 1px Rahmen
-    low:      { color: '#5f6672', form: 'plain' },   // nur Text
-    note:     { color: '#8a9099', form: 'plain' }
+    critical: { line: '#f2384f', tint: '#fdecef', ink: '#c11530', dot: 'fill' },
+    high:     { line: '#e8912f', tint: '#fdf4e8', ink: '#95590a', dot: 'fill' },
+    medium:   { line: '#8e97a8', tint: 'transparent', ink: '#5f6672', dot: 'fill' },
+    low:      { line: '#c3c8d0', tint: 'transparent', ink: '#6b7280', dot: 'ring' },
+    note:     { line: '#d7dade', tint: 'transparent', ink: '#8a9099', dot: 'ring' }
 };
 
 function exportAsPDF() {
@@ -1342,135 +1345,134 @@ function exportAsPDF() {
     const dates = exportEntries.map(e => e.date).sort();
     const caseId = getCaseId();
     const lang = document.documentElement.lang === 'en' ? 'en' : 'de';
-    const zeitraum = formatDate(dates[0]) + ' bis ' + formatDate(dates[dates.length - 1]);
-    const zeitraumEn = formatDate(dates[0]) + ' to ' + formatDate(dates[dates.length - 1]);
+    const zeitraum = formatDate(dates[0]) + L(' bis ', ' to ') + formatDate(dates[dates.length - 1]);
 
     const sevBadge = (sev) => {
         const p = PRINT_SEV[sev] || PRINT_SEV.note;
-        return '<span class="sev sev--' + p.form + '" style="--sev:' + p.color + '">' +
+        return '<span class="sev" style="--line:' + p.line + ';--tint:' + p.tint + ';--ink:' + p.ink + '">' +
             (SEVERITY_LABELS[sev] || sev) + '</span>';
     };
 
     let html = '<!DOCTYPE html><html lang="' + lang + '"><head><meta charset="UTF-8">';
     html += '<title>' + L('Beschwerde- und Dokumentationsprotokoll', 'Complaint and documentation record') + '</title>';
+    // Projekt-Schriften auch im Druckfenster — sonst faellt das Dokument auf
+    // die System-UI-Schrift zurueck und sieht aus wie von einer anderen App.
+    // Faellt die Verbindung aus, greift der Systemstapel; gedruckt wird erst,
+    // wenn document.fonts.ready aufgeloest ist.
+    html += '<link rel="preconnect" href="https://fonts.googleapis.com">';
+    html += '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
+    html += '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">';
     html += '<style>';
 
-    // ── Seite ──
-    html += '@page{margin:18mm 16mm 20mm}';
-    // Hintergruende und Rahmen MUESSEN mitgedruckt werden — ohne das verschwindet
-    // die Verteilungs-Grafik und jede gefuellte Kennzeichnung stillschweigend.
-    html += '*{print-color-adjust:exact;-webkit-print-color-adjust:exact;box-sizing:border-box}';
-    html += 'html,body{margin:0;padding:0}';
-    // Kein Webfont verfuegbar (das Druckfenster laedt keine Schriften nach) —
-    // deshalb Systemstapel. Serif fuer den Dokumenten-Text, Sans fuer Daten
-    // und Beschriftungen: das trennt Aussage von Metadaten.
-    html += 'body{font-family:Georgia,"Iowan Old Style","Times New Roman",serif;color:#111;font-size:10.5pt;line-height:1.6}';
-    html += '.sans{font-family:"Segoe UI",system-ui,-apple-system,Helvetica,Arial,sans-serif}';
-    html += '.mono{font-family:"Cascadia Mono",Consolas,"SF Mono",Menlo,monospace}';
+    html += '@page{margin:16mm 15mm 18mm}';
+    // Ohne das druckt Chrome keine Flaechen — die Verteilungs-Grafik und jede
+    // getoente Kennzeichnung kaemen weiss heraus.
+    html += '*{print-color-adjust:exact;-webkit-print-color-adjust:exact;box-sizing:border-box;margin:0;padding:0}';
+    html += 'body{font-family:Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color:#14161a;';
+    html += 'font-size:10pt;line-height:1.6;font-feature-settings:"cv11","ss01"}';
+    html += '.mono{font-family:"JetBrains Mono","Cascadia Mono",Consolas,monospace;font-variant-numeric:tabular-nums}';
+    html += '.num{font-variant-numeric:tabular-nums}';
 
-    // ── Laufender Kopf: wiederholt sich in Chrome auf jeder Druckseite ──
+    // Laufender Kopf — Chrome wiederholt position:fixed auf jeder Druckseite.
     html += '.runhead{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;';
-    html += 'font-size:7.5pt;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;';
-    html += 'border-bottom:.5pt solid #c9ccd1;padding-bottom:3pt}';
-    html += '.page{padding-top:10mm}';
+    html += 'font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:#9096a0;';
+    html += 'border-bottom:.5pt solid #e6e8eb;padding-bottom:2.5pt}';
+    html += '.page{padding-top:9mm}';
     html += '.break{break-after:page;page-break-after:always}';
 
-    // ── Ueberschriften ──
-    html += 'h2{font-size:14pt;font-weight:normal;letter-spacing:-.01em;margin:0 0 2mm;padding-bottom:2mm;border-bottom:1pt solid #111}';
-    html += '.lede{font-size:9.5pt;color:#4b5158;margin:0 0 7mm}';
+    // Typo wie in der App: Gewicht und Laufweite statt Zierschrift.
+    html += 'h2{font-size:13pt;font-weight:600;letter-spacing:-.02em;margin-bottom:5mm}';
+    html += '.lede{font-size:9.5pt;color:#6b7280;margin-bottom:8mm}';
 
-    // ── Deckblatt (keine vh-Einheiten: im Druck unzuverlaessig) ──
-    html += '.cover{padding-top:32mm}';
-    html += '.cover-tag{display:inline-block;border:1pt solid #b3261e;color:#b3261e;font-size:7.5pt;';
-    html += 'font-weight:600;letter-spacing:.16em;padding:2pt 8pt;margin-bottom:14mm}';
-    // 20pt statt 28pt: bei 28pt lief der deutsche Titel ueber den Satzspiegel
-    // hinaus und wurde am Rand abgeschnitten.
-    html += '.cover-title{font-size:20pt;line-height:1.2;font-weight:normal;letter-spacing:-.015em;margin:0 0 3mm;max-width:150mm}';
-    html += '.cover-sub{font-size:10pt;color:#4b5158;margin:0 0 16mm;max-width:130mm}';
-    html += '.facts{display:grid;grid-template-columns:1fr 1fr;gap:7mm 12mm;border-top:1pt solid #111;padding-top:6mm;margin:0 0 24mm}';
-    html += '.facts dt{font-size:7.5pt;letter-spacing:.08em;text-transform:uppercase;color:#6b7280;margin-bottom:1mm}';
-    html += '.facts dd{margin:0;font-size:11.5pt}';
-    html += '.sig{display:grid;grid-template-columns:1fr 1fr;gap:16mm;margin-top:20mm}';
-    html += '.sig-line{border-top:.75pt solid #111;padding-top:2mm;font-size:8.5pt;color:#4b5158}';
+    // ── Deckblatt ──
+    html += '.cover{padding-top:30mm}';
+    html += '.cover-tag{display:inline-block;border:.75pt solid #f2384f;color:#c11530;font-size:7pt;';
+    html += 'font-weight:600;letter-spacing:.16em;padding:2pt 8pt;border-radius:3pt;margin-bottom:13mm}';
+    html += '.cover-title{font-size:21pt;font-weight:600;letter-spacing:-.03em;line-height:1.15;margin-bottom:3mm;max-width:150mm}';
+    html += '.cover-sub{font-size:10pt;color:#6b7280;margin-bottom:15mm;max-width:125mm;line-height:1.6}';
+    html += '.facts{display:grid;grid-template-columns:1fr 1fr;gap:7mm 12mm;border-top:.75pt solid #14161a;padding-top:6mm;margin-bottom:22mm}';
+    html += '.facts dt{font-size:7.5pt;color:#9096a0;margin-bottom:1mm}';
+    html += '.facts dd{font-size:12pt;font-weight:500;letter-spacing:-.01em}';
+    html += '.sig{display:grid;grid-template-columns:1fr 1fr;gap:16mm;margin-top:18mm}';
+    html += '.sig-line{border-top:.5pt solid #c3c8d0;padding-top:2mm;font-size:8.5pt;color:#6b7280}';
 
-    // ── Schweregrad-Kennzeichnung: Form zuerst, Farbe als Zugabe ──
-    html += '.sev{display:inline-block;font-size:7.5pt;font-weight:600;letter-spacing:.07em;';
-    html += 'text-transform:uppercase;padding:1.5pt 6pt;white-space:nowrap;color:var(--sev)}';
-    html += '.sev--solid{background:var(--sev);color:#fff}';
-    html += '.sev--strong{border:1.5pt solid var(--sev)}';
-    html += '.sev--outline{border:.75pt solid var(--sev)}';
-    html += '.sev--plain{padding-left:0;padding-right:0}';
-    // margin-left: die Stufen ohne Rahmen (.sev--plain) haben keine Polsterung,
-    // sonst klebte im Verzeichnis „NOTIZ GELÖST" als ein Wort zusammen.
-    html += '.status{font-size:7.5pt;letter-spacing:.05em;text-transform:uppercase;color:#6b7280;white-space:nowrap;margin-left:3mm}';
+    // ── Schweregrad: getoentes Feld + Rahmen wie in der App. Der Rahmen ist
+    //    zugleich die Schwarzweiss-Stufe (kraeftig → duenn → keiner). ──
+    html += '.sev{display:inline-block;font-size:7.5pt;font-weight:600;letter-spacing:.04em;';
+    html += 'padding:1.5pt 6pt;border-radius:3pt;white-space:nowrap;';
+    html += 'background:var(--tint);border:.75pt solid var(--line);color:var(--ink)}';
+    html += '.status{font-size:7.5pt;color:#9096a0;white-space:nowrap;margin-left:3mm}';
 
-    // ── Inhaltsverzeichnis (ohne Anker: auf Papier klickt niemand) ──
+    // ── Übersicht ──
     html += '.toc{width:100%;border-collapse:collapse;font-size:9.5pt}';
-    html += '.toc td{padding:2.5mm 0;border-bottom:.5pt solid #d8dade;vertical-align:baseline}';
-    html += '.toc .n{width:9mm;color:#6b7280;font-size:8.5pt}';
-    html += '.toc .d{width:24mm;color:#4b5158;font-size:9pt;white-space:nowrap}';
+    html += '.toc td{padding:2.6mm 0;border-bottom:.5pt solid #eceef1;vertical-align:middle}';
+    html += '.toc .n{width:8mm;color:#b6bbc3;font-size:8.5pt}';
+    html += '.toc .d{width:23mm;color:#6b7280;font-size:9pt;white-space:nowrap}';
     html += '.toc .s{text-align:right;white-space:nowrap;padding-left:4mm}';
-    html += '.hint{margin-top:5mm;font-size:8pt;color:#6b7280;max-width:130mm}';
+    html += '.hint{margin-top:5mm;font-size:8pt;color:#9096a0;max-width:130mm}';
 
-    // ── Verteilung: eine Zeile pro Stufe. Eine gestapelte Farbleiste war in
-    //    s/w ein grauer Balken ohne Information; Balken pro Zeile plus Zahl
-    //    liest sich gedruckt immer. ──
-    html += '.dist{width:100%;border-collapse:collapse;font-size:9.5pt;margin:0 0 8mm}';
-    html += '.dist td{padding:1.8mm 0;vertical-align:middle}';
-    html += '.dist .lbl{width:26mm;white-space:nowrap}';
-    html += '.dist .bar{width:auto;padding-right:4mm}';
-    html += '.dist .bar i{display:block;height:3.2mm;background:var(--sev);min-width:.6mm}';
-    html += '.dist .val{width:12mm;text-align:right;font-variant-numeric:tabular-nums}';
-    html += 'table.tbl{width:100%;border-collapse:collapse;font-size:9.5pt;margin:0 0 8mm}';
-    html += 'table.tbl th{text-align:left;font-weight:600;font-size:7.5pt;letter-spacing:.07em;';
-    html += 'text-transform:uppercase;color:#6b7280;border-bottom:1pt solid #111;padding:0 0 2mm}';
-    html += 'table.tbl td{padding:2.2mm 0;border-bottom:.5pt solid #d8dade}';
-    html += 'table.tbl td+td,table.tbl th+th{text-align:right;width:18mm;font-variant-numeric:tabular-nums}';
+    // ── Verteilung: eine Zeile je Stufe, Anteil am Gesamtbestand ──
+    html += '.dist{width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:9mm}';
+    html += '.dist td{padding:1.9mm 0;vertical-align:middle}';
+    html += '.dist .lbl{width:25mm;white-space:nowrap;color:#4b5158}';
+    html += '.dist .bar{padding-right:4mm}';
+    html += '.dist .bar i{display:block;height:2.6mm;border-radius:1.3mm;background:var(--line);min-width:1mm}';
+    html += '.dist .val{width:11mm;text-align:right;font-weight:600}';
+    html += 'table.tbl{width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:9mm}';
+    html += 'table.tbl th{text-align:left;font-weight:500;font-size:8pt;color:#9096a0;';
+    html += 'border-bottom:.75pt solid #14161a;padding-bottom:2mm}';
+    html += 'table.tbl td{padding:2.3mm 0;border-bottom:.5pt solid #eceef1;color:#4b5158}';
+    html += 'table.tbl td+td,table.tbl th+th{text-align:right;width:18mm;font-variant-numeric:tabular-nums;color:#14161a;font-weight:500}';
 
-    // ── Vorfaelle: gesetzte Abschnitte, keine gerundeten Kaesten ──
-    html += '.inc{break-inside:avoid;page-break-inside:avoid;padding:0 0 7mm;margin:0 0 7mm;border-bottom:.5pt solid #d8dade}';
-    html += '.inc:last-of-type{border-bottom:none}';
-    html += '.inc-head{display:flex;justify-content:space-between;align-items:baseline;gap:4mm;margin-bottom:1.5mm}';
-    html += '.inc-no{font-size:8pt;letter-spacing:.08em;text-transform:uppercase;color:#6b7280;white-space:nowrap}';
-    html += '.inc-badges{display:flex;align-items:center;gap:4mm;flex-shrink:0}';
-    html += '.inc-when{font-size:11pt;margin:0 0 1mm}';
-    html += '.inc-cat{font-size:8.5pt;letter-spacing:.04em;text-transform:uppercase;color:#4b5158;margin-bottom:3mm}';
-    html += '.inc-text{white-space:pre-wrap;font-size:10.5pt;line-height:1.65;max-width:150mm}';
-    html += '.det{margin:4mm 0 0;display:grid;grid-template-columns:auto 1fr;gap:1.2mm 4mm;font-size:9.5pt;max-width:130mm}';
-    html += '.det dt{color:#6b7280;font-size:8.5pt;white-space:nowrap}';
-    html += '.det dd{margin:0}';
-    html += '.wit{margin-top:3mm;font-size:9.5pt}';
-    html += '.wit b{font-weight:normal;color:#6b7280;font-size:8.5pt}';
-    // Beweisfotos gross genug, um Beweis zu sein — 150px waren auf Papier
-    // etwa 4cm und damit unbrauchbar.
-    html += '.pics{margin-top:4mm;display:flex;flex-wrap:wrap;gap:3mm}';
-    html += '.pics img{width:80mm;max-height:90mm;object-fit:contain;border:.5pt solid #c9ccd1}';
-    html += '.trace{margin-top:3mm;font-size:7.5pt;color:#8a9099;letter-spacing:.02em}';
-    html += '.foot{margin-top:12mm;padding-top:4mm;border-top:1pt solid #111;font-size:8pt;color:#4b5158;max-width:150mm}';
+    // ── Vorfaelle: dieselbe Zeitleiste wie in der App ──
+    html += '.inc{position:relative;padding:0 0 8mm 9mm;break-inside:avoid;page-break-inside:avoid}';
+    html += '.inc::before{content:"";position:absolute;left:1.6mm;top:2.6mm;bottom:0;width:.5pt;background:#e0e3e7}';
+    html += '.inc:last-of-type::before{display:none}';
+    html += '.inc-dot{position:absolute;left:0;top:1.5mm;width:3.2mm;height:3.2mm;border-radius:50%;background:#fff}';
+    html += '.inc-dot i{position:absolute;inset:.35mm;border-radius:50%}';
+    html += '.inc-dot.fill i{background:var(--line)}';
+    html += '.inc-dot.ring i{box-shadow:inset 0 0 0 .55mm var(--line)}';
+    html += '.inc-head{display:flex;justify-content:space-between;align-items:center;gap:4mm;margin-bottom:1.6mm}';
+    html += '.inc-when{font-size:9.5pt;font-weight:500;letter-spacing:-.01em}';
+    html += '.inc-when span{color:#9096a0;font-weight:400;margin-left:2mm}';
+    html += '.inc-badges{display:flex;align-items:center;flex-shrink:0}';
+    html += '.inc-cat{font-size:8.5pt;color:#6b7280;margin-bottom:2.5mm}';
+    html += '.inc-text{white-space:pre-wrap;font-size:10pt;line-height:1.65;max-width:150mm}';
+    html += '.det{margin-top:3.5mm;padding-top:3mm;border-top:.5pt solid #eceef1;';
+    html += 'display:flex;flex-wrap:wrap;gap:1.5mm 8mm;font-size:9pt}';
+    html += '.det dt{color:#9096a0;margin-right:2mm;display:inline}';
+    html += '.det dd{display:inline;font-weight:500}';
+    html += '.det>div{white-space:nowrap}';
+    html += '.wit{margin-top:2.5mm;font-size:9pt;color:#4b5158}';
+    html += '.wit b{font-weight:400;color:#9096a0}';
+    // Beweisfotos gross genug, um Beweis zu sein.
+    html += '.pics{margin-top:3.5mm;display:flex;flex-wrap:wrap;gap:3mm}';
+    html += '.pics img{width:80mm;max-height:90mm;object-fit:contain;border:.5pt solid #e0e3e7;border-radius:2mm}';
+    html += '.trace{margin-top:2.5mm;font-size:7.5pt;color:#b6bbc3}';
+    html += '.foot{margin-top:12mm;padding-top:4mm;border-top:.75pt solid #14161a;font-size:8pt;color:#6b7280;max-width:150mm;line-height:1.6}';
     html += '</style></head><body>';
 
-    // ── Laufender Kopf ──
-    html += '<div class="runhead sans"><span>' + L('Vertraulich', 'Confidential') + '</span>';
-    html += '<span>' + (caseId ? escapeHtml(caseId) : L('Schatten-Berichtsheft', 'Shadow report book')) + '</span></div>';
+    html += '<div class="runhead"><span>' + L('Vertraulich', 'Confidential') + '</span>';
+    html += '<span class="mono">' + (caseId ? escapeHtml(caseId) : 'MyWorkLog') + '</span></div>';
 
     // ═══ DECKBLATT ═══
     html += '<div class="page cover break">';
-    html += '<div class="cover-tag sans">' + L('VERTRAULICH', 'CONFIDENTIAL') + '</div>';
+    html += '<div class="cover-tag">' + L('VERTRAULICH', 'CONFIDENTIAL') + '</div>';
     html += '<h1 class="cover-title">' + L('Beschwerde- und Dokumentationsprotokoll', 'Complaint and documentation record') + '</h1>';
     html += '<p class="cover-sub">' + L('Private Aufzeichnung einer Auszubildenden / eines Auszubildenden, geführt neben dem amtlichen Ausbildungsnachweis nach § 13 BBiG.', 'A private record kept by an apprentice alongside the official training record under § 13 BBiG (German Vocational Training Act).') + '</p>';
-    html += '<dl class="facts sans">';
+    html += '<dl class="facts">';
     if (caseId) html += '<div><dt>' + L('Aktenzeichen', 'Case reference') + '</dt><dd class="mono">' + escapeHtml(caseId) + '</dd></div>';
-    html += '<div><dt>' + L('Dokumentierter Zeitraum', 'Documented period') + '</dt><dd>' + L(zeitraum, zeitraumEn) + '</dd></div>';
-    html += '<div><dt>' + L('Vorfälle', 'Incidents') + '</dt><dd>' + exportEntries.length + '</dd></div>';
+    html += '<div><dt>' + L('Dokumentierter Zeitraum', 'Documented period') + '</dt><dd>' + zeitraum + '</dd></div>';
+    html += '<div><dt>' + L('Vorfälle', 'Incidents') + '</dt><dd class="num">' + exportEntries.length + '</dd></div>';
     html += '<div><dt>' + L('Ausgefertigt am', 'Issued on') + '</dt><dd>' + now.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'long', year: 'numeric' }) + '</dd></div>';
     html += '</dl>';
-    html += '<div class="sig sans">';
+    html += '<div class="sig">';
     html += '<div class="sig-line">' + L('Name der Auszubildenden / des Auszubildenden', 'Name of the apprentice') + '</div>';
     html += '<div class="sig-line">' + L('Ausbildungsbetrieb', 'Training company') + '</div>';
     html += '</div>';
     html += '</div>';
 
-    // ═══ INHALTSVERZEICHNIS ═══
+    // ═══ ÜBERSICHT ═══
     html += '<div class="page break">';
     html += '<h2>' + L('Übersicht der Vorfälle', 'Overview of incidents') + '</h2>';
     html += '<table class="toc">';
@@ -1478,51 +1480,50 @@ function exportAsPDF() {
         const cat = CATEGORIES[e.category] || CATEGORIES.other;
         const statusMeta = STATUS_META[e.status || 'open'] || STATUS_META.open;
         html += '<tr>';
-        html += '<td class="n sans">' + (i + 1) + '</td>';
-        html += '<td class="d sans">' + formatDate(e.date) + '</td>';
+        html += '<td class="n num">' + (i + 1) + '</td>';
+        html += '<td class="d mono">' + formatDate(e.date) + '</td>';
         html += '<td>' + escapeHtml(cat.label) + '</td>';
-        html += '<td class="s sans">' + sevBadge(e.severity) +
-                ' <span class="status">' + escapeHtml(statusMeta.label) + '</span></td>';
+        html += '<td class="s">' + sevBadge(e.severity) +
+                '<span class="status">' + escapeHtml(statusMeta.label) + '</span></td>';
         html += '</tr>';
     });
     html += '</table>';
-    // Bewusst keine erfundenen Seitenzahlen: echte Seitenzahlen kann CSS im
-    // Browser nicht liefern, der Druckdialog schon.
-    html += '<p class="hint sans">' + L('Seitenzahlen liefert der Druckdialog: dort „Kopf- und Fußzeilen" aktivieren.', 'For page numbers, enable “Headers and footers” in the print dialog.') + '</p>';
+    // Bewusst keine erfundenen Seitenzahlen: CSS kann sie im Browser nicht
+    // liefern, der Druckdialog schon.
+    html += '<p class="hint">' + L('Seitenzahlen liefert der Druckdialog: dort „Kopf- und Fußzeilen" aktivieren.', 'For page numbers, enable “Headers and footers” in the print dialog.') + '</p>';
     html += '</div>';
 
     // ═══ ZUSAMMENFASSUNG ═══
     html += '<div class="page break">';
     html += '<h2>' + L('Zusammenfassung', 'Summary') + '</h2>';
-    html += '<p class="lede">' + exportEntries.length + L(' dokumentierte Vorfälle im Zeitraum ', ' documented incidents in the period ') + L(zeitraum, zeitraumEn) + '.</p>';
+    html += '<p class="lede">' + exportEntries.length + L(' dokumentierte Vorfälle im Zeitraum ', ' documented incidents in the period ') + zeitraum + '.</p>';
 
     const sevOrder = ['critical', 'high', 'medium', 'low', 'note'];
     const sevCounts = {};
     sevOrder.forEach(s => { sevCounts[s] = exportEntries.filter(e => e.severity === s).length; });
 
-    // Anteil am Gesamtbestand, nicht am groessten Wert: bei fuenf gleich
-    // haeufigen Stufen ergaebe eine Max-Normierung fuenf randvolle Balken —
-    // das liest sich wie ein Darstellungsfehler und sagt nichts.
-    html += '<table class="dist sans">';
+    // Anteil am Gesamtbestand, nicht am groessten Wert: bei gleich haeufigen
+    // Stufen ergaebe eine Max-Normierung lauter randvolle Balken.
+    html += '<table class="dist">';
     sevOrder.filter(s => sevCounts[s] > 0).forEach(s => {
         const p = PRINT_SEV[s] || PRINT_SEV.note;
         const pct = sevCounts[s] / exportEntries.length * 100;
-        html += '<tr style="--sev:' + p.color + '">';
+        html += '<tr style="--line:' + p.line + '">';
         html += '<td class="lbl">' + (SEVERITY_LABELS[s] || s) + '</td>';
         html += '<td class="bar"><i style="width:' + pct.toFixed(1) + '%"></i></td>';
-        html += '<td class="val">' + sevCounts[s] + '</td>';
+        html += '<td class="val num">' + sevCounts[s] + '</td>';
         html += '</tr>';
     });
     html += '</table>';
 
-    html += '<table class="tbl sans"><tr><th>' + L('Kategorie', 'Category') + '</th><th>' + L('Anzahl', 'Count') + '</th></tr>';
+    html += '<table class="tbl"><tr><th>' + L('Kategorie', 'Category') + '</th><th>' + L('Anzahl', 'Count') + '</th></tr>';
     Object.keys(CATEGORIES).forEach(k => {
         const c = exportEntries.filter(e => e.category === k).length;
         if (c > 0) html += '<tr><td>' + escapeHtml(CATEGORIES[k].label) + '</td><td>' + c + '</td></tr>';
     });
     html += '</table>';
 
-    html += '<table class="tbl sans"><tr><th>' + L('Bearbeitungsstand', 'Handling status') + '</th><th>' + L('Anzahl', 'Count') + '</th></tr>';
+    html += '<table class="tbl"><tr><th>' + L('Bearbeitungsstand', 'Handling status') + '</th><th>' + L('Anzahl', 'Count') + '</th></tr>';
     STATUS_ORDER.forEach(s => {
         const c = exportEntries.filter(e => (e.status || 'open') === s).length;
         if (c > 0) html += '<tr><td>' + escapeHtml(STATUS_META[s].label) + '</td><td>' + c + '</td></tr>';
@@ -1536,23 +1537,25 @@ function exportAsPDF() {
     exportEntries.forEach((e, i) => {
         const cat = CATEGORIES[e.category] || CATEGORIES.other;
         const statusMeta = STATUS_META[e.status || 'open'] || STATUS_META.open;
+        const p = PRINT_SEV[e.severity] || PRINT_SEV.note;
         html += '<div class="inc">';
+        html += '<span class="inc-dot ' + p.dot + '" style="--line:' + p.line + '"><i></i></span>';
         html += '<div class="inc-head">';
-        html += '<span class="inc-no sans">' + L('Vorfall ', 'Incident ') + (i + 1) + L(' von ', ' of ') + exportEntries.length + '</span>';
-        html += '<span class="inc-badges sans">' + sevBadge(e.severity) +
+        html += '<span class="inc-when mono">' + formatDate(e.date) +
+                (e.time ? '<span>' + e.time + L(' Uhr', '') + '</span>' : '') + '</span>';
+        html += '<span class="inc-badges">' + sevBadge(e.severity) +
                 '<span class="status">' + escapeHtml(statusMeta.label) + '</span></span>';
         html += '</div>';
-        html += '<p class="inc-when">' + formatDate(e.date) + (e.time ? ', ' + e.time + L(' Uhr', '') : '') + '</p>';
-        html += '<p class="inc-cat sans">' + escapeHtml(cat.label) + '</p>';
+        html += '<p class="inc-cat">' + escapeHtml(cat.label) + '</p>';
         html += '<div class="inc-text">' + escapeHtml(e.text) + '</div>';
 
         const detailRows = resolveCategoryDetails(e.category, e.details);
         if (detailRows.length) {
-            html += '<dl class="det sans">' + detailRows.map(d =>
-                '<dt>' + escapeHtml(d.label) + '</dt><dd>' + escapeHtml(d.value) + '</dd>').join('') + '</dl>';
+            html += '<dl class="det">' + detailRows.map(d =>
+                '<div><dt>' + escapeHtml(d.label) + '</dt><dd>' + escapeHtml(d.value) + '</dd></div>').join('') + '</dl>';
         }
         if (e.witnesses && e.witnesses.length) {
-            html += '<p class="wit sans"><b>' + L('Zeugen', 'Witnesses') + '</b> · ' + escapeHtml(e.witnesses.join(', ')) + '</p>';
+            html += '<p class="wit"><b>' + L('Zeugen', 'Witnesses') + '</b> ' + escapeHtml(e.witnesses.join(', ')) + '</p>';
         }
         if (e.attachments && e.attachments.length) {
             html += '<div class="pics">' + e.attachments.map(a =>
@@ -1562,26 +1565,29 @@ function exportAsPDF() {
         trace.push(L('Erfasst am ', 'Recorded on ') + new Date(e.createdAt).toLocaleString(mwlLocale()));
         if (e.history && e.history.length) trace.push(e.history.length + L('× nachträglich bearbeitet', '× edited afterwards'));
         if (e.contentHash) trace.push(L('Prüfsumme ', 'Checksum ') + e.contentHash);
-        html += '<p class="trace sans mono">' + escapeHtml(trace.join('  ·  ')) + '</p>';
+        html += '<p class="trace mono">' + escapeHtml(trace.join('  ·  ')) + '</p>';
         html += '</div>';
     });
 
-    html += '<div class="sig sans">';
+    html += '<div class="sig">';
     html += '<div class="sig-line">' + L('Ort, Datum', 'Place, date') + '</div>';
     html += '<div class="sig-line">' + L('Unterschrift', 'Signature') + '</div>';
     html += '</div>';
 
-    html += '<p class="foot sans">' + L(
+    html += '<p class="foot">' + L(
         'Dieses Protokoll wurde aus einem lokal mit AES-256-GCM verschlüsselten Speicher erzeugt. Die Einträge sind jeweils zeitnah zu den beschriebenen Vorfällen entstanden; das Erfassungsdatum steht unter jedem Vorfall. Die Prüfsumme belegt, dass der Text seit der Erfassung unverändert ist, ersetzt aber keinen kryptographischen Manipulationsschutz.',
         'This record was produced from storage encrypted locally with AES-256-GCM. Each entry was written close in time to the incident it describes; the date of entry appears beneath every incident. The checksum shows the text is unchanged since it was recorded, but is not a substitute for cryptographic tamper protection.'
     ) + '</p>';
     html += '</div>';
 
-    // Das Dokument druckt sich selbst, sobald ES fertig ist. Vorher haing der
-    // Aufruf an printWin.onload — das Ereignis ist nach document.write()+close()
-    // oft schon durch, dann kam der Dialog nie. Ausserdem muessen Beweisfotos
-    // (data:-URLs) geladen sein, bevor gedruckt wird.
-    html += '<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},120);});<\/script>';
+    // Das Dokument druckt sich selbst, sobald ES fertig ist — printWin.onload
+    // ist nach document.write()+close() oft schon durch, dann kam der Dialog
+    // nie. Zusaetzlich auf die Schriften warten, sonst druckt Chrome die
+    // Fallback-Schrift und das Layout springt.
+    html += '<script>window.addEventListener("load",function(){';
+    html += 'var go=function(){setTimeout(function(){window.print();},120);};';
+    html += 'if(document.fonts&&document.fonts.ready){document.fonts.ready.then(go,go);}else{go();}';
+    html += '});<\/script>';
     html += '</body></html>';
 
     const printWin = window.open('', '_blank');
