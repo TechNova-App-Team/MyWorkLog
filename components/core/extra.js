@@ -180,7 +180,10 @@ window._clsBC='extra.js-start';(function initGhostMode() {
         };
 
         document.addEventListener('DOMContentLoaded', function() {
-            if (localStorage.getItem('pro_intro_seen') === 'true') {
+            // _introSkipped: landing.js hat das Intro wegen eines #p2p=-Deep-Links
+            // uebersprungen, ohne 'pro_intro_seen' zu setzen — der Button gehoert
+            // trotzdem sichtbar, sonst fehlt er genau in dieser einen Sitzung.
+            if (localStorage.getItem('pro_intro_seen') === 'true' || window._introSkipped) {
                     if (window._showGhostButton) window._showGhostButton();
             }
         });

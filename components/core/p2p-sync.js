@@ -1289,10 +1289,29 @@
     }
 
     // === DEEP-LINK: #p2p=<code> ===
+    // Das Intro (#pro-intro) liegt auf z-index 99999 und setzt body{overflow:hidden},
+    // der Wizard nur auf 200. Laeuft es noch, oeffnet sich der Wizard unsichtbar
+    // dahinter: nichts scrollt, nichts laesst sich tippen, P2P scheint gar nicht zu
+    // starten — von aussen ununterscheidbar von einem Absturz. landing.js ueberspringt
+    // das Intro bei einem #p2p=-Link bereits beim Laden; hier faengt es den Fall ab,
+    // dass der Hash erst spaeter ankommt (Android fokussiert beim Scannen oft den
+    // bestehenden Tab, dann laedt nichts neu und landing.js ist laengst durch).
+    function p2pDismissIntro() {
+        const intro = document.getElementById('pro-intro');
+        if (!intro || intro.style.display === 'none' || intro.style.display === '') return;
+        intro.style.display = 'none';
+        document.body.style.overflow = '';
+        // 'pro_intro_seen' bewusst NICHT setzen — das Intro kommt beim naechsten
+        // normalen Aufruf ganz regulaer.
+        try { if (window._showGhostButton) window._showGhostButton(); } catch (e) {}
+    }
+
     async function p2pHandleDeepLink() {
         const m = (location.hash || '').match(/[#&]p2p=([A-Za-z0-9\-_]+)/);
         if (!m) return;
         const code = m[1];
+
+        p2pDismissIntro();
 
         // Hash sofort entfernen: der Code enthaelt lokale IP-Adressen aus dem SDP und
         // hat in History, Bookmarks und im Referrer nichts verloren.

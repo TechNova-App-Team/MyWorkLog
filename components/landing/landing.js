@@ -1,5 +1,12 @@
 (function(){
     if(localStorage.getItem('pro_intro_seen')==='true') return;
+    // Wer per QR-Code hier landet (#p2p=<code>), oeffnet die App auf dem ZWEITEN Geraet
+    // meist zum allerersten Mal — genau der Fall, in dem das Intro sonst laeuft. Es liegt
+    // auf z-index 99999 und sperrt body-Scroll, der P2P-Wizard nur auf 200: der Wizard
+    // waere unsichtbar dahinter, Eingaben unmoeglich, die Seite wirkt eingefroren.
+    // Deshalb Intro ueberspringen — und 'pro_intro_seen' bewusst NICHT setzen, damit es
+    // beim naechsten normalen Aufruf ganz normal kommt.
+    if(/[#&]p2p=/.test(location.hash||'')){ window._introSkipped=true; return; }
     var intro=document.getElementById('pro-intro');
     intro.style.display='block';
     document.body.style.overflow='hidden';
