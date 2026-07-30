@@ -338,7 +338,58 @@
                 border-radius: 20px;
                 padding: 1.8rem;
             }
-            #supportChangelog { display: flex; flex-direction: column; gap: 10px; }
+            #supportChangelog { display: flex; flex-direction: column; gap: 8px; }
+
+            /* ── Changelog-Zeile: neutral. Farbe traegt genau eine Aussage,
+                  naemlich welche Version gerade laeuft. ── */
+            .sp-cl-row {
+                display: flex;
+                gap: 14px;
+                align-items: flex-start;
+                padding: 11px 13px;
+                border-radius: 10px;
+                background: rgba(255,255,255,.022);
+                border: 1px solid rgba(255,255,255,.055);
+                border-left: 2px solid rgba(255,255,255,.12);
+            }
+            .sp-cl-row.is-current {
+                background: rgba(var(--primary-rgb),.055);
+                border-color: rgba(var(--primary-rgb),.22);
+                border-left-color: var(--primary);
+            }
+            .sp-cl-ver {
+                font-family: var(--font-mono);
+                font-size: .7rem;
+                font-variant-numeric: tabular-nums;
+                color: var(--text-muted);
+                min-width: 58px;
+                padding-top: 2px;
+                flex-shrink: 0;
+            }
+            .sp-cl-row.is-current .sp-cl-ver { color: var(--primary); }
+            .sp-cl-main { min-width: 0; }
+            .sp-cl-title {
+                font-weight: 600;
+                font-size: .88rem;
+                color: var(--text-main);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+            .sp-cl-body { font-size: .78rem; color: var(--text-muted); margin-top: 4px; line-height: 1.6; }
+            .sp-cl-now {
+                font-size: .62rem;
+                font-weight: 700;
+                letter-spacing: .07em;
+                text-transform: uppercase;
+                color: var(--primary);
+                background: rgba(var(--primary-rgb),.12);
+                border: 1px solid rgba(var(--primary-rgb),.28);
+                border-radius: 5px;
+                padding: 1px 6px;
+                white-space: nowrap;
+            }
             /* Aufgeklappt: 101 Eintraege wuerden die Seite auf ein Vielfaches
                strecken — deshalb bekommt die Liste eine eigene Scrollflaeche,
                statt den Rest der Seite unerreichbar weit nach unten zu schieben. */
@@ -679,8 +730,13 @@
                    deshalb ein lokaler Helfer (Vorbild: p2pL() in p2p-sync.js). */
                 var isEN = document.documentElement.lang === 'en';
                 var clL = function(de, en) { return isEN ? en : de; };
-                var accents = ['var(--primary)', 'var(--success)', 'var(--school)', 'var(--holiday)', 'var(--danger)', 'var(--text-muted)'];
-                var bgs = ['rgba(var(--primary-rgb),.05)', 'rgba(16,185,129,.05)', 'rgba(59,130,246,.05)', 'rgba(245,158,11,.05)', 'rgba(239,68,68,.05)', 'rgba(148,163,184,.05)'];
+                /* Bewusst KEINE Farbrotation mehr. Vorher lief die Liste ueber sechs
+                   Toene nach Listenposition (accents[i % 6]) — die Farbe kodierte damit
+                   nichts und verschob sich beim Aufklappen. Schlimmer: sie griff in
+                   belegte Tokens (--danger = Fehler/Loeschen, --success = erledigt,
+                   --school/--holiday = Eintragstypen), jede fuenfte Version sah aus wie
+                   ein Fehler. Farbe markiert jetzt genau eine wahre Sache: welche
+                   Version gerade laeuft. Alles andere bleibt neutral. */
                 fetch('/config/version.json', { cache: 'no-cache' })
                     .then(function(r) { return r.json(); })
                     .then(function(data) {
@@ -693,18 +749,19 @@
                         if (!cl || typeof cl !== 'object') { host.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">' + clL('Keine Änderungshistorie verfügbar.', 'No change history available.') + '</div>'; return; }
                         var versions = Object.keys(cl).sort(function(a, b) { return clCmpVer(b, a); });
                         var MAX = 8;
-                        var buildRow = function(v, i) {
-                            var accent = accents[i % accents.length];
-                            var bg = bgs[i % bgs.length];
+                        var current = String(data && data.version || '').trim();
+                        var buildRow = function(v) {
+                            var isCurrent = v === current;
                             var text = String((clEN && clEN[v]) || cl[v] || '').trim();
                             /* Erster Satz = Titel (falls kurz genug), Rest = Detail */
                             var title = 'Version ' + v, body = text;
                             var dot = text.indexOf('. ');
                             if (dot > 0 && dot <= 90) { title = text.slice(0, dot); body = text.slice(dot + 2); }
-                            var bodyHtml = body ? '<div style="font-size:.78rem; color:var(--text-muted); margin-top:3px; line-height:1.55;">' + clEsc(body) + '</div>' : '';
-                            return '<div style="display:flex; gap:12px; align-items:flex-start; padding:10px; border-radius:10px; background:' + bg + '; border-left:3px solid ' + accent + ';">'
-                                + '<div style="font-size:.7rem; color:var(--text-muted); min-width:60px; font-family:var(--font-mono); padding-top:2px;">v' + clEsc(v) + '</div>'
-                                + '<div style="min-width:0;"><div style="font-weight:600; font-size:.88rem; color:var(--text-main);">' + clEsc(title) + '</div>' + bodyHtml + '</div>'
+                            var bodyHtml = body ? '<div class="sp-cl-body">' + clEsc(body) + '</div>' : '';
+                            var badge = isCurrent ? '<span class="sp-cl-now">' + clL('Aktuell', 'Current') + '</span>' : '';
+                            return '<div class="sp-cl-row' + (isCurrent ? ' is-current' : '') + '">'
+                                + '<div class="sp-cl-ver">v' + clEsc(v) + '</div>'
+                                + '<div class="sp-cl-main"><div class="sp-cl-title">' + clEsc(title) + badge + '</div>' + bodyHtml + '</div>'
                                 + '</div>';
                         };
 
