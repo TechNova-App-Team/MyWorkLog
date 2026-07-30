@@ -199,7 +199,12 @@ allFiles.forEach(f => {
   const r = rel(f);
   const g = detectGroup(f);
   const e = ext(f);
-  const type = /html?/.test(e)?'page':/[jt]s|mjs/.test(e)?'script':/s?css/.test(e)?'style':e==='json'?'data':'other';
+  /* Verankert pruefen: '/[jt]s|mjs/' traf ungewollt auch 'json' ("js" steckt darin),
+     dadurch liefen 59 JSON-Dateien als JavaScript durch den Graphen. */
+  const type = /^html?$/.test(e)?'page'
+    :/^(js|mjs|cjs|jsx|ts|tsx)$/.test(e)?'script'
+    :/^s?css$/.test(e)?'style'
+    :e==='json'?'data':'other';
   nodes[r] = { id:r, name:base(f), path:r, ext:e, type, group:g, info:{}, inDegree:0, outDegree:0 };
   if (!groups[g.label]) groups[g.label] = { ...g, files:[] };
   groups[g.label].files.push(r);
