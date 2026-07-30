@@ -1,170 +1,232 @@
 // ═══ SCHOOL MODULE ═══
 
+    // Lucide-Style Icons (Stroke 1.8, currentColor) — eine Quelle, keine Emojis.
+    const SC_ICONS = {
+        trendUp:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/></svg>',
+        trendDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 17 13.5 8.5 8.5 13.5 2 7"/><path d="M16 17h6v-6"/></svg>',
+        trendFlat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg>',
+        pencil:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+        trash:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>',
+        plus:      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
+        award:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M8.5 12.5 7 22l5-3 5 3-1.5-9.5"/></svg>',
+        check:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>',
+        alert:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 4.3 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>'
+    };
+
+    // JS-generierte Texte uebersetzen sich lokal, NICHT ueber das globale MAP in
+    // i18n-runtime.js: Kurzlabels wie 'Gut'/'Sehr gut' kommen auch in
+    // year-month-stats.js vor und wuerden dort halb uebersetzt landen.
+    function scL(de, en) {
+        return (document.documentElement.lang === 'en') ? en : de;
+    }
+
+    // Deutsche Zahlenschreibweise, folgt der App-Sprache (siehe mwlLocale()).
+    function scFmt(num, digits) {
+        const n = Number(num);
+        if (!isFinite(n)) return '–';
+        const loc = (typeof mwlLocale === 'function') ? mwlLocale() : 'de-DE';
+        return n.toLocaleString(loc, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+    }
+
+    // Notenskala: eine Stufe pro Bereich, benutzt ueberall dieselben Klassen.
+    function getSchoolNoteTone(note) {
+        const n = parseFloat(note);
+        if (isNaN(n) || n === 0) return 'neutral';
+        if (n <= 2.0) return 'good';
+        if (n <= 3.0) return 'mid';
+        return 'bad';
+    }
+
     function renderSchoolView() {
         const kpis = calculateSchoolKPIs();
         const overallAvg = kpis.overallAvg;
 
-        // Ring & averages
-        const avgEl = document.getElementById('schoolOverallAvg');
-        const ringEl = document.getElementById('ringSchoolAvg');
+        // ── Durchschnitts-Ring ──
+        const avgEl   = document.getElementById('schoolOverallAvg');
+        const ringEl  = document.getElementById('ringSchoolAvg');
         const badgeEl = document.getElementById('schoolGradeBadge');
 
         if (overallAvg > 0) {
-            avgEl.innerText = overallAvg.toFixed(2);
-            const avgColor = getSchoolNoteColor(overallAvg);
-            avgEl.style.color = avgColor;
+            const tone = getSchoolNoteTone(overallAvg);
+            if (avgEl) avgEl.textContent = scFmt(overallAvg, 2);
 
-            const circumference = 326.7;
-            const pct = mapNoteToRadial(overallAvg);
-            const offset = circumference - (pct / 100) * circumference;
-            ringEl.style.strokeDashoffset = offset;
-            ringEl.style.stroke = avgColor;
-            ringEl.style.filter = `drop-shadow(0 0 12px ${avgColor})`;
+            if (ringEl) {
+                const circumference = 326.7;
+                const pct = mapNoteToRadial(overallAvg);
+                ringEl.style.strokeDashoffset = circumference - (pct / 100) * circumference;
+                ringEl.style.stroke = 'var(--sc-' + tone + ')';
+            }
 
-            // Grade badge
             if (badgeEl) {
-                if (overallAvg <= 1.5) badgeEl.textContent = '🌟 Exzellent';
-                else if (overallAvg <= 2.5) badgeEl.textContent = '✅ Gut';
-                else if (overallAvg <= 3.5) badgeEl.textContent = '📘 Befriedigend';
-                else if (overallAvg <= 4.5) badgeEl.textContent = '⚠️ Ausreichend';
-                else badgeEl.textContent = '🔴 Mangelhaft';
+                let icon = SC_ICONS.check, label = scL('Gut', 'Good');
+                if (overallAvg <= 1.5)      { icon = SC_ICONS.award; label = scL('Sehr gut', 'Very good'); }
+                else if (overallAvg <= 2.5) { icon = SC_ICONS.check; label = scL('Gut', 'Good'); }
+                else if (overallAvg <= 3.5) { icon = SC_ICONS.check; label = scL('Befriedigend', 'Satisfactory'); }
+                else if (overallAvg <= 4.5) { icon = SC_ICONS.alert; label = scL('Ausreichend', 'Sufficient'); }
+                else                        { icon = SC_ICONS.alert; label = scL('Mangelhaft', 'Poor'); }
+                badgeEl.innerHTML = icon + '<span>' + esc(label) + '</span>';
             }
         } else {
-            avgEl.innerText = '---';
-            ringEl.style.strokeDashoffset = 326.7;
-            if (badgeEl) badgeEl.textContent = 'Keine Daten';
+            if (avgEl) avgEl.textContent = '–';
+            if (ringEl) {
+                ringEl.style.strokeDashoffset = 326.7;
+                ringEl.style.stroke = '';
+            }
+            if (badgeEl) badgeEl.textContent = scL('Keine Daten', 'No data');
         }
 
-        // Metrics
-        const bestNoteEl = document.getElementById('schoolBestNote');
-        const bestSubjectEl = document.getElementById('schoolBestSubject');
-        const worstNoteEl = document.getElementById('schoolWorstNote');
+        // ── Kennzahlen ──
+        const bestNoteEl     = document.getElementById('schoolBestNote');
+        const bestSubjectEl  = document.getElementById('schoolBestSubject');
+        const worstNoteEl    = document.getElementById('schoolWorstNote');
         const worstSubjectEl = document.getElementById('schoolWorstSubject');
         const subjectCountEl = document.getElementById('schoolSubjectCount');
         const subjectTotalEl = document.getElementById('schoolSubjectTotal');
 
-        if (kpis.bestNote > 0) {
-            bestNoteEl.innerText = kpis.bestNote.toFixed(1);
-            bestNoteEl.style.color = getSchoolNoteColor(kpis.bestNote);
-            bestSubjectEl.innerText = kpis.bestSubject;
-        } else {
-            bestNoteEl.innerText = '---';
-            bestSubjectEl.innerText = '—';
-        }
-
-        if (kpis.worstNote > 0) {
-            worstNoteEl.innerText = kpis.worstNote.toFixed(1);
-            worstNoteEl.style.color = getSchoolNoteColor(kpis.worstNote);
-            worstSubjectEl.innerText = kpis.worstSubject;
-        } else {
-            worstNoteEl.innerText = '---';
-            worstSubjectEl.innerText = '—';
-        }
-
-        const totalCount = kpis.allGrades.length;
-        const subjectCount = Object.keys(data.settings.school?.grades || {}).length;
-        subjectCountEl.innerText = totalCount;
-        subjectTotalEl.innerText = `in ${subjectCount} Fächern`;
-
-        // Trend indicator
-        const trendIndicator = document.getElementById('schoolTrendIndicator');
-        const trendArrow = document.getElementById('schoolTrendArrow');
-        const trendText = document.getElementById('schoolTrendText');
-        const trendValue = document.getElementById('schoolTrendValue');
-        const volatility = document.getElementById('schoolVolatility');
-
-        if (trendIndicator) {
-            if (overallAvg < 2.0) {
-                trendArrow.innerText = '📈';
-                trendText.innerText = 'Sehr gut!';
-            } else if (overallAvg < 3.5) {
-                trendArrow.innerText = '→';
-                trendText.innerText = 'Im Plan';
+        if (bestNoteEl) {
+            if (kpis.bestNote > 0) {
+                bestNoteEl.textContent = scFmt(kpis.bestNote, 1);
+                bestNoteEl.style.color = 'var(--sc-' + getSchoolNoteTone(kpis.bestNote) + ')';
+                bestSubjectEl.textContent = kpis.bestSubject;
             } else {
-                trendArrow.innerText = '📉';
-                trendText.innerText = 'Verbesserung nötig';
+                bestNoteEl.textContent = '–';
+                bestNoteEl.style.color = '';
+                bestSubjectEl.textContent = scL('Noch kein Fach', 'No subject yet');
             }
         }
 
-        if (trendValue) trendValue.innerText = overallAvg.toFixed(2);
-        if (volatility) {
-            const vol = calculateVolatility(kpis.allGrades);
-            volatility.innerText = vol.toFixed(2);
+        if (worstNoteEl) {
+            if (kpis.worstNote > 0) {
+                worstNoteEl.textContent = scFmt(kpis.worstNote, 1);
+                worstNoteEl.style.color = 'var(--sc-' + getSchoolNoteTone(kpis.worstNote) + ')';
+                worstSubjectEl.textContent = kpis.worstSubject;
+            } else {
+                worstNoteEl.textContent = '–';
+                worstNoteEl.style.color = '';
+                worstSubjectEl.textContent = scL('Noch kein Fach', 'No subject yet');
+            }
         }
 
-        // Distribution
+        const totalCount   = kpis.allGrades.length;
+        const subjectCount = Object.keys(data.settings.school?.grades || {}).length;
+        if (subjectCountEl) subjectCountEl.textContent = totalCount;
+        if (subjectTotalEl) {
+            const unit = subjectCount === 1
+                ? scL('Fach', 'subject')
+                : scL('Fächern', 'subjects');
+            subjectTotalEl.textContent = `${scL('in', 'across')} ${subjectCount} ${unit}`;
+        }
+
+        // ── Entwicklung ──
+        const trendIcon  = document.getElementById('schoolTrendArrow');
+        const trendText  = document.getElementById('schoolTrendText');
+        const trendValue = document.getElementById('schoolTrendValue');
+        const volatility = document.getElementById('schoolVolatility');
+
+        if (trendIcon && trendText) {
+            trendIcon.classList.remove('is-good', 'is-bad');
+            if (totalCount === 0) {
+                trendIcon.innerHTML = SC_ICONS.trendFlat;
+                trendText.textContent = scL('Keine Daten', 'No data');
+            } else if (overallAvg < 2.0) {
+                trendIcon.innerHTML = SC_ICONS.trendUp;
+                trendIcon.classList.add('is-good');
+                trendText.textContent = scL('Sehr guter Schnitt', 'Very good average');
+            } else if (overallAvg < 3.5) {
+                trendIcon.innerHTML = SC_ICONS.trendFlat;
+                trendText.textContent = scL('Im Plan', 'On track');
+            } else {
+                trendIcon.innerHTML = SC_ICONS.trendDown;
+                trendIcon.classList.add('is-bad');
+                trendText.textContent = scL('Verbesserung nötig', 'Needs improvement');
+            }
+        }
+
+        if (trendValue) trendValue.textContent = totalCount > 0 ? scFmt(overallAvg, 2) : '–';
+        if (volatility) volatility.textContent = totalCount > 1 ? scFmt(calculateVolatility(kpis.allGrades), 2) : '–';
+
+        // ── Verteilung ──
         const dist = kpis.distribution;
-        document.getElementById('distGood').style.width = dist.good + '%';
-        document.getElementById('distOk').style.width = dist.ok + '%';
-        document.getElementById('distMedium').style.width = dist.medium + '%';
-        document.getElementById('distPoor').style.width = dist.poor + '%';
+        const setW = (id, val) => { const el = document.getElementById(id); if (el) el.style.width = val + '%'; };
+        const setT = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
-        document.getElementById('countGood').innerText = dist.goodCount;
-        document.getElementById('countOk').innerText = dist.okCount;
-        document.getElementById('countMedium').innerText = dist.mediumCount;
-        document.getElementById('countPoor').innerText = dist.poorCount;
+        setW('distGood', dist.good);
+        setW('distOk', dist.ok);
+        setW('distMedium', dist.medium);
+        setW('distPoor', dist.poor);
 
-        // Timeline fill
-        const timelineGood = document.getElementById('scTimelineGood');
-        const timelineOk = document.getElementById('scTimelineOk');
-        const timelinePoor = document.getElementById('scTimelinePoor');
+        setT('countGood', dist.goodCount);
+        setT('countOk', dist.okCount);
+        setT('countMedium', dist.mediumCount);
+        setT('countPoor', dist.poorCount);
 
-        if (timelineGood) timelineGood.style.width = dist.good + '%';
-        if (timelineOk) timelineOk.style.width = dist.ok + '%';
-        if (timelinePoor) timelinePoor.style.width = dist.poor + '%';
-
-        // Subjects table
-        const tableBody = document.getElementById('schoolSubjectsBody');
-        if (kpis.gradeListHTML) {
+        // ── Fächer-Tabelle ──
+        const oldBody = document.getElementById('schoolSubjectsBody');
+        if (oldBody && kpis.gradeRowsHTML) {
             const tbody = document.createElement('tbody');
             tbody.id = 'schoolSubjectsBody';
-            tbody.innerHTML = kpis.gradeListHTML;
-            const oldBody = document.getElementById('schoolSubjectsBody');
-            if (oldBody) oldBody.parentNode.replaceChild(tbody, oldBody);
+            tbody.innerHTML = kpis.gradeRowsHTML;
+            oldBody.parentNode.replaceChild(tbody, oldBody);
         }
     }
 
     function renderSchoolGradesInputs() {
         const inputGrid = document.getElementById('schoolSubjectsInputGrid');
+        if (!inputGrid) return;
+
+        const subjects = Object.keys(data.settings.school?.grades || {});
         let html = '';
 
-        for (const subject in data.settings.school.grades) {
-            const grades = data.settings.school.grades[subject];
-            const validGrades = grades.filter(n => !isNaN(parseFloat(n)) && n >= 1 && n <= 6);
-            const avg = validGrades.length > 0 ? validGrades.reduce((a,b) => a + parseFloat(b), 0) / validGrades.length : 0;
-            const avgColor = avg > 0 ? getSchoolNoteColor(avg) : 'var(--primary)';
+        if (subjects.length === 0) {
+            html = '<div class="sc-subjects-empty">' + scL('Noch keine Fächer angelegt.', 'No subjects yet.') + '</div>';
+        }
 
+        subjects.forEach(subject => {
+            const grades = data.settings.school.grades[subject] || [];
+            const validGrades = grades.filter(n => !isNaN(parseFloat(n)) && n >= 1 && n <= 6);
+            const avg = validGrades.length > 0
+                ? validGrades.reduce((a, b) => a + parseFloat(b), 0) / validGrades.length
+                : 0;
             const subjectEsc = esc(subject);
+
+            const avgBadge = avg > 0
+                ? `<span class="sc-subject-avg is-${getSchoolNoteTone(avg)}">Ø ${scFmt(avg, 1)}</span>`
+                : '';
+
+            const gradeWord = scL('Note', 'Grade');
+            const chips = grades.map((grade, index) => `
+                            <input type="number" step="0.1" min="1.0" max="6.0"
+                                class="sc-grade-input school-grade-input"
+                                data-subject="${subjectEsc}" data-index="${index}"
+                                value="${esc(grade)}"
+                                aria-label="${subjectEsc}, ${gradeWord} ${index + 1}">
+            `).join('');
+
             html += `
-                <div style="background:rgba(255,255,255,0.03);padding:1.25rem;border-radius:16px;border:1px solid rgba(255,255,255,0.06);position:relative;overflow:hidden;">
-                    <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${avgColor};border-radius:3px 3px 0 0;"></div>
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                        <div style="display:flex;align-items:center;gap:8px;flex:1;">
-                            <h5 style="color:#fff;margin:0;font-size:1rem;font-weight:700;">${subjectEsc}</h5>
-                            ${avg > 0 ? '<span style="font-size:.75rem;padding:3px 10px;border-radius:8px;background:' + avgColor + '20;color:' + avgColor + ';font-weight:600;">Ø ' + avg.toFixed(1) + '</span>' : ''}
-                        </div>
-                        <div style="display:flex;gap:6px;">
-                            <button type="button" data-subject="${subjectEsc}" style="background:rgba(168,85,247,0.15);color:var(--primary);border:none;padding:4px 8px;border-radius:6px;font-size:.9rem;cursor:pointer;transition:all 0.2s;font-weight:600;" title="Fach umbenennen" class="school-action-btn school-rename-btn">✏️</button>
-                            <button type="button" data-subject="${subjectEsc}" style="background:rgba(239,68,68,0.2);color:#ef4444;border:none;padding:4px 8px;border-radius:6px;font-size:.9rem;cursor:pointer;transition:all 0.2s;font-weight:600;" title="Fach löschen" class="school-action-btn school-delete-btn">🗑️</button>
+                <div class="sc-subject-card">
+                    <div class="sc-subject-top">
+                        <h5 class="sc-subject-name" title="${subjectEsc}">${subjectEsc}</h5>
+                        ${avgBadge}
+                        <div class="sc-subject-actions">
+                            <button type="button" class="sc-icon-btn school-rename-btn" data-subject="${subjectEsc}"
+                                title="${scL('Fach umbenennen', 'Rename subject')}"
+                                aria-label="${scL('Fach', 'Subject')} ${subjectEsc} ${scL('umbenennen', 'rename')}">${SC_ICONS.pencil}</button>
+                            <button type="button" class="sc-icon-btn is-danger school-delete-btn" data-subject="${subjectEsc}"
+                                title="${scL('Fach löschen', 'Delete subject')}"
+                                aria-label="${scL('Fach', 'Subject')} ${subjectEsc} ${scL('löschen', 'delete')}">${SC_ICONS.trash}</button>
                         </div>
                     </div>
-                    <div style="display:flex;flex-direction:column;gap:8px;">
-                        ${grades.map((grade, index) => `
-                            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(255,255,255,0.03);border-radius:10px;">
-                                <label style="font-size:.8rem;color:rgba(255,255,255,0.4);font-weight:500;">Note ${index + 1}</label>
-                                <input type="number" step="0.1" min="1.0" max="6.0"
-                                    class="glass-input school-grade-input" data-subject="${subjectEsc}" data-index="${index}" value="${esc(grade)}"
-                                    style="width:80px;padding:8px;text-align:center;font-family:var(--font-mono);border-radius:10px;">
-                            </div>
-                        `).join('')}
-
-                        <button type="button" class="btn btn-ghost school-addgrade-btn" data-subject="${subjectEsc}" style="background:transparent;border:1px dashed rgba(168,85,247,0.3);color:var(--primary);padding:10px;border-radius:12px;font-size:.85rem;">+ Note hinzufügen</button>
+                    <div class="sc-grade-chips">
+                        ${chips}
+                        <button type="button" class="sc-chip-add school-addgrade-btn" data-subject="${subjectEsc}"
+                            aria-label="${scL('Note hinzufügen zu', 'Add grade to')} ${subjectEsc}">${SC_ICONS.plus}${gradeWord}</button>
                     </div>
                 </div>
             `;
-        }
+        });
 
         inputGrid.innerHTML = html;
+
         inputGrid.querySelectorAll('.school-rename-btn').forEach(btn => {
             btn.addEventListener('click', () => renameSchoolSubject(btn.dataset.subject));
         });
@@ -174,11 +236,7 @@
         inputGrid.querySelectorAll('.school-addgrade-btn').forEach(btn => {
             btn.addEventListener('click', () => addSchoolGrade(btn.dataset.subject));
         });
-        const buttons = document.querySelectorAll('.school-action-btn');
-        buttons.forEach(btn => {
-            btn.addEventListener('mouseenter', function() { this.style.background = this.style.background.includes('#ef4444') ? 'rgba(239,68,68,0.3)' : 'rgba(59,130,246,0.3)'; });
-            btn.addEventListener('mouseleave', function() { this.style.background = this.style.background.includes('#ef4444') ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)'; });
-        });
+
         renderSchoolView();
     }
 
@@ -251,32 +309,39 @@
             ? allGrades.reduce((a, b) => a + b, 0) / allGrades.length
             : 0;
 
-        // Build grades list HTML
-        let gradeListHTML = '';
-        if (Object.keys(gradesBySubject).length > 0) {
-            gradeListHTML = '<tbody id="schoolSubjectsBody">';
-            for (const subject in gradesBySubject) {
-                const avg = gradesBySubject[subject];
-                const count = (grades[subject] || []).filter(n => !isNaN(parseFloat(n)) && n >= 1 && n <= 6).length;
-                const trend = calculateTrend(grades[subject] || []);
-                const trendText = trend.direction === 'up' ? '📈' : trend.direction === 'down' ? '📉' : '→';
-                const statusColor = avg <= 2 ? '#22c55e' : avg <= 3 ? '#f59e0b' : '#ef4444';
-                const statusBg = avg <= 2 ? 'rgba(34,197,94,0.2)' : avg <= 3 ? 'rgba(245,158,11,0.2)' : 'rgba(239,68,68,0.2)';
+        // Tabellenzeilen
+        let gradeRowsHTML = '';
+        for (const subject in gradesBySubject) {
+            const avg = gradesBySubject[subject];
+            const count = (grades[subject] || []).filter(n => !isNaN(parseFloat(n)) && n >= 1 && n <= 6).length;
+            const trend = calculateTrend(grades[subject] || []);
+            const tone = getSchoolNoteTone(avg);
 
-                gradeListHTML += `
-                    <tr>
-                        <td class="sc-col-subject">${esc(subject)}</td>
-                        <td class="sc-col-grade"><span style="color:${statusColor};font-weight:700;">${avg.toFixed(1)}</span></td>
-                        <td class="sc-col-trend">${trendText} ${trend.change > 0 ? '+' : ''}${trend.change.toFixed(2)}</td>
-                        <td class="sc-col-count">${count}</td>
-                        <td class="sc-col-status"><span style="background:${statusBg};color:${statusColor};padding:4px 12px;border-radius:20px;font-size:0.85rem;font-weight:600;">${avg <= 2 ? 'Sehr gut' : avg <= 3 ? 'Gut' : 'Verbesserung'}</span></td>
-                    </tr>
-                `;
-            }
-            gradeListHTML += '</tbody>';
+            const trendIcon = trend.direction === 'up' ? SC_ICONS.trendUp
+                            : trend.direction === 'down' ? SC_ICONS.trendDown
+                            : SC_ICONS.trendFlat;
+            const trendClass = trend.direction === 'up' ? ' is-up'
+                             : trend.direction === 'down' ? ' is-down' : '';
+            // Vorzeichen getrennt setzen, die Zahl immer ueber scFmt — sonst steht
+            // auf /en/ ein deutsches Komma im sonst englischen Text.
+            const trendSign = trend.change === 0 ? '±' : (trend.change > 0 ? '+' : '−');
+            const trendLabel = trendSign + scFmt(Math.abs(trend.change), 2);
+
+            const statusLabel = avg <= 2 ? scL('Sehr gut', 'Very good')
+                              : avg <= 3 ? scL('Gut', 'Good')
+                              : scL('Verbesserung', 'Needs work');
+
+            gradeRowsHTML += `
+                <tr>
+                    <td class="sc-col-subject">${esc(subject)}</td>
+                    <td class="sc-col-grade"><span class="sc-grade-val" style="color:var(--sc-${tone})">${scFmt(avg, 1)}</span></td>
+                    <td class="sc-col-trend"><span class="sc-trend-cell${trendClass}">${trendIcon}${trendLabel}</span></td>
+                    <td class="sc-col-count">${count}</td>
+                    <td class="sc-col-status"><span class="sc-status-pill sc-status-${tone}">${statusLabel}</span></td>
+                </tr>
+            `;
         }
 
-        // Calculate distribution
         const distribution = calculateGradeDistribution(allGrades);
 
         return {
@@ -286,7 +351,7 @@
             worstNote: worstNote === 1.0 ? 0 : worstNote,
             worstSubject,
             allGrades,
-            gradeListHTML,
+            gradeRowsHTML,
             distribution
         };
     }
@@ -305,7 +370,7 @@
         const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
         const olderAvg = older.reduce((a, b) => a + b, 0) / older.length;
 
-        const change = olderAvg - recentAvg; // Positive = improvement (notes went down)
+        const change = olderAvg - recentAvg; // Positive = Verbesserung (Noten gesunken)
         let direction = 'stable';
         if (change > 0.2) direction = 'up';
         else if (change < -0.2) direction = 'down';
@@ -348,24 +413,19 @@
         return Math.sqrt(variance);
     }
 
-    function getSchoolNoteColor(note) {
-        const n = parseFloat(note);
-        if (isNaN(n) || n === 0) return 'var(--primary)';
-        if (n <= 2.0) return '#22c55e';
-        if (n <= 3.0) return '#f59e0b';
-        return '#ef4444';
-    }
-
     function mapNoteToRadial(note) {
         const n = parseFloat(note);
         if (isNaN(n) || n === 0) return 0;
-        // Map 1.0 (best) to 100%, 6.0 (worst) to 0%
+        // Note 1.0 (beste) = 100%, Note 6.0 (schlechteste) = 0%
         return Math.max(0, Math.min(100, ((6.0 - n) / 5.0) * 100));
     }
 
     function addSchoolGrade(subject) {
         data.settings.school.grades[subject].push('');
         renderSchoolGradesInputs();
+        // Fokus auf das neue, leere Feld
+        const fields = document.querySelectorAll(`.school-grade-input[data-subject="${CSS.escape(subject)}"]`);
+        if (fields.length) fields[fields.length - 1].focus();
     }
 
     function addNewSchoolSubject() {
@@ -376,12 +436,20 @@
         const grade = parseFloat(gradeEl?.value || '');
 
         if (!name) {
-            alert('Bitte gib einen Fachnamen ein!');
+            showCustomMessage(
+                scL('Fachname fehlt', 'Subject name missing'),
+                scL('Gib einen Namen für das Fach ein.', 'Enter a name for the subject.'),
+                'warning');
+            nameEl?.focus();
             return;
         }
 
         if (isNaN(grade) || grade < 1.0 || grade > 6.0) {
-            alert('Bitte gib eine gültige Note ein (1.0 – 6.0)!');
+            showCustomMessage(
+                scL('Note prüfen', 'Check the grade'),
+                scL('Die Note muss zwischen 1,0 und 6,0 liegen.', 'The grade must be between 1.0 and 6.0.'),
+                'warning');
+            gradeEl?.focus();
             return;
         }
 
@@ -399,7 +467,6 @@
     }
 
     function saveSchoolGrades() {
-        // Collect all grade inputs
         if (!data.settings.school) data.settings.school = { grades: {} };
 
         const inputs = document.querySelectorAll('.school-grade-input');
@@ -414,7 +481,7 @@
             updatedGrades[subject][index] = isNaN(value) ? '' : value.toString();
         });
 
-        // Merge with existing (in case some subjects haven't been modified)
+        // Faecher ohne sichtbare Eingabefelder unveraendert uebernehmen
         for (const subject in data.settings.school.grades) {
             if (!updatedGrades[subject]) {
                 updatedGrades[subject] = data.settings.school.grades[subject];
@@ -427,7 +494,8 @@
     }
 
     function deleteSchoolSubject(subject) {
-        if (confirm(`Fach "${subject}" wirklich löschen?`)) {
+        const question = scL(`Fach "${subject}" wirklich löschen?`, `Really delete the subject "${subject}"?`);
+        if (confirm(question)) {
             delete data.settings.school.grades[subject];
             save();
             renderSchoolGradesInputs();
@@ -435,7 +503,8 @@
     }
 
     function renameSchoolSubject(oldName) {
-        const newName = prompt(`Neuer Name für "${oldName}":`, oldName);
+        const label = scL(`Neuer Name für "${oldName}":`, `New name for "${oldName}":`);
+        const newName = prompt(label, oldName);
         if (newName && newName.trim() && newName !== oldName) {
             data.settings.school.grades[newName.trim()] = data.settings.school.grades[oldName];
             delete data.settings.school.grades[oldName];

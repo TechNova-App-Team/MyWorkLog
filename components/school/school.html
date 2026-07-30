@@ -1,115 +1,81 @@
 <div id="view-school" class="view-section">
 
             <!-- ═══════════════════════════════════════════ -->
-            <!-- MISSION CONTROL HEADER                      -->
+            <!-- HEADER — DURCHSCHNITT                       -->
             <!-- ═══════════════════════════════════════════ -->
             <div class="sc-header">
-                <div class="sc-header-grid">
-                    <div class="sc-header-left">
-                        <div class="sc-status-row">
-                            <span class="sc-badge-live">
-                                <span class="sc-badge-dot"></span>
-                                ACADEMIC
-                            </span>
-                            <span class="sc-breadcrumb">BERUFSSCHULE MONITOR</span>
-                            <span class="sc-sep">/</span>
-                            <span class="sc-breadcrumb-sub">Noten & Leistungsanalyse</span>
-                        </div>
-                        <h1 class="sc-title">Academic <span class="sc-title-accent">Intelligence</span></h1>
-                        <p class="sc-subtitle">Echtzeit-Einsicht in deine Schulnoten & akademischen Trends</p>
-                    </div>
-                    <div class="sc-header-right">
-                        <div class="sc-ring-wrap">
-                            <svg class="sc-ring-svg" viewBox="0 0 120 120">
-                                <circle class="sc-ring-track" cx="60" cy="60" r="52"/>
-                                <circle class="sc-ring-glow" cx="60" cy="60" r="52"/>
-                                <circle id="ringSchoolAvg" class="sc-ring-progress" cx="60" cy="60" r="52"
-                                    stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
-                                <text x="60" y="53" class="sc-ring-pct" id="schoolOverallAvg">---</text>
-                                <text x="60" y="70" class="sc-ring-label-inner">DURCHSCHNITT</text>
-                            </svg>
-                        </div>
-                        <div class="sc-ring-meta" id="schoolGradeBadge">Keine Daten</div>
-                    </div>
+                <div class="sc-header-text">
+                    <p class="sc-subtitle">Dein Notenschnitt über alle Fächer, die Entwicklung je Fach und die Verteilung deiner Noten.</p>
                 </div>
 
-                <!-- GRADE PERFORMANCE TIMELINE -->
-                <div class="sc-timeline-wrap">
-                    <div class="sc-timeline-label">LEISTUNGSVERLAUF</div>
-                    <div class="sc-timeline-bar">
-                        <div class="sc-timeline-fill-good" id="scTimelineGood" style="width:0%"></div>
-                        <div class="sc-timeline-fill-ok" id="scTimelineOk" style="width:0%"></div>
-                        <div class="sc-timeline-fill-poor" id="scTimelinePoor" style="width:0%"></div>
-                        <div class="sc-timeline-label-bottom">
-                            <span>1.0 (sehr gut)</span>
-                            <span>4.0 (ausreichend)</span>
-                            <span>6.0 (ungenügend)</span>
+                <div class="sc-avg">
+                    <div class="sc-ring-wrap">
+                        <svg class="sc-ring-svg" viewBox="0 0 120 120" aria-hidden="true">
+                            <circle class="sc-ring-track" cx="60" cy="60" r="52"/>
+                            <circle id="ringSchoolAvg" class="sc-ring-progress" cx="60" cy="60" r="52"
+                                stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+                        </svg>
+                        <div class="sc-ring-center">
+                            <span class="sc-ring-value" id="schoolOverallAvg">–</span>
+                            <span class="sc-ring-caption">Schnitt</span>
                         </div>
                     </div>
+                    <div class="sc-avg-meta" id="schoolGradeBadge">Keine Daten</div>
                 </div>
             </div>
 
             <!-- ═══════════════════════════════════════════ -->
-            <!-- PRIMARY METRICS ROW                         -->
+            <!-- KENNZAHLEN                                  -->
             <!-- ═══════════════════════════════════════════ -->
             <div class="sc-metrics-row">
 
-                <div class="sc-metric-block sc-metric-primary">
-                    <div class="sc-metric-eyebrow">BESTE NOTE</div>
-                    <div class="sc-metric-num sc-metric-num-green" id="schoolBestNote">---</div>
-                    <div class="sc-metric-foot" id="schoolBestSubject">—</div>
-                    <div class="sc-metric-bar-wrap">
-                        <div class="sc-metric-bar-fill sc-bar-green" style="width:100%"></div>
-                    </div>
+                <div class="sc-metric-block">
+                    <div class="sc-metric-label">Beste Note</div>
+                    <div class="sc-metric-num" id="schoolBestNote">–</div>
+                    <div class="sc-metric-foot" id="schoolBestSubject">Noch kein Fach</div>
                 </div>
 
                 <div class="sc-metric-block">
-                    <div class="sc-metric-eyebrow">SCHWÄCHSTE NOTE</div>
-                    <div class="sc-metric-num sc-metric-num-red" id="schoolWorstNote">---</div>
-                    <div class="sc-metric-foot" id="schoolWorstSubject">—</div>
-                    <div class="sc-metric-bar-wrap">
-                        <div class="sc-metric-bar-fill sc-bar-red" style="width:0%"></div>
-                    </div>
+                    <div class="sc-metric-label">Schwächste Note</div>
+                    <div class="sc-metric-num" id="schoolWorstNote">–</div>
+                    <div class="sc-metric-foot" id="schoolWorstSubject">Noch kein Fach</div>
                 </div>
 
                 <div class="sc-metric-block">
-                    <div class="sc-metric-eyebrow">FÄCHER ERFASST</div>
-                    <div class="sc-metric-num sc-metric-num-steel" id="schoolSubjectCount">0</div>
-                    <div class="sc-metric-foot" id="schoolSubjectTotal">Insgesamt</div>
-                    <div class="sc-metric-bar-wrap">
-                        <div class="sc-metric-bar-fill sc-bar-steel" style="width:100%"></div>
-                    </div>
+                    <div class="sc-metric-label">Noten erfasst</div>
+                    <div class="sc-metric-num" id="schoolSubjectCount">0</div>
+                    <div class="sc-metric-foot" id="schoolSubjectTotal">in 0 Fächern</div>
                 </div>
 
             </div>
 
             <!-- ═══════════════════════════════════════════ -->
-            <!-- SUBJECT GRADES TABLE                        -->
+            <!-- FÄCHER-TABELLE                              -->
             <!-- ═══════════════════════════════════════════ -->
-            <div class="sc-subjects-panel">
+            <div class="sc-panel sc-subjects-panel">
                 <div class="sc-panel-header">
-                    <span class="sc-panel-icon">◈</span>
-                    <span class="sc-panel-title">FÄCHER-ÜBERSICHT</span>
-                    <span class="sc-panel-tag">LIVE DATEN</span>
+                    <h3 class="sc-panel-title">Fächer</h3>
                 </div>
 
                 <div class="sc-subjects-table-wrap">
                     <table class="sc-subjects-table" id="schoolGradesList">
                         <thead>
                             <tr>
-                                <th class="sc-col-subject">FACH</th>
-                                <th class="sc-col-grade">AKTUELLE NOTE</th>
-                                <th class="sc-col-trend">TREND</th>
-                                <th class="sc-col-count">EINTRÄGE</th>
-                                <th class="sc-col-status">STATUS</th>
+                                <th class="sc-col-subject">Fach</th>
+                                <th class="sc-col-grade">Schnitt</th>
+                                <th class="sc-col-trend">Trend</th>
+                                <th class="sc-col-count">Noten</th>
+                                <th class="sc-col-status">Bewertung</th>
                             </tr>
                         </thead>
                         <tbody id="schoolSubjectsBody">
                             <tr class="sc-table-empty">
-                                <td colspan="5" class="sc-empty-state">
-                                    <div style="font-size:2.5rem;opacity:0.2;margin-bottom:0.5rem;">📚</div>
-                                    <div style="font-weight:600;color:rgba(255,255,255,0.5);">Keine Fächer vorhanden</div>
-                                    <div style="font-size:0.8rem;color:rgba(255,255,255,0.3);">Füge deine ersten Fächer in der Konfiguration ein</div>
+                                <td colspan="5">
+                                    <div class="sc-empty-state">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1 2 3 6 3s6-2 6-3v-5"/></svg>
+                                        <div class="sc-empty-title">Noch keine Fächer</div>
+                                        <div class="sc-empty-hint">Leg unten ein Fach an, dann erscheint es hier.</div>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -118,68 +84,62 @@
             </div>
 
             <!-- ═══════════════════════════════════════════ -->
-            <!-- ANALYSIS PANELS: TREND & DISTRIBUTION      -->
+            <!-- ENTWICKLUNG & VERTEILUNG                    -->
             <!-- ═══════════════════════════════════════════ -->
             <div class="sc-analysis-grid">
 
-                <!-- TREND ANALYSIS -->
                 <div class="sc-panel">
                     <div class="sc-panel-header">
-                        <span class="sc-panel-icon">→</span>
-                        <span class="sc-panel-title">TREND-ANALYSE</span>
-                        <span class="sc-panel-tag">KI-INSIGHTS</span>
+                        <h3 class="sc-panel-title">Entwicklung</h3>
                     </div>
                     <div class="sc-trend-content">
                         <div class="sc-trend-indicator" id="schoolTrendIndicator">
-                            <div class="sc-trend-arrow" id="schoolTrendArrow">→</div>
-                            <div class="sc-trend-text" id="schoolTrendText">Keine Daten</div>
+                            <span class="sc-trend-icon" id="schoolTrendArrow"></span>
+                            <span class="sc-trend-text" id="schoolTrendText">Keine Daten</span>
                         </div>
                         <div class="sc-trend-info">
                             <div class="sc-trend-stat">
-                                <span class="sc-trend-label">Ø Entwicklung</span>
-                                <span class="sc-trend-value" id="schoolTrendValue">—</span>
+                                <span class="sc-trend-label">Gesamtschnitt</span>
+                                <span class="sc-trend-value" id="schoolTrendValue">–</span>
                             </div>
                             <div class="sc-trend-stat">
-                                <span class="sc-trend-label">Volatilität</span>
-                                <span class="sc-trend-value" id="schoolVolatility">—</span>
+                                <span class="sc-trend-label">Streuung</span>
+                                <span class="sc-trend-value" id="schoolVolatility">–</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- GRADE DISTRIBUTION -->
                 <div class="sc-panel">
                     <div class="sc-panel-header">
-                        <span class="sc-panel-icon">⊡</span>
-                        <span class="sc-panel-title">NOTENVERTEILUNG</span>
-                        <span class="sc-panel-tag">STATISTIK</span>
+                        <h3 class="sc-panel-title">Notenverteilung</h3>
                     </div>
                     <div class="sc-distribution-grid">
                         <div class="sc-dist-item">
-                            <div class="sc-dist-label">Sehr gut (1-2)</div>
+                            <div class="sc-dist-label">Sehr gut <span class="sc-dist-range">1,0–2,0</span></div>
                             <div class="sc-dist-bar">
-                                <div class="sc-dist-fill sc-dist-green" id="distGood" style="width:0%"></div>
+                                <div class="sc-dist-fill sc-dist-good" id="distGood" style="width:0%"></div>
                             </div>
                             <div class="sc-dist-count" id="countGood">0</div>
                         </div>
                         <div class="sc-dist-item">
-                            <div class="sc-dist-label">Gut (2-3)</div>
+                            <div class="sc-dist-label">Gut <span class="sc-dist-range">2,1–3,0</span></div>
                             <div class="sc-dist-bar">
-                                <div class="sc-dist-fill sc-dist-yellow" id="distOk" style="width:0%"></div>
+                                <div class="sc-dist-fill sc-dist-neutral" id="distOk" style="width:0%"></div>
                             </div>
                             <div class="sc-dist-count" id="countOk">0</div>
                         </div>
                         <div class="sc-dist-item">
-                            <div class="sc-dist-label">Ausreichend+ (3-4)</div>
+                            <div class="sc-dist-label">Ausreichend <span class="sc-dist-range">3,1–4,0</span></div>
                             <div class="sc-dist-bar">
-                                <div class="sc-dist-fill sc-dist-amber" id="distMedium" style="width:0%"></div>
+                                <div class="sc-dist-fill sc-dist-mid" id="distMedium" style="width:0%"></div>
                             </div>
                             <div class="sc-dist-count" id="countMedium">0</div>
                         </div>
                         <div class="sc-dist-item">
-                            <div class="sc-dist-label">Schwach (4-6)</div>
+                            <div class="sc-dist-label">Schwach <span class="sc-dist-range">4,1–6,0</span></div>
                             <div class="sc-dist-bar">
-                                <div class="sc-dist-fill sc-dist-red" id="distPoor" style="width:0%"></div>
+                                <div class="sc-dist-fill sc-dist-bad" id="distPoor" style="width:0%"></div>
                             </div>
                             <div class="sc-dist-count" id="countPoor">0</div>
                         </div>
@@ -189,46 +149,42 @@
             </div>
 
             <!-- ═══════════════════════════════════════════ -->
-            <!-- CONFIG PANEL: ADD & MANAGE SUBJECTS         -->
+            <!-- FÄCHER VERWALTEN                            -->
             <!-- ═══════════════════════════════════════════ -->
-            <div class="sc-config-panel">
-                <div class="sc-config-header">
-                    <div class="sc-config-title-row">
-                        <span class="sc-config-icon">⚙</span>
-                        <span class="sc-config-title">FÄCHER & NOTEN VERWALTUNG</span>
-                    </div>
-                    <div class="sc-config-subtitle">Füge Fächer hinzu und verwalte deine Schulnoten</div>
+            <div class="sc-panel sc-config-panel">
+                <div class="sc-panel-header">
+                    <h3 class="sc-panel-title">Fächer verwalten</h3>
+                    <p class="sc-panel-sub">Fächer anlegen, Noten eintragen und Änderungen speichern.</p>
                 </div>
 
-                <div class="sc-config-body">
-                    <div class="sc-config-section-label">FÄCHER HINZUFÜGEN</div>
-                    <div class="sc-config-row">
-                        <div class="sc-field-group">
-                            <label class="sc-field-label">FACHNAME</label>
-                            <input type="text" id="newSubjectName" class="sc-input" placeholder="z.B. Mathematik, Deutsch">
-                        </div>
-                        <div class="sc-field-group">
-                            <label class="sc-field-label">AKTUELLE NOTE <span class="sc-field-hint">1.0 – 6.0</span></label>
-                            <input type="number" id="newSubjectGrade" class="sc-input" step="0.1" min="1.0" max="6.0" placeholder="z.B. 2.5">
-                        </div>
-                        <div class="sc-field-group" style="display:flex;align-items:flex-end;">
-                            <button class="sc-add-btn" onclick="addNewSchoolSubject()">
-                                <span class="sc-add-icon">+</span>
-                                Fach hinzufügen
-                            </button>
-                        </div>
+                <div class="sc-config-row">
+                    <div class="sc-field-group">
+                        <label class="sc-field-label" for="newSubjectName">Fachname</label>
+                        <input type="text" id="newSubjectName" class="sc-input" placeholder="z.B. Wirtschaftslehre">
                     </div>
-
-                    <div class="sc-config-section-label" style="margin-top:2rem;">MEINE FÄCHER</div>
-                    <div id="schoolSubjectsInputGrid" class="sc-subjects-input-grid">
+                    <div class="sc-field-group">
+                        <label class="sc-field-label" for="newSubjectGrade">Erste Note <span class="sc-field-hint">1,0 bis 6,0</span></label>
+                        <input type="number" id="newSubjectGrade" class="sc-input" step="0.1" min="1.0" max="6.0" placeholder="z.B. 2.5">
                     </div>
+                    <button class="sc-add-btn" onclick="addNewSchoolSubject()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                        Fach anlegen
+                    </button>
                 </div>
+
+                <div class="sc-config-divider"></div>
+
+                <div class="sc-subjects-head">
+                    <h4 class="sc-subjects-heading">Meine Fächer</h4>
+                    <span class="sc-subjects-hint">Note antippen zum Ändern</span>
+                </div>
+                <div id="schoolSubjectsInputGrid" class="sc-subjects-input-grid"></div>
 
                 <div class="sc-config-footer">
-                    <div class="sc-save-hint">Änderungen werden lokal gespeichert</div>
+                    <span class="sc-save-hint">Änderungen werden lokal gespeichert</span>
                     <button class="sc-save-btn" onclick="saveSchoolGrades()">
-                        <span class="sc-save-icon">▶</span>
-                        Speichern & Berechnen
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Speichern
                     </button>
                 </div>
             </div>

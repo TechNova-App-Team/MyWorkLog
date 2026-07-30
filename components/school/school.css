@@ -1,513 +1,252 @@
         /* ═══════════════════════════════════════════════════════════
-           BERUFSSCHULE / NOTEN-AUDIT — GEOMETRIC DATA TERMINAL
-           Precision · Angular · Purple System
+           BERUFSSCHULE — CLEAN ENTERPRISE SAAS
+           Ruhige Flaechen · klare Hierarchie · Farbe nur als Status
            ══════════════════════════════════════════════════════════ */
 
         #view-school {
-            --sc-panel:      var(--bg-glass);
-            --sc-border:     var(--border);
+            /* Flaechen */
+            --sc-surface:    rgba(255, 255, 255, 0.022);
+            --sc-surface-2:  rgba(255, 255, 255, 0.04);
+            --sc-border:     rgba(255, 255, 255, 0.08);
+            --sc-border-soft: rgba(255, 255, 255, 0.05);
+
             --sc-accent:     var(--primary);
             --sc-accent-rgb: var(--primary-rgb);
-            --sc-accent-dim: var(--primary-dim);
-            --sc-green:      var(--success);
-            --sc-amber:      #f59e0b;
-            --sc-red:        var(--danger);
-            --sc-steel:      rgba(203, 213, 225, 0.55);
+
+            /* Notenskala — geordnet, NICHT kategorial.
+               Validiert mit dataviz/validate_palette.js (dark + light):
+               Normal-vision-Floor 15.6 PASS, CVD-WARN 7.2 ist durch die
+               Klartext-Labels + Zahl je Zeile abgedeckt (Sekundaer-Codierung).
+               --note-mid ist bewusst #f59e0b und nicht #fbbf24: letzteres
+               faellt im Light-Theme auf Kontrast 1.63 gegen Weiss. */
+            --sc-good:    var(--note-good);
+            --sc-neutral: #94a3b8;
+            --sc-mid:     var(--note-mid);
+            --sc-bad:     var(--note-bad);
+
             --sc-text-main:  var(--text-main);
             --sc-text-muted: var(--text-muted);
-            --sc-text-dim:   rgba(148, 163, 184, 0.45);
-            --sc-mono:       var(--font-mono);
-            --sc-sans:       var(--font-main);
-            --sc-notch:      24px;
-            font-family: var(--sc-sans);
+            --sc-text-dim:   color-mix(in srgb, var(--text-muted) 65%, transparent);
+
+            /* Zahlen laufen bewusst in Inter mit tabular-nums statt in Mono:
+               JetBrains Mono gibt dem Dezimalkomma eine volle Zeichenbreite
+               ("1 , 5"). tabular-nums richtet die Ziffern genauso aus. */
+            font-family: var(--font-main);
+        }
+
+        [data-theme="light"] #view-school {
+            --sc-surface:     rgba(7, 16, 35, 0.02);
+            --sc-surface-2:   rgba(7, 16, 35, 0.04);
+            --sc-border:      rgba(7, 16, 35, 0.1);
+            --sc-border-soft: rgba(7, 16, 35, 0.06);
+        }
+
+        /* Gemeinsame Panel-Basis */
+        #view-school .sc-panel,
+        #view-school .sc-header,
+        #view-school .sc-metric-block {
+            background: var(--bg-glass);
+            border: 1px solid var(--sc-border);
+            border-radius: 16px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
         }
 
         /* ════════════════════════════════════════════════
-           HEADER — GEOMETRIC MISSION CONTROL
+           HEADER
            ════════════════════════════════════════════════ */
         #view-school .sc-header {
-            position: relative;
-            background:
-                radial-gradient(ellipse 62% 55% at 92% -5%,  rgba(var(--sc-accent-rgb), 0.18) 0%, transparent 55%),
-                radial-gradient(ellipse 40% 60% at 2% 105%,  rgba(var(--sc-accent-rgb), 0.07) 0%, transparent 50%),
-                var(--sc-panel);
-            border: 1px solid var(--sc-border);
-            border-radius: 3px;
-            padding: 2.5rem 2.5rem 2.25rem;
-            margin-bottom: 1.75rem;
-            overflow: hidden;
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            clip-path: polygon(
-                0 0,
-                100% 0,
-                100% calc(100% - var(--sc-notch)),
-                calc(100% - var(--sc-notch)) 100%,
-                0 100%
-            );
-        }
-
-        /* Animated grid scan */
-        #view-school .sc-header::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px);
-            background-size: 38px 38px;
-            animation: sc-grid-drift 7s linear infinite;
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* TL + TR bracket pair */
-        #view-school .sc-header::after {
-            content: '';
-            position: absolute;
-            top: 15px; left: 15px;
-            width: 22px; height: 22px;
-            border-top: 2px solid rgba(var(--sc-accent-rgb), 0.7);
-            border-left: 2px solid rgba(var(--sc-accent-rgb), 0.7);
-            z-index: 3;
-            pointer-events: none;
-        }
-
-        @keyframes sc-grid-drift {
-            from { background-position: 0 0, 0 0; }
-            to   { background-position: 0 38px, 0 38px; }
-        }
-
-        #view-school .sc-header-grid {
-            position: relative;
-            z-index: 1;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 2.5rem;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        #view-school .sc-status-row {
             display: flex;
             align-items: center;
-            gap: 0.6rem;
-            margin-bottom: 1rem;
+            justify-content: space-between;
             flex-wrap: wrap;
+            gap: 2rem;
+            padding: 1.75rem 2rem;
+            margin-bottom: 1rem;
         }
 
-        #view-school .sc-badge-live {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-family: var(--sc-mono);
-            font-size: 0.58rem;
-            font-weight: 700;
-            letter-spacing: 0.18em;
-            color: var(--sc-accent);
-            background: rgba(var(--sc-accent-rgb), 0.1);
-            border: 1px solid rgba(var(--sc-accent-rgb), 0.35);
-            padding: 3px 10px;
-            clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
-        }
-
-        #view-school .sc-badge-dot {
-            display: inline-block;
-            width: 5px; height: 5px;
-            border-radius: 50%;
-            background: var(--sc-accent);
-            animation: pulse 2s infinite;
-        }
-
-        #view-school .sc-breadcrumb {
-            font-family: var(--sc-mono);
-            font-size: 0.62rem;
-            font-weight: 600;
-            letter-spacing: 0.1em;
-            color: var(--sc-text-muted);
-            text-transform: uppercase;
-        }
-
-        #view-school .sc-sep {
-            opacity: 0.25;
-            margin: 0 0.15rem;
-        }
-
-        #view-school .sc-breadcrumb-sub {
-            font-size: 0.62rem;
-            color: var(--sc-text-dim);
+        #view-school .sc-header-text {
+            flex: 1 1 260px;
+            min-width: 0;
         }
 
         #view-school .sc-title {
-            margin: 0.75rem 0 0.4rem;
-            font-size: 2.1rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            line-height: 1.1;
+            margin: 0 0 0.4rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
             color: var(--sc-text-main);
-        }
-
-        #view-school .sc-title-accent {
-            color: var(--sc-accent);
-            font-style: italic;
         }
 
         #view-school .sc-subtitle {
             margin: 0;
-            font-size: 0.88rem;
+            max-width: 46ch;
+            font-size: 0.875rem;
+            line-height: 1.55;
             color: var(--sc-text-muted);
-            font-weight: 400;
         }
 
-        /* ── Ring — targeting brackets ── */
+        /* ── Durchschnitts-Ring ── */
+        #view-school .sc-avg {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+
         #view-school .sc-ring-wrap {
             position: relative;
-            width: 155px;
-            height: 155px;
-        }
-
-        /* TL targeting bracket */
-        #view-school .sc-ring-wrap::before {
-            content: '';
-            position: absolute;
-            top: -10px; left: -10px;
-            width: 28px; height: 28px;
-            border-top: 2px solid rgba(var(--sc-accent-rgb), 0.55);
-            border-left: 2px solid rgba(var(--sc-accent-rgb), 0.55);
-            z-index: 2;
-        }
-
-        /* BR targeting bracket */
-        #view-school .sc-ring-wrap::after {
-            content: '';
-            position: absolute;
-            bottom: -10px; right: -10px;
-            width: 28px; height: 28px;
-            border-bottom: 2px solid rgba(var(--sc-accent-rgb), 0.55);
-            border-right: 2px solid rgba(var(--sc-accent-rgb), 0.55);
-            z-index: 2;
+            width: 128px;
+            height: 128px;
         }
 
         #view-school .sc-ring-svg {
-            width: 100%; height: 100%;
-            filter: drop-shadow(0 0 22px rgba(var(--sc-accent-rgb), 0.2));
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
         }
 
         #view-school .sc-ring-track {
-            stroke: rgba(255,255,255,0.07);
-            stroke-width: 7;
-        }
-
-        #view-school .sc-ring-glow {
-            stroke: rgba(var(--sc-accent-rgb), 0.1);
-            stroke-width: 11;
-            filter: blur(3px);
+            fill: none;
+            stroke: var(--sc-surface-2);
+            stroke-width: 8;
         }
 
         #view-school .sc-ring-progress {
+            fill: none;
             stroke: var(--sc-accent);
-            stroke-width: 7;
-            stroke-linecap: square;
-            transition: stroke-dashoffset 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-            filter: drop-shadow(0 0 10px rgba(var(--sc-accent-rgb), 0.5));
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.2s ease;
         }
 
-        #view-school .sc-ring-pct {
-            font-family: var(--sc-mono);
-            font-size: 26px;
-            font-weight: 700;
-            fill: var(--sc-text-main);
-            text-anchor: middle;
-        }
-
-        #view-school .sc-ring-label-inner {
-            font-family: var(--sc-mono);
-            font-size: 9px;
-            font-weight: 600;
-            fill: var(--sc-text-dim);
-            text-anchor: middle;
-            letter-spacing: 0.12em;
-        }
-
-        #view-school .sc-ring-meta {
-            margin-top: 1rem;
-            font-size: 0.72rem;
-            color: var(--sc-text-muted);
-            text-align: center;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-weight: 600;
-        }
-
-        /* Timeline */
-        #view-school .sc-timeline-wrap {
-            position: relative;
-            z-index: 1;
-            margin-top: 2rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--sc-border);
-        }
-
-        #view-school .sc-timeline-label {
-            font-family: var(--sc-mono);
-            font-size: 0.62rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            color: var(--sc-text-dim);
-            margin-bottom: 0.75rem;
-            text-transform: uppercase;
-        }
-
-        #view-school .sc-timeline-bar {
-            height: 10px;
-            background: rgba(255,255,255,0.04);
-            border-radius: 0;
-            overflow: hidden;
-            display: flex;
-            clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
-        }
-
-        #view-school .sc-timeline-fill-good  { height: 100%; background: var(--sc-green); transition: width 0.6s ease; }
-        #view-school .sc-timeline-fill-ok    { height: 100%; background: var(--sc-amber); transition: width 0.6s ease; }
-        #view-school .sc-timeline-fill-poor  { height: 100%; background: var(--sc-red);   transition: width 0.6s ease; }
-
-        #view-school .sc-timeline-label-bottom {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 0.55rem;
-            font-size: 0.68rem;
-            color: var(--sc-text-dim);
-        }
-
-        /* ════════════════════════════════════════════════
-           METRIC CARDS — STAGGERED GEOMETRIC
-           ════════════════════════════════════════════════ */
-        #view-school .sc-metrics-row {
-            display: grid;
-            grid-template-columns: 1.15fr 1fr 1fr;
-            gap: 1rem;
-            align-items: start;
-            margin-bottom: 2rem;
-        }
-
-        #view-school .sc-metric-block {
-            position: relative;
-            background:
-                radial-gradient(ellipse 90% 70% at 20% 0%, rgba(var(--sc-accent-rgb), 0.06) 0%, transparent 65%),
-                var(--sc-panel);
-            border: 1px solid var(--sc-border);
-            border-radius: 3px;
-            padding: 1.6rem 1.75rem 1.4rem;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-            clip-path: polygon(
-                0 0,
-                calc(100% - var(--sc-notch)) 0,
-                100% var(--sc-notch),
-                100% 100%,
-                0 100%
-            );
-        }
-
-        /* TL corner bracket */
-        #view-school .sc-metric-block::before {
-            content: '';
+        #view-school .sc-ring-center {
             position: absolute;
-            top: 10px; left: 10px;
-            width: 14px; height: 14px;
-            border-top: 1.5px solid rgba(var(--sc-accent-rgb), 0.4);
-            border-left: 1.5px solid rgba(var(--sc-accent-rgb), 0.4);
-            z-index: 2;
-            transition: opacity 0.25s ease;
-            opacity: 0.6;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            pointer-events: none;
         }
 
-        /* BR corner bracket */
-        #view-school .sc-metric-block::after {
-            content: '';
-            position: absolute;
-            bottom: 10px; right: 10px;
-            width: 14px; height: 14px;
-            border-bottom: 1.5px solid rgba(var(--sc-accent-rgb), 0.25);
-            border-right: 1.5px solid rgba(var(--sc-accent-rgb), 0.25);
-            z-index: 2;
-            transition: opacity 0.25s ease;
-            opacity: 0.5;
-        }
-
-        #view-school .sc-metric-block:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 32px rgba(var(--sc-accent-rgb), 0.1);
-            border-color: rgba(var(--sc-accent-rgb), 0.25);
-        }
-
-        #view-school .sc-metric-block:hover::before { opacity: 1; }
-        #view-school .sc-metric-block:hover::after  { opacity: 0.8; }
-
-        /* Primary card — larger + left accent */
-        #view-school .sc-metric-block.sc-metric-primary {
-            box-shadow: inset 3px 0 0 rgba(var(--sc-accent-rgb), 0.7),
-                        0 0 0 1px rgba(var(--sc-accent-rgb), 0.15);
-            border-color: rgba(var(--sc-accent-rgb), 0.2);
-        }
-
-        /* Stagger: 2nd card lower */
-        #view-school .sc-metric-block:nth-child(2) {
-            transform: translateY(16px);
-        }
-        #view-school .sc-metric-block:nth-child(2):hover {
-            transform: translateY(12px);
-        }
-
-        /* 3rd card slightly lower too */
-        #view-school .sc-metric-block:nth-child(3) {
-            transform: translateY(8px);
-        }
-        #view-school .sc-metric-block:nth-child(3):hover {
-            transform: translateY(4px);
-        }
-
-        #view-school .sc-metric-eyebrow {
-            font-family: var(--sc-mono);
-            font-size: 0.6rem;
+        #view-school .sc-ring-value {
+            font-family: var(--font-main);
+            font-size: 1.75rem;
             font-weight: 700;
-            letter-spacing: 0.14em;
-            color: var(--sc-text-dim);
-            margin-bottom: 0.7rem;
-            text-transform: uppercase;
-        }
-
-        #view-school .sc-metric-num {
-            position: relative;
-            z-index: 1;
-            font-family: var(--sc-mono);
-            font-size: 2.2rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
+            line-height: 1;
+            letter-spacing: -0.02em;
             color: var(--sc-text-main);
-            margin-bottom: 0.35rem;
             font-variant-numeric: tabular-nums;
         }
 
-        #view-school .sc-metric-num-green { color: var(--sc-green); }
-        #view-school .sc-metric-num-red   { color: var(--sc-red); }
-        #view-school .sc-metric-num-steel { color: var(--sc-steel); }
+        #view-school .sc-ring-caption {
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            color: var(--sc-text-dim);
+        }
 
-        #view-school .sc-metric-foot {
-            font-size: 0.75rem;
+        #view-school .sc-avg-meta {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 8px;
+            background: var(--sc-surface-2);
+            font-size: 0.78rem;
+            font-weight: 600;
             color: var(--sc-text-muted);
+            white-space: nowrap;
+        }
+
+        #view-school .sc-avg-meta svg {
+            width: 14px;
+            height: 14px;
+            display: block;
+            flex-shrink: 0;
+        }
+
+        /* ════════════════════════════════════════════════
+           KENNZAHLEN
+           ════════════════════════════════════════════════ */
+        #view-school .sc-metrics-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
             margin-bottom: 1rem;
         }
 
-        #view-school .sc-metric-bar-wrap {
-            height: 4px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 0;
+        #view-school .sc-metric-block {
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px;
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+
+        #view-school .sc-metric-block:hover {
+            border-color: color-mix(in srgb, var(--sc-accent) 30%, transparent);
+        }
+
+        #view-school .sc-metric-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--sc-text-muted);
+            margin-bottom: 0.6rem;
+        }
+
+        #view-school .sc-metric-num {
+            font-family: var(--font-main);
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            color: var(--sc-text-main);
+            margin-bottom: 0.3rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #view-school .sc-metric-foot {
+            font-size: 0.78rem;
+            color: var(--sc-text-dim);
             overflow: hidden;
-        }
-
-        #view-school .sc-metric-bar-fill {
-            height: 100%;
-            transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Diagonal stripe overlay on bars */
-        #view-school .sc-bar-green {
-            background:
-                repeating-linear-gradient(-55deg, transparent 0, transparent 3px, rgba(255,255,255,0.12) 3px, rgba(255,255,255,0.12) 4px),
-                var(--sc-green);
-        }
-        #view-school .sc-bar-red {
-            background:
-                repeating-linear-gradient(-55deg, transparent 0, transparent 3px, rgba(255,255,255,0.12) 3px, rgba(255,255,255,0.12) 4px),
-                var(--sc-red);
-        }
-        #view-school .sc-bar-steel {
-            background:
-                repeating-linear-gradient(-55deg, transparent 0, transparent 3px, rgba(255,255,255,0.12) 3px, rgba(255,255,255,0.12) 4px),
-                var(--sc-steel);
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         /* ════════════════════════════════════════════════
-           SHARED PANEL BASE
+           PANELS
            ════════════════════════════════════════════════ */
-        #view-school .sc-subjects-panel,
         #view-school .sc-panel {
-            position: relative;
-            background: var(--sc-panel);
-            border: 1px solid var(--sc-border);
-            border-radius: 3px;
             padding: 1.5rem 1.75rem;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
         }
 
-        /* Left accent stripe */
-        #view-school .sc-subjects-panel::before,
-        #view-school .sc-panel::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0;
-            width: 3px; height: 100%;
-            background: linear-gradient(
-                to bottom,
-                var(--sc-accent) 0%,
-                rgba(var(--sc-accent-rgb), 0.3) 60%,
-                transparent 100%
-            );
-        }
-
-        #view-school .sc-subjects-panel { margin-bottom: 1.25rem; }
+        #view-school .sc-subjects-panel { margin-bottom: 1rem; }
 
         #view-school .sc-panel-header {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--sc-border);
-        }
-
-        #view-school .sc-panel-icon {
-            font-size: 0.9rem;
-            opacity: 0.5;
+            margin-bottom: 1.25rem;
         }
 
         #view-school .sc-panel-title {
-            font-family: var(--sc-mono);
-            font-size: 0.67rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            color: var(--sc-text-muted);
-            text-transform: uppercase;
-            flex: 1;
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: var(--sc-text-main);
         }
 
-        /* Parallelogram tag */
-        #view-school .sc-panel-tag {
-            font-family: var(--sc-mono);
-            font-size: 0.57rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            color: var(--sc-accent);
-            background: rgba(var(--sc-accent-rgb), 0.1);
-            border: 1px solid rgba(var(--sc-accent-rgb), 0.25);
-            padding: 3px 14px 3px 10px;
-            clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+        #view-school .sc-panel-sub {
+            margin: 0.35rem 0 0;
+            font-size: 0.8rem;
+            color: var(--sc-text-muted);
         }
 
         /* ════════════════════════════════════════════════
-           SUBJECTS TABLE
+           FAECHER-TABELLE
            ════════════════════════════════════════════════ */
-        #view-school .sc-subjects-table-wrap {
-            position: relative;
-            z-index: 1;
-            overflow-x: auto;
-        }
+        #view-school .sc-subjects-table-wrap { overflow-x: auto; }
 
         #view-school .sc-subjects-table {
             width: 100%;
@@ -515,475 +254,642 @@
             font-size: 0.875rem;
         }
 
-        #view-school .sc-subjects-table thead {
-            border-bottom: 1px solid var(--sc-border);
-        }
-
         #view-school .sc-subjects-table th {
             text-align: left;
-            padding: 0.85rem 1rem;
-            font-family: var(--sc-mono);
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
+            padding: 0 1rem 0.7rem;
+            font-size: 0.75rem;
+            font-weight: 500;
             color: var(--sc-text-dim);
-            text-transform: uppercase;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--sc-border-soft);
+        }
+
+        #view-school .sc-subjects-table th:first-child,
+        #view-school .sc-subjects-table td:first-child { padding-left: 0; }
+
+        #view-school .sc-subjects-table td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--sc-border-soft);
+            color: var(--sc-text-main);
+        }
+
+        #view-school .sc-subjects-table tbody tr:last-child td { border-bottom: none; }
+
+        #view-school .sc-subjects-table tbody tr { transition: background 0.2s ease; }
+        #view-school .sc-subjects-table tbody tr:hover td {
+            background: var(--sc-surface);
+        }
+
+        #view-school .sc-col-subject { font-weight: 500; }
+
+        #view-school .sc-grade-val {
+            font-family: var(--font-main);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Trend-Zelle */
+        #view-school .sc-trend-cell {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-main);
+            font-size: 0.8rem;
+            color: var(--sc-text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+
+        #view-school .sc-trend-cell svg {
+            width: 15px;
+            height: 15px;
+            display: block;
+            flex-shrink: 0;
+        }
+
+        #view-school .sc-trend-cell.is-up   { color: var(--sc-good); }
+        #view-school .sc-trend-cell.is-down { color: var(--sc-bad); }
+
+        #view-school .sc-col-count {
+            font-family: var(--font-main);
+            color: var(--sc-text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Bewertungs-Pille */
+        #view-school .sc-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
             white-space: nowrap;
         }
 
-        #view-school .sc-subjects-table td {
-            padding: 0.9rem 1rem;
-            border-bottom: 1px solid var(--sc-border);
-            color: var(--sc-text-main);
-            transition: background 0.18s ease;
+        #view-school .sc-status-pill::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            flex-shrink: 0;
         }
 
-        #view-school .sc-subjects-table tbody tr {
-            transition: background 0.18s ease;
+        #view-school .sc-status-good {
+            color: var(--sc-good);
+            background: color-mix(in srgb, var(--sc-good) 14%, transparent);
+        }
+        #view-school .sc-status-mid {
+            color: var(--sc-mid);
+            background: color-mix(in srgb, var(--sc-mid) 14%, transparent);
+        }
+        #view-school .sc-status-bad {
+            color: var(--sc-bad);
+            background: color-mix(in srgb, var(--sc-bad) 14%, transparent);
         }
 
-        #view-school .sc-subjects-table tbody tr:hover td {
-            background: rgba(var(--sc-accent-rgb), 0.04);
-        }
-
-        #view-school .sc-subjects-table tbody tr:hover td:first-child {
-            border-left: 2px solid rgba(var(--sc-accent-rgb), 0.5);
-            padding-left: calc(1rem - 2px);
-        }
-
+        /* Leerzustand */
         #view-school .sc-table-empty td {
-            text-align: center;
-            padding: 3rem !important;
+            border-bottom: none;
+            padding: 2.5rem 1rem !important;
         }
 
-        #view-school .sc-empty-state { color: var(--sc-text-dim); }
+        #view-school .sc-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            text-align: center;
+            color: var(--sc-text-dim);
+        }
+
+        #view-school .sc-empty-state svg {
+            width: 32px;
+            height: 32px;
+            opacity: 0.5;
+            margin-bottom: 0.25rem;
+        }
+
+        #view-school .sc-empty-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--sc-text-muted);
+        }
+
+        #view-school .sc-empty-hint { font-size: 0.8rem; }
 
         /* ════════════════════════════════════════════════
-           ANALYSIS GRID — ASYMMETRIC
+           ENTWICKLUNG & VERTEILUNG
            ════════════════════════════════════════════════ */
         #view-school .sc-analysis-grid {
             display: grid;
-            grid-template-columns: 1.15fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 1rem;
-            margin-bottom: 1.25rem;
-        }
-
-        #view-school .sc-trend-content {
-            position: relative;
-            z-index: 1;
+            margin-bottom: 1rem;
         }
 
         #view-school .sc-trend-indicator {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            padding: 1rem 1.2rem;
-            background: rgba(var(--sc-accent-rgb), 0.07);
-            border-radius: 3px;
-            border: 1px solid rgba(var(--sc-accent-rgb), 0.18);
-            clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding: 0.9rem 1.1rem;
+            background: var(--sc-surface);
+            border: 1px solid var(--sc-border-soft);
+            border-radius: 12px;
         }
 
-        #view-school .sc-trend-arrow {
-            font-size: 1.7rem;
-            font-weight: 800;
-            color: var(--sc-accent);
-            line-height: 1;
+        #view-school .sc-trend-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: var(--sc-surface-2);
+            color: var(--sc-text-muted);
+            flex-shrink: 0;
+        }
+
+        #view-school .sc-trend-icon svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+        }
+
+        #view-school .sc-trend-icon.is-good {
+            color: var(--sc-good);
+            background: color-mix(in srgb, var(--sc-good) 12%, transparent);
+        }
+        #view-school .sc-trend-icon.is-bad {
+            color: var(--sc-bad);
+            background: color-mix(in srgb, var(--sc-bad) 12%, transparent);
         }
 
         #view-school .sc-trend-text {
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             color: var(--sc-text-main);
         }
 
         #view-school .sc-trend-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+            gap: 0.75rem;
         }
 
         #view-school .sc-trend-stat {
             display: flex;
             flex-direction: column;
-            gap: 0.35rem;
-            padding: 0.75rem;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--sc-border);
-            border-radius: 2px;
+            gap: 0.3rem;
+            padding: 0.85rem 1rem;
+            background: var(--sc-surface);
+            border: 1px solid var(--sc-border-soft);
+            border-radius: 12px;
         }
 
         #view-school .sc-trend-label {
-            font-size: 0.65rem;
-            color: var(--sc-text-dim);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            font-size: 0.75rem;
+            color: var(--sc-text-muted);
         }
 
         #view-school .sc-trend-value {
-            font-family: var(--sc-mono);
-            font-size: 1.2rem;
+            font-family: var(--font-main);
+            font-size: 1.15rem;
             font-weight: 700;
             color: var(--sc-text-main);
             font-variant-numeric: tabular-nums;
         }
 
-        /* Distribution */
+        /* Verteilung */
         #view-school .sc-distribution-grid {
-            position: relative;
-            z-index: 1;
             display: flex;
             flex-direction: column;
-            gap: 0.9rem;
+            gap: 0.85rem;
         }
 
         #view-school .sc-dist-item {
             display: grid;
-            grid-template-columns: 90px 1fr 32px;
-            gap: 0.75rem;
+            grid-template-columns: minmax(120px, auto) 1fr 28px;
+            gap: 0.9rem;
             align-items: center;
         }
 
         #view-school .sc-dist-label {
+            font-size: 0.8rem;
+            color: var(--sc-text-main);
+            white-space: nowrap;
+        }
+
+        #view-school .sc-dist-range {
+            font-family: var(--font-main);
             font-size: 0.72rem;
-            color: var(--sc-text-muted);
-            font-weight: 600;
+            color: var(--sc-text-dim);
+            margin-left: 4px;
         }
 
         #view-school .sc-dist-bar {
-            height: 6px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 0;
+            height: 8px;
+            background: var(--sc-surface-2);
+            border-radius: 4px;
             overflow: hidden;
         }
 
         #view-school .sc-dist-fill {
             height: 100%;
-            transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 4px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        #view-school .sc-dist-green  {
-            background: repeating-linear-gradient(-55deg, transparent 0, transparent 3px, rgba(255,255,255,0.14) 3px, rgba(255,255,255,0.14) 4px), var(--sc-green);
-        }
-        #view-school .sc-dist-yellow {
-            background: repeating-linear-gradient(-55deg, transparent 0, transparent 3px, rgba(255,255,255,0.14) 3px, rgba(255,255,255,0.14) 4px), #84cc16;
-        }
-        #view-school .sc-dist-amber  {
-            background: repeating-linear-gradient(-55deg, transparent 0, transparent 3px, rgba(255,255,255,0.14) 3px, rgba(255,255,255,0.14) 4px), var(--sc-amber);
-        }
-        #view-school .sc-dist-red    {
-            background: repeating-linear-gradient(-55deg, transparent 0, transparent 3px, rgba(255,255,255,0.14) 3px, rgba(255,255,255,0.14) 4px), var(--sc-red);
-        }
+        #view-school .sc-dist-good    { background: var(--sc-good); }
+        #view-school .sc-dist-neutral { background: var(--sc-neutral); }
+        #view-school .sc-dist-mid     { background: var(--sc-mid); }
+        #view-school .sc-dist-bad     { background: var(--sc-bad); }
 
         #view-school .sc-dist-count {
             text-align: right;
-            font-family: var(--sc-mono);
+            font-family: var(--font-main);
             font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--sc-text-main);
+            font-weight: 600;
+            color: var(--sc-text-muted);
             font-variant-numeric: tabular-nums;
         }
 
         /* ════════════════════════════════════════════════
-           CONFIG PANEL
+           FAECHER VERWALTEN
            ════════════════════════════════════════════════ */
-        #view-school .sc-config-panel {
-            position: relative;
-            background:
-                radial-gradient(ellipse 55% 50% at 90% 0%, rgba(var(--sc-accent-rgb), 0.1) 0%, transparent 55%),
-                radial-gradient(ellipse 35% 55% at 5% 100%, rgba(var(--sc-accent-rgb), 0.05) 0%, transparent 50%),
-                var(--sc-panel);
-            border: 1px solid var(--sc-border);
-            border-radius: 3px;
-            padding: 2rem;
-            margin-top: 1.25rem;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            clip-path: polygon(
-                0 0,
-                calc(100% - var(--sc-notch)) 0,
-                100% var(--sc-notch),
-                100% 100%,
-                0 100%
-            );
-        }
-
-        /* Config left accent */
-        #view-school .sc-config-panel::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0;
-            width: 3px; height: 100%;
-            background: linear-gradient(
-                to bottom,
-                var(--sc-accent) 0%,
-                rgba(var(--sc-accent-rgb), 0.2) 70%,
-                transparent 100%
-            );
-        }
-
-        /* Config corner bracket */
-        #view-school .sc-config-panel::after {
-            content: '';
-            position: absolute;
-            top: 12px; right: 28px;
-            width: 18px; height: 18px;
-            border-top: 1.5px solid rgba(var(--sc-accent-rgb), 0.4);
-            border-right: 1.5px solid rgba(var(--sc-accent-rgb), 0.4);
-            z-index: 2;
-        }
-
-        #view-school .sc-config-header {
-            position: relative;
-            z-index: 1;
-            margin-bottom: 2rem;
-            padding-left: 0.5rem;
-        }
-
-        #view-school .sc-config-title-row {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            margin-bottom: 0.5rem;
-        }
-
-        #view-school .sc-config-icon { font-size: 1.1rem; opacity: 0.6; }
-
-        #view-school .sc-config-title {
-            font-size: 1rem;
-            font-weight: 700;
-            letter-spacing: 0.02em;
-            color: var(--sc-text-main);
-        }
-
-        #view-school .sc-config-subtitle {
-            font-size: 0.82rem;
-            color: var(--sc-text-muted);
-        }
-
-        #view-school .sc-config-body {
-            position: relative;
-            z-index: 1;
-            margin-bottom: 2rem;
-        }
-
-        #view-school .sc-config-section-label {
-            font-family: var(--sc-mono);
-            font-size: 0.62rem;
-            font-weight: 700;
-            letter-spacing: 0.14em;
-            color: var(--sc-text-dim);
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        #view-school .sc-config-section-label::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--sc-border);
-        }
-
         #view-school .sc-config-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-            gap: 1.25rem;
-            margin-bottom: 1.5rem;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+            gap: 1rem;
+            align-items: end;
         }
 
         #view-school .sc-field-group {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.45rem;
+            min-width: 0;
         }
 
         #view-school .sc-field-label {
-            font-size: 0.7rem;
-            font-weight: 700;
+            font-size: 0.78rem;
+            font-weight: 500;
             color: var(--sc-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
         }
 
         #view-school .sc-field-hint {
-            font-size: 0.62rem;
+            font-family: var(--font-main);
+            font-size: 0.7rem;
             color: var(--sc-text-dim);
             font-weight: 400;
-            text-transform: none;
-            letter-spacing: 0;
         }
 
         #view-school .sc-input {
-            padding: 0.7rem 1rem;
-            background: rgba(255,255,255,0.03);
+            width: 100%;
+            padding: 0.65rem 0.85rem;
+            background: var(--sc-surface);
             border: 1px solid var(--sc-border);
-            border-radius: 2px;
+            border-radius: 8px;
             color: var(--sc-text-main);
-            font-family: var(--sc-sans);
+            font-family: var(--font-main);
             font-size: 0.9rem;
-            transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
             outline: none;
         }
 
+        #view-school .sc-input::placeholder { color: var(--sc-text-dim); }
+
         #view-school .sc-input:focus {
-            background: rgba(var(--sc-accent-rgb), 0.06);
-            border-color: rgba(var(--sc-accent-rgb), 0.45);
-            box-shadow: 0 0 0 3px rgba(var(--sc-accent-rgb), 0.08);
+            border-color: color-mix(in srgb, var(--sc-accent) 55%, transparent);
+            box-shadow: 0 0 0 3px rgba(var(--sc-accent-rgb), 0.2);
         }
 
-        #view-school .sc-add-btn {
-            padding: 0.7rem 1.25rem;
-            background: rgba(var(--sc-accent-rgb), 0.12);
-            border: 1px solid rgba(var(--sc-accent-rgb), 0.35);
-            border-radius: 2px;
-            color: var(--sc-accent);
-            font-weight: 700;
-            font-size: 0.875rem;
-            cursor: pointer;
-            display: flex;
+        #view-school .sc-add-btn,
+        #view-school .sc-save-btn {
+            display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 0.5rem;
+            padding: 0.65rem 1.1rem;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            background: var(--sc-accent);
+            color: #fff;
+            font-family: var(--font-main);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
             transition: all 0.2s ease;
-            font-family: var(--sc-sans);
-            clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
         }
 
-        #view-school .sc-add-btn:hover {
-            background: rgba(var(--sc-accent-rgb), 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(var(--sc-accent-rgb), 0.18);
+        #view-school .sc-add-btn svg,
+        #view-school .sc-save-btn svg {
+            width: 16px;
+            height: 16px;
+            display: block;
+            flex-shrink: 0;
         }
 
-        #view-school .sc-add-icon { font-size: 1rem; font-weight: 700; }
+        #view-school .sc-add-btn:hover,
+        #view-school .sc-save-btn:hover {
+            background: color-mix(in srgb, var(--sc-accent) 85%, #fff);
+        }
+
+        #view-school .sc-add-btn:active,
+        #view-school .sc-save-btn:active { transform: scale(0.98); }
+
+        #view-school .sc-add-btn:focus-visible,
+        #view-school .sc-save-btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--sc-accent-rgb), 0.35);
+        }
+
+        #view-school .sc-config-divider {
+            height: 1px;
+            background: var(--sc-border-soft);
+            margin: 1.75rem 0 1.25rem;
+        }
+
+        #view-school .sc-subjects-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        #view-school .sc-subjects-heading {
+            margin: 0;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--sc-text-main);
+        }
+
+        #view-school .sc-subjects-hint {
+            font-size: 0.75rem;
+            color: var(--sc-text-dim);
+        }
 
         #view-school .sc-subjects-input-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 0.85rem;
+            align-items: start; /* Karten folgen ihrem Inhalt, keine Leerflaeche unter kurzen Karten */
+        }
+
+        /* ── Fach-Karte ── */
+        #view-school .sc-subject-card {
+            padding: 1.1rem 1.15rem;
+            background: var(--sc-surface);
+            border: 1px solid var(--sc-border-soft);
+            border-radius: 12px;
+            transition: border-color 0.2s ease;
+        }
+
+        #view-school .sc-subject-card:hover {
+            border-color: var(--sc-border);
+        }
+
+        #view-school .sc-subject-top {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.9rem;
+        }
+
+        #view-school .sc-subject-name {
+            flex: 1 1 auto;
+            min-width: 0;
+            margin: 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--sc-text-main);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #view-school .sc-subject-avg {
+            flex-shrink: 0;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-family: var(--font-main);
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #view-school .sc-subject-avg.is-good {
+            color: var(--sc-good);
+            background: color-mix(in srgb, var(--sc-good) 14%, transparent);
+        }
+        #view-school .sc-subject-avg.is-mid {
+            color: var(--sc-mid);
+            background: color-mix(in srgb, var(--sc-mid) 14%, transparent);
+        }
+        #view-school .sc-subject-avg.is-bad {
+            color: var(--sc-bad);
+            background: color-mix(in srgb, var(--sc-bad) 14%, transparent);
+        }
+
+        /* Aktionen — dauerhaft sichtbar (Touch hat kein :hover) */
+        #view-school .sc-subject-actions {
+            display: flex;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+
+        #view-school .sc-icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--sc-text-dim);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #view-school .sc-icon-btn svg {
+            width: 15px;
+            height: 15px;
+            display: block;
+        }
+
+        #view-school .sc-icon-btn:hover {
+            background: var(--sc-surface-2);
+            color: var(--sc-text-main);
+        }
+
+        #view-school .sc-icon-btn.is-danger:hover {
+            background: color-mix(in srgb, var(--sc-bad) 15%, transparent);
+            color: var(--sc-bad);
+        }
+
+        #view-school .sc-icon-btn:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--sc-accent-rgb), 0.3);
+        }
+
+        /* Noten-Chips */
+        #view-school .sc-grade-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        #view-school .sc-grade-input {
+            width: 56px;
+            padding: 7px 4px;
+            text-align: center;
+            background: var(--sc-surface-2);
+            border: 1px solid transparent;
+            border-radius: 8px;
+            color: var(--sc-text-main);
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            outline: none;
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        #view-school .sc-grade-input::-webkit-outer-spin-button,
+        #view-school .sc-grade-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        #view-school .sc-grade-input:focus {
+            border-color: color-mix(in srgb, var(--sc-accent) 55%, transparent);
+            box-shadow: 0 0 0 3px rgba(var(--sc-accent-rgb), 0.2);
+        }
+
+        #view-school .sc-chip-add {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 33px;
+            padding: 0 10px;
+            border: 1px dashed var(--sc-border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--sc-text-muted);
+            font-family: var(--font-main);
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #view-school .sc-chip-add svg {
+            width: 13px;
+            height: 13px;
+            display: block;
+        }
+
+        #view-school .sc-chip-add:hover {
+            border-color: color-mix(in srgb, var(--sc-accent) 45%, transparent);
+            border-style: solid;
+            color: var(--sc-accent);
+        }
+
+        #view-school .sc-chip-add:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(var(--sc-accent-rgb), 0.3);
+        }
+
+        #view-school .sc-subjects-empty {
+            grid-column: 1 / -1;
+            padding: 1.5rem;
+            border: 1px dashed var(--sc-border);
+            border-radius: 12px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--sc-text-dim);
         }
 
         #view-school .sc-config-footer {
-            position: relative;
-            z-index: 1;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--sc-border);
             gap: 1rem;
+            margin-top: 1.75rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--sc-border-soft);
         }
 
         #view-school .sc-save-hint {
-            font-size: 0.72rem;
+            font-size: 0.78rem;
             color: var(--sc-text-dim);
-            font-family: var(--sc-mono);
-            letter-spacing: 0.04em;
         }
-
-        #view-school .sc-save-btn {
-            padding: 0.7rem 1.75rem;
-            background: rgba(16, 185, 129, 0.12);
-            border: 1px solid rgba(16, 185, 129, 0.35);
-            border-radius: 2px;
-            color: var(--sc-green);
-            font-weight: 700;
-            font-size: 0.875rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.2s ease;
-            font-family: var(--sc-sans);
-            clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px);
-        }
-
-        #view-school .sc-save-btn:hover {
-            background: rgba(16, 185, 129, 0.22);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.18);
-        }
-
-        #view-school .sc-save-icon { font-size: 0.9rem; }
 
         /* ════════════════════════════════════════════════
-           MOBILE
+           RESPONSIVE
            ════════════════════════════════════════════════ */
         @media (max-width: 900px) {
-            #view-school .sc-analysis-grid {
-                grid-template-columns: 1fr;
-            }
+            #view-school .sc-analysis-grid { grid-template-columns: 1fr; }
+            #view-school .sc-metrics-row { grid-template-columns: 1fr 1fr; }
+            #view-school .sc-metrics-row .sc-metric-block:last-child { grid-column: 1 / -1; }
         }
 
         @media (max-width: 768px) {
             #view-school .sc-header {
-                padding: 1.75rem 1.5rem 1.5rem;
-                clip-path: none;
-            }
-
-            #view-school .sc-header-grid {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-            }
-
-            #view-school .sc-title { font-size: 1.6rem; }
-
-            #view-school .sc-ring-wrap {
-                width: 120px; height: 120px;
-                margin: 0 auto;
-            }
-
-            #view-school .sc-metrics-row {
-                grid-template-columns: 1fr;
-                gap: 0.75rem;
-            }
-
-            /* Kill stagger on mobile */
-            #view-school .sc-metric-block:nth-child(2),
-            #view-school .sc-metric-block:nth-child(3) {
-                transform: none;
-            }
-            #view-school .sc-metric-block:nth-child(2):hover,
-            #view-school .sc-metric-block:nth-child(3):hover {
-                transform: translateY(-3px);
-            }
-
-            #view-school .sc-metric-block {
-                clip-path: none;
-            }
-
-            #view-school .sc-config-panel {
-                clip-path: none;
-                padding: 1.5rem;
-            }
-
-            #view-school .sc-config-footer {
                 flex-direction: column;
-                align-items: stretch;
+                align-items: flex-start;
+                gap: 1.5rem;
+                padding: 1.5rem 1.25rem;
             }
 
-            #view-school .sc-save-btn {
-                width: 100%;
-                justify-content: center;
-                clip-path: none;
+            #view-school .sc-avg {
+                flex-direction: row;
+                align-items: center;
+                gap: 1rem;
+                align-self: stretch;
             }
 
-            #view-school .sc-add-btn {
-                clip-path: none;
-            }
+            #view-school .sc-ring-wrap { width: 88px; height: 88px; }
+            #view-school .sc-ring-value { font-size: 1.35rem; }
+            #view-school .sc-ring-caption { font-size: 0.6rem; }
+
+            #view-school .sc-title { font-size: 1.3rem; }
+
+            #view-school .sc-panel { padding: 1.25rem 1.15rem; }
+
+            #view-school .sc-metrics-row { grid-template-columns: 1fr; }
+            #view-school .sc-metrics-row .sc-metric-block:last-child { grid-column: auto; }
+
+            #view-school .sc-config-row { grid-template-columns: 1fr; }
+            #view-school .sc-add-btn { width: 100%; }
 
             #view-school .sc-dist-item {
-                grid-template-columns: 75px 1fr 28px;
+                grid-template-columns: minmax(96px, auto) 1fr 26px;
                 gap: 0.6rem;
             }
+            #view-school .sc-dist-label { font-size: 0.75rem; }
+            #view-school .sc-dist-range { display: block; margin-left: 0; }
+
+            #view-school .sc-config-footer {
+                flex-direction: column-reverse;
+                align-items: stretch;
+                text-align: center;
+            }
+            #view-school .sc-save-btn { width: 100%; }
+
+            #view-school .sc-subjects-input-grid { grid-template-columns: 1fr; }
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+        @media (prefers-reduced-motion: reduce) {
+            #view-school .sc-ring-progress,
+            #view-school .sc-dist-fill { transition: none; }
         }

@@ -23,7 +23,7 @@
             'history': 'Daten-Analyse & Historie',
             'performance': 'Performance Analyse',
             'ihk': 'IHK / Karriere',
-            'school': 'Berufsschule Audit',
+            'school': 'Berufsschule & Noten',
             'goals': 'Ziele & Fokus',
             'yearview': 'Jahresübersicht & Insights',
             'monthcompare': 'Monats-Vergleich & Detailanalyse',
