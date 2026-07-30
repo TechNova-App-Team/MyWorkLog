@@ -428,6 +428,17 @@
 
         .lock-error { color: var(--danger); font-size: 0.8rem; min-height: 1.2rem; margin-top: 0.5rem; font-weight: 500; }
 
+        /* Erscheint erst nach einem fehlgeschlagenen Entsperr-Versuch (siehe
+           handleUnlock) — vorher waere es eine Einladung, ohne Not den
+           eigenen Tresor zu loeschen. */
+        .lock-forgot-link {
+            display: block; background: none; border: none; cursor: pointer;
+            color: var(--text-2); font-size: 0.78rem; font-weight: 500;
+            text-decoration: underline; text-underline-offset: 2px;
+            margin-top: 0.6rem; padding: 0;
+        }
+        .lock-forgot-link:hover { color: var(--text-0); }
+
         /* Der Hinweis stand frueher vier Mal auf dem Bildschirm (Untertitel,
            Krypto-Badge, Warnbox, Fusszeile). Jetzt genau einmal — und zwar
            dort, wo die Entscheidung faellt. */
@@ -1281,6 +1292,9 @@
                     <span id="unlockBtnText">Entsperren</span>
                 </button>
                 <div class="lock-error" id="lockError"></div>
+                <button type="button" class="lock-forgot-link" id="forgotPasswordLink" style="display:none;" onclick="openResetVaultModal()">
+                    Passwort vergessen? Tresor zurücksetzen …
+                </button>
             </div>
 
             <!-- SETUP -->
@@ -1704,6 +1718,35 @@
                 <button class="btn" onclick="generatePreview()">Vorschau</button>
                 <button class="btn btn-success" onclick="exportAsText()">Als TXT</button>
                 <button class="btn btn-primary" onclick="exportAsPDF()">Als PDF</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TRESOR ZURÜCKSETZEN (vergessenes Passwort) — es gibt keine
+     Passwort-Wiederherstellung (AES-256-GCM, Schlüssel verlaesst nie das
+     Geraet), also bleibt nur: alten, unzugaenglichen Tresor loeschen und
+     neu anlegen. Tippbestaetigung statt einfachem Klick, weil das hier
+     ALLE Eintraege + Beweisfotos unwiderruflich vernichtet.
+     ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="resetVaultModal">
+    <div class="modal" style="max-width:440px;">
+        <div class="modal-head">
+            <h2>Tresor zurücksetzen</h2>
+            <button class="modal-close" onclick="closeResetVaultModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="setup-warning-box">
+                Es gibt <strong>keine Passwort-Wiederherstellung</strong> — der Schlüssel wird aus deinem Passwort abgeleitet und verlässt nie dein Gerät. Zurücksetzen löscht den aktuellen Tresor <strong>inklusive aller Einträge und Beweisfotos unwiderruflich</strong>. Nur fortfahren, wenn du sicher bist, dass das Passwort endgültig verloren ist.
+            </div>
+            <div class="lock-input-group">
+                <label class="lock-label" for="resetVaultConfirmInput">Tippe „TRESOR LÖSCHEN" zum Bestätigen</label>
+                <input type="text" class="lock-input" id="resetVaultConfirmInput" autocomplete="off" oninput="updateResetVaultButton()">
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeResetVaultModal()">Abbrechen</button>
+                <button class="btn btn-danger" id="confirmResetVaultBtn" disabled onclick="confirmResetVault()">Tresor endgültig löschen</button>
             </div>
         </div>
     </div>

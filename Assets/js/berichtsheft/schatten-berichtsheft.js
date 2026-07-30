@@ -437,7 +437,47 @@ async function handleUnlock() {
     } catch (e) {
         errEl.textContent = e.message;
         btn.disabled = false; btnText.textContent = L('ZUGANG GEWÄHREN', 'GRANT ACCESS');
+        // Erst nach einem tatsaechlich falschen Passwort zeigen — sonst waere
+        // es eine Einladung, den eigenen Tresor grundlos zu loeschen.
+        document.getElementById('forgotPasswordLink').style.display = 'block';
     }
+}
+
+// ═════════════════════════════════════════
+//  TRESOR ZURÜCKSETZEN — es gibt keine Passwort-Wiederherstellung (der
+//  Schluessel wird aus dem Passwort abgeleitet, verlaesst nie das Geraet),
+//  also bleibt bei einem vergessenen Passwort nur: alten, unzugaenglichen
+//  Tresor loeschen und neu anlegen. Tippbestaetigung statt Klick, weil das
+//  ALLE Eintraege + Beweisfotos unwiderruflich vernichtet.
+// ═════════════════════════════════════════
+
+const RESET_VAULT_CONFIRM_PHRASE = L('TRESOR LÖSCHEN', 'DELETE VAULT');
+
+function openResetVaultModal() {
+    document.getElementById('resetVaultConfirmInput').value = '';
+    document.getElementById('confirmResetVaultBtn').disabled = true;
+    openModal('resetVaultModal');
+}
+
+function closeResetVaultModal() {
+    closeModal('resetVaultModal');
+}
+
+function updateResetVaultButton() {
+    const val = document.getElementById('resetVaultConfirmInput').value.trim();
+    document.getElementById('confirmResetVaultBtn').disabled = val !== RESET_VAULT_CONFIRM_PHRASE;
+}
+
+function confirmResetVault() {
+    const val = document.getElementById('resetVaultConfirmInput').value.trim();
+    if (val !== RESET_VAULT_CONFIRM_PHRASE) return;
+    localStorage.removeItem(STORE_KEY);
+    closeResetVaultModal();
+    document.getElementById('pwInput').value = '';
+    document.getElementById('lockError').textContent = '';
+    document.getElementById('forgotPasswordLink').style.display = 'none';
+    initLockScreen();
+    showToast(L('Tresor gelöscht — leg einen neuen mit einem neuen Passwort an', 'Vault deleted — set up a new one with a new password'), 'info');
 }
 
 async function handleSetup() {
