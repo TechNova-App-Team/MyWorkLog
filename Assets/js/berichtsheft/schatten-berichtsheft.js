@@ -520,6 +520,7 @@ function enterApp() {
     renderEntries();
     updateStats();
     populateCategoryFilter();
+    updateCloudSyncUI();
 }
 
 function lockApp() {
@@ -595,6 +596,99 @@ async function handleChangePassword() {
     } catch (e) {
         errEl.textContent = e.message;
     }
+}
+
+// ═════════════════════════════════════════
+//  CLOUD-FREIGABE
+//  Der Tresor bleibt standardmaessig auf diesem Geraet. Wer ihn mitnehmen will,
+//  gibt ihn hier ausdruecklich frei — bestaetigt mit dem Tresor-Passwort, damit
+//  das nicht jemand nebenbei an einem offenen Geraet umlegt.
+//  Hochgeladen wird ausschliesslich der verschluesselte Block: der Schluessel
+//  wird aus dem Passwort abgeleitet und existiert nirgendwo sonst. Wer die Datei
+//  auf dem Server liest, sieht Zufallszahlen. Ohne Passwort auch fuer uns.
+//  Die eigentliche Sperre sitzt in Assets/js/Cloud/supabase-integration.js
+//  (cloudKeyAllowed) — sie greift fuer Upload UND Download.
+// ═════════════════════════════════════════
+
+const CLOUD_FLAG_KEY = 'schatten_cloud_sync';
+
+function isVaultCloudSyncOn() {
+    try { return localStorage.getItem(CLOUD_FLAG_KEY) === '1'; } catch (e) { return false; }
+}
+
+// Prueft ein Passwort, ohne den Zustand anzufassen: Schluessel neu ableiten und
+// einen Entschluesselungsversuch machen. Der pwHash im Tresor waere billiger,
+// aber ein echter Entschluesselungsversuch ist der Beweis, nicht nur ein Indiz.
+async function verifyVaultPassword(password) {
+    const vault = getVault();
+    if (!vault || !password) return false;
+    try {
+        const key = await deriveKey(password, b64ToU8(vault.salt));
+        await decrypt(vault.entries, key);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+function updateCloudSyncUI() {
+    const on = isVaultCloudSyncOn();
+    const state = document.getElementById('cloudSyncState');
+    if (state) {
+        state.textContent = on ? L('An', 'On') : L('Aus', 'Off');
+        state.classList.toggle('is-on', on);
+    }
+    const modal = document.getElementById('vaultCloudModal');
+    if (modal) modal.classList.toggle('is-on', on);
+    const btn = document.getElementById('vaultCloudConfirmBtn');
+    if (btn) {
+        btn.textContent = on ? L('Freigabe aufheben', 'Turn sharing off') : L('Freigeben', 'Turn sharing on');
+        btn.classList.toggle('btn-danger', on);
+        btn.classList.toggle('btn-cta', !on);
+    }
+}
+
+function openVaultCloudModal() {
+    document.getElementById('vaultMenu').classList.remove('open');
+    const pw = document.getElementById('vaultCloudPwInput');
+    if (pw) pw.value = '';
+    const err = document.getElementById('vaultCloudError');
+    if (err) err.textContent = '';
+    updateCloudSyncUI();
+    openModal('vaultCloudModal');
+    setTimeout(() => { if (pw) pw.focus(); }, 250);
+}
+
+async function confirmVaultCloudToggle() {
+    const btn = document.getElementById('vaultCloudConfirmBtn');
+    const errEl = document.getElementById('vaultCloudError');
+    const pw = document.getElementById('vaultCloudPwInput').value;
+    errEl.textContent = '';
+    if (!pw) { errEl.textContent = L('Bitte Tresor-Passwort eingeben', 'Please enter the vault password'); return; }
+
+    const label = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = L('Prüfe …', 'Checking …');
+    const ok = await verifyVaultPassword(pw);
+    btn.disabled = false;
+    btn.textContent = label;
+    if (!ok) { errEl.textContent = L('Falsches Passwort', 'Wrong password'); return; }
+
+    const turningOn = !isVaultCloudSyncOn();
+    try {
+        if (turningOn) localStorage.setItem(CLOUD_FLAG_KEY, '1');
+        else localStorage.removeItem(CLOUD_FLAG_KEY);
+    } catch (e) {
+        errEl.textContent = L('Einstellung konnte nicht gespeichert werden', 'Could not save the setting');
+        return;
+    }
+    document.getElementById('vaultCloudPwInput').value = '';
+    updateCloudSyncUI();
+    closeModal('vaultCloudModal');
+    showToast(turningOn
+        ? L('Tresor fährt ab jetzt mit der Cloud-Synchronisation mit', 'The vault now travels with cloud sync')
+        : L('Tresor bleibt wieder auf diesem Gerät', 'The vault stays on this device again'),
+        turningOn ? 'success' : 'info');
 }
 
 function triggerBackupExport() {

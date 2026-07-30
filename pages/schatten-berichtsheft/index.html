@@ -45,7 +45,7 @@
     <meta name="twitter:image" content="https://myworklog.de/Grafiken/icon-512.png">
 
     <!-- Fuellt Version + "Zuletzt aktualisiert" im geteilten Footer -->
-    <script defer src="/Assets/js/version-loader.js?v=4.8.10"></script>
+    <script defer src="/Assets/js/version-loader.js?v=4.9.0"></script>
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="/Grafiken/image.jpg">
@@ -860,7 +860,11 @@
 
         /* ══ MODALS ══ */
         .modal-overlay {
-            position: fixed; inset: 0; z-index: 900;
+            /* Muss ueber #lockScreen (z-index 1000, deckende Flaeche) liegen.
+               Vorher 900: das Zuruecksetzen-Modal oeffnete sich brav und lag
+               unsichtbar HINTER dem Sperrbildschirm — von aussen sah es aus,
+               als wuerde der Knopf nichts tun. Toasts bleiben mit 9999 darueber. */
+            position: fixed; inset: 0; z-index: 2000;
             background: rgba(4, 5, 7, 0.7);
             display: none; align-items: center; justify-content: center;
             padding: 1rem;
@@ -978,10 +982,45 @@
         }
         .vault-menu-item:hover { background: rgba(255,255,255,0.06); color: var(--text-0); }
         .vault-menu-item svg { flex-shrink: 0; opacity: 0.7; }
+        .vault-menu-item span:first-of-type { flex: 1; }
+        /* Zustand der Cloud-Freigabe direkt im Menue — sonst muesste man das
+           Modal oeffnen, nur um zu sehen, ob sie an ist. */
+        .vault-menu-state {
+            font-family: var(--font-mono); font-size: 0.66rem; font-weight: 600;
+            letter-spacing: 0.04em; text-transform: uppercase;
+            padding: 2px 6px; border-radius: 5px; flex-shrink: 0;
+            color: var(--text-2); background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+        }
+        /* Bewusst der Akzent und kein Gruen: die Severity-Palette dieser Seite ist
+           auf zwei Status-Farben + Neutral begrenzt (validiert), ein dritter
+           Status-Ton wuerde genau diese Trennschaerfe wieder aufweichen. */
+        .vault-menu-state.is-on {
+            color: var(--primary); background: rgba(var(--primary-rgb), 0.13);
+            border-color: rgba(var(--primary-rgb), 0.32);
+        }
         .vault-menu-size {
             margin-top: 4px; padding: 8px 10px 5px; border-top: 1px solid var(--border);
             font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-2);
         }
+
+        /* ══ CLOUD-FREIGABE-MODAL ══ */
+        .vc-lead { color: var(--text-1); font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.1rem; }
+        .vc-facts { list-style: none; margin: 0 0 1.1rem; padding: 0; display: grid; gap: 10px; }
+        .vc-facts li {
+            display: flex; gap: 10px; align-items: flex-start;
+            font-size: 0.84rem; line-height: 1.6; color: var(--text-2);
+        }
+        .vc-facts li svg { flex-shrink: 0; margin-top: 2px; opacity: 0.75; }
+        .vc-note {
+            font-size: 0.8rem; line-height: 1.6; color: var(--text-2);
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            border-left: 2px solid var(--text-2);
+            border-radius: 0 var(--r-2) var(--r-2) 0; padding: 10px 12px; margin-bottom: 1.1rem;
+        }
+        /* Der Hinweis zum Aufheben gilt nur, wenn die Freigabe gerade AN ist. */
+        .vc-note--off { display: none; }
+        #vaultCloudModal.is-on .vc-note--off { display: block; }
 
         /* ══ BEWEISMITTEL ══ */
         .form-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
@@ -1205,7 +1244,7 @@
             .entry-severity { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=4.8.10"></script>
+    <script defer src="/Assets/js/ph-init.js?v=4.9.0"></script>
 </head>
 <body>
 
@@ -1490,6 +1529,11 @@
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9"></path><polyline points="7 8 12 3 17 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                             Backup importieren
                         </button>
+                        <button class="vault-menu-item" onclick="openVaultCloudModal()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .3-9 6 6 0 0 0-11.5 1.5A3.75 3.75 0 0 0 6.8 19z"></path></svg>
+                            <span>Cloud-Freigabe</span>
+                            <span class="vault-menu-state" id="cloudSyncState">Aus</span>
+                        </button>
                         <div class="vault-menu-size">Speicher: <span id="vaultMenuSize">—</span></div>
                     </div>
                 </div>
@@ -1753,6 +1797,51 @@
 </div>
 
 <!-- ══════════════════════════════════════════
+     CLOUD-FREIGABE — der Tresor bleibt standardmäßig lokal. Hier gibt man ihn
+     ausdrücklich für die Cloud-Synchronisation der App frei, bestätigt mit dem
+     Tresor-Passwort. Hochgeladen wird ausschließlich der verschlüsselte Block.
+     ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="vaultCloudModal">
+    <div class="modal" style="max-width:480px;">
+        <div class="modal-head">
+            <h2>Cloud-Freigabe</h2>
+            <button class="modal-close" onclick="closeModal('vaultCloudModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="vc-lead">Standardmäßig verlässt dieser Tresor dein Gerät nicht. Mit der Freigabe fährt er bei der normalen Cloud-Synchronisation der App mit — hoch wie runter. Praktisch, wenn du auf der Arbeit etwas festhältst und zuhause weiterschreibst.</p>
+
+            <ul class="vc-facts">
+                <li>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <span>Hochgeladen wird ausschließlich der verschlüsselte Block. Der Schlüssel wird aus deinem Passwort abgeleitet und existiert nirgendwo sonst — auf dem Server stehen Zufallszahlen.</span>
+                </li>
+                <li>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 4v5c0 4-3 7.5-7 9-4-1.5-7-5-7-9V7z"></path></svg>
+                    <span>Ohne dein Passwort kommt niemand an den Inhalt. Auch wir nicht, und auch nicht, wer den Server hat.</span>
+                </li>
+                <li>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><circle cx="12" cy="16.2" r="0.6" fill="currentColor" stroke="none"></circle></svg>
+                    <span>Auf jedem weiteren Gerät brauchst du dasselbe Tresor-Passwort. Vergisst du es, hilft auch die Cloud-Kopie nicht.</span>
+                </li>
+            </ul>
+
+            <p class="vc-note vc-note--off">Nach dem Aufheben wird die Kopie beim nächsten Hochladen aus der Cloud entfernt. Bereits synchronisierte Geräte behalten ihren lokalen Stand.</p>
+
+            <div class="form-group">
+                <label class="form-label" for="vaultCloudPwInput">Zum Bestätigen: Tresor-Passwort</label>
+                <input type="password" class="form-input" id="vaultCloudPwInput" autocomplete="current-password">
+            </div>
+            <div class="lock-error" id="vaultCloudError"></div>
+
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('vaultCloudModal')">Abbrechen</button>
+                <button class="btn btn-cta" id="vaultCloudConfirmBtn" onclick="confirmVaultCloudToggle()">Freigeben</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
      DELETE MODAL
      ══════════════════════════════════════════ -->
 <div class="modal-overlay" id="deleteModal">
@@ -1881,7 +1970,7 @@
       var t=document.createElement('template'); t.innerHTML=html; ph.replaceWith(t.content);
     });
 </script>
-<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=4.8.10"></script>
+<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=4.9.0"></script>
 <script>
 /* Theme-Sync: Standalone-Seiten laufen ausserhalb der SPA und muessen den
    User-Akzent selbst nachziehen. Greift hier erst seit dem Redesign, weil das

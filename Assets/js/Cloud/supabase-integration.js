@@ -7,6 +7,29 @@
  * @version 1.0.0
  */
 
+/* ══════════════════════════════════════════════════════════════════════════
+   OPT-IN-DATEN
+   Der Sync sammelt den KOMPLETTEN localStorage ein. Der Tresor des
+   Schatten-Berichtshefts (`schatten_vault`) fuhr dadurch bisher ungefragt mit —
+   Ende-zu-Ende verschluesselt zwar (AES-256-GCM, Schluessel wird aus dem
+   Passwort abgeleitet und verlaesst das Geraet nie, hochgeladen ist also nur
+   Geheimtext), aber "liegt auf einem fremden Server" ist eine Entscheidung,
+   die dem Nutzer gehoert und nicht dem Sync.
+   Solche Schluessel fahren deshalb nur mit, wenn ihr Freigabe-Flag gesetzt ist.
+   Das Flag wird im Tresor selbst gesetzt (mit Passwort-Bestaetigung).
+   ══════════════════════════════════════════════════════════════════════════ */
+const CLOUD_OPT_IN_KEYS = { 'schatten_vault': 'schatten_cloud_sync' };
+
+function cloudKeyAllowed(key) {
+    const flagKey = CLOUD_OPT_IN_KEYS[key];
+    if (!flagKey) return true;
+    try {
+        return localStorage.getItem(flagKey) === '1';
+    } catch (e) {
+        return false;   /* Im Zweifel NICHT hochladen. */
+    }
+}
+
 class SupabaseCloudSync {
     constructor(supabaseUrl, anonKey) {
         this.supabaseUrl = supabaseUrl;
@@ -293,6 +316,7 @@ class SupabaseCloudSync {
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key.startsWith('sb-') || key.startsWith('supabase')) continue;
+                if (!cloudKeyAllowed(key)) continue;   /* nicht freigegeben -> bleibt lokal */
                 allData[key] = localStorage.getItem(key);
             }
 
@@ -372,6 +396,10 @@ class SupabaseCloudSync {
                 // Auth-Tokens niemals überschreiben — nur App-Daten wiederherstellen
                 Object.entries(data.all_data).forEach(([key, value]) => {
                     if (key.startsWith('sb-') || key.startsWith('supabase')) return;
+                    /* Ohne Freigabe auch NICHT zurueckschreiben: sonst koennte eine
+                       aeltere Cloud-Kopie einen lokalen Tresor ueberschreiben, der
+                       nie hochgeladen werden sollte. */
+                    if (!cloudKeyAllowed(key)) return;
                     localStorage.setItem(key, value);
                 });
 
