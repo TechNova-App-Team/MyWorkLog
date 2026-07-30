@@ -1462,6 +1462,32 @@ const PRINT_SEV = {
     note:     { line: '#d7dade', tint: 'transparent', ink: '#8a9099', dot: 'ring' }
 };
 
+// Laufendes Motiv statt Deko: dieselben (bereits ΔE-validierten) Schwere-
+// grad-Farben, als schmaler Balken auf jeder Druckseite UND gross auf dem
+// Deckblatt — das Dokument zeigt seine eigene Form, bevor man ein Wort
+// gelesen hat. Radius bewusst uniform statt "aeussere Ecken rund": bei
+// 1.4mm Hoehe faellt der Unterschied nicht auf, dafuer bricht nichts, wenn
+// nur ein oder zwei Stufen vorkommen.
+function sevFingerprintHtml(list, sizeClass) {
+    if (!list.length) return '';
+    const order = ['critical', 'high', 'medium', 'low', 'note'];
+    const counts = {};
+    order.forEach(s => { counts[s] = list.filter(e => e.severity === s).length; });
+    const present = order.filter(s => counts[s] > 0);
+    const segs = present.map(s => {
+        const p = PRINT_SEV[s] || PRINT_SEV.note;
+        const pct = (counts[s] / list.length * 100).toFixed(2);
+        return '<i style="width:' + pct + '%;background:' + p.line + '"></i>';
+    }).join('');
+    return '<div class="fingerprint ' + sizeClass + '">' + segs + '</div>';
+}
+
+// Kategorie-Icon aus derselben Quelle wie die App (CATEGORY_ICONS) — vorher
+// stand im Druck nur Fliesstext, wo die App ein Icon zeigt.
+function catIconHtml(cat) {
+    return '<span class="cat-ico">' + cat.icon + '</span>';
+}
+
 function exportAsPDF() {
     const exportEntries = getExportEntries();
     if (exportEntries.length === 0) { showToast(L('Keine Einträge zum Exportieren', 'No entries to export'), 'warning'); return; }
@@ -1499,25 +1525,45 @@ function exportAsPDF() {
     html += '.num{font-variant-numeric:tabular-nums}';
 
     // Laufender Kopf — Chrome wiederholt position:fixed auf jeder Druckseite.
-    html += '.runhead{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;';
-    html += 'font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:#9096a0;';
-    html += 'border-bottom:.5pt solid #e6e8eb;padding-bottom:2.5pt}';
-    html += '.page{padding-top:9mm}';
+    // Zweizeilig seit dem Fingerprint-Balken: Zeile 1 Vertraulich/Aktenzeichen,
+    // Zeile 2 die Schweregrad-Signatur (siehe sevFingerprintHtml).
+    html += '.runhead{position:fixed;top:0;left:0;right:0;border-bottom:.5pt solid #e6e8eb;padding-bottom:2mm}';
+    html += '.runhead-row{display:flex;justify-content:space-between;';
+    html += 'font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:#9096a0;margin-bottom:1.8mm}';
+    html += '.page{padding-top:12mm}';
     html += '.break{break-after:page;page-break-after:always}';
 
-    // Typo wie in der App: Gewicht und Laufweite statt Zierschrift.
-    html += 'h2{font-size:13pt;font-weight:600;letter-spacing:-.02em;margin-bottom:5mm}';
+    // ── Fingerprint: dieselben validierten Schweregrad-Farben als
+    //    Segment-Balken. Klein im Laufkopf, gross auf dem Deckblatt. ──
+    html += '.fingerprint{display:flex;gap:.4mm;overflow:hidden;border-radius:1pt}';
+    html += '.fingerprint i{display:block;height:100%}';
+    html += '.fp-run{height:1.3mm}';
+    html += '.fp-cover{height:2.8mm;border-radius:1.4pt;margin-bottom:3mm}';
+    html += '.cover-fp-label{font-size:7.5pt;color:#9096a0;letter-spacing:.04em;margin-bottom:2.2mm}';
+
+    // Typo wie in der App: Gewicht und Laufweite statt Zierschrift. Eyebrow-
+    // Index (01/02/03) ist eine echte Sequenz — drei feste Abschnitte, kein
+    // Deko-Zaehler — und ersetzt Seitenzahlen, die CSS im Browser nicht liefern kann.
+    html += '.sec-head{display:flex;align-items:baseline;gap:3mm;margin-bottom:5mm}';
+    html += '.sec-idx{font-family:"JetBrains Mono",monospace;font-size:8pt;color:#c3c8d0;font-weight:500}';
+    html += 'h2{font-size:13pt;font-weight:600;letter-spacing:-.02em}';
     html += '.lede{font-size:9.5pt;color:#6b7280;margin-bottom:8mm}';
 
+    // ── Kategorie-Icon: dieselbe Quelle wie die App (CATEGORY_ICONS). ──
+    html += '.cat-ico{width:8.5pt;height:8.5pt;flex-shrink:0;color:#8a9099}';
+    html += '.cat-ico svg{width:100%;height:100%;display:block}';
+    html += '.icon-label{display:inline-flex;align-items:center;gap:2mm}';
+
     // ── Deckblatt ──
-    html += '.cover{padding-top:30mm}';
+    html += '.cover{padding-top:26mm}';
     html += '.cover-tag{display:inline-block;border:.75pt solid #f2384f;color:#c11530;font-size:7pt;';
     html += 'font-weight:600;letter-spacing:.16em;padding:2pt 8pt;border-radius:3pt;margin-bottom:13mm}';
     html += '.cover-title{font-size:21pt;font-weight:600;letter-spacing:-.03em;line-height:1.15;margin-bottom:3mm;max-width:150mm}';
     html += '.cover-sub{font-size:10pt;color:#6b7280;margin-bottom:15mm;max-width:125mm;line-height:1.6}';
-    html += '.facts{display:grid;grid-template-columns:1fr 1fr;gap:7mm 12mm;border-top:.75pt solid #14161a;padding-top:6mm;margin-bottom:22mm}';
+    html += '.facts{display:grid;grid-template-columns:1fr 1fr;gap:7mm 12mm;border-top:.75pt solid #14161a;padding-top:6mm;margin-bottom:9mm}';
     html += '.facts dt{font-size:7.5pt;color:#9096a0;margin-bottom:1mm}';
     html += '.facts dd{font-size:12pt;font-weight:500;letter-spacing:-.01em}';
+    html += '.cover-fp-block{margin-bottom:20mm}';
     html += '.sig{display:grid;grid-template-columns:1fr 1fr;gap:16mm;margin-top:18mm}';
     html += '.sig-line{border-top:.5pt solid #c3c8d0;padding-top:2mm;font-size:8.5pt;color:#6b7280}';
 
@@ -1528,20 +1574,24 @@ function exportAsPDF() {
     html += 'background:var(--tint);border:.75pt solid var(--line);color:var(--ink)}';
     html += '.status{font-size:7.5pt;color:#9096a0;white-space:nowrap;margin-left:3mm}';
 
-    // ── Übersicht ──
+    // ── Übersicht: Farbschiene links (--line kommt von der <tr>, kaskadiert
+    //    auf das erste td) statt Border-Trick auf <tr> — der wird von
+    //    Tabellen-Layouts uneinheitlich gerendert. ──
     html += '.toc{width:100%;border-collapse:collapse;font-size:9.5pt}';
     html += '.toc td{padding:2.6mm 0;border-bottom:.5pt solid #eceef1;vertical-align:middle}';
-    html += '.toc .n{width:8mm;color:#b6bbc3;font-size:8.5pt}';
+    html += '.toc td:first-child{border-left:2pt solid var(--line);padding-left:2.5mm}';
+    html += '.toc .n{width:9mm;color:#b6bbc3;font-size:8.5pt}';
     html += '.toc .d{width:23mm;color:#6b7280;font-size:9pt;white-space:nowrap}';
     html += '.toc .s{text-align:right;white-space:nowrap;padding-left:4mm}';
-    html += '.hint{margin-top:5mm;font-size:8pt;color:#9096a0;max-width:130mm}';
 
-    // ── Verteilung: eine Zeile je Stufe, Anteil am Gesamtbestand ──
+    // ── Verteilung: Balken auf einer sichtbaren Schiene — ohne Schiene
+    //    verschwindet eine 5%-Stufe spurlos, es fehlt der Bezugsrahmen. ──
     html += '.dist{width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:9mm}';
     html += '.dist td{padding:1.9mm 0;vertical-align:middle}';
     html += '.dist .lbl{width:25mm;white-space:nowrap;color:#4b5158}';
     html += '.dist .bar{padding-right:4mm}';
-    html += '.dist .bar i{display:block;height:2.6mm;border-radius:1.3mm;background:var(--line);min-width:1mm}';
+    html += '.dist .bar-track{display:block;height:2.6mm;border-radius:1.3mm;background:#eef0f2}';
+    html += '.dist .bar-track i{display:block;height:100%;border-radius:1.3mm;background:var(--line);min-width:1mm}';
     html += '.dist .val{width:11mm;text-align:right;font-weight:600}';
     html += 'table.tbl{width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:9mm}';
     html += 'table.tbl th{text-align:left;font-weight:500;font-size:8pt;color:#9096a0;';
@@ -1549,12 +1599,17 @@ function exportAsPDF() {
     html += 'table.tbl td{padding:2.3mm 0;border-bottom:.5pt solid #eceef1;color:#4b5158}';
     html += 'table.tbl td+td,table.tbl th+th{text-align:right;width:18mm;font-variant-numeric:tabular-nums;color:#14161a;font-weight:500}';
 
-    // ── Verlorene Ausbildungszeit: dieselbe Kasten-Optik wie das Deckblatt,
-    //    weil das hier die eine Zahl ist, die dem Betrieb wehtut. ──
-    html += '.lost{border-top:.75pt solid #14161a;padding-top:5mm;margin-bottom:9mm;display:grid;grid-template-columns:repeat(3,1fr);gap:6mm}';
-    html += '.lost dt{font-size:7.5pt;color:#9096a0;margin-bottom:1mm}';
-    html += '.lost dd{font-size:13pt;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}';
-    html += '.lost-hint{font-size:8pt;color:#9096a0;margin-top:-4mm;margin-bottom:9mm;max-width:150mm;line-height:1.5}';
+    // ── Verlorene Ausbildungszeit: eigene getoente Karte statt Fliesstext —
+    //    das ist die eine Zahl, die dem Betrieb wehtut, auf der Farbe der
+    //    Stufe, die dafuer bereits validiert ist (amber/high). ──
+    html += '.lost-card{background:#fdf4e8;border:.75pt solid rgba(232,145,47,.32);border-radius:2.5mm;padding:6mm 7mm;margin-bottom:9mm}';
+    html += '.lost-card-head{display:flex;align-items:center;gap:2.5mm;font-size:8pt;font-weight:600;';
+    html += 'color:#95590a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5mm}';
+    html += '.lost-card-head .cat-ico{width:11pt;height:11pt;color:#95590a}';
+    html += '.lost{display:grid;grid-template-columns:repeat(3,1fr);gap:6mm}';
+    html += '.lost dt{font-size:7.5pt;color:#a9752f;margin-bottom:1mm}';
+    html += '.lost dd{font-size:13pt;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:#14161a}';
+    html += '.lost-hint{font-size:8pt;color:#8a5a1c;margin-top:5mm;max-width:150mm;line-height:1.5}';
 
     // ── Vorfaelle: dieselbe Zeitleiste wie in der App ──
     html += '.inc{position:relative;padding:0 0 8mm 9mm;break-inside:avoid;page-break-inside:avoid}';
@@ -1565,8 +1620,14 @@ function exportAsPDF() {
     html += '.inc-dot.fill i{background:var(--line)}';
     html += '.inc-dot.ring i{box-shadow:inset 0 0 0 .55mm var(--line)}';
     html += '.inc-head{display:flex;justify-content:space-between;align-items:center;gap:4mm;margin-bottom:1.6mm}';
+    // Index-Nummer vor dem Datum — dieselbe Zahl wie in der Übersichtstabelle,
+    // damit sich beide Seiten ohne Seitenzahlen gegenseitig zitieren lassen.
     html += '.inc-when{font-size:9.5pt;font-weight:500;letter-spacing:-.01em}';
+    // .inc-when .inc-idx statt .inc-idx allein: sonst gewinnt die generische
+    // ".inc-when span"-Regel (hoehere Spezifitaet) und ueberschreibt Farbe/
+    // Abstand der Index-Nummer lautlos (siehe CLAUDE.md: Selektor-Kollisionen).
     html += '.inc-when span{color:#9096a0;font-weight:400;margin-left:2mm}';
+    html += '.inc-when .inc-idx{color:#c3c8d0;font-weight:500;margin-left:0;margin-right:2mm}';
     html += '.inc-badges{display:flex;align-items:center;flex-shrink:0}';
     html += '.inc-cat{font-size:8.5pt;color:#6b7280;margin-bottom:2.5mm}';
     html += '.inc-text{white-space:pre-wrap;font-size:10pt;line-height:1.65;max-width:150mm}';
@@ -1575,17 +1636,36 @@ function exportAsPDF() {
     html += '.det dt{color:#9096a0;margin-right:2mm;display:inline}';
     html += '.det dd{display:inline;font-weight:500}';
     html += '.det>div{white-space:nowrap}';
-    html += '.wit{margin-top:2.5mm;font-size:9pt;color:#4b5158}';
+    html += '.wit{margin-top:2.5mm;display:flex;align-items:flex-start;gap:2mm;font-size:9pt;color:#4b5158}';
+    html += '.wit .cat-ico{width:9pt;height:9pt;margin-top:.4mm;color:#9096a0}';
     html += '.wit b{font-weight:400;color:#9096a0}';
     // Beweisfotos gross genug, um Beweis zu sein.
     html += '.pics{margin-top:3.5mm;display:flex;flex-wrap:wrap;gap:3mm}';
     html += '.pics img{width:80mm;max-height:90mm;object-fit:contain;border:.5pt solid #e0e3e7;border-radius:2mm}';
     html += '.trace{margin-top:2.5mm;font-size:7.5pt;color:#b6bbc3}';
     html += '.foot{margin-top:12mm;padding-top:4mm;border-top:.75pt solid #14161a;font-size:8pt;color:#6b7280;max-width:150mm;line-height:1.6}';
+    html += '.foot p+p{margin-top:2mm}';
+
+    // ── Bildschirm vs. Papier: @page limitiert die Breite NUR beim echten
+    //    Drucken/in der Druckvorschau. Der neue Tab selbst ist eine ganz
+    //    normale Webseite ohne diese Grenze — ohne Gegenmassnahme zieht sich
+    //    jede volle-Breite-Tabelle über den kompletten (breiten) Monitor,
+    //    bevor ueberhaupt gedruckt wird. Deshalb: auf dem Bildschirm jede
+    //    .page als eigenes A4-breites "Blatt" zentriert auf grauem Grund,
+    //    beim Drucken unveraendert randlos nach @page. ──
+    html += '@media screen {';
+    html += 'body{background:#e4e5e9;padding:24px 0 48px}';
+    html += '.runhead{position:sticky;max-width:190mm;margin:0 auto;padding-left:15mm;padding-right:15mm;background:#fff}';
+    html += '.page{max-width:190mm;margin:0 auto 8mm;background:#fff;padding:16mm 15mm 18mm;';
+    html += 'box-shadow:0 1px 2px rgba(20,22,26,.06),0 10px 24px rgba(20,22,26,.10);border-radius:1.5mm}';
+    html += '}';
     html += '</style></head><body>';
 
-    html += '<div class="runhead"><span>' + L('Vertraulich', 'Confidential') + '</span>';
+    html += '<div class="runhead">';
+    html += '<div class="runhead-row"><span>' + L('Vertraulich', 'Confidential') + '</span>';
     html += '<span class="mono">' + (caseId ? escapeHtml(caseId) : 'MyWorkLog') + '</span></div>';
+    html += sevFingerprintHtml(exportEntries, 'fp-run');
+    html += '</div>';
 
     // ═══ DECKBLATT ═══
     html += '<div class="page cover break">';
@@ -1598,6 +1678,12 @@ function exportAsPDF() {
     html += '<div><dt>' + L('Vorfälle', 'Incidents') + '</dt><dd class="num">' + exportEntries.length + '</dd></div>';
     html += '<div><dt>' + L('Ausgefertigt am', 'Issued on') + '</dt><dd>' + now.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'long', year: 'numeric' }) + '</dd></div>';
     html += '</dl>';
+    // Fingerprint gross: die Form des Falls auf einen Blick, bevor ein
+    // einziges Wort gelesen ist — dieselbe Signatur wie im Laufkopf.
+    html += '<div class="cover-fp-block">';
+    html += '<div class="cover-fp-label">' + L('Schweregrad auf einen Blick', 'Severity at a glance') + '</div>';
+    html += sevFingerprintHtml(exportEntries, 'fp-cover');
+    html += '</div>';
     html += '<div class="sig">';
     html += '<div class="sig-line">' + L('Name der Auszubildenden / des Auszubildenden', 'Name of the apprentice') + '</div>';
     html += '<div class="sig-line">' + L('Ausbildungsbetrieb', 'Training company') + '</div>';
@@ -1606,28 +1692,26 @@ function exportAsPDF() {
 
     // ═══ ÜBERSICHT ═══
     html += '<div class="page break">';
-    html += '<h2>' + L('Übersicht der Vorfälle', 'Overview of incidents') + '</h2>';
+    html += '<div class="sec-head"><span class="sec-idx">01</span><h2>' + L('Übersicht der Vorfälle', 'Overview of incidents') + '</h2></div>';
     html += '<table class="toc">';
     exportEntries.forEach((e, i) => {
         const cat = CATEGORIES[e.category] || CATEGORIES.other;
         const statusMeta = STATUS_META[e.status || 'open'] || STATUS_META.open;
-        html += '<tr>';
+        const p = PRINT_SEV[e.severity] || PRINT_SEV.note;
+        html += '<tr style="--line:' + p.line + '">';
         html += '<td class="n num">' + (i + 1) + '</td>';
         html += '<td class="d mono">' + formatDate(e.date) + '</td>';
-        html += '<td>' + escapeHtml(cat.label) + '</td>';
+        html += '<td><span class="icon-label">' + catIconHtml(cat) + escapeHtml(cat.label) + '</span></td>';
         html += '<td class="s">' + sevBadge(e.severity) +
                 '<span class="status">' + escapeHtml(statusMeta.label) + '</span></td>';
         html += '</tr>';
     });
     html += '</table>';
-    // Bewusst keine erfundenen Seitenzahlen: CSS kann sie im Browser nicht
-    // liefern, der Druckdialog schon.
-    html += '<p class="hint">' + L('Seitenzahlen liefert der Druckdialog: dort „Kopf- und Fußzeilen" aktivieren.', 'For page numbers, enable “Headers and footers” in the print dialog.') + '</p>';
     html += '</div>';
 
     // ═══ ZUSAMMENFASSUNG ═══
     html += '<div class="page break">';
-    html += '<h2>' + L('Zusammenfassung', 'Summary') + '</h2>';
+    html += '<div class="sec-head"><span class="sec-idx">02</span><h2>' + L('Zusammenfassung', 'Summary') + '</h2></div>';
     html += '<p class="lede">' + exportEntries.length + L(' dokumentierte Vorfälle im Zeitraum ', ' documented incidents in the period ') + zeitraum + '.</p>';
 
     const sevOrder = ['critical', 'high', 'medium', 'low', 'note'];
@@ -1635,14 +1719,15 @@ function exportAsPDF() {
     sevOrder.forEach(s => { sevCounts[s] = exportEntries.filter(e => e.severity === s).length; });
 
     // Anteil am Gesamtbestand, nicht am groessten Wert: bei gleich haeufigen
-    // Stufen ergaebe eine Max-Normierung lauter randvolle Balken.
+    // Stufen ergaebe eine Max-Normierung lauter randvolle Balken. Schiene
+    // (bar-track) gibt jeder Stufe einen Bezugsrahmen, auch einer 5%-Stufe.
     html += '<table class="dist">';
     sevOrder.filter(s => sevCounts[s] > 0).forEach(s => {
         const p = PRINT_SEV[s] || PRINT_SEV.note;
         const pct = sevCounts[s] / exportEntries.length * 100;
         html += '<tr style="--line:' + p.line + '">';
         html += '<td class="lbl">' + (SEVERITY_LABELS[s] || s) + '</td>';
-        html += '<td class="bar"><i style="width:' + pct.toFixed(1) + '%"></i></td>';
+        html += '<td class="bar"><span class="bar-track"><i style="width:' + pct.toFixed(1) + '%"></i></span></td>';
         html += '<td class="val num">' + sevCounts[s] + '</td>';
         html += '</tr>';
     });
@@ -1651,12 +1736,14 @@ function exportAsPDF() {
     html += '<table class="tbl"><tr><th>' + L('Kategorie', 'Category') + '</th><th>' + L('Anzahl', 'Count') + '</th></tr>';
     Object.keys(CATEGORIES).forEach(k => {
         const c = exportEntries.filter(e => e.category === k).length;
-        if (c > 0) html += '<tr><td>' + escapeHtml(CATEGORIES[k].label) + '</td><td>' + c + '</td></tr>';
+        if (c > 0) html += '<tr><td><span class="icon-label">' + catIconHtml(CATEGORIES[k]) + escapeHtml(CATEGORIES[k].label) + '</span></td><td>' + c + '</td></tr>';
     });
     html += '</table>';
 
     const lostTime = computeLostTrainingTime(exportEntries);
     if (lostTime.onceMinutes > 0 || lostTime.weeklyMinutes > 0) {
+        html += '<div class="lost-card">';
+        html += '<div class="lost-card-head">' + catIconHtml(CATEGORIES.overtime) + '<span>' + L('Verlorene Ausbildungszeit', 'Training time lost') + '</span></div>';
         html += '<dl class="lost">';
         if (lostTime.weeklyMinutes > 0) {
             html += '<div><dt>' + L('pro Woche', 'per week') + '</dt><dd>' + fmtDuration(lostTime.weeklyMinutes) + '</dd></div>';
@@ -1667,7 +1754,8 @@ function exportAsPDF() {
             html += '<div><dt>' + L('einmalig erfasst', 'recorded one-off') + '</dt><dd>' + fmtDuration(lostTime.onceMinutes) + '</dd></div>';
         }
         html += '</dl>';
-        html += '<p class="lost-hint">' + L('Verlorene Ausbildungszeit durch ausbildungsfremde Tätigkeiten — hochgerechnet aus Dauer und Häufigkeit der einzelnen Vorfälle.', 'Training time lost to non-training tasks — extrapolated from the duration and frequency recorded on the individual incidents.') + '</p>';
+        html += '<p class="lost-hint">' + L('Durch ausbildungsfremde Tätigkeiten — hochgerechnet aus Dauer und Häufigkeit der einzelnen Vorfälle.', 'From non-training tasks — extrapolated from the duration and frequency recorded on the individual incidents.') + '</p>';
+        html += '</div>';
     }
 
     html += '<table class="tbl"><tr><th>' + L('Bearbeitungsstand', 'Handling status') + '</th><th>' + L('Anzahl', 'Count') + '</th></tr>';
@@ -1680,7 +1768,7 @@ function exportAsPDF() {
 
     // ═══ VORFÄLLE ═══
     html += '<div class="page">';
-    html += '<h2>' + L('Die Vorfälle im Einzelnen', 'The incidents in detail') + '</h2>';
+    html += '<div class="sec-head"><span class="sec-idx">03</span><h2>' + L('Die Vorfälle im Einzelnen', 'The incidents in detail') + '</h2></div>';
     exportEntries.forEach((e, i) => {
         const cat = CATEGORIES[e.category] || CATEGORIES.other;
         const statusMeta = STATUS_META[e.status || 'open'] || STATUS_META.open;
@@ -1688,12 +1776,13 @@ function exportAsPDF() {
         html += '<div class="inc">';
         html += '<span class="inc-dot ' + p.dot + '" style="--line:' + p.line + '"><i></i></span>';
         html += '<div class="inc-head">';
-        html += '<span class="inc-when mono">' + formatDate(e.date) +
+        // #-Nummer identisch zur Übersichtstabelle — Querverweis ohne Seitenzahlen.
+        html += '<span class="inc-when mono"><span class="inc-idx">#' + (i + 1) + '</span>' + formatDate(e.date) +
                 (e.time ? '<span>' + e.time + L(' Uhr', '') + '</span>' : '') + '</span>';
         html += '<span class="inc-badges">' + sevBadge(e.severity) +
                 '<span class="status">' + escapeHtml(statusMeta.label) + '</span></span>';
         html += '</div>';
-        html += '<p class="inc-cat">' + escapeHtml(cat.label) + '</p>';
+        html += '<p class="inc-cat"><span class="icon-label">' + catIconHtml(cat) + escapeHtml(cat.label) + '</span></p>';
         html += '<div class="inc-text">' + escapeHtml(e.text) + '</div>';
 
         const detailRows = resolveCategoryDetails(e.category, e.details);
@@ -1702,7 +1791,7 @@ function exportAsPDF() {
                 '<div><dt>' + escapeHtml(d.label) + '</dt><dd>' + escapeHtml(d.value) + '</dd></div>').join('') + '</dl>';
         }
         if (e.witnesses && e.witnesses.length) {
-            html += '<p class="wit"><b>' + L('Zeugen', 'Witnesses') + '</b> ' + escapeHtml(e.witnesses.join(', ')) + '</p>';
+            html += '<p class="wit"><span class="cat-ico">' + UI_ICONS.users + '</span><b>' + L('Zeugen', 'Witnesses') + '</b> ' + escapeHtml(e.witnesses.join(', ')) + '</p>';
         }
         if (e.attachments && e.attachments.length) {
             html += '<div class="pics">' + e.attachments.map(a =>
@@ -1721,10 +1810,15 @@ function exportAsPDF() {
     html += '<div class="sig-line">' + L('Unterschrift', 'Signature') + '</div>';
     html += '</div>';
 
-    html += '<p class="foot">' + L(
+    html += '<div class="foot">';
+    html += '<p>' + L(
         'Dieses Protokoll wurde aus einem lokal mit AES-256-GCM verschlüsselten Speicher erzeugt. Die Einträge sind jeweils zeitnah zu den beschriebenen Vorfällen entstanden; das Erfassungsdatum steht unter jedem Vorfall. Die Prüfsumme belegt, dass der Text seit der Erfassung unverändert ist, ersetzt aber keinen kryptographischen Manipulationsschutz.',
         'This record was produced from storage encrypted locally with AES-256-GCM. Each entry was written close in time to the incident it describes; the date of entry appears beneath every incident. The checksum shows the text is unchanged since it was recorded, but is not a substitute for cryptographic tamper protection.'
     ) + '</p>';
+    // Bewusst keine erfundenen Seitenzahlen: CSS kann sie im Browser nicht
+    // liefern, der Druckdialog schon.
+    html += '<p>' + L('Seitenzahlen liefert der Druckdialog: dort „Kopf- und Fußzeilen" aktivieren.', 'For page numbers, enable “Headers and footers” in the print dialog.') + '</p>';
+    html += '</div>';
     html += '</div>';
 
     // Das Dokument druckt sich selbst, sobald ES fertig ist — printWin.onload
