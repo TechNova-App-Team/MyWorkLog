@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -9,15 +9,17 @@
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
 <title>MyWorkLog | ArchFlow</title>
-<meta name="description" content="ArchFlow maps the MyWorkLog codebase: every file, every load, every stylesheet, as an explorable graph.">
+<meta name="description" content="ArchFlow zeigt den Quellcode von MyWorkLog als Karte: jede Datei eine Kachel, jede Ladebeziehung eine Linie. Farbe steht für die Dateiart.">
 <link rel="canonical" href="https://myworklog.de/archflow/">
 <link rel="alternate" hreflang="de" href="https://myworklog.de/archflow/">
 <link rel="alternate" hreflang="en" href="https://myworklog.de/en/archflow/">
 <link rel="alternate" hreflang="x-default" href="https://myworklog.de/archflow/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="ArchFlow — MyWorkLog architecture">
-<meta property="og:description" content="Every file, every load, every stylesheet, as an explorable graph.">
+<meta property="og:title" content="ArchFlow — die Architektur von MyWorkLog">
+<meta property="og:description" content="Jede Datei eine Kachel, jede Ladebeziehung eine Linie. Farbe steht für die Dateiart.">
 <meta property="og:url" content="https://myworklog.de/archflow/">
+<meta property="og:image" content="https://myworklog.de/Grafiken/icon-512.png">
+<meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -188,6 +190,29 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
 .cr-t{font-size:10px;color:var(--t3);flex-shrink:0}
 .dp-more{font-size:11px;color:var(--t3);padding:5px 9px}
 
+/* Erklaerblock (Startzustand). Desktop: an der Stelle der Detailspalte.
+   Handy: Karte ueber der Zeichenflaeche — sichtbar, nicht display:none. */
+#about{position:absolute;right:0;top:0;bottom:0;width:322px;z-index:12;overflow-y:auto;
+  background:var(--bg-1);border-left:1px solid var(--border);padding:18px 18px 28px;
+  scrollbar-width:thin;scrollbar-color:var(--bg-4) transparent}
+#about::-webkit-scrollbar{width:6px}
+#about::-webkit-scrollbar-thumb{background:var(--bg-4);border-radius:3px}
+#about.hid{display:none}
+#about h2{font-size:15px;font-weight:600;letter-spacing:-.15px;margin:0 34px 10px 0;line-height:1.35}
+#about h3{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--t3);margin:18px 0 7px}
+#about p{font-size:12.5px;color:var(--t2);line-height:1.65;margin-bottom:9px}
+#about strong{color:var(--t1);font-weight:600}
+.ab-x{position:absolute;top:14px;right:14px}
+.ab-l{list-style:none;margin:0 0 10px;padding:0}
+.ab-l li{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--t2);padding:4px 0}
+.ab-l i{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ab-l i.ring{background:none;border:1.5px solid var(--ty-other)}
+.ab-k{list-style:none;margin:2px 0 10px;padding:0;display:grid;gap:5px}
+.ab-k li{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--t2)}
+.ab-k span{color:var(--t3)}
+#about kbd{font-family:var(--mono);font-size:10.5px;background:var(--bg-3);border:1px solid var(--border);
+  border-radius:4px;padding:1px 5px;color:var(--t2)}
+
 /* ── Handy ── */
 .mob-nav{display:none;flex-shrink:0;background:var(--bg-1);border-top:1px solid var(--border);
   align-items:stretch;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
@@ -225,6 +250,11 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
   .h-stats{display:none}
   .zc{bottom:16px;right:14px}
   .leg{display:none}
+  #about{left:10px;right:10px;top:auto;bottom:10px;width:auto;max-height:56%;
+    border:1px solid var(--border);border-left:1px solid var(--border);border-radius:var(--r-card);
+    background:rgba(10,10,14,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    padding:16px 16px 20px;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+  .zc{bottom:auto;top:12px}
 }
 @media(max-width:440px){
   .seg button span{display:none}
@@ -235,33 +265,33 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
 </style>
-    <script defer src="/Assets/js/ph-init.js?v=4.8.7"></script>
+    <script defer src="/Assets/js/ph-init.js?v=4.8.8"></script>
 </head>
 <body>
 <div id="loader">
   <div class="ld-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M10 6.5h2.5a2 2 0 0 1 2 2V14"/></svg></div>
   <div class="ld-title">ArchFlow</div>
   <div class="ld-track" id="ldTrack"><i></i></div>
-  <div class="ld-msg" id="ldMsg">Loading graph data</div>
+  <div class="ld-msg" id="ldMsg">Daten werden geladen</div>
 </div>
 
 <div id="app">
   <header>
     <div class="h-brand">
-      <a class="h-home" href="/" title="Back to MyWorkLog" aria-label="Back to MyWorkLog"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></a>
+      <a class="h-home" href="/" title="Zurück zu MyWorkLog" aria-label="Zurück zu MyWorkLog"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></a>
       <div style="min-width:0">
-        <div class="h-title">ArchFlow</div>
+        <h1 class="h-title">ArchFlow</h1>
         <div class="h-proj" id="hProj">&nbsp;</div>
       </div>
       <div class="h-stats" id="hStats"></div>
     </div>
     <div class="h-actions">
-      <div class="seg" role="group" aria-label="Layout">
-        <button id="btnG" class="on" onclick="setLayout('group')" aria-pressed="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Groups</span></button>
-        <button id="btnH" onclick="setLayout('hier')" aria-pressed="false"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v5m0 0H6.5A1.5 1.5 0 0 0 5 10.5V14m7-5h5.5A1.5 1.5 0 0 1 19 10.5V14M5 14v2m7-2v2m7-2v2"/><circle cx="12" cy="3" r="1.4"/></svg><span>Hierarchy</span></button>
+      <div class="seg" role="group" aria-label="Anordnung">
+        <button id="btnG" class="on" onclick="setLayout('group')" aria-pressed="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Gruppen</span></button>
+        <button id="btnH" onclick="setLayout('hier')" aria-pressed="false"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v5m0 0H6.5A1.5 1.5 0 0 0 5 10.5V14m7-5h5.5A1.5 1.5 0 0 1 19 10.5V14M5 14v2m7-2v2m7-2v2"/><circle cx="12" cy="3" r="1.4"/></svg><span>Hierarchie</span></button>
       </div>
-      <button class="ib" onclick="fitView()" title="Fit to screen (0)" aria-label="Fit to screen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9m6 0h3.5A1.5 1.5 0 0 1 20 5.5V9m0 6v3.5a1.5 1.5 0 0 1-1.5 1.5H15m-6 0H5.5A1.5 1.5 0 0 1 4 18.5V15"/></svg></button>
-      <button class="ib" onclick="exportPNG()" title="Save as PNG" aria-label="Save as PNG"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg></button>
+      <button class="ib" onclick="fitView()" title="Alles einpassen (0)" aria-label="Alles einpassen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9m6 0h3.5A1.5 1.5 0 0 1 20 5.5V9m0 6v3.5a1.5 1.5 0 0 1-1.5 1.5H15m-6 0H5.5A1.5 1.5 0 0 1 4 18.5V15"/></svg></button>
+      <button class="ib" onclick="exportPNG()" title="Als PNG speichern" aria-label="Als PNG speichern"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg></button>
     </div>
   </header>
 
@@ -269,21 +299,21 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
     <aside class="sb">
       <div class="sb-srch">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
-        <input id="srch" type="search" placeholder="Search files" aria-label="Search files" oninput="doFilter()">
+        <input id="srch" type="search" placeholder="Dateien suchen" aria-label="Dateien suchen" oninput="doFilter()">
       </div>
-      <div class="sb-filt" id="sfilt" role="group" aria-label="Filter by file type"></div>
+      <div class="sb-filt" id="sfilt" role="group" aria-label="Nach Dateiart filtern"></div>
       <div class="sb-list" id="slist"></div>
     </aside>
 
     <div class="cv" id="cvWrap">
-      <canvas id="cvs" aria-label="Architecture graph"></canvas>
+      <canvas id="cvs" aria-label="Architektur-Graph"></canvas>
       <div class="zc">
         <div class="zl" id="zLvl">100%</div>
-        <button class="ib" onclick="doZoom(.8)" title="Zoom out (-)" aria-label="Zoom out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
-        <button class="ib" onclick="doZoom(1.25)" title="Zoom in (+)" aria-label="Zoom in"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
+        <button class="ib" onclick="doZoom(.8)" title="Verkleinern (-)" aria-label="Verkleinern"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 12h12"/></svg></button>
+        <button class="ib" onclick="doZoom(1.25)" title="Vergrößern (+)" aria-label="Vergrößern"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg></button>
       </div>
       <div class="leg" id="leg">
-        <button class="leg-h" id="legH" onclick="toggleLegend()" aria-expanded="true">Legend
+        <button class="leg-h" id="legH" onclick="toggleLegend()" aria-expanded="true"><span>Legende</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <div class="leg-b" id="legB"></div>
@@ -291,11 +321,39 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
     </div>
 
     <div class="dp" id="dp"><div class="dp-in" id="dpIn"></div></div>
+
+    <!-- Startzustand: erklaert die Grafik, bevor etwas ausgewaehlt ist. Steht bewusst
+         im HTML (nicht per JS eingefuegt) und ist in beiden Ansichten sichtbar —
+         Google indexiert mobil-first, per display:none verstecktes gilt dort nichts. -->
+    <section id="about" aria-label="Über diese Ansicht">
+      <button class="ab-x ib" onclick="hideAbout()" aria-label="Hinweis schließen" title="Schließen"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <h2>Die Architektur von MyWorkLog</h2>
+      <p>Diese Karte zeigt den Quellcode der App: jede Datei ist eine Kachel, jede Linie eine Ladebeziehung. Wenn eine Seite ein Skript einbindet oder ein Stylesheet nachlädt, steht diese Linie hier.</p>
+      <h3>Wie man sie liest</h3>
+      <p>Die Farbe bedeutet genau eine Sache — die Art der Datei:</p>
+      <ul class="ab-l">
+        <li><i style="background:var(--ty-page)"></i><span>Seiten und Vorlagen (HTML)</span></li>
+        <li><i style="background:var(--ty-script)"></i><span>Programmcode (JavaScript)</span></li>
+        <li><i style="background:var(--ty-style)"></i><span>Gestaltung (CSS)</span></li>
+        <li><i class="ring"></i><span>Konfiguration und Daten (JSON)</span></li>
+      </ul>
+      <p>Eine Verbindungslinie trägt die Farbe dessen, was sie lädt. Die Rahmen fassen zusammen, was fachlich zusammengehört — Dashboard, Historie, Berichtsheft und so weiter.</p>
+      <h3>Bedienung</h3>
+      <p>Ziehen verschiebt, Scrollen zoomt. In der Übersicht bleiben die Namen aus, weil sie dort nur wenige Pixel hoch wären; hineinzoomen bringt sie zurück. Ein Klick auf eine Kachel zeigt, was sie lädt und wer sie lädt.</p>
+      <ul class="ab-k">
+        <li><kbd translate="no">/</kbd><span>Suche</span></li>
+        <li><kbd translate="no">0</kbd><span>alles einpassen</span></li>
+        <li><kbd translate="no">+</kbd><kbd translate="no">−</kbd><span>Zoom</span></li>
+        <li><kbd translate="no">Esc</kbd><span>schließen</span></li>
+      </ul>
+      <h3>Woher die Daten kommen</h3>
+      <p>Die Karte ist nicht von Hand gepflegt. Ein Analyse-Werkzeug liest das Repository ein, verfolgt die Verweise zwischen den Dateien und schreibt das Ergebnis in eine Datei, die diese Seite lädt. Sie zeigt also den Stand des letzten Durchlaufs, nicht eine gezeichnete Wunschvorstellung.</p>
+    </section>
   </div>
 
-  <nav class="mob-nav" aria-label="Views">
+  <nav class="mob-nav" aria-label="Ansichten">
     <button class="mt on" id="mtG" onclick="mobTab('G')"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M7.6 7.9l3 7.8m5.8-7.8l-3 7.8M8.5 6h7"/></svg><span class="mt-l">Graph</span></button>
-    <button class="mt" id="mtF" onclick="mobTab('F')"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h3.2l1.8 2.2h8A1.5 1.5 0 0 1 20 9.7v8.8A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5z"/></svg><span class="mt-l">Files</span></button>
+    <button class="mt" id="mtF" onclick="mobTab('F')"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h3.2l1.8 2.2h8A1.5 1.5 0 0 1 20 9.7v8.8A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5z"/></svg><span class="mt-l">Dateien</span></button>
     <button class="mt" id="mtI" onclick="mobTab('I')"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5m0-8.2v.2"/></svg><span class="mt-l">Details</span></button>
   </nav>
 </div>
@@ -319,11 +377,16 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
    vom Nutzer frei waehlbar und koennte sonst mit einer Datenfarbe kollidieren.
    Geprueft mit dataviz/scripts/validate_palette.js --mode dark.
    ───────────────────────────────────────────────────────────────────────────*/
+/* JS-erzeugte Texte erfasst die statische i18n-Pipeline nicht — deshalb hier ein
+   lokaler Helfer (Vorbild: p2pL() in p2p-sync.js, RL() im Rechte-Checker). */
+const L=(de,en)=>document.documentElement.lang==='en'?en:de;
+
 const TC={page:'#5b9dff',script:'#e8b23c',style:'#f472b6',api:'#8b94a8',data:'#8b94a8',other:'#8b94a8'};
-const TL={page:'HTML',script:'JS',style:'CSS',api:'API',data:'Data',other:'Other'};
+const TL={page:'HTML',script:'JS',style:'CSS',api:'API',data:L('Daten','Data'),other:L('Sonstige','Other')};
 const RING=t=>t==='api'||t==='data'||t==='other';     /* Ringmarke statt Fuellung: zweite Kodierung neben der Farbe */
-const EL={script_load:'loads',stylesheet:'stylesheet',api_call:'API call',import:'import',require:'require',
-  dynamic_import:'dynamic import',navigation:'navigation',redirect:'redirect',form_submit:'form submit'};
+const EL={script_load:L('lädt','loads'),stylesheet:L('Stylesheet','stylesheet'),api_call:L('API-Aufruf','API call'),
+  import:'import',require:'require',dynamic_import:L('dynamischer Import','dynamic import'),
+  navigation:L('Navigation','navigation'),redirect:L('Weiterleitung','redirect'),form_submit:L('Formular','form submit')};
 const SEL_INK='rgba(255,255,255,0.92)';
 
 const NW=186,NH=54,NR=10,GPAD=30,GGAP=48,NGX=20,NGY=44;
@@ -365,8 +428,8 @@ function loadData(){
     const p=location.pathname;
     const base=/\/pages\/en\/archflow\//.test(p)?'../../archflow/':(/\/pages\/archflow\//.test(p)?'./':'/archflow/');
     s.src=base+'archflow-data.js?t='+Date.now();
-    s.onload=()=>window.__ARCHFLOW_DATA__?res(window.__ARCHFLOW_DATA__):rej(new Error('archflow-data.js loaded, but __ARCHFLOW_DATA__ is not defined.'));
-    s.onerror=()=>rej(new Error('Could not load archflow-data.js. Serve the repo root over HTTP, then reload.'));
+    s.onload=()=>window.__ARCHFLOW_DATA__?res(window.__ARCHFLOW_DATA__):rej(new Error(L('archflow-data.js geladen, aber __ARCHFLOW_DATA__ ist nicht definiert.','archflow-data.js loaded, but __ARCHFLOW_DATA__ is not defined.')));
+    s.onerror=()=>rej(new Error(L('archflow-data.js konnte nicht geladen werden.','Could not load archflow-data.js.')));
     document.head.appendChild(s);
   });
 }
@@ -376,7 +439,7 @@ async function init(){
     RAW=data;NODES=Object.values(data.nodes||{});EDGES=data.edges||[];GROUPS=Object.values(data.groups||{});
     document.getElementById('hProj').textContent=(data.meta&&data.meta.project)||'Project';
     document.getElementById('hStats').innerHTML=[
-      {v:NODES.length,l:'files'},{v:EDGES.length,l:'links'},{v:GROUPS.length,l:'groups'}
+      {v:NODES.length,l:L('Dateien','files')},{v:EDGES.length,l:L('Verbindungen','links')},{v:GROUPS.length,l:L('Gruppen','groups')}
     ].map(s=>'<div class="h-s"><b>'+s.v+'</b><span>'+s.l+'</span></div>').join('');
     buildFilters();buildList();buildLegend();resize();setLayout('group');
     document.getElementById('loader').classList.add('out');
@@ -465,7 +528,9 @@ function render(){
      der Position, nicht in einer Farbe. */
   if(layout==='group'){
     /* Gruppennamen gegen den Zoom skalieren, damit sie in der Uebersicht lesbar bleiben. */
-    const gf=Math.min(Math.max(12,12/sc),40);
+    /* 12/sc ergibt konstant 12px auf dem Bildschirm; die Deckelung greift erst bei
+       sehr starker Verkleinerung (Handy landet beim Einpassen bei ~18%). */
+    const gf=Math.min(Math.max(12,12/sc),72);
     GROUPS.forEach(g=>{
       if(!g._box)return;
       const{ox,oy,bW,bH}=g._box;
@@ -687,9 +752,13 @@ function selectNode(id){
   document.querySelectorAll('.fi').forEach(el=>el.classList.toggle('sel',el.dataset.id===id));
   if(mob())showSheetDetail(id);else showDetail(id);
   const n=RAW.nodes[id];
-  if(n)document.getElementById('live').textContent=n.name+' selected. '+n.inDegree+' incoming, '+n.outDegree+' outgoing links.';
+  if(n)document.getElementById('live').textContent=L(
+    n.name+' ausgewählt. '+n.inDegree+' eingehende, '+n.outDegree+' ausgehende Verbindungen.',
+    n.name+' selected. '+n.inDegree+' incoming, '+n.outDegree+' outgoing links.');
+  hideAbout();
   render();
 }
+function hideAbout(){const a=document.getElementById('about');if(a)a.classList.add('hid');}
 function closeDetail(){
   sel=null;document.getElementById('dp').classList.remove('o');
   document.querySelectorAll('.fi').forEach(el=>el.classList.remove('sel'));render();
@@ -704,8 +773,8 @@ function buildDetail(id){
   h+='<div class="dp-path">'+esc(n.path)+'</div>';
   h+='<div class="dp-badge">'+dot(n.type)+esc(TL[n.type]||n.type)
     +(n.group&&n.group.label?'<span style="color:var(--t3)">·</span>'+esc(n.group.label):'')+'</div>';
-  h+='<div class="dsec"><div class="dsec-t">Links</div><div class="chips">'
-    +'<span class="ch">'+inn.length+' in</span><span class="ch">'+out.length+' out</span>'
+  h+='<div class="dsec"><div class="dsec-t">'+L('Verbindungen','Links')+'</div><div class="chips">'
+    +'<span class="ch">'+inn.length+L(' eingehend',' in')+'</span><span class="ch">'+out.length+L(' ausgehend',' out')+'</span>'
     +'<span class="ch">'+esc(n.ext)+'</span></div></div>';
   const rows=(list,dir)=>{
     let s='';
@@ -719,19 +788,19 @@ function buildDetail(id){
     return s;
   };
   if(out.length){
-    h+='<div class="dsec"><div class="dsec-t">Loads ('+out.length+')</div>'+rows(out.slice(0,14),'out');
-    if(out.length>14)h+='<div class="dp-more">'+(out.length-14)+' more</div>';
+    h+='<div class="dsec"><div class="dsec-t">'+L('Lädt','Loads')+' ('+out.length+')</div>'+rows(out.slice(0,14),'out');
+    if(out.length>14)h+='<div class="dp-more">'+(out.length-14)+L(' weitere',' more')+'</div>';
     h+='</div>';
   }
   if(inn.length){
-    h+='<div class="dsec"><div class="dsec-t">Loaded by ('+inn.length+')</div>'+rows(inn.slice(0,10),'in');
-    if(inn.length>10)h+='<div class="dp-more">'+(inn.length-10)+' more</div>';
+    h+='<div class="dsec"><div class="dsec-t">'+L('Wird geladen von','Loaded by')+' ('+inn.length+')</div>'+rows(inn.slice(0,10),'in');
+    if(inn.length>10)h+='<div class="dp-more">'+(inn.length-10)+L(' weitere',' more')+'</div>';
     h+='</div>';
   }
-  if(info.functions&&info.functions.length){h+='<div class="dsec"><div class="dsec-t">Functions ('+info.functions.length+')</div><div class="chips">';info.functions.slice(0,24).forEach(f=>{h+='<span class="ch">'+esc(f)+'()</span>';});if(info.functions.length>24)h+='<span class="ch">+'+(info.functions.length-24)+'</span>';h+='</div></div>';}
-  if(info.events&&info.events.length){h+='<div class="dsec"><div class="dsec-t">Events</div><div class="chips">';info.events.forEach(ev=>{h+='<span class="ch b">'+esc(ev)+'</span>';});h+='</div></div>';}
+  if(info.functions&&info.functions.length){h+='<div class="dsec"><div class="dsec-t">'+L('Funktionen','Functions')+' ('+info.functions.length+')</div><div class="chips">';info.functions.slice(0,24).forEach(f=>{h+='<span class="ch">'+esc(f)+'()</span>';});if(info.functions.length>24)h+='<span class="ch">+'+(info.functions.length-24)+'</span>';h+='</div></div>';}
+  if(info.events&&info.events.length){h+='<div class="dsec"><div class="dsec-t">'+L('Ereignisse','Events')+'</div><div class="chips">';info.events.forEach(ev=>{h+='<span class="ch b">'+esc(ev)+'</span>';});h+='</div></div>';}
   if(info.supabase&&info.supabase.length){h+='<div class="dsec"><div class="dsec-t">Supabase</div><div class="chips">';[...new Set(info.supabase)].forEach(s=>{h+='<span class="ch g">'+esc(s)+'</span>';});h+='</div></div>';}
-  if(info.apis&&info.apis.length){h+='<div class="dsec"><div class="dsec-t">API calls ('+info.apis.length+')</div><div class="chips">';info.apis.slice(0,10).forEach(a=>{const sh=a.length>38?a.slice(0,36)+'…':a;h+='<span class="ch g" title="'+esc(a)+'">'+esc(sh)+'</span>';});h+='</div></div>';}
+  if(info.apis&&info.apis.length){h+='<div class="dsec"><div class="dsec-t">'+L('API-Aufrufe','API calls')+' ('+info.apis.length+')</div><div class="chips">';info.apis.slice(0,10).forEach(a=>{const sh=a.length>38?a.slice(0,36)+'…':a;h+='<span class="ch g" title="'+esc(a)+'">'+esc(sh)+'</span>';});h+='</div></div>';}
   if(info.localStorage&&info.localStorage.length){h+='<div class="dsec"><div class="dsec-t">localStorage</div><div class="chips">';info.localStorage.forEach(s=>{h+='<span class="ch y">'+esc(s)+'</span>';});h+='</div></div>';}
   return h;
 }
@@ -746,7 +815,7 @@ function closeSheet(){bsEl.classList.remove('o');document.getElementById('bk').c
   ['G','F','I'].forEach(id=>document.getElementById('mt'+id).classList.toggle('on',id==='G'));}
 function showSheetDetail(id){openSheet(buildDetail(id));['G','F','I'].forEach(x=>document.getElementById('mt'+x).classList.toggle('on',x==='I'));}
 function showSheetFiles(){
-  let h='<div class="bs-t">Files</div>';
+  let h='<div class="bs-t">'+L('Dateien','Files')+'</div>';
   GROUPS.forEach(g=>{
     const files=g.files.filter(f=>RAW.nodes[f]);if(!files.length)return;
     h+='<div class="bs-g">'+esc(g.label)+' · '+files.length+'</div>';
@@ -763,7 +832,7 @@ function showSheetFiles(){
 function mobTab(t){
   ['G','F','I'].forEach(id=>document.getElementById('mt'+id).classList.toggle('on',id===t));
   if(t==='F')showSheetFiles();
-  else if(t==='I'){if(sel)showSheetDetail(sel);else openSheet('<div class="bs-t">Details</div><p style="font-size:12.5px;color:var(--t3);line-height:1.7">Tap a card in the graph to see what it loads and who loads it.</p>');}
+  else if(t==='I'){if(sel)showSheetDetail(sel);else openSheet('<div class="bs-t">Details</div><p style="font-size:12.5px;color:var(--t3);line-height:1.7">'+L('Tippe eine Kachel im Graphen an, um zu sehen, was sie lädt und wer sie lädt.','Tap a card in the graph to see what it loads and who loads it.')+'</p>');}
   else closeSheet();
 }
 
@@ -772,8 +841,8 @@ function showTT(e,n){
   ttEl.innerHTML='<div class="tt-n">'+dot(n.type)+esc(n.name)+'</div>'
     +'<div class="tt-p">'+esc(n.path)+'</div>'
     +'<div class="tt-r"><span>'+esc((n.group&&n.group.label)||TL[n.type]||n.type)+'</span><span class="tt-v">'+esc(n.ext)+'</span></div>'
-    +'<div class="tt-r"><span>links in / out</span><span class="tt-v">'+n.inDegree+' / '+n.outDegree+'</span></div>'
-    +(n.info&&n.info.functions&&n.info.functions.length?'<div class="tt-r"><span>functions</span><span class="tt-v">'+n.info.functions.length+'</span></div>':'');
+    +'<div class="tt-r"><span>'+L('ein / aus','links in / out')+'</span><span class="tt-v">'+n.inDegree+' / '+n.outDegree+'</span></div>'
+    +(n.info&&n.info.functions&&n.info.functions.length?'<div class="tt-r"><span>'+L('Funktionen','functions')+'</span><span class="tt-v">'+n.info.functions.length+'</span></div>':'');
   ttEl.style.display='block';
   const W=window.innerWidth;
   ttEl.style.left=(e.clientX+250>W?Math.max(8,e.clientX-258):e.clientX+16)+'px';
@@ -794,14 +863,14 @@ function buildFilters(){
     b.onclick=()=>{filterType=id;el.querySelectorAll('.sf').forEach(x=>x.classList.remove('on'));b.classList.add('on');buildList();};
     el.appendChild(b);
   };
-  mk('all','All','',NODES.length,false);
+  mk('all',L('Alle','All'),'',NODES.length,false);
   order.forEach(t=>mk(t,TL[t]||t,TC[t],counts[t],RING(t)));
 }
 function buildLegend(){
   const tCounts={},eCounts={};
   NODES.forEach(n=>{tCounts[n.type]=(tCounts[n.type]||0)+1;});
   EDGES.forEach(e=>{eCounts[e.type]=(eCounts[e.type]||0)+1;});
-  let h='<div class="leg-t">File type</div>';
+  let h='<div class="leg-t">'+L('Dateiart','File type')+'</div>';
   /* Nur die drei tragenden Arten bekommen eine Farbe. Konfiguration und Sonstiges
      teilen sich EINE neutrale Ringmarke — zwei Legendenzeilen mit gleichem
      Symbol waeren nicht unterscheidbar, deshalb stehen sie in einer Zeile. */
@@ -810,14 +879,14 @@ function buildLegend(){
   });
   const restN=['data','api','other'].reduce((s,t)=>s+(tCounts[t]||0),0);
   const restL=['data','api','other'].filter(t=>tCounts[t]).map(t=>TL[t].toLowerCase());
-  if(restN)h+='<div class="lr"><i class="ring"></i>'+(restL.length>1?'Config, other':'Config')+'<b>'+restN+'</b></div>';
+  if(restN)h+='<div class="lr"><i class="ring"></i>'+(restL.length>1?L('Konfig., Sonstige','Config, other'):L('Konfiguration','Config'))+'<b>'+restN+'</b></div>';
   const eks=Object.keys(eCounts);
   if(eks.length){
-    h+='<div class="leg-t" style="margin-top:11px">Link</div>';
+    h+='<div class="leg-t" style="margin-top:11px">'+L('Verbindung','Link')+'</div>';
     eks.sort((a,b)=>eCounts[b]-eCounts[a]).forEach(k=>{
       h+='<div class="lr"><u class="'+(k==='stylesheet'?'dash':'')+'" style="border-color:var(--t3)"></u>'+(EL[k]||k)+'<b>'+eCounts[k]+'</b></div>';
     });
-    h+='<div class="leg-t" style="margin-top:9px;color:var(--t3)">A link is drawn in the colour of the file it pulls in.</div>';
+    h+='<div class="leg-t" style="margin-top:9px;color:var(--t3)">'+L('Eine Linie trägt die Farbe der Datei, die sie lädt.','A link is drawn in the colour of the file it pulls in.')+'</div>';
   }
   document.getElementById('legB').innerHTML=h;
 }
@@ -857,7 +926,9 @@ function buildList(){
   });
   if(!shown){
     const d=document.createElement('div');d.className='sb-empty';
-    d.textContent=searchQ?'No file matches “'+document.getElementById('srch').value+'”.':'No file of this type.';
+    d.textContent=searchQ
+      ?L('Keine Datei passt zu „'+document.getElementById('srch').value+'“.','No file matches “'+document.getElementById('srch').value+'”.')
+      :L('Keine Datei dieser Art.','No file of this type.');
     list.appendChild(d);
   }
 }
