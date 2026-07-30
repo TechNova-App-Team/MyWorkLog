@@ -147,7 +147,7 @@ header{height:52px;flex-shrink:0;display:flex;align-items:center;gap:12px;paddin
 }
 @media(max-width:420px){.hb{width:32px;padding:0;justify-content:center}}
 </style>
-    <script defer src="/Assets/js/ph-init.js?v=4.8.5"></script>
+    <script defer src="/Assets/js/ph-init.js?v=4.8.6"></script>
 </head>
 <body>
 <div id="loader">
@@ -233,7 +233,11 @@ function loadData(){
   return new Promise((res,rej)=>{
     prog(25,'Loading data file…');
     const s=document.createElement('script');
-    s.src='./archflow-data.js?t='+Date.now();
+    /* Datenpfad: relativ bricht auf /en/archflow (dort gaebe es /en/archflow-data.js -> 404).
+       Die Datei liegt physisch nur unter pages/archflow/, live erreichbar ueber /archflow/archflow-data.js. */
+    const p=location.pathname;
+    const base=/\/pages\/en\/archflow\//.test(p)?'../../archflow/':(/\/pages\/archflow\//.test(p)?'./':'/archflow/');
+    s.src=base+'archflow-data.js?t='+Date.now();
     s.onload=()=>window.__ARCHFLOW_DATA__?res(window.__ARCHFLOW_DATA__):rej(new Error('archflow-data.js: __ARCHFLOW_DATA__ not defined'));
     s.onerror=()=>rej(new Error('Cannot load archflow-data.js — serve via: npx serve .'));
     document.head.appendChild(s);
