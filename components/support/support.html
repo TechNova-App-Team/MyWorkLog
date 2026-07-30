@@ -339,6 +339,51 @@
                 padding: 1.8rem;
             }
             #supportChangelog { display: flex; flex-direction: column; gap: 10px; }
+            /* Aufgeklappt: 101 Eintraege wuerden die Seite auf ein Vielfaches
+               strecken — deshalb bekommt die Liste eine eigene Scrollflaeche,
+               statt den Rest der Seite unerreichbar weit nach unten zu schieben. */
+            #supportChangelog.is-open {
+                max-height: min(62vh, 620px);
+                overflow-y: auto;
+                padding-right: 6px;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(255,255,255,.14) transparent;
+                -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+                mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+            }
+            #supportChangelog.is-open::-webkit-scrollbar { width: 6px; }
+            #supportChangelog.is-open::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 3px; }
+
+            .sp-cl-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                width: 100%;
+                margin-top: 14px;
+                padding: 11px 16px;
+                background: rgba(255,255,255,.03);
+                border: 1px solid rgba(255,255,255,.08);
+                border-radius: 12px;
+                color: var(--text-muted);
+                font-family: var(--font-main);
+                font-size: .82rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: color .2s ease, border-color .2s ease, background .2s ease;
+            }
+            /* display:flex der Klasse schlaegt sonst das [hidden]-Attribut —
+               der Knopf waere bei wenigen Eintraegen trotzdem sichtbar. */
+            .sp-cl-toggle[hidden] { display: none; }
+            .sp-cl-toggle:hover { color: var(--text-main); border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.055); }
+            .sp-cl-toggle:active { transform: scale(.99); }
+            .sp-cl-toggle:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb),.35); }
+            .sp-cl-toggle svg { width: 15px; height: 15px; transition: transform .25s cubic-bezier(.32,.72,0,1); }
+            .sp-cl-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+            .sp-cl-count { font-family: var(--font-mono); font-size: .74rem; opacity: .7; font-variant-numeric: tabular-nums; }
+            @media (prefers-reduced-motion: reduce) {
+                .sp-cl-toggle, .sp-cl-toggle svg { transition: none; }
+            }
 
             /* ── FLOATING CARD (parallax depth) ── */
             .sp-float-card {
@@ -530,6 +575,8 @@
                 <div id="supportChangelog">
                     <div class="sp-cl-empty" style="font-size:.82rem; color:var(--text-muted); padding:10px;">Lädt aktuelle Änderungen…</div>
                 </div>
+                <!-- Aufklappen auf die komplette Historie; Beschriftung setzt renderSupportChangelog(). -->
+                <button type="button" id="supportChangelogToggle" class="sp-cl-toggle" aria-expanded="false" aria-controls="supportChangelog" hidden></button>
             </div>
         </div>
 
@@ -628,6 +675,10 @@
             function renderSupportChangelog() {
                 var host = document.getElementById('supportChangelog');
                 if (!host) return;
+                /* JS-erzeugte Texte erfasst die statische i18n-Pipeline nicht —
+                   deshalb ein lokaler Helfer (Vorbild: p2pL() in p2p-sync.js). */
+                var isEN = document.documentElement.lang === 'en';
+                var clL = function(de, en) { return isEN ? en : de; };
                 var accents = ['var(--primary)', 'var(--success)', 'var(--school)', 'var(--holiday)', 'var(--danger)', 'var(--text-muted)'];
                 var bgs = ['rgba(var(--primary-rgb),.05)', 'rgba(16,185,129,.05)', 'rgba(59,130,246,.05)', 'rgba(245,158,11,.05)', 'rgba(239,68,68,.05)', 'rgba(148,163,184,.05)'];
                 fetch('/config/version.json', { cache: 'no-cache' })
@@ -637,13 +688,12 @@
                            jeweilige Version gepflegt ist — sonst faellt jeder
                            einzelne Eintrag auf den deutschen Text zurueck.
                            So bricht eine fehlende Uebersetzung nie die Liste. */
-                        var isEN = document.documentElement.lang === 'en';
                         var clEN = (isEN && data && data.changelog_en) || null;
                         var cl = data && data.changelog;
-                        if (!cl || typeof cl !== 'object') { host.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">Keine Änderungshistorie verfügbar.</div>'; return; }
+                        if (!cl || typeof cl !== 'object') { host.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">' + clL('Keine Änderungshistorie verfügbar.', 'No change history available.') + '</div>'; return; }
                         var versions = Object.keys(cl).sort(function(a, b) { return clCmpVer(b, a); });
                         var MAX = 8;
-                        var html = versions.slice(0, MAX).map(function(v, i) {
+                        var buildRow = function(v, i) {
                             var accent = accents[i % accents.length];
                             var bg = bgs[i % bgs.length];
                             var text = String((clEN && clEN[v]) || cl[v] || '').trim();
@@ -656,11 +706,44 @@
                                 + '<div style="font-size:.7rem; color:var(--text-muted); min-width:60px; font-family:var(--font-mono); padding-top:2px;">v' + clEsc(v) + '</div>'
                                 + '<div style="min-width:0;"><div style="font-weight:600; font-size:.88rem; color:var(--text-main);">' + clEsc(title) + '</div>' + bodyHtml + '</div>'
                                 + '</div>';
-                        }).join('');
-                        host.innerHTML = html || '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">Keine Änderungshistorie verfügbar.</div>';
+                        };
+
+                        if (!versions.length) { host.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">' + clL('Keine Änderungshistorie verfügbar.', 'No change history available.') + '</div>'; return; }
+
+                        var btn = document.getElementById('supportChangelogToggle');
+                        var expanded = false;
+                        var chevron = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+
+                        function paint() {
+                            var list = expanded ? versions : versions.slice(0, MAX);
+                            host.innerHTML = list.map(buildRow).join('');
+                            host.classList.toggle('is-open', expanded);
+                            if (!btn) return;
+                            btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                            btn.innerHTML = expanded
+                                ? clL('Weniger anzeigen', 'Show less') + chevron
+                                : clL('Alle Versionen anzeigen', 'Show all versions')
+                                  + '<span class="sp-cl-count">' + versions.length + '</span>' + chevron;
+                        }
+
+                        if (btn && versions.length > MAX) {
+                            btn.hidden = false;
+                            btn.onclick = function() {
+                                expanded = !expanded;
+                                paint();
+                                /* Beim Zuklappen zurueck an den Listenanfang — sonst steht
+                                   man mitten im Nichts, weil die Liste unter einem wegschrumpft. */
+                                if (!expanded) {
+                                    host.scrollTop = 0;
+                                    var wrap = host.closest('.sp-changelog-wrap');
+                                    if (wrap) wrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                                }
+                            };
+                        }
+                        paint();
                     })
                     .catch(function() {
-                        host.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">Änderungshistorie konnte nicht geladen werden.</div>';
+                        host.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">' + clL('Änderungshistorie konnte nicht geladen werden.', 'Could not load the change history.') + '</div>';
                     });
             }
             renderSupportChangelog();
