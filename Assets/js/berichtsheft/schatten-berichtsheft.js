@@ -105,9 +105,11 @@ const CATEGORY_FIELDS = {
     ],
     unrelated: [
         { key: 'taskType', label: L('Welche Tätigkeit?', 'Which task?'), type: 'text', placeholder: L('z.B. Lager, Botengänge, Reinigung …', 'e.g. warehouse, errands, cleaning …') },
+        { key: 'durationMinutes', label: L('Dauer pro Mal (Minuten)', 'Duration per time (minutes)'), type: 'number', placeholder: L('z.B. 90', 'e.g. 90') },
         { key: 'frequency', label: L('Häufigkeit', 'Frequency'), type: 'select', options: [
             ['once', L('Einmalig', 'One-off')], ['repeated', L('Wiederholt', 'Repeated')], ['ongoing', L('Dauerhaft', 'Ongoing')]
         ] },
+        { key: 'timesPerWeek', label: L('Wie oft pro Woche? (bei wiederholt/dauerhaft)', 'How many times per week? (if repeated/ongoing)'), type: 'number', placeholder: L('z.B. 1', 'e.g. 1') },
     ],
     overtime: [
         { key: 'hours', label: L('Anzahl Stunden', 'Number of hours'), type: 'number', placeholder: '2.5' },
@@ -961,6 +963,75 @@ function updateStats() {
     }
 
     renderSeverityBar();
+    renderLostTimePanel();
+}
+
+// ═════════════════════════════════════════
+//  VERLORENE AUSBILDUNGSZEIT — was fuer die IHK zaehlt, ist nicht die Zahl der
+//  Vorfaelle, sondern die Zeit, die dabei nicht zum Ausbildungsinhalt wurde.
+//  Nur "unrelated" (ausbildungsfremde Taetigkeiten) traegt eine Dauer;
+//  einmalige Vorfaelle werden addiert, wiederkehrende (repeated/ongoing +
+//  timesPerWeek) auf Woche/Monat/Jahr hochgerechnet (Monat = Woche * 52/12,
+//  Jahr = Woche * 52 + die einmaligen Minuten separat).
+// ═════════════════════════════════════════
+
+function computeLostTrainingTime(list) {
+    let onceMinutes = 0;
+    let weeklyMinutes = 0;
+    list.forEach(e => {
+        if (e.category !== 'unrelated') return;
+        const d = e.details || {};
+        const dur = parseFloat(d.durationMinutes);
+        if (!dur || dur <= 0) return;
+        const timesPerWeek = parseFloat(d.timesPerWeek);
+        if ((d.frequency === 'repeated' || d.frequency === 'ongoing') && timesPerWeek > 0) {
+            weeklyMinutes += dur * timesPerWeek;
+        } else {
+            onceMinutes += dur;
+        }
+    });
+    return {
+        onceMinutes,
+        weeklyMinutes,
+        monthlyMinutes: weeklyMinutes * (52 / 12),
+        yearlyMinutes: weeklyMinutes * 52,
+    };
+}
+
+// "1 Std 30 Min" statt Dezimalstunden — die IHK-Zielgruppe rechnet in
+// Stunden/Minuten, keine Nachkommastellen erfinden, die es nicht gibt.
+function fmtDuration(minutes) {
+    const total = Math.round(minutes);
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    if (h === 0) return m + ' ' + L('Min', 'min');
+    if (m === 0) return h + ' ' + L('Std', 'h');
+    return h + ' ' + L('Std', 'h') + ' ' + m + ' ' + L('Min', 'min');
+}
+
+function renderLostTimePanel() {
+    const wrap = document.getElementById('lostTimeWrap');
+    if (!wrap) return;
+    const t = computeLostTrainingTime(entries);
+    if (t.onceMinutes <= 0 && t.weeklyMinutes <= 0) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+
+    const rows = [];
+    if (t.weeklyMinutes > 0) {
+        rows.push({ label: L('pro Woche', 'per week'), value: fmtDuration(t.weeklyMinutes) });
+        rows.push({ label: L('pro Monat', 'per month'), value: fmtDuration(t.monthlyMinutes) });
+        rows.push({ label: L('pro Jahr', 'per year'), value: fmtDuration(t.yearlyMinutes) });
+    }
+    if (t.onceMinutes > 0) {
+        rows.push({ label: L('einmalig erfasst', 'recorded one-off'), value: fmtDuration(t.onceMinutes) });
+    }
+
+    wrap.innerHTML =
+        '<div class="lost-time-head">' + L('Verlorene Ausbildungszeit durch ausbildungsfremde Tätigkeiten', 'Training time lost to non-training tasks') + '</div>' +
+        '<div class="lost-time-rows">' + rows.map(r =>
+            '<div class="lost-time-row"><span class="lost-time-val">' + r.value + '</span><span class="lost-time-lbl">' + r.label + '</span></div>'
+        ).join('') + '</div>' +
+        '<p class="lost-time-hint">' + L('Hochgerechnet aus der bei „Ausbildungsfremde Tätigkeiten" hinterlegten Dauer und Häufigkeit — trag sie bei jedem Eintrag ein, damit die Rechnung stimmt.', 'Extrapolated from the duration and frequency recorded under “non-training tasks” — fill them in on every entry so the math holds up.') + '</p>';
 }
 
 // ═════════════════════════════════════════
@@ -1242,6 +1313,20 @@ function buildProtocol(exportEntries) {
         const c = exportEntries.filter(e => (e.status || 'open') === s).length;
         if (c > 0) lines.push('  ' + STATUS_META[s].label + ': ' + c + L(' Einträge', c === 1 ? ' entry' : ' entries'));
     });
+
+    const lostTime = computeLostTrainingTime(exportEntries);
+    if (lostTime.onceMinutes > 0 || lostTime.weeklyMinutes > 0) {
+        lines.push('');
+        lines.push(L('Verlorene Ausbildungszeit (ausbildungsfremde Tätigkeiten):', 'Training time lost (non-training tasks):'));
+        if (lostTime.weeklyMinutes > 0) {
+            lines.push('  ' + L('pro Woche: ', 'per week: ') + fmtDuration(lostTime.weeklyMinutes));
+            lines.push('  ' + L('pro Monat: ', 'per month: ') + fmtDuration(lostTime.monthlyMinutes));
+            lines.push('  ' + L('pro Jahr:  ', 'per year:  ') + fmtDuration(lostTime.yearlyMinutes));
+        }
+        if (lostTime.onceMinutes > 0) {
+            lines.push('  ' + L('einmalig erfasst: ', 'recorded one-off: ') + fmtDuration(lostTime.onceMinutes));
+        }
+    }
     lines.push('');
     lines.push('───────────────────────────────────────────────');
     lines.push('');
@@ -1424,6 +1509,13 @@ function exportAsPDF() {
     html += 'table.tbl td{padding:2.3mm 0;border-bottom:.5pt solid #eceef1;color:#4b5158}';
     html += 'table.tbl td+td,table.tbl th+th{text-align:right;width:18mm;font-variant-numeric:tabular-nums;color:#14161a;font-weight:500}';
 
+    // ── Verlorene Ausbildungszeit: dieselbe Kasten-Optik wie das Deckblatt,
+    //    weil das hier die eine Zahl ist, die dem Betrieb wehtut. ──
+    html += '.lost{border-top:.75pt solid #14161a;padding-top:5mm;margin-bottom:9mm;display:grid;grid-template-columns:repeat(3,1fr);gap:6mm}';
+    html += '.lost dt{font-size:7.5pt;color:#9096a0;margin-bottom:1mm}';
+    html += '.lost dd{font-size:13pt;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}';
+    html += '.lost-hint{font-size:8pt;color:#9096a0;margin-top:-4mm;margin-bottom:9mm;max-width:150mm;line-height:1.5}';
+
     // ── Vorfaelle: dieselbe Zeitleiste wie in der App ──
     html += '.inc{position:relative;padding:0 0 8mm 9mm;break-inside:avoid;page-break-inside:avoid}';
     html += '.inc::before{content:"";position:absolute;left:1.6mm;top:2.6mm;bottom:0;width:.5pt;background:#e0e3e7}';
@@ -1522,6 +1614,21 @@ function exportAsPDF() {
         if (c > 0) html += '<tr><td>' + escapeHtml(CATEGORIES[k].label) + '</td><td>' + c + '</td></tr>';
     });
     html += '</table>';
+
+    const lostTime = computeLostTrainingTime(exportEntries);
+    if (lostTime.onceMinutes > 0 || lostTime.weeklyMinutes > 0) {
+        html += '<dl class="lost">';
+        if (lostTime.weeklyMinutes > 0) {
+            html += '<div><dt>' + L('pro Woche', 'per week') + '</dt><dd>' + fmtDuration(lostTime.weeklyMinutes) + '</dd></div>';
+            html += '<div><dt>' + L('pro Monat', 'per month') + '</dt><dd>' + fmtDuration(lostTime.monthlyMinutes) + '</dd></div>';
+            html += '<div><dt>' + L('pro Jahr', 'per year') + '</dt><dd>' + fmtDuration(lostTime.yearlyMinutes) + '</dd></div>';
+        }
+        if (lostTime.onceMinutes > 0) {
+            html += '<div><dt>' + L('einmalig erfasst', 'recorded one-off') + '</dt><dd>' + fmtDuration(lostTime.onceMinutes) + '</dd></div>';
+        }
+        html += '</dl>';
+        html += '<p class="lost-hint">' + L('Verlorene Ausbildungszeit durch ausbildungsfremde Tätigkeiten — hochgerechnet aus Dauer und Häufigkeit der einzelnen Vorfälle.', 'Training time lost to non-training tasks — extrapolated from the duration and frequency recorded on the individual incidents.') + '</p>';
+    }
 
     html += '<table class="tbl"><tr><th>' + L('Bearbeitungsstand', 'Handling status') + '</th><th>' + L('Anzahl', 'Count') + '</th></tr>';
     STATUS_ORDER.forEach(s => {
