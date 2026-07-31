@@ -238,15 +238,59 @@ function updateStrengthBar(pw, barId) {
 }
 
 // ═════════════════════════════════════════
-//  STORAGE — Encrypted Vault in localStorage
+//  STORAGE — Verschluesselter Tresor in IndexedDB
 // ═════════════════════════════════════════
+//
+//  SCHLUESSEL-ARCHITEKTUR (Format v2): Umschlag-Verschluesselung.
+//  Ein zufaelliger Haupt-Schluessel verschluesselt Eintraege UND Dateien.
+//  Er liegt selbst verschluesselt im Tresor-Kopf (`wrappedKey`), gesichert
+//  mit dem aus dem Passwort abgeleiteten Schluessel.
+//
+//  Warum nicht direkt mit dem Passwort-Schluessel wie in v1: Dann muesste
+//  eine Passwortaenderung JEDE Datei neu verschluesseln. Bei einem Tresor
+//  mit hunderten MB Beweismitteln waeren das Minuten Rechenzeit im Browser
+//  — und ein Abbruch mittendrin liesse den Tresor halb verschluesselt
+//  zurueck. Jetzt wird nur der Umschlag neu verpackt (Millisekunden), die
+//  Dateien bleiben unberuehrt. Das Passwort wird weiterhin nirgends
+//  gespeichert und verlaesst das Geraet nicht.
 
-function getVault() {
-    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch(e) { return null; }
+let vaultMeta = null;     // Tresor-Kopf: {v, caseId, salt, pwHash, wrappedKey}
+let legacyVault = null;   // v1-Tresor aus localStorage, wartet auf Migration beim Entsperren
+
+function getVault() { return vaultMeta; }
+function isFirstTime() { return !vaultMeta; }
+
+// Haupt-Schluessel erzeugen/ein- und auspacken. Bewusst ueber
+// encrypt/decrypt der rohen 32 Bytes statt ueber wrapKey/unwrapKey: so
+// bleibt der importierte Schluessel `extractable:false` und kann aus dem
+// laufenden Code nicht wieder ausgelesen werden.
+function importMasterKey(rawBytes) {
+    return crypto.subtle.importKey('raw', rawBytes, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
 }
 
-function isFirstTime() {
-    return !getVault();
+async function wrapMasterKey(rawBytes, kek) {
+    const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, tagLength: 128 }, kek, rawBytes);
+    return { iv: u8ToB64(iv), data: u8ToB64(new Uint8Array(ct)) };
+}
+
+async function unwrapMasterKey(wrapped, kek) {
+    const raw = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: b64ToU8(wrapped.iv), tagLength: 128 }, kek, b64ToU8(wrapped.data));
+    return new Uint8Array(raw);
+}
+
+// Binaer-Varianten von encrypt/decrypt: iv als Uint8Array, Nutzlast als
+// ArrayBuffer. Beides speichert IndexedDB nativ — kein Base64, kein
+// 33-%-Aufschlag. Genau das war die Ursache des Speicherproblems.
+async function encryptBytes(buf, key) {
+    const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+    const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv, tagLength: 128 }, key, buf);
+    return { iv, data };
+}
+
+function decryptBytes(iv, data, key) {
+    return crypto.subtle.decrypt({ name: 'AES-GCM', iv, tagLength: 128 }, key, data);
 }
 
 // Aktenzeichen: rein ein Referenz-Code (Erstelldatum + Zufalls-Suffix), keine
@@ -261,116 +305,296 @@ function generateCaseId() {
 
 async function createVault(password) {
     const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
-    const key = await deriveKey(password, salt);
+    const kek = await deriveKey(password, salt);
     const pwHash = await getPasswordHash(password);
-    const emptyData = JSON.stringify([]);
-    const encrypted = await encrypt(emptyData, key);
 
-    const vault = {
-        v: 1,
+    const masterRaw = crypto.getRandomValues(new Uint8Array(32));
+    derivedKey = await importMasterKey(masterRaw);
+
+    vaultMeta = {
+        v: 2,
         caseId: generateCaseId(),
         salt: u8ToB64(salt),
         pwHash: pwHash,
-        entries: encrypted
+        wrappedKey: await wrapMasterKey(masterRaw, kek)
     };
-    localStorage.setItem(STORE_KEY, JSON.stringify(vault));
-    derivedKey = key;
+    masterRaw.fill(0);   // Rohschluessel nicht laenger als noetig im Speicher lassen
+
+    await vsPutMeta(vaultMeta);
     entries = [];
+    await saveVault();
+    // Dauerhaftigkeit gleich beim Anlegen anfordern: ohne sie darf der Browser
+    // den Tresor bei Speicherdruck raeumen — bei Beweismitteln der schlimmste Fall.
+    await vsRequestPersist();
 }
 
 async function unlockVault(password) {
-    const vault = getVault();
-    if (!vault) throw new Error(L('Kein Tresor gefunden', 'No vault found'));
+    if (!vaultMeta) throw new Error(L('Kein Tresor gefunden', 'No vault found'));
 
-    const salt = b64ToU8(vault.salt);
-    const key = await deriveKey(password, salt);
+    const kek = await deriveKey(password, b64ToU8(vaultMeta.salt));
 
-    // Verify password by trying to decrypt
-    try {
-        const plaintext = await decrypt(vault.entries, key);
-        entries = JSON.parse(plaintext);
-        derivedKey = key;
-    } catch(e) {
-        throw new Error(L('Falsches Passwort', 'Wrong password'));
+    if (vaultMeta.wrappedKey) {
+        // Format v2: Haupt-Schluessel auspacken, damit Eintraege UND Dateien lesbar werden.
+        let masterRaw;
+        try {
+            masterRaw = await unwrapMasterKey(vaultMeta.wrappedKey, kek);
+        } catch (e) {
+            throw new Error(L('Falsches Passwort', 'Wrong password'));
+        }
+        derivedKey = await importMasterKey(masterRaw);
+        masterRaw.fill(0);
+        const rec = await vsGetEntries();
+        entries = rec ? JSON.parse(await decrypt(rec, derivedKey)) : [];
+    } else {
+        // Format v1: Eintraege haengen direkt am Passwort-Schluessel.
+        try {
+            entries = JSON.parse(await decrypt(vaultMeta.entries, kek));
+        } catch (e) {
+            throw new Error(L('Falsches Passwort', 'Wrong password'));
+        }
+        await migrateLegacyVault(kek);
     }
 
-    // Migration: Tresore aus einer Version ohne Aktenzeichen bekommen eins nachgetragen.
-    if (!vault.caseId) {
-        vault.caseId = generateCaseId();
-        localStorage.setItem(STORE_KEY, JSON.stringify(vault));
+    if (!vaultMeta.caseId) {
+        vaultMeta.caseId = generateCaseId();
+        await vsPutMeta(vaultMeta);
     }
+    await vsRequestPersist();
+}
+
+// ─── Migration v1 → v2 ──────────────────────────────────
+// Der alte Tresor trug seine Beweisfotos als Base64-Data-URL INNERHALB des
+// Eintrags-Blocks. Diese Funktion loest sie heraus, legt sie als echte Bytes
+// in IndexedDB ab und laesst im Eintrag nur noch die Referenz stehen.
+//
+// Reihenfolge ist hier alles: Der alte localStorage-Key wird erst geloescht,
+// nachdem der neue Stand zurueckgelesen und geprueft wurde. Ein Abbruch
+// mittendrin kostet damit nichts — beim naechsten Entsperren laeuft die
+// Migration einfach erneut. Beweismittel duerfen nie zwischen zwei Formaten
+// verschwinden.
+async function migrateLegacyVault(kek) {
+    const masterRaw = crypto.getRandomValues(new Uint8Array(32));
+    const masterKey = await importMasterKey(masterRaw);
+
+    let moved = 0;
+    for (const entry of entries) {
+        if (!entry.attachments || !entry.attachments.length) continue;
+        const rebuilt = [];
+        for (const att of entry.attachments) {
+            if (!att.dataUrl) { rebuilt.push(att); continue; }   // schon migriert
+            const bytes = dataUrlToBytes(att.dataUrl);
+            const enc = await encryptBytes(bytes.buffer, masterKey);
+            const meta = {
+                id: att.id || crypto.randomUUID(),
+                name: att.name || 'Beweisfoto.jpg',
+                mime: att.mime || bytes.mime || 'image/jpeg',
+                size: bytes.length,
+                createdAt: entry.createdAt || new Date().toISOString(),
+                thumb: att.dataUrl.length < 120000 ? att.dataUrl : null
+            };
+            await vsPutFile(meta, enc.data, enc.iv);
+            rebuilt.push({ id: meta.id, name: meta.name, mime: meta.mime, size: meta.size });
+            moved++;
+        }
+        entry.attachments = rebuilt;
+    }
+
+    const newMeta = {
+        v: 2,
+        caseId: vaultMeta.caseId || generateCaseId(),
+        salt: vaultMeta.salt,
+        pwHash: vaultMeta.pwHash,
+        wrappedKey: await wrapMasterKey(masterRaw, kek)
+    };
+    masterRaw.fill(0);
+
+    await vsPutEntries(await encrypt(JSON.stringify(entries), masterKey));
+    await vsPutMeta(newMeta);
+
+    // Rueckleseprobe: erst wenn der neue Tresor nachweislich lesbar ist,
+    // darf die alte Kopie weg.
+    const check = await vsGetEntries();
+    const verified = JSON.parse(await decrypt(check, masterKey));
+    if (!Array.isArray(verified) || verified.length !== entries.length) {
+        throw new Error(L('Migration fehlgeschlagen — der alte Tresor bleibt unangetastet',
+                          'Migration failed — the old vault remains untouched'));
+    }
+
+    vaultMeta = newMeta;
+    derivedKey = masterKey;
+    legacyVault = null;
+    localStorage.removeItem(STORE_KEY);
+    syncCloudMirror();
+    console.info('[Tresor] Auf IndexedDB migriert, ' + moved + ' Anhang/Anhaenge ausgelagert.');
+}
+
+// Data-URL zurueck in Bytes — nur fuer die Migration der Alt-Anhaenge.
+function dataUrlToBytes(dataUrl) {
+    const comma = dataUrl.indexOf(',');
+    const header = dataUrl.slice(0, comma);
+    const bin = atob(dataUrl.slice(comma + 1));
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    const m = header.match(/^data:([^;,]+)/);
+    out.mime = m ? m[1] : 'application/octet-stream';
+    return out;
 }
 
 function getCaseId() {
-    const vault = getVault();
-    return (vault && vault.caseId) || '';
+    return (vaultMeta && vaultMeta.caseId) || '';
 }
 
 async function saveVault() {
-    if (!derivedKey) return;
-    const vault = getVault();
-    if (!vault) return;
-    const plaintext = JSON.stringify(entries);
-    vault.entries = await encrypt(plaintext, derivedKey);
-    // Bewusst KEIN automatisches Kuerzen bei QuotaExceededError (anders als das
-    // Backup-Pattern in storage-save.js) — Beweismittel duerfen nie still verloren gehen.
-    // Der Aufrufer faengt den Fehler und macht die zuletzt hinzugefuegte Aenderung rueckgaengig.
-    localStorage.setItem(STORE_KEY, JSON.stringify(vault));
+    if (!derivedKey || !vaultMeta) return;
+    // Kein automatisches Kuerzen bei vollem Speicher (anders als das
+    // Backup-Pattern in storage-save.js) — Beweismittel duerfen nie still
+    // verloren gehen. Der Aufrufer faengt den Fehler und macht die zuletzt
+    // hinzugefuegte Aenderung rueckgaengig.
+    await vsPutEntries(await encrypt(JSON.stringify(entries), derivedKey));
+    syncCloudMirror();
 }
 
-function estimateVaultSize() {
-    const vault = getVault();
-    if (!vault) return 0;
-    return new Blob([JSON.stringify(vault)]).size;
+// Spiegel fuer die bestehende Cloud-Freigabe: die synchronisiert
+// localStorage-Keys (supabase-integration.js, CLOUD_OPT_IN_KEYS), sieht also
+// von IndexedDB nichts. Hier landet deshalb weiterhin der TEXT-Teil des
+// Tresors unter dem alten Key — klein genug fuer localStorage, und damit
+// bleibt die Freigabe ohne Backend-Umbau funktionsfaehig. Die Dateien
+// bleiben bewusst lokal; sie wuerden jede JSONB-Zeile sprengen.
+//
+// Schlaegt der Spiegel fehl (localStorage voll), ist das kein Fehler des
+// Speicherns: IndexedDB ist ab jetzt die Wahrheit.
+function syncCloudMirror() {
+    try {
+        if (!vaultMeta) return;
+        const mirror = {
+            v: vaultMeta.v, caseId: vaultMeta.caseId, salt: vaultMeta.salt,
+            pwHash: vaultMeta.pwHash, wrappedKey: vaultMeta.wrappedKey,
+            entries: null, filesLocalOnly: true
+        };
+        vsGetEntries().then(rec => {
+            if (!rec) return;
+            mirror.entries = { iv: rec.iv, data: rec.data };
+            try { localStorage.setItem(STORE_KEY, JSON.stringify(mirror)); }
+            catch (e) { console.warn('[Tresor] Cloud-Spiegel konnte nicht geschrieben werden:', e && e.name); }
+        });
+    } catch (e) { /* Spiegel ist optional */ }
 }
 
+// Belegung in Bytes — jetzt asynchron, weil die Groesse aus den
+// Datei-Metadaten in IndexedDB kommt statt aus einem localStorage-String.
+async function estimateVaultSize() {
+    const usage = await vsUsage();
+    return usage.bytes;
+}
+
+// Reicht bis TB: Seit die Anhaenge in IndexedDB liegen, sind Browser-Quoten
+// im zweistelligen GB-Bereich der Normalfall — bei MB als groesster Einheit
+// stand dort "10252.02 MB", was niemand als "10 GB" liest.
+// Dezimaltrennzeichen folgt der Seitensprache (DE Komma, EN Punkt).
 function formatBytes(bytes) {
+    const num = (val, digits) => val.toLocaleString(mwlLocale(), {
+        minimumFractionDigits: digits, maximumFractionDigits: digits
+    });
     if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    if (bytes < 1024 * 1024) return num(bytes / 1024, 0) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return num(bytes / (1024 * 1024), 2) + ' MB';
+    if (bytes < 1024 * 1024 * 1024 * 1024) return num(bytes / (1024 * 1024 * 1024), 2) + ' GB';
+    return num(bytes / Math.pow(1024, 4), 2) + ' TB';
 }
 
+// Dank Umschlag-Verschluesselung wird hier nur der Haupt-Schluessel neu
+// verpackt. Eintraege und Dateien bleiben unangetastet — bei einem Tresor
+// mit vielen hundert MB Beweismitteln ist das der Unterschied zwischen
+// Millisekunden und Minuten.
 async function changePassword(currentPw, newPw) {
-    const vault = getVault();
-    if (!vault) throw new Error(L('Kein Tresor gefunden', 'No vault found'));
+    if (!vaultMeta) throw new Error(L('Kein Tresor gefunden', 'No vault found'));
     const currentHash = await getPasswordHash(currentPw);
-    if (currentHash !== vault.pwHash) throw new Error(L('Aktuelles Passwort ist falsch', 'Current password is wrong'));
+    if (currentHash !== vaultMeta.pwHash) throw new Error(L('Aktuelles Passwort ist falsch', 'Current password is wrong'));
+
+    const oldKek = await deriveKey(currentPw, b64ToU8(vaultMeta.salt));
+    const masterRaw = await unwrapMasterKey(vaultMeta.wrappedKey, oldKek);
 
     const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
-    const newKey = await deriveKey(newPw, salt);
-    const newPwHash = await getPasswordHash(newPw);
-    const plaintext = JSON.stringify(entries);
-    const encrypted = await encrypt(plaintext, newKey);
+    const newKek = await deriveKey(newPw, salt);
 
-    const newVault = { v: vault.v, salt: u8ToB64(salt), pwHash: newPwHash, entries: encrypted };
-    localStorage.setItem(STORE_KEY, JSON.stringify(newVault));
-    derivedKey = newKey;
+    vaultMeta = Object.assign({}, vaultMeta, {
+        salt: u8ToB64(salt),
+        pwHash: await getPasswordHash(newPw),
+        wrappedKey: await wrapMasterKey(masterRaw, newKek)
+    });
+    masterRaw.fill(0);
+
+    await vsPutMeta(vaultMeta);
+    syncCloudMirror();
 }
 
 // ═════════════════════════════════════════
 //  BACKUP — Export/Import des (bereits verschluesselten) Tresors
 // ═════════════════════════════════════════
 
-function exportBackup() {
-    const vault = getVault();
-    if (!vault) { showToast(L('Kein Tresor zum Exportieren vorhanden', 'No vault to export'), 'warning'); return; }
-    const blob = new Blob([JSON.stringify(vault, null, 2)], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'schatten-berichtsheft-backup_' + new Date().toISOString().slice(0, 10) + '.json';
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast(L('Backup heruntergeladen — an einem zweiten Ort sicher aufbewahren', 'Backup downloaded — keep it safe in a second location'), 'success');
+// Das Backup enthaelt jetzt auch die Anhaenge. Vorher exportierte es nur den
+// localStorage-Block; seit die Dateien in IndexedDB liegen, waere das ein
+// Backup ohne Beweismittel gewesen — die gefaehrlichste Sorte Sicherung,
+// weil sie sich vollstaendig anfuehlt.
+//
+// Zusammengesetzt aus Blob-Teilen statt einem grossen String: Bei einem
+// Tresor mit hunderten MB wuerde JSON.stringify ueber alles den Tab
+// zuverlaessig abschiessen. So liegt immer nur eine Datei gleichzeitig als
+// Base64 im Speicher.
+async function exportBackup() {
+    if (!vaultMeta) { showToast(L('Kein Tresor zum Exportieren vorhanden', 'No vault to export'), 'warning'); return; }
+    showToast(L('Backup wird zusammengestellt …', 'Assembling backup …'), 'info');
+
+    try {
+        const entriesRec = await vsGetEntries();
+        const head = {
+            format: 'mwl-schatten-backup',
+            v: 2,
+            exportedAt: new Date().toISOString(),
+            caseId: vaultMeta.caseId,
+            salt: vaultMeta.salt,
+            pwHash: vaultMeta.pwHash,
+            wrappedKey: vaultMeta.wrappedKey || null,
+            entries: entriesRec ? { iv: entriesRec.iv, data: entriesRec.data } : null
+        };
+        const parts = [JSON.stringify(head).slice(0, -1) + ',"files":['];
+
+        const metas = await vsAllFileMeta();
+        for (let i = 0; i < metas.length; i++) {
+            const rec = await vsGetFileBytes(metas[i].id);
+            if (!rec) continue;
+            const ivBytes = rec.iv instanceof Uint8Array ? rec.iv : new Uint8Array(rec.iv);
+            parts.push((i ? ',' : '') + JSON.stringify(Object.assign({}, metas[i], {
+                iv: u8ToB64(ivBytes),
+                data: vsBufToB64(rec.data)
+            })));
+        }
+        parts.push(']}');
+
+        const blob = new Blob(parts, { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'schatten-berichtsheft-backup_' + new Date().toISOString().slice(0, 10) + '.json';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        showToast(L('Backup heruntergeladen (' + formatBytes(blob.size) + ') — an einem zweiten Ort sicher aufbewahren',
+                    'Backup downloaded (' + formatBytes(blob.size) + ') — keep it safe in a second location'), 'success');
+    } catch (e) {
+        showToast(L('Backup konnte nicht erstellt werden', 'Could not create backup'), 'error');
+    }
 }
 
+// v2 = neues Format mit Dateien, v1 = der alte localStorage-Block.
+// Beide bleiben importierbar; wer eine alte Sicherung herumliegen hat, soll
+// sie nicht wegwerfen muessen.
 function isValidVaultShape(v) {
     return !!(v && typeof v === 'object' && v.salt && v.pwHash && v.entries && v.entries.iv && v.entries.data);
 }
 
 function importBackupFile(file) {
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
         let parsed;
         try { parsed = JSON.parse(reader.result); } catch (e) {
             showToast(L('Datei ist kein gültiges Backup (kein JSON)', 'File is not a valid backup (not JSON)'), 'error');
@@ -386,7 +610,31 @@ function importBackupFile(file) {
             : L('Backup importieren und als deinen Tresor einrichten?', 'Import backup and set it up as your vault?');
         if (!window.confirm(msg)) return;
 
-        localStorage.setItem(STORE_KEY, JSON.stringify(parsed));
+        try {
+            await vsClearAll();
+            localStorage.removeItem(STORE_KEY);
+
+            await vsPutMeta({
+                v: parsed.wrappedKey ? 2 : 1,
+                caseId: parsed.caseId || generateCaseId(),
+                salt: parsed.salt,
+                pwHash: parsed.pwHash,
+                wrappedKey: parsed.wrappedKey || null,
+                // v1-Backups tragen die Eintraege im Kopf; unlockVault() erkennt
+                // das am fehlenden wrappedKey und migriert beim Entsperren.
+                entries: parsed.wrappedKey ? undefined : parsed.entries
+            });
+            await vsPutEntries(parsed.entries);
+
+            for (const f of (parsed.files || [])) {
+                const meta = { id: f.id, name: f.name, mime: f.mime, size: f.size, createdAt: f.createdAt, thumb: f.thumb || null };
+                await vsPutFile(meta, vsB64ToBuf(f.data), b64ToU8(f.iv));
+            }
+        } catch (e) {
+            showToast(L('Backup konnte nicht eingespielt werden', 'Could not import backup'), 'error');
+            return;
+        }
+
         // Reload erzwingt das Entsperren mit dem Passwort des importierten Tresors —
         // das ist gleichzeitig der Validitaets-Check, kein stiller Fehlschlag moeglich.
         location.reload();
@@ -468,10 +716,15 @@ function updateResetVaultButton() {
     document.getElementById('confirmResetVaultBtn').disabled = val !== RESET_VAULT_CONFIRM_PHRASE;
 }
 
-function confirmResetVault() {
+async function confirmResetVault() {
     const val = document.getElementById('resetVaultConfirmInput').value.trim();
     if (val !== RESET_VAULT_CONFIRM_PHRASE) return;
     localStorage.removeItem(STORE_KEY);
+    await vsClearAll();          // sonst blieben die Dateien in IndexedDB liegen
+    vaultMeta = null;
+    legacyVault = null;
+    entries = [];
+    derivedKey = null;
     closeResetVaultModal();
     document.getElementById('pwInput').value = '';
     document.getElementById('lockError').textContent = '';
@@ -498,7 +751,10 @@ async function handleSetup() {
     }
 }
 
-function enterApp() {
+async function enterApp() {
+    // Datei-Metadaten VOR dem ersten Rendern laden, sonst zeigt die Liste
+    // beim Entsperren kurz Typ-Symbole statt der Vorschaubilder.
+    await refreshFileMetaCache();
     const lockBody = document.getElementById('lockSvgBody');
     if (lockBody) {
         lockBody.classList.add('pulse-once');
@@ -556,8 +812,49 @@ function toggleVaultMenu() {
     const menu = document.getElementById('vaultMenu');
     const willOpen = !menu.classList.contains('open');
     menu.classList.toggle('open', willOpen);
-    if (willOpen) {
-        document.getElementById('vaultMenuSize').textContent = formatBytes(estimateVaultSize());
+    if (willOpen) renderStorageMeter();
+}
+
+// Speicheranzeige. Zeigt bewusst BEIDE Zahlen: was der Tresor belegt und
+// was der Browser insgesamt zugesteht. Es gibt keine kuenstliche Grenze —
+// wie der Platz auf Fotos, PDFs und Videos verteilt wird, entscheidet der
+// Fall. Die Anzeige ist Information, keine Schranke.
+//
+// `quota` ist eine Schaetzung des Browsers und haengt am freien Plattenplatz.
+// Sie wird deshalb angezeigt, aber nie als Bedingung ausgewertet.
+async function renderStorageMeter() {
+    const sizeEl = document.getElementById('vaultMenuSize');
+    const barEl = document.getElementById('vaultStorageBar');
+    const noteEl = document.getElementById('vaultStorageNote');
+    if (!sizeEl) return;
+
+    const usage = await vsUsage();
+    const quota = await vsQuota();
+    const persisted = await vsIsPersisted();
+
+    sizeEl.textContent = formatBytes(usage.bytes) +
+        (usage.count ? ' · ' + usage.count + ' ' + (usage.count === 1 ? L('Datei', 'file') : L('Dateien', 'files')) : '');
+
+    if (barEl) {
+        const pct = quota.quota ? Math.min(100, (quota.usage / quota.quota) * 100) : 0;
+        // Unter 1,5 % waere der Balken unsichtbar und saehe nach "kaputt" aus.
+        barEl.style.width = (pct > 0 && pct < 1.5 ? 1.5 : pct) + '%';
+        barEl.classList.toggle('is-tight', pct > 85);
+    }
+
+    if (noteEl) {
+        const parts = [];
+        if (quota.quota) parts.push(L('Verfügbar: ', 'Available: ') + formatBytes(quota.quota - quota.usage));
+        if (vsIsFallback()) {
+            parts.push(L('Notbetrieb — enges Limit', 'Fallback mode — tight limit'));
+        } else if (!persisted) {
+            // Ehrlich benennen: ohne Dauerhaftigkeit darf der Browser den
+            // Tresor bei Speicherdruck raeumen. Der Nutzer soll wissen,
+            // dass das Backup dann seine einzige Absicherung ist.
+            parts.push(L('Nicht dauerhaft geschützt — Backup exportieren', 'Not marked persistent — export a backup'));
+        }
+        noteEl.textContent = parts.join(' · ');
+        noteEl.classList.toggle('is-warn', vsIsFallback() || !persisted);
     }
 }
 
@@ -732,75 +1029,246 @@ function startSessionTimer() {
 //  BEWEISMITTEL — Bild-Anhaenge (komprimiert, im Entry mitverschluesselt)
 // ═════════════════════════════════════════
 
-const MAX_ATTACHMENTS = 5;
-const ATTACHMENT_MAX_DIM = 1600;
-const ATTACHMENT_QUALITY = 0.72;
+// KEINE Stueckzahl- und keine Groessengrenze: Was als Beweismittel taugt,
+// entscheidet der Fall, nicht der Speicher. Der Tresor zeigt stattdessen
+// seine Belegung an (siehe renderStorageMeter) und der Nutzer teilt sie
+// selbst ein. Die frueheren `MAX_ATTACHMENTS = 5` waren eine Folge des
+// 5-MB-localStorage-Deckels — der ist mit IndexedDB weg.
+
+// Vorschaubilder werden klein gerechnet, weil sie im Metadaten-Record
+// mitreisen und die Dateiliste sonst wieder teuer zu laden waere.
+const THUMB_MAX_DIM = 320;
+const THUMB_QUALITY = 0.7;
 
 let currentAttachments = [];
 
-function fileToCompressedDataUrl(file, maxDim, quality) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const img = new Image();
-            img.onload = () => {
+// Vorschaubilder und Groessen fuer die Eintragsliste. Ohne diesen Zwischen-
+// speicher braeuchte jedes Rendern einen IndexedDB-Zugriff pro Anhang;
+// renderEntries() ist aber synchron und laeuft bei jedem Tastendruck in der
+// Suche. Der Cache haelt nur Metadaten (inkl. kleinem Thumbnail), nie Bytes.
+let fileMetaCache = new Map();
+
+async function refreshFileMetaCache() {
+    const all = await vsAllFileMeta();
+    fileMetaCache = new Map(all.map(f => [f.id, f]));
+}
+
+// Bytes wegraeumen, auf die kein Eintrag mehr zeigt: abgebrochene
+// Eintraege, entfernte Anhaenge, geloeschte Eintraege. Laeuft erst NACH
+// einem erfolgreichen Speichern — vorher waere die Zuordnung nicht
+// verlaesslich und ein Beweismittel koennte verschwinden, obwohl der
+// Eintrag es noch braucht.
+async function cleanupUnusedFiles() {
+    const used = [];
+    for (const e of entries) {
+        for (const a of (e.attachments || [])) used.push(a.id);
+    }
+    await vsPruneOrphans(used);
+    await refreshFileMetaCache();
+}
+
+// Beweismittel werden BIT-IDENTISCH abgelegt — kein Umkodieren, kein
+// Neukomprimieren, auch nicht bei Fotos. Ein nachtraeglich durch einen
+// Canvas gelaufenes Bild hat andere Pruefsummen als das Original, verliert
+// seine EXIF-Daten (Aufnahmezeit!) und ist als Beweis angreifbar. Die
+// Verkleinerung passiert ausschliesslich fuer die Vorschau.
+const ATT_ICONS = {
+    pdf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 15h1.5a1.5 1.5 0 0 0 0-3H9v6"></path><path d="M14 18v-6h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2z"></path></svg>',
+    image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-4.35-4.35a2 2 0 0 0-2.83 0L3 21"></path></svg>',
+    doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="13" y2="17"></line></svg>',
+    audio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>',
+    video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"></path><rect x="2" y="6" width="14" height="12" rx="2"></rect></svg>',
+    generic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>',
+};
+
+function fileKind(mime, name) {
+    const m = (mime || '').toLowerCase();
+    const ext = (name || '').split('.').pop().toLowerCase();
+    if (m.indexOf('image/') === 0) return 'image';
+    if (m === 'application/pdf' || ext === 'pdf') return 'pdf';
+    if (m.indexOf('audio/') === 0) return 'audio';
+    if (m.indexOf('video/') === 0) return 'video';
+    if (/^(doc|docx|odt|rtf|txt|md|eml|msg|xls|xlsx|ods|csv)$/.test(ext)) return 'doc';
+    return 'generic';
+}
+
+// Vorschau NUR fuer Bilder. Scheitert das (defektes Bild, exotisches
+// Format), gibt es kein Thumbnail und die Kachel zeigt das Typ-Symbol —
+// die Datei selbst bleibt davon unberuehrt gespeichert.
+function makeThumbnail(file) {
+    return new Promise(resolve => {
+        if (!(file.type || '').startsWith('image/')) { resolve(null); return; }
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+            try {
                 let { width, height } = img;
-                if (width > maxDim || height > maxDim) {
-                    const scale = maxDim / Math.max(width, height);
-                    width = Math.round(width * scale);
-                    height = Math.round(height * scale);
-                }
+                const scale = Math.min(1, THUMB_MAX_DIM / Math.max(width, height));
+                width = Math.max(1, Math.round(width * scale));
+                height = Math.max(1, Math.round(height * scale));
                 const canvas = document.createElement('canvas');
                 canvas.width = width; canvas.height = height;
                 canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', quality));
-            };
-            img.onerror = () => reject(new Error(L('Bild konnte nicht gelesen werden', 'Could not read image')));
-            img.src = reader.result;
+                resolve(canvas.toDataURL('image/jpeg', THUMB_QUALITY));
+            } catch (e) { resolve(null); }
+            URL.revokeObjectURL(url);
         };
-        reader.onerror = () => reject(new Error(L('Datei konnte nicht gelesen werden', 'Could not read file')));
-        reader.readAsDataURL(file);
+        img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+        img.src = url;
     });
 }
 
+// Dateien wandern SOFORT verschluesselt nach IndexedDB, nicht erst beim
+// Speichern des Eintrags. Sonst laege eine 200-MB-Videodatei bis zum Klick
+// auf "Speichern" komplett im Arbeitsspeicher. Bricht der Nutzer den
+// Eintrag ab, raeumt vsPruneOrphans() die verwaisten Bytes wieder weg.
 async function handleAttachmentSelect(fileList) {
-    const files = Array.from(fileList || []).filter(f => f.type.startsWith('image/'));
+    const files = Array.from(fileList || []);
     if (!files.length) return;
-    if (currentAttachments.length + files.length > MAX_ATTACHMENTS) {
-        showToast(L('Maximal ' + MAX_ATTACHMENTS + ' Beweisfotos pro Eintrag', 'Maximum ' + MAX_ATTACHMENTS + ' evidence photos per entry'), 'warning');
-    }
-    const room = Math.max(0, MAX_ATTACHMENTS - currentAttachments.length);
-    for (const file of files.slice(0, room)) {
+    if (!derivedKey) { showToast(L('Tresor ist gesperrt', 'Vault is locked'), 'error'); return; }
+
+    for (const file of files) {
+        const pendingId = crypto.randomUUID();
+        currentAttachments.push({ id: pendingId, name: file.name, mime: file.type || 'application/octet-stream', size: file.size, pending: true });
+        renderAttachmentThumbs();
         try {
-            const dataUrl = await fileToCompressedDataUrl(file, ATTACHMENT_MAX_DIM, ATTACHMENT_QUALITY);
-            currentAttachments.push({ id: crypto.randomUUID(), name: file.name, mime: 'image/jpeg', dataUrl, size: dataUrl.length });
+            const buf = await file.arrayBuffer();
+            const thumb = await makeThumbnail(file);
+            const enc = await encryptBytes(buf, derivedKey);
+            const meta = {
+                id: pendingId,
+                name: file.name,
+                mime: file.type || 'application/octet-stream',
+                size: file.size,
+                createdAt: new Date().toISOString(),
+                thumb: thumb
+            };
+            await vsPutFile(meta, enc.data, enc.iv);
+            const idx = currentAttachments.findIndex(a => a.id === pendingId);
+            if (idx !== -1) currentAttachments[idx] = { id: meta.id, name: meta.name, mime: meta.mime, size: meta.size, thumb: thumb };
         } catch (e) {
-            showToast(e.message, 'error');
+            currentAttachments = currentAttachments.filter(a => a.id !== pendingId);
+            const full = e && (e.name === 'QuotaExceededError' || e.name === 'NotEnoughSpace');
+            showToast(full
+                ? L('Speicher des Browsers voll — Platz schaffen oder ein Backup exportieren',
+                    'Browser storage full — free up space or export a backup')
+                : L('„' + file.name + '" konnte nicht gespeichert werden', '"' + file.name + '" could not be saved'), 'error');
         }
+        renderAttachmentThumbs();
     }
-    renderAttachmentThumbs();
+    renderStorageMeter();
 }
 
-function removeAttachment(id) {
+async function removeAttachment(id) {
     currentAttachments = currentAttachments.filter(a => a.id !== id);
     renderAttachmentThumbs();
+    // Bytes bleiben vorerst liegen: Der Nutzer koennte den Eintrag noch
+    // abbrechen, dann waere der Anhang der GESPEICHERTEN Fassung sonst weg.
+    // Aufgeraeumt wird nach dem Speichern ueber vsPruneOrphans().
 }
 
 function renderAttachmentThumbs() {
     const wrap = document.getElementById('attachmentThumbs');
     if (!wrap) return;
     if (!currentAttachments.length) { wrap.innerHTML = ''; return; }
-    wrap.innerHTML = currentAttachments.map(a =>
-        '<div class="attach-thumb">' +
-            '<img src="' + a.dataUrl + '" alt="' + escapeHtml(a.name) + '">' +
-            '<button type="button" class="attach-thumb-remove" onclick="removeAttachment(\'' + a.id + '\')" aria-label="' + L('Entfernen', 'Remove') + '">&times;</button>' +
-        '</div>'
-    ).join('');
+    wrap.innerHTML = currentAttachments.map(a => {
+        const kind = fileKind(a.mime, a.name);
+        const face = a.pending
+            ? '<span class="attach-tile-spin" aria-hidden="true"></span>'
+            : (a.thumb
+                ? '<img src="' + a.thumb + '" alt="">'
+                : '<span class="attach-tile-ico" aria-hidden="true">' + ATT_ICONS[kind] + '</span>');
+        return '<div class="attach-tile' + (a.pending ? ' is-pending' : '') + '" data-kind="' + kind + '">' +
+            '<div class="attach-tile-face">' + face + '</div>' +
+            '<div class="attach-tile-meta">' +
+                '<span class="attach-tile-name" title="' + escapeHtml(a.name) + '">' + escapeHtml(a.name) + '</span>' +
+                '<span class="attach-tile-size">' + (a.pending ? L('wird verschlüsselt …', 'encrypting …') : formatBytes(a.size)) + '</span>' +
+            '</div>' +
+            (a.pending ? '' :
+            '<button type="button" class="attach-tile-remove" onclick="removeAttachment(\'' + a.id + '\')" aria-label="' +
+                L('Anhang entfernen', 'Remove attachment') + '">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>' +
+            '</button>') +
+        '</div>';
+    }).join('');
 }
 
-function openAttachmentViewer(dataUrl) {
-    document.getElementById('attachmentViewerImg').src = dataUrl;
+// Der Betrachter bekommt nur noch die Datei-ID. Bytes werden erst beim
+// Oeffnen aus IndexedDB geholt und entschluesselt — so haengt nicht der
+// ganze Tresor im Arbeitsspeicher, sobald eine Liste gerendert wird.
+let viewerObjectUrl = null;
+
+function releaseViewerUrl() {
+    if (viewerObjectUrl) { URL.revokeObjectURL(viewerObjectUrl); viewerObjectUrl = null; }
+}
+
+async function loadAttachmentBlob(id) {
+    const meta = await vsGetFileMeta(id);
+    const rec = await vsGetFileBytes(id);
+    if (!meta || !rec) return null;
+    const plain = await decryptBytes(rec.iv, rec.data, derivedKey);
+    return { meta, blob: new Blob([plain], { type: meta.mime || 'application/octet-stream' }) };
+}
+
+async function openAttachmentViewer(id) {
+    const body = document.getElementById('attachmentViewerBody');
+    const title = document.getElementById('attachmentViewerTitle');
+    const dl = document.getElementById('attachmentViewerDownload');
+    releaseViewerUrl();
+    body.innerHTML = '<p class="viewer-status">' + L('Wird entschlüsselt …', 'Decrypting …') + '</p>';
     openModal('attachmentViewerModal');
+
+    let loaded;
+    try {
+        loaded = await loadAttachmentBlob(id);
+    } catch (e) {
+        body.innerHTML = '<p class="viewer-status">' + L('Datei konnte nicht entschlüsselt werden', 'Could not decrypt file') + '</p>';
+        return;
+    }
+    if (!loaded) {
+        // Kann auftreten, wenn ein Tresor aus der Cloud kam: dort reisen die
+        // Eintraege mit, die Dateien bleiben auf dem Ursprungsgeraet.
+        body.innerHTML = '<p class="viewer-status">' +
+            L('Diese Datei liegt nicht auf diesem Gerät. Anhänge bleiben lokal — spiel ein Backup vom Ursprungsgerät ein.',
+              'This file is not on this device. Attachments stay local — import a backup from the original device.') + '</p>';
+        return;
+    }
+
+    const { meta, blob } = loaded;
+    viewerObjectUrl = URL.createObjectURL(blob);
+    title.textContent = meta.name;
+    dl.href = viewerObjectUrl;
+    dl.download = meta.name;
+    dl.style.display = 'inline-flex';
+
+    const kind = fileKind(meta.mime, meta.name);
+    if (kind === 'image') {
+        body.innerHTML = '<img src="' + viewerObjectUrl + '" alt="' + escapeHtml(meta.name) + '" class="viewer-image">';
+    } else if (kind === 'pdf') {
+        // <object> statt <iframe>: faellt bei fehlendem PDF-Betrachter auf
+        // den inneren Inhalt zurueck, statt ein leeres Rechteck zu zeigen.
+        body.innerHTML = '<object data="' + viewerObjectUrl + '" type="application/pdf" class="viewer-pdf">' +
+            '<p class="viewer-status">' + L('Dieser Browser zeigt keine PDFs an — nutze „Herunterladen".',
+                                            'This browser cannot display PDFs — use "Download".') + '</p></object>';
+    } else if (kind === 'audio') {
+        body.innerHTML = '<audio controls src="' + viewerObjectUrl + '" class="viewer-media"></audio>';
+    } else if (kind === 'video') {
+        body.innerHTML = '<video controls src="' + viewerObjectUrl + '" class="viewer-media"></video>';
+    } else {
+        body.innerHTML = '<div class="viewer-file">' +
+            '<span class="viewer-file-ico">' + ATT_ICONS[kind] + '</span>' +
+            '<p class="viewer-status">' + escapeHtml(meta.name) + ' · ' + formatBytes(meta.size) + '</p>' +
+            '<p class="viewer-status">' + L('Vorschau nicht möglich — die Datei liegt unverändert im Tresor.',
+                                            'No preview available — the file is stored unchanged in the vault.') + '</p>' +
+        '</div>';
+    }
+}
+
+function closeAttachmentViewer() {
+    closeModal('attachmentViewerModal');
+    const body = document.getElementById('attachmentViewerBody');
+    if (body) body.innerHTML = '';   // stoppt laufende Medien und loest den Blob
+    releaseViewerUrl();
 }
 
 // ═════════════════════════════════════════
@@ -898,7 +1366,11 @@ function openEditEntry(id) {
     document.getElementById('entryStatus').value = entry.status || 'open';
     document.getElementById('entryText').value = entry.text;
     document.getElementById('entryWitnesses').value = (entry.witnesses || []).join(', ');
-    currentAttachments = (entry.attachments || []).slice();
+    // Vorschaubild aus dem Cache anreichern — im Eintrag steht nur die Referenz.
+    currentAttachments = (entry.attachments || []).map(a => {
+        const cached = fileMetaCache.get(a.id);
+        return Object.assign({}, a, { thumb: cached ? cached.thumb : null });
+    });
     renderAttachmentThumbs();
     renderCategoryFields(entry.category, entry.details || {});
     openModal('entryModal');
@@ -916,7 +1388,12 @@ async function saveEntry() {
 
     const editId = document.getElementById('entryEditId').value;
     const witnessList = witnesses ? witnesses.split(',').map(w => w.trim()).filter(Boolean) : [];
-    const attachmentsSnapshot = currentAttachments.slice();
+    // Nur die Referenz wandert in den Eintrag. Vorschaubild und Bytes liegen
+    // in IndexedDB — laege das Thumbnail hier mit drin, waere der
+    // Eintrags-Block wieder so gross wie frueher der ganze Tresor.
+    const attachmentsSnapshot = currentAttachments
+        .filter(a => !a.pending)
+        .map(a => ({ id: a.id, name: a.name, mime: a.mime, size: a.size }));
     const status = document.getElementById('entryStatus').value || 'open';
     const details = collectCategoryFieldValues(category);
 
@@ -962,9 +1439,11 @@ async function saveEntry() {
         await saveVault();
     } catch (e) {
         entries = beforeEntries;
-        showToast(L('Kein Speicherplatz mehr — alte Beweisfotos entfernen oder zuerst ein Backup exportieren', 'Out of storage space — remove old evidence photos or export a backup first'), 'error');
+        showToast(L('Speichern fehlgeschlagen — exportiere zur Sicherheit ein Backup',
+                    'Saving failed — export a backup to be safe'), 'error');
         return;
     }
+    await cleanupUnusedFiles();
     closeModal('entryModal');
     renderEntries();
     updateStats();
@@ -976,6 +1455,7 @@ function confirmDelete(id) {
     document.getElementById('confirmDeleteBtn').onclick = async () => {
         entries = entries.filter(e => e.id !== id);
         await saveVault();
+        await cleanupUnusedFiles();   // Anhaenge des Eintrags mit entfernen
         closeModal('deleteModal');
         renderEntries();
         updateStats();
@@ -1023,9 +1503,19 @@ function renderEntries() {
 
         const attachments = e.attachments || [];
         const attachHtml = attachments.length ?
-            '<div class="entry-attach-strip">' + attachments.map(a =>
-                '<img class="entry-attach-thumb" src="' + a.dataUrl + '" alt="' + escapeHtml(a.name) + '" onclick="openAttachmentViewer(\'' + a.dataUrl.replace(/'/g, "\\'") + '\')">'
-            ).join('') + '</div>' : '';
+            '<div class="entry-attach-strip">' + attachments.map(a => {
+                // Vorschaubild kommt aus dem Metadaten-Cache, nicht aus dem
+                // Eintrag — der traegt nur noch die Referenz.
+                const cached = fileMetaCache.get(a.id);
+                const kind = fileKind(a.mime, a.name);
+                const face = (cached && cached.thumb)
+                    ? '<img src="' + cached.thumb + '" alt="">'
+                    : '<span class="entry-attach-ico" aria-hidden="true">' + ATT_ICONS[kind] + '</span>';
+                return '<button type="button" class="entry-attach-chip" data-kind="' + kind + '" ' +
+                    'onclick="openAttachmentViewer(\'' + a.id + '\')" title="' + escapeHtml(a.name) + '">' +
+                    face + '<span class="entry-attach-label">' + escapeHtml(a.name) + '</span>' +
+                '</button>';
+            }).join('') + '</div>' : '';
 
         const history = e.history || [];
         const revisionHtml = history.length ?
@@ -1489,7 +1979,8 @@ function buildProtocol(exportEntries) {
         }
         if (e.attachments && e.attachments.length) {
             lines.push('');
-            lines.push(L('  Beweisfotos (siehe PDF-Export): ', '  Evidence photos (see PDF export): ') + e.attachments.map(a => a.name).join(', '));
+            lines.push(L('  Beweismittel im Tresor: ', '  Evidence in the vault: ') +
+                e.attachments.map(a => a.name + ' (' + formatBytes(a.size) + ')').join(', '));
         }
         lines.push('');
         lines.push('───────────────────────────────────────────────');
@@ -1582,9 +2073,35 @@ function catIconHtml(cat) {
     return '<span class="cat-ico">' + cat.icon + '</span>';
 }
 
-function exportAsPDF() {
+// Bilder fuer den Druck vorab entschluesseln. Sie muessen als data:-URL im
+// erzeugten Dokument stehen — ein blob:-Verweis aus diesem Fenster ist im
+// Druckfenster nicht mehr aufloesbar. Nicht-Bilder werden nur namentlich
+// aufgefuehrt; ein PDF laesst sich nicht in eine Druckseite einbetten.
+async function collectAttachmentDataUrls(list) {
+    const map = new Map();
+    for (const e of list) {
+        for (const a of (e.attachments || [])) {
+            if (fileKind(a.mime, a.name) !== 'image') continue;
+            try {
+                const loaded = await loadAttachmentBlob(a.id);
+                if (!loaded) continue;
+                map.set(a.id, await new Promise(res => {
+                    const fr = new FileReader();
+                    fr.onload = () => res(fr.result);
+                    fr.onerror = () => res(null);
+                    fr.readAsDataURL(loaded.blob);
+                }));
+            } catch (err) { /* einzelnes Bild fehlt: Export laeuft trotzdem durch */ }
+        }
+    }
+    return map;
+}
+
+async function exportAsPDF() {
     const exportEntries = getExportEntries();
     if (exportEntries.length === 0) { showToast(L('Keine Einträge zum Exportieren', 'No entries to export'), 'warning'); return; }
+
+    const attachmentUrls = await collectAttachmentDataUrls(exportEntries);
 
     const now = new Date();
     const dates = exportEntries.map(e => e.date).sort();
@@ -1731,6 +2248,8 @@ function exportAsPDF() {
     html += '.det dd{display:inline;font-weight:500}';
     html += '.det>div{white-space:nowrap}';
     html += '.wit{margin-top:2.5mm;display:flex;align-items:flex-start;gap:2mm;font-size:9pt;color:#4b5158}';
+    html += '.docs{margin-top:2.5mm;font-size:8.5pt;color:#4b5158;line-height:1.5}';
+    html += '.docs b{font-weight:600;color:#14161a}';
     html += '.wit .cat-ico{width:9pt;height:9pt;margin-top:.4mm;color:#9096a0}';
     html += '.wit b{font-weight:400;color:#9096a0}';
     // Beweisfotos gross genug, um Beweis zu sein.
@@ -1888,8 +2407,19 @@ function exportAsPDF() {
             html += '<p class="wit"><span class="cat-ico">' + UI_ICONS.users + '</span><b>' + L('Zeugen', 'Witnesses') + '</b> ' + escapeHtml(e.witnesses.join(', ')) + '</p>';
         }
         if (e.attachments && e.attachments.length) {
-            html += '<div class="pics">' + e.attachments.map(a =>
-                '<img src="' + a.dataUrl + '" alt="' + escapeHtml(a.name) + '">').join('') + '</div>';
+            const pics = e.attachments.filter(a => attachmentUrls.get(a.id));
+            const docs = e.attachments.filter(a => !attachmentUrls.get(a.id));
+            if (pics.length) {
+                html += '<div class="pics">' + pics.map(a =>
+                    '<img src="' + attachmentUrls.get(a.id) + '" alt="' + escapeHtml(a.name) + '">').join('') + '</div>';
+            }
+            // Dokumente lassen sich nicht in die Druckseite legen — sie werden
+            // benannt, damit die gedruckte Akte vollstaendig auflistet, was im
+            // Tresor liegt.
+            if (docs.length) {
+                html += '<p class="docs"><b>' + L('Weitere Beweismittel im Tresor', 'Further evidence in the vault') + '</b> ' +
+                    escapeHtml(docs.map(a => a.name + ' (' + formatBytes(a.size) + ')').join(' · ')) + '</p>';
+            }
         }
         const trace = [];
         trace.push(L('Erfasst am ', 'Recorded on ') + new Date(e.createdAt).toLocaleString(mwlLocale()));
@@ -2040,6 +2570,36 @@ document.getElementById('attachmentInput').addEventListener('change', function()
     handleAttachmentSelect(this.files);
     this.value = '';
 });
+
+// Ablage-Zone: Klick, Tastatur und Ziehen fuehren zum selben Ergebnis.
+// Ohne den Tastaturpfad waere das Hinzufuegen von Beweismitteln nur mit
+// Maus moeglich — die Zone ist die einzige Stelle dafuer.
+(function wireAttachmentDrop() {
+    const zone = document.getElementById('attachmentDrop');
+    const input = document.getElementById('attachmentInput');
+    if (!zone || !input) return;
+
+    zone.addEventListener('click', () => input.click());
+    zone.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+    });
+
+    // dragenter/dragover MUESSEN abgefangen werden, sonst oeffnet der Browser
+    // die Datei einfach im Tab und der Eintrag ist weg.
+    ['dragenter', 'dragover'].forEach(ev => zone.addEventListener(ev, (e) => {
+        e.preventDefault(); e.stopPropagation();
+        zone.classList.add('is-over');
+    }));
+    ['dragleave', 'drop'].forEach(ev => zone.addEventListener(ev, (e) => {
+        e.preventDefault(); e.stopPropagation();
+        zone.classList.remove('is-over');
+    }));
+    zone.addEventListener('drop', (e) => {
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+            handleAttachmentSelect(e.dataTransfer.files);
+        }
+    });
+})();
 document.getElementById('backupFileInput').addEventListener('change', function() {
     if (this.files[0]) importBackupFile(this.files[0]);
     this.value = '';
@@ -2062,4 +2622,35 @@ try {
     }
 } catch(e) {}
 
-initLockScreen();
+// Der Tresor-Kopf liegt jetzt in IndexedDB und damit hinter einem
+// asynchronen Zugriff — der Sperrbildschirm darf erst danach entscheiden,
+// ob er "anlegen" oder "entsperren" zeigt. Bis dahin bleibt das Formular
+// verborgen, sonst blitzt fuer einen Moment die falsche Ansicht auf.
+async function bootVault() {
+    await vsInit();
+
+    vaultMeta = await vsGetMeta();
+
+    if (!vaultMeta) {
+        // Kein Tresor in IndexedDB — steht noch einer im alten localStorage?
+        // Der kann hier nur gelesen, nicht migriert werden: seine Anhaenge
+        // stecken im verschluesselten Block, dafuer braucht es das Passwort.
+        // Die eigentliche Migration laeuft in unlockVault().
+        try {
+            const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+            if (raw && raw.salt && raw.pwHash && raw.entries) {
+                legacyVault = raw;
+                vaultMeta = raw;
+            }
+        } catch (e) { /* kaputter Alt-Key: wie kein Tresor behandeln */ }
+    }
+
+    if (vsIsFallback()) {
+        showToast(L('Dieser Browser erlaubt keinen grossen Speicher — der Tresor läuft im Notbetrieb mit engem Limit',
+                    'This browser does not allow large storage — the vault runs in fallback mode with a tight limit'), 'warning');
+    }
+
+    initLockScreen();
+}
+
+bootVault();

@@ -45,7 +45,7 @@
     <meta name="twitter:image" content="https://myworklog.de/Grafiken/icon-512.png">
 
     <!-- Fuellt Version + "Zuletzt aktualisiert" im geteilten Footer -->
-    <script defer src="/Assets/js/version-loader.js?v=4.9.0"></script>
+    <script defer src="/Assets/js/version-loader.js?v=5.0.0"></script>
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="/Grafiken/image.jpg">
@@ -999,10 +999,6 @@
             color: var(--primary); background: rgba(var(--primary-rgb), 0.13);
             border-color: rgba(var(--primary-rgb), 0.32);
         }
-        .vault-menu-size {
-            margin-top: 4px; padding: 8px 10px 5px; border-top: 1px solid var(--border);
-            font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-2);
-        }
 
         /* ══ CLOUD-FREIGABE-MODAL ══ */
         .vc-lead { color: var(--text-1); font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.1rem; }
@@ -1025,24 +1021,115 @@
         /* ══ BEWEISMITTEL ══ */
         .form-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
         .form-label-row .form-label { margin-bottom: 0; }
-        .attach-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-        .attach-thumb { position: relative; width: 64px; height: 64px; border-radius: var(--r-2); overflow: hidden; border: 1px solid var(--border); }
-        .attach-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .attach-thumb-remove {
-            position: absolute; top: 3px; right: 3px; width: 18px; height: 18px;
-            border-radius: 50%; border: none; background: rgba(0,0,0,0.7); color: #fff;
-            font-size: 0.85rem; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: background 0.18s var(--ease);
+        /* ══ BEWEISMITTEL — Ablage-Zone ══
+           Die Zone ist die einzige Stelle zum Hinzufuegen und traegt deshalb
+           die Erklaerung mit, statt sie in ein Label auszulagern. */
+        .attach-drop {
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            padding: 18px 16px; margin-top: 8px; cursor: pointer;
+            border: 1px dashed var(--border-strong); border-radius: var(--r-3);
+            background: rgba(255,255,255,0.012); text-align: center;
+            transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
         }
-        .attach-thumb-remove:hover { background: var(--danger); }
-        .entry-attach-strip { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.8rem; }
-        .entry-attach-thumb {
-            width: 52px; height: 52px; object-fit: cover; border-radius: var(--r-2);
-            border: 1px solid var(--border); cursor: pointer;
-            transition: border-color 0.2s var(--ease), transform 0.2s var(--ease);
+        .attach-drop:hover, .attach-drop:focus-visible { border-color: rgba(var(--primary-rgb), 0.5); background: rgba(var(--primary-rgb), 0.04); }
+        .attach-drop.is-over { border-color: var(--primary); background: rgba(var(--primary-rgb), 0.08); border-style: solid; }
+        .attach-drop-ico { width: 20px; height: 20px; color: var(--text-2); }
+        .attach-drop.is-over .attach-drop-ico { color: var(--primary); }
+        .attach-drop-main { font-size: 0.83rem; font-weight: 500; color: var(--text-1); }
+        .attach-drop-sub { font-size: 0.72rem; color: var(--text-2); line-height: 1.45; max-width: 34ch; }
+
+        /* Liste statt Kachelraster: Seit auch PDFs und Schreiben abgelegt
+           werden koennen, traegt der Dateiname die Information — bei einem
+           Raster aus Quadraten waere er abgeschnitten oder unsichtbar. */
+        .attach-thumbs { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+        .attach-tile {
+            display: flex; align-items: center; gap: 10px; padding: 7px 8px;
+            border: 1px solid var(--border); border-radius: var(--r-2);
+            background: rgba(255,255,255,0.015);
         }
-        .entry-attach-thumb:hover { border-color: var(--border-strong); transform: scale(1.05); }
-        .attachment-viewer-modal { max-width: 720px; }
+        .attach-tile.is-pending { opacity: 0.6; }
+        .attach-tile-face {
+            flex: 0 0 auto; width: 34px; height: 34px; border-radius: var(--r-1);
+            overflow: hidden; background: var(--bg-2);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .attach-tile-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .attach-tile-ico { display: flex; color: var(--text-2); }
+        .attach-tile-ico svg { width: 17px; height: 17px; }
+        .attach-tile[data-kind="pdf"] .attach-tile-ico { color: var(--sev-critical); }
+        .attach-tile-meta { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+        .attach-tile-name {
+            font-size: 0.78rem; color: var(--text-0);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .attach-tile-size { font-size: 0.68rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+        .attach-tile-remove {
+            flex: 0 0 auto; width: 30px; height: 30px; border-radius: var(--r-1);
+            border: none; background: transparent; color: var(--text-2); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: color 0.18s var(--ease), background 0.18s var(--ease);
+        }
+        .attach-tile-remove svg { width: 14px; height: 14px; }
+        .attach-tile-remove:hover { color: var(--danger); background: rgba(var(--danger-rgb), 0.1); }
+        /* Am Finger ist ein 30er-Ziel zu klein — und das Entfernen eines
+           Beweismittels ist nichts, was man aus Versehen daneben tippen soll. */
+        @media (hover: none) {
+            .attach-tile-remove { width: 44px; height: 44px; }
+            .attach-tile-remove svg { width: 16px; height: 16px; }
+        }
+        .attach-tile-spin {
+            width: 15px; height: 15px; border-radius: 50%;
+            border: 1.5px solid var(--border-strong); border-top-color: var(--primary);
+            animation: attachSpin 0.7s linear infinite;
+        }
+        @keyframes attachSpin { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .attach-tile-spin { animation-duration: 2.4s; } }
+
+        /* ══ BEWEISMITTEL — Streifen an der Eintragskarte ══ */
+        .entry-attach-strip { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.8rem; }
+        .entry-attach-chip {
+            display: inline-flex; align-items: center; gap: 6px; max-width: 190px;
+            padding: 3px 9px 3px 3px; cursor: pointer;
+            border: 1px solid var(--border); border-radius: 999px;
+            background: rgba(255,255,255,0.02); color: var(--text-1);
+            font-family: var(--font-body); font-size: 0.7rem;
+            transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+        }
+        .entry-attach-chip:hover { border-color: var(--border-strong); color: var(--text-0); }
+        .entry-attach-chip img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; display: block; }
+        .entry-attach-ico { display: flex; width: 20px; height: 20px; align-items: center; justify-content: center; color: var(--text-2); }
+        .entry-attach-ico svg { width: 13px; height: 13px; }
+        .entry-attach-chip[data-kind="pdf"] .entry-attach-ico { color: var(--sev-critical); }
+        .entry-attach-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* ══ BEWEISMITTEL — Betrachter ══ */
+        .attachment-viewer-modal { max-width: 860px; }
+        .viewer-body { min-height: 120px; display: flex; align-items: center; justify-content: center; }
+        .viewer-image { max-width: 100%; max-height: 70vh; border-radius: var(--r-3); display: block; }
+        .viewer-pdf { width: 100%; height: 70vh; border: 1px solid var(--border); border-radius: var(--r-3); background: var(--bg-2); }
+        .viewer-media { width: 100%; max-height: 70vh; border-radius: var(--r-3); }
+        .viewer-status { font-size: 0.8rem; color: var(--text-2); text-align: center; line-height: 1.6; padding: 12px; }
+        .viewer-file { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 12px; }
+        .viewer-file-ico { display: flex; color: var(--text-2); }
+        .viewer-file-ico svg { width: 40px; height: 40px; }
+
+        /* ══ SPEICHERBELEGUNG im Tresor-Menue ══
+           Zeigt an, verbietet nichts: Wie der Platz auf Fotos, PDFs und
+           Aufnahmen verteilt wird, entscheidet der Fall. */
+        .vault-storage { padding: 9px 12px 10px; border-top: 1px solid var(--border); }
+        .vault-storage-head {
+            display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+            font-size: 0.68rem; color: var(--text-2); margin-bottom: 6px;
+        }
+        .vault-storage-head span:last-child { color: var(--text-1); font-variant-numeric: tabular-nums; }
+        .vault-storage-track { height: 3px; border-radius: 999px; background: rgba(255,255,255,0.06); overflow: hidden; }
+        .vault-storage-fill {
+            height: 100%; width: 0; border-radius: 999px; background: var(--primary);
+            transition: width 0.4s var(--ease), background 0.2s var(--ease);
+        }
+        .vault-storage-fill.is-tight { background: var(--sev-high); }
+        .vault-storage-note { margin-top: 6px; font-size: 0.65rem; color: var(--text-2); line-height: 1.45; }
+        .vault-storage-note.is-warn { color: var(--sev-high); }
 
         /* ══ AENDERUNGSVERLAUF ══ */
         .entry-revision-badge {
@@ -1244,7 +1331,7 @@
             .entry-severity { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=4.9.0"></script>
+    <script defer src="/Assets/js/ph-init.js?v=5.0.0"></script>
 </head>
 <body>
 
@@ -1534,7 +1621,14 @@
                             <span>Cloud-Freigabe</span>
                             <span class="vault-menu-state" id="cloudSyncState">Aus</span>
                         </button>
-                        <div class="vault-menu-size">Speicher: <span id="vaultMenuSize">—</span></div>
+                        <div class="vault-storage">
+                            <div class="vault-storage-head">
+                                <span>Belegt</span>
+                                <span id="vaultMenuSize">—</span>
+                            </div>
+                            <div class="vault-storage-track"><div class="vault-storage-fill" id="vaultStorageBar"></div></div>
+                            <div class="vault-storage-note" id="vaultStorageNote"></div>
+                        </div>
                     </div>
                 </div>
                 <button class="btn btn-sm btn-icon" onclick="lockApp()" title="Sperren (Strg+L)">
@@ -1696,12 +1790,14 @@
                     placeholder="Namen, durch Komma getrennt">
             </div>
             <div class="form-group">
-                <label class="form-label">Beweismittel (optional, max. 5 Fotos)</label>
-                <input type="file" id="attachmentInput" accept="image/*" multiple style="display:none">
-                <button type="button" class="btn btn-sm" onclick="document.getElementById('attachmentInput').click()">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                    Foto hinzufügen
-                </button>
+                <label class="form-label">Beweismittel (optional)</label>
+                <input type="file" id="attachmentInput" multiple style="display:none">
+                <div class="attach-drop" id="attachmentDrop" tabindex="0" role="button"
+                     aria-label="Dateien auswählen oder hierher ziehen">
+                    <svg class="attach-drop-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <span class="attach-drop-main">Dateien hierher ziehen oder auswählen</span>
+                    <span class="attach-drop-sub">Fotos, PDF, Schreiben, Tonaufnahmen — unverändert und verschlüsselt abgelegt</span>
+                </div>
                 <div class="attach-thumbs" id="attachmentThumbs"></div>
             </div>
             <div class="modal-footer">
@@ -1823,6 +1919,10 @@
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><circle cx="12" cy="16.2" r="0.6" fill="currentColor" stroke="none"></circle></svg>
                     <span>Auf jedem weiteren Gerät brauchst du dasselbe Tresor-Passwort. Vergisst du es, hilft auch die Cloud-Kopie nicht.</span>
                 </li>
+                <li>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    <span>Beweismittel bleiben auf diesem Gerät. Mitgenommen werden nur die Einträge — Fotos, PDFs und Aufnahmen überträgt die Freigabe nicht. Für ein zweites Gerät nimm ein Backup.</span>
+                </li>
             </ul>
 
             <p class="vc-note vc-note--off">Nach dem Aufheben wird die Kopie beim nächsten Hochladen aus der Cloud entfernt. Bereits synchronisierte Geräte behalten ihren lokalen Stand.</p>
@@ -1913,11 +2013,18 @@
 <div class="modal-overlay" id="attachmentViewerModal">
     <div class="modal attachment-viewer-modal">
         <div class="modal-head">
-            <h2>Beweisfoto</h2>
-            <button class="modal-close" onclick="closeModal('attachmentViewerModal')">&times;</button>
+            <h2 id="attachmentViewerTitle">Beweismittel</h2>
+            <button class="modal-close" onclick="closeAttachmentViewer()">&times;</button>
         </div>
         <div class="modal-body" style="padding-top:0;">
-            <img id="attachmentViewerImg" src="" alt="Beweisfoto" style="width:100%;border-radius:10px;">
+            <div id="attachmentViewerBody" class="viewer-body"></div>
+        </div>
+        <div class="modal-footer">
+            <a id="attachmentViewerDownload" class="btn btn-sm" download style="display:none">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Herunterladen
+            </a>
+            <button class="btn btn-sm" onclick="closeAttachmentViewer()">Schließen</button>
         </div>
     </div>
 </div>
@@ -1970,7 +2077,10 @@
       var t=document.createElement('template'); t.innerHTML=html; ph.replaceWith(t.content);
     });
 </script>
-<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=4.9.0"></script>
+<!-- Reihenfolge zwingend: vault-store.js stellt die vs*-Funktionen bereit,
+     die schatten-berichtsheft.js beim Start sofort aufruft (bootVault). -->
+<script src="/Assets/js/berichtsheft/vault-store.js?v=5.0.0"></script>
+<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.0.0"></script>
 <script>
 /* Theme-Sync: Standalone-Seiten laufen ausserhalb der SPA und muessen den
    User-Akzent selbst nachziehen. Greift hier erst seit dem Redesign, weil das
