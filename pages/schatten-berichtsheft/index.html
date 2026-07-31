@@ -45,7 +45,7 @@
     <meta name="twitter:image" content="https://myworklog.de/Grafiken/icon-512.png">
 
     <!-- Fuellt Version + "Zuletzt aktualisiert" im geteilten Footer -->
-    <script defer src="/Assets/js/version-loader.js?v=5.0.1"></script>
+    <script defer src="/Assets/js/version-loader.js?v=5.0.2"></script>
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="/Grafiken/image.jpg">
@@ -1018,6 +1018,36 @@
         .vc-note--off { display: none; }
         #vaultCloudModal.is-on .vc-note--off { display: block; }
 
+        /* Die eine Einschraenkung der Freigabe — bewusst aus der neutralen
+           Faktenliste herausgehoben. Amber, nicht Rot: es ist kein Fehler,
+           sondern etwas, das man vorher wissen muss. */
+        .vc-alert {
+            display: flex; gap: 11px; align-items: flex-start;
+            padding: 13px 14px; margin-bottom: 1.1rem;
+            background: rgba(232, 145, 47, 0.06);
+            border: 1px solid rgba(232, 145, 47, 0.22);
+            border-left: 2px solid var(--sev-high);
+            border-radius: 0 var(--r-2) var(--r-2) 0;
+        }
+        .vc-alert-ico { flex-shrink: 0; display: flex; color: var(--sev-high); margin-top: 1px; }
+        .vc-alert-ico svg { width: 17px; height: 17px; }
+        .vc-alert-body { min-width: 0; }
+        .vc-alert-title {
+            font-size: 0.85rem; font-weight: 600; color: var(--text-0);
+            margin: 0 0 5px; letter-spacing: -0.01em;
+        }
+        .vc-alert-text { font-size: 0.8rem; line-height: 1.6; color: var(--text-1); margin: 0 0 6px; }
+        .vc-alert-text:last-of-type { margin-bottom: 10px; }
+        .vc-alert-btn { border-color: rgba(232, 145, 47, 0.32); }
+        .vc-alert-btn:hover { border-color: var(--sev-high); color: var(--text-0); }
+
+        /* Dauerhafte Erinnerung im Tresor-Menue, solange die Freigabe laeuft. */
+        .vault-menu-hint {
+            margin: 0; padding: 2px 12px 9px 34px;
+            font-size: 0.66rem; line-height: 1.45; color: var(--text-2);
+        }
+        .vault-menu-hint[hidden] { display: none; }
+
         /* ══ BEWEISMITTEL ══ */
         .form-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
         .form-label-row .form-label { margin-bottom: 0; }
@@ -1331,7 +1361,7 @@
             .entry-severity { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=5.0.1"></script>
+    <script defer src="/Assets/js/ph-init.js?v=5.0.2"></script>
 </head>
 <body>
 
@@ -1621,6 +1651,10 @@
                             <span>Cloud-Freigabe</span>
                             <span class="vault-menu-state" id="cloudSyncState">Aus</span>
                         </button>
+                        <!-- Nur sichtbar, solange die Freigabe laeuft: erinnert an die
+                             eine Sache, die sie NICHT tut. Im Modal steht es beim
+                             Einschalten, hier bleibt es abrufbar. -->
+                        <p class="vault-menu-hint" id="cloudSyncHint" hidden>Anhänge fahren nicht mit — für ein zweites Gerät ein Backup exportieren und dort importieren.</p>
                         <div class="vault-storage">
                             <div class="vault-storage-head">
                                 <span>Belegt</span>
@@ -1919,11 +1953,27 @@
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><circle cx="12" cy="16.2" r="0.6" fill="currentColor" stroke="none"></circle></svg>
                     <span>Auf jedem weiteren Gerät brauchst du dasselbe Tresor-Passwort. Vergisst du es, hilft auch die Cloud-Kopie nicht.</span>
                 </li>
-                <li>
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
-                    <span>Beweismittel bleiben auf diesem Gerät. Mitgenommen werden nur die Einträge — Fotos, PDFs und Aufnahmen überträgt die Freigabe nicht. Für ein zweites Gerät nimm ein Backup.</span>
-                </li>
             </ul>
+
+            <!-- Eigener Hinweis statt vierter Listenpunkt: Das ist die einzige
+                 Einschraenkung der Freigabe, die den Nutzer spaeter wirklich
+                 ueberrascht — als gleichrangiger Aufzaehlungspunkt zwischen drei
+                 beruhigenden Aussagen wuerde sie untergehen. Die Handlung steht
+                 direkt daneben, damit man sie nicht erst suchen muss. -->
+            <div class="vc-alert" role="note">
+                <span class="vc-alert-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                </span>
+                <div class="vc-alert-body">
+                    <p class="vc-alert-title">Beweismittel fahren nicht mit</p>
+                    <p class="vc-alert-text">Die Freigabe überträgt ausschließlich die Einträge. Fotos, PDFs, Schreiben und Aufnahmen bleiben auf diesem Gerät — auf dem zweiten Gerät siehst du den Eintrag, aber nicht die zugehörige Datei.</p>
+                    <p class="vc-alert-text">Um die Dateien mitzunehmen, führt kein Weg an einem Backup vorbei: hier exportieren und auf dem anderen Gerät über „Backup importieren“ einspielen.</p>
+                    <button type="button" class="btn btn-sm vc-alert-btn" onclick="exportBackup()">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Backup exportieren
+                    </button>
+                </div>
+            </div>
 
             <p class="vc-note vc-note--off">Nach dem Aufheben wird die Kopie beim nächsten Hochladen aus der Cloud entfernt. Bereits synchronisierte Geräte behalten ihren lokalen Stand.</p>
 
@@ -2079,8 +2129,8 @@
 </script>
 <!-- Reihenfolge zwingend: vault-store.js stellt die vs*-Funktionen bereit,
      die schatten-berichtsheft.js beim Start sofort aufruft (bootVault). -->
-<script src="/Assets/js/berichtsheft/vault-store.js?v=5.0.1"></script>
-<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.0.1"></script>
+<script src="/Assets/js/berichtsheft/vault-store.js?v=5.0.2"></script>
+<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.0.2"></script>
 <script>
 /* Theme-Sync: Standalone-Seiten laufen ausserhalb der SPA und muessen den
    User-Akzent selbst nachziehen. Greift hier erst seit dem Redesign, weil das

@@ -1028,6 +1028,10 @@ function updateCloudSyncUI() {
     }
     const modal = document.getElementById('vaultCloudModal');
     if (modal) modal.classList.toggle('is-on', on);
+    // `hidden` statt Klasse: das Attribut haelt den Hinweis auch aus dem
+    // Vorlese-Baum heraus, solange die Freigabe aus ist.
+    const hint = document.getElementById('cloudSyncHint');
+    if (hint) hint.hidden = !on;
     const btn = document.getElementById('vaultCloudConfirmBtn');
     if (btn) {
         btn.textContent = on ? L('Freigabe aufheben', 'Turn sharing off') : L('Freigeben', 'Turn sharing on');
