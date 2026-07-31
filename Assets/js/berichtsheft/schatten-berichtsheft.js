@@ -254,8 +254,9 @@ function updateStrengthBar(pw, barId) {
 //  Dateien bleiben unberuehrt. Das Passwort wird weiterhin nirgends
 //  gespeichert und verlaesst das Geraet nicht.
 
-let vaultMeta = null;     // Tresor-Kopf: {v, caseId, salt, pwHash, wrappedKey}
-let legacyVault = null;   // v1-Tresor aus localStorage, wartet auf Migration beim Entsperren
+let vaultMeta = null;         // Tresor-Kopf: {v, caseId, salt, pwHash, wrappedKey, updatedAt}
+let legacyVault = null;       // v1-Tresor aus localStorage, wartet auf Migration beim Entsperren
+let pendingCloudVault = null; // Neuerer Stand aus der Cloud-Freigabe, wartet aufs Zusammenfuehren
 
 function getVault() { return vaultMeta; }
 function isFirstTime() { return !vaultMeta; }
@@ -316,7 +317,8 @@ async function createVault(password) {
         caseId: generateCaseId(),
         salt: u8ToB64(salt),
         pwHash: pwHash,
-        wrappedKey: await wrapMasterKey(masterRaw, kek)
+        wrappedKey: await wrapMasterKey(masterRaw, kek),
+        updatedAt: new Date().toISOString()
     };
     masterRaw.fill(0);   // Rohschluessel nicht laenger als noetig im Speicher lassen
 
@@ -359,7 +361,90 @@ async function unlockVault(password) {
         vaultMeta.caseId = generateCaseId();
         await vsPutMeta(vaultMeta);
     }
+    if (pendingCloudVault) await mergeCloudVault(password);
     await vsRequestPersist();
+}
+
+// ─── Abgleich mit der Cloud-Freigabe ────────────────────
+// Wird ein neuerer Stand aus der Freigabe gefunden, werden die Eintraege
+// ZUSAMMENGEFUEHRT, nicht ersetzt. Ersetzen waere hier der falsche Reflex:
+// Beide Geraete koennen zwischen zwei Synchronisationen Eintraege bekommen
+// haben, und ein verworfener Vorfall ist bei Beweismitteln nicht wieder
+// herstellbar. Vereinigt wird ueber die Eintrags-ID; kollidiert dieselbe ID,
+// gewinnt der neuere `updatedAt` und die unterlegene Fassung wandert in
+// dessen Aenderungsverlauf, statt verloren zu gehen.
+async function mergeCloudVault(password) {
+    const cloud = pendingCloudVault;
+    pendingCloudVault = null;
+    if (!cloud) return;
+
+    // Anderer Passwort-Stamm: dann gehoert die Kopie zu einem anderen Tresor
+    // (oder das Passwort wurde auf dem anderen Geraet geaendert). Hier NICHTS
+    // anfassen — lieber nichts tun als den falschen Tresor ueberschreiben.
+    if (cloud.pwHash !== vaultMeta.pwHash) {
+        showToast(L('In der Cloud liegt ein Tresor mit anderem Passwort — dein lokaler Stand bleibt unverändert',
+                    'The cloud holds a vault with a different password — your local state is unchanged'), 'warning');
+        return;
+    }
+
+    let cloudEntries;
+    try {
+        const kek = await deriveKey(password, b64ToU8(cloud.salt));
+        const raw = await unwrapMasterKey(cloud.wrappedKey, kek);
+        const cloudKey = await importMasterKey(raw);
+        raw.fill(0);
+        cloudEntries = JSON.parse(await decrypt(cloud.entries, cloudKey));
+    } catch (e) {
+        showToast(L('Cloud-Stand konnte nicht gelesen werden — dein lokaler Stand bleibt unverändert',
+                    'Could not read the cloud state — your local state is unchanged'), 'warning');
+        return;
+    }
+    if (!Array.isArray(cloudEntries)) return;
+
+    const byId = new Map(entries.map(e => [e.id, e]));
+    let neu = 0, aktualisiert = 0;
+
+    for (const remote of cloudEntries) {
+        const local = byId.get(remote.id);
+        if (!local) { byId.set(remote.id, remote); neu++; continue; }
+
+        const tLocal = Date.parse(local.updatedAt || local.createdAt || '') || 0;
+        const tRemote = Date.parse(remote.updatedAt || remote.createdAt || '') || 0;
+        if (tRemote <= tLocal) continue;
+
+        // Die lokale Fassung ist die aeltere — sie wird nicht weggeworfen,
+        // sondern als Zwischenstand in den Verlauf des Gewinners gelegt.
+        const winner = Object.assign({}, remote);
+        winner.history = (remote.history || []).slice();
+        winner.history.push({
+            ts: local.updatedAt || local.createdAt, date: local.date, time: local.time,
+            severity: local.severity, category: local.category, text: local.text,
+            witnesses: local.witnesses || [], status: local.status || 'open',
+            details: local.details || {}
+        });
+        byId.set(remote.id, winner);
+        aktualisiert++;
+    }
+
+    if (!neu && !aktualisiert) return;
+
+    entries = Array.from(byId.values());
+    await saveVault();
+    await refreshFileMetaCache();
+
+    const teile = [];
+    if (neu) teile.push(neu + L(neu === 1 ? ' neuer Eintrag' : ' neue Einträge', neu === 1 ? ' new entry' : ' new entries'));
+    if (aktualisiert) teile.push(aktualisiert + L(' aktualisiert', ' updated'));
+    showToast(L('Stand von einem anderen Gerät übernommen: ', 'Adopted state from another device: ') + teile.join(', '), 'success');
+
+    // Beweismittel reisen nicht mit — wer auf dem anderen Geraet Dateien
+    // angehaengt hat, findet hier nur die Referenz. Das ehrlich sagen,
+    // statt den Nutzer eine leere Vorschau suchen zu lassen.
+    const fehlend = entries.reduce((n, e) => n + (e.attachments || []).filter(a => !fileMetaCache.has(a.id)).length, 0);
+    if (fehlend) {
+        showToast(L(fehlend + ' Beweismittel liegen auf dem anderen Gerät — dort ein Backup exportieren und hier einspielen',
+                    fehlend + ' evidence files are on the other device — export a backup there and import it here'), 'warning');
+    }
 }
 
 // ─── Migration v1 → v2 ──────────────────────────────────
@@ -404,7 +489,8 @@ async function migrateLegacyVault(kek) {
         caseId: vaultMeta.caseId || generateCaseId(),
         salt: vaultMeta.salt,
         pwHash: vaultMeta.pwHash,
-        wrappedKey: await wrapMasterKey(masterRaw, kek)
+        wrappedKey: await wrapMasterKey(masterRaw, kek),
+        updatedAt: new Date().toISOString()
     };
     masterRaw.fill(0);
 
@@ -451,6 +537,10 @@ async function saveVault() {
     // verloren gehen. Der Aufrufer faengt den Fehler und macht die zuletzt
     // hinzugefuegte Aenderung rueckgaengig.
     await vsPutEntries(await encrypt(JSON.stringify(entries), derivedKey));
+    // Zeitstempel entscheidet beim naechsten Start, welche Seite neuer ist
+    // (Geraet oder Cloud-Kopie) — ohne ihn kann der Abgleich nur raten.
+    vaultMeta.updatedAt = new Date().toISOString();
+    await vsPutMeta(vaultMeta);
     syncCloudMirror();
 }
 
@@ -469,6 +559,7 @@ function syncCloudMirror() {
         const mirror = {
             v: vaultMeta.v, caseId: vaultMeta.caseId, salt: vaultMeta.salt,
             pwHash: vaultMeta.pwHash, wrappedKey: vaultMeta.wrappedKey,
+            updatedAt: vaultMeta.updatedAt || new Date().toISOString(),
             entries: null, filesLocalOnly: true
         };
         vsGetEntries().then(rec => {
@@ -2631,18 +2722,38 @@ async function bootVault() {
 
     vaultMeta = await vsGetMeta();
 
+    let mirror = null;
+    try {
+        const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+        if (raw && raw.salt && raw.pwHash && raw.entries) mirror = raw;
+    } catch (e) { /* kaputter Key: wie kein Tresor behandeln */ }
+
     if (!vaultMeta) {
-        // Kein Tresor in IndexedDB — steht noch einer im alten localStorage?
-        // Der kann hier nur gelesen, nicht migriert werden: seine Anhaenge
+        // Kein Tresor in IndexedDB — steht noch einer im localStorage?
+        // Entweder ein alter v1-Tresor oder der Spiegel aus der Cloud-Freigabe.
+        // Beide koennen hier nur gelesen, nicht ausgepackt werden: die Inhalte
         // stecken im verschluesselten Block, dafuer braucht es das Passwort.
-        // Die eigentliche Migration laeuft in unlockVault().
-        try {
-            const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
-            if (raw && raw.salt && raw.pwHash && raw.entries) {
-                legacyVault = raw;
-                vaultMeta = raw;
-            }
-        } catch (e) { /* kaputter Alt-Key: wie kein Tresor behandeln */ }
+        // Migration bzw. Uebernahme laeuft in unlockVault().
+        if (mirror) {
+            legacyVault = mirror;
+            vaultMeta = mirror;
+        }
+    } else if (mirror) {
+        // WICHTIG: Hier lag der Fehler, an dem der Stand von einem zweiten
+        // Geraet nicht ankam. Der Cloud-Sync schreibt seine Kopie in den
+        // localStorage-Spiegel; der Tresor selbst liegt aber in IndexedDB.
+        // Weil dieser Zweig frueher gar nicht existierte, wurde ein frisch
+        // heruntergeladener Stand schlicht ignoriert, sobald lokal schon ein
+        // Tresor lag — und beim naechsten Speichern hat der lokale, aeltere
+        // Stand den neueren in der Cloud auch noch ueberschrieben.
+        const mine = Date.parse(vaultMeta.updatedAt || '') || 0;
+        const theirs = Date.parse(mirror.updatedAt || '') || 0;
+        // Im Zweifel zusammenfuehren: Das Zusammenfuehren ist verlustfrei
+        // (Vereinigung ueber die Eintrags-IDs), ein ueberfluessiger Durchlauf
+        // kostet also nur eine Entschluesselung. Ein ausgelassener Durchlauf
+        // kostet dagegen den Stand eines Geraets — Tresore aus der Zeit vor
+        // diesem Zeitstempel haben `mine === 0` und werden deshalb geprueft.
+        if (!mine || theirs > mine) pendingCloudVault = mirror;
     }
 
     if (vsIsFallback()) {

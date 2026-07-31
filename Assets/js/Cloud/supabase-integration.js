@@ -393,15 +393,33 @@ class SupabaseCloudSync {
             if (data && data.all_data && typeof data.all_data === 'object') {
                 console.log('[Cloud] Lade', Object.keys(data.all_data).length, 'Keys in LocalStorage');
                 
-                // Auth-Tokens niemals überschreiben — nur App-Daten wiederherstellen
-                Object.entries(data.all_data).forEach(([key, value]) => {
-                    if (key.startsWith('sb-') || key.startsWith('supabase')) return;
+                /* ZWEI Durchgaenge, und die Reihenfolge ist der ganze Punkt.
+                   `cloudKeyAllowed` liest das Freigabe-Flag aus dem LOKALEN
+                   localStorage. Das Flag reist selbst als ganz normaler Key mit —
+                   wird es erst NACH dem freigabepflichtigen Key geschrieben, ist
+                   die Freigabe zum Pruefzeitpunkt noch nicht da und der Key wird
+                   verworfen. Auf einem frischen Geraet fiel der Schatten-Tresor
+                   dadurch beim ersten Herunterladen lautlos hinten runter — und
+                   weil localStorage seine Schluessel in Einfuege-Reihenfolge
+                   ausgibt (nicht alphabetisch), haengt es davon ab, ob der Nutzer
+                   die Freigabe vor oder nach dem Tresor angelegt hat.
+                   Deshalb: erst alle ungeschuetzten Keys (darunter die Flags),
+                   dann die freigabepflichtigen. */
+                const entriesAll = Object.entries(data.all_data)
+                    .filter(([key]) => !key.startsWith('sb-') && !key.startsWith('supabase'));
+                const gated = [];
+
+                for (const [key, value] of entriesAll) {
+                    if (CLOUD_OPT_IN_KEYS[key]) { gated.push([key, value]); continue; }
+                    localStorage.setItem(key, value);
+                }
+                for (const [key, value] of gated) {
                     /* Ohne Freigabe auch NICHT zurueckschreiben: sonst koennte eine
                        aeltere Cloud-Kopie einen lokalen Tresor ueberschreiben, der
                        nie hochgeladen werden sollte. */
-                    if (!cloudKeyAllowed(key)) return;
+                    if (!cloudKeyAllowed(key)) continue;
                     localStorage.setItem(key, value);
-                });
+                }
 
                 console.log('[Cloud] Daten erfolgreich synchronisiert!');
                 return { success: true, itemsLoaded: Object.keys(data.all_data).length };
