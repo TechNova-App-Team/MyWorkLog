@@ -283,6 +283,10 @@
     'Jahresübersicht & Insights': 'Year overview & insights',
     'Monats-Vergleich & Detailanalyse': 'Month comparison & detail analysis',
     'Wochenansicht': 'Week view',
+    // Sidebar-Label + Command-Palette + Seitentitel. Steht in
+    // data.settings.nav bzw. wird von tab-navigation.js erzeugt — die
+    // statische Pipeline sieht davon nichts.
+    'Urlaubsplaner': 'Vacation planner',
     'AI-Bot Assistent': 'AI bot assistant',
     'Aufgaben': 'Tasks',
     'Ziele': 'Goals',
@@ -498,6 +502,7 @@
     [/Ziele & Fokus/g, 'Goals & focus'],
     [/AI-Bot Assistent/g, 'AI bot assistant'],
     [/Wochenansicht/g, 'Week view'],
+    [/Urlaubsplaner/g, 'Vacation planner'],
     [/IHK \/ Karriere/g, 'IHK / career'],
     [/Übersicht/g, 'Overview'],
     // Insight-Titel

@@ -28,6 +28,7 @@
             'yearview': 'Jahresübersicht & Insights',
             'monthcompare': 'Monats-Vergleich & Detailanalyse',
             'weekview': 'Wochenansicht',
+            'urlaubsplaner': 'Urlaubsplaner',
             'aibot': 'AI-Bot Assistent',
             'support': 'Support',
             'analytics-pro': 'Analytics Pro',
@@ -56,6 +57,9 @@
         }
         if (tabId === 'goals') {
             renderGoalsView();
+        }
+        if (tabId === 'urlaubsplaner') {
+            renderUrlaubsplaner();
         }
         if (tabId === 'history') {
             renderHistoryView();

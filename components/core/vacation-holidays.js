@@ -822,7 +822,12 @@
 
         const getEasterSunday = (Y) => {
             const a = Y % 19; const b = Y % 4; const c = Y % 7;
-            const k = Math.floor(Y / 100); const p = Math.floor((13 * k + 8) / 25);
+            // Gauss: p = floor((13 + 8k)/25). Stand bis v5.1.0 als (13k+8)/25 —
+            // damit ergab sich fuer 2000-2099 M=20 statt der korrekten 24 und
+            // Ostern lag in den meisten Jahren 1-3 Wochen daneben (2027: 18.4.
+            // statt 28.3.). Betraf Karfreitag, Ostermontag, Christi Himmelfahrt,
+            // Pfingstmontag und Fronleichnam.
+            const k = Math.floor(Y / 100); const p = Math.floor((13 + 8 * k) / 25);
             const q = Math.floor(k / 4);
             const M = (15 - p + k - q) % 30;
             const N = (4 + k - q) % 7;

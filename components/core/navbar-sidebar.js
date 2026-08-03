@@ -11,6 +11,7 @@
             yearview: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 9h16"/><path d="M10 3v4"/><path d="M14 3v4"/></svg>',
             monthcompare: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M9 5v4"/><path d="M15 5v4"/></svg>',
             weekview: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 5v4"/><path d="M16 5v4"/></svg>',
+            urlaubsplaner: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 21a9 9 0 00-9-9 9 9 0 019-9 9 9 0 019 9 9 9 0 00-9 9z"/><path d="M13 21v-9"/></svg>',
             school: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M4 9v7a8 8 0 0016 0V9"/></svg>',
             ihk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L3 7l9 4 9-4-9-4z"/><path d="M3 7v6c0 5 4 9 9 9s9-4 9-9V7"/></svg>',
             goals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><path d="M12 5v2"/><path d="M12 17v2"/><path d="M5 12h2"/><path d="M17 12h2"/></svg>',
@@ -215,6 +216,7 @@
             {id:'yearview', label:'Jahresansicht', icon:getIconSvgById('yearview'), visible:true},
             {id:'monthcompare', label:'Monatsansicht', icon:getIconSvgById('monthcompare'), visible:true},
             {id:'weekview', label:'Wochenansicht', icon:getIconSvgById('weekview'), visible:true},
+            {id:'urlaubsplaner', label:'Urlaubsplaner', icon:getIconSvgById('urlaubsplaner'), visible:true},
             {id:'school', label:'Berufsschule', icon:getIconSvgById('school'), visible:true},
             {id:'ihk', label:'IHK', icon:getIconSvgById('ihk'), visible:true},
             {id:'goals', label:'Ziele', icon:getIconSvgById('goals'), visible:true},
@@ -223,7 +225,10 @@
         ];
 
         // Nav-Version: bei Änderung der Reihenfolge/Items hochzählen → erzwingt Reset
-        const NAV_VERSION = 5;
+        // 6: Urlaubsplaner ergaenzt. Ohne Bump landet er bei Bestandsnutzern
+        // per Append ganz unten statt bei den Zeitraum-Ansichten — die
+        // Sidebar-Reihenfolge steckt in den Nutzerdaten (data.settings.nav).
+        const NAV_VERSION = 6;
         const navNeedsReset = !Array.isArray(data.settings.nav) || data.settings.navVersion !== NAV_VERSION;
         if (navNeedsReset) {
             // Bestehende visibility-Einstellungen übernehmen, aber neue Reihenfolge erzwingen
@@ -452,6 +457,7 @@
         { id: 'yearview',     label: 'Jahresansicht',     icon: getIconSvgById('yearview'), group: 'Navigation', action: () => switchTab('yearview') },
         { id: 'monthcompare', label: 'Monatvergleich',    icon: getIconSvgById('monthcompare'), group: 'Navigation', action: () => switchTab('monthcompare') },
         { id: 'weekview',     label: 'Wochenansicht',     icon: getIconSvgById('weekview'), group: 'Navigation', action: () => switchTab('weekview') },
+        { id: 'urlaubsplaner', label: 'Urlaubsplaner',    icon: getIconSvgById('urlaubsplaner'), group: 'Navigation', action: () => switchTab('urlaubsplaner') },
         { id: 'school',       label: 'Berufsschule',      icon: getIconSvgById('school'), group: 'Navigation', action: () => switchTab('school') },
         { id: 'aibot',        label: 'AI-Bot',            icon: getIconSvgById('aibot'), group: 'Navigation', action: () => switchTab('aibot') },
         { id: 'support',      label: 'Support',           icon: getIconSvgById('support'), group: 'Navigation', action: () => switchTab('support') },

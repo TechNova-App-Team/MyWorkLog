@@ -1,0 +1,366 @@
+/* ═══ URLAUBSPLANER ═══ */
+
+/* Datenfarben bewusst NICHT ueber --primary: der Akzent ist frei waehlbar,
+   eine Datenkategorie darf sich nicht mitverfaerben. Werte gegen
+   validate_palette.js geprueft (CVD-Separation dark ΔE 8.9 / light ΔE 9.2).
+   Der Light-Satz ist dunkler, weil die hellen Toene gegen #f8fafc unter
+   3:1 Kontrast fielen. */
+#view-urlaubsplaner {
+    --up-hol: #f59e0b;
+    --up-vac: #10b981;
+    --up-sug: #3b82f6;
+    --up-line: rgba(255, 255, 255, 0.08);
+    --up-cell: rgba(255, 255, 255, 0.03);
+    /* Ziffer auf gefuellter Zelle. Dark: helle Fuellung → dunkle Schrift
+       (9.1:1 auf Amber, 7.6:1 auf Gruen). Light: dunkle Fuellung → weisse
+       Schrift; dunkel waere dort nur 3.8:1 bzw. 3.5:1 und damit unter AA. */
+    --up-on-fill: #0b0b0f;
+}
+
+[data-theme="light"] #view-urlaubsplaner {
+    --up-hol: #c2410c;
+    --up-vac: #047857;
+    --up-sug: #1d4ed8;
+    --up-line: rgba(7, 16, 35, 0.10);
+    --up-cell: rgba(7, 16, 35, 0.035);
+    --up-on-fill: #ffffff;
+}
+
+.up-title { margin-bottom: 0.4rem; }
+
+.up-lead {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    max-width: 62ch;
+    line-height: 1.6;
+}
+
+/* ── Budget ─────────────────────────────────────────────── */
+
+.up-budget { margin-bottom: 2rem; border-radius: 16px; }
+
+.up-budget__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+.up-budget__label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+}
+
+.up-budget__year { max-width: 140px; border-radius: 8px; }
+
+.up-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.up-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--up-line);
+    border-radius: 12px;
+    background: var(--up-cell);
+}
+
+.up-stat--lead { border-color: rgba(var(--primary-rgb), 0.35); }
+
+.up-stat__label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.up-stat__value {
+    font-family: var(--font-mono);
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+}
+
+.up-stat--lead .up-stat__value { color: var(--primary); }
+
+.up-stat__unit { font-size: 0.75rem; color: var(--text-muted); }
+
+.up-budget__note {
+    margin: 1.1rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* ── Abschnitte ─────────────────────────────────────────── */
+
+.up-section { margin-bottom: 2.5rem; }
+.up-section__title { font-size: 1.05rem; margin-bottom: 0.4rem; }
+
+.up-section__hint {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+    max-width: 68ch;
+    margin-bottom: 1.1rem;
+}
+
+/* ── Vorschlaege ────────────────────────────────────────── */
+
+.up-sugs { display: flex; flex-direction: column; gap: 0.7rem; }
+
+.up-sug {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--up-line);
+    border-radius: 14px;
+    background: var(--bg-glass);
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.up-sug:hover { border-color: rgba(var(--primary-rgb), 0.3); }
+
+.up-sug__rank {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: var(--up-cell);
+    border: 1px solid var(--up-line);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.up-sug__main { flex: 1 1 auto; min-width: 0; }
+
+.up-sug__range {
+    font-size: 1rem;
+    font-weight: 650;
+    margin: 0 0 0.15rem;
+    color: var(--text-main);
+}
+
+.up-sug__why {
+    margin: 0 0 0.55rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.up-sug__math {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+}
+
+.up-sug__cost { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.up-sug__arrow { width: 15px; height: 15px; color: var(--text-muted); flex: 0 0 auto; }
+
+.up-sug__gain {
+    font-weight: 650;
+    color: var(--up-vac);
+    font-variant-numeric: tabular-nums;
+}
+
+.up-sug__side {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.up-sug__ratio { text-align: right; line-height: 1.15; }
+
+.up-sug__ratio-num {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+}
+
+.up-sug__ratio-lbl {
+    display: block;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.up-sug__book {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.9rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary);
+    color: #fff;
+    font-family: var(--font-main);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.up-sug__book svg { width: 15px; height: 15px; }
+.up-sug__book:hover { filter: brightness(1.1); }
+.up-sug__book:active { transform: scale(0.97); }
+.up-sug__book:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.35); }
+
+/* ── Leerzustand ────────────────────────────────────────── */
+
+.up-empty {
+    padding: 2.2rem 1.5rem;
+    border: 1px dashed var(--up-line);
+    border-radius: 14px;
+    text-align: center;
+}
+
+.up-empty__icon { width: 30px; height: 30px; color: var(--text-muted); opacity: 0.7; }
+.up-empty__title { font-size: 0.95rem; margin: 0.7rem 0 0.35rem; }
+
+.up-empty__body {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    max-width: 52ch;
+    margin: 0 auto;
+}
+
+.up-empty__btn {
+    margin-top: 1.1rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--up-line);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-main);
+    font-family: var(--font-main);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.up-empty__btn:hover { background: var(--up-cell); border-color: rgba(var(--primary-rgb), 0.35); }
+
+/* ── Legende ────────────────────────────────────────────── */
+
+.up-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.15rem;
+    margin-bottom: 1.2rem;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+}
+
+.up-legend__item { display: inline-flex; align-items: center; gap: 0.4rem; }
+
+.up-legend__sw {
+    width: 13px;
+    height: 13px;
+    border-radius: 4px;
+    flex: 0 0 auto;
+}
+
+/* Vorschlaege tragen Form UND Farbe (Ring statt Fuellung) — zweite Kodierung
+   fuer Farbsehschwaeche, und semantisch richtig: ein Vorschlag ist noch
+   keine Buchung. */
+.up-legend__sw--sug { background: transparent; box-shadow: inset 0 0 0 2px var(--up-sug); }
+.up-legend__sw--hol { background: var(--up-hol); }
+.up-legend__sw--vac { background: var(--up-vac); }
+.up-legend__sw--free { background: var(--up-cell); border: 1px solid var(--up-line); }
+
+/* ── Jahreskalender ─────────────────────────────────────── */
+
+.up-cal {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.1rem;
+}
+
+.up-m {
+    padding: 0.9rem;
+    border: 1px solid var(--up-line);
+    border-radius: 12px;
+    background: var(--up-cell);
+}
+
+.up-m__name {
+    font-size: 0.8rem;
+    font-weight: 650;
+    margin: 0 0 0.6rem;
+    color: var(--text-main);
+}
+
+.up-m__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.up-m__wd {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--text-muted);
+    opacity: 0.65;
+    padding-bottom: 3px;
+}
+
+.up-d {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border-radius: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    background: transparent;
+}
+
+.up-d--pad { background: none; }
+.up-d--free { background: var(--up-cell); }
+.up-d--past { opacity: 0.32; }
+
+.up-d--hol { background: var(--up-hol); color: var(--up-on-fill); font-weight: 700; }
+.up-d--vac { background: var(--up-vac); color: var(--up-on-fill); font-weight: 700; }
+
+.up-d--sug {
+    box-shadow: inset 0 0 0 2px var(--up-sug);
+    color: var(--up-sug);
+    font-weight: 700;
+}
+
+@media (max-width: 560px) {
+    .up-sug { flex-wrap: wrap; }
+    .up-sug__side { width: 100%; justify-content: space-between; }
+    .up-cal { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.7rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .up-sug, .up-sug__book, .up-empty__btn { transition: none; }
+    .up-sug__book:active { transform: none; }
+}
