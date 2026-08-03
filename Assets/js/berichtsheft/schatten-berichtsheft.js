@@ -2168,25 +2168,57 @@ function catIconHtml(cat) {
     return '<span class="cat-ico">' + cat.icon + '</span>';
 }
 
-// Bilder fuer den Druck vorab entschluesseln. Sie muessen als data:-URL im
-// erzeugten Dokument stehen — ein blob:-Verweis aus diesem Fenster ist im
-// Druckfenster nicht mehr aufloesbar. Nicht-Bilder werden nur namentlich
-// aufgefuehrt; ein PDF laesst sich nicht in eine Druckseite einbetten.
-async function collectAttachmentDataUrls(list) {
+// Anhaenge fuer den Druck vorab entschluesseln.
+//
+// Bilder muessen als data:-URL im erzeugten Dokument stehen — ein blob:-Verweis
+// aus diesem Fenster ist im Druckfenster nicht mehr aufloesbar.
+//
+// Textartige Beweismittel (Chatprotokoll, Mail-Export, CSV) wurden bis v5.2.0
+// nur mit Namen und Groesse erwaehnt, ihr INHALT fiel aus dem Protokoll heraus.
+// Genau der ist aber das Beweismittel. Sie werden jetzt woertlich abgedruckt.
+//
+// Echte Binaerdateien (PDF, Audio, Video, Office) lassen sich in eine Druckseite
+// nicht hineinrendern. Sie bekommen einen Eintrag im Anlagenverzeichnis und
+// werden separat uebergeben — das steht so im Dokument, statt sie stillschweigend
+// wegzulassen.
+const ATT_TEXT_LIMIT = 20000;   // Zeichen; darueber wird sichtbar gekuerzt
+
+function attIsTextual(mime, name) {
+    const m = (mime || '').toLowerCase();
+    if (m.indexOf('text/') === 0) return true;
+    if (m === 'application/json' || m === 'application/xml') return true;
+    const ext = (name || '').split('.').pop().toLowerCase();
+    return /^(txt|md|csv|log|eml|json|xml|vtt|srt)$/.test(ext);
+}
+
+async function collectAttachmentContents(list) {
     const map = new Map();
     for (const e of list) {
         for (const a of (e.attachments || [])) {
-            if (fileKind(a.mime, a.name) !== 'image') continue;
+            const isImg = fileKind(a.mime, a.name) === 'image';
+            const isTxt = !isImg && attIsTextual(a.mime, a.name);
+            if (!isImg && !isTxt) continue;
             try {
                 const loaded = await loadAttachmentBlob(a.id);
                 if (!loaded) continue;
-                map.set(a.id, await new Promise(res => {
-                    const fr = new FileReader();
-                    fr.onload = () => res(fr.result);
-                    fr.onerror = () => res(null);
-                    fr.readAsDataURL(loaded.blob);
-                }));
-            } catch (err) { /* einzelnes Bild fehlt: Export laeuft trotzdem durch */ }
+                if (isImg) {
+                    const url = await new Promise(res => {
+                        const fr = new FileReader();
+                        fr.onload = () => res(fr.result);
+                        fr.onerror = () => res(null);
+                        fr.readAsDataURL(loaded.blob);
+                    });
+                    if (url) map.set(a.id, { type: 'image', url: url });
+                } else {
+                    const raw = await loaded.blob.text();
+                    map.set(a.id, {
+                        type: 'text',
+                        text: raw.slice(0, ATT_TEXT_LIMIT),
+                        truncated: raw.length > ATT_TEXT_LIMIT,
+                        fullLength: raw.length
+                    });
+                }
+            } catch (err) { /* einzelner Anhang fehlt: Export laeuft trotzdem durch */ }
         }
     }
     return map;
@@ -2196,7 +2228,28 @@ async function exportAsPDF() {
     const exportEntries = getExportEntries();
     if (exportEntries.length === 0) { showToast(L('Keine Einträge zum Exportieren', 'No entries to export'), 'warning'); return; }
 
-    const attachmentUrls = await collectAttachmentDataUrls(exportEntries);
+    const attachmentUrls = await collectAttachmentContents(exportEntries);
+
+    // Durchgehende Anlagen-Nummern ueber das ganze Dokument. Ohne sie laesst
+    // sich aus dem Fliesstext nicht auf ein einzelnes Beweismittel verweisen,
+    // und die separat uebergebenen Dateien sind keinem Vorfall zuzuordnen.
+    // Nummeriert wird in DARSTELLUNGS-Reihenfolge (Bild, Text, separat), nicht
+    // in Speicherreihenfolge — sonst stehen die Anlagen im Dokument als 1, 3, 2.
+    const attIndex = new Map();
+    const attList = [];
+    const modeRank = { image: 0, text: 1, external: 2 };
+    exportEntries.forEach(e => {
+        const withMode = (e.attachments || []).map(a => {
+            const got = attachmentUrls.get(a.id);
+            return { att: a, mode: got ? got.type : 'external', content: got || null };
+        });
+        withMode.sort((x, y) => modeRank[x.mode] - modeRank[y.mode]);
+        withMode.forEach(it => {
+            const nr = attList.length + 1;
+            attIndex.set(it.att.id, nr);
+            attList.push({ nr: nr, att: it.att, entry: e, mode: it.mode, content: it.content });
+        });
+    });
 
     const now = new Date();
     const dates = exportEntries.map(e => e.date).sort();
@@ -2305,6 +2358,19 @@ async function exportAsPDF() {
     html += 'table.tbl td{padding:2.3mm 0;border-bottom:.5pt solid #eceef1;color:#4b5158}';
     html += 'table.tbl td+td,table.tbl th+th{text-align:right;width:18mm;font-variant-numeric:tabular-nums;color:#14161a;font-weight:500}';
 
+    // ── Anlagenverzeichnis ──────────────────────────────────────────────
+    html += '.att-lead{font-size:9.5pt;color:#4b5158;line-height:1.6;margin-bottom:6mm;max-width:150mm}';
+    html += 'table.att-tab{width:100%;border-collapse:collapse;font-size:9pt}';
+    html += 'table.att-tab th{text-align:left;font-weight:500;font-size:8pt;color:#9096a0;';
+    html += 'border-bottom:.75pt solid #14161a;padding-bottom:2mm}';
+    html += 'table.att-tab td{padding:2.3mm 2mm 2.3mm 0;border-bottom:.5pt solid #eceef1;color:#4b5158;vertical-align:top}';
+    html += 'table.att-tab th:first-child,table.att-tab td:first-child{width:14mm}';
+    html += 'table.att-tab th:last-child,table.att-tab td:last-child{width:34mm}';
+    // Separat beigefuegte Dateien nicht ueber Farbe kennzeichnen — das Dokument
+    // wird oft schwarzweiss ausgedruckt. Fettung traegt die Unterscheidung.
+    html += 'table.att-tab tr.att-ext td:last-child{color:#14161a;font-weight:600}';
+    html += '.att-note{margin-top:5mm;font-size:8.5pt;color:#9096a0;line-height:1.55;max-width:150mm}';
+
     // ── Verlorene Ausbildungszeit: eigene getoente Karte statt Fliesstext —
     //    das ist die eine Zahl, die dem Betrieb wehtut, auf der Farbe der
     //    Stufe, die dafuer bereits validiert ist (amber/high). ──
@@ -2349,7 +2415,17 @@ async function exportAsPDF() {
     html += '.wit b{font-weight:400;color:#9096a0}';
     // Beweisfotos gross genug, um Beweis zu sein.
     html += '.pics{margin-top:3.5mm;display:flex;flex-wrap:wrap;gap:3mm}';
-    html += '.pics img{width:80mm;max-height:90mm;object-fit:contain;border:.5pt solid #e0e3e7;border-radius:2mm}';
+    html += '.pic{break-inside:avoid;page-break-inside:avoid}';
+    html += '.pics img{width:80mm;max-height:90mm;object-fit:contain;border:.5pt solid #e0e3e7;border-radius:2mm;display:block}';
+    // Beschriftung: ein unbeschriftetes Foto belegt nicht, wozu es gehoert.
+    html += '.pic figcaption{margin-top:1.2mm;font-size:7.5pt;color:#9096a0}';
+    // Textbeweise woertlich — abgesetzt, damit klar ist, wo Zitat anfaengt
+    // und aufhoert, und umbruchsicher ueber Seitengrenzen.
+    html += '.att-txt{margin-top:3.5mm;border:.5pt solid #e0e3e7;border-radius:2mm;overflow:hidden}';
+    html += '.att-txt figcaption{padding:1.8mm 2.5mm;background:#f4f5f7;font-size:8pt;font-weight:600;color:#14161a;border-bottom:.5pt solid #e0e3e7}';
+    html += '.att-txt .att-meta{font-weight:400;color:#9096a0}';
+    html += '.att-txt pre{padding:2.5mm;font-family:"JetBrains Mono","Cascadia Mono",Consolas,monospace;font-size:7.5pt;line-height:1.55;color:#14161a;white-space:pre-wrap;word-break:break-word}';
+    html += '.att-cut{padding:0 2.5mm 2mm;font-size:7pt;color:#9096a0}';
     html += '.trace{margin-top:2.5mm;font-size:7.5pt;color:#b6bbc3}';
     html += '.foot{margin-top:12mm;padding-top:4mm;border-top:.75pt solid #14161a;font-size:8pt;color:#6b7280;max-width:150mm;line-height:1.6}';
     html += '.foot p+p{margin-top:2mm}';
@@ -2502,18 +2578,40 @@ async function exportAsPDF() {
             html += '<p class="wit"><span class="cat-ico">' + UI_ICONS.users + '</span><b>' + L('Zeugen', 'Witnesses') + '</b> ' + escapeHtml(e.witnesses.join(', ')) + '</p>';
         }
         if (e.attachments && e.attachments.length) {
-            const pics = e.attachments.filter(a => attachmentUrls.get(a.id));
+            const pics = e.attachments.filter(a => (attachmentUrls.get(a.id) || {}).type === 'image');
+            const txts = e.attachments.filter(a => (attachmentUrls.get(a.id) || {}).type === 'text');
             const docs = e.attachments.filter(a => !attachmentUrls.get(a.id));
+
             if (pics.length) {
                 html += '<div class="pics">' + pics.map(a =>
-                    '<img src="' + attachmentUrls.get(a.id) + '" alt="' + escapeHtml(a.name) + '">').join('') + '</div>';
+                    '<figure class="pic"><img src="' + attachmentUrls.get(a.id).url + '" alt="' + escapeHtml(a.name) + '">' +
+                    '<figcaption>' + L('Anlage ', 'Exhibit ') + attIndex.get(a.id) + ' — ' + escapeHtml(a.name) + '</figcaption></figure>'
+                ).join('') + '</div>';
             }
-            // Dokumente lassen sich nicht in die Druckseite legen — sie werden
-            // benannt, damit die gedruckte Akte vollstaendig auflistet, was im
-            // Tresor liegt.
+
+            // Textbeweise woertlich. Der Inhalt IST das Beweismittel; ein
+            // Dateiname im Fliesstext belegt gar nichts.
+            txts.forEach(a => {
+                const c = attachmentUrls.get(a.id);
+                html += '<figure class="att-txt">';
+                html += '<figcaption>' + L('Anlage ', 'Exhibit ') + attIndex.get(a.id) + ' — ' + escapeHtml(a.name) +
+                        ' <span class="att-meta">(' + escapeHtml(formatBytes(a.size)) + ')</span></figcaption>';
+                html += '<pre>' + escapeHtml(c.text) + '</pre>';
+                if (c.truncated) {
+                    html += '<p class="att-cut">' + L(
+                        'Gekürzt nach ' + ATT_TEXT_LIMIT.toLocaleString(mwlLocale()) + ' von ' + c.fullLength.toLocaleString(mwlLocale()) + ' Zeichen. Die vollständige Datei liegt im Tresor.',
+                        'Truncated after ' + ATT_TEXT_LIMIT.toLocaleString(mwlLocale()) + ' of ' + c.fullLength.toLocaleString(mwlLocale()) + ' characters. The complete file is in the vault.'
+                    ) + '</p>';
+                }
+                html += '</figure>';
+            });
+
+            // PDF, Audio, Video, Office: in eine Druckseite nicht darstellbar.
+            // Sie stehen mit Anlagennummer hier und im Anlagenverzeichnis, damit
+            // die separat uebergebene Datei dem Vorfall zuzuordnen ist.
             if (docs.length) {
-                html += '<p class="docs"><b>' + L('Weitere Beweismittel im Tresor', 'Further evidence in the vault') + '</b> ' +
-                    escapeHtml(docs.map(a => a.name + ' (' + formatBytes(a.size) + ')').join(' · ')) + '</p>';
+                html += '<p class="docs"><b>' + L('Separat beigefügt', 'Supplied separately') + '</b> ' +
+                    escapeHtml(docs.map(a => L('Anlage ', 'Exhibit ') + attIndex.get(a.id) + ': ' + a.name + ' (' + formatBytes(a.size) + ')').join(' · ')) + '</p>';
             }
         }
         const trace = [];
@@ -2523,6 +2621,54 @@ async function exportAsPDF() {
         html += '<p class="trace mono">' + escapeHtml(trace.join('  ·  ')) + '</p>';
         html += '</div>';
     });
+
+    // ─── 04 Anlagenverzeichnis ───────────────────────────────────────────
+    // Ohne dieses Verzeichnis ist eine separat uebergebene Datei keinem
+    // Vorfall zuzuordnen, und der Empfaenger sieht nicht, ob zu einem
+    // Vorfall ueberhaupt Beweismittel existieren.
+    if (attList.length) {
+        html += '<div class="page break">';
+        html += '<div class="sec-head"><span class="sec-idx">04</span><h2>' + L('Anlagenverzeichnis', 'Index of exhibits') + '</h2></div>';
+
+        const nExt = attList.filter(a => a.mode === 'external').length;
+        html += '<p class="att-lead">' + L(
+            'Zu den oben genannten Vorfällen gehören ' + attList.length + ' Beweismittel. Bilder und Textdokumente sind in diesem Protokoll abgedruckt.' +
+                (nExt ? ' ' + nExt + ' Datei(en) lassen sich nicht ausdrucken und werden separat übergeben.' : ''),
+            'The incidents above have ' + attList.length + ' items of evidence. Images and text documents are reproduced in this record.' +
+                (nExt ? ' ' + nExt + ' file(s) cannot be printed and are supplied separately.' : '')
+        ) + '</p>';
+
+        html += '<table class="att-tab"><thead><tr>';
+        html += '<th>' + L('Anlage', 'Exhibit') + '</th>';
+        html += '<th>' + L('Vorfall vom', 'Incident of') + '</th>';
+        html += '<th>' + L('Datei', 'File') + '</th>';
+        html += '<th>' + L('Größe', 'Size') + '</th>';
+        html += '<th>' + L('Im Protokoll', 'In this record') + '</th>';
+        html += '</tr></thead><tbody>';
+        attList.forEach(it => {
+            const inDoc = it.mode === 'image'
+                ? L('abgedruckt (Bild)', 'reproduced (image)')
+                : it.mode === 'text'
+                    ? L('abgedruckt (Text)', 'reproduced (text)')
+                    : L('separat beigefügt', 'supplied separately');
+            html += '<tr' + (it.mode === 'external' ? ' class="att-ext"' : '') + '>';
+            html += '<td class="mono">' + it.nr + '</td>';
+            html += '<td>' + escapeHtml(formatDate(it.entry.date)) + '</td>';
+            html += '<td>' + escapeHtml(it.att.name) + '</td>';
+            html += '<td class="mono">' + escapeHtml(formatBytes(it.att.size)) + '</td>';
+            html += '<td>' + inDoc + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table>';
+
+        if (nExt) {
+            html += '<p class="att-note">' + L(
+                'Die separat beigefügten Dateien liegen unverändert im verschlüsselten Tresor. Über „Backup exportieren" lassen sie sich im Original herausgeben.',
+                'The separately supplied files are held unchanged in the encrypted vault. Use "Export backup" to hand them over in their original form.'
+            ) + '</p>';
+        }
+        html += '</div>';
+    }
 
     html += '<div class="sig">';
     html += '<div class="sig-line">' + L('Ort, Datum', 'Place, date') + '</div>';
@@ -2576,10 +2722,18 @@ function openExportModal() {
 //  HELPERS
 // ═════════════════════════════════════════
 
+// textContent→innerHTML escapt < > &, aber NICHT die Anfuehrungszeichen. In
+// Attribut-Kontext (alt=, title=, value=, placeholder=) reicht das nicht: ein
+// Dateiname wie  x" onerror="…  bricht aus dem Attribut aus und haengt einen
+// Event-Handler ans Tag. Im PDF-Export war das nachweisbar — das erzeugte
+// <img> trug einen fremden onerror-Handler, und in diesem Dokument stehen die
+// entschluesselten Beweismittel. Dateinamen sind Nutzereingabe.
+// Quotes werden deshalb immer mit escapt; im Textkontext rendert &quot; bzw.
+// &#39; unveraendert als " bzw. ', es gibt also keine Nebenwirkung.
 function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
-    return div.innerHTML;
+    return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function formatDate(dateStr) {
