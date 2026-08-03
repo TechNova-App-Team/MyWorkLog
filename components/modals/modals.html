@@ -1699,6 +1699,44 @@
                         <p class="settings-hint" style="margin-top:0.5rem; font-size:0.7rem;">Auf 0 lassen wenn du nicht am Wochenende arbeitest.</p>
                     </div>
 
+                    <!-- Live-Verdienst-Zähler -->
+                    <div class="settings-section">
+                        <div class="settings-section-title">Live-Verdienst-Zähler</div>
+                        <p class="settings-hint" style="margin-bottom:1rem;">Zeigt beim Eintrag erfassen live, was du seit dem Start verdienst — reine Motivation, rechnet mit deinem Netto-Gehalt und den Soll-Stunden oben.</p>
+
+                        <label style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer; margin-bottom:1rem;">
+                            <input type="checkbox" id="confWageEnabled" style="accent-color:var(--primary); width:18px; height:18px;" onchange="onWageEnabledChange()">
+                            <div style="flex:1;">
+                                <div style="font-size:0.9rem; font-weight:600; color:var(--text-main);">Zähler aktivieren</div>
+                                <div style="font-size:0.72rem; color:var(--text-muted); margin-top:2px;">Ohne Aktivierung bleibt dein Gehalt ungenutzt und wird nirgends angezeigt.</div>
+                            </div>
+                        </label>
+
+                        <div id="wageFieldsBlock" style="display:none;">
+                            <label class="settings-label">Netto-Gehalt / Monat (€)</label>
+                            <input type="number" id="confWageNetMonthly" class="glass-input" style="max-width:200px;" min="0" step="10" placeholder="z.B. 1150" oninput="if(typeof refreshWageUI==='function')refreshWageUI()">
+                            <p class="settings-hint" style="margin-top:0.5rem; font-size:0.7rem;">Stundensatz = Netto-Gehalt ÷ Ø Monatsstunden (Soll-Stunden/Woche × 4,33).</p>
+                            <p class="settings-hint" id="wageRateHint" style="font-size:0.7rem; color:var(--text-main); font-weight:600;"></p>
+
+                            <label class="settings-label" style="margin-top:0.85rem;">Anzeige-Tempo</label>
+                            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-bottom:0.5rem;">
+                                <label style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+                                    <input type="radio" name="wageUnit" id="wageUnitSecond" value="second" style="accent-color:var(--primary);">
+                                    <span style="font-size:0.8rem; font-weight:600; color:var(--text-main);">Sekunde</span>
+                                </label>
+                                <label style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+                                    <input type="radio" name="wageUnit" id="wageUnitMinute" value="minute" style="accent-color:var(--primary);">
+                                    <span style="font-size:0.8rem; font-weight:600; color:var(--text-main);">Minute</span>
+                                </label>
+                                <label style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; cursor:pointer;">
+                                    <input type="radio" name="wageUnit" id="wageUnitHour" value="hour" style="accent-color:var(--primary);">
+                                    <span style="font-size:0.8rem; font-weight:600; color:var(--text-main);">Stunde</span>
+                                </label>
+                            </div>
+                            <p class="settings-hint" style="font-size:0.7rem;">Bestimmt, wie fein der Zähler tickt — Sekunde zeigt 4 Nachkommastellen und aktualisiert alle 100ms (jede Änderung sichtbar), Stunde ist ruhiger (2 Nachkommastellen, alle 5s).</p>
+                        </div>
+                    </div>
+
                     <!-- Urlaub -->
                     <div class="settings-section">
                         <div class="settings-section-title">Urlaub</div>

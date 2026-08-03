@@ -50,7 +50,20 @@
             const el = document.getElementById('h'+i);
             if(el) el.value = data.settings.hours[i];
         }
-        
+
+        // Live-Verdienst-Zähler: Werte ins Form
+        const wage = data.settings.wage || {};
+        const confWageEnabledEl = document.getElementById('confWageEnabled');
+        if (confWageEnabledEl) confWageEnabledEl.checked = !!wage.enabled;
+        const confWageNetEl = document.getElementById('confWageNetMonthly');
+        if (confWageNetEl) confWageNetEl.value = wage.netMonthly || '';
+        const wageUnit = (wage.unit === 'minute' || wage.unit === 'hour') ? wage.unit : 'second';
+        ['Second', 'Minute', 'Hour'].forEach(suf => {
+            const el = document.getElementById('wageUnit' + suf);
+            if (el) el.checked = (el.value === wageUnit);
+        });
+        if (typeof refreshWageUI === 'function') refreshWageUI();
+
         // Render backups list for restore/debugging
         try { renderBackupsList(); } catch(e){ /* ignore */ }
 
@@ -149,7 +162,20 @@
             const el = document.getElementById('h'+i);
             if(el) data.settings.hours[i] = parseFloat(el.value) || 0;
         }
-        
+
+        // Live-Verdienst-Zähler speichern
+        if (!data.settings.wage) data.settings.wage = { enabled:false, netMonthly:0, unit:'second' };
+        const confWageEnabledSaveEl = document.getElementById('confWageEnabled');
+        if (confWageEnabledSaveEl) data.settings.wage.enabled = !!confWageEnabledSaveEl.checked;
+        const confWageNetSaveEl = document.getElementById('confWageNetMonthly');
+        if (confWageNetSaveEl) data.settings.wage.netMonthly = Math.max(0, parseFloat(confWageNetSaveEl.value) || 0);
+        const wageUnitRadio = document.querySelector('input[name="wageUnit"]:checked');
+        data.settings.wage.unit = wageUnitRadio ? wageUnitRadio.value : (data.settings.wage.unit || 'second');
+        // Läuft der Ticker gerade (z.B. Settings während offenem Eintragsformular geändert),
+        // mit neuem Tempo/Betrag neu starten statt der alten Einstellung nachzuhängen.
+        if (typeof stopLiveEarnings === 'function') stopLiveEarnings();
+        if (typeof updateLiveEarnings === 'function') updateLiveEarnings();
+
         // Urlaub: Mode + Anspruch + Manual speichern
         if (!data.settings.vacation) data.settings.vacation = {total:30, used:0, usedManual:0, mode:'days'};
         const modeRadio = document.querySelector('input[name="vacationMode"]:checked');
@@ -257,4 +283,32 @@
     }
     function onRoundingEnabledChange() { refreshRoundingUI(); }
     function onRoundingModeChange() { refreshRoundingUI(); }
+
+    // Live-Verdienst-Zähler: Sichtbarkeit + Stundensatz-Vorschau
+    function refreshWageUI() {
+        const enabledEl = document.getElementById('confWageEnabled');
+        const fieldsBlock = document.getElementById('wageFieldsBlock');
+        if (!fieldsBlock) return;
+        const isOn = !!(enabledEl && enabledEl.checked);
+        fieldsBlock.style.display = isOn ? 'block' : 'none';
+
+        const hint = document.getElementById('wageRateHint');
+        if (!hint) return;
+        const netEl = document.getElementById('confWageNetMonthly');
+        const net = netEl ? (parseFloat(netEl.value) || 0) : 0;
+        let weeklyHours = 0;
+        for (let i = 0; i <= 6; i++) {
+            const h = document.getElementById('h' + i);
+            weeklyHours += h ? (parseFloat(h.value) || 0) : 0;
+        }
+        const monthlyHours = weeklyHours * (52 / 12);
+        if (net > 0 && monthlyHours > 0) {
+            const perHour = net / monthlyHours;
+            const rateStr = perHour.toLocaleString(mwlLocale(), { style: 'currency', currency: 'EUR' }) + '/h';
+            hint.textContent = (document.documentElement.lang === 'en') ? ('Currently ≈ ' + rateStr + '.') : ('Aktuell ≈ ' + rateStr + '.');
+        } else {
+            hint.textContent = '';
+        }
+    }
+    function onWageEnabledChange() { refreshWageUI(); }
 

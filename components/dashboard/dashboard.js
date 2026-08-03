@@ -550,9 +550,100 @@
         if (toggle) toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
     }
 
+    // ═══ LIVE-VERDIENST MODULE ═══
+    // Tickender Live-Verdienst im Eintragsformular (opt-in, data.settings.wage). Startet, sobald
+    // "Beginn" befüllt ist, und zeigt bewusst NUR eine Einheit — den laufenden Netto-Betrag in EUR,
+    // kein Sekunden/Minuten-Umschalter gleichzeitig. "Einheit" (data.settings.wage.unit) wählt
+    // stattdessen, wie fein/schnell er tickt (Sekunde = 4 Nachkommastellen alle 100ms, Stunde = ruhiger).
+    //
+    // Wichtig: die verstrichene Zeit wird bei JEDEM Tick frisch aus Datum+Start-Feld gegen die
+    // aktuelle Systemzeit berechnet (kein performance.now()-Anker seit Aktivierung) — sonst zeigt
+    // der Zähler nach einem Reload wieder 0 (Anker weg) und ignoriert beim nachträglichen Aktivieren
+    // (Wage-Setting erst NACH dem Ausfüllen von Start eingeschaltet), was zwischen Start und jetzt
+    // bereits verdient wurde. Nur "heute" gilt als live — ein rückwirkend gebuchter Tag tickt nicht.
+    let _liveEarningsTimer = null;
+
+    function wageNetPerSecond() {
+        const w = data.settings && data.settings.wage;
+        if (!w || !w.enabled) return 0;
+        const netMonthly = parseFloat(w.netMonthly) || 0;
+        if (netMonthly <= 0) return 0;
+        const weeklyHours = (data.settings.hours || []).reduce((s, h) => s + (parseFloat(h) || 0), 0);
+        if (weeklyHours <= 0) return 0;
+        const monthlyHours = weeklyHours * (52 / 12); // Ø Wochen/Monat
+        return netMonthly / monthlyHours / 3600;
+    }
+
+    function wageDisplayConfig() {
+        const w = data.settings && data.settings.wage;
+        const unit = (w && (w.unit === 'minute' || w.unit === 'hour')) ? w.unit : 'second';
+        if (unit === 'minute') return { decimals: 2, intervalMs: 1000 };
+        if (unit === 'hour') return { decimals: 2, intervalMs: 5000 };
+        return { decimals: 4, intervalMs: 100 };
+    }
+
+    function _localDateStr(d) {
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    // Liefert den echten Start-Zeitpunkt (heutiges Datum + Uhrzeit aus inpStart) als Date,
+    // oder null wenn Start leer ist / das Eintragsdatum nicht heute ist (dann ist "live" sinnlos).
+    function liveEarningsStartDate() {
+        const startEl = document.getElementById('inpStart');
+        const start = startEl ? startEl.value : '';
+        const m = /^(\d{2}):(\d{2})$/.exec(start);
+        if (!m) return null;
+        const today = new Date();
+        const dateEl = document.getElementById('inpDate');
+        const dateStr = (dateEl && dateEl.value) ? dateEl.value : _localDateStr(today);
+        if (dateStr !== _localDateStr(today)) return null;
+        const d = new Date();
+        d.setHours(parseInt(m[1], 10), parseInt(m[2], 10), 0, 0);
+        return d;
+    }
+
+    function tickLiveEarnings() {
+        const el = document.getElementById('entryEarningsValue');
+        if (!el) return;
+        const startDate = liveEarningsStartDate();
+        if (!startDate) return;
+        const elapsedSec = Math.max(0, (Date.now() - startDate.getTime()) / 1000);
+        const amount = elapsedSec * wageNetPerSecond();
+        const decimals = wageDisplayConfig().decimals;
+        el.textContent = amount.toLocaleString(mwlLocale(), { style: 'currency', currency: 'EUR', minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+
+    function stopLiveEarnings() {
+        if (_liveEarningsTimer) { clearInterval(_liveEarningsTimer); _liveEarningsTimer = null; }
+    }
+
+    // Einziger Einstiegspunkt — wird von updateEntryDuration() bei jeder relevanten Formularänderung
+    // aufgerufen (Start/Ende/Pause/Typ/Datum/Reset/Draft-Restore laufen alle darüber).
+    function updateLiveEarnings() {
+        const wrap = document.getElementById('entryEarnings');
+        if (!wrap) return;
+        const rate = wageNetPerSecond();
+        const typeEl = document.getElementById('inpType');
+        const type = typeEl ? typeEl.value : '';
+        const isCustom = String(type).startsWith('custom-');
+        const active = rate > 0 && (type === 'work' || isCustom) && !!liveEarningsStartDate();
+
+        if (!active) {
+            stopLiveEarnings();
+            wrap.style.display = 'none';
+            return;
+        }
+        wrap.style.display = 'flex';
+        tickLiveEarnings(); // sofort den echten (ggf. bereits aufgelaufenen) Stand zeigen
+        if (!_liveEarningsTimer) {
+            _liveEarningsTimer = setInterval(tickLiveEarnings, wageDisplayConfig().intervalMs);
+        }
+    }
+
     // Live-Vorschau der Netto-Arbeitszeit (Start→Ende minus Pause), spiegelt exakt
     // die Buchungslogik aus handleEntry(). Nur bei Zeit-Typen (Arbeit/Custom).
     function updateEntryDuration() {
+        if (typeof updateLiveEarnings === 'function') updateLiveEarnings();
         const badge = document.getElementById('entryDurationBadge');
         if (!badge) return;
         function setEmpty() { badge.textContent = '–'; badge.classList.add('is-empty'); }
