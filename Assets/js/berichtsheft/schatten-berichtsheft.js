@@ -90,6 +90,123 @@ const STATUS_META = {
 };
 const STATUS_ORDER = ['open', 'raised', 'escalated', 'resolved'];
 
+// ═════════════════════════════════════════
+//  ZEITBEZUG — Erfassung vs. Ereignis
+// ═════════════════════════════════════════
+//
+//  Ein Eintrag traegt ZWEI Zeitstempel, und sie beantworten verschiedene
+//  Fragen:
+//
+//    createdAt   Wann wurde der Eintrag angelegt? Automatisch, nicht
+//                editierbar. Das ist der Wert, der eine Dokumentation
+//                „zeitnah" macht — er belegt, dass hier nicht Monate
+//                spaeter eine Erinnerung rekonstruiert wurde.
+//    date/time   Wann ist der Vorfall passiert? Vom Nutzer eingetragen,
+//                also frei rueckdatierbar — dafuer die Angabe, um die es
+//                inhaltlich geht.
+//
+//  Welcher von beiden die Chronologie fuehrt (Kartentitel, Sortierung,
+//  Zeitraum-Filter, Statistik, Export), entscheidet der Nutzer: als
+//  Standard fuer den ganzen Tresor (`vaultMeta.timeBasis`) und, wo noetig,
+//  abweichend fuer einen einzelnen Eintrag (`entry.timeBasis`).
+//
+//  `entry.timeBasis` wird NUR gesetzt, wenn es vom Tresor-Standard
+//  abweicht. Wuerde bei jedem Speichern der gewaehlte Wert mitgeschrieben,
+//  bliebe ein spaeteres Umschalten des Standards an allen alten Eintraegen
+//  wirkungslos — sie klebten an dem Wert, der beim Speichern zufaellig
+//  gerade Standard war.
+//
+//  Sichtbar sind IMMER beide, jeweils beschriftet. Ein nacktes Datum auf
+//  einer Karte ist mehrdeutig, und genau das war der Ausgangspunkt: das
+//  Formular fuellte „Datum" mit JETZT vor, verarbeitet wurde der Wert
+//  ueberall als Vorfallszeitpunkt.
+
+const TIME_BASIS_DEFAULT = 'created';
+
+const TIME_BASIS = {
+    created: {
+        short: L('Erfasst', 'Recorded'),
+        lead: L('Erfasst am', 'Recorded on'),
+        long: L('Erfassungszeitpunkt', 'Time of recording'),
+        hint: L('wann der Eintrag angelegt wurde', 'when the entry was created'),
+    },
+    occurred: {
+        short: L('Passiert', 'Happened'),
+        lead: L('Passiert am', 'Happened on'),
+        long: L('Ereigniszeitpunkt', 'Time of the incident'),
+        hint: L('wann der Vorfall stattfand', 'when the incident took place'),
+    },
+};
+
+function isTimeBasis(v) { return v === 'created' || v === 'occurred'; }
+
+// Standard des Tresors.
+function getTimeBasis() {
+    return (vaultMeta && isTimeBasis(vaultMeta.timeBasis)) ? vaultMeta.timeBasis : TIME_BASIS_DEFAULT;
+}
+
+// Effektiver Bezug eines Eintrags: eigene Abweichung, sonst der Standard.
+function entryBasis(e) {
+    return isTimeBasis(e && e.timeBasis) ? e.timeBasis : getTimeBasis();
+}
+
+// Vergleicht gegen den AKTUELLEN Standard, nicht gegen „Feld gesetzt?" —
+// wird der Standard spaeter auf den abweichenden Wert umgestellt, ist der
+// Eintrag keine Ausnahme mehr und soll auch nicht mehr so aussehen.
+function entryBasisDiffers(e) {
+    return entryEffectiveBasis(e) !== getTimeBasis();
+}
+
+// createdAt ist ein ISO-String in UTC. Fuer die Anzeige und fuer jeden
+// Vergleich mit `date`/`time` (lokal notiert) zaehlen die LOKALEN
+// Komponenten — `toISOString().slice(0,10)` laege in MESZ regelmaessig
+// einen Tag daneben.
+function isoLocalDate(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function isoLocalTime(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
+function basisDate(e, basis) {
+    return basis === 'created' ? isoLocalDate(e.createdAt) : (e.date || '');
+}
+
+function basisTime(e, basis) {
+    return basis === 'created' ? isoLocalTime(e.createdAt) : (e.time || '');
+}
+
+// Die Achse, die tatsaechlich einen Wert traegt. Zwei Faelle brauchen den
+// Rueckfall: ein Eintrag darf ohne Vorfallsdatum gespeichert werden (wer nur
+// „irgendwann letzte Woche" weiss, soll nicht raten muessen), und Eintraege
+// aus v1-Sicherungen haben kein `createdAt`. Beschriftet wird immer die
+// Achse, die dann wirklich angezeigt wird — sonst steht ein falscher Name
+// ueber der Zahl.
+function entryEffectiveBasis(e) {
+    const want = entryBasis(e);
+    if (basisDate(e, want)) return want;
+    const other = want === 'created' ? 'occurred' : 'created';
+    return basisDate(e, other) ? other : want;
+}
+
+function entryLeadDate(e) { return basisDate(e, entryEffectiveBasis(e)); }
+function entryLeadTime(e) { return basisTime(e, entryEffectiveBasis(e)); }
+
+function entryAltBasis(e) { return entryEffectiveBasis(e) === 'created' ? 'occurred' : 'created'; }
+function entryAltDate(e) { return basisDate(e, entryAltBasis(e)); }
+function entryAltTime(e) { return basisTime(e, entryAltBasis(e)); }
+
+// Sortier- und Filterschluessel auf der fuehrenden Achse. Ohne Uhrzeit
+// bleibt der Teil hinter dem T leer und sortiert damit an den Tagesanfang —
+// dasselbe Verhalten wie vor dem Zeitbezug, als direkt auf `e.time`
+// verglichen wurde.
+function entrySortKey(e) { return entryLeadDate(e) + 'T' + entryLeadTime(e); }
+
 // Kategoriespezifische Detailfelder — datengetrieben statt neun handgebauter
 // UI-Bloecke: renderCategoryFields() baut den Container aus dieser Map neu auf.
 const CATEGORY_FIELDS = {
@@ -387,6 +504,17 @@ async function mergeCloudVault(password) {
         return;
     }
 
+    // Zeitbezug uebernehmen — aber nur, wenn hier noch gar keiner gesetzt
+    // ist. Haben beide Geraete eine Wahl getroffen, gewinnt die des Geraets,
+    // an dem man gerade sitzt: eine Anzeige-Konvention hin und her springen
+    // zu lassen, waere fuer den Nutzer nicht nachvollziehbar, und es gibt
+    // hier nichts zu verlieren wie bei Eintraegen.
+    if (!isTimeBasis(vaultMeta.timeBasis) && isTimeBasis(cloud.timeBasis)) {
+        vaultMeta.timeBasis = cloud.timeBasis;
+        await vsPutMeta(vaultMeta);
+        syncTimeBasisControls();
+    }
+
     let cloudEntries;
     try {
         const kek = await deriveKey(password, b64ToU8(cloud.salt));
@@ -490,6 +618,7 @@ async function migrateLegacyVault(kek) {
         salt: vaultMeta.salt,
         pwHash: vaultMeta.pwHash,
         wrappedKey: await wrapMasterKey(masterRaw, kek),
+        timeBasis: vaultMeta.timeBasis || null,
         updatedAt: new Date().toISOString()
     };
     masterRaw.fill(0);
@@ -530,6 +659,35 @@ function getCaseId() {
     return (vaultMeta && vaultMeta.caseId) || '';
 }
 
+// Standard-Zeitbezug umstellen. Bewusst mit `updatedAt`: der Wert liegt im
+// Tresor-Kopf und reist damit ueber den Cloud-Spiegel zum zweiten Geraet —
+// ohne frischen Zeitstempel bliebe die Umstellung dort liegen. Ein
+// zusaetzlicher Abgleich kostet nur eine Entschluesselung, das
+// Zusammenfuehren selbst ist verlustfrei.
+async function setTimeBasis(basis) {
+    if (!isTimeBasis(basis) || !vaultMeta) return;
+    if (getTimeBasis() === basis) { syncTimeBasisControls(); return; }
+    vaultMeta.timeBasis = basis;
+    vaultMeta.updatedAt = new Date().toISOString();
+    await vsPutMeta(vaultMeta);
+    syncCloudMirror();
+    syncTimeBasisControls();
+    renderEntries();
+    updateStats();
+    // Wird im Export-Dialog umgeschaltet, zeigen Von/Bis noch Daten der alten
+    // Achse — auf der neuen koennen sie den ganzen Bestand ausschliessen.
+    // Neu herleiten ist ehrlicher als stehen zu lassen: die alten Zahlen
+    // bedeuten nach dem Wechsel schlicht etwas anderes.
+    const exportModal = document.getElementById('exportModal');
+    if (exportModal && exportModal.classList.contains('active') && entries.length > 0) {
+        const dates = entries.map(entryLeadDate).filter(Boolean).sort();
+        document.getElementById('exportFrom').value = dates[0];
+        document.getElementById('exportTo').value = dates[dates.length - 1];
+    }
+    showToast(L('Zeitachse: ' + TIME_BASIS[basis].long + ' (' + TIME_BASIS[basis].hint + ')',
+                'Timeline: ' + TIME_BASIS[basis].long + ' (' + TIME_BASIS[basis].hint + ')'), 'info');
+}
+
 async function saveVault() {
     if (!derivedKey || !vaultMeta) return;
     // Kein automatisches Kuerzen bei vollem Speicher (anders als das
@@ -560,6 +718,7 @@ function syncCloudMirror() {
             v: vaultMeta.v, caseId: vaultMeta.caseId, salt: vaultMeta.salt,
             pwHash: vaultMeta.pwHash, wrappedKey: vaultMeta.wrappedKey,
             updatedAt: vaultMeta.updatedAt || new Date().toISOString(),
+            timeBasis: vaultMeta.timeBasis || null,
             entries: null, filesLocalOnly: true
         };
         vsGetEntries().then(rec => {
@@ -646,6 +805,7 @@ async function exportBackup() {
             salt: vaultMeta.salt,
             pwHash: vaultMeta.pwHash,
             wrappedKey: vaultMeta.wrappedKey || null,
+            timeBasis: vaultMeta.timeBasis || null,
             entries: entriesRec ? { iv: entriesRec.iv, data: entriesRec.data } : null
         };
         const parts = [JSON.stringify(head).slice(0, -1) + ',"files":['];
@@ -711,6 +871,7 @@ function importBackupFile(file) {
                 salt: parsed.salt,
                 pwHash: parsed.pwHash,
                 wrappedKey: parsed.wrappedKey || null,
+                timeBasis: isTimeBasis(parsed.timeBasis) ? parsed.timeBasis : null,
                 // v1-Backups tragen die Eintraege im Kopf; unlockVault() erkennt
                 // das am fehlenden wrappedKey und migriert beim Entsperren.
                 entries: parsed.wrappedKey ? undefined : parsed.entries
@@ -864,6 +1025,7 @@ async function enterApp() {
     sessionStart = Date.now();
     startSessionTimer();
     resetAutoLock();
+    syncTimeBasisControls();
     renderEntries();
     updateStats();
     populateCategoryFilter();
@@ -1431,11 +1593,75 @@ function collectCategoryFieldValues(category) {
     return details;
 }
 
+// ─── Zeitbezug in der Oberflaeche ───────────────────────
+// Der Standard steht an zwei Stellen zur Wahl (Werkzeugleiste und
+// Export-Dialog) und markiert im Eintrags-Formular, welche der beiden Karten
+// die Vorgabe ist. Eine Funktion haelt alle drei am selben Wert — sonst
+// zeigt der Export-Dialog noch die alte Auswahl, wenn man sie in der
+// Werkzeugleiste geaendert hat.
+function syncTimeBasisControls() {
+    const basis = getTimeBasis();
+    document.querySelectorAll('[data-basis-group]').forEach(group => {
+        group.querySelectorAll('[data-basis]').forEach(btn => {
+            const on = btn.getAttribute('data-basis') === basis;
+            btn.classList.toggle('is-on', on);
+            btn.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+    });
+    document.querySelectorAll('[data-basis-std]').forEach(chip => {
+        chip.hidden = chip.getAttribute('data-basis-std') !== basis;
+    });
+    const note = document.getElementById('exportBasisNote');
+    if (note) note.textContent = TIME_BASIS[basis].long + ' — ' + TIME_BASIS[basis].hint + '.';
+    updateEntryBasisHelp();
+}
+
+function getFormBasis() {
+    const picked = document.querySelector('input[name="entryBasis"]:checked');
+    return picked && isTimeBasis(picked.value) ? picked.value : getTimeBasis();
+}
+
+function updateEntryBasisHelp() {
+    const help = document.getElementById('entryBasisHelp');
+    if (!help) return;
+    const std = getTimeBasis();
+    const pick = getFormBasis();
+    document.querySelectorAll('#entryBasisPick .basis-card').forEach(card => {
+        card.classList.toggle('is-on', card.getAttribute('data-basis-card') === pick);
+    });
+    help.textContent = pick === std
+        ? L('Folgt dem Standard des Tresors. Stellst du den Standard später um, geht dieser Eintrag mit.',
+            'Follows the vault default. If you switch the default later, this entry moves with it.')
+        : L('Weicht vom Standard ab (' + TIME_BASIS[std].long + '). Dieser Eintrag bleibt beim Umschalten unverändert.',
+            'Differs from the default (' + TIME_BASIS[std].long + '). This entry stays unchanged when the default is switched.');
+}
+
+function onEntryBasisChange() { updateEntryBasisHelp(); }
+
+// Setzt beide Karten des Formulars. `createdAt` fehlt bei einem neuen
+// Eintrag noch — dort steht, was passieren wird, statt eines leeren Feldes.
+function fillEntryBasisFields(entry) {
+    const stamp = document.getElementById('entryCreatedStamp');
+    const hasStamp = !!(entry && entry.createdAt);
+    stamp.textContent = hasStamp
+        ? formatDate(isoLocalDate(entry.createdAt)) + ', ' + isoLocalTime(entry.createdAt) + L(' Uhr', '')
+        : L('wird beim Speichern gesetzt', 'set when you save');
+    stamp.classList.toggle('is-pending', !hasStamp);
+    const basis = entry ? entryBasis(entry) : getTimeBasis();
+    const radio = document.querySelector('input[name="entryBasis"][value="' + basis + '"]');
+    if (radio) radio.checked = true;
+    updateEntryBasisHelp();
+}
+
 function openNewEntry() {
     document.getElementById('entryModalTitle').textContent = L('Neuer Eintrag', 'New entry');
     document.getElementById('entryEditId').value = '';
-    document.getElementById('entryDate').value = new Date().toISOString().slice(0, 10);
+    // Vorbelegung bleibt „jetzt": die allermeisten Vorfaelle werden noch am
+    // selben Tag notiert. Beschriftet ist das Feld jetzt aber eindeutig als
+    // Vorfallszeitpunkt, statt nur „Datum" zu heissen.
+    document.getElementById('entryDate').value = isoLocalDate(new Date().toISOString());
     document.getElementById('entryTime').value = new Date().toTimeString().slice(0, 5);
+    fillEntryBasisFields(null);
     selectedSeverity = 'medium';
     selectSeverity('medium');
     document.getElementById('entryCategory').value = 'verbal';
@@ -1453,8 +1679,9 @@ function openEditEntry(id) {
     if (!entry) return;
     document.getElementById('entryModalTitle').textContent = L('Eintrag bearbeiten', 'Edit entry');
     document.getElementById('entryEditId').value = id;
-    document.getElementById('entryDate').value = entry.date;
+    document.getElementById('entryDate').value = entry.date || '';
     document.getElementById('entryTime').value = entry.time || '';
+    fillEntryBasisFields(entry);
     selectedSeverity = entry.severity;
     selectSeverity(entry.severity);
     document.getElementById('entryCategory').value = entry.category;
@@ -1478,8 +1705,22 @@ async function saveEntry() {
     const text = document.getElementById('entryText').value.trim();
     const witnesses = document.getElementById('entryWitnesses').value.trim();
 
-    if (!date) { showToast(L('Datum fehlt', 'Date missing'), 'warning'); return; }
+    // Das Vorfallsdatum ist nur Pflicht, wenn es die Chronologie dieses
+    // Eintrags traegt. Steht er auf Erfassungszeitpunkt, darf es leer
+    // bleiben — sonst muesste raten, wer den Tag nicht mehr genau weiss,
+    // und ein geratenes Datum ist als Beweismittel schlechter als keines.
+    const formBasis = getFormBasis();
+    if (!date && formBasis === 'occurred') {
+        showToast(L('Datum des Vorfalls fehlt — oder stelle den Eintrag auf „Erfasst am" um',
+                    'Date of the incident is missing — or switch this entry to "Recorded on"'), 'warning');
+        return;
+    }
     if (!text) { showToast(L('Beschreibung fehlt', 'Description missing'), 'warning'); return; }
+
+    // Nur speichern, wenn abweichend: sonst klebte der Eintrag an dem Wert,
+    // der beim Speichern zufaellig Standard war, und ein spaeteres Umstellen
+    // des Standards bliebe an ihm wirkungslos.
+    const basisOverride = formBasis === getTimeBasis() ? undefined : formBasis;
 
     const editId = document.getElementById('entryEditId').value;
     const witnessList = witnesses ? witnesses.split(',').map(w => w.trim()).filter(Boolean) : [];
@@ -1501,7 +1742,7 @@ async function saveEntry() {
         if (idx !== -1) {
             const prev = entries[idx];
             const history = (prev.history || []).slice();
-            history.push({ ts: prev.updatedAt || prev.createdAt, date: prev.date, time: prev.time, severity: prev.severity, category: prev.category, text: prev.text, witnesses: prev.witnesses || [], status: prev.status || 'open', details: prev.details || {} });
+            history.push({ ts: prev.updatedAt || prev.createdAt, date: prev.date, time: prev.time, severity: prev.severity, category: prev.category, text: prev.text, witnesses: prev.witnesses || [], status: prev.status || 'open', details: prev.details || {}, timeBasis: prev.timeBasis });
             const updated = Object.assign({}, prev, {
                 date, time, severity: selectedSeverity, category, text,
                 witnesses: witnessList,
@@ -1510,6 +1751,10 @@ async function saveEntry() {
                 history,
                 updatedAt: new Date().toISOString(),
             });
+            // Object.assign traegt `undefined` mit ein — der Schluessel bliebe
+            // sonst mit leerem Wert stehen und `isTimeBasis` faenge ihn zwar
+            // ab, im Backup-JSON stuende aber Muell.
+            if (basisOverride) updated.timeBasis = basisOverride; else delete updated.timeBasis;
             updated.contentHash = await contentFingerprint(updated);
             entries[idx] = updated;
         }
@@ -1526,6 +1771,7 @@ async function saveEntry() {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         };
+        if (basisOverride) newEntry.timeBasis = basisOverride;
         newEntry.contentHash = await contentFingerprint(newEntry);
         entries.push(newEntry);
     }
@@ -1562,6 +1808,41 @@ function confirmDelete(id) {
 //  RENDER
 // ═════════════════════════════════════════
 
+// Zeitstempel einer Karte. Die fuehrende Achse steht in der Kopfzeile, die
+// andere als ruhige Zeile darunter — und BEIDE tragen ihre Beschriftung.
+// Ohne sie waere das Datum genau so mehrdeutig wie vorher, nur mit mehr
+// Zahlen.
+function entryStampHtml(e) {
+    const lead = TIME_BASIS[entryEffectiveBasis(e)];
+    const leadTime = entryLeadTime(e);
+    let html = '<span class="entry-stamp-lbl">' + lead.short + '</span>' +
+        '<span class="entry-date">' + formatDate(entryLeadDate(e)) + '</span>' +
+        (leadTime ? '<span class="entry-time">' + leadTime + L(' Uhr', '') + '</span>' : '');
+    if (entryBasisDiffers(e)) {
+        // Zwei Gruende, warum eine Karte neben der Achse des Dokuments liegt,
+        // und sie verlangen verschiedene Antworten: eine bewusste Ausnahme
+        // laesst man stehen, ein fehlendes Vorfallsdatum traegt man nach.
+        // Ein gemeinsames „abweichend" haette beides verschluckt.
+        const declared = isTimeBasis(e.timeBasis);
+        const label = declared ? L('abweichend', 'differs') : L('kein Vorfallsdatum', 'no incident date');
+        const tip = declared
+            ? L('Für diesen Eintrag gewählt. Folgt nicht dem Standard (' + TIME_BASIS[getTimeBasis()].long + ') und bleibt beim Umschalten unverändert.',
+                'Chosen for this entry. Does not follow the default (' + TIME_BASIS[getTimeBasis()].long + ') and stays unchanged when the default is switched.')
+            : L('Ohne Vorfallsdatum trägt die Erfassung die Chronologie. Über „Bearbeiten" nachtragbar.',
+                'Without a date for the incident, the recording time carries the chronology. You can add it via "Edit".');
+        html += '<span class="entry-basis-flag" title="' + escapeHtml(tip) + '">' + label + '</span>';
+    }
+    return html;
+}
+
+function entryAltStampHtml(e) {
+    const altDate = entryAltDate(e);
+    if (!altDate) return '';
+    const altTime = entryAltTime(e);
+    return '<div class="entry-stamp-alt">' + TIME_BASIS[entryAltBasis(e)].lead + ' ' +
+        formatDate(altDate) + (altTime ? ', ' + altTime + L(' Uhr', '') : '') + '</div>';
+}
+
 function renderEntries() {
     const list = document.getElementById('entriesList');
     const search = (document.getElementById('searchInput').value || '').toLowerCase();
@@ -1572,12 +1853,16 @@ function renderEntries() {
     let filtered = entries.filter(e => {
         if (sevFilter !== 'all' && e.severity !== sevFilter) return false;
         if (catFilter !== 'all' && e.category !== catFilter) return false;
-        if (search && !e.text.toLowerCase().includes(search) && !e.date.includes(search) && !(e.witnesses || []).join(' ').toLowerCase().includes(search)) return false;
+        // Gesucht wird auf BEIDEN Zeitachsen: wer „2026-08-04" eintippt, meint
+        // den Tag, nicht die gerade eingestellte Konvention.
+        if (search && !e.text.toLowerCase().includes(search) &&
+            !(e.date || '').includes(search) && !isoLocalDate(e.createdAt).includes(search) &&
+            !(e.witnesses || []).join(' ').toLowerCase().includes(search)) return false;
         return true;
     });
 
-    if (sort === 'newest') filtered.sort((a, b) => b.date.localeCompare(a.date) || (b.time || '').localeCompare(a.time || ''));
-    else if (sort === 'oldest') filtered.sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''));
+    if (sort === 'newest') filtered.sort((a, b) => entrySortKey(b).localeCompare(entrySortKey(a)));
+    else if (sort === 'oldest') filtered.sort((a, b) => entrySortKey(a).localeCompare(entrySortKey(b)));
     else if (sort === 'severity') filtered.sort((a, b) => (SEVERITY_ORDER[a.severity] || 9) - (SEVERITY_ORDER[b.severity] || 9));
 
     if (filtered.length === 0) {
@@ -1592,7 +1877,6 @@ function renderEntries() {
     list.innerHTML = filtered.map(e => {
         const cat = CATEGORIES[e.category] || CATEGORIES.other;
         const sevClass = 'sev-' + e.severity;
-        const dateStr = formatDate(e.date);
         const witnessHtml = (e.witnesses && e.witnesses.length) ?
             '<div class="entry-witnesses"><span class="inline-icon">' + UI_ICONS.users + '</span>' + L('Zeugen: ', 'Witnesses: ') + escapeHtml(e.witnesses.join(', ')) + '</div>' : '';
 
@@ -1637,11 +1921,10 @@ function renderEntries() {
             '<span class="entry-dot" aria-hidden="true"></span>' +
             '<div class="entry-body">' +
                 '<div class="entry-header">' +
-                    '<div class="entry-meta"><span class="entry-date">' + dateStr + '</span>' +
-                    (e.time ? '<span class="entry-time">' + e.time + L(' Uhr', '') + '</span>' : '') +
-                    '</div>' +
+                    '<div class="entry-meta">' + entryStampHtml(e) + '</div>' +
                     '<div class="entry-header-badges"><span class="entry-severity ' + sevClass + '">' + (SEVERITY_LABELS[e.severity] || e.severity) + '</span>' + statusHtml + '</div>' +
                 '</div>' +
+                entryAltStampHtml(e) +
                 '<div class="entry-category"><span class="cat-icon">' + cat.icon + '</span>' + cat.label + '</div>' +
                 '<div class="entry-text">' + escapeHtml(e.text) + '</div>' +
                 detailsHtml +
@@ -1672,7 +1955,9 @@ function updateStats() {
     document.getElementById('statHigh').toggleAttribute('data-zero', high === 0);
 
     if (entries.length > 0) {
-        const dates = entries.map(e => e.date).sort();
+        // Spanne auf der fuehrenden Achse — sonst zeigt die Kachel einen
+        // Zeitraum, den keine der sichtbaren Karten belegt.
+        const dates = entries.map(entryLeadDate).filter(Boolean).sort();
         const first = dates[0];
         const last = dates[dates.length - 1];
         const days = Math.ceil((new Date(last) - new Date(first)) / 86400000) + 1;
@@ -1995,12 +2280,30 @@ function getExportEntries() {
     const sevFilter = document.getElementById('exportSeverity').value;
     const sevList = sevFilter === 'all' ? null : sevFilter.split(',');
 
+    // Gefiltert und sortiert wird auf derselben Achse, die das Dokument
+    // spaeter abdruckt — sonst schliesst „Von 01.08." Vorfaelle aus, deren
+    // gedrucktes Datum im Zeitraum liegt.
     return entries.filter(e => {
-        if (from && e.date < from) return false;
-        if (to && e.date > to) return false;
+        const d = entryLeadDate(e);
+        if (from && d < from) return false;
+        if (to && d > to) return false;
         if (sevList && !sevList.includes(e.severity)) return false;
         return true;
-    }).sort((a, b) => a.date.localeCompare(b.date));
+    }).sort((a, b) => entrySortKey(a).localeCompare(entrySortKey(b)));
+}
+
+// Kopfzeile fuer beide Ausgabeformate: das Dokument muss selbst sagen, was
+// seine Datumsangaben bedeuten. Ohne diesen Satz kann ein Leser bei der IHK
+// nicht wissen, ob „04.08." der Vorfall oder die Niederschrift war.
+function timeBasisNoteLines(exportEntries) {
+    const std = TIME_BASIS[getTimeBasis()];
+    const abweichend = exportEntries.filter(entryBasisDiffers).length;
+    const out = [std.long + ' (' + std.hint + ')'];
+    if (abweichend) {
+        out.push(L(abweichend + (abweichend === 1 ? ' Vorfall ist' : ' Vorfälle sind') + ' abweichend datiert und unten gekennzeichnet',
+                   abweichend + (abweichend === 1 ? ' incident is' : ' incidents are') + ' dated differently and marked below'));
+    }
+    return out;
 }
 
 function buildProtocol(exportEntries) {
@@ -2017,9 +2320,12 @@ function buildProtocol(exportEntries) {
     lines.push(L('Uhrzeit:     ', 'Time:        ') + now.toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' }));
     lines.push(L('Einträge:    ', 'Entries:     ') + exportEntries.length);
     if (exportEntries.length > 0) {
-        const dates = exportEntries.map(e => e.date).sort();
+        const dates = exportEntries.map(entryLeadDate).filter(Boolean).sort();
         lines.push(L('Zeitraum:    ', 'Period:      ') + formatDate(dates[0]) + ' — ' + formatDate(dates[dates.length - 1]));
     }
+    timeBasisNoteLines(exportEntries).forEach((t, i) => {
+        lines.push((i === 0 ? L('Zeitbezug:   ', 'Time basis:  ') : '             ') + t);
+    });
     lines.push('');
     lines.push(L('Schweregrad-Zusammenfassung:', 'Severity summary:'));
     ['critical', 'high', 'medium', 'low', 'note'].forEach(sev => {
@@ -2053,11 +2359,20 @@ function buildProtocol(exportEntries) {
     exportEntries.forEach((e, i) => {
         const cat = CATEGORIES[e.category] || CATEGORIES.other;
         lines.push(L('▸ VORFALL #', '▸ INCIDENT #') + (i + 1));
-        lines.push(L('  Datum:       ', '  Date:        ') + formatDate(e.date) + (e.time ? ', ' + e.time + L(' Uhr', '') : ''));
+        // Beide Zeitstempel, jeder mit seinem Namen — der fuehrende zuerst.
+        // Frueher stand hier ein unbeschriftetes „Datum:" und weiter unten
+        // ein „Erstellt am:"; welcher der beiden die Chronologie des
+        // Dokuments traegt, war daraus nicht ablesbar.
+        const stamp = (label, d, t) => ('  ' + label + ':').padEnd(15) +
+            formatDate(d) + (t ? ', ' + t + L(' Uhr', '') : '');
+        lines.push(stamp(TIME_BASIS[entryEffectiveBasis(e)].lead, entryLeadDate(e), entryLeadTime(e)) +
+            (entryBasisDiffers(e) ? L('   [abweichend vom Zeitbezug des Protokolls]', '   [differs from the record\'s time basis]') : ''));
+        if (entryAltDate(e)) {
+            lines.push(stamp(TIME_BASIS[entryAltBasis(e)].lead, entryAltDate(e), entryAltTime(e)));
+        }
         lines.push(L('  Schwere:     ', '  Severity:    ') + (SEVERITY_LABELS[e.severity] || e.severity));
         lines.push(L('  Kategorie:   ', '  Category:    ') + cat.label);
         lines.push(L('  Status:      ', '  Status:      ') + (STATUS_META[e.status || 'open'] || STATUS_META.open).label);
-        lines.push(L('  Erstellt am: ', '  Created:     ') + new Date(e.createdAt).toLocaleString(mwlLocale()));
         if (e.contentHash) lines.push(L('  Fingerprint: ', '  Fingerprint: ') + e.contentHash);
         if (e.history && e.history.length) lines.push(L('  Änderungen:  ', '  Revisions:   ') + e.history.length + L(' × bearbeitet, zuletzt am ', ' × edited, last on ') + new Date(e.updatedAt).toLocaleString(mwlLocale()));
         const detailRows = resolveCategoryDetails(e.category, e.details);
@@ -2252,7 +2567,7 @@ async function exportAsPDF() {
     });
 
     const now = new Date();
-    const dates = exportEntries.map(e => e.date).sort();
+    const dates = exportEntries.map(entryLeadDate).filter(Boolean).sort();
     const caseId = getCaseId();
     const lang = document.documentElement.lang === 'en' ? 'en' : 'de';
     const zeitraum = formatDate(dates[0]) + L(' bis ', ' to ') + formatDate(dates[dates.length - 1]);
@@ -2341,6 +2656,8 @@ async function exportAsPDF() {
     html += '.toc td:first-child{border-left:2pt solid var(--line);padding-left:2.5mm}';
     html += '.toc .n{width:9mm;color:#b6bbc3;font-size:8.5pt}';
     html += '.toc .d{width:23mm;color:#6b7280;font-size:9pt;white-space:nowrap}';
+    html += '.toc .d-alt{color:#9096a0;padding-left:.6mm}';
+    html += '.toc-note{margin-top:3mm;font-size:8pt;color:#9096a0}';
     html += '.toc .s{text-align:right;white-space:nowrap;padding-left:4mm}';
 
     // ── Verteilung: Balken auf einer sichtbaren Schiene — ohne Schiene
@@ -2400,6 +2717,10 @@ async function exportAsPDF() {
     // Abstand der Index-Nummer lautlos (siehe CLAUDE.md: Selektor-Kollisionen).
     html += '.inc-when span{color:#9096a0;font-weight:400;margin-left:2mm}';
     html += '.inc-when .inc-idx{color:#c3c8d0;font-weight:500;margin-left:0;margin-right:2mm}';
+    // Beschriftet die Zahl dahinter. Braucht die .inc-when-Verankerung aus
+    // demselben Grund wie .inc-idx — sonst gewinnt die generische span-Regel.
+    html += '.inc-when .inc-basis{margin-left:0;margin-right:1.6mm;font-size:7pt;';
+    html += 'letter-spacing:.08em;text-transform:uppercase;color:#9096a0;font-weight:500}';
     html += '.inc-badges{display:flex;align-items:center;flex-shrink:0}';
     html += '.inc-cat{font-size:8.5pt;color:#6b7280;margin-bottom:2.5mm}';
     html += '.inc-text{white-space:pre-wrap;font-size:10pt;line-height:1.65;max-width:150mm}';
@@ -2461,6 +2782,10 @@ async function exportAsPDF() {
     html += '<div><dt>' + L('Dokumentierter Zeitraum', 'Documented period') + '</dt><dd>' + zeitraum + '</dd></div>';
     html += '<div><dt>' + L('Vorfälle', 'Incidents') + '</dt><dd class="num">' + exportEntries.length + '</dd></div>';
     html += '<div><dt>' + L('Ausgefertigt am', 'Issued on') + '</dt><dd>' + now.toLocaleDateString(mwlLocale(), { day: '2-digit', month: 'long', year: 'numeric' }) + '</dd></div>';
+    // Ohne diese Zeile weiss ein Leser bei der IHK nicht, ob das Datum eines
+    // Vorfalls der Zeitpunkt des Geschehens oder der Niederschrift ist.
+    html += '<div><dt>' + L('Zeitbezug der Daten', 'Basis of the dates') + '</dt><dd>' +
+        timeBasisNoteLines(exportEntries).map(escapeHtml).join('<br>') + '</dd></div>';
     html += '</dl>';
     // Fingerprint gross: die Form des Falls auf einen Blick, bevor ein
     // einziges Wort gelesen ist — dieselbe Signatur wie im Laufkopf.
@@ -2484,13 +2809,24 @@ async function exportAsPDF() {
         const p = PRINT_SEV[e.severity] || PRINT_SEV.note;
         html += '<tr style="--line:' + p.line + '">';
         html += '<td class="n num">' + (i + 1) + '</td>';
-        html += '<td class="d mono">' + formatDate(e.date) + '</td>';
+        html += '<td class="d mono">' + formatDate(entryLeadDate(e)) +
+                (entryBasisDiffers(e) ? '<span class="d-alt">*</span>' : '') + '</td>';
         html += '<td><span class="icon-label">' + catIconHtml(cat) + escapeHtml(cat.label) + '</span></td>';
         html += '<td class="s">' + sevBadge(e.severity) +
                 '<span class="status">' + escapeHtml(statusMeta.label) + '</span></td>';
         html += '</tr>';
     });
     html += '</table>';
+    // Die Spalte traegt Daten von zwei verschiedenen Achsen, sobald ein
+    // Eintrag abweicht — der Stern muss erklaert werden, sonst ist er Zierrat.
+    const tocStd = TIME_BASIS[getTimeBasis()];
+    html += '<p class="toc-note">' + escapeHtml(L('Datumsspalte: ', 'Date column: ') +
+        tocStd.long + ' (' + tocStd.hint + ').');
+    if (exportEntries.some(entryBasisDiffers)) {
+        html += ' ' + escapeHtml(L('Mit * gekennzeichnete Zeilen sind abweichend datiert; der jeweils andere Zeitstempel steht bei dem Vorfall in Abschnitt 03.',
+                                   'Rows marked * are dated differently; the other timestamp is given with the incident in section 03.'));
+    }
+    html += '</p>';
     html += '</div>';
 
     // ═══ ZUSAMMENFASSUNG ═══
@@ -2561,8 +2897,10 @@ async function exportAsPDF() {
         html += '<span class="inc-dot ' + p.dot + '" style="--line:' + p.line + '"><i></i></span>';
         html += '<div class="inc-head">';
         // #-Nummer identisch zur Übersichtstabelle — Querverweis ohne Seitenzahlen.
-        html += '<span class="inc-when mono"><span class="inc-idx">#' + (i + 1) + '</span>' + formatDate(e.date) +
-                (e.time ? '<span>' + e.time + L(' Uhr', '') + '</span>' : '') + '</span>';
+        html += '<span class="inc-when mono"><span class="inc-idx">#' + (i + 1) + '</span>' +
+                '<span class="inc-basis">' + escapeHtml(TIME_BASIS[entryEffectiveBasis(e)].short) + '</span>' +
+                formatDate(entryLeadDate(e)) +
+                (entryLeadTime(e) ? '<span>' + entryLeadTime(e) + L(' Uhr', '') + '</span>' : '') + '</span>';
         html += '<span class="inc-badges">' + sevBadge(e.severity) +
                 '<span class="status">' + escapeHtml(statusMeta.label) + '</span></span>';
         html += '</div>';
@@ -2614,8 +2952,15 @@ async function exportAsPDF() {
                     escapeHtml(docs.map(a => L('Anlage ', 'Exhibit ') + attIndex.get(a.id) + ': ' + a.name + ' (' + formatBytes(a.size) + ')').join(' · ')) + '</p>';
             }
         }
+        // Der zweite Zeitstempel gehoert in dieselbe Zeile wie Pruefsumme und
+        // Bearbeitungszahl: Angaben ueber den Eintrag, nicht ueber den
+        // Vorfall. Beschriftet, weil er je nach Zeitbezug ein anderer ist.
         const trace = [];
-        trace.push(L('Erfasst am ', 'Recorded on ') + new Date(e.createdAt).toLocaleString(mwlLocale()));
+        if (entryAltDate(e)) {
+            trace.push(TIME_BASIS[entryAltBasis(e)].lead + ' ' + formatDate(entryAltDate(e)) +
+                (entryAltTime(e) ? ', ' + entryAltTime(e) + L(' Uhr', '') : ''));
+        }
+        if (entryBasisDiffers(e)) trace.push(L('abweichender Zeitbezug', 'differing time basis'));
         if (e.history && e.history.length) trace.push(e.history.length + L('× nachträglich bearbeitet', '× edited afterwards'));
         if (e.contentHash) trace.push(L('Prüfsumme ', 'Checksum ') + e.contentHash);
         html += '<p class="trace mono">' + escapeHtml(trace.join('  ·  ')) + '</p>';
@@ -2653,7 +2998,7 @@ async function exportAsPDF() {
                     : L('separat beigefügt', 'supplied separately');
             html += '<tr' + (it.mode === 'external' ? ' class="att-ext"' : '') + '>';
             html += '<td class="mono">' + it.nr + '</td>';
-            html += '<td>' + escapeHtml(formatDate(it.entry.date)) + '</td>';
+            html += '<td>' + escapeHtml(formatDate(entryLeadDate(it.entry))) + '</td>';
             html += '<td>' + escapeHtml(it.att.name) + '</td>';
             html += '<td class="mono">' + escapeHtml(formatBytes(it.att.size)) + '</td>';
             html += '<td>' + inDoc + '</td>';
@@ -2708,12 +3053,15 @@ async function exportAsPDF() {
 }
 
 function openExportModal() {
-    // Set default dates
+    // Vorbelegung auf der fuehrenden Achse — die Von/Bis-Felder filtern
+    // dieselbe, und ein Zeitraum, der die eigenen Eintraege nicht umschliesst,
+    // waere eine unnoetige Falle.
     if (entries.length > 0) {
-        const dates = entries.map(e => e.date).sort();
+        const dates = entries.map(entryLeadDate).filter(Boolean).sort();
         document.getElementById('exportFrom').value = dates[0];
         document.getElementById('exportTo').value = dates[dates.length - 1];
     }
+    syncTimeBasisControls();
     document.getElementById('exportPreview').textContent = L('Klicke "Vorschau" um das Protokoll zu generieren.', 'Click "Preview" to generate the record.');
     openModal('exportModal');
 }

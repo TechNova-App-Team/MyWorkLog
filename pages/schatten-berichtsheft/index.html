@@ -45,7 +45,7 @@
     <meta name="twitter:image" content="https://myworklog.de/Grafiken/icon-512.png">
 
     <!-- Fuellt Version + "Zuletzt aktualisiert" im geteilten Footer -->
-    <script defer src="/Assets/js/version-loader.js?v=5.2.1"></script>
+    <script defer src="/Assets/js/version-loader.js?v=5.3.0"></script>
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="/Grafiken/image.jpg">
@@ -682,6 +682,30 @@
         .filter-select:focus { border-color: rgba(var(--primary-rgb), 0.45); box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.13); }
         .filter-select option { background: var(--bg-2); color: var(--text-0); }
 
+        /* ══ ZEITACHSEN-SCHALTER ══
+           Zwei Zustaende, beide dauerhaft sichtbar — ein Dropdown haette die
+           nicht gewaehlte Bedeutung versteckt, und genau der Unterschied
+           zwischen den beiden ist hier die Information. Gleiche Hoehe wie
+           .filter-select, damit die Werkzeugleiste eine Linie behaelt. */
+        .basis-switch {
+            display: inline-flex; align-items: center; gap: 2px;
+            background: var(--bg-1); border: 1px solid var(--border);
+            border-radius: var(--r-2); padding: 3px;
+        }
+        .basis-switch-lbl {
+            font-size: 0.72rem; color: var(--text-2);
+            padding: 0 7px 0 6px; white-space: nowrap;
+        }
+        .basis-seg {
+            appearance: none; background: none; border: 0;
+            font-family: var(--font-body); font-size: 0.8rem; font-weight: 500;
+            color: var(--text-2); padding: 5px 11px;
+            border-radius: calc(var(--r-2) - 3px); cursor: pointer; white-space: nowrap;
+            transition: color 0.2s var(--ease), background 0.2s var(--ease);
+        }
+        .basis-seg:hover { color: var(--text-0); }
+        .basis-seg.is-on { background: var(--bg-2); color: var(--text-0); }
+
         /* ══════════════════════════════════════════════
            EINTRAEGE — DATIERTE ZEITLEISTE
            Die Eintraege sind eine Chronologie, keine lose Kartenliste. Die
@@ -749,6 +773,25 @@
         .entry-meta { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
         .entry-date { font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-0); font-weight: 500; font-variant-numeric: tabular-nums; }
         .entry-time { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+        /* Jede Datumsangabe traegt ihren Namen. Ein nacktes Datum auf der
+           Karte konnte den Vorfall ODER die Niederschrift meinen — dieselbe
+           Zahl, zwei Bedeutungen, nichts unterschied sie. */
+        .entry-stamp-lbl {
+            font-size: 0.64rem; font-weight: 600; letter-spacing: 0.07em;
+            text-transform: uppercase; color: var(--text-2);
+        }
+        .entry-stamp-alt {
+            font-size: 0.74rem; color: var(--text-2);
+            margin: -0.4rem 0 0.7rem; font-variant-numeric: tabular-nums;
+        }
+        /* Sagt voraus, was beim Umschalten des Standards passiert. Bewusst
+           ohne eigene Farbe: das ist eine Fussnote, kein Alarm. */
+        .entry-basis-flag {
+            font-size: 0.66rem; color: var(--text-2);
+            border: 1px solid var(--border-strong); border-radius: var(--r-1);
+            padding: 1px 6px; cursor: help;
+        }
 
         .status-badge {
             display: inline-flex; align-items: center; gap: 5px;
@@ -931,6 +974,51 @@
         /* Native Selects kuerzen ihren Text hart ab — min-width:0 laesst die
            Grid-Spalte ueberhaupt erst schrumpfen statt zu ueberlaufen. */
         .form-row .form-group { min-width: 0; }
+
+        /* ══ ZEITBEZUG-WAEHLER ══
+           Beide Zeitstempel liegen nebeneinander, der gewaehlte fuehrt. Die
+           Datumsfelder stehen bewusst NICHT im <label> des Radios: sonst
+           wechselte jeder Klick ins Datumsfeld die Auswahl, und der
+           Vorfallszeitpunkt muss auch dann eintragbar bleiben, wenn die
+           Erfassung fuehrt. */
+        /* minmax(0,1fr) statt 1fr: die Datums-/Uhrzeitfelder haben eine
+           intrinsische Mindestbreite und zogen ihre Spalte sonst auf 283px,
+           waehrend die andere auf 217px zusammenfiel. */
+        .basis-pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .basis-card {
+            border: 1px solid var(--border); border-radius: var(--r-3);
+            background: var(--bg-1); padding: 10px 12px 12px;
+            transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+        }
+        .basis-card.is-on { border-color: rgba(var(--primary-rgb), 0.4); background: var(--bg-2); }
+        .basis-card-head {
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer; margin-bottom: 9px;
+        }
+        .basis-card-head input {
+            accent-color: var(--primary); width: 15px; height: 15px;
+            flex-shrink: 0; cursor: pointer;
+        }
+        .basis-card-name { font-size: 0.82rem; font-weight: 500; color: var(--text-0); }
+        .basis-card-std {
+            font-size: 0.61rem; font-weight: 600; letter-spacing: 0.06em;
+            text-transform: uppercase; color: var(--text-2);
+            border: 1px solid var(--border-strong); border-radius: var(--r-1);
+            padding: 1px 5px; margin-left: auto; white-space: nowrap;
+        }
+        .basis-card-val {
+            font-family: var(--font-mono); font-size: 0.8rem;
+            color: var(--text-1); font-variant-numeric: tabular-nums;
+        }
+        /* Solange kein Zeitstempel existiert, steht dort ein Satz und keine
+           Zahl — Mono liesse ihn wie einen Wert aussehen und bricht in der
+           schmalen Spalte dreimal um. */
+        .basis-card-val.is-pending {
+            font-family: var(--font-body); font-size: 0.74rem; color: var(--text-2);
+        }
+        .basis-card-note { font-size: 0.7rem; color: var(--text-2); margin-top: 5px; line-height: 1.45; }
+        .basis-card-fields { display: grid; grid-template-columns: 1.35fr 1fr; gap: 8px; }
+        .basis-help { font-size: 0.72rem; color: var(--text-2); margin-top: 9px; line-height: 1.5; }
         .category-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; margin-bottom: 0; }
         .category-fields:empty { display: none; }
         .category-fields .form-group { margin-bottom: 0.85rem; }
@@ -1324,7 +1412,15 @@
             .search-box { flex: 1 0 100%; }
             .search-box input { width: 100%; flex: 1; min-width: 0; }
             .filter-select { flex: 1 1 0; min-width: 0; }
+            /* Der Zeitachsen-Schalter darf NICHT auf 0 schrumpfen — beide
+               Segmente muessen antippbar bleiben (Touch-Regel). Am Desktop
+               reicht die Zeilenhoehe der Filter, per Finger sind 25px zu
+               wenig — deshalb hier mehr Polsterung statt nur mehr Breite. */
+            .basis-switch { flex: 1 1 100%; justify-content: center; }
+            .basis-seg { padding: 9px 16px; flex: 1 1 0; }
             .form-row, .category-fields { grid-template-columns: 1fr; }
+            /* Nebeneinander waeren die Karten zu schmal fuer Datum + Uhrzeit. */
+            .basis-pick { grid-template-columns: 1fr; }
             .entry-card { padding-left: 1.75rem; padding-bottom: 1.4rem; }
             .modal-footer { flex-direction: column-reverse; }
             .modal-footer .btn { justify-content: center; }
@@ -1361,7 +1457,7 @@
             .entry-severity { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=5.2.1"></script>
+    <script defer src="/Assets/js/ph-init.js?v=5.3.0"></script>
 </head>
 <body>
 
@@ -1732,6 +1828,13 @@
                 </select>
             </div>
             <div class="toolbar-right">
+                <div class="basis-switch" data-basis-group role="radiogroup" aria-label="Zeitachse der Einträge">
+                    <span class="basis-switch-lbl">Zeitachse</span>
+                    <button type="button" class="basis-seg" data-basis="created" role="radio" aria-checked="true"
+                            onclick="setTimeBasis('created')">Erfasst</button>
+                    <button type="button" class="basis-seg" data-basis="occurred" role="radio" aria-checked="false"
+                            onclick="setTimeBasis('occurred')">Passiert</button>
+                </div>
                 <select class="filter-select" id="sortOrder" onchange="renderEntries()">
                     <option value="newest">Neueste zuerst</option>
                     <option value="oldest">Älteste zuerst</option>
@@ -1757,15 +1860,35 @@
         </div>
         <div class="modal-body">
             <input type="hidden" id="entryEditId">
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Datum</label>
-                    <input type="date" class="form-input" id="entryDate">
+            <!-- Zeitbezug: welcher der beiden Zeitstempel die Chronologie
+                 dieses Eintrags traegt. Beide werden immer gespeichert —
+                 hier wird nur entschieden, welcher fuehrt. -->
+            <div class="form-group">
+                <label class="form-label">Zeitbezug dieses Eintrags</label>
+                <div class="basis-pick" id="entryBasisPick" role="radiogroup" aria-label="Zeitbezug dieses Eintrags">
+                    <div class="basis-card" data-basis-card="created">
+                        <label class="basis-card-head">
+                            <input type="radio" name="entryBasis" value="created" onchange="onEntryBasisChange()">
+                            <span class="basis-card-name">Erfasst am</span>
+                            <span class="basis-card-std" data-basis-std="created" hidden>Standard</span>
+                        </label>
+                        <div class="basis-card-val" id="entryCreatedStamp">wird beim Speichern gesetzt</div>
+                        <div class="basis-card-note">Automatisch, nicht änderbar. Belegt, dass zeitnah dokumentiert wurde.</div>
+                    </div>
+                    <div class="basis-card" data-basis-card="occurred">
+                        <label class="basis-card-head">
+                            <input type="radio" name="entryBasis" value="occurred" onchange="onEntryBasisChange()">
+                            <span class="basis-card-name">Passiert am</span>
+                            <span class="basis-card-std" data-basis-std="occurred" hidden>Standard</span>
+                        </label>
+                        <div class="basis-card-fields">
+                            <input type="date" class="form-input" id="entryDate" aria-label="Datum des Vorfalls">
+                            <input type="time" class="form-input" id="entryTime" aria-label="Uhrzeit des Vorfalls">
+                        </div>
+                        <div class="basis-card-note">Uhrzeit optional. Frei eintragbar, also auch nachtragbar.</div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Uhrzeit (optional)</label>
-                    <input type="time" class="form-input" id="entryTime">
-                </div>
+                <p class="basis-help" id="entryBasisHelp"></p>
             </div>
             <div class="form-group">
                 <label class="form-label">Schweregrad</label>
@@ -1865,6 +1988,20 @@
                 Exportiert alle Einträge als strukturiertes Beschwerde-Protokoll für die IHK.
                 Du kannst Zeitraum und Schweregrad einschränken.
             </p>
+            <!-- Der Zeitbezug gehoert hierher, weil hier die Frage aufkommt,
+                 die ihn ueberhaupt noetig macht: Was bedeutet das Datum, das
+                 die IHK zu lesen bekommt? Derselbe Wert wie in der
+                 Werkzeugleiste — Von/Bis filtert auf dieser Achse. -->
+            <div class="form-group">
+                <label class="form-label">Zeitbezug der Datumsangaben</label>
+                <div class="basis-switch" data-basis-group role="radiogroup" aria-label="Zeitbezug der Datumsangaben">
+                    <button type="button" class="basis-seg" data-basis="created" role="radio" aria-checked="true"
+                            onclick="setTimeBasis('created')">Erfasst am</button>
+                    <button type="button" class="basis-seg" data-basis="occurred" role="radio" aria-checked="false"
+                            onclick="setTimeBasis('occurred')">Passiert am</button>
+                </div>
+                <p class="basis-help" id="exportBasisNote"></p>
+            </div>
             <div class="form-row" style="margin-bottom:1rem;">
                 <div class="form-group">
                     <label class="form-label">Von</label>
@@ -2129,8 +2266,8 @@
 </script>
 <!-- Reihenfolge zwingend: vault-store.js stellt die vs*-Funktionen bereit,
      die schatten-berichtsheft.js beim Start sofort aufruft (bootVault). -->
-<script src="/Assets/js/berichtsheft/vault-store.js?v=5.2.1"></script>
-<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.2.1"></script>
+<script src="/Assets/js/berichtsheft/vault-store.js?v=5.3.0"></script>
+<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.3.0"></script>
 <script>
 /* Theme-Sync: Standalone-Seiten laufen ausserhalb der SPA und muessen den
    User-Akzent selbst nachziehen. Greift hier erst seit dem Redesign, weil das
