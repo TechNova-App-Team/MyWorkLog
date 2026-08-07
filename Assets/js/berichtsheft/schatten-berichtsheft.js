@@ -2457,10 +2457,11 @@ const PRINT_SEV = {
     note:     { line: '#d7dade', tint: 'transparent', ink: '#8a9099', dot: 'ring' }
 };
 
-// Laufendes Motiv statt Deko: dieselben (bereits ΔE-validierten) Schwere-
-// grad-Farben, als schmaler Balken auf jeder Druckseite UND gross auf dem
-// Deckblatt — das Dokument zeigt seine eigene Form, bevor man ein Wort
-// gelesen hat. Radius bewusst uniform statt "aeussere Ecken rund": bei
+// Die Form des Falls auf einen Blick: dieselben (bereits ΔE-validierten)
+// Schweregrad-Farben als Segment-Balken, EINMAL auf dem Deckblatt — das
+// Dokument zeigt seine eigene Form, bevor man ein Wort gelesen hat. Nicht
+// als Laufkopf wiederholen: der ueberdeckt Fliesstext auf Folgeseiten (siehe
+// @page-Kommentar unten). Radius bewusst uniform statt "aeussere Ecken rund": bei
 // 1.4mm Hoehe faellt der Unterschied nicht auf, dafuer bricht nichts, wenn
 // nur ein oder zwei Stufen vorkommen.
 function sevFingerprintHtml(list, sizeClass) {
@@ -2598,20 +2599,19 @@ async function exportAsPDF() {
     html += '.mono{font-family:"JetBrains Mono","Cascadia Mono",Consolas,monospace;font-variant-numeric:tabular-nums}';
     html += '.num{font-variant-numeric:tabular-nums}';
 
-    // Laufender Kopf — Chrome wiederholt position:fixed auf jeder Druckseite.
-    // Zweizeilig seit dem Fingerprint-Balken: Zeile 1 Vertraulich/Aktenzeichen,
-    // Zeile 2 die Schweregrad-Signatur (siehe sevFingerprintHtml).
-    html += '.runhead{position:fixed;top:0;left:0;right:0;border-bottom:.5pt solid #e6e8eb;padding-bottom:2mm}';
-    html += '.runhead-row{display:flex;justify-content:space-between;';
-    html += 'font-size:7pt;letter-spacing:.08em;text-transform:uppercase;color:#9096a0;margin-bottom:1.8mm}';
-    html += '.page{padding-top:12mm}';
+    // KEIN laufender Kopf mehr. position:fixed wiederholt sich zwar auf jeder
+    // Druckseite, RESERVIERT dort aber keinen Platz: Fliesstext beginnt auf
+    // jeder Folgeseite wieder ganz oben und laeuft unter dem Kopf durch.
+    // Platz auf allen Seiten reservieren kann nur der @page-Rand — und in den
+    // hinein malen kann ein fixed-Element in Chrome nicht zuverlaessig.
+    // Vertraulichkeitsvermerk, Aktenzeichen und Schweregrad-Signatur stehen
+    // deshalb genau EINMAL: auf dem Deckblatt.
     html += '.break{break-after:page;page-break-after:always}';
 
     // ── Fingerprint: dieselben validierten Schweregrad-Farben als
-    //    Segment-Balken. Klein im Laufkopf, gross auf dem Deckblatt. ──
+    //    Segment-Balken. Steht einmal, auf dem Deckblatt. ──
     html += '.fingerprint{display:flex;gap:.4mm;overflow:hidden;border-radius:1pt}';
     html += '.fingerprint i{display:block;height:100%}';
-    html += '.fp-run{height:1.3mm}';
     html += '.fp-cover{height:2.8mm;border-radius:1.4pt;margin-bottom:3mm}';
     html += '.cover-fp-label{font-size:7.5pt;color:#9096a0;letter-spacing:.04em;margin-bottom:2.2mm}';
 
@@ -2760,17 +2760,10 @@ async function exportAsPDF() {
     //    beim Drucken unveraendert randlos nach @page. ──
     html += '@media screen {';
     html += 'body{background:#e4e5e9;padding:24px 0 48px}';
-    html += '.runhead{position:sticky;max-width:190mm;margin:0 auto;padding-left:15mm;padding-right:15mm;background:#fff}';
     html += '.page{max-width:190mm;margin:0 auto 8mm;background:#fff;padding:16mm 15mm 18mm;';
     html += 'box-shadow:0 1px 2px rgba(20,22,26,.06),0 10px 24px rgba(20,22,26,.10);border-radius:1.5mm}';
     html += '}';
     html += '</style></head><body>';
-
-    html += '<div class="runhead">';
-    html += '<div class="runhead-row"><span>' + L('Vertraulich', 'Confidential') + '</span>';
-    html += '<span class="mono">' + (caseId ? escapeHtml(caseId) : 'MyWorkLog') + '</span></div>';
-    html += sevFingerprintHtml(exportEntries, 'fp-run');
-    html += '</div>';
 
     // ═══ DECKBLATT ═══
     html += '<div class="page cover break">';
