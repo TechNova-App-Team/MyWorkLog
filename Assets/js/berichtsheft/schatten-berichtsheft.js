@@ -29,20 +29,227 @@ const CATEGORY_ICONS = {
     documentation: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"></rect><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><line x1="9.5" y1="13" x2="14.5" y2="18"></line><line x1="14.5" y1="13" x2="9.5" y2="18"></line></svg>',
     positive: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
     other: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>',
+    book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>',
+    graduation: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5z"></path><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5"></path></svg>',
+    euro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.5 5.5A7 7 0 0 0 7.2 9m0 6a7 7 0 0 0 11.3 3.5"></path><line x1="3" y1="10" x2="12" y2="10"></line><line x1="3" y1="14" x2="12" y2="14"></line></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="10" y1="9" x2="10" y2="15"></line><line x1="14" y1="9" x2="14" y2="15"></line></svg>',
+    moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>',
+    heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 22l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>',
+    alert: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
+    hand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v5"></path><path d="M14 10V4a2 2 0 0 0-4 0v7"></path><path d="M10 10.5V6a2 2 0 0 0-4 0v9"></path><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg>',
+    tag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 12 22l-9-9V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"></path><line x1="7.5" y1="7.5" x2="7.51" y2="7.5"></line></svg>',
 };
 
-const CATEGORIES = {
-    verbal: { label: L('Verbale Belästigung', 'Verbal harassment'), icon: CATEGORY_ICONS.verbal },
-    neglect: { label: L('Ausbildungspflicht vernachlässigt (zu wenig Anleitung)', 'Training duty neglected (too little guidance)'), icon: CATEGORY_ICONS.neglect },
-    unrelated: { label: L('Ausbildungsfremde Tätigkeiten (falsche Aufgaben)', 'Non-training tasks (work unrelated to training)'), icon: CATEGORY_ICONS.unrelated },
-    overtime: { label: L('Überstunden / Arbeitszeitverstöße', 'Overtime / working-time violations'), icon: CATEGORY_ICONS.overtime },
-    mobbing: { label: L('Mobbing / Ausgrenzung', 'Bullying / exclusion'), icon: CATEGORY_ICONS.mobbing },
-    safety: { label: L('Arbeitsschutz-Verstoß', 'Occupational-safety violation'), icon: CATEGORY_ICONS.safety },
-    discrimination: { label: L('Diskriminierung', 'Discrimination'), icon: CATEGORY_ICONS.discrimination },
-    documentation: { label: L('Fehlende Dokumentation', 'Missing documentation'), icon: CATEGORY_ICONS.documentation },
-    positive: { label: L('Positiver Fortschritt', 'Positive progress'), icon: CATEGORY_ICONS.positive },
-    other: { label: L('Sonstiges', 'Other'), icon: CATEGORY_ICONS.other },
+// ─── Kategorie-Gruppen ──────────────────────────────────
+// Bei ~40 Kategorien ist eine flache Liste nicht mehr lesbar. Die Gruppe ist
+// zugleich die Voreinstellung fuer das Symbol: eine Kategorie muss nur dann
+// ein eigenes tragen, wenn sie sich innerhalb ihrer Gruppe unterscheiden soll.
+// Sonst braeuchte man 40 Symbole, von denen die Haelfte nichts kodiert
+// (dieselbe Falle wie bei den 53 ArchFlow-Gruppen auf 21 Farben).
+const CATEGORY_GROUPS = {
+    training: { label: L('Ausbildungsinhalt & Anleitung', 'Training content & guidance'), icon: CATEGORY_ICONS.book },
+    time:     { label: L('Arbeitszeit & Vergütung', 'Working time & pay'), icon: CATEGORY_ICONS.overtime },
+    conduct:  { label: L('Umgang & Verhalten', 'Conduct & behaviour'), icon: CATEGORY_ICONS.verbal },
+    health:   { label: L('Sicherheit & Gesundheit', 'Safety & health'), icon: CATEGORY_ICONS.safety },
+    school:   { label: L('Berufsschule & Prüfung', 'Vocational school & exams'), icon: CATEGORY_ICONS.graduation },
+    formal:   { label: L('Organisation & Formales', 'Organisation & formalities'), icon: CATEGORY_ICONS.other },
+    misc:     { label: L('Sonstiges', 'Other'), icon: CATEGORY_ICONS.other },
+    custom:   { label: L('Eigene Kategorien', 'Your own categories'), icon: CATEGORY_ICONS.tag },
 };
+
+// Reihenfolge im Waehler. `custom` steht vorn: wer sich eine eigene Kategorie
+// angelegt hat, greift zuerst danach.
+const CATEGORY_GROUP_ORDER = ['custom', 'training', 'time', 'conduct', 'health', 'school', 'formal', 'misc'];
+
+// `hint` ist die Fundhilfe beim Auswaehlen — im Waehler und in der Suche
+// sichtbar, im Protokoll NICHT. Deshalb ein eigenes Feld statt einer Klammer
+// im Label: was nie Teil des Labels ist, kann auch nicht versehentlich in den
+// Export geraten (siehe catExportLabel).
+const CATEGORIES = {
+    // ── Ausbildungsinhalt & Anleitung ──
+    neglect: { group: 'training', icon: CATEGORY_ICONS.neglect,
+        label: L('Ausbildungspflicht vernachlässigt', 'Training duty neglected'),
+        hint: L('zu wenig Anleitung, sich selbst überlassen', 'too little guidance, left on your own') },
+    unrelated: { group: 'training', icon: CATEGORY_ICONS.unrelated,
+        label: L('Ausbildungsfremde Tätigkeiten', 'Non-training tasks'),
+        hint: L('Aufgaben ohne Bezug zum Ausbildungsberuf', 'tasks unrelated to the occupation you train for') },
+    noTrainer: { group: 'training',
+        label: L('Kein Ausbilder erreichbar', 'No trainer available'),
+        hint: L('Ansprechpartner fehlt oder wechselt ständig', 'contact person missing or constantly changing') },
+    planDeviation: { group: 'training',
+        label: L('Abweichung vom Ausbildungsplan', 'Deviation from the training plan'),
+        hint: L('vorgesehene Abteilung oder Inhalte übersprungen', 'planned department or content skipped') },
+    overchallenged: { group: 'training',
+        label: L('Überforderung ohne Einweisung', 'Out of your depth without instruction'),
+        hint: L('Aufgaben deutlich über dem Ausbildungsstand', 'tasks well beyond your current training level') },
+    underchallenged: { group: 'training',
+        label: L('Unterforderung', 'Under-challenged'),
+        hint: L('dauerhaft nur einfachste Tätigkeiten', 'nothing but the simplest tasks, permanently') },
+    documentation: { group: 'training', icon: CATEGORY_ICONS.documentation,
+        label: L('Fehlende Dokumentation', 'Missing documentation'),
+        hint: L('keine Unterlagen, keine Erklärung zum Ablauf', 'no documents, no explanation of the process') },
+    reportBook: { group: 'training',
+        label: L('Berichtsheft nicht abgezeichnet', 'Training record not signed off'),
+        hint: L('Ausbilder prüft oder unterschreibt nicht', 'trainer does not check or sign') },
+
+    // ── Arbeitszeit & Vergütung ──
+    overtime: { group: 'time', icon: CATEGORY_ICONS.overtime,
+        label: L('Überstunden / Arbeitszeitverstöße', 'Overtime / working-time violations'),
+        hint: L('Mehrarbeit, zu lange Schichten', 'extra hours, shifts that run too long') },
+    breaks: { group: 'time', icon: CATEGORY_ICONS.pause,
+        label: L('Pause nicht gewährt', 'Break not granted'),
+        hint: L('Pause gestrichen, verkürzt oder ständig gestört', 'break cancelled, cut short or constantly interrupted') },
+    restPeriod: { group: 'time', icon: CATEGORY_ICONS.moon,
+        label: L('Ruhezeit unterschritten', 'Rest period too short'),
+        hint: L('weniger als elf Stunden zwischen zwei Schichten', 'less than eleven hours between two shifts') },
+    youthProtection: { group: 'time',
+        label: L('Jugendarbeitsschutz missachtet', 'Youth employment protection ignored'),
+        hint: L('unter 18: Nacht-, Wochenend- oder Mehrarbeit', 'under 18: night, weekend or extra work') },
+    vacation: { group: 'time',
+        label: L('Urlaub verweigert oder gekürzt', 'Leave refused or cut'),
+        hint: L('Antrag abgelehnt oder Urlaub zurückgenommen', 'request rejected or leave withdrawn') },
+    pay: { group: 'time', icon: CATEGORY_ICONS.euro,
+        label: L('Vergütung fehlerhaft', 'Pay incorrect'),
+        hint: L('zu spät, zu wenig, Zuschläge fehlen', 'late, too little, supplements missing') },
+    timeRecord: { group: 'time',
+        label: L('Arbeitszeit falsch erfasst', 'Working time recorded incorrectly'),
+        hint: L('Stunden gestrichen oder gar nicht eingetragen', 'hours removed or never entered') },
+    sickLeave: { group: 'time',
+        label: L('Krankmeldung als Problem behandelt', 'Sick leave treated as a problem'),
+        hint: L('Druck trotz Attest, unangenehmes Rückkehrgespräch', 'pressure despite a doctor’s note, uncomfortable return interview') },
+
+    // ── Umgang & Verhalten ──
+    verbal: { group: 'conduct', icon: CATEGORY_ICONS.verbal,
+        label: L('Verbale Belästigung / Anschreien', 'Verbal harassment / shouting'),
+        hint: L('Beleidigung, Anschreien, Herabwürdigung', 'insults, shouting, being belittled') },
+    mobbing: { group: 'conduct', icon: CATEGORY_ICONS.mobbing,
+        label: L('Mobbing / Ausgrenzung', 'Bullying / exclusion'),
+        hint: L('systematisch, wiederholt, oft durch mehrere', 'systematic, repeated, often by several people') },
+    discrimination: { group: 'conduct', icon: CATEGORY_ICONS.discrimination,
+        label: L('Diskriminierung', 'Discrimination'),
+        hint: L('wegen Herkunft, Geschlecht, Religion, Behinderung, Alter, Identität', 'because of origin, gender, religion, disability, age, identity') },
+    sexualHarassment: { group: 'conduct', icon: CATEGORY_ICONS.hand,
+        label: L('Sexuelle Belästigung', 'Sexual harassment'),
+        hint: L('Anzüglichkeiten, Berührungen, Bilder, Nachrichten', 'innuendo, touching, images, messages') },
+    threat: { group: 'conduct',
+        label: L('Drohung / Einschüchterung', 'Threat / intimidation'),
+        hint: L('mit Kündigung, Nachteilen oder körperlich', 'with dismissal, disadvantages, or physically') },
+    physical: { group: 'conduct', icon: CATEGORY_ICONS.hand,
+        label: L('Körperlicher Übergriff', 'Physical assault'),
+        hint: L('Festhalten, Schubsen, Werfen, Schlagen', 'grabbing, shoving, throwing, hitting') },
+    blame: { group: 'conduct',
+        label: L('Ungerechte Schuldzuweisung', 'Unfair blame'),
+        hint: L('Fehler anderer werden dir zugeschrieben', 'other people’s mistakes attributed to you') },
+    publicReprimand: { group: 'conduct',
+        label: L('Zurechtweisung vor anderen', 'Reprimanded in front of others'),
+        hint: L('Kritik vor Kunden, Kollegen oder der Abteilung', 'criticism in front of customers, colleagues or the department') },
+    retaliation: { group: 'conduct',
+        label: L('Nachteile nach einer Beschwerde', 'Disadvantages after a complaint'),
+        hint: L('Reaktion darauf, dass du etwas angesprochen hast', 'a reaction to you having raised something') },
+
+    // ── Sicherheit & Gesundheit ──
+    safety: { group: 'health', icon: CATEGORY_ICONS.safety,
+        label: L('Arbeitsschutz-Verstoß', 'Occupational-safety violation'),
+        hint: L('Schutzausrüstung, ungesicherte Maschine, Gefahrstoff', 'protective equipment, unsecured machine, hazardous substance') },
+    instructionMissing: { group: 'health',
+        label: L('Sicherheitsunterweisung fehlt', 'Safety briefing missing'),
+        hint: L('keine Einweisung vor einer gefährlichen Tätigkeit', 'no briefing before a dangerous task') },
+    strain: { group: 'health',
+        label: L('Körperliche Überlastung', 'Physical overload'),
+        hint: L('schweres Heben, Dauerbelastung, keine Erholung', 'heavy lifting, constant strain, no recovery') },
+    psych: { group: 'health', icon: CATEGORY_ICONS.heart,
+        label: L('Psychische Belastung', 'Psychological strain'),
+        hint: L('Dauerdruck, Schlafprobleme, Angst vor der Arbeit', 'constant pressure, trouble sleeping, dreading work') },
+    accident: { group: 'health', icon: CATEGORY_ICONS.alert,
+        label: L('Arbeitsunfall / Beinaheunfall', 'Accident / near miss'),
+        hint: L('mit oder ohne Verletzung, auch wenn nichts passiert ist', 'with or without injury, including when nothing happened') },
+
+    // ── Berufsschule & Prüfung ──
+    schoolBlocked: { group: 'school', icon: CATEGORY_ICONS.graduation,
+        label: L('Freistellung für die Berufsschule verweigert', 'Time off for vocational school refused'),
+        hint: L('Berufsschultag, Blockunterricht oder Prüfung', 'school day, block teaching or an exam') },
+    examPrep: { group: 'school',
+        label: L('Prüfungsvorbereitung verhindert', 'Exam preparation prevented'),
+        hint: L('keine Freistellung, kein Lernstoff, keine Zeit', 'no time off, no material, no time') },
+    schoolPressure: { group: 'school',
+        label: L('Druck wegen Schulnoten', 'Pressure over school grades'),
+        hint: L('Drohungen oder Strafen wegen der Leistungen', 'threats or penalties over your results') },
+
+    // ── Organisation & Formales ──
+    contract: { group: 'formal',
+        label: L('Ausbildungsvertrag nicht eingehalten', 'Training contract not honoured'),
+        hint: L('Zusagen aus dem Vertrag werden nicht erfüllt', 'commitments from the contract are not met') },
+    equipment: { group: 'formal',
+        label: L('Arbeitsmittel fehlen', 'Work equipment missing'),
+        hint: L('Werkzeug, Kleidung, Zugang oder Material', 'tools, clothing, access or material') },
+    dataPrivacy: { group: 'formal', icon: CATEGORY_ICONS.lock,
+        label: L('Datenschutz / Überwachung', 'Data protection / surveillance'),
+        hint: L('Kontrolle, Kamera, Zugriff auf private Daten', 'monitoring, cameras, access to private data') },
+    noResponse: { group: 'formal',
+        label: L('Beschwerde ohne Reaktion', 'Complaint with no response'),
+        hint: L('gemeldet, und danach ist nichts passiert', 'reported, and then nothing happened') },
+
+    // ── Sonstiges ──
+    positive: { group: 'misc', icon: CATEGORY_ICONS.positive,
+        label: L('Positiver Fortschritt', 'Positive progress'),
+        hint: L('etwas lief gut und soll festgehalten werden', 'something went well and is worth recording') },
+    other: { group: 'misc', icon: CATEGORY_ICONS.other,
+        label: L('Sonstiges', 'Other'),
+        hint: L('passt in keine der Kategorien', 'does not fit any of the categories') },
+};
+
+// Eigene Kategorien des Nutzers: [{id, label, hint}]. Liegen verschluesselt
+// im Tresor (siehe loadCustomCategories), nicht im Klartext daneben — ein
+// selbst vergebener Name kann so verraeterisch sein wie der Eintrag selbst.
+let customCategories = [];
+
+function customCategoryMap() {
+    const out = {};
+    customCategories.forEach(c => {
+        out[c.id] = { label: c.label, hint: c.hint || '', icon: CATEGORY_ICONS.tag, group: 'custom', custom: true };
+    });
+    return out;
+}
+
+// EINZIGER Lesezugriff auf eine Kategorie. Faellt auf „Sonstiges" zurueck,
+// damit ein Eintrag mit unbekanntem Schluessel (geloeschte eigene Kategorie,
+// Backup von einem anderen Stand) nie eine leere Karte rendert.
+function getCategory(key) {
+    return CATEGORIES[key] || customCategoryMap()[key] || CATEGORIES.other;
+}
+
+function categoryExists(key) {
+    return !!(CATEGORIES[key] || customCategoryMap()[key]);
+}
+
+// Alle Kategorien in Anzeige-Reihenfolge: [{key, cat, group}]
+function allCategoryEntries() {
+    const custom = customCategoryMap();
+    const all = Object.assign({}, CATEGORIES, custom);
+    const out = [];
+    CATEGORY_GROUP_ORDER.forEach(g => {
+        Object.keys(all).forEach(k => {
+            if ((all[k].group || 'misc') === g) out.push({ key: k, cat: all[k], group: g });
+        });
+    });
+    return out;
+}
+
+// Symbol einer Kategorie — eigenes, sonst das der Gruppe.
+function categoryIcon(cat) {
+    return cat.icon || (CATEGORY_GROUPS[cat.group] || CATEGORY_GROUPS.misc).icon;
+}
+
+// Label fuer Protokoll und Textausgabe. Der `hint` ist hier per Konstruktion
+// nicht dabei — er ist ein eigenes Feld und wird nie mitgeschrieben. Die
+// Klammer-Entfernung greift fuer EIGENE Kategorien, in die ein Nutzer seine
+// Fundhilfe selbst als „Name (Erklaerung)" tippt: im Waehler hilft das, im
+// Beschwerdeprotokoll hat es nichts zu suchen.
+function catExportLabel(cat) {
+    const stripped = String(cat.label || '').replace(/\s*\([^()]*\)/g, '').replace(/\s{2,}/g, ' ').trim();
+    return stripped || String(cat.label || '');
+}
 
 const SEVERITY_LABELS = {
     critical: L('Kritisch', 'Critical'),
@@ -272,7 +479,48 @@ const CATEGORY_FIELDS = {
     other: [
         { key: 'location', label: L('Ort', 'Location'), type: 'text' },
     ],
+    breaks: [
+        { key: 'minutesLost', label: L('Ausgefallene Pause (Minuten)', 'Break time lost (minutes)'), type: 'number', placeholder: L('z.B. 30', 'e.g. 30') },
+        { key: 'frequency', label: L('Häufigkeit', 'Frequency'), type: 'select', options: [
+            ['once', L('Einmalig', 'One-off')], ['repeated', L('Wiederholt', 'Repeated')], ['ongoing', L('Dauerhaft', 'Ongoing')]
+        ] },
+    ],
+    restPeriod: [
+        { key: 'hoursBetween', label: L('Stunden zwischen den Schichten', 'Hours between the shifts'), type: 'number', placeholder: L('z.B. 9', 'e.g. 9') },
+        { key: 'shiftEnd', label: L('Schichtende am Vortag', 'End of the previous shift'), type: 'text', placeholder: '22:00' },
+    ],
+    pay: [
+        { key: 'payPeriod', label: L('Betroffener Abrechnungsmonat', 'Pay period affected'), type: 'text', placeholder: L('z.B. Juli 2026', 'e.g. July 2026') },
+        { key: 'amount', label: L('Fehlbetrag (Euro, falls bekannt)', 'Amount missing (euro, if known)'), type: 'number' },
+    ],
+    schoolBlocked: [
+        { key: 'schoolDate', label: L('Betroffener Schul- oder Prüfungstag', 'School or exam day affected'), type: 'date' },
+        { key: 'refusedBy', label: L('Verweigert von', 'Refused by'), type: 'text' },
+    ],
+    accident: [
+        { key: 'injury', label: L('Verletzung', 'Injury'), type: 'select', options: [
+            ['none', L('Keine', 'None')], ['minor', L('Leicht', 'Minor')], ['treated', L('Ärztlich behandelt', 'Medically treated')]
+        ] },
+        { key: 'reportedTo', label: L('Gemeldet an', 'Reported to'), type: 'text' },
+        { key: 'inLogbook', label: L('Im Verbandbuch eingetragen', 'Entered in the first-aid log'), type: 'select', options: [
+            ['yes', L('Ja', 'Yes')], ['no', L('Nein', 'No')], ['unknown', L('Weiß ich nicht', 'Do not know')]
+        ] },
+    ],
 };
+
+// Kategorien ohne eigenen Satz bekommen diesen. Ort und Häufigkeit sind die
+// zwei Angaben, nach denen bei einer Beschwerde als Erstes gefragt wird —
+// „einmal" und „seit Monaten jede Woche" sind zwei verschiedene Sachverhalte.
+const CATEGORY_FIELDS_DEFAULT = [
+    { key: 'location', label: L('Ort', 'Location'), type: 'text', placeholder: L('z.B. Werkstatt, Büro …', 'e.g. workshop, office …') },
+    { key: 'frequency', label: L('Häufigkeit', 'Frequency'), type: 'select', options: [
+        ['once', L('Einmalig', 'One-off')], ['repeated', L('Wiederholt', 'Repeated')], ['ongoing', L('Dauerhaft', 'Ongoing')]
+    ] },
+];
+
+function categoryFields(key) {
+    return CATEGORY_FIELDS[key] || CATEGORY_FIELDS_DEFAULT;
+}
 
 let derivedKey = null;
 let entries = [];
@@ -441,6 +689,7 @@ async function createVault(password) {
 
     await vsPutMeta(vaultMeta);
     entries = [];
+    customCategories = [];
     await saveVault();
     // Dauerhaftigkeit gleich beim Anlegen anfordern: ohne sie darf der Browser
     // den Tresor bei Speicherdruck raeumen — bei Beweismitteln der schlimmste Fall.
@@ -473,6 +722,8 @@ async function unlockVault(password) {
         }
         await migrateLegacyVault(kek);
     }
+
+    await loadCustomCategories();
 
     if (!vaultMeta.caseId) {
         vaultMeta.caseId = generateCaseId();
@@ -516,18 +767,36 @@ async function mergeCloudVault(password) {
     }
 
     let cloudEntries;
+    let cloudCategories = [];
     try {
         const kek = await deriveKey(password, b64ToU8(cloud.salt));
         const raw = await unwrapMasterKey(cloud.wrappedKey, kek);
         const cloudKey = await importMasterKey(raw);
         raw.fill(0);
         cloudEntries = JSON.parse(await decrypt(cloud.entries, cloudKey));
+        // Eigene Kategorien der Gegenseite. Eigener try/catch: ein Stand von
+        // vor dieser Version hat den Datensatz gar nicht, und daran darf das
+        // Zusammenfuehren der Eintraege nicht scheitern.
+        if (cloud.categories) {
+            try {
+                const parsed = JSON.parse(await decrypt(cloud.categories, cloudKey));
+                if (Array.isArray(parsed)) cloudCategories = parsed.filter(c => c && c.id && c.label);
+            } catch (e) { /* ohne eigene Kategorien weitermachen */ }
+        }
     } catch (e) {
         showToast(L('Cloud-Stand konnte nicht gelesen werden — dein lokaler Stand bleibt unverändert',
                     'Could not read the cloud state — your local state is unchanged'), 'warning');
         return;
     }
     if (!Array.isArray(cloudEntries)) return;
+
+    // Kategorien vereinigen statt ersetzen — dieselbe Regel wie bei den
+    // Eintraegen. Bei gleicher ID gewinnt der lokale Name; ihn von der
+    // Gegenseite umbenennen zu lassen waere fuer den Nutzer nicht erklaerbar.
+    if (cloudCategories.length) {
+        const known = new Set(customCategories.map(c => c.id));
+        cloudCategories.forEach(c => { if (!known.has(c.id)) customCategories.push(c); });
+    }
 
     const byId = new Map(entries.map(e => [e.id, e]));
     let neu = 0, aktualisiert = 0;
@@ -688,6 +957,27 @@ async function setTimeBasis(basis) {
                 'Timeline: ' + TIME_BASIS[basis].long + ' (' + TIME_BASIS[basis].hint + ')'), 'info');
 }
 
+// ─── Eigene Kategorien ──────────────────────────────────
+// Liegen verschluesselt neben den Eintraegen. Ein fehlender oder kaputter
+// Datensatz darf das Entsperren nie verhindern — dann eben keine eigenen
+// Kategorien, die Eintraege selbst sind das Wertvolle.
+async function loadCustomCategories() {
+    customCategories = [];
+    try {
+        const rec = await vsGetCategories();
+        if (!rec) return;
+        const parsed = JSON.parse(await decrypt(rec, derivedKey));
+        if (Array.isArray(parsed)) customCategories = parsed.filter(c => c && c.id && c.label);
+    } catch (e) {
+        console.warn('[Tresor] Eigene Kategorien nicht lesbar:', e && e.name);
+    }
+}
+
+async function saveCustomCategories() {
+    if (!derivedKey) return;
+    await vsPutCategories(await encrypt(JSON.stringify(customCategories), derivedKey));
+}
+
 async function saveVault() {
     if (!derivedKey || !vaultMeta) return;
     // Kein automatisches Kuerzen bei vollem Speicher (anders als das
@@ -695,6 +985,7 @@ async function saveVault() {
     // verloren gehen. Der Aufrufer faengt den Fehler und macht die zuletzt
     // hinzugefuegte Aenderung rueckgaengig.
     await vsPutEntries(await encrypt(JSON.stringify(entries), derivedKey));
+    await saveCustomCategories();
     // Zeitstempel entscheidet beim naechsten Start, welche Seite neuer ist
     // (Geraet oder Cloud-Kopie) — ohne ihn kann der Abgleich nur raten.
     vaultMeta.updatedAt = new Date().toISOString();
@@ -719,11 +1010,16 @@ function syncCloudMirror() {
             pwHash: vaultMeta.pwHash, wrappedKey: vaultMeta.wrappedKey,
             updatedAt: vaultMeta.updatedAt || new Date().toISOString(),
             timeBasis: vaultMeta.timeBasis || null,
-            entries: null, filesLocalOnly: true
+            entries: null, categories: null, filesLocalOnly: true
         };
-        vsGetEntries().then(rec => {
+        // Die eigenen Kategorien muessen mitreisen: ohne sie stuenden auf dem
+        // zweiten Geraet Eintraege, deren Kategorie es dort nicht gibt — sie
+        // fielen ueber getCategory() still auf „Sonstiges" zurueck und die
+        // Einordnung waere weg.
+        Promise.all([vsGetEntries(), vsGetCategories()]).then(([rec, catRec]) => {
             if (!rec) return;
             mirror.entries = { iv: rec.iv, data: rec.data };
+            if (catRec) mirror.categories = { iv: catRec.iv, data: catRec.data };
             try { localStorage.setItem(STORE_KEY, JSON.stringify(mirror)); }
             catch (e) { console.warn('[Tresor] Cloud-Spiegel konnte nicht geschrieben werden:', e && e.name); }
         });
@@ -797,6 +1093,10 @@ async function exportBackup() {
 
     try {
         const entriesRec = await vsGetEntries();
+        // Ohne die eigenen Kategorien waere die Sicherung unvollstaendig: nach
+        // dem Einspielen stuenden die betroffenen Vorfaelle unter „Sonstiges",
+        // und die selbst gewaehlte Einordnung waere nicht wiederherstellbar.
+        const catRec = await vsGetCategories();
         const head = {
             format: 'mwl-schatten-backup',
             v: 2,
@@ -806,7 +1106,8 @@ async function exportBackup() {
             pwHash: vaultMeta.pwHash,
             wrappedKey: vaultMeta.wrappedKey || null,
             timeBasis: vaultMeta.timeBasis || null,
-            entries: entriesRec ? { iv: entriesRec.iv, data: entriesRec.data } : null
+            entries: entriesRec ? { iv: entriesRec.iv, data: entriesRec.data } : null,
+            categories: catRec ? { iv: catRec.iv, data: catRec.data } : null
         };
         const parts = [JSON.stringify(head).slice(0, -1) + ',"files":['];
 
@@ -877,6 +1178,11 @@ function importBackupFile(file) {
                 entries: parsed.wrappedKey ? undefined : parsed.entries
             });
             await vsPutEntries(parsed.entries);
+            // Faellt bei Sicherungen aus der Zeit vor den eigenen Kategorien
+            // schlicht weg — dann gibt es eben keine.
+            if (parsed.categories && parsed.categories.iv && parsed.categories.data) {
+                await vsPutCategories(parsed.categories);
+            }
 
             for (const f of (parsed.files || [])) {
                 const meta = { id: f.id, name: f.name, mime: f.mime, size: f.size, createdAt: f.createdAt, thumb: f.thumb || null };
@@ -976,6 +1282,7 @@ async function confirmResetVault() {
     vaultMeta = null;
     legacyVault = null;
     entries = [];
+    customCategories = [];
     derivedKey = null;
     closeResetVaultModal();
     document.getElementById('pwInput').value = '';
@@ -1028,13 +1335,19 @@ async function enterApp() {
     syncTimeBasisControls();
     renderEntries();
     updateStats();
-    populateCategoryFilter();
+    // Erst nach dem Entsperren: vorher sind die eigenen Kategorien noch
+    // verschluesselt und wuerden in beiden Listen fehlen.
+    installCategoryValueMirror();
+    populateCategorySelects();
     updateCloudSyncUI();
 }
 
 function lockApp() {
     derivedKey = null;
     entries = [];
+    // Die eigenen Kategorien sind Tresor-Inhalt und duerfen nach dem
+    // Sperren nicht im Speicher stehen bleiben.
+    customCategories = [];
     document.getElementById('mainApp').classList.remove('visible');
     document.getElementById('mainApp').style.display = 'none';
     document.getElementById('sessionTimer').style.display = 'none';
@@ -1546,7 +1859,7 @@ function selectSeverity(sev) {
 function renderCategoryFields(category, values) {
     values = values || {};
     const container = document.getElementById('categoryFieldsContainer');
-    const fields = CATEGORY_FIELDS[category] || [];
+    const fields = categoryFields(category);
     if (!fields.length) { container.innerHTML = ''; return; }
     container.innerHTML = fields.map(f => {
         const val = values[f.key] || '';
@@ -1568,7 +1881,7 @@ function renderCategoryFields(category, values) {
 // fuer Entry-Card, PDF- und TXT-Export, damit die drei nie auseinanderlaufen.
 function resolveCategoryDetails(category, details) {
     if (!details) return [];
-    const fields = CATEGORY_FIELDS[category] || [];
+    const fields = categoryFields(category);
     const out = [];
     fields.forEach(f => {
         const raw = details[f.key];
@@ -1584,7 +1897,7 @@ function resolveCategoryDetails(category, details) {
 }
 
 function collectCategoryFieldValues(category) {
-    const fields = CATEGORY_FIELDS[category] || [];
+    const fields = categoryFields(category);
     const details = {};
     fields.forEach(f => {
         const el = document.getElementById('catfield_' + f.key);
@@ -1621,19 +1934,30 @@ function getFormBasis() {
     return picked && isTimeBasis(picked.value) ? picked.value : getTimeBasis();
 }
 
+// Eine Hilfszeile statt zweier Erklaerkaesten. Sie sagt zwei Dinge, und zwar
+// nur ueber die GERADE gewaehlte Achse: was dieser Zeitstempel ist, und wie
+// er sich zum Tresor-Standard verhaelt. Vorher stand beides gleichzeitig und
+// dauerhaft da — vier Zeilen Erklaerung ueber einem Formular, in dem jedes
+// andere Feld aus Beschriftung und Eingabe besteht.
 function updateEntryBasisHelp() {
     const help = document.getElementById('entryBasisHelp');
     if (!help) return;
     const std = getTimeBasis();
     const pick = getFormBasis();
-    document.querySelectorAll('#entryBasisPick .basis-card').forEach(card => {
-        card.classList.toggle('is-on', card.getAttribute('data-basis-card') === pick);
+    document.querySelectorAll('#entryBasisPick .basis-row').forEach(row => {
+        row.classList.toggle('is-on', row.getAttribute('data-basis-card') === pick);
     });
-    help.textContent = pick === std
-        ? L('Folgt dem Standard des Tresors. Stellst du den Standard später um, geht dieser Eintrag mit.',
-            'Follows the vault default. If you switch the default later, this entry moves with it.')
-        : L('Weicht vom Standard ab (' + TIME_BASIS[std].long + '). Dieser Eintrag bleibt beim Umschalten unverändert.',
-            'Differs from the default (' + TIME_BASIS[std].long + '). This entry stays unchanged when the default is switched.');
+
+    const what = pick === 'created'
+        ? L('Führend ist der Erfassungszeitpunkt — automatisch gesetzt und nicht änderbar.',
+            'The time of entry leads — set automatically and not editable.')
+        : L('Führend ist der Vorfallszeitpunkt — frei eintragbar, Uhrzeit optional.',
+            'The time of the incident leads — freely editable, time optional.');
+    const rel = pick === std
+        ? L('Folgt dem Standard des Tresors.', 'Follows the vault default.')
+        : L('Weicht vom Standard ab (' + TIME_BASIS[std].long + ') und bleibt beim Umschalten unverändert.',
+            'Differs from the default (' + TIME_BASIS[std].long + ') and stays unchanged when the default is switched.');
+    help.textContent = what + ' ' + rel;
 }
 
 function onEntryBasisChange() { updateEntryBasisHelp(); }
@@ -1875,7 +2199,7 @@ function renderEntries() {
     }
 
     list.innerHTML = filtered.map(e => {
-        const cat = CATEGORIES[e.category] || CATEGORIES.other;
+        const cat = getCategory(e.category);
         const sevClass = 'sev-' + e.severity;
         const witnessHtml = (e.witnesses && e.witnesses.length) ?
             '<div class="entry-witnesses"><span class="inline-icon">' + UI_ICONS.users + '</span>' + L('Zeugen: ', 'Witnesses: ') + escapeHtml(e.witnesses.join(', ')) + '</div>' : '';
@@ -1925,7 +2249,7 @@ function renderEntries() {
                     '<div class="entry-header-badges"><span class="entry-severity ' + sevClass + '">' + (SEVERITY_LABELS[e.severity] || e.severity) + '</span>' + statusHtml + '</div>' +
                 '</div>' +
                 entryAltStampHtml(e) +
-                '<div class="entry-category"><span class="cat-icon">' + cat.icon + '</span>' + cat.label + '</div>' +
+                '<div class="entry-category"><span class="cat-icon">' + categoryIcon(cat) + '</span>' + escapeHtml(cat.label) + '</div>' +
                 '<div class="entry-text">' + escapeHtml(e.text) + '</div>' +
                 detailsHtml +
                 attachHtml +
@@ -2074,12 +2398,358 @@ function renderSeverityBar() {
     ).join('');
 }
 
-function populateCategoryFilter() {
-    const sel = document.getElementById('filterCategory');
-    sel.innerHTML = '<option value="all">' + L('Alle Kategorien', 'All categories') + '</option>';
-    Object.entries(CATEGORIES).forEach(([k, v]) => {
-        sel.innerHTML += '<option value="' + k + '">' + v.label + '</option>';
+// ═════════════════════════════════════════
+//  KATEGORIE-WAEHLER
+//  Bei ~40 Kategorien plus eigenen ist eine native Auswahlliste unbrauchbar:
+//  sie zeigt keine Fundhilfe, keine Gruppen und laesst sich nicht durchsuchen.
+//  Muster wie beim Typ-Picker der Haupt-App: das <select> BLEIBT im DOM und
+//  bleibt die Wert-Quelle — jeder bestehende `entryCategory.value`-Zugriff
+//  laeuft unveraendert weiter —, darueber liegt eine eigene Listbox, die den
+//  Wert nur spiegelt.
+// ═════════════════════════════════════════
+
+function categoryOptionHtml(key, cat) {
+    return '<option value="' + escapeHtml(key) + '">' + escapeHtml(cat.label) + '</option>';
+}
+
+// Beide Auswahllisten aus den Daten bauen, nicht im HTML pflegen: eine fest
+// verdrahtete Liste veraltet schweigend, sobald eine Kategorie dazukommt.
+function populateCategorySelects() {
+    const entrySel = document.getElementById('entryCategory');
+    const keep = entrySel ? entrySel.value : '';
+    const grouped = {};
+    allCategoryEntries().forEach(({ key, cat, group }) => {
+        (grouped[group] = grouped[group] || []).push({ key, cat });
     });
+
+    let optionsHtml = '';
+    CATEGORY_GROUP_ORDER.forEach(g => {
+        if (!grouped[g] || !grouped[g].length) return;
+        optionsHtml += '<optgroup label="' + escapeHtml(CATEGORY_GROUPS[g].label) + '">' +
+            grouped[g].map(o => categoryOptionHtml(o.key, o.cat)).join('') + '</optgroup>';
+    });
+
+    if (entrySel) {
+        entrySel.innerHTML = optionsHtml;
+        if (keep && categoryExists(keep)) entrySel.value = keep;
+    }
+
+    const filterSel = document.getElementById('filterCategory');
+    if (filterSel) {
+        const keptFilter = filterSel.value;
+        filterSel.innerHTML = '<option value="all">' + L('Alle Kategorien', 'All categories') + '</option>' + optionsHtml;
+        filterSel.value = (keptFilter && (keptFilter === 'all' || categoryExists(keptFilter))) ? keptFilter : 'all';
+    }
+
+    // Dritte Liste: das Eskalations-Modal. Wurde beim Erweitern der
+    // Kategorien fast uebersehen — es stand als zweiter fest verdrahteter
+    // Optionsblock im HTML und haette dauerhaft die alten zehn gezeigt.
+    const escSel = document.getElementById('escalationCategorySelect');
+    if (escSel) {
+        const keptEsc = escSel.value;
+        escSel.innerHTML = optionsHtml;
+        if (keptEsc && categoryExists(keptEsc)) escSel.value = keptEsc;
+    }
+
+    syncCategoryPickerButton();
+}
+
+// Alter Name, damit bestehende Aufrufe weiterlaufen.
+function populateCategoryFilter() { populateCategorySelects(); }
+
+let catPickerOpen = false;
+let catPickerIndex = -1;   // Index in der aktuell gefilterten Liste
+
+function catPickerEls() {
+    return {
+        sel: document.getElementById('entryCategory'),
+        btn: document.getElementById('catPickerBtn'),
+        panel: document.getElementById('catPickerPanel'),
+        search: document.getElementById('catPickerSearch'),
+        list: document.getElementById('catPickerList'),
+    };
+}
+
+// Knopfbeschriftung dem <select> nachziehen. Wird auch vom value-Spiegel
+// aufgerufen, damit programmatische Zuweisungen sichtbar werden.
+function syncCategoryPickerButton() {
+    const { sel, btn } = catPickerEls();
+    if (!sel || !btn) return;
+    const cat = getCategory(sel.value);
+    btn.querySelector('.cat-picker-ico').innerHTML = categoryIcon(cat);
+    btn.querySelector('.cat-picker-label').textContent = cat.label;
+}
+
+// Suchbegriff normalisieren: Umlaute und Grossschreibung duerfen einen
+// Treffer nicht verhindern — „uberstunden" muss „Überstunden" finden.
+// NFD zerlegt „ü" in u + Diakritikum, die Zeichenklasse wirft Letzteres weg;
+// „ß" hat keine Zerlegung und braucht die eigene Zeile.
+function catSearchNorm(str) {
+    return String(str || '').toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/ß/g, 'ss');
+}
+
+function catPickerMatches(query) {
+    const q = catSearchNorm(query).trim();
+    const all = allCategoryEntries();
+    if (!q) return all;
+    const terms = q.split(/\s+/);
+    return all.filter(({ cat, group }) => {
+        const hay = catSearchNorm(cat.label + ' ' + (cat.hint || '') + ' ' + (CATEGORY_GROUPS[group] || {}).label);
+        return terms.every(t => hay.indexOf(t) !== -1);
+    });
+}
+
+function renderCategoryPickerList() {
+    const { search, list, sel } = catPickerEls();
+    if (!list) return;
+    const query = search ? search.value : '';
+    const matches = catPickerMatches(query);
+    const current = sel ? sel.value : '';
+
+    if (!matches.length) {
+        list.innerHTML = '<div class="cat-picker-empty">' +
+            '<p>' + L('Keine Kategorie passt zu „', 'No category matches “') + escapeHtml(query.trim()) + L('".', '”.') + '</p>' +
+            '<p class="cat-picker-empty-sub">' + L('Leg sie als eigene Kategorie an — sie steht dann bei jedem weiteren Eintrag zur Verfügung.',
+                                                   'Create it as your own category — it will be available on every later entry.') + '</p>' +
+            '</div>';
+        catPickerIndex = -1;
+        updateCatPickerCreateLabel(query);
+        return;
+    }
+
+    let html = '';
+    let lastGroup = null;
+    matches.forEach(({ key, cat, group }, i) => {
+        if (group !== lastGroup) {
+            html += '<div class="cat-picker-group">' + escapeHtml(CATEGORY_GROUPS[group].label) + '</div>';
+            lastGroup = group;
+        }
+        const on = key === current;
+        html += '<div class="cat-picker-opt' + (on ? ' is-on' : '') + (i === catPickerIndex ? ' is-cursor' : '') + '"' +
+            ' role="option" aria-selected="' + (on ? 'true' : 'false') + '"' +
+            ' data-cat-key="' + escapeHtml(key) + '" data-cat-idx="' + i + '"' +
+            ' onclick="pickCategory(this.getAttribute(\'data-cat-key\'))">' +
+            '<span class="cat-picker-opt-ico">' + categoryIcon(cat) + '</span>' +
+            '<span class="cat-picker-opt-text">' +
+                '<span class="cat-picker-opt-name">' + escapeHtml(cat.label) + '</span>' +
+                (cat.hint ? '<span class="cat-picker-opt-hint">' + escapeHtml(cat.hint) + '</span>' : '') +
+            '</span>';
+        if (cat.custom) {
+            // Bewusst IMMER sichtbar statt per :hover eingeblendet — auf
+            // Touch gibt es kein :hover, sonst waeren beide Aktionen dort
+            // unerreichbar (siehe CLAUDE.md, Touch-Regel).
+            html += '<span class="cat-picker-opt-acts">' +
+                '<button type="button" class="cat-picker-act" title="' + L('Umbenennen', 'Rename') + '"' +
+                    ' aria-label="' + L('Kategorie umbenennen', 'Rename category') + '"' +
+                    ' onclick="event.stopPropagation();openCustomCategoryModal(\'' + escapeHtml(key) + '\')">' + UI_ICONS.edit + '</button>' +
+                '<button type="button" class="cat-picker-act" title="' + L('Löschen', 'Delete') + '"' +
+                    ' aria-label="' + L('Kategorie löschen', 'Delete category') + '"' +
+                    ' onclick="event.stopPropagation();deleteCustomCategory(\'' + escapeHtml(key) + '\')">' + UI_ICONS.trash + '</button>' +
+                '</span>';
+        }
+        html += '</div>';
+    });
+    list.innerHTML = html;
+    updateCatPickerCreateLabel(query);
+}
+
+// Der Anlegen-Knopf uebernimmt den Suchtext. Wer „Werkstatt zu kalt" tippt
+// und nichts findet, soll nicht abtippen muessen.
+function updateCatPickerCreateLabel(query) {
+    const btn = document.getElementById('catPickerCreate');
+    if (!btn) return;
+    const q = (query || '').trim();
+    btn.querySelector('.cat-picker-create-txt').textContent = q
+        ? L('„' + q + '" als eigene Kategorie anlegen', 'Create “' + q + '” as your own category')
+        : L('Eigene Kategorie anlegen', 'Create your own category');
+}
+
+function openCategoryPicker() {
+    const { panel, search, btn } = catPickerEls();
+    if (!panel) return;
+    catPickerOpen = true;
+    catPickerIndex = -1;
+    panel.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    search.value = '';
+    renderCategoryPickerList();
+    search.focus();
+    // Die gewaehlte Kategorie in den sichtbaren Bereich holen — bei 40
+    // Eintraegen liegt sie sonst irgendwo ausserhalb.
+    const on = panel.querySelector('.cat-picker-opt.is-on');
+    if (on) on.scrollIntoView({ block: 'nearest' });
+}
+
+function closeCategoryPicker(refocus) {
+    const { panel, btn } = catPickerEls();
+    if (!panel || panel.hidden) return;
+    catPickerOpen = false;
+    panel.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+    if (refocus) btn.focus();
+}
+
+function toggleCategoryPicker() {
+    if (catPickerOpen) closeCategoryPicker(true); else openCategoryPicker();
+}
+
+function pickCategory(key) {
+    const { sel } = catPickerEls();
+    if (!sel || !categoryExists(key)) return;
+    sel.value = key;
+    // Das <select> selbst feuert bei programmatischer Zuweisung kein
+    // `change` — ohne diesen Aufruf laeuft renderCategoryFields() nicht und
+    // die kategoriespezifischen Felder blieben die der alten Kategorie.
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    syncCategoryPickerButton();
+    closeCategoryPicker(true);
+}
+
+// Klick daneben schliesst. `mousedown` statt `click`: bei `click` wuerde ein
+// Klick auf ein anderes Formularfeld erst das Panel schliessen und der Fokus
+// landete nirgends.
+document.addEventListener('mousedown', function (e) {
+    if (!catPickerOpen) return;
+    const wrap = document.getElementById('catPickerWrap');
+    if (wrap && !wrap.contains(e.target)) closeCategoryPicker(false);
+});
+
+function onCategoryPickerKey(e) {
+    if (!catPickerOpen) return;
+    const opts = Array.prototype.slice.call(document.querySelectorAll('#catPickerList .cat-picker-opt'));
+    if (e.key === 'Escape') { e.preventDefault(); closeCategoryPicker(true); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!opts.length) return;
+        catPickerIndex = e.key === 'ArrowDown'
+            ? Math.min(opts.length - 1, catPickerIndex + 1)
+            : Math.max(0, catPickerIndex - 1);
+        opts.forEach((el, i) => el.classList.toggle('is-cursor', i === catPickerIndex));
+        opts[catPickerIndex].scrollIntoView({ block: 'nearest' });
+        return;
+    }
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        if (catPickerIndex >= 0 && opts[catPickerIndex]) pickCategory(opts[catPickerIndex].getAttribute('data-cat-key'));
+        else if (opts.length === 1) pickCategory(opts[0].getAttribute('data-cat-key'));
+        else if (!opts.length) openCustomCategoryModal(null, document.getElementById('catPickerSearch').value.trim());
+    }
+}
+
+// ─── Eigene Kategorien anlegen / umbenennen / loeschen ───
+
+// Programmatisches `entryCategory.value = …` feuert KEIN change-Ereignis —
+// openNewEntry(), openEditEntry() und resetEdit() setzen den Wert genau so.
+// Ohne diesen Spiegel bliebe der Knopf auf der zuletzt angeklickten Kategorie
+// stehen, waehrend das <select> laengst eine andere fuehrt. Ein Spiegel auf
+// dem Setter der Instanz statt einer Anpassung an jeder Aufrufstelle: die
+// naechste neue Aufrufstelle wuerde es sonst wieder vergessen.
+function installCategoryValueMirror() {
+    const sel = document.getElementById('entryCategory');
+    if (!sel || sel._mwlMirrored) return;
+    const proto = Object.getPrototypeOf(sel);
+    const desc = Object.getOwnPropertyDescriptor(proto, 'value') ||
+                 Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+    if (!desc || !desc.set) return;
+    Object.defineProperty(sel, 'value', {
+        configurable: true,
+        get() { return desc.get.call(this); },
+        set(v) { desc.set.call(this, v); syncCategoryPickerButton(); }
+    });
+    sel._mwlMirrored = true;
+}
+
+function customCategoryById(id) {
+    return customCategories.find(c => c.id === id) || null;
+}
+
+function openCustomCategoryModal(editId, presetName) {
+    const existing = editId ? customCategoryById(editId) : null;
+    document.getElementById('customCatEditId').value = existing ? existing.id : '';
+    document.getElementById('customCatName').value = existing ? existing.label : (presetName || '');
+    document.getElementById('customCatHint').value = existing ? (existing.hint || '') : '';
+    document.getElementById('customCatModalTitle').textContent = existing
+        ? L('Kategorie umbenennen', 'Rename category')
+        : L('Eigene Kategorie', 'Your own category');
+    closeCategoryPicker(false);
+    openModal('customCatModal');
+    setTimeout(() => document.getElementById('customCatName').focus(), 60);
+}
+
+async function saveCustomCategory() {
+    const id = document.getElementById('customCatEditId').value;
+    const label = document.getElementById('customCatName').value.trim();
+    const hint = document.getElementById('customCatHint').value.trim();
+
+    if (!label) {
+        showToast(L('Die Kategorie braucht einen Namen', 'The category needs a name'), 'warning');
+        return;
+    }
+    // Gegen Werks- UND eigene Kategorien pruefen: zwei gleichnamige Eintraege
+    // in der Liste sind im Protokoll spaeter nicht auseinanderzuhalten.
+    const clash = allCategoryEntries().some(({ key, cat }) =>
+        key !== id && cat.label.toLowerCase() === label.toLowerCase());
+    if (clash) {
+        showToast(L('Diese Kategorie gibt es schon', 'That category already exists'), 'warning');
+        return;
+    }
+
+    let targetId = id;
+    if (id) {
+        const c = customCategoryById(id);
+        if (!c) return;
+        c.label = label;
+        c.hint = hint;
+    } else {
+        targetId = 'custom_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+        customCategories.push({ id: targetId, label: label, hint: hint, createdAt: new Date().toISOString() });
+    }
+
+    try {
+        await saveVault();
+    } catch (e) {
+        showToast(L('Kategorie konnte nicht gespeichert werden', 'Could not save the category'), 'error');
+        return;
+    }
+
+    populateCategorySelects();
+    closeModal('customCatModal');
+    // Eine gerade angelegte Kategorie ist so gut wie immer die, die man
+    // gleich verwenden will — also direkt setzen statt erneut suchen lassen.
+    if (!id && document.getElementById('entryModal').classList.contains('active')) pickCategory(targetId);
+    renderEntries();
+    showToast(id ? L('Kategorie umbenannt', 'Category renamed') : L('Kategorie angelegt', 'Category created'), 'success');
+}
+
+async function deleteCustomCategory(id) {
+    const cat = customCategoryById(id);
+    if (!cat) return;
+    // In Benutzung NICHT loeschen. Sonst fiele jeder betroffene Eintrag ueber
+    // getCategory() still auf „Sonstiges" zurueck — die Einordnung waere weg,
+    // ohne dass es jemand merkt, und im Protokoll stuende etwas Falsches.
+    const used = entries.filter(e => e.category === id).length;
+    if (used > 0) {
+        showToast(used === 1
+            ? L('Ein Eintrag nutzt diese Kategorie — erst dort umstellen, dann löschen',
+                'One entry uses this category — change that one first, then delete')
+            : L(used + ' Einträge nutzen diese Kategorie — erst dort umstellen, dann löschen',
+                used + ' entries use this category — change those first, then delete'), 'warning');
+        return;
+    }
+    if (!window.confirm(L('Kategorie „' + cat.label + '" löschen?', 'Delete the category “' + cat.label + '”?'))) return;
+
+    customCategories = customCategories.filter(c => c.id !== id);
+    try {
+        await saveVault();
+    } catch (e) {
+        showToast(L('Kategorie konnte nicht gelöscht werden', 'Could not delete the category'), 'error');
+        return;
+    }
+    populateCategorySelects();
+    renderCategoryPickerList();
+    showToast(L('Kategorie gelöscht', 'Category deleted'), 'success');
 }
 
 // ═════════════════════════════════════════
@@ -2095,13 +2765,13 @@ function openHistoryModal(id) {
         body.innerHTML = '<p style="color:var(--text-2);font-size:0.85rem;">' + L('Keine früheren Fassungen vorhanden.', 'No earlier versions available.') + '</p>';
     } else {
         body.innerHTML = history.map((h, i) => {
-            const cat = CATEGORIES[h.category] || CATEGORIES.other;
+            const cat = getCategory(h.category);
             return '<div class="history-entry">' +
                 '<div class="history-entry-head">' +
                     '<span>' + L('Fassung ', 'Version ') + (i + 1) + ' · ' + new Date(h.ts).toLocaleString(mwlLocale()) + '</span>' +
                     '<span class="entry-severity sev-' + h.severity + '">' + (SEVERITY_LABELS[h.severity] || h.severity) + '</span>' +
                 '</div>' +
-                '<div class="entry-category"><span class="cat-icon">' + cat.icon + '</span>' + cat.label + '</div>' +
+                '<div class="entry-category"><span class="cat-icon">' + categoryIcon(cat) + '</span>' + escapeHtml(cat.label) + '</div>' +
                 '<div class="entry-text">' + escapeHtml(h.text) + '</div>' +
             '</div>';
         }).join('') + '<div class="history-entry history-entry--current">' +
@@ -2249,16 +2919,38 @@ const ESCALATION = {
     },
 };
 
+// Ausgearbeitete Anlaufstellen gibt es nur fuer die urspruenglichen Themen.
+// Die neuen Kategorien erben ueber ihre GRUPPE die inhaltlich naechste —
+// „Pause nicht gewaehrt" gehoert zu Arbeitszeit, nicht in den Auffangtopf.
+// Fuer eigene Kategorien bleibt es bewusst beim allgemeinen Eintrag: welche
+// Stelle zustaendig ist, kann niemand aus einem selbst vergebenen Namen ableiten.
+const ESCALATION_BY_GROUP = {
+    training: 'neglect',
+    time: 'overtime',
+    conduct: 'verbal',
+    health: 'safety',
+    school: 'neglect',
+    formal: 'other',
+    misc: 'other',
+    custom: 'other',
+};
+
+function resolveEscalation(category) {
+    if (ESCALATION[category]) return ESCALATION[category];
+    const group = getCategory(category).group || 'misc';
+    return ESCALATION[ESCALATION_BY_GROUP[group]] || ESCALATION.other;
+}
+
 function openEscalationModal(category) {
     const sel = document.getElementById('escalationCategorySelect');
-    if (category && CATEGORIES[category]) sel.value = category;
+    if (category && categoryExists(category)) sel.value = category;
     renderEscalationContent();
     openModal('escalationModal');
 }
 
 function renderEscalationContent() {
     const category = document.getElementById('escalationCategorySelect').value;
-    const data = ESCALATION[category] || ESCALATION.other;
+    const data = resolveEscalation(category);
     const body = document.getElementById('escalationModalBody');
     const contactsHtml = data.contacts.length ?
         '<div class="esc-contacts">' + data.contacts.map(c => '<span class="esc-contact-pill">' + escapeHtml(c) + '</span>').join('') + '</div>' :
@@ -2357,7 +3049,7 @@ function buildProtocol(exportEntries) {
     lines.push('');
 
     exportEntries.forEach((e, i) => {
-        const cat = CATEGORIES[e.category] || CATEGORIES.other;
+        const cat = getCategory(e.category);
         lines.push(L('▸ VORFALL #', '▸ INCIDENT #') + (i + 1));
         // Beide Zeitstempel, jeder mit seinem Namen — der fuehrende zuerst.
         // Frueher stand hier ein unbeschriftetes „Datum:" und weiter unten
@@ -2371,7 +3063,7 @@ function buildProtocol(exportEntries) {
             lines.push(stamp(TIME_BASIS[entryAltBasis(e)].lead, entryAltDate(e), entryAltTime(e)));
         }
         lines.push(L('  Schwere:     ', '  Severity:    ') + (SEVERITY_LABELS[e.severity] || e.severity));
-        lines.push(L('  Kategorie:   ', '  Category:    ') + cat.label);
+        lines.push(L('  Kategorie:   ', '  Category:    ') + catExportLabel(cat));
         lines.push(L('  Status:      ', '  Status:      ') + (STATUS_META[e.status || 'open'] || STATUS_META.open).label);
         if (e.contentHash) lines.push(L('  Fingerprint: ', '  Fingerprint: ') + e.contentHash);
         if (e.history && e.history.length) lines.push(L('  Änderungen:  ', '  Revisions:   ') + e.history.length + L(' × bearbeitet, zuletzt am ', ' × edited, last on ') + new Date(e.updatedAt).toLocaleString(mwlLocale()));
@@ -2481,7 +3173,7 @@ function sevFingerprintHtml(list, sizeClass) {
 // Kategorie-Icon aus derselben Quelle wie die App (CATEGORY_ICONS) — vorher
 // stand im Druck nur Fliesstext, wo die App ein Icon zeigt.
 function catIconHtml(cat) {
-    return '<span class="cat-ico">' + cat.icon + '</span>';
+    return '<span class="cat-ico">' + categoryIcon(cat) + '</span>';
 }
 
 // Anhaenge fuer den Druck vorab entschluesseln.
@@ -2797,14 +3489,14 @@ async function exportAsPDF() {
     html += '<div class="sec-head"><span class="sec-idx">01</span><h2>' + L('Übersicht der Vorfälle', 'Overview of incidents') + '</h2></div>';
     html += '<table class="toc">';
     exportEntries.forEach((e, i) => {
-        const cat = CATEGORIES[e.category] || CATEGORIES.other;
+        const cat = getCategory(e.category);
         const statusMeta = STATUS_META[e.status || 'open'] || STATUS_META.open;
         const p = PRINT_SEV[e.severity] || PRINT_SEV.note;
         html += '<tr style="--line:' + p.line + '">';
         html += '<td class="n num">' + (i + 1) + '</td>';
         html += '<td class="d mono">' + formatDate(entryLeadDate(e)) +
                 (entryBasisDiffers(e) ? '<span class="d-alt">*</span>' : '') + '</td>';
-        html += '<td><span class="icon-label">' + catIconHtml(cat) + escapeHtml(cat.label) + '</span></td>';
+        html += '<td><span class="icon-label">' + catIconHtml(cat) + escapeHtml(catExportLabel(cat)) + '</span></td>';
         html += '<td class="s">' + sevBadge(e.severity) +
                 '<span class="status">' + escapeHtml(statusMeta.label) + '</span></td>';
         html += '</tr>';
@@ -2847,9 +3539,12 @@ async function exportAsPDF() {
     html += '</table>';
 
     html += '<table class="tbl"><tr><th>' + L('Kategorie', 'Category') + '</th><th>' + L('Anzahl', 'Count') + '</th></tr>';
-    Object.keys(CATEGORIES).forEach(k => {
-        const c = exportEntries.filter(e => e.category === k).length;
-        if (c > 0) html += '<tr><td><span class="icon-label">' + catIconHtml(CATEGORIES[k]) + escapeHtml(CATEGORIES[k].label) + '</span></td><td>' + c + '</td></tr>';
+    // Ueber allCategoryEntries(), nicht ueber CATEGORIES: sonst fehlen die
+    // eigenen Kategorien in der Summe und die Zahlen ergeben nicht die
+    // Gesamtzahl der Vorfaelle.
+    allCategoryEntries().forEach(({ key, cat }) => {
+        const c = exportEntries.filter(e => e.category === key).length;
+        if (c > 0) html += '<tr><td><span class="icon-label">' + catIconHtml(cat) + escapeHtml(catExportLabel(cat)) + '</span></td><td>' + c + '</td></tr>';
     });
     html += '</table>';
 
@@ -2883,7 +3578,7 @@ async function exportAsPDF() {
     html += '<div class="page">';
     html += '<div class="sec-head"><span class="sec-idx">03</span><h2>' + L('Die Vorfälle im Einzelnen', 'The incidents in detail') + '</h2></div>';
     exportEntries.forEach((e, i) => {
-        const cat = CATEGORIES[e.category] || CATEGORIES.other;
+        const cat = getCategory(e.category);
         const statusMeta = STATUS_META[e.status || 'open'] || STATUS_META.open;
         const p = PRINT_SEV[e.severity] || PRINT_SEV.note;
         html += '<div class="inc">';
@@ -2897,7 +3592,7 @@ async function exportAsPDF() {
         html += '<span class="inc-badges">' + sevBadge(e.severity) +
                 '<span class="status">' + escapeHtml(statusMeta.label) + '</span></span>';
         html += '</div>';
-        html += '<p class="inc-cat"><span class="icon-label">' + catIconHtml(cat) + escapeHtml(cat.label) + '</span></p>';
+        html += '<p class="inc-cat"><span class="icon-label">' + catIconHtml(cat) + escapeHtml(catExportLabel(cat)) + '</span></p>';
         html += '<div class="inc-text">' + escapeHtml(e.text) + '</div>';
 
         const detailRows = resolveCategoryDetails(e.category, e.details);
@@ -3090,7 +3785,11 @@ function openModal(id) {
 
 function closeModal(id) {
     document.getElementById(id).classList.remove('active');
-    document.body.style.overflow = '';
+    // Nur freigeben, wenn wirklich kein Modal mehr offen ist. Seit das
+    // Kategorie-Modal AUS dem Eintrags-Modal geoeffnet wird, gab das Schliessen
+    // des oberen sonst den Seiten-Scroll frei, waehrend darunter noch ein
+    // Modal steht — der Hintergrund scrollt dann unter dem Dialog weg.
+    if (!document.querySelector('.modal-overlay.active')) document.body.style.overflow = '';
 }
 
 const TOAST_ICONS = {

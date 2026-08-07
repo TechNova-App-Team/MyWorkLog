@@ -173,6 +173,23 @@ async function vsPutEntries(cipher) {
     return vsTx(VS_ENTRIES, 'readwrite', s => s.put(rec));
 }
 
+// Eigene Kategorien: bewusst ein ZWEITER Datensatz im selben Store statt
+// eines zweiten Feldes im Eintrags-Payload. Das Payload-Format bleibt damit
+// exakt das Array, das es immer war — eine aeltere App-Version liest den
+// Tresor unveraendert weiter und uebersieht den neuen Datensatz einfach,
+// statt ueber ein Objekt zu stolpern, wo sie ein Array erwartet.
+// Kein neuer Store, also auch keine DB-Versionserhoehung.
+async function vsGetCategories() {
+    if (vsUsingFallback) return vsFbGet(VS_ENTRIES, 'categories');
+    return (await vsTx(VS_ENTRIES, 'readonly', s => s.get('categories'))) || null;
+}
+
+async function vsPutCategories(cipher) {
+    const rec = { k: 'categories', iv: cipher.iv, data: cipher.data };
+    if (vsUsingFallback) return vsFbPut(VS_ENTRIES, 'categories', rec);
+    return vsTx(VS_ENTRIES, 'readwrite', s => s.put(rec));
+}
+
 // Datei ablegen. `meta` = {id,name,mime,size,createdAt,thumb?}, `cipherBuf` =
 // ArrayBuffer der verschluesselten Bytes, `iv` = Uint8Array.
 // Bytes zuerst, Metadaten danach: bricht der grosse Schreibvorgang ab, steht

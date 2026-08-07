@@ -45,7 +45,7 @@
     <meta name="twitter:image" content="https://myworklog.de/Grafiken/icon-512.png">
 
     <!-- Fuellt Version + "Zuletzt aktualisiert" im geteilten Footer -->
-    <script defer src="/Assets/js/version-loader.js?v=5.3.1"></script>
+    <script defer src="/Assets/js/version-loader.js?v=5.4.0"></script>
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="/Grafiken/image.jpg">
@@ -953,12 +953,16 @@
             display: block; font-size: 0.8rem; font-weight: 500;
             color: var(--text-1); margin-bottom: 6px;
         }
-        .form-input, .form-textarea, .form-select {
+        /* line-height ausdruecklich setzen: die intrinsische Zeilenhoehe von
+           <select> und <button> unterscheidet sich, und der Kategorie-Knopf
+           steht direkt neben „Status". Ohne diese Zeile stimmten die Hoehen
+           nur zufaellig ueberein — mit ihr per Konstruktion. */
+        .form-input, .form-textarea, .form-select, .cat-picker-btn {
             width: 100%; padding: 10px 12px;
             background: var(--bg-2);
             border: 1px solid var(--border); border-radius: var(--r-2);
             color: var(--text-0); font-family: var(--font-body);
-            font-size: 0.88rem; outline: none;
+            font-size: 0.88rem; line-height: 1.3; outline: none;
             transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
         }
         .form-input::placeholder, .form-textarea::placeholder { color: var(--text-3); }
@@ -976,49 +980,165 @@
         .form-row .form-group { min-width: 0; }
 
         /* ══ ZEITBEZUG-WAEHLER ══
-           Beide Zeitstempel liegen nebeneinander, der gewaehlte fuehrt. Die
-           Datumsfelder stehen bewusst NICHT im <label> des Radios: sonst
+           Zwei Zeilen, nicht zwei Karten. Vorher trug jede Karte Radio, Name,
+           Standard-Marke, Wert UND zwei Zeilen Erklaerung — zusammen der mit
+           Abstand schwerste Block im Formular, direkt ueber Feldern, die aus
+           Beschriftung und Eingabe bestehen. Jetzt ist es eine Auswahlliste im
+           Rhythmus des restlichen Formulars; die Erklaerung steht einmal
+           darunter und bezieht sich nur auf die gewaehlte Achse.
+
+           Die Zeilen sind `display: contents`, damit Name, Wert und Marke ueber
+           BEIDE Zeilen hinweg in denselben Spalten stehen. Ein eigenes Grid je
+           Zeile kann das nicht — die Spalten waeren pro Zeile anders breit.
+           Der Preis: eine Zeile hat keine eigene Flaeche, also traegt die
+           Auswahl Schriftfarbe und -gewicht statt eines Hintergrunds. Im
+           Clean-SaaS-Look ist das ohnehin das ruhigere Mittel.
+
+           Die Datumsfelder stehen bewusst NICHT im <label> des Radios: sonst
            wechselte jeder Klick ins Datumsfeld die Auswahl, und der
            Vorfallszeitpunkt muss auch dann eintragbar bleiben, wenn die
            Erfassung fuehrt. */
-        /* minmax(0,1fr) statt 1fr: die Datums-/Uhrzeitfelder haben eine
-           intrinsische Mindestbreite und zogen ihre Spalte sonst auf 283px,
-           waehrend die andere auf 217px zusammenfiel. */
-        .basis-pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-        .basis-card {
+        .basis-pick {
+            display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content;
+            align-items: center; gap: 8px 12px;
             border: 1px solid var(--border); border-radius: var(--r-3);
-            background: var(--bg-1); padding: 10px 12px 12px;
-            transition: border-color 0.2s var(--ease), background 0.2s var(--ease);
+            background: var(--bg-1); padding: 10px 12px;
         }
-        .basis-card.is-on { border-color: rgba(var(--primary-rgb), 0.4); background: var(--bg-2); }
-        .basis-card-head {
+        .basis-row { display: contents; }
+        .basis-row-lead {
             display: flex; align-items: center; gap: 8px;
-            cursor: pointer; margin-bottom: 9px;
+            cursor: pointer; min-height: 30px;
         }
-        .basis-card-head input {
+        .basis-row-lead input {
             accent-color: var(--primary); width: 15px; height: 15px;
             flex-shrink: 0; cursor: pointer;
         }
-        .basis-card-name { font-size: 0.82rem; font-weight: 500; color: var(--text-0); }
-        .basis-card-std {
+        .basis-row-name {
+            font-size: 0.82rem; color: var(--text-2); white-space: nowrap;
+            transition: color 0.2s var(--ease);
+        }
+        .basis-row.is-on .basis-row-name { color: var(--text-0); font-weight: 500; }
+        .basis-row-std {
             font-size: 0.61rem; font-weight: 600; letter-spacing: 0.06em;
             text-transform: uppercase; color: var(--text-2);
             border: 1px solid var(--border-strong); border-radius: var(--r-1);
-            padding: 1px 5px; margin-left: auto; white-space: nowrap;
+            padding: 1px 5px; white-space: nowrap; justify-self: end;
         }
-        .basis-card-val {
+        /* Ohne Marke bleibt die dritte Spalte leer — das ist gewollt, sonst
+           springen die Zeilen, sobald der Standard umgestellt wird. */
+        .basis-row-std[hidden] { display: none; }
+        .basis-row-val {
             font-family: var(--font-mono); font-size: 0.8rem;
             color: var(--text-1); font-variant-numeric: tabular-nums;
         }
         /* Solange kein Zeitstempel existiert, steht dort ein Satz und keine
-           Zahl — Mono liesse ihn wie einen Wert aussehen und bricht in der
-           schmalen Spalte dreimal um. */
-        .basis-card-val.is-pending {
+           Zahl — Mono liesse ihn wie einen Wert aussehen. */
+        .basis-row-val.is-pending {
             font-family: var(--font-body); font-size: 0.74rem; color: var(--text-2);
         }
-        .basis-card-note { font-size: 0.7rem; color: var(--text-2); margin-top: 5px; line-height: 1.45; }
-        .basis-card-fields { display: grid; grid-template-columns: 1.35fr 1fr; gap: 8px; }
+        .basis-row-fields { display: grid; grid-template-columns: 1.25fr 1fr; gap: 8px; }
+        .basis-row-fields .form-input { padding: 0.42rem 0.6rem; font-size: 0.82rem; }
         .basis-help { font-size: 0.72rem; color: var(--text-2); margin-top: 9px; line-height: 1.5; }
+        .field-note { font-size: 0.7rem; color: var(--text-2); margin-top: 5px; line-height: 1.45; }
+
+        /* ══ KATEGORIE-WAEHLER ══
+           Eigene Listbox statt <select>: eine native Auswahlliste kann weder
+           Fundhilfe noch Gruppen noch Suche zeigen, und bei ~40 Kategorien ist
+           genau das der Unterschied zwischen „passt ungefaehr" und „passt". */
+        .cat-picker { position: relative; }
+        /* Rahmen, Polsterung und Schrift erbt der Knopf aus der
+           .form-input/.form-select-Regel oben — hier nur, was ihn zum
+           Kombinationsfeld macht. */
+        .cat-picker-btn {
+            display: flex; align-items: center; gap: 9px;
+            text-align: left; cursor: pointer;
+        }
+        .cat-picker-btn:hover { border-color: var(--border-strong); }
+        .cat-picker-btn:focus-visible,
+        .cat-picker-btn[aria-expanded="true"] {
+            outline: none; border-color: rgba(var(--primary-rgb), 0.45);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.14);
+        }
+        .cat-picker-ico { width: 16px; height: 16px; flex-shrink: 0; color: var(--text-2); }
+        .cat-picker-ico svg { width: 100%; height: 100%; display: block; }
+        .cat-picker-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cat-picker-caret { width: 15px; height: 15px; flex-shrink: 0; color: var(--text-3); }
+
+        .cat-picker-panel {
+            /* Breiter als die Kategorie-Spalte: in deren ~230px bricht jeder
+               zweite Hinweis um, und genau der Hinweis ist der Grund, warum es
+               den Waehler gibt. max-width haelt ihn im Modal. */
+            position: absolute; top: calc(100% + 5px); left: 0; z-index: 60;
+            width: max(100%, 340px); max-width: calc(100vw - 2.5rem);
+            background: var(--bg-2); border: 1px solid var(--border-strong);
+            border-radius: var(--r-3); box-shadow: var(--shadow-lg);
+            display: flex; flex-direction: column; overflow: hidden;
+            /* Genug, um mehrere Gruppen zu sehen, wenig genug, dass der
+               Speichern-Knopf darunter nicht verdeckt wird. */
+            max-height: min(52vh, 380px);
+            animation: catPanelIn 0.16s var(--ease) both;
+        }
+        @keyframes catPanelIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+        .cat-picker-panel[hidden] { display: none; }
+
+        .cat-picker-search {
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+            padding: 9px 11px; border-bottom: 1px solid var(--border);
+        }
+        .cat-picker-search svg { width: 15px; height: 15px; color: var(--text-3); flex-shrink: 0; }
+        .cat-picker-search input {
+            flex: 1 1 auto; min-width: 0; background: none; border: none; outline: none;
+            color: var(--text-0); font-family: var(--font-body); font-size: 0.85rem;
+        }
+        .cat-picker-search input::placeholder { color: var(--text-3); }
+
+        .cat-picker-list { overflow-y: auto; padding: 5px 0; flex: 1 1 auto; }
+        .cat-picker-group {
+            font-size: 0.62rem; font-weight: 600; letter-spacing: 0.08em;
+            text-transform: uppercase; color: var(--text-3);
+            padding: 9px 12px 4px;
+        }
+        .cat-picker-opt {
+            display: flex; align-items: flex-start; gap: 9px;
+            padding: 7px 12px; cursor: pointer;
+            transition: background 0.15s var(--ease);
+        }
+        .cat-picker-opt:hover, .cat-picker-opt.is-cursor { background: var(--bg-3); }
+        .cat-picker-opt.is-on .cat-picker-opt-name { color: var(--primary); font-weight: 500; }
+        .cat-picker-opt-ico { width: 15px; height: 15px; flex-shrink: 0; color: var(--text-3); margin-top: 2px; }
+        .cat-picker-opt-ico svg { width: 100%; height: 100%; display: block; }
+        .cat-picker-opt-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
+        .cat-picker-opt-name { font-size: 0.83rem; color: var(--text-0); line-height: 1.35; }
+        .cat-picker-opt-hint { font-size: 0.71rem; color: var(--text-2); line-height: 1.4; }
+        /* Nicht per :hover einblenden — auf Touch gaebe es die beiden
+           Aktionen dann gar nicht (CLAUDE.md, Touch-Regel). */
+        .cat-picker-opt-acts { display: flex; gap: 2px; flex-shrink: 0; }
+        .cat-picker-act {
+            width: 26px; height: 26px; display: grid; place-items: center;
+            background: none; border: none; border-radius: var(--r-1); cursor: pointer;
+            color: var(--text-3); opacity: 0.65; transition: all 0.2s var(--ease);
+        }
+        .cat-picker-act:hover, .cat-picker-act:focus-visible { opacity: 1; background: var(--bg-1); color: var(--text-0); outline: none; }
+        .cat-picker-act svg { width: 13px; height: 13px; display: block; }
+
+        .cat-picker-empty { padding: 18px 14px; }
+        .cat-picker-empty p { font-size: 0.83rem; color: var(--text-1); line-height: 1.5; }
+        .cat-picker-empty-sub { font-size: 0.74rem !important; color: var(--text-2) !important; margin-top: 5px; }
+
+        .cat-picker-create {
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+            width: 100%; padding: 10px 12px; cursor: pointer; text-align: left;
+            background: var(--bg-1); border: none; border-top: 1px solid var(--border);
+            color: var(--primary); font-family: var(--font-body); font-size: 0.81rem; font-weight: 500;
+            transition: background 0.15s var(--ease);
+        }
+        .cat-picker-create:hover, .cat-picker-create:focus-visible { background: var(--bg-3); outline: none; }
+        .cat-picker-create svg { width: 14px; height: 14px; flex-shrink: 0; }
+        .cat-picker-create-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Modal AUS einem Modal — muss ueber dessen 2000 liegen. */
+        .modal-overlay--stacked { z-index: 100000; }
+        .modal--narrow { max-width: 420px; }
         .category-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; margin-bottom: 0; }
         .category-fields:empty { display: none; }
         .category-fields .form-group { margin-bottom: 0.85rem; }
@@ -1419,8 +1539,19 @@
             .basis-switch { flex: 1 1 100%; justify-content: center; }
             .basis-seg { padding: 9px 16px; flex: 1 1 0; }
             .form-row, .category-fields { grid-template-columns: 1fr; }
-            /* Nebeneinander waeren die Karten zu schmal fuer Datum + Uhrzeit. */
-            .basis-pick { grid-template-columns: 1fr; }
+            /* Am Handy passen Name, Datum+Uhrzeit und Standard-Marke nicht in
+               eine Zeile — die drei Spalten werden hier aufgeloest: Name und
+               Marke oben, Wert bzw. Eingabefelder darunter ueber die volle
+               Breite. Dafuer muss `display: contents` weichen, sonst gibt es
+               keine Zeile, in der sich etwas umbrechen koennte. */
+            .basis-pick { display: block; padding: 6px 12px; }
+            .basis-row {
+                display: flex; flex-wrap: wrap; align-items: center; gap: 5px 10px;
+                padding: 9px 0;
+            }
+            .basis-row + .basis-row { border-top: 1px solid var(--border); }
+            .basis-row-std { margin-left: auto; }
+            .basis-row-val, .basis-row-fields { flex: 1 1 100%; }
             .entry-card { padding-left: 1.75rem; padding-bottom: 1.4rem; }
             .modal-footer { flex-direction: column-reverse; }
             .modal-footer .btn { justify-content: center; }
@@ -1457,7 +1588,7 @@
             .entry-severity { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=5.3.1"></script>
+    <script defer src="/Assets/js/ph-init.js?v=5.4.0"></script>
 </head>
 <body>
 
@@ -1864,28 +1995,26 @@
                  dieses Eintrags traegt. Beide werden immer gespeichert —
                  hier wird nur entschieden, welcher fuehrt. -->
             <div class="form-group">
-                <label class="form-label">Zeitbezug dieses Eintrags</label>
+                <label class="form-label">Zeitbezug</label>
                 <div class="basis-pick" id="entryBasisPick" role="radiogroup" aria-label="Zeitbezug dieses Eintrags">
-                    <div class="basis-card" data-basis-card="created">
-                        <label class="basis-card-head">
+                    <label class="basis-row" data-basis-card="created">
+                        <span class="basis-row-lead">
                             <input type="radio" name="entryBasis" value="created" onchange="onEntryBasisChange()">
-                            <span class="basis-card-name">Erfasst am</span>
-                            <span class="basis-card-std" data-basis-std="created" hidden>Standard</span>
-                        </label>
-                        <div class="basis-card-val" id="entryCreatedStamp">wird beim Speichern gesetzt</div>
-                        <div class="basis-card-note">Automatisch, nicht änderbar. Belegt, dass zeitnah dokumentiert wurde.</div>
-                    </div>
-                    <div class="basis-card" data-basis-card="occurred">
-                        <label class="basis-card-head">
+                            <span class="basis-row-name">Erfasst am</span>
+                        </span>
+                        <span class="basis-row-val" id="entryCreatedStamp">wird beim Speichern gesetzt</span>
+                        <span class="basis-row-std" data-basis-std="created" hidden>Standard</span>
+                    </label>
+                    <div class="basis-row" data-basis-card="occurred">
+                        <label class="basis-row-lead">
                             <input type="radio" name="entryBasis" value="occurred" onchange="onEntryBasisChange()">
-                            <span class="basis-card-name">Passiert am</span>
-                            <span class="basis-card-std" data-basis-std="occurred" hidden>Standard</span>
+                            <span class="basis-row-name">Passiert am</span>
                         </label>
-                        <div class="basis-card-fields">
+                        <span class="basis-row-fields">
                             <input type="date" class="form-input" id="entryDate" aria-label="Datum des Vorfalls">
                             <input type="time" class="form-input" id="entryTime" aria-label="Uhrzeit des Vorfalls">
-                        </div>
-                        <div class="basis-card-note">Uhrzeit optional. Frei eintragbar, also auch nachtragbar.</div>
+                        </span>
+                        <span class="basis-row-std" data-basis-std="occurred" hidden>Standard</span>
                     </div>
                 </div>
                 <p class="basis-help" id="entryBasisHelp"></p>
@@ -1901,23 +2030,39 @@
                 </div>
             </div>
             <!-- Kategorie bekommt mehr Spalte als Status: die Labels sind lang
-                 („Ausbildungsfremde Tätigkeiten (falsche Aufgaben)") und wurden
-                 in einer halben Spalte mitten im Wort abgeschnitten. -->
+                 und wurden in einer halben Spalte mitten im Wort abgeschnitten. -->
             <div class="form-row form-row--wide-first">
                 <div class="form-group">
-                    <label class="form-label" for="entryCategory">Kategorie</label>
-                    <select class="form-select" id="entryCategory" onchange="renderCategoryFields(this.value)">
-                        <option value="verbal">Verbale Belästigung / Anschreien</option>
-                        <option value="neglect">Ausbildungspflicht vernachlässigt (zu wenig Anleitung)</option>
-                    <option value="unrelated">Ausbildungsfremde Tätigkeiten (falsche Aufgaben)</option>
-                        <option value="overtime">Überstunden / Arbeitszeitverstöße</option>
-                        <option value="mobbing">Mobbing / Ausgrenzung</option>
-                        <option value="safety">Arbeitsschutz-Verstoß</option>
-                        <option value="discrimination">Diskriminierung</option>
-                        <option value="documentation">Fehlende Dokumentation / Anleitung</option>
-                        <option value="positive">Positiver Fortschritt</option>
-                        <option value="other">Sonstiges</option>
-                    </select>
+                    <label class="form-label" for="catPickerBtn">Kategorie</label>
+                    <!-- Das <select> bleibt die Wert-Quelle und wird aus den
+                         Daten befuellt (populateCategorySelects). Sichtbar ist
+                         die Listbox darueber; sie spiegelt nur. -->
+                    <select class="form-select" id="entryCategory" hidden
+                            onchange="renderCategoryFields(this.value);syncCategoryPickerButton()"></select>
+                    <div class="cat-picker" id="catPickerWrap">
+                        <button type="button" class="cat-picker-btn" id="catPickerBtn"
+                                role="combobox" aria-expanded="false" aria-haspopup="listbox"
+                                aria-controls="catPickerPanel" onclick="toggleCategoryPicker()">
+                            <span class="cat-picker-ico" aria-hidden="true"></span>
+                            <span class="cat-picker-label">Kategorie wählen</span>
+                            <svg class="cat-picker-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </button>
+                        <div class="cat-picker-panel" id="catPickerPanel" hidden>
+                            <div class="cat-picker-search">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" id="catPickerSearch" autocomplete="off"
+                                       placeholder="Suchen — z.B. Pause, Urlaub, Schule …"
+                                       aria-label="Kategorie suchen"
+                                       oninput="renderCategoryPickerList()" onkeydown="onCategoryPickerKey(event)">
+                            </div>
+                            <div class="cat-picker-list" id="catPickerList" role="listbox" aria-label="Kategorien"></div>
+                            <button type="button" class="cat-picker-create" id="catPickerCreate"
+                                    onclick="openCustomCategoryModal(null, document.getElementById('catPickerSearch').value.trim())">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                <span class="cat-picker-create-txt">Eigene Kategorie anlegen</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Status</label>
@@ -1969,6 +2114,39 @@
                     </svg>
                     Verschlüsselt speichern
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     EIGENE KATEGORIE
+     Wird AUS dem Eintrags-Modal geoeffnet und braucht deshalb z-index
+     >= 100000, sonst liegt es dahinter (siehe CLAUDE.md).
+     ══════════════════════════════════════════ -->
+<div class="modal-overlay modal-overlay--stacked" id="customCatModal">
+    <div class="modal modal--narrow">
+        <div class="modal-head">
+            <h2 id="customCatModalTitle">Eigene Kategorie</h2>
+            <button class="modal-close" onclick="closeModal('customCatModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="customCatEditId">
+            <div class="form-group">
+                <label class="form-label" for="customCatName">Name</label>
+                <input type="text" class="form-input" id="customCatName" maxlength="80"
+                       placeholder="z.B. Werkzeug wird mir weggenommen">
+                <p class="field-note">So steht die Kategorie später im Protokoll.</p>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="customCatHint">Hinweis für dich (optional)</label>
+                <input type="text" class="form-input" id="customCatHint" maxlength="120"
+                       placeholder="Wann wähle ich diese Kategorie?">
+                <p class="field-note">Hilft nur beim Suchen und Auswählen. Erscheint nicht im Export.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('customCatModal')">Abbrechen</button>
+                <button class="btn btn-cta" onclick="saveCustomCategory()">Kategorie speichern</button>
             </div>
         </div>
     </div>
@@ -2228,18 +2406,9 @@
         <div class="modal-body">
             <div class="form-group">
                 <label class="form-label">Kategorie</label>
-                <select class="form-select" id="escalationCategorySelect">
-                    <option value="verbal">Verbale Belästigung / Anschreien</option>
-                    <option value="neglect">Ausbildungspflicht vernachlässigt (zu wenig Anleitung)</option>
-                    <option value="unrelated">Ausbildungsfremde Tätigkeiten (falsche Aufgaben)</option>
-                    <option value="overtime">Überstunden / Arbeitszeitverstöße</option>
-                    <option value="mobbing">Mobbing / Ausgrenzung</option>
-                    <option value="safety">Arbeitsschutz-Verstoß</option>
-                    <option value="discrimination">Diskriminierung</option>
-                    <option value="documentation">Fehlende Dokumentation / Anleitung</option>
-                    <option value="positive">Positiver Fortschritt</option>
-                    <option value="other">Sonstiges</option>
-                </select>
+                <!-- Optionen kommen aus den Daten (populateCategorySelects) —
+                     eine fest verdrahtete Liste veraltet hier schweigend. -->
+                <select class="form-select" id="escalationCategorySelect"></select>
             </div>
             <div id="escalationModalBody"></div>
         </div>
@@ -2266,8 +2435,8 @@
 </script>
 <!-- Reihenfolge zwingend: vault-store.js stellt die vs*-Funktionen bereit,
      die schatten-berichtsheft.js beim Start sofort aufruft (bootVault). -->
-<script src="/Assets/js/berichtsheft/vault-store.js?v=5.3.1"></script>
-<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.3.1"></script>
+<script src="/Assets/js/berichtsheft/vault-store.js?v=5.4.0"></script>
+<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.4.0"></script>
 <script>
 /* Theme-Sync: Standalone-Seiten laufen ausserhalb der SPA und muessen den
    User-Akzent selbst nachziehen. Greift hier erst seit dem Redesign, weil das
