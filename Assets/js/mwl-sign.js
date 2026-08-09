@@ -97,17 +97,27 @@
     // Signiert wird ein fest zusammengesetzter String, NICHT das JSON-Objekt:
     // die Schluesselreihenfolge in JSON.stringify ist keine Garantie, und eine
     // Pruefung, die von ihr abhaengt, bricht beim ersten Feld, das dazukommt.
+    // 🔴 JEDES Feld, das die Entscheidung traegt, MUSS hier hineinlaufen.
+    // Bei der Sammel-Antwort ist das die komplette ds-Liste: waere sie
+    // draussen, deckte die Signatur nur noch Name und Zeitstempel ab und die
+    // eigentlichen Freigaben liessen sich austauschen, ohne dass die Pruefung
+    // anschlaegt. Die Anzahl steht mit drin, damit sich Felder nicht ueber
+    // Eintragsgrenzen hinweg verschieben lassen.
     function canonical(d) {
-        return [
-            'mwl-freigabe/1',
-            d.r || '',
-            String(d.y || ''),
-            String(d.w || ''),
-            d.s || '',
-            d.at || '',
-            d.by || '',
-            d.n || ''
-        ].join('');
+        const SEP = '\u001f';   // Unit Separator — kommt in Nutzertext nicht vor
+        const teile = ['mwl-freigabe/1', d.at || '', d.by || '', d.n || ''];
+        if (Array.isArray(d.ds)) {
+            teile.push('ds:' + d.ds.length);
+            d.ds.forEach(function (x) {
+                teile.push(String(x.r || ''), String(x.y || ''), String(x.w || ''),
+                           String(x.s || ''), String(x.n || ''));
+            });
+        } else {
+            // Einzelne Entscheidung (Form vor der Mehrfach-Freigabe)
+            teile.push('one', String(d.r || ''), String(d.y || ''),
+                       String(d.w || ''), String(d.s || ''));
+        }
+        return teile.join(SEP);
     }
 
     async function sign(decision) {

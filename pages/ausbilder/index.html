@@ -10,8 +10,8 @@
 </script>
     <meta name="description" content="Ausbildungsnachweis eines Azubis ansehen und bestätigen oder zurückgeben — ohne Konto, ohne Anmeldung. Die Woche steht im Link selbst, es wird nichts hochgeladen.">
     <meta name="keywords" content="Ausbildungsnachweis bestätigen, Berichtsheft unterschreiben, Ausbilder, Azubi, Wochenbericht freigeben">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=5.5.0"></script>
-    <script defer src="/Assets/js/version-loader.js?v=5.5.0"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=5.6.0"></script>
+    <script defer src="/Assets/js/version-loader.js?v=5.6.0"></script>
     <title>MyWorkLog | Ausbildungsnachweis freigeben</title>
     <link rel="canonical" href="https://myworklog.de/ausbilder/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/ausbilder/">
@@ -157,6 +157,43 @@
             text-transform: uppercase; color: var(--text-faint); margin-bottom: 9px;
         }
         .ab-block-text { font-size: 0.94rem; color: var(--text-muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+        /* ── Wochen-Abschnitt (bei mehreren Wochen) ──────────────── */
+        .ab-wk + .ab-wk { margin-top: 12px; }
+        .ab-wk-card {
+            border: 1px solid var(--border); border-radius: var(--radius);
+            background: var(--bg-card); padding: 16px 18px;
+        }
+        .ab-wk-card.is-approved { border-color: rgba(var(--success-rgb), 0.4); }
+        .ab-wk-card.is-rejected { border-color: rgba(var(--warning-rgb), 0.4); }
+
+        .ab-wk-head {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            cursor: pointer; user-select: none;
+        }
+        .ab-wk-kw { font-size: 1rem; font-weight: 650; letter-spacing: -0.01em; }
+        .ab-wk-sub { font-size: 0.8rem; color: var(--text-muted); }
+        .ab-wk-state {
+            margin-left: auto; font-size: 0.74rem; font-weight: 600;
+            padding: 3px 9px; border-radius: 999px; flex: 0 0 auto;
+        }
+        .ab-wk-state.s-open { color: var(--text-faint); border: 1px solid var(--border-strong); }
+        .ab-wk-state.s-ok { color: var(--success); background: rgba(var(--success-rgb), 0.14); }
+        .ab-wk-state.s-no { color: var(--warning); background: rgba(var(--warning-rgb), 0.14); }
+        .ab-wk-chev { width: 16px; height: 16px; color: var(--text-faint); flex: 0 0 auto; transition: transform 0.2s ease; }
+        .ab-wk.is-open .ab-wk-chev { transform: rotate(180deg); }
+
+        .ab-wk-body { display: none; padding-top: 4px; }
+        .ab-wk.is-open .ab-wk-body { display: block; }
+
+        .ab-wk-actions { display: flex; gap: 8px; margin-top: 14px; }
+        .ab-wk-actions .ab-btn { padding: 10px 14px; font-size: 0.86rem; }
+        .ab-wk-note {
+            margin-top: 10px; padding: 9px 12px; border-radius: var(--radius-sm);
+            background: rgba(var(--warning-rgb), 0.08);
+            border-left: 2px solid var(--warning);
+            font-size: 0.82rem; color: var(--text-muted);
+        }
 
         /* ── Entscheidungsleiste ─────────────────────────────────── */
         /* Fest am unteren Rand: der Ausbilder soll nicht ans Ende eines
@@ -357,7 +394,7 @@
             </div>
         </section>
 
-        <!-- ══ Die Woche ═════════════════════════════════════════════ -->
+        <!-- ══ Die Woche(n) ══════════════════════════════════════════ -->
         <section id="abWeek" style="display:none">
             <p class="ab-eyebrow">Ausbildungsnachweis</p>
             <h1 class="ab-title" id="abWeekTitle"></h1>
@@ -365,17 +402,7 @@
             <p class="ab-person" id="abWeekPerson"></p>
             <p class="ab-firm" id="abWeekFirm"></p>
 
-            <div class="ab-chips" id="abWeekChips"></div>
-
-            <hr class="ab-rule">
-
-            <ul class="ab-days" id="abWeekDays"></ul>
-            <div id="abWeekProse"></div>
-
-            <div class="ab-block" id="abWeekSchoolBox" style="display:none">
-                <p class="ab-block-label">Berufsschule</p>
-                <p class="ab-block-text" id="abWeekSchool"></p>
-            </div>
+            <div id="abWeekList"></div>
         </section>
 
         <!-- ══ Ergebnis ══════════════════════════════════════════════ -->
@@ -392,7 +419,7 @@
                 <div class="ab-sheet-actions">
                     <button type="button" class="ab-btn ab-btn-ghost" id="abBackBtn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
-                        <span>Woche noch einmal</span>
+                        <span>Zurück</span>
                     </button>
                     <button type="button" class="ab-btn ab-btn-ghost" id="abCopyBtn">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
@@ -405,8 +432,10 @@
     </main>
 
     <!-- ══ Entscheidungsleiste ═══════════════════════════════════════ -->
+    <!-- Eine Woche: direkt entscheiden. Mehrere: Stand + Abschluss, die
+         Entscheidung faellt dann pro Woche oben im Text. -->
     <div class="ab-bar" id="abBar" style="display:none">
-        <div class="ab-bar-inner">
+        <div class="ab-bar-inner" id="abBarSingle">
             <button type="button" class="ab-btn ab-btn-ghost" id="abRejectBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14l6-6M15 14L9 8"/><circle cx="12" cy="12" r="9"/></svg>
                 <span>Zurückgeben</span>
@@ -414,6 +443,16 @@
             <button type="button" class="ab-btn ab-btn-primary" id="abApproveBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
                 <span>Bestätigen</span>
+            </button>
+        </div>
+        <div class="ab-bar-inner" id="abBarMulti" style="display:none">
+            <div style="flex:1 1 auto;min-width:0;">
+                <p id="abTally" style="font-size:0.82rem;font-weight:600;"></p>
+                <p id="abTallyHint" style="font-size:0.74rem;color:var(--text-faint);"></p>
+            </div>
+            <button type="button" class="ab-btn ab-btn-primary" id="abFinishBtn" style="flex:0 0 auto;min-width:150px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>Antwort erzeugen</span>
             </button>
         </div>
     </div>
@@ -424,7 +463,7 @@
             <p class="ab-sheet-title" id="abSheetTitle"></p>
             <p class="ab-sheet-sub" id="abSheetSub"></p>
 
-            <div class="ab-field">
+            <div class="ab-field" id="abNameField">
                 <label class="ab-label" for="abName">Ihr Name</label>
                 <input class="ab-input" type="text" id="abName" autocomplete="name" placeholder="Vor- und Nachname">
             </div>
@@ -448,8 +487,8 @@
 
     <div id="page-footer"></div>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=5.5.0"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=5.5.0"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=5.6.0"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=5.6.0"></script>
 
     <script>
     (function () {
@@ -465,13 +504,21 @@
 
         var NAME_KEY = 'mwl_ausbilder_name';
 
-        // Die Wochentage sind SCHLUESSEL der Nutzlast (so legt sie das
-        // Berichtsheft an) — deshalb bleiben sie deutsch und werden nur fuer
-        // die Anzeige uebersetzt.
-        var DAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
-        var DAY_EN = {
-            'Montag': 'Monday', 'Dienstag': 'Tuesday', 'Mittwoch': 'Wednesday',
-            'Donnerstag': 'Thursday', 'Freitag': 'Friday', 'Samstag': 'Saturday', 'Sonntag': 'Sunday'
+        // Die Tagesschluessel der Nutzlast kommen aus DAYS in
+        // pages/berichtsheft (monday, tuesday, …) — NICHT die deutschen Namen.
+        // Diese Tabelle ist nur fuer die Beschriftung da; iteriert wird ueber
+        // die Schluessel der Nutzlast selbst (siehe orderedDays), damit ein
+        // unbekannter Schluessel angezeigt statt stillschweigend verschluckt
+        // wird. Genau daran blieb die Seite bis v5.5.0 leer.
+        var DAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        var DAY_NAMES = {
+            monday:    ['Montag',     'Monday'],
+            tuesday:   ['Dienstag',   'Tuesday'],
+            wednesday: ['Mittwoch',   'Wednesday'],
+            thursday:  ['Donnerstag', 'Thursday'],
+            friday:    ['Freitag',    'Friday'],
+            saturday:  ['Samstag',    'Saturday'],
+            sunday:    ['Sonntag',    'Sunday']
         };
 
         // Standalone-Seite ohne utils.js — eigener Fallback, damit auf /en/
@@ -481,10 +528,26 @@
             return document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE';
         }
         function abL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
-        function dayLabel(day) { return document.documentElement.lang === 'en' ? (DAY_EN[day] || day) : day; }
 
-        var week = null;
-        var pending = null;
+        function dayLabel(key) {
+            var n = DAY_NAMES[key];
+            if (!n) return key;                       // unbekannt: lieber roh zeigen als schlucken
+            return abL(n[0], n[1]);
+        }
+
+        // Bekannte Tage in Wochenreihenfolge, danach alles Uebrige — so faellt
+        // kein Schluessel raus, den das Berichtsheft irgendwann dazunimmt.
+        function orderedDays(obj) {
+            var keys = Object.keys(obj || {});
+            var bekannt = DAY_ORDER.filter(function (d) { return keys.indexOf(d) !== -1; });
+            var rest = keys.filter(function (k) { return DAY_ORDER.indexOf(k) === -1; });
+            return bekannt.concat(rest);
+        }
+
+        var weeks = [];        // alle Wochen aus der Nutzlast
+        var azubi = {};        // { az, bt } — gilt fuer alle Wochen
+        var decisions = [];    // decisions[i] = { s, n } oder undefined = offen
+        var pending = null;    // { kind, i } waehrend der Dialog offen ist
 
         function $(id) { return document.getElementById(id); }
         function show(id, on) { var el = $(id); if (el) el.style.display = on ? '' : 'none'; }
@@ -532,36 +595,31 @@
                 '</span>';
         }
 
-        function renderWeek(w) {
-            $('abWeekTitle').textContent = abL('Kalenderwoche ', 'Calendar week ') + w.w;
-            $('abWeekRange').textContent = fmtRange(w.df, w.dt);
-            $('abWeekPerson').textContent = w.az || abL('Auszubildende/r', 'Apprentice');
-            $('abWeekFirm').textContent = w.bt || '';
-            if (!w.bt) $('abWeekFirm').style.display = 'none';
-            $('abHeadNote').textContent = abL('KW ', 'Week ') + w.w + ' · ' + w.y;
+        // Inhalt EINER Woche (Chips, Tage bzw. Fliesstext, Berufsschule)
+        function weekBodyHTML(w) {
+            var out = '';
 
             var chips = '';
             if (w.h) chips += chip('<path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/>', abL('Stunden', 'Hours'), fmtHours(w.h));
             if (w.dep) chips += chip('<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>', abL('Abteilung', 'Department'), w.dep);
-            chips += chip('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/>', abL('Jahr', 'Year'), String(w.y));
-            $('abWeekChips').innerHTML = chips;
-
-            var daysEl = $('abWeekDays');
-            var proseEl = $('abWeekProse');
-            daysEl.innerHTML = '';
-            proseEl.innerHTML = '';
+            // w.y ist das AUSBILDUNGSJAHR (1–4), nicht das Kalenderjahr —
+            // "Jahr 1" las sich vorher wie eine kaputte Jahreszahl.
+            if (w.y) chips += chip('<path d="M22 10L12 5 2 10l10 5 10-5v6"/><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5"/>',
+                                   abL('Ausbildungsjahr', 'Training year'), String(w.y) + '.');
+            if (chips) out += '<div class="ab-chips">' + chips + '</div>';
 
             var da = w.da && typeof w.da === 'object' ? w.da : null;
             var hasDaily = da && Object.keys(da).some(function (k) { return String(da[k] || '').trim(); });
 
             if (hasDaily) {
                 var dh = w.dh && typeof w.dh === 'object' ? w.dh : {};
-                var html = '';
-                DAYS.forEach(function (day) {
-                    if (!(day in da) && !(day in dh)) return;
+                var alle = orderedDays(da);
+                orderedDays(dh).forEach(function (k) { if (alle.indexOf(k) === -1) alle.push(k); });
+                var li = '';
+                alle.forEach(function (day) {
                     var text = String(da[day] || '').trim();
                     var hrs = fmtHours(dh[day]);
-                    html += '<li class="ab-day' + (text ? ' ab-day-filled' : '') + '">' +
+                    li += '<li class="ab-day' + (text ? ' ab-day-filled' : '') + '">' +
                         '<span class="ab-dot"></span>' +
                         '<div class="ab-day-body">' +
                         '<div class="ab-day-head">' +
@@ -573,25 +631,105 @@
                             : '<p class="ab-day-empty">' + abL('Kein Eintrag', 'No entry') + '</p>') +
                         '</div></li>';
                 });
-                daysEl.innerHTML = html;
-            } else if (String(w.a || '').trim()) {
-                proseEl.innerHTML = '<div class="ab-block">' +
-                    '<p class="ab-block-label">' + abL('Tätigkeiten der Woche', 'Activities this week') + '</p>' +
-                    '<p class="ab-block-text">' + esc(w.a) + '</p></div>';
+                out += '<ul class="ab-days">' + li + '</ul>';
             } else {
-                proseEl.innerHTML = '<div class="ab-block">' +
+                var txt = String(w.a || '').trim();
+                out += '<div class="ab-block" style="margin-top:14px;">' +
                     '<p class="ab-block-label">' + abL('Tätigkeiten der Woche', 'Activities this week') + '</p>' +
-                    '<p class="ab-block-text">' + abL('Für diese Woche wurde nichts eingetragen.', 'Nothing was recorded for this week.') + '</p></div>';
+                    '<p class="ab-block-text">' + (txt ? esc(txt)
+                        : abL('Für diese Woche wurde nichts eingetragen.', 'Nothing was recorded for this week.')) +
+                    '</p></div>';
             }
 
             if (String(w.sch || '').trim()) {
-                $('abWeekSchool').textContent = w.sch;
-                show('abWeekSchoolBox', true);
+                out += '<div class="ab-block" style="margin-top:12px;">' +
+                    '<p class="ab-block-label">' + abL('Berufsschule', 'Vocational school') + '</p>' +
+                    '<p class="ab-block-text">' + esc(w.sch) + '</p></div>';
+            }
+            return out;
+        }
+
+        function stateLabel(s) {
+            if (s === 'approved') return ['s-ok', abL('Bestätigt', 'Approved')];
+            if (s === 'rejected') return ['s-no', abL('Zurückgegeben', 'Sent back')];
+            return ['s-open', abL('Offen', 'Open')];
+        }
+
+        function renderWeeks() {
+            var mehrere = weeks.length > 1;
+
+            $('abWeekTitle').textContent = mehrere
+                ? (abL('Ausbildungsnachweis, ', 'Training record, ') + weeks.length + abL(' Wochen', ' weeks'))
+                : (abL('Kalenderwoche ', 'Calendar week ') + weeks[0].w);
+            $('abWeekRange').textContent = mehrere
+                ? fmtRange(weeks[0].df, weeks[weeks.length - 1].dt)
+                : fmtRange(weeks[0].df, weeks[0].dt);
+            // Namen nur zeigen, wenn einer da ist — ein Platzhalter neben lauter
+            // leeren Feldern liest sich wie ein Fehler.
+            $('abWeekPerson').textContent = azubi.az || '';
+            $('abWeekPerson').style.display = azubi.az ? '' : 'none';
+            $('abWeekFirm').textContent = azubi.bt || '';
+            $('abWeekFirm').style.display = azubi.bt ? '' : 'none';
+            $('abHeadNote').textContent = mehrere
+                ? (weeks.length + abL(' Wochen', ' weeks'))
+                : (abL('KW ', 'Week ') + weeks[0].w);
+
+            if (!mehrere) {
+                // Eine Woche: direkt lesen, entschieden wird unten in der Leiste.
+                $('abWeekList').innerHTML = '<hr class="ab-rule">' + weekBodyHTML(weeks[0]);
+                show('abBarSingle', true);
+                show('abBarMulti', false);
+            } else {
+                $('abWeekList').innerHTML = '<hr class="ab-rule">' + weeks.map(function (w, i) {
+                    var st = stateLabel(decisions[i] && decisions[i].s);
+                    var offen = !decisions[i];
+                    return '<div class="ab-wk' + (offen && i === naechsteOffene() ? ' is-open' : '') + '" data-i="' + i + '">' +
+                        '<div class="ab-wk-card' + (decisions[i] ? ' is-' + decisions[i].s : '') + '">' +
+                        '<div class="ab-wk-head" data-toggle="' + i + '" role="button" tabindex="0" aria-expanded="' + (offen && i === naechsteOffene()) + '">' +
+                        '<span class="ab-wk-kw">' + abL('KW ', 'Week ') + w.w + '</span>' +
+                        '<span class="ab-wk-sub">' + esc(fmtRange(w.df, w.dt)) + '</span>' +
+                        '<span class="ab-wk-state ' + st[0] + '">' + st[1] + '</span>' +
+                        '<svg class="ab-wk-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
+                        '</div>' +
+                        '<div class="ab-wk-body">' +
+                        weekBodyHTML(w) +
+                        (decisions[i] && decisions[i].n
+                            ? '<p class="ab-wk-note">' + esc(decisions[i].n) + '</p>' : '') +
+                        '<div class="ab-wk-actions">' +
+                        '<button type="button" class="ab-btn ab-btn-ghost" data-decide="rejected" data-i="' + i + '">' +
+                        '<span>' + abL('Zurückgeben', 'Send back') + '</span></button>' +
+                        '<button type="button" class="ab-btn ab-btn-primary" data-decide="approved" data-i="' + i + '">' +
+                        '<span>' + abL('Bestätigen', 'Approve') + '</span></button>' +
+                        '</div></div></div>';
+                }).join('');
+                show('abBarSingle', false);
+                show('abBarMulti', true);
+                updateTally();
             }
 
             show('abIntro', false);
             show('abWeek', true);
             show('abBar', true);
+        }
+
+        function naechsteOffene() {
+            for (var i = 0; i < weeks.length; i++) if (!decisions[i]) return i;
+            return -1;
+        }
+
+        function updateTally() {
+            var ok = 0, no = 0;
+            decisions.forEach(function (d) { if (d) { if (d.s === 'approved') ok++; else no++; } });
+            var offen = weeks.length - ok - no;
+            var teile = [];
+            if (ok) teile.push(ok + abL(' bestätigt', ' approved'));
+            if (no) teile.push(no + abL(' zurückgegeben', ' sent back'));
+            if (offen) teile.push(offen + abL(' offen', ' open'));
+            $('abTally').textContent = teile.join(' · ');
+            $('abTallyHint').textContent = offen
+                ? abL('Noch nicht entschiedene Wochen bleiben unberührt.', 'Undecided weeks are left untouched.')
+                : abL('Alle Wochen entschieden.', 'All weeks decided.');
+            $('abFinishBtn').disabled = (ok + no) === 0;
         }
 
         function fail(title, text) {
@@ -604,12 +742,20 @@
         }
 
         // ── Entscheidung ─────────────────────────────────────────────
-        function openSheet(kind) {
-            pending = kind;
+        // Bei EINER Woche fragt der Dialog Name + Anmerkung und schliesst
+        // direkt ab. Bei MEHREREN entscheidet man pro Woche im Text (eine
+        // Rueckgabe fragt dort nur nach der Begruendung), und der Name wird
+        // einmal am Ende abgefragt.
+        function openSheet(kind, i) {
+            pending = { kind: kind, i: typeof i === 'number' ? i : 0 };
             var approve = kind === 'approved';
+            var mehrere = weeks.length > 1;
+            var kw = weeks[pending.i] ? weeks[pending.i].w : '';
+
             $('abSheetTitle').textContent = approve
                 ? abL('Woche bestätigen', 'Approve week')
-                : abL('Woche zurückgeben', 'Send week back');
+                : (mehrere ? abL('KW ' + kw + ' zurückgeben', 'Send week ' + kw + ' back')
+                           : abL('Woche zurückgeben', 'Send week back'));
             $('abSheetSub').textContent = approve
                 ? abL('Ihre Bestätigung wird in das Berichtsheft Ihres Azubis übernommen und der Eintrag dort gesperrt.',
                       'Your approval is copied into your apprentice’s training record and locks the entry there.')
@@ -618,6 +764,7 @@
             $('abNoteLabel').textContent = approve
                 ? abL('Anmerkung', 'Comment')
                 : abL('Was soll geändert werden?', 'What needs changing?');
+            $('abNote').value = '';
             $('abNote').placeholder = approve
                 ? abL('Optional', 'Optional')
                 : abL('Zum Beispiel: Dienstag fehlt die Tätigkeit', 'For example: Tuesday is missing its activity');
@@ -627,11 +774,37 @@
             $('abConfirmLabel').textContent = approve
                 ? abL('Bestätigen', 'Approve')
                 : abL('Zurückgeben', 'Send back');
+
+            // Der Name gehoert bei mehreren Wochen ans Ende, nicht an jede
+            // einzelne Rueckgabe — sonst tippt man ihn zwoelfmal.
+            $('abNameField').style.display = mehrere ? 'none' : '';
             try { $('abName').value = localStorage.getItem(NAME_KEY) || ''; } catch (e) { /* Privatmodus */ }
             // Zuruecksetzen, nicht nur beim Fehlerfall: confirmDecision() sperrt
             // den Knopf und der Dialog kann danach erneut geoeffnet werden
             // (Abbrechen, Zurueck, andere Entscheidung). Ohne das hier bliebe er
             // beim zweiten Anlauf tot — ein Klick ohne jede Reaktion.
+            $('abConfirmBtn').disabled = false;
+            $('abSheet').style.display = 'flex';
+            setTimeout(function () { (mehrere ? $('abNote') : $('abName')).focus(); }, 50);
+        }
+
+        // Abschluss-Dialog bei mehreren Wochen: nur noch der Name
+        function openFinishSheet() {
+            pending = { kind: 'finish' };
+            var ok = 0, no = 0;
+            decisions.forEach(function (d) { if (d) { if (d.s === 'approved') ok++; else no++; } });
+            $('abSheetTitle').textContent = abL('Antwort erzeugen', 'Generate response');
+            $('abSheetSub').textContent =
+                abL(ok + ' bestätigt, ' + no + ' zurückgegeben. Nicht entschiedene Wochen bleiben unberührt.',
+                    ok + ' approved, ' + no + ' sent back. Undecided weeks are left untouched.');
+            $('abNameField').style.display = '';
+            $('abNoteLabel').textContent = abL('Anmerkung für alle Wochen', 'Comment for all weeks');
+            $('abNote').value = '';
+            $('abNote').placeholder = abL('Optional', 'Optional');
+            $('abNoteHint').textContent = abL('Zusätzlich zu den Begründungen einzelner Wochen.',
+                                              'In addition to the comments on individual weeks.');
+            $('abConfirmLabel').textContent = abL('Antwort erzeugen', 'Generate response');
+            try { $('abName').value = localStorage.getItem(NAME_KEY) || ''; } catch (e) { /* Privatmodus */ }
             $('abConfirmBtn').disabled = false;
             $('abSheet').style.display = 'flex';
             setTimeout(function () { $('abName').focus(); }, 50);
@@ -643,7 +816,18 @@
         }
 
         async function confirmDecision() {
-            if (!pending || !week) return;
+            if (!pending || !weeks.length) return;
+            var mehrere = weeks.length > 1;
+
+            // Pro-Woche-Entscheidung bei mehreren: nur merken und weiterlesen.
+            if (mehrere && pending.kind !== 'finish') {
+                decisions[pending.i] = { s: pending.kind, n: $('abNote').value.trim() };
+                closeSheet();
+                renderWeeks();
+                oeffneWoche(naechsteOffene());
+                return;
+            }
+
             var name = $('abName').value.trim();
             if (!name) { $('abName').focus(); return; }
             try { localStorage.setItem(NAME_KEY, name); } catch (e) { /* Privatmodus */ }
@@ -651,22 +835,29 @@
             var btn = $('abConfirmBtn');
             btn.disabled = true;
 
-            var decision = {
+            if (!mehrere) decisions[0] = { s: pending.kind, n: $('abNote').value.trim() };
+            var sammel = mehrere ? $('abNote').value.trim() : '';
+
+            // Ein Datensatz fuer alle Entscheidungen, EINE Signatur darueber.
+            var antwort = {
                 v: 1,
-                r: week.r || '',
-                y: week.y,
-                w: week.w,
-                s: pending,
                 at: new Date().toISOString(),
                 by: name,
-                n: $('abNote').value.trim()
+                n: sammel,
+                ds: []
             };
+            weeks.forEach(function (w, i) {
+                if (!decisions[i]) return;   // offen = wird nicht uebertragen
+                antwort.ds.push({ r: w.r || '', y: w.y, w: w.w, s: decisions[i].s, n: decisions[i].n || '' });
+            });
+
+            if (!antwort.ds.length) { btn.disabled = false; closeSheet(); return; }
 
             try {
                 if (window.MWLSign && MWLSign.available()) {
-                    var sig = await MWLSign.sign(decision);
-                    decision.k = sig.k;
-                    decision.g = sig.g;
+                    var sig = await MWLSign.sign(antwort);
+                    antwort.k = sig.k;
+                    antwort.g = sig.g;
                 }
             } catch (e) {
                 // Ohne Signatur ist die Freigabe weiterhin gueltig — sie kann auf
@@ -676,7 +867,7 @@
 
             var code;
             try {
-                code = await MWLCodec.encode(decision);
+                code = await MWLCodec.encode(antwort);
             } catch (e) {
                 btn.disabled = false;
                 fail(abL('Die Antwort konnte nicht erzeugt werden', 'The response could not be generated'),
@@ -685,23 +876,44 @@
             }
 
             closeSheet();
-            showResult(decision, code);
+            showResult(antwort, code);
         }
 
-        async function showResult(decision, code) {
-            var approve = decision.s === 'approved';
+        function oeffneWoche(i) {
+            if (i < 0) return;
+            var el = document.querySelector('.ab-wk[data-i="' + i + '"]');
+            if (!el) return;
+            document.querySelectorAll('.ab-wk').forEach(function (w) { w.classList.remove('is-open'); });
+            el.classList.add('is-open');
+            var head = el.querySelector('.ab-wk-head');
+            if (head) head.setAttribute('aria-expanded', 'true');
+            el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        }
+
+        async function showResult(antwort, code) {
+            var ok = antwort.ds.filter(function (d) { return d.s === 'approved'; }).length;
+            var no = antwort.ds.length - ok;
+            var nurOk = no === 0;
             // Auf /en/ muss die Antwort auch auf der englischen Seite landen,
             // sonst wechselt der Azubi beim Scannen unvermittelt die Sprache.
             var link = location.origin + abL('/berichtsheft/', '/en/berichtsheft/') + '#fb=' + code;
 
-            $('abSeal').className = 'ab-seal ' + (approve ? 'ab-seal-ok' : 'ab-seal-no');
-            $('abSeal').innerHTML = approve
+            $('abSeal').className = 'ab-seal ' + (nurOk ? 'ab-seal-ok' : 'ab-seal-no');
+            $('abSeal').innerHTML = nurOk
                 ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>'
                 : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>';
 
-            $('abDoneTitle').textContent = approve
-                ? abL('Kalenderwoche ' + decision.w + ' bestätigt', 'Calendar week ' + decision.w + ' approved')
-                : abL('Kalenderwoche ' + decision.w + ' zurückgegeben', 'Calendar week ' + decision.w + ' sent back');
+            if (antwort.ds.length === 1) {
+                var d0 = antwort.ds[0];
+                $('abDoneTitle').textContent = d0.s === 'approved'
+                    ? abL('Kalenderwoche ' + d0.w + ' bestätigt', 'Calendar week ' + d0.w + ' approved')
+                    : abL('Kalenderwoche ' + d0.w + ' zurückgegeben', 'Calendar week ' + d0.w + ' sent back');
+            } else {
+                var teile = [];
+                if (ok) teile.push(ok + abL(' bestätigt', ' approved'));
+                if (no) teile.push(no + abL(' zurückgegeben', ' sent back'));
+                $('abDoneTitle').textContent = teile.join(', ');
+            }
             $('abDoneSub').textContent = abL(
                 'Damit die Entscheidung ankommt, muss Ihr Azubi den Code abscannen oder den Link öffnen.',
                 'For the decision to arrive, your apprentice must scan the code or open the link.');
@@ -743,11 +955,12 @@
 
         // ── Start ────────────────────────────────────────────────────
         async function boot() {
-            $('abRejectBtn').addEventListener('click', function () { openSheet('rejected'); });
-            $('abApproveBtn').addEventListener('click', function () { openSheet('approved'); });
+            $('abRejectBtn').addEventListener('click', function () { openSheet('rejected', 0); });
+            $('abApproveBtn').addEventListener('click', function () { openSheet('approved', 0); });
             $('abCancelBtn').addEventListener('click', closeSheet);
             $('abConfirmBtn').addEventListener('click', confirmDecision);
             $('abCopyBtn').addEventListener('click', copyLink);
+            $('abFinishBtn').addEventListener('click', openFinishSheet);
             // Wer sich vertippt hat, kommt sonst nur ueber einen Reload zurueck.
             // Die zuletzt erzeugte Antwort gilt — der Azubi scannt ohnehin nur eine.
             $('abBackBtn').addEventListener('click', function () {
@@ -759,11 +972,45 @@
             $('abSheet').addEventListener('click', function (e) { if (e.target === $('abSheet')) closeSheet(); });
             document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
 
+            // Ein Listener fuer die ganze Liste — die Wochen werden neu
+            // gezeichnet, einzeln gebundene Handler waeren danach weg.
+            $('abWeekList').addEventListener('click', function (e) {
+                var btn = e.target.closest('[data-decide]');
+                if (btn) {
+                    var i = parseInt(btn.getAttribute('data-i'), 10);
+                    if (btn.getAttribute('data-decide') === 'approved') {
+                        // Bestaetigen ohne Rueckfrage — bei zwoelf Wochen waere
+                        // ein Dialog pro Woche eine Zumutung. Die Anmerkung
+                        // kommt am Ende fuer alle.
+                        decisions[i] = { s: 'approved', n: '' };
+                        renderWeeks();
+                        oeffneWoche(naechsteOffene());
+                    } else {
+                        openSheet('rejected', i);
+                    }
+                    return;
+                }
+                var head = e.target.closest('.ab-wk-head');
+                if (head) {
+                    var wk = head.closest('.ab-wk');
+                    var offen = wk.classList.toggle('is-open');
+                    head.setAttribute('aria-expanded', String(offen));
+                }
+            });
+            $('abWeekList').addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                var head = e.target.closest('.ab-wk-head');
+                if (!head) return;
+                e.preventDefault();
+                head.click();
+            });
+
             var m = /[#&]w=([A-Za-z0-9\-_]+)/.exec(location.hash || '');
             if (!m) return;
 
+            var nutzlast;
             try {
-                week = await MWLCodec.decode(m[1]);
+                nutzlast = await MWLCodec.decode(m[1]);
             } catch (e) {
                 console.warn('[ausbilder] Nutzlast unlesbar:', e);
                 fail(abL('Der Link lässt sich nicht lesen', 'This link cannot be read'),
@@ -772,14 +1019,26 @@
                 return;
             }
 
-            if (!week || week.v !== 1 || !week.w || !week.y) {
+            // Zwei Formen: {ws:[…]} (mehrere Wochen, seit 5.5.1) und die alte
+            // Einzelwoche direkt im Wurzelobjekt. Beide lesen, damit ein Link,
+            // der schon verschickt wurde, weiter funktioniert.
+            if (nutzlast && nutzlast.v === 1 && Array.isArray(nutzlast.ws)) {
+                weeks = nutzlast.ws.filter(function (w) { return w && w.w; });
+                azubi = { az: nutzlast.az || '', bt: nutzlast.bt || '' };
+            } else if (nutzlast && nutzlast.v === 1 && nutzlast.w) {
+                weeks = [nutzlast];
+                azubi = { az: nutzlast.az || '', bt: nutzlast.bt || '' };
+            }
+
+            if (!weeks.length) {
                 fail(abL('Dieser Link gehört nicht hierher', 'This link does not belong here'),
                      abL('Der Inhalt passt nicht zu einem Ausbildungsnachweis. Bitte prüfen Sie, ob Sie den vollständigen Link geöffnet haben.',
                          'The content does not match a training record. Please check that you opened the complete link.'));
                 return;
             }
 
-            renderWeek(week);
+            decisions = new Array(weeks.length);
+            renderWeeks();
         }
 
         if (document.readyState === 'loading') {

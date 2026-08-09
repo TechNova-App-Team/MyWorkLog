@@ -10,9 +10,9 @@
 </script>
     <meta name="description" content="Berichtsheft Generator: IHK-konformes Berichtsheft erstellen mit lokaler KI. Automatische Einträge, Prüfungsvorbereitung, AES-256 verschlüsselt & DSGVO-konform.">
     <meta name="keywords" content="Berichtsheft Generator, IHK-konformes Berichtsheft, digitales Berichtsheft, Berichtsheft erstellen, Berichtsheft App, lokale KI Berichtsheft, Ausbildungsnachweis, IHK Berichtsheft, Auszubildende Berichtsheft, online Berichtsheft, Fachinformatiker Berichtsheft, Berichtsheft offline">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=5.5.0"></script>
-    <script defer src="/Assets/js/mwl-codec.js?v=5.5.0"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=5.5.0"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=5.6.0"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=5.6.0"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=5.6.0"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -2962,8 +2962,8 @@
             color: var(--text-main);
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=5.5.0"></script>
-    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=5.5.0">
+    <script defer src="/Assets/js/ph-init.js?v=5.6.0"></script>
+    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=5.6.0">
 </head>
 <body>
     <!-- ===== SVG ICON SPRITE ===== -->
@@ -3457,15 +3457,29 @@ Beispiel:
                 <svg class="icon"><use href="#i-tie"/></svg>
                 <span>Freigabe durch Ausbilder</span>
             </h2>
-            <p id="freigabeSub" style="color: var(--text-muted); margin-bottom: 1.25rem; font-size: 0.88rem;"></p>
+            <p id="freigabeSub" style="color: var(--text-muted); margin-bottom: 1.25rem; font-size: 0.88rem;">Wähle die Wochen, die dein Ausbilder abzeichnen soll.</p>
 
-            <div id="freigabeQr" style="background:#fff;border-radius:12px;padding:14px;width:fit-content;max-width:100%;margin:0 auto;line-height:0;"></div>
+            <div style="display:flex;gap:6px;margin-bottom:0.6rem;flex-wrap:wrap;">
+                <button type="button" class="btn btn-secondary" onclick="freigabeSelect('offen')" style="padding:5px 11px;font-size:0.75rem;">
+                    <span>Alle offenen</span>
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="freigabeSelect('alle')" style="padding:5px 11px;font-size:0.75rem;">
+                    <span>Alle</span>
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="freigabeSelect('keine')" style="padding:5px 11px;font-size:0.75rem;">
+                    <span>Keine</span>
+                </button>
+            </div>
+            <div id="freigabeWeeks" style="max-height:190px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:5px;"></div>
+            <p id="freigabeBudget" style="font-size:0.76rem;color:var(--text-muted);margin-top:0.6rem;line-height:1.5;"></p>
+
+            <div id="freigabeQr" style="background:#fff;border-radius:12px;padding:14px;width:fit-content;max-width:100%;margin:1.25rem auto 0;line-height:0;display:none;"></div>
             <p id="freigabeQrHint" style="text-align:center;font-size:0.82rem;color:var(--text-muted);margin-top:0.9rem;"></p>
 
             <div style="margin-top:1.25rem;">
                 <label class="form-label" for="freigabeLink">Oder Link schicken</label>
                 <input class="form-input" type="text" id="freigabeLink" readonly onclick="this.select()" style="font-family:var(--font-mono);font-size:0.72rem;">
-                <button class="btn btn-secondary" onclick="shareFreigabeLink()" style="margin-top:0.6rem;width:100%;">
+                <button class="btn btn-secondary" id="freigabeShareBtn" onclick="shareFreigabeLink()" style="margin-top:0.6rem;width:100%;">
                     <svg class="icon"><use href="#i-copy"/></svg>
                     <span>Link teilen</span>
                 </button>
@@ -3640,7 +3654,7 @@ Beispiel:
             </div>
         </div>
     </div>
-    <script defer src="/components/umfrage/umfrage.js?v=5.5.0"></script>
+    <script defer src="/components/umfrage/umfrage.js?v=5.6.0"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -4838,74 +4852,168 @@ Beispiel:
 
             const p = {
                 v: 1,
+                az: cfg.name || '',
+                bt: cfg.betrieb || '',
+                ws: (Array.isArray(report) ? report : [report]).map(bhWeekEntry)
+            };
+            return p;
+        }
+
+        // Eine einzelne Woche in der Nutzlast. Kurze Schluessel, weil jedes
+        // Zeichen im Link zaehlt — bei 52 Wochen sind das ~14.000.
+        function bhWeekEntry(report) {
+            const e = {
                 r: report.id,
-                y: report.year,
+                y: report.year,          // Ausbildungsjahr 1–4, NICHT das Kalenderjahr
                 w: report.week,
                 df: report.dateFrom,
                 dt: report.dateTo,
                 dep: report.department || '',
                 sch: report.school || '',
-                h: report.hours || 0,
-                az: cfg.name || '',
-                bt: cfg.betrieb || ''
+                h: report.hours || 0
             };
-
+            // Die Tagesschluessel sind monday/tuesday/… (siehe DAYS oben),
+            // nicht die deutschen Namen — die Ausbilder-Seite iteriert ueber
+            // die tatsaechlichen Schluessel, damit nichts stillschweigend fehlt.
             if (report.mode === 'daily' && report.dailyActivities) {
-                p.da = report.dailyActivities;
-                p.dh = report.dailyHours || {};
+                e.da = report.dailyActivities;
+                e.dh = report.dailyHours || {};
             } else {
-                p.a = report.activities || '';
+                e.a = report.activities || '';
             }
-            return p;
+            return e;
         }
 
-        let _freigabeId = null;
+        // Was steht zur Freigabe an? Standard sind alle Wochen, die noch keine
+        // Bestaetigung tragen — das ist fast immer genau das, was gemeint ist.
+        function bhFreigabeKandidaten() {
+            return reports.slice().sort((a, b) => (a.year - b.year) || (a.week - b.week));
+        }
 
-        async function openFreigabeModal(id) {
+        // Ausgewaehlte Bericht-IDs fuer die Freigabe
+        let _freigabeSel = new Set();
+        let _freigabeBuildToken = 0;
+
+        // Ab hier wird der Link in Messengern und Mail-Clients unangenehm bzw.
+        // riskant (Zeilenumbrueche, Kuerzung). KEIN hartes Limit — der Nutzer
+        // entscheidet, ob er trotzdem alles auf einmal schickt.
+        const FREIGABE_LINK_WARN = 8000;
+
+        function openFreigabeModal(id) {
             const report = reports.find(r => r.id === id);
-            if (!report) return;
-            _freigabeId = id;
+            _freigabeSel = new Set(report ? [report.id] : []);
 
-            const modal = document.getElementById('freigabeModal');
+            document.getElementById('freigabeModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            renderFreigabeAuswahl();
+            rebuildFreigabeLink();
+        }
+
+        function renderFreigabeAuswahl() {
+            const box = document.getElementById('freigabeWeeks');
+            const alle = bhFreigabeKandidaten();
+
+            box.innerHTML = alle.map(r => {
+                const an = _freigabeSel.has(r.id);
+                const st = r.approval && r.approval.state === 'approved'
+                    ? '<span style="color:var(--success);font-size:0.7rem;">&#10003;</span>'
+                    : r.approval && r.approval.state === 'rejected'
+                        ? '<span style="color:var(--warning);font-size:0.7rem;">&#8635;</span>'
+                        : '';
+                return '<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;' +
+                    (an ? 'background:rgba(var(--primary-rgb),0.10);' : '') + '">' +
+                    '<input type="checkbox" ' + (an ? 'checked' : '') +
+                    ' onchange="toggleFreigabeWeek(\'' + r.id + '\')"' +
+                    ' style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;flex:0 0 auto;">' +
+                    '<span style="font-size:0.82rem;font-weight:600;min-width:52px;">KW ' + r.week + '</span>' +
+                    '<span style="font-size:0.76rem;color:var(--text-muted);flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' +
+                    escapeHtml(r.department || '') + '</span>' + st + '</label>';
+            }).join('') || '<p style="font-size:0.82rem;color:var(--text-muted);">' +
+                bhL('Noch keine Berichte vorhanden.', 'No reports yet.') + '</p>';
+        }
+
+        function toggleFreigabeWeek(id) {
+            if (_freigabeSel.has(id)) _freigabeSel.delete(id); else _freigabeSel.add(id);
+            renderFreigabeAuswahl();
+            rebuildFreigabeLink();
+        }
+
+        function freigabeSelect(was) {
+            const alle = bhFreigabeKandidaten();
+            if (was === 'alle') _freigabeSel = new Set(alle.map(r => r.id));
+            else if (was === 'keine') _freigabeSel = new Set();
+            else if (was === 'offen') _freigabeSel = new Set(
+                alle.filter(r => !r.approval || r.approval.state !== 'approved').map(r => r.id));
+            renderFreigabeAuswahl();
+            rebuildFreigabeLink();
+        }
+
+        async function rebuildFreigabeLink() {
+            const token = ++_freigabeBuildToken;
             const qrBox = document.getElementById('freigabeQr');
             const linkBox = document.getElementById('freigabeLink');
             const hint = document.getElementById('freigabeQrHint');
+            const budget = document.getElementById('freigabeBudget');
+            const shareBtn = document.getElementById('freigabeShareBtn');
 
-            document.getElementById('freigabeSub').textContent =
-                bhL('KW ' + report.week + ' · ' + report.year + '. Ausbildungsjahr',
-                    'Week ' + report.week + ' · year ' + report.year);
-
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
+            const gewaehlt = bhFreigabeKandidaten().filter(r => _freigabeSel.has(r.id));
 
             qrBox.innerHTML = '';
+            qrBox.style.display = 'none';
             linkBox.value = '';
+
+            if (!gewaehlt.length) {
+                hint.textContent = '';
+                budget.textContent = bhL('Keine Woche ausgewählt.', 'No week selected.');
+                budget.style.color = 'var(--text-muted)';
+                shareBtn.disabled = true;
+                return;
+            }
+            shareBtn.disabled = false;
             hint.textContent = bhL('Code wird erzeugt …', 'Generating code …');
 
             let link;
             try {
-                const code = await MWLCodec.encode(bhBuildWeekPayload(report));
-                link = location.origin + '/ausbilder/#w=' + code;
+                const code = await MWLCodec.encode(bhBuildWeekPayload(gewaehlt));
+                link = location.origin + bhL('/ausbilder/', '/en/ausbilder/') + '#w=' + code;
             } catch (e) {
-                hint.textContent = bhL('Der Code konnte nicht erzeugt werden.',
-                                       'The code could not be generated.');
+                hint.textContent = bhL('Der Code konnte nicht erzeugt werden.', 'The code could not be generated.');
                 return;
             }
+            // Auswahl kann sich waehrend des Komprimierens geaendert haben
+            if (token !== _freigabeBuildToken) return;
 
             linkBox.value = link;
 
-            // Ueber der sicheren Laenge werden die Module so klein, dass
-            // Handykameras den Code nicht mehr zuverlaessig lesen. Dann lieber
-            // ehrlich auf den Link verweisen als ein unlesbares Bild zeigen.
+            // Budget offen anzeigen statt eine Obergrenze zu erfinden: der
+            // Nutzer sieht, woran er ist, und entscheidet selbst, ob er
+            // aufteilt. Zahlen gemessen — eine Woche ~850 Zeichen, ein ganzes
+            // Jahr ~14.000.
+            const n = gewaehlt.length;
+            const wStr = n === 1 ? bhL('1 Woche', '1 week') : n + bhL(' Wochen', ' weeks');
+            const lStr = link.length.toLocaleString(mwlLocaleSafe()) + bhL(' Zeichen', ' characters');
+            if (link.length > FREIGABE_LINK_WARN) {
+                budget.textContent = wStr + ' · ' + lStr + bhL(
+                    ' — sehr lang, manche Messenger kürzen das. Im Zweifel in zwei Portionen schicken.',
+                    ' — very long, some messengers truncate it. Consider sending it in two batches.');
+                budget.style.color = 'var(--warning)';
+            } else {
+                budget.textContent = wStr + ' · ' + lStr;
+                budget.style.color = 'var(--text-muted)';
+            }
+
             if (!MWLCodec.qrFits(link)) {
                 hint.textContent = bhL(
-                    'Diese Woche ist zu lang für einen QR-Code — schick deinem Ausbilder stattdessen den Link.',
-                    'This week is too long for a QR code — send your trainer the link instead.');
+                    'Für einen QR-Code ist das zu viel — schick deinem Ausbilder den Link. Ein QR geht nur bei einer einzelnen Woche.',
+                    'That is too much for a QR code — send your trainer the link. A QR code only works for a single week.');
                 return;
             }
 
             try {
                 await MWLCodec.renderQr(qrBox, link, 320);
+                if (token !== _freigabeBuildToken) { qrBox.innerHTML = ''; return; }
+                qrBox.style.display = '';
                 hint.textContent = bhL('Dein Ausbilder scannt den Code mit seiner Handykamera.',
                                        'Your trainer scans this with their phone camera.');
             } catch (e) {
@@ -4914,17 +5022,25 @@ Beispiel:
             }
         }
 
+        // mwlLocale() lebt in utils.js, das diese Seite nicht laedt
+        function mwlLocaleSafe() {
+            if (window.mwlLocale) return window.mwlLocale();
+            return document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE';
+        }
+
         function closeFreigabeModal() {
             document.getElementById('freigabeModal').classList.remove('active');
             document.body.style.overflow = '';
-            _freigabeId = null;
+            _freigabeBuildToken++;
         }
 
         async function shareFreigabeLink() {
             const link = document.getElementById('freigabeLink').value;
             if (!link) return;
-            const report = reports.find(r => r.id === _freigabeId);
-            const title = report ? bhL('Ausbildungsnachweis KW ' + report.week, 'Report week ' + report.week) : 'MyWorkLog';
+            const n = _freigabeSel.size;
+            const title = n === 1
+                ? bhL('Ausbildungsnachweis', 'Training record')
+                : bhL('Ausbildungsnachweis, ' + n + ' Wochen', 'Training record, ' + n + ' weeks');
             if (navigator.share) {
                 try { await navigator.share({ title: title, url: link }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
             }
@@ -4947,25 +5063,31 @@ Beispiel:
                               'The response code could not be read.'), 'error');
                 return false;
             }
-
-            if (!d || d.v !== 1 || (d.s !== 'approved' && d.s !== 'rejected')) {
+            if (!d || d.v !== 1) {
                 showToast(bhL('Das ist kein Freigabe-Code.', 'That is not an approval code.'), 'error');
                 return false;
             }
 
-            let report = d.r ? reports.find(r => r.id === d.r) : null;
-            // Faellt der Bericht ueber die ID nicht auf (geloescht und neu
-            // angelegt), ueber KW + Jahr suchen — das ist die fachliche Identitaet.
-            if (!report) report = reports.find(r => r.week === d.w && r.year === d.y);
-            if (!report) {
-                showToast(bhL('Zu dieser Freigabe gibt es hier keine Woche (KW ' + d.w + ').',
-                              'No matching week found for this approval (week ' + d.w + ').'), 'error');
+            // Zwei Formen: {ds:[…]} (Sammel-Antwort) und die alte Einzel-
+            // entscheidung direkt im Wurzelobjekt.
+            let liste = Array.isArray(d.ds) ? d.ds : null;
+            if (!liste) {
+                if (d.s !== 'approved' && d.s !== 'rejected') {
+                    showToast(bhL('Das ist kein Freigabe-Code.', 'That is not an approval code.'), 'error');
+                    return false;
+                }
+                liste = [{ r: d.r, y: d.y, w: d.w, s: d.s, n: d.n || '' }];
+            }
+            if (!liste.length) {
+                showToast(bhL('Diese Antwort enthält keine Entscheidung.',
+                              'This response contains no decision.'), 'error');
                 return false;
             }
 
-            // Signatur pruefen und mit dem zuerst gesehenen Geraet vergleichen.
-            // Ohne Server gibt es keine Identitaetspruefung — mehr als
-            // "dasselbe Geraet wie beim ersten Mal" ist hier nicht zu haben.
+            // Signatur EINMAL ueber die ganze Antwort pruefen — sie deckt die
+            // komplette Entscheidungsliste ab (siehe canonical() in mwl-sign.js).
+            // Ohne Server gibt es keine Identitaetspruefung; mehr als "dasselbe
+            // Geraet wie beim ersten Mal" ist hier nicht zu haben.
             let trust = 'unsigned';
             if (d.k && d.g && window.MWLSign) {
                 const ok = await MWLSign.verify(d);
@@ -4984,43 +5106,83 @@ Beispiel:
                 }
             }
 
-            report.approval = {
-                state: d.s,
-                by: d.by || '',
-                at: d.at || new Date().toISOString(),
-                note: d.n || '',
-                pub: d.k || '',
-                sig: d.g || '',
-                trust: trust
-            };
-            if (d.s === 'approved') {
-                report.status = 'signed';
-            } else if (report.status === 'signed') {
-                // Wurde die Woche vorher schon einmal freigegeben und jetzt
-                // zurueckgegeben, darf "Unterschrieben" nicht stehenbleiben —
-                // sonst zeigt die Karte zwei widerspruechliche Zustaende.
-                report.status = 'complete';
+            let ok = 0, no = 0;
+            const fehlend = [];
+
+            liste.forEach(x => {
+                if (x.s !== 'approved' && x.s !== 'rejected') return;
+                let report = x.r ? reports.find(r => r.id === x.r) : null;
+                // Faellt der Bericht ueber die ID nicht auf (geloescht und neu
+                // angelegt), ueber KW + Ausbildungsjahr suchen — das ist die
+                // fachliche Identitaet.
+                if (!report) report = reports.find(r => r.week === x.w && r.year === x.y);
+                if (!report) { fehlend.push(x.w); return; }
+
+                report.approval = {
+                    state: x.s,
+                    by: d.by || '',
+                    at: d.at || new Date().toISOString(),
+                    // Begruendung der Woche, sonst die Sammel-Anmerkung
+                    note: x.n || d.n || '',
+                    pub: d.k || '',
+                    sig: d.g || '',
+                    trust: trust
+                };
+                if (x.s === 'approved') {
+                    report.status = 'signed';
+                    ok++;
+                } else {
+                    // Wurde die Woche vorher schon einmal freigegeben und jetzt
+                    // zurueckgegeben, darf "Unterschrieben" nicht stehenbleiben —
+                    // sonst zeigt die Karte zwei widersprüchliche Zustände.
+                    if (report.status === 'signed') report.status = 'complete';
+                    no++;
+                }
+                report.updatedAt = new Date().toISOString();
+            });
+
+            if (!ok && !no) {
+                showToast(bhL('Zu dieser Antwort gibt es hier keine passende Woche.',
+                              'No matching week found for this response.'), 'error');
+                return false;
             }
-            report.updatedAt = new Date().toISOString();
 
             saveToStorage();
             updateUI();
 
-            const kw = 'KW ' + report.week;
-            if (d.s === 'approved') {
-                showToast(bhL(kw + ' wurde freigegeben' + (d.by ? ' von ' + d.by : '') + '.',
-                              kw + ' approved' + (d.by ? ' by ' + d.by : '') + '.'), 'success');
+            const von = d.by ? bhL(' von ', ' by ') + d.by : '';
+            if (ok && !no) {
+                showToast(ok === 1
+                    ? bhL('KW ' + liste.find(x => x.s === 'approved').w + ' wurde freigegeben' + von + '.',
+                          'Week ' + liste.find(x => x.s === 'approved').w + ' approved' + von + '.')
+                    : bhL(ok + ' Wochen wurden freigegeben' + von + '.',
+                          ok + ' weeks approved' + von + '.'), 'success');
                 if (typeof launchConfetti === 'function') launchConfetti();
+            } else if (no && !ok) {
+                showToast(no === 1
+                    ? bhL('KW ' + liste.find(x => x.s === 'rejected').w + ' wurde zurückgegeben — bitte überarbeiten.',
+                          'Week ' + liste.find(x => x.s === 'rejected').w + ' was returned — please revise.')
+                    : bhL(no + ' Wochen wurden zurückgegeben — bitte überarbeiten.',
+                          no + ' weeks were returned — please revise.'), 'info');
             } else {
-                showToast(bhL(kw + ' wurde zurückgegeben — bitte überarbeiten.',
-                              kw + ' was returned — please revise.'), 'info');
+                showToast(bhL(ok + ' freigegeben, ' + no + ' zurückgegeben' + von + '.',
+                              ok + ' approved, ' + no + ' returned' + von + '.'), 'success');
+            }
+
+            // Nicht verschlucken: eine Woche, die es hier nicht mehr gibt, ist
+            // fuer den Nutzer sonst spurlos verschwunden.
+            if (fehlend.length) {
+                setTimeout(function () {
+                    showToast(bhL('Ohne Zuordnung geblieben: KW ' + fehlend.join(', KW ') + '.',
+                                  'Could not be matched: week ' + fehlend.join(', week ') + '.'), 'info');
+                }, 2600);
             }
 
             if (trust === 'other-device') {
                 setTimeout(function () {
                     showToast(bhL('Hinweis: Diese Freigabe kam von einem anderen Gerät als beim ersten Mal.',
                                   'Note: this approval came from a different device than the first one.'), 'info');
-                }, 2600);
+                }, 3400);
             }
 
             if (opts && opts.closeModal) closeFreigabeModal();
@@ -11188,8 +11350,8 @@ ${trackingBlock}${aufgabenBlock}
     </script>
 
     <!-- BBiG-Live-Scanner -->
-    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=5.5.0">
-    <script src="/components/bbig-scanner/bbig-scanner.js?v=5.5.0"></script>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=5.6.0">
+    <script src="/components/bbig-scanner/bbig-scanner.js?v=5.6.0"></script>
     <script>
         if (typeof initBbigBerichtsheft === 'function') {
             if (document.readyState === 'loading') {
