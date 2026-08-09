@@ -10,7 +10,9 @@
 </script>
     <meta name="description" content="Berichtsheft Generator: IHK-konformes Berichtsheft erstellen mit lokaler KI. Automatische Einträge, Prüfungsvorbereitung, AES-256 verschlüsselt & DSGVO-konform.">
     <meta name="keywords" content="Berichtsheft Generator, IHK-konformes Berichtsheft, digitales Berichtsheft, Berichtsheft erstellen, Berichtsheft App, lokale KI Berichtsheft, Ausbildungsnachweis, IHK Berichtsheft, Auszubildende Berichtsheft, online Berichtsheft, Fachinformatiker Berichtsheft, Berichtsheft offline">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=5.4.0"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=5.5.0"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=5.5.0"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=5.5.0"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -2960,8 +2962,8 @@
             color: var(--text-main);
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=5.4.0"></script>
-    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=5.4.0">
+    <script defer src="/Assets/js/ph-init.js?v=5.5.0"></script>
+    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=5.5.0">
 </head>
 <body>
     <!-- ===== SVG ICON SPRITE ===== -->
@@ -3447,6 +3449,44 @@ Beispiel:
         </div>
     </div>
 
+    <!-- ===== FREIGABE DURCH AUSBILDER ===== -->
+    <div class="modal" id="freigabeModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeFreigabeModal()">&times;</button>
+            <h2 class="modal-title">
+                <svg class="icon"><use href="#i-tie"/></svg>
+                <span>Freigabe durch Ausbilder</span>
+            </h2>
+            <p id="freigabeSub" style="color: var(--text-muted); margin-bottom: 1.25rem; font-size: 0.88rem;"></p>
+
+            <div id="freigabeQr" style="background:#fff;border-radius:12px;padding:14px;width:fit-content;max-width:100%;margin:0 auto;line-height:0;"></div>
+            <p id="freigabeQrHint" style="text-align:center;font-size:0.82rem;color:var(--text-muted);margin-top:0.9rem;"></p>
+
+            <div style="margin-top:1.25rem;">
+                <label class="form-label" for="freigabeLink">Oder Link schicken</label>
+                <input class="form-input" type="text" id="freigabeLink" readonly onclick="this.select()" style="font-family:var(--font-mono);font-size:0.72rem;">
+                <button class="btn btn-secondary" onclick="shareFreigabeLink()" style="margin-top:0.6rem;width:100%;">
+                    <svg class="icon"><use href="#i-copy"/></svg>
+                    <span>Link teilen</span>
+                </button>
+            </div>
+
+            <hr style="border:0;border-top:1px solid var(--border);margin:1.5rem 0;">
+
+            <div>
+                <label class="form-label" for="freigabeResponse">Antwort deines Ausbilders eintragen</label>
+                <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.6rem;">Normalerweise scannst du seinen Antwort-Code einfach mit der Handykamera. Falls er dir den Link geschickt hat, kannst du ihn hier einfügen.</p>
+                <input class="form-input" type="text" id="freigabeResponse" placeholder="Link oder Code einfügen" style="font-family:var(--font-mono);font-size:0.72rem;">
+                <button class="btn btn-primary" onclick="bhPasteResponse()" style="margin-top:0.6rem;width:100%;">
+                    <svg class="icon"><use href="#i-check"/></svg>
+                    <span>Freigabe übernehmen</span>
+                </button>
+            </div>
+
+            <p style="font-size:0.76rem;color:var(--text-muted);margin-top:1.25rem;line-height:1.55;">Die Woche steckt im Link selbst und wird nicht hochgeladen. Eine Bestätigung sperrt den Eintrag hier — du kannst die Sperre jederzeit selbst aufheben, verlierst damit aber die Freigabe.</p>
+        </div>
+    </div>
+
     <!-- ═══ UMFRAGE: Welche Funktion ist Geld wert? ═══ -->
     <div class="modal" id="umfrageModal">
         <div class="modal-box umf-box">
@@ -3600,7 +3640,7 @@ Beispiel:
             </div>
         </div>
     </div>
-    <script defer src="/components/umfrage/umfrage.js?v=5.4.0"></script>
+    <script defer src="/components/umfrage/umfrage.js?v=5.5.0"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -4712,10 +4752,13 @@ Beispiel:
                                 <span><svg class="icon" style="width:12px;height:12px"><use href="#i-edit"/></svg> ${wordCount} Wörter</span>
                                 ${modeBadge}
                                 ${statusBadge}
+                                ${bhApprovalBadge(report)}
                             </div>
+                            ${bhApprovalNote(report)}
                         </div>
                         ${!bulkMode ? `
                         <div class="report-actions" onclick="event.stopPropagation()">
+                            <button class="btn-icon" onclick="openFreigabeModal('${report.id}')" title="Freigabe durch Ausbilder"><svg class="icon"><use href="#i-tie"/></svg></button>
                             <button class="btn-icon" onclick="editReport('${report.id}')" title="Bearbeiten"><svg class="icon"><use href="#i-edit"/></svg></button>
                             <button class="btn-icon success" onclick="duplicateReport('${report.id}')" title="Duplizieren"><svg class="icon"><use href="#i-copy"/></svg></button>
                             <button class="btn-icon" onclick="exportReportPDF('${report.id}')" title="Als PDF exportieren"><svg class="icon"><use href="#i-file"/></svg></button>
@@ -4737,6 +4780,280 @@ Beispiel:
                 });
             });
         }
+
+        // ═══════════════════════════════════════
+        // AUSBILDER-FREIGABE
+        // ═══════════════════════════════════════
+        // Hinweg:   Woche -> Fragment (#w=) -> /ausbilder/
+        // Rueckweg: Entscheidung -> Fragment (#fb=) -> hierher
+        //
+        // Bewusst ohne Verbindung zwischen den Geraeten: die Nutzlast steht im
+        // Fragment und wird nie an einen Server geschickt. WebRTC braeuchte
+        // beide Seiten gleichzeitig online, und Firmennetze blockieren genau
+        // das. Details in Assets/js/mwl-codec.js.
+
+        const AUSBILDER_PUB_KEY = 'berichtsheft_ausbilder_pub';
+
+        function bhL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
+
+        function bhIsLocked(report) {
+            return !!(report && report.approval && report.approval.state === 'approved');
+        }
+
+        function bhApprovalBadge(report) {
+            const a = report && report.approval;
+            if (!a) return '';
+            if (a.state === 'approved') {
+                return '<span class="badge badge-signed" title="' +
+                    escapeHtml(bhL('Freigegeben von ', 'Approved by ') + (a.by || '')) + '">' +
+                    '&#10003; ' + escapeHtml(bhL('Freigegeben', 'Approved')) + '</span>';
+            }
+            if (a.state === 'rejected') {
+                return '<span class="badge badge-warning">' +
+                    escapeHtml(bhL('Zurückgegeben', 'Returned')) + '</span>';
+            }
+            return '';
+        }
+
+        // Die Begruendung einer Rueckgabe gehoert sichtbar an die Karte — sie ist
+        // die einzige Information, die dem Azubi sagt, WAS er aendern soll.
+        function bhApprovalNote(report) {
+            const a = report && report.approval;
+            if (!a || a.state !== 'rejected') return '';
+            const who = a.by ? escapeHtml(a.by) : bhL('Der Ausbilder', 'The trainer');
+            const txt = a.note
+                ? escapeHtml(a.note)
+                : bhL('Ohne Anmerkung zurückgegeben.', 'Returned without a comment.');
+            return '<div style="margin-top:8px;padding:9px 12px;border-radius:8px;' +
+                'background:rgba(var(--warning-rgb),0.08);border-left:2px solid var(--warning);">' +
+                '<div style="font-size:0.72rem;font-weight:600;color:var(--warning);margin-bottom:3px;">' +
+                who + ' &middot; ' + escapeHtml(bhL('muss überarbeitet werden', 'needs revision')) + '</div>' +
+                '<div style="font-size:0.8rem;color:var(--text-muted);">' + txt + '</div></div>';
+        }
+
+        // ── Hinweg ───────────────────────────────────────────────────
+        function bhBuildWeekPayload(report) {
+            let cfg = {};
+            try { cfg = JSON.parse(localStorage.getItem('pdf_personal_cfg') || '{}'); } catch (e) { /* egal */ }
+
+            const p = {
+                v: 1,
+                r: report.id,
+                y: report.year,
+                w: report.week,
+                df: report.dateFrom,
+                dt: report.dateTo,
+                dep: report.department || '',
+                sch: report.school || '',
+                h: report.hours || 0,
+                az: cfg.name || '',
+                bt: cfg.betrieb || ''
+            };
+
+            if (report.mode === 'daily' && report.dailyActivities) {
+                p.da = report.dailyActivities;
+                p.dh = report.dailyHours || {};
+            } else {
+                p.a = report.activities || '';
+            }
+            return p;
+        }
+
+        let _freigabeId = null;
+
+        async function openFreigabeModal(id) {
+            const report = reports.find(r => r.id === id);
+            if (!report) return;
+            _freigabeId = id;
+
+            const modal = document.getElementById('freigabeModal');
+            const qrBox = document.getElementById('freigabeQr');
+            const linkBox = document.getElementById('freigabeLink');
+            const hint = document.getElementById('freigabeQrHint');
+
+            document.getElementById('freigabeSub').textContent =
+                bhL('KW ' + report.week + ' · ' + report.year + '. Ausbildungsjahr',
+                    'Week ' + report.week + ' · year ' + report.year);
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            qrBox.innerHTML = '';
+            linkBox.value = '';
+            hint.textContent = bhL('Code wird erzeugt …', 'Generating code …');
+
+            let link;
+            try {
+                const code = await MWLCodec.encode(bhBuildWeekPayload(report));
+                link = location.origin + '/ausbilder/#w=' + code;
+            } catch (e) {
+                hint.textContent = bhL('Der Code konnte nicht erzeugt werden.',
+                                       'The code could not be generated.');
+                return;
+            }
+
+            linkBox.value = link;
+
+            // Ueber der sicheren Laenge werden die Module so klein, dass
+            // Handykameras den Code nicht mehr zuverlaessig lesen. Dann lieber
+            // ehrlich auf den Link verweisen als ein unlesbares Bild zeigen.
+            if (!MWLCodec.qrFits(link)) {
+                hint.textContent = bhL(
+                    'Diese Woche ist zu lang für einen QR-Code — schick deinem Ausbilder stattdessen den Link.',
+                    'This week is too long for a QR code — send your trainer the link instead.');
+                return;
+            }
+
+            try {
+                await MWLCodec.renderQr(qrBox, link, 320);
+                hint.textContent = bhL('Dein Ausbilder scannt den Code mit seiner Handykamera.',
+                                       'Your trainer scans this with their phone camera.');
+            } catch (e) {
+                hint.textContent = bhL('QR-Code nicht verfügbar — nutze den Link darunter.',
+                                       'QR code unavailable — use the link below.');
+            }
+        }
+
+        function closeFreigabeModal() {
+            document.getElementById('freigabeModal').classList.remove('active');
+            document.body.style.overflow = '';
+            _freigabeId = null;
+        }
+
+        async function shareFreigabeLink() {
+            const link = document.getElementById('freigabeLink').value;
+            if (!link) return;
+            const report = reports.find(r => r.id === _freigabeId);
+            const title = report ? bhL('Ausbildungsnachweis KW ' + report.week, 'Report week ' + report.week) : 'MyWorkLog';
+            if (navigator.share) {
+                try { await navigator.share({ title: title, url: link }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+            }
+            try {
+                await navigator.clipboard.writeText(link);
+                showToast(bhL('Link kopiert', 'Link copied'), 'success');
+            } catch (e) {
+                document.getElementById('freigabeLink').select();
+                showToast(bhL('Bitte von Hand kopieren', 'Please copy manually'), 'info');
+            }
+        }
+
+        // ── Rueckweg ─────────────────────────────────────────────────
+        async function bhApplyResponse(code, opts) {
+            let d;
+            try {
+                d = await MWLCodec.decode(code);
+            } catch (e) {
+                showToast(bhL('Der Antwort-Code lässt sich nicht lesen.',
+                              'The response code could not be read.'), 'error');
+                return false;
+            }
+
+            if (!d || d.v !== 1 || (d.s !== 'approved' && d.s !== 'rejected')) {
+                showToast(bhL('Das ist kein Freigabe-Code.', 'That is not an approval code.'), 'error');
+                return false;
+            }
+
+            let report = d.r ? reports.find(r => r.id === d.r) : null;
+            // Faellt der Bericht ueber die ID nicht auf (geloescht und neu
+            // angelegt), ueber KW + Jahr suchen — das ist die fachliche Identitaet.
+            if (!report) report = reports.find(r => r.week === d.w && r.year === d.y);
+            if (!report) {
+                showToast(bhL('Zu dieser Freigabe gibt es hier keine Woche (KW ' + d.w + ').',
+                              'No matching week found for this approval (week ' + d.w + ').'), 'error');
+                return false;
+            }
+
+            // Signatur pruefen und mit dem zuerst gesehenen Geraet vergleichen.
+            // Ohne Server gibt es keine Identitaetspruefung — mehr als
+            // "dasselbe Geraet wie beim ersten Mal" ist hier nicht zu haben.
+            let trust = 'unsigned';
+            if (d.k && d.g && window.MWLSign) {
+                const ok = await MWLSign.verify(d);
+                if (!ok) {
+                    showToast(bhL('Die Signatur dieser Freigabe stimmt nicht. Sie wurde nachträglich verändert.',
+                                  'The signature of this approval is invalid. It was altered.'), 'error');
+                    return false;
+                }
+                let known = null;
+                try { known = localStorage.getItem(AUSBILDER_PUB_KEY); } catch (e) { /* Privatmodus */ }
+                if (!known) {
+                    try { localStorage.setItem(AUSBILDER_PUB_KEY, d.k); } catch (e) { /* Privatmodus */ }
+                    trust = 'first';
+                } else {
+                    trust = known === d.k ? 'known' : 'other-device';
+                }
+            }
+
+            report.approval = {
+                state: d.s,
+                by: d.by || '',
+                at: d.at || new Date().toISOString(),
+                note: d.n || '',
+                pub: d.k || '',
+                sig: d.g || '',
+                trust: trust
+            };
+            if (d.s === 'approved') {
+                report.status = 'signed';
+            } else if (report.status === 'signed') {
+                // Wurde die Woche vorher schon einmal freigegeben und jetzt
+                // zurueckgegeben, darf "Unterschrieben" nicht stehenbleiben —
+                // sonst zeigt die Karte zwei widerspruechliche Zustaende.
+                report.status = 'complete';
+            }
+            report.updatedAt = new Date().toISOString();
+
+            saveToStorage();
+            updateUI();
+
+            const kw = 'KW ' + report.week;
+            if (d.s === 'approved') {
+                showToast(bhL(kw + ' wurde freigegeben' + (d.by ? ' von ' + d.by : '') + '.',
+                              kw + ' approved' + (d.by ? ' by ' + d.by : '') + '.'), 'success');
+                if (typeof launchConfetti === 'function') launchConfetti();
+            } else {
+                showToast(bhL(kw + ' wurde zurückgegeben — bitte überarbeiten.',
+                              kw + ' was returned — please revise.'), 'info');
+            }
+
+            if (trust === 'other-device') {
+                setTimeout(function () {
+                    showToast(bhL('Hinweis: Diese Freigabe kam von einem anderen Gerät als beim ersten Mal.',
+                                  'Note: this approval came from a different device than the first one.'), 'info');
+                }, 2600);
+            }
+
+            if (opts && opts.closeModal) closeFreigabeModal();
+            return true;
+        }
+
+        async function bhPasteResponse() {
+            const field = document.getElementById('freigabeResponse');
+            const raw = (field.value || '').trim();
+            if (!raw) return;
+            // Der Nutzer fuegt meist die ganze URL ein, nicht nur den Code.
+            const m = /[#&]fb=([A-Za-z0-9\-_]+)/.exec(raw);
+            const ok = await bhApplyResponse(m ? m[1] : raw, { closeModal: true });
+            if (ok) field.value = '';
+        }
+
+        // Deep-Link #fb=<code>. Laeuft beim Laden UND bei hashchange: Android
+        // fokussiert beim Scannen oft den bestehenden Tab, dann laedt nichts neu.
+        let _bhLastHash = '';
+        async function bhHandleHash() {
+            const hash = location.hash || '';
+            if (hash === _bhLastHash) return;
+            _bhLastHash = hash;
+            const m = /[#&]fb=([A-Za-z0-9\-_]+)/.exec(hash);
+            if (!m) return;
+            // Hash sofort entfernen: ein Reload soll die Freigabe nicht erneut
+            // anwenden und der Code hat im Verlauf nichts zu suchen.
+            history.replaceState(null, '', location.pathname + location.search);
+            _bhLastHash = '';
+            await bhApplyResponse(m[1], { closeModal: false });
+        }
+
+        window.addEventListener('hashchange', bhHandleHash);
 
         // ═══════════════════════════════════════
         // DATE HELPERS
@@ -4918,6 +5235,21 @@ Beispiel:
         function editReport(id) {
             const report = reports.find(r => r.id === id);
             if (!report) return;
+
+            // Bestaetigte Wochen sind gesperrt. Die Sperre liegt in den eigenen
+            // Daten des Nutzers, er kann sie also aufheben — sie soll ihn davor
+            // bewahren, eine abgezeichnete Woche versehentlich zu veraendern,
+            // nicht ihn aussperren. Wer sie aufhebt, verliert die Freigabe.
+            if (bhIsLocked(report)) {
+                if (!confirm('Diese Woche wurde von ' + (report.approval.by || 'dem Ausbilder') +
+                             ' bestätigt und ist deshalb gesperrt.\n\n' +
+                             'Wenn Sie sie jetzt bearbeiten, entfällt die Bestätigung und die Woche muss erneut freigegeben werden.\n\n' +
+                             'Trotzdem bearbeiten?')) return;
+                delete report.approval;
+                report.status = 'complete';
+                saveToStorage();
+                updateUI();
+            }
 
             editingId = id;
             document.getElementById('modalTitle').textContent = 'Bericht bearbeiten';
@@ -6952,6 +7284,11 @@ Beispiel:
 
             // Load reports
             loadReports();
+
+            // Freigabe-Antwort aus dem Link uebernehmen (#fb=...) — erst NACH
+            // loadReports(), sonst gibt es die Woche noch nicht, der die
+            // Entscheidung zugeordnet werden soll.
+            bhHandleHash();
 
             // Initialize AI Studio
             AIStudio.init();
@@ -10851,8 +11188,8 @@ ${trackingBlock}${aufgabenBlock}
     </script>
 
     <!-- BBiG-Live-Scanner -->
-    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=5.4.0">
-    <script src="/components/bbig-scanner/bbig-scanner.js?v=5.4.0"></script>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=5.5.0">
+    <script src="/components/bbig-scanner/bbig-scanner.js?v=5.5.0"></script>
     <script>
         if (typeof initBbigBerichtsheft === 'function') {
             if (document.readyState === 'loading') {

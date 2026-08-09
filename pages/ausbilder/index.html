@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+/* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
+    <meta name="description" content="Ausbildungsnachweis eines Azubis ansehen und bestätigen oder zurückgeben — ohne Konto, ohne Anmeldung. Die Woche steht im Link selbst, es wird nichts hochgeladen.">
+    <meta name="keywords" content="Ausbildungsnachweis bestätigen, Berichtsheft unterschreiben, Ausbilder, Azubi, Wochenbericht freigeben">
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=5.5.0"></script>
+    <script defer src="/Assets/js/version-loader.js?v=5.5.0"></script>
+    <title>MyWorkLog | Ausbildungsnachweis freigeben</title>
+    <link rel="canonical" href="https://myworklog.de/ausbilder/">
+    <link rel="alternate" hreflang="de" href="https://myworklog.de/ausbilder/">
+    <link rel="alternate" hreflang="en" href="https://myworklog.de/en/ausbilder/">
+    <link rel="alternate" hreflang="x-default" href="https://myworklog.de/ausbilder/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://myworklog.de/ausbilder/">
+    <meta property="og:title" content="MyWorkLog | Ausbildungsnachweis freigeben">
+    <meta property="og:description" content="Wochenbericht eines Azubis ansehen und bestätigen oder zurückgeben. Ohne Konto, ohne Anmeldung.">
+    <meta property="og:image" content="https://myworklog.de/Grafiken/og-image.png">
+    <meta name="theme-color" content="#030305">
+    <link rel="icon" href="/Grafiken/favicon.ico" sizes="any">
+
+    <style>
+        :root {
+            --bg-deep: #030305;
+            --bg-card: #0e0e15;
+            --bg-raise: #15151d;
+            --primary: #a855f7;
+            --primary-rgb: 168, 85, 247;
+            --primary-dim: rgba(168, 85, 247, 0.15);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-faint: #64748b;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.13);
+            --success: #10b981;     --success-rgb: 16, 185, 129;
+            --danger: #ef4444;      --danger-rgb: 239, 68, 68;
+            --warning: #f59e0b;     --warning-rgb: 245, 158, 11;
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Roboto Mono', ui-monospace, monospace;
+            --radius: 16px;
+            --radius-sm: 8px;
+        }
+
+        [data-theme="light"] {
+            --bg-deep: #f6f7fb;
+            --bg-card: #ffffff;
+            --bg-raise: #f1f3f9;
+            --text-main: #0b1220;
+            --text-muted: #4a5568;
+            --text-faint: #718096;
+            --border: rgba(11, 18, 32, 0.10);
+            --border-strong: rgba(11, 18, 32, 0.16);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--bg-deep);
+            color: var(--text-main);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.6;
+        }
+
+        /* ── Kopfzeile ───────────────────────────────────────────── */
+        .ab-head {
+            display: flex; align-items: center; gap: 10px;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 20;
+            background: color-mix(in srgb, var(--bg-deep) 88%, transparent);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .ab-head svg { width: 22px; height: 22px; color: var(--primary); flex: 0 0 auto; }
+        .ab-brand { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.01em; }
+        .ab-head-note { margin-left: auto; font-size: 0.75rem; color: var(--text-faint); }
+
+        .ab-wrap { max-width: 680px; margin: 0 auto; padding: 28px 20px 40px; }
+
+        /* ── Dokumentkopf ────────────────────────────────────────── */
+        .ab-eyebrow {
+            font-size: 0.72rem; font-weight: 600; letter-spacing: 0.11em;
+            text-transform: uppercase; color: var(--text-faint); margin-bottom: 10px;
+        }
+        .ab-title {
+            font-size: clamp(1.6rem, 5vw, 2.1rem); font-weight: 700;
+            letter-spacing: -0.025em; line-height: 1.15;
+        }
+        .ab-range { font-size: 1rem; color: var(--text-muted); margin-top: 6px; }
+        .ab-person { font-size: 0.95rem; color: var(--text-main); margin-top: 16px; font-weight: 500; }
+        .ab-firm { font-size: 0.88rem; color: var(--text-muted); }
+
+        .ab-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+        .ab-chip {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 7px 13px; border-radius: 999px;
+            border: 1px solid var(--border); background: var(--bg-card);
+            font-size: 0.82rem; color: var(--text-muted);
+        }
+        .ab-chip svg { width: 14px; height: 14px; flex: 0 0 auto; }
+        .ab-chip-val { color: var(--text-main); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+        .ab-rule { height: 1px; background: var(--border); margin: 28px 0; border: 0; }
+
+        /* ── Tages-Leiste (Signaturelement) ──────────────────────── */
+        /* Die Verbindungslinie haengt am Item, NICHT an der Rail-Spalte:
+           align-self:stretch dehnt nur auf die Content-Box, das Padding
+           zwischen zwei Eintraegen bliebe sonst ungedeckt. */
+        .ab-days { list-style: none; }
+        .ab-day { position: relative; display: flex; gap: 16px; padding: 14px 0; }
+        .ab-day::before {
+            content: ''; position: absolute;
+            left: 5px; top: 0; bottom: 0; width: 1px;
+            background: rgba(255, 255, 255, 0.13);
+        }
+        [data-theme="light"] .ab-day::before { background: rgba(11, 18, 32, 0.14); }
+        .ab-day:first-child::before { top: 22px; }
+        .ab-day:last-child::before { bottom: calc(100% - 22px); }
+        .ab-day:first-child:last-child::before { display: none; }
+
+        .ab-dot {
+            position: relative; z-index: 1; flex: 0 0 auto;
+            width: 11px; height: 11px; margin-top: 16px; border-radius: 50%;
+            background: var(--bg-deep);
+            box-shadow: inset 0 0 0 1.5px var(--text-faint);
+        }
+        .ab-day-filled .ab-dot { box-shadow: inset 0 0 0 5.5px var(--primary); }
+
+        .ab-day-body { flex: 1 1 auto; min-width: 0; }
+        .ab-day-head { display: flex; align-items: baseline; gap: 10px; }
+        .ab-day-name { font-size: 0.9rem; font-weight: 600; }
+        .ab-day-h {
+            margin-left: auto; font-family: var(--font-mono); font-size: 0.8rem;
+            color: var(--text-muted); font-variant-numeric: tabular-nums; flex: 0 0 auto;
+        }
+        .ab-day-text {
+            margin-top: 5px; font-size: 0.92rem; color: var(--text-muted);
+            white-space: pre-wrap; overflow-wrap: anywhere;
+        }
+        .ab-day-empty { margin-top: 5px; font-size: 0.9rem; color: var(--text-faint); font-style: italic; }
+
+        /* ── Fliesstext-Woche ────────────────────────────────────── */
+        .ab-block { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+        .ab-block + .ab-block { margin-top: 14px; }
+        .ab-block-label {
+            font-size: 0.72rem; font-weight: 600; letter-spacing: 0.09em;
+            text-transform: uppercase; color: var(--text-faint); margin-bottom: 9px;
+        }
+        .ab-block-text { font-size: 0.94rem; color: var(--text-muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+        /* ── Entscheidungsleiste ─────────────────────────────────── */
+        /* Fest am unteren Rand: der Ausbilder soll nicht ans Ende eines
+           langen Textes scrollen muessen, um zu entscheiden. */
+        .ab-bar {
+            position: sticky; bottom: 0; z-index: 30;
+            background: color-mix(in srgb, var(--bg-deep) 92%, transparent);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-top: 1px solid var(--border);
+            padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+        }
+        .ab-bar-inner { max-width: 680px; margin: 0 auto; display: flex; gap: 10px; }
+        .ab-btn {
+            flex: 1 1 0; min-width: 0;
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 14px 16px; border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 0.94rem; font-weight: 600;
+            cursor: pointer; border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .ab-btn svg { width: 17px; height: 17px; flex: 0 0 auto; }
+        .ab-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.35); }
+        .ab-btn-ghost {
+            background: transparent; border-color: var(--border-strong); color: var(--text-muted);
+        }
+        .ab-btn-ghost:hover { border-color: rgba(var(--danger-rgb), 0.5); color: #fca5a5; }
+        .ab-btn-primary { background: var(--success); color: #04140d; }
+        .ab-btn-primary:hover { filter: brightness(1.08); }
+        .ab-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; filter: none; }
+
+        /* ── Formular ────────────────────────────────────────────── */
+        .ab-field { margin-top: 14px; }
+        .ab-label { display: block; font-size: 0.82rem; font-weight: 500; color: var(--text-muted); margin-bottom: 7px; }
+        .ab-input, .ab-textarea {
+            width: 100%; padding: 11px 13px;
+            background: var(--bg-raise); color: var(--text-main);
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 0.94rem;
+            transition: all 0.2s ease;
+        }
+        .ab-textarea { resize: vertical; min-height: 88px; line-height: 1.55; }
+        .ab-input:focus, .ab-textarea:focus {
+            outline: none; border-color: rgba(var(--primary-rgb), 0.55);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
+        }
+        .ab-hint { font-size: 0.78rem; color: var(--text-faint); margin-top: 7px; }
+
+        /* ── Dialog ──────────────────────────────────────────────── */
+        .ab-sheet {
+            position: fixed; inset: 0; z-index: 100;
+            display: none; align-items: flex-end; justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+        }
+        .ab-sheet-card {
+            width: 100%; max-width: 520px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius) var(--radius) 0 0;
+            padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
+            max-height: 92vh; overflow-y: auto;
+        }
+        .ab-sheet-title { font-size: 1.15rem; font-weight: 650; letter-spacing: -0.015em; }
+        .ab-sheet-sub { font-size: 0.88rem; color: var(--text-muted); margin-top: 6px; }
+        .ab-sheet-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+        @media (min-width: 640px) {
+            .ab-sheet { align-items: center; }
+            .ab-sheet-card { border-radius: var(--radius); }
+        }
+
+        /* ── Ergebnis ────────────────────────────────────────────── */
+        .ab-result { text-align: center; padding: 12px 0 0; }
+        .ab-seal {
+            width: 60px; height: 60px; margin: 0 auto 18px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+        .ab-seal svg { width: 28px; height: 28px; }
+        .ab-seal-ok { background: rgba(var(--success-rgb), 0.14); color: var(--success); }
+        .ab-seal-no { background: rgba(var(--warning-rgb), 0.14); color: var(--warning); }
+        .ab-result-title { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; }
+        .ab-result-sub { font-size: 0.92rem; color: var(--text-muted); margin-top: 8px; }
+
+        .ab-qr {
+            margin: 24px auto 0; padding: 16px;
+            background: #ffffff; border-radius: var(--radius);
+            width: fit-content; max-width: 100%;
+            line-height: 0;
+        }
+        .ab-qr img, .ab-qr canvas { display: block; width: 100%; height: auto; max-width: 300px; }
+        .ab-qr-note { font-size: 0.85rem; color: var(--text-muted); margin-top: 14px; }
+
+        .ab-code {
+            margin-top: 18px; padding: 12px 14px;
+            background: var(--bg-raise); border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono); font-size: 0.72rem;
+            color: var(--text-muted); text-align: left;
+            max-height: 92px; overflow-y: auto; overflow-wrap: anywhere;
+        }
+
+        /* ── Erklaerung / Leerzustand ────────────────────────────── */
+        /* Steht bewusst im HTML und nicht hinter JS: ohne Nutzlast ist das
+           der einzige Inhalt, den ein Crawler ueberhaupt zu sehen bekommt. */
+        .ab-lead { font-size: 1.02rem; color: var(--text-muted); margin-top: 14px; }
+        .ab-steps { list-style: none; counter-reset: s; margin-top: 26px; }
+        .ab-step { display: flex; gap: 14px; padding: 13px 0; border-top: 1px solid var(--border); }
+        .ab-step-n {
+            flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%;
+            background: var(--bg-raise); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 600; color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+        .ab-step-t { font-size: 0.93rem; color: var(--text-muted); }
+        .ab-note {
+            margin-top: 26px; padding: 16px 18px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-left: 2px solid rgba(var(--primary-rgb), 0.5);
+            border-radius: var(--radius-sm);
+        }
+        .ab-note-t { font-size: 0.88rem; color: var(--text-muted); }
+        .ab-note-t + .ab-note-t { margin-top: 8px; }
+
+        .ab-cta {
+            display: inline-flex; align-items: center; gap: 8px; margin-top: 24px;
+            padding: 12px 20px; border-radius: var(--radius-sm);
+            background: var(--primary); color: #fff;
+            font-size: 0.92rem; font-weight: 600; text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .ab-cta:hover { filter: brightness(1.1); }
+        .ab-cta svg { width: 16px; height: 16px; }
+
+        /* ── Fehler ──────────────────────────────────────────────── */
+        .ab-err {
+            padding: 18px 20px; border-radius: var(--radius);
+            background: rgba(var(--danger-rgb), 0.08);
+            border: 1px solid rgba(var(--danger-rgb), 0.25);
+        }
+        .ab-err-t { font-size: 0.95rem; font-weight: 600; color: #fca5a5; }
+        .ab-err-s { font-size: 0.88rem; color: var(--text-muted); margin-top: 7px; }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { transition: none !important; animation: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="ab-head">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/></svg>
+        <span class="ab-brand" translate="no">MyWorkLog</span>
+        <span class="ab-head-note" id="abHeadNote">Freigabe</span>
+    </header>
+
+    <main class="ab-wrap">
+
+        <!-- ══ Leerzustand: was ist diese Seite ══════════════════════ -->
+        <section id="abIntro">
+            <p class="ab-eyebrow">Für Ausbilderinnen und Ausbilder</p>
+            <h1 class="ab-title">Ausbildungsnachweis ansehen und freigeben</h1>
+            <p class="ab-lead">Diese Seite zeigt eine einzelne Berichtsheft-Woche eines Azubis, damit Sie sie bestätigen oder zur Überarbeitung zurückgeben können. Sie brauchen dafür kein Konto und müssen nichts installieren.</p>
+
+            <ol class="ab-steps">
+                <li class="ab-step">
+                    <span class="ab-step-n">1</span>
+                    <span class="ab-step-t">Ihr Azubi zeigt Ihnen einen QR-Code oder schickt Ihnen einen Link.</span>
+                </li>
+                <li class="ab-step">
+                    <span class="ab-step-n">2</span>
+                    <span class="ab-step-t">Sie lesen die Woche hier und tippen auf Bestätigen oder Zurückgeben.</span>
+                </li>
+                <li class="ab-step">
+                    <span class="ab-step-n">3</span>
+                    <span class="ab-step-t">Sie erhalten einen kurzen Antwort-Code, den Ihr Azubi mit der Handykamera abscannt. Danach steht Ihre Entscheidung in seinem Berichtsheft.</span>
+                </li>
+            </ol>
+
+            <div class="ab-note">
+                <p class="ab-note-t">Die Woche steckt im Link selbst. Sie wird nicht an einen Server übertragen und nirgends gespeichert — der Teil einer Adresse hinter dem Rautezeichen verlässt das Gerät nicht.</p>
+                <p class="ab-note-t">Ohne einen solchen Link hat diese Seite keinen Inhalt anzuzeigen.</p>
+            </div>
+
+            <a class="ab-cta" href="/">
+                <span>MyWorkLog ansehen</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+        </section>
+
+        <!-- ══ Fehler ════════════════════════════════════════════════ -->
+        <section id="abError" style="display:none">
+            <div class="ab-err">
+                <p class="ab-err-t" id="abErrTitle">Der Link lässt sich nicht lesen</p>
+                <p class="ab-err-s" id="abErrText">Bitte lassen Sie sich den Link noch einmal schicken. Möglicherweise wurde er beim Kopieren abgeschnitten.</p>
+            </div>
+        </section>
+
+        <!-- ══ Die Woche ═════════════════════════════════════════════ -->
+        <section id="abWeek" style="display:none">
+            <p class="ab-eyebrow">Ausbildungsnachweis</p>
+            <h1 class="ab-title" id="abWeekTitle"></h1>
+            <p class="ab-range" id="abWeekRange"></p>
+            <p class="ab-person" id="abWeekPerson"></p>
+            <p class="ab-firm" id="abWeekFirm"></p>
+
+            <div class="ab-chips" id="abWeekChips"></div>
+
+            <hr class="ab-rule">
+
+            <ul class="ab-days" id="abWeekDays"></ul>
+            <div id="abWeekProse"></div>
+
+            <div class="ab-block" id="abWeekSchoolBox" style="display:none">
+                <p class="ab-block-label">Berufsschule</p>
+                <p class="ab-block-text" id="abWeekSchool"></p>
+            </div>
+        </section>
+
+        <!-- ══ Ergebnis ══════════════════════════════════════════════ -->
+        <section id="abDone" style="display:none">
+            <div class="ab-result">
+                <div class="ab-seal" id="abSeal"></div>
+                <p class="ab-result-title" id="abDoneTitle"></p>
+                <p class="ab-result-sub" id="abDoneSub"></p>
+
+                <div class="ab-qr" id="abQr" style="display:none"></div>
+                <p class="ab-qr-note" id="abQrNote"></p>
+
+                <div class="ab-code" id="abCode"></div>
+                <div class="ab-sheet-actions">
+                    <button type="button" class="ab-btn ab-btn-ghost" id="abBackBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+                        <span>Woche noch einmal</span>
+                    </button>
+                    <button type="button" class="ab-btn ab-btn-ghost" id="abCopyBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                        <span id="abCopyLabel">Link kopieren</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ══ Entscheidungsleiste ═══════════════════════════════════════ -->
+    <div class="ab-bar" id="abBar" style="display:none">
+        <div class="ab-bar-inner">
+            <button type="button" class="ab-btn ab-btn-ghost" id="abRejectBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14l6-6M15 14L9 8"/><circle cx="12" cy="12" r="9"/></svg>
+                <span>Zurückgeben</span>
+            </button>
+            <button type="button" class="ab-btn ab-btn-primary" id="abApproveBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>Bestätigen</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ══ Dialog: Entscheidung abschliessen ═════════════════════════ -->
+    <div class="ab-sheet" id="abSheet">
+        <div class="ab-sheet-card" role="dialog" aria-modal="true" aria-labelledby="abSheetTitle">
+            <p class="ab-sheet-title" id="abSheetTitle"></p>
+            <p class="ab-sheet-sub" id="abSheetSub"></p>
+
+            <div class="ab-field">
+                <label class="ab-label" for="abName">Ihr Name</label>
+                <input class="ab-input" type="text" id="abName" autocomplete="name" placeholder="Vor- und Nachname">
+            </div>
+
+            <div class="ab-field">
+                <label class="ab-label" for="abNote" id="abNoteLabel">Anmerkung</label>
+                <textarea class="ab-textarea" id="abNote" placeholder="Optional"></textarea>
+                <p class="ab-hint" id="abNoteHint"></p>
+            </div>
+
+            <div class="ab-sheet-actions">
+                <button type="button" class="ab-btn ab-btn-ghost" id="abCancelBtn">
+                    <span>Abbrechen</span>
+                </button>
+                <button type="button" class="ab-btn ab-btn-primary" id="abConfirmBtn">
+                    <span id="abConfirmLabel">Bestätigen</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-footer"></div>
+
+    <script defer src="/Assets/js/mwl-codec.js?v=5.5.0"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=5.5.0"></script>
+
+    <script>
+    (function () {
+        'use strict';
+
+        // ═══ AUSBILDER-FREIGABE MODULE ═══
+        // Liest eine Berichtsheft-Woche aus dem Fragment (#w=...), zeigt sie
+        // read-only an und erzeugt aus der Entscheidung eine signierte Antwort,
+        // die der Azubi per Kamera zurueckscannt.
+        //
+        // Diese Seite fasst tg_pro_data NICHT an. Sie laeuft auf demselben
+        // Origin wie die App, koennte es also — genau deshalb steht es hier.
+
+        var NAME_KEY = 'mwl_ausbilder_name';
+
+        // Die Wochentage sind SCHLUESSEL der Nutzlast (so legt sie das
+        // Berichtsheft an) — deshalb bleiben sie deutsch und werden nur fuer
+        // die Anzeige uebersetzt.
+        var DAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+        var DAY_EN = {
+            'Montag': 'Monday', 'Dienstag': 'Tuesday', 'Mittwoch': 'Wednesday',
+            'Donnerstag': 'Thursday', 'Freitag': 'Friday', 'Samstag': 'Saturday', 'Sonntag': 'Sunday'
+        };
+
+        // Standalone-Seite ohne utils.js — eigener Fallback, damit auf /en/
+        // keine deutschen Monatsnamen und kein 24.07.2026-Format erscheinen.
+        function abLocale() {
+            if (window.mwlLocale) return window.mwlLocale();
+            return document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE';
+        }
+        function abL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
+        function dayLabel(day) { return document.documentElement.lang === 'en' ? (DAY_EN[day] || day) : day; }
+
+        var week = null;
+        var pending = null;
+
+        function $(id) { return document.getElementById(id); }
+        function show(id, on) { var el = $(id); if (el) el.style.display = on ? '' : 'none'; }
+        function esc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function fmtHours(h) {
+            var n = parseFloat(h);
+            if (!isFinite(n) || n <= 0) return '';
+            // Dezimaltrennzeichen ueber die Locale, nicht fest als Komma —
+            // auf /en/ stand sonst "38,5 h" mitten im englischen Satz.
+            return n.toLocaleString(abLocale(), { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + ' h';
+        }
+
+        function fmtDate(iso) {
+            if (!iso) return '';
+            var d = new Date(iso + 'T12:00:00');
+            if (isNaN(d)) return iso;
+            return d.toLocaleDateString(abLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        function fmtRange(from, to) {
+            if (!from || !to) return fmtDate(from) || fmtDate(to);
+            var a = new Date(from + 'T12:00:00'), b = new Date(to + 'T12:00:00');
+            if (isNaN(a) || isNaN(b)) return fmtDate(from) + ' – ' + fmtDate(to);
+            // formatRange kennt die Zusammenzieh-Regeln jeder Sprache: deutsch
+            // "3.–7. August 2026", englisch "August 3 – 7, 2026". Von Hand
+            // zusammengebaut kam auf /en/ "3. – 7 August 2026" heraus.
+            try {
+                var f = new Intl.DateTimeFormat(abLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
+                if (typeof f.formatRange === 'function') return f.formatRange(a, b);
+            } catch (e) { /* aelterer Browser — unten weiter */ }
+            return fmtDate(from) + ' – ' + fmtDate(to);
+        }
+
+        // ── Anzeige ──────────────────────────────────────────────────
+        function chip(iconPath, label, value) {
+            return '<span class="ab-chip">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + iconPath + '</svg>' +
+                '<span>' + esc(label) + '</span>' +
+                '<span class="ab-chip-val">' + esc(value) + '</span>' +
+                '</span>';
+        }
+
+        function renderWeek(w) {
+            $('abWeekTitle').textContent = abL('Kalenderwoche ', 'Calendar week ') + w.w;
+            $('abWeekRange').textContent = fmtRange(w.df, w.dt);
+            $('abWeekPerson').textContent = w.az || abL('Auszubildende/r', 'Apprentice');
+            $('abWeekFirm').textContent = w.bt || '';
+            if (!w.bt) $('abWeekFirm').style.display = 'none';
+            $('abHeadNote').textContent = abL('KW ', 'Week ') + w.w + ' · ' + w.y;
+
+            var chips = '';
+            if (w.h) chips += chip('<path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/>', abL('Stunden', 'Hours'), fmtHours(w.h));
+            if (w.dep) chips += chip('<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>', abL('Abteilung', 'Department'), w.dep);
+            chips += chip('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/>', abL('Jahr', 'Year'), String(w.y));
+            $('abWeekChips').innerHTML = chips;
+
+            var daysEl = $('abWeekDays');
+            var proseEl = $('abWeekProse');
+            daysEl.innerHTML = '';
+            proseEl.innerHTML = '';
+
+            var da = w.da && typeof w.da === 'object' ? w.da : null;
+            var hasDaily = da && Object.keys(da).some(function (k) { return String(da[k] || '').trim(); });
+
+            if (hasDaily) {
+                var dh = w.dh && typeof w.dh === 'object' ? w.dh : {};
+                var html = '';
+                DAYS.forEach(function (day) {
+                    if (!(day in da) && !(day in dh)) return;
+                    var text = String(da[day] || '').trim();
+                    var hrs = fmtHours(dh[day]);
+                    html += '<li class="ab-day' + (text ? ' ab-day-filled' : '') + '">' +
+                        '<span class="ab-dot"></span>' +
+                        '<div class="ab-day-body">' +
+                        '<div class="ab-day-head">' +
+                        '<span class="ab-day-name">' + esc(dayLabel(day)) + '</span>' +
+                        (hrs ? '<span class="ab-day-h">' + esc(hrs) + '</span>' : '') +
+                        '</div>' +
+                        (text
+                            ? '<p class="ab-day-text">' + esc(text) + '</p>'
+                            : '<p class="ab-day-empty">' + abL('Kein Eintrag', 'No entry') + '</p>') +
+                        '</div></li>';
+                });
+                daysEl.innerHTML = html;
+            } else if (String(w.a || '').trim()) {
+                proseEl.innerHTML = '<div class="ab-block">' +
+                    '<p class="ab-block-label">' + abL('Tätigkeiten der Woche', 'Activities this week') + '</p>' +
+                    '<p class="ab-block-text">' + esc(w.a) + '</p></div>';
+            } else {
+                proseEl.innerHTML = '<div class="ab-block">' +
+                    '<p class="ab-block-label">' + abL('Tätigkeiten der Woche', 'Activities this week') + '</p>' +
+                    '<p class="ab-block-text">' + abL('Für diese Woche wurde nichts eingetragen.', 'Nothing was recorded for this week.') + '</p></div>';
+            }
+
+            if (String(w.sch || '').trim()) {
+                $('abWeekSchool').textContent = w.sch;
+                show('abWeekSchoolBox', true);
+            }
+
+            show('abIntro', false);
+            show('abWeek', true);
+            show('abBar', true);
+        }
+
+        function fail(title, text) {
+            $('abErrTitle').textContent = title;
+            $('abErrText').textContent = text;
+            show('abIntro', false);
+            show('abWeek', false);
+            show('abBar', false);
+            show('abError', true);
+        }
+
+        // ── Entscheidung ─────────────────────────────────────────────
+        function openSheet(kind) {
+            pending = kind;
+            var approve = kind === 'approved';
+            $('abSheetTitle').textContent = approve
+                ? abL('Woche bestätigen', 'Approve week')
+                : abL('Woche zurückgeben', 'Send week back');
+            $('abSheetSub').textContent = approve
+                ? abL('Ihre Bestätigung wird in das Berichtsheft Ihres Azubis übernommen und der Eintrag dort gesperrt.',
+                      'Your approval is copied into your apprentice’s training record and locks the entry there.')
+                : abL('Ihr Azubi sieht, dass diese Woche überarbeitet werden muss.',
+                      'Your apprentice will see that this week needs revising.');
+            $('abNoteLabel').textContent = approve
+                ? abL('Anmerkung', 'Comment')
+                : abL('Was soll geändert werden?', 'What needs changing?');
+            $('abNote').placeholder = approve
+                ? abL('Optional', 'Optional')
+                : abL('Zum Beispiel: Dienstag fehlt die Tätigkeit', 'For example: Tuesday is missing its activity');
+            $('abNoteHint').textContent = approve
+                ? abL('Optional. Wird zusammen mit Ihrem Namen übernommen.', 'Optional. Passed on together with your name.')
+                : abL('Hilft Ihrem Azubi, die Woche gezielt zu ergänzen.', 'Helps your apprentice fix the right thing.');
+            $('abConfirmLabel').textContent = approve
+                ? abL('Bestätigen', 'Approve')
+                : abL('Zurückgeben', 'Send back');
+            try { $('abName').value = localStorage.getItem(NAME_KEY) || ''; } catch (e) { /* Privatmodus */ }
+            // Zuruecksetzen, nicht nur beim Fehlerfall: confirmDecision() sperrt
+            // den Knopf und der Dialog kann danach erneut geoeffnet werden
+            // (Abbrechen, Zurueck, andere Entscheidung). Ohne das hier bliebe er
+            // beim zweiten Anlauf tot — ein Klick ohne jede Reaktion.
+            $('abConfirmBtn').disabled = false;
+            $('abSheet').style.display = 'flex';
+            setTimeout(function () { $('abName').focus(); }, 50);
+        }
+
+        function closeSheet() {
+            $('abSheet').style.display = 'none';
+            pending = null;
+        }
+
+        async function confirmDecision() {
+            if (!pending || !week) return;
+            var name = $('abName').value.trim();
+            if (!name) { $('abName').focus(); return; }
+            try { localStorage.setItem(NAME_KEY, name); } catch (e) { /* Privatmodus */ }
+
+            var btn = $('abConfirmBtn');
+            btn.disabled = true;
+
+            var decision = {
+                v: 1,
+                r: week.r || '',
+                y: week.y,
+                w: week.w,
+                s: pending,
+                at: new Date().toISOString(),
+                by: name,
+                n: $('abNote').value.trim()
+            };
+
+            try {
+                if (window.MWLSign && MWLSign.available()) {
+                    var sig = await MWLSign.sign(decision);
+                    decision.k = sig.k;
+                    decision.g = sig.g;
+                }
+            } catch (e) {
+                // Ohne Signatur ist die Freigabe weiterhin gueltig — sie kann auf
+                // der Gegenseite nur nicht einem Geraet zugeordnet werden.
+                console.warn('[ausbilder] Signatur nicht moeglich:', e);
+            }
+
+            var code;
+            try {
+                code = await MWLCodec.encode(decision);
+            } catch (e) {
+                btn.disabled = false;
+                fail(abL('Die Antwort konnte nicht erzeugt werden', 'The response could not be generated'),
+                     abL('Bitte laden Sie die Seite neu und versuchen Sie es noch einmal.', 'Please reload the page and try again.'));
+                return;
+            }
+
+            closeSheet();
+            showResult(decision, code);
+        }
+
+        async function showResult(decision, code) {
+            var approve = decision.s === 'approved';
+            // Auf /en/ muss die Antwort auch auf der englischen Seite landen,
+            // sonst wechselt der Azubi beim Scannen unvermittelt die Sprache.
+            var link = location.origin + abL('/berichtsheft/', '/en/berichtsheft/') + '#fb=' + code;
+
+            $('abSeal').className = 'ab-seal ' + (approve ? 'ab-seal-ok' : 'ab-seal-no');
+            $('abSeal').innerHTML = approve
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>'
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>';
+
+            $('abDoneTitle').textContent = approve
+                ? abL('Kalenderwoche ' + decision.w + ' bestätigt', 'Calendar week ' + decision.w + ' approved')
+                : abL('Kalenderwoche ' + decision.w + ' zurückgegeben', 'Calendar week ' + decision.w + ' sent back');
+            $('abDoneSub').textContent = abL(
+                'Damit die Entscheidung ankommt, muss Ihr Azubi den Code abscannen oder den Link öffnen.',
+                'For the decision to arrive, your apprentice must scan the code or open the link.');
+            $('abQrNote').textContent = abL(
+                'Ihr Azubi scannt diesen Code mit der Kamera seines Handys.',
+                'Your apprentice scans this code with their phone camera.');
+            $('abCode').textContent = link;
+
+            show('abWeek', false);
+            show('abBar', false);
+            show('abDone', true);
+            window.scrollTo({ top: 0, behavior: 'auto' });
+
+            try {
+                await MWLCodec.renderQr($('abQr'), link, 300);
+                show('abQr', true);
+            } catch (e) {
+                $('abQrNote').textContent = abL(
+                    'Der QR-Code lässt sich hier nicht anzeigen. Schicken Sie Ihrem Azubi stattdessen den Link darunter.',
+                    'The QR code cannot be shown here. Send your apprentice the link below instead.');
+            }
+        }
+
+        async function copyLink() {
+            var text = $('abCode').textContent;
+            var label = $('abCopyLabel');
+            try {
+                await navigator.clipboard.writeText(text);
+                label.textContent = abL('Kopiert', 'Copied');
+            } catch (e) {
+                var r = document.createRange();
+                r.selectNodeContents($('abCode'));
+                var sel = window.getSelection();
+                sel.removeAllRanges(); sel.addRange(r);
+                label.textContent = abL('Bitte von Hand kopieren', 'Please copy manually');
+            }
+            setTimeout(function () { label.textContent = abL('Link kopieren', 'Copy link'); }, 2200);
+        }
+
+        // ── Start ────────────────────────────────────────────────────
+        async function boot() {
+            $('abRejectBtn').addEventListener('click', function () { openSheet('rejected'); });
+            $('abApproveBtn').addEventListener('click', function () { openSheet('approved'); });
+            $('abCancelBtn').addEventListener('click', closeSheet);
+            $('abConfirmBtn').addEventListener('click', confirmDecision);
+            $('abCopyBtn').addEventListener('click', copyLink);
+            // Wer sich vertippt hat, kommt sonst nur ueber einen Reload zurueck.
+            // Die zuletzt erzeugte Antwort gilt — der Azubi scannt ohnehin nur eine.
+            $('abBackBtn').addEventListener('click', function () {
+                show('abDone', false);
+                show('abWeek', true);
+                show('abBar', true);
+                window.scrollTo({ top: 0, behavior: 'auto' });
+            });
+            $('abSheet').addEventListener('click', function (e) { if (e.target === $('abSheet')) closeSheet(); });
+            document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
+
+            var m = /[#&]w=([A-Za-z0-9\-_]+)/.exec(location.hash || '');
+            if (!m) return;
+
+            try {
+                week = await MWLCodec.decode(m[1]);
+            } catch (e) {
+                console.warn('[ausbilder] Nutzlast unlesbar:', e);
+                fail(abL('Der Link lässt sich nicht lesen', 'This link cannot be read'),
+                     abL('Bitte lassen Sie sich den Link noch einmal schicken. Beim Weiterleiten über Messenger wird er manchmal abgeschnitten.',
+                         'Please ask for the link again. Messengers sometimes cut it short when forwarding.'));
+                return;
+            }
+
+            if (!week || week.v !== 1 || !week.w || !week.y) {
+                fail(abL('Dieser Link gehört nicht hierher', 'This link does not belong here'),
+                     abL('Der Inhalt passt nicht zu einem Ausbildungsnachweis. Bitte prüfen Sie, ob Sie den vollständigen Link geöffnet haben.',
+                         'The content does not match a training record. Please check that you opened the complete link.'));
+                return;
+            }
+
+            renderWeek(week);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', boot);
+        } else {
+            boot();
+        }
+    })();
+    </script>
+
+    <script>
+    (function () {
+        fetch('/pages/footer/footer.html')
+            .then(function (r) { return r.text(); })
+            .then(function (html) {
+                var ph = document.getElementById('page-footer');
+                if (!ph) return;
+                var t = document.createElement('template');
+                t.innerHTML = html;
+                ph.replaceWith(t.content);
+            })
+            .catch(function () { /* Footer ist Beiwerk, kein Grund die Seite zu blockieren */ });
+    })();
+    </script>
+
+    <!-- Theme-Farbe-Sync: liest User-Akzent aus tg_pro_data.settings.theme -->
+    <script>
+    (function() {
+        function applyTheme(hex) {
+            if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+            var r = parseInt(hex.slice(1,3), 16);
+            var g = parseInt(hex.slice(3,5), 16);
+            var b = parseInt(hex.slice(5,7), 16);
+            document.documentElement.style.setProperty('--primary', hex);
+            document.documentElement.style.setProperty('--primary-rgb', r + ',' + g + ',' + b);
+            document.documentElement.style.setProperty('--primary-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
+        }
+        function syncTheme() {
+            try {
+                var raw = localStorage.getItem('tg_pro_data');
+                if (!raw) return;
+                var data = JSON.parse(raw);
+                if (data && data.settings && data.settings.theme) applyTheme(data.settings.theme);
+            } catch (e) { /* ignore */ }
+        }
+        syncTheme();
+        window.addEventListener('storage', function(e) { if (e.key === 'tg_pro_data') syncTheme(); });
+        document.addEventListener('visibilitychange', function() { if (!document.hidden) syncTheme(); });
+    })();
+    </script>
+
+<!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
+<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
+</html>
