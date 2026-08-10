@@ -186,3 +186,26 @@
 /WEATHER_DEMO.txt
   Cache-Control: no-store
   X-Robots-Tag: noindex
+
+# ========================================================
+# Google-Drive-Sicherung im Schatten-Berichtsheft
+# ========================================================
+# Der Google-Anmeldedialog laeuft in einem Popup und meldet sein Ergebnis
+# per postMessage an das oeffnende Fenster zurueck. Das globale
+# `Cross-Origin-Opener-Policy: same-origin` (siehe oben) kappt genau diese
+# Verbindung: das Popup oeffnet sich, der Nutzer bestaetigt, und danach
+# passiert nichts mehr — ohne Fehlermeldung, weil technisch alles erlaubt
+# war. `same-origin-allow-popups` behaelt die Isolation gegenueber fremden
+# Fenstern und laesst nur die selbst geoeffneten antworten.
+# Gilt nur fuer diese eine Seite, nicht fuer die ganze Domain.
+/schatten-berichtsheft/*
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+
+/pages/schatten-berichtsheft/*
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+
+/en/schatten-berichtsheft/*
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+
+/pages/en/schatten-berichtsheft/*
+  Cross-Origin-Opener-Policy: same-origin-allow-popups

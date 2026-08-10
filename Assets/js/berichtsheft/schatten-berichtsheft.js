@@ -1087,47 +1087,61 @@ async function changePassword(currentPw, newPw) {
 // Tresor mit hunderten MB wuerde JSON.stringify ueber alles den Tab
 // zuverlaessig abschiessen. So liegt immer nur eine Datei gleichzeitig als
 // Base64 im Speicher.
+// Baut den Backup-Blob. Eigene Funktion, weil ihn zwei Wege brauchen —
+// Download und Google-Drive-Sicherung. Zwei Kopien dieser Logik waeren die
+// gefaehrlichste Sorte Doppelung: eine Sicherung, die je nach Weg etwas
+// anderes enthaelt, faellt erst beim Wiederherstellen auf.
+async function buildBackupBlob(onProgress) {
+    const entriesRec = await vsGetEntries();
+    // Ohne die eigenen Kategorien waere die Sicherung unvollstaendig: nach
+    // dem Einspielen stuenden die betroffenen Vorfaelle unter „Sonstiges",
+    // und die selbst gewaehlte Einordnung waere nicht wiederherstellbar.
+    const catRec = await vsGetCategories();
+    const head = {
+        format: 'mwl-schatten-backup',
+        v: 2,
+        exportedAt: new Date().toISOString(),
+        caseId: vaultMeta.caseId,
+        salt: vaultMeta.salt,
+        pwHash: vaultMeta.pwHash,
+        wrappedKey: vaultMeta.wrappedKey || null,
+        timeBasis: vaultMeta.timeBasis || null,
+        entries: entriesRec ? { iv: entriesRec.iv, data: entriesRec.data } : null,
+        categories: catRec ? { iv: catRec.iv, data: catRec.data } : null
+    };
+    const parts = [JSON.stringify(head).slice(0, -1) + ',"files":['];
+
+    const metas = await vsAllFileMeta();
+    for (let i = 0; i < metas.length; i++) {
+        const rec = await vsGetFileBytes(metas[i].id);
+        if (!rec) continue;
+        const ivBytes = rec.iv instanceof Uint8Array ? rec.iv : new Uint8Array(rec.iv);
+        parts.push((i ? ',' : '') + JSON.stringify(Object.assign({}, metas[i], {
+            iv: u8ToB64(ivBytes),
+            data: vsBufToB64(rec.data)
+        })));
+        if (onProgress) onProgress(i + 1, metas.length);
+    }
+    parts.push(']}');
+
+    return { blob: new Blob(parts, { type: 'application/json;charset=utf-8' }), fileCount: metas.length };
+}
+
+function backupFileName() {
+    return 'schatten-berichtsheft-backup_' + new Date().toISOString().slice(0, 10) + '.json';
+}
+
 async function exportBackup() {
     if (!vaultMeta) { showToast(L('Kein Tresor zum Exportieren vorhanden', 'No vault to export'), 'warning'); return; }
     showToast(L('Backup wird zusammengestellt …', 'Assembling backup …'), 'info');
 
     try {
-        const entriesRec = await vsGetEntries();
-        // Ohne die eigenen Kategorien waere die Sicherung unvollstaendig: nach
-        // dem Einspielen stuenden die betroffenen Vorfaelle unter „Sonstiges",
-        // und die selbst gewaehlte Einordnung waere nicht wiederherstellbar.
-        const catRec = await vsGetCategories();
-        const head = {
-            format: 'mwl-schatten-backup',
-            v: 2,
-            exportedAt: new Date().toISOString(),
-            caseId: vaultMeta.caseId,
-            salt: vaultMeta.salt,
-            pwHash: vaultMeta.pwHash,
-            wrappedKey: vaultMeta.wrappedKey || null,
-            timeBasis: vaultMeta.timeBasis || null,
-            entries: entriesRec ? { iv: entriesRec.iv, data: entriesRec.data } : null,
-            categories: catRec ? { iv: catRec.iv, data: catRec.data } : null
-        };
-        const parts = [JSON.stringify(head).slice(0, -1) + ',"files":['];
-
-        const metas = await vsAllFileMeta();
-        for (let i = 0; i < metas.length; i++) {
-            const rec = await vsGetFileBytes(metas[i].id);
-            if (!rec) continue;
-            const ivBytes = rec.iv instanceof Uint8Array ? rec.iv : new Uint8Array(rec.iv);
-            parts.push((i ? ',' : '') + JSON.stringify(Object.assign({}, metas[i], {
-                iv: u8ToB64(ivBytes),
-                data: vsBufToB64(rec.data)
-            })));
-        }
-        parts.push(']}');
-
-        const blob = new Blob(parts, { type: 'application/json;charset=utf-8' });
+        const built = await buildBackupBlob();
+        const blob = built.blob;
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'schatten-berichtsheft-backup_' + new Date().toISOString().slice(0, 10) + '.json';
+        a.download = backupFileName();
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 10000);
         showToast(L('Backup heruntergeladen (' + formatBytes(blob.size) + ') — an einem zweiten Ort sicher aufbewahren',
@@ -1144,6 +1158,297 @@ function isValidVaultShape(v) {
     return !!(v && typeof v === 'object' && v.salt && v.pwHash && v.entries && v.entries.iv && v.entries.data);
 }
 
+// Spielt ein bereits geparstes Backup ein. Getrennt von der Datei-Lesung,
+// damit die Google-Drive-Wiederherstellung exakt denselben Weg nimmt — ein
+// zweiter Import-Pfad waere ein zweiter Ort, an dem etwas schieflaufen kann.
+async function applyBackupObject(parsed) {
+    if (!isValidVaultShape(parsed)) {
+        showToast(L('Datei hat nicht die Struktur eines Schatten-Berichtsheft-Backups', 'File does not have the structure of a shadow-report-book backup'), 'error');
+        return false;
+    }
+    const replacing = !isFirstTime();
+    const msg = replacing
+        ? L('Dies ersetzt deinen AKTUELLEN Tresor unwiderruflich durch das importierte Backup. Falls nötig, exportiere vorher ein Backup des aktuellen Stands. Fortfahren?', 'This irreversibly replaces your CURRENT vault with the imported backup. If needed, export a backup of the current state first. Continue?')
+        : L('Backup importieren und als deinen Tresor einrichten?', 'Import backup and set it up as your vault?');
+    if (!window.confirm(msg)) return false;
+
+    try {
+        await vsClearAll();
+        localStorage.removeItem(STORE_KEY);
+
+        await vsPutMeta({
+            v: parsed.wrappedKey ? 2 : 1,
+            caseId: parsed.caseId || generateCaseId(),
+            salt: parsed.salt,
+            pwHash: parsed.pwHash,
+            wrappedKey: parsed.wrappedKey || null,
+            timeBasis: isTimeBasis(parsed.timeBasis) ? parsed.timeBasis : null,
+            // v1-Backups tragen die Eintraege im Kopf; unlockVault() erkennt
+            // das am fehlenden wrappedKey und migriert beim Entsperren.
+            entries: parsed.wrappedKey ? undefined : parsed.entries
+        });
+        await vsPutEntries(parsed.entries);
+        // Faellt bei Sicherungen aus der Zeit vor den eigenen Kategorien
+        // schlicht weg — dann gibt es eben keine.
+        if (parsed.categories && parsed.categories.iv && parsed.categories.data) {
+            await vsPutCategories(parsed.categories);
+        }
+
+        for (const f of (parsed.files || [])) {
+            const meta = { id: f.id, name: f.name, mime: f.mime, size: f.size, createdAt: f.createdAt, thumb: f.thumb || null };
+            await vsPutFile(meta, vsB64ToBuf(f.data), b64ToU8(f.iv));
+        }
+    } catch (e) {
+        showToast(L('Backup konnte nicht eingespielt werden', 'Could not import backup'), 'error');
+        return false;
+    }
+
+    // Reload erzwingt das Entsperren mit dem Passwort des importierten Tresors —
+    // das ist gleichzeitig der Validitaets-Check, kein stiller Fehlschlag moeglich.
+    location.reload();
+    return true;
+}
+
+// ═════════════════════════════════════════
+//  GOOGLE DRIVE — Sicherung des ganzen Tresors
+// ═════════════════════════════════════════
+//
+// Hochgeladen wird derselbe Blob wie beim Download — also der bereits
+// verschluesselte Tresor. Google speichert einen unlesbaren Klumpen; das
+// Passwort verlaesst dieses Geraet zu keinem Zeitpunkt.
+
+let driveBusy = false;
+
+function driveEl(id) { return document.getElementById(id); }
+
+function driveSetStatus(text, tone) {
+    const el = driveEl('driveStatusLine');
+    if (!el) return;
+    el.textContent = text || '';
+    el.className = 'drive-status' + (tone ? ' tone-' + tone : '');
+    el.hidden = !text;
+}
+
+function driveSetProgress(done, total) {
+    const wrap = driveEl('driveProgress');
+    const bar = driveEl('driveProgressBar');
+    const label = driveEl('driveProgressLabel');
+    if (!wrap) return;
+    if (done == null) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+    const pct = total ? Math.min(100, Math.round(done / total * 100)) : 0;
+    bar.style.width = pct + '%';
+    // Echte Bytes, kein geschaetzter Balken: bei 300 MB ueber Mobilfunk ist
+    // der Unterschied zwischen „laeuft noch" und „haengt" die einzige
+    // Information, die zaehlt.
+    label.textContent = total
+        ? formatBytes(done) + ' / ' + formatBytes(total) + ' · ' + pct + '%'
+        : L('Wird vorbereitet …', 'Preparing …');
+}
+
+function driveRelTime(iso) {
+    if (!iso) return null;
+    const then = new Date(iso).getTime();
+    if (isNaN(then)) return null;
+    const mins = Math.round((Date.now() - then) / 60000);
+    if (mins < 1) return L('gerade eben', 'just now');
+    if (mins < 60) return L('vor ' + mins + ' Min.', mins + ' min ago');
+    const hrs = Math.round(mins / 60);
+    if (hrs < 24) return L('vor ' + hrs + ' Std.', hrs + ' h ago');
+    const days = Math.round(hrs / 24);
+    return L('vor ' + days + ' Tagen', days + ' days ago');
+}
+
+async function openDriveModal() {
+    document.getElementById('vaultMenu').classList.remove('open');
+    openModal('driveModal');
+    driveSetProgress(null);
+    driveSetStatus('');
+    // Zustand beim OEFFNEN herstellen — sonst zeigt der Dialog beim zweiten
+    // Aufruf noch das Ergebnis des ersten.
+    const btn = driveEl('driveBackupBtn');
+    if (btn) btn.disabled = false;
+    driveBusy = false;
+    driveRenderState();
+}
+
+function driveRenderState() {
+    const D = window.SchattenDrive;
+    const setup = driveEl('driveSetup');
+    const connect = driveEl('driveConnect');
+    const ready = driveEl('driveReady');
+    if (!D || !setup) return;
+
+    setup.hidden = D.isConfigured();
+    connect.hidden = !D.isConfigured() || D.isConnected();
+    ready.hidden = !D.isConnected();
+
+    if (D.isConnected()) {
+        const last = D.lastBackupAt();
+        const rel = driveRelTime(last);
+        const lastEl = driveEl('driveLastBackup');
+        if (lastEl) {
+            lastEl.textContent = rel
+                ? L('Letzte Sicherung: ' + rel, 'Last backup: ' + rel)
+                : L('Noch nichts gesichert', 'Nothing backed up yet');
+            lastEl.classList.toggle('is-stale', !rel);
+        }
+        driveRefreshList();
+    }
+}
+
+async function driveConnectClick() {
+    const D = window.SchattenDrive;
+    driveSetStatus(L('Google-Fenster geöffnet — bitte dort bestätigen.', 'Google window opened — please confirm there.'), 'info');
+    try {
+        await D.connect(true);
+        driveSetStatus('');
+        driveRenderState();
+        showToast(L('Mit Google Drive verbunden', 'Connected to Google Drive'), 'success');
+    } catch (e) {
+        const msg = String(e && e.message || '');
+        if (msg === 'gis-load-failed') {
+            driveSetStatus(L('Google konnte nicht geladen werden. Blockiert ein Inhaltsblocker accounts.google.com?',
+                             'Google could not be loaded. Is a content blocker blocking accounts.google.com?'), 'error');
+        } else if (msg.indexOf('popup') >= 0) {
+            driveSetStatus(L('Das Google-Fenster wurde blockiert oder geschlossen. Popups für diese Seite erlauben und erneut versuchen.',
+                             'The Google window was blocked or closed. Allow pop-ups for this site and try again.'), 'error');
+        } else {
+            driveSetStatus(L('Verbindung nicht zustande gekommen: ' + msg, 'Connection failed: ' + msg), 'error');
+        }
+    }
+}
+
+async function driveBackupNow() {
+    const D = window.SchattenDrive;
+    if (driveBusy) return;
+    if (!vaultMeta) { showToast(L('Kein Tresor vorhanden', 'No vault present'), 'warning'); return; }
+    driveBusy = true;
+    const btn = driveEl('driveBackupBtn');
+    if (btn) btn.disabled = true;
+
+    try {
+        driveSetStatus(L('Tresor wird zusammengestellt …', 'Assembling vault …'), 'info');
+        driveSetProgress(0, 0);
+        const built = await buildBackupBlob();
+        driveSetStatus(L('Wird hochgeladen — verschlüsselt, Google sieht nur Zufallsdaten.',
+                         'Uploading — encrypted, Google only sees random data.'), 'info');
+        const file = await D.uploadBlob(backupFileName(), built.blob, driveSetProgress);
+        const now = new Date().toISOString();
+        D.noteBackup(now);
+        driveSetProgress(null);
+        driveSetStatus(L('Gesichert: ' + built.fileCount + ' Dateien, ' + formatBytes(built.blob.size) + '.',
+                         'Backed up: ' + built.fileCount + ' files, ' + formatBytes(built.blob.size) + '.'), 'success');
+        showToast(L('In Google Drive gesichert', 'Backed up to Google Drive'), 'success');
+        driveRenderState();
+        return file;
+    } catch (e) {
+        driveSetProgress(null);
+        const msg = String(e && e.message || '');
+        driveSetStatus(L('Sicherung fehlgeschlagen (' + msg + '). Der Tresor auf diesem Gerät ist unverändert.',
+                         'Backup failed (' + msg + '). The vault on this device is unchanged.'), 'error');
+        showToast(L('Sicherung fehlgeschlagen', 'Backup failed'), 'error');
+    } finally {
+        driveBusy = false;
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function driveRefreshList() {
+    const D = window.SchattenDrive;
+    const list = driveEl('driveList');
+    if (!list) return;
+    list.innerHTML = '<p class="drive-empty">' + L('Wird geladen …', 'Loading …') + '</p>';
+    try {
+        const files = await D.listBackups();
+        if (!files.length) {
+            list.innerHTML = '<p class="drive-empty">' +
+                L('Noch keine Sicherung in Drive. „Jetzt alles sichern" legt die erste an.',
+                  'No backup in Drive yet. "Back up everything now" creates the first one.') + '</p>';
+            return;
+        }
+        list.innerHTML = files.map(function (f) {
+            const when = new Date(f.createdTime);
+            const whenTxt = isNaN(when.getTime()) ? f.name : when.toLocaleString(mwlLocale(), {
+                day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+            return '<div class="drive-item">' +
+                '<div class="drive-item-main">' +
+                    '<span class="drive-item-when">' + escapeHtml(whenTxt) + '</span>' +
+                    '<span class="drive-item-size">' + (f.size ? formatBytes(+f.size) : '—') + '</span>' +
+                '</div>' +
+                '<div class="drive-item-actions">' +
+                    '<button type="button" class="btn btn-sm" onclick="driveRestoreFrom(\'' + escapeHtml(f.id) + '\')">' +
+                        L('Wiederherstellen', 'Restore') + '</button>' +
+                    '<button type="button" class="btn btn-sm btn-icon drive-del" title="' + L('Löschen', 'Delete') + '" ' +
+                        'onclick="driveDeleteFrom(\'' + escapeHtml(f.id) + '\', \'' + escapeHtml(whenTxt) + '\')">' +
+                        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>' +
+                    '</button>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+    } catch (e) {
+        list.innerHTML = '<p class="drive-empty">' +
+            L('Liste konnte nicht geladen werden.', 'Could not load the list.') + '</p>';
+    }
+}
+
+async function driveRestoreFrom(fileId) {
+    const D = window.SchattenDrive;
+    driveSetStatus(L('Wird geladen …', 'Downloading …'), 'info');
+    try {
+        const text = await D.downloadBackup(fileId);
+        let parsed;
+        try { parsed = JSON.parse(text); }
+        catch (e) {
+            driveSetStatus(L('Die Datei in Drive ist kein lesbares Backup.', 'The file in Drive is not a readable backup.'), 'error');
+            return;
+        }
+        driveSetStatus('');
+        // Geht durch denselben Import-Weg wie eine lokale Datei — inklusive
+        // der Rueckfrage und des Neuladens zum Entsperren.
+        await applyBackupObject(parsed);
+    } catch (e) {
+        driveSetStatus(L('Wiederherstellen fehlgeschlagen.', 'Restore failed.'), 'error');
+    }
+}
+
+async function driveDeleteFrom(fileId, label) {
+    const D = window.SchattenDrive;
+    if (!window.confirm(L('Sicherung vom ' + label + ' endgültig aus Google Drive löschen?',
+                          'Permanently delete the backup from ' + label + ' in Google Drive?'))) return;
+    try {
+        await D.deleteBackup(fileId);
+        showToast(L('Sicherung gelöscht', 'Backup deleted'), 'success');
+        driveRefreshList();
+    } catch (e) {
+        showToast(L('Löschen fehlgeschlagen', 'Delete failed'), 'error');
+    }
+}
+
+async function driveDisconnectClick() {
+    const D = window.SchattenDrive;
+    await D.disconnect();
+    driveSetStatus(L('Verbindung getrennt. Bereits gesicherte Dateien bleiben in deinem Drive liegen.',
+                     'Disconnected. Files already backed up remain in your Drive.'), 'info');
+    driveRenderState();
+}
+
+function driveSaveClientId() {
+    const input = driveEl('driveClientIdInput');
+    if (!input) return;
+    const val = input.value.trim();
+    if (!val) { showToast(L('Bitte eine Client-ID eintragen', 'Please enter a client ID'), 'warning'); return; }
+    if (!/\.apps\.googleusercontent\.com$/.test(val)) {
+        showToast(L('Das sieht nicht nach einer Google-Client-ID aus (endet auf .apps.googleusercontent.com)',
+                    'That does not look like a Google client ID (ends with .apps.googleusercontent.com)'), 'warning');
+        return;
+    }
+    window.SchattenDrive.setClientId(val);
+    showToast(L('Client-ID gespeichert', 'Client ID saved'), 'success');
+    driveRenderState();
+}
+
 function importBackupFile(file) {
     const reader = new FileReader();
     reader.onload = async () => {
@@ -1152,50 +1457,7 @@ function importBackupFile(file) {
             showToast(L('Datei ist kein gültiges Backup (kein JSON)', 'File is not a valid backup (not JSON)'), 'error');
             return;
         }
-        if (!isValidVaultShape(parsed)) {
-            showToast(L('Datei hat nicht die Struktur eines Schatten-Berichtsheft-Backups', 'File does not have the structure of a shadow-report-book backup'), 'error');
-            return;
-        }
-        const replacing = !isFirstTime();
-        const msg = replacing
-            ? L('Dies ersetzt deinen AKTUELLEN Tresor unwiderruflich durch das importierte Backup. Falls nötig, exportiere vorher ein Backup des aktuellen Stands. Fortfahren?', 'This irreversibly replaces your CURRENT vault with the imported backup. If needed, export a backup of the current state first. Continue?')
-            : L('Backup importieren und als deinen Tresor einrichten?', 'Import backup and set it up as your vault?');
-        if (!window.confirm(msg)) return;
-
-        try {
-            await vsClearAll();
-            localStorage.removeItem(STORE_KEY);
-
-            await vsPutMeta({
-                v: parsed.wrappedKey ? 2 : 1,
-                caseId: parsed.caseId || generateCaseId(),
-                salt: parsed.salt,
-                pwHash: parsed.pwHash,
-                wrappedKey: parsed.wrappedKey || null,
-                timeBasis: isTimeBasis(parsed.timeBasis) ? parsed.timeBasis : null,
-                // v1-Backups tragen die Eintraege im Kopf; unlockVault() erkennt
-                // das am fehlenden wrappedKey und migriert beim Entsperren.
-                entries: parsed.wrappedKey ? undefined : parsed.entries
-            });
-            await vsPutEntries(parsed.entries);
-            // Faellt bei Sicherungen aus der Zeit vor den eigenen Kategorien
-            // schlicht weg — dann gibt es eben keine.
-            if (parsed.categories && parsed.categories.iv && parsed.categories.data) {
-                await vsPutCategories(parsed.categories);
-            }
-
-            for (const f of (parsed.files || [])) {
-                const meta = { id: f.id, name: f.name, mime: f.mime, size: f.size, createdAt: f.createdAt, thumb: f.thumb || null };
-                await vsPutFile(meta, vsB64ToBuf(f.data), b64ToU8(f.iv));
-            }
-        } catch (e) {
-            showToast(L('Backup konnte nicht eingespielt werden', 'Could not import backup'), 'error');
-            return;
-        }
-
-        // Reload erzwingt das Entsperren mit dem Passwort des importierten Tresors —
-        // das ist gleichzeitig der Validitaets-Check, kein stiller Fehlschlag moeglich.
-        location.reload();
+        await applyBackupObject(parsed);
     };
     reader.onerror = () => showToast(L('Datei konnte nicht gelesen werden', 'Could not read file'), 'error');
     reader.readAsText(file);
@@ -1378,7 +1640,21 @@ function toggleVaultMenu() {
     const menu = document.getElementById('vaultMenu');
     const willOpen = !menu.classList.contains('open');
     menu.classList.toggle('open', willOpen);
-    if (willOpen) renderStorageMeter();
+    if (willOpen) { renderStorageMeter(); updateDriveMenuState(); }
+}
+
+// Der Zustand im Menue beantwortet die Frage, die man vor dem Oeffnen hat:
+// „Ist da was gesichert, und wie alt?" — nicht bloss „verbunden ja/nein".
+// Ein Token ueberlebt das Neuladen ohnehin nicht, „verbunden" waere also
+// eine wenig aussagekraeftige Anzeige.
+function updateDriveMenuState() {
+    const el = document.getElementById('driveMenuState');
+    const D = window.SchattenDrive;
+    if (!el || !D) return;
+    if (!D.isConfigured()) { el.textContent = L('Aus', 'Off'); el.classList.remove('is-on'); return; }
+    const rel = driveRelTime(D.lastBackupAt());
+    el.textContent = rel || L('Nie', 'Never');
+    el.classList.toggle('is-on', !!rel);
 }
 
 // Speicheranzeige. Zeigt bewusst BEIDE Zahlen: was der Tresor belegt und
@@ -1651,7 +1927,14 @@ const ATT_ICONS = {
     generic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>',
 };
 
+// Die feine Typ-Erkennung liegt in file-preview.js. Hier bleibt nur die
+// grobe Einordnung fuer die Kachel-Symbole — die kennt weiter genau die
+// fuenf ATT_ICONS-Schluessel, damit alle bestehenden Aufrufer unveraendert
+// funktionieren.
 function fileKind(mime, name) {
+    if (window.SchattenPreview) {
+        return window.SchattenPreview.iconKey(window.SchattenPreview.detectKind(mime, name));
+    }
     const m = (mime || '').toLowerCase();
     const ext = (name || '').split('.').pop().toLowerCase();
     if (m.indexOf('image/') === 0) return 'image';
@@ -1785,6 +2068,9 @@ async function openAttachmentViewer(id) {
     const title = document.getElementById('attachmentViewerTitle');
     const dl = document.getElementById('attachmentViewerDownload');
     releaseViewerUrl();
+    // Zustand beim OEFFNEN herstellen, nicht nur im Fehlerfall aufraeumen —
+    // sonst behaelt der Rahmen die Dokument-Ausrichtung der vorigen Datei.
+    body.classList.remove('viewer-body-doc');
     body.innerHTML = '<p class="viewer-status">' + L('Wird entschlüsselt …', 'Decrypting …') + '</p>';
     openModal('attachmentViewerModal');
 
@@ -1811,33 +2097,208 @@ async function openAttachmentViewer(id) {
     dl.download = meta.name;
     dl.style.display = 'inline-flex';
 
-    const kind = fileKind(meta.mime, meta.name);
+    const kind = window.SchattenPreview
+        ? window.SchattenPreview.detectKind(meta.mime, meta.name)
+        : fileKind(meta.mime, meta.name);
+
     if (kind === 'image') {
         body.innerHTML = '<img src="' + viewerObjectUrl + '" alt="' + escapeHtml(meta.name) + '" class="viewer-image">';
-    } else if (kind === 'pdf') {
+        return;
+    }
+    if (kind === 'pdf') {
         // <object> statt <iframe>: faellt bei fehlendem PDF-Betrachter auf
         // den inneren Inhalt zurueck, statt ein leeres Rechteck zu zeigen.
         body.innerHTML = '<object data="' + viewerObjectUrl + '" type="application/pdf" class="viewer-pdf">' +
             '<p class="viewer-status">' + L('Dieser Browser zeigt keine PDFs an — nutze „Herunterladen".',
                                             'This browser cannot display PDFs — use "Download".') + '</p></object>';
-    } else if (kind === 'audio') {
-        body.innerHTML = '<audio controls src="' + viewerObjectUrl + '" class="viewer-media"></audio>';
-    } else if (kind === 'video') {
-        body.innerHTML = '<video controls src="' + viewerObjectUrl + '" class="viewer-media"></video>';
-    } else {
-        body.innerHTML = '<div class="viewer-file">' +
-            '<span class="viewer-file-ico">' + ATT_ICONS[kind] + '</span>' +
-            '<p class="viewer-status">' + escapeHtml(meta.name) + ' · ' + formatBytes(meta.size) + '</p>' +
-            '<p class="viewer-status">' + L('Vorschau nicht möglich — die Datei liegt unverändert im Tresor.',
-                                            'No preview available — the file is stored unchanged in the vault.') + '</p>' +
-        '</div>';
+        return;
     }
+    if (kind === 'audio') {
+        body.innerHTML = '<audio controls src="' + viewerObjectUrl + '" class="viewer-media"></audio>';
+        return;
+    }
+    if (kind === 'video') {
+        body.innerHTML = '<video controls src="' + viewerObjectUrl + '" class="viewer-media"></video>';
+        return;
+    }
+
+    // Ab hier sind es Dokument-Ansichten: der Viewer-Rahmen zentriert nicht
+    // mehr mittig, sondern laesst den Inhalt oben beginnen und fliessen.
+    body.innerHTML = '<p class="viewer-status">' + L('Wird gelesen …', 'Reading …') + '</p>';
+    try {
+        const html = await renderTextualPreview(kind, meta, blob);
+        body.classList.add('viewer-body-doc');
+        body.innerHTML = html;
+    } catch (e) {
+        body.classList.remove('viewer-body-doc');
+        body.innerHTML = noPreviewBlock(meta, L('Die Datei liess sich nicht lesen. Sie liegt unverändert im Tresor.',
+                                                'The file could not be read. It is stored unchanged in the vault.'));
+    }
+}
+
+// Jede abgeleitete Ansicht sagt, WORAUS sie stammt. In einem Beweismittel-
+// Archiv ist der Unterschied zwischen „so sieht das Dokument aus" und „das
+// steht als Text darin" entscheidend — ein Textauszug enthaelt weder
+// Briefkopf noch Unterschrift noch Seitenumbrueche.
+function originNote(text) {
+    return '<p class="viewer-origin">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>' +
+        '<span>' + text + '</span></p>';
+}
+
+function noPreviewBlock(meta, reason) {
+    return '<div class="viewer-file">' +
+        '<span class="viewer-file-ico">' + ATT_ICONS.generic + '</span>' +
+        '<p class="viewer-status">' + escapeHtml(meta.name) + ' · ' + formatBytes(meta.size) + '</p>' +
+        '<p class="viewer-status">' + reason + '</p>' +
+    '</div>';
+}
+
+function textBlock(text, truncated, totalBytes) {
+    let html = '<pre class="viewer-text">' + escapeHtml(text) + '</pre>';
+    if (truncated) {
+        html += '<p class="viewer-status">' + L(
+            'Gekürzt angezeigt — die vollständige Datei (' + formatBytes(totalBytes) + ') bekommst du über „Herunterladen".',
+            'Shown shortened — get the complete file (' + formatBytes(totalBytes) + ') via "Download".') + '</p>';
+    }
+    return html;
+}
+
+function tableBlock(rows, note) {
+    if (!rows.length) return '<p class="viewer-status">' + L('Die Tabelle ist leer.', 'The table is empty.') + '</p>';
+    const width = rows.reduce((m, r) => Math.max(m, r.length), 0);
+    const head = rows[0];
+    const bodyRows = rows.slice(1);
+    const cells = (arr, tag) => {
+        let out = '';
+        for (let i = 0; i < width; i++) out += '<' + tag + '>' + escapeHtml(arr[i] == null ? '' : arr[i]) + '</' + tag + '>';
+        return out;
+    };
+    return '<div class="viewer-sheet-wrap"><table class="viewer-sheet">' +
+        '<thead><tr>' + cells(head, 'th') + '</tr></thead>' +
+        '<tbody>' + bodyRows.map(r => '<tr>' + cells(r, 'td') + '</tr>').join('') + '</tbody>' +
+        '</table></div>' + (note || '');
+}
+
+async function renderTextualPreview(kind, meta, blob) {
+    const P = window.SchattenPreview;
+    if (!P) return noPreviewBlock(meta, L('Vorschau nicht verfügbar.', 'Preview not available.'));
+
+    if (kind === 'undecodable') {
+        const ext = P.extOf(meta.name).toUpperCase();
+        return noPreviewBlock(meta, L(
+            'Browser können ' + ext + ' nicht darstellen. Die Datei liegt unverändert im Tresor — lade sie herunter und öffne sie mit einem passenden Programm.',
+            'Browsers cannot display ' + ext + '. The file is stored unchanged in the vault — download it and open it with a suitable program.'));
+    }
+    if (kind === 'legacy-office') {
+        const ext = P.extOf(meta.name).toUpperCase();
+        return noPreviewBlock(meta, L(
+            ext + ' ist ein altes Binärformat, das sich im Browser nicht auslesen lässt. Öffne die Datei nach dem Herunterladen — oder speichere sie einmal als DOCX/XLSX, dann zeigt die Vorschau den Text.',
+            ext + ' is a legacy binary format that cannot be read in the browser. Open the file after downloading — or save it once as DOCX/XLSX and the preview will show its text.'));
+    }
+
+    const buffer = await blob.arrayBuffer();
+
+    if (kind === 'office') {
+        const ext = P.extOf(meta.name);
+        const res = await P.extractOffice(buffer, ext);
+        if (res.error === 'nodecompress') {
+            return noPreviewBlock(meta, L('Dieser Browser kann die Datei nicht entpacken (DecompressionStream fehlt).',
+                                          'This browser cannot unpack the file (DecompressionStream missing).'));
+        }
+        if (res.error) {
+            return noPreviewBlock(meta, L('Der Inhalt liess sich nicht auslesen. Die Datei liegt unverändert im Tresor.',
+                                          'The content could not be read. The file is stored unchanged in the vault.'));
+        }
+        const family = P.officeFamily(ext);
+        const labels = {
+            'word': L('Word-Dokument', 'Word document'),
+            'sheet': L('Excel-Tabelle', 'Excel spreadsheet'),
+            'slides': L('PowerPoint-Präsentation', 'PowerPoint presentation'),
+            'odf-text': L('OpenDocument-Text', 'OpenDocument text'),
+            'odf-sheet': L('OpenDocument-Tabelle', 'OpenDocument spreadsheet'),
+            'odf-slides': L('OpenDocument-Präsentation', 'OpenDocument presentation'),
+        };
+        // Label voranstellen statt einbauen: „aus einer Word-Dokument-Datei"
+        // waere doppelt gemoppelt, und ein Artikel im Satz muesste sich je
+        // nach Geschlecht des Labels aendern (einem Dokument / einer Tabelle).
+        const note = originNote(L(
+            (labels[family] || ext.toUpperCase()) + ' — Textauszug. Layout, Kopfzeilen, Bilder und Unterschriften fehlen; als Beweis zählt die Originaldatei.',
+            (labels[family] || ext.toUpperCase()) + ' — text extract. Layout, headers, images and signatures are missing; the original file is what counts as evidence.'));
+        if (res.type === 'table') {
+            const capped = res.rows.length >= P.limits.tableRows
+                ? '<p class="viewer-status">' + L('Erste ' + P.limits.tableRows + ' Zeilen.', 'First ' + P.limits.tableRows + ' rows.') + '</p>'
+                : '';
+            return note + tableBlock(res.rows, capped);
+        }
+        return note + textBlock(res.lines.join('\n'), false, meta.size);
+    }
+
+    const dec = P.decodeText(buffer);
+
+    if (kind === 'table') {
+        const delim = P.sniffDelimiter(dec.text);
+        const rows = P.parseDelimited(dec.text, delim);
+        const names = { ';': L('Semikolon', 'semicolon'), ',': L('Komma', 'comma'), '\t': L('Tabulator', 'tab'), '|': L('Strich', 'pipe') };
+        const note = originNote(L(
+            'Als Tabelle gelesen, Trennzeichen: ' + (names[delim] || delim) + ' · Zeichensatz: ' + dec.encoding,
+            'Read as a table, delimiter: ' + (names[delim] || delim) + ' · character set: ' + dec.encoding));
+        const capped = (dec.truncated || rows.length >= P.limits.tableRows)
+            ? '<p class="viewer-status">' + L('Erste ' + rows.length + ' Zeilen — vollständig über „Herunterladen".',
+                                              'First ' + rows.length + ' rows — complete file via "Download".') + '</p>'
+            : '';
+        return note + tableBlock(rows, capped);
+    }
+
+    if (kind === 'mail') {
+        const mail = P.parseEml(dec.text);
+        const head = mail.meta.map(pair =>
+            '<div class="viewer-mail-row"><span class="viewer-mail-key">' + escapeHtml(pair[0]) + '</span>' +
+            '<span class="viewer-mail-val">' + escapeHtml(pair[1]) + '</span></div>').join('');
+        const note = originNote(L(
+            'Kopfzeilen und Textteil einer E-Mail-Datei. Angehängte Dateien und HTML-Formatierung sind nicht dargestellt.',
+            'Headers and text part of an email file. Attachments and HTML formatting are not shown.'));
+        return note +
+            (head ? '<div class="viewer-mail-head">' + head + '</div>' : '') +
+            textBlock(mail.body || L('(kein Textteil gefunden)', '(no text part found)'), dec.truncated, dec.totalBytes);
+    }
+
+    if (kind === 'json') {
+        const pretty = P.prettyJson(dec.text);
+        const note = pretty
+            ? originNote(L('JSON, zur Lesbarkeit eingerückt.', 'JSON, indented for readability.'))
+            : originNote(L('Kein gültiges JSON — als reiner Text angezeigt.', 'Not valid JSON — shown as plain text.'));
+        return note + textBlock(pretty || dec.text, dec.truncated, dec.totalBytes);
+    }
+
+    if (kind === 'html') {
+        return originNote(L(
+            'Nur der Text der HTML-Datei. Sie wird bewusst nicht dargestellt, damit aus dem Tresor heraus nichts nachgeladen wird.',
+            'Only the text of the HTML file. It is deliberately not rendered so that nothing is loaded from within the vault.')) +
+            textBlock(P.stripHtml(dec.text), dec.truncated, dec.totalBytes);
+    }
+
+    if (kind === 'rtf') {
+        return originNote(L('Textauszug aus einer RTF-Datei — ohne Formatierung.',
+                            'Text extracted from an RTF file — without formatting.')) +
+            textBlock(P.stripRtf(dec.text), dec.truncated, dec.totalBytes);
+    }
+
+    if (kind === 'ical' || kind === 'xml' || kind === 'text') {
+        const note = dec.encoding === 'UTF-8' ? '' : originNote(L(
+            'Gelesen als ' + dec.encoding + ' — die Datei ist nicht UTF-8 kodiert.',
+            'Read as ' + dec.encoding + ' — the file is not UTF-8 encoded.'));
+        return note + textBlock(dec.text, dec.truncated, dec.totalBytes);
+    }
+
+    return noPreviewBlock(meta, L('Für diesen Dateityp gibt es keine Vorschau — die Datei liegt unverändert im Tresor.',
+                                  'There is no preview for this file type — the file is stored unchanged in the vault.'));
 }
 
 function closeAttachmentViewer() {
     closeModal('attachmentViewerModal');
     const body = document.getElementById('attachmentViewerBody');
-    if (body) body.innerHTML = '';   // stoppt laufende Medien und loest den Blob
+    if (body) { body.innerHTML = ''; body.classList.remove('viewer-body-doc'); }   // stoppt laufende Medien und loest den Blob
     releaseViewerUrl();
 }
 

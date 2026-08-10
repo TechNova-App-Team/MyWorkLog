@@ -45,7 +45,7 @@
     <meta name="twitter:image" content="https://myworklog.de/Grafiken/icon-512.png">
 
     <!-- Fuellt Version + "Zuletzt aktualisiert" im geteilten Footer -->
-    <script defer src="/Assets/js/version-loader.js?v=5.7.0"></script>
+    <script defer src="/Assets/js/version-loader.js?v=5.8.0"></script>
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="/Grafiken/image.jpg">
@@ -1347,9 +1347,91 @@
         .viewer-pdf { width: 100%; height: 70vh; border: 1px solid var(--border); border-radius: var(--r-3); background: var(--bg-2); }
         .viewer-media { width: 100%; max-height: 70vh; border-radius: var(--r-3); }
         .viewer-status { font-size: 0.8rem; color: var(--text-2); text-align: center; line-height: 1.6; padding: 12px; }
+        /* ── Google-Drive-Sicherung ──────────────────────────────────
+           Das Versprechen steht oben und traegt die einzige Farbe im
+           Dialog. Alles darunter bleibt bewusst grau: der Nutzer soll die
+           Aussage lesen, nicht die Knoepfe zaehlen. */
+        .drive-modal { max-width: 600px; }
+        .drive-promise { display: flex; gap: 11px; padding: 13px 15px; margin-bottom: 1.1rem;
+            background: rgba(var(--primary-rgb), 0.05); border: 1px solid rgba(var(--primary-rgb), 0.18);
+            border-radius: var(--r-3); }
+        .drive-promise > svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 2px; color: var(--primary); }
+        .drive-promise-lead { margin: 0 0 5px; font-size: 0.84rem; font-weight: 600; color: var(--text-0); line-height: 1.4; }
+        .drive-promise-body { margin: 0; font-size: 0.76rem; color: var(--text-2); line-height: 1.6; }
+        .drive-note { font-size: 0.76rem; color: var(--text-2); line-height: 1.6; margin: 0.85rem 0 0; }
+        .drive-mono { font-family: var(--font-mono); font-size: 0.95em; }
+        .drive-origin { margin: 0.5rem 0 0; padding: 8px 11px; background: var(--bg-2);
+            border: 1px solid var(--border); border-radius: var(--r-2);
+            font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-1);
+            overflow-wrap: anywhere; user-select: all; }
+        .drive-cta { display: inline-flex; align-items: center; gap: 8px; }
+        .drive-action { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .drive-last { font-size: 0.76rem; color: var(--text-2); }
+        .drive-last.is-stale { color: var(--warn, var(--text-2)); }
+        .drive-progress { margin-top: 14px; }
+        .drive-progress-track { height: 4px; border-radius: 2px; background: var(--bg-2); overflow: hidden; }
+        .drive-progress-bar { height: 100%; width: 0; background: var(--primary); transition: width 0.25s var(--ease); }
+        .drive-progress-label { display: block; margin-top: 6px; font-size: 0.72rem; color: var(--text-2);
+            font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+        .drive-list-head { margin: 1.5rem 0 0.6rem; font-size: 0.74rem; font-weight: 600; color: var(--text-2); }
+        .drive-list { border: 1px solid var(--border); border-radius: var(--r-3); overflow: hidden; }
+        .drive-empty { margin: 0; padding: 16px; font-size: 0.76rem; color: var(--text-2); line-height: 1.6; }
+        .drive-item { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            padding: 9px 12px; border-bottom: 1px solid var(--border); }
+        .drive-item:last-child { border-bottom: none; }
+        .drive-item-main { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+        .drive-item-when { font-size: 0.78rem; color: var(--text-1); }
+        .drive-item-size { font-size: 0.71rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+        .drive-item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .drive-del:hover { color: var(--danger, #f2384f); }
+        .drive-footer { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 1rem; }
+        .drive-status { margin: 1rem 0 0; padding: 10px 13px; border-radius: var(--r-2);
+            font-size: 0.76rem; line-height: 1.6; background: var(--bg-2);
+            border: 1px solid var(--border); color: var(--text-2); }
+        .drive-status.tone-success { border-color: rgba(16,185,129,0.28); color: var(--text-1); }
+        .drive-status.tone-error { border-color: rgba(242,56,79,0.3); color: var(--text-1); }
+        @media (max-width: 560px) {
+            .drive-action { align-items: stretch; flex-direction: column; }
+            .drive-cta { justify-content: center; }
+            .drive-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .drive-item-actions { width: 100%; }
+        }
+
         .viewer-file { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 12px; }
         .viewer-file-ico { display: flex; color: var(--text-2); }
         .viewer-file-ico svg { width: 40px; height: 40px; }
+
+        /* Abgeleitete Ansichten (Text, Tabelle, E-Mail). Die Herkunftszeile
+           steht bewusst ueber dem Inhalt: wer eine .docx als Text sieht, muss
+           das wissen, BEVOR er den Auszug fuer das Dokument haelt. */
+        .viewer-body.viewer-body-doc { display: block; }
+        .viewer-origin { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 12px; padding: 9px 12px;
+            background: var(--bg-2); border: 1px solid var(--border); border-left: 2px solid var(--text-2);
+            border-radius: var(--r-2); font-size: 0.74rem; line-height: 1.5; color: var(--text-2); }
+        .viewer-origin svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px; }
+        .viewer-text { max-height: 62vh; overflow: auto; margin: 0; padding: 14px 16px;
+            background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--r-3);
+            font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.65; color: var(--text-1);
+            white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; }
+        .viewer-sheet-wrap { max-height: 62vh; overflow: auto; border: 1px solid var(--border); border-radius: var(--r-3); }
+        .viewer-sheet { border-collapse: collapse; width: 100%; font-size: 0.76rem; }
+        .viewer-sheet th, .viewer-sheet td { padding: 6px 10px; text-align: left; vertical-align: top;
+            border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); white-space: pre-wrap; }
+        .viewer-sheet th { position: sticky; top: 0; background: var(--bg-2); font-weight: 600;
+            color: var(--text-1); white-space: nowrap; }
+        .viewer-sheet td { color: var(--text-1); font-variant-numeric: tabular-nums; }
+        .viewer-sheet tr:last-child td { border-bottom: none; }
+        .viewer-sheet th:last-child, .viewer-sheet td:last-child { border-right: none; }
+        .viewer-mail-head { margin-bottom: 12px; padding: 12px 14px; background: var(--bg-2);
+            border: 1px solid var(--border); border-radius: var(--r-3); display: grid; gap: 5px; }
+        .viewer-mail-row { display: grid; grid-template-columns: 84px 1fr; gap: 10px; font-size: 0.78rem; line-height: 1.5; }
+        .viewer-mail-key { color: var(--text-2); }
+        .viewer-mail-val { color: var(--text-1); overflow-wrap: anywhere; }
+        @media (max-width: 560px) {
+            .viewer-text { font-size: 0.72rem; padding: 11px 12px; }
+            .viewer-mail-row { grid-template-columns: 1fr; gap: 1px; }
+            .viewer-mail-key { font-size: 0.7rem; }
+        }
 
         /* ══ SPEICHERBELEGUNG im Tresor-Menue ══
            Zeigt an, verbietet nichts: Wie der Platz auf Fotos, PDFs und
@@ -1588,7 +1670,7 @@
             .entry-severity { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=5.7.0"></script>
+    <script defer src="/Assets/js/ph-init.js?v=5.8.0"></script>
 </head>
 <body>
 
@@ -1872,6 +1954,11 @@
                         <button class="vault-menu-item" onclick="triggerBackupImportPicker()">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9"></path><polyline points="7 8 12 3 17 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                             Backup importieren
+                        </button>
+                        <button class="vault-menu-item" onclick="openDriveModal()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            <span>Google Drive</span>
+                            <span class="vault-menu-state" id="driveMenuState">Aus</span>
                         </button>
                         <button class="vault-menu-item" onclick="openVaultCloudModal()">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .3-9 6 6 0 0 0-11.5 1.5A3.75 3.75 0 0 0 6.8 19z"></path></svg>
@@ -2360,6 +2447,78 @@
 </div>
 
 <!-- ══════════════════════════════════════════
+     GOOGLE-DRIVE-SICHERUNG
+     ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="driveModal">
+    <div class="modal drive-modal">
+        <div class="modal-head">
+            <h2>Google Drive</h2>
+            <button class="modal-close" onclick="closeModal('driveModal')" aria-label="Schließen">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+
+            <!-- Der wichtigste Satz des Dialogs steht oben, nicht im Kleingedruckten. -->
+            <div class="drive-promise">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <div>
+                    <p class="drive-promise-lead">Google bekommt eine verschlüsselte Datei — mehr nicht.</p>
+                    <p class="drive-promise-body">Hochgeladen wird derselbe Block, den auch „Backup exportieren“ erzeugt: mit deinem Tresor-Passwort verschlüsselt. Ohne dieses Passwort ist die Datei in Drive unlesbar, auch für Google und auch für uns. Die App erhält ausschließlich Zugriff auf Dateien, die sie selbst anlegt — dein übriger Drive-Inhalt bleibt unsichtbar.</p>
+                </div>
+            </div>
+
+            <!-- Zustand 1: keine Client-ID hinterlegt -->
+            <div id="driveSetup" hidden>
+                <p class="drive-note">Für die Verbindung braucht diese Seite eine OAuth-Client-ID aus der Google Cloud Console: Projekt anlegen, dann APIs &amp; Dienste → Anmeldedaten → OAuth-Client-ID für Webanwendung. Als autorisierte JavaScript-Herkunft trägst du dort ein:</p>
+                <p class="drive-origin" translate="no">https://myworklog.de</p>
+                <p class="drive-note">Die Client-ID ist kein Geheimnis — sie steht bei jeder Google-Anmeldung im Klartext und darf im Quelltext liegen.</p>
+                <div class="form-group">
+                    <label class="form-label" for="driveClientIdInput">Client-ID</label>
+                    <input type="text" class="form-input drive-mono" id="driveClientIdInput" placeholder="…apps.googleusercontent.com" autocomplete="off" spellcheck="false">
+                </div>
+                <button type="button" class="btn btn-primary" onclick="driveSaveClientId()">Client-ID speichern</button>
+            </div>
+
+            <!-- Zustand 2: konfiguriert, aber nicht verbunden -->
+            <div id="driveConnect" hidden>
+                <button type="button" class="btn btn-primary drive-cta" onclick="driveConnectClick()">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Mit Google Drive verbinden
+                </button>
+                <p class="drive-note">Google fragt dich einmal um Erlaubnis. Danach liegt die Sicherung in deinem eigenen Drive, im Ordner „MyWorkLog Schatten-Berichtsheft“.</p>
+            </div>
+
+            <!-- Zustand 3: verbunden -->
+            <div id="driveReady" hidden>
+                <div class="drive-action">
+                    <button type="button" class="btn btn-primary drive-cta" id="driveBackupBtn" onclick="driveBackupNow()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        Jetzt alles sichern
+                    </button>
+                    <span class="drive-last" id="driveLastBackup"></span>
+                </div>
+
+                <div class="drive-progress" id="driveProgress" hidden>
+                    <div class="drive-progress-track"><div class="drive-progress-bar" id="driveProgressBar"></div></div>
+                    <span class="drive-progress-label" id="driveProgressLabel"></span>
+                </div>
+
+                <h4 class="drive-list-head">Sicherungen in Drive</h4>
+                <div class="drive-list" id="driveList"></div>
+
+                <div class="drive-footer">
+                    <button type="button" class="btn btn-sm" onclick="driveRefreshList()">Liste aktualisieren</button>
+                    <button type="button" class="btn btn-sm" onclick="driveDisconnectClick()">Verbindung trennen</button>
+                </div>
+            </div>
+
+            <p class="drive-status" id="driveStatusLine" hidden></p>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
      ÄNDERUNGSVERLAUF MODAL
      ══════════════════════════════════════════ -->
 <div class="modal-overlay" id="historyModal">
@@ -2435,8 +2594,10 @@
 </script>
 <!-- Reihenfolge zwingend: vault-store.js stellt die vs*-Funktionen bereit,
      die schatten-berichtsheft.js beim Start sofort aufruft (bootVault). -->
-<script src="/Assets/js/berichtsheft/vault-store.js?v=5.7.0"></script>
-<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.7.0"></script>
+<script src="/Assets/js/berichtsheft/vault-store.js?v=5.8.0"></script>
+<script src="/Assets/js/berichtsheft/file-preview.js?v=5.8.0"></script>
+<script src="/Assets/js/berichtsheft/drive-backup.js?v=5.8.0"></script>
+<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.8.0"></script>
 <script>
 /* Theme-Sync: Standalone-Seiten laufen ausserhalb der SPA und muessen den
    User-Akzent selbst nachziehen. Greift hier erst seit dem Redesign, weil das
