@@ -267,6 +267,21 @@
     // ===== DSGVO: Feedback Data Mode =====
     let feedbackDataMode = 'minimal'; // 'minimal' or 'full'
 
+    // JS-generierte Texte erreicht die statische i18n-Pipeline nicht → lokaler Helfer
+    function sfL(de, en) { return document.documentElement.lang === 'en' ? en : de; }
+
+    // Lucide-Style Icons für die Modus-Zeile (kein Emoji im UI)
+    const FEEDBACK_MODE_ICONS = {
+        minimal: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+        full: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'
+    };
+
+    function feedbackModeInfoHTML(mode, text) {
+        return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+            + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0; margin-top:2px;">'
+            + FEEDBACK_MODE_ICONS[mode] + '</svg><span>' + text + '</span>';
+    }
+
     function setFeedbackDataMode(mode) {
         feedbackDataMode = mode;
         const minBtn = document.getElementById('feedbackModeMinimal');
@@ -275,11 +290,15 @@
         if (mode === 'minimal') {
             if (minBtn) { minBtn.style.background = 'rgba(16,185,129,0.15)'; minBtn.style.borderColor = 'rgba(16,185,129,0.3)'; minBtn.style.color = '#10b981'; }
             if (fullBtn) { fullBtn.style.background = 'rgba(255,255,255,0.03)'; fullBtn.style.borderColor = 'rgba(255,255,255,0.08)'; fullBtn.style.color = 'var(--text-muted)'; }
-            if (info) info.innerHTML = '🔒 <strong>Minimal:</strong> Nur Rating, Nachricht & Datum werden gesendet. Keine Gerätedaten.';
+            if (info) info.innerHTML = feedbackModeInfoHTML('minimal', sfL(
+                'Minimal: Nur Nachricht, Bewertung, Zeitpunkt und dein Name werden gesendet. Keine Gerätedaten, keine Statistiken.',
+                'Minimal: only your message, rating, time and name are sent. No device data, no statistics.'));
         } else {
             if (fullBtn) { fullBtn.style.background = 'rgba(var(--primary-rgb),0.15)'; fullBtn.style.borderColor = 'rgba(var(--primary-rgb),0.3)'; fullBtn.style.color = 'var(--primary)'; }
             if (minBtn) { minBtn.style.background = 'rgba(255,255,255,0.03)'; minBtn.style.borderColor = 'rgba(255,255,255,0.08)'; minBtn.style.color = 'var(--text-muted)'; }
-            if (info) info.innerHTML = '📊 <strong>Vollständig:</strong> Rating, Nachricht, Nutzungsstatistiken, Einstellungen & Gerätedaten werden gesendet. Hilft uns, MyWorkLog zu verbessern.';
+            if (info) info.innerHTML = feedbackModeInfoHTML('full', sfL(
+                'Vollständig: Zusätzlich Nutzungsstatistiken, App-Einstellungen und Gerätedaten. Nie einzelne Einträge, Notizen oder das Schatten-Berichtsheft.',
+                'Full: additionally usage statistics, app settings and device data. Never individual entries, notes or the shadow report book.'));
         }
     }
 
@@ -362,65 +381,98 @@
         };
     }
 
+    // Klarnamen für die Datenvorschau — Schlüssel = Feldname in buildFeedbackData(), Wert = [DE, EN]
+    const FEEDBACK_FIELD_LABELS = {
+        email: ['Empfänger', 'Recipient'], message: ['Nachricht', 'Message'], rating: ['Bewertung', 'Rating'],
+        rating_emoji: ['Bewertung (Symbol)', 'Rating (symbol)'], from_name: ['Name', 'Name'], date: ['Datum & Uhrzeit', 'Date & time'],
+        data_mode: ['Datenmodus', 'Data mode'], user_name: ['Name (App-Einstellung)', 'Name (app setting)'],
+        total_entries: ['Einträge gesamt', 'Entries total'], total_hours: ['Stunden gesamt', 'Hours total'],
+        total_saldo: ['Saldo gesamt', 'Balance total'], total_work_days: ['Arbeitstage', 'Working days'],
+        total_school_days: ['Schultage', 'School days'], total_vacation_days: ['Urlaubstage', 'Vacation days'],
+        total_sick_days: ['Krankheitstage', 'Sick days'], total_holiday_days: ['Feiertage', 'Public holidays'],
+        year: ['Jahr', 'Year'], year_entries: ['Einträge (Jahr)', 'Entries (year)'], year_hours: ['Stunden (Jahr)', 'Hours (year)'],
+        year_saldo: ['Saldo (Jahr)', 'Balance (year)'], year_work_days: ['Arbeitstage (Jahr)', 'Working days (year)'],
+        year_school_days: ['Schultage (Jahr)', 'School days (year)'],
+        avg_hours: ['Stunden pro Tag', 'Hours per day'], weekly_soll: ['Wöchentliches Soll', 'Weekly target'],
+        best_weekday: ['Produktivster Wochentag', 'Most productive weekday'], best_weekday_hours: ['Stunden an dem Tag', 'Hours on that day'],
+        active_months: ['Aktive Monate', 'Active months'], break_threshold: ['Pausenschwelle', 'Break threshold'],
+        first_entry: ['Erster Eintrag', 'First entry'], last_entry: ['Letzter Eintrag', 'Last entry'],
+        days_using_app: ['Tage seit erstem Eintrag', 'Days since first entry'], current_streak: ['Streak', 'Streak'],
+        vacation_total: ['Urlaub gesamt', 'Vacation total'], vacation_used: ['Urlaub verbraucht', 'Vacation used'],
+        vacation_remaining: ['Urlaub übrig', 'Vacation remaining'],
+        custom_types_count: ['Eigene Eintragsarten', 'Custom entry types'], feedback_count: ['Bisherige Feedbacks', 'Feedback sent so far'],
+        feature_request_count: ['Bisherige Feature-Anfragen', 'Feature requests so far'],
+        theme_color: ['Theme-Farbe', 'Theme color'], theme_mode: ['Theme-Modus', 'Theme mode'],
+        screen_size: ['Bildschirmgröße', 'Screen size'], viewport: ['Viewport', 'Viewport'],
+        platform: ['Plattform', 'Platform'], language: ['Sprache', 'Language'],
+        timezone: ['Zeitzone', 'Time zone'], online: ['Online', 'Online'],
+        touch_device: ['Touch-Gerät', 'Touch device'], pixel_ratio: ['Pixeldichte', 'Pixel density'],
+        user_agent: ['Browserkennung (User Agent)', 'Browser identification (user agent)'],
+    };
+
     function showFeedbackDataPreview() {
         const previewData = buildFeedbackData(
             document.getElementById('supportFeedbackText')?.value?.trim() || '(Deine Nachricht)',
             data.supportRating || 0
         );
+        const isFull = feedbackDataMode === 'full';
+        const modeName = isFull ? sfL('Vollständig', 'Full') : sfL('Minimal', 'Minimal');
+        const escVal = (typeof esc === 'function') ? esc : (s => String(s));
         const lines = Object.entries(previewData).map(([k, v]) => {
-            const label = {
-                email: '📧 Empfänger', message: '💬 Nachricht', rating: '⭐ Bewertung',
-                rating_emoji: '😊 Emoji', from_name: '👤 Name', date: '📅 Datum',
-                data_mode: '📊 Datenmodus', user_name: '👤 Benutzername',
-                total_entries: '📋 Einträge gesamt', total_hours: '⏱️ Stunden gesamt',
-                total_saldo: '📈 Saldo gesamt', total_work_days: '💼 Arbeitstage',
-                total_school_days: '🎓 Schultage', total_vacation_days: '🏖️ Urlaubstage',
-                total_sick_days: '🤒 Krankheitstage', total_holiday_days: '🎉 Feiertage',
-                year: '📅 Jahr', year_entries: '📋 Einträge (Jahr)', year_hours: '⏱️ Stunden (Jahr)',
-                year_saldo: '📈 Saldo (Jahr)', year_work_days: '💼 Arbeit (Jahr)',
-                year_school_days: '🎓 Schule (Jahr)',
-                avg_hours: '⌀ Stunden/Tag', weekly_soll: '📐 Wöchentl. Soll',
-                best_weekday: '🏆 Produktivster Tag', best_weekday_hours: '🏆 Std. an dem Tag',
-                active_months: '📆 Aktive Monate', break_threshold: '⏸️ Pausenschwelle',
-                first_entry: '📅 Erster Eintrag', last_entry: '📅 Letzter Eintrag',
-                days_using_app: '📆 Tage aktiv', current_streak: '🔥 Streak',
-                vacation_total: '🏖️ Urlaub gesamt', vacation_used: '✈️ Urlaub verbraucht',
-                vacation_remaining: '✅ Urlaub übrig',
-                custom_types_count: '🎨 Eigene Typen', feedback_count: '💬 Feedbacks',
-                feature_request_count: '💡 Feature Requests',
-                theme_color: '🎨 Theme Farbe', theme_mode: '🌙 Theme Modus',
-                screen_size: '🖥️ Bildschirm', viewport: '📐 Viewport',
-                platform: '💻 Platform', language: '🌐 Sprache',
-                timezone: '🕐 Zeitzone', online: '📶 Online',
-                touch_device: '👆 Touch', pixel_ratio: '🔍 Pixel Ratio',
-                user_agent: '🌐 User Agent',
-            };
-            const displayKey = label[k] || k;
-            const displayVal = (k === 'message') ? '(Dein Text)' : (k === 'email') ? '(Entwickler)' : v;
-            return `<tr><td style="padding:4px 8px; font-size:0.72rem; color:var(--text-muted); white-space:nowrap;">${displayKey}</td><td style="padding:4px 8px; font-size:0.72rem; color:var(--text-main); word-break:break-all; font-family:var(--font-mono);">${displayVal}</td></tr>`;
+            const pair = FEEDBACK_FIELD_LABELS[k];
+            const displayKey = pair ? sfL(pair[0], pair[1]) : k;
+            const displayVal = (k === 'message')
+                ? (isFull
+                    ? sfL('(Deine Nachricht + die Werte aus dieser Tabelle als Text)', '(Your message + the values from this table as text)')
+                    : sfL('(Deine Nachricht)', '(Your message)'))
+                : (k === 'email') ? sfL('(Entwickler)', '(Developer)') : escVal(v);
+            return '<tr><td>' + escVal(displayKey) + '</td><td>' + displayVal + '</td></tr>';
         }).join('');
 
         const count = Object.keys(previewData).length;
         const html = `
-            <div style="max-height:60vh; overflow-y:auto; margin-top:12px;">
-                <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:12px;">
-                    📊 <strong>${count} Datenfelder</strong> werden im <strong>${feedbackDataMode === 'full' ? 'Vollständig' : 'Minimal'}</strong>-Modus gesendet:
-                </div>
-                <table style="width:100%; border-collapse:collapse;">
-                    <thead><tr>
-                        <th style="text-align:left; padding:6px 8px; font-size:0.7rem; color:var(--primary); border-bottom:1px solid rgba(var(--primary-rgb),0.2); text-transform:uppercase; letter-spacing:1px;">Feld</th>
-                        <th style="text-align:left; padding:6px 8px; font-size:0.7rem; color:var(--primary); border-bottom:1px solid rgba(var(--primary-rgb),0.2); text-transform:uppercase; letter-spacing:1px;">Wert</th>
-                    </tr></thead>
+            <div class="fdp-intro">
+                ${sfL('Im Modus <strong>' + modeName + '</strong> werden <strong>' + count + ' Felder</strong> gesendet — hier mit deinen echten Werten:',
+                      '<strong>' + count + ' fields</strong> are sent in <strong>' + modeName + '</strong> mode — shown here with your real values:')}
+            </div>
+            <div class="fdp-table-wrap">
+                <table class="fdp-table">
+                    <thead><tr><th>${sfL('Feld', 'Field')}</th><th>${sfL('Wert', 'Value')}</th></tr></thead>
                     <tbody>${lines}</tbody>
                 </table>
             </div>
-            <div style="margin-top:16px; padding:10px 14px; background:rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.15); border-radius:10px; font-size:0.72rem; color:var(--text-muted); line-height:1.5;">
-                🔒 Daten werden verschlüsselt über <strong>EmailJS</strong> (HTTPS) an den Entwickler gesendet. Keine Speicherung bei Drittanbietern über die E-Mail-Zustellung hinaus.
-                <br>📄 <a href="Pages/DE-Gestz/DSGVO.html" target="_blank" style="color:var(--primary);">Datenschutzerklärung lesen</a>
+            <div class="fdp-note">
+                ${sfL('Einzelne Zeiteinträge, Notizen, Projektnamen und das Schatten-Berichtsheft sind nie dabei — auch nicht im Modus „Vollständig“.',
+                      'Individual time entries, notes, project names and the shadow report book are never included — not even in “Full” mode.')}
+                <br>${sfL('Die Übertragung läuft verschlüsselt über EmailJS (HTTPS) direkt an den Entwickler.',
+                          'The transfer runs encrypted via EmailJS (HTTPS) straight to the developer.')}
+                <br><a href="/DSGVO/" target="_blank">${sfL('Datenschutzerklärung lesen', 'Read the privacy policy')}</a>
             </div>
         `;
-        showCustomMessage('👁️ Datenvorschau — ' + (feedbackDataMode === 'full' ? 'Vollständig' : 'Minimal'), html, 'info');
+
+        const modal = document.getElementById('feedbackDataPreviewModal');
+        if (!modal) return;
+        const modeEl = document.getElementById('fdpMode');
+        const bodyEl = document.getElementById('fdpBody');
+        if (modeEl) modeEl.textContent = modeName;
+        if (bodyEl) { bodyEl.innerHTML = html; bodyEl.scrollTop = 0; }
+        // Inline-display schlägt jede .active-Klasse → beides setzen
+        modal.style.display = 'flex';
+        modal.classList.add('active');
     }
+
+    function closeFeedbackDataPreview() {
+        const modal = document.getElementById('feedbackDataPreviewModal');
+        if (!modal) return;
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const modal = document.getElementById('feedbackDataPreviewModal');
+        if (modal && modal.style.display !== 'none') closeFeedbackDataPreview();
+    });
 
     function supportSendFeedback() {
         const text = document.getElementById('supportFeedbackText');
