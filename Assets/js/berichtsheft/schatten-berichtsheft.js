@@ -1335,6 +1335,13 @@ function driveRenderState() {
     connect.hidden = !D.isConfigured() || D.isConnected();
     ready.hidden = !D.isConnected();
 
+    // Google prueft die Herkunft exakt. Was hier steht, muss deshalb die
+    // Adresse sein, unter der die Seite gerade wirklich laeuft — sonst
+    // traegt der Nutzer einen Wert ein, der zu seinem Aufruf nicht passt,
+    // und bekommt „Fehler 400: origin_mismatch" ohne zu erkennen, warum.
+    const originEl = driveEl('driveOriginValue');
+    if (originEl) originEl.textContent = location.origin;
+
     if (D.isConnected()) {
         const last = D.lastBackupAt();
         const rel = driveRelTime(last);
@@ -1707,6 +1714,19 @@ function updateDriveMenuState() {
     const rel = driveRelTime(D.lastBackupAt());
     el.textContent = rel || L('Nie', 'Never');
     el.classList.toggle('is-on', !!rel);
+}
+
+// Kopieren statt abtippen: ein Schrägstrich am Ende oder ein fehlendes
+// „s" in https reicht fuer origin_mismatch, und die Fehlermeldung von
+// Google sagt nicht, welcher Teil nicht passt.
+async function driveCopyOrigin() {
+    try {
+        await navigator.clipboard.writeText(location.origin);
+        showToast(L('Adresse kopiert — in der Cloud Console unter „Autorisierte JavaScript-Quellen" einfügen',
+                    'Address copied — paste it under “Authorised JavaScript origins” in the Cloud Console'), 'success');
+    } catch (e) {
+        showToast(L('Kopieren nicht möglich', 'Could not copy'), 'error');
+    }
 }
 
 // ═════════════════════════════════════════

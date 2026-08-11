@@ -45,7 +45,7 @@
     <meta name="twitter:image" content="https://myworklog.de/Grafiken/icon-512.png">
 
     <!-- Fuellt Version + "Zuletzt aktualisiert" im geteilten Footer -->
-    <script defer src="/Assets/js/version-loader.js?v=5.9.0"></script>
+    <script defer src="/Assets/js/version-loader.js?v=5.9.1"></script>
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="/Grafiken/image.jpg">
@@ -1425,6 +1425,8 @@
             border: 1px solid var(--border); border-radius: var(--r-2);
             font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-1);
             overflow-wrap: anywhere; user-select: all; }
+        .drive-origin-copy { margin-top: 8px; }
+        .drive-origin-copy svg { width: 14px; height: 14px; }
         .drive-cta { display: inline-flex; align-items: center; gap: 8px; }
         .drive-action { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
         .drive-last { font-size: 0.76rem; color: var(--text-2); }
@@ -1731,7 +1733,7 @@
             .entry-severity { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=5.9.0"></script>
+    <script defer src="/Assets/js/ph-init.js?v=5.9.1"></script>
 </head>
 <body>
 
@@ -2569,7 +2571,17 @@
             <!-- Zustand 1: keine Client-ID hinterlegt -->
             <div id="driveSetup" hidden>
                 <p class="drive-note">Für die Verbindung braucht diese Seite eine OAuth-Client-ID aus der Google Cloud Console: Projekt anlegen, dann APIs &amp; Dienste → Anmeldedaten → OAuth-Client-ID für Webanwendung. Als autorisierte JavaScript-Herkunft trägst du dort ein:</p>
-                <p class="drive-origin" translate="no">https://myworklog.de</p>
+                <!-- Muss die Adresse zeigen, auf der die Seite WIRKLICH läuft.
+                     Ein fest eingetragenes „https://myworklog.de" führt bei
+                     jedem anderen Aufruf (lokal, Vorschau-Deploy, www-Variante)
+                     direkt zu Fehler 400: origin_mismatch — Google vergleicht
+                     exakt, inklusive Schema und Port. -->
+                <p class="drive-origin" id="driveOriginValue" translate="no">https://myworklog.de</p>
+                <button type="button" class="btn btn-sm drive-origin-copy" onclick="driveCopyOrigin()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <span>Adresse kopieren</span>
+                </button>
+                <p class="drive-note">Genau so, ohne Schrägstrich am Ende, und in das Feld „Autorisierte JavaScript-Quellen“ — nicht in „Autorisierte Weiterleitungs-URIs“. Rufst du die Seite auch von woanders auf, braucht jede Adresse einen eigenen Eintrag. Passt der Wert nicht, meldet Google „Fehler 400: origin_mismatch“.</p>
                 <p class="drive-note">Die Client-ID ist kein Geheimnis — sie steht bei jeder Google-Anmeldung im Klartext und darf im Quelltext liegen.</p>
                 <div class="form-group">
                     <label class="form-label" for="driveClientIdInput">Client-ID</label>
@@ -2692,11 +2704,11 @@
 </script>
 <!-- Reihenfolge zwingend: vault-store.js stellt die vs*-Funktionen bereit,
      die schatten-berichtsheft.js beim Start sofort aufruft (bootVault). -->
-<script src="/Assets/js/berichtsheft/vault-store.js?v=5.9.0"></script>
-<script src="/Assets/js/berichtsheft/vault-journal.js?v=5.9.0"></script>
-<script src="/Assets/js/berichtsheft/file-preview.js?v=5.9.0"></script>
-<script src="/Assets/js/berichtsheft/drive-backup.js?v=5.9.0"></script>
-<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.9.0"></script>
+<script src="/Assets/js/berichtsheft/vault-store.js?v=5.9.1"></script>
+<script src="/Assets/js/berichtsheft/vault-journal.js?v=5.9.1"></script>
+<script src="/Assets/js/berichtsheft/file-preview.js?v=5.9.1"></script>
+<script src="/Assets/js/berichtsheft/drive-backup.js?v=5.9.1"></script>
+<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.9.1"></script>
 <script>
 /* Theme-Sync: Standalone-Seiten laufen ausserhalb der SPA und muessen den
    User-Akzent selbst nachziehen. Greift hier erst seit dem Redesign, weil das
