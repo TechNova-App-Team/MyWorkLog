@@ -1372,6 +1372,12 @@ async function driveConnectClick() {
         } else if (msg.indexOf('popup') >= 0) {
             driveSetStatus(L('Das Google-Fenster wurde blockiert oder geschlossen. Popups für diese Seite erlauben und erneut versuchen.',
                              'The Google window was blocked or closed. Allow pop-ups for this site and try again.'), 'error');
+        } else if (msg.indexOf('access_denied') >= 0) {
+            // Googles eigene Meldung ("Überprüfung nicht abgeschlossen") klingt
+            // nach einem Verfahren, das man durchlaufen muss. Es ist keins: der
+            // Zustimmungsbildschirm steht schlicht noch auf Testbetrieb.
+            driveSetStatus(L('Google lässt nur eingetragene Testnutzer zu, weil dein Projekt noch auf „Testbetrieb“ steht — auch dich selbst nicht. In der Cloud Console unter „Google Auth Platform → Zielgruppe“ entweder dein Konto als Testnutzer eintragen oder „App veröffentlichen“ wählen. Eine Überprüfung durch Google ist dafür nicht nötig.',
+                             'Google only admits listed test users because your project is still in “Testing” mode — including you. In the Cloud Console under “Google Auth Platform → Audience”, either add your account as a test user or choose “Publish app”. No Google review is required for this.'), 'error');
         } else {
             driveSetStatus(L('Verbindung nicht zustande gekommen: ' + msg, 'Connection failed: ' + msg), 'error');
         }
