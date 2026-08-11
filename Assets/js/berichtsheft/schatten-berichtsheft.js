@@ -724,6 +724,7 @@ async function unlockVault(password) {
     }
 
     await loadCustomCategories();
+    await loadJournal();
 
     if (!vaultMeta.caseId) {
         vaultMeta.caseId = generateCaseId();
@@ -978,6 +979,44 @@ async function saveCustomCategories() {
     await vsPutCategories(await encrypt(JSON.stringify(customCategories), derivedKey));
 }
 
+// ─── Ereignis-Journal ───────────────────────────────────
+// Die Kette (vault-journal.js) liegt verschluesselt neben den Eintraegen.
+// Ein fehlendes Journal ist KEIN Fehler: Tresore aus der Zeit vor v5.9.0
+// haben keins, und die Pruefung sagt das dann auch so. Ein KAPUTTES Journal
+// darf das Entsperren ebenso wenig verhindern wie kaputte Kategorien — die
+// Beweismittel sind das Wertvolle, die Kette ist die Zugabe.
+let vaultJournal = [];
+
+async function loadJournal() {
+    vaultJournal = [];
+    try {
+        const rec = await vsGetJournal();
+        if (!rec) return;
+        const parsed = JSON.parse(await decrypt(rec, derivedKey));
+        if (Array.isArray(parsed)) vaultJournal = parsed;
+    } catch (e) {
+        console.warn('[Tresor] Journal nicht lesbar:', e && e.name);
+    }
+}
+
+async function saveJournal() {
+    if (!derivedKey) return;
+    await vsPutJournal(await encrypt(JSON.stringify(vaultJournal), derivedKey));
+}
+
+// Ereignis anhaengen, OHNE zu speichern — der Aufrufer haelt eine Rollback-
+// Kopie und schreibt erst, wenn saveVault() durchgelaufen ist. Faellt das
+// Journal aus (alter Browser ohne crypto.subtle), laeuft der Tresor normal
+// weiter: eine fehlende Kette ist besser als ein verweigerter Eintrag.
+async function journalRecord(action, entry) {
+    if (!window.VaultJournal || !VaultJournal.available()) return;
+    try {
+        vaultJournal = await VaultJournal.append(vaultJournal, action, entry);
+    } catch (e) {
+        console.warn('[Tresor] Journal-Eintrag fehlgeschlagen:', e && e.name);
+    }
+}
+
 async function saveVault() {
     if (!derivedKey || !vaultMeta) return;
     // Kein automatisches Kuerzen bei vollem Speicher (anders als das
@@ -986,6 +1025,7 @@ async function saveVault() {
     // hinzugefuegte Aenderung rueckgaengig.
     await vsPutEntries(await encrypt(JSON.stringify(entries), derivedKey));
     await saveCustomCategories();
+    await saveJournal();
     // Zeitstempel entscheidet beim naechsten Start, welche Seite neuer ist
     // (Geraet oder Cloud-Kopie) — ohne ihn kann der Abgleich nur raten.
     vaultMeta.updatedAt = new Date().toISOString();
@@ -1097,9 +1137,14 @@ async function buildBackupBlob(onProgress) {
     // dem Einspielen stuenden die betroffenen Vorfaelle unter „Sonstiges",
     // und die selbst gewaehlte Einordnung waere nicht wiederherstellbar.
     const catRec = await vsGetCategories();
+    // Ohne das Journal waere die Sicherung zwar inhaltlich vollstaendig, aber
+    // die Kette risse beim Einspielen ab — nach einer Wiederherstellung
+    // stuende jeder Eintrag als „nicht protokolliert" da, und genau der
+    // Nachweis, um den es geht, waere weg.
+    const jrnRec = await vsGetJournal();
     const head = {
         format: 'mwl-schatten-backup',
-        v: 2,
+        v: 3,
         exportedAt: new Date().toISOString(),
         caseId: vaultMeta.caseId,
         salt: vaultMeta.salt,
@@ -1107,7 +1152,8 @@ async function buildBackupBlob(onProgress) {
         wrappedKey: vaultMeta.wrappedKey || null,
         timeBasis: vaultMeta.timeBasis || null,
         entries: entriesRec ? { iv: entriesRec.iv, data: entriesRec.data } : null,
-        categories: catRec ? { iv: catRec.iv, data: catRec.data } : null
+        categories: catRec ? { iv: catRec.iv, data: catRec.data } : null,
+        journal: jrnRec ? { iv: jrnRec.iv, data: jrnRec.data } : null
     };
     const parts = [JSON.stringify(head).slice(0, -1) + ',"files":['];
 
@@ -1192,6 +1238,12 @@ async function applyBackupObject(parsed) {
         // schlicht weg — dann gibt es eben keine.
         if (parsed.categories && parsed.categories.iv && parsed.categories.data) {
             await vsPutCategories(parsed.categories);
+        }
+        // Ebenso bei Sicherungen aus der Zeit vor dem Journal (Format v2 und
+        // aelter): dann gibt es keine Kette, und die Pruefung sagt das auch so,
+        // statt einen Bruch zu behaupten, den es nie gab.
+        if (parsed.journal && parsed.journal.iv && parsed.journal.data) {
+            await vsPutJournal(parsed.journal);
         }
 
         for (const f of (parsed.files || [])) {
@@ -1657,6 +1709,140 @@ function updateDriveMenuState() {
     el.classList.toggle('is-on', !!rel);
 }
 
+// ═════════════════════════════════════════
+//  CHRONIK-PRUEFUNG (Hash-Kette)
+// ═════════════════════════════════════════
+
+let journalLastHead = '';
+
+async function openJournalModal() {
+    const menu = document.getElementById('vaultMenu');
+    if (menu) menu.classList.remove('open');
+    openModal('journalModal');
+    const box = document.getElementById('journalResult');
+    if (!box) return;
+    box.innerHTML = '<p class="viewer-status">' + L('Wird geprüft …', 'Checking …') + '</p>';
+    journalLastHead = '';
+
+    if (!window.VaultJournal || !VaultJournal.available()) {
+        box.innerHTML = journalVerdict('empty',
+            L('Prüfung nicht verfügbar', 'Check not available'),
+            L('Dieser Browser stellt die nötigen Krypto-Funktionen nicht bereit.',
+              'This browser does not provide the required crypto functions.'));
+        return;
+    }
+
+    let res;
+    try {
+        res = await VaultJournal.verify(vaultJournal, entries);
+    } catch (e) {
+        box.innerHTML = journalVerdict('broken', L('Prüfung fehlgeschlagen', 'Check failed'),
+            L('Die Kette liess sich nicht lesen.', 'The chain could not be read.'));
+        return;
+    }
+    journalLastHead = res.head || '';
+    box.innerHTML = journalRender(res);
+    updateJournalMenuState(res);
+}
+
+function journalVerdict(tone, lead, body) {
+    const icons = {
+        ok:     '<path d="M9 12l2 2 4-4"></path><circle cx="12" cy="12" r="9"></circle>',
+        broken: '<path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>',
+        empty:  '<circle cx="12" cy="12" r="9"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path>'
+    };
+    return '<div class="journal-verdict is-' + tone + '">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+        (icons[tone] || icons.empty) + '</svg>' +
+        '<div><p class="journal-verdict-lead">' + lead + '</p>' +
+        '<p class="journal-verdict-body">' + body + '</p></div></div>';
+}
+
+// Der Befund wird ausgesprochen, nicht bepunktet. Reihenfolge nach Schwere:
+// ein Kettenbruch macht jede weitere Aussage hinfaellig und steht deshalb
+// allein da.
+function journalRender(res) {
+    if (!res.total) {
+        return journalVerdict('empty', L('Noch keine Chronik', 'No chain yet'),
+            L('Sobald du den ersten Eintrag anlegst, beginnt die Kette. Für Einträge, die es vorher schon gab, lässt sie sich nicht rückwirkend bilden — das wäre genau die nachträgliche Konstruktion, gegen die sie hilft.',
+              'The chain starts with your first entry. It cannot be built retroactively for entries that already existed — that would be exactly the after-the-fact construction it guards against.'));
+    }
+
+    if (res.chainBreak) {
+        return journalVerdict('broken', L('Die Kette ist unterbrochen', 'The chain is broken'),
+            L('Ab Ereignis ' + res.chainBreak.at + ' passt die Verkettung nicht mehr. Das heisst: am Protokoll selbst wurde etwas verändert. Ein Backup von vor diesem Zeitpunkt ist der einzige Weg zurück.',
+              'From event ' + res.chainBreak.at + ' onward the chain no longer matches. Something was altered in the log itself. A backup from before that point is the only way back.'));
+    }
+
+    const findings = [];
+    if (res.changed.length) {
+        findings.push(['hard', L(
+            res.changed.length + ' Eintrag' + (res.changed.length > 1 ? 'e wurden' : ' wurde') + ' verändert, ohne dass es protokolliert ist.',
+            res.changed.length + ' entr' + (res.changed.length > 1 ? 'ies were' : 'y was') + ' changed without being logged.')]);
+    }
+    if (res.vanished.length) {
+        findings.push(['hard', L(
+            res.vanished.length + ' protokollierte' + (res.vanished.length > 1 ? ' Einträge sind' : 'r Eintrag ist') + ' verschwunden, ohne gelöscht worden zu sein.',
+            res.vanished.length + ' logged entr' + (res.vanished.length > 1 ? 'ies have' : 'y has') + ' vanished without being deleted.')]);
+    }
+    if (res.unlogged.length) {
+        findings.push(['soft', L(
+            res.unlogged.length + ' Eintrag' + (res.unlogged.length > 1 ? 'e stehen' : ' steht') + ' ohne Protokoll da. Normal nach dem Einspielen eines Backups oder bei Einträgen aus der Zeit vor der Chronik.',
+            res.unlogged.length + ' entr' + (res.unlogged.length > 1 ? 'ies have' : 'y has') + ' no log record. Normal after importing a backup, or for entries predating the chain.')]);
+    }
+
+    const head = '<div class="journal-head-box">' +
+        '<span class="journal-head-label">' + L('Kettenkopf', 'Chain head') + '</span>' +
+        '<span class="journal-head-value">' + escapeHtml(res.headShort) + '</span></div>';
+
+    if (!findings.length) {
+        return journalVerdict('ok', L('Kette vollständig', 'Chain complete'),
+            L(res.total + ' Ereignisse lückenlos verkettet — jeder Eintrag steht so da, wie er protokolliert wurde.',
+              res.total + ' events chained without a gap — every entry matches its log record.')) + head;
+    }
+
+    const list = '<ul class="journal-findings">' + findings.map(function (f) {
+        return '<li class="journal-finding"><span class="journal-mark is-' + f[0] + '"></span><span>' + f[1] + '</span></li>';
+    }).join('') + '</ul>';
+
+    const hard = findings.some(function (f) { return f[0] === 'hard'; });
+    return journalVerdict(hard ? 'broken' : 'empty',
+        hard ? L('Abweichungen gefunden', 'Discrepancies found') : L('Kette intakt, mit Anmerkungen', 'Chain intact, with notes'),
+        hard ? L('Die Verkettung selbst ist unversehrt, aber der aktuelle Bestand passt nicht überall dazu.',
+                 'The chain itself is unharmed, but the current contents do not match it everywhere.')
+             : L('Die Verkettung ist unversehrt. Die Anmerkungen unten haben in aller Regel eine harmlose Erklärung.',
+                 'The chain is unharmed. The notes below usually have a harmless explanation.')) + head + list;
+}
+
+function updateJournalMenuState(res) {
+    const el = document.getElementById('journalMenuState');
+    if (!el) return;
+    if (!res) { el.textContent = vaultJournal.length ? String(vaultJournal.length) : '—'; return; }
+    el.textContent = res.ok ? L('Intakt', 'Intact') : (res.chainBreak ? L('Bruch', 'Broken') : L('Prüfen', 'Check'));
+    el.classList.toggle('is-on', !!res.ok);
+}
+
+async function copyJournalHead() {
+    if (!journalLastHead) {
+        showToast(L('Noch kein Kettenkopf vorhanden', 'No chain head yet'), 'error');
+        return;
+    }
+    // Mit Fall-Nummer und Datum: der Kopf allein sagt einem Dritten nichts,
+    // und genau als Beleg gegenueber Dritten ist er gedacht.
+    const text = L('MyWorkLog Schatten-Berichtsheft — Kettenkopf\nFall: ', 'MyWorkLog shadow report book — chain head\nCase: ') +
+        (getCaseId() || '—') + '\n' +
+        L('Stand: ', 'As of: ') + new Date().toLocaleString(mwlLocale()) + '\n' +
+        L('Ereignisse: ', 'Events: ') + vaultJournal.length + '\n' +
+        journalLastHead;
+    try {
+        await navigator.clipboard.writeText(text);
+        showToast(L('Kettenkopf kopiert — schick ihn dir selbst oder zeig ihn jemandem',
+                    'Chain head copied — send it to yourself or show it to someone'), 'success');
+    } catch (e) {
+        showToast(L('Kopieren nicht möglich', 'Could not copy'), 'error');
+    }
+}
+
 // Speicheranzeige. Zeigt bewusst BEIDE Zahlen: was der Tresor belegt und
 // was der Browser insgesamt zugesteht. Es gibt keine kuenstliche Grenze —
 // wie der Platz auf Fotos, PDFs und Videos verteilt wird, entscheidet der
@@ -2052,7 +2238,14 @@ function renderAttachmentThumbs() {
 let viewerObjectUrl = null;
 
 function releaseViewerUrl() {
-    if (viewerObjectUrl) { URL.revokeObjectURL(viewerObjectUrl); viewerObjectUrl = null; }
+    if (!viewerObjectUrl) return;
+    // Verzoegert freigeben statt sofort: wer die Datei per „In neuem Tab
+    // oeffnen" startet und den Betrachter gleich danach schliesst, haette
+    // sonst einen Tab, der ins Leere laedt. Der Speicher wird trotzdem
+    // freigegeben, nur eine Minute spaeter.
+    const url = viewerObjectUrl;
+    viewerObjectUrl = null;
+    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
 }
 
 async function loadAttachmentBlob(id) {
@@ -2106,11 +2299,7 @@ async function openAttachmentViewer(id) {
         return;
     }
     if (kind === 'pdf') {
-        // <object> statt <iframe>: faellt bei fehlendem PDF-Betrachter auf
-        // den inneren Inhalt zurueck, statt ein leeres Rechteck zu zeigen.
-        body.innerHTML = '<object data="' + viewerObjectUrl + '" type="application/pdf" class="viewer-pdf">' +
-            '<p class="viewer-status">' + L('Dieser Browser zeigt keine PDFs an — nutze „Herunterladen".',
-                                            'This browser cannot display PDFs — use "Download".') + '</p></object>';
+        body.innerHTML = pdfBlock(meta);
         return;
     }
     if (kind === 'audio') {
@@ -2144,6 +2333,42 @@ function originNote(text) {
     return '<p class="viewer-origin">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>' +
         '<span>' + text + '</span></p>';
+}
+
+// Ein Knopf, der die Datei dem Betriebssystem uebergibt. Auf Geraeten ohne
+// eingebetteten PDF-Betrachter ist das der einzige Weg, das Dokument
+// ueberhaupt zu sehen — er darf deshalb nie fehlen.
+function openInTabButton() {
+    return '<a class="viewer-open-tab" href="' + viewerObjectUrl + '" target="_blank" rel="noopener">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>' +
+        '<span>' + L('In neuem Tab öffnen', 'Open in new tab') + '</span></a>';
+}
+
+// Mobile Browser (Android Chrome, iOS Safari) haben keinen eingebetteten
+// PDF-Betrachter. <object> laedt die Datei dort zwar erfolgreich, kann sie
+// aber nicht zeichnen — und weil das LADEN geklappt hat, greift der innere
+// Fallback des <object> genau dann NICHT. Sichtbar bleibt ein leeres graues
+// Rechteck, das von einem Absturz nicht zu unterscheiden ist. Gemessen:
+// fallbackRendered = 0px. navigator.pdfViewerEnabled sagt uns das vorher,
+// und der Ausweg steht auch dort, wo die Einbettung klappt (aeltere Browser
+// kennen das Flag nicht und melden undefined).
+function pdfBlock(meta) {
+    if (navigator.pdfViewerEnabled === false) {
+        return '<div class="viewer-file">' +
+            '<span class="viewer-file-ico">' + ATT_ICONS.pdf + '</span>' +
+            '<p class="viewer-status">' + escapeHtml(meta.name) + ' · ' + formatBytes(meta.size) + '</p>' +
+            '<p class="viewer-status">' + L(
+                'Dieser Browser kann PDFs nicht direkt anzeigen. Öffne die Datei in einem neuen Tab — dort übernimmt der PDF-Betrachter des Geräts.',
+                'This browser cannot display PDFs inline. Open the file in a new tab, where the device’s PDF viewer takes over.') + '</p>' +
+            openInTabButton() +
+        '</div>';
+    }
+    // Eigener Wrapper: .viewer-body ist eine zentrierte Flex-Zeile, zwei
+    // Geschwister landeten dort nebeneinander statt untereinander.
+    return '<div class="viewer-pdf-wrap">' +
+        '<object data="' + viewerObjectUrl + '" type="application/pdf" class="viewer-pdf"></object>' +
+        openInTabButton() +
+    '</div>';
 }
 
 function noPreviewBlock(meta, reason) {
@@ -2289,6 +2514,19 @@ async function renderTextualPreview(kind, meta, blob) {
             'Gelesen als ' + dec.encoding + ' — die Datei ist nicht UTF-8 kodiert.',
             'Read as ' + dec.encoding + ' — the file is not UTF-8 encoded.'));
         return note + textBlock(dec.text, dec.truncated, dec.totalBytes);
+    }
+
+    // Letzte Stufe: Name und MIME-Typ haben nichts hergegeben, also entscheidet
+    // der Inhalt. Eine Datei ohne Endung ("Abmahnung", "protokoll") ist sehr
+    // oft schlicht Text — die vorschnelle Absage war der haeufigste Grund
+    // dafuer, dass eine Datei sich nicht ansehen liess.
+    if (P.looksTextual(buffer)) {
+        return originNote(L(
+            'Kein bekannter Dateityp — der Inhalt ist lesbarer Text und wird als solcher gezeigt' +
+                (dec.encoding === 'UTF-8' ? '.' : ', gelesen als ' + dec.encoding + '.'),
+            'Unknown file type — the content is readable text and is shown as such' +
+                (dec.encoding === 'UTF-8' ? '.' : ', read as ' + dec.encoding + '.'))) +
+            textBlock(dec.text, dec.truncated, dec.totalBytes);
     }
 
     return noPreviewBlock(meta, L('Für diesen Dateityp gibt es keine Vorschau — die Datei liegt unverändert im Tresor.',
@@ -2521,6 +2759,7 @@ async function saveEntry() {
     // Rollback-Kopie fuer den Fall, dass saveVault() an der Speicher-Quota scheitert —
     // Beweismittel duerfen dann nicht still verschwinden (siehe Plan: kein automatisches Kuerzen).
     const beforeEntries = entries.map(e => Object.assign({}, e));
+    const beforeJournal = vaultJournal.slice();
 
     if (editId) {
         const idx = entries.findIndex(e => e.id === editId);
@@ -2542,6 +2781,7 @@ async function saveEntry() {
             if (basisOverride) updated.timeBasis = basisOverride; else delete updated.timeBasis;
             updated.contentHash = await contentFingerprint(updated);
             entries[idx] = updated;
+            await journalRecord('update', updated);
         }
     } else {
         const newEntry = {
@@ -2559,12 +2799,14 @@ async function saveEntry() {
         if (basisOverride) newEntry.timeBasis = basisOverride;
         newEntry.contentHash = await contentFingerprint(newEntry);
         entries.push(newEntry);
+        await journalRecord('create', newEntry);
     }
 
     try {
         await saveVault();
     } catch (e) {
         entries = beforeEntries;
+        vaultJournal = beforeJournal;
         showToast(L('Speichern fehlgeschlagen — exportiere zur Sicherheit ein Backup',
                     'Saving failed — export a backup to be safe'), 'error');
         return;
@@ -2579,6 +2821,11 @@ async function saveEntry() {
 function confirmDelete(id) {
     openModal('deleteModal');
     document.getElementById('confirmDeleteBtn').onclick = async () => {
+        // Ereignis VOR dem Entfernen: danach ist der Eintrag aus `entries`
+        // raus und es gaebe nichts mehr, worauf sich das Protokoll bezieht.
+        // Ein geloeschter Eintrag bleibt so in der Kette nachweisbar — dass
+        // etwas da war, laesst sich nicht mehr wegwischen.
+        await journalRecord('delete', { id: id });
         entries = entries.filter(e => e.id !== id);
         await saveVault();
         await cleanupUnusedFiles();   // Anhaenge des Eintrags mit entfernen

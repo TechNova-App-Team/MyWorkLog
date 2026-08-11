@@ -45,7 +45,7 @@
     <meta name="twitter:image" content="https://myworklog.de/Grafiken/icon-512.png">
 
     <!-- Fuellt Version + "Zuletzt aktualisiert" im geteilten Footer -->
-    <script defer src="/Assets/js/version-loader.js?v=5.8.0"></script>
+    <script defer src="/Assets/js/version-loader.js?v=5.9.0"></script>
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/png" href="/Grafiken/image.jpg">
@@ -1347,6 +1347,67 @@
         .viewer-pdf { width: 100%; height: 70vh; border: 1px solid var(--border); border-radius: var(--r-3); background: var(--bg-2); }
         .viewer-media { width: 100%; max-height: 70vh; border-radius: var(--r-3); }
         .viewer-status { font-size: 0.8rem; color: var(--text-2); text-align: center; line-height: 1.6; padding: 12px; }
+        /* Der Ausweg fuer Geraete ohne eingebetteten PDF-Betrachter. Steht
+           auch dann da, wo die Einbettung klappt — aeltere Browser melden
+           navigator.pdfViewerEnabled gar nicht, und ein leeres Rechteck ohne
+           sichtbaren Ausweg ist der schlechteste aller Zustaende. */
+        .viewer-pdf-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; }
+        .viewer-open-tab {
+            display: inline-flex; align-items: center; gap: 7px;
+            margin-top: 4px; padding: 8px 14px;
+            border: 1px solid var(--border); border-radius: var(--r-2);
+            background: transparent; color: var(--text-1);
+            font-family: var(--font-body); font-size: 0.82rem; font-weight: 500;
+            text-decoration: none; white-space: nowrap;
+            transition: all 0.2s var(--ease);
+        }
+        .viewer-open-tab svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .viewer-open-tab:hover { border-color: rgba(var(--primary-rgb), 0.5); color: var(--primary); }
+        .viewer-open-tab:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2); }
+        /* ── Chronik-Prüfung ─────────────────────────────────────────
+           Zwei Zustände plus ein Neutral, nicht mehr: „Kette intakt" und
+           „Kette hat einen Befund" sind das Einzige, was hier binär ist.
+           Die Schwere der Befunde trägt deshalb FORM (gefüllter Punkt =
+           schwer, Ring = erklärbar), nicht eine dritte und vierte Farbe —
+           eine fünfstufige Farbrampe bestünde die ΔE-Prüfung ohnehin nicht. */
+        .journal-modal { max-width: 560px; }
+        .journal-verdict { display: flex; gap: 12px; align-items: flex-start;
+            padding: 14px 16px; border-radius: var(--r-3); border: 1px solid var(--border);
+            background: var(--bg-2); margin-bottom: 1rem; }
+        .journal-verdict > svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+        .journal-verdict.is-ok { border-color: rgba(16,185,129,0.3); }
+        .journal-verdict.is-ok > svg { color: #10b981; }
+        .journal-verdict.is-broken { border-color: rgba(var(--sev-critical-rgb), 0.35); }
+        .journal-verdict.is-broken > svg { color: var(--sev-critical); }
+        .journal-verdict.is-empty > svg { color: var(--text-2); }
+        .journal-verdict-lead { margin: 0 0 4px; font-size: 0.86rem; font-weight: 600; color: var(--text-0); line-height: 1.4; }
+        .journal-verdict-body { margin: 0; font-size: 0.78rem; color: var(--text-2); line-height: 1.6; }
+
+        .journal-head-box { margin: 0 0 1rem; padding: 11px 13px; background: var(--bg-2);
+            border: 1px solid var(--border); border-radius: var(--r-2); }
+        .journal-head-label { display: block; font-size: 0.7rem; text-transform: uppercase;
+            letter-spacing: 0.06em; color: var(--text-2); margin-bottom: 5px; }
+        .journal-head-value { font-family: var(--font-mono); font-size: 0.86rem; color: var(--text-0);
+            word-break: break-all; line-height: 1.5; }
+
+        .journal-findings { list-style: none; margin: 0 0 1rem; padding: 0;
+            border: 1px solid var(--border); border-radius: var(--r-3); overflow: hidden; }
+        .journal-finding { display: flex; gap: 11px; align-items: flex-start; padding: 11px 14px;
+            border-bottom: 1px solid var(--border); font-size: 0.78rem; line-height: 1.6; color: var(--text-1); }
+        .journal-finding:last-child { border-bottom: none; }
+        /* Gefüllt = die Kette selbst ist verletzt. Ring = auffällig, aber mit
+           einer harmlosen Erklärung (Import, Zusammenführung). */
+        .journal-mark { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+        .journal-mark.is-hard { background: var(--sev-critical); }
+        .journal-mark.is-soft { border: 1.5px solid var(--text-2); }
+        .journal-finding-count { font-family: var(--font-mono); color: var(--text-2); }
+
+        .journal-honest { padding: 13px 15px; background: var(--bg-1);
+            border: 1px solid var(--border); border-radius: var(--r-3); }
+        .journal-honest-lead { margin: 0 0 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-1); }
+        .journal-honest-body { margin: 0 0 8px; font-size: 0.76rem; color: var(--text-2); line-height: 1.65; }
+        .journal-honest-body:last-child { margin-bottom: 0; }
+
         /* ── Google-Drive-Sicherung ──────────────────────────────────
            Das Versprechen steht oben und traegt die einzige Farbe im
            Dialog. Alles darunter bleibt bewusst grau: der Nutzer soll die
@@ -1670,7 +1731,7 @@
             .entry-severity { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=5.8.0"></script>
+    <script defer src="/Assets/js/ph-init.js?v=5.9.0"></script>
 </head>
 <body>
 
@@ -1954,6 +2015,11 @@
                         <button class="vault-menu-item" onclick="triggerBackupImportPicker()">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9"></path><polyline points="7 8 12 3 17 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
                             Backup importieren
+                        </button>
+                        <button class="vault-menu-item" onclick="openJournalModal()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c2.4 0 4.58.94 6.19 2.47"></path></svg>
+                            <span>Chronik prüfen</span>
+                            <span class="vault-menu-state" id="journalMenuState">—</span>
                         </button>
                         <button class="vault-menu-item" onclick="openDriveModal()">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
@@ -2447,6 +2513,38 @@
 </div>
 
 <!-- ══════════════════════════════════════════
+     CHRONIK-PRÜFUNG (Hash-Kette)
+     ══════════════════════════════════════════ -->
+<div class="modal-overlay" id="journalModal">
+    <div class="modal journal-modal">
+        <div class="modal-head">
+            <h2>Chronik prüfen</h2>
+            <button class="modal-close" onclick="closeModal('journalModal')" aria-label="Schließen">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="journalResult" class="journal-result">
+                <p class="viewer-status">Wird geprüft …</p>
+            </div>
+
+            <!-- Die Grenzen stehen im Dialog, nicht im Kleingedruckten: ein
+                 Nachweis, dessen Reichweite man falsch einschätzt, ist
+                 schlimmer als gar keiner. -->
+            <div class="journal-honest">
+                <p class="journal-honest-lead">Was diese Prüfung aussagt</p>
+                <p class="journal-honest-body">Jeder angelegte, geänderte und gelöschte Eintrag bekommt den Fingerabdruck seines Vorgängers eingerechnet. Wird nachträglich etwas verändert, entfernt oder dazwischengeschoben, passt die Kette ab dieser Stelle nicht mehr — das ist unten sichtbar.</p>
+                <p class="journal-honest-body">Sie ersetzt keine Beglaubigung. Wer dein Tresor-Passwort hat, kann die Kette komplett neu rechnen, und die Uhr deines Geräts ist frei einstellbar. Belastbar wird der Nachweis erst, wenn du den Kettenkopf früh aus dem Haus gibst: an die JAV mailen, abfotografieren, deiner Vertrauensperson zeigen. Ab diesem Zeitpunkt steht fest, wie deine Chronik damals aussah.</p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn" onclick="closeModal('journalModal')">Schließen</button>
+            <button class="btn sb-btn-primary" onclick="copyJournalHead()">Kettenkopf kopieren</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════
      GOOGLE-DRIVE-SICHERUNG
      ══════════════════════════════════════════ -->
 <div class="modal-overlay" id="driveModal">
@@ -2594,10 +2692,11 @@
 </script>
 <!-- Reihenfolge zwingend: vault-store.js stellt die vs*-Funktionen bereit,
      die schatten-berichtsheft.js beim Start sofort aufruft (bootVault). -->
-<script src="/Assets/js/berichtsheft/vault-store.js?v=5.8.0"></script>
-<script src="/Assets/js/berichtsheft/file-preview.js?v=5.8.0"></script>
-<script src="/Assets/js/berichtsheft/drive-backup.js?v=5.8.0"></script>
-<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.8.0"></script>
+<script src="/Assets/js/berichtsheft/vault-store.js?v=5.9.0"></script>
+<script src="/Assets/js/berichtsheft/vault-journal.js?v=5.9.0"></script>
+<script src="/Assets/js/berichtsheft/file-preview.js?v=5.9.0"></script>
+<script src="/Assets/js/berichtsheft/drive-backup.js?v=5.9.0"></script>
+<script src="/Assets/js/berichtsheft/schatten-berichtsheft.js?v=5.9.0"></script>
 <script>
 /* Theme-Sync: Standalone-Seiten laufen ausserhalb der SPA und muessen den
    User-Akzent selbst nachziehen. Greift hier erst seit dem Redesign, weil das

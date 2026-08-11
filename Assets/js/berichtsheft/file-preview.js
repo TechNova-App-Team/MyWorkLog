@@ -23,6 +23,7 @@
     const TEXT_CHAR_LIMIT = 400000;            // danach abschneiden
     const TABLE_ROW_LIMIT = 500;
     const ZIP_MEMBER_LIMIT = 24 * 1024 * 1024; // entpackte Groesse je ZIP-Eintrag
+    const SNIFF_BYTES = 4096;                  // Probe fuer "ist das Text?"
 
     // ── Endungs-Tabellen ──────────────────────────────────────────────
     // Verankert (^…$), sonst matcht "js" auch "json" — dieselbe Falle wie
@@ -94,6 +95,27 @@
         if (kind === 'image' || kind === 'pdf' || kind === 'audio' || kind === 'video') return kind;
         if (kind === 'generic' || kind === 'undecodable') return 'generic';
         return 'doc';
+    }
+
+    // ── Inhalts-Schnueffelei ──────────────────────────────────────────
+    // detectKind() kennt nur Name und MIME-Typ. Beides fehlt haeufiger als
+    // man denkt: was ein Azubi vom Handy weiterleitet oder aus einem Chat
+    // sichert, heisst gern "Abmahnung" oder "protokoll" ganz ohne Endung und
+    // kommt als application/octet-stream an. Solche Dateien landeten bisher
+    // auf "generic" und damit bei "keine Vorschau" — obwohl reiner Text
+    // drinsteht. Deshalb entscheidet am Ende der Inhalt: kein NUL-Byte und
+    // fast keine Steuerzeichen heisst lesbarer Text.
+    function looksTextual(buffer) {
+        const bytes = new Uint8Array(buffer);
+        const n = Math.min(bytes.length, SNIFF_BYTES);
+        if (n === 0) return false;
+        let ctrl = 0;
+        for (let i = 0; i < n; i++) {
+            const b = bytes[i];
+            if (b === 0) return false;                     // NUL = sicher binaer
+            if (b < 9 || (b > 13 && b < 32) || b === 127) ctrl++;
+        }
+        return ctrl / n < 0.02;
     }
 
     // ── Text-Dekodierung ──────────────────────────────────────────────
@@ -545,6 +567,7 @@
         detectKind: detectKind,
         iconKey: iconKey,
         decodeText: decodeText,
+        looksTextual: looksTextual,
         extractOffice: extractOffice,
         sniffDelimiter: sniffDelimiter,
         parseDelimited: parseDelimited,

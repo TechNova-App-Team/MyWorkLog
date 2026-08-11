@@ -190,6 +190,20 @@ async function vsPutCategories(cipher) {
     return vsTx(VS_ENTRIES, 'readwrite', s => s.put(rec));
 }
 
+// Ereignis-Journal (vault-journal.js): dritter Datensatz im selben Store,
+// aus demselben Grund wie die Kategorien — kein neuer Store, keine DB-
+// Versionserhoehung, und eine aeltere App-Version uebersieht ihn einfach.
+async function vsGetJournal() {
+    if (vsUsingFallback) return vsFbGet(VS_ENTRIES, 'journal');
+    return (await vsTx(VS_ENTRIES, 'readonly', s => s.get('journal'))) || null;
+}
+
+async function vsPutJournal(cipher) {
+    const rec = { k: 'journal', iv: cipher.iv, data: cipher.data };
+    if (vsUsingFallback) return vsFbPut(VS_ENTRIES, 'journal', rec);
+    return vsTx(VS_ENTRIES, 'readwrite', s => s.put(rec));
+}
+
 // Datei ablegen. `meta` = {id,name,mime,size,createdAt,thumb?}, `cipherBuf` =
 // ArrayBuffer der verschluesselten Bytes, `iv` = Uint8Array.
 // Bytes zuerst, Metadaten danach: bricht der grosse Schreibvorgang ab, steht
