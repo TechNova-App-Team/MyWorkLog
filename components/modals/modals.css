@@ -1,5 +1,9 @@
         /* --- MODAL --- */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 200; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
+        /* KEIN backdrop-filter: blur() — der Overlay ist mit 0.88 praktisch deckend,
+           der Blur war unsichtbar, kostete aber pro Invalidierung ein Re-Blur des
+           GESAMTEN Viewports (inkl. der ~110 backdrop-filter-Elemente dahinter).
+           Das machte jeden Repaint im Modal (Hover/Scroll) zum Frame-Drop. */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 200; justify-content: center; align-items: center; }
         .modal.active { display: flex !important; animation: fadeIn 0.2s ease; }
 
 
