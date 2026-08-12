@@ -2,9 +2,12 @@
     window._clsBC = 'settings.js-start';
 
     function openSettings() {
+        // Stoppe den Live-Earnings-Ticker um CPU zu sparen
+        if (typeof stopLiveEarnings === 'function') stopLiveEarnings();
+
         document.getElementById('settingsModal').classList.add('active');
         switchSettingsTab('profile'); // Standardmäßig auf Profile Tab
-        
+
         document.getElementById('confName').value = data.settings.name;
         // Job
         const confJobEl = document.getElementById('confJob');
@@ -129,7 +132,11 @@
         try { if (typeof renderJobManager === 'function') renderJobManager(); } catch(e) { console.warn('renderJobManager error', e); }
     }
 
-    function closeSettings() { saveSettings(); }
+    function closeSettings() {
+        saveSettings();
+        // Starte den Live-Earnings-Ticker wieder wenn die Settings geschlossen werden
+        if (typeof updateLiveEarnings === 'function') updateLiveEarnings();
+    }
 
     function saveSettings() {
         data.settings.name = document.getElementById('confName').value;
