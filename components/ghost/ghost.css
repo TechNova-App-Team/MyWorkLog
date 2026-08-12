@@ -1,0 +1,836 @@
+/* ═══════════════════════════════════════════════════════════════
+   GHOST MODE — Boss-Key-Skins
+
+   AUSNAHME von der Projektregel "keine festen Hex-Werte":
+   Diese Datei ahmt fremde Programme nach. Excel-Gruen (#217346) und die
+   VS-Code-Palette (#1e1e1e / #007acc) sind Teil der Tarnung — wuerde hier
+   var(--primary) stehen, hiesse das: Wer Orange als Akzent gewaehlt hat,
+   bekommt ein oranges Excel. Genau das faellt auf.
+   Ausserhalb der beiden Overlays gilt die Regel weiter (Panic-Button unten).
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════
+   SKIN 1 — Tabellenkalkulation
+   ══════════════════════════════════════════ */
+#ghostModeOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: #f0f0f0;
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+    color: #1a1a1a;
+    flex-direction: column;
+    overflow: hidden;
+    cursor: default;
+    user-select: none;
+}
+#ghostModeOverlay.active { display: flex; }
+
+/* ── Titelleiste ── */
+.ghost-titlebar {
+    background: #217346;
+    color: #fff;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    flex-shrink: 0;
+    font-size: 12px;
+}
+.ghost-qat { display: flex; align-items: center; gap: 2px; }
+.ghost-qat-btn {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    opacity: 0.9;
+}
+.ghost-qat-btn svg { width: 13px; height: 13px; }
+.ghost-qat-btn:hover { background: rgba(255,255,255,0.15); }
+.ghost-qat-dim { opacity: 0.4; }
+.ghost-doc-title {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    opacity: 0.95;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 12px;
+}
+.ghost-win-btns { display: flex; height: 30px; }
+.ghost-win-btn {
+    width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.9);
+}
+.ghost-win-btn svg { width: 10px; height: 10px; }
+.ghost-win-btn:hover { background: rgba(255,255,255,0.15); }
+.ghost-win-close:hover { background: #e81123; }
+
+/* ── Menuebandreiter ── */
+.ghost-ribbon-tabs {
+    background: #217346;
+    display: flex;
+    align-items: flex-end;
+    height: 26px;
+    padding-left: 4px;
+    flex-shrink: 0;
+    font-size: 12px;
+    overflow: hidden;
+}
+.ghost-rt {
+    padding: 4px 11px;
+    color: rgba(255,255,255,0.92);
+    border-radius: 3px 3px 0 0;
+    white-space: nowrap;
+    line-height: 18px;
+}
+.ghost-rt:hover { background: rgba(255,255,255,0.14); }
+.ghost-rt-file { background: #1a5c38; }
+.ghost-rt-active,
+.ghost-rt-active:hover { background: #fff; color: #217346; font-weight: 600; }
+
+/* ── Menueband ── */
+.ghost-ribbon {
+    background: #fff;
+    border-bottom: 1px solid #d4d4d4;
+    display: flex;
+    align-items: stretch;
+    padding: 3px 6px 0;
+    height: 84px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+.ghost-rg {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0 8px;
+    border-right: 1px solid #e6e6e6;
+}
+.ghost-rg:last-child { border-right: none; }
+.ghost-rg-body { display: flex; align-items: center; gap: 3px; flex: 1; }
+.ghost-rg-col { flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; }
+.ghost-rg-row { display: flex; align-items: center; gap: 3px; }
+.ghost-rg-label {
+    font-size: 10px;
+    color: #666;
+    text-align: center;
+    padding-bottom: 3px;
+    white-space: nowrap;
+}
+.ghost-rb {
+    background: none;
+    border: 1px solid transparent;
+    color: #333;
+    font-size: 11px;
+    font-family: inherit;
+    padding: 3px 6px;
+    border-radius: 3px;
+    cursor: default;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+.ghost-rb svg { width: 14px; height: 14px; }
+.ghost-rb:hover { background: #e8f2ec; border-color: #b8d6c6; }
+.ghost-rb-big {
+    flex-direction: column;
+    gap: 3px;
+    padding: 5px 10px;
+    font-size: 11px;
+}
+.ghost-rb-big svg { width: 22px; height: 22px; }
+.ghost-rb-sq { min-width: 24px; height: 24px; justify-content: center; padding: 0 5px; }
+.ghost-rb-sep { width: 1px; height: 18px; background: #e0e0e0; margin: 0 3px; }
+.ghost-rf-name, .ghost-rf-size {
+    border: 1px solid #d0d0d0;
+    background: #fff;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    color: #333;
+}
+.ghost-rf-name { min-width: 68px; }
+.ghost-rf-wide { min-width: 82px; }
+.ghost-rf-size { min-width: 30px; text-align: center; }
+.ghost-sigma { font-size: 14px; font-weight: 700; color: #217346; line-height: 1; }
+
+/* ── Bearbeitungsleiste ── */
+.ghost-formula-bar {
+    background: #fff;
+    border-bottom: 1px solid #d0d0d0;
+    display: flex;
+    align-items: center;
+    padding: 3px 6px;
+    height: 26px;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+.ghost-cell-ref {
+    background: #fff;
+    border: 1px solid #c0c0c0;
+    padding: 2px 8px;
+    min-width: 78px;
+    font-size: 11px;
+    text-align: left;
+    color: #333;
+    border-radius: 2px;
+}
+.ghost-fb-sep { width: 1px; height: 16px; background: #d0d0d0; margin: 0 7px; }
+.ghost-fx { color: #888; margin-right: 8px; font-style: italic; font-size: 11px; }
+.ghost-formula-input {
+    flex: 1;
+    border: 1px solid transparent;
+    border-left: 1px solid #d0d0d0;
+    padding: 2px 8px;
+    font-size: 12px;
+    color: #1a1a1a;
+    background: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+/* ── Raster ── */
+.ghost-sheet-wrap {
+    flex: 1;
+    overflow: auto;
+    background: #fff;
+    contain: layout paint style;
+}
+.ghost-sheet {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: max-content;
+    min-width: 100%;
+    font-size: 12px;
+    table-layout: fixed;
+}
+.ghost-sheet th {
+    background: #f3f3f3;
+    border-right: 1px solid #d0d0d0;
+    border-bottom: 1px solid #d0d0d0;
+    padding: 3px 6px;
+    font-weight: 400;
+    color: #444;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    text-align: center;
+    font-size: 11px;
+    height: 20px;
+}
+.ghost-sheet th.ghost-col-active { background: #d3e3da; color: #1a5c38; font-weight: 600; }
+.ghost-sheet th.ghost-row-head,
+.ghost-sheet th.ghost-corner {
+    position: sticky;
+    left: 0;
+    min-width: 38px;
+    width: 38px;
+}
+.ghost-sheet th.ghost-corner { z-index: 4; }
+.ghost-sheet td {
+    border-right: 1px solid #e2e2e2;
+    border-bottom: 1px solid #e2e2e2;
+    padding: 2px 6px;
+    color: #1a1a1a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 21px;
+    max-width: 0;
+}
+/* Excel richtet Zahlen und Datumsangaben rechts aus, Text links.
+   Fehlt das, wirkt die Tabelle sofort wie ein Nachbau. */
+.ghost-sheet td.ghost-num { text-align: right; }
+.ghost-sheet td.ghost-bold { font-weight: 700; }
+.ghost-sheet td.ghost-row-num {
+    background: #f3f3f3;
+    border-right: 1px solid #d0d0d0;
+    text-align: center;
+    color: #444;
+    font-size: 11px;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    width: 38px;
+    max-width: 38px;
+}
+.ghost-sheet td.ghost-row-active { background: #d3e3da; color: #1a5c38; font-weight: 600; }
+.ghost-sheet td.ghost-in-range { background: rgba(33,115,70,0.09); }
+.ghost-sheet td.ghost-selected {
+    outline: 2px solid #217346;
+    outline-offset: -2px;
+    background: #fff;
+    position: relative;
+    overflow: visible;
+}
+.ghost-sheet td.ghost-selected.ghost-in-range { background: #fff; }
+/* Ausfuellkaestchen unten rechts an der Auswahl */
+.ghost-sheet td.ghost-selected::after {
+    content: '';
+    position: absolute;
+    right: -3px;
+    bottom: -3px;
+    width: 6px;
+    height: 6px;
+    background: #217346;
+    border: 1px solid #fff;
+    z-index: 3;
+}
+.ghost-sheet td.ghost-editing {
+    outline: 2px solid #217346;
+    outline-offset: -2px;
+    background: #fff;
+    overflow: visible;
+    text-overflow: clip;
+    cursor: text;
+    user-select: text;
+}
+.ghost-sheet td.ghost-editing::after { display: none; }
+
+/* ── Blattregister ── */
+.ghost-sheet-tabs {
+    background: #f0f0f0;
+    border-top: 1px solid #d0d0d0;
+    display: flex;
+    align-items: stretch;
+    height: 26px;
+    flex-shrink: 0;
+    padding-left: 6px;
+    font-size: 11px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.ghost-sheet-tabs::-webkit-scrollbar { display: none; }
+.ghost-st {
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    color: #444;
+    border-right: 1px solid #d8d8d8;
+    white-space: nowrap;
+    cursor: default;
+}
+.ghost-st:hover { background: #e6e6e6; }
+.ghost-st-active {
+    background: #fff;
+    color: #217346;
+    font-weight: 600;
+    border-top: 2px solid #217346;
+    padding-top: 0;
+}
+.ghost-st-add { color: #666; padding: 0 10px; }
+
+/* ── Statusleiste ── */
+.ghost-statusbar {
+    background: #217346;
+    color: #fff;
+    padding: 0 14px;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    height: 24px;
+    flex-shrink: 0;
+}
+.ghost-sb-mode { opacity: 0.9; }
+.ghost-sb-stats { margin-left: auto; opacity: 0.95; letter-spacing: 0.01em; }
+.ghost-sb-zoom { opacity: 0.85; }
+
+@media (max-width: 900px) {
+    .ghost-rg-hide-sm { display: none; }
+    .ghost-ribbon { height: 72px; }
+    .ghost-rt { padding: 4px 8px; }
+}
+@media (max-width: 640px) {
+    .ghost-ribbon { display: none; }
+    .ghost-doc-title { font-size: 11px; }
+}
+
+/* ══════════════════════════════════════════
+   SKIN 2 — Code-Editor
+   ══════════════════════════════════════════ */
+#ghostModeVSCode {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: #1e1e1e;
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    color: #cccccc;
+    flex-direction: column;
+    overflow: hidden;
+    cursor: default;
+    user-select: none;
+}
+#ghostModeVSCode.active { display: flex; }
+
+.vsc-titlebar {
+    background: #323233;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+.vsc-titlebar-left { display: flex; padding-left: 8px; }
+.vsc-menu-item {
+    padding: 4px 8px;
+    color: rgba(255,255,255,0.75);
+    border-radius: 4px;
+    white-space: nowrap;
+}
+.vsc-menu-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.vsc-titlebar-center {
+    flex: 1;
+    text-align: center;
+    color: rgba(255,255,255,0.55);
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 12px;
+}
+.vsc-titlebar-right { display: flex; }
+.vsc-win-btn {
+    width: 46px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.7);
+}
+.vsc-win-btn svg { width: 10px; height: 10px; }
+.vsc-win-btn:hover { background: rgba(255,255,255,0.08); }
+.vsc-win-btn.vsc-close:hover { background: #e81123; color: #fff; }
+
+.vsc-main { flex: 1; display: flex; overflow: hidden; }
+
+.vsc-activitybar {
+    width: 48px;
+    background: #333333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 0;
+    flex-shrink: 0;
+}
+.vsc-act-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.55;
+    border-left: 2px solid transparent;
+    position: relative;
+}
+.vsc-act-icon svg { width: 24px; height: 24px; }
+.vsc-act-icon:hover { opacity: 0.85; }
+.vsc-act-icon.vsc-act-active { opacity: 1; border-left-color: #fff; }
+.vsc-act-bottom { margin-top: auto; }
+.vsc-act-badged::after {
+    content: attr(data-badge);
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    min-width: 15px;
+    height: 15px;
+    border-radius: 8px;
+    background: #007acc;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+.vsc-sidebar {
+    width: 240px;
+    background: #252526;
+    flex-shrink: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+.vsc-sidebar-title {
+    padding: 10px 20px 6px;
+    font-size: 11px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.6);
+    flex-shrink: 0;
+}
+.vsc-tree { font-size: 13px; padding-bottom: 12px; }
+.vsc-tree-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 12px 1px 0;
+    color: rgba(255,255,255,0.72);
+    white-space: nowrap;
+    height: 22px;
+    border: 1px solid transparent;
+}
+.vsc-tree-row:hover { background: rgba(255,255,255,0.05); }
+.vsc-tree-row.vsc-tree-active { background: #37373d; color: #fff; }
+.vsc-editor-area:focus-within .vsc-tree-row.vsc-tree-active { background: #04395e; }
+.vsc-tree-chev {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    opacity: 0.75;
+    transition: transform 0.12s ease;
+}
+.vsc-tree-row.vsc-open > .vsc-tree-chev { transform: rotate(90deg); }
+.vsc-tree-ico { width: 15px; height: 15px; flex-shrink: 0; }
+.vsc-tree-children { display: none; }
+.vsc-tree-children.vsc-open { display: block; }
+
+.vsc-editor-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+.vsc-tabs {
+    display: flex;
+    background: #252526;
+    height: 35px;
+    flex-shrink: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.vsc-tabs::-webkit-scrollbar { display: none; }
+.vsc-tab {
+    padding: 0 10px 0 12px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.5);
+    border-right: 1px solid #252526;
+    white-space: nowrap;
+    background: #2d2d2d;
+    position: relative;
+}
+.vsc-tab:hover { background: #333;  }
+.vsc-tab.vsc-tab-active { background: #1e1e1e; color: #fff; }
+.vsc-tab.vsc-tab-active::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: #007acc;
+}
+.vsc-tab-icon { font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 2px; color: #fff; }
+.vsc-ti-ts { background: #3178c6; }
+.vsc-ti-js { background: #cbb723; color: #1e1e1e; }
+.vsc-ti-json { background: #8b8b8b; }
+.vsc-tab-close {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    opacity: 0;
+    margin-left: 2px;
+    flex-shrink: 0;
+}
+.vsc-tab-close svg { width: 9px; height: 9px; }
+.vsc-tab:hover .vsc-tab-close,
+.vsc-tab.vsc-tab-active .vsc-tab-close { opacity: 0.7; }
+.vsc-tab-close:hover { background: rgba(255,255,255,0.12); opacity: 1; }
+
+.vsc-breadcrumbs {
+    height: 22px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 18px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    background: #1e1e1e;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.vsc-bc-sep { opacity: 0.5; }
+
+.vsc-editor-body { flex: 1; display: flex; min-height: 0; background: #1e1e1e; }
+.vsc-editor {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0 40vh;
+    font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 19px;
+    min-width: 0;
+    outline: none;
+}
+.vsc-line { display: flex; min-height: 19px; padding-right: 16px; }
+.vsc-line-num {
+    width: 56px;
+    text-align: right;
+    padding-right: 20px;
+    color: rgba(255,255,255,0.24);
+    flex-shrink: 0;
+    user-select: none;
+}
+.vsc-line-code { white-space: pre; flex: 1; min-width: 0; }
+.vsc-line.vsc-active-line { background: rgba(255,255,255,0.045); }
+.vsc-line.vsc-active-line .vsc-line-num { color: rgba(255,255,255,0.62); }
+
+/* Minimap: pro Zeile ein Balken, Breite aus der Zeilenlaenge, Farbe aus dem
+   ersten Token — reicht optisch voellig und kostet kein Canvas. */
+.vsc-minimap {
+    width: 74px;
+    flex-shrink: 0;
+    background: #1e1e1e;
+    padding: 4px 6px 0 2px;
+    overflow: hidden;
+    border-left: 1px solid rgba(255,255,255,0.04);
+}
+.vsc-mm-line { height: 2px; margin-bottom: 1px; border-radius: 1px; opacity: 0.55; }
+
+/* Syntaxfarben — VS Code Dark+ */
+.vsc-kw   { color: #c586c0; }
+.vsc-fn   { color: #dcdcaa; }
+.vsc-str  { color: #ce9178; }
+.vsc-num  { color: #b5cea8; }
+.vsc-cmt  { color: #6a9955; }
+.vsc-type { color: #4ec9b0; }
+.vsc-var  { color: #9cdcfe; }
+.vsc-op   { color: #d4d4d4; }
+.vsc-tag  { color: #569cd6; }
+.vsc-attr { color: #92c5f7; }
+.vsc-dec  { color: #4fc1ff; }
+
+/* Panel / Terminal */
+.vsc-panel {
+    display: none;
+    flex-direction: column;
+    height: 34%;
+    min-height: 120px;
+    background: #1e1e1e;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    flex-shrink: 0;
+}
+.vsc-panel.vsc-panel-open { display: flex; }
+.vsc-panel-tabs {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 0 14px;
+    height: 34px;
+    flex-shrink: 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.vsc-pt { color: rgba(255,255,255,0.45); padding: 8px 0 6px; border-bottom: 1px solid transparent; white-space: nowrap; }
+.vsc-pt:hover { color: rgba(255,255,255,0.75); }
+.vsc-pt-active { color: #fff; border-bottom-color: #e7e7e7; }
+.vsc-panel-close {
+    margin-left: auto;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: rgba(255,255,255,0.6);
+}
+.vsc-panel-close svg { width: 9px; height: 9px; }
+.vsc-panel-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.vsc-terminal {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2px 16px 12px;
+    font-family: 'Cascadia Code', Consolas, 'Courier New', monospace;
+    font-size: 12.5px;
+    line-height: 18px;
+    color: #cccccc;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.vsc-t-path  { color: #4ec9b0; }
+.vsc-t-br    { color: #ce9178; }
+.vsc-t-ok    { color: #23d18b; }
+.vsc-t-warn  { color: #e5e510; }
+.vsc-t-dim   { color: rgba(255,255,255,0.45); }
+.vsc-t-info  { color: #29b8db; }
+
+.vsc-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 15px;
+    background: #cccccc;
+    vertical-align: text-bottom;
+    animation: vscCursorBlink 1.05s step-end infinite;
+}
+.vsc-caret {
+    display: inline-block;
+    width: 2px;
+    height: 15px;
+    margin: 0 -1px;
+    background: #aeafad;
+    vertical-align: text-bottom;
+    animation: vscCursorBlink 1.05s step-end infinite;
+}
+@keyframes vscCursorBlink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}
+
+.vsc-statusbar {
+    height: 22px;
+    background: #007acc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.92);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+.vsc-sb-left, .vsc-sb-right { display: flex; align-items: center; min-width: 0; }
+.vsc-sb-item {
+    padding: 0 7px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+.vsc-sb-item svg { width: 12px; height: 12px; flex-shrink: 0; }
+.vsc-sb-item:hover { background: rgba(255,255,255,0.12); }
+.vsc-sb-remote { background: #16825d; margin-right: 4px; }
+.vsc-sb-remote:hover { background: #1a9c6f; }
+
+@media (max-width: 900px) {
+    .vsc-minimap { display: none; }
+    .vsc-sidebar { width: 190px; }
+    .vsc-menu-item:nth-child(n+5) { display: none; }
+}
+@media (max-width: 700px) {
+    .vsc-sidebar { display: none; }
+    .vsc-activitybar { width: 40px; }
+    .vsc-act-icon { width: 40px; height: 40px; }
+    .vsc-act-icon svg { width: 20px; height: 20px; }
+    .vsc-sb-right .vsc-sb-item:nth-child(n+3) { display: none; }
+    .vsc-breadcrumbs { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vsc-cursor, .vsc-caret { animation: none; }
+    .vsc-tree-chev { transition: none; }
+}
+
+/* ══════════════════════════════════════════
+   Panic-Button — gehoert zur App, nicht zur Tarnung.
+   Hier gelten die Projekt-Tokens wieder.
+   ══════════════════════════════════════════ */
+.ghost-panic-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999998;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(8, 8, 16, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.28);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.4s ease, background 0.22s ease, border-color 0.22s ease,
+                color 0.22s ease, box-shadow 0.22s ease, transform 0.18s ease;
+}
+.ghost-panic-btn.visible { opacity: 0.18; }
+.ghost-panic-btn:hover,
+.ghost-panic-btn:focus-visible {
+    opacity: 1 !important;
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.28);
+    color: rgba(239, 68, 68, 0.9);
+    box-shadow: 0 0 0 1px rgba(239,68,68,0.12), 0 0 24px rgba(239,68,68,0.12);
+    transform: scale(1.06);
+}
+.ghost-panic-btn:focus-visible { outline: 2px solid rgba(239,68,68,0.6); outline-offset: 2px; }
+.ghost-panic-btn:hover .ghost-panic-tooltip,
+.ghost-panic-btn:focus-visible .ghost-panic-tooltip { opacity: 1; transform: translateY(0); }
+
+.ghost-panic-tooltip {
+    position: absolute;
+    bottom: calc(100% + 9px);
+    right: 0;
+    background: rgba(8, 8, 18, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 7px;
+    padding: 5px 9px;
+    font-size: 0.6rem;
+    font-family: var(--font-mono, monospace);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.55);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.ghost-panic-tooltip kbd {
+    font-family: inherit;
+    font-size: 0.55rem;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 3px;
+    padding: 1px 4px;
+    color: rgba(255,255,255,0.4);
+    margin-left: 4px;
+}
+
+[data-theme="light"] .ghost-panic-btn {
+    background: rgba(250, 250, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.07);
+    color: rgba(0, 0, 0, 0.22);
+}
+[data-theme="light"] .ghost-panic-btn:hover,
+[data-theme="light"] .ghost-panic-btn:focus-visible {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: #dc2626;
+}
+[data-theme="light"] .ghost-panic-tooltip {
+    background: rgba(250, 250, 255, 0.97);
+    border-color: rgba(0,0,0,0.1);
+    color: rgba(0,0,0,0.55);
+}
+[data-theme="light"] .ghost-panic-tooltip kbd {
+    background: rgba(0,0,0,0.06);
+    border-color: rgba(0,0,0,0.12);
+    color: rgba(0,0,0,0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ghost-panic-btn, .ghost-panic-tooltip { transition: none; }
+}
+
+/* Im Ghost Mode wird der Auslöser per JS ausgeblendet, nicht per CSS:
+   _showGhostButton() setzt style.display inline, und inline schlägt jede
+   Regel hier. Siehe togglePanicButton() in ghost.js. */
