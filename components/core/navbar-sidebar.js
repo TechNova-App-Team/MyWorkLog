@@ -33,9 +33,12 @@
             berichtsheft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h-1.5a2 2 0 00-4 0H8a2 2 0 00-2 2v14a2 2 0 002 2h8a2 2 0 002-2V6a2 2 0 00-2-2z"/><path d="M9 4h6"/></svg>',
             aufgaben: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>',
             skilltree: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v7"/><path d="M7 10l5 5 5-5"/><path d="M12 20v-6"/></svg>',
-            ausbildung: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3L3 7l9 4 9-4-9-4z"/><path d="M4 9v6a8 8 0 0016 0V9"/></svg>',
             vertrag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
-            rights: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3.5 9.74-7 11-3.5-1.26-7-6-7-11V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>'
+            rights: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3.5 9.74-7 11-3.5-1.26-7-6-7-11V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>',
+            'schatten-berichtsheft': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>',
+            'fi-academy': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 6 2 12 8 18"/><polyline points="16 6 22 12 16 18"/></svg>',
+            'it-hub': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/><circle cx="4" cy="18" r="2"/><circle cx="20" cy="18" r="2"/><path d="M9.5 10.5L5.7 7.3M14.5 10.5l3.8-3.2M9.5 13.5l-3.8 3.2M14.5 13.5l3.8 3.2"/></svg>',
+            ghost: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V11a6 6 0 0112 0v9l-2.5-2-2 2-1.5-2-1.5 2-2-2z"/><path d="M9.5 10h.01M14.5 10h.01"/></svg>'
         };
         return icons[id] || '';
     }    // ===== NAVBAR CUSTOMIZATION: render based on settings and allow drag/drop =====
@@ -459,10 +462,10 @@
         { id: 'weekview',     label: 'Wochenansicht',     icon: getIconSvgById('weekview'), group: 'Navigation', action: () => switchTab('weekview') },
         { id: 'urlaubsplaner', label: 'Urlaubsplaner',    icon: getIconSvgById('urlaubsplaner'), group: 'Navigation', action: () => switchTab('urlaubsplaner') },
         { id: 'school',       label: 'Berufsschule',      icon: getIconSvgById('school'), group: 'Navigation', action: () => switchTab('school') },
-        { id: 'aibot',        label: 'AI-Bot',            icon: getIconSvgById('aibot'), group: 'Navigation', action: () => switchTab('aibot') },
+        { id: 'ihk',          label: 'IHK',               icon: getIconSvgById('ihk'), group: 'Navigation', action: () => switchTab('ihk') },
+        { id: 'goals',        label: 'Ziele',             icon: getIconSvgById('goals'), group: 'Navigation', action: () => switchTab('goals') },
         { id: 'support',      label: 'Support',           icon: getIconSvgById('support'), group: 'Navigation', action: () => switchTab('support') },
         { id: 'analytics-pro', label: 'Analytics Pro',     icon: getIconSvgById('analytics-pro'), group: 'Navigation', action: () => switchTab('analytics-pro') },
-        { id: 'aufgaben-tab', label: 'Aufgaben (Dashboard)',     icon: getIconSvgById('aufgaben'), group: 'Navigation', action: () => switchTab('aufgaben') },
         // Tools
         { id: 'settings',     label: 'Einstellungen',     icon: getIconSvgById('settings'), group: 'Tools',      action: () => openSettings() },
         { id: 'alerts',       label: 'Alerts',            icon: getIconSvgById('alerts'), group: 'Tools',      action: () => toggleAlertsPanel() },
@@ -472,17 +475,22 @@
         { id: 'untis',        label: 'Untis Import',      icon: getIconSvgById('untis'), group: 'Tools',      action: () => showUntisImportModal() },
         // Extern
         { id: 'berichtsheft', label: 'Berichtsheft',      icon: getIconSvgById('berichtsheft'), group: 'Extern',     action: () => { window.location.href = './berichtsheft/'; } },
+        { id: 'schatten-berichtsheft', label: 'Schatten-Berichtsheft', icon: getIconSvgById('schatten-berichtsheft'), group: 'Extern', action: () => { window.location.href = './schatten-berichtsheft/'; } },
+        { id: 'fahrtkosten',  label: 'Fahrtkosten',       icon: getIconSvgById('fahrtkosten'), group: 'Extern',     action: () => { window.location.href = './fahrtkosten/'; } },
         { id: 'aufgaben',     label: 'Aufgaben Manager', icon: getIconSvgById('aufgaben'), group: 'Extern',     action: () => { window.location.href = './aufgaben/'; } },
         { id: 'skilltree',    label: 'Skill-Baum',       icon: getIconSvgById('skilltree'), group: 'Extern',     action: () => { window.location.href = './skill-tree/'; } },
-        { id: 'ausbildung',   label: 'Ausbildungshilfe',  icon: getIconSvgById('ausbildung'), group: 'Extern',     action: () => { window.location.href = './rechte-checker/'; } },
+        { id: 'fi-academy',   label: 'FI Academy',        icon: getIconSvgById('fi-academy'), group: 'Extern',     action: () => { window.location.href = './Fachinformatiker/'; } },
+        { id: 'it-hub',       label: 'IT Professional Hub', icon: getIconSvgById('it-hub'), group: 'Extern',     action: () => { window.location.href = './it-landing/'; } },
+        { id: 'rechte-checker', label: 'Rechte-Checker',  icon: getIconSvgById('rights'), group: 'Extern',     action: () => { window.location.href = './rechte-checker/'; } },
         { id: 'vertrag',      label: 'Vertrags-Manager',  icon: getIconSvgById('vertrag'), group: 'Extern',     action: () => { window.location.href = './vertrags-manager/'; } },
+        { id: 'archflow',     label: 'ArchFlow',          icon: getIconSvgById('archflow'), group: 'Extern',     action: () => window.open('/archflow/', '_blank') },
         { id: 'repo',         label: 'Repo-Analyse',      icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('/repo-report/', '_blank') },
         { id: 'analytics',    label: 'Analytics',         icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('./analytics/', '_blank') },
         { id: 'impressum',    label: 'Impressum',         icon: getIconSvgById('impressum'), group: 'Extern',     action: () => window.open('./Impressum/', '_blank') },
         { id: 'dsgvo',        label: 'DSGVO',             icon: getIconSvgById('dsgvo'), group: 'Extern',     action: () => window.open('./DSGVO/', '_blank') },
         { id: 'about',        label: 'About',             icon: getIconSvgById('about'), group: 'Extern',     action: () => window.open('./about/', '_blank') },
         // Ghost Mode
-        { id: 'ghost',        label: 'Ghost Mode',        icon: getIconSvgById('about'), group: 'Tools',      action: () => toggleGhostMode() },
+        { id: 'ghost',        label: 'Ghost Mode',        icon: getIconSvgById('ghost'), group: 'Tools',      action: () => toggleGhostMode() },
     ];
 
     let cmdSelectedIdx = 0;

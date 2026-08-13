@@ -497,8 +497,10 @@
         }
     }
     
-    // SVG-Icons für State-Wechsel (kein Emoji)
-    const CLOUD_ICON_LOADING = '<svg class="cloud-spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+    // SVG-Icons für State-Wechsel (kein Emoji).
+    // Wolke bleibt fix, nur der Pfeil animiert — Richtung passend zu Upload/Download.
+    const CLOUD_ICON_LOADING_UP = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><g class="cloud-arrow-move up"><polyline points="8 13 12 9 16 13"/><line x1="12" y1="9" x2="12" y2="21"/></g></svg>';
+    const CLOUD_ICON_LOADING_DOWN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><g class="cloud-arrow-move down"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="9" x2="12" y2="21"/></g></svg>';
     const CLOUD_ICON_SUCCESS = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
     const CLOUD_ICON_ERROR = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
 
@@ -554,7 +556,7 @@
 
         const originalHTML = uploadBtn.innerHTML;
         uploadBtn.disabled = true;
-        uploadBtn.innerHTML = CLOUD_ICON_LOADING + '<span>Lädt hoch…</span>';
+        uploadBtn.innerHTML = CLOUD_ICON_LOADING_UP + '<span>Lädt hoch…</span>';
         lockSettingsClose(true);
 
         try {
@@ -580,7 +582,7 @@
 
         const originalHTML = downloadBtn.innerHTML;
         downloadBtn.disabled = true;
-        downloadBtn.innerHTML = CLOUD_ICON_LOADING + '<span>Wiederherstellen…</span>';
+        downloadBtn.innerHTML = CLOUD_ICON_LOADING_DOWN + '<span>Wiederherstellen…</span>';
         lockSettingsClose(true);
 
         try {
@@ -632,9 +634,11 @@
         const mode = (function(){ try { return localStorage.getItem('mwl_cloud_chip_mode') === 'download' ? 'download' : 'upload'; } catch(e) { return 'upload'; } })();
         if (wrap) wrap.classList.toggle('mode-download', mode === 'download');
 
-        // Icon spiegelt immer den Modus (auch wenn nicht eingeloggt)
-        const ICON_UP = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 13 12 9 16 13"/><line x1="12" y1="9" x2="12" y2="21"/></svg>';
-        const ICON_DOWN = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><polyline points="8 17 12 21 16 17"/><line x1="12" y1="9" x2="12" y2="21"/></svg>';
+        // Icon spiegelt immer den Modus (auch wenn nicht eingeloggt).
+        // Pfeil in eigener <g class="sync-arrow"> — bei is-syncing animiert nur
+        // der Pfeil (rauf/runter), die Wolke bleibt fix (siehe sidebar.css).
+        const ICON_UP = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><g class="sync-arrow"><polyline points="8 13 12 9 16 13"/><line x1="12" y1="9" x2="12" y2="21"/></g></svg>';
+        const ICON_DOWN = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 14.5A4 4 0 0 0 18 7h-1.3a8 8 0 1 0-13.7 7.3"/><g class="sync-arrow"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="9" x2="12" y2="21"/></g></svg>';
         if (icon) icon.innerHTML = mode === 'download' ? ICON_DOWN : ICON_UP;
 
         chip.classList.remove('is-offline');

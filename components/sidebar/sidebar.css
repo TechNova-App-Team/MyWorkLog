@@ -540,8 +540,12 @@
             border-color: rgba(var(--primary-rgb), 0.25);
         }
         .sidebar-cloud-chip.is-syncing .sidebar-cloud-icon { color: var(--primary); }
-        .sidebar-cloud-chip.is-syncing .sidebar-cloud-icon svg {
-            animation: sidebarCloudSpin 1.1s linear infinite;
+        .sidebar-cloud-chip.is-syncing .sidebar-cloud-icon .sync-arrow {
+            animation: sidebarArrowUp 1s ease-in-out infinite;
+            transform-origin: 12px 12px;
+        }
+        .sidebar-cloud-wrap.mode-download .sidebar-cloud-chip.is-syncing .sidebar-cloud-icon .sync-arrow {
+            animation-name: sidebarArrowDown;
         }
         .sidebar-cloud-wrap:has(.sidebar-cloud-chip.is-success) {
             background: rgba(16,185,129,0.10);
@@ -556,9 +560,15 @@
         .sidebar-cloud-wrap:has(.sidebar-cloud-chip.is-offline) { opacity: 0.6; }
         .sidebar-cloud-chip.is-offline { cursor: pointer; }
         .sidebar-cloud-chip.is-offline .sidebar-cloud-sub { color: #f59e0b; }
-        @keyframes sidebarCloudSpin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        @keyframes sidebarArrowUp {
+            0%   { transform: translateY(4px); opacity: 0; }
+            40%  { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-6px); opacity: 0; }
+        }
+        @keyframes sidebarArrowDown {
+            0%   { transform: translateY(-4px); opacity: 0; }
+            40%  { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(6px); opacity: 0; }
         }
         .sidebar.collapsed .sidebar-cloud-chip {
             justify-content: center;
@@ -739,6 +749,11 @@
             font-size: 0.9rem; flex-shrink: 0;
             transition: all 0.15s;
             border: 1px solid rgba(255,255,255,0.03);
+        }
+        .cmd-palette-item .cpi-icon svg {
+            width: 17px; height: 17px;
+            display: block;
+            flex-shrink: 0;
         }
         .cmd-palette-item.selected .cpi-icon,
         .cmd-palette-item:hover .cpi-icon {
