@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+/* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
+    <meta name="description" content="Rot gab es 1962, für Blau brauchte es drei Jahrzehnte. Der Deep Dive erklärt Bandlücke, Pufferschicht, p-Dotierung und Quantentöpfe mit sieben Diagrammen zum Ausprobieren.">
+    <title>Warum die blaue LED 30 Jahre gedauert hat | MyWorkLog</title>
+    <link rel="canonical" href="https://myworklog.de/it-stories/blaue-led/">
+    <link rel="alternate" hreflang="de" href="https://myworklog.de/it-stories/blaue-led/">
+    <link rel="alternate" hreflang="en" href="https://myworklog.de/en/it-stories/blaue-led/">
+    <link rel="alternate" hreflang="x-default" href="https://myworklog.de/it-stories/blaue-led/">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Warum die blaue LED 30 Jahre gedauert hat">
+    <meta property="og:description" content="Bandlücke, Pufferschicht, p-Dotierung und Quantentöpfe — erklärt mit sieben Diagrammen zum Ausprobieren.">
+    <meta property="og:url" content="https://myworklog.de/it-stories/blaue-led/">
+    <meta property="og:image" content="https://myworklog.de/Grafiken/icon-512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Warum die blaue LED 30 Jahre gedauert hat">
+    <meta name="twitter:description" content="Bandlücke, Pufferschicht, p-Dotierung und Quantentöpfe — erklärt mit sieben Diagrammen zum Ausprobieren.">
+    <script defer src="/Assets/js/version-loader.js?v=5.9.7"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/Assets/css/it-stories.css?v=5.9.7">
+    <script defer src="/Assets/js/ph-init.js?v=5.9.7"></script>
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="readbar"></div>
+
+    <header class="topbar">
+        <a href="/it-landing/" class="brand">
+            <span class="brand-mark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+            </span>
+            <span class="brand-name">IT Hub <span>· MyWorkLog</span></span>
+        </a>
+        <a href="/it-landing/" class="back-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            Zurück
+        </a>
+    </header>
+
+    <div class="shell">
+        <div class="layout">
+
+            <nav class="rail" aria-label="Kapitel">
+                <div class="rail-title">Kapitel</div>
+                <a href="#e1">Farbe ist Energie</a>
+                <a href="#e2">Direkt oder indirekt</a>
+                <a href="#e3">Drei Kandidaten</a>
+                <a href="#e4">Kein Untergrund</a>
+                <a href="#e5">Die halbe Diode</a>
+                <a href="#e6">Der Zusammenbau</a>
+                <a href="#e7">Das eigentliche Rätsel</a>
+                <a href="#e8">Was daraus wurde</a>
+                <a href="#e9">Was bleibt</a>
+            </nav>
+
+            <div>
+                <section class="hero">
+                    <span class="kicker">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                        Deep Dive · Halbleiter
+                    </span>
+                    <h1>Warum die blaue LED <em>dreißig Jahre</em> gedauert hat</h1>
+                    <p class="standfirst">Rot leuchtete 1962. Grün kurz danach. Für Blau brauchte es drei Jahrzehnte, ein Material, das alle abgeschrieben hatten, und zwei Prozessschritte, die niemand für den entscheidenden Punkt hielt. Diese Seite erklärt das Problem von Grund auf und zeigt an sieben Diagrammen, was in der Diode wirklich passiert.</p>
+                    <div class="byline">
+                        <span>Lesezeit etwa 18 Minuten</span>
+                        <span>7 Diagramme zum Ausprobieren</span>
+                        <span>Stand: August 2026</span>
+                    </div>
+                </section>
+
+                <article class="prose">
+
+                    <!-- ═══ 1 ═══ -->
+                    <h2 id="e1"><span class="num">KAPITEL 1</span>Farbe ist keine Farbe, Farbe ist Energie</h2>
+                    <p class="lead">Eine Leuchtdiode ist im Kern ein simples Bauteil. Zwei unterschiedlich dotierte Halbleiterschichten liegen aufeinander. Legt man Spannung an, wandern Elektronen von der einen Seite in die Mitte und Löcher, also fehlende Elektronen, von der anderen. Trifft ein Elektron auf ein Loch, fällt es hinein und gibt dabei genau die Energie ab, die es vorher mehr hatte.</p>
+                    <p>Diese Energiedifferenz heißt Bandlücke. Sie ist keine Einstellung, sondern eine Eigenschaft des Materials, so fest wie dessen Dichte oder Schmelzpunkt. Und weil die Energie eines Lichtteilchens unmittelbar seine Wellenlänge festlegt, legt die Bandlücke die Farbe fest. Der Zusammenhang passt in eine Zeile:</p>
+
+                    <div class="formula">λ [nm] = 1239,8 / E [eV]
+                        <small>Wellenlänge des abgegebenen Lichts aus der Bandlücke des Halbleiters.</small>
+                    </div>
+
+                    <p>Rot bei 650 Nanometern braucht rund 1,9 Elektronenvolt. Grün bei 550 Nanometern rund 2,25. Blau bei 460 Nanometern braucht 2,7. Wer eine blaue LED bauen will, sucht also kein blaues Material. Er sucht einen Halbleiter, dessen Bandlücke etwa anderthalbmal so groß ist wie die des roten. Zieh im Diagramm den Regler nach rechts und sieh zu, wie weit außen Blau liegt.</p>
+
+                    <!-- Abb. 1 -->
+                    <figure class="fig rise" id="fig-gap">
+                        <figcaption class="fig-head">
+                            <span class="fig-num">Abbildung 1</span>
+                            <span class="fig-title">Die Bandlücke bestimmt die Farbe</span>
+                        </figcaption>
+                        <div class="fig-stage"><canvas data-ratio="3.0" data-ratio-narrow="1.7" data-min-h="190"></canvas></div>
+                        <div class="fig-ctrl">
+                            <div class="ctrl-group">
+                                <span class="ctrl-label">Bandlücke</span>
+                                <input type="range" id="gapRange" min="1.2" max="3.6" step="0.01" value="2.75" aria-label="Bandlücke in Elektronenvolt">
+                            </div>
+                        </div>
+                        <dl class="readout">
+                            <div><dt>Bandlücke</dt><dd translate="no"><span id="gapEv">2,75</span> <small>eV</small></dd></div>
+                            <div><dt>Wellenlänge</dt><dd translate="no"><span id="gapNm">451</span> <small>nm</small></dd></div>
+                            <div><dt>Material</dt><dd translate="no" id="gapMat">InGaN</dd></div>
+                            <div><dt>Lichtfarbe</dt><dd><span class="swatch" id="gapSwatch"></span></dd></div>
+                        </dl>
+                        <div class="fig-foot">Grau heißt unsichtbar: Unterhalb von 1,6 eV liegt das Licht im Infraroten, oberhalb von 3,3 eV im Ultravioletten. Bei Galliumphosphid und Siliziumkarbid stammt das sichtbare Licht nicht direkt aus der Bandlücke, sondern aus Störstellen knapp darunter, deshalb leuchten sie etwas langwelliger, als die Marke vermuten lässt.</div>
+                    </figure>
+
+                    <p>Nick Holonyak baute 1962 bei General Electric die erste sichtbare LED, rot, aus Galliumarsenidphosphid. Gelb und Grün folgten in den Sechzigern und Siebzigern. Danach passierte fast drei Jahrzehnte lang nichts, was blau geleuchtet hätte und das man bei Tageslicht auch gesehen hätte. Der Grund ist, dass die große Bandlücke nur die erste von drei Bedingungen ist.</p>
+                    <ul>
+                        <li>Der Halbleiter muss einen direkten Übergang haben, sonst wird aus der Energie Wärme statt Licht.</li>
+                        <li>Er muss sich in beide Richtungen dotieren lassen, denn ohne p-Seite und n-Seite gibt es keine Diode.</li>
+                        <li>Er muss sich als brauchbarer Einkristall herstellen lassen, und zwar auf einem Untergrund, den man kaufen kann.</li>
+                    </ul>
+                    <p>Für Rot erfüllt Galliumarsenidphosphid alle drei fast von allein. Für Blau erfüllte über Jahrzehnte kein einziges Material alle drei gleichzeitig. Genau daran hing die Sache, nicht an der Bandlücke.</p>
+
+                    <!-- ═══ 2 ═══ -->
+                    <h2 id="e2"><span class="num">KAPITEL 2</span>Die erste Hürde: direkt oder indirekt</h2>
+                    <p>Ein Elektron im Kristall hat nicht nur eine Energie, sondern auch einen Impuls. Beides muss bei jedem Übergang erhalten bleiben. Trägt man die Energie der erlaubten Zustände über dem Impuls auf, bekommt man das Banddiagramm: unten das Valenzband mit den gebundenen Elektronen, oben das Leitungsband mit den freien.</p>
+                    <p>Bei einem direkten Halbleiter liegt das Minimum des Leitungsbands genau über dem Maximum des Valenzbands. Das Elektron fällt senkrecht nach unten, sein Impuls ändert sich dabei nicht, und die gesamte Energie geht an ein Photon. Das passt, denn ein Photon trägt zwar Energie, aber so gut wie keinen Impuls.</p>
+                    <p>Bei einem indirekten Halbleiter sind die beiden Punkte gegeneinander verschoben. Jetzt muss das Elektron beim Fallen zusätzlich seinen Impuls loswerden, und das kann ihm ein Photon nicht abnehmen. Es braucht ein Phonon dazu, eine Gitterschwingung. Dass Elektron, Loch und passendes Phonon gleichzeitig am selben Ort zusammenkommen, ist erheblich unwahrscheinlicher als der direkte Fall. Also passiert stattdessen meist etwas anderes: Die Energie versickert über Umwege im Gitter und wird Wärme.</p>
+
+                    <!-- Abb. 2 -->
+                    <figure class="fig rise" id="fig-band">
+                        <figcaption class="fig-head">
+                            <span class="fig-num">Abbildung 2</span>
+                            <span class="fig-title">Links direkt, rechts indirekt: dieselbe Bandlücke, ein völlig anderes Ergebnis</span>
+                        </figcaption>
+                        <div class="fig-stage"><canvas data-ratio="2.3" data-ratio-narrow="0.85" data-min-h="230"></canvas></div>
+                        <div class="fig-ctrl">
+                            <button class="btn primary" id="bandPlay" aria-pressed="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                                <span id="bandLblPause">Anhalten</span><span id="bandLblPlay" hidden>Abspielen</span>
+                            </button>
+                            <button class="btn" id="bandReset">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+                                Zähler zurücksetzen
+                            </button>
+                        </div>
+                        <dl class="readout">
+                            <div><dt>Direkt · Photonen</dt><dd class="ok" translate="no" id="bandPhoD">0</dd></div>
+                            <div><dt>Direkt · Wärme</dt><dd translate="no" id="bandHeaD">0</dd></div>
+                            <div><dt>Indirekt · Photonen</dt><dd class="warn" translate="no" id="bandPhoI">0</dd></div>
+                            <div><dt>Indirekt · Wärme</dt><dd translate="no" id="bandHeaI">0</dd></div>
+                        </dl>
+                        <div class="fig-foot">Rechts muss das Elektron erst den Impulsunterschied überbrücken, im Bild gestrichelt als Δk markiert. Das Verhältnis ist zugunsten der Sichtbarkeit gewählt: Real trennt ein indirekter Halbleiter vom direkten nicht ein Faktor 18, sondern eher ein Faktor tausend.</div>
+                    </figure>
+
+                    <p>Silizium ist indirekt. Deshalb gibt es keine Silizium-LED, obwohl Silizium der bestbeherrschte Halbleiter der Welt ist. Siliziumkarbid ist ebenfalls indirekt, und Siliziumkarbid war jahrelang die einzige blaue LED, die man kaufen konnte. Sie funktionierte tatsächlich. Ihr Wirkungsgrad lag allerdings im Bereich von hundertstel Prozent, man musste sie im abgedunkelten Raum suchen.</p>
+
+                    <!-- ═══ 3 ═══ -->
+                    <h2 id="e3"><span class="num">KAPITEL 3</span>Drei Kandidaten, zwei Sackgassen</h2>
+                    <p>Mitte der Achtziger war klar, welche Materialien überhaupt in Frage kamen. Es waren drei, und zwei davon endeten im Nichts.</p>
+
+                    <h3>Siliziumkarbid: leuchtet, aber falsch herum</h3>
+                    <p>Der einzige Kandidat, der bereits als kommerzielles Bauteil existierte, und zugleich der aussichtsloseste. Ein indirekter Halbleiter wird nicht dadurch besser, dass man ihn sauberer herstellt. Die Physik erlaubt schlicht keine hohe Ausbeute. Siliziumkarbid-LEDs verschwanden vom Markt, sobald es eine Alternative gab.</p>
+
+                    <h3>Zinkselenid: der Favorit, der starb</h3>
+                    <p>Auf dem Papier war Zinkselenid perfekt. Direkter Übergang, Bandlücke von rund 2,7 Elektronenvolt, also genau im Blauen, und fast exakt dieselbe Gitterkonstante wie Galliumarsenid, für das es fertige, hochwertige Substrate zu kaufen gab. Der Großteil der Fachwelt arbeitete daran, mit erheblichem Budget.</p>
+                    <p>Das Bauteil hatte nur einen Fehler, den niemand wegbekam: Es starb im Betrieb. Unter Strom vermehrten sich Kristallfehler, wuchsen zu dunklen Linien durch die aktive Zone und fraßen die Helligkeit auf. Lebensdauern lagen im Bereich von Stunden. Für ein Laborexperiment reicht das, für ein Produkt nicht. Das Problem wurde nie gelöst.</p>
+
+                    <h3>Galliumnitrid: das Material, das alle aufgegeben hatten</h3>
+                    <p>Galliumnitrid hat einen direkten Übergang und eine Bandlücke von 3,4 Elektronenvolt, das liegt schon im Ultravioletten. Mischt man Indium hinein, sinkt die Bandlücke, und zwar kontinuierlich über den gesamten sichtbaren Bereich. Man kann die Farbe also einstellen. Besser konnte ein Material für diese Aufgabe kaum passen.</p>
+                    <p>Nur ließ es sich nicht herstellen. Jacques Pankove baute bei RCA 1971 die erste GaN-Leuchtdiode, aber ohne echten p-n-Übergang, weil sich die eine Hälfte nicht dotieren ließ. RCA stellte die Arbeiten 1979 ein. Danach galt Galliumnitrid als erledigt. Wer in den Achtzigern auf einer Konferenz sagte, er arbeite an GaN, erntete Mitleid.</p>
+
+                    <div class="note">
+                        <div class="note-head">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                            Die Wette
+                        </div>
+                        <p>Isamu Akasaki blieb bei Galliumnitrid, als praktisch alle anderen abgesprungen waren. Shuji Nakamura entschied sich 1989 bei Nichia, einem kleinen Chemieunternehmen ohne Halbleiterabteilung, aus demselben Grund dafür: Bei Zinkselenid hätte er gegen hundert besser ausgestattete Gruppen antreten müssen. Bei Galliumnitrid stand er fast allein. Das Material war nicht deshalb attraktiv, weil es einfacher war, sondern weil das Feld leer war.</p>
+                    </div>
+
+                    <!-- ═══ 4 ═══ -->
+                    <h2 id="e4"><span class="num">KAPITEL 4</span>Problem eins: Es gab keinen Untergrund</h2>
+                    <p>Halbleiterschichten wachsen epitaktisch. Man legt ein Substrat in einen heißen Reaktor, leitet die Ausgangsstoffe als Gas darüber und lässt den neuen Kristall Atomlage für Atomlage aufwachsen. Der wachsende Kristall übernimmt dabei das Gitter des Untergrunds. Passt der Untergrund nicht, passt auch nichts, was darauf wächst.</p>
+                    <p>Für Galliumnitrid gab es keinen passenden Untergrund. GaN-Substrate hätte man aus einer Schmelze ziehen müssen, dazu bräuchte es weit über zweitausend Grad und einen Stickstoffdruck von mehreren Tausend Atmosphären. Also nahm man Saphir, weil er verfügbar, hitzefest und billig ist. Die Gitterkonstanten der beiden Materialien liegen allerdings rund sechzehn Prozent auseinander, und die Wärmeausdehnung unterscheidet sich um etwa ein Viertel.</p>
+                    <p>Das Ergebnis waren Schichten mit einer Versetzungsdichte in der Größenordnung von einer Milliarde Fehlstellen pro Quadratzentimeter. Zum Vergleich: In Galliumarsenid gilt ein Bauteil bei zehntausend Versetzungen pro Quadratzentimeter als kaputt. Die frühen GaN-Filme waren rau, rissig und milchig, und das mit Abstand freundlichste Wort dafür war Polykristall.</p>
+                    <p>Hiroshi Amano fand 1986 in Akasakis Gruppe den Ausweg, und der ist so einfach, dass er unplausibel klingt. Man beschichtet den Saphir zuerst mit einer sehr dünnen Lage Aluminiumnitrid, aber bei nur etwa fünfhundert Grad. Das ist viel zu kalt für ordentliches Kristallwachstum, es entsteht eine feinkörnige, fast strukturlose Pufferschicht. Erst danach heizt man auf die eigentlichen tausend Grad. Aus dem Puffer kristallisieren dann sehr viele, sehr kleine und vor allem gleich ausgerichtete Keime, die schnell zusammenwachsen. Der eigentliche Film startet nicht mehr auf dem fremden Saphirgitter, sondern auf einer Fläche, die zu ihm passt.</p>
+
+                    <!-- Abb. 3 -->
+                    <figure class="fig rise" id="fig-buffer">
+                        <figcaption class="fig-head">
+                            <span class="fig-num">Abbildung 3</span>
+                            <span class="fig-title">Kristallwachstum auf Saphir, mit und ohne Pufferschicht</span>
+                        </figcaption>
+                        <div class="fig-stage"><canvas data-ratio="2.4" data-ratio-narrow="1.4" data-min-h="210"></canvas></div>
+                        <div class="fig-ctrl">
+                            <div class="seg" id="bufMode" role="group" aria-label="Wachstumsverfahren">
+                                <button type="button" data-value="plain" aria-pressed="false">Direkt auf Saphir</button>
+                                <button type="button" data-value="buffer" aria-pressed="true">Mit Pufferschicht</button>
+                            </div>
+                            <button class="btn" id="bufReplay">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+                                Wachstum wiederholen
+                            </button>
+                        </div>
+                        <dl class="readout">
+                            <div><dt>Temperatur</dt><dd translate="no"><span id="bufTemp">300</span> <small>°C</small></dd></div>
+                            <div><dt>Versetzungslinien</dt><dd translate="no" id="bufDis">—</dd></div>
+                            <div><dt>Rauheit</dt><dd translate="no"><span id="bufRough">—</span> <small>% der Dicke</small></dd></div>
+                        </dl>
+                        <div class="fig-foot">Ohne Puffer keimen wenige, beliebig gedrehte Inseln. Wo zwei davon zusammenstoßen, passen die Gitter nicht aufeinander und es entsteht eine Versetzung, die bis an die Oberfläche durchschlägt. Mit Puffer keimen viele, nahezu gleich ausgerichtete Inseln, die Stoßstellen sind harmlos und der Film wird spiegelglatt. Die Werte sind Kennzahlen dieser Simulation, keine Messwerte.</div>
+                    </figure>
+
+                    <div class="note warn">
+                        <div class="note-head">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+                            Legende und Protokoll
+                        </div>
+                        <p>Die Pufferschicht wird oft als Zufallsfund erzählt, entstanden durch einen defekten Reaktorofen. Amano selbst beschreibt es in seiner Nobelvorlesung nüchterner: als Ergebnis einer langen Reihe systematischer Wachstumsversuche, bei denen die Temperatur der ersten Lage einer von vielen durchprobierten Parametern war. Beides schließt sich nicht aus. Entscheidend ist, dass jemand hingesehen hat, als eine Probe plötzlich spiegelte statt zu trüben.</p>
+                    </div>
+
+                    <p>Nakamura baute später bei Nichia seinen Reaktor selbst um und ersetzte das Aluminiumnitrid durch Galliumnitrid als Puffermaterial, was reproduzierbarer war. Dazu kam sein Zwei-Fluss-Verfahren: Neben dem waagerechten Gasstrom mit den Ausgangsstoffen bläst ein zweiter, inaktiver Strom von oben senkrecht auf das Substrat und drückt die Reaktionsgase gegen die heiße Oberfläche. Ohne diesen Trick reißt die aufsteigende Konvektion über dem tausend Grad heißen Substrat das Gas weg, bevor es reagieren kann.</p>
+
+                    <!-- ═══ 5 ═══ -->
+                    <h2 id="e5"><span class="num">KAPITEL 5</span>Problem zwei: die Diode ohne zweite Hälfte</h2>
+                    <p>Eine Leuchtdiode braucht beide Seiten. Auf der n-Seite überschüssige Elektronen, auf der p-Seite fehlende. Galliumnitrid war jedoch immer n-leitend, ganz von allein. Baute man Magnesium oder Zink ein, also Atome, die ein Loch beisteuern sollten, blieb der Kristall trotzdem praktisch isolierend. Spezifische Widerstände um eine Million Ohmzentimeter, das ist kein Halbleiter, das ist ein Isolator.</p>
+                    <p>Zwei Effekte überlagerten sich, und das machte die Sache lange undurchsichtig. Der erste ist Wasserstoff. Er steckt zwangsläufig im Prozess, denn die Stickstoffquelle ist Ammoniak und das Trägergas ist Wasserstoff. Jedes eingebaute Magnesiumatom fängt sich ein Wasserstoffatom ein, und das Paar ist elektrisch tot. Der zweite Effekt ist die Lage des Magnesium-Niveaus: Es liegt rund zweihundert Millielektronenvolt über der Bandkante, also verhältnismäßig tief. Bei Raumtemperatur gibt nur etwa jedes hundertste Magnesiumatom sein Loch überhaupt ab. Man muss deshalb extrem hoch dotieren, was den Kristall wiederum belastet.</p>
+                    <p>Der erste Durchbruch war ein Nebenbefund. Amano und Akasaki stellten 1989 fest, dass magnesiumdotiertes GaN unter dem Elektronenstrahl eines Rasterelektronenmikroskops heller leuchtete, und dass es danach leitfähig war. Aus dieser Beobachtung wurde die erste echte GaN-Diode mit p-n-Übergang. Für die Fertigung taugte das Verfahren allerdings nicht: Der Elektronenstrahl wirkt nur oberflächennah und muss Stück für Stück über den Wafer geführt werden.</p>
+                    <p>Nakamura fand 1992 heraus, was dabei eigentlich passiert, und das änderte alles. Es ist kein Strahleneffekt, es ist der Wasserstoff. Erhitzt man die Schicht über siebenhundert Grad in reinem Stickstoff, brechen die Magnesium-Wasserstoff-Paare auf, der Wasserstoff diffundiert aus dem Kristall heraus und das Magnesium wird aktiv. Der spezifische Widerstand fällt von rund einer Million auf zwei Ohmzentimeter, die Löcherdichte steigt auf etwa drei mal zehn hoch siebzehn pro Kubikzentimeter. Damit war p-GaN kein Kunststück mehr, sondern ein Ofenprogramm für ganze Wafer.</p>
+
+                    <!-- Abb. 4 -->
+                    <figure class="fig rise" id="fig-ptype">
+                        <figcaption class="fig-head">
+                            <span class="fig-num">Abbildung 4</span>
+                            <span class="fig-title">Tempern befreit das Magnesium, Ammoniak macht es rückgängig</span>
+                        </figcaption>
+                        <div class="fig-stage"><canvas data-ratio="2.2" data-ratio-narrow="1.3" data-min-h="215"></canvas></div>
+                        <div class="fig-ctrl">
+                            <div class="ctrl-group">
+                                <span class="ctrl-label">Temperatur</span>
+                                <input type="range" id="pRange" min="300" max="1000" step="5" value="300" aria-label="Temperatur in Grad Celsius">
+                            </div>
+                            <div class="seg" id="pAtmo" role="group" aria-label="Atmosphäre">
+                                <button type="button" data-value="N2" aria-pressed="true">In Stickstoff</button>
+                                <button type="button" data-value="NH3" aria-pressed="false">In Ammoniak</button>
+                            </div>
+                            <button class="btn" id="pReset">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+                                Zurücksetzen
+                            </button>
+                        </div>
+                        <dl class="readout">
+                            <div><dt>Temperatur</dt><dd translate="no"><span id="pT">300</span> <small>°C</small></dd></div>
+                            <div><dt>Magnesium aktiv</dt><dd translate="no"><span id="pAct">0</span> <small>%</small></dd></div>
+                            <div><dt>Spez. Widerstand</dt><dd class="no" translate="no"><span id="pRho">1,0·10⁶</span> <small>Ω·cm</small></dd></div>
+                            <div><dt>Löcherdichte</dt><dd translate="no"><span id="pHoles">0</span> <small>cm⁻³</small></dd></div>
+                        </dl>
+                        <div class="fig-foot">Schieb die Temperatur über 700 Grad und beobachte, wie der Wasserstoff das Magnesium verlässt und der Widerstand einbricht. Dann stell auf Ammoniak um und heiz erneut: Der Wasserstoff kehrt zurück, die Schicht wird wieder isolierend. Genau diese Umkehrbarkeit war der Beweis, dass Wasserstoff die Ursache ist und nicht irgendein Strahlungseffekt.</div>
+                    </figure>
+
+                    <p>Der Gegenversuch im Diagramm ist nicht ausgedacht. Dieselbe Probe, in Ammoniak statt Stickstoff getempert, wird wieder hochohmig, weil der Ammoniak beim Zerfall neuen Wasserstoff liefert. Mit dieser Umkehrbarkeit war die Erklärung eindeutig, und aus einem jahrzehntelang unverstandenen Ärgernis wurde ein Prozessparameter.</p>
+
+                    <!-- ═══ 6 ═══ -->
+                    <h2 id="e6"><span class="num">KAPITEL 6</span>Der Zusammenbau: was in der fertigen LED passiert</h2>
+                    <p>Mit glattem Kristall und funktionierender p-Schicht war der Weg frei. Nichia stellte im November 1993 die erste blaue Leuchtdiode vor, die hell genug für den Alltag war, mit rund einer Candela Lichtstärke. Ihr Aufbau ist im Prinzip der, den blaue LEDs bis heute haben.</p>
+                    <p>Ganz unten der Saphir, darauf die Pufferschicht, darüber eine dicke n-leitende GaN-Schicht als Elektronenreservoir. In der Mitte die aktive Zone: mehrere nur wenige Nanometer dünne Lagen aus Indiumgalliumnitrid zwischen GaN-Barrieren. Diese Quantentöpfe halten Elektronen und Löcher am selben Ort fest, statt sie durch das Bauteil laufen zu lassen, und der Indiumanteil stellt die Farbe ein. Darüber eine dünne Aluminiumgalliumnitrid-Sperre, die verhindert, dass Elektronen über die aktive Zone hinausschießen, denn sie sind erheblich beweglicher als Löcher. Ganz oben die p-Schicht mit dem Kontakt.</p>
+
+                    <!-- Abb. 5 -->
+                    <figure class="fig rise" id="fig-led">
+                        <figcaption class="fig-head">
+                            <span class="fig-num">Abbildung 5</span>
+                            <span class="fig-title">Querschnitt der fertigen Diode im Betrieb</span>
+                        </figcaption>
+                        <div class="fig-stage"><canvas data-ratio="2.1" data-ratio-narrow="1.2" data-min-h="230"></canvas></div>
+                        <div class="fig-ctrl">
+                            <div class="ctrl-group">
+                                <span class="ctrl-label">Strom</span>
+                                <input type="range" id="ledRange" min="0" max="150" step="1" value="20" aria-label="Strom in Milliampere">
+                            </div>
+                        </div>
+                        <dl class="readout">
+                            <div><dt>Strom</dt><dd translate="no"><span id="ledI">20</span> <small>mA</small></dd></div>
+                            <div><dt>Innerer Wirkungsgrad</dt><dd class="ok" translate="no"><span id="ledEta">61</span> <small>%</small></dd></div>
+                            <div><dt>Lichtleistung</dt><dd translate="no"><span id="ledP">27</span> <small>mW</small></dd></div>
+                            <div><dt>Farbe</dt><dd><span class="swatch" id="ledSwatch"></span></dd></div>
+                        </dl>
+                        <div class="fig-foot">Blaue Punkte sind Elektronen, gelbe Punkte Löcher. Dreh den Strom hoch und achte auf die kleine Kennlinie oben rechts: Der Wirkungsgrad steigt zuerst, erreicht ein Maximum und fällt dann wieder. Die Kurve kommt aus dem ABC-Modell, in dem sich strahlende Rekombination mit dem Quadrat der Ladungsträgerdichte entwickelt, der Auger-Verlust aber mit der dritten Potenz. Deshalb betreibt man in Lampen lieber viele Chips bei kleinem Strom als wenige bei großem.</div>
+                    </figure>
+
+                    <p>Dieser Effizienzeinbruch bei hohem Strom hat einen eigenen Namen bekommen, Droop, und er ist bis heute ein Forschungsthema. Für die Praxis bedeutet er eine unangenehme Umkehrung der üblichen Kostenlogik: Man kann eine LED-Lampe nicht dadurch billiger machen, dass man weniger Chips härter fährt.</p>
+
+                    <!-- ═══ 7 ═══ -->
+                    <h2 id="e7"><span class="num">KAPITEL 7</span>Das eigentliche Rätsel: Warum funktioniert das überhaupt?</h2>
+                    <p>An dieser Stelle sollte man kurz innehalten. Die aktive Zone dieser Diode sitzt auf einem Kristall mit rund einer Milliarde Versetzungen pro Quadratzentimeter. Das ist eine Fehlstelle auf einer Fläche von etwa dreihundert mal dreihundert Nanometern. Versetzungen sind nichtstrahlende Rekombinationszentren: Ein Ladungsträger, der dort ankommt, gibt seine Energie als Wärme ab und ist für das Licht verloren. In Galliumarsenid würde bei dieser Fehlerdichte kein einziges Photon mehr herauskommen.</p>
+                    <p>Die Antwort liegt im Indium. Es verteilt sich in der InGaN-Schicht nicht gleichmäßig, sondern schwankt auf einer Skala von wenigen Nanometern. Wo mehr Indium sitzt, ist die Bandlücke etwas kleiner, und eine kleinere Bandlücke ist für einen Ladungsträger eine Mulde. Elektronen und Löcher fallen in diese Mulden, bevor sie weit genug wandern können, um eine Versetzung zu finden. Sie sitzen dann fest, treffen dort aufeinander und rekombinieren strahlend. Der Kristall ist voller Fehler, aber die Ladungsträger kommen nie bei ihnen an.</p>
+
+                    <!-- Abb. 6 -->
+                    <figure class="fig rise" id="fig-loc">
+                        <figcaption class="fig-head">
+                            <span class="fig-num">Abbildung 6</span>
+                            <span class="fig-title">Aufsicht auf die aktive Schicht: Mulden schlagen Fehlstellen</span>
+                        </figcaption>
+                        <div class="fig-stage"><canvas data-ratio="2.5" data-ratio-narrow="1.35" data-min-h="200"></canvas></div>
+                        <div class="fig-ctrl">
+                            <div class="seg" id="locMode" role="group" aria-label="Indiumverteilung">
+                                <button type="button" data-value="off" aria-pressed="false">Indium gleichmäßig verteilt</button>
+                                <button type="button" data-value="on" aria-pressed="true">Mit Indium-Schwankungen</button>
+                            </div>
+                        </div>
+                        <dl class="readout">
+                            <div><dt>Strahlender Anteil</dt><dd class="ok" translate="no"><span id="locRad">—</span> <small>%</small></dd></div>
+                            <div><dt>Ereignisse gesamt</dt><dd translate="no" id="locTot">0</dd></div>
+                        </dl>
+                        <div class="fig-foot">Rote Punkte sind Versetzungen, jeder Ladungsträger, der ihren Ring erreicht, endet als Wärme. Schalt die Indium-Schwankungen ab und sieh zu, wie der strahlende Anteil zusammenbricht. Dass diese Lokalisierung der Grund für die überraschende Gutmütigkeit von InGaN ist, war in den Neunzigern eine Vermutung und gilt heute als gut belegt.</div>
+                    </figure>
+
+                    <p>Rückblickend ist das die eigentliche Pointe der Geschichte. Die entscheidende Eigenschaft von Indiumgalliumnitrid war nicht die einstellbare Bandlücke, die hatte man erwartet. Es war die Unempfindlichkeit gegen Kristallfehler, und die hatte niemand vorhergesagt. Hätte man sie vorhersagen können, hätte man vermutlich viel früher aufgehört, an Zinkselenid zu arbeiten.</p>
+
+                    <!-- ═══ 8 ═══ -->
+                    <h2 id="e8"><span class="num">KAPITEL 8</span>Was daraus wurde</h2>
+                    <p>Blau war nie das Ziel, Blau war das fehlende Stück. Mit Rot, Grün und Blau lässt sich jede Farbe mischen, und vor allem lässt sich weißes Licht erzeugen. In der Praxis nimmt man dafür allerdings nicht drei LEDs, sondern eine einzige blaue und einen Leuchtstoff darüber, meist cerdotiertes Yttrium-Aluminium-Granat. Der Leuchtstoff schluckt einen Teil des blauen Lichts und gibt ihn als breites Gelb wieder ab. Blau und Gelb zusammen liest das Auge als Weiß.</p>
+
+                    <!-- Abb. 7 -->
+                    <figure class="fig rise" id="fig-white">
+                        <figcaption class="fig-head">
+                            <span class="fig-num">Abbildung 7</span>
+                            <span class="fig-title">Aus einer blauen Linie wird weißes Licht</span>
+                        </figcaption>
+                        <div class="fig-stage"><canvas data-ratio="2.6" data-ratio-narrow="1.5" data-min-h="190"></canvas></div>
+                        <div class="fig-ctrl">
+                            <div class="ctrl-group">
+                                <span class="ctrl-label">Leuchtstoff</span>
+                                <input type="range" id="whRange" min="0" max="92" step="1" value="78" aria-label="Anteil des umgewandelten Lichts in Prozent">
+                            </div>
+                        </div>
+                        <dl class="readout">
+                            <div><dt>Umgewandelt</dt><dd translate="no"><span id="whConv">78</span> <small>%</small></dd></div>
+                            <div><dt>Farbtemperatur</dt><dd class="hi" translate="no"><span id="whCct">—</span> <small>K</small></dd></div>
+                            <div><dt>Stokes-Verlust</dt><dd translate="no"><span id="whLoss">0</span> <small>%</small></dd></div>
+                            <div><dt>Mischfarbe</dt><dd><span class="swatch" id="whSwatch"></span></dd></div>
+                        </dl>
+                        <div class="fig-foot">Die Farbprobe wird nicht gemalt, sondern aus dem gezeichneten Spektrum über die Normspektralwertfunktionen der CIE berechnet, so wie es das Auge tut. Mehr Leuchtstoff heißt wärmeres Weiß, kostet aber Wirkungsgrad: Aus jedem blauen Photon wird ein energieärmeres gelbes, die Differenz bleibt als Wärme im Leuchtstoff. Ganz rechts kippt die Mischung ins Grünliche, und genau deshalb setzen echte Warmweiß-LEDs zusätzlich einen roten Leuchtstoff ein. Eine Farbtemperatur wird nur angezeigt, solange die Mischfarbe nahe genug an der Planck-Kurve liegt, um überhaupt eine zu haben.</div>
+                    </figure>
+
+                    <p>Die Zahlen dahinter erklären, warum daraus so schnell ein Umbau der weltweiten Beleuchtung wurde. Eine Glühlampe liefert etwa fünfzehn Lumen pro Watt, eine Leuchtstoffröhre siebzig, eine heutige weiße LED im Produkt hundertfünfzig bis zweihundert. In der Pressemitteilung zum Nobelpreis 2014 steht die Größenordnung, um die es geht: Rund ein Viertel des weltweiten Stromverbrauchs entfällt auf Beleuchtung.</p>
+                    <p>Dieselbe Materialfamilie brachte 1996 die violette Laserdiode bei 405 Nanometern, und damit Blu-ray, denn kürzere Wellenlänge bedeutet kleinerer Laserpunkt und mehr Daten auf derselben Scheibe. Auch die weiße Hintergrundbeleuchtung, die in jedem Handy und Notebook steckt, ist eine blaue LED mit Leuchtstoff.</p>
+
+                    <div class="note">
+                        <div class="note-head">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.9 4.9 1.4 1.4"/><path d="m17.7 17.7 1.4 1.4"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.3 17.7-1.4 1.4"/><path d="m19.1 4.9-1.4 1.4"/></svg>
+                            Der Streit um die Prämie
+                        </div>
+                        <p>Nakamura erhielt für die Erfindung von seinem Arbeitgeber eine Prämie von zwanzigtausend Yen, damals ein paar hundert Mark. Er verklagte Nichia auf eine angemessene Vergütung. Das Bezirksgericht Tokio sprach ihm 2004 in erster Instanz zwanzig Milliarden Yen zu, ein Betrag ohne Beispiel im japanischen Arbeitsrecht. Der Fall endete 2005 mit einem Vergleich über rund achthundertvierzig Millionen Yen. Der Prozess gilt bis heute als Auslöser dafür, dass japanische Unternehmen ihre Erfindervergütung neu geregelt haben.</p>
+                    </div>
+
+                    <p>2014 ging der Nobelpreis für Physik an Isamu Akasaki, Hiroshi Amano und Shuji Nakamura, mit einer Begründung, die für diesen Preis ungewöhnlich anwendungsnah ausfällt: für die Erfindung effizienter blauer Leuchtdioden, die helle und energiesparende weiße Lichtquellen ermöglicht haben.</p>
+
+                    <div class="tl rise">
+                        <div class="tl-item">
+                            <div class="tl-year">1907</div>
+                            <div class="tl-text">Henry Joseph Round beobachtet an einem Siliziumkarbid-Kristall gelbliches Leuchten. Niemand kann es erklären, die Notiz ist zwei Absätze lang.</div>
+                        </div>
+                        <div class="tl-item">
+                            <div class="tl-year">1962</div>
+                            <div class="tl-text">Nick Holonyak baut die erste sichtbare Leuchtdiode. Sie leuchtet rot.</div>
+                        </div>
+                        <div class="tl-item">
+                            <div class="tl-year">1971</div>
+                            <div class="tl-text">Jacques Pankove zeigt bei RCA die erste GaN-Leuchtdiode. Sie hat keinen echten p-n-Übergang, weil sich GaN nicht p-dotieren lässt.</div>
+                        </div>
+                        <div class="tl-item">
+                            <div class="tl-year">1979</div>
+                            <div class="tl-text">RCA stellt die Arbeiten an Galliumnitrid ein. Das Feld gilt danach als aussichtslos.</div>
+                        </div>
+                        <div class="tl-item key">
+                            <div class="tl-year">1986</div>
+                            <div class="tl-text">Amano und Akasaki wachsen erstmals einen spiegelglatten GaN-Film, indem sie eine Pufferschicht bei niedriger Temperatur vorlegen.</div>
+                        </div>
+                        <div class="tl-item key">
+                            <div class="tl-year">1989</div>
+                            <div class="tl-text">Magnesiumdotiertes GaN wird unter dem Elektronenstrahl leitfähig. Die erste GaN-Diode mit echtem p-n-Übergang entsteht.</div>
+                        </div>
+                        <div class="tl-item">
+                            <div class="tl-year">1991</div>
+                            <div class="tl-text">Nakamura stellt sein Zwei-Fluss-Verfahren vor und bekommt reproduzierbar hochwertige Schichten aus dem Reaktor.</div>
+                        </div>
+                        <div class="tl-item key">
+                            <div class="tl-year">1992</div>
+                            <div class="tl-text">Tempern in Stickstoff über 700 Grad macht p-GaN zur Routine. Der Wasserstoff war die Ursache, nicht der fehlende Elektronenstrahl.</div>
+                        </div>
+                        <div class="tl-item key">
+                            <div class="tl-year">1993</div>
+                            <div class="tl-text">Nichia stellt die erste helle blaue Leuchtdiode mit InGaN-Doppelheterostruktur vor und bringt sie auf den Markt.</div>
+                        </div>
+                        <div class="tl-item">
+                            <div class="tl-year">1996</div>
+                            <div class="tl-text">Weißes Licht aus blauer LED und Leuchtstoff wird verkauft, die violette Laserdiode ebnet den Weg zu Blu-ray.</div>
+                        </div>
+                        <div class="tl-item key">
+                            <div class="tl-year">2014</div>
+                            <div class="tl-text">Der Nobelpreis für Physik geht an Akasaki, Amano und Nakamura.</div>
+                        </div>
+                    </div>
+
+                    <!-- ═══ 9 ═══ -->
+                    <h2 id="e9"><span class="num">KAPITEL 9</span>Was von der Geschichte bleibt</h2>
+                    <p>Drei Dinge an dieser Geschichte sind übertragbar, und keines davon hat mit Halbleitern zu tun.</p>
+                    <p>Erstens lag das Problem nicht dort, wo alle gesucht haben. Die Fachwelt optimierte jahrelang Zinkselenid, weil es das logisch naheliegende Material war, und scheiterte an einem Fehler, den man nicht wegoptimieren konnte. Gelöst wurde die Aufgabe mit dem Material, das als erledigt galt.</p>
+                    <p>Zweitens waren die beiden Durchbrüche keine neue Theorie, sondern Prozessführung. Eine Temperaturrampe und ein Ofenprogramm. Was fehlte, war nicht das Wissen, was man bauen will, sondern wie man es herstellt.</p>
+                    <p>Drittens waren beide Schlüsselbeobachtungen Nebenbefunde. Eine Probe, die spiegelte statt zu trüben. Ein Kristall, der unter dem Mikroskop heller wurde. Beides hätte man als Messfehler abhaken können. Der Unterschied lag darin, dass jemand nachgefragt hat, warum.</p>
+
+                    <h3>Quellen und Originalarbeiten</h3>
+                    <div class="sources">
+                        <ol>
+                            <li><a href="https://www.nobelprize.org/prizes/physics/2014/summary/" target="_blank" rel="noopener">Nobelpreis für Physik 2014, Pressemitteilung und Hintergrundmaterial, nobelprize.org</a></li>
+                            <li><a href="https://www.nobelprize.org/uploads/2018/06/amano-lecture.pdf" target="_blank" rel="noopener">Hiroshi Amano, Nobelvorlesung: Growth of GaN on Sapphire via Low-Temperature Deposited Buffer Layer (PDF)</a></li>
+                            <li><a href="https://www.nobelprize.org/uploads/2018/06/nakamura-lecture.pdf" target="_blank" rel="noopener">Shuji Nakamura, Nobelvorlesung: Background Story of the Invention of Efficient Blue InGaN Light Emitting Diodes (PDF)</a></li>
+                            <li>Amano, Sawaki, Akasaki, Toyoda: Metalorganic vapor phase epitaxial growth of a high quality GaN film using an AlN buffer layer. Applied Physics Letters 48, 353 (1986)</li>
+                            <li>Amano, Kito, Hiramatsu, Akasaki: P-Type Conduction in Mg-Doped GaN Treated with Low-Energy Electron Beam Irradiation. Japanese Journal of Applied Physics 28, L2112 (1989)</li>
+                            <li><a href="https://iopscience.iop.org/article/10.1143/JJAP.31.L139" target="_blank" rel="noopener">Nakamura, Mukai, Senoh, Iwasa: Thermal Annealing Effects on P-Type Mg-Doped GaN Films. Japanese Journal of Applied Physics 31, L139 (1992)</a></li>
+                        </ol>
+                    </div>
+                </article>
+
+                <section class="outro rise">
+                    <div>
+                        <h2>Weiter im IT Hub</h2>
+                        <p>Der Deep Dive gehört zum IT-Bereich von MyWorkLog. Dort liegen auch der Skill-Baum für deine Kompetenzen und die Lernstrecke für die Fachinformatiker-Ausbildung.</p>
+                    </div>
+                    <div class="outro-actions">
+                        <a href="/it-landing/" class="btn primary">Zum IT Hub</a>
+                        <a href="/Fachinformatiker/" class="btn">FI Academy</a>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="page-footer"></div>
+
+    <script defer src="/Assets/js/it-stories.js?v=5.9.7"></script>
+    <script defer src="/Assets/js/it-stories-blaue-led.js?v=5.9.7"></script>
+
+    <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
+    <script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
+</body>
+</html>

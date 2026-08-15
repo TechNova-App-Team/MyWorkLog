@@ -14,7 +14,7 @@
     <link rel="alternate" hreflang="de" href="https://myworklog.de/it-landing/">
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/it-landing/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/it-landing/">
-    <script defer src="/Assets/js/version-loader.js?v=5.9.6"></script>
+    <script defer src="/Assets/js/version-loader.js?v=5.9.7"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -239,6 +239,46 @@
         .strip-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
         .strip-sub { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
 
+        /* ── Deep Dives ── */
+        .section-head {
+            display: flex; align-items: baseline; justify-content: space-between;
+            gap: 16px; flex-wrap: wrap; margin: 54px 0 16px;
+            animation: fadeUp 0.55s 0.42s ease-out both;
+        }
+        .section-head h2 { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+        .section-head p { font-size: 13px; color: var(--text-dim); }
+        .stories { display: grid; gap: 14px; animation: fadeUp 0.55s 0.48s ease-out both; }
+        .story {
+            position: relative; display: grid; grid-template-columns: 1fr auto;
+            gap: 22px; align-items: center; overflow: hidden;
+            border: 1px solid var(--border); border-radius: var(--radius);
+            background: var(--bg-card); padding: 24px 26px;
+            text-decoration: none; color: inherit;
+            transition: border-color 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease;
+        }
+        .story::before {
+            content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 2px;
+            background: linear-gradient(180deg, var(--primary), transparent 85%);
+        }
+        .story:hover { border-color: var(--border-hover); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35); }
+        .story-meta {
+            display: flex; flex-wrap: wrap; gap: 7px 14px; margin-bottom: 11px;
+            font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em;
+            color: var(--text-dim);
+        }
+        .story-meta span:first-child { color: var(--primary); }
+        .story-title { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+        .story-desc { font-size: 14px; line-height: 1.62; color: var(--text-muted); max-width: 60ch; }
+        .story-go {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+            border: 1px solid var(--border); background: var(--bg-surface);
+            transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        }
+        .story-go svg { width: 17px; height: 17px; color: var(--primary); }
+        .story:hover .story-go { background: var(--primary-dim); border-color: rgba(var(--primary-rgb), 0.45); transform: translateX(3px); }
+        @media (max-width: 620px) { .story { grid-template-columns: 1fr; } .story-go { display: none; } }
+
         /* ── Scrollbar ── */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--bg-deep); }
@@ -256,7 +296,7 @@
             .path { padding: 22px 20px 18px; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=5.9.6"></script>
+    <script defer src="/Assets/js/ph-init.js?v=5.9.7"></script>
 </head>
 <body>
     <div class="bg-glow"></div>
@@ -393,6 +433,28 @@
                 <span class="strip-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></svg></span>
                 <div><div class="strip-title">Sofort startklar</div><div class="strip-sub">Keine Anmeldung, keine Ladezeit — einfach loslegen und lernen.</div></div>
             </div>
+        </section>
+
+        <!-- Deep Dives -->
+        <div class="section-head" id="deepDivesHead">
+            <h2>Deep Dives</h2>
+            <p>Technikgeschichten, ausführlich erklärt und mit Diagrammen zum Ausprobieren.</p>
+        </div>
+        <section class="stories" id="deepDives">
+            <a href="/it-stories/blaue-led/" class="story">
+                <div>
+                    <div class="story-meta">
+                        <span>HALBLEITER</span>
+                        <span>18 Min</span>
+                        <span>7 Diagramme</span>
+                    </div>
+                    <div class="story-title">Warum die blaue LED dreißig Jahre gedauert hat</div>
+                    <div class="story-desc">Rot leuchtete 1962, für Blau brauchte es drei Jahrzehnte. Von der Bandlücke über die Pufferschicht bis zum Quantentopf, Schritt für Schritt zum Mitspielen.</div>
+                </div>
+                <span class="story-go">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                </span>
+            </a>
         </section>
 
     </main>
