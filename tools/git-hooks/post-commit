@@ -1,0 +1,48 @@
+#!/bin/sh
+# ═══ POST-COMMIT: graphify-Wissensgraph nachziehen ═══
+#
+# Der Graph in graphify-out/ veraltet still — er merkt sich den Commit, aus dem
+# er gebaut wurde, meldet sich aber nicht, wenn der Code weitergelaufen ist.
+# Dieser Hook zieht ihn nach jedem Commit nach.
+#
+# ⚠️ WARUM HIER UND NICHT IN .git/hooks/:
+# Das Repo setzt core.hooksPath=tools/git-hooks (npm postinstall). Sobald das
+# gesetzt ist, ignoriert Git .git/hooks/ KOMPLETT. Ein `graphify hook install`
+# schreibt aber genau dorthin — der Hook laege da, wuerde nie laufen, und
+# niemand merkt es. Deshalb steht er hier.
+#
+# Laeuft im HINTERGRUND: ein Rebuild dauert auch ohne Aenderungen ~10 s, das
+# gehoert nicht in die Wartezeit eines Commits. Der Exit-Code eines
+# post-commit-Hooks interessiert Git ohnehin nicht.
+#
+# Abschalten: GRAPHIFY_SKIP=1 git commit …   (oder diese Datei loeschen)
+
+[ -n "$GRAPHIFY_SKIP" ] && exit 0
+
+# ── graphify finden ───────────────────────────────────────────────────────────
+# Muss ohne graphify funktionieren: das Repo ist oeffentlich, und weder andere
+# Mitwirkende noch der Cloudflare-Build haben das Werkzeug installiert.
+GRAPHIFY=""
+for c in graphify "$HOME/.local/bin/graphify" "$HOME/.local/bin/graphify.exe"; do
+  if command -v "$c" >/dev/null 2>&1; then GRAPHIFY="$c"; break; fi
+done
+[ -z "$GRAPHIFY" ] && exit 0
+
+# ── Nur bei Dateien laufen, die im Graphen ueberhaupt vorkommen ───────────────
+# Ein Versions-Bump oder eine CSS-Aenderung aendert am Code-Graphen nichts —
+# dann sparen wir uns die 10 s. (Der Graph erfasst hier .js/.mjs und .md;
+# HTML und CSS liegen ausserhalb, siehe CLAUDE.md.)
+changed=$(git diff-tree --no-commit-id --name-only -r HEAD 2>/dev/null)
+echo "$changed" | grep -qE '\.(js|mjs|cjs|ts|py|md)$' || exit 0
+
+# ── Im Hintergrund nachziehen ────────────────────────────────────────────────
+LOG=".git/graphify-post-commit.log"
+(
+  {
+    echo "── $(date '+%Y-%m-%d %H:%M:%S')  nach $(git rev-parse --short HEAD)"
+    "$GRAPHIFY" update .
+  } >"$LOG" 2>&1
+) &
+
+echo "[graphify] Graph wird im Hintergrund nachgezogen (Log: $LOG)"
+exit 0
