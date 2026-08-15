@@ -169,6 +169,52 @@ function upsertLink(doc, selector, attrs) {
   return el;
 }
 
+// --------------------------------------------------------------------------
+// Interne Links auf die englischen Entsprechungen umbiegen. Ohne das landet
+// man von /en/<seite> mit einem Klick wieder im Deutschen — der Text ist
+// uebersetzt, die Navigation aber nicht.
+//
+// Quelle der Wahrheit ist pages.config.json: gemappt wird NUR, was es auch
+// wirklich auf Englisch gibt. Alles andere bleibt deutsch (eine deutsche
+// Seite ist besser als ein 404).
+function buildLinkMap() {
+  const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'pages.config.json'), 'utf8'));
+  const map = {};
+  for (const p of cfg.pages) {
+    if (!p.canonicalDe || !p.canonicalEn) continue;
+    const de = new URL(p.canonicalDe).pathname;
+    const en = new URL(p.canonicalEn).pathname;
+    if (de === en) continue;
+    map[de] = en;
+    // Clean-URL ohne Schraegstrich (_redirects kennt beide Formen)
+    const bare = de.replace(/\/+$/, '');
+    if (bare) map[bare] = en;
+  }
+  return map;
+}
+
+// Statische Dateien haben keine Sprachvariante.
+const SKIP_LINK_PREFIX = /^\/(Assets|Grafiken|components|config|pages)\//;
+
+function localizeLinks(doc, map) {
+  let n = 0;
+  doc.querySelectorAll('a[href]').forEach((a) => {
+    const href = a.getAttribute('href');
+    if (!href || href[0] !== '/' || href[1] === '/') return;  // extern, Anker, mailto
+    if (href.startsWith('/en/')) return;                       // schon englisch
+    if (SKIP_LINK_PREFIX.test(href)) return;
+    // hreflang markiert den bewussten Sprachwechsel (Umschalter) — nicht anfassen.
+    if (a.hasAttribute('hreflang')) return;
+    const cut = href.search(/[?#]/);
+    const pathOnly = cut < 0 ? href : href.slice(0, cut);
+    const target = map[pathOnly];
+    if (!target) return;
+    a.setAttribute('href', target + (cut < 0 ? '' : href.slice(cut)));
+    n++;
+  });
+  return n;
+}
+
 function phrasePass(dom, phrases) {
   // Ersetzt GANZE Text-Knoten, deren normalisierter Text exakt einem Phrase-Key
   // entspricht — fängt gemischten Inhalt (Icon+Text, Heading+Badge) ab, den der
@@ -283,6 +329,22 @@ function cmdRender(src, enJsonPath, outHtml, canonicalEn, canonicalDe, phrasesPa
     add('x-default', canonicalDe);
   }
 
+  // Interne Links auf die /en/-Fassungen umbiegen. Muss VOR dem Sprach-
+  // Umschalter laufen, damit dessen bewusster Sprung nach "/" gewinnt.
+  const linkMap = buildLinkMap();
+  const linkCount = localizeLinks(doc, linkMap);
+
+  // Dieselbe Zuordnung fuer Inhalte, die erst zur Laufzeit dazukommen — der
+  // geteilte Footer wird per fetch nachgeladen und ist hier noch gar nicht da.
+  // i18n-runtime.js liest den Block und zieht die Links nach.
+  if (!doc.getElementById('i18nLinkMap')) {
+    const mapEl = doc.createElement('script');
+    mapEl.setAttribute('type', 'application/json');
+    mapEl.setAttribute('id', 'i18nLinkMap');
+    mapEl.textContent = JSON.stringify(linkMap);
+    doc.head.appendChild(mapEl);
+  }
+
   // Sprach-Umschalter umdrehen: DE-Quelle zeigt "English → /en/",
   // die generierte EN-Seite zeigt "Deutsch → /".
   const langItem = doc.getElementById('langSwitchItem');
@@ -304,7 +366,7 @@ function cmdRender(src, enJsonPath, outHtml, canonicalEn, canonicalDe, phrasesPa
   let out = '<!DOCTYPE html>\n' + dom.serialize();
   fs.mkdirSync(path.dirname(outHtml), { recursive: true });
   fs.writeFileSync(outHtml, out, 'utf8');
-  console.log(`render: ${translated} übersetzt, ${phraseCount} Phrasen, ${missing} fehlend → ${outHtml}`);
+  console.log(`render: ${translated} übersetzt, ${phraseCount} Phrasen, ${linkCount} Links, ${missing} fehlend → ${outHtml}`);
   if (missing) {
     const uniq = [...new Set(missingKeys)];
     console.log(`  fehlende Keys (${uniq.length} uniq):`, uniq.slice(0, 25).join(', ') + (uniq.length > 25 ? ' …' : ''));

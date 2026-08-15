@@ -741,6 +741,31 @@
     }
   }
 
+  // ── Interne Links auf die englischen Seiten ziehen ──────────────────────
+  // Links, die IM HTML stehen, biegt schon die statische Pipeline um. Was per
+  // fetch nachkommt — vor allem der geteilte Footer — braucht denselben Griff
+  // hier, sonst faellt man aus /en/ mit einem Klick zurueck ins Deutsche.
+  // Die Zuordnung kommt aus dem vom Renderer eingebetteten JSON-Block, damit
+  // es keine zweite, driftende Liste gibt.
+  var LINKS = (function () {
+    try {
+      var el = document.getElementById('i18nLinkMap');
+      return el ? JSON.parse(el.textContent) : null;
+    } catch (e) { return null; }
+  })();
+
+  function localizeLink(el) {
+    if (!LINKS || el.tagName !== 'A') return;
+    var href = el.getAttribute('href');
+    if (!href || href.charAt(0) !== '/' || href.charAt(1) === '/') return;
+    if (href.slice(0, 4) === '/en/') return;
+    if (el.hasAttribute('hreflang')) return;   // bewusster Sprachwechsel
+    var cut = href.search(/[?#]/);
+    var pathOnly = cut < 0 ? href : href.slice(0, cut);
+    var target = LINKS[pathOnly];
+    if (target) el.setAttribute('href', target + (cut < 0 ? '' : href.slice(cut)));
+  }
+
   function walk(root) {
     if (!root) return;
     if (root.nodeType === 3) { translateTextNode(root); return; }
@@ -753,6 +778,7 @@
       return;
     }
     translateEl(root);
+    localizeLink(root);
     for (var n = root.firstChild; n; n = n.nextSibling) walk(n);
   }
 
