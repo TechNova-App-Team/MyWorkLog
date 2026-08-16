@@ -10,9 +10,9 @@
 </script>
     <meta name="description" content="Berichtsheft Generator: IHK-konformes Berichtsheft erstellen mit lokaler KI. Automatische Einträge, Prüfungsvorbereitung, AES-256 verschlüsselt & DSGVO-konform.">
     <meta name="keywords" content="Berichtsheft Generator, IHK-konformes Berichtsheft, digitales Berichtsheft, Berichtsheft erstellen, Berichtsheft App, lokale KI Berichtsheft, Ausbildungsnachweis, IHK Berichtsheft, Auszubildende Berichtsheft, online Berichtsheft, Fachinformatiker Berichtsheft, Berichtsheft offline">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.0.0"></script>
-    <script defer src="/Assets/js/mwl-codec.js?v=6.0.0"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.0.0"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.1.0"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.1.0"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.1.0"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1675,6 +1675,119 @@
             padding: 2px 4px; border-radius: 3px;
         }
 
+
+        /* ═══════════════════════════════════════════════════════════
+           FOTO-IMPORT — Papier-Berichtsheft abfotografieren
+           ═══════════════════════════════════════════════════════════ */
+        .foto-overlay {
+            position: fixed; inset: 0; z-index: 9100;
+            background: rgba(0,0,0,0.9);
+            display: none; align-items: center; justify-content: center;
+            padding: 16px;
+        }
+        .foto-overlay.open { display: flex; }
+        .foto-box {
+            width: 100%; max-width: 620px; max-height: 92vh;
+            display: flex; flex-direction: column;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; overflow: hidden;
+            box-shadow: 0 28px 70px rgba(0,0,0,0.6);
+        }
+        .foto-head {
+            display: flex; align-items: center; gap: 12px;
+            padding: 16px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+        }
+        .foto-head-icon {
+            width: 38px; height: 38px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 10px; background: var(--primary-dim);
+            border: 1px solid var(--border); color: var(--primary);
+        }
+        .foto-head-text { flex: 1; min-width: 0; }
+        .foto-head-text h3 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--text-main); }
+        .foto-head-text p { margin: 2px 0 0; font-size: 0.76rem; color: var(--text-muted); }
+        .foto-close {
+            width: 32px; height: 32px; flex-shrink: 0; border-radius: 8px;
+            background: transparent; border: 1px solid var(--border);
+            color: var(--text-muted); cursor: pointer; font-size: 18px; line-height: 1;
+            transition: all 0.15s ease;
+        }
+        .foto-close:hover { color: var(--text-main); border-color: var(--border-hover); }
+
+        .foto-body { padding: 18px; overflow-y: auto; flex: 1; min-height: 0; }
+
+        .foto-error {
+            margin-bottom: 14px; padding: 10px 12px; border-radius: 8px;
+            font-size: 0.82rem; line-height: 1.45; color: #fca5a5;
+            background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25);
+        }
+
+        .foto-drop {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            padding: 32px 20px; border: 1.5px dashed var(--border-hover);
+            border-radius: 12px; cursor: pointer; text-align: center;
+            transition: all 0.18s ease;
+        }
+        .foto-drop:hover { border-color: var(--primary); background: var(--primary-dim); }
+        .foto-drop-icon { width: 30px; height: 30px; color: var(--primary); margin-bottom: 6px; }
+        .foto-drop-main { font-size: 0.94rem; font-weight: 600; color: var(--text-main); }
+        .foto-drop-sub { font-size: 0.76rem; color: var(--text-muted); }
+
+        .foto-facts {
+            margin: 16px 0 0; padding-left: 18px;
+            font-size: 0.78rem; line-height: 1.6; color: var(--text-muted);
+        }
+        .foto-facts li { margin-bottom: 5px; }
+        .foto-facts strong { color: var(--text-secondary); }
+
+        .foto-busy-text { margin: 8px 0 10px; font-size: 0.88rem; color: var(--text-main); }
+        .foto-bar-track {
+            height: 6px; border-radius: 3px; overflow: hidden;
+            background: var(--bg-elevated); border: 1px solid var(--border);
+        }
+        .foto-bar { height: 100%; width: 2%; background: var(--primary); transition: width 0.25s ease; }
+        .foto-hint { margin: 12px 0 0; font-size: 0.75rem; color: var(--text-dim); line-height: 1.5; }
+
+        .foto-meta {
+            margin: 0 0 12px; padding: 8px 11px; border-radius: 8px;
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            font-size: 0.78rem; color: var(--text-secondary); font-family: var(--font-mono);
+        }
+        .foto-warn {
+            margin-bottom: 12px; padding: 10px 12px; border-radius: 8px;
+            font-size: 0.78rem; line-height: 1.5; color: #fbbf24;
+            background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.25);
+        }
+        .foto-days { display: flex; flex-direction: column; gap: 9px; }
+        .foto-day { display: flex; flex-direction: column; gap: 4px; }
+        .foto-day label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); }
+        .foto-day textarea, .foto-raw textarea {
+            width: 100%; padding: 8px 10px; border-radius: 8px;
+            background: var(--bg-input); border: 1px solid var(--border);
+            color: var(--text-main); font-size: 0.8rem; font-family: var(--font-main);
+            resize: vertical; outline: none;
+        }
+        .foto-day textarea:focus { border-color: var(--border-active); }
+
+        .foto-raw { margin-top: 14px; }
+        .foto-raw summary {
+            cursor: pointer; font-size: 0.76rem; color: var(--text-muted);
+            padding: 6px 0;
+        }
+        .foto-raw textarea { font-family: var(--font-mono); font-size: 0.72rem; margin-top: 6px; }
+
+        .foto-actions { display: flex; gap: 9px; justify-content: flex-end; margin-top: 16px; }
+
+        /* Touch hat kein :hover — die Flaeche muss auch so als tippbar lesbar sein. */
+        @media (hover: none) { .foto-drop { border-color: var(--primary); } }
+
+        @media (max-width: 640px) {
+            .foto-box { max-height: 96vh; }
+            .foto-head-text p { display: none; }
+            .foto-actions { flex-direction: column-reverse; }
+            .foto-actions .btn { width: 100%; justify-content: center; }
+        }
+
         /* ═══════════════════════════════════════════════════════════
            PDF EXPORT MODAL — IHK STUDIO
            ═══════════════════════════════════════════════════════════ */
@@ -3047,12 +3160,13 @@
             color: var(--text-main);
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.0.0"></script>
-    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=6.0.0">
+    <script defer src="/Assets/js/ph-init.js?v=6.1.0"></script>
+    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=6.1.0">
 </head>
 <body>
     <!-- ===== SVG ICON SPRITE ===== -->
     <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+        <symbol id="i-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></symbol>
         <symbol id="i-clipboard" viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/></symbol>
         <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
         <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></symbol>
@@ -3247,6 +3361,10 @@
             <button class="btn btn-secondary" onclick="autoFillFromTimeTracker()">
                 <svg class="icon"><use href="#i-refresh"/></svg>
                 <span>TimeTracker Import</span>
+            </button>
+            <button class="btn btn-secondary" onclick="mwlFotoOpen()">
+                <svg class="icon"><use href="#i-camera"/></svg>
+                <span>Foto vom Papier</span>
             </button>
             <button class="btn btn-secondary" onclick="openPDFModal(null)">
                 <svg class="icon"><use href="#i-file"/></svg>
@@ -3749,10 +3867,80 @@ Beispiel:
             </div>
         </div>
     </div>
-    <script defer src="/components/umfrage/umfrage.js?v=6.0.0"></script>
+    <script defer src="/components/umfrage/umfrage.js?v=6.1.0"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="/Assets/js/berichtsheft/ihk-formulare.js?v=6.0.0"></script>
+    <script src="/Assets/js/berichtsheft/ihk-formulare.js?v=6.1.0"></script>
+    <script src="/Assets/js/berichtsheft/foto-import.js?v=6.1.0"></script>
+
+    <!-- ===== FOTO-IMPORT — Papier-Berichtsheft abfotografieren ===== -->
+    <div class="foto-overlay" id="fotoImport" role="dialog" aria-modal="true" aria-labelledby="fotoTitle">
+        <div class="foto-box">
+            <div class="foto-head">
+                <span class="foto-head-icon" aria-hidden="true"><svg class="icon"><use href="#i-camera"/></svg></span>
+                <div class="foto-head-text">
+                    <h3 id="fotoTitle">Foto vom Papier-Berichtsheft</h3>
+                    <p>Texterkennung läuft auf deinem Gerät — das Bild wird nicht hochgeladen</p>
+                </div>
+                <button class="foto-close" onclick="mwlFotoClose()" aria-label="Schließen">&times;</button>
+            </div>
+
+            <div class="foto-body">
+                <div class="foto-error" id="fotoError" style="display:none;" role="alert"></div>
+
+                <!-- Start -->
+                <div id="fotoStep_start">
+                    <label class="foto-drop" for="fotoFileInput">
+                        <svg class="foto-drop-icon"><use href="#i-camera"/></svg>
+                        <span class="foto-drop-main">Foto oder Scan auswählen</span>
+                        <span class="foto-drop-sub">Am Handy öffnet sich direkt die Kamera</span>
+                        <input type="file" id="fotoFileInput" accept="image/*" capture="environment" hidden onchange="mwlFotoDatei(this)">
+                    </label>
+
+                    <ul class="foto-facts">
+                        <li>Gedruckte und getippte Blätter werden gut erkannt, <strong>Handschrift schlecht</strong> — bei Handschrift ist Abtippen meist schneller.</li>
+                        <li>Beim ersten Mal wird die Texterkennung einmalig aus dem Netz geladen (einige Megabyte). Danach läuft sie offline.</li>
+                        <li>Was herauskommt, ist ein Vorschlag. Er landet im Wochenformular, wo du ihn prüfst — gespeichert wird erst dort.</li>
+                    </ul>
+                </div>
+
+                <!-- Läuft -->
+                <div id="fotoStep_busy" style="display:none;">
+                    <p class="foto-busy-text" id="fotoBusyText">Wird gestartet …</p>
+                    <div class="foto-bar-track"><div class="foto-bar" id="fotoBar"></div></div>
+                    <p class="foto-hint">Das dauert je nach Gerät einige Sekunden. Das Bild bleibt dabei auf diesem Gerät.</p>
+                </div>
+
+                <!-- Ergebnis -->
+                <div id="fotoStep_result" style="display:none;">
+                    <p class="foto-meta" id="fotoMeta"></p>
+
+                    <div class="foto-warn" id="fotoHinweis" style="display:none;">
+                        Es liess sich kein Wochentag zuordnen. Der erkannte Text steht unten im Rohtext —
+                        du kannst ihn von dort in die Tagesfelder kopieren.
+                    </div>
+
+                    <div class="foto-days">
+                        <div class="foto-day"><label for="fotoTag_monday">Montag</label><textarea id="fotoTag_monday" rows="2"></textarea></div>
+                        <div class="foto-day"><label for="fotoTag_tuesday">Dienstag</label><textarea id="fotoTag_tuesday" rows="2"></textarea></div>
+                        <div class="foto-day"><label for="fotoTag_wednesday">Mittwoch</label><textarea id="fotoTag_wednesday" rows="2"></textarea></div>
+                        <div class="foto-day"><label for="fotoTag_thursday">Donnerstag</label><textarea id="fotoTag_thursday" rows="2"></textarea></div>
+                        <div class="foto-day"><label for="fotoTag_friday">Freitag</label><textarea id="fotoTag_friday" rows="2"></textarea></div>
+                    </div>
+
+                    <details class="foto-raw">
+                        <summary>Erkannten Rohtext anzeigen</summary>
+                        <textarea id="fotoRawText" rows="8" readonly></textarea>
+                    </details>
+
+                    <div class="foto-actions">
+                        <button class="btn btn-secondary" onclick="mwlFotoSchritt('start')">Anderes Foto</button>
+                        <button class="btn btn-primary" onclick="mwlFotoUebernehmen()">Ins Wochenformular übernehmen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- ===== PDF EXPORT MODAL — IHK STUDIO ===== -->
     <div class="pdf-modal-overlay" id="pdfModal">
@@ -11651,8 +11839,8 @@ ${trackingBlock}${aufgabenBlock}
     </script>
 
     <!-- BBiG-Live-Scanner -->
-    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=6.0.0">
-    <script src="/components/bbig-scanner/bbig-scanner.js?v=6.0.0"></script>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=6.1.0">
+    <script src="/components/bbig-scanner/bbig-scanner.js?v=6.1.0"></script>
     <script>
         if (typeof initBbigBerichtsheft === 'function') {
             if (document.readyState === 'loading') {

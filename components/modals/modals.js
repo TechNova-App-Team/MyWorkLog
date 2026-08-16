@@ -104,13 +104,15 @@
 
         const iconStyle = `width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;flex-shrink:0;`;
         const btnStyle = `width:100%;padding:0.9rem 1rem;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text-main);text-align:left;cursor:pointer;transition:background 0.15s;font-size:0.95rem;display:flex;align-items:center;gap:12px;`;
+        // "Rückgängig" nur zeigen, wenn es auch etwas rückgängig zu machen gibt.
+        const undoAvailable = (typeof mwlImportHasUndo === 'function') && mwlImportHasUndo();
 
         menu.innerHTML = `
             <div style="padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
                 <span style="${iconStyle}background:rgba(168,85,247,0.15);color:var(--primary);">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                 </span>
-                <h3 style="margin:0;font-size:1rem;font-weight:700;">Backup importieren</h3>
+                <h3 style="margin:0;font-size:1rem;font-weight:700;">Daten übernehmen</h3>
             </div>
             <button style="${btnStyle}" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'" onclick="closeBackupMenu(); document.getElementById('fileImp').click();">
                 <span style="${iconStyle}background:rgba(34,197,94,0.15);color:#4ade80;">
@@ -121,7 +123,7 @@
                     <div style="font-size:0.8rem;color:var(--text-muted);">JSON-Datei (v2 oder Legacy)</div>
                 </div>
             </button>
-            <button style="${btnStyle}border-bottom:none;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'" onclick="closeBackupMenu(); document.getElementById('fileImpEncrypted').click();">
+            <button style="${btnStyle}" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'" onclick="closeBackupMenu(); document.getElementById('fileImpEncrypted').click();">
                 <span style="${iconStyle}background:rgba(251,146,60,0.15);color:#fb923c;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </span>
@@ -130,6 +132,25 @@
                     <div style="font-size:0.8rem;color:var(--text-muted);">Mit Passwort geschützt</div>
                 </div>
             </button>
+            <button style="${btnStyle}${undoAvailable ? '' : 'border-bottom:none;'}" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'" onclick="closeBackupMenu(); openImportWizard();">
+                <span style="${iconStyle}background:rgba(59,130,246,0.15);color:#60a5fa;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                </span>
+                <div>
+                    <div style="font-weight:600;">Aus Excel oder CSV übernehmen</div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);">Zeiten aus einer Tabelle oder anderen App</div>
+                </div>
+            </button>
+            ${undoAvailable ? `
+            <button style="${btnStyle}border-bottom:none;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'" onclick="closeBackupMenu(); mwlImportUndo();">
+                <span style="${iconStyle}background:rgba(248,113,113,0.15);color:#f87171;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3.51 13a9 9 0 1 0 2.13-9.36L3 7"/></svg>
+                </span>
+                <div>
+                    <div style="font-weight:600;">Import rückgängig</div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);">Die zuletzt übernommenen Einträge wieder entfernen</div>
+                </div>
+            </button>` : ''}
         `;
 
         document.body.appendChild(menu);

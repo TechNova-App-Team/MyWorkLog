@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+/* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
+(function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
+</script>
+    <title>MyWorkLog | Zeiterfassung wechseln ohne Datenverlust</title>
+    <meta name="description" content="Von Excel, Papier oder einer anderen Zeiterfassung zu MyWorkLog wechseln: CSV- und Excel-Import, Foto vom Papier-Berichtsheft, alles lokal im Browser. Schritt für Schritt erklärt.">
+    <meta name="keywords" content="Zeiterfassung wechseln, Excel Zeiterfassung importieren, Arbeitszeiten CSV importieren, Berichtsheft übertragen, Stundenzettel digitalisieren, Zeiterfassung Daten übernehmen, Azubi Zeiterfassung Umstieg">
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.1.0"></script>
+
+    <link rel="canonical" href="https://myworklog.de/wechseln/">
+    <link rel="alternate" hreflang="de" href="https://myworklog.de/wechseln/">
+    <link rel="alternate" hreflang="en" href="https://myworklog.de/en/wechseln/">
+    <link rel="alternate" hreflang="x-default" href="https://myworklog.de/wechseln/">
+
+    <meta property="og:title" content="Zeiterfassung wechseln ohne Datenverlust">
+    <meta property="og:description" content="Excel, CSV oder Papier-Berichtsheft übernehmen — im Browser, ohne Upload.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://myworklog.de/wechseln/">
+    <meta property="og:site_name" content="MyWorkLog">
+    <meta property="og:locale" content="de_DE">
+
+    <style>
+        :root {
+            --bg-deep: #030305;
+            --bg-card: rgba(255,255,255,0.025);
+            --primary: #a855f7;
+            --primary-rgb: 168, 85, 247;
+            --primary-dim: rgba(168,85,247,0.15);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(255,255,255,0.16);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+        }
+        [data-theme="light"] {
+            --bg-deep: #f8fafc;
+            --bg-card: rgba(7,16,35,0.02);
+            --text-main: #071023;
+            --text-muted: #475569;
+            --text-dim: #64748b;
+            --border: rgba(7,16,35,0.08);
+            --border-hover: rgba(7,16,35,0.16);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-main);
+            background: var(--bg-deep);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
+        }
+
+        .ambient {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background: radial-gradient(60% 40% at 50% 0%, rgba(var(--primary-rgb), 0.10), transparent 70%);
+        }
+
+        .shell { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
+
+        nav ol { list-style: none; display: flex; gap: 6px; font-size: 0.75rem; color: var(--text-dim); flex-wrap: wrap; }
+        nav a { color: var(--text-dim); text-decoration: none; }
+        nav a:hover { color: var(--text-muted); }
+
+        .back-btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            margin: 10px 0 26px; padding: 7px 13px;
+            border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text-muted); text-decoration: none;
+            font-size: 0.82rem; transition: all 0.15s ease;
+        }
+        .back-btn:hover { border-color: var(--border-hover); color: var(--text-main); }
+        .back-btn svg { width: 15px; height: 15px; }
+
+        .hero { margin-bottom: 40px; }
+        .hero-badge {
+            display: inline-block; padding: 4px 11px; border-radius: 20px;
+            background: var(--primary-dim); border: 1px solid rgba(var(--primary-rgb), 0.25);
+            color: var(--primary); font-size: 0.72rem; font-weight: 600;
+            letter-spacing: 0.04em; margin-bottom: 14px;
+        }
+        h1 {
+            font-size: clamp(1.9rem, 5vw, 2.7rem); font-weight: 800;
+            letter-spacing: -0.03em; line-height: 1.12; margin-bottom: 14px;
+        }
+        h1 span { color: var(--primary); }
+        .hero-sub { font-size: 1.03rem; color: var(--text-muted); max-width: 62ch; }
+
+        h2 {
+            font-size: 1.32rem; font-weight: 700; letter-spacing: -0.02em;
+            margin: 38px 0 14px; scroll-margin-top: 20px;
+        }
+        h3 { font-size: 1rem; font-weight: 650; margin-bottom: 6px; }
+        p { color: var(--text-muted); margin-bottom: 12px; }
+        p strong, li strong { color: var(--text-main); font-weight: 600; }
+
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 18px 20px; margin-bottom: 14px;
+        }
+        .card-head { display: flex; align-items: center; gap: 11px; margin-bottom: 10px; }
+        .card-ico {
+            width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--primary-dim); border: 1px solid var(--border); color: var(--primary);
+        }
+        .card-ico svg { width: 17px; height: 17px; }
+        .card h3 { margin: 0; }
+        .card p:last-child, .card ol:last-child, .card ul:last-child { margin-bottom: 0; }
+
+        ol, ul { margin: 0 0 12px 20px; color: var(--text-muted); }
+        li { margin-bottom: 6px; }
+
+        .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 460px; }
+        th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--text-dim); font-weight: 600; font-size: 0.75rem; letter-spacing: 0.04em; text-transform: uppercase; }
+        td { color: var(--text-muted); }
+        td:first-child { color: var(--text-main); font-weight: 600; white-space: nowrap; }
+        tr:last-child td { border-bottom: none; }
+        code { font-family: var(--font-mono); font-size: 0.86em; color: var(--text-main); }
+
+        .note {
+            border-left: 3px solid var(--primary);
+            padding: 11px 15px; margin: 16px 0;
+            background: var(--primary-dim); border-radius: 0 10px 10px 0;
+            font-size: 0.9rem;
+        }
+        .note.warn { border-left-color: var(--warning); background: rgba(245,158,11,0.07); }
+        .note p:last-child { margin-bottom: 0; }
+
+        .faq-item { border-bottom: 1px solid var(--border); }
+        .faq-item:last-child { border-bottom: none; }
+        .faq-item summary {
+            cursor: pointer; padding: 13px 0; font-weight: 600;
+            font-size: 0.94rem; list-style: none; display: flex;
+            justify-content: space-between; gap: 12px; align-items: center;
+        }
+        .faq-item summary::-webkit-details-marker { display: none; }
+        .faq-item summary::after { content: '+'; color: var(--primary); font-size: 1.2rem; flex-shrink: 0; }
+        .faq-item[open] summary::after { content: '−'; }
+        .faq-item p { padding-bottom: 13px; margin-bottom: 0; font-size: 0.9rem; }
+
+        .cta {
+            display: flex; flex-wrap: wrap; gap: 11px; align-items: center;
+            margin-top: 34px; padding: 22px; border-radius: 14px;
+            background: var(--bg-card); border: 1px solid var(--border);
+        }
+        .cta-text { flex: 1; min-width: 210px; }
+        .cta-text strong { display: block; font-size: 1.02rem; margin-bottom: 3px; }
+        .cta-text span { font-size: 0.86rem; color: var(--text-muted); }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 11px 20px; border-radius: 9px; text-decoration: none;
+            font-size: 0.9rem; font-weight: 600; transition: all 0.15s ease;
+            border: 1px solid var(--border);
+        }
+        .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .btn-primary:hover { filter: brightness(1.1); }
+        .btn-ghost { color: var(--text-muted); }
+        .btn-ghost:hover { border-color: var(--border-hover); color: var(--text-main); }
+
+        /* Touch hat kein :hover — Ziele muessen auch ohne erkennbar sein. */
+        @media (hover: none) { .btn-ghost { color: var(--text-main); } }
+
+        @media (max-width: 560px) {
+            .shell { padding: 20px 15px 44px; }
+            .cta { flex-direction: column; align-items: stretch; }
+            .btn { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient"></div>
+
+    <div class="shell">
+        <nav aria-label="Breadcrumb">
+            <ol>
+                <li><a href="/">MyWorkLog</a></li>
+                <li aria-hidden="true" style="opacity:0.4;">›</li>
+                <li aria-current="page" style="color:var(--text-muted);">Wechseln</li>
+            </ol>
+        </nav>
+
+        <a href="/" class="back-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+            Zurück
+        </a>
+
+        <header class="hero">
+            <div class="hero-badge">Umstieg</div>
+            <h1>Wechseln, ohne die <span>alten Zeiten</span> zu verlieren</h1>
+            <p class="hero-sub">
+                Die meisten haben schon Monate erfasst — in einer Excel-Tabelle, in einer anderen App
+                oder auf Papier. Genau das ist der Grund, warum ein Wechsel meistens unterbleibt.
+                MyWorkLog liest die alten Daten ein, damit du nicht bei Null anfängst.
+            </p>
+        </header>
+
+        <h2 id="ueberblick">Was übernommen werden kann</h2>
+        <p>
+            Drei Wege, je nachdem, wo deine Zeiten heute liegen. Alle drei laufen vollständig
+            im Browser — keine Datei wird hochgeladen, kein Konto ist nötig.
+        </p>
+
+        <div class="card">
+            <div class="card-head">
+                <span class="card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></span>
+                <h3>Excel, LibreOffice oder Google Tabellen</h3>
+            </div>
+            <p>
+                <code>.xlsx</code> wird direkt gelesen, ebenso <code>.csv</code> und Tabulator-Text.
+                Du kannst die Zeilen auch einfach in der Tabelle markieren, kopieren und ins
+                Einfügefeld werfen — das ist oft der schnellste Weg.
+            </p>
+            <ol>
+                <li>In MyWorkLog links in der Seitenleiste auf <strong>Import</strong>.</li>
+                <li><strong>Aus Excel oder CSV übernehmen</strong> wählen.</li>
+                <li>Datei aussuchen oder die kopierten Zeilen einfügen.</li>
+                <li>Spalten prüfen — meistens sind sie schon richtig zugeordnet.</li>
+                <li>In der Vorschau abhaken, was übernommen werden soll.</li>
+            </ol>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <span class="card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+                <h3>Aus einer anderen Zeiterfassungs-App</h3>
+            </div>
+            <p>
+                Fast jede App kann CSV exportieren — such in ihren Einstellungen nach
+                „Export", „Daten herunterladen" oder „Backup". Die entstandene Datei
+                nimmst du dann wie oben. Wie die Spalten dort heißen, ist egal:
+                du ordnest sie im zweiten Schritt selbst zu.
+            </p>
+        </div>
+
+        <div class="card">
+            <div class="card-head">
+                <span class="card-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg></span>
+                <h3>Papier-Berichtsheft abfotografieren</h3>
+            </div>
+            <p>
+                Im <a href="/berichtsheft/" style="color:var(--primary);">Berichtsheft</a> gibt es
+                <strong>Foto vom Papier</strong>. Die Texterkennung läuft auf deinem Gerät und
+                schlägt die Woche vor; prüfen und speichern machst du im normalen Wochenformular.
+            </p>
+            <div class="note warn">
+                <p>
+                    Ehrlich dazugesagt: gedruckte und getippte Blätter erkennt sie gut,
+                    <strong>Handschrift schlecht</strong>. Bei handschriftlichen Heften bist du
+                    mit Abtippen meistens schneller als mit Nachkorrigieren.
+                </p>
+            </div>
+        </div>
+
+        <h2 id="spalten">Welche Spalten erkannt werden</h2>
+        <p>
+            Die Kopfzeile wird automatisch gedeutet — deutsche und englische Bezeichnungen.
+            Passt etwas nicht, stellst du es per Auswahlfeld um. Nur das Datum ist Pflicht.
+        </p>
+        <div class="tbl-wrap">
+            <table>
+                <thead>
+                    <tr><th>Feld</th><th>Erkannte Bezeichnungen</th><th>Beispiele für Werte</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Datum</td><td>Datum, Date, Tag, Day</td><td><code>03.08.2026</code>, <code>2026-08-03</code>, <code>3/8/26</code></td></tr>
+                    <tr><td>Von / Bis</td><td>Von, Start, Beginn, Bis, Ende, Gehen</td><td><code>08:00</code>, <code>16:30</code></td></tr>
+                    <tr><td>Stunden</td><td>Stunden, Arbeitszeit, Dauer, Ist, Hours</td><td><code>8,5</code>, <code>8:30</code>, <code>7,75 Std.</code></td></tr>
+                    <tr><td>Pause</td><td>Pause, Break</td><td><code>30</code> (Minuten), <code>0:45</code></td></tr>
+                    <tr><td>Typ</td><td>Typ, Art, Kategorie, Status</td><td>Arbeit, Urlaub, Krank, Berufsschule, Feiertag, Gleittag</td></tr>
+                    <tr><td>Projekt</td><td>Projekt, Kunde, Auftrag</td><td>frei</td></tr>
+                    <tr><td>Notiz</td><td>Notiz, Bemerkung, Tätigkeit</td><td>frei</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p style="margin-top:12px;font-size:0.88rem;">
+            Excel-Datumszellen und Uhrzeiten als Tagesbruchteil werden mitgelesen — du musst
+            in der Tabelle nichts umformatieren. Zeilen ohne brauchbares Datum landen nicht
+            still im Nichts, sondern stehen mit Grund in der Vorschau.
+        </p>
+
+        <h2 id="soll">Was mit Soll-Stunden und Saldo passiert</h2>
+        <p>
+            Deine alte Tabelle kennt in der Regel nur die geleisteten Stunden. Das Tagessoll
+            kommt deshalb aus deinen Einstellungen in MyWorkLog — nicht aus der Datei.
+        </p>
+        <ul>
+            <li><strong>Vor dem Import die Arbeitszeiten einstellen.</strong> Sonst rechnet der Saldo gegen die Vorgabewerte statt gegen deinen echten Wochenplan.</li>
+            <li><strong>Urlaub, Krankheit, Feiertag</strong> bekommen automatisch das Tagessoll gutgeschrieben, ihr Saldo-Beitrag ist null.</li>
+            <li><strong>Gleittage</strong> ziehen das Tagessoll vom Guthaben ab — genau wie manuell erfasst.</li>
+            <li><strong>Mehrere Einträge am selben Tag</strong> zählen das Tagessoll nur einmal; der zweite Block ist reine Zusatzzeit.</li>
+        </ul>
+        <div class="note">
+            <p>
+                Die Vorschau zeigt die Saldo-Änderung, bevor irgendetwas gespeichert wird.
+                Und falls es doch danebengeht: <strong>Import rückgängig</strong> steht direkt
+                im Import-Menü und entfernt die übernommenen Einträge wieder.
+            </p>
+        </div>
+
+        <h2 id="faq">Häufige Fragen</h2>
+        <div>
+            <details class="faq-item">
+                <summary>Werden meine Daten irgendwohin hochgeladen?</summary>
+                <p>
+                    Nein. Die Datei wird im Browser gelesen, die Texterkennung für Fotos läuft
+                    ebenfalls auf deinem Gerät. MyWorkLog speichert deine Zeiten lokal — es gibt
+                    keinen Server, auf dem sie liegen könnten.
+                </p>
+            </details>
+            <details class="faq-item">
+                <summary>Meine Tabelle hat keine Kopfzeile — geht das trotzdem?</summary>
+                <p>
+                    Ja. Ohne Kopfzeile werden die Spalten am Inhalt erkannt: die Spalte, in der
+                    überwiegend Datumsangaben stehen, ist das Datum, und so weiter. Die erste
+                    Zeile geht dabei nicht verloren.
+                </p>
+            </details>
+            <details class="faq-item">
+                <summary>Was passiert mit Tagen, die ich schon erfasst habe?</summary>
+                <p>
+                    Solche Zeilen werden als Dublette markiert und sind in der Vorschau
+                    standardmäßig abgewählt. Doppelte Tage verfälschen den Saldo unauffälliger
+                    als eine fehlende Zeile — deshalb diese Richtung. Anhaken kannst du sie
+                    trotzdem, etwa bei einem echten Split-Dienst.
+                </p>
+            </details>
+            <details class="faq-item">
+                <summary>Kann ich .xls-Dateien importieren?</summary>
+                <p>
+                    Das alte <code>.xls</code>-Format nicht — das lässt sich im Browser nicht
+                    auspacken. Öffne die Datei in Excel oder LibreOffice und speichere sie als
+                    <code>.xlsx</code> oder CSV; danach klappt es.
+                </p>
+            </details>
+            <details class="faq-item">
+                <summary>Ich habe mehrere Jobs — welchem wird der Import zugeordnet?</summary>
+                <p>
+                    Wenn du mehr als einen Job angelegt hast, wählst du im zweiten Schritt aus,
+                    zu welchem die Zeilen gehören. Soll und Pause kommen dann von diesem Job.
+                    Für mehrere Jobs importierst du am besten getrennt.
+                </p>
+            </details>
+            <details class="faq-item">
+                <summary>Muss ich alles auf einmal übernehmen?</summary>
+                <p>
+                    Nein. In der Vorschau hakst du zeilenweise ab. Du kannst genauso gut erst
+                    einen Monat einlesen, das Ergebnis ansehen und den Rest später nachziehen.
+                </p>
+            </details>
+        </div>
+
+        <div class="cta">
+            <div class="cta-text">
+                <strong>Bereit zum Umstieg?</strong>
+                <span>Kostenlos, ohne Konto, ohne Installation.</span>
+            </div>
+            <a href="/" class="btn btn-primary">MyWorkLog öffnen</a>
+            <a href="/berichtsheft/" class="btn btn-ghost">Zum Berichtsheft</a>
+        </div>
+    </div>
+
+    <div id="page-footer"></div>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type":"Question","name":"Werden meine Daten irgendwohin hochgeladen?","acceptedAnswer":{"@type":"Answer","text":"Nein. Die Datei wird im Browser gelesen, die Texterkennung für Fotos läuft ebenfalls auf dem Gerät. MyWorkLog speichert Zeiten lokal."}},
+        {"@type":"Question","name":"Meine Tabelle hat keine Kopfzeile — geht das trotzdem?","acceptedAnswer":{"@type":"Answer","text":"Ja. Ohne Kopfzeile werden die Spalten am Inhalt erkannt: die Spalte mit überwiegend Datumsangaben ist das Datum. Die erste Zeile geht dabei nicht verloren."}},
+        {"@type":"Question","name":"Was passiert mit Tagen, die ich schon erfasst habe?","acceptedAnswer":{"@type":"Answer","text":"Solche Zeilen werden als Dublette markiert und sind in der Vorschau standardmäßig abgewählt. Anhaken lassen sie sich trotzdem."}},
+        {"@type":"Question","name":"Kann ich .xls-Dateien importieren?","acceptedAnswer":{"@type":"Answer","text":"Das alte .xls-Format nicht. In Excel oder LibreOffice als .xlsx oder CSV speichern, danach klappt der Import."}},
+        {"@type":"Question","name":"Ich habe mehrere Jobs — welchem wird der Import zugeordnet?","acceptedAnswer":{"@type":"Answer","text":"Bei mehreren Jobs wählt man im zweiten Schritt aus, zu welchem Job die Zeilen gehören. Soll und Pause kommen von diesem Job."}},
+        {"@type":"Question","name":"Muss ich alles auf einmal übernehmen?","acceptedAnswer":{"@type":"Answer","text":"Nein, in der Vorschau wird zeilenweise abgehakt. Man kann auch erst einen Monat einlesen und den Rest später nachziehen."}}
+      ]
+    }
+    </script>
+
+    <script>
+        fetch('/pages/footer/footer.html')
+            .then(r => r.text())
+            .then(html => {
+                const ph = document.getElementById('page-footer');
+                if (!ph) return;
+                const tmpl = document.createElement('template');
+                tmpl.innerHTML = html;
+                ph.replaceWith(tmpl.content);
+                if (typeof loadAppVersion === 'function') loadAppVersion();
+            });
+    </script>
+
+    <!-- Theme-Farbe-Sync: liest User-Akzent aus tg_pro_data.settings.theme -->
+    <script>
+    (function() {
+        function applyTheme(hex) {
+            if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+            var r = parseInt(hex.slice(1,3), 16);
+            var g = parseInt(hex.slice(3,5), 16);
+            var b = parseInt(hex.slice(5,7), 16);
+            document.documentElement.style.setProperty('--primary', hex);
+            document.documentElement.style.setProperty('--primary-rgb', r + ',' + g + ',' + b);
+            document.documentElement.style.setProperty('--primary-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
+        }
+        function syncTheme() {
+            try {
+                var raw = localStorage.getItem('tg_pro_data');
+                if (!raw) return;
+                var data = JSON.parse(raw);
+                if (data && data.settings) {
+                    if (data.settings.theme) applyTheme(data.settings.theme);
+                    if (data.settings.themeMode === 'light') document.documentElement.setAttribute('data-theme', 'light');
+                }
+            } catch (e) { /* ignore */ }
+        }
+        syncTheme();
+        window.addEventListener('storage', function(e) { if (e.key === 'tg_pro_data') syncTheme(); });
+        document.addEventListener('visibilitychange', function() { if (!document.hidden) syncTheme(); });
+    })();
+    </script>
+
+<!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
+<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
+</html>

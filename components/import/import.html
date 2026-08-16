@@ -1,0 +1,117 @@
+<!-- ═══ IMPORT: WECHSEL-BRÜCKE ═══
+     Zeiten aus Excel/CSV oder einer anderen App übernehmen.
+     Logik: components/import/import.js -->
+<div class="imp-overlay" id="importWizard" role="dialog" aria-modal="true" aria-labelledby="impTitle">
+    <div class="imp-box">
+
+        <div class="imp-head">
+            <span class="imp-head-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </span>
+            <div class="imp-head-text">
+                <h3 id="impTitle">Zeiten übernehmen</h3>
+                <p>Aus Excel, CSV oder einer anderen App — alles bleibt auf diesem Gerät</p>
+            </div>
+            <div class="imp-dots" aria-hidden="true">
+                <span class="imp-dot active" id="impDot1"></span>
+                <span class="imp-dot" id="impDot2"></span>
+                <span class="imp-dot" id="impDot3"></span>
+            </div>
+            <button class="imp-close" onclick="closeImportWizard()" aria-label="Schließen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+
+        <div class="imp-body">
+            <div class="imp-error" id="impError" style="display:none;" role="alert"></div>
+
+            <!-- ── Schritt 1: Quelle ─────────────────────────────────────── -->
+            <div id="impStep1">
+                <label class="imp-drop" for="impFileInput">
+                    <svg class="imp-drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+                    <span class="imp-drop-main">Datei auswählen</span>
+                    <span class="imp-drop-sub">.csv, .txt oder .xlsx — oder Datei hierher ziehen</span>
+                    <input type="file" id="impFileInput" accept=".csv,.txt,.tsv,.xlsx" hidden onchange="mwlImportFile(this)">
+                </label>
+
+                <div class="imp-or"><span>oder</span></div>
+
+                <div class="imp-field">
+                    <label class="imp-label" for="impPasteArea">Aus der Tabelle kopieren und hier einfügen</label>
+                    <textarea class="imp-textarea" id="impPasteArea" rows="5"
+                        placeholder="Zeilen aus Excel markieren, kopieren (Strg+C) und hier einfügen (Strg+V)"></textarea>
+                    <button class="imp-btn imp-btn-ghost" onclick="mwlImportPaste()">Eingefügte Zeilen lesen</button>
+                </div>
+
+                <p class="imp-hint">
+                    Gelesen wird nur, was du hier auswählst. Die Datei wird im Browser verarbeitet
+                    und nirgendwo hochgeladen.
+                    <a href="/wechseln/" target="_blank" rel="noopener" class="imp-link">Anleitung für den Umstieg</a>
+                </p>
+            </div>
+
+            <!-- ── Schritt 2: Spalten zuordnen ───────────────────────────── -->
+            <div id="impStep2" style="display:none;">
+                <p class="imp-file-info" id="impFileInfo"></p>
+
+                <div class="imp-map-grid" id="impMapRows"></div>
+
+                <div class="imp-field imp-row-2">
+                    <div>
+                        <label class="imp-label" for="impDefaultType">Typ, wenn die Datei keinen nennt</label>
+                        <select class="imp-select" id="impDefaultType">
+                            <option value="work">Arbeit</option>
+                            <option value="school">Berufsschule</option>
+                            <option value="vacation">Urlaub</option>
+                            <option value="sick">Krankheit</option>
+                            <option value="holiday">Feiertag</option>
+                            <option value="gleittag">Gleittag</option>
+                        </select>
+                    </div>
+                    <div id="impJobRow">
+                        <label class="imp-label" for="impJob">Job</label>
+                        <select class="imp-select" id="impJob"></select>
+                    </div>
+                </div>
+
+                <div class="imp-actions">
+                    <button class="imp-btn imp-btn-ghost" onclick="mwlImportGoto(1)">Zurück</button>
+                    <button class="imp-btn imp-btn-primary" onclick="mwlImportBuildPreview()">Vorschau ansehen</button>
+                </div>
+            </div>
+
+            <!-- ── Schritt 3: Prüfen & Übernehmen ────────────────────────── -->
+            <div id="impStep3" style="display:none;">
+                <div class="imp-summary" id="impSummary"></div>
+
+                <div class="imp-select-row">
+                    <button class="imp-link" onclick="mwlImportSelectAll(true)">Alle auswählen</button>
+                    <button class="imp-link" onclick="mwlImportSelectAll(false)">Alle abwählen</button>
+                </div>
+
+                <div class="imp-table-wrap">
+                    <table class="imp-table">
+                        <thead>
+                            <tr>
+                                <th style="width:34px;"></th>
+                                <th>Datum</th>
+                                <th>Typ</th>
+                                <th class="imp-num">Ist</th>
+                                <th class="imp-num">Soll</th>
+                                <th class="imp-num">Diff</th>
+                                <th>Notiz</th>
+                            </tr>
+                        </thead>
+                        <tbody id="impPreviewBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="imp-actions">
+                    <button class="imp-btn imp-btn-ghost" onclick="mwlImportGoto(2)">Zurück</button>
+                    <button class="imp-btn imp-btn-primary" id="impApplyBtn" onclick="mwlImportApply()">Einträge übernehmen</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
