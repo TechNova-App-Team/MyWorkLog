@@ -1,0 +1,132 @@
+{
+  "app": {
+    "myworklog": "· MyWorkLog",
+    "kapitel": "Kapitel",
+    "die_zelle_haelt_ladung": "Die Zelle hält Ladung",
+    "viele_zellen_werden_nand": "Viele Zellen werden NAND",
+    "der_controller_uebersetzt": "Der Controller übersetzt",
+    "ssd_gegen_hdd": "SSD gegen HDD",
+    "warum_flash_verschleisst": "Warum Flash verschleißt",
+    "was_bleibt": "Was bleibt",
+    "sich_erinnert": "sich erinnert",
+    "in_einer_ssd_dreht_sich": "In einer SSD dreht sich nichts. Trotzdem bleiben Daten gespeichert, wenn der Strom weg ist. Der Trick ist eine winzige Ladung, die in isolierten Zellen gefangen wird. Von dort geht es über NAND-Seiten, Blöcke und einen Übersetzer zur Datei — und im direkten Vergleich zur HDD wird klar, warum beide Laufwerke so unterschiedlich reagieren.",
+    "lesezeit_etwa_9_minuten": "Lesezeit etwa 9 Minuten",
+    "5_diagramme_zum_ausprobieren": "5 Diagramme zum Ausprobieren",
+    "stand_august_2026": "Stand: August 2026",
+    "eine_flashzelle_ist_ein_transistor": "Eine Flash-Zelle ist ein Transistor mit einem zusätzlichen, vollständig isolierten Gate. Dieses Floating Gate sitzt zwischen Steuergate und Kanal und kann Elektronen festhalten. Jedes Elektron dort schirmt einen Teil des Gate-Felds ab, also braucht der Transistor mehr Spannung, bevor er leitet. Genau diese verschobene Schwelle liest der Controller später als Datenwert.",
+    "beim_programmieren_zieht_eine_hohe": "Beim Programmieren zieht eine hohe Spannung am Steuergate Elektronen aus dem Kanal durch die dünne Oxidschicht auf das Floating Gate — Fowler-Nordheim-Tunneln. Beim Löschen dreht sich das Feld um und die Ladung wandert zurück. Die Oxidschicht ist der Isolator und zugleich die empfindlichste Stelle der Zelle: Bei jedem Zyklus bleiben ein paar Ladungen darin hängen.",
+    "die_zelle_speichert_also_nicht": "Die Zelle speichert also nicht „eine Datei“ und auch nicht direkt eine Null oder Eins. Sie speichert eine analoge Ladungsmenge, die der Controller in ein Spannungsfenster einordnet. Aus vielen solchen Fenstern entstehen Seiten, aus Seiten werden Blöcke und aus Blöcken ein Laufwerk.",
+    "aktuelle_laufwerke_stapeln_die_zellen": "Aktuelle Laufwerke stapeln die Zellen in mehr als 200 Lagen übereinander (3D-NAND) und fangen die Ladung meist nicht mehr in einem leitenden Gate, sondern in einer isolierenden Nitridschicht — Charge-Trap-Flash. Das Prinzip bleibt identisch: eingesperrte Ladung verschiebt die Schwelle. Weil man beim Stapeln nicht mehr in die Fläche schrumpfen muss, sind die einzelnen Zellen dabei sogar wieder größer geworden, was Ausdauer und Fehlerrate spürbar verbessert hat.",
+    "nandflash_schaltet_zellen_in_langen": "NAND-Flash schaltet Zellen in langen Reihen hintereinander. Eine Seite ist die kleinste Einheit, die der Controller programmieren kann — häufig 4 bis 16 KiB Nutzdaten plus Platz für die Fehlerkorrektur. Löschen geht dagegen nur blockweise: Ein Block fasst hunderte bis tausende Seiten und wird über eine hohe Spannung am Substrat komplett in den gelöschten Zustand zurückgesetzt.",
+    "daraus_folgt_die_regel_die": "Daraus folgt die Regel, die alles Weitere erklärt: Programmieren geht seitenweise, Löschen nur blockweise — und eine belegte Seite lässt sich nicht einfach überschreiben. Wer eine Seite ändern will, bekommt eine neue.",
+    "das_betriebssystem_denkt_in_logischen": "Das Betriebssystem denkt in logischen Blöcken: LBA 42 ist immer LBA 42. Die NAND-Seiten darunter haben aber eine begrenzte Lebensdauer, lassen sich nicht überschreiben und werden nur blockweise gelöscht. Zwischen beide Welten schiebt der SSD-Controller deshalb eine Übersetzungstabelle, die Flash Translation Layer, kurz FTL.",
+    "die_ftl_ist_der_grund": "Die FTL ist der Grund, warum eine SSD nicht wie ein großer USB-Stick funktioniert. Sie arbeitet ständig im Hintergrund: Wear-Leveling verteilt die Abnutzung, ECC rekonstruiert einzelne gekippte Bits, Garbage Collection räumt Blöcke frei, und TRIM meldet dem Laufwerk, welche Seiten das Dateisystem gar nicht mehr braucht. Ohne TRIM hält der Controller gelöschte Dateien für gültige Daten und kopiert sie beim Aufräumen brav mit. Dazu kommt ein Reserveanteil, den der Nutzer nie zu sehen bekommt — Over-Provisioning, typisch 7 bis 28 Prozent. Beides zusammen ist der Grund, warum ein randvolles Laufwerk beim Schreiben einbricht.",
+    "eine_hdd_speichert_bits_als": "Eine HDD speichert Bits als Magnetisierung winziger Bereiche auf rotierenden Scheiben. Bevor auch nur ein Byte fließt, muss zweierlei passieren: Der Arm schwenkt den Kopf auf die richtige Spur, und danach dreht sich die Scheibe so lange weiter, bis der gesuchte Sektor unter dem Kopf durchläuft. Beides sind mechanische Wartezeiten — und beide lassen sich ausrechnen. Eine halbe Umdrehung dauert bei 7200 Umdrehungen pro Minute immer 4,2 ms, egal wie gut die Firmware ist.",
+    "die_ssd_hat_nichts_zu": "Die SSD hat nichts zu bewegen. Sie schlägt die Adresse in der FTL nach, liest die Flash-Seite aus und schiebt die Daten heraus. Kein Weg, keine Wartezeit auf eine Umdrehung.",
+    "in_iops_gerechnet_ist_der": "In IOPS gerechnet ist der Abstand bei einzelnen kleinen Zugriffen etwa 11.000 gegen 80. Datenblätter nennen für SSDs trotzdem gern sechsstellige Werte — die gelten für tiefe Warteschlangen, in denen das Laufwerk dutzende Anfragen gleichzeitig auf verschiedene NAND-Dies verteilt. Genau das kann eine HDD nicht: Sie hat einen Arm, und der ist immer nur an einer Stelle.",
+    "eine_ssd_ist_nicht_einfach": "Eine SSD ist nicht einfach eine HDD ohne Scheiben. Sie löst dasselbe Problem mit einer anderen Physik: Elektronen statt Magnetisierung, Mapping statt Kopfposition und Fehlerkorrektur statt „ein Bit ist ein Bit“.",
+    "wo_die_hdd_gewinnt_hat": "Wo die HDD gewinnt, hat nichts mit Geschwindigkeit zu tun: Preis pro Terabyte, verfügbare Kapazität pro Gehäuse und ein Verschleißverhalten, das nicht vom Schreibvolumen abhängt. Wo die SSD gewinnt: Latenz, kleine Zugriffe, Parallelität, Lautlosigkeit, Erschütterungsfestigkeit und Stromaufnahme.",
+    "jeder_programmloeschzyklus_belastet_das_": "Jeder Programm-Lösch-Zyklus belastet das Tunneloxid. Ein Teil der Elektronen bleibt darin hängen, statt vollständig durchzugehen. Die Folge: Die Schwelle einer programmierten Zelle sitzt nicht mehr genau dort, wo sie sitzen soll, und die Verteilungen werden breiter. Das nutzbare Spannungsfenster wächst dabei nicht mit — es ist von der Physik der Zelle vorgegeben, nicht von der Anzahl der Bits, die man hineinlegen möchte.",
+    "genau_daraus_entsteht_der_zielkonflikt": "Genau daraus entsteht der Zielkonflikt zwischen SLC, MLC, TLC und QLC. Wer vier Bit in eine Zelle legt, muss sechzehn Pegel in dasselbe Fenster quetschen: Der Abstand zwischen zwei Pegeln sinkt auf ein Achtel dessen, was SLC zur Verfügung hat — bei praktisch unverändertem Rauschen.",
+    "deshalb_betreiben_fast_alle_tlc": "Deshalb betreiben fast alle TLC- und QLC-Laufwerke einen Teil ihrer Zellen bewusst im SLC-Modus: nur ein Bit, riesige Abstände, sehr schnelles Schreiben. Solange die Daten in diesen Cache passen, sieht man die volle Datenblattgeschwindigkeit. Ist er voll, muss der Controller während des Schreibens gleichzeitig nach TLC oder QLC umschichten — an dieser Stelle bricht die Kurve bei großen Kopiervorgängen ein, oft von mehreren Gigabyte pro Sekunde auf einen Bruchteil davon. Das ist kein Defekt, sondern die Konstruktion.",
+    "wenn_du_eine_ssd_anschliesst": "Wenn du eine SSD anschließt, siehst du keine Zellen und keine NAND-Blöcke, sondern Dateien. Dazwischen arbeitet eine Kette aus Ladung, Spannungsfenstern, Fehlerkorrektur und Adressübersetzung. Genau diese Schichten erklären den Alltag: SSDs fühlen sich sofortig an, weil ihnen der mechanische Weg fehlt. Sie werden langsamer, wenn sie voll sind, weil dann die Write Amplification steigt. Und sie halten trotzdem lange, weil der Controller die Abnutzung verteilt. HDDs bleiben daneben das, was sie immer waren: günstig, groß und beim langen Lesen am Stück gar nicht so weit weg.",
+    "quellen_und_weiterfuehrende_literatur": "Quellen und weiterführende Literatur",
+    "micron_tn2919_nand_flash_101": "Micron TN-29-19: NAND Flash 101 — Seiten, Blöcke, Programmier- und Löschzeiten",
+    "agrawal_et_al_design_tradeoffs": "Agrawal et al.: Design Tradeoffs for SSD Performance (USENIX ATC 2008)",
+    "cai_et_al_errors_in": "Cai et al.: Errors in Flash-Memory-Based Solid-State Drives — Analysis, Mitigation, and Recovery",
+    "snia_solid_state_storage_ueberblick": "SNIA: Solid State Storage — Überblick und Begriffe",
+    "nvm_express_spezifikationen_fuer_wartesc": "NVM Express: Spezifikationen für Warteschlangen und Kommandos",
+    "weiter_im_it_hub": "Weiter im IT Hub",
+    "der_deep_dive_gehoert_zum": "Der Deep Dive gehört zum IT-Bereich von MyWorkLog. Dort liegen auch der Skill-Baum und die Lernstrecke für die Fachinformatiker-Ausbildung.",
+    "zum_it_hub": "Zum IT Hub",
+    "fi_academy": "FI Academy",
+    "kapitel_2": "Kapitel"
+  },
+  "e1": {
+    "kapitel_1": "KAPITEL 1"
+  },
+  "figCell": {
+    "abbildung_1": "Abbildung 1",
+    "ladung_auf_dem_floating_gate": "Ladung auf dem Floating Gate verschiebt die Schwelle",
+    "ladungszustand": "Ladungszustand",
+    "elektronen": "Elektronen",
+    "schwelle": "Schwelle",
+    "zustand": "Zustand",
+    "bits_pro_zelle": "Bits pro Zelle",
+    "eine_mlczelle_speichert_zwei_bit": "Eine MLC-Zelle speichert zwei Bit über vier unterscheidbare Spannungsfenster; TLC nutzt acht, QLC sechzehn. Der gelöschte Zustand 11 liegt unter null Volt — die Zelle leitet dann schon ohne Gate-Spannung. Die Pegel sind so codiert, dass sich Nachbarn in genau einem Bit unterscheiden (Gray-Code): Ein verlesener Nachbarpegel kostet deshalb höchstens ein Bit statt zwei.",
+    "die_elektronenzahl_ist_hier_aus": "Die Elektronenzahl ist hier aus der Schwellenverschiebung gerechnet (Q = C · ΔVTH, rund 120 Elektronen je Volt). Bei den kleinsten Zellen sind es nur noch einige Dutzend — dort zählt praktisch jedes einzelne Elektron."
+  },
+  "e2": {
+    "kapitel_2": "KAPITEL 2"
+  },
+  "figNand": {
+    "abbildung_2": "Abbildung 2",
+    "schreiben_fuellt_seiten_loeschen_leert": "Schreiben füllt Seiten, Löschen leert den ganzen Block",
+    "gueltige_seiten": "Gültige Seiten",
+    "ungueltige_seiten": "Ungültige Seiten",
+    "freie_seiten": "Freie Seiten",
+    "loeschzyklen": "Löschzyklen",
+    "seite_aendern_zeigt_den_kern": "„Seite ändern“ zeigt den Kern: Die neue Version landet in einer freien Seite, die alte wird nur als ungültig markiert. Der Platz kommt erst zurück, wenn der ganze Block gelöscht wird — das erledigt später die Garbage Collection. Ist keine freie Seite mehr da, hilft nur noch löschen.",
+    "der_block_hier_hat_acht": "Der Block hier hat acht Seiten, damit man ihn zählen kann; echte Blöcke fassen hunderte bis tausende und damit mehrere Megabyte. Die Zeiten daneben sind Größenordnungen für TLC-NAND: Lesen ist billig, Programmieren kostet ein Vielfaches, Löschen noch einmal deutlich mehr."
+  },
+  "e3": {
+    "kapitel_3": "KAPITEL 3"
+  },
+  "figFtl": {
+    "abbildung_3": "Abbildung 3",
+    "dieselbe_logische_adresse_jedes_mal": "Dieselbe logische Adresse, jedes Mal eine andere Seite",
+    "fuellstand": "Füllstand",
+    "logisch": "Logisch",
+    "physisch": "Physisch",
+    "write_amplification": "Write Amplification",
+    "freie_seiten": "Freie Seiten",
+    "die_logische_adresse_bleibt_stehen": "Die logische Adresse bleibt stehen, die physische wandert bei jedem Schreibvorgang — bevorzugt in einen anderen Block, damit die Abnutzung sich verteilt (Wear-Leveling). Die alte Seite wird rot: belegt, aber wertlos.",
+    "write_amplification_ist_das_verhaeltnis": "Write Amplification ist das Verhältnis aus tatsächlich geschriebenen Flash-Daten zu den Nutzdaten des Betriebssystems. Der Regler rechnet mit der einfachen Näherung WA = 1/(1−u) für zufällige Schreibmuster: Je voller das Laufwerk, desto mehr gültige Seiten muss die Garbage Collection beim Aufräumen mitschleppen. Echte Controller wählen die Opferblöcke geschickter und trennen heiße von kalten Daten, kommen also günstiger weg — der Trend stimmt trotzdem."
+  },
+  "e4": {
+    "kapitel_4": "KAPITEL 4"
+  },
+  "figCompare": {
+    "abbildung_4": "Abbildung 4",
+    "derselbe_leseauftrag_an_beide_laufwerke": "Derselbe Leseauftrag an beide Laufwerke, in Zeitlupe",
+    "zufaellig_4_kib": "Zufällig 4 KiB",
+    "sequenziell_1_mib": "Sequenziell 1 MiB",
+    "ssd": "SSD",
+    "hdd": "HDD",
+    "faktor": "Faktor",
+    "ssdzugriffe_derweil": "SSD-Zugriffe derweil",
+    "die_simulation_laeuft_in_zeitlupe": "Die Simulation läuft in Zeitlupe — eine Sekunde auf dem Bildschirm sind vier Millisekunden im Laufwerk. Gerechnet wird mit vergleichbarer Klasse auf beiden Seiten: 7200 min⁻¹, 200 MB/s und ein Suchmodell mit Wurzelkennlinie gegen eine SATA-SSD mit 550 MB/s und 60 µs Lesezeit im NAND. Bei zufälligen 4 KiB liegen zwei Größenordnungen dazwischen. Bei einem Megabyte am Stück schrumpft der Vorsprung auf weniger als das Dreifache, weil dann nur noch die Transferrate zählt — genau dort ist die HDD konkurrenzfähig geblieben. Eine NVMe-SSD würde auch dieses Feld wieder klar gewinnen.",
+    "zugriffsmuster_auswaehlen": "Zugriffsmuster auswählen"
+  },
+  "e5": {
+    "kapitel_5": "KAPITEL 5"
+  },
+  "figWear": {
+    "abbildung_5": "Abbildung 5",
+    "festes_fenster_mehr_pegel_weniger": "Festes Fenster, mehr Pegel, weniger Abstand",
+    "slc": "SLC",
+    "mlc": "MLC",
+    "tlc": "TLC",
+    "qlc": "QLC",
+    "abnutzung": "Abnutzung",
+    "bits_pro_zelle": "Bits pro Zelle",
+    "pegelabstand": "Pegelabstand",
+    "pezyklen": "P/E-Zyklen",
+    "rohbitfehlerrate": "Rohbitfehlerrate",
+    "die_rohbitfehlerrate_ist_hier_aus": "Die Rohbitfehlerrate ist hier aus dem Überlapp benachbarter Gauß-Verteilungen gerechnet, nicht abgelesen: Sie zeigt die Größenordnung, kein bestimmtes Bauteil. Die Fehlerkorrektur moderner Laufwerke (LDPC) fängt Raten bis etwa 10⁻² ab; wird es darüber eng, sortiert die Firmware den Block aus und nimmt einen Reserveblock.",
+    "die_zyklenzahlen_sind_typische_groesseno": "Die Zyklenzahlen sind typische Größenordnungen für die jeweilige Zellart. Over-Provisioning, Controller und Firmware verschieben sie deutlich, und Wear-Leveling sorgt dafür, dass nicht immer dieselben Blöcke altern.",
+    "flashtyp_auswaehlen": "Flash-Typ auswählen"
+  },
+  "e6": {
+    "kapitel_6": "KAPITEL 6"
+  },
+  "cellRange": {
+    "ladungszustand_der_zelle": "Ladungszustand der Zelle"
+  },
+  "ftlRange": {
+    "fuellstand_des_laufwerks_in_prozent": "Füllstand des Laufwerks in Prozent"
+  },
+  "wearRange": {
+    "abnutzung_in_prozent_der_spezifizierten": "Abnutzung in Prozent der spezifizierten Zyklen"
+  }
+}

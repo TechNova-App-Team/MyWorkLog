@@ -483,7 +483,7 @@
         { id: 'it-hub',       label: 'IT Professional Hub', icon: getIconSvgById('it-hub'), group: 'Extern',     action: () => { window.location.href = './it-landing/'; } },
         { id: 'rechte-checker', label: 'Rechte-Checker',  icon: getIconSvgById('rights'), group: 'Extern',     action: () => { window.location.href = './rechte-checker/'; } },
         { id: 'vertrag',      label: 'Vertrags-Manager',  icon: getIconSvgById('vertrag'), group: 'Extern',     action: () => { window.location.href = './vertrags-manager/'; } },
-        { id: 'archflow',     label: 'ArchFlow',          icon: getIconSvgById('archflow'), group: 'Extern',     action: () => window.open('/archflow/', '_blank') },
+        { id: 'archflow',     label: 'Graphify',           icon: getIconSvgById('archflow'), group: 'Extern',     action: () => window.open('/archflow/', '_blank') },
         { id: 'repo',         label: 'Repo-Analyse',      icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('/repo-report/', '_blank') },
         { id: 'analytics',    label: 'Analytics',         icon: getIconSvgById('analytics'), group: 'Extern',     action: () => window.open('./analytics/', '_blank') },
         { id: 'impressum',    label: 'Impressum',         icon: getIconSvgById('impressum'), group: 'Extern',     action: () => window.open('./Impressum/', '_blank') },
@@ -579,6 +579,26 @@
     })();
 
     // Global Ctrl+K / ⌘K shortcut
+    // Keep the generated shell compatible with the current Graphify naming.
+    // Update the already-rendered link without touching generated HTML files.
+    function applyGraphifySidebarLabel() {
+        document.querySelectorAll('a[href="/archflow/"]').forEach((link) => {
+            link.setAttribute('aria-label', 'Graphify');
+            link.childNodes.forEach((node) => {
+                if (node.nodeType === Node.TEXT_NODE && node.textContent.includes('ArchFlow')) {
+                    node.textContent = node.textContent.replace('ArchFlow', 'Graphify');
+                }
+            });
+            if (!link.querySelector('.nav-badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'nav-badge';
+                badge.textContent = 'NEU';
+                link.appendChild(badge);
+            }
+        });
+    }
+    applyGraphifySidebarLabel();
+
     document.addEventListener('keydown', (e) => {
         // Master-Schalter (shortcuts.js) — Default AUS. Palette bleibt per
         // Sidebar-Button / Mobile-Nav erreichbar, kein Lockout.

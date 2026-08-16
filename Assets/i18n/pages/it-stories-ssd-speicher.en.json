@@ -1,0 +1,138 @@
+{
+  "app": {
+    "myworklog": "· MyWorkLog",
+    "kapitel": "Chapters",
+    "die_zelle_haelt_ladung": "The cell holds charge",
+    "viele_zellen_werden_nand": "Many cells become NAND",
+    "der_controller_uebersetzt": "The controller translates",
+    "ssd_gegen_hdd": "SSD versus HDD",
+    "warum_flash_verschleisst": "Why flash wears out",
+    "was_bleibt": "What remains",
+    "sich_erinnert": "remembers",
+    "in_einer_ssd_dreht_sich": "Nothing spins inside an SSD. Data still survives when the power is gone. The trick is a tiny charge trapped inside insulated cells. From there the path runs through NAND pages, blocks and a translator to the file — and a direct comparison with a hard disk shows why the two drives behave so differently.",
+    "lesezeit_etwa_9_minuten": "About 9 minutes",
+    "5_diagramme_zum_ausprobieren": "5 diagrams to play with",
+    "stand_august_2026": "Updated August 2026",
+    "eine_flashzelle_ist_ein_transistor": "A flash cell is a transistor with one extra, fully insulated gate. This floating gate sits between the control gate and the channel, and it can hold on to electrons. Every electron up there screens part of the gate field, so the transistor needs more voltage before it conducts. That shifted threshold is exactly what the controller reads back as a data value.",
+    "beim_programmieren_zieht_eine_hohe": "During programming, a high voltage on the control gate pulls electrons out of the channel and through the thin oxide layer onto the floating gate — Fowler-Nordheim tunnelling. Erasing reverses the field and the charge travels back. That oxide layer is the insulator and at the same time the most fragile part of the cell: every cycle leaves a few charges stuck inside it.",
+    "die_zelle_speichert_also_nicht": "So the cell does not store “a file”, and it does not directly store a zero or a one either. It stores an analogue amount of charge that the controller sorts into a voltage window. Many such windows make a page, pages make a block, and blocks make a drive.",
+    "aktuelle_laufwerke_stapeln_die_zellen": "Current drives stack their cells more than 200 layers deep (3D NAND) and usually no longer trap the charge in a conducting gate but in an insulating nitride layer — charge-trap flash. The principle is unchanged: trapped charge shifts the threshold. Because stacking removes the pressure to shrink in area, the individual cells actually grew again, which noticeably improved endurance and error rates.",
+    "nandflash_schaltet_zellen_in_langen": "NAND flash wires cells into long chains. A page is the smallest unit the controller can program — often 4 to 16 KiB of payload plus room for error correction. Erasing, on the other hand, only works per block: a block holds hundreds to thousands of pages and is reset to the erased state in one go by a high voltage on the substrate.",
+    "daraus_folgt_die_regel_die": "That gives the rule everything else follows from: programming happens page by page, erasing only block by block — and an occupied page cannot simply be overwritten. Change a page and you get a new one.",
+    "das_betriebssystem_denkt_in_logischen": "The operating system thinks in logical blocks: LBA 42 is always LBA 42. The NAND pages underneath have a limited lifetime, cannot be overwritten and are erased only in whole blocks. So the SSD controller slots a translation table between the two worlds: the Flash Translation Layer, or FTL.",
+    "die_ftl_ist_der_grund": "The FTL is the reason an SSD is not just a large USB stick. It works constantly in the background: wear levelling spreads the ageing, ECC reconstructs individual flipped bits, garbage collection frees blocks up, and TRIM tells the drive which pages the file system no longer needs at all. Without TRIM the controller treats deleted files as valid data and dutifully copies them along during cleanup. On top of that comes a reserve the user never sees — over-provisioning, typically 7 to 28 percent. Together they explain why a drive filled to the brim collapses on writes.",
+    "eine_hdd_speichert_bits_als": "A hard disk stores bits as the magnetisation of tiny regions on spinning platters. Before a single byte flows, two things have to happen: the arm swings the head onto the right track, and then the platter keeps turning until the wanted sector passes underneath. Both are mechanical waits — and both can be calculated. Half a revolution at 7200 rpm always takes 4.2 ms, no matter how good the firmware is.",
+    "die_ssd_hat_nichts_zu": "The SSD has nothing to move. It looks the address up in the FTL, reads the flash page and pushes the data out. No travel, no waiting for a revolution.",
+    "in_iops_gerechnet_ist_der": "In IOPS, single small accesses come out at roughly 11,000 against 80. Data sheets still like to quote six-figure numbers for SSDs — those apply to deep queues, where the drive spreads dozens of requests across different NAND dies at once. That is precisely what a hard disk cannot do: it has one arm, and the arm is only ever in one place.",
+    "eine_ssd_ist_nicht_einfach": "An SSD is not simply a hard disk without platters. It solves the same problem with different physics: electrons instead of magnetisation, mapping instead of head position, and error correction instead of “a bit is a bit”.",
+    "wo_die_hdd_gewinnt_hat": "Where the hard disk wins has nothing to do with speed: price per terabyte, capacity per enclosure, and wear behaviour that does not depend on how much you write. Where the SSD wins: latency, small accesses, parallelism, silence, shock resistance and power draw.",
+    "jeder_programmloeschzyklus_belastet_das_": "Every program-erase cycle stresses the tunnel oxide. Some of the electrons stay stuck inside instead of passing through. The result: the threshold of a programmed cell no longer sits exactly where it should, and the distributions widen. The usable voltage window does not grow along with it — it is set by the physics of the cell, not by the number of bits you would like to put inside.",
+    "genau_daraus_entsteht_der_zielkonflikt": "That is exactly where the trade-off between SLC, MLC, TLC and QLC comes from. Put four bits into a cell and you have to squeeze sixteen levels into the same window: the distance between two levels drops to an eighth of what SLC has available — with practically unchanged noise.",
+    "deshalb_betreiben_fast_alle_tlc": "This is why almost every TLC and QLC drive deliberately runs part of its cells in SLC mode: one bit only, huge margins, very fast writes. As long as the data fits into that cache, you see the full data-sheet speed. Once it is full, the controller has to move data over to TLC or QLC while still accepting writes — and that is where the curve collapses during large copies, often from several gigabytes per second to a fraction of it. Not a defect, but the design.",
+    "wenn_du_eine_ssd_anschliesst": "When you plug in an SSD you see no cells and no NAND blocks, only files. In between works a chain of charge, voltage windows, error correction and address translation. Those layers explain everyday behaviour: SSDs feel instant because the mechanical path is missing. They slow down when full, because write amplification climbs. And they still last, because the controller spreads the wear. Hard disks meanwhile remain what they always were: cheap, large, and not that far behind on long sequential reads.",
+    "quellen_und_weiterfuehrende_literatur": "Sources and further reading",
+    "micron_tn2919_nand_flash_101": "Micron TN-29-19: NAND Flash 101 — pages, blocks, program and erase times",
+    "agrawal_et_al_design_tradeoffs": "Agrawal et al.: Design Tradeoffs for SSD Performance (USENIX ATC 2008)",
+    "cai_et_al_errors_in": "Cai et al.: Errors in Flash-Memory-Based Solid-State Drives — Analysis, Mitigation, and Recovery",
+    "snia_solid_state_storage_ueberblick": "SNIA: Solid State Storage — overview and terminology",
+    "nvm_express_spezifikationen_fuer_wartesc": "NVM Express: specifications for queues and commands",
+    "weiter_im_it_hub": "More in the IT Hub",
+    "der_deep_dive_gehoert_zum": "This deep dive belongs to the IT section of MyWorkLog, which also holds the skill tree and the learning path for the German IT apprenticeship.",
+    "zum_it_hub": "To the IT Hub",
+    "fi_academy": "FI Academy",
+    "kapitel_2": "Chapters"
+  },
+  "e1": {
+    "kapitel_1": "CHAPTER 1"
+  },
+  "figCell": {
+    "abbildung_1": "Figure 1",
+    "ladung_auf_dem_floating_gate": "Charge on the floating gate shifts the threshold",
+    "ladungszustand": "Charge state",
+    "elektronen": "Electrons",
+    "schwelle": "Threshold",
+    "zustand": "State",
+    "bits_pro_zelle": "Bits per cell",
+    "eine_mlczelle_speichert_zwei_bit": "An MLC cell stores two bits across four distinguishable voltage windows; TLC uses eight, QLC sixteen. The erased state 11 sits below zero volts — the cell already conducts without any gate voltage. The levels are coded so that neighbours differ in exactly one bit (Gray code): misreading a neighbouring level therefore costs at most one bit instead of two.",
+    "die_elektronenzahl_ist_hier_aus": "The electron count here is derived from the threshold shift (Q = C · ΔVTH, roughly 120 electrons per volt). In the smallest cells only a few dozen are left — there, practically every single electron counts."
+  },
+  "e2": {
+    "kapitel_2": "CHAPTER 2"
+  },
+  "figNand": {
+    "abbildung_2": "Figure 2",
+    "schreiben_fuellt_seiten_loeschen_leert": "Writing fills pages, erasing clears the whole block",
+    "gueltige_seiten": "Valid pages",
+    "ungueltige_seiten": "Stale pages",
+    "freie_seiten": "Free pages",
+    "loeschzyklen": "Erase cycles",
+    "seite_aendern_zeigt_den_kern": "“Change page” shows the core of it: the new version lands in a free page, the old one is merely marked stale. The space only comes back when the whole block is erased — garbage collection takes care of that later. Once no free page is left, erasing is the only option.",
+    "der_block_hier_hat_acht": "The block here has eight pages so you can count them; real blocks hold hundreds to thousands, and therefore several megabytes. The timings beside it are orders of magnitude for TLC NAND: reading is cheap, programming costs several times as much, erasing considerably more again."
+  },
+  "e3": {
+    "kapitel_3": "CHAPTER 3"
+  },
+  "figFtl": {
+    "abbildung_3": "Figure 3",
+    "dieselbe_logische_adresse_jedes_mal": "The same logical address, a different page every time",
+    "fuellstand": "Fill level",
+    "logisch": "Logical",
+    "physisch": "Physical",
+    "write_amplification": "Write amplification",
+    "freie_seiten": "Free pages",
+    "die_logische_adresse_bleibt_stehen": "The logical address stays put, the physical one moves with every write — preferably into a different block, so the ageing spreads out (wear levelling). The old page turns red: occupied, but worthless.",
+    "write_amplification_ist_das_verhaeltnis": "Write amplification is the ratio of flash data actually written to the payload the operating system handed over. The slider uses the simple approximation WA = 1/(1−u) for random write patterns: the fuller the drive, the more valid pages garbage collection has to drag along while cleaning up. Real controllers pick victim blocks more cleverly and separate hot from cold data, so they get off more lightly — but the trend holds."
+  },
+  "e4": {
+    "kapitel_4": "CHAPTER 4"
+  },
+  "figCompare": {
+    "abbildung_4": "Figure 4",
+    "derselbe_leseauftrag_an_beide_laufwerke": "The same read request to both drives, in slow motion",
+    "zufaellig_4_kib": "Random 4 KiB",
+    "sequenziell_1_mib": "Sequential 1 MiB",
+    "ssd": "SSD",
+    "hdd": "HDD",
+    "faktor": "Factor",
+    "ssdzugriffe_derweil": "SSD accesses meanwhile",
+    "die_simulation_laeuft_in_zeitlupe": "The simulation runs in slow motion — one second on screen is four milliseconds inside the drive. Both sides are modelled in comparable class: 7200 rpm, 200 MB/s and a square-root seek model against a SATA SSD at 550 MB/s with 60 µs of NAND read time. With random 4 KiB there are two orders of magnitude between them. With a megabyte in one piece the lead shrinks to less than threefold, because only transfer rate is left to decide — and that is exactly where hard disks stayed competitive. An NVMe SSD would win this field clearly again.",
+    "zugriffsmuster_auswaehlen": "Choose access pattern"
+  },
+  "e5": {
+    "kapitel_5": "CHAPTER 5"
+  },
+  "figWear": {
+    "abbildung_5": "Figure 5",
+    "festes_fenster_mehr_pegel_weniger": "Fixed window, more levels, less margin",
+    "slc": "SLC",
+    "mlc": "MLC",
+    "tlc": "TLC",
+    "qlc": "QLC",
+    "abnutzung": "Wear",
+    "bits_pro_zelle": "Bits per cell",
+    "pegelabstand": "Level spacing",
+    "pezyklen": "P/E cycles",
+    "rohbitfehlerrate": "Raw bit error rate",
+    "die_rohbitfehlerrate_ist_hier_aus": "The raw bit error rate here is computed from the overlap of neighbouring Gaussian distributions, not looked up: it shows the order of magnitude, not a specific part. The error correction in modern drives (LDPC) copes with rates up to roughly 10⁻²; once it gets tighter than that, the firmware retires the block and takes a spare.",
+    "die_zyklenzahlen_sind_typische_groesseno": "The cycle counts are typical orders of magnitude for each cell type. Over-provisioning, controller and firmware shift them considerably, and wear levelling makes sure it is never the same blocks that age.",
+    "flashtyp_auswaehlen": "Choose flash type"
+  },
+  "e6": {
+    "kapitel_6": "CHAPTER 6"
+  },
+  "cellRange": {
+    "ladungszustand_der_zelle": "Charge state of the cell"
+  },
+  "ftlRange": {
+    "fuellstand_des_laufwerks_in_prozent": "Fill level of the drive in percent"
+  },
+  "wearRange": {
+    "abnutzung_in_prozent_der_spezifizierten": "Wear in percent of the specified cycles"
+  },
+  "__title": "How an SSD stores data | MyWorkLog",
+  "__metaDescription": "How an SSD traps charge inside flash cells, why it can only erase whole blocks, and what really makes the difference in a calculated head-to-head with a hard disk.",
+  "__ogTitle": "How an SSD stores data",
+  "__ogDescription": "Flash cells, NAND blocks and a calculated access comparison with the hard disk.",
+  "__twitterTitle": "How an SSD stores data",
+  "__twitterDescription": "Flash cells, NAND blocks and a calculated access comparison with the hard disk."
+}
