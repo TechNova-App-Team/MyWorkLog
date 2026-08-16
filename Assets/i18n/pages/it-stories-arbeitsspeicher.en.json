@@ -1,0 +1,153 @@
+{
+  "app": {
+    "myworklog": "· MyWorkLog",
+    "kapitel": "Chapters",
+    "ein_bit_ist_ein_kondensator": "A bit is a capacitor",
+    "lesen_zerstoert_das_bit": "Reading destroys the bit",
+    "vom_bit_zum_byte": "From bit to byte",
+    "was_von_allein_schiefgeht": "What goes wrong by itself",
+    "was_ecc_rettet": "What ECC saves",
+    "rowhammer": "Rowhammer",
+    "was_bleibt": "What remains",
+    "vergisst": "forgets",
+    "eine_ssd_haelt_ihre_ladung": "An SSD holds on to its charge until somebody erases it. Main memory cannot. Every bit sits on a tiny capacitor that drains all by itself, so it has to be topped up thousands of times per second. Almost everything else follows from that one weakness: the access timings, the error correction — and a class of attack in which merely reading one memory row alters the row next door.",
+    "lesezeit_etwa_11_minuten": "About 11 minutes",
+    "5_diagramme_zum_ausprobieren": "5 diagrams to play with",
+    "stand_august_2026": "Updated August 2026",
+    "eine_dramzelle_besteht_aus_genau": "A DRAM cell is made of exactly two parts: a capacitor that holds the charge and a transistor that connects it to the bit line. That is the entire storage. Charged means one, empty means zero. Because so little goes into it, billions of cells fit on a chip — a 16 GB module carries more than 137 billion of them.",
+    "der_preis_dafuer_ist_die": "The price is leakiness. Junction currents in the transistor and leakage paths in the substrate drain the charge away all on their own. An average cell holds its contents for several seconds at room temperature. The problem is not the average cells, though, but the worst ones: the refresh rate of the whole module has to be set by the weakest cell out of a hundred billion.",
+    "ein_refresh_ist_dabei_nichts": "A refresh is nothing special in itself: the row is read and immediately written straight back. Why that is enough is the next chapter — inside DRAM, reading and writing back are the same operation anyway.",
+    "die_bitleitung_an_der_die": "The bit line the cell hangs on is enormous compared to the cell: hundreds of cells share it, and its capacitance is many times larger. When the transistor opens, the cell's charge spreads out across that line. What is left is a voltage difference of a few dozen millivolts. That is the entire signal from which the chip has to decide between a one and a zero.",
+    "diese_ladungsverteilung_ist_keine_kopie": "That redistribution is not a copy but a move: after the read, the cell is empty. The sense amplifier — a cross-coupled latch of four transistors — pulls the difference apart to the full rails and in doing so writes the cell back to full automatically. Which is why refreshing really does amount to “read it and throw the result away”.",
+    "zellen_liegen_in_einem_raster": "Cells sit in a grid of rows and columns. An access always runs in the same order. First the row is activated and loaded into the row buffer in one piece — one to two kilobytes at a time on DDR4. Only then does the controller pick out the column it wants. Reading a different row of the same bank means the old one has to be written back first and the bit lines precharged again.",
+    "aus_diesen_drei_schritten_entstehen": "Those three steps are where the numbers on the module sticker come from. “CL22-22-22” on DDR4-3200 means 22 clocks for the column, 22 for activating the row, 22 for precharging — at 1600 MHz that is 13.75 ns each. An access to an already open row costs that once. An access that first has to close a foreign row costs three times as much.",
+    "bis_hierher_war_alles_absicht": "Everything so far was by design. Now for what happens unplanned — and there is more of it than most people expect.",
+    "weiche_fehler": "Soft errors",
+    "ein_neutron_aus_der_kosmischen": "A neutron from cosmic radiation, or an alpha particle from a contaminant in the packaging material, knocks charge carriers loose in the silicon. Hit the right spot and it pushes a cell's charge across the read threshold. The cell itself is not broken: the next write puts it right again. Neutron flux grows with altitude — around 13 neutrons per square centimetre and hour at sea level, roughly ten times that at 3000 metres, several hundred times at cruising altitude.",
+    "harte_fehler": "Hard errors",
+    "eine_zelle_ein_leseverstaerker_oder": "A cell, a sense amplifier or a line is permanently broken. Google's large field study across two and a half years and tens of thousands of servers found that about a third of the machines report at least one correctable error per year — and that the errors are distributed extremely unevenly: a few modules produce nearly all of them. Repeated errors at the same address were the typical pattern. That points to hard defects, not to cosmic rays.",
+    "zellen_mit_gedaechtnisluecke": "Cells with a memory gap",
+    "manche_zellen_wechseln_ihre_haltezeit": "Some cells change their retention time abruptly and without any recognisable trigger, sometimes seconds, sometimes milliseconds. Variable retention time is the name of the phenomenon, and it is the reason retention errors cannot simply be tested away: at the factory the cell looks fine, weeks later in the field it does not.",
+    "ohne_fehlerkorrektur_bemerkt_ein_rechner": "Without error correction a computer notices none of this. A flipped bit lands quietly in a number, a pointer or a file buffer. On consumer hardware that is precisely the normal case. The on-die ECC in DDR5 changes little about it either: it corrects inside the chip but reports nothing to the system. Anyone who wants to know whether their memory is making errors needs a module with real ECC and an operating system that reads out the counters.",
+    "die_klassische_antwort_ist_ein": "The classic answer is a SECDED code: single error correction, double error detection. Eight check bits are added to every 64 data bits, which makes the module 72 bits wide. That is why an ECC stick carries nine chips instead of eight.",
+    "die_pruefbits_sind_so_gewaehlt": "The check bits are chosen so that every data bit appears in a different combination of them. On reading they are recalculated and compared with the stored ones. The result is called the syndrome. If it is zero, everything is fine. If it is not zero, its value points directly at the position of the flipped bit — there is nothing to search for, the arithmetic names the spot.",
+    "bei_zwei_gekippten_bits_reicht": "With two flipped bits there is no longer enough information to repair anything. An additional parity bit across the whole word does reveal that there were two, and the machine halts instead of carrying on with wrong data. With three flipped bits even that fails. Sometimes the syndrome points at a position that does not exist in the code word at all — at least the hardware notices that. More often it simply looks like a single error: the correction steps in and flips a fourth, innocent bit. After that the data word is wrong and nobody knows.",
+    "bleibt_der_gefaehrlichste_fall_und": "That leaves the most dangerous case, and it is no accident but a sequence of accesses. Cells sit so close together that activating one row electrically disturbs its neighbours. Every single activation pulls a little charge out of them. Once is nothing. Ten thousand times within one refresh window is enough to flip bits — in rows the attacker never touched.",
+    "die_zahlen_sind_unangenehm_ein": "The numbers are uncomfortable. A refresh window lasts 64 ms, an activation about 47 ns. So over a million activations fit into one window. Current DDR4 chips flip their first bit after a few tens of thousands — it does not even take one percent of the window. Hammering two rows alternately halves the effort again, because the victim in between is disturbed from both sides.",
+    "gefaehrlich_ist_das_weil_ein": "It is dangerous because a flipped bit in the right place is not data corruption but privilege escalation. Project Zero demonstrated in 2015 how to obtain kernel privileges from an ordinary user process this way. Attacks from JavaScript in the browser, over the network and out of virtual machines followed later. Error correction only helps so far: flip two or three bits in the same word deliberately and you get past SECDED.",
+    "die_gegenmassnahme_in_aktuellen_modulen": "The countermeasure in current modules is called target row refresh. The chip keeps track of which rows get activated suspiciously often and refreshes their neighbours early. The catch is the size of the counter table: hammer more rows at once than the chip can track and you walk straight past it. That is exactly what the TRRespass work demonstrated in 2020 on dozens of modules from all three big manufacturers. DDR5 answers with refresh management, where the memory controller counts activations itself and forces the chip to take time for extra refreshes — which does not end the race, only makes it more expensive.",
+    "der_arbeitsspeicher_ist_kein_aktenschran": "Main memory is not a filing cabinet but a leaky bucket that somebody keeps topping up. Almost everything about it follows from that. The access timings are in the data sheet because opening a row, reading a column and closing a row are physical processes. Error correction exists because a few dozen millivolts of signal is not much. And Rowhammer works because cells sit so close together that being neighbours turns into an attack surface.",
+    "praktisch_heisst_das_dreierlei_speicherf": "In practice that means three things. Memory errors are not a fringe phenomenon but measurably common. Without ECC nobody gets to see them. And code that walks through memory in order instead of jumping around is not faster for stylistic reasons, but because it hits the row buffer.",
+    "quellen_und_weiterfuehrende_literatur": "Sources and further reading",
+    "kim_et_al_flipping_bits": "Kim et al.: Flipping Bits in Memory Without Accessing Them (ISCA 2014) — the original Rowhammer paper",
+    "schroeder_pinheiro_weber_dram_errors": "Schroeder, Pinheiro, Weber: DRAM Errors in the Wild (SIGMETRICS 2009) — field study across Google's server fleet",
+    "liu_et_al_an_experimental": "Liu et al.: An Experimental Study of Data Retention Behavior in Modern DRAM Devices (ISCA 2013)",
+    "project_zero_exploiting_the_dram": "Project Zero: Exploiting the DRAM rowhammer bug to gain kernel privileges",
+    "frigo_et_al_trrespass_exploiting": "Frigo et al.: TRRespass — Exploiting the Many Sides of Target Row Refresh (IEEE S&P 2020)",
+    "weiter_im_it_hub": "More in the IT Hub",
+    "der_deep_dive_gehoert_zum": "This deep dive belongs to the IT section of MyWorkLog, which also holds the skill tree and the learning path for the German IT apprenticeship.",
+    "zum_it_hub": "To the IT Hub",
+    "fi_academy": "FI Academy",
+    "kapitel_2": "Chapters"
+  },
+  "e1": {
+    "kapitel_1": "CHAPTER 1"
+  },
+  "figCell": {
+    "abbildung_1": "Figure 1",
+    "die_zelle_verliert_ihre_ladung": "The cell loses its charge all by itself",
+    "temperatur": "Temperature",
+    "64_ms": "64 ms",
+    "32_ms": "32 ms",
+    "kein_refresh": "No refresh",
+    "ladung": "Charge",
+    "leseschwelle": "Read threshold",
+    "retention_schwaechste_zelle": "Retention of the weakest cell",
+    "seit_dem_refresh": "Since the refresh",
+    "die_retentionszeit_halbiert_sich_etwa": "Retention time roughly halves every 10 kelvin. That is exactly why the standard prescribes twice the refresh rate above 85 °C: at 95 °C the 64 millisecond window is no longer enough for the weakest cells. Switch to “no refresh” and watch the bit disappear.",
+    "ladung_und_leseschwelle_sind_gerechnet": "Charge and read threshold are calculated: Q = C · U with 10 fF of cell capacitance at 1.2 V. The threshold is the point at which the voltage difference on the bit line slips below the sense amplifier's offset — from there on the charge is still present but no longer safely readable.",
+    "refreshintervall_auswaehlen": "Choose refresh interval"
+  },
+  "e2": {
+    "kapitel_2": "CHAPTER 2"
+  },
+  "figSense": {
+    "abbildung_2": "Figure 2",
+    "aus_einer_zelle_werden_vierzig": "One cell turns into forty millivolts",
+    "zellen_je_bitleitung": "Cells per bit line",
+    "zelle_1": "Cell = 1",
+    "zelle_0": "Cell = 0",
+    "signal_auf_der_bitleitung": "Signal on the bit line",
+    "kapazitaet_der_bitleitung": "Bit line capacitance",
+    "stoerabstand": "Noise margin",
+    "zellen_je_bitleitung_2": "Cells per bit line",
+    "gerechnet_wird_u_u2_czelle": "The calculation is ΔU = U/2 · C(cell) / (C(cell) + C(bit line)), against an assumed sense amplifier offset of 15 mV. More cells per bit line means less chip area per bit — but also less signal. DRAM is designed right at that boundary, and that is exactly why bits flip as soon as anything eats up the rest of the margin.",
+    "gespeicherten_wert_auswaehlen": "Choose the stored value"
+  },
+  "e3": {
+    "kapitel_3": "CHAPTER 3"
+  },
+  "figBank": {
+    "abbildung_3": "Figure 3",
+    "derselbe_datenumfang_dreifache_latenz": "The same amount of data, three times the latency",
+    "sequenziell": "Sequential",
+    "zufaellig": "Random",
+    "zugriffe": "Accesses",
+    "zeilentreffer": "Row hits",
+    "mittlere_latenz": "Mean latency",
+    "letzter_zugriff": "Last access",
+    "die_latenzen_sind_aus_ddr43200": "The latencies are calculated from DDR4-3200 CL22-22-22, the hit rate comes out of the access pattern actually being played across sixteen banks. Which is why a sequential run is not a little faster than a random one but about three times — for identical amounts of data.",
+    "ein_byte_liegt_dabei_nie": "And a byte never lives in one place. A DDR4 module delivers 64 bits at once, spread across eight chips of eight bits each, and transfers eight such helpings back to back per access: 64 bytes together, exactly one cache line. Read a single byte and you are really fetching sixty-four.",
+    "zugriffsmuster_auswaehlen": "Choose access pattern"
+  },
+  "e4": {
+    "kapitel_4": "CHAPTER 4"
+  },
+  "e5": {
+    "kapitel_5": "CHAPTER 5"
+  },
+  "figEcc": {
+    "abbildung_4": "Figure 4",
+    "ein_fehler_wird_repariert_zwei": "One error gets repaired, two get detected, three do not",
+    "gekippte_bits": "Flipped bits",
+    "syndrom": "Syndrome",
+    "errechnete_position": "Calculated position",
+    "codewort": "Code word",
+    "das_ist_ein_echter_hammingsecdedcode": "This is a real Hamming SECDED code across 72 bits: the check bits sit on the powers of two, the syndrome is the XOR sum of the positions of all set bits. Clicking the cells flips them one at a time. With three errors the position often points at a bit that was never flipped — the correction is what breaks it. Which is why servers rely on chipkill, which survives the loss of a whole chip."
+  },
+  "e6": {
+    "kapitel_6": "CHAPTER 6"
+  },
+  "figHammer": {
+    "abbildung_5": "Figure 5",
+    "zeilen_haemmern_bis_die_nachbarn": "Hammer rows until the neighbours flip",
+    "einseitig": "Single-sided",
+    "doppelseitig": "Double-sided",
+    "vielseitig": "Many-sided",
+    "trr_aktiv": "TRR active",
+    "trr_aus": "TRR off",
+    "aktivierungen": "Activations",
+    "zeit_im_fenster": "Time in the window",
+    "gekippte_bits": "Flipped bits",
+    "erster_flip_nach": "First flip after",
+    "die_simulation_zaehlt_echte_aktivierunge": "The simulation counts real activations: 47 ns per row activation, a 64 ms refresh window, first flip after 15,000 disturbances of a victim row. Target row refresh is modelled with a counter table for four rows — enough for single-sided and double-sided hammering, too little for eight attacker rows at once.",
+    "ein_einmal_gekipptes_bit_bleibt": "A bit that has flipped once stays flipped. The next refresh reads the wrong value and dutifully writes it back: refresh repairs nothing, it preserves.",
+    "hammermuster_auswaehlen": "Choose hammer pattern",
+    "schutzmechanismus_umschalten": "Toggle the protection mechanism"
+  },
+  "e7": {
+    "kapitel_7": "CHAPTER 7"
+  },
+  "ramTemp": {
+    "temperatur_des_speicherchips_in_grad": "Temperature of the memory chip in degrees Celsius"
+  },
+  "senseRange": {
+    "anzahl_der_zellen_an_einer": "Number of cells on one bit line"
+  },
+  "__title": "How memory forgets | MyWorkLog",
+  "__metaDescription": "How DRAM holds a bit on a capacitor, why reading destroys it, everything that goes wrong along the way — and why merely reading one memory row can flip bits in the row next door.",
+  "__ogTitle": "How memory forgets",
+  "__ogDescription": "DRAM cells, row buffers, bit errors and Rowhammer — with five calculated diagrams you can play with.",
+  "__twitterTitle": "How memory forgets",
+  "__twitterDescription": "DRAM cells, row buffers, bit errors and Rowhammer — with five calculated diagrams you can play with."
+}

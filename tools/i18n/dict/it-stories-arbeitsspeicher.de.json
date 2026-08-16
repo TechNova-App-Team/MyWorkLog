@@ -1,0 +1,147 @@
+{
+  "app": {
+    "myworklog": "· MyWorkLog",
+    "kapitel": "Kapitel",
+    "ein_bit_ist_ein_kondensator": "Ein Bit ist ein Kondensator",
+    "lesen_zerstoert_das_bit": "Lesen zerstört das Bit",
+    "vom_bit_zum_byte": "Vom Bit zum Byte",
+    "was_von_allein_schiefgeht": "Was von allein schiefgeht",
+    "was_ecc_rettet": "Was ECC rettet",
+    "rowhammer": "Rowhammer",
+    "was_bleibt": "Was bleibt",
+    "vergisst": "vergisst",
+    "eine_ssd_haelt_ihre_ladung": "Eine SSD hält ihre Ladung fest, bis jemand sie löscht. Der Arbeitsspeicher kann das nicht. Jedes Bit sitzt auf einem winzigen Kondensator, der von allein leerläuft, und muss deshalb tausende Male pro Sekunde nachgeladen werden. Aus dieser einen Schwäche folgt fast alles: die Zugriffszeiten, die Fehlerkorrektur — und eine Angriffsklasse, bei der das bloße Lesen einer Speicherzeile die Nachbarzeile verändert.",
+    "lesezeit_etwa_11_minuten": "Lesezeit etwa 11 Minuten",
+    "5_diagramme_zum_ausprobieren": "5 Diagramme zum Ausprobieren",
+    "stand_august_2026": "Stand: August 2026",
+    "eine_dramzelle_besteht_aus_genau": "Eine DRAM-Zelle besteht aus genau zwei Bauteilen: einem Kondensator, der die Ladung hält, und einem Transistor, der ihn mit der Bitleitung verbindet. Das ist der ganze Speicher. Geladen heißt Eins, leer heißt Null. Weil so wenig hineingehört, passen Milliarden Zellen auf einen Chip — ein 16-GB-Modul trägt über 137 Milliarden davon.",
+    "der_preis_dafuer_ist_die": "Der Preis dafür ist die Undichtigkeit. Sperrschichtströme im Transistor und Leckpfade im Substrat ziehen die Ladung ab, ganz ohne Zutun. Eine durchschnittliche Zelle hält ihren Inhalt bei Zimmertemperatur mehrere Sekunden. Das Problem sind aber nicht die durchschnittlichen Zellen, sondern die schlechtesten: Der Refresh-Takt des ganzen Moduls muss sich nach der schwächsten Zelle von hundert Milliarden richten.",
+    "ein_refresh_ist_dabei_nichts": "Ein Refresh ist dabei nichts Besonderes: Die Zeile wird gelesen und sofort wieder zurückgeschrieben. Warum das genügt, steht im nächsten Kapitel — Lesen und Zurückschreiben sind im DRAM ohnehin derselbe Vorgang.",
+    "die_bitleitung_an_der_die": "Die Bitleitung, an der die Zelle hängt, ist verglichen mit der Zelle riesig: Hunderte Zellen teilen sie sich, ihre Kapazität ist ein Vielfaches. Öffnet der Transistor, verteilt sich die Ladung der Zelle über diese Leitung. Übrig bleibt eine Spannungsdifferenz von einigen Dutzend Millivolt. Das ist das gesamte Nutzsignal, aus dem der Chip eine Eins oder eine Null macht.",
+    "diese_ladungsverteilung_ist_keine_kopie": "Diese Ladungsverteilung ist keine Kopie, sondern ein Umzug: Nach dem Lesen ist die Zelle leer. Der Leseverstärker — ein rückgekoppeltes Latch aus vier Transistoren — zieht die Differenz auf die vollen Pegel auseinander und schreibt die Zelle dabei automatisch wieder voll. Deshalb genügt zum Auffrischen tatsächlich „lesen und das Ergebnis wegwerfen\".",
+    "zellen_liegen_in_einem_raster": "Zellen liegen in einem Raster aus Zeilen und Spalten. Ein Zugriff läuft immer in derselben Reihenfolge ab. Zuerst wird die Zeile aktiviert und komplett in den Zeilenpuffer geladen, bei DDR4 ein bis zwei Kilobyte auf einmal. Erst danach greift der Controller die gewünschte Spalte ab. Soll eine andere Zeile derselben Bank gelesen werden, muss die alte erst zurückgeschrieben und die Bitleitungen neu vorgeladen werden.",
+    "aus_diesen_drei_schritten_entstehen": "Aus diesen drei Schritten entstehen die Zahlen auf dem Modulaufkleber. „CL22-22-22\" bei DDR4-3200 heißt: 22 Takte für die Spalte, 22 für die Zeilenaktivierung, 22 fürs Vorladen — bei 1600 MHz sind das jeweils 13,75 ns. Ein Zugriff auf eine bereits offene Zeile kostet einmal diese Zeit. Ein Zugriff, der erst eine fremde Zeile schließen muss, kostet dreimal so viel.",
+    "bis_hierher_war_alles_absicht": "Bis hierher war alles Absicht. Jetzt zu dem, was ungeplant passiert — und davon gibt es mehr, als die meisten vermuten.",
+    "weiche_fehler": "Weiche Fehler",
+    "ein_neutron_aus_der_kosmischen": "Ein Neutron aus der kosmischen Höhenstrahlung oder ein Alphateilchen aus einer Verunreinigung im Gehäusematerial schlägt im Silizium Ladungsträger frei. Trifft es die richtige Stelle, verschiebt es die Ladung einer Zelle über die Leseschwelle. Die Zelle selbst ist dabei nicht kaputt: Beim nächsten Schreiben stimmt sie wieder. Der Neutronenfluss wächst mit der Höhe — auf Meereshöhe sind es rund 13 Neutronen pro Quadratzentimeter und Stunde, auf 3000 Metern etwa das Zehnfache, auf Reiseflughöhe mehrere Hundertfache.",
+    "harte_fehler": "Harte Fehler",
+    "eine_zelle_ein_leseverstaerker_oder": "Eine Zelle, ein Leseverstärker oder eine Leitung ist dauerhaft defekt. Die große Feldstudie von Google über zweieinhalb Jahre und mehrere zehntausend Server fand, dass etwa ein Drittel der Maschinen pro Jahr mindestens einen korrigierbaren Fehler meldet — und dass sich die Fehler extrem ungleich verteilen: Wenige Module produzieren fast alle. Wiederholte Fehler an derselben Adresse waren das typische Muster. Das spricht für harte Defekte, nicht für Höhenstrahlung.",
+    "zellen_mit_gedaechtnisluecke": "Zellen mit Gedächtnislücke",
+    "manche_zellen_wechseln_ihre_haltezeit": "Manche Zellen wechseln ihre Haltezeit sprunghaft und ohne erkennbaren Auslöser, mal Sekunden, mal Millisekunden. Variable Retention Time heißt das Phänomen, und es ist der Grund, warum sich Retentionsfehler nicht einfach wegtesten lassen: Beim Test im Werk ist die Zelle unauffällig, im Betrieb Wochen später nicht mehr.",
+    "ohne_fehlerkorrektur_bemerkt_ein_rechner": "Ohne Fehlerkorrektur bemerkt ein Rechner von all dem nichts. Ein gekipptes Bit landet still in einer Zahl, einem Zeiger oder einem Dateipuffer. Bei Consumer-Hardware ist genau das der Normalfall. Auch die On-Die-ECC in DDR5 ändert daran wenig: Sie korrigiert innerhalb des Chips, meldet dem System aber nichts. Wer wissen will, ob sein Speicher Fehler macht, braucht ein Modul mit echter ECC und ein Betriebssystem, das die Zähler ausliest.",
+    "die_klassische_antwort_ist_ein": "Die klassische Antwort ist ein SECDED-Code: Single Error Correction, Double Error Detection. Zu jeweils 64 Datenbits kommen 8 Prüfbits, das Modul wird dadurch 72 Bit breit. Deshalb sitzen auf einem ECC-Riegel neun Chips statt acht.",
+    "die_pruefbits_sind_so_gewaehlt": "Die Prüfbits sind so gewählt, dass jedes Datenbit in einer anderen Kombination von ihnen auftaucht. Beim Lesen werden sie neu berechnet und mit den gespeicherten verglichen. Das Ergebnis heißt Syndrom. Ist es null, ist alles in Ordnung. Ist es ungleich null, zeigt sein Wert direkt auf die Position des gekippten Bits — man muss nicht suchen, die Rechnung nennt die Stelle.",
+    "bei_zwei_gekippten_bits_reicht": "Bei zwei gekippten Bits reicht die Information zum Reparieren nicht mehr. Ein zusätzliches Paritätsbit über das ganze Wort verrät aber, dass es zwei waren, und der Rechner hält an, statt falsch weiterzurechnen. Bei drei gekippten Bits versagt auch das. Manchmal zeigt das Syndrom dann auf eine Position, die es im Codewort gar nicht gibt — wenigstens das fällt der Hardware auf. Häufiger sieht es aber schlicht aus wie ein Einzelfehler: Die Korrektur greift zu und kippt ein viertes, unschuldiges Bit. Danach ist das Datenwort falsch und niemand weiß es.",
+    "bleibt_der_gefaehrlichste_fall_und": "Bleibt der gefährlichste Fall, und der ist kein Zufall, sondern eine Zugriffsfolge. Zellen liegen so dicht beieinander, dass das Aktivieren einer Zeile die Nachbarzeilen elektrisch stört. Jede einzelne Aktivierung zieht ein wenig Ladung aus den Nachbarn ab. Einmal ist das nichts. Zehntausendmal innerhalb eines Refresh-Fensters genügt, um Bits zu kippen — in Zeilen, die der Angreifer nie angefasst hat.",
+    "die_zahlen_sind_unangenehm_ein": "Die Zahlen sind unangenehm. Ein Refresh-Fenster dauert 64 ms, eine Aktivierung rund 47 ns. In ein Fenster passen also über eine Million Aktivierungen. Aktuelle DDR4-Chips kippen ihr erstes Bit nach einigen zehntausend — es braucht nicht einmal ein Prozent des Fensters. Zwei Zeilen abwechselnd zu hämmern halbiert den Aufwand noch einmal, weil das Opfer dazwischen von beiden Seiten gestört wird.",
+    "gefaehrlich_ist_das_weil_ein": "Gefährlich ist das, weil ein gekipptes Bit an der richtigen Stelle keine Datenkorruption ist, sondern eine Rechteausweitung. Project Zero führte 2015 vor, wie sich damit aus einem gewöhnlichen Nutzerprozess Kernel-Rechte holen lassen. Später kamen Angriffe über JavaScript im Browser, über das Netzwerk und aus virtuellen Maschinen heraus dazu. Fehlerkorrektur hilft nur bedingt: Wer gezielt zwei oder drei Bits im selben Wort kippt, kommt an SECDED vorbei.",
+    "die_gegenmassnahme_in_aktuellen_modulen": "Die Gegenmaßnahme in aktuellen Modulen heißt Target Row Refresh. Der Chip zählt mit, welche Zeilen auffällig oft aktiviert werden, und frischt deren Nachbarn vorzeitig auf. Der Haken ist die Größe der Zählertabelle: Wer mehr Zeilen gleichzeitig hämmert, als der Chip verfolgen kann, läuft daran vorbei. Genau das führte die TRRespass-Arbeit 2020 an dutzenden Modulen aller drei großen Hersteller vor. DDR5 antwortet darauf mit Refresh Management, bei dem der Speichercontroller Aktivierungen mitzählt und dem Chip Zeit zum Nachfrischen abverlangt — der Wettlauf ist damit nicht beendet, nur teurer geworden.",
+    "der_arbeitsspeicher_ist_kein_aktenschran": "Der Arbeitsspeicher ist kein Aktenschrank, sondern ein Eimer mit Loch, den jemand ununterbrochen nachfüllt. Fast alles, was ihn ausmacht, folgt daraus: Die Zugriffszeiten stehen im Datenblatt, weil Zeile öffnen, Spalte lesen und Zeile schließen physikalische Vorgänge sind. Fehlerkorrektur gibt es, weil einige Dutzend Millivolt Nutzsignal wenig sind. Und Rowhammer funktioniert, weil Zellen so eng liegen, dass Nachbarschaft zu einem Angriffsvektor wird.",
+    "praktisch_heisst_das_dreierlei_speicherf": "Praktisch heißt das dreierlei. Speicherfehler sind kein Randphänomen, sondern messbar häufig. Ohne ECC bekommt niemand sie zu sehen. Und Code, der Speicher der Reihe nach durchläuft statt wild zu springen, ist nicht aus Stilgründen schneller, sondern weil er den Zeilenpuffer trifft.",
+    "quellen_und_weiterfuehrende_literatur": "Quellen und weiterführende Literatur",
+    "kim_et_al_flipping_bits": "Kim et al.: Flipping Bits in Memory Without Accessing Them (ISCA 2014) — die Rowhammer-Erstbeschreibung",
+    "schroeder_pinheiro_weber_dram_errors": "Schroeder, Pinheiro, Weber: DRAM Errors in the Wild (SIGMETRICS 2009) — Feldstudie über Googles Serverflotte",
+    "liu_et_al_an_experimental": "Liu et al.: An Experimental Study of Data Retention Behavior in Modern DRAM Devices (ISCA 2013)",
+    "project_zero_exploiting_the_dram": "Project Zero: Exploiting the DRAM rowhammer bug to gain kernel privileges",
+    "frigo_et_al_trrespass_exploiting": "Frigo et al.: TRRespass — Exploiting the Many Sides of Target Row Refresh (IEEE S&P 2020)",
+    "weiter_im_it_hub": "Weiter im IT Hub",
+    "der_deep_dive_gehoert_zum": "Der Deep Dive gehört zum IT-Bereich von MyWorkLog. Dort liegen auch der Skill-Baum und die Lernstrecke für die Fachinformatiker-Ausbildung.",
+    "zum_it_hub": "Zum IT Hub",
+    "fi_academy": "FI Academy",
+    "kapitel_2": "Kapitel"
+  },
+  "e1": {
+    "kapitel_1": "KAPITEL 1"
+  },
+  "figCell": {
+    "abbildung_1": "Abbildung 1",
+    "die_zelle_verliert_ihre_ladung": "Die Zelle verliert ihre Ladung von allein",
+    "temperatur": "Temperatur",
+    "64_ms": "64 ms",
+    "32_ms": "32 ms",
+    "kein_refresh": "Kein Refresh",
+    "ladung": "Ladung",
+    "leseschwelle": "Leseschwelle",
+    "retention_schwaechste_zelle": "Retention schwächste Zelle",
+    "seit_dem_refresh": "Seit dem Refresh",
+    "die_retentionszeit_halbiert_sich_etwa": "Die Retentionszeit halbiert sich etwa alle 10 Kelvin. Genau deshalb schreibt der Standard oberhalb von 85 °C den doppelten Refresh-Takt vor: Bei 95 °C reicht das 64-Millisekunden-Fenster für die schwächsten Zellen nicht mehr. Auf „Kein Refresh\" stellen und zusehen, wie das Bit verschwindet.",
+    "ladung_und_leseschwelle_sind_gerechnet": "Ladung und Leseschwelle sind gerechnet: Q = C · U bei 10 fF Zellkapazität und 1,2 V. Die Schwelle ist der Punkt, ab dem die Spannungsdifferenz auf der Bitleitung unter den Offset des Leseverstärkers rutscht — ab da ist die Ladung zwar noch da, aber nicht mehr sicher lesbar.",
+    "refreshintervall_auswaehlen": "Refresh-Intervall auswählen"
+  },
+  "e2": {
+    "kapitel_2": "KAPITEL 2"
+  },
+  "figSense": {
+    "abbildung_2": "Abbildung 2",
+    "aus_einer_zelle_werden_vierzig": "Aus einer Zelle werden vierzig Millivolt",
+    "zellen_je_bitleitung": "Zellen je Bitleitung",
+    "zelle_1": "Zelle = 1",
+    "zelle_0": "Zelle = 0",
+    "signal_auf_der_bitleitung": "Signal auf der Bitleitung",
+    "kapazitaet_der_bitleitung": "Kapazität der Bitleitung",
+    "stoerabstand": "Störabstand",
+    "zellen_je_bitleitung_2": "Zellen je Bitleitung",
+    "gerechnet_wird_u_u2_czelle": "Gerechnet wird ΔU = U/2 · C(Zelle) / (C(Zelle) + C(Bitleitung)), gegen einen angenommenen Offset des Leseverstärkers von 15 mV. Mehr Zellen an einer Bitleitung heißt weniger Chipfläche pro Bit — aber auch weniger Signal. An dieser Grenze wird DRAM entworfen, und genau deshalb kippen Bits, sobald irgendetwas den Rest des Abstands auffrisst.",
+    "gespeicherten_wert_auswaehlen": "Gespeicherten Wert auswählen"
+  },
+  "e3": {
+    "kapitel_3": "KAPITEL 3"
+  },
+  "figBank": {
+    "abbildung_3": "Abbildung 3",
+    "derselbe_datenumfang_dreifache_latenz": "Derselbe Datenumfang, dreifache Latenz",
+    "sequenziell": "Sequenziell",
+    "zufaellig": "Zufällig",
+    "zugriffe": "Zugriffe",
+    "zeilentreffer": "Zeilentreffer",
+    "mittlere_latenz": "Mittlere Latenz",
+    "letzter_zugriff": "Letzter Zugriff",
+    "die_latenzen_sind_aus_ddr43200": "Die Latenzen sind aus DDR4-3200 CL22-22-22 gerechnet, die Trefferquote entsteht aus dem tatsächlich abgespielten Zugriffsmuster über sechzehn Bänke. Deshalb ist ein sequenzieller Durchlauf nicht ein bisschen schneller als ein zufälliger, sondern rund dreimal — bei identischer Datenmenge.",
+    "ein_byte_liegt_dabei_nie": "Ein Byte liegt dabei nie an einem Ort. Ein DDR4-Modul liefert 64 Bit gleichzeitig, verteilt über acht Chips zu je acht Bit, und überträgt pro Zugriff acht solcher Häppchen hintereinander: zusammen 64 Byte, genau eine Cache-Zeile. Wer ein einzelnes Byte liest, holt in Wahrheit vierundsechzig.",
+    "zugriffsmuster_auswaehlen": "Zugriffsmuster auswählen"
+  },
+  "e4": {
+    "kapitel_4": "KAPITEL 4"
+  },
+  "e5": {
+    "kapitel_5": "KAPITEL 5"
+  },
+  "figEcc": {
+    "abbildung_4": "Abbildung 4",
+    "ein_fehler_wird_repariert_zwei": "Ein Fehler wird repariert, zwei werden erkannt, drei nicht",
+    "gekippte_bits": "Gekippte Bits",
+    "syndrom": "Syndrom",
+    "errechnete_position": "Errechnete Position",
+    "codewort": "Codewort",
+    "das_ist_ein_echter_hammingsecdedcode": "Das ist ein echter Hamming-SECDED-Code über 72 Bit: Die Prüfbits sitzen auf den Zweierpotenzen, das Syndrom ist die XOR-Summe der Positionen aller gesetzten Bits. Auf die Zellen klicken kippt sie einzeln. Bei drei Fehlern zeigt die Position oft auf ein Bit, das gar nicht gekippt war — die Korrektur macht es dann erst kaputt. Server setzen deshalb auf Chipkill, das den Ausfall eines kompletten Chips übersteht."
+  },
+  "e6": {
+    "kapitel_6": "KAPITEL 6"
+  },
+  "figHammer": {
+    "abbildung_5": "Abbildung 5",
+    "zeilen_haemmern_bis_die_nachbarn": "Zeilen hämmern, bis die Nachbarn kippen",
+    "einseitig": "Einseitig",
+    "doppelseitig": "Doppelseitig",
+    "vielseitig": "Vielseitig",
+    "trr_aktiv": "TRR aktiv",
+    "trr_aus": "TRR aus",
+    "aktivierungen": "Aktivierungen",
+    "zeit_im_fenster": "Zeit im Fenster",
+    "gekippte_bits": "Gekippte Bits",
+    "erster_flip_nach": "Erster Flip nach",
+    "die_simulation_zaehlt_echte_aktivierunge": "Die Simulation zählt echte Aktivierungen: 47 ns je Zeilenaktivierung, 64 ms Refresh-Fenster, erstes Kippen nach 15.000 Störungen einer Opferzeile. Der Schutzmechanismus Target Row Refresh ist mit einer Zählertabelle für vier Zeilen modelliert — genug für einseitiges und doppelseitiges Hämmern, zu wenig für acht Angreiferzeilen gleichzeitig.",
+    "ein_einmal_gekipptes_bit_bleibt": "Ein einmal gekipptes Bit bleibt gekippt. Der nächste Refresh liest den falschen Wert und schreibt ihn brav zurück: Refresh repariert nichts, er konserviert.",
+    "hammermuster_auswaehlen": "Hammer-Muster auswählen",
+    "schutzmechanismus_umschalten": "Schutzmechanismus umschalten"
+  },
+  "e7": {
+    "kapitel_7": "KAPITEL 7"
+  },
+  "ramTemp": {
+    "temperatur_des_speicherchips_in_grad": "Temperatur des Speicherchips in Grad Celsius"
+  },
+  "senseRange": {
+    "anzahl_der_zellen_an_einer": "Anzahl der Zellen an einer Bitleitung"
+  }
+}
