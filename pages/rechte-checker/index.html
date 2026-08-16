@@ -172,42 +172,44 @@
         /* ═══════════════════════════════════════
            DESIGN TOKENS
         ═══════════════════════════════════════ */
+        /* Palette und Radien kommen aus components/core/core.css - diese Seite
+           hatte sie mit eigenen Hex-Werten ueberschrieben und lief damit auf
+           einem Lila (#a855f7), das im Rest der App nirgends vorkommt. Der
+           Akzent wird unten per Theme-Sync aus den Nutzereinstellungen gezogen;
+           die Werte hier sind nur der Startwert, bis das Script laeuft.
+
+           Bewusst KEINE zehn Kategoriefarben mehr: Rechtsauskunft soll ruhig
+           lesbar sein, und zehn gleichzeitig leuchtende Akzente tragen keine
+           Information - welche Kategorie gemeint ist, steht als Wort daneben.
+           Farbe bleibt damit frei fuer das, was sie hier wirklich bedeutet:
+           die Einschaetzung (erlaubt / Graubereich / unzulaessig). */
         :root {
-            --bg-deep: #050507;
-            --bg-card: rgba(18, 18, 24, 0.75);
-            --bg-card-solid: #12121a;
-            --bg-elevated: rgba(30, 30, 42, 0.6);
-            --primary: #a855f7;
-            --primary-rgb: 168, 85, 247;
-            --secondary: #6366f1;
-            --secondary-rgb: 99, 102, 241;
+            --bg-deep: #030305;
+            --bg-card: rgba(22, 22, 26, 0.65);
+            --bg-card-solid: #101014;
+            --bg-elevated: rgba(34, 34, 40, 0.6);
+            --primary: #5578a8;
+            --primary-rgb: 85, 120, 168;
             --success: #10b981;
             --success-rgb: 16, 185, 129;
             --warning: #f59e0b;
             --warning-rgb: 245, 158, 11;
             --danger: #ef4444;
             --danger-rgb: 239, 68, 68;
-            --cyan: #06b6d4;
-            --cyan-rgb: 6, 182, 212;
-            --orange: #f97316;
-            --orange-rgb: 249, 115, 22;
-            --teal: #14b8a6;
-            --teal-rgb: 20, 184, 166;
-            --pink: #ec4899;
-            --pink-rgb: 236, 72, 153;
-            --lime: #84cc16;
-            --lime-rgb: 132, 204, 22;
-            --text: #f1f5f9;
+            --text: #f8fafc;
             --text-muted: #94a3b8;
             --text-dim: #64748b;
             --border: rgba(255, 255, 255, 0.06);
+            --border-strong: rgba(255, 255, 255, 0.10);
             --radius: 16px;
             --radius-sm: 10px;
-            --radius-xs: 6px;
+            --radius-xs: 8px;
             --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-            --shadow-card: 0 4px 24px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
-            --shadow-glow: 0 8px 40px rgba(var(--primary-rgb), 0.15);
+            /* Schatten in der Hintergrundfarbe statt reinem Schwarz - ein
+               schwarzer Schatten auf dunklem Grund wird zum Loch, kein Volumen. */
+            --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25);
+            --shadow-lift: 0 8px 28px rgba(0, 0, 0, 0.35);
         }
 
         /* ═══════════════════════════════════════
@@ -229,42 +231,19 @@
         /* ═══════════════════════════════════════
            AMBIENT BACKGROUND
         ═══════════════════════════════════════ */
+        /* Vorher lagen hier drei 100px-weich gezeichnete Farbkugeln (lila, rot,
+           gelb) mit Dauerschleife. Sie faerbten den halben Bildschirm, standen
+           in Konkurrenz zum Inhalt und liessen die GPU durchgehend rechnen.
+           Geblieben ist ein einzelner, sehr flacher Lichtschein hinter dem
+           Kopfbereich: genug, damit die Seite nicht flach wirkt, wenig genug,
+           dass man ihn nicht bewusst wahrnimmt. Statisch, also keine Bewegung,
+           die man wegblenden muesste. */
         .ambient {
             position: fixed; inset: 0;
             pointer-events: none; z-index: 0;
-            overflow: hidden;
-        }
-        .ambient-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-            opacity: 0.15;
-            animation: orbFloat 20s ease-in-out infinite alternate;
-        }
-        .ambient-orb:nth-child(1) {
-            width: 600px; height: 600px;
-            background: var(--primary);
-            top: -10%; left: -5%;
-        }
-        .ambient-orb:nth-child(2) {
-            width: 500px; height: 500px;
-            background: var(--danger);
-            bottom: -10%; right: -5%;
-            animation-delay: -7s;
-            animation-duration: 25s;
-        }
-        .ambient-orb:nth-child(3) {
-            width: 400px; height: 400px;
-            background: var(--warning);
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: -14s;
-        }
-        @keyframes orbFloat {
-            0% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(30px, -20px) scale(1.05); }
-            66% { transform: translate(-20px, 30px) scale(0.95); }
-            100% { transform: translate(10px, 10px) scale(1.02); }
+            background:
+                radial-gradient(60rem 32rem at 50% -14rem,
+                    rgba(var(--primary-rgb), 0.16), transparent 70%);
         }
 
         /* ═══════════════════════════════════════
@@ -306,56 +285,75 @@
             text-align: center;
             margin-bottom: 48px;
         }
+        /* Das Signal war vorher rot und schrie "Alarm". Der Seitenzweck ist aber
+           Nachschlagen, nicht Warnen - Rot bleibt jetzt den Faellen vorbehalten,
+           in denen wirklich etwas unzulaessig ist. */
         .hero-badge {
-            display: inline-flex; align-items: center; gap: 8px;
-            background: rgba(var(--danger-rgb), 0.12);
-            color: var(--danger);
-            font-size: 0.8rem; font-weight: 600;
-            padding: 6px 16px;
+            display: inline-flex; align-items: center; gap: 7px;
+            background: rgba(var(--primary-rgb), 0.10);
+            color: var(--text-muted);
+            font-size: 0.72rem; font-weight: 600;
+            padding: 5px 13px;
             border-radius: 100px;
-            border: 1px solid rgba(var(--danger-rgb), 0.2);
-            margin-bottom: 18px;
-            letter-spacing: 0.5px;
+            border: 1px solid rgba(var(--primary-rgb), 0.22);
+            margin-bottom: 20px;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
         }
+        .hero-badge svg { width: 14px; height: 14px; flex-shrink: 0; color: var(--primary); }
         .hero h1 {
-            font-size: clamp(1.8rem, 5vw, 2.6rem);
-            font-weight: 800;
-            line-height: 1.15;
-            margin-bottom: 12px;
+            font-size: clamp(1.9rem, 5vw, 2.75rem);
+            font-weight: 700;
+            /* Grosse Schrift wirkt bei normaler Laufweite auseinandergezogen. */
+            letter-spacing: -0.025em;
+            line-height: 1.12;
+            margin-bottom: 14px;
+            text-wrap: balance;
         }
+        /* Kein Verlaufstext mehr. Zwei Verlaeufe auf einer Seite (Titel und
+           Kennzahlen) waren einer zu viel, und Verlaufsschrift verliert bei
+           kleinen Groessen den Kontrast.
+           Betont wird jetzt mit einem Unterstrich statt mit Textfarbe: der
+           Akzent ist frei waehlbar, und ein heller oder stark entsaettigter
+           Wert liesse das betonte Wort sonst blasser wirken als den Rest der
+           Zeile - es saehe aus wie ausgegraut statt hervorgehoben. */
         .hero h1 span {
-            background: linear-gradient(135deg, var(--danger), var(--warning));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--text);
+            box-shadow: inset 0 -0.12em 0 rgba(var(--primary-rgb), 0.75);
         }
         .hero-sub {
             color: var(--text-muted);
-            font-size: 1.05rem;
-            max-width: 600px;
-            margin: 0 auto 28px;
+            font-size: 1.02rem;
+            line-height: 1.65;
+            max-width: 34rem;
+            margin: 0 auto 30px;
+            text-wrap: pretty;
         }
         .hero-stats {
-            display: flex; justify-content: center; gap: 32px;
+            display: flex; justify-content: center;
+            gap: 0;
             flex-wrap: wrap;
         }
+        /* Trennstriche statt grosser Abstaende: die drei Werte lesen sich als
+           eine Zeile, nicht als drei konkurrierende Kacheln. */
         .hero-stat {
             text-align: center;
+            padding: 0 22px;
+            border-left: 1px solid var(--border);
         }
+        .hero-stat:first-child { border-left: 0; }
         .hero-stat-num {
-            font-size: 1.5rem; font-weight: 800;
+            font-size: 1.35rem; font-weight: 600;
             font-family: var(--font-mono);
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-variant-numeric: tabular-nums;
+            color: var(--text);
+            line-height: 1.3;
         }
         .hero-stat-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-dim);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.09em;
         }
 
         /* ═══════════════════════════════════════
@@ -414,10 +412,21 @@
             border-color: rgba(var(--primary-rgb), 0.3);
             color: var(--text);
         }
-        .search-mode-trigger .mode-icon { font-size: 0.85rem; line-height: 1; }
-        .search-mode-trigger .mode-chevron {
-            font-size: 0.55rem; opacity: 0.5; transition: transform 0.2s;
+        /* Feste Masse statt Eigenbreite: ein <svg> mit viewBox, aber ohne
+           width/height-Attribut meldet in einem Flex-Container die Breite 0.
+           Der Wrapper faellt dann auf 0 zusammen und das Symbol legt sich
+           ueber den Text daneben. */
+        .search-mode-trigger .mode-icon {
+            display: inline-flex; flex: 0 0 auto;
+            width: 13px; height: 13px; line-height: 1;
         }
+        .search-mode-trigger .mode-icon svg { width: 13px; height: 13px; flex-shrink: 0; }
+        .search-mode-trigger .mode-chevron {
+            display: inline-flex; flex: 0 0 auto;
+            width: 11px; height: 11px;
+            opacity: 0.5; transition: transform 0.2s;
+        }
+        .search-mode-trigger .mode-chevron svg { width: 11px; height: 11px; }
         .search-mode-trigger.open .mode-chevron { transform: rotate(180deg); }
         .search-mode-trigger.mode-smart  { color: var(--primary); border-color: rgba(var(--primary-rgb), 0.3); }
         .search-mode-trigger.mode-exact  { color: var(--cyan); border-color: rgba(var(--cyan-rgb, 6,182,212), 0.3); }
@@ -464,14 +473,23 @@
         }
         .search-mode-opt:hover { background: rgba(255,255,255,0.04); color: var(--text); }
         .search-mode-opt.active { background: rgba(var(--primary-rgb), 0.08); color: var(--primary); }
-        .search-mode-opt .opt-icon { font-size: 1rem; width: 22px; text-align: center; flex-shrink: 0; }
+        .search-mode-opt .opt-icon {
+            width: 22px; height: 16px; flex: 0 0 auto;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-dim);
+        }
+        .search-mode-opt .opt-icon svg { width: 15px; height: 15px; }
+        .search-mode-opt.active .opt-icon { color: var(--primary); }
         .search-mode-opt .opt-info { flex: 1; min-width: 0; }
         .search-mode-opt .opt-title { font-size: 0.8rem; font-weight: 600; }
         .search-mode-opt .opt-desc { font-size: 0.68rem; color: var(--text-dim); margin-top: 1px; }
         .search-mode-opt.active .opt-desc { color: rgba(var(--primary-rgb), 0.6); }
         .search-mode-opt .opt-check {
-            font-size: 0.75rem; opacity: 0; transition: opacity 0.15s;
+            display: inline-flex; flex: 0 0 auto;
+            width: 14px; height: 14px; color: var(--primary);
+            opacity: 0; transition: opacity 0.15s;
         }
+        .search-mode-opt .opt-check svg { width: 14px; height: 14px; }
         .search-mode-opt.active .opt-check { opacity: 1; }
         .search-mode-divider {
             height: 1px; background: var(--border); margin: 4px 6px;
@@ -518,9 +536,11 @@
             background: rgba(var(--primary-rgb), 0.06);
         }
         .ai-suggest-icon {
-            font-size: 1.2rem;
-            flex-shrink: 0;
+            display: inline-flex; flex: 0 0 auto;
+            width: 17px; height: 17px;
+            color: var(--text-dim);
         }
+        .ai-suggest-icon svg { width: 17px; height: 17px; }
         .ai-suggest-text {
             flex: 1; min-width: 0;
         }
@@ -670,6 +690,10 @@
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; font-size: 0.85rem; transition: all 0.2s;
         }
+        .llm-response-close svg { width: 13px; height: 13px; }
+        .detail-close svg { width: 16px; height: 16px; }
+        .llm-key-delete svg { width: 15px; height: 15px; }
+        .law-ref-icon svg { width: 18px; height: 18px; }
         .llm-response-close:hover { color: var(--danger); border-color: rgba(var(--danger-rgb), 0.3); }
         .llm-response-body {
             padding: 16px;
@@ -764,28 +788,44 @@
             margin-bottom: 36px;
         }
         .cat-pill {
-            padding: 8px 18px;
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 7px 15px;
             border-radius: 100px;
-            font-size: 0.82rem;
-            font-weight: 600;
+            font-size: 0.8rem;
+            font-weight: 500;
+            font-family: inherit;
             border: 1px solid var(--border);
             background: var(--bg-card);
             color: var(--text-muted);
             cursor: pointer;
-            transition: all 0.25s;
-            backdrop-filter: blur(8px);
+            transition: background-color 0.2s ease, border-color 0.2s ease,
+                        color 0.2s ease;
             user-select: none;
         }
+        .cat-pill svg {
+            width: 14px; height: 14px;
+            flex-shrink: 0;
+            opacity: 0.75;
+        }
         .cat-pill:hover {
-            border-color: rgba(var(--primary-rgb), 0.3);
+            border-color: var(--border-strong);
+            background: var(--bg-elevated);
             color: var(--text);
         }
-        .cat-pill.active {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: #fff;
-            border-color: transparent;
-            box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.3);
+        .cat-pill:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
+        /* Flaechiger Verlauf plus farbiger Schein war fuer einen Filterknopf zu
+           viel Gewicht - er zog mehr Aufmerksamkeit als die Ergebnisse darunter.
+           Eine ruhige Fuellung reicht, um "ausgewaehlt" zu zeigen. */
+        .cat-pill.active {
+            background: rgba(var(--primary-rgb), 0.16);
+            border-color: rgba(var(--primary-rgb), 0.45);
+            color: var(--text);
+            font-weight: 600;
+        }
+        .cat-pill.active svg { opacity: 1; color: var(--primary); }
 
         /* ═══════════════════════════════════════
            SCENARIO CARDS GRID
@@ -802,89 +842,103 @@
             border-radius: var(--radius);
             padding: 0;
             cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(12px);
+            /* Nur transform/border/shadow bewegen sich, nichts loest Layout aus. */
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                        border-color 0.22s ease,
+                        box-shadow 0.22s ease;
+            box-shadow: var(--shadow-card);
             overflow: hidden;
             position: relative;
         }
-        .scenario-card::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--card-accent, var(--primary)), transparent);
-            transform: scaleX(0);
-            transform-origin: left;
-            transition: transform 0.3s;
+        /* Der farbige Balken oben ist weg: er lief in der Kategoriefarbe und war
+           damit Teil des Regenbogens. Die Karte hebt sich jetzt nur an und
+           bekommt eine deutlichere Kante - das reicht als Ruecklmeldung. */
+        .scenario-card:hover,
+        .scenario-card:focus-visible {
+            transform: translateY(-2px);
+            border-color: rgba(var(--primary-rgb), 0.35);
+            box-shadow: var(--shadow-lift);
         }
-        .scenario-card:hover::before { transform: scaleX(1); }
-        .scenario-card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(var(--primary-rgb), 0.2);
-            box-shadow: var(--shadow-glow);
+        .scenario-card:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
         .scenario-card-inner {
-            padding: 20px;
+            padding: 20px 20px 18px;
         }
+        /* Vorher: gefuellte Pille in einer von zehn Farben. Jetzt Symbol plus
+           Wort in gedaempftem Grau - die Kategorie ist eine Einordnung, keine
+           Meldung, und braucht deshalb kein Farbfeld um sich herum. */
         .scenario-tag {
-            display: inline-flex; align-items: center; gap: 5px;
-            font-size: 0.7rem; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.68rem; font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 4px 10px;
-            border-radius: 100px;
-            margin-bottom: 12px;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
+            margin-bottom: 11px;
         }
-        .tag-arbeitszeit { background: rgba(var(--cyan-rgb), 0.12); color: var(--cyan); }
-        .tag-taetigkeit { background: rgba(var(--warning-rgb), 0.12); color: var(--warning); }
-        .tag-urlaub { background: rgba(var(--success-rgb), 0.12); color: var(--success); }
-        .tag-schule { background: rgba(var(--secondary-rgb), 0.12); color: var(--secondary); }
-        .tag-geld { background: rgba(var(--orange-rgb), 0.12); color: var(--orange); }
-        .tag-kuendigung { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); }
-        .tag-mobbing { background: rgba(var(--primary-rgb), 0.12); color: var(--primary); }
-        .tag-sicherheit { background: rgba(var(--teal-rgb), 0.12); color: var(--teal); }
-        .tag-ausbildung { background: rgba(var(--pink-rgb), 0.12); color: var(--pink); }
-        .tag-mitbestimmung { background: rgba(var(--lime-rgb), 0.12); color: var(--lime); }
+        .scenario-tag svg {
+            width: 13px; height: 13px;
+            flex-shrink: 0;
+            color: var(--text-dim);
+        }
 
         .scenario-title {
-            font-size: 1rem; font-weight: 700;
-            margin-bottom: 6px;
-            line-height: 1.3;
+            font-size: 0.98rem; font-weight: 650;
+            letter-spacing: -0.008em;
+            margin-bottom: 7px;
+            line-height: 1.35;
+            text-wrap: pretty;
         }
         .scenario-desc {
             font-size: 0.82rem;
             color: var(--text-muted);
-            line-height: 1.5;
+            line-height: 1.55;
+            text-wrap: pretty;
         }
         .scenario-footer {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 12px 20px;
+            gap: 12px;
+            padding: 11px 20px;
             border-top: 1px solid var(--border);
-            background: rgba(0,0,0,0.15);
+            background: rgba(0, 0, 0, 0.18);
         }
         .scenario-law {
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             font-family: var(--font-mono);
             color: var(--text-dim);
             font-weight: 500;
         }
+        /* Drei rote Punkte ohne Beschriftung sagten niemandem, was sie messen -
+           und wer Rot und Gruen nicht unterscheidet, sah gar nichts. Jetzt steht
+           das Ergebnis als Wort da. Die Staerke-Balken sind wieder rausgeflogen:
+           sie brauchten so viel Breite, dass die Paragraphenangabe daneben
+           umbrach, und "wie schlimm auf einer Skala von drei" ist ohne Legende
+           ohnehin nicht lesbar. Farbe traegt hier echte Bedeutung - deshalb ist
+           dies die einzige Stelle der Seite, an der sie noch auftritt. */
         .scenario-severity {
-            display: flex; gap: 3px;
+            display: inline-flex; align-items: center;
+            flex-shrink: 0;
         }
-        .severity-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: var(--border);
+        .severity-label {
+            font-size: 0.68rem; font-weight: 600;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
         }
-        .severity-dot.active { background: var(--danger); }
-        .severity-dot.active.medium { background: var(--warning); }
-        .severity-dot.active.low { background: var(--success); }
+        .sev-no  .severity-label { color: var(--danger); }
+        .sev-mid .severity-label { color: var(--warning); }
+        .sev-ok  .severity-label { color: var(--success); }
 
         .no-results {
             text-align: center;
             padding: 60px 20px;
             color: var(--text-dim);
         }
-        .no-results-icon { font-size: 3rem; margin-bottom: 16px; }
+        .no-results-icon {
+            display: flex; justify-content: center;
+            margin-bottom: 14px; color: var(--text-dim);
+        }
+        .no-results-icon svg { width: 34px; height: 34px; stroke-width: 1.5; }
         .no-results h3 { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 8px; }
 
         /* ═══════════════════════════════════════
@@ -943,14 +997,14 @@
             border-color: rgba(var(--danger-rgb), 0.3);
         }
         .detail-category {
-            display: inline-flex; align-items: center; gap: 6px;
-            font-size: 0.72rem; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 7px;
+            font-size: 0.7rem; font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 5px 12px;
-            border-radius: 100px;
+            letter-spacing: 0.08em;
+            color: var(--text-dim);
             margin-bottom: 14px;
         }
+        .detail-category svg { width: 14px; height: 14px; flex-shrink: 0; }
         .detail-title {
             font-size: 1.4rem; font-weight: 800;
             line-height: 1.25;
@@ -1181,7 +1235,11 @@
                 grid-template-columns: 1fr;
             }
             .hero h1 { font-size: 1.6rem; }
-            .hero-stats { gap: 20px; }
+            /* Auf schmalen Schirmen brechen die drei Werte um. Die Trennstriche
+               muessen dann weg: das erste Element der zweiten Zeile behielte
+               sonst seinen linken Strich und haette nichts, wovon er trennt. */
+            .hero-stats { gap: 8px 20px; }
+            .hero-stat { padding: 0; border-left: 0; }
             .detail-modal { max-height: 95vh; }
             .detail-header, .detail-body { padding-left: 20px; padding-right: 20px; }
             .detail-title { font-size: 1.2rem; }
@@ -1196,15 +1254,13 @@
             clip: rect(0,0,0,0); white-space: nowrap; border: 0;
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=5.9.9"></script>
+    <script defer src="/Assets/js/ph-init.js?v=5.9.10"></script>
 </head>
 <body>
     <!-- ═══════════════ AMBIENT ═══════════════ -->
-    <div class="ambient">
-        <div class="ambient-orb"></div>
-        <div class="ambient-orb"></div>
-        <div class="ambient-orb"></div>
-    </div>
+    <!-- Der Lichtschein liegt jetzt als Verlauf auf .ambient selbst; die drei
+         Kugel-Elemente waren nach dem Umbau leere Huellen ohne Regel. -->
+    <div class="ambient"></div>
 
     <!-- ═══════════════ SHELL ═══════════════ -->
     <div class="shell">
@@ -1225,7 +1281,7 @@
 
         <!-- Hero -->
         <header class="hero fade-in fade-in-d1">
-            <div class="hero-badge">⚖️ Azubi-Bodyguard</div>
+            <div class="hero-badge" id="heroBadge">Azubi-Bodyguard</div>
             <h1>Darf der Chef <span>das</span>?</h1>
             <p class="hero-sub">Kenne deine Rechte als Azubi. Wähl ein Szenario und check sofort die Rechtslage – mit Paragraph aus dem <strong>BBiG</strong>, <strong>JArbSchG</strong> &amp; <strong>ArbZG</strong>, Tipps und fertiger E-Mail-Vorlage.</p>
             <div class="hero-stats">
@@ -1251,41 +1307,41 @@
             <input type="search" class="search-input" id="searchInput" placeholder="Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'" autocomplete="off" style="padding-right:118px;">
             <div class="search-mode-dropdown" id="searchModeDropdown">
                 <button class="search-mode-trigger mode-smart" id="searchModeTrigger" onclick="toggleModeMenu()">
-                    <span class="mode-icon" id="modeIcon">🧠</span>
+                    <span class="mode-icon" id="modeIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/></svg></span>
                     <span class="mode-label" id="modeLabel">Smart</span>
-                    <span class="mode-chevron">▼</span>
+                    <span class="mode-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
                 </button>
                 <div class="search-mode-menu" id="searchModeMenu">
                     <div class="search-mode-menu-label">Suchmodus</div>
                     <button class="search-mode-opt active" data-mode="smart" onclick="setSearchMode('smart')">
-                        <span class="opt-icon">🧠</span>
+                        <span class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/></svg></span>
                         <div class="opt-info">
                             <div class="opt-title">Smart-Suche</div>
                             <div class="opt-desc">Tippfehler-Erkennung & Synonyme</div>
                         </div>
-                        <span class="opt-check">✓</span>
+                        <span class="opt-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
                     </button>
                     <button class="search-mode-opt" data-mode="exact" onclick="setSearchMode('exact')">
-                        <span class="opt-icon">🔍</span>
+                        <span class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span>
                         <div class="opt-info">
                             <div class="opt-title">Exakte Suche</div>
                             <div class="opt-desc">Direkter Textabgleich</div>
                         </div>
-                        <span class="opt-check">✓</span>
+                        <span class="opt-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
                     </button>
                     <div class="search-mode-divider"></div>
                     <div class="search-mode-menu-label">KI-Assistent</div>
                     <button class="search-mode-opt" data-mode="llm" onclick="setSearchMode('llm')" id="llmModeBtn">
-                        <span class="opt-icon">🤖</span>
+                        <span class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg></span>
                         <div class="opt-info">
                             <div class="opt-title">AI-Rechtsberater</div>
                             <div class="opt-desc" id="llmModeDesc">API-Key benötigt</div>
                         </div>
-                        <span class="opt-check">✓</span>
+                        <span class="opt-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span>
                     </button>
                     <div class="search-mode-divider"></div>
                     <button class="search-mode-opt ai-settings" onclick="openLlmKeyModal()">
-                        <span class="opt-icon">⚙️</span>
+                        <span class="opt-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></span>
                         <div class="opt-info">
                             <div class="opt-title">AI-Einstellungen</div>
                             <div class="opt-desc">Anbieter & API-Key konfigurieren</div>
@@ -1300,8 +1356,8 @@
         <div class="llm-response-area" id="llmResponseArea">
             <div class="llm-response-box">
                 <div class="llm-response-header">
-                    <div class="llm-response-header-left">🤖 AI-Rechtsberater</div>
-                    <button class="llm-response-close" onclick="closeLlmResponse()">✕</button>
+                    <div class="llm-response-header-left">AI-Rechtsberater</div>
+                    <button class="llm-response-close" onclick="closeLlmResponse()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
                 </div>
                 <div class="llm-response-body" id="llmResponseBody"></div>
                 <div class="llm-response-actions" id="llmResponseActions"></div>
@@ -1310,17 +1366,21 @@
 
         <!-- Category Filters -->
         <div class="cat-filters fade-in fade-in-d2" id="catFilters">
+            <!-- Nur Text, kein Symbol im Markup: der i18n-Walk uebersetzt den
+                 Textknoten eines Elements: steht ein <svg> daneben, wird aus dem
+                 Knoten gemischter Inhalt und die Uebersetzung faellt still aus.
+                 Die Symbole haengt paintCatIcons() nach dem Laden davor. -->
             <button class="cat-pill active" data-cat="all">Alle</button>
-            <button class="cat-pill" data-cat="arbeitszeit">⏰ Arbeitszeit</button>
-            <button class="cat-pill" data-cat="taetigkeit">🧹 Tätigkeiten</button>
-            <button class="cat-pill" data-cat="urlaub">🏖️ Urlaub</button>
-            <button class="cat-pill" data-cat="schule">📚 Berufsschule</button>
-            <button class="cat-pill" data-cat="geld">💰 Vergütung</button>
-            <button class="cat-pill" data-cat="kuendigung">📋 Kündigung</button>
-            <button class="cat-pill" data-cat="mobbing">🛡️ Mobbing</button>
-            <button class="cat-pill" data-cat="sicherheit">⛑️ Sicherheit</button>
-            <button class="cat-pill" data-cat="ausbildung">🎓 Ausbildung</button>
-            <button class="cat-pill" data-cat="mitbestimmung">🗳️ Mitbestimmung</button>
+            <button class="cat-pill" data-cat="arbeitszeit">Arbeitszeit</button>
+            <button class="cat-pill" data-cat="taetigkeit">Tätigkeiten</button>
+            <button class="cat-pill" data-cat="urlaub">Urlaub</button>
+            <button class="cat-pill" data-cat="schule">Berufsschule</button>
+            <button class="cat-pill" data-cat="geld">Vergütung</button>
+            <button class="cat-pill" data-cat="kuendigung">Kündigung</button>
+            <button class="cat-pill" data-cat="mobbing">Mobbing</button>
+            <button class="cat-pill" data-cat="sicherheit">Sicherheit</button>
+            <button class="cat-pill" data-cat="ausbildung">Ausbildung</button>
+            <button class="cat-pill" data-cat="mitbestimmung">Mitbestimmung</button>
         </div>
 
         <!-- Scenarios Grid -->
@@ -1329,7 +1389,7 @@
 
             <!-- No Results -->
             <div class="no-results" id="noResults" style="display:none;" aria-live="polite">
-                <div class="no-results-icon">🔍</div>
+                <div class="no-results-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
                 <h3>Kein Szenario gefunden</h3>
                 <p style="color:var(--text-dim); font-size:0.85rem;">Versuch andere Suchbegriffe oder wähle eine andere Kategorie.</p>
             </div>
@@ -1357,14 +1417,14 @@
 
         <!-- Disclaimer -->
         <footer class="disclaimer fade-in">
-            <p>⚠️ Diese Informationen dienen zur allgemeinen Orientierung und ersetzen keine Rechtsberatung. Bei konkreten Problemen wende dich an deine <strong>Gewerkschaft</strong>, die <strong>IHK/HWK</strong> oder einen <strong>Fachanwalt für Arbeitsrecht</strong>.</p>
+            <p>Diese Informationen dienen zur allgemeinen Orientierung und ersetzen keine Rechtsberatung. Bei konkreten Problemen wende dich an deine <strong>Gewerkschaft</strong>, die <strong>IHK/HWK</strong> oder einen <strong>Fachanwalt für Arbeitsrecht</strong>.</p>
         </footer>
     </div>
 
     <!-- ═════════════ LLM API KEY MODAL ═════════════ -->
     <div class="llm-key-overlay" id="llmKeyOverlay">
         <div class="llm-key-modal">
-            <h3>🤖 AI-Assistent einrichten</h3>
+            <h3>AI-Assistent einrichten</h3>
             <p class="llm-key-desc">Verbinde einen LLM-Anbieter. Dein API-Key bleibt lokal im Browser gespeichert – wird nie an uns gesendet.</p>
 
             <label for="llmProvider">Anbieter</label>
@@ -1393,11 +1453,11 @@
 
             <div class="llm-key-actions">
                 <button class="llm-key-cancel" onclick="closeLlmKeyModal()">Abbrechen</button>
-                <button class="llm-key-delete" onclick="deleteLlmKey()" id="llmDeleteBtn" style="display:none;">🗑️</button>
-                <button class="llm-key-save" onclick="saveLlmKey()">🔒 Speichern</button>
+                <button class="llm-key-delete" onclick="deleteLlmKey()" id="llmDeleteBtn" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></button>
+                <button class="llm-key-save" onclick="saveLlmKey()">Speichern</button>
             </div>
             <div class="llm-key-hint" id="llmProviderHint">
-                💡 <strong>Groq</strong> ist komplett kostenlos! Hol dir einen Key auf <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>
+                <strong>Groq</strong> ist komplett kostenlos! Hol dir einen Key auf <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>
             </div>
         </div>
     </div>
@@ -1406,7 +1466,7 @@
     <div class="detail-overlay" id="detailOverlay">
         <div class="detail-modal" id="detailModal">
             <div class="detail-header">
-                <button class="detail-close" onclick="closeDetail()" aria-label="Schließen">✕</button>
+                <button class="detail-close" onclick="closeDetail()" aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
                 <div class="detail-category" id="detailCategory"></div>
                 <h2 class="detail-title" id="detailTitle"></h2>
                 <p class="detail-subtitle" id="detailSubtitle"></p>
@@ -3242,7 +3302,7 @@ Mit freundlichen Grüßen
     ];
 
     // ═══════════════════════════════════════════
-    //  🧠 SMART SEARCH ENGINE (Fuzzy + NLP-lite)
+    //  SMART SEARCH ENGINE (Fuzzy + NLP-lite)
     //  No LLM, no API, no download. Pure client-side.
     // ═══════════════════════════════════════════
 
@@ -3596,9 +3656,9 @@ Mit freundlichen Grüßen
     let searchMode = 'smart'; // 'smart' | 'exact' | 'llm'
 
     const MODE_CONFIG = {
-        smart: { icon: '🧠', label: RL('Smart', 'Smart'), cls: 'mode-smart', placeholder: RL("Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'", "Describe your problem… e.g. 'My boss wants me to come in on Saturday'") },
-        exact: { icon: '🔍', label: RL('Exakt', 'Exact'), cls: 'mode-exact', placeholder: RL("Szenario suchen… z.B. Überstunden, Urlaub, Putzen", "Search a scenario… e.g. overtime, holiday, cleaning") },
-        llm:   { icon: '🤖', label: 'AI',    cls: 'mode-llm',   placeholder: RL("Frag den AI-Rechtsberater… z.B. 'Darf mein Chef mir Kündigung androhen wenn ich krank bin?'", "Ask the AI legal advisor… e.g. 'Can my boss threaten me with dismissal when I am off sick?'") }
+        smart: { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5A2 2 0 0 0 15.5 9.94l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/></svg>', label: RL('Smart', 'Smart'), cls: 'mode-smart', placeholder: RL("Beschreib dein Problem… z.B. 'Mein Chef will dass ich Samstag komme'", "Describe your problem… e.g. 'My boss wants me to come in on Saturday'") },
+        exact: { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>', label: RL('Exakt', 'Exact'), cls: 'mode-exact', placeholder: RL("Szenario suchen… z.B. Überstunden, Urlaub, Putzen", "Search a scenario… e.g. overtime, holiday, cleaning") },
+        llm:   { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>', label: 'AI',    cls: 'mode-llm',   placeholder: RL("Frag den AI-Rechtsberater… z.B. 'Darf mein Chef mir Kündigung androhen wenn ich krank bin?'", "Ask the AI legal advisor… e.g. 'Can my boss threaten me with dismissal when I am off sick?'") }
     };
 
     function toggleModeMenu() {
@@ -3659,14 +3719,14 @@ Mit freundlichen Grüßen
         const top = results.results.slice(0, 5);
         let html = '';
         if (typoCorrection) {
-            html += `<div class="ai-typo-hint">${RL('✨ Meintest du', '✨ Did you mean')} "${escapeHtml(typoCorrection)}"?</div>`;
+            html += `<div class="ai-typo-hint">${RL('Meintest du', 'Did you mean')} "${escapeHtml(typoCorrection)}"?</div>`;
         }
-        html += '<div class="ai-suggest-header">' + RL('🧠 Smart-Ergebnis', '🧠 Smart result') + '</div>';
+        html += '<div class="ai-suggest-header">' + RL('Smart-Ergebnis', 'Smart result') + '</div>';
         top.forEach(r => {
             const s = SCENARIOS.find(x => x.id === r.id);
             if (!s) return;
             html += `<div class="ai-suggest-item" onclick="openDetail('${s.id}'); hideAiSuggest();">
-                <div class="ai-suggest-icon">${getCatEmoji(s.cat)}</div>
+                <div class="ai-suggest-icon">${catIcon(s.cat)}</div>
                 <div class="ai-suggest-text">
                     <div class="ai-suggest-title">${escapeHtml(s.title)}</div>
                     <div class="ai-suggest-meta">
@@ -3689,7 +3749,7 @@ Mit freundlichen Grüßen
     });
 
     // ═══════════════════════════════════════════
-    //  🤖 LLM INTEGRATION
+    //  LLM INTEGRATION
     // ═══════════════════════════════════════════
 
     // LLM-Key liegt in sessionStorage (verschwindet beim Schließen des Browsers).
@@ -3729,39 +3789,39 @@ Mit freundlichen Grüßen
         customUrl.style.display = (prov === 'custom') ? 'block' : 'none';
         const providers = {
             openai: {
-                hint: RL('💡 Hol dir einen Key auf <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. <strong>gpt-4o-mini</strong> ist günstig & schnell.', '💡 Get a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. <strong>gpt-4o-mini</strong> is cheap & fast.'),
+                hint: RL('Hol dir einen Key auf <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. <strong>gpt-4o-mini</strong> ist günstig & schnell.', 'Get a key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. <strong>gpt-4o-mini</strong> is cheap & fast.'),
                 placeholder: 'gpt-4o-mini'
             },
             claude: {
-                hint: RL('💡 Key holen auf <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. <strong>claude-sonnet-4-20250514</strong> empfohlen.', '💡 Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. <strong>claude-sonnet-4-20250514</strong> recommended.'),
+                hint: RL('Key holen auf <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. <strong>claude-sonnet-4-20250514</strong> empfohlen.', 'Get a key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. <strong>claude-sonnet-4-20250514</strong> recommended.'),
                 placeholder: 'claude-sonnet-4-20250514'
             },
             gemini: {
-                hint: RL('💡 Key holen auf <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. <strong>gemini-2.0-flash</strong> ist schnell.<br>⚠️ Free-Tier: 15 Req/Min. Für höhere Limits: <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Billing aktivieren</a> im Google Cloud Projekt.', '💡 Get a key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. <strong>gemini-2.0-flash</strong> is fast.<br>⚠️ Free tier: 15 req/min. For higher limits: <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">enable billing</a> in your Google Cloud project.'),
+                hint: RL('Key holen auf <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. <strong>gemini-2.0-flash</strong> ist schnell.<br>Free-Tier: 15 Req/Min. Für höhere Limits: <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Billing aktivieren</a> im Google Cloud Projekt.', 'Get a key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com</a>. <strong>gemini-2.0-flash</strong> is fast.<br>Free tier: 15 req/min. For higher limits: <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">enable billing</a> in your Google Cloud project.'),
                 placeholder: 'gemini-2.0-flash'
             },
             groq: {
-                hint: RL('💡 <strong>Groq ist komplett kostenlos!</strong> Key holen auf <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>. Empfohlen: <strong>llama-3.3-70b-versatile</strong>', '💡 <strong>Groq is completely free!</strong> Get a key at <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>. Recommended: <strong>llama-3.3-70b-versatile</strong>'),
+                hint: RL('<strong>Groq ist komplett kostenlos!</strong> Key holen auf <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>. Empfohlen: <strong>llama-3.3-70b-versatile</strong>', '<strong>Groq is completely free!</strong> Get a key at <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>. Recommended: <strong>llama-3.3-70b-versatile</strong>'),
                 placeholder: 'llama-3.3-70b-versatile'
             },
             mistral: {
-                hint: RL('💡 Key holen auf <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai</a>. <strong>mistral-large-latest</strong> ist top.', '💡 Get a key at <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai</a>. <strong>mistral-large-latest</strong> is great.'),
+                hint: RL('Key holen auf <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai</a>. <strong>mistral-large-latest</strong> ist top.', 'Get a key at <a href="https://console.mistral.ai/api-keys" target="_blank" rel="noopener">console.mistral.ai</a>. <strong>mistral-large-latest</strong> is great.'),
                 placeholder: 'mistral-large-latest'
             },
             deepseek: {
-                hint: RL('💡 Super günstig! Key auf <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a>. <strong>deepseek-chat</strong> empfohlen.', '💡 Very cheap! Get a key at <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a>. <strong>deepseek-chat</strong> recommended.'),
+                hint: RL('Super günstig! Key auf <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a>. <strong>deepseek-chat</strong> empfohlen.', 'Very cheap! Get a key at <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener">platform.deepseek.com</a>. <strong>deepseek-chat</strong> recommended.'),
                 placeholder: 'deepseek-chat'
             },
             openrouter: {
-                hint: RL('💡 <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a> – viele Modelle, manche kostenlos. Versuche <strong>meta-llama/llama-3.3-70b-instruct</strong>', '💡 <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a> – many models, some free. Try <strong>meta-llama/llama-3.3-70b-instruct</strong>'),
+                hint: RL('<a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a> – viele Modelle, manche kostenlos. Versuche <strong>meta-llama/llama-3.3-70b-instruct</strong>', '<a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a> – many models, some free. Try <strong>meta-llama/llama-3.3-70b-instruct</strong>'),
                 placeholder: 'meta-llama/llama-3.3-70b-instruct'
             },
             xai: {
-                hint: RL('💡 Key auf <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a>. <strong>grok-3-mini-fast</strong> empfohlen.', '💡 Get a key at <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a>. <strong>grok-3-mini-fast</strong> recommended.'),
+                hint: RL('Key auf <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a>. <strong>grok-3-mini-fast</strong> empfohlen.', 'Get a key at <a href="https://console.x.ai" target="_blank" rel="noopener">console.x.ai</a>. <strong>grok-3-mini-fast</strong> recommended.'),
                 placeholder: 'grok-3-mini-fast'
             },
             custom: {
-                hint: RL('💡 Jede OpenAI-kompatible API (z.B. LM Studio, Ollama, vLLM). Trage die Base URL ein.', '💡 Any OpenAI-compatible API (e.g. LM Studio, Ollama, vLLM). Enter the base URL.'),
+                hint: RL('Jede OpenAI-kompatible API (z.B. LM Studio, Ollama, vLLM). Trage die Base URL ein.', 'Any OpenAI-compatible API (e.g. LM Studio, Ollama, vLLM). Enter the base URL.'),
                 placeholder: RL('z.B. llama3', 'e.g. llama3')
             }
         };
@@ -3984,28 +4044,28 @@ ${scenarioCtx}`;
                 let msg = RL('API-Fehler: ', 'API error: ') + resp.status;
                 console.log('[LLM] Error body:', err);
                 if (resp.status === 401 || resp.status === 403) {
-                    msg = RL('Ungültiger API-Key. Öffne ⚙️ Einstellungen um ihn zu ändern.', 'Invalid API key. Open ⚙️ Settings to change it.');
+                    msg = RL('Ungültiger API-Key. Öffne Einstellungen um ihn zu ändern.', 'Invalid API key. Open Settings to change it.');
                 } else if (resp.status === 429) {
                     if (prov === 'gemini') {
-                        msg = RL('⏱️ <strong>Gemini Rate-Limit erreicht (429).</strong><br><br>' +
+                        msg = RL('<strong>Gemini Rate-Limit erreicht (429).</strong><br><br>' +
                               '<strong>Mögliche Ursachen:</strong><br>' +
                               '• Free-Tier: Nur 15 Requests/Min – warte kurz und versuch nochmal<br>' +
                               '• Paid-Tier: Prüfe ob <strong>Billing</strong> im <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Google Cloud Console</a> aktiv ist<br>' +
                               '• Der API-Key muss zu einem Projekt mit aktivierter Abrechnung gehören<br><br>' +
-                              '💡Tipp:</strong> <a href="https://console.groq.com" target="_blank" rel="noopener"><strong>Groq</strong></a> ist kostenlos & hat großzügige Limits.',
-                              '⏱️ <strong>Gemini rate limit reached (429).</strong><br><br>' +
+                              'Tipp:</strong> <a href="https://console.groq.com" target="_blank" rel="noopener"><strong>Groq</strong></a> ist kostenlos & hat großzügige Limits.',
+                              '<strong>Gemini rate limit reached (429).</strong><br><br>' +
                               '<strong>Possible causes:</strong><br>' +
                               '• Free tier: only 15 requests/min – wait a moment and try again<br>' +
                               '• Paid tier: check whether <strong>billing</strong> is active in the <a href="https://console.cloud.google.com/billing" target="_blank" rel="noopener">Google Cloud Console</a><br>' +
                               '• The API key must belong to a project with billing enabled<br><br>' +
-                              '💡 Tip:</strong> <a href="https://console.groq.com" target="_blank" rel="noopener"><strong>Groq</strong></a> is free & has generous limits.');
+                              'Tip:</strong> <a href="https://console.groq.com" target="_blank" rel="noopener"><strong>Groq</strong></a> is free & has generous limits.');
                     } else {
-                        msg = RL('⏱️ Rate-Limit erreicht. Warte ein paar Sekunden und versuch es nochmal.', '⏱️ Rate limit reached. Wait a few seconds and try again.');
+                        msg = RL('Rate-Limit erreicht. Warte ein paar Sekunden und versuch es nochmal.', 'Rate limit reached. Wait a few seconds and try again.');
                     }
                 } else if (resp.status === 400) {
-                    msg = RL('⚠️ Ungültiges Request-Format. Prüf ob Model & Einstellungen richtig sind. <br><small>Details: ', '⚠️ Invalid request format. Check that the model & settings are correct. <br><small>Details: ') + err.slice(0, 200) + '</small>';
+                    msg = RL('Ungültiges Request-Format. Prüf ob Model & Einstellungen richtig sind. <br><small>Details: ', 'Invalid request format. Check that the model & settings are correct. <br><small>Details: ') + err.slice(0, 200) + '</small>';
                 } else if (resp.status >= 500) {
-                    msg = RL('🔴 Server-Fehler (' + resp.status + '). Anbieter ist gerade überlastet. Versuch später nochmal.', '🔴 Server error (' + resp.status + '). The provider is currently overloaded. Try again later.');
+                    msg = RL('Server-Fehler (' + resp.status + '). Anbieter ist gerade überlastet. Versuch später nochmal.', 'Server error (' + resp.status + '). The provider is currently overloaded. Try again later.');
                 }
                 throw new Error(msg);
             }
@@ -4024,21 +4084,21 @@ ${scenarioCtx}`;
             if (e.name === 'AbortError') return;
             console.error('[LLM] Query error:', e.message, e);
             body.innerHTML = `<div style="color:var(--danger)">
-                <p style="margin-bottom:12px;"><strong>❌ ${escapeHtml(e.message)}</strong></p>
-                <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:14px;">${RL('🔍 Browser Console (F12) zeigt Details', '🔍 The browser console (F12) shows details')}</p>
+                <p style="margin-bottom:12px;"><strong>${escapeHtml(e.message)}</strong></p>
+                <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:14px;">${RL('Browser Console (F12) zeigt Details', 'The browser console (F12) shows details')}</p>
                 <div style="background:rgba(var(--danger-rgb),0.05);border:1px solid rgba(var(--danger-rgb),0.2);border-radius:8px;padding:12px;font-size:0.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:14px;">
                     <strong style="color:var(--text);">${RL('Tipps zum Troubleshooting:', 'Troubleshooting tips:')}</strong>
-                    <ul style="list-style-type:none;padding:0;margin:8px 0 0 0;">
-                        <li>${RL('✓ Prüfe dein API-Key – ist er gültig und hab richtig reinkopiert?', '✓ Check your API key – is it valid and copied in correctly?')}</li>
-                        <li>${RL('✓ Überprüfe den Provider – stimmt die Auswahl zu deinem Key?', '✓ Check the provider – does the selection match your key?')}</li>
-                        <li>${RL('✓ Checke deinen Account-Status (Guthaben, aktiv, nicht gebannt)', '✓ Check your account status (credit, active, not banned)')}</li>
-                        <li>${RL('✓ Falls Gemini: Nutze Groq statt – kostenlos & zuverlässiger', '✓ If Gemini: use Groq instead – free & more reliable')}</li>
-                        <li>${RL('✓ Versuch es später nochmal – Server könnte kurzzeitig ausfallen', '✓ Try again later – the server might be briefly down')}</li>
+                    <ul style="list-style-type:disc;padding-left:18px;margin:8px 0 0 0;">
+                        <li>${RL('Prüfe dein API-Key – ist er gültig und hab richtig reinkopiert?', 'Check your API key – is it valid and copied in correctly?')}</li>
+                        <li>${RL('Überprüfe den Provider – stimmt die Auswahl zu deinem Key?', 'Check the provider – does the selection match your key?')}</li>
+                        <li>${RL('Checke deinen Account-Status (Guthaben, aktiv, nicht gebannt)', 'Check your account status (credit, active, not banned)')}</li>
+                        <li>${RL('Falls Gemini: Nutze Groq statt – kostenlos & zuverlässiger', 'If Gemini: use Groq instead – free & more reliable')}</li>
+                        <li>${RL('Versuch es später nochmal – Server könnte kurzzeitig ausfallen', 'Try again later – the server might be briefly down')}</li>
                     </ul>
                 </div>
             </div>`;
-            actions.innerHTML = `<button class="llm-action-chip" onclick="openLlmKeyModal()">${RL('⚙️ Key ändern', '⚙️ Change key')}</button>
-                <button class="llm-action-chip" onclick="closeLlmResponse()" style="color:var(--text-dim);">${RL('✕ Schließen', '✕ Close')}</button>`;
+            actions.innerHTML = `<button class="llm-action-chip" onclick="openLlmKeyModal()">${RL('Key ändern', 'Change key')}</button>
+                <button class="llm-action-chip" onclick="closeLlmResponse()" style="color:var(--text-dim);">${RL('Schließen', 'Close')}</button>`;
         }
     }
 
@@ -4063,7 +4123,7 @@ ${scenarioCtx}`;
         html = html.replace(/((?:Betreff|Subject):.+?)(<\/p>|$)/gs, (match) => {
             const id = 'llm_email_' + Date.now();
             return `<div class="llm-email-block" id="${id}">
-                <button class="llm-email-copy" onclick="copyLlmEmail('${id}')">${RL('📋 Kopieren', '📋 Copy')}</button>
+                <button class="llm-email-copy" onclick="copyLlmEmail('${id}')">${RL('Kopieren', 'Copy')}</button>
                 ${match}
             </div>`;
         });
@@ -4078,19 +4138,19 @@ ${scenarioCtx}`;
                 content.toLowerCase().includes(s.title.toLowerCase().slice(1, -1))) {
                 const chip = document.createElement('button');
                 chip.className = 'llm-action-chip';
-                chip.textContent = getCatEmoji(s.cat) + ' ' + s.title.slice(0,30) + '…';
+                chip.textContent = s.title.slice(0, 30) + '…';
                 chip.addEventListener('click', () => openDetail(s.id));
                 actions.appendChild(chip);
             }
         });
         const emailChip = document.createElement('button');
         emailChip.className = 'llm-action-chip';
-        emailChip.textContent = RL('📧 E-Mail generieren', '📧 Generate email');
+        emailChip.textContent = RL('E-Mail generieren', 'Generate email');
         emailChip.addEventListener('click', () => queryLlm(RL('Erstelle eine höfliche E-Mail für folgendes Problem: ', 'Write a polite email for the following problem: ') + originalQuery));
         actions.appendChild(emailChip);
         const settingsChip = document.createElement('button');
         settingsChip.className = 'llm-action-chip';
-        settingsChip.textContent = RL('⚙️ Einstellungen', '⚙️ Settings');
+        settingsChip.textContent = RL('Einstellungen', 'Settings');
         settingsChip.addEventListener('click', () => openLlmKeyModal());
         actions.appendChild(settingsChip);
     }
@@ -4103,10 +4163,10 @@ ${scenarioCtx}`;
     function copyLlmEmail(elemId) {
         const el = document.getElementById(elemId);
         if (!el) return;
-        const text = el.innerText.replace(RL('📋 Kopieren', '📋 Copy'), '').trim();
+        const text = el.innerText.replace(RL('Kopieren', 'Copy'), '').trim();
         navigator.clipboard.writeText(text).then(() => {
             const btn = el.querySelector('.llm-email-copy');
-            if (btn) { btn.textContent = RL('✅ Kopiert!', '✅ Copied!'); setTimeout(() => btn.textContent = RL('📋 Kopieren', '📋 Copy'), 2000); }
+            if (btn) { btn.textContent = RL('Kopiert!', 'Copied!'); setTimeout(() => btn.textContent = RL('Kopieren', 'Copy'), 2000); }
         });
     }
 
@@ -4188,20 +4248,19 @@ ${scenarioCtx}`;
         noResults.style.display = 'none';
 
         grid.innerHTML = filtered.map(s => {
-            const tagClass = 'tag-' + s.cat;
             const catLabel = getCatLabel(s.cat);
-            const catEmoji = getCatEmoji(s.cat);
+            const sevKind = s.verdict === 'nein' ? 'sev-no' : s.verdict === 'jein' ? 'sev-mid' : 'sev-ok';
             const severityDots = renderSeverity(s.severity, s.verdict);
             return `
-                <article class="scenario-card" role="listitem" style="--card-accent: ${getAccentColor(s.cat)}" onclick="openDetail('${s.id}')" tabindex="0" aria-label="${escapeHtml(s.title)} – ${escapeHtml(s.law)}" onkeydown="if(event.key==='Enter')openDetail('${s.id}')">
+                <article class="scenario-card" role="listitem" onclick="openDetail('${s.id}')" tabindex="0" aria-label="${escapeHtml(s.title)} – ${escapeHtml(s.law)}" onkeydown="if(event.key==='Enter')openDetail('${s.id}')">
                     <div class="scenario-card-inner">
-                        <div class="scenario-tag ${tagClass}">${catEmoji} ${catLabel}</div>
+                        <div class="scenario-tag">${catIcon(s.cat)}${catLabel}</div>
                         <h3 class="scenario-title">${escapeHtml(s.title)}</h3>
                         <p class="scenario-desc">${escapeHtml(s.desc)}</p>
                     </div>
                     <div class="scenario-footer">
                         <div class="scenario-law">${escapeHtml(s.law)}</div>
-                        <div class="scenario-severity" aria-label="${RL('Schweregrad ' + s.severity + ' von 3', 'Severity ' + s.severity + ' of 3')}">${severityDots}</div>
+                        <div class="scenario-severity ${sevKind}" aria-label="${RL('Schweregrad ' + s.severity + ' von 3', 'Severity ' + s.severity + ' of 3')}">${severityDots}</div>
                     </div>
                 </article>
             `;
@@ -4216,21 +4275,73 @@ ${scenarioCtx}`;
         const map = { arbeitszeit: 'Arbeitszeit', taetigkeit: 'Tätigkeiten', urlaub: 'Urlaub', schule: 'Berufsschule', geld: 'Vergütung', kuendigung: 'Kündigung', mobbing: 'Mobbing', sicherheit: 'Sicherheit', ausbildung: 'Ausbildung', mitbestimmung: 'Mitbestimmung' };
         return map[cat] || cat;
     }
-    function getCatEmoji(cat) {
-        const map = { arbeitszeit: '⏰', taetigkeit: '🧹', urlaub: '🏖️', schule: '📚', geld: '💰', kuendigung: '📋', mobbing: '🛡️', sicherheit: '⛑️', ausbildung: '🎓', mitbestimmung: '🗳️' };
-        return map[cat] || '📌';
+    /* Kategoriesymbole als Inline-SVG im Lucide-Stil (siehe CLAUDE.md: nie
+       Emojis). Emojis werden von jedem Betriebssystem anders gezeichnet, sind
+       farbig und lassen sich nicht auf die Textfarbe einstellen - genau das
+       liess die Filterzeile bunt und uneinheitlich wirken. `currentColor` erbt
+       dagegen die Farbe des Elternelements, damit passt sich das Symbol jedem
+       Zustand an (ruhend, ausgewaehlt, Hover) ohne eigene Regel. */
+    const CAT_ICONS = {
+        arbeitszeit:    '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+        taetigkeit:     '<path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/>',
+        urlaub:         '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>',
+        schule:         '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+        geld:           '<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01"/><path d="M18 12h.01"/>',
+        kuendigung:     '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>',
+        mobbing:        '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>',
+        sicherheit:     '<path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1z"/><path d="M10 10V5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v5"/><path d="M4 15v-3a6 6 0 0 1 6-6"/><path d="M14 6a6 6 0 0 1 6 6v3"/>',
+        ausbildung:     '<path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/>',
+        mitbestimmung:  '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+        _fallback:      '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>'
+    };
+    function catIcon(cat) {
+        const d = CAT_ICONS[cat] || CAT_ICONS._fallback;
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+             + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
     }
-    function getAccentColor(cat) {
-        const map = { arbeitszeit: 'var(--cyan)', taetigkeit: 'var(--warning)', urlaub: 'var(--success)', schule: 'var(--secondary)', geld: 'var(--orange)', kuendigung: 'var(--danger)', mobbing: 'var(--primary)', sicherheit: 'var(--teal)', ausbildung: 'var(--pink)', mitbestimmung: 'var(--lime)' };
-        return map[cat] || 'var(--primary)';
-    }
-    function renderSeverity(level, verdict) {
-        let cls = verdict === 'nein' ? 'active' : verdict === 'jein' ? 'active medium' : 'active low';
-        let dots = '';
-        for (let i = 0; i < 3; i++) {
-            dots += `<div class="severity-dot ${i < level ? cls : ''}"></div>`;
+
+    /* Haengt die Symbole erst nach dem Laden vor die Filterknoepfe - im Markup
+       wuerden sie den Textknoten zu gemischtem Inhalt machen und die statische
+       Uebersetzung aushebeln (CLAUDE.md, Abschnitt Sprachmix). */
+    function paintCatIcons() {
+        const badge = document.getElementById('heroBadge');
+        if (badge && !badge.querySelector('svg')) {
+            badge.insertAdjacentHTML('afterbegin',
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+                + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                + '<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>'
+                + '<path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/>'
+                + '<path d="M7 21h10"/><path d="M12 3v18"/>'
+                + '<path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>');
         }
-        return dots;
+        document.querySelectorAll('.cat-pill[data-cat]').forEach(btn => {
+            if (btn.querySelector('svg')) return;      // doppeltes Anhaengen vermeiden
+            const cat = btn.dataset.cat;
+            const svg = cat === 'all'
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"'
+                  + ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+                  + '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/>'
+                  + '<rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>'
+                : catIcon(cat);
+            btn.insertAdjacentHTML('afterbegin', svg);
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', paintCatIcons);
+    } else {
+        paintCatIcons();
+    }
+
+    /* Vorher: drei Punkte, bei "unzulaessig" alle rot. Wie viele Punkte wofuer
+       stehen, stand nirgends - die Farbe war das einzige Signal, und fuer alle,
+       die Rot und Gruen nicht unterscheiden, damit gar keins. Jetzt benennt ein
+       Wort das Ergebnis, der Balken zeigt nur noch, wie deutlich der Fall ist. */
+    function renderSeverity(level, verdict) {
+        const kind = verdict === 'nein' ? 'no' : verdict === 'jein' ? 'mid' : 'ok';
+        const label = kind === 'no'  ? RL('Unzulässig', 'Not allowed')
+                    : kind === 'mid' ? RL('Kommt drauf an', 'Depends')
+                    :                  RL('Zulässig', 'Allowed');
+        return `<span class="severity-label">${label}</span>`;
     }
     function escapeHtml(str) {
         const d = document.createElement('div');
@@ -4297,7 +4408,7 @@ ${scenarioCtx}`;
         const bodyEl = document.getElementById('detailBody');
 
         catDiv.className = 'detail-category tag-' + s.cat;
-        catDiv.innerHTML = getCatEmoji(s.cat) + ' ' + getCatLabel(s.cat);
+        catDiv.innerHTML = catIcon(s.cat) + escapeHtml(getCatLabel(s.cat));
         titleEl.textContent = s.title;
         subEl.textContent = s.desc;
 
@@ -4305,7 +4416,7 @@ ${scenarioCtx}`;
 
         // Verdict box
         html += `<div class="verdict-box ${s.verdict}">
-            <div class="verdict-label">${s.verdict === 'nein' ? RL('❌ Das darf der Chef NICHT', '❌ The boss may NOT do that') : s.verdict === 'jein' ? RL('⚠️ Kommt drauf an…', '⚠️ It depends…') : RL('✅ Das ist erlaubt', '✅ This is allowed')}</div>
+            <div class="verdict-label">${s.verdict === 'nein' ? RL('Das darf der Chef NICHT', 'The boss may NOT do that') : s.verdict === 'jein' ? RL('Kommt drauf an…', 'It depends…') : RL('Das ist erlaubt', 'This is allowed')}</div>
             <div class="verdict-text">${escapeHtml(s.verdictShort)}</div>
             <div class="verdict-detail">${escapeHtml(s.verdictDetail)}</div>
         </div>`;
@@ -4314,7 +4425,7 @@ ${scenarioCtx}`;
         if (s.laws && s.laws.length) {
             s.laws.forEach(law => {
                 html += `<div class="law-ref">
-                    <div class="law-ref-icon">📖</div>
+                    <div class="law-ref-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg></div>
                     <div class="law-ref-content">
                         <div class="law-ref-title">${escapeHtml(law.title)}</div>
                         <div class="law-ref-text">${escapeHtml(law.text)}</div>
@@ -4326,7 +4437,7 @@ ${scenarioCtx}`;
         // Tips
         if (s.tips && s.tips.length) {
             html += `<div class="tips-section">
-                <div class="tips-title">${RL('💡 Was du tun kannst', '💡 What you can do')}</div>`;
+                <div class="tips-title">${RL('Was du tun kannst', 'What you can do')}</div>`;
             s.tips.forEach((tip, i) => {
                 html += `<div class="tip-item">
                     <div class="tip-num">${i + 1}</div>
@@ -4345,8 +4456,8 @@ ${scenarioCtx}`;
                 </button>
                 <div class="email-output" id="emailOutput_${s.id}">
                     <div class="email-output-header">
-                        <div class="email-output-title">${RL('📧 Betreff: ', '📧 Subject: ')}${escapeHtml(s.email.subject)}</div>
-                        <button class="email-copy-btn" onclick="copyEmail('${s.id}')">${RL('📋 Kopieren', '📋 Copy')}</button>
+                        <div class="email-output-title">${RL('Betreff: ', 'Subject: ')}${escapeHtml(s.email.subject)}</div>
+                        <button class="email-copy-btn" onclick="copyEmail('${s.id}')">${RL('Kopieren', 'Copy')}</button>
                     </div>
                     <div class="email-text" id="emailText_${s.id}">${escapeHtml(s.email.body)}</div>
                 </div>
@@ -4391,7 +4502,7 @@ ${scenarioCtx}`;
             const btn = document.querySelector('#emailOutput_' + id + ' .email-copy-btn');
             if (btn) {
                 const original = btn.textContent;
-                btn.textContent = RL('✅ Kopiert!', '✅ Copied!');
+                btn.textContent = RL('Kopiert!', 'Copied!');
                 btn.style.color = 'var(--success)';
                 setTimeout(() => {
                     btn.textContent = original;
@@ -4401,6 +4512,35 @@ ${scenarioCtx}`;
         });
     }
     </script>
+
+    <!-- Theme-Farbe-Sync: liest User-Akzent aus tg_pro_data.settings.theme.
+         Fehlte hier bisher als einziger Standalone-Seite, deshalb blieb der
+         Akzent unabhaengig von der Einstellung in der App. -->
+    <script>
+    (function() {
+        function applyTheme(hex) {
+            if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+            var r = parseInt(hex.slice(1,3), 16);
+            var g = parseInt(hex.slice(3,5), 16);
+            var b = parseInt(hex.slice(5,7), 16);
+            document.documentElement.style.setProperty('--primary', hex);
+            document.documentElement.style.setProperty('--primary-rgb', r + ',' + g + ',' + b);
+            document.documentElement.style.setProperty('--primary-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
+        }
+        function syncTheme() {
+            try {
+                var raw = localStorage.getItem('tg_pro_data');
+                if (!raw) return;
+                var data = JSON.parse(raw);
+                if (data && data.settings && data.settings.theme) applyTheme(data.settings.theme);
+            } catch (e) { /* ignore */ }
+        }
+        syncTheme();
+        window.addEventListener('storage', function(e) { if (e.key === 'tg_pro_data') syncTheme(); });
+        document.addEventListener('visibilitychange', function() { if (!document.hidden) syncTheme(); });
+    })();
+    </script>
+
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
 <script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
 </html>
