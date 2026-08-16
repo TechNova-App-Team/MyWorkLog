@@ -42,117 +42,105 @@
 /WEATHER_DEMO.txt /404.html 302
 
 # ========================================================
-# 1. 301 REDIRECTS (Alte HTML-Pfade & Trailing Slashes auf Clean URLs)
+# 1. CLEAN URLs - Canonical ist die Form MIT Schraegstrich.
+#
+#    Jede Seite traegt <link rel="canonical" href=".../<name>/"> und steht so
+#    auch in der sitemap.xml. Hier stand bis 2026-08-16 die Gegenrichtung
+#    (/berichtsheft/ -> /berichtsheft 301), also ein 301 WEG vom Canonical.
+#
+#    Gegriffen hat das nie: eine Rewrite-Regel im Cloudflare-Dashboard faengt
+#    die Slash-Form vorher ab und liefert sie mit 200 aus. Die Form OHNE
+#    Schraegstrich fiel dagegen hier durch - und weil ein 200-Rewrite auf ein
+#    Verzeichnis (/pages/<name>/index.html) von Cloudflare zu einem sichtbaren
+#    308 auf eben diesen Pfad normalisiert wird, stand danach der interne
+#    /pages/-Pfad in der Adresszeile. Gemessen am 2026-08-16: /berichtsheft,
+#    /archflow, /Fachinformatiker, /en/about - alle 308 auf /pages/...
+#
+#    Deshalb hier kein 200-Rewrite mehr, sondern ein 301 auf den Canonical.
+#    Ein Rewrite kann diese Datei bei Cloudflare Pages ohnehin nur auf eine
+#    echte Datei, nicht auf ein Verzeichnis (siehe archflow-data.js unten).
 # ========================================================
 
-/pages/berichtsheft.html /berichtsheft 301
-/berichtsheft/ /berichtsheft 301
-/pages/ausbilder.html /ausbilder 301
-/ausbilder/ /ausbilder 301
-/pages/aufgaben.html /aufgaben 301
-/aufgaben/ /aufgaben 301
-/pages/fahrtkosten.html /fahrtkosten 301
-/fahrtkosten/ /fahrtkosten 301
-/pages/vertrags-manager.html /vertrags-manager 301
-/vertrags-manager/ /vertrags-manager 301
-/pages/rechte-checker.html /rechte-checker 301
-/rechte-checker/ /rechte-checker 301
-/pages/skill-tree.html /skill-tree 301
-/skill-tree/ /skill-tree 301
-/pages/repo-report.html /repo-report 301
-/repo-report/ /repo-report 301
-/pages/analytics.html /analytics 301
-/analytics/ /analytics 301
-/pages/Impressum.html /Impressum 301
-/Impressum/ /Impressum 301
-/pages/DSGVO.html /DSGVO 301
-/DSGVO/ /DSGVO 301
-/pages/about.html /about 301
-/about/ /about 301
+/about                           /about/                          301
+/analytics                       /analytics/                      301
+/archflow                        /archflow/                       301
+/aufgaben                        /aufgaben/                       301
+/ausbilder                       /ausbilder/                      301
+/berichtsheft                    /berichtsheft/                   301
+/DSGVO                           /DSGVO/                          301
+/Fachinformatiker                /Fachinformatiker/               301
+/fahrtkosten                     /fahrtkosten/                    301
+/Impressum                       /Impressum/                      301
+/it-landing                      /it-landing/                     301
+/maintenance                     /maintenance/                    301
+/offline                         /offline/                        301
+/rechte-checker                  /rechte-checker/                 301
+/repo-report                     /repo-report/                    301
+/schatten-berichtsheft           /schatten-berichtsheft/          301
+/skill-tree                      /skill-tree/                     301
+/umfrage-ergebnis                /umfrage-ergebnis/               301
+/vertrags-manager                /vertrags-manager/               301
+/Weihnachten                     /Weihnachten/                    301
+
+# Verschachtelte Clean URLs
+/archflow/graph                  /archflow/graph/                 301
+/email/send                      /email/send/                     301
+/it-stories/blaue-led            /it-stories/blaue-led/           301
+/it-stories/ssd-speicher         /it-stories/ssd-speicher/        301
+/it-stories/arbeitsspeicher      /it-stories/arbeitsspeicher/     301
 
 # ========================================================
-# 2. 200 REWRITES (Clean URLs intern auf echte HTML-Dateien mappen)
+# 2. ALTLASTEN - die Seiten lagen frueher als pages/<name>.html vor.
+#    Externe Links und der Google-Index zeigen teils noch dorthin.
 # ========================================================
 
-/berichtsheft /pages/berichtsheft.html 200
-/ausbilder /pages/ausbilder.html 200
-/aufgaben /pages/aufgaben.html 200
-/fahrtkosten /pages/fahrtkosten.html 200
-/vertrags-manager /pages/vertrags-manager.html 200
-/rechte-checker /pages/rechte-checker.html 200
-/skill-tree /pages/skill-tree.html 200
-/repo-report /pages/repo-report.html 200
-/analytics /pages/analytics.html 200
-# Internes Werkzeug (noindex, nicht in der Sitemap). Beide Formen als 200-
-# Rewrite statt 301, damit kein Redirect zwischen Slash-Varianten entsteht.
-/umfrage-ergebnis /pages/umfrage-ergebnis/index.html 200
-/umfrage-ergebnis/ /pages/umfrage-ergebnis/index.html 200
-/email/send /pages/email/send/index.html 200
-/Impressum /pages/Impressum.html 200
-/DSGVO /pages/DSGVO.html 200
-/about /pages/about.html 200
-/archflow /pages/archflow/index.html 200
-/archflow/archflow-data.js /pages/archflow/archflow-data.js 200
-# Code-Graph (aus graphify, erzeugt von tools/publish-graph.js). Beide Formen
-# als 200-Rewrite, Canonical ist die Slash-Form.
-/archflow/graph/ /pages/archflow/graph/index.html 200
-/archflow/graph /pages/archflow/graph/index.html 200
-# Deep Dives (/it-stories/<slug>/). Canonical ist die Slash-Form, deshalb beide
-# Varianten als 200-Rewrite — ein 301 zwischen ihnen wuerde gegen den Canonical
-# arbeiten. Neue Geschichte = zwei Zeilen hier + zwei in Abschnitt 3.
-/it-stories/blaue-led/ /pages/it-stories/blaue-led/index.html 200
-/it-stories/blaue-led /pages/it-stories/blaue-led/index.html 200
-/it-stories/ssd-speicher/ /pages/it-stories/ssd-speicher/index.html 200
-/it-stories/ssd-speicher /pages/it-stories/ssd-speicher/index.html 200
-/it-stories/arbeitsspeicher/ /pages/it-stories/arbeitsspeicher/index.html 200
-/it-stories/arbeitsspeicher /pages/it-stories/arbeitsspeicher/index.html 200
+/pages/about.html                /about/                          301
+/pages/analytics.html            /analytics/                      301
+/pages/aufgaben.html             /aufgaben/                       301
+/pages/ausbilder.html            /ausbilder/                      301
+/pages/berichtsheft.html         /berichtsheft/                   301
+/pages/DSGVO.html                /DSGVO/                          301
+/pages/fahrtkosten.html          /fahrtkosten/                    301
+/pages/Impressum.html            /Impressum/                      301
+/pages/rechte-checker.html       /rechte-checker/                 301
+/pages/repo-report.html          /repo-report/                    301
+/pages/skill-tree.html           /skill-tree/                     301
+/pages/vertrags-manager.html     /vertrags-manager/               301
 
 # ========================================================
-# 3. ENGLISH /en/ (statische i18n-Pipeline → pages/en/<name>/index.html)
-#    Trailing-Slash 301 auf Clean-URL, dann interner 200-Rewrite auf die Datei.
-#    Homepage /en/ läuft über die Cloudflare-Dashboard-Rewrite-Regel.
+# 3. ENGLISCH /en/ (statische i18n-Pipeline -> pages/en/<name>/index.html)
+#    Gleiche Regel wie oben: Canonical ist die Slash-Form, hier steht nur der
+#    301 von der schraeglosen Variante darauf. Die Homepage /en/ laeuft ueber
+#    die Cloudflare-Dashboard-Regel.
 # ========================================================
 
-/en/about/ /en/about 301
-/en/about /pages/en/about/index.html 200
-/en/archflow/ /en/archflow 301
-/en/archflow /pages/en/archflow/index.html 200
-/en/it-landing/ /en/it-landing 301
-/en/it-landing /pages/en/it-landing/index.html 200
-/en/it-stories/blaue-led/ /pages/en/it-stories/blaue-led/index.html 200
-/en/it-stories/blaue-led /pages/en/it-stories/blaue-led/index.html 200
-/en/it-stories/ssd-speicher/ /pages/en/it-stories/ssd-speicher/index.html 200
-/en/it-stories/ssd-speicher /pages/en/it-stories/ssd-speicher/index.html 200
-/en/it-stories/arbeitsspeicher/ /pages/en/it-stories/arbeitsspeicher/index.html 200
-/en/it-stories/arbeitsspeicher /pages/en/it-stories/arbeitsspeicher/index.html 200
-/en/Fachinformatiker/ /en/Fachinformatiker 301
-/en/Fachinformatiker /pages/en/Fachinformatiker/index.html 200
-/en/fahrtkosten/ /en/fahrtkosten 301
-/en/fahrtkosten /pages/en/fahrtkosten/index.html 200
-/en/aufgaben/ /en/aufgaben 301
-/en/aufgaben /pages/en/aufgaben/index.html 200
-/en/ausbilder/ /en/ausbilder 301
-/en/ausbilder /pages/en/ausbilder/index.html 200
-/en/analytics/ /en/analytics 301
-/en/analytics /pages/en/analytics/index.html 200
-/en/skill-tree/ /en/skill-tree 301
-/en/skill-tree /pages/en/skill-tree/index.html 200
-/en/vertrags-manager/ /en/vertrags-manager 301
-/en/vertrags-manager /pages/en/vertrags-manager/index.html 200
-/en/Impressum/ /en/Impressum 301
-/en/Impressum /pages/en/Impressum/index.html 200
-/en/rechte-checker/ /en/rechte-checker 301
-/en/rechte-checker /pages/en/rechte-checker/index.html 200
-/en/DSGVO/ /en/DSGVO 301
-/en/DSGVO /pages/en/DSGVO/index.html 200
-/en/berichtsheft/ /en/berichtsheft 301
-/en/berichtsheft /pages/en/berichtsheft/index.html 200
-# Schatten-Berichtsheft: bewusst KEIN Slash-auf-Nicht-Slash-301. Die Slash-Form
-# ist der Canonical und muss 200 liefern — live macht das die Cloudflare-
-# Dashboard-Regel, diese Zeilen sind nur der Fallback, falls sie wegfaellt.
-/en/schatten-berichtsheft/ /pages/en/schatten-berichtsheft/index.html 200
-/en/schatten-berichtsheft /pages/en/schatten-berichtsheft/index.html 200
-/en/offline/ /en/offline 301
-/en/offline /pages/en/offline/index.html 200
-/en/maintenance/ /en/maintenance 301
-/en/maintenance /pages/en/maintenance/index.html 200
+/en/about                        /en/about/                       301
+/en/analytics                    /en/analytics/                   301
+/en/archflow                     /en/archflow/                    301
+/en/aufgaben                     /en/aufgaben/                    301
+/en/ausbilder                    /en/ausbilder/                   301
+/en/berichtsheft                 /en/berichtsheft/                301
+/en/DSGVO                        /en/DSGVO/                       301
+/en/Fachinformatiker             /en/Fachinformatiker/            301
+/en/fahrtkosten                  /en/fahrtkosten/                 301
+/en/Impressum                    /en/Impressum/                   301
+/en/it-landing                   /en/it-landing/                  301
+/en/maintenance                  /en/maintenance/                 301
+/en/offline                      /en/offline/                     301
+/en/rechte-checker               /en/rechte-checker/              301
+/en/schatten-berichtsheft        /en/schatten-berichtsheft/       301
+/en/skill-tree                   /en/skill-tree/                  301
+/en/vertrags-manager             /en/vertrags-manager/            301
+
+# Deep Dives
+/en/it-stories/blaue-led         /en/it-stories/blaue-led/        301
+/en/it-stories/ssd-speicher      /en/it-stories/ssd-speicher/     301
+/en/it-stories/arbeitsspeicher   /en/it-stories/arbeitsspeicher/  301
+
+# ========================================================
+# 4. ECHTE DATEIEN hinter einer Clean URL.
+#    Ein 200-Rewrite funktioniert hier, weil das Ziel eine Datei ist und kein
+#    Verzeichnis - deshalb bleibt die URL stehen statt zu einem 308 zu werden.
+# ========================================================
+
+/archflow/archflow-data.js       /pages/archflow/archflow-data.js 200
