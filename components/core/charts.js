@@ -1187,7 +1187,13 @@
         // Einheit: Stunden (Default) oder distinkte Tage — steuert nur die ANZEIGE-Formatierung
         const useDays = (typeof data !== 'undefined' && data.settings && data.settings.distributionUnit === 'days');
         const isEN = document.documentElement.lang === 'en';
-        const fmtVal = (v) => useDays ? (Math.round(v) + (isEN ? ' d' : ' T.')) : (v.toFixed(1) + 'h');
+        // Zahlformat aus der Seitensprache, nicht aus toFixed(): auf der
+        // deutschen Seite standen "2077.7" und "65.4%" mit englischem
+        // Dezimalpunkt zwischen lauter Komma-Werten.
+        const loc  = (typeof mwlLocale === 'function') ? mwlLocale() : (isEN ? 'en-GB' : 'de-DE');
+        const nf1  = new Intl.NumberFormat(loc, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        const nf0  = new Intl.NumberFormat(loc, { maximumFractionDigits: 0 });
+        const fmtVal = (v) => useDays ? (nf0.format(v) + (isEN ? ' d' : ' T.')) : (nf1.format(v) + ' h');
 
         const categories = [
             { id: 'donutWork', val: work, type: 'work' },
@@ -1215,7 +1221,7 @@
         const sumAll = work + vac + sick + school + holiday;
         const centerEl = document.getElementById('donutCenterValue');
         const centerLabel = document.getElementById('donutCenterLabel');
-        if (centerEl) centerEl.textContent = useDays ? String(Math.round(sumAll)) : sumAll.toFixed(1);
+        if (centerEl) centerEl.textContent = useDays ? nf0.format(sumAll) : nf1.format(sumAll);
         if (centerLabel) centerLabel.textContent = isEN ? 'Total' : 'Gesamt';
 
         // Animate stacked bar segments
@@ -1258,7 +1264,7 @@
             const valEl = document.getElementById(`val-${cat.type}`);
             const pctEl = document.getElementById(`pct-${cat.type}`);
             if (valEl) valEl.textContent = fmtVal(cat.val);
-            if (pctEl) pctEl.textContent = ((cat.val / total) * 100).toFixed(1) + '%';
+            if (pctEl) pctEl.textContent = nf1.format((cat.val / total) * 100) + ' %';
         });
     }
 

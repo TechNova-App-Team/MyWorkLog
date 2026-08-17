@@ -19,8 +19,20 @@
             --work-color: var(--primary); 
             --expected-color: #64748b; 
             --border: rgba(255, 255, 255, 0.06);
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+            /* 🔴 Beide Familien wurden jahrelang referenziert, aber NIE geladen.
+               Der <link> im Head holt 'Plus Jakarta Sans' und 'DM Serif Display' —
+               'Inter' und 'JetBrains Mono' standen nur hier im CSS. Ergebnis:
+               die gesamte App lief in der Windows-Systemschrift, und jede Zahl
+               ("+22,34 h", Timer, Tabellen) wurde in Consolas gesetzt. Genau
+               daher kam der Taschenrechner-Eindruck.
+               Beim Ändern hier IMMER prüfen, ob die Familie im <link> in
+               index.template.html wirklich geladen wird. */
+            --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', monospace;
+            /* Displayzahlen (KPI-Werte) laufen bewusst in der Textschrift mit
+               Tabellenziffern statt in Mono: bei 2,5 rem reisst eine Mono-Ziffer
+               das Dezimalkomma optisch aus der Zahl heraus. */
+            --font-num: 'Plus Jakarta Sans', -apple-system, sans-serif;
             --radius: 20px;
             --note-good: #10b981; /* Für Noten 1.0 - 2.0 */
             --note-mid: #f59e0b; /* Für Noten 2.1 - 3.0 — nicht #fbbf24: Kontrast 1.63 gegen Light-Theme-Weiss */

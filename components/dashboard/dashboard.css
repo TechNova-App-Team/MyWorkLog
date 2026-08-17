@@ -6,13 +6,22 @@
 
         /* ─── EXTENDED DESIGN TOKENS ─────────────────────────────────── */
         :root {
-            --bg-surface:          rgba(12, 12, 16, 0.80);
-            --bg-surface-hover:    rgba(20, 20, 26, 0.92);
-            --bg-elevated:         rgba(22, 22, 30, 0.82);
-            --bg-inset:            rgba(0, 0, 0, 0.28);
-            --border-subtle:       rgba(255, 255, 255, 0.04);
-            --border-default:      rgba(255, 255, 255, 0.07);
-            --border-interactive:  rgba(255, 255, 255, 0.11);
+            /* Die Karten lagen bei rgba(12,12,16,.80) auf #030305 — knapp
+               drei Prozent Helligkeitsunterschied. Auf einem Notebook-Display
+               sah man nicht, wo eine Karte anfaengt; alles wirkte flach
+               aufgemalt statt geschichtet. Jetzt heben sie sich sichtbar ab
+               und tragen eine Innenkante (siehe --edge-top weiter unten). */
+            --bg-surface:          rgba(23, 24, 29, 0.92);
+            --bg-surface-hover:    rgba(31, 33, 39, 0.96);
+            --bg-elevated:         rgba(28, 30, 36, 0.94);
+            --bg-inset:            rgba(0, 0, 0, 0.24);
+            --border-subtle:       rgba(255, 255, 255, 0.05);
+            --border-default:      rgba(255, 255, 255, 0.09);
+            --border-interactive:  rgba(255, 255, 255, 0.16);
+            /* Lichtkante oben: der eine Kunstgriff, der eine Flaeche wie ein
+               physisches Objekt aussehen laesst statt wie ein Rechteck.
+               Licht kommt von oben, also sitzt die Kante oben. */
+            --edge-top:            inset 0 1px 0 rgba(255, 255, 255, 0.07);
             --border-focus:        rgba(var(--primary-rgb), 0.45);
             --shadow-sm:           0 1px 3px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--border-subtle);
             --shadow-md:           0 4px 16px rgba(0, 0, 0, 0.30), 0 0 0 1px var(--border-subtle);
@@ -57,16 +66,15 @@
             --eyebrow-size:        0.6875rem;
             --eyebrow-tracking:    0.09em;
         }
-        [data-theme="light"] {
-            --role-neutral:        rgba(7, 16, 35, 0.18);
-            --role-track:          rgba(7, 16, 35, 0.07);
-        }
+        /* (Die Light-Tokens stehen gesammelt im Block weiter unten —
+           hier KEINEN zweiten [data-theme="light"] aufmachen.) */
 
-        /* Jede Zahl im Dashboard bekommt Tabellenziffern. Ohne das
-           wandert die Breite jeder Ziffer beim Animieren und die Werte
-           zappeln waehrend des Hochzaehlens. */
+        /* Zahlen bekommen Tabellenziffern — sonst wandert die Breite jeder
+           Ziffer beim Hochzaehlen und die Werte zappeln.
+           Kleinwerte laufen in Mono (dort ist die Gitteroptik richtig),
+           Displayzahlen in der Textschrift: bei 2,5 rem reisst eine
+           Mono-Ziffer das Dezimalkomma sichtbar aus der Zahl. */
         .dash-num,
-        .kpi-v2__value,
         .kpi-v2__foot-num,
         .devbar__scale-num {
             font-family: var(--font-mono);
@@ -74,17 +82,30 @@
             font-feature-settings: "tnum" 1;
             letter-spacing: -0.02em;
         }
+        .kpi-v2__value {
+            font-family: var(--font-num);
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum" 1;
+        }
         [data-theme="light"] {
-            --bg-surface:          rgba(255, 255, 255, 0.92);
-            --bg-surface-hover:    rgba(255, 255, 255, 0.98);
+            --role-neutral:        rgba(7, 16, 35, 0.20);
+            --role-track:          rgba(7, 16, 35, 0.07);
+            --bg-surface:          #ffffff;
+            --bg-surface-hover:    #ffffff;
             --bg-elevated:         rgba(248, 250, 252, 0.96);
-            --bg-inset:            rgba(0, 0, 0, 0.04);
-            --border-subtle:       rgba(0, 0, 0, 0.05);
-            --border-default:      rgba(0, 0, 0, 0.08);
-            --border-interactive:  rgba(0, 0, 0, 0.13);
-            --shadow-sm:           0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--border-subtle);
-            --shadow-md:           0 4px 16px rgba(0, 0, 0, 0.07), 0 0 0 1px var(--border-subtle);
-            --shadow-lg:           0 10px 32px rgba(0, 0, 0, 0.09), 0 0 0 1px var(--border-subtle);
+            --bg-inset:            rgba(7, 16, 35, 0.04);
+            --border-subtle:       rgba(7, 16, 35, 0.06);
+            --border-default:      rgba(7, 16, 35, 0.09);
+            --border-interactive:  rgba(7, 16, 35, 0.16);
+            /* Im Hellen kommt die Tiefe aus dem Schatten — eine weisse
+               Lichtkante auf Weiss waere unsichtbar. */
+            --edge-top:            none;
+            /* Getoente Schatten statt reinem Schwarz: ein schwarzer Schatten
+               auf hellem Grund wirkt schmutzig, ein zum Untergrund gefaerbter
+               wirkt wie Tiefe. */
+            --shadow-sm:           0 1px 2px rgba(7, 16, 35, 0.05);
+            --shadow-md:           0 2px 4px rgba(7, 16, 35, 0.04), 0 8px 20px rgba(7, 16, 35, 0.06);
+            --shadow-lg:           0 12px 36px rgba(7, 16, 35, 0.10);
             --shadow-glow-primary: 0 0 24px rgba(var(--primary-rgb), 0.06);
         }
 
@@ -149,13 +170,17 @@
         .activities-card {
             background: var(--bg-surface);
             border: 1px solid var(--border-default);
-            border-radius: 16px;
+            border-radius: 18px;
             position: relative;
             overflow: hidden;
+            /* Lichtkante + getoenter Schatten: erst beides zusammen liest
+               sich als erhobene Flaeche. Ein blosser 1-px-Rahmen ergibt ein
+               aufgemaltes Rechteck. */
+            box-shadow: var(--edge-top), var(--shadow-sm);
             transition:
-                background var(--dur-fast) var(--ease-out),
-                border-color var(--dur-fast) var(--ease-out),
-                transform var(--dur-normal) var(--ease-out),
+                background var(--dur-normal) var(--ease-out),
+                border-color var(--dur-normal) var(--ease-out),
+                transform var(--dur-normal) var(--ease-spring),
                 box-shadow var(--dur-normal) var(--ease-out);
         }
         .kpi-card:hover,
@@ -163,7 +188,22 @@
         .activities-card:hover {
             background: var(--bg-surface-hover);
             border-color: var(--border-interactive);
-            box-shadow: var(--shadow-md);
+            /* 1 px Anheben — gerade genug, dass die Karte auf den Zeiger
+               reagiert, ohne dass die Zahlen darunter verrutschen. */
+            transform: translateY(-1px);
+            box-shadow: var(--edge-top), var(--shadow-md);
+        }
+        @media (hover: none) {
+            /* Am Handy gibt es kein :hover — der angehobene Zustand darf
+               dort nicht der einzige Weg zu irgendetwas sein. */
+            .kpi-card:hover,
+            .chart-card:hover,
+            .activities-card:hover { transform: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .kpi-card:hover,
+            .chart-card:hover,
+            .activities-card:hover { transform: none; }
         }
 
 
@@ -250,10 +290,11 @@
             align-self: end;
             display: flex;
             align-items: baseline;
-            gap: 0.15em;
-            /* Mono-Ziffern brauchen bei Displaygroesse mehr Zug, sonst
-               reisst besonders das Dezimalkomma die Zahl auseinander. */
-            letter-spacing: -0.045em;
+            gap: 0.18em;
+            /* Displayzahlen in der Textschrift vertragen nur wenig Zug —
+               die harte -0.045em stammte aus der Mono-Zeit und presste
+               die Ziffern ineinander. */
+            letter-spacing: -0.025em;
         }
         /* Der Messwert bleibt bewusst in Textfarbe. Das Vorzeichen steht
            schon als Glyphe davor UND als Seite, auf der der Balken aus
@@ -284,6 +325,10 @@
             font-size: var(--num-sm);
             color: var(--text-main);
             font-weight: 600;
+            /* Mono neben Fliesstext braucht Luft, sonst klebt "0,0h" an
+               "Ø" und "pro Tag" — die Mono-Ziffern haben kein optisches
+               Seitenweiss wie die Textschrift. */
+            margin: 0 0.15em;
         }
 
         /* Gleitzeit-Karte: gleiche Anatomie, groesserer Auftritt */
