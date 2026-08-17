@@ -472,3 +472,15 @@
             }
         }
     });
+    // Dieselbe Zeile per Tastatur: die Karten tragen role="button" und
+    // tabindex="0", also muss auch Enter/Leertaste sie oeffnen — sonst ist
+    // der Fokusrahmen eine Zusage, die niemand einloesen kann.
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const item = e.target.closest && e.target.closest('.activity-item');
+        if (!item) return;
+        const entryId = item.getAttribute('data-entry-id');
+        if (!entryId) return;
+        e.preventDefault();
+        window.goToHistoryAndHighlight(entryId);
+    });

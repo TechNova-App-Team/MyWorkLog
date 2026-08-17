@@ -45,8 +45,23 @@
             --goal-saldo: #06b6d4;
             --goal-weeks: #10b981;
             --goal-perfect: #f59e0b;
+
+            /* ─── INTERAKTIONS-ZUSTAENDE ──────────────────────────────
+               🔴 Ein weisser Schleier auf dunklem Grund hellt nicht auf,
+               er entsaettigt: rgba(255,255,255,0.10) ueber einer Karte
+               zieht Text, Rahmen und Akzent gemeinsam ins Milchige, und
+               weil derselbe Schleier auf jedem Element anders viel
+               Untergrund erwischt, wirkt der Hover nirgends gleich.
+               Hover faerbt deshalb im Akzent-Ton — dieselbe Farbe, die
+               das Element ohnehin traegt, nur dichter. Die eigentliche
+               Rueckmeldung kommt vom Rahmen; die Fuellung ist nur da,
+               damit die Flaeche mitgeht.
+               NIE rgba(255,255,255,…) fuer einen Hover-Hintergrund. */
+            --hover-fill:        rgba(var(--primary-rgb), 0.07);
+            --hover-fill-strong: rgba(var(--primary-rgb), 0.12);
+            --hover-border:      rgba(var(--primary-rgb), 0.28);
         }
-        
+
 
         /* Light theme overrides (applied via data-theme="light" on <html>) */
         [data-theme="light"] {
@@ -59,6 +74,11 @@
             --primary-dim: rgba(var(--primary-rgb), 0.08);
             --heatmap-low: #f1f5f9;
             --heatmap-mid: #cbd5e1;
+            /* Auf Weiss traegt derselbe Alphawert weniger — dort darf die
+               Hover-Fuellung dichter sein, sonst passiert sichtbar nichts. */
+            --hover-fill:        rgba(var(--primary-rgb), 0.08);
+            --hover-fill-strong: rgba(var(--primary-rgb), 0.14);
+            --hover-border:      rgba(var(--primary-rgb), 0.34);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1080,12 +1100,21 @@
            Karteninnere braucht deshalb nur noch eine Spalte. */
         .input-wrapper { display: block; }
         
+        /* 🔴 `color: #fff` war fest verdrahtet. Im hellen Theme stand damit
+           weisser Text in einem fast weissen Feld — Kontrast 1,05:1. Das
+           eingetragene Datum war unlesbar, und weil ein leeres Feld genauso
+           aussieht wie ein ausgefuelltes, merkte es niemand. Farbe kommt
+           aus --text-main, das beide Themes kennt. */
         .glass-input, .glass-select {
-            background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-            padding: 16px; border-radius: 12px; color: #fff; font-size: 0.95rem; width: 100%; outline: none; transition: 0.2s;
+            background: var(--bg-inset, rgba(0,0,0,0.3)); border: 1px solid var(--border);
+            padding: 16px; border-radius: 12px; color: var(--text-main); font-size: 0.95rem; width: 100%; outline: none;
+            transition: border-color 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                        background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1);
             font-family: var(--font-main);
         }
-        .glass-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); background: rgba(0,0,0,0.4); }
+        .glass-input:hover:not(:focus), .glass-select:hover:not(:focus) { border-color: var(--hover-border); }
+        .glass-input:focus, .glass-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-dim); }
         @keyframes inputShake {
             0%,100% { transform: translateX(0); }
             15%      { transform: translateX(-6px); }
@@ -1123,13 +1152,41 @@
         .timer-display { font-family: var(--font-mono); font-size: 2rem; font-weight: 700; color: #fff; text-shadow: 0 0 20px rgba(0,0,0,0.5); }
         .timer-active .timer-display { color: var(--primary); text-shadow: 0 0 20px var(--primary); }
         
-        .btn { border: none; padding: 14px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9rem; letter-spacing: 0.5px; }
+        .btn {
+            border: none; padding: 14px 24px; border-radius: 12px; font-weight: 600;
+            cursor: pointer; font-size: 0.9rem; letter-spacing: 0.5px;
+            /* Benannte Eigenschaften statt `transition: 0.2s` (= all): sonst
+               animiert der Browser auch Groesse und Position mit, sobald sie
+               sich beim Hover aendern — das ist das Zittern in Listen. */
+            transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                        border-color     0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                        color            0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                        box-shadow       0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform        0.12s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        /* Druckpunkt: der Knopf gibt unter dem Finger nach. Kostet nichts
+           und ist der Unterschied zwischen "reagiert" und "haengt". */
+        .btn:active { transform: scale(0.985); }
         .btn-primary { background: var(--primary); color: #fff; width: 100%; box-shadow: 0 5px 20px -5px var(--primary); }
-        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        
+        /* 🔴 Vorher `filter: brightness(1.1)`. Ein Filter rechnet den ganzen
+           Knopf samt Text neu durch und schiebt jeden Kanal Richtung Weiss —
+           der Akzent verliert Saettigung und der Knopf sieht ausgewaschen
+           aus. color-mix hellt nur die Flaeche auf und laesst die Schrift
+           in Ruhe. Das Anheben faellt weg: ein Knopf, der beim Hover
+           hochspringt, verschiebt den Klickpunkt unter dem Zeiger. */
+        .btn-primary:hover {
+            background: color-mix(in srgb, var(--primary) 88%, #ffffff);
+            box-shadow: 0 8px 24px -8px var(--primary);
+        }
+
         .btn-icon-row { display: flex; gap: 8px; width: 100%; }
-        .btn-ghost { background: rgba(255,255,255,0.05); color: #fff; flex: 1; padding: 10px; }
-        .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            flex: 1; padding: 10px;
+        }
+        .btn-ghost:hover { background: var(--hover-fill); border-color: var(--hover-border); }
         .btn.active { background: var(--primary); color: #fff; }
 
         /* Moderne Icon-Buttons für Bearbeiten und Löschen */
@@ -1138,20 +1195,22 @@
             height: 32px;
             border-radius: 8px;
             border: none;
-            background: rgba(255,255,255,0.05);
+            background: var(--hover-fill);
             color: var(--text-main);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                        color            0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform        0.12s cubic-bezier(0.16, 1, 0.3, 1);
             font-size: 1rem;
         }
         .btn-icon:hover {
-            background: rgba(255,255,255,0.15);
-            transform: scale(1.05);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            background: var(--hover-fill-strong);
+            color: var(--primary);
         }
+        .btn-icon:active { transform: scale(0.94); }
         .btn-icon.danger:hover {
             background: var(--danger);
             color: #fff;
@@ -1190,10 +1249,15 @@
         /* --- LISTS --- */
         .entry-row {
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255,255,255,0.02); padding: 16px 20px; border-radius: 14px;
-            margin-bottom: 8px; border-left: 3px solid transparent; transition: 0.2s;
+            background: rgba(var(--primary-rgb), 0.02); padding: 16px 20px; border-radius: 14px;
+            margin-bottom: 8px; border-left: 3px solid transparent;
+            transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+                        border-color     0.18s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .entry-row:hover { background: rgba(255,255,255,0.04); padding-left: 24px; }
+        /* Vorher wanderte hier `padding-left` von 20 auf 24 px. Padding ist
+           Layout: der Browser rechnet die Zeile neu um, der Text springt,
+           und bei mehreren Zeilen untereinander zappelt die ganze Liste. */
+        .entry-row:hover { background: var(--hover-fill); }
         /* Rahmenfarbe aus --type-rgb (setzt history.js pro Zeile) — greift damit
            auch für eigene Eintragstypen, die vorher randlos blieben. */
         .entry-row[class*="type-"] { border-color: rgb(var(--type-rgb, var(--primary-rgb))); }

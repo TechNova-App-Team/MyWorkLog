@@ -122,11 +122,9 @@
     // ═══ AKTIVITÄTS-KARTE (Dashboard „Letzte Aktivitäten") ═══
     // Eine Quelle für Erst-Render UND Tab-Wechsel — vorher stand dieselbe Karte
     // zweimal im File und ist beim Ändern zwangsläufig auseinandergelaufen.
-    const ACT_ICON_CLOCK = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>';
     // Tooltip-Marker im Saldo-Trend (Streak positiv/negativ)
     const TT_ICON_OK   = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;color:#10b981"><path d="M20 6 9 17l-5-5"/></svg>';
     const TT_ICON_WARN = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;color:#f59e0b"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
-    const ACT_ICON_TAG   = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z"/><circle cx="7.5" cy="7.5" r="1"/></svg>';
 
     // Zählt der Typ in die Arbeitszeit-Bilanz? Standards ja, Custom-Types nur per Flag.
     function activityCountsAsWork(id) {
@@ -149,39 +147,78 @@
         return d.toLocaleDateString(mwlLocale(), { month: 'short', day: 'numeric' });
     }
 
+    // 🔴 `entry.info` ist KEIN Freitextfeld, sondern ein Pipe-String:
+    // handleEntry() startet mit info = <Notiz des Nutzers> und stellt dann
+    // je nach Zweig einen System-Zusatz VORNE davor ("07:30 - 17:00 (30m
+    // Pause)", "Manuell (7.50h)", "Berufsschule - Mittwoch (…)", "Urlaubstag").
+    // Nachtraege ("↪ Zusatzzeit") haengen hinten dran.
+    // Die Karte hat diesen ganzen String frueher ZWEIMAL gezeigt — einmal als
+    // Ueberschrift, einmal als Zitat darunter. Hier bleibt nur der Teil, den
+    // der Nutzer selbst getippt hat: alles nach dem ersten Segment.
+    function activityUserNote(e) {
+        if (e.isPeriod) return String(e.info || '').trim();
+        const parts = String(e.info || '').split('|').map(s => s.trim()).filter(Boolean);
+        while (parts.length && parts[parts.length - 1].startsWith('↪')) parts.pop();
+        return parts.length > 1 ? parts.slice(1).join(' · ') : '';
+    }
+
+    // Stunden im Zahlformat der Seite (8,75 auf /de/, 8.75 auf /en/) und mit
+    // der Rundung aus den Einstellungen — nicht mit einem festen toFixed(2).
+    function activityNum(h, digits) {
+        const d = typeof digits === 'number' ? digits : 2;
+        const v = (typeof roundHours === 'function') ? roundHours(h || 0, d) : (h || 0);
+        return v.toLocaleString(mwlLocale(), { minimumFractionDigits: d, maximumFractionDigits: d });
+    }
+
     function createActivityCard(e) {
-        const icon  = (typeof getTypeIconTile === 'function') ? getTypeIconTile(e.type, 20, 'activity-icon') : '';
+        const icon  = (typeof getTypeIconTile === 'function') ? getTypeIconTile(e.type, 17, 'activity-icon') : '';
         const label = (typeof getTypeLabel === 'function') ? getTypeLabel(e.type) : e.type;
-        const notes = e.isPeriod ? (e.label || '') : (e.info || '');
+        const rgb   = (typeof getTypeRgb === 'function') ? getTypeRgb(e.type) : '148,163,184';
+        const note  = activityUserNote(e);
+
         const dayIndex = new Date(e.date).getDay();
         const expected = e.expected !== undefined ? e.expected : (data.settings?.hours?.[dayIndex] || 8);
         const diffHours = e.diff !== undefined ? e.diff : ((e.worked || 0) - expected);
-        const diffSign = diffHours >= 0 ? '+' : '';
-        const diffColor = diffHours > 0 ? '#10b981' : (diffHours < 0 ? '#ef4444' : '#6b7280');
-        const diffHtml = activityCountsAsWork(e.type)
-            ? `<div style="font-weight:600; color:${diffColor}; font-size:0.9rem; min-width:50px; text-align:right;">${diffSign}${diffHours.toFixed(1)}h</div>`
-            : `<div style="font-weight:500; color:#64748b; font-size:0.9rem; min-width:50px; text-align:right;" title="Zählt nicht in die Arbeitszeit-Bilanz">—</div>`;
+        const counts = activityCountsAsWork(e.type);
+        const sign = !counts ? 'none' : (diffHours > 0.004 ? 'pos' : (diffHours < -0.004 ? 'neg' : 'zero'));
+        // Vorzeichen traegt die Farbe (--role-pos/--role-neg via data-sign),
+        // nicht ein Hex im style-Attribut.
+        const diffHtml = counts
+            ? `<span class="activity-diff" data-sign="${sign}">${diffHours >= 0 ? '+' : '−'}${activityNum(Math.abs(diffHours), 2)}<small> h</small></span>`
+            : `<span class="activity-diff" data-sign="none" title="Zählt nicht in die Arbeitszeit-Bilanz">—</span>`;
+
+        // Zeitraum aus den strukturierten Feldern, nicht aus dem info-String
+        // geparst. Fehlt er (Urlaub, Krank, Korrektur), tritt die relative
+        // Angabe an seine Stelle — beide sind sprachneutral bzw. haben eine
+        // Regel in i18n-runtime.js.
+        const span = (e.start && e.end) ? `${e.start} – ${e.end}` : activityRelativeTime(e.date);
+        const metaBits = [`<span class="activity-time">${esc(span)}</span>`];
+        if (e.project) metaBits.push(`<span class="activity-project">${esc(e.project)}</span>`);
 
         return `
-            <div class="activity-item type-${e.type}" data-entry-id="${e.id}" style="cursor: pointer;">
-                <div class="activity-card-header">
-                    ${icon}
-                    <div class="activity-header-info">
-                        <span class="activity-type-label">${esc(label)}</span>
-                        <span class="activity-time">${activityRelativeTime(e.date)}</span>
-                    </div>
-                    ${diffHtml}
-                </div>
-                <div class="activity-content">
-                    <div class="activity-main">${e.isPeriod ? esc(e.label || 'Periode') : esc(e.info || 'Arbeitszeit')}</div>
-                    <div class="activity-details">
-                        <span class="activity-hours">${ACT_ICON_CLOCK} ${e.worked.toFixed(2)}h</span>
-                        ${e.project ? `<span class="activity-project">${ACT_ICON_TAG} ${esc(e.project)}</span>` : ''}
-                        ${notes && !e.isPeriod ? `<div class="activity-note">"${esc(notes)}"</div>` : ''}
-                    </div>
-                </div>
+            <div class="activity-item type-${e.type}" data-entry-id="${e.id}"
+                 style="--type-rgb:${rgb}; cursor:pointer;" role="button" tabindex="0">
+                ${icon}
+                <span class="activity-type-label">${esc(label)}</span>
+                <span class="activity-hours">${activityNum(e.worked, 2)}<small>h</small></span>
+                <span class="activity-meta">${metaBits.join('<span class="activity-meta__sep" aria-hidden="true">·</span>')}</span>
+                ${diffHtml}
+                ${note ? `<div class="activity-note">${esc(note)}</div>` : ''}
             </div>
         `;
+    }
+
+    // Summe des angezeigten Tages in die Kopfzeile. Nur die Zahl wird
+    // gesetzt — die Einheit steht als eigener <small>-Knoten im HTML und
+    // wuerde von einem textContent auf dem Elternknoten verschluckt.
+    function renderActivityDaySum(entries) {
+        const box = document.getElementById('activitiesDaySum');
+        const val = document.getElementById('activitiesDaySumValue');
+        if (!box || !val) return;
+        if (!entries || !entries.length) { box.style.display = 'none'; return; }
+        const sum = entries.reduce((acc, e) => acc + (Number(e.worked) || 0), 0);
+        val.textContent = activityNum(sum, 2);
+        box.style.display = 'flex';
     }
 
     function renderLists() {
@@ -203,6 +240,7 @@
             trackEl.style.display = 'none';
             if (emptyEl) emptyEl.style.display = 'flex';
             dayTabsEl.innerHTML = '';
+            renderActivityDaySum(null);
             return;
         }
 
@@ -224,17 +262,19 @@
         if (emptyEl) emptyEl.style.display = 'none';
         trackEl.style.display = 'flex';
 
-        // Render day tabs
+        // Render day tabs — als <button>, damit sie per Tab erreichbar sind
+        // und Enter/Leertaste ohne eigenen Handler funktionieren.
         const dayTabsHtml = uniqueDates.map((date, idx) => {
             const dateObj = new Date(date + 'T00:00:00');
             const dayName = dateObj.toLocaleDateString(mwlLocale(), {weekday:'short'}).toUpperCase();
             const dayNum = dateObj.getDate();
-            const isActive = idx === 0 ? 'active' : '';
+            const isActive = idx === 0;
             return `
-                <div class="day-tab ${isActive}" onclick="switchActivityDay('${date}')">
-                    <div class="day-tab-label">${dayName}</div>
-                    <div class="day-tab-date">${dayNum}</div>
-                </div>
+                <button type="button" class="day-tab${isActive ? ' active' : ''}" data-date="${date}"
+                        aria-pressed="${isActive}" onclick="switchActivityDay('${date}')">
+                    <span class="day-tab-label">${dayName}</span>
+                    <span class="day-tab-date">${dayNum}</span>
+                </button>
             `;
         }).join('');
         dayTabsEl.innerHTML = dayTabsHtml;
@@ -242,6 +282,7 @@
         // Render activities for first date
         const firstDateActivities = entriesByDate[uniqueDates[0]] || [];
         trackEl.innerHTML = firstDateActivities.map(createActivityCard).join('');
+        renderActivityDaySum(firstDateActivities);
 
         setTimeout(() => { initActivityScrollListeners(); }, 50);
     }
@@ -253,21 +294,19 @@
 
         if (!trackEl || !dayTabsEl) return;
 
-        // Update active tab
-        document.querySelectorAll('.day-tab').forEach(tab => {
-            tab.classList.remove('active');
-            if (tab.innerText.toLowerCase().includes(new Date(date + 'T00:00:00').getDate())) {
-                // Find the correct tab
-                const dateObj = new Date(date + 'T00:00:00');
-                const dayNum = dateObj.getDate();
-                if (tab.querySelector('.day-tab-date').innerText == dayNum) {
-                    tab.classList.add('active');
-                }
-            }
+        // Der aktive Tab wird ueber data-date gefunden. Vorher wurde die
+        // Tages-ZAHL aus dem Text verglichen — das haelt nur, solange sich
+        // im Fenster keine Zahl wiederholt, und bricht still, sobald der
+        // Zeitraum groesser wird als ein Monat.
+        dayTabsEl.querySelectorAll('.day-tab').forEach(tab => {
+            const on = tab.getAttribute('data-date') === date;
+            tab.classList.toggle('active', on);
+            tab.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
 
         const activities = window.activityDayTabs.entriesByDate[date] || [];
         trackEl.innerHTML = activities.map(createActivityCard).join('');
+        renderActivityDaySum(activities);
     }
 
     // ═══ SWIPE & WHEEL SUPPORT ═══

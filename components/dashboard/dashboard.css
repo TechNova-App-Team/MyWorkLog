@@ -165,9 +165,19 @@
 
 
         /* ─── SHARED CARD FOUNDATION ─────────────────────────────────── */
+        /* 🔴 Die Liste ist die Wahrheit darueber, was auf dem Dashboard eine
+           Karte IST. Sie stand vorher nur fuer drei Klassen — das Erfassen-
+           Formular (.input-wrapper) und die Aktivitaetenliste
+           (.activities-card-new) hingen daneben am alten .card aus core.css
+           und waren dadurch aus einem anderen Material als ihre Nachbarn:
+           andere Rundung, anderer Rahmen, kein Lichtrand, dafuer ein
+           backdrop-filter, den sonst keine Karte hat.
+           Neue Karte auf dem Dashboard? Hier eintragen, nicht daneben. */
         .kpi-card,
         .chart-card,
-        .activities-card {
+        .activities-card,
+        .activities-card-new,
+        .input-wrapper {
             background: var(--bg-surface);
             border: 1px solid var(--border-default);
             border-radius: 18px;
@@ -177,33 +187,35 @@
                sich als erhobene Flaeche. Ein blosser 1-px-Rahmen ergibt ein
                aufgemaltes Rechteck. */
             box-shadow: var(--edge-top), var(--shadow-sm);
+            /* 🔴 Kein backdrop-filter. Die Karten sind mit 0.92 Alpha fast
+               deckend — man saehe vom Blur nichts, die GPU rechnet ihn aber
+               bei jeder Invalidierung im Viewport neu. */
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            /* .card aus core.css bringt margin-bottom: 1rem mit. Im
+               Dashboard-Grid regelt `gap` den Abstand — beides zusammen
+               ergibt unter jeder Karte eine zweite, groessere Luecke. */
+            margin-bottom: 0;
             transition:
-                background var(--dur-normal) var(--ease-out),
                 border-color var(--dur-normal) var(--ease-out),
-                transform var(--dur-normal) var(--ease-spring),
                 box-shadow var(--dur-normal) var(--ease-out);
         }
+        /* 🔴 Der Hover WECHSELTE die Flaechenfarbe (--bg-surface-hover) und
+           hob die Karte an. Beides war zu viel fuer etwas, das gar nicht
+           anklickbar ist: die ganze Karte blitzte grau auf, waehrend man
+           nur zum Knopf darin unterwegs war — genau der milchige Effekt.
+           Eine Karte ist ein Behaelter. Sie darf zeigen, dass der Zeiger
+           bei ihr ist, aber sie darf sich dabei nicht veraendern: nur der
+           Rahmen wird deutlicher, der Schatten eine Stufe tiefer.
+           Alles, was wirklich klickbar ist — Knoepfe, Tabs, Listenzeilen —
+           faerbt sich im Akzent (--hover-fill). Fuellung = klickbar. */
         .kpi-card:hover,
         .chart-card:hover,
-        .activities-card:hover {
-            background: var(--bg-surface-hover);
+        .activities-card:hover,
+        .activities-card-new:hover,
+        .input-wrapper:hover {
             border-color: var(--border-interactive);
-            /* 1 px Anheben — gerade genug, dass die Karte auf den Zeiger
-               reagiert, ohne dass die Zahlen darunter verrutschen. */
-            transform: translateY(-1px);
             box-shadow: var(--edge-top), var(--shadow-md);
-        }
-        @media (hover: none) {
-            /* Am Handy gibt es kein :hover — der angehobene Zustand darf
-               dort nicht der einzige Weg zu irgendetwas sein. */
-            .kpi-card:hover,
-            .chart-card:hover,
-            .activities-card:hover { transform: none; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .kpi-card:hover,
-            .chart-card:hover,
-            .activities-card:hover { transform: none; }
         }
 
 
@@ -885,7 +897,7 @@
                 transform var(--dur-fast) var(--ease-out);
         }
         .quick-actions button:hover:not([disabled]) {
-            background: rgba(var(--primary-rgb), 0.07);
+            background: var(--hover-fill);
             color: var(--text-main);
         }
         .quick-actions button:active:not([disabled]) {
@@ -1035,8 +1047,7 @@
         }
         .chart-config-btn:hover {
             color: var(--primary) !important;
-            transform: scale(1.08);
-            text-shadow: 0 0 12px rgba(var(--primary-rgb), 0.35);
+            background: var(--hover-fill) !important;
         }
         .chart-config-btn:active {
             transform: scale(0.96);
@@ -1102,13 +1113,11 @@
             align-items: center;
             justify-content: center;
         }
+        /* Kein Anheben: die fuenf Knoepfe sitzen in einer gemeinsamen Spur,
+           und einer, der aus der Reihe springt, laesst die Leiste wackeln. */
         .trend-period-btn:hover {
             color: var(--text-main);
-            background: rgba(var(--primary-rgb), 0.06);
-            transform: translateY(-1px);
-        }
-        [data-theme="light"] .trend-period-btn:hover {
-            background: rgba(var(--primary-rgb), 0.08);
+            background: var(--hover-fill);
         }
         .trend-period-btn.active {
             color: var(--primary);
@@ -1392,16 +1401,13 @@
             gap: 7px;
             padding: 4px 5px;
             border-radius: 6px;
-            transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
+            transition: background-color var(--dur-fast) var(--ease-out),
+                        color var(--dur-fast) var(--ease-out);
             cursor: default;
         }
         .legend-item:hover {
-            background: rgba(255, 255, 255, 0.04);
+            background: var(--hover-fill);
             color: var(--text-main);
-            transform: translateX(2px);
-        }
-        [data-theme="light"] .legend-item:hover {
-            background: rgba(0, 0, 0, 0.04);
         }
         .dot {
             width: 8px;
@@ -1449,7 +1455,7 @@
         .setup-hint-title {
             font-size: 0.82rem;
             font-weight: 700;
-            color: #d8b4fe;
+            color: var(--text-main);
             margin-bottom: 4px;
             letter-spacing: -0.01em;
         }
@@ -1460,7 +1466,7 @@
             margin-bottom: 10px;
         }
         .setup-hint-text strong {
-            color: #c4b5fd;
+            color: var(--primary);
             font-weight: 600;
         }
         .setup-hint-btn {
@@ -1468,20 +1474,23 @@
             align-items: center;
             gap: 5px;
             padding: 5px 13px;
-            background: rgba(168,85,247,0.22);
-            border: 1px solid rgba(168,85,247,0.42);
+            /* Hier standen vier feste #a855f7-Werte — die alte Akzentfarbe.
+               Wer sein Theme umstellt, bekam einen violetten Knopf in einer
+               blauen App. Farbe kommt aus --primary, nie aus einem Hex. */
+            background: var(--hover-fill-strong);
+            border: 1px solid var(--hover-border);
             border-radius: 8px;
-            color: #d8b4fe;
+            color: var(--primary);
             font-size: 0.75rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.18s, border-color 0.18s, transform 0.15s;
+            transition: background-color 0.18s var(--ease-out),
+                        border-color 0.18s var(--ease-out);
             letter-spacing: 0.01em;
         }
         .setup-hint-btn:hover {
-            background: rgba(168,85,247,0.38);
-            border-color: rgba(168,85,247,0.58);
-            transform: translateX(2px);
+            background: rgba(var(--primary-rgb), 0.2);
+            border-color: rgba(var(--primary-rgb), 0.45);
         }
         .setup-hint-close {
             position: absolute;
@@ -1499,11 +1508,17 @@
             font-weight: 400;
         }
         .setup-hint-close:hover {
-            color: #e2e8f0;
-            background: rgba(255,255,255,0.07);
+            color: var(--text-main);
+            background: var(--hover-fill);
         }
 
         /* ─── ENTRY FORM ─────────────────────────────────────────────── */
+        /* Die Karte lief bis hierher auf `padding: 1rem` aus .card, waehrend
+           die Aktivitaeten daneben 24 px hatten und die KPI-Karten 20 px —
+           drei Innenabstaende fuer dieselbe Sorte Flaeche. */
+        .input-wrapper {
+            padding: 1.375rem 1.5rem 1.5rem;
+        }
         .entry-form {
             display: flex;
             flex-direction: column;
@@ -1518,42 +1533,50 @@
             background: var(--bg-inset);
         }
         .entry-form .glass-input::placeholder { color: var(--text-muted); opacity: 0.65; }
-        /* ── Header mit Icon-Badge ── */
+        /* ── Header mit Icon-Badge ──
+           Titel und Unterzeile laufen bewusst auf derselben Skala wie
+           .chart-title / .chart-sub. Vorher hatte jede grosse Karte ihre
+           eigene Groesse (0,88 / 1,0 / 1,15 rem) — nebeneinander liest sich
+           das als drei Hierarchie-Ebenen, obwohl alle drei dasselbe sind:
+           die Ueberschrift einer Karte. */
         .entry-form__header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding-bottom: 2px;
+            gap: 11px;
+            padding-bottom: 14px;
+            margin-bottom: 2px;
+            border-bottom: 1px solid var(--border-subtle);
         }
         .entry-form__badge {
             flex-shrink: 0;
-            width: 38px;
-            height: 38px;
+            width: 32px;
+            height: 32px;
             display: grid;
             place-items: center;
-            border-radius: 11px;
+            border-radius: 9px;
             color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.12);
-            border: 1px solid rgba(var(--primary-rgb), 0.22);
+            background: rgba(var(--primary-rgb), 0.10);
+            border: 1px solid rgba(var(--primary-rgb), 0.18);
         }
+        .entry-form__badge svg { width: 16px; height: 16px; }
         .entry-form__heading {
             display: flex;
             flex-direction: column;
-            gap: 1px;
+            gap: 2px;
             flex: 1;
             min-width: 0;
         }
         .entry-form__title {
-            font-size: 1rem;
-            font-weight: 650;
+            font-size: 0.88rem;
+            font-weight: 600;
             margin: 0;
             letter-spacing: -0.02em;
             color: var(--text-main);
-            line-height: 1.15;
+            line-height: 1.2;
         }
         .entry-form__subtitle {
-            font-size: 0.74rem;
-            font-weight: 500;
+            font-size: 0.7rem;
+            font-weight: 400;
             margin: 0;
             color: var(--text-muted);
             line-height: 1.2;
@@ -1663,7 +1686,7 @@
             gap: 10px;
             width: 100%;
             padding: 12px 14px;
-            background: rgba(255,255,255,0.02);
+            background: var(--bg-inset);
             border: 1px solid var(--border-default);
             border-radius: 10px;
             color: var(--text-main);
@@ -1671,12 +1694,12 @@
             font-weight: 600;
             font-family: var(--font-main);
             cursor: pointer;
-            transition: background var(--dur-fast) var(--ease-out),
+            transition: background-color var(--dur-fast) var(--ease-out),
                         border-color var(--dur-fast) var(--ease-out);
         }
         .entry-form__more:hover {
-            background: rgba(var(--primary-rgb), 0.06);
-            border-color: rgba(var(--primary-rgb), 0.25);
+            background: var(--hover-fill);
+            border-color: var(--hover-border);
         }
         .entry-form__more[aria-expanded="true"] {
             background: rgba(var(--primary-rgb), 0.06);
@@ -1755,8 +1778,8 @@
         }
         .entry-form__now-btn:hover {
             color: var(--primary) !important;
-            background: rgba(var(--primary-rgb), 0.08) !important;
-            border-color: rgba(var(--primary-rgb), 0.28) !important;
+            background: var(--hover-fill) !important;
+            border-color: var(--hover-border) !important;
         }
         @keyframes time-set-glow {
             0%   { box-shadow: 0 0 0 0 rgba(74,222,128,0), border-color: var(--border); }
@@ -1800,9 +1823,8 @@
             z-index: 0;
         }
         .entry-form__voice-btn:hover {
-            background: rgba(var(--primary-rgb), 0.12);
-            border-color: rgba(var(--primary-rgb), 0.35);
-            box-shadow: 0 0 14px rgba(var(--primary-rgb), 0.15);
+            background: var(--hover-fill-strong);
+            border-color: var(--hover-border);
         }
 
         /* sonar rings – hidden by default */
@@ -1986,7 +2008,10 @@
             border: 1px solid var(--border-default);
             border-radius: 12px;
             padding: 0.75rem 2.25rem 0.75rem 1rem;
-            margin-bottom: 1.25rem;
+            /* Der Abstand kommt aus dem `gap` von .entry-form. Ein eigenes
+               margin oben drauf ergab 2,2 rem Luft zwischen Uhr und Formular
+               und liess die Leiste wie ein fremdes Element wirken. */
+            margin-bottom: 0;
             transition: border-color var(--dur-normal) var(--ease-out);
         }
         .timer-box.timer-active { border-color: rgba(var(--primary-rgb), 0.35); }
@@ -2085,10 +2110,10 @@
         .timer-btn svg { width: 11px; height: 11px; flex-shrink: 0; }
         .timer-btn:hover {
             color: var(--text-main);
-            background: var(--bg-surface-hover);
-            border-color: var(--border-interactive);
+            background: var(--hover-fill);
+            border-color: var(--hover-border);
         }
-        .timer-btn:active { transform: translateY(1px); }
+        .timer-btn:active { transform: scale(0.97); }
         .timer-btn:focus-visible {
             outline: 2px solid var(--border-focus);
             outline-offset: 2px;
@@ -2120,64 +2145,111 @@
         }
 
 
-        /* ─── ACTIVITIES: MODERNE TIMELINE NEU ────────────────────────── */
+        /* ═══════════════════════════════════════════════════════════════
+           LETZTE AKTIVITAETEN
+           🔴 Diese Karte lief auf var(--card-bg) und var(--border-color).
+           Beide Tokens gibt es in der App NICHT — sie stammen aus den
+           Standalone-Seiten, die einen eigenen :root-Block haben. Ein
+           var() ohne Fallback ist "invalid at computed-value time": die
+           Eigenschaft faellt auf ihren Initialwert zurueck, also
+           background: transparent und border-style: none. Uebrig blieb
+           ein backdrop-filter: blur(8px) ohne alles — eine randlose
+           Milchglasscheibe mitten zwischen lauter festen Karten. Genau
+           daher kam der milchige Eindruck.
+           Die Karte holt ihre Flaeche jetzt aus der SHARED CARD
+           FOUNDATION ganz oben; hier steht nur noch, was sie INNEN
+           anders macht.
+           ═══════════════════════════════════════════════════════════════ */
         .activities-card-new {
             display: flex;
             flex-direction: column;
-            gap: 20px;
-            padding: 24px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            transition: all var(--dur-normal) var(--ease-out);
-        }
-        .activities-card-new:hover {
-            border-color: rgba(var(--primary-rgb), 0.2);
-            background: var(--card-bg);
+            gap: 16px;
+            padding: 1.375rem 1.5rem 1.5rem;
         }
 
         .activities-header-new {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 12px;
             padding-bottom: 14px;
-            border-bottom: 1px solid rgba(var(--primary-rgb), 0.06);
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .activities-header-content {
             flex: 1;
+            min-width: 0;
         }
 
         .activities-title-container {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 11px;
         }
 
+        /* Die Kopfzeile hatte drei eigene Einblend-Animationen (Icon 0,1 s,
+           Titel 0,15 s, Meta 0,2 s). Eine Ueberschrift, die bei jedem
+           Ansichtswechsel neu hereinfaehrt, ist Dekoration — die Karte als
+           Ganzes blendet ohnehin schon ueber .dashboard-item ein. */
         .activities-icon {
-            width: 24px;
-            height: 24px;
+            width: 32px;
+            height: 32px;
+            padding: 7px;
+            border-radius: 9px;
             color: var(--primary);
+            background: rgba(var(--primary-rgb), 0.10);
+            border: 1px solid rgba(var(--primary-rgb), 0.18);
             flex-shrink: 0;
-            animation: slideInDown 0.6s ease-out 0.1s both;
         }
 
         .activities-title-new {
-            font-size: 1.15rem;
+            font-size: 0.88rem;
             font-weight: 600;
             color: var(--text-main);
-            letter-spacing: -0.005em;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
             margin: 0;
-            animation: slideInDown 0.6s ease-out 0.15s both;
         }
 
         .activities-meta {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
-            margin: 3px 0 0 0;
-            animation: slideInDown 0.6s ease-out 0.2s both;
+            margin: 2px 0 0 0;
+            line-height: 1.2;
+        }
+
+        /* Tagessumme: die Zahl, wegen der man diese Liste ueberhaupt
+           aufmacht. Rein numerisch — damit sie auf /en/ nicht uebersetzt
+           werden muss (die statische Pipeline sieht nur, was im HTML
+           steht, und hier schreibt JS). */
+        .activities-sum {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 3px;
+            flex-shrink: 0;
+        }
+        .activities-sum__value {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 1.0625rem;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+        .activities-sum__value small {
+            font-size: 0.7em;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-left: 3px;
+        }
+        .activities-sum__label {
+            font-size: var(--eyebrow-size);
+            text-transform: uppercase;
+            letter-spacing: var(--eyebrow-tracking);
+            font-weight: 600;
+            color: var(--text-muted);
         }
 
         /* Day Tabs Navigation */
@@ -2222,43 +2294,53 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-width: 65px;
-            padding: 10px 14px;
-            background: rgba(var(--primary-rgb), 0.03);
-            border: 1px solid rgba(var(--primary-rgb), 0.08);
-            border-radius: 10px;
+            min-width: 54px;
+            padding: 8px 12px;
+            background: var(--bg-inset);
+            border: 1px solid var(--border-default);
+            border-radius: 9px;
             cursor: pointer;
-            transition: all 0.25s var(--ease-out);
+            /* `all` animierte auch Rahmen-Breite und Schatten mit; benannte
+               Eigenschaften reichen und flackern nicht. */
+            transition: background-color var(--dur-fast) var(--ease-out),
+                        border-color var(--dur-fast) var(--ease-out),
+                        color var(--dur-fast) var(--ease-out);
             font-size: 0.72rem;
             color: var(--text-muted);
             white-space: nowrap;
             flex-shrink: 0;
         }
+        /* Kein Anheben, kein Schatten: das sind sieben bis zehn Kacheln in
+           einer Reihe — springt eine heraus, wirkt die ganze Leiste unruhig. */
         .day-tab:hover {
-            background: rgba(var(--primary-rgb), 0.12);
-            border-color: rgba(var(--primary-rgb), 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 2px 6px rgba(var(--primary-rgb), 0.1);
+            background: var(--hover-fill);
+            border-color: var(--hover-border);
+            color: var(--text-main);
         }
+        .day-tab:active { transform: scale(0.97); }
         .day-tab.active {
             background: var(--primary);
             border-color: var(--primary);
-            color: white;
-            box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.25);
+            color: #fff;
             font-weight: 600;
+        }
+        .day-tab:focus-visible {
+            outline: 2px solid var(--border-focus);
+            outline-offset: 2px;
         }
         .day-tab-label {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 600;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             text-transform: uppercase;
-            letter-spacing: 0.015em;
-            opacity: 0.8;
+            letter-spacing: 0.08em;
+            opacity: 0.75;
         }
         .day-tab-date {
-            font-size: 0.75rem;
-            font-weight: 700;
+            font-size: 0.8rem;
+            font-weight: 600;
             font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
         }
 
         /* Activities Timeline */
@@ -2292,155 +2374,144 @@
             background: rgba(var(--primary-rgb), 0.25);
         }
 
-        /* Activity Item New */
+        /* ═══════════════════════════════════════════════════════════════
+           EINE ZEILE = EIN EINTRAG
+           Vorher war jeder Eintrag ein Block aus vier gestapelten Bloecken:
+           Typ-Pille, Ueberschrift, Stunden-Chip, Projekt-Chip, Notiz-Kasten
+           — knapp 200 px hoch, sodass zwei Eintraege die Karte fuellten.
+           Dabei standen Ueberschrift und Notiz-Kasten SELBST auf demselben
+           String (beide lasen e.info), man las also alles doppelt.
+           Jetzt: Kachel · Typ · Messwert in einer Zeile, darunter Zeitraum
+           und Projekt, die Notiz nur wenn es eine gibt.
+           Spalte 1 = Identitaet, Spalte 2 = Kontext, Spalte 3 = Zahlen —
+           dieselbe Leserichtung wie in den KPI-Karten.
+           ═══════════════════════════════════════════════════════════════ */
         .activity-item {
             position: relative;
-            padding: 12px 14px;
-            background: rgba(var(--primary-rgb), 0.02);
-            border: 1px solid rgba(var(--primary-rgb), 0.08);
-            border-radius: 10px;
-            transition: all 0.2s var(--ease-out);
-            animation: slideInUp 0.35s ease-out;
-        }
-        @keyframes slideInUp {
-            from {
-                opacity: 0;
-                transform: translateY(6px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        @keyframes slideInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-8px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .activity-item:hover {
-            border-color: rgba(var(--primary-rgb), 0.2);
-            background: rgba(var(--primary-rgb), 0.08);
-            transform: translateX(3px);
-            box-shadow: 0 3px 8px rgba(var(--primary-rgb), 0.1);
-        }
-
-        .activity-item.type-school {
-            border-color: rgba(59, 130, 246, 0.15);
-            background: rgba(59, 130, 246, 0.05);
-        }
-        .activity-item.type-vacation {
-            border-color: rgba(16, 185, 129, 0.15);
-            background: rgba(16, 185, 129, 0.05);
-        }
-        .activity-item.type-sick {
-            border-color: rgba(239, 68, 68, 0.15);
-            background: rgba(239, 68, 68, 0.05);
-        }
-        .activity-item.type-gleittag {
-            border-color: rgba(245, 158, 11, 0.15);
-            background: rgba(245, 158, 11, 0.05);
-        }
-
-        .activity-card-header {
-            display: flex;
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
+            column-gap: 12px;
+            row-gap: 2px;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
+            padding: 11px 13px 11px 12px;
+            background: var(--bg-inset);
+            border: 1px solid var(--border-subtle);
+            border-left: 2px solid rgb(var(--type-rgb, var(--primary-rgb)));
+            border-radius: 10px;
+            transition: background-color var(--dur-fast) var(--ease-out),
+                        border-color var(--dur-fast) var(--ease-out);
         }
-        /* Kachel-Optik kommt aus .type-tile (core.css), hier nur die Groesse. */
+        /* Kein translateX(3px) mehr: eine Liste, in der die Zeile unter dem
+           Zeiger seitlich wegrutscht, laesst den Blick jedes Mal nachfassen
+           — und die Zahlen rechts stehen dann nicht mehr untereinander. */
+        /* Die Zeile ist das Hauptziel dieser Karte (Klick fuehrt in den
+           Verlauf) — sie darf deutlicher antworten als ein Behaelter. */
+        .activity-item:hover {
+            background: var(--hover-fill-strong);
+            border-color: var(--hover-border);
+            border-left-color: rgb(var(--type-rgb, var(--primary-rgb)));
+        }
+        .activity-item:focus-visible {
+            outline: 2px solid var(--border-focus);
+            outline-offset: 2px;
+        }
+
+        /* Kachel-Optik kommt aus .type-tile (core.css), hier nur Groesse
+           und Platz im Raster. */
         .activity-icon {
-            width: 40px;
-            height: 40px;
-        }
-        .activity-header-info {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            flex: 1;
+            grid-column: 1;
+            grid-row: 1 / span 2;
+            width: 32px;
+            height: 32px;
+            align-self: center;
         }
         .activity-type-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            background: rgba(var(--primary-rgb), 0.12);
-            border: 1px solid rgba(var(--primary-rgb), 0.2);
-            border-radius: 6px;
-            font-size: 0.65rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            width: fit-content;
+            grid-column: 2;
+            grid-row: 1;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+            line-height: 1.25;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        .activity-time {
+        /* Zeitraum + Projekt in einer ruhigen Zeile statt als zwei Chips.
+           Chips sind fuer Dinge, die man anklickt. */
+        .activity-meta {
+            grid-column: 2;
+            grid-row: 2;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
             font-size: 0.7rem;
             color: var(--text-muted);
+            line-height: 1.25;
+        }
+        .activity-time {
             font-family: var(--font-mono);
-            font-weight: 600;
-        }
-
-        .activity-content {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .activity-main {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--text-main);
-            line-height: 1.3;
-        }
-        .activity-details {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            font-size: 0.9rem;
-        }
-        .activity-hours {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-family: var(--font-mono);
-            font-weight: 700;
-            font-size: 0.95rem;
-            padding: 6px 12px;
-            background: rgba(var(--primary-rgb), 0.1);
-            border-radius: 8px;
-            border: 1px solid rgba(var(--primary-rgb), 0.2);
-            width: fit-content;
-            color: var(--primary);
-        }
-        .activity-project {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: rgba(var(--primary-rgb), 0.06);
-            border-radius: 8px;
-            border: 1px solid rgba(var(--primary-rgb), 0.12);
-            font-size: 0.85rem;
-            color: var(--text-main);
-            width: fit-content;
-            max-width: 100%;
-            white-space: normal;
-            overflow-wrap: break-word;
+            font-variant-numeric: tabular-nums;
             font-weight: 500;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
-        .activity-note {
-            font-size: 0.85rem;
+        .activity-meta__sep { opacity: 0.4; flex-shrink: 0; }
+        .activity-project {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        /* 🔴 Der Messwert traegt Textfarbe, nicht den Akzent — dieselbe
+           Farbregel wie in den KPI-Karten: Akzent = Identitaet und
+           Fortschritt, nie eine gemessene Zahl. Das Vorzeichen steht
+           darunter und traegt --role-pos/--role-neg. */
+        .activity-hours {
+            grid-column: 3;
+            grid-row: 1;
+            justify-self: end;
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+            line-height: 1.25;
+            white-space: nowrap;
+        }
+        .activity-hours small {
+            font-size: 0.72em;
+            font-weight: 500;
             color: var(--text-muted);
-            font-style: italic;
-            padding: 10px 12px;
-            background: rgba(var(--primary-rgb), 0.05);
-            border-left: 3px solid rgba(var(--primary-rgb), 0.2);
-            border-radius: 6px;
-            line-height: 1.4;
+            margin-left: 2px;
+        }
+        .activity-diff {
+            grid-column: 3;
+            grid-row: 2;
+            justify-self: end;
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 0.7rem;
+            font-weight: 600;
+            line-height: 1.25;
+            white-space: nowrap;
+            color: var(--text-muted);
+        }
+        .activity-diff[data-sign="pos"] { color: var(--role-pos); }
+        .activity-diff[data-sign="neg"] { color: var(--role-neg); }
+        .activity-note {
+            grid-column: 2 / -1;
+            grid-row: 3;
+            margin-top: 6px;
+            padding-left: 9px;
+            border-left: 2px solid var(--border-default);
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            overflow-wrap: break-word;
         }
 
         /* Empty State */
@@ -2478,116 +2549,82 @@
 
         /* ─── RESPONSIVE: TABLET ─────────────────────────────────────── */
         @media (max-width: 768px) {
-            .activities-card-new {
-                padding: 18px;
-                gap: 14px;
+            .activities-card-new,
+            .input-wrapper {
+                padding: 1.125rem 1.125rem 1.25rem;
             }
+            .activities-card-new { gap: 14px; }
             .activities-header-new {
-                padding-bottom: 10px;
-            }
-            .activities-icon {
-                width: 22px;
-                height: 22px;
-            }
-            .activities-title-new {
-                font-size: 1.05rem;
-                font-weight: 600;
-            }
-            .activities-meta {
-                font-size: 0.75rem;
+                padding-bottom: 12px;
             }
             .day-tab {
-                min-width: 60px;
-                padding: 9px 12px;
-                font-size: 0.68rem;
+                min-width: 50px;
+                padding: 8px 10px;
             }
             .activities-timeline {
                 max-height: 450px;
                 gap: 8px;
             }
-            .activity-item {
-                padding: 11px 12px;
-            }
         }
 
         /* ─── RESPONSIVE: MOBILE ─────────────────────────────────────── */
         @media (max-width: 480px) {
-            .activities-card-new {
-                padding: 14px;
-                gap: 12px;
+            .activities-card-new,
+            .input-wrapper {
+                padding: 1rem 0.875rem 1.125rem;
                 border-radius: 14px;
             }
-            .activities-header-new {
-                padding-bottom: 10px;
-            }
+            .activities-card-new { gap: 12px; }
             .activities-title-container {
-                gap: 10px;
+                gap: 9px;
             }
             .activities-icon {
-                width: 20px;
-                height: 20px;
-            }
-            .activities-title-new {
-                font-size: 0.98rem;
-                font-weight: 600;
-            }
-            .activities-meta {
-                font-size: 0.72rem;
-                margin-top: 2px;
+                width: 28px;
+                height: 28px;
+                padding: 6px;
             }
             .day-tabs-container {
                 margin: 0 -8px;
                 padding: 0 8px;
             }
             .day-tab {
-                min-width: 60px;
-                padding: 10px 12px;
-                font-size: 0.65rem;
+                min-width: 48px;
+                padding: 8px 9px;
             }
             .activities-timeline {
                 max-height: 450px;
                 gap: 8px;
                 padding-right: 4px;
             }
+            /* Am Handy wird aus der dritten Spalte eine dritte Zeile: sonst
+               quetschen sich Typ und Messwert auf ~150 px und der Typname
+               bricht mitten im Wort ab. */
             .activity-item {
-                padding: 10px 12px;
-                border-radius: 10px;
-                font-size: 0.68rem;
+                grid-template-columns: auto minmax(0, 1fr);
+                padding: 10px 11px 10px 10px;
+                column-gap: 10px;
+            }
+            .activity-icon { grid-row: 1 / span 2; }
+            .activity-hours {
+                grid-column: 2;
+                grid-row: 3;
+                justify-self: start;
+                margin-top: 5px;
+            }
+            .activity-diff {
+                grid-column: 2;
+                grid-row: 3;
+                justify-self: end;
+                align-self: end;
+                margin-top: 5px;
+            }
+            .activity-note {
+                grid-column: 2;
+                grid-row: 4;
             }
             .carousel-wrapper {
                 margin-bottom: 10px;
                 border-radius: 10px;
-            }
-            .activity-card-header {
-                gap: 10px;
-            }
-            .activity-type-label {
-                padding: 3px 8px;
-                font-size: 0.65rem;
-            }
-            .activity-time {
-                font-size: 0.7rem;
-            }
-            .activity-main {
-                font-size: 1.3rem;
-                font-weight: 700;
-            }
-            .activity-details {
-                gap: 10px;
-                font-size: 0.9rem;
-            }
-            .activity-hours {
-                font-size: 1rem;
-                padding: 5px 10px;
-                gap: 6px;
-            }
-            .activity-project {
-                font-size: 0.85rem;
-                padding: 5px 10px;
-            }
-            .activity-note {
-                font-size: 0.85rem;
-                padding: 8px 10px;
             }
             .carousel-dots {
                 gap: 5px;
@@ -2617,10 +2654,11 @@
             justify-content: center;
         }
         .mood-btn:hover {
-            background: rgba(var(--primary-rgb), 0.08);
-            border-color: rgba(var(--primary-rgb), 0.25);
-            transform: scale(1.10);
+            background: var(--hover-fill);
+            border-color: var(--hover-border);
+            transform: scale(1.06);
         }
+        .mood-btn:active { transform: scale(0.96); }
         .mood-display {
             font-size: 1.05em;
             margin-left: 6px;
@@ -2673,9 +2711,8 @@
             gap: 6px;
         }
         .weather-trigger:hover {
-            background: var(--bg-surface-hover);
-            border-color: rgba(var(--primary-rgb), 0.18);
-            transform: translateY(-1px);
+            background: var(--hover-fill);
+            border-color: var(--hover-border);
         }
         .weather-icon { font-size: 1.35rem; line-height: 1; }
         .weather-temp {
@@ -2720,12 +2757,8 @@
             background: rgba(0, 0, 0, 0.025);
         }
         .mini-cal-day:hover {
-            background: rgba(255, 255, 255, 0.05);
-            transform: scale(1.07);
+            background: var(--hover-fill);
             z-index: 2;
-        }
-        [data-theme="light"] .mini-cal-day:hover {
-            background: rgba(0, 0, 0, 0.05);
         }
         .mini-cal-day.has-entry { color: #fff; font-weight: 700; }
         [data-theme="light"] .mini-cal-day.has-entry { color: var(--text-main); }
