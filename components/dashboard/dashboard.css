@@ -664,94 +664,11 @@
             outline-offset: 2px;
         }
 
-
-        /* ─── RING CARDS (Woche / Monat) ─────────────────────────────── */
-        .kpi-card--ring {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px 16px;
-        }
-
-        .kpi-card__header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            margin-bottom: 14px;
-        }
-        .kpi-card__tag {
-            font-size: 0.6rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            color: var(--text-muted);
-            padding: 3px 7px;
-            background: var(--bg-inset);
-            border: 1px solid var(--border-default);
-            border-radius: 5px;
-        }
-        .kpi-card__tag--accent {
-            background: rgba(var(--primary-rgb), 0.08);
-            border-color: rgba(var(--primary-rgb), 0.18);
-            color: var(--primary);
-        }
-        .kpi-card__indicator {
-            display: none !important;
-        }
-        @keyframes indicatorPulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 5px rgba(16, 185, 129, 0.4); }
-            50%       { opacity: 0.55; box-shadow: 0 0 3px rgba(16, 185, 129, 0.2); }
-        }
-
-
-        /* ─── SVG RINGS ──────────────────────────────────────────────── */
-        .progress-ring {
-            position: relative;
-            width: 110px;
-            height: 110px;
-        }
-        .progress-ring circle {
-            fill: transparent;
-            stroke-width: 4;
-            stroke-linecap: round;
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
-        }
-        .ring-bg {
-            stroke: rgba(255, 255, 255, 0.03);
-        }
-        [data-theme="light"] .ring-bg {
-            stroke: rgba(0, 0, 0, 0.06);
-        }
-        .ring-val {
-            stroke: var(--primary);
-            transition: stroke-dashoffset 1.5s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .ring-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-        }
-        .ring-num {
-            font-size: 1.45rem;
-            font-weight: 700;
-            color: var(--text-main);
-            font-family: var(--font-mono);
-            letter-spacing: -0.03em;
-            line-height: 1;
-        }
-        .ring-lbl {
-            font-size: 0.58rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-top: 3px;
-            letter-spacing: 0.07em;
-            font-weight: 600;
-        }
+        /* Die Ring-Kacheln (Woche/Monat) und die Stats-Kachel (Ø + Urlaub)
+           sind entfallen — alle vier KPI-Karten teilen sich jetzt .kpi-v2.
+           Ihre Reste standen hier noch: .kpi-card--ring/--stats, .kpi-card__tag,
+           .progress-ring, .ring-* und .kpi-stats__* hatten null Treffer im
+           Markup. */
 
 
         /* ═══ GLEITZEIT CARD V2 — MODERN REDESIGN ═══ */
@@ -792,100 +709,6 @@
 
         /* Die Container-Queries auf gz-card sind entfallen: die alte
            Gleitzeit-Karte brauchte sie, weil ihre drei verschachtelten
-           Ebenen bei schmaler Karte uebereinanderliefen. Die neue Karte
-           hat eine Zeile pro Aussage und braucht keine. */
-
-
-        /* ─── STATS CARD (Avg + Vacation) ────────────────────────────── */
-        .kpi-card--stats {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 20px 18px !important;
-            cursor: default;
-        }
-        .kpi-stats__value {
-            font-size: 2rem;
-            font-weight: 800;
-            color: var(--text-main);
-            font-family: var(--font-mono);
-            letter-spacing: -0.03em;
-            line-height: 1;
-            margin: 4px 0;
-        }
-        .kpi-stats__label {
-            font-size: 0.62rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            font-weight: 600;
-        }
-        .kpi-stats__divider {
-            width: 100%;
-            height: 1px;
-            background: var(--border-subtle);
-            margin: 13px 0;
-        }
-        .kpi-stats__vacation { width: 100%; }
-        .kpi-stats__vacation-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 7px;
-        }
-        .kpi-stats__vacation-label {
-            font-size: 0.6rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            font-weight: 600;
-        }
-        .kpi-stats__vacation-count {
-            font-family: var(--font-mono);
-            font-weight: 700;
-            font-size: 0.72rem;
-            color: var(--text-main);
-        }
-        .kpi-stats__vacation-track {
-            height: 5px;
-            background: var(--bg-inset);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        .kpi-stats__vacation-fill {
-            width: 0%;
-            background: var(--success);
-            height: 100%;
-            border-radius: 3px;
-            transition: width 0.9s var(--ease-out), background 0.5s;
-        }
-        /* Einstieg in den Urlaubsplaner. Bewusst ein eigener Button statt
-           eines Hover-Reveals — auf Touch gibt es kein :hover. */
-        .kpi-stats__vacation-plan {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            margin-top: 0.6rem;
-            padding: 0.55rem 0.7rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: transparent;
-            color: var(--text-muted);
-            font-family: var(--font-main);
-            font-size: 0.72rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: color 0.2s ease, border-color 0.2s ease;
-        }
-        .kpi-stats__vacation-plan svg { width: 13px; height: 13px; }
-        .kpi-stats__vacation-plan:hover {
-            color: var(--text-main);
-            border-color: rgba(var(--primary-rgb), 0.35);
-        }
-        .kpi-stats__vacation-plan:focus-visible {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.25);
-        }
 
 
         /* ─── WEEK DOTS ──────────────────────────────────────────────── */
@@ -3098,15 +2921,16 @@
         /* ─── ACCESSIBILITY ──────────────────────────────────────────── */
         @media (prefers-reduced-motion: reduce) {
             .dashboard-item { animation: none !important; }
-            .kpi-card__indicator { animation: none !important; }
             .streak-active { animation: none !important; }
             .greeting-emoji { animation: none !important; }
             * {
                 transition-duration: 0.01ms !important;
                 animation-duration: 0.01ms !important;
             }
-            .ring-val { transition: stroke-dashoffset 0.01ms !important; }
-            .kpi-stats__vacation-fill { transition: width 0.01ms !important; }
+            /* Die Balken laufen sonst weiter, weil sie eigene Dauern
+               setzen — der Stern oben deckt nur die Standardwerte ab. */
+            .devbar__fill,
+            .ptrack__fill { transition-duration: 0.01ms !important; }
         }
 
         /* Light theme adjustments */
