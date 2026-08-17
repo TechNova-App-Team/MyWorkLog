@@ -17,8 +17,13 @@
     // ── Three.js Lazy-Loader ──
     var _threeLoading = false;
     var _threeCallbacks = [];
+    var _threeReady = false;
     function _loadThreeJS(callback) {
-        if (typeof THREE !== 'undefined') { callback(); return; }
+        if (_threeReady || (typeof THREE !== 'undefined' && typeof THREE.OrbitControls !== 'undefined')) {
+            _threeReady = true;
+            callback(true);
+            return;
+        }
         _threeCallbacks.push(callback);
         if (_threeLoading) return;
         _threeLoading = true;
@@ -32,22 +37,41 @@
             'https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/shaders/CopyShader.js',
             'https://cdn.jsdelivr.net/npm/three@0.145.0/examples/js/shaders/LuminosityHighPassShader.js'
         ];
-        var i = 0;
+        var i = typeof THREE !== 'undefined' ? 1 : 0;
         function next() {
             if (i >= urls.length) {
                 _threeLoading = false;
-                _threeCallbacks.forEach(function(cb) { cb(); });
-                _threeCallbacks = [];
+                var ready = typeof THREE !== 'undefined' && typeof THREE.OrbitControls !== 'undefined';
+                _threeReady = ready;
+                var callbacks = _threeCallbacks.splice(0);
+                callbacks.forEach(function(cb) { cb(ready); });
                 return;
             }
             var s = document.createElement('script');
             s.src = urls[i++];
-            s.onload = next;
-            s.onerror = function() { console.error('[Galaxy] Three.js Ladefehler: ' + urls[i-1]); };
+            var advanced = false;
+            var timeoutId = window.setTimeout(function() {
+                console.error('[Galaxy] Three.js Timeout: ' + s.src);
+                advance();
+            }, 15000);
+            function advance() {
+                if (advanced) return;
+                advanced = true;
+                window.clearTimeout(timeoutId);
+                next();
+            }
+            s.onload = advance;
+            s.onerror = function() {
+                console.error('[Galaxy] Three.js Ladefehler: ' + urls[i-1]);
+                advance();
+            };
             document.head.appendChild(s);
         }
         next();
     }
+
+    // Shared by 3D City as well: both visualizations use one loader queue.
+    window._loadThreeJS = _loadThreeJS;
 
     // ── Extended state ──
     apGxState.volumetricNebula = null;
@@ -258,8 +282,8 @@
         '  float hotspot2 = exp(-pow(mod(angle - uTime * 1.2 + 2.1, 6.283), 2.0) * 6.0 - pow(normR - 0.35, 2.0) * 20.0) * 0.3;',
         '',
         '  // Planck blackbody approximation colors',
-        '  // 60000K (inner): blue-white, 8000K (mid): white, 2500K (outer): deep red',
-        '  vec3 col60k = vec3(0.65, 0.72, 1.0);',   // Very hot blue-white
+        '  // 60000K (inner): warm-white, 8000K (mid): white, 2500K (outer): deep red',
+        '  vec3 col60k = vec3(1.0, 0.92, 0.78);',    // Very hot warm-white
         '  vec3 col12k = vec3(0.95, 0.92, 0.88);',   // White
         '  vec3 col5k  = vec3(1.0, 0.65, 0.25);',    // Yellow-orange
         '  vec3 col2k  = vec3(0.6, 0.08, 0.01);',    // Deep red/IR
@@ -282,7 +306,7 @@
         '',
         '  // ISCO plunge: matter brightens as it falls past ISCO',
         '  float plungeGlow = exp(-(radius - rISCO) * 3.0) * 0.4;',
-        '  col += vec3(0.5, 0.4, 0.8) * plungeGlow;',
+        '  col += vec3(0.55, 0.38, 0.12) * plungeGlow;',
         '',
         '  gl_FragColor = vec4(col * brightness, alpha);',
         '}'
@@ -343,8 +367,8 @@
         '  // Knots: periodic brightness (internal shocks)',
         '  float knot = pow(max(sin(t * 18.0 + aOffset * 3.14), 0.0), 4.0);',
         '  vAlpha = ((1.0 - t) * (1.0 - t) * 0.3 + knot * 0.2) * 0.5;',
-        '  // Synchrotron blue at base, fading to dim blue-purple',
-        '  vColor = mix(vec3(0.15, 0.12, 0.35), vec3(0.6, 0.7, 1.0), (1.0 - t) * (1.0 - t));',
+        '  // Warm neutral jet, fading toward the dark background',
+        '  vColor = mix(vec3(0.16, 0.12, 0.07), vec3(1.0, 0.86, 0.58), (1.0 - t) * (1.0 - t));',
         '  vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);',
         '  gl_PointSize = (1.5 + knot * 2.0) * uPixelRatio * (100.0 / -mvPos.z);',
         '  gl_Position = projectionMatrix * mvPos;',
@@ -501,8 +525,8 @@
         container.innerHTML = '';
 
         var colorMap = {
-            work: '#a855f7', school: '#06b6d4', vacation: '#3b82f6',
-            holiday: '#3b82f6', gleittag: '#3b82f6', sick: '#ef4444'
+            work: '#f8fafc', school: '#f59e0b', vacation: '#94a3b8',
+            holiday: '#94a3b8', gleittag: '#94a3b8', sick: '#ef4444'
         };
 
         // Build nodes
@@ -510,7 +534,7 @@
             var hours = e.worked || 0;
             var expected = e.expected || 8;
             var ratio = expected > 0 ? hours / expected : 0;
-            var nodeColor = colorMap[e.type] || '#a855f7';
+            var nodeColor = colorMap[e.type] || '#f8fafc';
             if (e.type === 'work') {
                 if (ratio >= 1.0) nodeColor = '#22c55e';
                 else if (ratio < 0.4) nodeColor = '#ef4444';
@@ -536,7 +560,7 @@
             var dayDiff = Math.abs(d2 - d1) / 86400000;
             // Connect consecutive days
             if (dayDiff <= 2) {
-                links.push({ source: prev.id, target: curr.id, color: 'rgba(168,85,247,0.15)', width: 0.5 });
+                links.push({ source: prev.id, target: curr.id, color: 'rgba(255,255,255,0.14)', width: 0.5 });
             }
             // Connect same-project entries
             if (prev.project && prev.project === curr.project && dayDiff < 14) {
@@ -570,7 +594,7 @@
             .nodeColor('color')
             .nodeOpacity(0.9)
             .nodeLabel(function(n) {
-                return '<div style="background:rgba(0,0,0,0.85);color:#fff;padding:8px 12px;border-radius:10px;font-size:13px;backdrop-filter:blur(10px);border:1px solid rgba(168,85,247,0.3)">' +
+                return '<div style="background:rgba(0,0,0,0.85);color:#fff;padding:8px 12px;border-radius:10px;font-size:13px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.18)">' +
                     '<strong>' + n.label + '</strong><br>' +
                     '<span style="color:' + n.color + '">' + n.hours.toFixed(1) + 'h</span> · ' +
                     (n.project ? '<span style="opacity:0.7">' + n.project + '</span>' : n.type) +
@@ -580,8 +604,8 @@
             .linkWidth('width')
             .linkDirectionalParticles(2)
             .linkDirectionalParticleWidth(0.8)
-            .linkDirectionalParticleColor(function() { return 'rgba(168,85,247,0.5)'; })
-            .backgroundColor(isLight ? '#f0f0f5' : '#010008')
+            .linkDirectionalParticleColor(function() { return 'rgba(255,255,255,0.3)'; })
+            .backgroundColor(isLight ? '#f8fafc' : '#030305')
             .showNavInfo(false)
             .warmupTicks(80)
             .cooldownTime(3000);
@@ -589,7 +613,7 @@
         // Customize Three.js scene
         var scene = fg.scene();
         if (scene) {
-            scene.fog = new THREE.FogExp2(isLight ? 0xf0f0f5 : 0x010008, 0.002);
+            scene.fog = new THREE.FogExp2(isLight ? 0xf8fafc : 0x030305, 0.002);
         }
 
         // Add bloom-like glow via renderer
@@ -639,7 +663,13 @@
         if (typeof THREE === 'undefined') {
             var c = document.getElementById('apGxContainer');
             if (c) c.innerHTML = '<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">⏳</div>Three.js wird geladen…</div>';
-            _loadThreeJS(function() { apRenderGalaxy(); });
+            _loadThreeJS(function(ready) {
+                if (ready) {
+                    apRenderGalaxy();
+                } else if (c) {
+                    c.innerHTML = '<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">!</div>Three.js konnte nicht geladen werden.</div>';
+                }
+            });
             return;
         }
         apGxCleanup();
@@ -667,7 +697,7 @@
 
         // ── Scene ──
         var scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(isLight ? 0xf0f0f5 : 0x000003, 0.0018);
+        scene.fog = new THREE.FogExp2(isLight ? 0xf8fafc : 0x030305, 0.0018);
 
         // ── Camera ──
         var camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 3000);
@@ -690,7 +720,7 @@
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 0.45;
         renderer.outputEncoding = THREE.sRGBEncoding;
-        renderer.setClearColor(isLight ? 0xf0f0f5 : 0x000003, 1);
+        renderer.setClearColor(isLight ? 0xf8fafc : 0x030305, 1);
         container.appendChild(renderer.domElement);
 
         // ── Controls ──
@@ -730,8 +760,8 @@
         bhGlowCanvas.width = 128; bhGlowCanvas.height = 128;
         var bhGCtx = bhGlowCanvas.getContext('2d');
         var bhGrad = bhGCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
-        bhGrad.addColorStop(0,   'rgba(168,85,247,0.12)');
-        bhGrad.addColorStop(0.4, 'rgba(120,60,200,0.05)');
+        bhGrad.addColorStop(0,   'rgba(255,255,255,0.1)');
+        bhGrad.addColorStop(0.4, 'rgba(245,158,11,0.04)');
         bhGrad.addColorStop(1,   'rgba(0,0,0,0)');
         bhGCtx.fillStyle = bhGrad;
         bhGCtx.fillRect(0, 0, 128, 128);
@@ -743,7 +773,7 @@
         var innerDiskMat = null;
 
         // Core light
-        var coreLight = new THREE.PointLight(0xa855f7, 0.8, 60, 2);
+        var coreLight = new THREE.PointLight(0xf8fafc, 0.8, 60, 2);
         bhGroup.add(coreLight);
 
         scene.add(bhGroup);
@@ -810,8 +840,8 @@
 
             var temp = Math.random();
             // HR-diagram realistic distribution: 76% M-dwarf, 12% K, 8% G, 3% F, 1% A/B/O
-            if (temp < 0.01) { bgColors[bi * 3] = 0.62; bgColors[bi * 3 + 1] = 0.68; bgColors[bi * 3 + 2] = 1.0; }       // O/B hot blue (rare)
-            else if (temp < 0.04) { bgColors[bi * 3] = 0.82; bgColors[bi * 3 + 1] = 0.85; bgColors[bi * 3 + 2] = 1.0; }   // A white-blue
+            if (temp < 0.01) { bgColors[bi * 3] = 1.0; bgColors[bi * 3 + 1] = 0.86; bgColors[bi * 3 + 2] = 0.62; }       // O/B warm white (rare)
+            else if (temp < 0.04) { bgColors[bi * 3] = 1.0; bgColors[bi * 3 + 1] = 0.9; bgColors[bi * 3 + 2] = 0.72; }   // A warm white
             else if (temp < 0.12) { bgColors[bi * 3] = 0.97; bgColors[bi * 3 + 1] = 0.95; bgColors[bi * 3 + 2] = 0.9; }   // F yellow-white
             else if (temp < 0.24) { bgColors[bi * 3] = 1.0; bgColors[bi * 3 + 1] = 0.89; bgColors[bi * 3 + 2] = 0.7; }    // G solar yellow
             else if (temp < 0.36) { bgColors[bi * 3] = 1.0; bgColors[bi * 3 + 1] = 0.72; bgColors[bi * 3 + 2] = 0.45; }   // K orange
@@ -1165,11 +1195,11 @@
         var stars = [];
         var colorMapData = {
             'superstar': { hex: 0x22c55e, rgba: 'rgba(34,197,94,1)', spikes: 6 },
-            'normal': { hex: 0xa855f7, rgba: 'rgba(168,85,247,1)', spikes: 4 },
+            'normal': { hex: 0xf8fafc, rgba: 'rgba(248,250,252,1)', spikes: 4 },
             'low': { hex: 0xf59e0b, rgba: 'rgba(245,158,11,1)', spikes: 4 },
             'red': { hex: 0xef4444, rgba: 'rgba(239,68,68,1)', spikes: 4 },
-            'school': { hex: 0x06b6d4, rgba: 'rgba(6,182,212,1)', spikes: 4 },
-            'special': { hex: 0x3b82f6, rgba: 'rgba(59,130,246,1)', spikes: 4 }
+            'school': { hex: 0xf59e0b, rgba: 'rgba(245,158,11,1)', spikes: 4 },
+            'special': { hex: 0x94a3b8, rgba: 'rgba(148,163,184,1)', spikes: 4 }
         };
 
         var monthGroups = {};
@@ -1277,7 +1307,7 @@
             lCanvas.width = 256; lCanvas.height = 64;
             var lCtx = lCanvas.getContext('2d');
 
-            lCtx.fillStyle = 'rgba(168,85,247,0.06)';
+            lCtx.fillStyle = 'rgba(255,255,255,0.06)';
             lCtx.beginPath();
             lCtx.roundRect(28, 14, 200, 36, 18);
             lCtx.fill();
@@ -1301,7 +1331,7 @@
                 var cDiff = Math.abs(cd2 - cd1) / 86400000;
                 if (cDiff <= 3) {
                     var lineGeo = new THREE.BufferGeometry().setFromPoints([prev.position, curr.position]);
-                    var lineMat = new THREE.LineBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.06, blending: THREE.AdditiveBlending, depthWrite: false });
+                    var lineMat = new THREE.LineBasicMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.06, blending: THREE.AdditiveBlending, depthWrite: false });
                     scene.add(new THREE.Line(lineGeo, lineMat));
                 }
             }
@@ -1552,7 +1582,7 @@
         '  border-radius: 20px;',
         '}',
         '[data-theme="light"] #apGxForceGraphContainer {',
-        '  background: #f0f0f5;',
+        '  background: var(--bg-deep);',
         '}',
         '@media(max-width:640px){',
         '  #apGxForceGraphContainer { height: 350px; }',

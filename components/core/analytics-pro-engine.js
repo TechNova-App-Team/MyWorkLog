@@ -143,7 +143,7 @@
     function apRenderOverview() {
         var entries = apEntries();
         if (!entries.length) {
-            document.getElementById('apKpiRow').innerHTML = '<div class="ap-empty"><div class="ap-empty-icon">📊</div>Noch keine Einträge vorhanden</div>';
+            document.getElementById('apKpiRow').innerHTML = '<div class="ap-empty"><div class="ap-empty-icon">' + apIcon('chart') + '</div>Noch keine Einträge vorhanden</div>';
             return;
         }
         var d = apChartDefaults();
@@ -159,11 +159,31 @@
         var streak = apCalcStreak(entries);
 
         document.getElementById('apKpiRow').innerHTML =
-            '<div class="ap-kpi"><div class="ap-kpi-value">' + totalWorked.toFixed(1) + '</div><div class="ap-kpi-label">Stunden gesamt</div><div class="ap-kpi-sub">' + entries.length + ' Einträge</div></div>' +
-            '<div class="ap-kpi"><div class="ap-kpi-value" style="' + (totalSaldo >= 0 ? '' : '-webkit-text-fill-color:#ef4444;') + '">' + apFmtH(totalSaldo) + '</div><div class="ap-kpi-label">Gleitzeit-Saldo</div><div class="ap-kpi-sub">' + (totalSaldo >= 0 ? 'Überstunden' : 'Minus') + '</div></div>' +
-            '<div class="ap-kpi"><div class="ap-kpi-value">' + avgDaily.toFixed(2) + '</div><div class="ap-kpi-label">⌀ Stunden/Tag</div><div class="ap-kpi-sub">Arbeitstage</div></div>' +
-            '<div class="ap-kpi"><div class="ap-kpi-value">' + vacDays + '</div><div class="ap-kpi-label">Urlaubstage</div><div class="ap-kpi-sub">' + sickDays + ' Krankheitstage</div></div>' +
-            '<div class="ap-kpi"><div class="ap-kpi-value">' + streak + '</div><div class="ap-kpi-label">Tage-Streak</div><div class="ap-kpi-sub">' + uniqueMonths + ' Monate aktiv</div></div>';
+            '<article class="ap-kpi ap-kpi-featured">' +
+                '<div class="ap-kpi-top"><div class="ap-kpi-label">Arbeitszeit gesamt</div><span class="ap-kpi-context">Erfasst</span></div>' +
+                '<div class="ap-kpi-value">' + totalWorked.toFixed(1) + '<span class="ap-kpi-unit">h</span></div>' +
+                '<div class="ap-kpi-sub">' + entries.length + ' Einträge dokumentiert</div>' +
+            '</article>' +
+            '<article class="ap-kpi">' +
+                '<div class="ap-kpi-top"><div class="ap-kpi-label">Zeitkonto-Saldo</div><span class="ap-kpi-context">Soll / Ist</span></div>' +
+                '<div class="ap-kpi-value" style="' + (totalSaldo >= 0 ? '' : '-webkit-text-fill-color:#ef4444;') + '">' + apFmtH(totalSaldo) + '</div>' +
+                '<div class="ap-kpi-sub">' + (totalSaldo >= 0 ? 'Zeit über deinem Soll' : 'Zeit unter deinem Soll') + '</div>' +
+            '</article>' +
+            '<article class="ap-kpi">' +
+                '<div class="ap-kpi-top"><div class="ap-kpi-label">Arbeitszeit pro Tag</div><span class="ap-kpi-context">Durchschnitt</span></div>' +
+                '<div class="ap-kpi-value">' + avgDaily.toFixed(2) + '<span class="ap-kpi-unit">h</span></div>' +
+                '<div class="ap-kpi-sub">An ' + workE.length + ' Arbeitstagen</div>' +
+            '</article>' +
+            '<article class="ap-kpi">' +
+                '<div class="ap-kpi-top"><div class="ap-kpi-label">Abwesenheit</div><span class="ap-kpi-context">Erfasst</span></div>' +
+                '<div class="ap-kpi-value">' + vacDays + '<span class="ap-kpi-unit">Tage</span></div>' +
+                '<div class="ap-kpi-sub">' + sickDays + ' Krankheitstage zusätzlich</div>' +
+            '</article>' +
+            '<article class="ap-kpi">' +
+                '<div class="ap-kpi-top"><div class="ap-kpi-label">Aktive Monate</div><span class="ap-kpi-context">Zeitraum</span></div>' +
+                '<div class="ap-kpi-value">' + uniqueMonths + '</div>' +
+                '<div class="ap-kpi-sub">Monate mit mindestens einem Eintrag</div>' +
+            '</article>';
 
         // Overview Saldo (last 30 entries)
         var last30 = apRunningSaldo(entries).slice(-30);
@@ -505,10 +525,22 @@
             var totalDays = new Set(entries.map(function(e){ return e.date; })).size;
 
             statsEl.innerHTML =
-                '<div class="ap-kpi-row" style="margin:0;">' +
-                '<div class="ap-kpi"><div class="ap-kpi-value">' + maxStreak + '</div><div class="ap-kpi-label">Längster Streak</div><div class="ap-kpi-sub">' + (longestStart ? new Date(longestStart).toLocaleDateString(mwlLocale(),{day:'2-digit',month:'short'}) + ' – ' + new Date(longestEnd).toLocaleDateString(mwlLocale(),{day:'2-digit',month:'short'}) : '—') + '</div></div>' +
-                '<div class="ap-kpi"><div class="ap-kpi-value">' + maxHours.toFixed(1) + 'h</div><div class="ap-kpi-label">Rekord-Tag</div><div class="ap-kpi-sub">' + (maxEntry ? new Date(maxEntry.date).toLocaleDateString(mwlLocale()) : '—') + '</div></div>' +
-                '<div class="ap-kpi"><div class="ap-kpi-value">' + totalDays + '</div><div class="ap-kpi-label">Aktive Tage</div><div class="ap-kpi-sub">Einzigartige Tage</div></div>' +
+                '<div class="ap-streak-grid">' +
+                '<article class="ap-record-card ap-record-card-accent">' +
+                    '<div class="ap-record-label">Längste Erfassungsserie</div>' +
+                    '<div class="ap-record-value">' + maxStreak + '<span>Tage</span></div>' +
+                    '<div class="ap-record-meta">' + (longestStart ? new Date(longestStart).toLocaleDateString(mwlLocale(),{day:'2-digit',month:'short'}) + ' – ' + new Date(longestEnd).toLocaleDateString(mwlLocale(),{day:'2-digit',month:'short'}) : 'Noch keine Serie') + '</div>' +
+                '</article>' +
+                '<article class="ap-record-card">' +
+                    '<div class="ap-record-label">Rekord-Arbeitstag</div>' +
+                    '<div class="ap-record-value">' + maxHours.toFixed(1) + '<span>h</span></div>' +
+                    '<div class="ap-record-meta">' + (maxEntry ? new Date(maxEntry.date).toLocaleDateString(mwlLocale()) : 'Noch kein Arbeitstag') + '</div>' +
+                '</article>' +
+                '<article class="ap-record-card">' +
+                    '<div class="ap-record-label">Erfasste Tage</div>' +
+                    '<div class="ap-record-value">' + totalDays + '<span>Tage</span></div>' +
+                    '<div class="ap-record-meta">Mit mindestens einem Eintrag</div>' +
+                '</article>' +
                 '</div>';
         }
     }
@@ -686,7 +718,7 @@
                 data: {
                     labels: monthLabels,
                     datasets: [{
-                        label: '⌀ Stunden/Arbeitstag',
+                        label: 'Ø Stunden/Arbeitstag',
                         data: avgData,
                         borderColor: d.cyan,
                         backgroundColor: grad,
@@ -841,7 +873,7 @@
                 data: {
                     labels: dayNames,
                     datasets: [{
-                        label: '⌀ Stunden',
+                        label: 'Ø Stunden',
                         data: avgByDay.map(function(v){ return parseFloat(v.toFixed(2)); }),
                         borderColor: d.primary,
                         backgroundColor: 'rgba(' + d.primaryRgb + ',0.15)',
@@ -850,7 +882,7 @@
                         pointRadius: 4,
                         pointHoverRadius: 7
                     }, {
-                        label: '⌀ Saldo',
+                        label: 'Ø Saldo',
                         data: dayData.map(function(dd){ return dd.count ? parseFloat((dd.diffs / dd.count).toFixed(2)) : 0; }),
                         borderColor: d.cyan,
                         backgroundColor: 'rgba(6,182,212,0.1)',
@@ -889,7 +921,7 @@
                 data: {
                     labels: workDays.map(function(i){ return dayNames[i]; }),
                     datasets: [{
-                        label: '⌀ Stunden',
+                        label: 'Ø Stunden',
                         data: workDays.map(function(i){ return parseFloat(avgByDay[i].toFixed(2)); }),
                         backgroundColor: workDays.map(function(i) {
                             var avg = avgByDay[i];
@@ -898,7 +930,7 @@
                         borderRadius: 8,
                         borderSkipped: false
                     }, {
-                        label: '⌀ Saldo',
+                        label: 'Ø Saldo',
                         data: workDays.map(function(i){ return dayData[i].count ? parseFloat((dayData[i].diffs / dayData[i].count).toFixed(2)) : 0; }),
                         backgroundColor: workDays.map(function(i) {
                             var avg = dayData[i].count ? dayData[i].diffs / dayData[i].count : 0;
@@ -948,7 +980,7 @@
                     }
                 });
             } else {
-                ctx3.parentElement.innerHTML = '<div class="ap-empty"><div class="ap-empty-icon">😊</div>Noch keine Stimmungs-Daten erfasst</div>';
+                ctx3.parentElement.innerHTML = '<div class="ap-empty"><div class="ap-empty-icon">' + apIcon('mood') + '</div>Noch keine Stimmungs-Daten erfasst</div>';
             }
         }
     }
@@ -1100,7 +1132,18 @@
     function apRender3D() {
         if (typeof THREE === 'undefined') {
             var container = document.getElementById('ap3dContainer');
-            if (container) container.innerHTML = '<div class="ap-empty" style="padding:4rem;"><div class="ap-empty-icon">⏳</div>Three.js wird geladen... Bitte Seite neu laden.</div>';
+            if (container) container.innerHTML = '<div class="ap-empty" style="padding:4rem;"><div class="ap-empty-icon">...</div>Three.js wird geladen…</div>';
+            if (typeof window._loadThreeJS === 'function') {
+                window._loadThreeJS(function(ready) {
+                    if (ready) {
+                        apRender3D();
+                    } else if (container) {
+                        container.innerHTML = '<div class="ap-empty" style="padding:4rem;"><div class="ap-empty-icon">!</div>Three.js konnte nicht geladen werden.</div>';
+                    }
+                });
+            } else {
+                window.setTimeout(apRender3D, 50);
+            }
             return;
         }
 
@@ -1108,12 +1151,25 @@
 
         var entries = apEntries();
         if (!entries.length) {
-            document.getElementById('ap3dContainer').innerHTML = '<div class="ap-empty" style="padding:4rem;"><div class="ap-empty-icon">🏗️</div>Noch keine Daten für 3D-Ansicht</div>';
+            document.getElementById('ap3dContainer').innerHTML = '<div class="ap-empty" style="padding:4rem;"><div class="ap-empty-icon">' + apIcon('building') + '</div>Noch keine Daten für 3D-Ansicht</div>';
             return;
         }
 
         var range = ap3dState.range;
-        var filtered = range > 0 ? entries.slice(-range) : entries;
+        var filtered = entries;
+        if (range > 0) {
+            // The period buttons represent calendar days, not entry rows. This matters
+            // when a day contains several project entries.
+            var latestTime = entries.reduce(function(max, entry) {
+                return Math.max(max, new Date(entry.date).getTime());
+            }, 0);
+            var cutoff = new Date(latestTime);
+            cutoff.setHours(0, 0, 0, 0);
+            cutoff.setDate(cutoff.getDate() - (range - 1));
+            filtered = entries.filter(function(entry) {
+                return new Date(entry.date).getTime() >= cutoff.getTime();
+            });
+        }
         var isLight = document.documentElement.getAttribute('data-theme') === 'light';
 
         // Container setup
@@ -1150,7 +1206,7 @@
         // Controls
         var OrbitControlsCtor = THREE.OrbitControls || (window.THREE && window.THREE.OrbitControls);
         if (!OrbitControlsCtor) {
-            container.innerHTML = '<div class="ap-empty" style="padding:4rem;"><div class="ap-empty-icon">🔄</div>3D-Steuerung wird geladen…<br>Bitte Seite neu laden (F5).</div>';
+            container.innerHTML = '<div class="ap-empty" style="padding:4rem;"><div class="ap-empty-icon">' + apIcon('rotate') + '</div>3D-Steuerung wird geladen…<br>Bitte Seite neu laden (F5).</div>';
             renderer.dispose();
             return;
         }
@@ -1202,49 +1258,103 @@
         scene.add(ground);
 
         // Grid helper
-        var grid = new THREE.GridHelper(60, 60, isLight ? 0xccccdd : 0x1a1a2e, isLight ? 0xddddee : 0x12121e);
+        var grid = new THREE.GridHelper(120, 120, isLight ? 0xccccdd : 0x1a1a2e, isLight ? 0xddddee : 0x12121e);
         grid.position.y = 0;
         scene.add(grid);
 
-        // Build the city
+        // Build the city at a readable resolution.
+        // Several entries can belong to one day (projects, corrections, split shifts).
+        // A single building per day keeps the calendar grid honest and prevents overlap.
         var buildings = [];
-        var maxHours = 12;
         var dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+        var dayMap = {};
 
-        // Group by week
-        var weekGroups = [];
-        var currentWeek = [];
-        var lastWeekNum = -1;
         filtered.forEach(function(e) {
-            var d = new Date(e.date);
-            var wk = apGetISOWeek(d);
-            if (wk !== lastWeekNum && currentWeek.length > 0) {
-                weekGroups.push(currentWeek);
-                currentWeek = [];
+            var day = dayMap[e.date];
+            if (!day) {
+                day = {
+                    date: e.date,
+                    worked: 0,
+                    expected: 0,
+                    diff: 0,
+                    entryCount: 0,
+                    type: e.type || 'work',
+                    project: e.project || ''
+                };
+                dayMap[e.date] = day;
             }
-            currentWeek.push(e);
-            lastWeekNum = wk;
+
+            day.worked += Number(e.worked) || 0;
+            // Expected hours are a daily target. Do not count it twice for split entries.
+            day.expected = Math.max(day.expected, Number(e.expected) || 0);
+            day.entryCount += 1;
+            if (e.type === 'work' || (Number(e.worked) || 0) > 0) day.type = 'work';
+            if (day.project && e.project && day.project !== e.project) day.project = '';
         });
-        if (currentWeek.length > 0) weekGroups.push(currentWeek);
 
+        var dailyItems = Object.keys(dayMap).sort().map(function(date) {
+            var day = dayMap[date];
+            // Recalculate from the aggregated totals so split entries do not duplicate
+            // the daily target in the balance.
+            day.diff = day.worked - day.expected;
+            return day;
+        });
+        var cityItems = dailyItems;
+
+        // Group the days by ISO week, including the ISO year so a year boundary never merges
+        // two unrelated weeks. Every day keeps its own slot in the resulting city.
+        var weekGroups = [];
+        var weekLookup = {};
+        cityItems.forEach(function(item) {
+            var date = new Date(item.date);
+            var isoDay = date.getDay() || 7;
+            var isoYearDate = new Date(date);
+            isoYearDate.setDate(date.getDate() + 4 - isoDay);
+            var weekKey = isoYearDate.getFullYear() + '-' + String(apGetISOWeek(date)).padStart(2, '0');
+            if (!weekLookup[weekKey]) {
+                weekLookup[weekKey] = [];
+                weekGroups.push(weekLookup[weekKey]);
+            }
+            weekLookup[weekKey].push(item);
+        });
+
+        // Long histories are split into parallel strips instead of being compressed into
+        // summaries. This keeps each day readable while the city grows in depth.
+        var weeksPerDistrict = 26;
+        var districtCount = Math.max(1, Math.ceil(weekGroups.length / weeksPerDistrict));
         var gridSpacing = 1.6;
-        var barWidth = 1.1;
-        var offsetX = -(Math.min(weekGroups.length, 20) * gridSpacing) / 2;
-        var offsetZ = -(7 * gridSpacing) / 2;
+        var barWidth = Math.min(1.1, gridSpacing * 0.72);
+        var districtSpacing = 7 * gridSpacing + 4;
+        var offsetX = -((Math.min(weekGroups.length, weeksPerDistrict) - 1) * gridSpacing) / 2;
+        var offsetZ = -(6 * gridSpacing) / 2;
+        var cityWidth = Math.max(24, (Math.min(weekGroups.length, weeksPerDistrict) - 1) * gridSpacing);
+        var cityDepth = Math.max(10, (districtCount - 1) * districtSpacing + 6 * gridSpacing);
+        var viewSize = Math.max(cityWidth, cityDepth * 1.15);
+        camera.position.set(viewSize * 0.62, Math.max(14, viewSize * 0.38), viewSize * 0.62);
+        camera.lookAt(0, 3, 0);
+        controls.target.set(0, 3, 0);
+        controls.maxDistance = Math.max(80, viewSize * 2.5);
+        controls.update();
+        grid.scale.set(Math.max(1, cityWidth / 60), 1, Math.max(1, cityDepth / 60));
 
-        // Limit to last N weeks for reasonable rendering
-        var maxWeeks = Math.min(weekGroups.length, 52);
-        var startWeek = weekGroups.length - maxWeeks;
+        var maxHours = 0;
+        cityItems.forEach(function(item) {
+            maxHours = Math.max(maxHours, Number(item.worked) || 0);
+        });
+        maxHours = Math.max(8, maxHours);
 
-        for (var wi = startWeek; wi < weekGroups.length; wi++) {
+        for (var wi = 0; wi < weekGroups.length; wi++) {
             var week = weekGroups[wi];
-            var weekIdx = wi - startWeek;
+            var districtIdx = Math.floor(wi / weeksPerDistrict);
+            var weekIdx = wi % weeksPerDistrict;
+            var districtOffsetZ = offsetZ + districtIdx * districtSpacing;
 
             for (var di = 0; di < week.length; di++) {
                 var entry = week[di];
-                var dow = new Date(entry.date).getDay();
-                var hours = entry.worked || 0;
-                var expected = entry.expected || 8;
+                var isSummary = Boolean(entry.isSummary);
+                var dow = isSummary ? 3 : new Date(entry.date).getDay();
+                var hours = Number(entry.worked) || 0;
+                var expected = Number(entry.expected) || 8;
                 var ratio = expected > 0 ? hours / expected : 0;
                 var h = Math.max(0.15, (hours / maxHours) * 10);
                 var type = entry.type || 'work';
@@ -1272,7 +1382,7 @@
                 mesh.position.set(
                     offsetX + weekIdx * gridSpacing,
                     h / 2,
-                    offsetZ + dow * gridSpacing
+                    districtOffsetZ + dow * gridSpacing
                 );
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
@@ -1280,13 +1390,16 @@
                 // Store metadata
                 mesh.userData = {
                     date: entry.date,
+                    dateEnd: entry.dateEnd || entry.date,
                     dayName: dayNames[dow],
                     hours: hours,
                     expected: expected,
                     type: type,
                     diff: entry.diff || 0,
                     project: entry.project || '',
-                    ratio: ratio
+                    ratio: ratio,
+                    entryCount: entry.entryCount || 1,
+                    isSummary: isSummary
                 };
 
                 scene.add(mesh);
@@ -1306,21 +1419,23 @@
         // Day labels on Z axis
         if (typeof THREE.FontLoader === 'undefined') {
             // Use sprites for day labels instead
-            dayNames.forEach(function(name, i) {
-                var canvas = document.createElement('canvas');
-                canvas.width = 64; canvas.height = 32;
-                var ctx = canvas.getContext('2d');
-                ctx.fillStyle = isLight ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)';
-                ctx.font = 'bold 18px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(name, 32, 22);
-                var tex = new THREE.CanvasTexture(canvas);
-                var spMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
-                var sprite = new THREE.Sprite(spMat);
-                sprite.scale.set(2.5, 1.2, 1);
-                sprite.position.set(offsetX - 2.5, 0.5, offsetZ + i * gridSpacing);
-                scene.add(sprite);
-            });
+            for (var district = 0; district < districtCount; district++) {
+                dayNames.forEach(function(name, i) {
+                    var canvas = document.createElement('canvas');
+                    canvas.width = 64; canvas.height = 32;
+                    var ctx = canvas.getContext('2d');
+                    ctx.fillStyle = isLight ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)';
+                    ctx.font = 'bold 18px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(name, 32, 22);
+                    var tex = new THREE.CanvasTexture(canvas);
+                    var spMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+                    var sprite = new THREE.Sprite(spMat);
+                    sprite.scale.set(2.5, 1.2, 1);
+                    sprite.position.set(offsetX - 2.5, 0.5, offsetZ + district * districtSpacing + i * gridSpacing);
+                    scene.add(sprite);
+                });
+            }
         }
 
         // Save state
@@ -1339,6 +1454,12 @@
         infoOverlay.className = 'ap3d-info-overlay';
         infoOverlay.id = 'ap3dInfo';
         container.appendChild(infoOverlay);
+
+        var densityNote = document.createElement('div');
+        densityNote.className = 'ap3d-density-note';
+        densityNote.textContent = 'Tagesübersicht · ' + dailyItems.length + ' Tage' +
+            (districtCount > 1 ? ' · ' + districtCount + ' Stadtstreifen' : '');
+        container.appendChild(densityNote);
 
         // Mouse move for hover
         renderer.domElement.addEventListener('mousemove', function(event) {
@@ -1373,10 +1494,16 @@
                         var ud = obj.userData;
                         var typeLabels = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', sick: 'Krank', holiday: 'Feiertag', gleittag: 'Gleittag' };
                         if (info) {
-                            info.innerHTML = '<b>' + ud.dayName + ', ' + new Date(ud.date).toLocaleDateString(mwlLocale()) + '</b> &nbsp;|&nbsp; ' +
+                            var startLabel = new Date(ud.date).toLocaleDateString(mwlLocale());
+                            var endLabel = new Date(ud.dateEnd).toLocaleDateString(mwlLocale());
+                            var dateLabel = ud.isSummary && startLabel !== endLabel ? startLabel + ' – ' + endLabel : startLabel;
+                            var periodLabel = ud.isSummary ? 'Woche' : ud.dayName;
+                            var countLabel = ud.entryCount > 1 ? ' &nbsp;|&nbsp; ' + ud.entryCount + ' Einträge' : '';
+                            info.innerHTML = '<b>' + periodLabel + ', ' + dateLabel + '</b> &nbsp;|&nbsp; ' +
                                 (typeLabels[ud.type] || ud.type) + ' &nbsp;|&nbsp; ' +
                                 ud.hours.toFixed(2) + 'h / ' + ud.expected.toFixed(2) + 'h &nbsp;|&nbsp; ' +
                                 '<span style="color:' + (ud.diff >= 0 ? '#22c55e' : '#ef4444') + ';">' + (ud.diff >= 0 ? '+' : '') + ud.diff.toFixed(2) + 'h</span>' +
+                                countLabel +
                                 (ud.project ? ' &nbsp;|&nbsp; ' + ud.project : '');
                             info.classList.add('visible');
                         }
@@ -1428,7 +1555,7 @@
         statsEl.innerHTML =
             '<div class="ap-kpi"><div class="ap-kpi-value">' + buildings + '</div><div class="ap-kpi-label">Gebäude in City</div><div class="ap-kpi-sub">' + totalDays + ' Tage insgesamt</div></div>' +
             '<div class="ap-kpi"><div class="ap-kpi-value">' + pctOver + '%</div><div class="ap-kpi-label">Ziel erreicht</div><div class="ap-kpi-sub">' + overTarget + ' von ' + workDays.length + ' Arbeitstagen</div></div>' +
-            '<div class="ap-kpi"><div class="ap-kpi-value">' + avgHours.toFixed(1) + 'h</div><div class="ap-kpi-label">⌀ pro Tag</div><div class="ap-kpi-sub">Rekord: ' + maxH.toFixed(1) + 'h</div></div>';
+            '<div class="ap-kpi"><div class="ap-kpi-value">' + avgHours.toFixed(1) + 'h</div><div class="ap-kpi-label">Ø pro Tag</div><div class="ap-kpi-sub">Rekord: ' + maxH.toFixed(1) + 'h</div></div>';
     }
 
     // ════════════════════════════════════════════
@@ -1693,7 +1820,7 @@
         apGxCleanup();
 
         var entries = apEntries();
-        if(!entries.length){ document.getElementById('apGxContainer').innerHTML='<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">🌌</div>Noch keine Daten für Galaxy</div>'; return; }
+        if(!entries.length){ document.getElementById('apGxContainer').innerHTML='<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">'+apIcon('galaxy')+'</div>Noch keine Daten für Galaxy</div>'; return; }
 
         var range = apGxState.range;
         var filtered = range > 0 ? entries.slice(-range) : entries;
@@ -1733,7 +1860,7 @@
 
         // ── OrbitControls ──
         var OC = THREE.OrbitControls || (window.THREE && window.THREE.OrbitControls);
-        if(!OC){ container.innerHTML='<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">🔄</div>Controls laden… Bitte F5</div>'; renderer.dispose(); return; }
+        if(!OC){ container.innerHTML='<div class="ap-empty" style="padding:4rem"><div class="ap-empty-icon">'+apIcon('rotate')+'</div>Controls laden… Bitte F5</div>'; renderer.dispose(); return; }
         var controls = new OC(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.04;
@@ -2638,6 +2765,6 @@
         }
         el.innerHTML =
             '<div class="ap-kpi"><div class="ap-kpi-value">'+total+'</div><div class="ap-kpi-label">Sterne im Universum</div><div class="ap-kpi-sub">'+superstars+' Superstars</div></div>' +
-            '<div class="ap-kpi"><div class="ap-kpi-value">'+avgH.toFixed(1)+'h</div><div class="ap-kpi-label">⌀ Leuchtkraft</div><div class="ap-kpi-sub">'+totalHrs.toFixed(0)+'h Gesamtenergie</div></div>' +
+            '<div class="ap-kpi"><div class="ap-kpi-value">'+avgH.toFixed(1)+'h</div><div class="ap-kpi-label">Ø Leuchtkraft</div><div class="ap-kpi-sub">'+totalHrs.toFixed(0)+'h Gesamtenergie</div></div>' +
             '<div class="ap-kpi"><div class="ap-kpi-value">'+maxStreak+'</div><div class="ap-kpi-label">Längste Supernova</div><div class="ap-kpi-sub">Tage in Serie ≥ Soll</div></div>';
     }
