@@ -393,7 +393,7 @@
 
             // Manuelle Mindestpausen-Korrektur (wird in handleEntry detailliert durchgeführt)
             showCustomConfirm(
-                '⏹️ Zeit stoppen?',
+                'Zeit stoppen und buchen?',
                 `Geleistete Zeit: ${h_netto.toFixed(2)}h\nPausenzeit: ${(timer.breakTime / 3.6e6).toFixed(2)}h`,
                 () => {
                     // Den Netto-Wert in das Stundenfeld übertragen, damit handleEntry es verarbeitet

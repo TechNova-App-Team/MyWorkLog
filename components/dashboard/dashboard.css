@@ -23,6 +23,56 @@
             --dur-fast:            140ms;
             --dur-normal:          240ms;
             --dur-slow:            380ms;
+
+            /* ─── FARBROLLEN ──────────────────────────────────────────
+               Eine Farbe = eine Bedeutung. Vorher faerbte --primary
+               gleichzeitig Ringe, Werte, Chips und Icons; dadurch trug
+               sie keine Information mehr und wirkte beliebig.
+
+               --role-accent   Identitaet & Fortschritt (Balkenfuellung,
+                               aktiver Zustand). NIE fuer einen Messwert.
+               --role-pos/neg  AUSSCHLIESSLICH das Vorzeichen eines Saldos.
+               --role-neutral  Nulllinie, Skalenmarken, ruhende Spuren.
+               Alles andere traegt Text-Tokens (--text-main/--text-muted).
+               Kategoriefarben (work/school/...) leben nur im Verteilungs-
+               Diagramm und sonst nirgends.                              */
+            --role-accent:         var(--primary);
+            --role-accent-soft:    rgba(var(--primary-rgb), 0.14);
+            --role-pos:            #10b981;
+            --role-neg:            #ef4444;
+            --role-pos-soft:       rgba(16, 185, 129, 0.14);
+            --role-neg-soft:       rgba(239, 68, 68, 0.14);
+            --role-neutral:        rgba(255, 255, 255, 0.16);
+            --role-track:          rgba(255, 255, 255, 0.06);
+
+            /* ─── ZAHLEN-SKALA ────────────────────────────────────────
+               Drei Groessen statt der bisherigen fuenf. Zahlen sind hier
+               Messwerte, keine Headlines: tabellarische Ziffern, damit
+               beim Hochzaehlen nichts springt.                          */
+            --num-hero:            clamp(1.75rem, 1.3rem + 1.6vw, 2.25rem);
+            --num-md:              1.0625rem;
+            --num-sm:              0.8125rem;
+
+            /* Eyebrow — genau ein Stil fuer alle Kartenlabels */
+            --eyebrow-size:        0.6875rem;
+            --eyebrow-tracking:    0.09em;
+        }
+        [data-theme="light"] {
+            --role-neutral:        rgba(7, 16, 35, 0.18);
+            --role-track:          rgba(7, 16, 35, 0.07);
+        }
+
+        /* Jede Zahl im Dashboard bekommt Tabellenziffern. Ohne das
+           wandert die Breite jeder Ziffer beim Animieren und die Werte
+           zappeln waehrend des Hochzaehlens. */
+        .dash-num,
+        .kpi-v2__value,
+        .kpi-v2__foot-num,
+        .devbar__scale-num {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum" 1;
+            letter-spacing: -0.02em;
         }
         [data-theme="light"] {
             --bg-surface:          rgba(255, 255, 255, 0.92);
@@ -118,16 +168,500 @@
 
 
         /* ─── KPI GRID ───────────────────────────────────────────────── */
+        /* Die drei Saldo-Karten sind dieselbe Groesse auf drei Zeit-
+           horizonten (Woche → Monat → gesamt) — bewusst als Small
+           Multiples nebeneinander, damit die Balken vergleichbar sind.
+           Gleitzeit steht am Ende des Horizonts und bekommt mehr Breite,
+           weil es die Zahl ist, wegen der man das Dashboard oeffnet. */
+        /* 🔴 Breakpoints fuer .kpi-grid stehen GESAMMELT im Abschnitt
+           RESPONSIVE weiter unten — nicht hier daneben. Sonst entsteht
+           genau die Lage, die hier vorher herrschte: dieselbe Regel an
+           mehreren Stellen, und die spaetere gewinnt unbemerkt.
+           (mobile-nav.css setzt zusaetzlich eigene — die Datei laedt
+           NACH dieser und schlaegt alles hier.) */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: 1fr 1fr 1.35fr 1fr;
             gap: 1rem;
             margin-bottom: 0;
+            align-items: stretch;
         }
         .kpi-grid.edit-mode .kpi-card { cursor: grab; }
         .kpi-grid.edit-mode .kpi-card.dragging {
             opacity: 0.45;
             background: rgba(var(--primary-rgb), 0.08);
+        }
+
+
+        /* ═══════════════════════════════════════════════════════════════
+           KPI-KARTE — EINE ANATOMIE FUER ALLE VIER
+           Zeile 1  Eyebrow + optionale Meta rechts
+           Zeile 2  Hauptwert (genau einer pro Karte)
+           Zeile 3  Visual (Abweichungsbalken oder Fortschritt)
+           Zeile 4  Fusszeile — woran der Wert gemessen wird
+           Die Zeilen sind ein Grid mit fester Reihenfolge, damit die
+           Grundlinien ueber alle vier Karten auf gleicher Hoehe liegen.
+           ═══════════════════════════════════════════════════════════════ */
+        .kpi-v2 {
+            display: grid;
+            grid-template-rows: auto 1fr auto auto;
+            gap: 0.625rem;
+            padding: 1.125rem 1.25rem 1.25rem;
+            min-height: 172px;
+        }
+
+        .kpi-v2__top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            min-height: 20px;
+        }
+
+        /* Genau ein Eyebrow-Stil im ganzen Dashboard. Vorher war das
+           mal eine Pille mit Rahmen, mal nackter Grosstext. */
+        .kpi-v2__eyebrow {
+            font-size: var(--eyebrow-size);
+            font-weight: 600;
+            letter-spacing: var(--eyebrow-tracking);
+            text-transform: uppercase;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .kpi-v2__meta {
+            font-size: var(--num-sm);
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            white-space: nowrap;
+        }
+        .kpi-v2__meta.is-pos { color: var(--role-pos); }
+        .kpi-v2__meta.is-neg { color: var(--role-neg); }
+
+        .kpi-v2__value {
+            font-size: var(--num-hero);
+            font-weight: 700;
+            line-height: 1;
+            color: var(--text-main);
+            align-self: end;
+            display: flex;
+            align-items: baseline;
+            gap: 0.15em;
+            /* Mono-Ziffern brauchen bei Displaygroesse mehr Zug, sonst
+               reisst besonders das Dezimalkomma die Zahl auseinander. */
+            letter-spacing: -0.045em;
+        }
+        /* Der Messwert bleibt bewusst in Textfarbe. Das Vorzeichen steht
+           schon als Glyphe davor UND als Seite, auf der der Balken aus
+           der Null herauswaechst — die Zahl zusaetzlich einzufaerben
+           haette drei grosse gruene Zahlen nebeneinander ergeben, und
+           damit traegt die Farbe wieder keine Information.
+           Die Klassen bleiben, damit JS den Zustand ausdruecken kann. */
+        .kpi-v2__value.is-pos,
+        .kpi-v2__value.is-neg { color: var(--text-main); }
+        .kpi-v2__unit {
+            font-size: 0.45em;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0;
+        }
+
+        .kpi-v2__foot {
+            font-size: 0.75rem;
+            line-height: 1.35;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            min-height: 17px;
+        }
+        .kpi-v2__foot-num {
+            font-size: var(--num-sm);
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        /* Gleitzeit-Karte: gleiche Anatomie, groesserer Auftritt */
+        .kpi-v2--hero .kpi-v2__value { font-size: clamp(2rem, 1.4rem + 2.1vw, 2.75rem); }
+        @media (max-width: 1180px) {
+            .kpi-v2--hero { grid-column: span 2; }
+        }
+        @media (max-width: 560px) {
+            .kpi-v2--hero { grid-column: span 1; }
+        }
+
+
+        /* ═══════════════════════════════════════════════════════════════
+           ABWEICHUNGSBALKEN — ersetzt den irrefuehrenden Ring
+           Der alte Ring bildete einen SALDO auf einen Fortschrittsbogen
+           ab (charts.js: pct = 0.5 + val/40). Null war halb voll, voll
+           hiess "+20h Ueberstunden" — und die Skala stand nirgends.
+           Hier waechst der Balken aus einer sichtbaren Nulllinie nach
+           rechts (Plus) oder links (Minus), und die Enden sind beziffert.
+           Skala kommt aus data.settings, nicht aus einer festen 40.
+           ═══════════════════════════════════════════════════════════════ */
+        .devbar {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            align-self: end;
+        }
+
+        .devbar__track {
+            position: relative;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--role-track);
+            overflow: hidden;
+        }
+
+        /* Nulllinie — die Bezugsgroesse muss sichtbar sein, sonst ist
+           ein Abweichungsbalken nicht lesbar. */
+        .devbar__zero {
+            position: absolute;
+            top: -2px;
+            bottom: -2px;
+            left: 50%;
+            width: 1px;
+            margin-left: -0.5px;
+            background: var(--role-neutral);
+            z-index: 2;
+        }
+
+        .devbar__fill {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            border-radius: 3px;
+            background: var(--role-pos);
+            transition: left var(--dur-slow) var(--ease-out),
+                        width var(--dur-slow) var(--ease-out),
+                        background-color var(--dur-normal) var(--ease-out);
+        }
+        .devbar[data-sign="neg"] .devbar__fill { background: var(--role-neg); }
+        .devbar[data-sign="zero"] .devbar__fill { background: var(--role-neutral); }
+
+        /* Anschlag-Marke: der Wert liegt ausserhalb der Skala. Ohne das
+           sieht ein Balken am Rand aus wie ein exakt getroffenes Maximum. */
+        .devbar__fill.is-clamped::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--bg-surface);
+            opacity: 0.9;
+        }
+        .devbar[data-sign="pos"] .devbar__fill.is-clamped::after { right: 0; }
+        .devbar[data-sign="neg"] .devbar__fill.is-clamped::after { left: 0; }
+
+        .devbar__scale {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.625rem;
+            color: var(--text-muted);
+            opacity: 0.65;
+            letter-spacing: 0.02em;
+        }
+        .devbar__scale-num { font-size: 0.625rem; }
+        .devbar__scale-zero { font-weight: 600; }
+
+
+        /* ─── FORTSCHRITTSSPUR (Durchschnitt / Urlaub) ────────────────
+           Echter Fortschritt 0→100 %: einfarbig, Akzent, keine Nulllinie.
+           Bewusst anders als der Abweichungsbalken, weil es eine andere
+           Groesse ist — gleiche Form waere hier eine Luege. */
+        .ptrack {
+            position: relative;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--role-track);
+            overflow: hidden;
+            align-self: end;
+        }
+        .ptrack__fill {
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 0;
+            border-radius: 3px;
+            background: var(--role-accent);
+            transition: width var(--dur-slow) var(--ease-out);
+        }
+        /* Ueber Soll: der Balken laeuft nicht weiter, er wechselt die
+           Rolle — sonst waere "110 %" optisch nicht von "100 %" zu
+           unterscheiden. */
+        .ptrack__fill.is-over { background: var(--role-pos); }
+        .ptrack__fill.is-warn { background: #f59e0b; }
+        .ptrack__fill.is-crit { background: var(--role-neg); }
+
+
+        /* ─── AKTION & LINK IN DER KARTE ──────────────────────────────
+           Beide sitzen in Zeilen, die es ohnehin gibt (Top / Fuss) —
+           sie brauchen keinen eigenen Block und keine eigene Hoehe. */
+        .kpi-v2__action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            padding: 0;
+            border-radius: 7px;
+            border: 1px solid var(--border-default);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color var(--dur-fast) var(--ease-out),
+                        border-color var(--dur-fast) var(--ease-out),
+                        background-color var(--dur-fast) var(--ease-out);
+        }
+        .kpi-v2__action svg { width: 14px; height: 14px; }
+        .kpi-v2__action:hover {
+            color: var(--text-main);
+            border-color: var(--border-interactive);
+            background: var(--bg-inset);
+        }
+        .kpi-v2__action:active { transform: translateY(1px); }
+        .kpi-v2__action:focus-visible {
+            outline: 2px solid var(--border-focus);
+            outline-offset: 2px;
+        }
+
+        .kpi-v2__link {
+            border: 0;
+            background: none;
+            padding: 0;
+            font: inherit;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 1px solid transparent;
+            transition: color var(--dur-fast) var(--ease-out),
+                        border-color var(--dur-fast) var(--ease-out);
+        }
+        .kpi-v2__link:hover {
+            color: var(--text-main);
+            border-bottom-color: var(--border-interactive);
+        }
+        .kpi-v2__link:focus-visible {
+            outline: 2px solid var(--border-focus);
+            outline-offset: 3px;
+            border-radius: 2px;
+        }
+
+        .kpi-v2__streak {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            white-space: nowrap;
+        }
+        .kpi-v2__streak-icon {
+            display: inline-flex;
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+        .kpi-v2__streak-icon svg { width: 13px; height: 13px; }
+        /* Laufende Serie: das Icon nimmt die Positiv-Rolle an — es ist
+           ein Zustand, kein Messwert, deshalb faerbt sich das Symbol und
+           nicht die Zahl daneben. */
+        .kpi-v2__streak-icon.streak-active { color: var(--role-pos); opacity: 1; }
+        .kpi-v2__streak-best { opacity: 0.55; }
+
+        /* Wochenpunkte sitzen als vierte Zeile unter der Fusszeile und
+           duerfen die Grundlinien der anderen Karten nicht verschieben. */
+        .kpi-v2 .week-dots {
+            display: flex;
+            gap: 5px;
+            margin-top: 0.125rem;
+        }
+
+        /* Die Prognose war eine Pille mit eigener Farbe. In einer Fusszeile,
+           die ohnehin aus Text besteht, ist eine Pille ein zweiter Rahmen
+           ohne Aufgabe — und sie bleibt wie alle Messwerte hier farblos:
+           das Vorzeichen steht als Glyphe davor. */
+        .kpi-v2__foot-num.positive,
+        .kpi-v2__foot-num.negative { color: var(--text-main); }
+
+
+        /* ═══════════════════════════════════════════════════════════════
+           ARBEITSZEIT-VERTEILUNG
+           Kategoriefarben stehen AUSSCHLIESSLICH hier — sie sind die
+           einzige Stelle im Dashboard, an der Farbe Identitaet codiert.
+           Vorher klebten sie als Inline-Style an zehn Elementen, also an
+           zehn Stellen zu pflegen.
+           ═══════════════════════════════════════════════════════════════ */
+        .dist-bar,
+        .dist-legend {
+            --cat-work:     var(--primary);
+            --cat-school:   var(--school);
+            --cat-vacation: var(--success);
+            --cat-sick:     var(--danger);
+            --cat-holiday:  var(--holiday);
+        }
+        [data-cat="work"]     { background: var(--cat-work); }
+        [data-cat="school"]   { background: var(--cat-school); }
+        [data-cat="vacation"] { background: var(--cat-vacation); }
+        [data-cat="sick"]     { background: var(--cat-sick); }
+        [data-cat="holiday"]  { background: var(--cat-holiday); }
+
+        .donut-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: auto;
+            padding: 0.5rem 0 0;
+            gap: 0.875rem;
+        }
+        .donut-center-info {
+            position: static;
+            transform: none;
+            text-align: left;
+        }
+        .donut-center-info .center-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--text-main);
+        }
+        .donut-center-info .center-label {
+            font-size: var(--eyebrow-size);
+            font-weight: 600;
+            letter-spacing: var(--eyebrow-tracking);
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+        }
+
+        .dist-bar {
+            display: flex;
+            gap: 2px;             /* Fuge in Kartenfarbe statt Trennlinie */
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            background: var(--role-track);
+        }
+        .dist-bar__seg {
+            height: 100%;
+            flex: 0 0 0%;
+            border-radius: 2px;
+            min-width: 0;
+            transition: flex var(--dur-slow) var(--ease-out),
+                        opacity var(--dur-fast) var(--ease-out);
+        }
+        /* Beim Hervorheben eines Segments treten die anderen zurueck,
+           statt dass das aktive zusaetzlich leuchtet — sonst verschiebt
+           sich der wahrgenommene Flaechenanteil. */
+        .dist-bar.is-dimmed .dist-bar__seg { opacity: 0.28; }
+        .dist-bar.is-dimmed .dist-bar__seg.is-active { opacity: 1; }
+
+        .dist-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .dist-legend__row {
+            display: grid;
+            grid-template-columns: 8px 1fr auto auto;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.4rem 0.5rem;
+            border-radius: 7px;
+            cursor: default;
+            transition: background-color var(--dur-fast) var(--ease-out);
+        }
+        .dist-legend__row:hover,
+        .dist-legend__row.is-active { background: var(--bg-inset); }
+        .dist-legend__dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+        }
+        .dist-legend__name {
+            font-size: 0.8125rem;
+            color: var(--text-main);
+        }
+        .dist-legend__val {
+            font-size: var(--num-sm);
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        /* Prozent rechts in fester Spaltenbreite: sonst wandert die
+           Spalte, sobald ein Wert von 9 % auf 10 % springt. */
+        .dist-legend__pct {
+            font-size: var(--num-sm);
+            color: var(--text-muted);
+            min-width: 3.5em;
+            text-align: right;
+        }
+
+
+        /* ═══════════════════════════════════════════════════════════════
+           LEERE ZUSTAENDE
+           Ein leeres Diagramm ist die groesste ruhige Flaeche im ganzen
+           Dashboard — und damit der beste Ort, um zu sagen, was hier
+           entstehen wird. Vorher stand dort ein grauer Satz.
+           ═══════════════════════════════════════════════════════════════ */
+        .chart-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            height: 100%;
+            min-height: 200px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        /* Angedeutete Kurve: zeigt die Form der spaeteren Daten, ohne
+           Zahlen zu erfinden. Gestrichelt, damit sie nicht als Messwert
+           missverstanden wird. */
+        .chart-empty__art {
+            width: 120px;
+            height: 48px;
+            color: var(--role-accent);
+            margin-bottom: 0.25rem;
+        }
+        .chart-empty__title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .chart-empty__text {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            max-width: 30ch;
+            text-wrap: balance;
+        }
+        .chart-empty__btn {
+            margin-top: 0.5rem;
+            padding: 0.5rem 0.9rem;
+            font: inherit;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-main);
+            background: var(--bg-inset);
+            border: 1px solid var(--border-interactive);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color var(--dur-fast) var(--ease-out),
+                        border-color var(--dur-fast) var(--ease-out),
+                        transform var(--dur-fast) var(--ease-out);
+        }
+        .chart-empty__btn:hover {
+            background: var(--role-accent-soft);
+            border-color: var(--border-focus);
+        }
+        .chart-empty__btn:active { transform: translateY(1px); }
+        .chart-empty__btn:focus-visible {
+            outline: 2px solid var(--border-focus);
+            outline-offset: 2px;
         }
 
 
@@ -221,419 +755,45 @@
 
 
         /* ═══ GLEITZEIT CARD V2 — MODERN REDESIGN ═══ */
-        .card.gz-card-v2 {
-            position: relative !important;
-            background: linear-gradient(135deg,
-                rgba(var(--primary-rgb), 0.08) 0%,
-                rgba(var(--primary-rgb), 0.04) 50%,
-                rgba(var(--primary-rgb), 0.02) 100%) !important;
-            border: 1px solid rgba(var(--primary-rgb), 0.12) !important;
-            border-radius: 16px !important;
-            overflow: hidden !important;
-            padding: 1.25rem !important;
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 0.6rem !important;
-            backdrop-filter: blur(10px) !important;
-            -webkit-backdrop-filter: blur(10px) !important;
-            box-shadow: none !important;
-            margin-bottom: 0 !important;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            min-height: auto !important;
-            container-type: inline-size;
-            container-name: gz-card;
-        }
 
-        .card.gz-card-v2:hover {
-            border-color: rgba(var(--primary-rgb), 0.25) !important;
-            background: linear-gradient(135deg,
-                rgba(var(--primary-rgb), 0.12) 0%,
-                rgba(var(--primary-rgb), 0.06) 50%,
-                rgba(var(--primary-rgb), 0.03) 100%) !important;
-            box-shadow: 0 8px 32px rgba(var(--primary-rgb), 0.08) !important;
-        }
 
-        .gz-container {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-            min-width: 0;
-        }
 
-        .gz-header-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
 
-        .gz-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            text-shadow: 0 0 20px rgba(var(--primary-rgb), 0.1);
-        }
 
-        .gz-adjust-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 26px;
-            height: 26px;
-            padding: 0;
-            border-radius: 8px;
-            background: rgba(var(--primary-rgb), 0.08);
-            border: 1px solid rgba(var(--primary-rgb), 0.18);
-            color: var(--primary);
-            cursor: pointer;
-            transition: all 0.18s ease;
-        }
-        .gz-adjust-btn svg { width: 14px; height: 14px; }
-        .gz-adjust-btn:hover {
-            background: rgba(var(--primary-rgb), 0.16);
-            transform: translateY(-1px);
-        }
-        .gz-adjust-btn:active { transform: translateY(0); }
 
-        .gz-main-section {
-            display: grid;
-            grid-template-columns: clamp(64px, 22cqi, 100px) minmax(0, 1fr);
-            gap: clamp(0.75rem, 3cqi, 1.5rem);
-            align-items: center;
-            padding: clamp(0.9rem, 3.5cqi, 1.25rem);
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(var(--primary-rgb), 0.08);
-            border-radius: 12px;
-            position: relative;
-            overflow: hidden;
-            min-width: 0;
-        }
 
-        .gz-main-section::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg,
-                transparent 0%,
-                rgba(var(--primary-rgb), 0.05) 100%);
-            pointer-events: none;
-        }
 
-        .gz-balance-visual {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            color: var(--primary);
-        }
 
-        .gz-scale-icon {
-            width: 100%;
-            max-width: 80px;
-            height: auto;
-            aspect-ratio: 100 / 60;
-            opacity: 0.8;
-            filter: drop-shadow(0 4px 8px rgba(var(--primary-rgb), 0.15));
-            animation: gz-scale-tilt 3s ease-in-out infinite;
-        }
 
-        @keyframes gz-scale-tilt {
-            0%, 100% { transform: rotate(-5deg); }
-            50% { transform: rotate(5deg); }
-        }
+        /* gz-scale-tilt / gz-fill-grow sind entfallen: sie animierten das
+           Waagen-Icon und den Prognosebalken der alten Gleitzeit-Karte,
+           die es nicht mehr gibt. */
 
-        .gz-value-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            min-width: 0;
-        }
 
-        .gz-value-label {
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            letter-spacing: 0.02em;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
 
-        .gz-value-display {
-            font-size: clamp(1.4rem, 8.5cqi, 2.2rem);
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg,
-                var(--primary) 0%,
-                rgba(var(--primary-rgb), 0.7) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-family: 'JetBrains Mono', monospace;
-            text-shadow: 0 0 20px rgba(var(--primary-rgb), 0.2);
-            white-space: nowrap;
-            line-height: 1.1;
-        }
 
-        .gz-divider-modern {
-            height: 0.5px;
-            background: linear-gradient(90deg,
-                transparent 0%,
-                rgba(var(--primary-rgb), 0.15) 50%,
-                transparent 100%);
-            margin: 0.4rem 0;
-        }
 
-        .gz-forecast-section {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            padding: 0.75rem;
-            background: rgba(var(--primary-rgb), 0.03);
-            border: 1px solid rgba(var(--primary-rgb), 0.06);
-            border-radius: 10px;
-            position: relative;
-        }
 
-        .gz-forecast-section::after {
-            content: '';
-            position: absolute;
-            top: -1px;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg,
-                transparent 0%,
-                rgba(var(--primary-rgb), 0.3) 50%,
-                transparent 100%);
-        }
 
-        .gz-forecast-header {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.75rem;
-            min-width: 0;
-        }
 
-        .gz-forecast-icon {
-            font-size: 0.95rem;
-            flex-shrink: 0;
-        }
 
-        .gz-forecast-label {
-            font-weight: 600;
-            color: var(--text-main);
-            flex: 1;
-            min-width: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
 
-        .gz-forecast-timeframe {
-            font-size: 0.65rem;
-            font-weight: 700;
-            background: rgba(var(--primary-rgb), 0.12);
-            color: var(--primary);
-            padding: 2px 6px;
-            border-radius: 4px;
-            letter-spacing: 0.05em;
-            flex-shrink: 0;
-        }
 
-        .gz-forecast-value {
-            font-size: clamp(1rem, 5cqi, 1.2rem);
-            font-weight: 700;
-            color: var(--primary);
-            font-family: 'JetBrains Mono', monospace;
-            white-space: nowrap;
-        }
 
-        .gz-forecast-bar {
-            height: 4px;
-            background: rgba(var(--primary-rgb), 0.08);
-            border-radius: 2px;
-            overflow: hidden;
-            position: relative;
-        }
 
-        .gz-forecast-fill {
-            height: 100%;
-            background: linear-gradient(90deg,
-                var(--primary) 0%,
-                rgba(var(--primary-rgb), 0.6) 100%);
-            border-radius: 2px;
-            animation: gz-fill-grow 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.3);
-        }
 
-        @keyframes gz-fill-grow {
-            from { width: 0%; }
-        }
 
-        .gz-streak-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
-            min-width: 0;
-        }
 
-        .gz-streak-item {
-            padding: 0.7rem;
-            border-radius: 10px;
-            border: 1px solid rgba(var(--primary-rgb), 0.1);
-            background: rgba(var(--primary-rgb), 0.02);
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-            min-width: 0;
-        }
 
-        .gz-streak-item::before {
-            content: '';
-            position: absolute;
-            top: -1px;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg,
-                transparent 0%,
-                rgba(var(--primary-rgb), 0.2) 50%,
-                transparent 100%);
-        }
 
-        .gz-streak-item:hover {
-            border-color: rgba(var(--primary-rgb), 0.2);
-            background: rgba(var(--primary-rgb), 0.06);
-            transform: translateY(-2px);
-        }
 
-        .gz-streak-label {
-            font-size: 0.65rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            letter-spacing: 0.02em;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
 
-        .gz-streak-value {
-            font-size: clamp(1.05rem, 5.5cqi, 1.4rem);
-            font-weight: 900;
-            font-family: 'JetBrains Mono', monospace;
-            background: linear-gradient(135deg,
-                var(--primary) 0%,
-                rgba(var(--primary-rgb), 0.8) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1;
-        }
 
-        .gz-streak-subtext {
-            font-size: 0.6rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
 
-        /* ─── Container-basiert: passt sich der KARTEN-Breite an,
-              nicht der Viewport-Breite. Greift z.B. bei 1080p + Sidebar,
-              wenn die Karte ~310px wird und Texte sonst überlappen. ─── */
-        @container gz-card (max-width: 340px) {
-            .gz-main-section {
-                grid-template-columns: 1fr;
-                padding: 1rem;
-                gap: 0.75rem;
-            }
-            .gz-balance-visual {
-                order: -1;
-            }
-            .gz-scale-icon {
-                max-width: 64px;
-            }
-            .gz-value-wrapper {
-                align-items: flex-start;
-            }
-        }
-
-        @container gz-card (max-width: 260px) {
-            .gz-streak-section {
-                grid-template-columns: 1fr;
-                gap: 0.5rem;
-            }
-            .gz-streak-item {
-                display: grid;
-                grid-template-columns: minmax(0, 1fr) auto;
-                grid-template-rows: auto auto;
-                column-gap: 0.6rem;
-                row-gap: 0;
-                text-align: left;
-                padding: 0.55rem 0.75rem;
-                align-items: center;
-            }
-            .gz-streak-label {
-                grid-column: 1;
-                grid-row: 1 / span 2;
-                align-self: center;
-            }
-            .gz-streak-value {
-                grid-column: 2;
-                grid-row: 1;
-                text-align: right;
-            }
-            .gz-streak-subtext {
-                grid-column: 2;
-                grid-row: 2;
-                text-align: right;
-            }
-        }
-
-        /* ─── Mobile (Viewport-Fallback für sehr alte Browser ohne CQ) ─── */
-        @media (max-width: 640px) {
-            .gz-card-v2 {
-                padding: 1.25rem;
-                min-height: auto;
-            }
-
-            .gz-main-section {
-                grid-template-columns: 1fr;
-                padding: 1rem;
-                gap: 1rem;
-            }
-
-            .gz-balance-visual {
-                order: -1;
-            }
-
-            .gz-forecast-bar {
-                height: 5px;
-            }
-
-            .gz-streak-section {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* ─── Accessibility ─── */
-        @media (prefers-reduced-motion: reduce) {
-            .gz-card-v2:hover {
-                box-shadow: none;
-            }
-
-            .gz-scale-tilt,
-            .gz-fill-grow {
-                animation: none !important;
-            }
-        }
+        /* Die Container-Queries auf gz-card sind entfallen: die alte
+           Gleitzeit-Karte brauchte sie, weil ihre drei verschachtelten
+           Ebenen bei schmaler Karte uebereinanderliefen. Die neue Karte
+           hat eine Zeile pro Aussage und braucht keine. */
 
 
         /* ─── STATS CARD (Avg + Vacation) ────────────────────────────── */
@@ -808,42 +968,32 @@
         /* Icon-Container der Streak-Kacheln. Groesse hier, nicht per font-size —
            die SVGs erben die Textfarbe (currentColor), damit sie dem User-Akzent
            folgen. */
-        .gz-streak-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex: 0 0 17px;
-            width: 17px;
-            height: 17px;
-            color: var(--primary);
-        }
-        .gz-streak-icon svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        .gz-streak-icon--muted { color: var(--text-muted); }
 
-        /* Nur die Animation — Layout/Groesse kommt aus .gz-streak-icon. */
+        /* Nur die Animation — Layout/Groesse kommt aus .kpi-v2__streak-icon. */
         .streak-active {
             animation: streakPulse 3s ease-in-out infinite;
         }
 
 
         /* ─── COMMAND BAR ────────────────────────────────────────────── */
+        /* ─── WERKZEUGLEISTE ──────────────────────────────────────────
+           War eine Karte in voller Breite mit Rahmen, Flaeche und Schatten
+           — optisch also gleichrangig zu den KPI-Karten, obwohl es nur
+           Sprungziele sind. Jetzt eine ruhige Leiste ohne Kartenflaeche:
+           sie gehoert zur Seite, nicht zu den Daten. */
         .quick-actions {
             display: flex;
             align-items: center;
-            gap: 1px;
-            padding: 3px;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-default);
-            border-radius: 12px;
+            gap: 2px;
+            padding: 0;
+            background: none;
+            border: 0;
+            border-radius: 0;
             margin-bottom: 0;
             overflow-x: auto;
             overflow-y: hidden;
             scrollbar-width: none;
-            box-shadow: var(--shadow-sm);
+            box-shadow: none;
         }
         .quick-actions::-webkit-scrollbar { display: none; }
 
@@ -881,23 +1031,22 @@
         .quick-actions button[disabled] .cmd-label {
             text-decoration: line-through;
         }
+        /* Das Icon sass in einem eigenen gefuellten Kaestchen — ein Rahmen
+           im Knopf im (frueheren) Karten-Rahmen. Drei Ebenen fuer ein
+           12-px-Symbol. Es steht jetzt frei neben der Schrift. */
         .quick-actions button .cmd-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 22px;
-            height: 22px;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.04);
-            transition: background var(--dur-fast) var(--ease-out);
+            width: 16px;
+            height: 16px;
+            border-radius: 0;
+            background: none;
             flex-shrink: 0;
         }
-        [data-theme="light"] .quick-actions button .cmd-icon {
-            background: rgba(0, 0, 0, 0.04);
-        }
         .quick-actions button .cmd-icon svg {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
             stroke: currentColor;
             stroke-width: 2;
             stroke-linecap: round;
@@ -1124,18 +1273,22 @@
             }
         }
 
+        /* Drei Kennzahlen, links ausgerichtet statt ueber die volle Breite
+           gestreckt: sie gehoeren zur Ueberschrift des Diagramms, nicht zu
+           einer eigenen Tabelle. Sechs zentrierte Spalten liessen sie wie
+           ein Terminal-Ticker aussehen. */
         .trend-stats-bar {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 4px;
-            padding: 10px 0 8px;
-            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.75rem;
+            padding: 2px 0 12px;
+            margin-bottom: 12px;
             border-bottom: 1px solid var(--border-subtle);
         }
         .trend-stat {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
             gap: 3px;
         }
         .trend-stat-label {
@@ -1303,163 +1456,7 @@
             padding-bottom: 0;
         }
 
-        .donut-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 150px;
-            margin: 0.5rem 0;
-            cursor: pointer;
-        }
 
-        .donut-svg {
-            width: 140px !important;
-            height: 140px !important;
-            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.20));
-            transition: all var(--dur-normal) var(--ease-out);
-        }
-
-        .donut-svg:hover {
-            filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.35));
-        }
-
-        .donut-center-info {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        .center-value {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--primary);
-            font-family: var(--font-mono);
-            letter-spacing: -0.05em;
-            line-height: 1;
-            text-shadow: 0 0 12px rgba(var(--primary-rgb), 0.12);
-        }
-
-        .center-label {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-weight: 600;
-            margin-top: 4px;
-        }
-
-        .center-unit {
-            font-size: 0.6rem;
-            color: var(--text-muted);
-            opacity: 0.65;
-            margin-top: 2px;
-        }
-
-        /* Modern Legend Cards Grid */
-        .donut-legend-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 8px;
-            margin-top: 0.75rem;
-            padding-top: 0.75rem;
-            border-top: 1px solid var(--border-subtle);
-        }
-
-        .legend-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--border-subtle);
-            border-radius: 10px;
-            transition: all var(--dur-normal) var(--ease-out);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-            text-align: center;
-        }
-
-        .legend-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
-            opacity: 0;
-            transition: opacity var(--dur-normal);
-        }
-
-        .legend-card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: var(--border-interactive);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .legend-card:hover::before {
-            opacity: 1;
-        }
-
-        [data-theme="light"] .legend-card {
-            background: rgba(0, 0, 0, 0.02);
-            border-color: var(--border-subtle);
-        }
-
-        [data-theme="light"] .legend-card:hover {
-            background: rgba(0, 0, 0, 0.06);
-            border-color: var(--border-interactive);
-        }
-
-        .legend-card__accent {
-            width: 3px;
-            height: 20px;
-            border-radius: 2px;
-            flex-shrink: 0;
-            transition: all var(--dur-normal) var(--ease-out);
-        }
-
-        .legend-card:hover .legend-card__accent {
-            height: 24px;
-            box-shadow: 0 0 8px currentColor;
-        }
-
-        .legend-card__content {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-        }
-
-        .legend-card__label {
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-
-        .legend-card__value {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--text-main);
-            font-family: var(--font-mono);
-            letter-spacing: -0.02em;
-            line-height: 1;
-        }
-
-        .legend-card__percent {
-            font-size: 0.58rem;
-            color: var(--text-muted);
-            margin-top: 1px;
-            font-family: var(--font-mono);
-        }
 
         /* Donut Tooltip */
         .donut-tooltip {
@@ -1494,36 +1491,14 @@
             pointer-events: none;
         }
 
-        /* Responsive - Stack legend on mobile */
+        /* Die Verteilung ist auf schmalen Schirmen unveraendert lesbar:
+           ein Balken ueber die volle Breite und darunter eine Liste
+           brauchen keine eigene Umbruchregel. Nur die Kopfzahl wird
+           etwas kleiner. */
         @media (max-width: 768px) {
-            .donut-wrapper {
-                height: 130px;
-            }
-
-            .donut-svg {
-                width: 120px !important;
-                height: 120px !important;
-            }
-
-            .center-value {
-                font-size: 1.5rem;
-            }
-
-            .donut-legend-grid {
-                grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-                gap: 6px;
-            }
-
-            .legend-card {
-                padding: 8px;
-            }
+            .donut-center-info .center-value { font-size: 1.5rem; }
         }
 
-        @media (max-width: 500px) {
-            .donut-legend-grid {
-                grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-            }
-        }
 
         /* OLD STYLES - Keep for backwards compatibility */
         .donut-container {
@@ -2125,78 +2100,155 @@
 
 
         /* ─── TIMER BOX ──────────────────────────────────────────────── */
+        /* ═══════════════════════════════════════════════════════════════
+           TIMER — LEISTE STATT SPALTE
+           Ein Grid mit fester Spur fuer die Uhr: dadurch springt die
+           Leiste nicht, wenn aus 00:09:59 ein 00:10:00 wird, und die
+           Knoepfe bleiben an derselben Stelle stehen.
+           ═══════════════════════════════════════════════════════════════ */
         .timer-box {
+            position: relative;
+            display: grid;
+            /* Punkt · Beschriftung · Uhr · Verlaufsband · Knoepfe
+               (der Hilfe-Knopf steht absolut und zaehlt nicht mit) */
+            grid-template-columns: auto auto auto 1fr auto;
+            align-items: center;
+            gap: 0.875rem;
             background: var(--bg-inset);
             border: 1px solid var(--border-default);
-            border-radius: 14px;
-            padding: 20px 18px;
+            border-radius: 12px;
+            padding: 0.75rem 2.25rem 0.75rem 1rem;
+            margin-bottom: 1.25rem;
+            transition: border-color var(--dur-normal) var(--ease-out);
+        }
+        .timer-box.timer-active { border-color: rgba(var(--primary-rgb), 0.35); }
+
+        /* Laufender Zustand: ein Punkt, der pulsiert. Zustand gehoert an
+           ein Symbol, nicht an den Messwert — die Uhr selbst soll ruhig
+           bleiben, man liest sie ja ab. */
+        .timer-box__pulse {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--role-neutral);
+            flex-shrink: 0;
+            transition: background-color var(--dur-normal) var(--ease-out);
+        }
+        .timer-active .timer-box__pulse {
+            background: var(--role-pos);
+            animation: timerPulse 2s ease-in-out infinite;
+        }
+        @keyframes timerPulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); }
+            50%      { opacity: 0.75; box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .timer-active .timer-box__pulse { animation: none; }
+        }
+
+        .timer-box__meta {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-        }
-        .timer-box__header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            gap: 1px;
+            min-width: 0;
         }
         .timer-box__label {
             color: var(--text-muted);
-            font-size: 0.64rem;
+            font-size: var(--eyebrow-size);
             text-transform: uppercase;
-            letter-spacing: 0.10em;
-            font-weight: 700;
-            font-family: var(--font-mono);
-        }
-        .timer-display {
-            font-size: 2.2rem;
-            font-weight: 700;
-            font-family: var(--font-mono);
-            color: var(--text-main);
-            letter-spacing: -0.02em;
-            line-height: 1;
-            transition: color var(--dur-normal), text-shadow var(--dur-normal);
-        }
-        .timer-active .timer-display {
-            color: var(--primary);
-            text-shadow: 0 0 16px rgba(var(--primary-rgb), 0.28);
-        }
-        .timer-log {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            letter-spacing: var(--eyebrow-tracking);
+            font-weight: 600;
+            white-space: nowrap;
         }
         .timer-log-status {
-            font-size: 0.62rem;
+            font-size: 0.625rem;
             text-transform: uppercase;
-            letter-spacing: 0.10em;
+            letter-spacing: 0.08em;
             color: var(--text-muted);
-            font-weight: 700;
-            font-family: var(--font-mono);
-            flex-shrink: 0;
+            font-weight: 600;
+            opacity: 0.7;
         }
+
+        .timer-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1;
+            justify-self: start;
+            /* Feste Spur: sonst wandert alles rechts davon im Sekundentakt */
+            min-width: 7.5ch;
+        }
+        .timer-active .timer-display { color: var(--role-pos); }
+
         .timer-log-bar {
             display: flex;
             gap: 2px;
-            flex: 1;
+            justify-self: stretch;
+            min-width: 0;
+            height: 6px;
+            align-items: center;
         }
+
         .btn-icon-row {
             display: flex;
-            gap: 6px;
+            gap: 4px;
+            justify-self: end;
         }
-        .timer-btn--start { color: var(--success) !important; }
-        .timer-btn--pause { color: #f59e0b !important; }
-        .timer-btn--stop  { color: var(--danger)  !important; }
+        /* Die drei Knoepfe hiessen "▶ Start", "II Pause", "■ Stop" —
+           Satzzeichen als Symbolersatz. Jetzt echte SVG-Icons. */
         .timer-btn {
-            flex: 1;
-            font-size: 0.78rem !important;
-            font-weight: 600 !important;
-            padding: 8px 10px !important;
-            border-radius: 8px !important;
-            border: 1px solid var(--border-default) !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.4rem 0.7rem;
+            font: inherit;
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            background: transparent;
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color var(--dur-fast) var(--ease-out),
+                        border-color var(--dur-fast) var(--ease-out),
+                        background-color var(--dur-fast) var(--ease-out);
         }
+        .timer-btn svg { width: 11px; height: 11px; flex-shrink: 0; }
         .timer-btn:hover {
-            background: rgba(255, 255, 255, 0.05) !important;
-            border-color: var(--border-interactive) !important;
+            color: var(--text-main);
+            background: var(--bg-surface-hover);
+            border-color: var(--border-interactive);
+        }
+        .timer-btn:active { transform: translateY(1px); }
+        .timer-btn:focus-visible {
+            outline: 2px solid var(--border-focus);
+            outline-offset: 2px;
+        }
+        /* Farbe nur im Icon, nicht im ganzen Knopf: drei komplett
+           eingefaerbte Knoepfe nebeneinander lasen sich wie drei
+           Warnungen. */
+        .timer-btn--start svg { color: var(--role-pos); }
+        .timer-btn--pause svg { color: #f59e0b; }
+        .timer-btn--stop  svg { color: var(--role-neg); }
+
+        .timer-box__help {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+        }
+
+        @media (max-width: 860px) {
+            .timer-box {
+                grid-template-columns: auto 1fr auto;
+                gap: 0.625rem 0.75rem;
+                padding: 0.75rem 1rem;
+            }
+            .timer-display     { grid-column: 3; justify-self: end; }
+            .timer-log-bar     { grid-column: 1 / -1; }
+            .btn-icon-row      { grid-column: 1 / -1; justify-self: stretch; }
+            .timer-btn         { flex: 1; justify-content: center; }
+            .timer-box__help   { display: none; }
         }
 
 
@@ -3018,16 +3070,6 @@
             to { opacity: 1; }
         }
 
-        @keyframes labelFadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes cardSlideUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         /* Stacked Bar Segments - Smooth entrance with flex transition */
         #donutWork { animation: barSegmentSlide 1.1s ease-out 0ms forwards; }
         #donutSchool { animation: barSegmentSlide 1.1s ease-out 100ms forwards; }
@@ -3039,71 +3081,10 @@
             transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
-        .donut-segment:hover {
-            filter: brightness(1.2) drop-shadow(0 4px 14px rgba(0,0,0,0.25));
-            transform: scaleY(1.2);
-            z-index: 10;
-        }
 
-        .segment-label {
-            animation: labelFadeIn 0.6s ease-out 400ms forwards;
-            opacity: 0;
-            transition: all 0.2s ease;
-            font-weight: 700;
-            /* Dunkles Pill-Backdrop, damit weißer Text auf jedem Segment
-               (Purple/Grün/Orange/Rot) die WCAG-AA-Kontrastschwelle reißt. */
-            background: rgba(0, 0, 0, 0.55);
-            color: #ffffff !important;
-            padding: 2px 6px;
-            border-radius: 4px;
-            -webkit-backdrop-filter: blur(2px);
-            backdrop-filter: blur(2px);
-        }
 
-        .donut-segment:hover .segment-label {
-            opacity: 1;
-            font-size: 0.7rem;
-            background: rgba(0, 0, 0, 0.7);
-        }
 
-        /* Legend Cards - Staggered entrance */
-        .legend-card {
-            animation: cardSlideUp var(--dur-normal) var(--ease-out);
-            transition: all 0.3s var(--ease-out);
-        }
 
-        .legend-card:nth-child(1) { animation-delay: 480ms; }
-        .legend-card:nth-child(2) { animation-delay: 520ms; }
-        .legend-card:nth-child(3) { animation-delay: 560ms; }
-        .legend-card:nth-child(4) { animation-delay: 600ms; }
-        .legend-card:nth-child(5) { animation-delay: 640ms; }
-
-        .legend-card:hover {
-            transform: translateY(-3px);
-            background: rgba(var(--primary-rgb), 0.12);
-            border-color: rgba(var(--primary-rgb), 0.3);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        }
-
-        /* Center Info Animation */
-        .donut-center-info {
-            animation: fadeInScale 0.6s var(--ease-out) 0ms forwards;
-        }
-
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .center-value {
-            animation: counterUp 0.8s var(--ease-out) 200ms forwards;
-            opacity: 0;
-        }
-
-        @keyframes counterUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
 
         /* Effect utility classes */
         .effect-shake         { animation: shake 0.4s ease-in-out; }
@@ -3133,17 +3114,37 @@
 
 
         /* ─── RESPONSIVE ─────────────────────────────────────────────── */
+
+        /* KPI-Zeile: 4 → 2 → 1 Spalte. Die Gleitzeit-Karte behaelt ihren
+           Vorrang, solange zwei Spalten da sind, und gibt ihn erst in der
+           Einspalten-Ansicht auf.
+           🔴 Der Umschaltpunkt fuer den Span MUSS zum Umschaltpunkt der
+              Spaltenzahl passen — und der kommt unter 768 px NICHT aus
+              dieser Datei, sondern aus mobile-nav.css (max-width: 767px,
+              grid-template-columns: 1fr !important; laedt spaeter).
+              Bleibt der Span auf 2, waehrend das Raster nur eine Spalte
+              hat, erzeugt Grid eine implizite zweite Spalte: die Karten
+              stehen wieder zu zweit nebeneinander, in ungleicher Breite,
+              und keine Regel in dieser Datei erklaert warum. */
+        @media (max-width: 1180px) {
+            .kpi-grid { grid-template-columns: 1fr 1fr; }
+            .kpi-v2--hero { grid-column: span 2; }
+        }
+        @media (max-width: 767px) {
+            .kpi-v2--hero { grid-column: span 1; }
+        }
+
         @media (max-width: 768px) {
             .kpi-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 0.75rem;
             }
+            .kpi-v2 { min-height: 150px; padding: 1rem; }
             .charts-row {
                 grid-template-columns: 1fr;
             }
             .trend-stats-bar {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 3px;
+                gap: 1.25rem;
             }
             .entry-form__row,
             .entry-form__actions {
@@ -3166,6 +3167,7 @@
             .kpi-grid {
                 grid-template-columns: 1fr;
             }
+            .kpi-v2--hero { grid-column: span 1; }
             /* Zeitraum-Pfeil auf kleinen Phones ausblenden — Zeit-Inputs bleiben nebeneinander. */
             .entry-form__time-sep { display: none; }
             .entry-form__time-row { gap: 6px; }
@@ -3181,35 +3183,4 @@
             .donut-container {
                 height: 140px;
             }
-        }
-
-        /* ═══ GLEITZEIT CARD V2 — FINAL NUCLEAR OVERRIDE ═══ */
-        .card.gz-card-v2,
-        div.card.gz-card-v2,
-        .kpi-grid .card.gz-card-v2 {
-            position: relative !important;
-            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.08) 0%, rgba(var(--primary-rgb), 0.04) 50%, rgba(var(--primary-rgb), 0.02) 100%) !important;
-            border: 1px solid rgba(var(--primary-rgb), 0.12) !important;
-            border-radius: 16px !important;
-            overflow: hidden !important;
-            padding: 1.25rem !important;
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 0.6rem !important;
-            backdrop-filter: blur(10px) !important;
-            -webkit-backdrop-filter: blur(10px) !important;
-            box-shadow: none !important;
-            margin-bottom: 0 !important;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            min-height: auto !important;
-            container-type: inline-size;
-            container-name: gz-card;
-        }
-
-        .card.gz-card-v2:hover,
-        div.card.gz-card-v2:hover,
-        .kpi-grid .card.gz-card-v2:hover {
-            border-color: rgba(var(--primary-rgb), 0.25) !important;
-            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.12) 0%, rgba(var(--primary-rgb), 0.06) 50%, rgba(var(--primary-rgb), 0.03) 100%) !important;
-            box-shadow: 0 12px 48px rgba(var(--primary-rgb), 0.12) !important;
         }

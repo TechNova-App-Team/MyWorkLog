@@ -292,170 +292,59 @@
     // WIDGET MANAGER SYSTEM
     // ============================================
 
-    // Widget Library
+    // ═══════════════════════════════════════════════════════════════════
+    // WIDGET-BIBLIOTHEK
+    //
+    // 🔴 Die fuenf Dashboard-Widgets haben hier BEWUSST kein `html`.
+    //    Ihr Markup steht ausschliesslich in components/dashboard/dashboard.html
+    //    und wird beim Laden von captureAllWidgetMarkup() (widget-system.js)
+    //    aus dem DOM uebernommen.
+    //
+    //    Vorher lag hier eine handgepflegte Zweitfassung. Die driftete ab,
+    //    ohne dass es auffiel: im Browser sah alles richtig aus, aber wer
+    //    ein Widget entfernte und wieder hinzufuegte, bekam die alte
+    //    Fassung zurueck. Trag hier kein Markup nach — es wuerde beim
+    //    naechsten Laden ohnehin ueberschrieben und nur wieder abdriften.
+    //
+    //    Die Zusatz-Widgets weiter unten (mood-tracker, productivity-score,
+    //    quick-templates) stehen NICHT in dashboard.html; fuer sie ist diese
+    //    Datei die Quelle, deshalb tragen nur sie ihr Markup selbst.
+    // ═══════════════════════════════════════════════════════════════════
     const widgetLibrary = {
         'kpi-cards': {
             name: 'KPI Karten',
-            description: 'Wochen-, Monats- und Gleitzeit-Übersicht',
-            icon: '📊',
+            description: 'Woche, Monat, Gleitzeit und Urlaub',
             defaultEnabled: true,
-            html: `
-                <div class="kpi-grid" id="dashboardGrid">
-                    <div class="card kpi-card">
-                        <div class="progress-ring">
-                            <svg width="100" height="100">
-                                <circle class="ring-bg" cx="50" cy="50" r="44"></circle>
-                                <circle id="ringWeek" class="ring-val" cx="50" cy="50" r="44" stroke-dasharray="276" stroke-dashoffset="276"></circle>
-                            </svg>
-                            <div class="ring-center">
-                                <div class="ring-num" id="valWeek">0</div>
-                                <div class="ring-lbl">Woche</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card kpi-card">
-                        <div class="progress-ring">
-                            <svg width="100" height="100">
-                                <circle class="ring-bg" cx="50" cy="50" r="44"></circle>
-                                <circle id="ringMonth" class="ring-val" cx="50" cy="50" r="44" stroke-dasharray="276" stroke-dashoffset="276"></circle>
-                            </svg>
-                            <div class="ring-center">
-                                <div class="ring-num" id="valMonth">0</div>
-                                <div class="ring-lbl">Monat</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
-                        <div class="ring-lbl">GLEITZEIT KONTO</div>
-                        <div style="font-size:2.8rem; font-weight:800; color:var(--primary); margin:10px 0; font-family:var(--font-mono); letter-spacing:-2px;" id="valTotal">+0.0h</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">Prognose: <span id="valProjected" style="color:var(--text-main)">0h</span></div>
-                        <div style="margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:6px; font-size:0.8rem;">
-                            <span id="streakEmoji" class="gz-streak-icon streak-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span>
-                            <span style="color:var(--text-muted);">Streak:</span>
-                            <span id="streakCount" style="color:var(--success); font-weight:800;">0</span>
-                            <span style="font-size:0.7rem; color:var(--text-muted);">Best: <span id="streakBest">0</span></span>
-                        </div>
-                    </div>
-                    <div class="card" style="display:flex; flex-direction:column; justify-content:center;">
-                        <div class="ring-lbl">Ø TÄGLICH</div>
-                        <div style="font-size:2rem; font-weight:800; color:var(--text-main); margin:5px 0; font-family:var(--font-mono);" id="valAvg">0.0h</div>
-                        <div style="margin-top:auto; width:100%;">
-                            <div class="ring-lbl" style="margin-bottom:5px; display:flex; justify-content:space-between;">
-                                <span>Urlaubstage</span>
-                                <span id="valVacationUsed">0 / 30</span>
-                            </div>
-                            <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:2px;"><div id="vacationProgressBar" style="width:0%; background:var(--success); height:100%;"></div></div>
-                        </div>
-                    </div>
-                </div>
-            `
+            html: ``
         },
         'quick-actions': {
             name: 'Schnellaktionen',
             description: 'Direkter Zugriff auf häufige Aktionen',
-            icon: '⚡',
             defaultEnabled: true,
-            html: `
-                <div class="quick-actions" id="cmdBar">
-                    <button onclick="openSaldoAdjust()">
-                        <span class="cmd-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M3 6h18M3 18h18"/></svg></span>
-                        <span class="cmd-label">Saldo</span>
-                    </button>
-                    <div class="cmd-sep"></div>
-                    <button onclick="checkAndBookHolidays()" id="cmdHolidayCheck">
-                        <span class="cmd-icon"><svg viewBox="0 0 24 24"><path d="M14.5 2c1.4 0 2.5 1.1 2.5 2.5S15.9 7 14.5 7 12 5.9 12 4.5 13.1 2 14.5 2z"/><path d="M18 14l-4-4-4 4"/><path d="M6 22V9"/><path d="M18 22V9"/><path d="M2 22h20"/></svg></span>
-                        <span class="cmd-label">Feiertage</span>
-                    </button>
-                    <button class="nfc-cmd-btn" disabled>
-                        <span class="cmd-icon"><svg viewBox="0 0 24 24"><path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 018 4"/><path d="M5 19.5C5.5 18 6 15 6 12"/><path d="M21 12c0 1.5-.5 3-1.5 4.5"/><path d="M12 2c2 2 3 5 3 10"/><path d="M12 2c-2 2-3 5-3 10"/><path d="M18 22l4-4-4-4"/><path d="M22 18h-7"/></svg></span>
-                        <span class="cmd-label">NFC</span>
-                        <span class="nfc-new-badge">NEU</span>
-                    </button>
-                    <button onclick="window.location.href='/berichtsheft/'">
-                        <span class="cmd-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
-                        <span class="cmd-label">Berichtsheft</span>
-                    </button>
-                    <div class="cmd-sep"></div>
-                    <button onclick="openSettings()">
-                        <span class="cmd-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
-                        <span class="cmd-label">Settings</span>
-                    </button>
-                </div>
-            `
+            html: ``
         },
 
         'charts': {
             name: 'Diagramme',
             description: 'Saldo-Trend und Arbeitszeit-Verteilung',
-            icon: '📈',
             defaultEnabled: true,
-            html: `
-                <div class="charts-row">
-                    <div class="card">
-                        <div class="chart-header">
-                            <div>
-                                <div class="chart-title">Saldo Trend</div>
-                                <div class="chart-sub">Entwicklung der letzten 30 Tage</div>
-                            </div>
-                        </div>
-                        <div class="trend-container" id="trendChart"></div>
-                    </div>
-                    <div class="card">
-                        <div class="chart-header">
-                            <div class="chart-title">Verteilung</div>
-                        </div>
-                        <div class="donut-container">
-                            <svg width="150" height="150" viewBox="0 0 100 100" style="transform: rotate(-90deg);">
-                                <circle cx="50" cy="50" r="40" fill="transparent" stroke="rgba(255,255,255,0.05)" stroke-width="12"></circle>
-                                <circle id="donutSick" cx="50" cy="50" r="40" fill="transparent" stroke="var(--danger)" stroke-width="12" stroke-dasharray="0 251"></circle>
-                                <circle id="donutVac" cx="50" cy="50" r="40" fill="transparent" stroke="var(--success)" stroke-width="12" stroke-dasharray="0 251"></circle>
-                                <circle id="donutSchool" cx="50" cy="50" r="40" fill="transparent" stroke="var(--school)" stroke-width="12" stroke-dasharray="0 251"></circle>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-            `
+            html: ``
         },
         'entry-form': {
             name: 'Eingabeformular',
-            description: 'Schnelle Zeiteingabe direkt im Dashboard',
-            icon: '✏️',
+            description: 'Zeiterfassung und Timer',
             defaultEnabled: false,
-            html: `
-                <div class="card" style="padding:1.5rem;">
-                    <h4 style="margin:0 0 1rem 0; color:var(--primary); font-size:1rem;">⏱️ Schnelle Eingabe</h4>
-                    <form onsubmit="quickAddEntry(event)" style="display:flex; gap:12px; align-items:flex-end;">
-                        <div style="flex:1;">
-                            <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Projekt</label>
-                            <input type="text" id="quickProject" class="glass-input" placeholder="Projekt..." style="width:100%;" required>
-                        </div>
-                        <div style="flex:1;">
-                            <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:4px;">Stunden</label>
-                            <input type="number" id="quickHours" class="glass-input" placeholder="0.0" step="0.25" min="0" style="width:100%;" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="padding:10px 16px;">➕ Hinzufügen</button>
-                    </form>
-                </div>
-            `
+            html: ``
         },
         'last-activities': {
             name: 'Letzte Aktivitäten',
             description: 'Übersicht der letzten Arbeitszeiteinträge',
-            icon: '📋',
             defaultEnabled: false,
-            html: `
-                <div class="card" style="padding:1.5rem;">
-                    <h4 style="margin:0 0 1rem 0; color:var(--primary); font-size:1rem;">📋 Letzte Aktivitäten</h4>
-                    <div id="lastActivitiesList" style="max-height:200px; overflow-y:auto;">
-                        <!-- Wird per JS gefüllt -->
-                    </div>
-                </div>
-            `
+            html: ``
         },
         'mood-tracker': {
             name: 'Stimmungs-Tracker',
             description: 'Verfolge deine Stimmung nach Arbeitstagen',
-            icon: '😊',
             defaultEnabled: false,
             html: `
                 <div class="card" style="padding:1.5rem;">
@@ -470,7 +359,6 @@
         'productivity-score': {
             name: 'Produktivitäts-Score',
             description: 'Persönlicher Produktivitäts-Score basierend auf Mustern',
-            icon: '🎯',
             defaultEnabled: false,
             html: `
                 <div class="card" style="padding:1.5rem; background:linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(245,158,11,0.05) 100%); border:1px solid rgba(245,158,11,0.2);">
@@ -485,7 +373,6 @@
         'quick-templates': {
             name: 'Schnelleintrag',
             description: '⚡ 1-Klick Vorlagen für Arbeitstag, Schultag, etc.',
-            icon: '⚡',
             defaultEnabled: true,
             html: `
                 <div class="card" style="padding:1rem;">
@@ -729,24 +616,6 @@
         renderNewWidgetManager();
     }
 
-    function getCurrentDashboardWidgets() {
-        const dashboardContainer = document.getElementById('dashboardContainer');
-        const currentWidgets = [];
-        if (dashboardContainer) {
-            const widgetElements = dashboardContainer.querySelectorAll('.dashboard-item');
-            widgetElements.forEach(el => {
-                const widgetId = el.getAttribute('data-item-id');
-                if (widgetId && widgetLibrary[widgetId]) {
-                    currentWidgets.push({
-                        id: widgetId,
-                        name: widgetLibrary[widgetId].name,
-                        icon: widgetLibrary[widgetId].icon || '📦'
-                    });
-                }
-            });
-        }
-        return currentWidgets;
-    }
 
     // Alias for updateDashboard calls
     function updateDashboard() {

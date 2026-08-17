@@ -1,34 +1,101 @@
 // ═══ CORE: CHARTS ═══
     // --- CHARTS & PERFORMANCE ---
 
-    function setRadial(ringId, txtId, val) {
-        const el = document.getElementById(ringId);
-        const txt = document.getElementById(txtId);
-
-        if (!el) {
-            console.warn('setRadial: element not found for', ringId);
-            return;
+    // ─── KPI-WERT MIT EINHEIT ────────────────────────────────────────
+    // Die Hauptwerte stehen als `<div>34,2<span class="kpi-v2__unit">h</span></div>`
+    // im HTML. Ein schlichtes `el.innerText = wert` wuerde das <span>
+    // mitloeschen — danach steht ueberall eine nackte Zahl ohne Einheit,
+    // und es faellt niemandem auf, weil der erste Frame noch stimmt.
+    // Deshalb: Zahl als Textknoten setzen, Einheit als Knoten anhaengen.
+    function setKpiValue(el, numStr, unit, sign) {
+        if (!el) return;
+        el.textContent = numStr;
+        if (unit) {
+            const u = document.createElement('span');
+            u.className = 'kpi-v2__unit';
+            u.textContent = unit;
+            el.appendChild(u);
         }
+        el.classList.toggle('is-pos', sign > 0);
+        el.classList.toggle('is-neg', sign < 0);
+    }
 
-        if (!txt) {
-            console.warn('setRadial: text element not found for', txtId);
-        }
-
-        let pct = 0.5 + (val / 40);
-        if (pct > 1) pct = 1; if (pct < 0) pct = 0;
-        const offset = 276 - (pct * 276);
-
-        try {
-            el.style.strokeDashoffset = offset;
-            el.style.stroke = (val < 0) ? 'var(--danger)' : 'var(--primary)';
-        } catch (e) {
-            console.warn('setRadial: failed to set style for', ringId, e);
-        }
+    // ─── ABWEICHUNGSBALKEN ───────────────────────────────────────────
+    // Loest den frueheren Ring ab. Der rechnete `pct = 0.5 + val/40`:
+    // ein SALDO auf einem Fortschrittsbogen, bei dem 0 h halb voll
+    // aussah und "voll" +20 h Ueberstunden bedeutete — also eher eine
+    // Warnung als ein Erfolg. Die Skala stand nirgends.
+    //
+    // Hier waechst der Balken aus einer sichtbaren Nulllinie heraus, die
+    // Enden sind beziffert, und die Skala kommt aus den Einstellungen
+    // des Nutzers statt aus einer festen 40.
+    //
+    //   barId  Container mit .devbar__fill und [data-dev-min|max]
+    //   valId  Element fuer den Zahlwert (mit Einheiten-<span>)
+    //   val    Saldo in Stunden (Vorzeichen ist die Aussage)
+    //   scale  Betrag, der einem vollen Ausschlag entspricht
+    function setDeviation(barId, valId, val, scale, decimals) {
+        const bar = document.getElementById(barId);
+        const txt = document.getElementById(valId);
+        const dec = (typeof decimals === 'number') ? decimals : 1;
 
         if (txt) {
-            const v = (typeof roundHours === 'function') ? roundHours(val, 1) : val;
-            txt.innerText = (v >= 0 ? '+' : '') + v.toFixed(1) + 'h';
+            const v = (typeof roundHours === 'function') ? roundHours(val, dec) : val;
+            const nf = new Intl.NumberFormat(
+                (typeof mwlLocale === 'function') ? mwlLocale() : 'de-DE',
+                { minimumFractionDigits: dec, maximumFractionDigits: dec }
+            );
+            // Vorzeichen selbst setzen: Intl liefert kein fuehrendes "+".
+            setKpiValue(txt, (v >= 0 ? '+' : '−') + nf.format(Math.abs(v)), 'h', v === 0 ? 0 : (v > 0 ? 1 : -1));
         }
+
+        if (!bar) return;
+        const fill = bar.querySelector('.devbar__fill');
+        const lo   = bar.querySelector('[data-dev-min]');
+        const hi   = bar.querySelector('[data-dev-max]');
+        const S    = Math.max(Math.abs(scale) || 0, 0.5); // nie durch 0 teilen
+
+        // Halbe Spur = voller Ausschlag in eine Richtung.
+        const ratio   = Math.max(-1, Math.min(1, val / S));
+        const clamped = Math.abs(val) > S;
+        const halfPct = Math.abs(ratio) * 50;
+
+        bar.setAttribute('data-sign', val > 0 ? 'pos' : (val < 0 ? 'neg' : 'zero'));
+        if (fill) {
+            fill.style.left  = (val >= 0 ? 50 : 50 - halfPct) + '%';
+            fill.style.width = Math.max(halfPct, val === 0 ? 0 : 1.5) + '%';
+            fill.classList.toggle('is-clamped', clamped);
+        }
+
+        const s = Math.round(S);
+        if (lo) lo.textContent = '−' + s + ' h';
+        if (hi) hi.textContent = '+' + s + ' h';
+        bar.title = clamped
+            ? 'Wert liegt außerhalb der Skala von ±' + s + ' h'
+            : 'Skala ±' + s + ' h';
+    }
+
+    // Wochensoll aus den Einstellungen — nie eine feste Zahl, sonst
+    // rechnet ein Teilzeit-Azubi gegen fremde Vorgaben.
+    function weeklyTargetHours() {
+        if (typeof data === 'undefined' || !data || !data.settings) return 40;
+        const h = data.settings.hours;
+        if (!Array.isArray(h)) return 40;
+        const sum = h.reduce((a, b) => a + (parseFloat(b) || 0), 0);
+        return sum > 0 ? sum : 40;
+    }
+
+    // Zielpunkt fuer alle "jetzt erfassen"-Aufforderungen der leeren
+    // Zustaende. Scrollt zum Formular und setzt den Fokus auf das erste
+    // Feld, damit die Tastatur-Reise dort weitergeht, wo der Klick war.
+    function focusEntryForm() {
+        const form = document.querySelector('[data-item-id="entry-form"]') ||
+                     document.querySelector('.entry-form');
+        if (!form) return;
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        form.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+        const first = document.getElementById('inpDate');
+        if (first) setTimeout(() => { try { first.focus({ preventScroll: true }); } catch (e) {} }, reduce ? 0 : 380);
     }
 
     function getRelativeTime(dateStr) {
@@ -322,9 +389,41 @@
             window._trendDataFull = dataPoints;
         }
         
-        if(dataPoints.length < 2) { 
-            c.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; color:#555;">Noch keine Daten</div>'; 
-            return; 
+        // ─── LEERER ZUSTAND ──────────────────────────────────────────
+        // Vorher stand hier ein grauer Satz in der Mitte einer 300 px
+        // hohen Leerflaeche. Ein leeres Diagramm ist die Stelle, an der
+        // am meisten Platz und die geringste Ablenkung herrscht — es
+        // sagt jetzt, was es zeigen WIRD und wie man dahin kommt.
+        // Die Kennzahlenleiste zeigt sonst drei Gedankenstriche ueber
+        // einem leeren Diagramm — eine Tabelle ohne Inhalt, die den
+        // leeren Zustand nur unruhiger macht.
+        const statsBar = document.getElementById('trendStatsBar');
+        if (statsBar) statsBar.style.display = dataPoints.length < 2 ? 'none' : '';
+
+        if (dataPoints.length < 2) {
+            const en = document.documentElement.lang === 'en';
+            const braucht = dataPoints.length === 1;
+            c.innerHTML =
+                '<div class="chart-empty">' +
+                  '<svg class="chart-empty__art" viewBox="0 0 120 48" fill="none" aria-hidden="true">' +
+                    '<path d="M2 40 L26 30 L50 34 L74 18 L98 22 L118 8" stroke="currentColor" stroke-width="2" ' +
+                      'stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 6" opacity="0.45"/>' +
+                    '<circle cx="118" cy="8" r="3.5" fill="currentColor" opacity="0.6"/>' +
+                  '</svg>' +
+                  '<p class="chart-empty__title">' +
+                    (braucht
+                      ? (en ? 'One more entry and the curve starts' : 'Noch ein Eintrag, dann beginnt die Kurve')
+                      : (en ? 'Your flexitime balance over time' : 'Dein Gleitzeit-Saldo im Verlauf')) +
+                  '</p>' +
+                  '<p class="chart-empty__text">' +
+                    (en ? 'Two booked days are enough to draw the first line.'
+                        : 'Zwei erfasste Tage genügen für die erste Linie.') +
+                  '</p>' +
+                  '<button type="button" class="chart-empty__btn" onclick="focusEntryForm()">' +
+                    (en ? 'Record a day' : 'Tag erfassen') +
+                  '</button>' +
+                '</div>';
+            return;
         }
         
         // Lade oder nutze Default-Style
@@ -363,10 +462,8 @@
         
         // ============ STATS BAR ============
         if (isRichData && elementId === 'trendChart') {
-            const current = vals[vals.length - 1];
             const highest = max;
             const lowest = min;
-            const avgDaily = diffs.length > 0 ? diffs.reduce((s,v) => s+v, 0) / diffs.length : 0;
             
             // Icon-Helper: Lucide-Style SVG statt Emoji (farbcodiert)
             const TREND_C = { up:'#10b981', down:'#ef4444', flat:'#94a3b8', low:'#10b981', mid:'#f59e0b', high:'#ef4444' };
@@ -394,16 +491,12 @@
                 else { dirIcon = svgIcon(ICON_DOWN, TREND_C.down); dirLabel = 'Negativ'; }
             }
 
-            // Volatility (standard deviation of daily diffs)
-            let volIcon = '', volLabel = '—';
-            if (diffs.length > 1) {
-                const mean = diffs.reduce((s,v)=>s+v,0)/diffs.length;
-                const variance = diffs.reduce((s,v)=>s+(v-mean)**2,0)/diffs.length;
-                const stdDev = Math.sqrt(variance);
-                if (stdDev < 0.3) { volIcon = svgIcon(ICON_PULSE, TREND_C.low); volLabel = 'Niedrig'; }
-                else if (stdDev < 0.8) { volIcon = svgIcon(ICON_PULSE, TREND_C.mid); volLabel = 'Mittel'; }
-                else { volIcon = svgIcon(ICON_PULSE, TREND_C.high); volLabel = 'Hoch'; }
-            }
+            // Volatilitaet und "Ø Täglich" sind entfallen: die Leiste hatte
+            // sechs gleichrangige Spalten, von denen "Aktuell" den Gleitzeit-
+            // Wert der KPI-Zeile wiederholte und die Standardabweichung der
+            // Tagesdifferenzen fuer einen Azubi keine Entscheidung stuetzt.
+            // Geblieben ist, was den Verlauf DANEBEN einordnet: Spanne
+            // (Hoch/Tief) und Richtung.
 
             const statEl = (id, text, colorClass) => {
                 const el = document.getElementById(id);
@@ -419,12 +512,9 @@
                     el.className = 'trend-stat-value';
                 }
             };
-            statEl('trendStatCurrent', (current >= 0 ? '+' : '') + current.toFixed(1) + 'h', current >= 0 ? 'trend-stat-positive' : 'trend-stat-negative');
             statEl('trendStatHigh', '+' + highest.toFixed(1) + 'h', 'trend-stat-positive');
             statEl('trendStatLow', (lowest >= 0 ? '+' : '') + lowest.toFixed(1) + 'h', lowest < 0 ? 'trend-stat-negative' : '');
-            statEl('trendStatAvgDaily', (avgDaily >= 0 ? '+' : '') + avgDaily.toFixed(2) + 'h', avgDaily >= 0 ? 'trend-stat-positive' : 'trend-stat-negative');
             statElHTML('trendStatDirection', dirIcon + dirLabel);
-            statElHTML('trendStatVolatility', volIcon + volLabel);
         }
         
         const h = 220;
@@ -1100,11 +1190,11 @@
         const fmtVal = (v) => useDays ? (Math.round(v) + (isEN ? ' d' : ' T.')) : (v.toFixed(1) + 'h');
 
         const categories = [
-            { id: 'donutWork', val: work, type: 'work', labelId: 'work-label' },
-            { id: 'donutSchool', val: school, type: 'school', labelId: 'school-label' },
-            { id: 'donutVac', val: vac, type: 'vacation', labelId: 'vac-label' },
-            { id: 'donutSick', val: sick, type: 'sick', labelId: 'sick-label' },
-            { id: 'donutHoliday', val: holiday, type: 'holiday', labelId: 'holiday-label' }
+            { id: 'donutWork', val: work, type: 'work' },
+            { id: 'donutSchool', val: school, type: 'school' },
+            { id: 'donutVac', val: vac, type: 'vacation' },
+            { id: 'donutSick', val: sick, type: 'sick' },
+            { id: 'donutHoliday', val: holiday, type: 'holiday' }
         ];
 
         const total = work + vac + sick + school + holiday || 1;
@@ -1113,15 +1203,20 @@
         const subEl = document.getElementById('donutSubtitle');
         if (subEl) subEl.textContent = useDays ? (isEN ? 'Split by days' : 'Aufteilung in Tagen') : (isEN ? 'Split by hours' : 'Aufteilung in Stunden');
 
-        // Update center info
-        const mainCat = categories.reduce((a, b) => a.val > b.val ? a : b);
+        // ─── KOPFZAHL: GESAMTSUMME ───────────────────────────────────
+        // Vorher stand hier der Wert der GROESSTEN Kategorie, beschriftet
+        // mit deren Namen. Zwei Probleme:
+        //   1. Diese Zahl steht identisch nochmal in der Legende darunter
+        //      — dieselbe Information zweimal, an zwei Stellen gepflegt.
+        //   2. Bei lauter Nullen liefert das reduce() den LETZTEN Eintrag
+        //      (a.val > b.val ist nie wahr), also stand auf einem leeren
+        //      Dashboard "0.0 FEIERTAG".
+        // Die Summe ist die einzige Groesse, die sonst nirgends auftaucht.
+        const sumAll = work + vac + sick + school + holiday;
         const centerEl = document.getElementById('donutCenterValue');
         const centerLabel = document.getElementById('donutCenterLabel');
-        if (centerEl) centerEl.textContent = useDays ? String(Math.round(mainCat.val)) : mainCat.val.toFixed(1);
-        if (centerLabel) {
-            const labels = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', sick: 'Krank', holiday: 'Feiertag' };
-            centerLabel.textContent = labels[mainCat.type];
-        }
+        if (centerEl) centerEl.textContent = useDays ? String(Math.round(sumAll)) : sumAll.toFixed(1);
+        if (centerLabel) centerLabel.textContent = isEN ? 'Total' : 'Gesamt';
 
         // Animate stacked bar segments
         categories.forEach((cat, index) => {
@@ -1130,20 +1225,12 @@
 
             const percentage = (cat.val / total) * 100;
             const delay = animate ? index * 80 : 0;
-            const labelEl = document.getElementById(cat.labelId);
-            const pillEl = labelEl ? labelEl.parentElement : null;
 
-            const applyLabel = () => {
-                if (labelEl && pillEl) {
-                    if (percentage > 8) {
-                        labelEl.textContent = percentage.toFixed(0) + '%';
-                        pillEl.style.display = '';
-                    } else {
-                        labelEl.textContent = '';
-                        pillEl.style.display = 'none';
-                    }
-                }
-            };
+            // Keine Prozent-Beschriftung IM Balken mehr: derselbe Wert
+            // steht 30 px darunter in der Legende. In einem 32-px-Band
+            // mit fuenf Segmenten war er ohnehin nur bei den groessten
+            // zwei lesbar — der Balken zeigt jetzt die Verhaeltnisse,
+            // die Legende die Zahlen.
 
             if (animate) {
                 // Fill-Animation: sauber von 0 auf Zielwert (kein Rückwärts-Flackern
@@ -1154,13 +1241,11 @@
                 setTimeout(() => {
                     el.style.transition = transitionCss;
                     el.style.flex = `0 0 ${percentage}%`;
-                    applyLabel();
                 }, delay);
             } else {
                 // Animation aus: flex-Fill sofort (nur Hover-Transitions aktiv)
                 el.style.transition = hoverTrans;
                 el.style.flex = `0 0 ${percentage}%`;
-                applyLabel();
             }
 
             el.dataset.value = cat.val.toFixed(1);
@@ -1177,38 +1262,43 @@
         });
     }
 
-    // Interactive segment highlighting for stacked bar
+    // ─── SEGMENT HERVORHEBEN ─────────────────────────────────────────
+    // Frueher wurde das aktive Segment mit scaleY(1.3), brightness(1.5)
+    // und einem Schlagschatten aufgeblasen. In einem Flaechendiagramm
+    // ist das die falsche Richtung: die Flaeche IST die Aussage, und wer
+    // sie beim Hovern vergroessert, verfaelscht genau den Vergleich, den
+    // der Nutzer gerade anstellt (das Wachsen wurde vom overflow:hidden
+    // des Balkens ohnehin abgeschnitten).
+    // Jetzt treten die uebrigen Segmente zurueck, das aktive bleibt, wie
+    // es ist — Zustand ueber Klassen statt ueber Inline-Styles.
     function highlightDonutSegment(type) {
         var aliasMap = { 'vac': 'vacation' };
         var normalizedType = aliasMap[type] || type;
         var idFallback = { 'work': 'donutWork', 'school': 'donutSchool', 'vacation': 'donutVac', 'sick': 'donutSick', 'holiday': 'donutHoliday' };
         var targetId = idFallback[normalizedType];
 
-        const segments = document.querySelectorAll('.donut-segment');
-        segments.forEach(seg => {
-            var isMatch = seg.dataset.type === normalizedType || (targetId && seg.id === targetId);
-            if (isMatch) {
-                seg.style.filter = 'brightness(1.5) drop-shadow(0 2px 12px rgba(0,0,0,0.4))';
-                seg.style.transform = 'scaleY(1.3)';
-                seg.style.transformOrigin = 'center';
-                seg.style.zIndex = '10';
-                seg.style.opacity = '1';
-            } else {
-                seg.style.opacity = '0.4';
-                seg.style.filter = '';
-                seg.style.transform = 'scaleY(1)';
-                seg.style.zIndex = 'auto';
-            }
+        var bar = document.getElementById('donutChartContainer');
+        if (bar) bar.classList.add('is-dimmed');
+
+        document.querySelectorAll('.donut-segment').forEach(function (seg) {
+            var isMatch = seg.dataset.cat === normalizedType
+                       || seg.dataset.type === normalizedType
+                       || (targetId && seg.id === targetId);
+            seg.classList.toggle('is-active', isMatch);
+        });
+        document.querySelectorAll('.dist-legend__row').forEach(function (row) {
+            row.classList.toggle('is-active', row.dataset.type === normalizedType);
         });
     }
 
     function clearDonutHighlight() {
-        const segments = document.querySelectorAll('.donut-segment');
-        segments.forEach(seg => {
-            seg.style.filter = '';
-            seg.style.opacity = '1';
-            seg.style.transform = 'scaleY(1)';
-            seg.style.zIndex = 'auto';
+        var bar = document.getElementById('donutChartContainer');
+        if (bar) bar.classList.remove('is-dimmed');
+        document.querySelectorAll('.donut-segment').forEach(function (seg) {
+            seg.classList.remove('is-active');
+        });
+        document.querySelectorAll('.dist-legend__row').forEach(function (row) {
+            row.classList.remove('is-active');
         });
     }
 

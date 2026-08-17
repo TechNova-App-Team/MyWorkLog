@@ -55,19 +55,42 @@
             }
         });
 
-        setRadial('ringWeek', 'valWeek', week);
-        setRadial('ringMonth', 'valMonth', month);
-        
-        const totEl = document.getElementById('valTotal');
-        const totalRounded = (typeof roundHours === 'function') ? roundHours(total, 2) : total;
-        const totalStr = (totalRounded>=0?'+':'') + totalRounded.toFixed(2) + 'h';
-        animateDashboardValue(totEl, totalStr);
-        totEl.style.color = total>=0 ? 'var(--primary)' : 'var(--danger)';
-        totEl.className = 'counter-animate ' + (total >= 0 ? 'kpi-value-positive' : 'kpi-value-negative');
+        // ─── SALDO-KARTEN (Woche / Monat / gesamt) ───────────────────
+        // Alle drei zeigen dieselbe Groesse auf wachsendem Horizont und
+        // benutzen denselben Abweichungsbalken. Die Skala kommt aus dem
+        // Wochensoll des Nutzers, damit ein Teilzeit-Azubi nicht gegen
+        // eine fest verdrahtete 40-Stunden-Woche gemessen wird.
+        const weekTarget  = (typeof weeklyTargetHours === 'function') ? weeklyTargetHours() : 40;
+        const monthTarget = weekTarget * (52 / 12);          // 4,33 Wochen
+        const nf1 = new Intl.NumberFormat(mwlLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+        // Voller Ausschlag: eine halbe Woche bzw. ein halber Monat
+        // Abweichung — grob genug, dass Alltagswerte nicht anschlagen,
+        // fein genug, dass 2 h Minus sichtbar sind.
+        setDeviation('devWeek',  'valWeek',  week,  weekTarget  / 2, 1);
+        setDeviation('devMonth', 'valMonth', month, monthTarget / 2, 1);
+
+        // Gesamt-Saldo waechst ueber Jahre. Feste Skala wuerde dauerhaft
+        // anschlagen, deshalb waechst sie in Wochenschritten mit — immer
+        // mindestens eine Woche, damit kleine Salden nicht zappeln.
+        const totalScale = Math.max(weekTarget, Math.ceil(Math.abs(total) / weekTarget) * weekTarget);
+        setDeviation('devTotal', 'valTotal', total, totalScale, 2);
+
+        const wkTargetEl = document.getElementById('kpiWeekTarget');
+        if (wkTargetEl)  wkTargetEl.textContent = nf1.format(weekTarget) + ' h';
+        const moTargetEl = document.getElementById('kpiMonthTarget');
+        if (moTargetEl)  moTargetEl.textContent = nf1.format(monthTarget) + ' h';
+
+        // Meta rechts oben: welcher Zeitraum ueberhaupt gemeint ist.
+        const wkMetaEl = document.getElementById('kpiWeekMeta');
+        if (wkMetaEl)  wkMetaEl.textContent = 'KW ' + getWeek(now);
+        const moMetaEl = document.getElementById('kpiMonthMeta');
+        if (moMetaEl)  moMetaEl.textContent = now.toLocaleDateString(mwlLocale(), { month: 'short' }).replace('.', '');
 
         const avg = countDays > 0 ? totalWorked/countDays : 0;
         const avgRounded = (typeof roundHours === 'function') ? roundHours(avg, 1) : avg;
-        document.getElementById('valAvg').innerText = avgRounded.toFixed(1) + 'h';
+        const avgEl = document.getElementById('valAvg');
+        if (avgEl) avgEl.textContent = nf1.format(avgRounded) + 'h';
 
         // Gleitzeit-Prognose: Trend-basiert mit Mindestdatenmenge
         // Nutzt alle verfügbaren Daten (mehr Daten = präzisere Prognose)
@@ -81,7 +104,10 @@
         // Mindestens 20 Arbeitstage (~1 Monat) für eine sinnvolle Prognose
         if (totalWorkDays < 20) {
             projEl.innerText = '—';
-            projEl.className = 'projection-badge';
+            // classList statt className: ein Vollzuweisen wuerde die
+            // Layout-Klasse der Fusszeile (kpi-v2__foot-num) mit
+            // wegloeschen, und die Zahl faellt aus der Zahlenskala.
+            projEl.classList.remove('positive', 'negative');
             projEl.title = `Zu wenig Daten (${totalWorkDays} Tage). Mind. 20 Arbeitstage nötig für eine Prognose.`;
         } else {
             // Gewichteter Durchschnitt: letzte 60 Tage zählen doppelt (aktueller Trend wichtiger)
@@ -107,8 +133,9 @@
             }
             const projected = total + (avgDiffPerWorkDay * 30);
             const projRounded = (typeof roundHours === 'function') ? roundHours(projected, 1) : projected;
-            projEl.innerText = (projRounded>=0?'+':'') + projRounded.toFixed(1) + 'h';
-            projEl.className = 'projection-badge ' + (projected >= 0 ? 'positive' : 'negative');
+            projEl.innerText = (projRounded>=0?'+':'−') + nf1.format(Math.abs(projRounded)) + ' h';
+            projEl.classList.toggle('positive', projected >= 0);
+            projEl.classList.toggle('negative', projected < 0);
 
             // Konfidenz-Label basierend auf Datenmenge
             const confidence = totalWorkDays >= 60 ? '●●●' : totalWorkDays >= 40 ? '●●○' : '●○○';
@@ -140,10 +167,37 @@
         }
         const vacPct = totalVacation > 0 ? (usedVacation / totalVacation) * 100 : 0;
         const vacBar = document.getElementById('vacationProgressBar');
-        vacBar.style.width = `${Math.min(vacPct, 100)}%`;
-        if (vacPct > 90) vacBar.style.background = 'var(--danger)';
-        else if (vacPct > 70) vacBar.style.background = '#f59e0b';
-        else vacBar.style.background = 'var(--success)';
+        if (vacBar) {
+            vacBar.style.width = `${Math.min(vacPct, 100)}%`;
+            // Farbe ueber Klassen statt inline: der Balken traegt den
+            // Akzent (neutraler Fortschritt) und wechselt erst in eine
+            // Warnrolle, wenn das Kontingent knapp wird. Urlaub zu nehmen
+            // ist kein Fehler — ihn aufzubrauchen schon eine Info wert.
+            vacBar.style.background = '';
+            vacBar.classList.toggle('is-crit', vacPct > 90);
+            vacBar.classList.toggle('is-warn', vacPct > 70 && vacPct <= 90);
+        }
+
+        // Verbleibendes Kontingent — die Zahl, die man auf dem Dashboard
+        // sucht ("wie viel Urlaub hab ich noch"). Vorher stand dort nur
+        // "verbraucht / gesamt" und man musste selbst subtrahieren.
+        const vacLeftEl  = document.getElementById('valVacationLeft');
+        const vacUnitEl  = document.getElementById('valVacationLeftUnit');
+        if (vacLeftEl) {
+            const remaining = Math.max(0, totalVacation - usedVacation);
+            const remStr = vacMode === 'hours'
+                ? new Intl.NumberFormat(mwlLocale(), { maximumFractionDigits: 1 }).format(remaining)
+                : String(Math.round(remaining * 10) / 10);
+            // Einheit als eigener Knoten, sonst frisst textContent sie.
+            vacLeftEl.textContent = remStr;
+            const u = document.createElement('span');
+            u.className = 'kpi-v2__unit';
+            u.id = 'valVacationLeftUnit';
+            u.textContent = vacMode === 'hours' ? 'h' : (remaining === 1 ? 'Tag' : 'Tage');
+            vacLeftEl.appendChild(u);
+        } else if (vacUnitEl) {
+            vacUnitEl.textContent = unit;
+        }
 
         // ─── VACATION PACING ───
         const startOfYear = new Date(now.getFullYear(), 0, 1);

@@ -155,11 +155,58 @@
     // Wire init hooks — moved to run after window.onload to avoid overwriting rehydrated data
     // Initialization will be performed as part of the window.onload sequence.
 
+    // ═══════════════════════════════════════════════════════════════════
+    // WIDGET-MARKUP: EINE QUELLE
+    //
+    // widgetLibrary trug fuer die fuenf Dashboard-Widgets eine ZWEITE,
+    // handgepflegte Kopie ihres HTML. Die driftete unweigerlich ab: wer
+    // components/dashboard/dashboard.html aenderte, sah im Browser alles
+    // richtig — bis ein Nutzer ein Widget entfernte und wieder hinzufuegte.
+    // Dann kam die alte Fassung zurueck (samt Emoji-Icons und Inline-
+    // Styles), und niemand konnte den Weg dahin nachvollziehen.
+    //
+    // Der Trick: beim Laden steht IMMER das vollstaendige Markup im DOM —
+    // dashboard.html ist statisch, die Layout-Logik entfernt versteckte
+    // Widgets erst danach. Ein Schnappschuss zu diesem Zeitpunkt liefert
+    // also garantiert das aktuelle HTML aller Widgets.
+    //
+    // Damit ist dashboard.html die einzige Quelle. Wer das Markup aendert,
+    // muss hier nichts nachziehen.
+    // ═══════════════════════════════════════════════════════════════════
+    function captureWidgetMarkup(widgetId) {
+        if (typeof widgetLibrary === 'undefined' || !widgetLibrary[widgetId]) return;
+        const container = document.getElementById('dashboardContainer');
+        if (!container) return;
+        const el = container.querySelector(`[data-item-id="${widgetId}"]`);
+        if (el && el.innerHTML.trim()) widgetLibrary[widgetId].html = el.innerHTML;
+    }
+
+    function captureAllWidgetMarkup() {
+        const container = document.getElementById('dashboardContainer');
+        if (!container || typeof widgetLibrary === 'undefined') return;
+        container.querySelectorAll('.dashboard-item[data-item-id]').forEach(function (el) {
+            const id = el.getAttribute('data-item-id');
+            if (widgetLibrary[id] && el.innerHTML.trim()) widgetLibrary[id].html = el.innerHTML;
+        });
+    }
+
+    // Muss vor der Layout-Anwendung laufen (die haengt an window.onload),
+    // sonst sind versteckte Widgets schon aus dem DOM entfernt.
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', captureAllWidgetMarkup, { once: true });
+    } else {
+        captureAllWidgetMarkup();
+    }
+
     function addWidget(widgetId) {
         console.log('Adding widget:', widgetId);
         const widget = widgetLibrary[widgetId];
         if (!widget) {
             console.error('Widget not found in library:', widgetId);
+            return;
+        }
+        if (!widget.html || !widget.html.trim()) {
+            console.error('Widget hat kein Markup — Schnappschuss fehlgeschlagen:', widgetId);
             return;
         }
 
@@ -200,6 +247,9 @@
         
         const widgetElement = dashboardContainer.querySelector(`[data-item-id="${widgetId}"]`);
         if (widgetElement) {
+            // Vor dem Entfernen sichern — so kommt beim Wiederhinzufuegen
+            // exakt das zurueck, was hier stand.
+            captureWidgetMarkup(widgetId);
             widgetElement.remove();
             console.log('Widget removed from DOM');
             saveDashboardLayout();

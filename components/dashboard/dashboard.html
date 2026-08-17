@@ -7,130 +7,114 @@
 
             <div id="dashboardContainer" class="dashboard-grid">
 
-                <!-- ═══ KPI OVERVIEW ═══ -->
+                <!-- ═══ KPI OVERVIEW ═══
+                     Vier Karten, EINE Anatomie: Eyebrow · Hauptwert · Visual ·
+                     Fusszeile. Die ersten drei zeigen dieselbe Groesse (Saldo)
+                     auf wachsendem Horizont — Woche, Monat, gesamt — und teilen
+                     sich deshalb bewusst denselben Abweichungsbalken.
+                     Der fruehere Ring ist raus: er bildete einen Saldo auf einen
+                     Fortschrittsbogen ab, bei dem 0 h halb voll aussah. -->
                 <div class="dashboard-item" data-item-id="kpi-cards">
                     <div class="kpi-grid" id="dashboardGrid">
 
                         <!-- KPI: Woche -->
-                        <div class="card kpi-card kpi-card--ring">
-                            <div class="kpi-card__header">
-                                <span class="kpi-card__tag">Woche</span>
-                                <span class="kpi-card__indicator"></span>
+                        <div class="card kpi-card kpi-v2">
+                            <div class="kpi-v2__top">
+                                <span class="kpi-v2__eyebrow">Woche</span>
+                                <span class="kpi-v2__meta" id="kpiWeekMeta"></span>
                             </div>
-                            <div class="progress-ring">
-                                <svg width="100" height="100">
-                                    <circle class="ring-bg" cx="50" cy="50" r="44"></circle>
-                                    <circle id="ringWeek" class="ring-val" cx="50" cy="50" r="44" stroke-dasharray="276" stroke-dashoffset="276"></circle>
-                                </svg>
-                                <div class="ring-center">
-                                    <div class="ring-num" id="valWeek">0</div>
-                                    <div class="ring-lbl">Stunden</div>
+                            <div class="kpi-v2__value" id="valWeek">0<span class="kpi-v2__unit">h</span></div>
+                            <div class="devbar" id="devWeek" data-sign="zero">
+                                <div class="devbar__track">
+                                    <div class="devbar__zero"></div>
+                                    <div class="devbar__fill"></div>
                                 </div>
+                                <div class="devbar__scale">
+                                    <span class="devbar__scale-num" data-dev-min>—</span>
+                                    <span class="devbar__scale-zero">0</span>
+                                    <span class="devbar__scale-num" data-dev-max>—</span>
+                                </div>
+                            </div>
+                            <div class="kpi-v2__foot">
+                                <span>Abweichung vom Wochensoll</span>
+                                <span class="kpi-v2__foot-num" id="kpiWeekTarget">—</span>
                             </div>
                         </div>
 
                         <!-- KPI: Monat -->
-                        <div class="card kpi-card kpi-card--ring">
-                            <div class="kpi-card__header">
-                                <span class="kpi-card__tag">Monat</span>
-                                <span class="kpi-card__indicator"></span>
+                        <div class="card kpi-card kpi-v2">
+                            <div class="kpi-v2__top">
+                                <span class="kpi-v2__eyebrow">Monat</span>
+                                <span class="kpi-v2__meta" id="kpiMonthMeta"></span>
                             </div>
-                            <div class="progress-ring">
-                                <svg width="100" height="100">
-                                    <circle class="ring-bg" cx="50" cy="50" r="44"></circle>
-                                    <circle id="ringMonth" class="ring-val" cx="50" cy="50" r="44" stroke-dasharray="276" stroke-dashoffset="276"></circle>
-                                </svg>
-                                <div class="ring-center">
-                                    <div class="ring-num" id="valMonth">0</div>
-                                    <div class="ring-lbl">Stunden</div>
+                            <div class="kpi-v2__value" id="valMonth">0<span class="kpi-v2__unit">h</span></div>
+                            <div class="devbar" id="devMonth" data-sign="zero">
+                                <div class="devbar__track">
+                                    <div class="devbar__zero"></div>
+                                    <div class="devbar__fill"></div>
+                                </div>
+                                <div class="devbar__scale">
+                                    <span class="devbar__scale-num" data-dev-min>—</span>
+                                    <span class="devbar__scale-zero">0</span>
+                                    <span class="devbar__scale-num" data-dev-max>—</span>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- KPI: Gleitzeit Redesign -->
-                        <div class="card gz-card-v2">
-                            <!-- Main Container -->
-                            <div class="gz-container" style="gap:0.6rem;">
-                                <!-- Header Section -->
-                                <div class="gz-header-section">
-                                    <div class="gz-label">GLEITZEIT</div>
-                                    <button class="gz-adjust-btn" onclick="openSaldoAdjust()" title="Saldo anpassen — Korrektur buchen" aria-label="Saldo anpassen">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-                                    </button>
-                                </div>
-
-                                <!-- Main Value with Visual Indicator -->
-                                <div class="gz-main-section" style="position:relative;">
-                                    <div class="gz-balance-visual">
-                                        <svg class="gz-scale-icon" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet">
-                                            <!-- Scale Base -->
-                                            <line x1="20" y1="50" x2="80" y2="50" stroke="currentColor" stroke-width="2" opacity="0.3"/>
-                                            <!-- Pivot -->
-                                            <circle cx="50" cy="50" r="3" fill="currentColor" opacity="0.5"/>
-                                            <!-- Left Pan -->
-                                            <rect x="15" y="45" width="20" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"/>
-                                            <line x1="25" y1="45" x2="25" y2="30" stroke="currentColor" stroke-width="1" opacity="0.3"/>
-                                            <!-- Right Pan (Tilted by value) -->
-                                            <g transform="rotate(-12 50 50)">
-                                                <rect x="65" y="45" width="20" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
-                                                <line x1="75" y1="45" x2="75" y2="25" stroke="currentColor" stroke-width="1" opacity="0.4"/>
-                                            </g>
-                                        </svg>
-                                    </div>
-                                    <div class="gz-value-wrapper">
-                                        <div class="gz-value-label">Aktueller Saldo</div>
-                                        <div class="gz-value-display" id="valTotal">+0.0h</div>
-                                    </div>
-                                    <!-- Prognose Top Right -->
-                                    <div style="position:absolute;top:0.5rem;right:0.75rem;text-align:center;">
-                                        <div style="font-size:0.75rem;font-weight:700;color:var(--primary);font-family:'JetBrains Mono';"><span id="valProjected">+0h</span> (6W)</div>
-                                    </div>
-                                </div>
-
-                                <!-- Divider -->
-                                <div class="gz-divider-modern" style="height:0.5px;margin:0.2rem 0;"></div>
-
-                                <!-- Streak Section - Ultra Minimal -->
-                                <div style="display:flex;gap:0.5rem;justify-content:space-between;align-items:center;">
-                                    <div style="display:flex;align-items:center;gap:0.4rem;padding:0.4rem 0.6rem;background:rgba(var(--primary-rgb),0.08);border-radius:6px;flex:1;">
-                                        <span id="streakEmoji" class="gz-streak-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span>
-                                        <div style="flex:1;">
-                                            <div style="font-size:0.6rem;color:var(--text-muted);">Serie</div>
-                                            <div id="streakCount" style="font-size:0.9rem;font-weight:700;color:var(--primary);">0</div>
-                                        </div>
-                                    </div>
-                                    <div style="display:flex;align-items:center;gap:0.4rem;padding:0.4rem 0.6rem;background:rgba(var(--primary-rgb),0.08);border-radius:6px;flex:1;">
-                                        <span class="gz-streak-icon gz-streak-icon--muted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span>
-                                        <div style="flex:1;">
-                                            <div style="font-size:0.6rem;color:var(--text-muted);">Best</div>
-                                            <div id="streakBest" style="font-size:0.9rem;font-weight:700;color:var(--primary);">0</div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="kpi-v2__foot">
+                                <span>Abweichung vom Monatssoll</span>
+                                <span class="kpi-v2__foot-num" id="kpiMonthTarget">—</span>
                             </div>
                         </div>
 
-                        <!-- KPI: Durchschnitt + Urlaub -->
-                        <div class="card kpi-card kpi-card--stats">
-                            <div class="kpi-card__header">
-                                <span class="kpi-card__tag">Durchschnitt</span>
+                        <!-- KPI: Gleitzeit — die Zahl, wegen der man das
+                             Dashboard oeffnet. Gleiche Anatomie wie die
+                             Nachbarn, nur mehr Breite und groessere Ziffern. -->
+                        <div class="card kpi-card kpi-v2 kpi-v2--hero">
+                            <div class="kpi-v2__top">
+                                <span class="kpi-v2__eyebrow">Gleitzeit</span>
+                                <button class="kpi-v2__action" onclick="openSaldoAdjust()" title="Saldo anpassen — Korrektur buchen" aria-label="Saldo anpassen">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                                </button>
                             </div>
-                            <div class="kpi-stats__value" id="valAvg">0.0h</div>
-                            <div class="kpi-stats__label">pro Tag</div>
-                            <div class="kpi-stats__divider"></div>
-                            <div class="kpi-stats__vacation" onclick="openVacationPicker('vacation')" style="cursor:pointer;" title="Urlaub planen — mehrere Tage oder Zeiträume">
-                                <div class="kpi-stats__vacation-header">
-                                    <span class="kpi-stats__vacation-label">Urlaubstage</span>
-                                    <span id="valVacationUsed" class="kpi-stats__vacation-count">0 / 30</span>
+                            <div class="kpi-v2__value" id="valTotal">+0.00<span class="kpi-v2__unit">h</span></div>
+                            <div class="devbar" id="devTotal" data-sign="zero">
+                                <div class="devbar__track">
+                                    <div class="devbar__zero"></div>
+                                    <div class="devbar__fill"></div>
                                 </div>
-                                <div class="kpi-stats__vacation-track">
-                                    <div id="vacationProgressBar" class="kpi-stats__vacation-fill"></div>
+                                <div class="devbar__scale">
+                                    <span class="devbar__scale-num" data-dev-min>—</span>
+                                    <span class="devbar__scale-zero">0</span>
+                                    <span class="devbar__scale-num" data-dev-max>—</span>
                                 </div>
                             </div>
-                            <button type="button" class="kpi-stats__vacation-plan" onclick="event.stopPropagation(); switchTab('urlaubsplaner');">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 21a9 9 0 00-9-9 9 9 0 019-9 9 9 0 019 9 9 9 0 00-9 9z"/><path d="M13 21v-9"/></svg>
-                                <span>Brückentage finden</span>
-                            </button>
+                            <div class="kpi-v2__foot">
+                                <span>In 6 Wochen <span class="kpi-v2__foot-num" id="valProjected">—</span></span>
+                                <span class="kpi-v2__streak" title="Aktuelle Serie erfasster Tage / persönliche Bestmarke">
+                                    <span id="streakEmoji" class="kpi-v2__streak-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></span>
+                                    <span class="kpi-v2__foot-num" id="streakCount">0</span>
+                                    <span class="kpi-v2__streak-best">/ <span id="streakBest">0</span></span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- KPI: Urlaub
+                             Vorher teilten sich Durchschnitt, Urlaubsbalken,
+                             ein Planungs-Button und die Wochenpunkte EINE Karte.
+                             Urlaub ist die Zahl, die man hier sucht — sie fuehrt
+                             jetzt, Ø/Tag steht als Kontext in der Fusszeile. -->
+                        <div class="card kpi-card kpi-v2">
+                            <div class="kpi-v2__top">
+                                <span class="kpi-v2__eyebrow">Urlaub übrig</span>
+                                <span class="kpi-v2__meta" id="valVacationUsed">0 / 30</span>
+                            </div>
+                            <div class="kpi-v2__value" id="valVacationLeft">0<span class="kpi-v2__unit" id="valVacationLeftUnit">T</span></div>
+                            <div class="ptrack" id="vacationTrack" title="Anteil des Jahreskontingents, der schon verplant ist">
+                                <div id="vacationProgressBar" class="ptrack__fill"></div>
+                            </div>
+                            <div class="kpi-v2__foot">
+                                <span>Ø <span class="kpi-v2__foot-num" id="valAvg">0.0h</span> pro Tag</span>
+                                <button type="button" class="kpi-v2__link" onclick="switchTab('urlaubsplaner');">Brückentage</button>
+                            </div>
                             <div id="weekDotsContainer" class="week-dots"></div>
                         </div>
 
@@ -199,30 +183,23 @@
                                     </button>
                                 </div>
                             </div>
+                            <!-- Drei Kennzahlen statt sechs. "Aktuell" wiederholte
+                                 den Gleitzeit-Wert aus der KPI-Zeile, "Ø Täglich"
+                                 und "Volatilität" trugen keine Entscheidung. Was
+                                 bleibt, ordnet den Verlauf daneben ein: Spanne
+                                 und Richtung. -->
                             <div class="trend-stats-bar" id="trendStatsBar">
                                 <div class="trend-stat">
-                                    <span class="trend-stat-label">Aktuell</span>
-                                    <span class="trend-stat-value" id="trendStatCurrent">—</span>
+                                    <span class="trend-stat-label">Höchststand</span>
+                                    <span class="trend-stat-value dash-num trend-stat-positive" id="trendStatHigh">—</span>
                                 </div>
                                 <div class="trend-stat">
-                                    <span class="trend-stat-label">Hoch</span>
-                                    <span class="trend-stat-value trend-stat-positive" id="trendStatHigh">—</span>
-                                </div>
-                                <div class="trend-stat">
-                                    <span class="trend-stat-label">Tief</span>
-                                    <span class="trend-stat-value trend-stat-negative" id="trendStatLow">—</span>
-                                </div>
-                                <div class="trend-stat">
-                                    <span class="trend-stat-label">Ø Täglich</span>
-                                    <span class="trend-stat-value" id="trendStatAvgDaily">—</span>
+                                    <span class="trend-stat-label">Tiefststand</span>
+                                    <span class="trend-stat-value dash-num trend-stat-negative" id="trendStatLow">—</span>
                                 </div>
                                 <div class="trend-stat">
                                     <span class="trend-stat-label">Tendenz</span>
                                     <span class="trend-stat-value" id="trendStatDirection">—</span>
-                                </div>
-                                <div class="trend-stat">
-                                    <span class="trend-stat-label">Volatilität</span>
-                                    <span class="trend-stat-value" id="trendStatVolatility">—</span>
                                 </div>
                             </div>
                             <div class="trend-container-wrapper">
@@ -245,84 +222,62 @@
                                 </button>
                             </div>
 
-                            <!-- MODERN STACKED BAR CHART - Alle Kategorien sichtbar! -->
-                            <div class="donut-wrapper" id="donutWrapper" style="flex-direction: column; height: auto; padding: 1rem 0;">
-                                <div class="donut-center-info" id="donutCenterInfo" style="position: static; transform: none; margin-bottom: 1rem; text-align: center;">
-                                    <div class="center-value" id="donutCenterValue" style="font-size: 1.5rem;">—</div>
+                            <!-- Verteilung: Kopfzahl (Summe) · Balken (Verhaeltnis) ·
+                                 Legende (Detailwerte). Jede Ebene zeigt etwas,
+                                 das die anderen beiden nicht zeigen — vorher stand
+                                 dieselbe Zahl an allen drei Stellen. -->
+                            <div class="donut-wrapper" id="donutWrapper">
+                                <div class="donut-center-info" id="donutCenterInfo">
+                                    <div class="center-value dash-num" id="donutCenterValue">—</div>
                                     <div class="center-label" id="donutCenterLabel">Gesamt</div>
                                 </div>
 
-                                <!-- Stacked Progress Bar -->
-                                <div id="donutChartContainer" style="width: 100%; height: 32px; background: rgba(255,255,255,0.04); border-radius: 8px; overflow: hidden; display: flex; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
-                                    <div id="donutWork" class="donut-segment" style="background: var(--primary); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('work')" onmouseout="clearDonutHighlight()" title="Arbeit">
-                                        <div class="segment-label" style="display: none; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
-                                            <span id="work-label"></span>
-                                        </div>
-                                    </div>
-                                    <div id="donutSchool" class="donut-segment" style="background: var(--school); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('school')" onmouseout="clearDonutHighlight()" title="Schule">
-                                        <div class="segment-label" style="display: none; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
-                                            <span id="school-label"></span>
-                                        </div>
-                                    </div>
-                                    <div id="donutVac" class="donut-segment" style="background: var(--success); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('vacation')" onmouseout="clearDonutHighlight()" title="Urlaub">
-                                        <div class="segment-label" style="display: none; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
-                                            <span id="vac-label"></span>
-                                        </div>
-                                    </div>
-                                    <div id="donutSick" class="donut-segment" style="background: var(--danger); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('sick')" onmouseout="clearDonutHighlight()" title="Krank">
-                                        <div class="segment-label" style="display: none; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
-                                            <span id="sick-label"></span>
-                                        </div>
-                                    </div>
-                                    <div id="donutHoliday" class="donut-segment" style="background: var(--holiday); height: 100%; flex: 0 0 0%; transition: flex 0.8s cubic-bezier(0.34,1.56,0.64,1); position: relative;" onmouseover="highlightDonutSegment('holiday')" onmouseout="clearDonutHighlight()" title="Feiertag">
-                                        <div class="segment-label" style="display: none; position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 0.6rem; font-weight: 700; color: rgba(255,255,255,0.8); white-space: nowrap;">
-                                            <span id="holiday-label"></span>
-                                        </div>
-                                    </div>
+                                <!-- Gestapelter Balken. Die 2-px-Fugen zwischen den
+                                     Segmenten sind Flaeche der Karte, keine Linien —
+                                     so bleiben auch benachbarte Farben trennbar. -->
+                                <div id="donutChartContainer" class="dist-bar">
+                                    <div id="donutWork" class="donut-segment dist-bar__seg" data-cat="work" onmouseover="highlightDonutSegment('work')" onmouseout="clearDonutHighlight()" title="Arbeit"></div>
+                                    <div id="donutSchool" class="donut-segment dist-bar__seg" data-cat="school" onmouseover="highlightDonutSegment('school')" onmouseout="clearDonutHighlight()" title="Schule"></div>
+                                    <div id="donutVac" class="donut-segment dist-bar__seg" data-cat="vacation" onmouseover="highlightDonutSegment('vacation')" onmouseout="clearDonutHighlight()" title="Urlaub"></div>
+                                    <div id="donutSick" class="donut-segment dist-bar__seg" data-cat="sick" onmouseover="highlightDonutSegment('sick')" onmouseout="clearDonutHighlight()" title="Krank"></div>
+                                    <div id="donutHoliday" class="donut-segment dist-bar__seg" data-cat="holiday" onmouseover="highlightDonutSegment('holiday')" onmouseout="clearDonutHighlight()" title="Feiertag"></div>
                                 </div>
                             </div>
 
-                            <!-- NEW: Modern Data Cards Legend -->
-                            <div class="donut-legend-grid" id="donutLegendGrid">
-                                <div class="legend-card" data-type="work" onmouseover="highlightDonutSegment('work')" onmouseout="clearDonutHighlight()">
-                                    <div class="legend-card__accent" style="background: var(--primary);"></div>
-                                    <div class="legend-card__content">
-                                        <div class="legend-card__label">Arbeit</div>
-                                        <div class="legend-card__value" id="val-work">—</div>
-                                        <div class="legend-card__percent" id="pct-work">0%</div>
-                                    </div>
+                            <!-- Legende: eine Zeile pro Kategorie. Farbe steht nur
+                                 im Punkt, nie im Text — so bleibt die Zuordnung
+                                 auch bei Farbsehschwaeche ueber Name und Position
+                                 lesbar, nicht ueber den Farbton allein. -->
+                            <div class="dist-legend" id="donutLegendGrid">
+                                <div class="dist-legend__row" data-type="work" onmouseover="highlightDonutSegment('work')" onmouseout="clearDonutHighlight()">
+                                    <span class="dist-legend__dot" data-cat="work" aria-hidden="true"></span>
+                                    <span class="dist-legend__name">Arbeit</span>
+                                    <span class="dist-legend__val dash-num" id="val-work">—</span>
+                                    <span class="dist-legend__pct dash-num" id="pct-work">0%</span>
                                 </div>
-                                <div class="legend-card" data-type="school" onmouseover="highlightDonutSegment('school')" onmouseout="clearDonutHighlight()">
-                                    <div class="legend-card__accent" style="background: var(--school);"></div>
-                                    <div class="legend-card__content">
-                                        <div class="legend-card__label">Schule</div>
-                                        <div class="legend-card__value" id="val-school">—</div>
-                                        <div class="legend-card__percent" id="pct-school">0%</div>
-                                    </div>
+                                <div class="dist-legend__row" data-type="school" onmouseover="highlightDonutSegment('school')" onmouseout="clearDonutHighlight()">
+                                    <span class="dist-legend__dot" data-cat="school" aria-hidden="true"></span>
+                                    <span class="dist-legend__name">Schule</span>
+                                    <span class="dist-legend__val dash-num" id="val-school">—</span>
+                                    <span class="dist-legend__pct dash-num" id="pct-school">0%</span>
                                 </div>
-                                <div class="legend-card" data-type="vacation" onmouseover="highlightDonutSegment('vacation')" onmouseout="clearDonutHighlight()">
-                                    <div class="legend-card__accent" style="background: var(--success);"></div>
-                                    <div class="legend-card__content">
-                                        <div class="legend-card__label">Urlaub</div>
-                                        <div class="legend-card__value" id="val-vacation">—</div>
-                                        <div class="legend-card__percent" id="pct-vacation">0%</div>
-                                    </div>
+                                <div class="dist-legend__row" data-type="vacation" onmouseover="highlightDonutSegment('vacation')" onmouseout="clearDonutHighlight()">
+                                    <span class="dist-legend__dot" data-cat="vacation" aria-hidden="true"></span>
+                                    <span class="dist-legend__name">Urlaub</span>
+                                    <span class="dist-legend__val dash-num" id="val-vacation">—</span>
+                                    <span class="dist-legend__pct dash-num" id="pct-vacation">0%</span>
                                 </div>
-                                <div class="legend-card" data-type="sick" onmouseover="highlightDonutSegment('sick')" onmouseout="clearDonutHighlight()">
-                                    <div class="legend-card__accent" style="background: var(--danger);"></div>
-                                    <div class="legend-card__content">
-                                        <div class="legend-card__label">Krank</div>
-                                        <div class="legend-card__value" id="val-sick">—</div>
-                                        <div class="legend-card__percent" id="pct-sick">0%</div>
-                                    </div>
+                                <div class="dist-legend__row" data-type="sick" onmouseover="highlightDonutSegment('sick')" onmouseout="clearDonutHighlight()">
+                                    <span class="dist-legend__dot" data-cat="sick" aria-hidden="true"></span>
+                                    <span class="dist-legend__name">Krank</span>
+                                    <span class="dist-legend__val dash-num" id="val-sick">—</span>
+                                    <span class="dist-legend__pct dash-num" id="pct-sick">0%</span>
                                 </div>
-                                <div class="legend-card" data-type="holiday" onmouseover="highlightDonutSegment('holiday')" onmouseout="clearDonutHighlight()">
-                                    <div class="legend-card__accent" style="background: var(--holiday);"></div>
-                                    <div class="legend-card__content">
-                                        <div class="legend-card__label">Feiertag</div>
-                                        <div class="legend-card__value" id="val-holiday">—</div>
-                                        <div class="legend-card__percent" id="pct-holiday">0%</div>
-                                    </div>
+                                <div class="dist-legend__row" data-type="holiday" onmouseover="highlightDonutSegment('holiday')" onmouseout="clearDonutHighlight()">
+                                    <span class="dist-legend__dot" data-cat="holiday" aria-hidden="true"></span>
+                                    <span class="dist-legend__name">Feiertag</span>
+                                    <span class="dist-legend__val dash-num" id="val-holiday">—</span>
+                                    <span class="dist-legend__pct dash-num" id="pct-holiday">0%</span>
                                 </div>
                             </div>
                         </div>
@@ -372,6 +327,40 @@
                                     <p class="entry-form__subtitle">Zeiten buchen &amp; Tag erfassen</p>
                                 </div>
                                 <button class="help-slim" title="Hilfe" onclick="openQuickHelp('entry')">?</button>
+                            </div>
+
+                            <!-- ═══ TIMER ═══
+                                 Stand vorher als 300 px breite Spalte NEBEN dem
+                                 Formular — eine Uhr und drei Knoepfe auf knapp
+                                 600 px Hoehe, der Rest leer. Dabei ist der Timer
+                                 kein eigenes Werkzeug: timerAction('stop') schreibt
+                                 in #inpHours und ruft handleEntry() auf, er fuellt
+                                 also genau dieses Formular. Jetzt sitzt er als
+                                 Leiste darin — die zweite Art, denselben Tag zu
+                                 erfassen. -->
+                            <div class="timer-box" id="timerBox">
+                                <span class="timer-box__pulse" aria-hidden="true"></span>
+                                <div class="timer-box__meta">
+                                    <span class="timer-box__label">Live-Erfassung</span>
+                                    <span class="timer-log-status" id="timerStatus">STOP</span>
+                                </div>
+                                <div class="timer-display dash-num" id="timerDisplay">00:00:00</div>
+                                <div class="timer-log-bar" id="timerLogBar"></div>
+                                <div class="btn-icon-row">
+                                    <button class="timer-btn timer-btn--start" onclick="timerAction('start')" title="Zeitmessung starten">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3" fill="currentColor" stroke="none"/></svg>
+                                        <span>Start</span>
+                                    </button>
+                                    <button class="timer-btn timer-btn--pause" onclick="timerAction('pause')" title="Zeitmessung anhalten">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor" stroke="none"/></svg>
+                                        <span>Pause</span>
+                                    </button>
+                                    <button class="timer-btn timer-btn--stop" onclick="timerAction('stop')" title="Beenden und als Eintrag buchen">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" stroke="none"/></svg>
+                                        <span>Stopp</span>
+                                    </button>
+                                </div>
+                                <button class="help-slim timer-box__help" title="Hilfe" onclick="openQuickHelp('timer')">?</button>
                             </div>
 
                             <div class="entry-form__field">
@@ -488,23 +477,6 @@
                             </div>
                         </div>
 
-                        <!-- Timer -->
-                        <div class="timer-box" id="timerBox">
-                            <div class="timer-box__header">
-                                <span class="timer-box__label">Live</span>
-                                <button class="help-slim" title="Hilfe" onclick="openQuickHelp('timer')">?</button>
-                            </div>
-                            <div class="timer-display" id="timerDisplay">00:00:00</div>
-                            <div class="timer-log">
-                                <div class="timer-log-status" id="timerStatus">STOP</div>
-                                <div class="timer-log-bar" id="timerLogBar"></div>
-                            </div>
-                            <div class="btn-icon-row">
-                                <button class="btn btn-ghost timer-btn timer-btn--start" onclick="timerAction('start')">▶ Start</button>
-                                <button class="btn btn-ghost timer-btn timer-btn--pause" onclick="timerAction('pause')">II Pause</button>
-                                <button class="btn btn-ghost timer-btn timer-btn--stop"  onclick="timerAction('stop')">■ Stop</button>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -534,15 +506,19 @@
                         <!-- Activities Timeline -->
                         <div class="activities-timeline" id="entryListShort"></div>
 
-                        <!-- Empty State -->
+                        <!-- Leerer Zustand. Vorher: ein Haus-Icon (ohne Bezug
+                             zur Zeiterfassung) und "Starten Sie mit einer neuen
+                             Arbeitszeiteintrag" — falscher Kasus, und gesiezt,
+                             obwohl die App sonst durchgehend duzt. -->
                         <div class="activities-empty" id="activitiesEmpty">
                             <div class="empty-state">
-                                <svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                <svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="9"></circle>
+                                    <polyline points="12 7 12 12 15 14"></polyline>
                                 </svg>
-                                <div class="empty-text">Keine Aktivitäten vorhanden</div>
-                                <div class="empty-subtext">Starten Sie mit einer neuen Arbeitszeiteintrag</div>
+                                <div class="empty-text">Für diesen Tag ist nichts erfasst</div>
+                                <div class="empty-subtext">Trag deine Zeiten oben ein — der Tag landet dann hier.</div>
+                                <button type="button" class="chart-empty__btn" onclick="focusEntryForm()">Tag erfassen</button>
                             </div>
                         </div>
                     </div>
