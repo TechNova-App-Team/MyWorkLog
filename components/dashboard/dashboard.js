@@ -1885,14 +1885,17 @@
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Alle Eintrags-Daten (unique) an Arbeitstagen, sortiert newest→oldest
+        // Alle Eintrags-Daten bis heute (unique) an Arbeitstagen, sortiert newest→oldest.
+        // Zukunftseinträge — z. B. geplante Urlaubstage — dürfen weder die aktuelle
+        // Serie starten noch die persönliche Bestmarke vorzeitig erhöhen.
         const entryDates = [...new Set(data.entries.map(e => {
-            const d = new Date(e.date);
+            const parts = String(e.date || '').slice(0, 10).split('-').map(Number);
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
             d.setHours(0, 0, 0, 0);
-            return d.getTime();
-        }))].filter(ts => {
+            return Number.isFinite(d.getTime()) ? d.getTime() : null;
+        }).filter(ts => ts !== null))].filter(ts => {
             const dow = new Date(ts).getDay();
-            return dow !== 0 && dow !== 6;
+            return ts <= today.getTime() && dow !== 0 && dow !== 6;
         }).sort((a, b) => b - a).map(ts => new Date(ts));
 
         if (entryDates.length === 0) return { current: 0, best: 0 };

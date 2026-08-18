@@ -1244,6 +1244,19 @@
 
         const total = work + vac + sick + school + holiday || 1;
 
+        // ─── RANGFOLGE: groesster Anteil zuerst ──────────────────────
+        // EINE Reihenfolge fuer beide Ebenen. Vorher sortierte sich nur
+        // die Legende; der Balken behielt die feste Kategorie-Reihenfolge
+        // — also zeigten Zeile 1 und Segment 1 verschiedene Kategorien.
+        // Bei Gleichstand entscheidet die Reihenfolge aus `categories`,
+        // damit gleich grosse Anteile nicht bei jedem Rendern springen.
+        // Die FARBE haengt am `data-cat` (CSS), nicht an der Position —
+        // sortieren faerbt also nichts um.
+        const ranked = categories
+            .map((cat, index) => ({ cat, index }))
+            .sort((a, b) => (b.cat.val - a.cat.val) || (a.index - b.index))
+            .map(entry => entry.cat);
+
         // Untertitel spiegelt die gewählte Einheit
         const subEl = document.getElementById('donutSubtitle');
         if (subEl) subEl.textContent = useDays ? (isEN ? 'Split by days' : 'Aufteilung in Tagen') : (isEN ? 'Split by hours' : 'Aufteilung in Stunden');
@@ -1263,8 +1276,25 @@
         if (centerEl) centerEl.textContent = useDays ? nf0.format(sumAll) : nf1.format(sumAll);
         if (centerLabel) centerLabel.textContent = isEN ? 'Total' : 'Gesamt';
 
-        // Animate stacked bar segments
-        categories.forEach((cat, index) => {
+        // ─── BALKEN: Segmente in die Rangfolge bringen ───────────────
+        // Die Flex-Reihenfolge ist die DOM-Reihenfolge — sortiert wird
+        // also durch Umhaengen, nicht ueber `order` (das haette die
+        // Tab-/Vorlesereihenfolge gegen das Bild laufen lassen).
+        const bar = document.getElementById('donutChartContainer');
+        if (bar) {
+            const segs = ranked.map(cat => document.getElementById(cat.id)).filter(Boolean);
+            const current = Array.from(bar.children);
+            // Nur anfassen, wenn sich die Reihenfolge wirklich aendert:
+            // appendChild haengt den Knoten aus und wieder ein und bricht
+            // damit laufende Transitions ab. updateUI() laeuft oft.
+            const unchanged = segs.length === current.length
+                && segs.every((el, i) => current[i] === el);
+            if (!unchanged) segs.forEach(el => bar.appendChild(el));
+        }
+
+        // Animate stacked bar segments — in der Rangfolge, damit die
+        // Fuell-Animation von links nach rechts durchlaeuft.
+        ranked.forEach((cat, index) => {
             const el = document.getElementById(cat.id);
             if (!el) return;
 
@@ -1305,6 +1335,21 @@
             if (valEl) valEl.textContent = fmtVal(cat.val);
             if (pctEl) pctEl.textContent = nf1.format((cat.val / total) * 100) + ' %';
         });
+
+        // Die Legende folgt derselben Rangfolge wie der Balken —
+        // Zeile n und Segment n meinen dieselbe Kategorie. Die
+        // Datenattribute bleiben unverändert, damit Hover/Highlight
+        // weiterhin den richtigen Balken trifft.
+        const legend = document.getElementById('donutLegendGrid');
+        if (legend) {
+            const rows = ranked
+                .map(cat => legend.querySelector('.dist-legend__row[data-type="' + cat.type + '"]'))
+                .filter(Boolean);
+            const current = Array.from(legend.children);
+            const unchanged = rows.length === current.length
+                && rows.every((row, i) => current[i] === row);
+            if (!unchanged) rows.forEach(row => legend.appendChild(row));
+        }
     }
 
     // ─── SEGMENT HERVORHEBEN ─────────────────────────────────────────
