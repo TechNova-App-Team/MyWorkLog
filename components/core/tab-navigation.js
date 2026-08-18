@@ -18,6 +18,11 @@
         const mobBtn = document.getElementById('mobNav-' + tabId);
         if (mobBtn) mobBtn.classList.add('active');
         
+        // Nur noch fuer document.title — der sichtbare Seitentitel in der
+        // Kopfzeile ist weg, jede Ansicht bringt ihren eigenen .view-title mit.
+        // Kein querySelector('.page-title') mehr: das Element gibt es nicht,
+        // und ein Treffer auf eine gleichnamige neue Klasse wuerde deren Text
+        // ueberschreiben.
         const titles = {
             'dashboard': 'Dashboard',
             'history': 'Daten-Analyse & Historie',
@@ -35,8 +40,6 @@
             'aufgaben': 'Aufgaben',
             'aufgaben-tab': 'Aufgaben',
         };
-        const pageTitle = document.querySelector('.page-title');
-        if (pageTitle) pageTitle.textContent = titles[tabId] || '';
         document.title = 'MyWorkLog | ' + (titles[tabId] || tabId);
 
         if (window.innerWidth < 1024 && tabId !== 'dashboard') {

@@ -923,6 +923,64 @@
         [data-theme="light"] .date-badge__day { color: rgba(0,0,0,0.28); }
         [data-theme="light"] .date-badge__sep { color: rgba(0,0,0,0.15); }
         [data-theme="light"] .date-badge__date { color: rgba(0,0,0,0.55); }
+
+        /* --- SEITENKOPF DER ANSICHTEN ---
+           Eine Anatomie fuer Jahres-, Monats-, Wochenansicht, Urlaubsplaner und
+           Verlauf: Titel + Unterzeile links, optionale Aktionen rechts. Steht
+           bewusst hier und nicht in einer View-Datei — core.css laedt
+           render-blockierend, die View-Stylesheets asynchron. Lag der Kopf in
+           weekview.css, blitzte er auf den anderen vier Ansichten kurz
+           unformatiert auf. */
+        .view-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+        .view-title {
+            font-size: 1.7rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, var(--text-main) 30%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+            margin: 0;
+        }
+        .view-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: 6px 0 0;
+            letter-spacing: 0.01em;
+        }
+        .view-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        @media (max-width: 640px) {
+            .view-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+            .view-title { font-size: 1.35rem; }
+            .view-header-actions { width: 100%; justify-content: flex-end; flex-wrap: wrap; }
+        }
+        /* Der Farbverlauf haengt an `background-clip: text` mit durchsichtiger
+           Fuellung. Chrome druckt Hintergruende nicht — ohne diese Regel bleibt
+           die Ueberschrift auf dem Papier leer. */
+        @media print {
+            .view-title {
+                background: none;
+                -webkit-text-fill-color: currentColor;
+                color: var(--text-main);
+            }
+        }
         /* Mobile Menu Button */
         #mobileMenuToggle {
             display: none;
