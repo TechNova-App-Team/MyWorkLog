@@ -532,7 +532,7 @@
 
             if (typeof recalculateVacationUsed === 'function') recalculateVacationUsed();
             if (typeof save === 'function') save();
-            if (typeof uEvent === 'function') uEvent('urlaubsplaner_gebucht', { tage: s.cost });
+            if (typeof mwlEvent === 'function') mwlEvent('urlaubsplaner_gebucht', { tage: s.cost });
 
             renderUrlaubsplaner();
             showCustomMessage(

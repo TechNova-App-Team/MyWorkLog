@@ -9,6 +9,19 @@
 //
 // Auf Localhost bewusst deaktiviert (kein Dev-Rauschen in den Prod-Zahlen).
 // Adblocker duerfen das blocken — in der DSGVO ausdruecklich zugesagt.
+/* mwlEvent(name, props) — Zwilling der Fassung in index.template.html (dort inline,
+   weil sie vor den defer-Skripten stehen muss; die App laedt diese Datei nicht).
+   Aendert sich eine der beiden, die andere nachziehen.
+   Regeln: nur Zaehl-Events, NIE Inhalte (keine Zeiten, Notizen, Namen, Betraege).
+   Steht bewusst VOR dem Localhost-Ausstieg unten: die Funktion existiert dann immer,
+   und ohne posthog faellt sie still durch — sonst muesste jede Aufrufstelle raten. */
+window.mwlEvent = function (name, props) {
+    try {
+        if (typeof posthog === 'undefined' || !posthog.capture) return;
+        posthog.capture(name, props || {});
+    } catch (e) { /* Tracking darf die Seite nie kippen */ }
+};
+
 (function () {
     var h = location.hostname;
     if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '' || location.protocol === 'file:') return;

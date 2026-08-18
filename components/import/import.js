@@ -407,7 +407,7 @@ function mwlAnalyzeRows(rows) {
 // 4. AUS ZEILEN EINTRÄGE MACHEN
 // ─────────────────────────────────────────────────────────────────────────
 //
-// 🔴 Die Regeln fuer worked/expected/diff sind aus addEntry() in
+// 🔴 Die Regeln fuer worked/expected/diff sind aus handleEntry() in
 // components/dashboard/dashboard.js gespiegelt. Aendert sich dort die
 // Rechnung, muss sie hier nachgezogen werden — sonst rechnet ein importierter
 // Tag anders als derselbe Tag von Hand eingetragen, und der Saldo stimmt

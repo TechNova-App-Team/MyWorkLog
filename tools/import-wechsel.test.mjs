@@ -2,7 +2,7 @@
 //
 // Warum Tests hier besonders: Der Import schreibt Hunderte Eintraege auf
 // einmal in data.entries. Rechnet er `expected`/`diff` auch nur leicht anders
-// als addEntry() in dashboard.js, stimmt der Saldo danach nicht mehr — und
+// als handleEntry() in dashboard.js, stimmt der Saldo danach nicht mehr — und
 // zwar unauffaellig, weil jeder einzelne Tag plausibel aussieht. Die Tabelle
 // in Abschnitt 4 nagelt die Regeln fest.
 //
@@ -136,7 +136,7 @@ const e2 = p1[2].entry;
 eq('Berufsschule zählt als voller Tag', e2.worked, 8);
 eq('Berufsschule Diff immer 0', e2.diff, 0);
 
-console.log('\nRegeln je Typ (gespiegelt aus addEntry)');
+console.log('\nRegeln je Typ (gespiegelt aus handleEntry)');
 // Freitag 07.08.2026, Soll 4 h
 const mk = (typ, extra = '') => W.mwlParseDelimited(`Datum;Typ;Stunden\n07.08.2026;${typ};${extra}`);
 const one = (typ, extra) => {

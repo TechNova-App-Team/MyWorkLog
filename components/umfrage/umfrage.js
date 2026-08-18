@@ -24,7 +24,7 @@
         show('umfDone', umfHasVoted());
         show('umfFail', false);
         modal.classList.add('active');
-        if (typeof uEvent === 'function') uEvent('umfrage_geoeffnet');
+        if (typeof mwlEvent === 'function') mwlEvent('umfrage_geoeffnet');
     }
 
     function closeUmfrage() {
@@ -37,7 +37,7 @@
         try { localStorage.setItem(UMF_LS_DISMISSED, new Date().toISOString()); } catch (e) {}
         umfApplyBanner();
         closeUmfrage();
-        if (typeof uEvent === 'function') uEvent('umfrage_abgelehnt');
+        if (typeof mwlEvent === 'function') mwlEvent('umfrage_abgelehnt');
     }
 
     function umfReadAnswers() {
@@ -100,7 +100,7 @@
             show('umfForm', false);
             show('umfDone', true);
             umfApplyBanner();
-            if (typeof uEvent === 'function') uEvent('umfrage_gesendet');
+            if (typeof mwlEvent === 'function') mwlEvent('umfrage_gesendet');
 
         } catch (err) {
             // TypeError = Netzwerk/CORS/Edge-Block. Der Status ist von hier aus

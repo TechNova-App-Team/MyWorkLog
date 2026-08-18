@@ -1168,7 +1168,7 @@ window._clsBC = 'ghost.js-start';
                 disguiseTab('excel', T.docTitle(new Date().getFullYear()));
             }
             togglePanicButton(false);
-            if (typeof uEvent === 'function') { try { uEvent('ghost_mode_on', { skin: activeSkin }); } catch (err) {} }
+            if (typeof mwlEvent === 'function') { try { mwlEvent('ghost_mode_on', { skin: activeSkin }); } catch (err) {} }
         } else {
             stopEdit(false);
             excelOverlay.classList.remove('active');

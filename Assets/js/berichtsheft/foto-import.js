@@ -284,7 +284,7 @@ function mwlFotoOpen() {
     mwlFotoSchritt('start');
     ov.classList.add('open');
     document.body.style.overflow = 'hidden';
-    if (typeof uEvent === 'function') uEvent('foto_import_opened');
+    if (typeof mwlEvent === 'function') mwlEvent('foto_import_opened');
 }
 
 function mwlFotoClose() {
@@ -392,5 +392,5 @@ function mwlFotoUebernehmen() {
         showToast(mwlFotoL('Aus dem Foto übernommen — bitte prüfen und dann speichern',
                            'Taken from the photo — please check, then save'), 'info');
     }
-    if (typeof uEvent === 'function') uEvent('foto_import_applied');
+    if (typeof mwlEvent === 'function') mwlEvent('foto_import_applied');
 }
