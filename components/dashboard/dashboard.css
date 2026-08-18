@@ -606,7 +606,12 @@
         }
         .dist-bar__seg {
             height: 100%;
-            flex: 0 0 0%;
+            /* shrink 1, nicht 0: die Fugen kosten Breite (4 Fugen x 2 px), die
+               Basen summieren sich aber auf 100 %. Ohne Schrumpfen laeuft der
+               Balken um 8 px ueber und overflow:hidden schneidet das letzte —
+               seit der Sortierung das kleinste — Segment ab. Mit shrink 1 tragen
+               alle Segmente die 8 px anteilig, das Verhaeltnis bleibt. */
+            flex: 0 1 0%;
             border-radius: 2px;
             min-width: 0;
             transition: flex var(--dur-slow) var(--ease-out),

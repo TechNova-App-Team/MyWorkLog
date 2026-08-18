@@ -1311,16 +1311,16 @@
                 // Fill-Animation: sauber von 0 auf Zielwert (kein Rückwärts-Flackern
                 // bei Refresh) – Transition erst nach dem Reset aktivieren.
                 el.style.transition = 'none';
-                el.style.flex = '0 0 0%';
+                el.style.flex = '0 1 0%';
                 void el.offsetWidth; // Reflow erzwingen
                 setTimeout(() => {
                     el.style.transition = transitionCss;
-                    el.style.flex = `0 0 ${percentage}%`;
+                    el.style.flex = `0 1 ${percentage}%`;
                 }, delay);
             } else {
                 // Animation aus: flex-Fill sofort (nur Hover-Transitions aktiv)
                 el.style.transition = hoverTrans;
-                el.style.flex = `0 0 ${percentage}%`;
+                el.style.flex = `0 1 ${percentage}%`;
             }
 
             el.dataset.value = cat.val.toFixed(1);

@@ -1289,7 +1289,10 @@
     var BAR_CHART_DEFAULTS = {
         barHeight: 32,
         borderRadius: 8,
-        segmentGap: 0,
+        segmentGap: 2,   // Fuge zwischen den Segmenten. Seit der Balken nach
+                         // Anteil sortiert, koennen aehnliche Farben (Arbeit/Schule,
+                         // beide blau) nebeneinander landen — ohne Fuge sieht das
+                         // aus wie EIN Segment.
         showLabels: true,
         showAnimation: true,
         animSpeed: 800,   // ms – Dauer der Fill-Animation
@@ -1303,6 +1306,16 @@
             if (saved) s = JSON.parse(saved) || {};
         } catch (e) { s = {}; }
         return Object.assign({}, BAR_CHART_DEFAULTS, s);
+    }
+
+    // Der Eckenradius der SEGMENTE haengt an der Fuge, nicht am Radius des
+    // Balkens — der gehoert zu dessen Aussenkanten. Vorher stand hier
+    // Math.min(s.borderRadius, 6): bei 2 px Fuge und dem Standardradius 8
+    // haetten 6 px aus einem schmalen Segment (4 % = 19 px bei 32 px Hoehe)
+    // eine Pille gemacht. Steht an ZWEI Stellen (echter Balken + Vorschau im
+    // Modal) und gehoert deshalb in eine Funktion.
+    function barSegRadius(s) {
+        return s.segmentGap > 0 ? Math.min(s.segmentGap, 6) : 0;
     }
 
     // Wendet Layout-Settings (Höhe, Radius, Gap, Labels, Glow) direkt auf den echten Chart an.
@@ -1328,7 +1341,7 @@
         });
         // Bei Segment-Abstand bekommen die Segmente eigene abgerundete Ecken.
         document.querySelectorAll('#donutChartContainer .donut-segment').forEach(function (seg) {
-            seg.style.borderRadius = (s.segmentGap > 0 ? Math.min(s.borderRadius, 6) : 0) + 'px';
+            seg.style.borderRadius = barSegRadius(s) + 'px';
         });
     }
 
@@ -1362,7 +1375,7 @@
         '.bcs-replay:hover{background:rgba(var(--primary-rgb),.18)}' +
         '.bcs-replay svg{width:12px;height:12px}' +
         '.bcs-bar{width:100%;display:flex;overflow:hidden;background:rgba(255,255,255,.04);box-shadow:inset 0 2px 4px rgba(0,0,0,.2)}' +
-        '.bcs-seg{height:100%;flex:0 0 0%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:rgba(255,255,255,.92)}' +
+        '.bcs-seg{height:100%;flex:0 1 0%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:700;color:rgba(255,255,255,.92)}' +
         '.bcs-group-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:12px;display:block}' +
         '.bcs-row{display:flex;flex-direction:column;gap:9px}' +
         '.bcs-row+.bcs-row{margin-top:16px}' +
@@ -1550,20 +1563,20 @@
                 var el = document.createElement('div');
                 el.className = 'bcs-seg';
                 el.style.background = seg.color;
-                el.style.borderRadius = (s.segmentGap > 0 ? Math.min(s.borderRadius, 6) : 0) + 'px';
+                el.style.borderRadius = barSegRadius(s) + 'px';
                 el.style.transition = s.showAnimation ? ('flex ' + s.animSpeed + 'ms cubic-bezier(.34,1.56,.64,1)') : 'none';
                 el.textContent = (s.showLabels && seg.pct > 8) ? seg.pct + '%' : '';
-                el.style.flex = '0 0 0%';
+                el.style.flex = '0 1 0%';
                 bar.appendChild(el);
                 segEls.push({ el: el, pct: seg.pct });
             });
             var fill = function () {
-                segEls.forEach(function (o) { o.el.style.flex = '0 0 ' + o.pct + '%'; });
+                segEls.forEach(function (o) { o.el.style.flex = '0 1 ' + o.pct + '%'; });
             };
             if (animate && s.showAnimation) {
                 requestAnimationFrame(function () { requestAnimationFrame(fill); });
             } else {
-                segEls.forEach(function (o) { o.el.style.transition = 'none'; o.el.style.flex = '0 0 ' + o.pct + '%'; });
+                segEls.forEach(function (o) { o.el.style.transition = 'none'; o.el.style.flex = '0 1 ' + o.pct + '%'; });
             }
         }
 
