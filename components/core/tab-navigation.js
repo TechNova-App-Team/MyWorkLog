@@ -19,7 +19,7 @@
         if (mobBtn) mobBtn.classList.add('active');
         
         const titles = {
-            'dashboard': 'Übersicht',
+            'dashboard': 'Dashboard',
             'history': 'Daten-Analyse & Historie',
             'performance': 'Performance Analyse',
             'ihk': 'IHK / Karriere',
@@ -35,7 +35,8 @@
             'aufgaben': 'Aufgaben',
             'aufgaben-tab': 'Aufgaben',
         };
-        document.querySelector('.page-title').textContent = titles[tabId];
+        const pageTitle = document.querySelector('.page-title');
+        if (pageTitle) pageTitle.textContent = titles[tabId] || '';
         document.title = 'MyWorkLog | ' + (titles[tabId] || tabId);
 
         if (window.innerWidth < 1024 && tabId !== 'dashboard') {
@@ -58,9 +59,6 @@
         if (tabId === 'goals') {
             renderGoalsView();
         }
-        if (tabId === 'urlaubsplaner') {
-            renderUrlaubsplaner();
-        }
         if (tabId === 'history') {
             renderHistoryView();
         }
@@ -73,6 +71,9 @@
         }
         if (tabId === 'weekview') {
             renderWeekView();
+        }
+        if (tabId === 'urlaubsplaner') {
+            renderUrlaubsplaner();
         }
         if (tabId === 'aibot') {
             initializeAIBot();

@@ -231,6 +231,8 @@
         // 6: Urlaubsplaner ergaenzt. Ohne Bump landet er bei Bestandsnutzern
         // per Append ganz unten statt bei den Zeitraum-Ansichten — die
         // Sidebar-Reihenfolge steckt in den Nutzerdaten (data.settings.nav).
+        // Nur hochzaehlen, wenn sich die Liste oben wirklich aendert: ein Bump
+        // ueberschreibt jedem Bestandsnutzer seine selbst sortierte Sidebar.
         const NAV_VERSION = 6;
         const navNeedsReset = !Array.isArray(data.settings.nav) || data.settings.navVersion !== NAV_VERSION;
         if (navNeedsReset) {
@@ -458,7 +460,7 @@
         { id: 'performance',  label: 'Performance',       icon: getIconSvgById('performance'), group: 'Navigation', action: () => switchTab('performance') },
         { id: 'history',      label: 'Verlauf',           icon: getIconSvgById('history'), group: 'Navigation', action: () => switchTab('history') },
         { id: 'yearview',     label: 'Jahresansicht',     icon: getIconSvgById('yearview'), group: 'Navigation', action: () => switchTab('yearview') },
-        { id: 'monthcompare', label: 'Monatvergleich',    icon: getIconSvgById('monthcompare'), group: 'Navigation', action: () => switchTab('monthcompare') },
+        { id: 'monthcompare', label: 'Monatsansicht',     icon: getIconSvgById('monthcompare'), group: 'Navigation', action: () => switchTab('monthcompare') },
         { id: 'weekview',     label: 'Wochenansicht',     icon: getIconSvgById('weekview'), group: 'Navigation', action: () => switchTab('weekview') },
         { id: 'urlaubsplaner', label: 'Urlaubsplaner',    icon: getIconSvgById('urlaubsplaner'), group: 'Navigation', action: () => switchTab('urlaubsplaner') },
         { id: 'school',       label: 'Berufsschule',      icon: getIconSvgById('school'), group: 'Navigation', action: () => switchTab('school') },

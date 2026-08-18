@@ -104,7 +104,6 @@
         // 7. Render Charts
         renderMonthCompareCharts(stats, prevStats);
     }
-
     function renderMonthCompareCharts(currentStats, prevStats) {
         // Circular Chart für Current
         const maxHours = Math.max(currentStats.worked, prevStats.worked, 200);

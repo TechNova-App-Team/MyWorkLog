@@ -17,7 +17,6 @@
     function upL(de, en) {
         try { return document.documentElement.lang === 'en' ? en : de; } catch (e) { return de; }
     }
-
     // Feiertagsnamen werden in laengere Strings eingesetzt ("Weihnachten,
     // Neujahr") — als MAP-Eintrag im i18n-Runtime greift das nicht, weil der
     // dort immer den GANZEN Textknoten braucht. Deshalb hier uebersetzen.
