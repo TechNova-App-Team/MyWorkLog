@@ -67,12 +67,54 @@
             fill.classList.toggle('is-clamped', clamped);
         }
 
-        const s = Math.round(S);
+        // Seit die Skala mitwaechst, kann sie bei 1,2 h stehen — ein
+        // Math.round() daraus haette daraus "1 h" gemacht und die
+        // Beschriftung damit zur Luege.
+        const s = new Intl.NumberFormat(
+            (typeof mwlLocale === 'function') ? mwlLocale() : 'de-DE',
+            { maximumFractionDigits: S < 10 ? 1 : 0 }
+        ).format(S);
         if (lo) lo.textContent = '−' + s + ' h';
         if (hi) hi.textContent = '+' + s + ' h';
         bar.title = clamped
             ? 'Wert liegt außerhalb der Skala von ±' + s + ' h'
             : 'Skala ±' + s + ' h';
+    }
+
+    // ── Mitwachsende Skala (Hoechststand) ────────────────────────────────
+    // Eine feste Skala misst jeden Nutzer am selben Massstab: Wer nie mehr
+    // als 2 h abweicht, sieht auf ±20 h nie einen Ausschlag. Deshalb startet
+    // die Skala bei DEV_SCALE_MIN und waechst auf den groessten Betrag, den
+    // dieser Nutzer je erreicht hat — in beide Richtungen derselbe Wert,
+    // damit die Nulllinie in der Mitte bleibt und Plus mit Minus vergleichbar
+    // ist.
+    //
+    // Sie waechst NUR. Das ist Absicht: eine Skala, die wieder schrumpft,
+    // liesse denselben Saldo an verschiedenen Tagen verschieden gross
+    // aussehen — dann vergleicht man Bilder statt Zahlen. Der Preis ist,
+    // dass ein einmaliger Ausreisser den Balken dauerhaft unempfindlicher
+    // macht; genau dafuer steht der Hoechststand im Titel des Balkens.
+    const DEV_SCALE_MIN = 1;
+
+    function deviationScale(key, val) {
+        const abs = Math.abs(val) || 0;
+        if (typeof data === 'undefined' || !data || !data.settings) {
+            return Math.max(abs, DEV_SCALE_MIN);
+        }
+        if (!data.settings.devScale || typeof data.settings.devScale !== 'object') {
+            data.settings.devScale = {};
+        }
+        const store = data.settings.devScale;
+        const prev = parseFloat(store[key]);
+        const cur = (isFinite(prev) && prev > 0) ? prev : DEV_SCALE_MIN;
+        if (abs > cur) {
+            store[key] = abs;
+            // Nur beim echten Wachstum speichern — sonst schriebe jeder
+            // Render der Startseite in den Speicher.
+            if (typeof save === 'function') { try { save(); } catch (e) {} }
+            return abs;
+        }
+        return cur;
     }
 
     // Wochensoll aus den Einstellungen — nie eine feste Zahl, sonst

@@ -64,11 +64,13 @@
         const monthTarget = weekTarget * (52 / 12);          // 4,33 Wochen
         const nf1 = new Intl.NumberFormat(mwlLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-        // Voller Ausschlag: eine halbe Woche bzw. ein halber Monat
-        // Abweichung — grob genug, dass Alltagswerte nicht anschlagen,
-        // fein genug, dass 2 h Minus sichtbar sind.
-        setDeviation('devWeek',  'valWeek',  week,  weekTarget  / 2, 1);
-        setDeviation('devMonth', 'valMonth', month, monthTarget / 2, 1);
+        // Voller Ausschlag ist NICHT mehr die halbe Wochen-/Monatsvorgabe.
+        // Die war fuer die meisten Nutzer viel zu gross: Bei ±20 h Skala
+        // bewegt sich eine Stunde Abweichung um zweieinhalb Prozent der
+        // Spurbreite, also sichtbar gar nicht. Stattdessen waechst die
+        // Skala mit dem Nutzer mit (deviationScale in charts.js).
+        setDeviation('devWeek',  'valWeek',  week,  deviationScale('week', week), 1);
+        setDeviation('devMonth', 'valMonth', month, deviationScale('month', month), 1);
 
         // Gesamt-Saldo waechst ueber Jahre. Feste Skala wuerde dauerhaft
         // anschlagen, deshalb waechst sie in Wochenschritten mit — immer
