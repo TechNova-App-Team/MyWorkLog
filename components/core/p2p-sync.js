@@ -30,11 +30,15 @@
         // P2P Sync Settings (nur diese existieren noch)
         const autoSyncEl = document.getElementById('p2pAutoSync');
         const offlineQueueEl = document.getElementById('p2pOfflineQueue');
-        const encryptionEl = document.getElementById('p2pEncryption');
         
         if (autoSyncEl) autoSyncEl.checked = team.autoSync !== false;
         if (offlineQueueEl) offlineQueueEl.checked = team.offlineQueue !== false;
-        if (encryptionEl) encryptionEl.checked = team.encryption !== false;
+
+        // Verschluesselung ist kein Schalter, sondern ein Zustand: sie laeuft oder
+        // sie laeuft nicht, und der Nutzer erfaehrt welches von beidem. Vorher
+        // stand hier ein Haken "Ende-zu-Ende verschluesseln", der nur sich selbst
+        // setzte — gelesen hat ihn nie jemand wieder.
+        p2pRenderCryptoState();
     }
 
     // ========== === P2P WebRTC SYNC SYSTEM v2.0 === ==========
@@ -46,6 +50,7 @@
         peer: null,
         role: null, // 'host' | 'client'
         connected: false,
+        crypto: { keyPair: null, pub: null, key: null, sas: null, active: false },
         syncStats: { sent: 0, received: 0, merged: 0 },
         heartbeatInterval: null,
         lastSyncTime: null,
@@ -103,6 +108,167 @@
         }
     }
 
+    // === ENDE-ZU-ENDE-VERSCHLUESSELUNG ===
+    // WebRTC verschluesselt den DataChannel bereits per DTLS. Was DTLS NICHT
+    // abdeckt, ist der Kopplungscode: wer ihn unterwegs abfaengt und durch einen
+    // eigenen ersetzt, sitzt sauber in der Mitte — und beide Seiten sehen eine
+    // gueltige, "verschluesselte" Verbindung. Deshalb hier eine zweite Schicht:
+    // ephemeres ECDH ueber die Codes, AES-GCM auf jeder Nachricht, und eine
+    // sechsstellige Pruefziffer aus dem gemeinsamen Geheimnis. Stimmt sie auf
+    // beiden Geraeten ueberein, war niemand dazwischen — faelschen koennte ein
+    // Dritter sie nur, wenn er den Schluessel kennt, und den hat er nicht.
+    const P2P_KDF_KEY = 'MyWorkLog-P2P-Key-v1';
+    const P2P_KDF_SAS = 'MyWorkLog-P2P-SAS-v1';
+
+    // crypto.subtle gibt es NUR in sicheren Kontexten (https + localhost). Auf
+    // http://192.168.x.x im Heimnetz ist es schlicht undefined — dann laeuft die
+    // Uebertragung unverschluesselt, und genau das muss dann auch dranstehen.
+    function p2pCryptoAvailable() {
+        return typeof crypto !== 'undefined' && !!crypto.subtle && typeof crypto.subtle.deriveBits === 'function';
+    }
+
+    function p2pBytesToB64(bytes) {
+        let bin = '';
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        return btoa(bin);
+    }
+
+    function p2pB64ToBytes(str) {
+        return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+    }
+
+    function p2pCryptoReset() {
+        p2pSync.crypto = { keyPair: null, pub: null, key: null, sas: null, active: false };
+    }
+
+    // Eigenes Schluesselpaar. Der oeffentliche Teil (65 Byte roh) reist im
+    // Kopplungscode mit, der private verlaesst das Geraet nie — deshalb
+    // extractable = false. Oeffentliche Schluessel sind laut WebCrypto-Spec
+    // trotzdem immer exportierbar.
+    async function p2pCryptoInit() {
+        if (!p2pCryptoAvailable()) return null;
+        try {
+            const pair = await crypto.subtle.generateKey(
+                { name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits']
+            );
+            const raw = new Uint8Array(await crypto.subtle.exportKey('raw', pair.publicKey));
+            p2pSync.crypto.keyPair = pair;
+            p2pSync.crypto.pub = p2pBytesToB64(raw);
+            return p2pSync.crypto.pub;
+        } catch (e) {
+            console.warn('[P2P] Schluesselpaar fehlgeschlagen:', e);
+            p2pCryptoReset();
+            return null;
+        }
+    }
+
+    // Gemeinsames Geheimnis, daraus per HKDF zwei Dinge: Sitzungsschluessel und
+    // Pruefziffer. Das Salz enthaelt beide oeffentlichen Schluessel in SORTIERTER
+    // Reihenfolge — sonst rechnen Host und Client verschiedene Salze und damit
+    // verschiedene Schluessel, und nichts entschluesselt mehr.
+    async function p2pCryptoDerive(peerPubB64) {
+        if (!p2pCryptoAvailable() || !p2pSync.crypto.keyPair || !peerPubB64) return false;
+        try {
+            const enc = new TextEncoder();
+            const peerKey = await crypto.subtle.importKey(
+                'raw', p2pB64ToBytes(peerPubB64),
+                { name: 'ECDH', namedCurve: 'P-256' }, false, []
+            );
+            const shared = await crypto.subtle.deriveBits(
+                { name: 'ECDH', public: peerKey }, p2pSync.crypto.keyPair.privateKey, 256
+            );
+            const base = await crypto.subtle.importKey('raw', shared, 'HKDF', false, ['deriveBits', 'deriveKey']);
+            const salt = enc.encode([p2pSync.crypto.pub, peerPubB64].sort().join('|'));
+
+            p2pSync.crypto.key = await crypto.subtle.deriveKey(
+                { name: 'HKDF', hash: 'SHA-256', salt, info: enc.encode(P2P_KDF_KEY) },
+                base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+            );
+
+            const sasBits = await crypto.subtle.deriveBits(
+                { name: 'HKDF', hash: 'SHA-256', salt, info: enc.encode(P2P_KDF_SAS) },
+                base, 32
+            );
+            p2pSync.crypto.sas = String(new DataView(sasBits).getUint32(0) % 1000000).padStart(6, '0');
+            p2pSync.crypto.active = true;
+            console.log('[P2P] Ende-zu-Ende-Schluessel steht. Pruefziffer:', p2pSync.crypto.sas);
+            return true;
+        } catch (e) {
+            console.warn('[P2P] Schluesselableitung fehlgeschlagen:', e);
+            p2pCryptoReset();
+            return false;
+        }
+    }
+
+    async function p2pEncrypt(msg) {
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const pt = new TextEncoder().encode(JSON.stringify(msg));
+        const ct = new Uint8Array(await crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv, tagLength: 128 }, p2pSync.crypto.key, pt
+        ));
+        return { e: 1, i: p2pBytesToB64(iv), c: p2pBytesToB64(ct) };
+    }
+
+    async function p2pDecrypt(env) {
+        const pt = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: p2pB64ToBytes(env.i), tagLength: 128 },
+            p2pSync.crypto.key, p2pB64ToBytes(env.c)
+        );
+        return JSON.parse(new TextDecoder().decode(pt));
+    }
+
+    // Zeigt den WAHREN Zustand — in den Einstellungen und im Assistenten.
+    function p2pRenderCryptoState() {
+        const on = !!p2pSync.crypto.active;
+        const possible = p2pCryptoAvailable();
+
+        const badge = document.getElementById('p2pCryptoBadge');
+        const sub = document.getElementById('p2pCryptoSub');
+        // Vier Zustaende, und 'Bereit' ist NICHT derselbe wie 'verbunden, aber
+        // ohne Verschluesselung'. Genau diese Unterscheidung hat vorher gefehlt.
+        if (badge) {
+            badge.textContent = on ? p2pL('Aktiv', 'On')
+                : !possible ? p2pL('Nicht möglich', 'Unavailable')
+                : p2pSync.connected ? p2pL('Nicht aktiv', 'Off')
+                : p2pL('Bereit', 'Ready');
+            badge.dataset.state = on ? 'on' : (possible && !p2pSync.connected) ? '' : 'warn';
+        }
+        if (sub) {
+            sub.textContent = on
+                ? p2pL('AES-256-GCM. Der Schlüssel entsteht auf beiden Geräten und wird nie übertragen.',
+                       'AES-256-GCM. The key is created on both devices and never sent.')
+                : !possible
+                    ? p2pL('Nur über HTTPS verfügbar. Die Übertragung bleibt durch WebRTC geschützt.',
+                           'Requires HTTPS. The transfer stays protected by WebRTC.')
+                : p2pSync.connected
+                    ? p2pL('Die Gegenstelle unterstützt sie nicht. Die Übertragung bleibt durch WebRTC geschützt.',
+                           'The other device does not support it. The transfer stays protected by WebRTC.')
+                    : p2pL('Wird beim Verbinden ausgehandelt.', 'Negotiated when you connect.');
+        }
+
+        const block = document.getElementById('p2pSasBlock');
+        const code = document.getElementById('p2pSasCode');
+        const foot = document.getElementById('p2pSasFoot');
+        if (!block) return;
+        if (on && p2pSync.crypto.sas) {
+            block.style.display = '';
+            block.dataset.state = 'on';
+            if (code) code.textContent = p2pSync.crypto.sas.slice(0, 3) + ' ' + p2pSync.crypto.sas.slice(3);
+            if (foot) foot.textContent = p2pL(
+                'Auf beiden Geräten muss dieselbe Zahl stehen. Weicht sie ab, trenne die Verbindung.',
+                'Both devices must show the same number. If they differ, disconnect.');
+        } else if (p2pSync.connected) {
+            block.style.display = '';
+            block.dataset.state = 'off';
+            if (code) code.textContent = '— — —';
+            if (foot) foot.textContent = p2pL(
+                'Keine zusätzliche Verschlüsselung: die Gegenstelle nutzt eine ältere Version oder kein HTTPS. Die Übertragung läuft weiterhin direkt und WebRTC-gesichert.',
+                'No extra encryption: the other device runs an older version or no HTTPS. The transfer still runs directly and WebRTC-secured.');
+        } else {
+            block.style.display = 'none';
+        }
+    }
+
     // === WIZARD UI CONTROL ===
     function openP2PWizard() {
         // Schließe Settings Modal zuerst, damit P2P Modal oben ist
@@ -125,6 +291,12 @@
         document.getElementById('p2pStep2Dot').className = 'p2p-step-dot';
         document.getElementById('p2pStep3Dot').className = 'p2p-step-dot';
         document.getElementById('p2pWizardSubtitle').textContent = 'Rolle wählen';
+
+        // Ein Schluessel gehoert zu GENAU einer Verbindung. Bleibt ein alter liegen,
+        // verschluesselt der zweite Versuch gegen ein Geheimnis, das die neue
+        // Gegenstelle nie hatte — und nichts geht mehr auf.
+        p2pCryptoReset();
+        p2pRenderCryptoState();
 
         // Auch die Zwischenzustände zurücksetzen — sonst zeigt ein zweiter Versuch
         // nach einem Fehlschlag noch den alten Code, die alte Statuszeile usw.
@@ -549,6 +721,12 @@
                 : 'Kein Relay — Verbindung nur direkt oder im selben Netz');
 
             try {
+                // Schluesselpaar VOR dem Code erzeugen — der oeffentliche Teil
+                // reist als 'k' mit. Aeltere Fassungen kennen das Feld nicht und
+                // ignorieren es stillschweigend.
+                p2pCryptoReset();
+                const ownPub = await p2pCryptoInit();
+
                 const payload = {
                     v: 2,
                     t: 'offer',
@@ -557,6 +735,7 @@
                     n: data.settings?.name || 'Gerät',
                     ts: Date.now()
                 };
+                if (ownPub) payload.k = ownPub;
                 const compressed = await p2pCompress(payload);
                 console.log(`📦 Offer komprimiert: ${JSON.stringify(signalData).length} → ${compressed.length} Zeichen`);
 
@@ -626,6 +805,16 @@
             // Destroy old peer
             if (p2pSync.peer) { try { p2pSync.peer.destroy(); } catch(e){} p2pSync.peer = null; }
 
+            // Schluesselaustausch — nur wenn die Gegenstelle einen oeffentlichen
+            // Schluessel mitgeschickt hat. Fehlt er, laeuft es unverschluesselt
+            // weiter, aber sichtbar: p2pRenderCryptoState() sagt es dem Nutzer.
+            p2pCryptoReset();
+            let ownPub = null;
+            if (offerPayload.k) {
+                ownPub = await p2pCryptoInit();
+                if (ownPub) await p2pCryptoDerive(offerPayload.k);
+            }
+
             p2pSync.answerGenerated = false;
 
             const peer = new SimplePeer({
@@ -670,6 +859,9 @@
                         n: data.settings?.name || 'Gerät',
                         ts: Date.now()
                     };
+                    // Nur mitschicken, wenn die Ableitung wirklich geklappt hat —
+                    // sonst glaubt der Host an einen Schluessel, den es nicht gibt.
+                    if (ownPub && p2pSync.crypto.active) payload.k = ownPub;
                     const compressed = await p2pCompress(payload);
                     console.log(`📦 Answer komprimiert: ${compressed.length} Zeichen`);
 
@@ -776,6 +968,17 @@
                 devInfo.style.display = '';
             }
 
+            // Ableiten MUSS vor dem Signalisieren passieren: gleich danach kann
+            // 'connect' feuern und der Auto-Sync losschicken. Steht der Schluessel
+            // dann noch nicht, ginge das erste Paket im Klartext raus.
+            if (answerPayload.k) {
+                await p2pCryptoDerive(answerPayload.k);
+            } else {
+                // Gegenstelle kann kein ECDH — dann auch nicht so tun als ob.
+                p2pCryptoReset();
+            }
+            p2pRenderCryptoState();
+
             // Signal the answer to our peer (this completes the handshake!)
             console.log('📡 Host: Signalisiere Answer an Peer...');
             p2pSync.peer.signal(answerPayload.s);
@@ -828,8 +1031,16 @@
 
             // Update settings UI
             p2pUpdateConnectionUI(true);
+            p2pRenderCryptoState();
 
-            showCustomMessage('Verbunden', 'Direkte Verbindung steht. Daten werden übertragen.', 'success');
+            if (p2pSync.crypto.active) {
+                p2pLog('Ende-zu-Ende verschlüsselt · Prüfziffer ' + p2pSync.crypto.sas);
+                showCustomMessage('Verbunden',
+                    'Direkte Verbindung steht, Ende-zu-Ende verschlüsselt. Vergleiche die Prüfziffer auf beiden Geräten.', 'success');
+            } else {
+                p2pLog('Ohne zusätzliche Verschlüsselung verbunden');
+                showCustomMessage('Verbunden', 'Direkte Verbindung steht. Daten werden übertragen.', 'success');
+            }
 
             // Start heartbeat
             p2pStartHeartbeat();
@@ -843,12 +1054,29 @@
         });
 
         peer.on('data', (rawData) => {
-            try {
-                const msg = JSON.parse(rawData.toString());
-                p2pHandleMessage(msg);
-            } catch (e) {
-                console.error('❌ P2P Message Parse Error:', e);
-            }
+            // Entschluesseln ist async, der Empfang war es nicht. Ohne Kette
+            // koennten sich zwei Pakete ueberholen — dann kaeme 'sync-complete'
+            // womoeglich vor dem letzten Chunk an und der Merge liefe zu frueh.
+            p2pRecvChain = p2pRecvChain.then(async () => {
+                const wire = JSON.parse(rawData.toString());
+
+                if (p2pSync.crypto.active) {
+                    // Steht der Schluessel, wird Klartext NICHT mehr angenommen.
+                    // Sonst genuegte es, unverschluesselt zu senden, um die
+                    // Verschluesselung auszuhebeln — ein klassisches Downgrade.
+                    if (!wire || wire.e !== 1) {
+                        console.warn('[P2P] Klartext-Paket bei aktiver Verschluesselung verworfen');
+                        p2pLog('Unverschlüsseltes Paket verworfen');
+                        return;
+                    }
+                    p2pHandleMessage(await p2pDecrypt(wire));
+                    return;
+                }
+
+                p2pHandleMessage(wire);
+            }).catch(e => {
+                console.error('❌ P2P Message Error:', e);
+            });
         });
 
         peer.on('error', (err) => {
@@ -884,6 +1112,8 @@
         peer.on('close', () => {
             console.log('🔴 P2P Verbindung geschlossen');
             p2pSync.connected = false;
+            p2pCryptoReset();
+            p2pRenderCryptoState();
             p2pStopHeartbeat();
             if (p2pSync._connectBarInterval) { clearInterval(p2pSync._connectBarInterval); p2pSync._connectBarInterval = null; }
             p2pUpdateConnectionUI(false);
@@ -895,15 +1125,11 @@
     function p2pStartHeartbeat() {
         p2pStopHeartbeat();
         p2pSync.heartbeatInterval = setInterval(() => {
+            // Ueber p2pSendMessage, nicht direkt an peer.send: sonst ginge der
+            // Heartbeat als einziges Paket unverschlüsselt raus — und die
+            // Gegenstelle wuerde ihn wegen der Downgrade-Sperre verwerfen.
             if (p2pSync.peer && p2pSync.connected) {
-                try {
-                    p2pSync.peer.send(JSON.stringify({ type: 'heartbeat', ts: Date.now(), d: p2pSync.deviceId }));
-                } catch (e) {
-                    console.warn('Heartbeat failed:', e);
-                    p2pSync.connected = false;
-                    p2pUpdateConnectionUI(false);
-                    p2pStopHeartbeat();
-                }
+                p2pSendMessage({ type: 'heartbeat', ts: Date.now(), d: p2pSync.deviceId });
             }
         }, 5000);
     }
@@ -993,13 +1219,36 @@
         }
     }
 
+    // Beide Richtungen laufen streng seriell durch je eine Promise-Kette, damit
+    // die Reihenfolge trotz asynchroner Krypto erhalten bleibt.
+    let p2pSendChain = Promise.resolve();
+    let p2pRecvChain = Promise.resolve();
+
     function p2pSendMessage(msg) {
         if (!p2pSync.peer || !p2pSync.connected) return;
-        try {
-            p2pSync.peer.send(JSON.stringify(msg));
-        } catch (e) {
-            console.error('P2P Send Error:', e);
-        }
+        p2pSendChain = p2pSendChain.then(async () => {
+            if (!p2pSync.peer || !p2pSync.connected) return;
+
+            let wire;
+            try {
+                wire = p2pSync.crypto.active ? await p2pEncrypt(msg) : msg;
+            } catch (e) {
+                // Lieber nichts senden als versehentlich im Klartext.
+                console.error('[P2P] Verschlüsselung fehlgeschlagen, Paket verworfen:', e);
+                return;
+            }
+
+            try {
+                p2pSync.peer.send(JSON.stringify(wire));
+            } catch (e) {
+                // Senden schlaegt fehl = Kanal ist zu. Das merkte bisher nur der
+                // Heartbeat alle 5 s; jetzt merkt es jede Nachricht sofort.
+                console.warn('[P2P] Senden fehlgeschlagen:', e);
+                p2pSync.connected = false;
+                p2pUpdateConnectionUI(false);
+                p2pStopHeartbeat();
+            }
+        });
     }
 
     // === MESSAGE HANDLER ===
@@ -1151,8 +1400,10 @@
         }
         p2pSync.connected = false;
         p2pSync.role = null;
+        p2pCryptoReset();
         p2pStopHeartbeat();
         p2pUpdateConnectionUI(false);
+        p2pRenderCryptoState();
 
         // Reset wizard to step 1 if open
         const modal = document.getElementById('p2pWizardModal');
