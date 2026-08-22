@@ -144,29 +144,56 @@
     }
     .vi-end-p{margin-top:1rem;font-size:clamp(.9rem,1.4vw,1.05rem);color:rgba(255,255,255,0.55)}
 
-    /* Knopf: gefuellte Insel mit genestetem Pfeilkreis.
-       Fuellung bekommt nur, was klickbar ist — und bewegt wird erst bei :active. */
-    .vi-btn{
-      margin:2.2rem 0 0;padding:.85rem .9rem .85rem 1.7rem;height:auto;border:none;cursor:pointer;
-      display:inline-flex;align-items:center;gap:.85rem;
-      font-family:inherit;font-size:clamp(1rem,1.6vw,1.12rem);font-weight:650;letter-spacing:-.01em;
-      color:#fff;background:var(--primary);border-radius:100px;
-      box-shadow:0 12px 40px -12px rgba(var(--primary-rgb),0.75);
-      transition:background .22s ease,box-shadow .22s ease,transform .12s ease-out;
+    /* CTA — Vorlage von Uiverse.io (alexmaracinaru), angepasst.
+       Zwei Aenderungen am Original waren noetig:
+       1. Es faerbt Text und Linie hart in #000. Das Intro liegt auf
+          var(--bg-deep) — beides waere unsichtbar gewesen. Schrift auf Weiss,
+          Linie auf var(--primary), Pfeil auf currentColor.
+       2. Die Klassen hiessen .cta und .hover-underline-animation. landing.css
+          wird global in die App geladen; so blanke Namen haetten ueberall
+          zugeschlagen, wo die Klassen zufaellig vorkommen. Daher vi-Praefix. */
+    /* Die Marge MUSS ueber #pro-intro laufen: der Reset `#pro-intro *`
+       hat Spezifitaet (1,0,0) und schlaegt jede blanke .vi-*-Regel — mit
+       `margin:2.4rem` an .vi-cta stand der Knopf gemessene 0 px unter dem
+       Text. Galt fuer den alten .vi-btn genauso. */
+    #pro-intro .vi-cta{margin-top:2.4rem}
+    .vi-cta{
+      padding:0;height:auto;border:none;background:none;cursor:pointer;
+      display:inline-flex;align-items:center;
+      color:#fff;font-family:inherit;
+      transition:transform .12s ease-out;
     }
-    .vi-btn-ic{
-      width:34px;height:34px;border-radius:50%;flex-shrink:0;
-      background:rgba(255,255,255,0.18);
-      display:inline-flex;align-items:center;justify-content:center;
-      transition:transform .28s cubic-bezier(.23,1,.32,1);
+    .vi-cta-label{
+      position:relative;
+      padding:0 15px 7px 0;
+      font-size:14px;font-weight:600;letter-spacing:4px;text-transform:uppercase;
     }
-    .vi-btn-ic svg{width:16px;height:16px}
+    .vi-cta-label::after{
+      content:'';position:absolute;left:0;bottom:0;
+      width:100%;height:2px;
+      background:var(--primary);
+      transform:scaleX(0);transform-origin:bottom right;
+      transition:transform .25s ease-out;
+    }
+    .vi-cta-arrow{
+      fill:currentColor;flex-shrink:0;
+      transform:translateX(-8px);
+      transition:transform .3s ease;
+    }
     @media(hover:hover) and (pointer:fine){
-      .vi-btn:hover{background:color-mix(in srgb,var(--primary) 88%,#fff);box-shadow:0 16px 48px -12px rgba(var(--primary-rgb),0.9)}
-      .vi-btn:hover .vi-btn-ic{transform:translateX(3px)}
+      .vi-cta:hover .vi-cta-label::after{transform:scaleX(1);transform-origin:bottom left}
+      .vi-cta:hover .vi-cta-arrow{transform:translateX(0)}
     }
-    .vi-btn:active{transform:scale(.975)}
-    .vi-btn:focus-visible{outline:2px solid rgba(var(--primary-rgb),0.7);outline-offset:5px}
+    /* Touch kennt kein :hover. Ohne diesen Zweig gaebe es am Handy weder
+       Linie noch Pfeilbewegung — der Knopf saehe aus wie blosser Text. */
+    @media(hover:none){
+      .vi-cta-label::after{transform:scaleX(1);transform-origin:bottom left}
+      .vi-cta-arrow{transform:translateX(0)}
+    }
+    .vi-cta:active{transform:scale(.97)}
+    .vi-cta:active .vi-cta-arrow{transform:translateX(0) scale(.9)}
+    .vi-cta:focus-visible{outline:2px solid rgba(var(--primary-rgb),.7);outline-offset:6px;border-radius:4px}
+    .vi-cta:focus-visible .vi-cta-label::after{transform:scaleX(1);transform-origin:bottom left}
 
     /* ═══ FORTSCHRITT ═══ */
     .vi-prog{position:absolute;bottom:0;left:0;right:0;height:2px;z-index:50;background:rgba(255,255,255,0.06)}
@@ -240,5 +267,5 @@
          Bewegung, und darf hier NICHT ueberschrieben werden. */
       .vi-s > *{transition:opacity .25s ease;transform:none;filter:none}
       .vi-hint svg,.vi-caret{animation:none}
-      .vi-btn,.vi-btn-ic{transition:none}
+      .vi-cta,.vi-cta-arrow,.vi-cta-label::after{transition:none}
     }
