@@ -44,7 +44,15 @@
       var diff=vidTarget-vidCurrent;
       if(Math.abs(diff)>0.001){
         if(ts-vidLastTs>=VID_INTERVAL){
-          vidCurrent+=diff*0.18;
+          // Nachlauf abhaengig vom Abstand. Mit festem 0.18 braucht die
+          // Schleife rund 0,4 s, um 90 % einer Luecke zu schliessen — beim
+          // schnellen Scrollen laeuft das Video dadurch um mehr als eine
+          // halbe Szene hinterher, und dann steht der neue Text schon da,
+          // waehrend noch die vorige Szene im Bild ist. Nah dran bleibt es
+          // weich, weit weg holt es auf, sehr weit weg springt es.
+          var ad=Math.abs(diff);
+          if(ad>2.5) vidCurrent=vidTarget;
+          else vidCurrent+=diff*(ad>0.9?0.55:0.26);
           vid.currentTime=vidCurrent;
           vidLastTs=ts;
         }
