@@ -94,7 +94,7 @@
       var p=getP();
       progBar.style.width=(p*100)+'%';
       if(vidReady&&vid.duration){vidTarget=p*vid.duration;startVidLoop();}
-      var mode='split';
+      var mode=null;   // null = kein Abschnitt aktiv (Blende) -> Stellung halten
       for(var i=0;i<sections.length;i++){
         var s=parseFloat(sections[i].dataset.s);
         var e=parseFloat(sections[i].dataset.e);
@@ -107,7 +107,7 @@
           if(i===0) startTyped();
         }
       }
-      if(stage&&stage.dataset.mode!==mode) stage.dataset.mode=mode;
+      if(stage&&mode&&stage.dataset.mode!==mode) stage.dataset.mode=mode;
     }
 
     intro.addEventListener('scroll',function(){
