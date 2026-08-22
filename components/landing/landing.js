@@ -12,6 +12,7 @@
     document.body.style.overflow='hidden';
 
     var sections=intro.querySelectorAll('.vi-s');
+    var stage=document.getElementById('viStage');
     var progBar=document.getElementById('viProgBar');
     var vid=document.getElementById('viBgVid');
     var vidReady=false;
@@ -72,23 +73,6 @@
       },55);
     }
 
-    /* — S3 Counter Animation — */
-    var countersRan=false;
-    function runCounters(){
-      if(countersRan) return; countersRan=true;
-      intro.querySelectorAll('.vi-stat-num[data-target]').forEach(function(el){
-        var target=parseInt(el.dataset.target),dur=1100,start=null;
-        function tick(ts){
-          if(!start) start=ts;
-          var p=Math.min((ts-start)/dur,1);
-          var ease=1-Math.pow(1-p,3);
-          el.textContent=Math.floor(ease*target).toLocaleString(mwlLocale());
-          if(p<1) requestAnimationFrame(tick);
-        }
-        requestAnimationFrame(tick);
-      });
-    }
-
     /* — Scroll Engine — cache offsetHeight to avoid reflow per scroll event — */
     var scrollMax=0;
     function cacheScrollMax(){
@@ -110,16 +94,20 @@
       var p=getP();
       progBar.style.width=(p*100)+'%';
       if(vidReady&&vid.duration){vidTarget=p*vid.duration;startVidLoop();}
+      var mode='split';
       for(var i=0;i<sections.length;i++){
         var s=parseFloat(sections[i].dataset.s);
         var e=parseFloat(sections[i].dataset.e);
         var on=p>=s&&p<=e;
         sections[i].classList.toggle('on',on);
         if(on){
+          // Die Stellung des Bildschirms haengt am aktiven Abschnitt, nicht
+          // an einer zweiten Schwellen-Tabelle im Skript.
+          mode=sections[i].dataset.modeOf||'split';
           if(i===0) startTyped();
-          if(i===2) runCounters();
         }
       }
+      if(stage&&stage.dataset.mode!==mode) stage.dataset.mode=mode;
     }
 
     intro.addEventListener('scroll',function(){

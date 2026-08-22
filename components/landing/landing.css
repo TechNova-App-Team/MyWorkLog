@@ -1,183 +1,244 @@
-/* === BASE === */
-    #pro-intro{position:fixed;inset:0;z-index:99999;background:#080810;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;color:#fff;scrollbar-width:none;-ms-overflow-style:none}
+/* ═══ LANDING / VIDEO-INTRO ═══
+   Das Video ist der Hauptdarsteller, nicht die Tapete. Frueher lag es als
+   .vi-bg mit object-fit:cover ueber die volle 100vh-Buehne und darueber ein
+   Schleier mit 70 % Deckkraft — auf einem 16:9-Video in einem hohen Viewport
+   blieb davon sichtbar fast nichts uebrig. Jetzt sitzt es in einem eigenen
+   16:9-Rahmen (also kein Beschnitt) und der Text steht daneben statt darauf. */
+
+    #pro-intro{
+      position:fixed;inset:0;z-index:99999;
+      overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+      /* Fallback PFLICHT: ein undefiniertes var() ist invalid at computed-value time
+         und faellt auf den Initialwert (transparent) — dann scheint die App durch. */
+      background:var(--bg-deep,#07070e);
+      color:#fff;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+      scrollbar-width:none;-ms-overflow-style:none;
+    }
     #pro-intro::-webkit-scrollbar{display:none}
     /* Reset OHNE padding:0 — `#pro-intro *` hat Spezifitaet (1,0,0) und schlaegt damit
        JEDE .vi-*-Klassenregel, egal in welcher Reihenfolge. Solange padding:0 hier
-       drinstand, war jedes Padding weiter unten in dieser Datei wirkungslos: Code-Box,
-       Terminal, Fenster-Leiste, Ghost-Kopfzeile, Pills und CTA-Button lagen alle
-       bündig am Rand. Listen (die einzigen Elemente mit nennenswertem UA-Padding)
-       kommen im Intro nicht vor, das Weglassen ist also folgenlos. */
+       drinstand, war jedes Padding weiter unten in dieser Datei wirkungslos. */
     #pro-intro *{box-sizing:border-box;margin:0}
-    .vi-scroll{position:relative;height:700vh}
-    .vi-stick{position:sticky;top:0;width:100%;height:100vh;overflow:hidden}
 
-    /* === VIDEO === */
-    .vi-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
-    .vi-dim{position:absolute;inset:0;z-index:1;background:rgba(8,8,16,0.70)}
+    .vi-scroll{position:relative;height:800vh}
+    .vi-stick{position:sticky;top:0;width:100%;height:100dvh;overflow:hidden}
 
-    /* === SECTIONS — dramatic entrance === */
-    .vi-s{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;opacity:0;transform:scale(1.06) translateY(18px);filter:blur(6px);pointer-events:none;transition:opacity .3s cubic-bezier(.4,0,.2,1),transform .4s cubic-bezier(.22,1,.36,1),filter .3s ease}
-    .vi-s.on{opacity:1;transform:scale(1) translateY(0);filter:blur(0);pointer-events:auto}
+    /* Ruhiger Grund + ein Schimmer in Akzentfarbe hinter dem Bildschirm.
+       Kein Vollflaechen-Schleier mehr ueber dem Video. */
+    .vi-amb{
+      position:absolute;inset:0;z-index:0;pointer-events:none;
+      background:
+        radial-gradient(60% 55% at 50% 44%, rgba(var(--primary-rgb),0.14) 0%, rgba(var(--primary-rgb),0) 70%),
+        radial-gradient(120% 90% at 50% 50%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.55) 100%);
+    }
 
-    /* SLAM variant — big impact entrance */
-    .vi-s-slam.on{animation:viSlam .45s cubic-bezier(.15,.85,.35,1.15)}
-    @keyframes viSlam{0%{transform:scale(1.4);opacity:0;filter:blur(16px)}50%{transform:scale(.98);filter:blur(0)}100%{transform:scale(1);opacity:1;filter:blur(0)}}
+    /* ═══ BUEHNE ═══ */
+    .vi-stage{position:absolute;inset:0;z-index:10}
 
-    /* === PROGRESS === */
-    .vi-prog{position:absolute;bottom:0;left:0;right:0;height:2px;z-index:50;background:rgba(255,255,255,0.05)}
-    .vi-prog-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--primary),#ec4899);transition:width .08s linear}
+    /* ═══ DER BILDSCHIRM — Doppelrand: Aussenschale + Innenkern ═══
+       Der Rahmen ist 16:9, das Video ist 16:9 → object-fit:cover schneidet nichts ab.
+       Bewegt wird ausschliesslich per transform (GPU), nie per width/height. */
+    .vi-screen{
+      position:absolute;top:50%;left:50%;
+      width:min(94vw,1240px);aspect-ratio:16/9;
+      --sx:0px;--sy:0px;--sc:1;
+      transform:translate(-50%,-50%) translate(var(--sx),var(--sy)) scale(var(--sc));
+      transform-origin:center;
+      transition:transform 1.05s cubic-bezier(.22,1,.36,1),opacity .7s ease,filter .7s ease;
+      will-change:transform;
+      padding:8px;border-radius:26px;
+      background:rgba(255,255,255,0.035);
+      border:1px solid rgba(255,255,255,0.10);
+      box-shadow:
+        0 40px 120px -30px rgba(0,0,0,0.85),
+        0 0 90px -20px rgba(var(--primary-rgb),0.30);
+    }
+    .vi-screen-in{
+      position:relative;width:100%;height:100%;
+      border-radius:18px;overflow:hidden;
+      background:var(--bg-deep,#07070e);
+      box-shadow:inset 0 1px 1px rgba(255,255,255,0.14);
+    }
+    .vi-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+    /* Ganz leichter Lichtabfall an der Unterkante, damit der Rahmen Tiefe bekommt */
+    .vi-screen-in::after{
+      content:'';position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(180deg,rgba(255,255,255,0.05) 0%,rgba(255,255,255,0) 22%,rgba(0,0,0,0.28) 100%);
+    }
 
-    /* === SKIP === */
-    .vi-skip{position:absolute;top:1.2rem;right:1.2rem;z-index:50;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.3);font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:system-ui;transition:all .2s}
-    .vi-skip:hover{color:#fff;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2)}
-    .vi-skip svg{width:15px;height:15px;display:block}
+    /* Stellungen je Abschnitt-Modus */
+    [data-mode="hero"]  .vi-screen{--sx:0px;--sy:11.5vh;--sc:.70}
+    [data-mode="split"] .vi-screen{--sx:-17.5%;--sy:0px;--sc:.615}
+    [data-mode="cta"]   .vi-screen{--sx:0px;--sy:0px;--sc:.80;opacity:.30;filter:blur(3px)}
 
-    /* === ICONS ===
-       Alle Intro-Icons sind inline-SVG (Lucide-Style, currentColor) — nie Emojis:
-       Emojis faerben sich nicht mit dem Theme und rendern auf jedem OS anders.
-       Chip-artige Container werden inline-flex, damit Icon und Label auf einer
-       Grundlinie sitzen; in Fliesstext bleibt das SVG inline und skaliert per em
-       mit der clamp()-Schriftgroesse mit. */
-    .vi-box-tab svg,.vi-ghost-top svg{width:11px;height:11px;flex-shrink:0}
-    .vi-pill svg{width:14px;height:14px;flex-shrink:0}
-    .vi-ghost-q svg,.vi-ghost-p svg{display:inline-block;vertical-align:-.12em;margin-left:.18em}
-    .vi-ghost-q svg{width:.72em;height:.72em;opacity:.75}
-    .vi-ghost-p svg{width:1.05em;height:1.05em;opacity:.8}
+    /* ═══ TEXTSPALTE ═══ */
+    .vi-panels{position:absolute;inset:0;pointer-events:none}
+    .vi-s{
+      position:absolute;display:flex;flex-direction:column;
+      opacity:0;pointer-events:none;
+      transition:opacity .45s cubic-bezier(.23,1,.32,1);
+    }
+    .vi-s.on{opacity:1;pointer-events:auto}
 
-    /* ===== S1: BRAND SLAM ===== */
-    .vi-logo{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(4rem,14vw,9rem);font-weight:900;letter-spacing:-.05em;text-align:center;color:#fff;text-shadow:0 0 60px rgba(var(--primary-rgb),0.25)}
-    .vi-sub-row{display:flex;align-items:center;gap:2px;margin-top:.6rem;min-height:1.5em}
-    .vi-typed{font-size:clamp(.95rem,2.2vw,1.3rem);color:rgba(255,255,255,0.4);letter-spacing:.12em;font-weight:400}
-    .vi-caret{color:var(--primary);font-weight:200;font-size:clamp(1rem,2.4vw,1.4rem);animation:viBlink 1s step-end infinite}
-    .vi-ver{margin-top:.8rem;font-size:.7rem;color:rgba(255,255,255,0.15);letter-spacing:.15em}
+    /* Modus HERO + CTA: mittig, volle Breite */
+    [data-mode="hero"] .vi-s,[data-mode="cta"] .vi-s{
+      inset:0;align-items:center;justify-content:center;text-align:center;padding:0 6vw;
+    }
+    [data-mode="hero"] .vi-s{justify-content:flex-start;padding-top:12vh}
+
+    /* Modus SPLIT: rechte Spalte, linksbuendig */
+    [data-mode="split"] .vi-s{
+      top:50%;right:max(4vw,28px);left:auto;
+      width:min(38vw,440px);
+      transform:translateY(-50%);
+      align-items:flex-start;text-align:left;
+    }
+
+    /* Gestaffelter Einlauf der Kinder */
+    .vi-s > *{
+      opacity:0;transform:translateY(14px);filter:blur(4px);
+      transition:opacity .5s cubic-bezier(.23,1,.32,1),transform .6s cubic-bezier(.23,1,.32,1),filter .5s ease;
+    }
+    .vi-s.on > *{opacity:1;transform:translateY(0);filter:blur(0)}
+    .vi-s.on > :nth-child(1){transition-delay:.04s}
+    .vi-s.on > :nth-child(2){transition-delay:.10s}
+    .vi-s.on > :nth-child(3){transition-delay:.16s}
+    .vi-s.on > :nth-child(4){transition-delay:.22s}
+
+    /* ═══ TYPOGRAFIE ═══
+       Tracking ist groessenabhaengig: grosse Schrift bekommt negatives,
+       kleine Grossbuchstaben-Labels positives. Nie ein Wert fuer alles. */
+    .vi-eyebrow{
+      display:inline-flex;align-items:center;gap:.5em;
+      font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.16em;
+      color:rgba(var(--primary-rgb),0.95);
+      padding:.4em .85em;border-radius:100px;
+      background:rgba(var(--primary-rgb),0.10);
+      border:1px solid rgba(var(--primary-rgb),0.22);
+    }
+    .vi-h{
+      font-size:clamp(1.55rem,3.1vw,2.5rem);font-weight:750;line-height:1.1;
+      letter-spacing:-.028em;margin-top:1.1rem;
+    }
+    .vi-p{
+      font-size:clamp(.92rem,1.25vw,1.02rem);line-height:1.62;
+      color:rgba(255,255,255,0.62);margin-top:.85rem;max-width:42ch;
+    }
+
+    /* ═══ S1: HERO ═══ */
+    .vi-logo{
+      font-size:clamp(3rem,10.5vw,7rem);font-weight:800;letter-spacing:-.055em;line-height:1;
+      color:#fff;text-shadow:0 0 80px rgba(var(--primary-rgb),0.30);
+    }
+    .vi-sub-row{display:flex;align-items:center;gap:2px;margin-top:1rem;min-height:1.6em}
+    .vi-typed{font-size:clamp(1rem,2.1vw,1.35rem);color:rgba(255,255,255,0.55);letter-spacing:-.01em}
+    .vi-caret{color:var(--primary);font-weight:300;font-size:clamp(1rem,2.2vw,1.4rem);animation:viBlink 1s step-end infinite}
+    .vi-ver{margin-top:.9rem;font-size:.68rem;color:rgba(255,255,255,0.22);letter-spacing:.14em}
     @keyframes viBlink{50%{opacity:0}}
 
-    /* ===== S2: CODE EDITOR ===== */
-    .vi-box{background:rgba(10,10,18,0.92);border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden;max-width:540px;width:92%;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-    .vi-box-bar{padding:.6rem .9rem;display:flex;align-items:center;gap:7px;border-bottom:1px solid rgba(255,255,255,0.05);background:rgba(255,255,255,0.015)}
-    .vi-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-    .vi-box-tab{margin-left:auto;font-size:.65rem;color:rgba(255,255,255,0.2);letter-spacing:.06em;display:inline-flex;align-items:center;gap:.4em}
-    .vi-box-body{padding:1.2rem 1.1rem .9rem;font-size:clamp(.76rem,1.3vw,.88rem);line-height:1.85}
-    .vi-code{font-family:'SF Mono','Fira Code','Cascadia Code',monospace}
+    /* ═══ S8: CTA ═══ */
+    .vi-end-t{
+      font-size:clamp(2.6rem,8vw,5rem);font-weight:800;letter-spacing:-.045em;line-height:1;
+      text-shadow:0 0 70px rgba(var(--primary-rgb),0.22);
+    }
+    .vi-end-p{margin-top:1rem;font-size:clamp(.9rem,1.4vw,1.05rem);color:rgba(255,255,255,0.55)}
 
-    /* Code lines — stagger slide from left */
-    .vi-cl{opacity:0;transform:translateX(-12px);transition:opacity .22s ease,transform .25s ease}
-    .vi-s.on .vi-cl{opacity:1;transform:translateX(0)}
-    .vi-ln{color:rgba(255,255,255,0.12);user-select:none;display:inline-block;width:2.2ch;text-align:right;margin-right:.8ch}
-    .vi-kw{color:#c084fc}
-    .vi-str{color:#34d399}
-    .vi-num{color:#fbbf24}
-    .vi-bool{color:#60a5fa}
-    .vi-blink{color:var(--primary);animation:viBlink 1s step-end infinite}
-
-    /* ===== S3: STATS ===== */
-    .vi-stats{display:flex;gap:2.5rem;flex-wrap:wrap;justify-content:center;padding:0 1.5rem}
-    .vi-stat{display:flex;flex-direction:column;align-items:center;gap:.25rem;opacity:0;transform:translateY(35px) scale(.92);transition:opacity .35s ease,transform .4s cubic-bezier(.22,1,.36,1)}
-    .vi-s.on .vi-stat{opacity:1;transform:translateY(0) scale(1)}
-    .vi-stat-row{display:flex;align-items:baseline}
-    .vi-stat-num{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(2.8rem,8vw,5rem);font-weight:900;letter-spacing:-.03em;background:linear-gradient(135deg,#fff 30%,rgba(var(--primary-rgb),0.8));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .vi-stat-suf{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:900;background:linear-gradient(135deg,var(--primary),#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .vi-stat-lbl{font-size:.75rem;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:.14em}
-    .vi-stat-tag{font-size:.72rem;color:rgba(255,255,255,0.18);margin-top:.1rem;font-style:italic}
-
-    /* ===== S4: GHOST MODE ===== */
-    .vi-ghost{display:flex;flex-direction:column;align-items:center;gap:1.3rem;padding:0 1rem}
-    .vi-ghost-q,.vi-ghost-p{opacity:0;transform:translateY(25px);transition:opacity .4s ease,transform .4s ease}
-    .vi-s.on .vi-ghost-q,.vi-s.on .vi-ghost-p{opacity:1;transform:translateY(0)}
-    .vi-ghost-q{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(1.6rem,5vw,2.8rem);font-weight:800;letter-spacing:-.02em;text-align:center}
-    .vi-ghost-demo{opacity:0;transform:translateY(30px) scale(.95);transition:opacity .4s ease,transform .5s cubic-bezier(.22,1,.36,1)}
-    .vi-s.on .vi-ghost-demo{opacity:1;transform:translateY(0) scale(1)}
-    .vi-ghost-fake{background:#1a1a2e;border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
-    .vi-ghost-top{padding:.5rem .8rem;font-size:.6rem;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.05);font-family:system-ui;display:flex;align-items:center;gap:.45em}
-    .vi-ghost-grid{display:grid;grid-template-columns:2.5rem 1fr 1fr 1fr 1fr;font-size:.65rem;color:rgba(255,255,255,0.45);font-family:system-ui}
-    .vi-gh{padding:.3rem .5rem;background:rgba(255,255,255,0.03);font-weight:600;color:rgba(255,255,255,0.25);text-align:center;border-bottom:1px solid rgba(255,255,255,0.04)}
-    .vi-gr{padding:.3rem .4rem;background:rgba(255,255,255,0.02);color:rgba(255,255,255,0.2);text-align:center;font-weight:600;border-right:1px solid rgba(255,255,255,0.04)}
-    .vi-gc{padding:.3rem .5rem;border-bottom:1px solid rgba(255,255,255,0.03);border-right:1px solid rgba(255,255,255,0.02)}
-    .vi-ghost-p{font-size:clamp(.85rem,2vw,1.1rem);color:rgba(255,255,255,0.5);text-align:center;letter-spacing:.04em}
-
-    /* ===== S5: FEATURE PILLS ===== */
-    .vi-feat{display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:600px;width:92%}
-    .vi-feat-title{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(1.4rem,4vw,2.2rem);font-weight:800;letter-spacing:-.02em;opacity:0;transform:translateY(20px);transition:opacity .3s ease,transform .35s ease}
-    .vi-s.on .vi-feat-title{opacity:1;transform:translateY(0)}
-    .vi-pills{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
-    .vi-pill{padding:.5rem 1rem;font-size:clamp(.68rem,1.2vw,.8rem);background:rgba(var(--primary-rgb),0.08);border:1px solid rgba(var(--primary-rgb),0.15);border-radius:100px;color:rgba(255,255,255,0.7);white-space:nowrap;display:inline-flex;align-items:center;gap:.45rem;opacity:0;transform:translateY(22px) scale(.9);transition:opacity .3s ease,transform .35s cubic-bezier(.22,1,.36,1)}
-    .vi-s.on .vi-pill{opacity:1;transform:translateY(0) scale(1)}
-    .vi-pill:hover{background:rgba(var(--primary-rgb),0.15);border-color:rgba(var(--primary-rgb),0.3);color:#fff}
-
-    /* ===== S6: TERMINAL ===== */
-    .vi-term{line-height:1.9}
-    .vi-tl{opacity:0;transform:translateX(-10px);transition:opacity .2s ease,transform .25s ease}
-    .vi-s.on .vi-tl{opacity:1;transform:translateX(0)}
-    .vi-pr{color:var(--primary);font-weight:700}
-    .vi-out{color:rgba(255,255,255,0.45)}
-    .vi-g{color:#22c55e;font-weight:700}
-
-    /* ===== S7: CTA ===== */
-    .vi-end{text-align:center}
-    .vi-end-t{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:clamp(3.5rem,12vw,7rem);font-weight:900;letter-spacing:-.04em;margin-bottom:3rem;text-shadow:0 0 60px rgba(var(--primary-rgb),0.2)}
-
-    /* — CTA BUTTON (Outline-Text, Wipe-Reveal) —
-       Der Text steht als Konturschrift da; beim Hover wischt eine gefüllte Kopie
-       in Akzentfarbe von links herein, mit Cursor-Kante am rechten Rand.
-       Akzent kommt aus var(--primary)/--primary-rgb — nicht hart verdrahtet,
-       sonst ignoriert der Button die Farbwahl aus den Einstellungen. */
+    /* Knopf: gefuellte Insel mit genestetem Pfeilkreis.
+       Fuellung bekommt nur, was klickbar ist — und bewegt wird erst bei :active. */
     .vi-btn{
-      /* Default-Button-Styles zurücksetzen */
-      margin:0;padding:0;height:auto;background:transparent;border:none;cursor:pointer;
+      margin:2.2rem 0 0;padding:.85rem .9rem .85rem 1.7rem;height:auto;border:none;cursor:pointer;
+      display:inline-flex;align-items:center;gap:.85rem;
+      font-family:inherit;font-size:clamp(1rem,1.6vw,1.12rem);font-weight:650;letter-spacing:-.01em;
+      color:#fff;background:var(--primary);border-radius:100px;
+      box-shadow:0 12px 40px -12px rgba(var(--primary-rgb),0.75);
+      transition:background .22s ease,box-shadow .22s ease,transform .12s ease-out;
+    }
+    .vi-btn-ic{
+      width:34px;height:34px;border-radius:50%;flex-shrink:0;
+      background:rgba(255,255,255,0.18);
+      display:inline-flex;align-items:center;justify-content:center;
+      transition:transform .28s cubic-bezier(.23,1,.32,1);
+    }
+    .vi-btn-ic svg{width:16px;height:16px}
+    @media(hover:hover) and (pointer:fine){
+      .vi-btn:hover{background:color-mix(in srgb,var(--primary) 88%,#fff);box-shadow:0 16px 48px -12px rgba(var(--primary-rgb),0.9)}
+      .vi-btn:hover .vi-btn-ic{transform:translateX(3px)}
+    }
+    .vi-btn:active{transform:scale(.975)}
+    .vi-btn:focus-visible{outline:2px solid rgba(var(--primary-rgb),0.7);outline-offset:5px}
 
-      --vi-btn-caret:6px;
-      --vi-btn-stroke:rgba(255,255,255,0.55);
+    /* ═══ FORTSCHRITT ═══ */
+    .vi-prog{position:absolute;bottom:0;left:0;right:0;height:2px;z-index:50;background:rgba(255,255,255,0.06)}
+    .vi-prog-bar{height:100%;width:0%;background:var(--primary);transition:width .08s linear}
 
-      position:relative;display:inline-block;
-      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
-      font-size:clamp(1.7rem,6vw,2.6rem);
-      font-weight:800;letter-spacing:3px;text-transform:uppercase;
-      white-space:nowrap;
-      color:transparent;-webkit-text-stroke:1px var(--vi-btn-stroke);
-      transition:-webkit-text-stroke-color .3s ease;
+    /* ═══ SCROLL-HINWEIS ═══ */
+    .vi-hint{
+      position:absolute;bottom:2.2rem;left:50%;transform:translateX(-50%);z-index:40;
+      display:flex;flex-direction:column;align-items:center;gap:.5rem;
+      font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,0.30);
+      opacity:0;transition:opacity .5s ease;pointer-events:none;
     }
-    .vi-btn:hover{--vi-btn-stroke:rgba(255,255,255,0.75)}
+    [data-mode="hero"] .vi-hint{opacity:1}
+    .vi-hint svg{width:15px;height:15px;animation:viNudge 1.9s cubic-bezier(.4,0,.2,1) infinite}
+    @keyframes viNudge{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(5px);opacity:1}}
 
-    /* Die gefüllte Kopie, die beim Hover hereinwischt.
-       white-space:nowrap ist PFLICHT: der Layer ist absolut und startet bei
-       width:0 — ohne nowrap bricht ein mehrwortiges Label dort um. */
-    .vi-btn-hover{
-      position:absolute;inset:0;box-sizing:border-box;
-      width:0;overflow:hidden;white-space:nowrap;
-      color:var(--primary);
-      -webkit-text-stroke:1px var(--primary);
-      border-right:var(--vi-btn-caret) solid var(--primary);
-      transition:width .5s cubic-bezier(.22,1,.36,1),filter .3s ease;
+    /* ═══ SKIP ═══ */
+    .vi-skip{
+      position:absolute;top:1.3rem;right:1.3rem;z-index:50;width:36px;height:36px;border-radius:50%;
+      background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);
+      color:rgba(255,255,255,0.45);cursor:pointer;display:flex;align-items:center;justify-content:center;
+      transition:color .2s ease,background .2s ease,border-color .2s ease;
     }
-    .vi-btn:hover .vi-btn-hover,
-    .vi-btn:focus-visible .vi-btn-hover{
-      width:100%;
-      filter:drop-shadow(0 0 23px rgba(var(--primary-rgb),0.65));
+    .vi-skip svg{width:15px;height:15px;display:block}
+    @media(hover:hover) and (pointer:fine){
+      .vi-skip:hover{color:#fff;background:rgba(255,255,255,0.11);border-color:rgba(255,255,255,0.22)}
     }
-    .vi-btn:active{transform:translateY(1px)}
-    .vi-btn:focus-visible{
-      outline:2px solid rgba(var(--primary-rgb),0.6);
-      outline-offset:8px;border-radius:4px;
-    }
-    .vi-end::after{display:none}
-
-    /* Ohne text-stroke-Support wäre der Text unsichtbar (color:transparent) */
-    @supports not ((-webkit-text-stroke:1px #000) or (text-stroke:1px #000)){
-      .vi-btn{color:rgba(255,255,255,0.75)}
-      .vi-btn-hover{color:var(--primary)}
-    }
-    @media(prefers-reduced-motion:reduce){
-      .vi-btn,.vi-btn-hover{transition:none}
-    }
+    .vi-skip:active{transform:scale(.94)}
 
     @keyframes viFadeOut{to{opacity:0}}
 
-    /* === MOBILE === */
+    /* ═══ SCHMAL: Bildschirm oben, Text darunter ═══
+       Der Umschaltpunkt muss zu dem der Textspalte passen, sonst steht der Text
+       neben einem Video, das die ganze Breite braucht. */
+    @media(max-width:900px){
+      [data-mode="hero"]  .vi-screen{--sx:0px;--sy:10vh;--sc:.97}
+      [data-mode="split"] .vi-screen{--sx:0px;--sy:-13vh;--sc:1}
+      [data-mode="cta"]   .vi-screen{--sx:0px;--sy:0px;--sc:1}
+      [data-mode="split"] .vi-s{
+        top:auto;bottom:9vh;right:auto;left:50%;
+        width:min(88vw,560px);
+        transform:translateX(-50%);
+        align-items:center;text-align:center;
+      }
+      /* Auf schmalen Geraeten steht der Text unter dem Bildschirm — die
+         Ueberschrift darf dann nicht mehr so gross sein wie in der Spalte,
+         sonst frisst sie die Lueckenrechnung wieder auf. */
+      [data-mode="split"] .vi-h{font-size:clamp(1.35rem,5.4vw,1.8rem);margin-top:.75rem}
+      [data-mode="split"] .vi-p{margin-top:.6rem}
+      [data-mode="split"] .vi-p{max-width:none}
+      [data-mode="hero"] .vi-s{padding-top:7vh}
+      .vi-hint{bottom:1.4rem}
+    }
     @media(max-width:600px){
-      .vi-stats{flex-direction:column;gap:1.8rem}
-      .vi-pills{gap:.4rem}
-      .vi-pill{padding:.4rem .8rem}
-      .vi-ghost-grid{font-size:.55rem}
-      .vi-skip{top:.6rem;right:.6rem;width:32px;height:32px;font-size:.85rem}
-      .vi-box{width:95%;border-radius:10px}
+      .vi-screen{padding:6px;border-radius:20px}
+      .vi-screen-in{border-radius:15px}
+      .vi-skip{top:.7rem;right:.7rem;width:32px;height:32px}
+      [data-mode="split"] .vi-s{bottom:6vh}
+    }
+
+    /* ═══ WENIGER BEWEGUNG ═══
+       Reduzierte Bewegung heisst sanfter, nicht gar nichts: Deckkraft bleibt,
+       Verschiebung und Unschaerfe fallen weg. */
+    @media(prefers-reduced-motion:reduce){
+      /* Der Bildschirm MUSS seine Stellung wechseln — das ist Layout, keine Deko.
+         Also nur kurz statt lang, nicht abgeschaltet. */
+      .vi-screen{transition:transform .25s ease,opacity .25s ease,filter .25s ease}
+      .vi-s{transition:opacity .25s ease}
+      /* Nur der gestaffelte Einlauf der Kinder faellt weg — dort steckt die
+         Verschiebung. Das transform von .vi-s selbst ist Zentrierung, nicht
+         Bewegung, und darf hier NICHT ueberschrieben werden. */
+      .vi-s > *{transition:opacity .25s ease;transform:none;filter:none}
+      .vi-hint svg,.vi-caret{animation:none}
+      .vi-btn,.vi-btn-ic{transition:none}
     }
