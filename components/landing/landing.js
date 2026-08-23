@@ -23,7 +23,7 @@
 
     // Render first frame immediately
     // vidReady haengt NICHT mehr an einem einzelnen Ereignis. landing.js laeuft
-    // mit defer, das <video> hat preload="auto" — liegt die Datei im Cache, ist
+    // mit defer, das <video> laedt schon vorher — liegt die Datei im Cache, ist
     // 'loadedmetadata' laengst durch, bevor dieses Skript zuhoert. Dann blieb
     // vidReady fuer immer false, vidLoop stieg in Zeile 1 aus und currentTime
     // blieb auf 0. Sichtbar wurde das erst, als Bild 0 des Films schwarz war;
@@ -60,14 +60,32 @@
       fetch(url).then(function(r){ return r.ok ? r.blob() : null; }).then(function(b){
         if(!b) return;
         var stelle = vidCurrent;
-        vid.src = URL.createObjectURL(b);   // src schlaegt <source>
-        vid.load();
-        vid.addEventListener('loadedmetadata', function einmal(){
+        var objUrl = URL.createObjectURL(b);
+
+        // Scheitert das Laden aus dem Speicher, MUSS es zurueck auf die Netz-Adresse.
+        // Sonst ist der Film ganz weg statt nur langsam: vid.duration wird null,
+        // vidLoop steigt in Zeile 1 aus, das Bild steht fuer immer. Genau das war live
+        // der Fall, solange media-src in der CSP kein blob: erlaubte — Chrome meldet
+        // das nur am Element (vid.error.code 4), nicht als Konsolenzeile.
+        function zurueck(){
+          vid.removeEventListener('error', zurueck);
           vid.removeEventListener('loadedmetadata', einmal);
+          try{ URL.revokeObjectURL(objUrl); }catch(e){}
+          vidReady=false;
+          vid.removeAttribute('src');   // ohne src-Attribut gilt wieder <source>
+          vid.load();                   // markReady haengt noch dran und schaltet neu scharf
+        }
+        function einmal(){
+          vid.removeEventListener('loadedmetadata', einmal);
+          vid.removeEventListener('error', zurueck);
           vidCurrent = stelle;
           try{ vid.currentTime = stelle; }catch(e){}
           update();
-        });
+        }
+        vid.addEventListener('error', zurueck);
+        vid.addEventListener('loadedmetadata', einmal);
+        vid.src = objUrl;   // src schlaegt <source>
+        vid.load();
       }).catch(function(){});   // schlaegt es fehl, laeuft es wie bisher weiter
     })();
     var ticking=false;
