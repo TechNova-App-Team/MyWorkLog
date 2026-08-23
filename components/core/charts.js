@@ -1556,7 +1556,9 @@
     }
     
     function enhanceChartsWithEffects(config = {}) {
-        const charts = ['trendChart', 'chartMonthlyTrend', 'chartWeeklyPerformance', 'chartProductivityByDay'];
+        // chartMonthlyTrend / chartWeeklyPerformance / chartProductivityByDay gab es
+        // nur in der alten Performance-Ansicht und sind mit ihr entfallen.
+        const charts = ['trendChart'];
         charts.forEach(id => {
             attachChartEffects(id, config);
         });

@@ -210,79 +210,85 @@
 
         const pacingBlock = document.getElementById('vacPacingBlock');
         if (pacingBlock) {
+            // Zwei Schienen auf EINER Skala statt zweier Ringe nebeneinander:
+            // getrennte Ringe kann niemand vergleichen — genau der Vergleich ist
+            // aber die ganze Aussage („verbrauchst du schneller als das Jahr
+            // vergeht?"). Die Marke auf der oberen Schiene zeigt den Stand des
+            // Jahres direkt im Urlaubsbalken.
             pacingBlock.style.display = '';
+            const isEN = document.documentElement.lang === 'en';
 
-            const paceDot      = document.getElementById('vacPaceDot');
-            const paceLabel    = document.getElementById('vacPaceLabel');
-            const coHint       = document.getElementById('vacCarriedOverHint');
-            const coVal        = document.getElementById('vacCarriedOverVal');
-            // Left ring: Urlaub verbraucht %  (circumference 2π×50 ≈ 314)
-            const arcFill      = document.getElementById('vacArcFill');
-            const arcPctTxt    = document.getElementById('vacArcPct');
-            const arcDetail    = document.getElementById('vacArcDetail');
-            // Right ring: Jahresverlauf %
-            const yearArcFill  = document.getElementById('vacYearArcFill');
-            const yearArcPct   = document.getElementById('vacYearArcPct');
-            // Footer stats
-            const remainEl     = document.getElementById('vacRemainVal');
-            const prognoseYrEl = document.getElementById('vacPacePrognoseYear');
-
-            const C = 314; // circumference r=50
             const vacUsedPct = Math.round(vacPct);
+            const setW = (id, pct) => { const el = document.getElementById(id); if (el) el.style.width = Math.min(100, Math.max(0, pct)) + '%'; };
+            const setT = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
 
-            // Left ring: vacation used
-            if (arcFill)   arcFill.style.strokeDashoffset   = C - (Math.min(vacUsedPct, 100) / 100) * C;
-            if (arcPctTxt) arcPctTxt.textContent = vacUsedPct + '%';
-            if (arcDetail) {
-                const dashVacEl = document.getElementById('valVacationUsed');
-                if (dashVacEl) arcDetail.textContent = dashVacEl.innerText;
+            setW('vacArcFill', vacUsedPct);
+            setW('vacYearArcFill', yearPct);
+            setT('vacArcPct', vacUsedPct + '%');
+            setT('vacYearArcPct', yearPct + '%');
+
+            const paceMark = document.getElementById('vacPaceMark');
+            if (paceMark) {
+                paceMark.style.left = Math.min(100, Math.max(0, yearPct)) + '%';
+                paceMark.title = isEN ? 'Where the calendar year stands' : 'Stand des Kalenderjahres';
             }
 
-            // Right ring: year progress
-            if (yearArcFill) yearArcFill.style.strokeDashoffset = C - (yearPct / 100) * C;
-            if (yearArcPct)  yearArcPct.textContent = yearPct + '%';
+            const unitLong = vacMode === 'hours' ? (isEN ? 'hours' : 'Stunden') : (isEN ? 'days' : 'Tage');
+            setT('vacArcDetail', (Math.round(usedVacation * 10) / 10) + ' / ' + (Math.round(totalVacation * 10) / 10)
+                + ' ' + unitLong + (isEN ? ' taken' : ' verbraucht'));
 
-            // Status pill
-            let statusText = 'Ausgeglichen', statusColor = 'var(--primary)';
+            const daysLeftInYear = Math.max(0, Math.ceil((endOfYear - now) / 86400000));
+            setT('vacYearDetail', isEN ? (daysLeftInYear + ' days left in ' + now.getFullYear())
+                                       : ('Noch ' + daysLeftInYear + ' Tage in ' + now.getFullYear()));
+
+            // Status: vier semantische Zustaende, alle aus Tokens — kein Hex.
+            let statusText = isEN ? 'On track' : 'Ausgeglichen';
+            let statusColor = 'var(--primary)';
             if (pace !== null) {
-                if      (pace < 0.45) { statusText = 'Sehr sparsam';  statusColor = '#06b6d4'; }
-                else if (pace < 0.80) { statusText = 'Sparsam';       statusColor = 'var(--success)'; }
-                else if (pace < 1.20) { statusText = 'Ausgeglichen';  statusColor = 'var(--primary)'; }
-                else if (pace < 1.60) { statusText = 'Entspannt';     statusColor = '#f59e0b'; }
-                else                  { statusText = 'Kritisch';      statusColor = 'var(--danger)'; }
+                if      (pace < 0.80) { statusText = isEN ? 'Ahead of the year' : 'Sparsam';      statusColor = 'var(--success)'; }
+                else if (pace < 1.20) { statusText = isEN ? 'On track'          : 'Ausgeglichen'; statusColor = 'var(--primary)'; }
+                else if (pace < 1.60) { statusText = isEN ? 'Running warm'      : 'Zügig';        statusColor = 'var(--audit-warn)'; }
+                else                  { statusText = isEN ? 'Running out'       : 'Kritisch';     statusColor = 'var(--danger)'; }
             }
-            if (paceDot)   { paceDot.style.background = statusColor; paceDot.style.boxShadow = `0 0 8px ${statusColor}`; }
+            const paceDot = document.getElementById('vacPaceDot');
+            const paceLabel = document.getElementById('vacPaceLabel');
+            if (paceDot) paceDot.style.background = statusColor;
             if (paceLabel) { paceLabel.textContent = statusText; paceLabel.style.color = statusColor; }
 
-            // Footer: aktuell verfügbar
+            const u = vacMode === 'hours' ? ' h' : (isEN ? ' d' : ' T.');
             const actualRemain = Math.round((totalVacation - usedVacation) * 10) / 10;
-            const u = vacMode === 'hours' ? 'h' : ' T.';
+            const remainEl = document.getElementById('vacRemainVal');
             if (remainEl) {
                 remainEl.textContent = actualRemain + u;
                 remainEl.style.color = actualRemain <= 0 ? 'var(--danger)' : 'var(--text-main)';
             }
 
-            // Footer: Jahresende-Prognose
-            if (prognoseYrEl && pace !== null && yearProgress > 0.05) {
-                const projUsage  = usedVacation / yearProgress;
-                const projRemain = Math.round((totalVacation - projUsage) * 10) / 10;
-                if (projRemain > 0) {
-                    prognoseYrEl.textContent = '+' + projRemain + u + ' ungenutzt';
-                    prognoseYrEl.style.color = 'var(--success)';
-                } else if (projRemain < 0) {
-                    prognoseYrEl.textContent = Math.abs(projRemain) + u + ' fehlen';
-                    prognoseYrEl.style.color = 'var(--danger)';
+            const prognoseYrEl = document.getElementById('vacPacePrognoseYear');
+            if (prognoseYrEl) {
+                if (pace !== null && yearProgress > 0.05) {
+                    const projRemain = Math.round((totalVacation - usedVacation / yearProgress) * 10) / 10;
+                    if (projRemain > 0) {
+                        prognoseYrEl.textContent = '+' + projRemain + u + (isEN ? ' unused' : ' übrig');
+                        prognoseYrEl.style.color = 'var(--audit-warn)';
+                    } else if (projRemain < 0) {
+                        prognoseYrEl.textContent = Math.abs(projRemain) + u + (isEN ? ' short' : ' fehlen');
+                        prognoseYrEl.style.color = 'var(--danger)';
+                    } else {
+                        prognoseYrEl.textContent = isEN ? 'exactly used up' : 'exakt aufgebraucht';
+                        prognoseYrEl.style.color = 'var(--success)';
+                    }
                 } else {
-                    prognoseYrEl.textContent = 'exakt aufgebraucht';
+                    prognoseYrEl.textContent = '—';
                     prognoseYrEl.style.color = 'var(--text-muted)';
                 }
             }
 
-            // Carry-over hint
+            const coHint = document.getElementById('vacCarriedOverHint');
+            const coVal  = document.getElementById('vacCarriedOverVal');
             if (coHint && coVal) {
                 if (carriedOver > 0) {
                     coHint.style.display = '';
-                    coVal.textContent = carriedOver + (vacMode === 'hours' ? 'h' : ' Tage');
+                    coVal.textContent = carriedOver + ' ' + unitLong;
                 } else {
                     coHint.style.display = 'none';
                 }

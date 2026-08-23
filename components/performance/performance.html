@@ -1,330 +1,183 @@
 <div id="view-performance" class="view-section">
 
-            <!-- ─── Page Hero ────────────────────────────────────────── -->
-            <div class="perf-hero">
-                <div class="perf-hero__icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 3v18h18"/>
-                        <path d="M7 16V11"/>
-                        <path d="M12 16V7"/>
-                        <path d="M17 16v-4"/>
-                    </svg>
+            <!-- ═══ Kopf: Befund-Titel + Zeitraum-Wahl ═══ -->
+            <header class="pf-head">
+                <div class="pf-head__id">
+                    <p class="pf-eyebrow">Befund</p>
+                    <h2 class="pf-head__title">Dein Arbeitsrhythmus</h2>
+                    <p class="pf-head__sub" id="pfHeadSub">Zeitraum wird geladen.</p>
                 </div>
-                <div class="perf-hero__text">
-                    <h2 class="perf-hero__title">Performance Analyse & Muster</h2>
-                    <p class="perf-hero__sub">Arbeitszeit, Trends und Compliance auf einen Blick.</p>
+                <div class="pf-range" role="group" aria-label="Zeitraum">
+                    <button type="button" class="pf-range__btn" data-range="30" onclick="setPerfRange(30)">30 Tage</button>
+                    <button type="button" class="pf-range__btn is-on" data-range="90" onclick="setPerfRange(90)">90 Tage</button>
+                    <button type="button" class="pf-range__btn" data-range="365" onclick="setPerfRange(365)">1 Jahr</button>
                 </div>
-                <div class="perf-hero__scope">
-                    <span class="perf-hero__scope-dot"></span>
-                    Letzte 90 Tage
-                </div>
-            </div>
+            </header>
 
-            <!-- ── URLAUBS-PACING ── -->
-            <div id="vacPacingBlock" style="display:none; margin-bottom:1.5rem;">
-                <div class="vacp-card">
-
-                    <!-- Header row -->
-                    <div class="vacp-header">
-                        <div class="vacp-title">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            Urlaubs-Pacing
+            <!-- ═══ 1 · Der Befund — Saldo als Band ═══ -->
+            <section class="pf-verdict">
+                <div class="pf-verdict__lead">
+                    <p class="pf-verdict__kicker">Saldo im Zeitraum</p>
+                    <p class="pf-verdict__num" id="pfSaldoNum">&mdash;</p>
+                    <p class="pf-verdict__say" id="pfSaldoSay">Noch keine Einträge in diesem Zeitraum.</p>
+                    <dl class="pf-facts">
+                        <div class="pf-fact">
+                            <dt class="pf-fact__k">Soll erfüllt</dt>
+                            <dd class="pf-fact__v" id="kpiPerformance">&mdash;</dd>
                         </div>
-                        <div class="vacp-status-pill">
-                            <span id="vacPaceDot" class="vacp-dot"></span>
-                            <span id="vacPaceLabel" class="vacp-status-lbl">—</span>
+                        <div class="pf-fact">
+                            <dt class="pf-fact__k">Ø Arbeitsbeginn</dt>
+                            <dd class="pf-fact__v" id="kpiAvgStartTime">&mdash;</dd>
                         </div>
-                    </div>
-
-                    <!-- Two rings side by side -->
-                    <div class="vacp-rings">
-                        <!-- Left: Urlaub verbraucht -->
-                        <div class="vacp-ring-block">
-                            <div class="vacp-ring-wrap">
-                                <svg viewBox="0 0 120 120" class="vacp-svg">
-                                    <circle class="vacp-track" cx="60" cy="60" r="50"/>
-                                    <circle class="vacp-fill vacp-fill--used" id="vacArcFill" cx="60" cy="60" r="50"
-                                        stroke-dasharray="314 314" stroke-dashoffset="314"/>
-                                    <text id="vacArcPct" class="vacp-ring-pct" x="60" y="56" text-anchor="middle">0%</text>
-                                    <text class="vacp-ring-sub" x="60" y="74" text-anchor="middle">verbraucht</text>
-                                </svg>
-                            </div>
-                            <div class="vacp-ring-label">Urlaub</div>
-                            <div id="vacArcDetail" class="vacp-ring-detail">—</div>
+                        <div class="pf-fact">
+                            <dt class="pf-fact__k">Ø Block am Stück</dt>
+                            <dd class="pf-fact__v" id="kpiAvgFocus">&mdash;</dd>
                         </div>
-
-                        <!-- VS divider -->
-                        <div class="vacp-vs">
-                            <div class="vacp-vs-bar"></div>
-                            <span class="vacp-vs-chip">vs</span>
-                            <div class="vacp-vs-bar"></div>
-                        </div>
-
-                        <!-- Right: Jahresverlauf -->
-                        <div class="vacp-ring-block">
-                            <div class="vacp-ring-wrap">
-                                <svg viewBox="0 0 120 120" class="vacp-svg">
-                                    <circle class="vacp-track" cx="60" cy="60" r="50"/>
-                                    <circle class="vacp-fill vacp-fill--year" id="vacYearArcFill" cx="60" cy="60" r="50"
-                                        stroke-dasharray="314 314" stroke-dashoffset="314"/>
-                                    <text id="vacYearArcPct" class="vacp-ring-pct" x="60" y="56" text-anchor="middle">0%</text>
-                                    <text class="vacp-ring-sub" x="60" y="74" text-anchor="middle">des Jahres</text>
-                                </svg>
-                            </div>
-                            <div class="vacp-ring-label">Jahresverlauf</div>
-                            <div class="vacp-ring-detail">2026</div>
-                        </div>
-                    </div>
-
-                    <!-- Footer stats row -->
-                    <div class="vacp-footer">
-                        <div class="vacp-footer-stat">
-                            <div id="vacRemainVal" class="vacp-footer-val">—</div>
-                            <div class="vacp-footer-lbl">noch verfügbar</div>
-                        </div>
-                        <div class="vacp-footer-sep"></div>
-                        <div class="vacp-footer-stat">
-                            <div id="vacPacePrognoseYear" class="vacp-footer-val">—</div>
-                            <div class="vacp-footer-lbl">Prognose 31.12.</div>
-                        </div>
-                    </div>
-
-                    <div id="vacCarriedOverHint" class="vacp-carryover" style="display:none;">
-                        inkl. <strong><span id="vacCarriedOverVal">0</span></strong> Übertrag aus Vorjahr
-                    </div>
-                </div>
-            </div>
-
-            <style>
-            /* ── Urlaubs-Pacing Card ── */
-            .vacp-card{background:linear-gradient(145deg,rgba(168,85,247,0.07) 0%,rgba(255,255,255,0.02) 100%);border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:1.25rem 1.25rem 1rem;}
-            .vacp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
-            .vacp-title{display:flex;align-items:center;gap:7px;font-size:0.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.07em;}
-            .vacp-title svg{opacity:0.6;}
-            .vacp-status-pill{display:flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:99px;}
-            .vacp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .3s,box-shadow .3s;}
-            .vacp-status-lbl{font-size:0.78rem;font-weight:600;}
-            /* Rings */
-            .vacp-rings{display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:1.1rem;}
-            .vacp-ring-block{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;}
-            .vacp-ring-wrap{width:120px;height:120px;filter:drop-shadow(0 0 12px rgba(168,85,247,0.15));}
-            .vacp-svg{width:120px;height:120px;transform:rotate(-90deg);}
-            .vacp-track{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:9;}
-            .vacp-fill{fill:none;stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset .9s cubic-bezier(.34,1.56,.64,1);}
-            .vacp-fill--used{stroke:var(--primary);}
-            .vacp-fill--year{stroke:rgba(255,255,255,0.28);}
-            .vacp-ring-pct{fill:var(--text-main);font-size:20px;font-weight:800;font-family:'Inter',sans-serif;transform:rotate(90deg);transform-origin:60px 60px;}
-            .vacp-ring-sub{fill:var(--text-muted);font-size:9.5px;font-family:'Inter',sans-serif;transform:rotate(90deg);transform-origin:60px 60px;}
-            .vacp-ring-label{font-size:0.72rem;font-weight:600;color:var(--text-main);}
-            .vacp-ring-detail{font-size:0.68rem;color:var(--text-muted);}
-            /* VS divider */
-            .vacp-vs{display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 6px;flex-shrink:0;}
-            .vacp-vs-bar{width:1px;height:36px;background:rgba(255,255,255,0.08);}
-            .vacp-vs-chip{font-size:0.62rem;font-weight:700;color:var(--text-muted);letter-spacing:.06em;padding:3px 7px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);border-radius:4px;}
-            /* Footer */
-            .vacp-footer{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.75rem;padding:.9rem 0 0;border-top:1px solid rgba(255,255,255,0.07);}
-            .vacp-footer-sep{width:1px;height:34px;background:rgba(255,255,255,0.07);}
-            .vacp-footer-stat{text-align:center;}
-            .vacp-footer-val{font-size:1.05rem;font-weight:700;color:var(--text-main);}
-            .vacp-footer-lbl{font-size:0.63rem;color:var(--text-muted);margin-top:3px;text-transform:uppercase;letter-spacing:.04em;}
-            .vacp-carryover{margin-top:.75rem;font-size:.68rem;color:var(--text-muted);text-align:center;}
-            </style>
-
-            <!-- ─── KPI Stat Tiles ──────────────────────────────────── -->
-            <div class="perf-stats">
-                <div class="perf-stat" data-accent="primary">
-                    <div class="perf-stat__head">
-                        <span class="perf-stat__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="9"/>
-                                <circle cx="12" cy="12" r="5"/>
-                                <circle cx="12" cy="12" r="1.5"/>
-                            </svg>
-                        </span>
-                        <span class="perf-stat__label">Soll-Erfüllungsgrad</span>
-                    </div>
-                    <div class="perf-stat__value" id="kpiPerformance">0%</div>
-                    <div class="perf-stat__foot">Ziel: 100% · 90 Tage</div>
+                    </dl>
                 </div>
 
-                <div class="perf-stat" data-accent="cyan">
-                    <div class="perf-stat__head">
-                        <span class="perf-stat__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M17 18a5 5 0 0 0-10 0"/>
-                                <line x1="12" y1="9" x2="12" y2="2"/>
-                                <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/>
-                                <line x1="1" y1="18" x2="3" y2="18"/>
-                                <line x1="21" y1="18" x2="23" y2="18"/>
-                                <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/>
-                                <line x1="23" y1="22" x2="1" y2="22"/>
-                                <polyline points="8 6 12 2 16 6"/>
-                            </svg>
-                        </span>
-                        <span class="perf-stat__label">Ø Arbeitsbeginn</span>
-                    </div>
-                    <div class="perf-stat__value" id="kpiAvgStartTime">---</div>
-                    <div class="perf-stat__foot">Dein bestes Startfenster</div>
-                </div>
+                <figure class="pf-band" id="pfBand">
+                    <div class="pf-band__plot" id="pfBandPlot"></div>
+                    <div class="pf-band__cursor" id="pfBandCursor" hidden></div>
+                    <div class="pf-band__tip" id="pfBandTip" hidden role="status"></div>
+                    <figcaption class="pf-band__cap">
+                        <span id="pfBandFrom">&mdash;</span>
+                        <span class="pf-band__cap-mid">Kumulierter Saldo gegen die Nulllinie</span>
+                        <span id="pfBandTo">&mdash;</span>
+                    </figcaption>
+                </figure>
+            </section>
 
-                <div class="perf-stat" data-accent="amber">
-                    <div class="perf-stat__head">
-                        <span class="perf-stat__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                            </svg>
-                        </span>
-                        <span class="perf-stat__label">Ø Längste Fokusphase</span>
+            <!-- ═══ 2 · Soll und Ist je Periode ═══ -->
+            <section class="pf-act">
+                <div class="pf-act__head">
+                    <div class="pf-act__id">
+                        <p class="pf-eyebrow">Bilanz</p>
+                        <h3 class="pf-act__title">Soll und Ist nebeneinander</h3>
+                        <p class="pf-act__sub" id="pfBalanceSub">&mdash;</p>
                     </div>
-                    <div class="perf-stat__value" id="kpiAvgFocus">0.0h</div>
-                    <div class="perf-stat__foot">Zwischen Pausen & Start/Ende</div>
-                </div>
-
-                <div class="perf-stat" data-accent="success">
-                    <div class="perf-stat__head">
-                        <span class="perf-stat__icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-                                <polyline points="16 7 22 7 22 13"/>
-                            </svg>
-                        </span>
-                        <span class="perf-stat__label">Ø Saldo Monatlich</span>
-                    </div>
-                    <div class="perf-stat__value" id="kpiAvgMonthlyDiff">+0h</div>
-                    <div class="perf-stat__foot">Monatlicher Trend · 1 Jahr</div>
-                </div>
-            </div>
-
-            <!-- ─── Wöchentlicher Soll-Ist-Vergleich ────────────────── -->
-            <div class="perf-card">
-                <div class="perf-card__head">
-                    <div>
-                        <div class="perf-card__title">Wöchentlicher Soll-Ist-Vergleich</div>
-                        <div class="perf-card__sub">Geleistete Zeit vs. Soll-Zeit der letzten 8 Wochen</div>
-                    </div>
-                    <div class="perf-legend">
-                        <span class="perf-legend__item"><span class="perf-dot" style="background:var(--work-color)"></span>Geleistet</span>
-                        <span class="perf-legend__item"><span class="perf-dot" style="background:var(--expected-color)"></span>Soll</span>
+                    <div class="pf-key">
+                        <span class="pf-key__item"><span class="pf-key__tick" aria-hidden="true"></span><span>Soll</span></span>
+                        <span class="pf-key__item"><span class="pf-key__dot" aria-hidden="true"></span><span>Ist</span></span>
                     </div>
                 </div>
-                <div class="stacked-bar-chart" id="chartWeeklyPerformance"></div>
-            </div>
+                <div class="pf-dumb" id="pfBalance"></div>
+            </section>
 
-            <!-- ─── Statistik pro Job (nur bei 2+ Jobs) ─────────────── -->
+            <!-- ═══ 3 · Tagesrhythmus ═══ -->
+            <section class="pf-act">
+                <div class="pf-act__head">
+                    <div class="pf-act__id">
+                        <p class="pf-eyebrow">Rhythmus</p>
+                        <h3 class="pf-act__title">Wann du tatsächlich arbeitest</h3>
+                        <p class="pf-act__sub" id="pfRhythmSub">&mdash;</p>
+                    </div>
+                    <div class="pf-scale">
+                        <span class="pf-scale__lbl">wenig</span>
+                        <span class="pf-scale__ramp" aria-hidden="true"></span>
+                        <span class="pf-scale__lbl">viel</span>
+                    </div>
+                </div>
+                <div class="pf-rhythm" id="pfRhythm"></div>
+            </section>
+
+            <!-- ═══ Statistik pro Job (nur bei 2+ Jobs) ═══ -->
             <div id="jobStatsContainer" style="display:none;"></div>
 
-            <!-- ─── Projekt + Saldo-Trend ───────────────────────────── -->
-            <div class="perf-grid-2">
-                <div class="perf-card">
-                    <div class="perf-card__head">
-                        <div>
-                            <div class="perf-card__title">Projekt-Verteilung</div>
-                            <div class="perf-card__sub">Aufteilung der gesamten Arbeitszeit</div>
+            <!-- ═══ 4 · Projekte + Urlaubstempo ═══ -->
+            <div class="pf-duo">
+                <section class="pf-act">
+                    <div class="pf-act__head">
+                        <div class="pf-act__id">
+                            <p class="pf-eyebrow">Aufteilung</p>
+                            <h3 class="pf-act__title">Wohin die Stunden gehen</h3>
+                            <p class="pf-act__sub" id="pfProjectSub">&mdash;</p>
                         </div>
                     </div>
-                    <div class="donut-container" id="chartProjectDistribution"></div>
-                    <div class="donut-legend" id="projectDonutLegend"></div>
-                </div>
+                    <div class="pf-rank" id="pfProjects"></div>
+                </section>
 
-                <div class="perf-card">
-                    <div class="perf-card__head">
-                        <div>
-                            <div class="perf-card__title">Saldo-Entwicklung pro Monat</div>
-                            <div class="perf-card__sub">Kumulierte Saldo-Veränderung pro Monat (12 Monate)</div>
+                <section class="pf-act" id="vacPacingBlock" style="display:none;">
+                    <div class="pf-act__head">
+                        <div class="pf-act__id">
+                            <p class="pf-eyebrow">Tempo</p>
+                            <h3 class="pf-act__title">Urlaub gegen das Kalenderjahr</h3>
+                            <p class="pf-act__sub">Beide Balken auf derselben Skala. Wer vorne liegt, gibt das Tempo vor.</p>
+                        </div>
+                        <span class="pf-pill">
+                            <span id="vacPaceDot" class="pf-pill__dot"></span>
+                            <span id="vacPaceLabel" class="pf-pill__lbl">&mdash;</span>
+                        </span>
+                    </div>
+
+                    <div class="pf-rails">
+                        <div class="pf-rail">
+                            <div class="pf-rail__head">
+                                <span class="pf-rail__k">Urlaub verbraucht</span>
+                                <span class="pf-rail__v" id="vacArcPct">0%</span>
+                            </div>
+                            <div class="pf-rail__track">
+                                <div class="pf-rail__fill pf-rail__fill--vac" id="vacArcFill"></div>
+                                <div class="pf-rail__mark" id="vacPaceMark"></div>
+                            </div>
+                            <p class="pf-rail__foot" id="vacArcDetail">&mdash;</p>
+                        </div>
+
+                        <div class="pf-rail">
+                            <div class="pf-rail__head">
+                                <span class="pf-rail__k">Jahr vergangen</span>
+                                <span class="pf-rail__v" id="vacYearArcPct">0%</span>
+                            </div>
+                            <div class="pf-rail__track">
+                                <div class="pf-rail__fill pf-rail__fill--year" id="vacYearArcFill"></div>
+                            </div>
+                            <p class="pf-rail__foot" id="vacYearDetail">&mdash;</p>
                         </div>
                     </div>
-                    <div class="trend-container" id="chartMonthlyTrend"></div>
-                </div>
+
+                    <dl class="pf-facts pf-facts--tight">
+                        <div class="pf-fact">
+                            <dt class="pf-fact__k">Noch verfügbar</dt>
+                            <dd class="pf-fact__v" id="vacRemainVal">&mdash;</dd>
+                        </div>
+                        <div class="pf-fact">
+                            <dt class="pf-fact__k">Prognose 31.12.</dt>
+                            <dd class="pf-fact__v" id="vacPacePrognoseYear">&mdash;</dd>
+                        </div>
+                    </dl>
+
+                    <p id="vacCarriedOverHint" class="pf-note" style="display:none;">
+                        <span class="pf-note__k">Enthält Übertrag aus dem Vorjahr:</span>
+                        <span id="vacCarriedOverVal">0</span>
+                    </p>
+                </section>
             </div>
 
-            <!-- ─── Wochentag + Heatmap ─────────────────────────────── -->
-            <div class="perf-grid-deep">
-                <div class="perf-card">
-                    <div class="perf-card__head">
-                        <div>
-                            <div class="perf-card__title">Ø Produktivität pro Wochentag</div>
-                            <div class="perf-card__sub">Durchschnittlicher Saldo Mo – Fr</div>
-                        </div>
+            <!-- ═══ 5 · Arbeitszeitgesetz ═══ -->
+            <section class="pf-act">
+                <div class="pf-act__head">
+                    <div class="pf-act__id">
+                        <p class="pf-eyebrow">Prüfung</p>
+                        <h3 class="pf-act__title">Arbeitszeitgesetz</h3>
+                        <p class="pf-act__sub" id="pfLawSub">&mdash;</p>
                     </div>
-                    <div class="horizontal-bar-container" id="chartProductivityByDay" style="max-height: 320px; overflow-y: auto;"></div>
                 </div>
+                <div class="pf-law" id="pfLaw"></div>
+                <p class="pf-note pf-note--legal">
+                    <span class="pf-note__k">Grundlage:</span>
+                    <span>Geprüft wird gegen das Arbeitszeitgesetz (§ 3 Höchstarbeitszeit, § 4 Ruhepausen, § 5 Ruhezeit). Für Auszubildende unter 18 Jahren gilt stattdessen das Jugendarbeitsschutzgesetz mit strengeren Grenzen. Die Prüfung ersetzt keine Rechtsberatung.</span>
+                </p>
+            </section>
 
-                <div class="perf-card">
-                    <div class="perf-card__head">
-                        <div>
-                            <div class="perf-card__title">Tages-Heatmap</div>
-                            <div class="perf-card__sub">Ø geleistete Zeit pro Stunde (8:00 – 23:00)</div>
-                        </div>
-                    </div>
-                    <div id="chartProductivityHeatmap"></div>
-                </div>
-            </div>
-
-            <!-- ─── Compliance & Ruhezeiten ─────────────────────────── -->
-            <div class="perf-card">
-                <div class="perf-card__head">
-                    <div>
-                        <div class="perf-card__title">Compliance & Ruhezeiten-Audit</div>
-                        <div class="perf-card__sub">Gesetzliche Vorgaben deiner letzten Schicht</div>
+            <!-- ═══ 6 · Stimmung ═══ -->
+            <section class="pf-act">
+                <div class="pf-act__head">
+                    <div class="pf-act__id">
+                        <p class="pf-eyebrow">Stimmung</p>
+                        <h3 class="pf-act__title">Wie sich die Tage angefühlt haben</h3>
+                        <p class="pf-act__sub" id="pfMoodSub">&mdash;</p>
                     </div>
                 </div>
-                <div class="perf-audit-grid">
-                    <div class="perf-audit" data-status="ok" id="auditMaxHours">
-                        <div class="perf-audit__top">
-                            <span class="perf-audit__icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="9"/>
-                                    <polyline points="12 7 12 12 15 14"/>
-                                </svg>
-                            </span>
-                            <span class="perf-audit__pill" id="auditMaxHoursValue">OK</span>
-                        </div>
-                        <div class="perf-audit__label">10h Max-Arbeitszeit</div>
-                        <div class="perf-audit__desc">Tägliche Höchstarbeitszeit</div>
-                    </div>
-
-                    <div class="perf-audit" data-status="ok" id="auditRestTime">
-                        <div class="perf-audit__top">
-                            <span class="perf-audit__icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                                </svg>
-                            </span>
-                            <span class="perf-audit__pill" id="auditRestTimeValue">OK</span>
-                        </div>
-                        <div class="perf-audit__label">11h Ruhezeit</div>
-                        <div class="perf-audit__desc">Pause zur letzten Schicht</div>
-                    </div>
-
-                    <div class="perf-audit" data-status="ok" id="auditBreakMin">
-                        <div class="perf-audit__top">
-                            <span class="perf-audit__icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
-                                    <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
-                                    <line x1="6" y1="1" x2="6" y2="4"/>
-                                    <line x1="10" y1="1" x2="10" y2="4"/>
-                                    <line x1="14" y1="1" x2="14" y2="4"/>
-                                </svg>
-                            </span>
-                            <span class="perf-audit__pill" id="auditBreakMinValue">OK</span>
-                        </div>
-                        <div class="perf-audit__label">Pausen-Compliance</div>
-                        <div class="perf-audit__desc">Mindestpausen der letzten Schicht</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ─── Stimmungs-Übersicht ─────────────────────────────── -->
-            <div class="perf-card">
-                <div class="perf-card__head">
-                    <div>
-                        <div class="perf-card__title">Stimmungs-Übersicht</div>
-                        <div class="perf-card__sub">Deine Stimmung über die letzten 30 Tage</div>
-                    </div>
-                </div>
-                <div id="moodOverview" class="perf-mood">
-                    <!-- Mood entries will be filled by JS -->
-                </div>
-            </div>
+                <div id="moodOverview" class="pf-mood"></div>
+            </section>
         </div>

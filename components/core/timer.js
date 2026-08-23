@@ -1,10 +1,12 @@
 // ═══ CORE: TIMER ═══
     // --- LOGIC (handleEntry remains unchanged for core functionality) ---
-    function calculateProjectDistribution() {
+    // `entries` optional: die Performance-Ansicht reicht ihren Zeitraum-Ausschnitt
+    // durch, sonst gilt der ganze Bestand.
+    function calculateProjectDistribution(entries) {
         const projectHours = {};
         let totalWorkHours = 0;
 
-        data.entries.forEach(e => {
+        (entries || data.entries).forEach(e => {
             if (e.type === 'work' && e.worked > 0) {
                 const projectName = e.project || 'Unbekannt'; 
                 
@@ -25,7 +27,12 @@
         const distribution = topProjects.map(([name, hours]) => ({ name, hours }));
 
         if (otherHours > 0) {
-            distribution.push({ name: 'Sonstige Projekte', hours: otherHours });
+            // Sammelposten: der Name wird gerendert, gehoert also uebersetzt —
+            // die statische i18n-Pipeline sieht JS-Strings nicht.
+            distribution.push({
+                name: document.documentElement.lang === 'en' ? 'Other projects' : 'Sonstige Projekte',
+                hours: otherHours
+            });
         }
         
         return { distribution, totalWorkHours };

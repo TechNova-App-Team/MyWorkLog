@@ -49,8 +49,11 @@ function closeMoodSelector() {
     currentMoodEntryId = null;
 }
 
+// Beschriftung einer Stimmung. Wird auch im Performance-Befund gerendert und
+// steht dort auf /en/ — der i18n-Lauf sieht JS-Strings nicht, also liegt die
+// englische Fassung hier daneben.
 function getMoodDescription(emoji) {
-    const descriptions = {
+    const de = {
         '😄': 'Sehr glücklich',
         '😊': 'Glücklich',
         '🙂': 'Zufrieden',
@@ -62,46 +65,20 @@ function getMoodDescription(emoji) {
         '😴': 'Müde',
         '🤯': 'Überwältigt'
     };
-    return descriptions[emoji] || 'Unbekannt';
-}
-
-function renderMoodOverview() {
-    const moodContainer = document.getElementById('moodOverview');
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    // Filter entries with mood from last 30 days
-    const recentEntries = data.entries.filter(e => e.mood && new Date(e.date) >= thirtyDaysAgo);
-
-    if (recentEntries.length === 0) {
-        moodContainer.innerHTML = '<div style="color:var(--text-muted); font-style:italic;">Noch keine Stimmungen erfasst. Speichere Einträge und wähle eine Stimmung!</div>';
-        return;
-    }
-
-    // Group by date
-    const moodByDate = {};
-    recentEntries.forEach(e => {
-        const date = e.date;
-        if (!moodByDate[date]) moodByDate[date] = [];
-        moodByDate[date].push(e.mood);
-    });
-
-    // Create HTML: Show last 30 days, with mood if available
-    let html = '';
-    for (let i = 29; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        const moods = moodByDate[dateStr] || [];
-        const avgMood = moods.length > 0 ? moods[Math.floor(moods.length / 2)] : null; // Median mood
-
-        html += `<div style="display:flex; flex-direction:column; align-items:center; padding:4px; border-radius:6px; background:${avgMood ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)'}; min-width:32px;">
-            <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:2px;">${date.getDate()}</div>
-            <div style="font-size:1.2rem;">${avgMood || '–'}</div>
-        </div>`;
-    }
-
-    moodContainer.innerHTML = html;
+    const en = {
+        '😄': 'Very happy',
+        '😊': 'Happy',
+        '🙂': 'Content',
+        '😐': 'Neutral',
+        '😕': 'Unhappy',
+        '😞': 'Down',
+        '😠': 'Angry',
+        '🤒': 'Ill',
+        '😴': 'Tired',
+        '🤯': 'Overwhelmed'
+    };
+    const isEN = document.documentElement.lang === 'en';
+    return (isEN ? en : de)[emoji] || (isEN ? 'Unknown' : 'Unbekannt');
 }
 
 // ============================================
