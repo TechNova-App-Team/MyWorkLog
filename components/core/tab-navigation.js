@@ -70,7 +70,6 @@
         }
         if (tabId === 'monthcompare') {
             renderMonthCompareView();
-            if (typeof renderMiniCalendar === 'function') renderMiniCalendar();
         }
         if (tabId === 'weekview') {
             renderWeekView();

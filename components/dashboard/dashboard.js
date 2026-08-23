@@ -422,14 +422,21 @@
 
         let stats = {
             worked: 0,
+            expected: 0,
             workDays: 0,
             schoolDays: 0,
             vacationDays: 0,
             sickDays: 0,
             holidayDays: 0,
+            overDays: 0,
+            underDays: 0,
             saldo: 0,
             weeks: [],
-            dailyDiffs: []
+            // Tageswerte fuer die Monatsansicht: das Kalenderraster braucht je
+            // Tag Hoehe (worked), Sollmarke (expected) und Art (type). Die
+            // Werte fallen in der Schleife unten ohnehin an — sie zweimal zu
+            // rechnen waere die Stelle, an der zwei Zahlen auseinanderlaufen.
+            byDay: {}
         };
 
         // Sammle alle Einträge für diesen Monat
@@ -455,6 +462,7 @@
             if (dayEntries.length === 0) continue;
 
             let dayWorkedHours = 0;
+            let dayExpectedByJob = {};
             let daySaldo = 0;
             let dayHasWork = false;
             let dayHasSchool = false;
@@ -485,8 +493,14 @@
                     dayWorkedHours += hours;
                     if (hours > 0) {
                         dayHasWork = true;
-                        daySaldo += (typeof e.diff === 'number' ? e.diff : (hours - (e.expected ?? (data.settings.hours[new Date(dateStr).getDay()] || 0))));
+                        daySaldo += (typeof e.diff === 'number' ? e.diff : (hours - (e.expected ?? (data.settings.hours[new Date(dateStr + 'T00:00:00').getDay()] || 0))));
                     }
+                    // Tagessoll zaehlt je Job einmal am Tag — bei Split-Shift
+                    // traegt jeder Eintrag dasselbe `expected`, summiert waere
+                    // es doppelt.
+                    const jid = (typeof getEntryJobId === 'function') ? getEntryJobId(e) : 'primary';
+                    const exp = parseFloat(e.expected) || 0;
+                    if (exp > (dayExpectedByJob[jid] || 0)) dayExpectedByJob[jid] = exp;
                 } else if (type === 'school') {
                     dayHasSchool = true;
                 } else if (type === 'vacation') {
@@ -500,12 +514,17 @@
                 }
             });
 
+            const dayExpected = Object.keys(dayExpectedByJob)
+                .reduce((sum, k) => sum + dayExpectedByJob[k], 0);
+
             // Tageszusammenfassung in die Statistiken einfließen lassen
             if (dayHasWork) {
                 stats.worked += dayWorkedHours;
+                stats.expected += dayExpected;
                 stats.workDays += 1; // pro Arbeitstag nur einmal zählen
                 stats.saldo += daySaldo;
-                stats.dailyDiffs.push(daySaldo);
+                if (daySaldo > 0.05) stats.overDays += 1;
+                else if (daySaldo < -0.05) stats.underDays += 1;
             }
             if (dayHasSchool) stats.schoolDays += 1;
             if (dayHasVacation) stats.vacationDays += 1;
@@ -513,14 +532,38 @@
             if (dayHasSick) stats.sickDays += 1;
             if (dayHasHoliday) stats.holidayDays += 1;
 
-            // Wochen-Statistik (Woche im Monat: 1..5)
-            const weekNum = Math.ceil(d / 7);
+            // Ein Tag traegt genau eine Art im Kalenderbild. Arbeit gewinnt,
+            // sonst die naechste vorhandene — ein Feiertag, an dem gearbeitet
+            // wurde, ist im Bild ein Arbeitstag.
+            const dayType = dayHasWork ? 'work'
+                : dayHasSchool ? 'school'
+                : dayHasVacation ? 'vacation'
+                : dayHasGleittag ? 'gleittag'
+                : dayHasSick ? 'sick'
+                : dayHasHoliday ? 'holiday' : null;
+            if (dayType) {
+                stats.byDay[dateStr] = {
+                    worked: dayWorkedHours,
+                    expected: dayExpected,
+                    saldo: daySaldo,
+                    type: dayType
+                };
+            }
+
+            // 🔴 Echte Kalenderwoche. Vorher stand hier `Math.ceil(d / 7)` —
+            // das sind Bloecke von sieben Monatstagen: „Woche 1" endete immer
+            // am 7., egal welcher Wochentag das war, und keine Zeile deckte
+            // sich mit der Wochenansicht.
+            const weekNum = (typeof getWeek === 'function')
+                ? getWeek(new Date(year, month, d))
+                : Math.ceil(d / 7);
             let week = stats.weeks.find(w => w.weekNum === weekNum);
             if (!week) {
-                week = { weekNum: weekNum, entries: 0, hours: 0, saldo: 0 };
+                week = { weekNum: weekNum, days: 0, entries: 0, hours: 0, expected: 0, saldo: 0 };
                 stats.weeks.push(week);
             }
-            if (dayHasWork) { week.entries += 1; week.saldo += daySaldo; }
+            week.days += 1;
+            if (dayHasWork) { week.entries += 1; week.saldo += daySaldo; week.expected += dayExpected; }
             week.hours += dayWorkedHours;
         }
 
@@ -972,65 +1015,9 @@
         showHolidayConfirmModal(pending);
     }
 
-    function renderMiniCalendar() {
-        const grid = document.getElementById('miniCalGrid');
-        const monthEl = document.getElementById('miniCalMonth');
-        if (!grid || !monthEl) return;
-
-        const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
-        const year = miniCalViewYear;
-        const month = miniCalViewMonth;
-
-        // Month label
-        const monthName = new Date(year, month, 1).toLocaleDateString(mwlLocale(), { month: 'long', year: 'numeric' });
-        monthEl.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-
-        // Build entry map for this month
-        const entryMap = {};
-        (data.entries || []).forEach(e => {
-            const d = new Date(e.date);
-            if (d.getFullYear() === year && d.getMonth() === month) {
-                entryMap[e.date] = e.type;
-            }
-        });
-
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const firstDay = new Date(year, month, 1).getDay();
-        const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Monday start
-
-        // Header row
-        const dayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-        let html = dayLabels.map(d => `<div class="mini-cal-header">${d}</div>`).join('');
-
-        // Empty cells before first day
-        for (let i = 0; i < startOffset; i++) {
-            html += '<div class="mini-cal-day empty"></div>';
-        }
-
-        // Day cells
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const cellDate = new Date(year, month, day);
-            const dayOfWeek = cellDate.getDay();
-            const isWeekend = (data.settings.hours[dayOfWeek] || 0) <= 0 && (dayOfWeek === 0 || dayOfWeek === 6);
-            const isToday = dateStr === todayStr;
-            const entryType = entryMap[dateStr];
-
-            let classes = 'mini-cal-day';
-            if (entryType) classes += ` has-entry type-${entryType}`;
-            if (isToday) classes += ' is-today';
-            if (isWeekend && !entryType) classes += ' is-weekend';
-
-            const title = entryType ?
-                `${dateStr}: ${entryType === 'work' ? 'Arbeit' : entryType === 'school' ? 'Schule' : entryType === 'vacation' ? 'Urlaub' : entryType === 'gleittag' ? 'Gleittag' : entryType === 'sick' ? 'Krank' : 'Feiertag'}` :
-                dateStr;
-
-            html += `<div class="${classes}" title="${title}" onclick="miniCalDayClick('${dateStr}')">${day}</div>`;
-        }
-
-        grid.innerHTML = html;
-    }
+    // renderMiniCalendar() zeichnete bis v6.3.5 ein farbiges Kaestchen je Tag in
+    // #miniCalGrid. Das Raster gab es nur in der Monatsansicht; dort steht jetzt
+    // mcRenderCalendar() (monthcompare.js), das zusaetzlich die Tageslaenge zeigt.
 
     // ═══ Saldo-Trend: zentrale Defaults (spiegelt TREND_CHART_DEFAULTS aus charts.js) ═══
     function getTrendChartDefaults() {

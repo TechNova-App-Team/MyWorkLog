@@ -2,15 +2,9 @@
     // ============================================
     // FEATURE: MINI CALENDAR WIDGET
     // ============================================
-    let miniCalViewMonth = new Date().getMonth();
-    let miniCalViewYear = new Date().getFullYear();
-
-    function miniCalNav(dir) {
-        miniCalViewMonth += dir;
-        if (miniCalViewMonth > 11) { miniCalViewMonth = 0; miniCalViewYear++; }
-        if (miniCalViewMonth < 0) { miniCalViewMonth = 11; miniCalViewYear--; }
-        renderMiniCalendar();
-    }
+    // miniCalNav() + miniCalViewMonth/Year sind mit v6.3.5 entfallen: sie waren
+    // ein ZWEITER Monatszustand neben dem Dropdown der Monatsansicht, und die
+    // beiden liefen auseinander. Jetzt gibt es dort genau einen (mcNav).
     function miniCalDayClick(dateStr) {
         // Set entry form date to clicked day
         const inp = document.getElementById('inpDate');

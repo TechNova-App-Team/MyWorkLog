@@ -1,0 +1,589 @@
+        /* ═══ MONATSANSICHT — „Der Monat" ═════════════════════════════════
+           Dieselbe Dokumentsprache wie die Performance-Ansicht (Rubrik, Titel,
+           Beleg, Haarlinien statt schwebender Karten) — aber eine andere These:
+           dort geht es um den Rhythmus ueber einen Zeitraum, hier um EINEN
+           Monat als Objekt, das man gegen seine Nachbarn haelt.
+
+           Das Signaturbild ist deshalb der Kalender selbst: jeder Tag ein
+           Balken auf der Wochentagsspalte, an der er wirklich lag. Vorher war
+           er ein farbiges Kaestchen — es zeigte, DASS ein Tag erfasst war,
+           nie, wie lang er war.                                              */
+
+        #view-monthcompare {
+            --mc-ink-03:  rgba(255, 255, 255, 0.035);
+            --mc-ink-06:  rgba(255, 255, 255, 0.065);
+            --mc-ink-10:  rgba(255, 255, 255, 0.11);
+            --mc-rule:    var(--border);
+            --mc-gap:     30px;
+        }
+        [data-theme="light"] #view-monthcompare {
+            --mc-ink-03:  rgba(7, 16, 35, 0.035);
+            --mc-ink-06:  rgba(7, 16, 35, 0.07);
+            --mc-ink-10:  rgba(7, 16, 35, 0.13);
+        }
+
+
+        /* ─── Rubrik + Kopf ────────────────────────────────────────────── */
+        .mc-eyebrow {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--primary);
+            margin: 0 0 6px;
+            line-height: 1;
+        }
+        .mc-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding-bottom: 18px;
+        }
+        .mc-head__title {
+            font-size: 1.55rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text-main);
+            line-height: 1.05;
+            margin: 0;
+            font-variant-numeric: tabular-nums;
+        }
+        .mc-head__sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin: 6px 0 0;
+            line-height: 1.4;
+        }
+
+        .mc-nav {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px;
+            gap: 2px;
+            border: 1px solid var(--mc-rule);
+            border-radius: 10px;
+            background: var(--mc-ink-03);
+        }
+        .mc-nav__btn,
+        .mc-nav__now {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 7px;
+            cursor: pointer;
+            transition: color 0.15s ease, background-color 0.15s ease;
+        }
+        .mc-nav__btn {
+            width: 32px; height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mc-nav__now {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0 13px;
+            height: 32px;
+        }
+        .mc-nav__btn:hover:not(:disabled),
+        .mc-nav__now:hover { color: var(--text-main); background: var(--hover-fill); }
+        .mc-nav__btn:active:not(:disabled),
+        .mc-nav__now:active { transform: scale(0.94); }
+        .mc-nav__btn:focus-visible,
+        .mc-nav__now:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+        .mc-nav__btn:disabled { opacity: 0.3; cursor: default; }
+
+
+        /* ─── 1 · Befund ───────────────────────────────────────────────── */
+        .mc-verdict {
+            display: grid;
+            grid-template-columns: minmax(220px, 290px) 1fr;
+            gap: 34px;
+            align-items: start;
+            padding: 26px 0 30px;
+            border-top: 1px solid var(--mc-rule);
+        }
+        .mc-verdict__kicker {
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 0 0 8px;
+        }
+        .mc-verdict__num {
+            font-family: var(--font-num);
+            font-size: clamp(2.4rem, 5.5vw, 3.4rem);
+            font-weight: 800;
+            letter-spacing: -0.045em;
+            line-height: 0.95;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-main);
+            margin: 0;
+        }
+        .mc-verdict__num .mc-u {
+            font-size: 0.4em;
+            font-weight: 600;
+            margin-left: 0.14em;
+            color: var(--text-muted);
+        }
+        .mc-verdict__num.is-plus  { color: var(--success); }
+        .mc-verdict__num.is-minus { color: var(--danger); }
+        .mc-verdict__say {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: var(--text-muted);
+            margin: 12px 0 0;
+            max-width: 34ch;
+        }
+
+        .mc-facts {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            margin: 20px 0 0;
+            border-top: 1px solid var(--mc-rule);
+        }
+        .mc-facts--wide {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin-top: 22px;
+        }
+        .mc-fact { padding: 13px 12px 0 0; min-width: 0; }
+        .mc-fact + .mc-fact {
+            padding-left: 14px;
+            border-left: 1px solid var(--mc-rule);
+        }
+        .mc-fact__k {
+            font-size: 0.66rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            line-height: 1.25;
+            margin-bottom: 5px;
+        }
+        .mc-fact__v {
+            font-family: var(--font-num);
+            font-size: 1.02rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.2;
+        }
+        .mc-fact__v small {
+            display: block;
+            font-family: var(--font-main);
+            font-size: 0.63rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0;
+            margin-top: 3px;
+        }
+        .mc-fact__v.is-plus  { color: var(--success); }
+        .mc-fact__v.is-minus { color: var(--danger); }
+
+
+        /* ─── Kalenderraster (Signature) ───────────────────────────────── */
+        .mc-cal { margin: 0; min-width: 0; }
+        .mc-cal__grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 5px;
+        }
+        .mc-cal__wd {
+            font-size: 0.62rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-align: center;
+            padding-bottom: 4px;
+            letter-spacing: 0.03em;
+        }
+        .mc-cal__void { }
+
+        /* Ein Tag: Ziffer oben, Balken von unten, Sollmarke als Haarlinie. */
+        .mc-day {
+            position: relative;
+            appearance: none;
+            border: 1px solid var(--mc-rule);
+            background: var(--mc-ink-03);
+            border-radius: 7px;
+            /* Bewusst feste Hoehe statt `aspect-ratio: 1/1`: die Kalenderspalte
+               ist auf dem Desktop rund 850 px breit, ein quadratischer Tag waere
+               damit 120 px hoch und das Raster allein fuellte den Bildschirm.
+               Ein Kalendertag darf breiter als hoch sein. */
+            height: 58px;
+            padding: 0;
+            overflow: hidden;
+            cursor: pointer;
+            transition: border-color 0.15s ease, transform 0.1s ease;
+        }
+        .mc-day:hover  { border-color: var(--hover-border); }
+        .mc-day:active { transform: scale(0.95); }
+        .mc-day:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+        .mc-day.is-empty { cursor: pointer; }
+        .mc-day.is-off   { background: transparent; border-style: dashed; opacity: 0.5; }
+        .mc-day.is-today { border-color: var(--primary); border-width: 2px; }
+
+        .mc-day__n {
+            position: absolute;
+            top: 4px; left: 0; right: 0;
+            z-index: 2;
+            font-size: 0.66rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1;
+            pointer-events: none;
+        }
+        .mc-day.has-hours .mc-day__n,
+        .mc-day.is-today  .mc-day__n { color: var(--text-main); }
+
+        /* Gearbeitete Zeit als Fuellhoehe */
+        .mc-day__bar {
+            position: absolute;
+            left: 0; right: 0; bottom: 0;
+            height: var(--fill, 0%);
+            background: var(--cat, var(--primary));
+            opacity: 0.85;
+            transition: height 0.45s cubic-bezier(.22,.61,.36,1);
+        }
+        /* Tage ohne Stundenwert (Schule, Urlaub, Krank, Feiertag) fuellen die
+           ganze Flaeche flach — sie haben keine Hoehe, aber eine Art. */
+        .mc-day.is-flat .mc-day__bar { height: 100%; opacity: 0.22; }
+        .mc-day.is-flat .mc-day__n   { color: var(--text-main); }
+
+        /* Tagessoll als Haarlinie quer durch die Zelle */
+        .mc-day__soll {
+            position: absolute;
+            left: 0; right: 0;
+            bottom: var(--soll, 0%);
+            height: 0;
+            border-top: 1px dashed var(--expected-color);
+            opacity: 0.7;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .mc-cal__cap {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .mc-cal__hint {
+            font-size: 0.66rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            max-width: 42ch;
+        }
+
+
+        /* ─── Legenden ─────────────────────────────────────────────────── */
+        .mc-key {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+        .mc-key__item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.66rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .mc-key__sw {
+            width: 9px; height: 9px;
+            border-radius: 3px;
+            background: var(--cat, var(--primary));
+            flex-shrink: 0;
+        }
+        .mc-key__avg {
+            width: 14px; height: 0;
+            border-top: 1px dashed var(--expected-color);
+            flex-shrink: 0;
+        }
+
+
+        /* ─── Abschnitt ────────────────────────────────────────────────── */
+        .mc-act {
+            border-top: 1px solid var(--mc-rule);
+            padding: 24px 0 var(--mc-gap);
+        }
+        .mc-act__head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .mc-act__id { min-width: 0; }
+        .mc-act__title {
+            font-size: 1rem;
+            font-weight: 650;
+            letter-spacing: -0.018em;
+            color: var(--text-main);
+            line-height: 1.2;
+            margin: 0;
+        }
+        .mc-act__sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            margin: 5px 0 0;
+            max-width: 62ch;
+        }
+
+
+        /* ─── 2 · Zwölf-Monats-Streifen ────────────────────────────────── */
+        .mc-strip {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 6px;
+            align-items: end;
+        }
+        .mc-strip__col {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 7px;
+            min-width: 0;
+        }
+        .mc-strip__col:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 6px; }
+        .mc-strip__plot {
+            position: relative;
+            height: 118px;
+            display: flex;
+            align-items: flex-end;
+        }
+        .mc-strip__bar {
+            width: 100%;
+            height: var(--h, 0%);
+            min-height: 2px;
+            border-radius: 4px 4px 2px 2px;
+            background: var(--role-neutral, rgba(255, 255, 255, 0.22));
+            transition: height 0.45s cubic-bezier(.22,.61,.36,1), background-color 0.2s ease;
+        }
+        .mc-strip__col:hover .mc-strip__bar { background: rgba(var(--primary-rgb), 0.45); }
+        .mc-strip__col.is-sel .mc-strip__bar { background: var(--primary); }
+        /* Der Zwölf-Monats-Schnitt als eine Linie quer über alle Säulen */
+        .mc-strip__avg {
+            position: absolute;
+            z-index: 1;
+            left: 0; right: 0;
+            bottom: var(--avg, 0%);
+            height: 0;
+            border-top: 1px dashed var(--expected-color);
+            opacity: 0.75;
+            pointer-events: none;
+        }
+        .mc-strip__lbl {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .mc-strip__col.is-sel .mc-strip__lbl { color: var(--text-main); font-weight: 650; }
+        .mc-strip__val {
+            font-family: var(--font-num);
+            font-size: 0.62rem;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-muted);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+        .mc-strip__col:hover .mc-strip__val,
+        .mc-strip__col.is-sel .mc-strip__val { opacity: 1; color: var(--text-main); }
+
+
+        /* ─── 3 · Wochentabelle ────────────────────────────────────────── */
+        .mc-weeks { overflow-x: auto; }
+        .mc-tbl {
+            width: 100%;
+            min-width: 460px;
+            border-collapse: collapse;
+            font-variant-numeric: tabular-nums;
+        }
+        .mc-tbl th {
+            font-size: 0.64rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-muted);
+            text-align: right;
+            padding: 0 0 9px;
+            border-bottom: 1px solid var(--mc-rule);
+            white-space: nowrap;
+        }
+        .mc-tbl th:first-child,
+        .mc-tbl td:first-child { text-align: left; }
+        .mc-tbl th.mc-tbl__plot-h { width: 34%; text-align: left; padding-left: 16px; }
+        .mc-tbl td {
+            padding: 11px 0;
+            font-size: 0.78rem;
+            color: var(--text-main);
+            text-align: right;
+            border-bottom: 1px solid var(--mc-rule);
+            white-space: nowrap;
+        }
+        .mc-tbl tr:last-child td { border-bottom: 0; }
+        .mc-tbl tbody tr { transition: background-color 0.15s ease; }
+        .mc-tbl tbody tr:hover { background: var(--hover-fill); }
+        .mc-tbl__kw { font-weight: 650; }
+        .mc-tbl__muted { color: var(--text-muted); font-size: 0.74rem; }
+        .mc-tbl__saldo { font-family: var(--font-num); font-weight: 700; }
+        .mc-tbl__saldo.is-plus  { color: var(--success); }
+        .mc-tbl__saldo.is-minus { color: var(--danger); }
+        .mc-tbl__plot { padding-left: 16px; }
+        /* Saldo als Ausschlag um eine sichtbare Nulllinie — kein Fortschritt,
+           also kein Balken von links. */
+        .mc-bar {
+            display: block;
+            position: relative;
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--mc-ink-03);
+        }
+        .mc-bar__zero {
+            position: absolute;
+            top: -2px; bottom: -2px;
+            left: 50%;
+            width: 1px;
+            margin-left: -0.5px;
+            background: var(--role-neutral, rgba(255, 255, 255, 0.16));
+        }
+        .mc-bar__fill {
+            position: absolute;
+            top: 0; bottom: 0;
+            border-radius: 4px;
+            transition: width 0.45s cubic-bezier(.22,.61,.36,1);
+        }
+        .mc-bar__fill.is-plus  { left: 50%;  background: var(--success); }
+        .mc-bar__fill.is-minus { right: 50%; background: var(--danger); }
+
+
+        /* ─── 4 · Zusammensetzung ──────────────────────────────────────── */
+        /* 🔴 `flex: 0 1 X%` statt `0 0 X%`: die Fugen kommen ZUSAETZLICH zu den
+           Basen, Summe waere 100 % + 5x2 px. Mit shrink verteilt der Browser den
+           Ueberlauf gewichtet nach basis — das Verhaeltnis bleibt exakt. */
+        .mc-mix {
+            display: flex;
+            gap: 2px;
+            height: 34px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--mc-ink-03);
+        }
+        .mc-mix__seg {
+            flex: 0 1 auto;
+            min-width: 0;
+            border-radius: 2px;
+            background: var(--cat, var(--primary));
+            transition: flex-basis 0.45s cubic-bezier(.22,.61,.36,1);
+        }
+        .mc-mix__seg:first-child { border-radius: 6px 2px 2px 6px; }
+        .mc-mix__seg:last-child  { border-radius: 2px 6px 6px 2px; }
+        .mc-mix__legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 20px;
+            margin-top: 14px;
+        }
+        .mc-mix__row {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 8px;
+            font-size: 0.74rem;
+            color: var(--text-muted);
+        }
+        .mc-mix__dot {
+            width: 9px; height: 9px;
+            border-radius: 3px;
+            background: var(--cat, var(--primary));
+            flex-shrink: 0;
+            transform: translateY(-1px);
+        }
+        .mc-mix__n {
+            font-family: var(--font-num);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-main);
+        }
+
+
+        /* ─── Leerzustände ─────────────────────────────────────────────── */
+        .mc-empty {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+            padding: 18px;
+            border: 1px dashed var(--mc-ink-10);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+
+        /* ─── Responsive ──────────────────────────────────────────────── */
+        @media (max-width: 1000px) {
+            .mc-verdict { grid-template-columns: 1fr; gap: 26px; }
+        }
+
+        @media (max-width: 640px) {
+            #view-monthcompare { --mc-gap: 24px; }
+            .mc-head { flex-direction: column; align-items: flex-start; }
+            .mc-head__title { font-size: 1.3rem; }
+            .mc-nav { width: 100%; }
+            .mc-nav__now { flex: 1; }
+            .mc-verdict__num { font-size: 2.4rem; }
+            .mc-facts { grid-template-columns: 1fr 1fr; }
+            .mc-facts .mc-fact:nth-child(3) {
+                grid-column: 1 / -1;
+                padding-left: 0;
+                border-left: 0;
+                border-top: 1px solid var(--mc-rule);
+                margin-top: 13px;
+            }
+            .mc-facts--wide { grid-template-columns: 1fr 1fr; }
+            .mc-facts--wide .mc-fact:nth-child(3) {
+                grid-column: auto;
+                padding-left: 0;
+                border-left: 0;
+                border-top: 1px solid var(--mc-rule);
+                margin-top: 13px;
+            }
+            .mc-facts--wide .mc-fact:nth-child(4) {
+                border-top: 1px solid var(--mc-rule);
+                margin-top: 13px;
+            }
+            .mc-cal__grid { gap: 4px; }
+            .mc-day { height: 46px; }
+            .mc-day__n { font-size: 0.6rem; }
+            .mc-strip { gap: 3px; }
+            .mc-strip__plot { height: 88px; }
+            .mc-strip__lbl { font-size: 0.55rem; }
+            .mc-strip__val { display: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .mc-day__bar, .mc-strip__bar, .mc-bar__fill, .mc-mix__seg { transition: none; }
+            .mc-nav__btn:active, .mc-nav__now:active, .mc-day:active { transform: none; }
+        }

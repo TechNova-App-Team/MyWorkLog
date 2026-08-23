@@ -1,75 +1,8 @@
 // ═══ CORE: YEAR-MONTH-STATS ═══
-    function renderMonthComparisonBlock(stats, prevStats, selectedMonth, prevMonth) {
-        const container = document.getElementById('mcMonthComparisonBlock');
-        if (!container) return;
+    // renderMonthComparisonBlock() und renderMonthWeeksList() standen hier bis
+    // v6.3.5. Beide zeichneten denselben Monatsvergleich ein zweites bzw.
+    // drittes Mal; die Monatsansicht baut ihn jetzt einmal (monthcompare.js).
 
-        const monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-        const delta = prevStats.worked > 0 ? ((stats.worked - prevStats.worked) / prevStats.worked * 100) : (stats.worked > 0 ? 100 : 0);
-        const deltaColor = delta >= 0 ? 'var(--success)' : 'var(--danger)';
-        const deltaArrow = delta > 0 ? '↑' : (delta < 0 ? '↓' : '→');
-        const deltaBg = delta >= 0 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)';
-        const diffH = stats.worked - prevStats.worked;
-
-        container.innerHTML = `
-            <div class="week-cmp-block">
-                <div class="week-cmp-label">${monthNames[prevMonth]} (Vormonat)</div>
-                <div class="week-cmp-hours">${prevStats.worked.toFixed(1)}h</div>
-                <div class="week-cmp-days">${prevStats.workDays} Tage | ${prevStats.saldo >= 0 ? '+' : ''}${prevStats.saldo.toFixed(1)}h Saldo</div>
-            </div>
-            <div class="week-cmp-delta">
-                <div class="week-cmp-arrow" style="color:${deltaColor}">${deltaArrow}</div>
-                <div class="week-cmp-pct" style="color:${deltaColor}; background:${deltaBg}">
-                    ${delta >= 0 ? '+' : ''}${delta.toFixed(0)}%
-                </div>
-                <div style="font-size:0.72rem; color:${deltaColor}; font-family:var(--font-mono); margin-top:2px;">${diffH >= 0 ? '+' : ''}${diffH.toFixed(1)}h</div>
-            </div>
-            <div class="week-cmp-block" style="border-left:2px solid var(--primary-dim);">
-                <div class="week-cmp-label">${monthNames[selectedMonth]} (Aktuell)</div>
-                <div class="week-cmp-hours" style="color:var(--primary);">${stats.worked.toFixed(1)}h</div>
-                <div class="week-cmp-days">${stats.workDays} Tage | ${stats.saldo >= 0 ? '+' : ''}${stats.saldo.toFixed(1)}h Saldo</div>
-            </div>
-        `;
-    }
-    function renderMonthWeeksList(stats) {
-        const container = document.getElementById('mcWeeksList');
-        container.innerHTML = '';
-        
-        if (stats.weeks.length === 0) {
-            container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--text-muted);">Keine Einträge in diesem Monat</div>';
-            return;
-        }
-        
-        stats.weeks.forEach(week => {
-            const avgDay = week.entries > 0 ? week.hours / week.entries : 0;
-            const saldo = typeof week.saldo === 'number' ? week.saldo : (week.hours - (week.entries * 8.75));
-            const saldoColor = saldo >= 0 ? 'var(--success)' : 'var(--danger)';
-            
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.style.borderLeft = `5px solid ${saldoColor}`;
-            card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <div style="font-weight:600; font-size:1.1rem;"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg><span>Woche ${week.weekNum}</span></div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">${week.entries} Tage</div>
-                </div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
-                    <div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">Gesamt</div>
-                        <div style="font-size:1.5rem; font-weight:700; font-family:var(--font-mono);" id="week-${week.weekNum}-total">${week.hours.toFixed(1)}h</div>
-                    </div>
-                    <div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">Ø pro Tag</div>
-                        <div style="font-size:1.5rem; font-weight:700; font-family:var(--font-mono);">${avgDay.toFixed(1)}h</div>
-                    </div>
-                </div>
-                <div style="padding:12px; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid ${saldoColor};">
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;"><svg class="mwl-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg><span>Saldo</span></div>
-                    <div style="font-size:1.2rem; font-weight:700; color:${saldoColor}; font-family:var(--font-mono);">${saldo >= 0 ? '+' : ''}${saldo.toFixed(1)}h</div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    }
     function parseTime(timeStr) {
         const [h, m] = timeStr.split(':').map(Number);
         return h * 60 + m;
