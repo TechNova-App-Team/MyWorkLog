@@ -348,7 +348,7 @@
             defaultEnabled: false,
             html: `
                 <div class="card" style="padding:1.5rem;">
-                    <h4 style="margin:0 0 1rem 0; color:var(--primary); font-size:1rem;">😊 Stimmungs-Tracker</h4>
+                    <h4 style="margin:0 0 1rem 0; color:var(--primary); font-size:1rem;"><svg class="mwl-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg><span>Stimmungs-Tracker</span></h4>
                     <div id="moodStats" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap:8px; margin-bottom:1rem;">
                         <!-- Wird per JS gefüllt -->
                     </div>
@@ -362,7 +362,7 @@
             defaultEnabled: false,
             html: `
                 <div class="card" style="padding:1.5rem; background:linear-gradient(135deg, rgba(245,158,11,0.1) 0%, rgba(245,158,11,0.05) 100%); border:1px solid rgba(245,158,11,0.2);">
-                    <h4 style="margin:0 0 1rem 0; color:#f59e0b; font-size:1rem;">🎯 Produktivitäts-Score</h4>
+                    <h4 style="margin:0 0 1rem 0; color:#f59e0b; font-size:1rem;"><svg class="mwl-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><span>Produktivitäts-Score</span></h4>
                     <div style="text-align:center;">
                         <div style="font-size:3rem; font-weight:800; color:#f59e0b; margin:1rem 0;" id="productivityScoreWidget">--</div>
                         <div style="font-size:0.9rem; color:var(--text-muted);" id="productivityDescription">Berechne deinen Score...</div>
@@ -372,12 +372,12 @@
         },
         'quick-templates': {
             name: 'Schnelleintrag',
-            description: '⚡ 1-Klick Vorlagen für Arbeitstag, Schultag, etc.',
+            description: '1-Klick Vorlagen für Arbeitstag, Schultag, etc.',
             defaultEnabled: true,
             html: `
                 <div class="card" style="padding:1rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                        <div class="chart-title">⚡ Schnelleintrag</div>
+                        <div class="chart-title"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></svg><span>Schnelleintrag</span></div>
                         <span style="font-size:0.7rem; color:var(--text-muted);">1-Klick Vorlagen</span>
                     </div>
                     <div id="quickTemplatesGrid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px;">

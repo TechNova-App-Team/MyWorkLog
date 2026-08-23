@@ -190,7 +190,7 @@
 
         sheet.innerHTML = `
             <div style="text-align: center; margin-bottom: 24px;">
-                <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: rgba(239, 68, 68, 0.2); border-radius: 18px; margin: 0 auto 16px; font-size: 32px; color: #ef4444;">${icon}</div>
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; background: rgba(239, 68, 68, 0.2); border-radius: 18px; margin: 0 auto 16px; color: #ef4444;">${mwlIconFromEmoji(icon, 30)}</div>
                 <h2 style="color: #ef4444; margin: 0 0 8px 0; font-size: 1.4rem; font-weight: 700;">Endgültig löschen?</h2>
                 <p style="color: var(--text-muted); margin: 0 0 8px 0; font-size: 0.95rem;">${label} • ${dateStr}</p>
                 <p style="color: #ef4444; margin: 0; font-size: 0.85rem; font-weight: 600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> Diese Aktion kann nicht rückgängig gemacht werden</p>

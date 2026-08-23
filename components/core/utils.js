@@ -142,7 +142,7 @@
 
         sheet.innerHTML = `
             <div style="text-align: center; margin-bottom: 24px;">
-                <div style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: rgba(239, 68, 68, 0.15); border-radius: 16px; margin: 0 auto 16px; font-size: 28px; color: #ef4444;">${icon}</div>
+                <div style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; background: rgba(239, 68, 68, 0.15); border-radius: 16px; margin: 0 auto 16px; color: #ef4444;">${mwlIconFromEmoji(icon, 26)}</div>
                 <h2 style="color: #ef4444; margin: 0 0 8px 0; font-size: 1.3rem; font-weight: 700;">Eintrag löschen?</h2>
                 <p style="color: var(--text-muted); margin: 0; font-size: 0.95rem;">${label} • ${dateStr}</p>
             </div>

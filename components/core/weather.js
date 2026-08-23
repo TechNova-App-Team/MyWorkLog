@@ -960,7 +960,7 @@
                 fcHtml += `
                     <div class="weather-forecast-day" title="${esc(dw.desc)}">
                         <div class="weather-forecast-day-name">${dn}</div>
-                        <div class="weather-forecast-day-icon">${dw.icon}</div>
+                        <div class="weather-forecast-day-icon">${mwlIconFromEmoji(dw.icon, 22)}</div>
                         <div class="weather-forecast-day-temps">
                             <span class="weather-forecast-day-max">${mx}°</span>
                             <span class="weather-forecast-day-min">${mn}°</span>
@@ -1599,7 +1599,7 @@
         greetEl.innerHTML = `
             <span class="greeting-enhanced">
                 <span class="weather-trigger" onclick="openWeatherModal()" title="Wetter anzeigen">
-                    <span class="weather-icon">${weatherIcon}</span>
+                    <span class="weather-icon">${mwlIconFromEmoji(weatherIcon, 26)}</span>
                     ${weatherTemp ? `<span class="weather-temp">${weatherTemp}</span>` : ''}
                 </span>
                 ${greetText}, ${esc(data.settings.name)}

@@ -161,13 +161,13 @@
                     widgetCard.onclick = () => addWidget(widgetId);
                     widgetCard.innerHTML = `
                         <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                            <span style="font-size:1.5rem;">${widget.icon}</span>
+                            <span>${mwlIconFromEmoji(widget.icon, 22)}</span>
                             <div>
                                 <div style="font-weight:600; color:var(--text-main);">${widget.name}</div>
                                 <div style="font-size:0.8rem; color:var(--text-muted);">${widget.description}</div>
                             </div>
                         </div>
-                        <button class="btn btn-ghost" style="width:100%; padding:8px;" onclick="console.log('Add widget clicked:', '${widgetId}'); event.stopPropagation(); addWidget('${widgetId}')">➕ Hinzufügen</button>
+                        <button class="btn btn-ghost" style="width:100%; padding:8px;" onclick="console.log('Add widget clicked:', '${widgetId}'); event.stopPropagation(); addWidget('${widgetId}')">${mwlIcon('plus', 14)}<span>Hinzufügen</span></button>
                     `;
                     availableContainer.appendChild(widgetCard);
                 }
@@ -184,12 +184,12 @@
                     widgetCard.style.cssText = 'padding:16px; border:1px solid rgba(255,255,255,0.02);';
                     widgetCard.innerHTML = `
                         <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
-                            <span style="font-size:1.5rem;">${widget.icon}</span>
+                            <span>${mwlIconFromEmoji(widget.icon, 22)}</span>
                             <div style="flex:1;">
                                 <div style="font-weight:600; color:var(--text-main);">${widget.name}</div>
                                 <div style="font-size:0.8rem; color:var(--text-muted);">${widget.description}</div>
                             </div>
-                            <button class="btn btn-ghost" style="padding:6px;" onclick="removeWidget('${widgetId}')" title="Entfernen">🗑️</button>
+                            <button class="btn btn-ghost" style="padding:6px;" onclick="removeWidget('${widgetId}')" title="Entfernen" aria-label="Entfernen">${mwlIcon('trash', 15)}</button>
                         </div>
                     `;
                     currentContainer.appendChild(widgetCard);
@@ -523,7 +523,7 @@
                 lastGroup = item.group;
             }
             html += `<div class="cmd-palette-item${i === cmdSelectedIdx ? ' selected' : ''}" data-idx="${i}" onmouseenter="cmdHover(${i})" onclick="cmdSelect(${i})">
-                <div class="cpi-icon">${item.icon}</div>
+                <div class="cpi-icon">${mwlIconFromEmoji(item.icon, 16)}</div>
                 <span>${item.label}</span>
             </div>`;
         });

@@ -119,7 +119,7 @@ function generateInsights() {
         if (insights.length === 0) {
             html = '<p>Keine Insights verfügbar. Mehr Daten sammeln!</p>';
         } else {
-            html = insights.map(insight => `<div style="margin-bottom:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px;"><strong>${insight.icon}</strong> ${insight.text}</div>`).join('');
+            html = insights.map(insight => `<div style="margin-bottom:12px; padding:8px; background:rgba(255,255,255,0.05); border-radius:6px;"><strong>${mwlIconFromEmoji(insight.icon, 15)}</strong> ${insight.text}</div>`).join('');
         }
 
         insightsEl.innerHTML = html;

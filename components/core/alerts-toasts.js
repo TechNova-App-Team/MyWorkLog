@@ -259,7 +259,13 @@
     function showToast(title, message, type = 'info', icon = null, duration = TOAST_DURATION) {
         const container = _ensureToastContainer();
         const colors = _getToastColors(type);
-        const autoIcon = icon || (type === 'danger' || type === 'error' ? '❌' : type === 'warning' ? '⚠️' : type === 'success' ? '✅' : 'ℹ️');
+        // Aufrufer reichen teils noch Emoji-Zeichen als `icon` durch (auch aus
+        // gespeicherten Alerts) — mwlIconFromEmoji uebersetzt sie an der Ausgabe
+        // und laesst fertiges SVG unveraendert durch.
+        const _fallback = (type === 'danger' || type === 'error') ? 'xCircle'
+                        : type === 'warning' ? 'alert'
+                        : type === 'success' ? 'checkCircle' : 'info';
+        const autoIcon = (icon ? mwlIconFromEmoji(icon, 20) : '') || mwlIcon(_fallback, 20);
 
         // Limit: max sichtbare Toasts
         const existing = container.querySelectorAll('.tt-toast');
@@ -291,7 +297,7 @@
 
         toast.innerHTML = `
             <div style="display:flex; gap:12px; align-items:flex-start;">
-                <div style="font-size:1.35rem; flex-shrink:0; margin-top:1px;">${autoIcon}</div>
+                <div style="flex-shrink:0; margin-top:1px; line-height:0; color:${colors.border};">${autoIcon}</div>
                 <div style="flex:1; min-width:0;">
                     <div style="font-weight:650; font-size:0.9rem; color:#fafafa; margin-bottom:3px; line-height:1.3;">${title}</div>
                     <div style="font-size:0.825rem; color:#a1a1aa; line-height:1.45;">${message}</div>
@@ -445,7 +451,7 @@
             alertEl.style.opacity = alert.isRead ? '0.6' : '1';
             alertEl.style.borderLeftWidth = alert.isRead ? '2px' : '4px';
             alertEl.innerHTML = `
-                <div class="alert-item-icon">${alert.icon}</div>
+                <div class="alert-item-icon">${mwlIconFromEmoji(alert.icon, 18)}</div>
                 <div class="alert-item-content">
                     <div class="alert-item-title" style="font-weight: ${alert.isRead ? '400' : '700'};">${alert.title}</div>
                     <div style="font-size:0.9rem; margin-bottom:4px; color:var(--text-main);">${alert.message}</div>
@@ -476,7 +482,7 @@
                     alertEl.className = `alert-item ${alert.type}`;
                     alertEl.style.opacity = alert.isRead ? '0.6' : '1';
                     alertEl.innerHTML = `
-                        <div class="alert-item-icon">${alert.icon}</div>
+                        <div class="alert-item-icon">${mwlIconFromEmoji(alert.icon, 18)}</div>
                         <div class="alert-item-content">
                             <div class="alert-item-title">${alert.title}</div>
                             <div style="font-size:0.9rem; margin-bottom:4px;">${alert.message}</div>

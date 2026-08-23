@@ -195,7 +195,7 @@
         const toast = document.createElement('div');
         toast.id = 'successToastEl';
         toast.innerHTML = `
-            <span class="st-icon">${icon}</span>
+            <span class="st-icon">${mwlIconFromEmoji(icon, 18)}</span>
             <span class="st-msg">${esc(message)}</span>
             <div class="st-bar"></div>
         `;

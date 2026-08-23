@@ -60,7 +60,7 @@
         // Force animation restart by toggling display off first
         el.style.display = 'none';
         el.className = `school-inline-result school-inline-result--${modifier}`;
-        el.innerHTML = `<span class="school-inline-result__icon">${icon}</span><span>${text}</span>`;
+        el.innerHTML = `<span class="school-inline-result__icon">${mwlIconFromEmoji(icon, 15)}</span><span>${text}</span>`;
         // Reflow trigger so browser registers the display:none before showing again
         void el.offsetHeight;
         el.style.display = 'flex';

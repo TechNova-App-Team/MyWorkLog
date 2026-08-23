@@ -80,7 +80,7 @@
                 + '<div class="goal-title">' + safeHTML(goal.title) + '</div>'
                 + '<div class="goal-status">' + currentDisplay + unit + ' / ' + goal.target.toFixed(1) + unit + '</div>'
                 + '<div class="goal-status" style="color:' + (achieved ? '#10b981' : color) + ';margin-top:8px;font-weight:600">'
-                +   (achieved ? '✅ Ziel erreicht!' : '● Aktiv')
+                +   (achieved ? mwlIcon('checkCircle', 13) + ' Ziel erreicht!' : '● Aktiv')
                 + '</div>'
                 + '</div>';
         }

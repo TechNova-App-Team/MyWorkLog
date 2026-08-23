@@ -103,6 +103,60 @@
             font-family: inherit;
         }
 
+        /* Icons aus `mwlIcon()` und die fest eingebauten Geschwister. Zwei Dinge,
+           die ohne diese Regel still schiefgehen:
+           - `flex-shrink: 0`: ein `<svg>` als direktes Flex-Kind schrumpft, und
+             `width`/`height` am Element sind nur die Basisgroesse. Bei 320 px
+             Fensterbreite wird aus 16x16 sonst 4,8x16.
+           - `vertical-align: -0.125em`: inline neben Text sitzt ein SVG sonst auf
+             der Grundlinie und steht dadurch sichtbar zu hoch. */
+        .mwl-icon {
+            flex-shrink: 0;
+            vertical-align: -0.125em;
+        }
+        /* Knopf/Label mit Icon + Text: die Fuge gehoert an den Container, nicht
+           als Leerzeichen ins Markup — sonst haengt sie am Uebersetzungs-String. */
+        .school-settings-label,
+        .profile-popover-theme-btn,
+        .nfc-platform-pill,
+        .audit-label,
+        .chart-title,
+        .sp-contrib-icon,
+        .export-opt-icon,
+        .toggle-row-icon,
+        .alert-item-icon,
+        .quick-tpl-icon,
+        .weather-icon,
+        .weather-forecast-day-icon,
+        .school-inline-result__icon,
+        .mc-panel-icon,
+        .mc-config-icon,
+        .pwa-install-icon,
+        .school-settings-hero-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+        }
+        /* Reine Icon-Behaelter: die frueheren Emoji-Groessen (font-size) sind
+           wirkungslos geworden, das SVG bringt seine Groesse selbst mit. */
+        .sp-contrib-icon,
+        .export-opt-icon,
+        .toggle-row-icon,
+        .alert-item-icon,
+        .quick-tpl-icon,
+        .weather-icon,
+        .weather-forecast-day-icon,
+        .mc-panel-icon,
+        .mc-config-icon,
+        .pwa-install-icon,
+        .school-settings-hero-icon {
+            justify-content: center;
+            line-height: 0;
+        }
+        /* Stimmungs- und Bewertungsknoepfe: das SVG ersetzt das Emoji-Glyph,
+           die Zentrierung kommt vom vorhandenen Flex-Layout. */
+        .mood-btn, .sp-emoji-btn { line-height: 0; }
+
         body {
             font-family: var(--font-main);
             background-color: var(--bg-deep);

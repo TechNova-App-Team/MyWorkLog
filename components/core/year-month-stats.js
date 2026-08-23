@@ -49,7 +49,7 @@
             card.style.borderLeft = `5px solid ${saldoColor}`;
             card.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <div style="font-weight:600; font-size:1.1rem;">📅 Woche ${week.weekNum}</div>
+                    <div style="font-weight:600; font-size:1.1rem;"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg><span>Woche ${week.weekNum}</span></div>
                     <div style="font-size:0.85rem; color:var(--text-muted);">${week.entries} Tage</div>
                 </div>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
@@ -63,7 +63,7 @@
                     </div>
                 </div>
                 <div style="padding:12px; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid ${saldoColor};">
-                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">⚖️ Saldo</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;"><svg class="mwl-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg><span>Saldo</span></div>
                     <div style="font-size:1.2rem; font-weight:700; color:${saldoColor}; font-family:var(--font-mono);">${saldo >= 0 ? '+' : ''}${saldo.toFixed(1)}h</div>
                 </div>
             `;
@@ -275,12 +275,12 @@
                 const border = isToday ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.1)';
                 let typeLabel = '';
                 if (entry) {
-                    if (entry.type === 'vacation') typeLabel = ' 🌴 Urlaub';
-                    else if (entry.type === 'holiday') typeLabel = ' 🏖️ Feiertag';
-                    else if (entry.type === 'sick') typeLabel = ' 🤒 Krankheit';
-                    else if (entry.type === 'school') typeLabel = ' 📚 Schule';
-                    else if (entry.type === 'gleittag') typeLabel = ' ⚡ Gleittag';
-                    else typeLabel = ' 💼 Arbeit';
+                    if (entry.type === 'vacation') typeLabel = ' Urlaub';
+                    else if (entry.type === 'holiday') typeLabel = ' Feiertag';
+                    else if (entry.type === 'sick') typeLabel = ' Krankheit';
+                    else if (entry.type === 'school') typeLabel = ' Schule';
+                    else if (entry.type === 'gleittag') typeLabel = ' Gleittag';
+                    else typeLabel = ' Arbeit';
                 }
                 const tooltip = entry ? `${entry.worked.toFixed(1)}h (${entry.diff >= 0 ? '+' : ''}${entry.diff.toFixed(1)}h)${typeLabel}` : 'Kein Eintrag';
                 
@@ -375,9 +375,9 @@
             const color = insight.color || (i % 3 === 0 ? 'var(--primary)' : (i % 3 === 1 ? 'var(--success)' : '#06b6d4'));
             html += `
                 <div class="card" style="border-left: 5px solid ${color}; background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%); position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: -10px; right: -10px; font-size: 3rem; opacity: 0.1;">${insight.icon}</div>
+                    <div style="position: absolute; top: -10px; right: -10px; font-size: 3rem; opacity: 0.1;">${mwlIconFromEmoji(insight.icon, 44)}</div>
                     
-                    <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">${insight.icon} ${insight.title}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">${mwlIconFromEmoji(insight.icon, 13)} ${insight.title}</div>
                     <div style="font-size:2rem; font-weight:800; color:${color}; margin:10px 0; font-family:var(--font-mono);">${insight.value}</div>
                     <div style="font-size:0.85rem; color:var(--text-muted); line-height:1.5;">${insight.description}</div>
                 </div>

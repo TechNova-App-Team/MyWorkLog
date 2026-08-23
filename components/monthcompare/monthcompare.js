@@ -57,7 +57,7 @@
         const saldoTrend = stats.saldo;
         document.getElementById('mcSaldoTrend').innerText = (saldoTrend >= 0 ? '+' : '') + saldoTrend.toFixed(1) + 'h';
         document.getElementById('mcSaldoTrend').style.color = saldoTrend >= 0 ? 'var(--success)' : 'var(--danger)';
-        const trendLabel = saldoTrend > 10 ? '🚀 Sehr positiv' : (saldoTrend > 5 ? '📈 Gut' : (saldoTrend > 0 ? '✅ Positiv' : (saldoTrend > -5 ? '⚠️ Leicht negativ' : (saldoTrend > -10 ? '📉 Negativ' : '🔴 Kritisch'))));
+        const trendLabel = saldoTrend > 10 ? 'Sehr positiv' : (saldoTrend > 5 ? 'Gut' : (saldoTrend > 0 ? 'Positiv' : (saldoTrend > -5 ? 'Leicht negativ' : (saldoTrend > -10 ? 'Negativ' : 'Kritisch'))));
         document.getElementById('mcSaldoTrendLabel').innerText = trendLabel;
         
         // Sparkline for Saldo-Trend in Monatscontrol

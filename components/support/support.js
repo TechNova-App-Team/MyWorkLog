@@ -21,7 +21,7 @@
 
         grid.innerHTML = stats.map(s => `
             <div style="padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.05); text-align:center;">
-                <div style="font-size:1.2rem; margin-bottom:4px;">${s.icon}</div>
+                <div style="margin-bottom:4px; line-height:0;">${mwlIconFromEmoji(s.icon, 20)}</div>
                 <div style="font-size:1.3rem; font-weight:800; color:${s.color}; font-family:var(--font-mono);">${s.value}</div>
                 <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px;">${s.label}</div>
             </div>

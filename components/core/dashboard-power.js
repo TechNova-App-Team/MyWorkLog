@@ -329,7 +329,7 @@
         document.body.appendChild(a);
         a.click();
         setTimeout(function() { URL.revokeObjectURL(url); a.remove(); }, 100);
-        toast('📤 Exportiert', 'Layout als JSON heruntergeladen.', 'success');
+        toast('Exportiert', 'Layout als JSON heruntergeladen.', 'success');
     }
 
     function importLayoutFile(file) {
@@ -365,7 +365,7 @@
             var file = e.target.files[0];
             if (!file) return;
             importLayoutFile(file).then(function(preset) {
-                toast('📥 Importiert', 'Layout "' + preset.name + '" aktiviert.', 'success');
+                toast('Importiert', 'Layout "' + preset.name + '" aktiviert.', 'success');
                 renderLayoutManager();
             }).catch(function(err) {
                 toast('Import fehlgeschlagen', err.message || String(err), 'error');
@@ -434,7 +434,7 @@
             return (
                 '<div class="lm-preset' + (isActive ? ' active' : '') + '" data-preset-id="' + esc(p.id) + '">' +
                     '<button class="lm-preset-main" data-action="switch" data-id="' + esc(p.id) + '">' +
-                        '<span class="lm-preset-icon">' + esc(p.icon || '📐') + '</span>' +
+                        '<span class="lm-preset-icon">' + mwlIconFromEmoji(p.icon || '📐', 15) + '</span>' +
                         '<span class="lm-preset-info">' +
                             '<span class="lm-preset-name">' + esc(p.name) + '</span>' +
                             '<span class="lm-preset-meta">' + count + ' Widget' + (count === 1 ? '' : 's') +
@@ -537,7 +537,7 @@
         if (action === 'switch') {
             if (switchPreset(id)) {
                 renderLayoutManager();
-                toast('✓ Geladen', 'Preset aktiviert.', 'success');
+                toast('Geladen', 'Preset aktiviert.', 'success');
             }
         } else if (action === 'sync') {
             var p = presetById(id); if (!p) return;
@@ -546,7 +546,7 @@
             p.updatedAt = Date.now();
             safeSave();
             renderLayoutManager();
-            toast('💾 Gespeichert', 'Aktuelles Layout in Preset übernommen.', 'success');
+            toast('Gespeichert', 'Aktuelles Layout in Preset übernommen.', 'success');
         } else if (action === 'rename') {
             var pr = presetById(id); if (!pr) return;
             var name = prompt('Neuer Name:', pr.name);
@@ -567,7 +567,7 @@
             var preset = createPreset(name.trim());
             switchPreset(preset.id);
             renderLayoutManager();
-            toast('⭐ Erstellt', '"' + preset.name + '" aktiviert.', 'success');
+            toast('Erstellt', '"' + preset.name + '" aktiviert.', 'success');
         } else if (action === 'export') {
             exportLayoutJSON();
         } else if (action === 'import') {

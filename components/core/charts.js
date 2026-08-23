@@ -877,7 +877,7 @@
                         <div class="tt-row"><span class="tt-label">Tages-Diff</span><span class="tt-val ${dp.diff >= 0 ? 'tt-positive' : 'tt-negative'}">${dp.diff >= 0 ? '+' : ''}${dp.diff.toFixed(2)}h</span></div>
                         <div class="tt-row"><span class="tt-label">Gearbeitet</span><span class="tt-val">${dp.worked.toFixed(1)}h</span></div>
                         <div class="tt-row"><span class="tt-label">Streak</span><span class="tt-val">${streak}× ${isPos ? TT_ICON_OK : TT_ICON_WARN}</span></div>
-                        <div style="margin-top:4px;"><span class="tt-type-badge" style="--type-rgb:${(typeof getTypeRgb === 'function') ? getTypeRgb(dp.type) : 'var(--primary-rgb)'}">${typeIcon} ${esc(typeName)}</span></div>
+                        <div style="margin-top:4px;"><span class="tt-type-badge" style="--type-rgb:${(typeof getTypeRgb === 'function') ? getTypeRgb(dp.type) : 'var(--primary-rgb)'}">${mwlIconFromEmoji(typeIcon, 13)} ${esc(typeName)}</span></div>
                     `;
                     
                     // Position tooltip
@@ -1059,7 +1059,7 @@
         chartTypeContainer.innerHTML = chartTypes.map(type => {
             const isActive = currentStyle.type === type.id;
             return `<button class="chart-type-btn" data-type="${type.id}" style="display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px 8px; border:1px solid ${isActive ? 'var(--primary)' : 'rgba(255,255,255,0.08)'}; background:${isActive ? 'rgba(var(--primary-rgb),0.1)' : 'rgba(255,255,255,0.03)'}; border-radius:10px; cursor:pointer; color:${isActive ? 'var(--primary)' : 'var(--text-muted)'}; font-weight:${isActive ? '600' : '500'}; transition:all 0.2s; font-size:0.78rem;" onmouseover="if(!this.classList.contains('active-type'))this.style.background='rgba(255,255,255,0.06)'" onmouseout="if(!this.classList.contains('active-type'))this.style.background='rgba(255,255,255,0.03)'">
-                <span style="font-size:1.3rem; line-height:1;">${type.icon}</span>
+                <span style="font-size:1.3rem; line-height:1;">${mwlIconFromEmoji(type.icon, 20)}</span>
                 <span>${type.label}</span>
             </button>`;
         }).join('');

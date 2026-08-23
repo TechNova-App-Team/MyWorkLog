@@ -39,7 +39,7 @@
             dashboardLayoutDirty = true;
             const statusEl = document.getElementById('editModeStatus');
             if (statusEl) {
-                statusEl.textContent = '📍 Layout geändert (nicht gespeichert)';
+                statusEl.textContent = 'Layout geändert (nicht gespeichert)';
                 statusEl.style.opacity = '1';
             }
         });
@@ -64,7 +64,7 @@
         save();
         dashboardLayoutDirty = false;
         const statusEl = document.getElementById('editModeStatus');
-        if (statusEl) { statusEl.textContent = '📍 Layout-Bearbeitungsmodus AKTIV'; statusEl.style.opacity = '1'; }
+        if (statusEl) { statusEl.textContent = 'Layout-Bearbeitungsmodus AKTIV'; statusEl.style.opacity = '1'; }
         if (notify) showCustomMessage('✅ Layout gespeichert', 'Widget Reihenfolge gespeichert', 'success');
     }
 
@@ -88,7 +88,7 @@
         if (!container) return;
         const editorRoot = document.createElement('div');
         editorRoot.style.marginTop = '12px';
-        editorRoot.innerHTML = `<h4 style="color:var(--primary);">🔧 Navbar anpassen</h4><div id="navEditorList" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"></div><div style="display:flex; gap:8px; margin-top:12px;"><button class="btn btn-primary" id="saveNavEditor">Speichern</button><button class="btn" id="resetNavEditor">Zurücksetzen</button></div>`;
+        editorRoot.innerHTML = `<h4 style="color:var(--primary);"><svg class="mwl-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>Navbar anpassen</span></h4><div id="navEditorList" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;"></div><div style="display:flex; gap:8px; margin-top:12px;"><button class="btn btn-primary" id="saveNavEditor">Speichern</button><button class="btn" id="resetNavEditor">Zurücksetzen</button></div>`;
 
         // Remove previous editor content if present
         const old = container.querySelector('#navEditorWrapper');
@@ -108,7 +108,7 @@
             row.style.gap = '8px';
             row.style.alignItems = 'center';
 
-            row.innerHTML = `<span style="cursor:grab;">☰</span><input style="flex:1;" class="glass-input" value="${item.label}"><label style="display:flex; gap:8px; align-items:center; margin-left:8px;"><input type="checkbox" ${item.visible ? 'checked' : ''}> Sichtbar</label>`;
+            row.innerHTML = `<span style="cursor:grab;"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg></span><input style="flex:1;" class="glass-input" value="${item.label}"><label style="display:flex; gap:8px; align-items:center; margin-left:8px;"><input type="checkbox" ${item.visible ? 'checked' : ''}> Sichtbar</label>`;
             list.appendChild(row);
 
             // drag handlers
@@ -132,7 +132,7 @@
                 const id = row.dataset.navId;
                 const label = row.querySelector('input').value;
                 const visible = row.querySelector('input[type="checkbox"]').checked;
-                const item = data.settings.nav.find(i=>i.id===id) || {id, icon:'❔'};
+                const item = data.settings.nav.find(i=>i.id===id) || {id, icon:''};
                 item.label = label; item.visible = visible;
                 newNav.push(item);
             });
@@ -449,7 +449,7 @@
             const percentage = totalMoods > 0 ? (count / totalMoods * 100).toFixed(0) : 0;
             return `
                 <div style="text-align:center;">
-                    <div style="font-size:1.5rem;">${mood}</div>
+                    <div style="line-height:0; display:flex; justify-content:center;">${mwlMoodIcon(mood, 22)}</div>
                     <div style="font-size:0.8rem; color:var(--text-muted);">${count}</div>
                     <div style="font-size:0.7rem; color:var(--text-muted);">${percentage}%</div>
                 </div>

@@ -582,7 +582,7 @@
 
         grid.innerHTML = templates.map((t, i) => `
             <button class="quick-tpl-btn" onclick="applyQuickTemplate(${i})" ${hasTodayEntry ? 'title="Heute ist bereits ein Eintrag vorhanden"' : ''}>
-                <span class="quick-tpl-icon">${t.icon}</span>
+                <span class="quick-tpl-icon">${mwlIconFromEmoji(t.icon, 20)}</span>
                 <span class="quick-tpl-label">${t.label}</span>
                 <span class="quick-tpl-sub">${t.sub}</span>
             </button>

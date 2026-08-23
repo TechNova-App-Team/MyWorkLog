@@ -190,7 +190,7 @@
         } catch (e) { console.warn('Fehler beim Speichern von allowInInput', e); }
         
         if (result.conflicts && result.conflicts.length > 0) {
-            alert('⚠️ Warnung: Diese Tastenkombination ist bereits belegt!');
+            alert('Warnung: Diese Tastenkombination ist bereits belegt!');
         }
         
         // Schließe Modal
@@ -209,7 +209,7 @@
     }
     
     function resetShortcutsToDefaults() {
-        if (confirm('⚠️ Alle Shortcuts auf Standard zurücksetzen?')) {
+        if (confirm('Alle Shortcuts auf Standard zurücksetzen?')) {
             if (shortcutManager) {
                 shortcutManager.resetToDefaults();
                 renderShortcutsPanel();

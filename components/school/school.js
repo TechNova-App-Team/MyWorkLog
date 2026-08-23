@@ -335,7 +335,7 @@
                 <tr>
                     <td class="sc-col-subject">${esc(subject)}</td>
                     <td class="sc-col-grade"><span class="sc-grade-val" style="color:var(--sc-${tone})">${scFmt(avg, 1)}</span></td>
-                    <td class="sc-col-trend"><span class="sc-trend-cell${trendClass}">${trendIcon}${trendLabel}</span></td>
+                    <td class="sc-col-trend"><span class="sc-trend-cell${trendClass}">${mwlIconFromEmoji(trendIcon, 13)}${trendLabel}</span></td>
                     <td class="sc-col-count">${count}</td>
                     <td class="sc-col-status"><span class="sc-status-pill sc-status-${tone}">${statusLabel}</span></td>
                 </tr>

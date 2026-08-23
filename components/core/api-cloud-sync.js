@@ -139,21 +139,21 @@
                 if (recent503 > 0) {
                     diagBanner.style.display = 'block';
                     diagBanner.innerHTML = `<div class="api-diag-banner server503">
-                        <span class="api-diag-icon">🔴</span>
+                        <span class="api-diag-icon"><svg class="mwl-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span>
                         <div><div class="api-diag-title">Service Unavailable — HTTP 503</div>
                         Der Server antwortet, ist aber überlastet oder im Wartungsmodus. Das ist ein echtes Server-Problem, kein AdBlocker. Warte einige Minuten und versuche es erneut.</div>
                     </div>`;
                 } else if (recentAdblocked > 0 && recent5xx === 0) {
                     diagBanner.style.display = 'block';
                     diagBanner.innerHTML = `<div class="api-diag-banner adblock">
-                        <span class="api-diag-icon">🛡️</span>
+                        <span class="api-diag-icon"><svg class="mwl-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
                         <div><div class="api-diag-title">AdBlocker blockiert API-Zugriff</div>
                         Die API ist wahrscheinlich online, aber dein AdBlocker verhindert den Zugriff. Deaktiviere den AdBlocker für diese Seite oder füge myworklog.de zur Whitelist hinzu.</div>
                     </div>`;
                 } else if (recentNetErr > 0 && recent5xx === 0 && recentAdblocked === 0) {
                     diagBanner.style.display = 'block';
                     diagBanner.innerHTML = `<div class="api-diag-banner neterr">
-                        <span class="api-diag-icon">📡</span>
+                        <span class="api-diag-icon"><svg class="mwl-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a7.31 7.31 0 0 0 10 10Z"/><path d="m9 15 3-3"/><path d="M17 13a6 6 0 0 0-6-6"/><path d="M21 13A10 10 0 0 0 11 3"/></svg></span>
                         <div><div class="api-diag-title">Verbindungsfehler</div>
                         Kein AdBlocker erkannt — prüfe deine Netzwerkverbindung oder ob die API-URL korrekt konfiguriert ist.</div>
                     </div>`;
@@ -284,7 +284,7 @@
                     const statusLabel = isAdblocked ? 'BLK' : isNetErr ? 'ERR' : l.status;
                     const methodCls = l.method === 'GET' ? 'get' : l.method === 'POST' ? 'post' : l.method === 'HEAD' ? 'head' : l.method === 'PUT' ? 'put' : l.method === 'DELETE' ? 'del' : 'opt';
                     const timeAgo = formatTimeAgo(l.ts);
-                    const pathLabel = isAdblocked ? l.path + ' 🛡️' : isNetErr ? l.path + ' 📡' : l.path;
+                    const pathLabel = l.path;
 
                     return `<div class="api-log-row">
                         <span class="api-log-status ${statusCls}">${statusLabel}</span>
@@ -448,7 +448,7 @@
                 downloadBtn.style.opacity = '1';
             }
             if (statusDiv) {
-                statusDiv.innerHTML = `<p>🟢 <strong>Angemeldet als:</strong> ${user.email}</p><p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">Nutze die Buttons um manuell hoch- oder runterzuladen.</p>`;
+                statusDiv.innerHTML = `<p>${mwlIcon('checkCircle', 14)} <strong>Angemeldet als:</strong> ${esc(user.email)}</p><p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">Nutze die Buttons um manuell hoch- oder runterzuladen.</p>`;
             }
             console.log('[Cloud Sync] User angemeldet:', user.email);
         } else {
@@ -463,7 +463,7 @@
                 downloadBtn.style.opacity = '0.5';
             }
             if (statusDiv) {
-                statusDiv.innerHTML = `<p>🔴 <strong>Nicht angemeldet</strong></p><p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">Klick auf "Cloud Login" um dich anzumelden.</p>`;
+                statusDiv.innerHTML = `<p>${mwlIcon('xCircle', 14)} <strong>Nicht angemeldet</strong></p><p style="font-size:0.85rem; color:var(--text-muted); margin-top:8px;">Klick auf "Cloud Login" um dich anzumelden.</p>`;
             }
             console.log('[Cloud Sync] User abgemeldet');
         }
@@ -704,7 +704,7 @@
                 chip.classList.remove('is-syncing');
                 chip.classList.add('is-success');
             }
-            if (text) text.textContent = 'Synct ✓';
+            if (text) text.textContent = 'Synct';
             if (sub) sub.textContent = 'gerade eben';
 
             // Auch andere Trigger (Mobile-Tile) kurz markieren
