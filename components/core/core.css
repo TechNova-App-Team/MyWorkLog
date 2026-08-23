@@ -981,20 +981,79 @@
                 color: var(--text-main);
             }
         }
-        /* Mobile Menu Button */
+        /* ── MOBILE-MENUE-KNOPF ──────────────────────────────────────────
+           Sichtbar nur unter 1024 px; die Platzierung steht in mobile-nav.css
+           (laedt NACH dieser Datei und schlaegt sie deshalb — dort stehen nur
+           position/top/left/z-index, damit die Gestaltung genau hier bleibt).
+
+           Material bewusst identisch zu .sidebar-expand-float (sidebar.css):
+           beides sind frei ueber dem Inhalt schwebende Chrome-Knoepfe. Vorher
+           war dies das einzige Element der App, das als volle --primary-Flaeche
+           ueber dem Inhalt lag — ein gesaettigter Block mit einem Systemfont-
+           Glyph darin. Jetzt dieselbe Rezeptur wie die Geschwister: neutrale
+           Flaeche, Haarlinien-Rahmen, Akzent erst bei Beruehrung.
+
+           Radius 10 px statt der sonst ueblichen 8: die Familie haelt rund
+           0,27 x Kantenlaenge (28/8 px beim Float-Knopf, 30/8 px im Sidebar-
+           Kopf). 40 x 0,27 = 10. Mit 8 px wirkt das groessere Quadrat sichtbar
+           eckiger als seine kleinen Geschwister, obwohl die Zahl dieselbe ist.
+
+           Kein backdrop-filter (anders als beim Float-Knopf): die Flaeche liegt
+           bei 0,95 Alpha, vom Blur ist nichts zu sehen — er wuerde nur bei jeder
+           Invalidierung mitrechnen. Siehe Gotcha "backdrop-filter auf deckendem
+           Overlay = unsichtbare GPU-Bremse". */
         #mobileMenuToggle {
-            display: none;
+            display: none;               /* mobile-nav.css schaltet auf grid */
+            place-items: center;
             position: absolute;
             top: 20px;
             left: 20px;
-            background: var(--primary);
-            color: #fff;
-            border: none;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 1.2rem;
-            cursor: pointer;
             z-index: 101;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: 10px;
+            background: var(--bg-sidebar);
+            color: var(--text-main);
+            border: 1px solid rgba(255,255,255,0.10);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.5),
+                        inset 0 0 0 1px rgba(255,255,255,0.04);
+            cursor: pointer;
+            transition: color 0.18s ease,
+                        border-color 0.18s ease,
+                        box-shadow 0.18s ease,
+                        transform 0.12s ease;
+        }
+        #mobileMenuToggle svg { display: block; }
+        [data-theme="light"] #mobileMenuToggle {
+            border-color: rgba(7,16,35,0.10);
+            box-shadow: 0 2px 12px rgba(7,16,35,0.10),
+                        inset 0 0 0 1px rgba(255,255,255,0.6);
+        }
+        /* Hover nur, wo es wirklich einen Zeiger gibt — am Touchgeraet bleibt
+           der Zustand nach dem Tippen sonst am Knopf kleben. */
+        @media (hover: hover) and (pointer: fine) {
+            #mobileMenuToggle:hover {
+                color: var(--primary);
+                border-color: var(--hover-border);
+                box-shadow: 0 2px 16px rgba(var(--primary-rgb), 0.2),
+                            inset 0 0 0 1px rgba(255,255,255,0.06);
+            }
+        }
+        #mobileMenuToggle:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+        /* Bewegung gehoert in :active, nie in :hover — und am Handy ist das
+           ohnehin die einzige Rueckmeldung, die der Nutzer je zu sehen bekommt. */
+        #mobileMenuToggle:active {
+            transform: scale(0.94);
+            color: var(--primary);
+            border-color: var(--hover-border);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #mobileMenuToggle { transition: none; }
+            #mobileMenuToggle:active { transform: none; }
         }
 
 

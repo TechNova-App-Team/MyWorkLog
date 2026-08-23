@@ -11,8 +11,18 @@
                 z-index: 200;
             }
 
+            /* Gestaltung steht in core.css — hier nur die Sichtbarkeit.
+               grid (nicht block), weil dort place-items: center das Icon
+               mittig setzt. */
             #mobileMenuToggle {
-                display: block;
+                display: grid;
+            }
+            /* Der Knopf liegt hier absolut in .main (top/left 20 aus core.css)
+               und reserviert damit keinen Platz. Ohne diese Zeile lief die
+               Begruessung unter ihm durch — dieselbe Reserve gab es bisher nur
+               unter 768 px. */
+            .main .header {
+                padding-left: 60px;
             }
             /* AI-Bot Responsive für Tablet */
             #view-aibot > div:nth-child(2) {
@@ -110,14 +120,24 @@
                 margin-bottom: 1.5rem;
             }
             
+            /* Nur Sichtbarkeit + Platzierung. padding/font-size standen hier
+               frueher und haben die Groesse aus core.css ueberstimmt (diese
+               Datei laedt spaeter) — die Gestaltung gehoert an EINE Stelle.
+
+               z-index: 201 ist wirkungslos und bleibt nur der Vollstaendigkeit
+               halber stehen: .main ist position:relative mit z-index:1 und
+               damit ein eigener Stapelkontext. Der Knopf liegt darin, kann die
+               Sidebar (z-index 200, Geschwister von .main) also nie
+               ueberdecken — bei offener Schublade verschwindet er hinter ihr.
+               Das ist genau das gewuenschte Verhalten (geschlossen wird ueber
+               das abgedunkelte Overlay); ein Umbau zum Schliessen-Kreuz
+               braeuchte den Knopf ausserhalb von .main. */
             #mobileMenuToggle {
-                display: block;
+                display: grid;
                 position: fixed;
                 top: 16px;
                 left: 12px;
                 z-index: 201;
-                padding: 10px 12px;
-                font-size: 1.1rem;
             }
             
             /* ===== TYPOGRAPHY ===== */
