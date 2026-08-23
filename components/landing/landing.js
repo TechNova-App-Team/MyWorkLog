@@ -45,11 +45,40 @@
 
     // Ensure video loads
     vid.load();
+
+    // Den Film einmal komplett in den Speicher holen und von dort scrubben.
+    //
+    // Ohne das haengt jeder Sprung ausserhalb des gepufferten Bereichs am Netz.
+    // Auf dem Geraet gemessen: buffered war [0, 2.4] von 22,9 s, readyState 4,
+    // error null — und currentTime blieb trotzdem auf 0. Genau das Muster:
+    // die Seeks kamen nie an. Auf localhost faellt es nicht auf, weil dort
+    // jede Teilanfrage sofort beantwortet wird.
+    (function(){
+      var q = vid.querySelector('source');
+      var url = q && q.getAttribute('src');
+      if(!url || !window.fetch || !window.URL || !URL.createObjectURL) return;
+      fetch(url).then(function(r){ return r.ok ? r.blob() : null; }).then(function(b){
+        if(!b) return;
+        var stelle = vidCurrent;
+        vid.src = URL.createObjectURL(b);   // src schlaegt <source>
+        vid.load();
+        vid.addEventListener('loadedmetadata', function einmal(){
+          vid.removeEventListener('loadedmetadata', einmal);
+          vidCurrent = stelle;
+          try{ vid.currentTime = stelle; }catch(e){}
+          update();
+        });
+      }).catch(function(){});   // schlaegt es fehl, laeuft es wie bisher weiter
+    })();
     var ticking=false;
 
     /* — Smooth Video Scrub Loop — stops when settled, rate-limited to ~30fps — */
     function vidLoop(ts){
       if(!vidReady||!vid.duration){vidRafId=null;return;}
+      // Jede Zuweisung an currentTime ist ein Seek. Solange einer laeuft,
+      // bricht die naechste Zuweisung ihn ab — bei ~30 Zuweisungen pro Sekunde
+      // wird nie einer fertig und das Bild bleibt stehen. Also warten.
+      if(vid.seeking){vidRafId=requestAnimationFrame(vidLoop);return;}
       var diff=vidTarget-vidCurrent;
       if(Math.abs(diff)>0.001){
         if(ts-vidLastTs>=VID_INTERVAL){
