@@ -83,6 +83,26 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        /* 🔴 Formularelemente erben `font-family` NICHT. Ohne diese Zeile setzt
+           der Browser sie in seiner eigenen Voreinstellung — unter Windows also
+           Arial, nicht Plus Jakarta Sans. Gemessen waren das 228 von 494
+           Bedienelementen der App, darunter alle 43 `.btn` (die Regel setzt
+           font-weight, font-size und letter-spacing, aber nie die Familie).
+           "Speichern" stand damit in Arial Bold direkt neben Fliesstext in
+           Jakarta — sichtbar, aber schwer zu benennen: es sieht einfach billig
+           aus, ohne dass an einer einzelnen Regel etwas falsch waere.
+
+           Bewusst nur `font-family`, nicht `font-size`: die Voreinstellung fuer
+           Formularelemente ist ~13,33 px, und alles, was sich still darauf
+           verlaesst, wuerde bei `inherit` seine Groesse aendern.
+
+           Element-Selektor (Spezifitaet 0,0,0,1), damit jede Klasse ihn schlaegt:
+           absichtliche Abweichungen wie `.edit-input` (Mono) oder `.vi-cta`
+           (System-Stack) bleiben unangetastet. */
+        button, input, select, textarea, optgroup {
+            font-family: inherit;
+        }
+
         body {
             font-family: var(--font-main);
             background-color: var(--bg-deep);

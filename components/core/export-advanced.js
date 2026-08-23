@@ -329,7 +329,7 @@
         const blob = new Blob([iCalContent], { type: 'text/calendar;charset=utf-8' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `TimeTracker_${dateRange}_${new Date().toISOString().split('T')[0]}.ics`;
+        link.download = `MyWorkLog_${dateRange}_${new Date().toISOString().split('T')[0]}.ics`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -348,12 +348,12 @@
         // Header
         lines.push('BEGIN:VCALENDAR');
         lines.push('VERSION:2.0');
-        lines.push('PRODID:-//TimeTracker//NONSGML v2.0//EN');
+        lines.push('PRODID:-//MyWorkLog//NONSGML v2.0//EN');
         lines.push('CALSCALE:GREGORIAN');
         lines.push('METHOD:PUBLISH');
-        lines.push('X-WR-CALNAME:TimeTracker');
+        lines.push('X-WR-CALNAME:MyWorkLog');
         lines.push('X-WR-TIMEZONE:Europe/Berlin');
-        lines.push('X-WR-CALDESC:Zeiterfassungs-Einträge aus TimeTracker');
+        lines.push('X-WR-CALDESC:Zeiterfassungs-Einträge aus MyWorkLog');
 
         // Timezone (UTC für einfaches Handling)
         lines.push('BEGIN:VTIMEZONE');

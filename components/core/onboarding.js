@@ -563,13 +563,13 @@ function pwaInstallBannerInstall() {
         if (typeof showCustomMessage === 'function') {
             var ua = navigator.userAgent.toLowerCase();
             if (ua.indexOf('chrome') > -1) {
-                showCustomMessage('📲 Chrome', 'Tippe auf ⋮ (Menü oben rechts) → "App installieren" oder "Zum Startbildschirm hinzufügen"', 'info');
+                showCustomMessage('Chrome', 'Tippe auf ⋮ (Menü oben rechts) → "App installieren" oder "Zum Startbildschirm hinzufügen"', 'info');
             } else if (ua.indexOf('firefox') > -1) {
-                showCustomMessage('📲 Firefox', 'Tippe auf ⋮ (Menü) → "Installieren" oder "Zum Startbildschirm hinzufügen"', 'info');
+                showCustomMessage('Firefox', 'Tippe auf ⋮ (Menü) → "Installieren" oder "Zum Startbildschirm hinzufügen"', 'info');
             } else if (ua.indexOf('safari') > -1) {
-                showCustomMessage('📲 Safari', 'Tippe auf das Teilen-Symbol (□↑) → "Zum Home-Bildschirm"', 'info');
+                showCustomMessage('Safari', 'Tippe auf das Teilen-Symbol (□↑) → "Zum Home-Bildschirm"', 'info');
             } else {
-                showCustomMessage('📲 Installieren', 'Öffne das Browser-Menü und wähle "Zum Startbildschirm hinzufügen"', 'info');
+                showCustomMessage('Installieren', 'Öffne das Browser-Menü und wähle "Zum Startbildschirm hinzufügen"', 'info');
             }
         }
         pwaInstallBannerDismiss();
