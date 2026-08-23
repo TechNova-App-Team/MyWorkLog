@@ -22,17 +22,26 @@
     var VID_INTERVAL=33;
 
     // Render first frame immediately
-    vid.addEventListener('loadedmetadata',function(){
+    // vidReady haengt NICHT mehr an einem einzelnen Ereignis. landing.js laeuft
+    // mit defer, das <video> hat preload="auto" — liegt die Datei im Cache, ist
+    // 'loadedmetadata' laengst durch, bevor dieses Skript zuhoert. Dann blieb
+    // vidReady fuer immer false, vidLoop stieg in Zeile 1 aus und currentTime
+    // blieb auf 0. Sichtbar wurde das erst, als Bild 0 des Films schwarz war;
+    // vorher sah man einfach dauerhaft dasselbe erste Bild.
+    function markReady(){
+      if(vidReady) return;
+      if(!vid.duration || isNaN(vid.duration)) return;  // ohne Dauer waere p*duration NaN
       vidReady=true;
-      vid.currentTime=0;
       vidCurrent=0;
+      try{ vid.currentTime=0; }catch(e){}
+      update();   // sofort auf die aktuelle Scrollposition ziehen
+    }
+    ['loadedmetadata','loadeddata','canplay','durationchange'].forEach(function(ev){
+      vid.addEventListener(ev, markReady);
     });
-    vid.addEventListener('loadeddata',function(){
-      if(!vidReady){
-        vid.currentTime=0;
-        vidCurrent=0;
-      }
-    });
+    // Zustand zusaetzlich direkt abfragen — fuer den Fall, dass alle Ereignisse
+    // schon gefeuert haben, als hier noch niemand zuhoerte.
+    if(vid.readyState>=1) markReady();
 
     // Ensure video loads
     vid.load();
