@@ -14,8 +14,8 @@
     };
 
     // JS-generierte Texte uebersetzen sich lokal, NICHT ueber das globale MAP in
-    // i18n-runtime.js: Kurzlabels wie 'Gut'/'Sehr gut' kommen auch in
-    // year-month-stats.js vor und wuerden dort halb uebersetzt landen.
+    // i18n-runtime.js: Kurzlabels wie 'Gut'/'Sehr gut' kommen auch anderswo vor
+    // und wuerden dort halb uebersetzt landen.
     function scL(de, en) {
         return (document.documentElement.lang === 'en') ? en : de;
     }

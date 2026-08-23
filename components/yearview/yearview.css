@@ -1,0 +1,574 @@
+        /* ═══ JAHRESANSICHT — „Das Jahr in Tagen" ══════════════════════════
+           Dritte Ansicht in derselben Dokumentsprache (Rubrik, Titel, Beleg,
+           Haarlinien). These hier: EIN Bild aus 365 Feldern, und alles andere
+           erklaert dieses Bild.
+
+           🔴 Die alte Heatmap liess Farbe zwei Dinge gleichzeitig sagen: die
+           ART des Tages (Urlaub blau, Feiertag orange, krank pink) UND die
+           HOEHE des Saldos (rot/gelb/gruen/lila), dazu neun Opazitaetsstufen.
+           Das sind drei Farbrollen in einem Raster; lesen kann man das nicht,
+           nur auswendig lernen. Jetzt gibt es drei Modi mit je EINER Rolle:
+             Menge  = sequenziell, eine Akzent-Rampe hell→dicht
+             Art    = kategorial, feste Typfarben (getTypeColor)
+             Saldo  = divergierend, danger ↔ neutral ↔ success
+           Die Legende wechselt mit.                                          */
+
+        #view-yearview {
+            --yv-ink-03:  rgba(255, 255, 255, 0.035);
+            --yv-ink-06:  rgba(255, 255, 255, 0.065);
+            --yv-ink-10:  rgba(255, 255, 255, 0.11);
+            --yv-rule:    var(--border);
+            --yv-gap:     30px;
+            --yv-cell:    13px;
+            --yv-cellgap: 3px;
+        }
+        [data-theme="light"] #view-yearview {
+            --yv-ink-03:  rgba(7, 16, 35, 0.035);
+            --yv-ink-06:  rgba(7, 16, 35, 0.07);
+            --yv-ink-10:  rgba(7, 16, 35, 0.13);
+        }
+
+
+        /* ─── Rubrik + Kopf ────────────────────────────────────────────── */
+        .yv-eyebrow {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--primary);
+            margin: 0 0 6px;
+            line-height: 1;
+        }
+        .yv-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding-bottom: 18px;
+        }
+        .yv-head__title {
+            font-size: 1.55rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text-main);
+            line-height: 1.05;
+            margin: 0;
+            font-variant-numeric: tabular-nums;
+        }
+        .yv-head__sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin: 6px 0 0;
+            line-height: 1.4;
+        }
+
+        .yv-nav {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px;
+            gap: 2px;
+            border: 1px solid var(--yv-rule);
+            border-radius: 10px;
+            background: var(--yv-ink-03);
+        }
+        .yv-nav__btn,
+        .yv-nav__now {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 7px;
+            cursor: pointer;
+            height: 32px;
+            transition: color 0.15s ease, background-color 0.15s ease;
+        }
+        .yv-nav__btn {
+            width: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .yv-nav__now { font-size: 0.75rem; font-weight: 600; padding: 0 13px; }
+        .yv-nav__btn:hover:not(:disabled),
+        .yv-nav__now:hover { color: var(--text-main); background: var(--hover-fill); }
+        .yv-nav__btn:active:not(:disabled),
+        .yv-nav__now:active { transform: scale(0.94); }
+        .yv-nav__btn:focus-visible,
+        .yv-nav__now:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+        .yv-nav__btn:disabled { opacity: 0.3; cursor: default; }
+
+
+        /* ─── 1 · Befund ───────────────────────────────────────────────── */
+        .yv-verdict {
+            display: grid;
+            grid-template-columns: minmax(240px, 340px) 1fr;
+            gap: 40px;
+            align-items: center;
+            padding: 26px 0 30px;
+            border-top: 1px solid var(--yv-rule);
+        }
+        .yv-verdict__kicker {
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 0 0 8px;
+        }
+        .yv-verdict__num {
+            font-family: var(--font-num);
+            font-size: clamp(2.4rem, 5.5vw, 3.4rem);
+            font-weight: 800;
+            letter-spacing: -0.045em;
+            line-height: 0.95;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-main);
+            margin: 0;
+        }
+        .yv-verdict__num .yv-u {
+            font-size: 0.4em;
+            font-weight: 600;
+            margin-left: 0.14em;
+            color: var(--text-muted);
+        }
+        .yv-verdict__say {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: var(--text-muted);
+            margin: 12px 0 0;
+            max-width: 40ch;
+        }
+
+        .yv-facts {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin: 0;
+            border-top: 1px solid var(--yv-rule);
+        }
+        .yv-fact { padding: 15px 14px 0 0; min-width: 0; }
+        .yv-fact + .yv-fact {
+            padding-left: 16px;
+            border-left: 1px solid var(--yv-rule);
+        }
+        .yv-fact__k {
+            font-size: 0.66rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            line-height: 1.25;
+            margin-bottom: 5px;
+        }
+        .yv-fact__v {
+            font-family: var(--font-num);
+            font-size: 1.05rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.2;
+        }
+        .yv-fact__v small {
+            display: block;
+            font-family: var(--font-main);
+            font-size: 0.63rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0;
+            margin-top: 3px;
+        }
+        .yv-fact__v.is-plus  { color: var(--success); }
+        .yv-fact__v.is-minus { color: var(--danger); }
+
+
+        /* ─── Abschnitt ────────────────────────────────────────────────── */
+        .yv-act {
+            border-top: 1px solid var(--yv-rule);
+            padding: 24px 0 var(--yv-gap);
+        }
+        .yv-act__head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .yv-act__id { min-width: 0; }
+        .yv-act__title {
+            font-size: 1rem;
+            font-weight: 650;
+            letter-spacing: -0.018em;
+            color: var(--text-main);
+            line-height: 1.2;
+            margin: 0;
+        }
+        .yv-act__sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            margin: 5px 0 0;
+            max-width: 64ch;
+        }
+
+
+        /* ─── 2 · Jahresraster (Signature) ─────────────────────────────── */
+        .yv-modes {
+            display: inline-flex;
+            padding: 3px;
+            gap: 2px;
+            border: 1px solid var(--yv-rule);
+            border-radius: 10px;
+            background: var(--yv-ink-03);
+            flex-shrink: 0;
+        }
+        .yv-modes__btn {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 7px 13px;
+            border-radius: 7px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.15s ease, background-color 0.15s ease;
+        }
+        .yv-modes__btn:hover { color: var(--text-main); background: var(--hover-fill); }
+        .yv-modes__btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+        .yv-modes__btn.is-on { background: var(--primary); color: #fff; }
+
+        .yv-map__scroll {
+            overflow-x: auto;
+            padding-bottom: 6px;
+        }
+        /* 53 Wochenspalten. Auf schmalen Fenstern scrollt der Block, statt die
+           Felder unlesbar klein zu quetschen. */
+        .yv-map__months,
+        .yv-map__grid {
+            display: grid;
+            grid-template-columns: repeat(53, var(--yv-cell));
+            gap: var(--yv-cellgap);
+        }
+        .yv-map__months {
+            margin: 0 0 6px calc(26px + var(--yv-cellgap));
+            width: max-content;
+        }
+        .yv-map__month {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            line-height: 1;
+            grid-row: 1;
+        }
+        .yv-map__body {
+            display: flex;
+            gap: var(--yv-cellgap);
+            width: max-content;
+        }
+        .yv-map__days {
+            display: grid;
+            grid-template-rows: repeat(7, var(--yv-cell));
+            gap: var(--yv-cellgap);
+            width: 26px;
+            flex-shrink: 0;
+        }
+        .yv-map__wd {
+            font-size: 0.58rem;
+            color: var(--text-muted);
+            line-height: var(--yv-cell);
+            text-align: right;
+            padding-right: 4px;
+        }
+        .yv-map__grid {
+            grid-template-rows: repeat(7, var(--yv-cell));
+            grid-auto-flow: column;
+        }
+
+        .yv-cell {
+            width: var(--yv-cell);
+            height: var(--yv-cell);
+            border-radius: 3px;
+            background: var(--yv-ink-06);
+            padding: 0;
+            border: 0;
+            appearance: none;
+            cursor: pointer;
+            outline: 1px solid transparent;
+            outline-offset: 1px;
+            transition: outline-color 0.12s ease;
+        }
+        .yv-cell:hover { outline-color: var(--text-main); }
+        .yv-cell:focus-visible { outline: 2px solid var(--primary); }
+        /* Ein Tag, der noch kommt, ist nicht dasselbe wie ein Tag ohne Eintrag. */
+        .yv-cell.is-future { background: transparent; box-shadow: inset 0 0 0 1px var(--yv-ink-06); cursor: default; }
+        .yv-cell.is-void   { visibility: hidden; cursor: default; }
+        .yv-cell.is-today  { box-shadow: 0 0 0 2px var(--primary); }
+
+        .yv-map__foot {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+            padding-top: 13px;
+            border-top: 1px solid var(--yv-rule);
+        }
+        .yv-map__hint {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin: 0;
+            max-width: 56ch;
+        }
+        .yv-scale {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 0.66rem;
+            color: var(--text-muted);
+            flex-shrink: 0;
+        }
+        .yv-scale__steps { display: inline-flex; gap: 3px; }
+        .yv-scale__sw {
+            width: 12px; height: 12px;
+            border-radius: 3px;
+            background: var(--sw, var(--yv-ink-06));
+        }
+        .yv-scale__item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+
+        /* ─── 3 · Monatszeilen ─────────────────────────────────────────── */
+        .yv-months { display: flex; flex-direction: column; }
+        .yv-month {
+            display: grid;
+            grid-template-columns: 46px 1fr 96px 74px;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            padding: 10px 8px 10px 0;
+            border: 0;
+            border-top: 1px solid var(--yv-rule);
+            background: transparent;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.15s ease;
+        }
+        .yv-month:first-child { border-top: 0; }
+        .yv-month:hover { background: var(--hover-fill); }
+        .yv-month:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+        .yv-month.is-empty { opacity: 0.42; cursor: default; }
+        .yv-month.is-empty:hover { background: transparent; }
+        .yv-month__n {
+            font-size: 0.76rem;
+            font-weight: 650;
+            color: var(--text-muted);
+        }
+        .yv-month__track {
+            height: 9px;
+            border-radius: 5px;
+            background: var(--yv-ink-03);
+            overflow: hidden;
+        }
+        .yv-month__fill {
+            display: block;   /* <span> ist inline — width/height greifen sonst nicht */
+            height: 100%;
+            border-radius: 5px;
+            background: var(--primary);
+            transition: width 0.5s cubic-bezier(.22,.61,.36,1);
+        }
+        .yv-month__h {
+            font-family: var(--font-num);
+            font-size: 0.76rem;
+            font-weight: 650;
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+            color: var(--text-main);
+        }
+        .yv-month__h small {
+            font-family: var(--font-main);
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-left: 5px;
+        }
+        .yv-month__s {
+            font-family: var(--font-num);
+            font-size: 0.76rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+            color: var(--text-muted);
+        }
+        .yv-month__s.is-plus  { color: var(--success); }
+        .yv-month__s.is-minus { color: var(--danger); }
+
+
+        /* ─── 4 · Jahreskonto ──────────────────────────────────────────── */
+        .yv-ledger { display: flex; flex-direction: column; }
+        .yv-led {
+            display: grid;
+            grid-template-columns: 30px 1fr auto;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 0;
+            border-top: 1px solid var(--yv-rule);
+        }
+        .yv-led:first-child { border-top: 0; padding-top: 0; }
+        .yv-led__icon {
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(var(--cat-rgb, 148, 163, 184), 0.12);
+            color: var(--cat, var(--text-muted));
+        }
+        .yv-led__body { min-width: 0; }
+        .yv-led__name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-main);
+            line-height: 1.25;
+        }
+        .yv-led__desc {
+            font-size: 0.71rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            margin-top: 3px;
+        }
+        /* Nur wo es einen echten Nenner gibt (Urlaubsanspruch) steht eine
+           Fortschritts-Schiene. Reine Zaehlungen bekommen keine. */
+        .yv-led__rail {
+            height: 7px;
+            border-radius: 4px;
+            background: var(--yv-ink-03);
+            margin-top: 8px;
+            overflow: hidden;
+            max-width: 320px;
+        }
+        .yv-led__fill {
+            height: 100%;
+            border-radius: 4px;
+            background: var(--cat, var(--primary));
+            transition: width 0.5s cubic-bezier(.22,.61,.36,1);
+        }
+        .yv-led__v {
+            font-family: var(--font-num);
+            font-size: 1.15rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            text-align: right;
+            white-space: nowrap;
+        }
+        .yv-led__v small {
+            font-family: var(--font-main);
+            font-size: 0.66rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-left: 4px;
+        }
+
+
+        /* ─── 5 · Auffälligkeiten ──────────────────────────────────────── */
+        .yv-notes { display: flex; flex-direction: column; }
+        .yv-note {
+            display: grid;
+            grid-template-columns: minmax(0, 128px) 1fr;
+            align-items: baseline;
+            gap: 20px;
+            padding: 15px 0;
+            border-top: 1px solid var(--yv-rule);
+        }
+        .yv-note:first-child { border-top: 0; padding-top: 0; }
+        .yv-note__v {
+            font-family: var(--font-num);
+            font-size: 1.3rem;
+            font-weight: 750;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.03em;
+            color: var(--text-main);
+            line-height: 1.1;
+        }
+        .yv-note__v.is-plus  { color: var(--success); }
+        .yv-note__v.is-minus { color: var(--danger); }
+        .yv-note__body { min-width: 0; }
+        .yv-note__k {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-main);
+            line-height: 1.3;
+        }
+        .yv-note__t {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-top: 3px;
+            max-width: 68ch;
+        }
+
+
+        /* ─── Leerzustände ─────────────────────────────────────────────── */
+        .yv-empty {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+            padding: 18px;
+            border: 1px dashed var(--yv-ink-10);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+
+        /* ─── Responsive ──────────────────────────────────────────────── */
+        /* 53 Spalten a --yv-cell plus Fugen ergeben die Mindestbreite des Rasters.
+           Statt die Felder unlesbar klein zu rechnen, wird die Groesse gestaffelt
+           und erst ganz unten gescrollt. */
+        @media (max-width: 1500px) { #view-yearview { --yv-cell: 12px; } }
+        @media (max-width: 1300px) { #view-yearview { --yv-cell: 11px; } }
+
+        @media (max-width: 1100px) {
+            #view-yearview { --yv-cell: 10px; }
+            .yv-verdict { grid-template-columns: 1fr; gap: 26px; }
+        }
+
+        @media (max-width: 640px) {
+            #view-yearview { --yv-gap: 24px; --yv-cell: 9px; --yv-cellgap: 2px; }
+            .yv-head { flex-direction: column; align-items: flex-start; }
+            .yv-head__title { font-size: 1.3rem; }
+            .yv-nav { width: 100%; }
+            .yv-nav__now { flex: 1; }
+            .yv-verdict__num { font-size: 2.4rem; }
+            .yv-facts { grid-template-columns: 1fr 1fr; }
+            .yv-facts .yv-fact:nth-child(3) {
+                padding-left: 0;
+                border-left: 0;
+                border-top: 1px solid var(--yv-rule);
+                margin-top: 14px;
+            }
+            .yv-facts .yv-fact:nth-child(4) {
+                border-top: 1px solid var(--yv-rule);
+                margin-top: 14px;
+            }
+            .yv-modes { width: 100%; }
+            .yv-modes__btn { flex: 1; text-align: center; padding: 9px 6px; }
+            .yv-month { grid-template-columns: 38px 1fr 76px 62px; gap: 10px; }
+            .yv-month__h, .yv-month__s, .yv-month__n { font-size: 0.7rem; }
+            .yv-note { grid-template-columns: 1fr; gap: 6px; }
+            .yv-note__v { font-size: 1.15rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .yv-month__fill, .yv-led__fill { transition: none; }
+            .yv-nav__btn:active, .yv-nav__now:active { transform: none; }
+        }

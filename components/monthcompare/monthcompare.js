@@ -252,7 +252,7 @@
                 : '';
 
             html += '<button type="button" class="' + cls + '" style="' + style + '" title="' + title + '"'
-                  + ' onclick="mcOpenDay(\'' + key + '\')">'
+                  + ' onclick="mwlOpenDayInForm(\'' + key + '\')">'
                   + '<span class="mc-day__n">' + d + '</span>'
                   + '<span class="mc-day__bar"></span>'
                   // Sollmarke NACH dem Balken: beide sind positioniert, ohne
@@ -277,15 +277,6 @@
         return new Date(key + 'T00:00:00').toLocaleDateString(mcLoc(), { weekday: 'long', day: '2-digit', month: 'long' });
     }
 
-    // Ein Klick auf einen Tag setzte bisher nur `#inpDate` und scrollte zum
-    // Formular — das liegt aber im Dashboard-Tab, der hier ausgeblendet ist.
-    // Von dieser Ansicht aus passierte deshalb nichts.
-    function mcOpenDay(dateStr) {
-        if (typeof switchTab === 'function') switchTab('dashboard');
-        setTimeout(function () {
-            if (typeof miniCalDayClick === 'function') miniCalDayClick(dateStr);
-        }, 60);
-    }
 
 
     // ── Zwölf-Monats-Streifen ────────────────────────────────────────────

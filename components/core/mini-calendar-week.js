@@ -5,6 +5,14 @@
     // miniCalNav() + miniCalViewMonth/Year sind mit v6.3.5 entfallen: sie waren
     // ein ZWEITER Monatszustand neben dem Dropdown der Monatsansicht, und die
     // beiden liefen auseinander. Jetzt gibt es dort genau einen (mcNav).
+    // Von Monats- und Jahresansicht aus liegt das Erfassen-Formular in einem
+    // ausgeblendeten Tab — `scrollIntoView` auf ein `display:none`-Element tut
+    // nichts. Deshalb erst den Tab wechseln, dann das Datum setzen.
+    function mwlOpenDayInForm(dateStr) {
+        if (typeof switchTab === 'function') switchTab('dashboard');
+        setTimeout(function () { miniCalDayClick(dateStr); }, 60);
+    }
+
     function miniCalDayClick(dateStr) {
         // Set entry form date to clicked day
         const inp = document.getElementById('inpDate');

@@ -1663,18 +1663,12 @@
             avgFocusHours: focusCount > 0 ? (totalFocusHours / focusCount).toFixed(1) : '0.0',
         };
     }
-    function getTypeColor(type) {
-        const colors = {
-            'work': 'var(--primary)',
-            'school': 'var(--school)',
-            'vacation': 'var(--success)',
-            'gleittag': '#f59e0b',
-            'sick': 'var(--danger)',
-            'holiday': 'var(--holiday)',
-            'reset': '#64748b'
-        };
-        return colors[type] || '#666';
-    }
+    // 🔴 Hier stand eine zweite getTypeColor()-Fassung. custom-types-fields.js
+    // laedt spaeter (Zeile 838 vs 834 in index.template.html) und hat sie
+    // ohnehin ueberschrieben — die Kopie war tot und haette bei geaenderter
+    // Ladereihenfolge still gewonnen (mit gleittag=#f59e0b statt cyan, also
+    // nicht mehr von holiday zu unterscheiden). Farben kommen aus
+    // DEFAULT_ENTRY_TYPES; nur die beruecksichtigen auch Nutzer-Overrides.
     
     // getTypeEmoji() stand hier als zweite, veraltete Kopie (sick: 💊 statt 🤒) und wurde
     // beim Laden von custom-types-fields.js ohnehin überschrieben. Icons kommen jetzt aus

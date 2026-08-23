@@ -1,106 +1,109 @@
 <div id="view-yearview" class="view-section">
-            <div class="view-header">
-                <div>
-                    <h2 class="view-title">Jahresübersicht &amp; Intelligente Insights</h2>
-                    <p class="view-subtitle">Deine komplette Arbeitsleistung auf einen Blick. Sieh deine Produktivitätsmuster und erhalte personalisierte Empfehlungen.</p>
-                </div>
-            </div>
-            
-            <!-- JAHR-SELECTOR -->
-            <div class="card" style="margin-bottom:2rem; display:flex; gap:15px; align-items:center;">
-                <label style="font-weight:600;">Wähle ein Jahr:</label>
-                <select id="yearSelector" class="glass-select" onchange="onYearSelectorChange()" style="flex:1; max-width:200px;">
-                    <option>2025</option>
-                </select>
-            </div>
-            
-            <!-- JAHRES-STATISTIK HEADER -->
-            <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom:2rem;">
-                <div class="card" style="border-left: 5px solid var(--primary);">
-                    <div class="audit-label">Gesamte Arbeitszeit</div>
-                    <div style="font-size:2rem; font-weight:800; color:var(--primary); margin:10px 0; font-family:var(--font-mono);" id="yearTotalWorked">0h</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">In diesem Jahr</div>
-                </div>
-                <div class="card" style="border-left: 5px solid var(--success);">
-                    <div class="audit-label">Durchschnittlich pro Tag</div>
-                    <div style="font-size:2rem; font-weight:800; color:var(--success); margin:10px 0; font-family:var(--font-mono);" id="yearAvgDaily">0h</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">An Arbeitstagen</div>
-                </div>
-                <div class="card" style="border-left: 5px solid #06b6d4;">
-                    <div class="audit-label">Saldo am Jahresende</div>
-                    <div style="font-size:2rem; font-weight:800; color:#06b6d4; margin:10px 0; font-family:var(--font-mono);" id="yearEndSaldo">+0h</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">Prognose Dezember</div>
-                </div>
-                <div class="card" style="border-left: 5px solid var(--holiday);">
-                    <div class="audit-label">Produktivste Woche</div>
-                    <div style="font-size:2rem; font-weight:800; color:var(--holiday); margin:10px 0; font-family:var(--font-mono);" id="yearBestWeek">KW --</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted); font-family:var(--font-mono);" id="yearBestWeekValue">+0h</div>
-                </div>
-                <div class="card" style="border-left: 5px solid #3b82f6;">
-                    <div class="audit-label"><svg class="mwl-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8c0-2.76-2.46-5-5.5-5S2 5.24 2 8h2l1-1 1 1h4"/><path d="M13 7.14A5.82 5.82 0 0 1 16.5 6c3.04 0 5.5 2.24 5.5 5h-3l-1-1-1 1h-3"/><path d="M5.89 9.71c-2.15 2.15-2.3 5.06-.35 7.01l4.24-4.24.7-.7.71-.71 2.12-2.12c-1.95-1.96-4.86-1.8-7.02.35"/><path d="M11 15.5c.5 2.5-.17 4.5-1 6.5h4c2-5.5-.5-12-1-14"/></svg><span>Urlaubstage</span></div>
-                    <div style="font-size:2rem; font-weight:800; color:#3b82f6; margin:10px 0; font-family:var(--font-mono);" id="yearVacationDays">0</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">In diesem Jahr</div>
-                </div>
-                <div class="card" style="border-left: 5px solid #f59e0b;">
-                    <div class="audit-label"><svg class="mwl-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20"/><path d="M22 12a10.06 10.06 1 0 0-20 0Z"/><path d="M12 22a2 2 0 0 1-2-2"/></svg><span>Feiertage</span></div>
-                    <div style="font-size:2rem; font-weight:800; color:#f59e0b; margin:10px 0; font-family:var(--font-mono);" id="yearHolidayDays">0</div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);">In diesem Jahr</div>
-                </div>
-            </div>
-            
-            <!-- JAHRES-HEATMAP -->
-            <div class="card" style="margin-bottom:2rem;">
-                <h3 style="font-size:1.1rem; margin-bottom:1.5rem;"><svg class="mwl-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5"/></svg><span>Produktivitäts-Heatmap</span></h3>
-                <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">Jedes Quadrat = 1 Tag. 
-                    <strong style="color:#3b82f6;">Blau = Urlaub</strong> | 
-                    <strong style="color:#f59e0b;">Orange = Feiertag</strong> | 
-                    <strong style="color:#ec4899;">Pink = Krankheit</strong> | 
-                    <strong style="color:#10b981;">Grün = Positiv</strong> | 
-                    <strong style="color:#ef4444;">Rot = Negativ</strong> | 
-                    Grau = kein Eintrag</p>
-                
-                <div style="overflow-x: auto; padding-bottom: 1rem;">
-                    <div id="yearHeatmap" style="display:inline-block; min-width:100%;"></div>
-                </div>
-                
-                <div style="display:flex; gap:2rem; margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border); flex-wrap:wrap; font-size:0.85rem;">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:20px; height:20px; background:#ef4444; border-radius:4px;"></div>
-                        <span>Saldo negativ (-)</span>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:20px; height:20px; background:#fbbf24; border-radius:4px;"></div>
-                        <span>Leicht positiv (0-1h)</span>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:20px; height:20px; background:var(--success); border-radius:4px;"></div>
-                        <span>Positiv (1-3h)</span>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:20px; height:20px; background:var(--primary); border-radius:4px;"></div>
-                        <span>Sehr positiv (3h+)</span>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:20px; height:20px; background:#475569; border-radius:4px;"></div>
-                        <span>Kein Eintrag</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- INTELLIGENTE INSIGHTS -->
-            <div class="card" style="margin-bottom:2rem;">
-                <h3 style="font-size:1.1rem; margin-bottom:1.5rem; color:var(--primary);"><svg class="mwl-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span>KI-Insights &amp; Empfehlungen</span></h3>
-                <div id="yearInsights" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:1.5rem;">
-                    <!-- Werden dynamisch gefüllt -->
-                </div>
-            </div>
-            
-            <!-- MONATS-VERGLEICH -->
-            <div class="card">
-                <h3 style="font-size:1.1rem; margin-bottom:1.5rem;"><svg class="mwl-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span>Monatlicher Vergleich</span></h3>
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:1rem;" id="yearMonthlyComparison">
-                    <!-- Werden dynamisch gefüllt -->
-                </div>
-            </div>
 
+            <!-- ═══ Kopf: Jahresregler ═══ -->
+            <header class="yv-head">
+                <div class="yv-head__id">
+                    <p class="yv-eyebrow">Jahr</p>
+                    <h2 class="yv-head__title" id="yvTitle">&mdash;</h2>
+                    <p class="yv-head__sub" id="yvHeadSub">Jahr wird geladen.</p>
+                </div>
+                <div class="yv-nav">
+                    <button type="button" class="yv-nav__btn" id="yvPrev" onclick="yvNav(-1)" aria-label="Vorheriges Jahr"></button>
+                    <button type="button" class="yv-nav__now" onclick="yvNav(0)">Heute</button>
+                    <button type="button" class="yv-nav__btn" id="yvNext" onclick="yvNav(1)" aria-label="Nächstes Jahr"></button>
+                </div>
+            </header>
+
+            <!-- ═══ 1 · Befund ═══ -->
+            <section class="yv-verdict">
+                <div class="yv-verdict__lead">
+                    <p class="yv-verdict__kicker">Geleistet im Jahr</p>
+                    <p class="yv-verdict__num" id="yvWorked">&mdash;</p>
+                    <p class="yv-verdict__say" id="yvSay">&mdash;</p>
+                </div>
+                <dl class="yv-facts">
+                    <div class="yv-fact">
+                        <dt class="yv-fact__k">Saldo bis heute</dt>
+                        <dd class="yv-fact__v" id="yvSaldo">&mdash;</dd>
+                    </div>
+                    <div class="yv-fact">
+                        <dt class="yv-fact__k">Ø je Arbeitstag</dt>
+                        <dd class="yv-fact__v" id="yvAvgDay">&mdash;</dd>
+                    </div>
+                    <div class="yv-fact">
+                        <dt class="yv-fact__k">Erfasste Tage</dt>
+                        <dd class="yv-fact__v" id="yvDays">&mdash;</dd>
+                    </div>
+                    <div class="yv-fact">
+                        <dt class="yv-fact__k">Prognose 31.12.</dt>
+                        <dd class="yv-fact__v" id="yvForecast">&mdash;</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <!-- ═══ 2 · Das Jahr in Tagen (Signature) ═══ -->
+            <section class="yv-act">
+                <div class="yv-act__head">
+                    <div class="yv-act__id">
+                        <p class="yv-eyebrow">Das Jahr</p>
+                        <h3 class="yv-act__title">Jeder Tag ein Feld</h3>
+                        <p class="yv-act__sub" id="yvMapSub">&mdash;</p>
+                    </div>
+                    <div class="yv-modes" role="group" aria-label="Was die Farbe zeigt">
+                        <button type="button" class="yv-modes__btn is-on" data-mode="amount" onclick="yvSetMapMode('amount')">Menge</button>
+                        <button type="button" class="yv-modes__btn" data-mode="kind" onclick="yvSetMapMode('kind')">Art</button>
+                        <button type="button" class="yv-modes__btn" data-mode="balance" onclick="yvSetMapMode('balance')">Saldo</button>
+                    </div>
+                </div>
+
+                <div class="yv-map" id="yvMap">
+                    <div class="yv-map__scroll">
+                        <div class="yv-map__months" id="yvMapMonths"></div>
+                        <div class="yv-map__body">
+                            <div class="yv-map__days" id="yvMapDays"></div>
+                            <div class="yv-map__grid" id="yvMapGrid"></div>
+                        </div>
+                    </div>
+                    <div class="yv-map__foot">
+                        <p class="yv-map__hint" id="yvMapHint">&mdash;</p>
+                        <div class="yv-scale" id="yvMapScale"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ 3 · Monate ═══ -->
+            <section class="yv-act">
+                <div class="yv-act__head">
+                    <div class="yv-act__id">
+                        <p class="yv-eyebrow">Monate</p>
+                        <h3 class="yv-act__title">Zwölf Monate untereinander</h3>
+                        <p class="yv-act__sub" id="yvMonthsSub">&mdash;</p>
+                    </div>
+                </div>
+                <div class="yv-months" id="yvMonths"></div>
+            </section>
+
+            <!-- ═══ 4 · Jahreskonto ═══ -->
+            <section class="yv-act">
+                <div class="yv-act__head">
+                    <div class="yv-act__id">
+                        <p class="yv-eyebrow">Jahreskonto</p>
+                        <h3 class="yv-act__title">Was sich nur einmal im Jahr zurücksetzt</h3>
+                        <p class="yv-act__sub" id="yvLedgerSub">&mdash;</p>
+                    </div>
+                </div>
+                <div class="yv-ledger" id="yvLedger"></div>
+            </section>
+
+            <!-- ═══ 5 · Auffälligkeiten ═══ -->
+            <section class="yv-act">
+                <div class="yv-act__head">
+                    <div class="yv-act__id">
+                        <p class="yv-eyebrow">Auffälligkeiten</p>
+                        <h3 class="yv-act__title">Was aus den Zahlen hervorsticht</h3>
+                        <p class="yv-act__sub">Alles hier ist aus deinen Einträgen gerechnet und in einem Satz nachvollziehbar.</p>
+                    </div>
+                </div>
+                <div class="yv-notes" id="yvNotes"></div>
+            </section>
         </div>

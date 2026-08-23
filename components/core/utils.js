@@ -22,6 +22,14 @@
         return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
     }
 
+    // "HH:MM" → Minuten seit Mitternacht. Stand bis v6.3.6 als einziger
+    // verbliebener Inhalt in year-month-stats.js, nachdem die Jahres- und
+    // Monatsberechnungen dort ausgezogen sind.
+    function parseTime(timeStr) {
+        const [h, m] = String(timeStr || '').split(':').map(Number);
+        return h * 60 + m;
+    }
+
     // --- ZEIT-RUNDUNG ---
     // Liest die User-Settings für Zeit-Rundung (kaufmännisch / abrunden / Taktung).
     // Default: enabled=false → JS-Standard-Rundung wie zuvor.
