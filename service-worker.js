@@ -29,7 +29,7 @@ const warn = (...a) => DEBUG && console.warn('[SW]', ...a);
 // Dateitypen die gecacht werden (nur eigener Origin)
 const CACHEABLE_EXTS = new Set(['js', 'css', 'html', 'png', 'svg', 'jpg',
                                  'jpeg', 'webp', 'ico', 'woff', 'woff2',
-                                 'json', 'mp4', 'txt']);
+                                 'json', 'txt']);   // kein 'mp4': Medien laufen am SW vorbei
 
 // Analytics/Tracking-Domains NICHT cachen (dynamische Responses)
 // Versioned CDN-Libraries (jsdelivr, cdnjs) werden gecacht — sie ändern sich nie
@@ -124,6 +124,19 @@ self.addEventListener('fetch', event => {
     );
     return;
   }
+
+  // Medien (Video/Audio) NICHT abfangen — durchreichen an den Browser.
+  //
+  // Der Zweig darunter holt jedes Asset mit `cache: 'reload'`, also unter
+  // Umgehung des HTTP-Caches. Fuer JS/CSS ist das gewollt (frischer Stand nach
+  // Deploy, ein paar KB). Fuer das 2,4-MB-Intro-Video heisst es: bei JEDEM
+  // Seitenaufruf komplett neu aus dem Netz, und beim Scroll-Scrubben sendet
+  // das <video> laufend Range-Anfragen, die alle einzeln am Cache vorbeigehen.
+  // Der Medienstack des Browsers kann Teilbereiche puffern und wiederverwenden,
+  // ein Service Worker im Weg kann das nur verschlechtern. Die Frische regelt
+  // hier ohnehin die ?v=<version>-Query in der URL.
+  const pfad = new URL(request.url).pathname;
+  if (/\.(mp4|webm|m4v|mov|ogg|mp3|wav)$/i.test(pfad)) return;
 
   // CDN und nicht-cacheable: direkt ans Netz
   if (!isCacheable(request.url)) return;

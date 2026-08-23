@@ -44,18 +44,15 @@
 /Grafiken/*
   Cache-Control: public, max-age=31536000, immutable
 
-# Das Intro-Video liegt im selben Ordner, aendert sich aber unter gleichem Namen.
-# `immutable` aus der Regel darueber hiess: Browser fragt ein Jahr lang nicht nach —
-# auch nicht beim Neuladen und auch nicht nach einem Cloudflare-Purge (der raeumt
-# die Kante, nicht den Geraete-Cache). Ein Handy zeigte deshalb nach dem Deploy
-# weiter den alten Clip. Diese Regel steht bewusst NACH /Grafiken/*, damit sie
-# gewinnt, egal ob Pages die spezifischere oder die spaetere Regel bevorzugt.
-# Zusaetzlich stempelt tools/stamp-assets.js ?v=<version> an die Video-URL.
-/Grafiken/*.mp4
-  Cache-Control: public, max-age=0, must-revalidate
-
-/Grafiken/*.webm
-  Cache-Control: public, max-age=0, must-revalidate
+# Das Intro-Video liegt im selben Ordner und wird unter gleichem Namen ersetzt.
+# Eine eigene Regel dafuer stand hier kurz — sie hat NICHT ueberstimmt: Pages
+# merged bei mehreren Treffern, live kam `max-age=86400, immutable,
+# must-revalidate` heraus (der max-age stammt zusaetzlich aus einer Regel im
+# Cloudflare-Dashboard, siehe Kommentar in tools/stamp-assets.js). Ein Wert, der
+# gleichzeitig immutable und must-revalidate sagt, hilft niemandem.
+# Geloest wird es stattdessen ueber die URL: stamp-assets haengt ?v=<version>
+# an die Video-Referenz, damit ist jede Fassung eine eigene Adresse — und dann
+# ist `immutable` fuer sie sogar korrekt.
 
 /*.png
   Cache-Control: public, max-age=31536000, immutable
