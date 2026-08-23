@@ -1,599 +1,472 @@
-/* ═══ WEEKVIEW — COMPLETE REDESIGN ═══ */
-
-/* ── Local tokens ── */
-#view-weekview {
-    --wv-accent: #a855f7;
-    --wv-cyan: #22d3ee;
-    --wv-emerald: #10b981;
-    --wv-rose: #f43f5e;
-    --wv-amber: #f59e0b;
-    --wv-school: #818cf8;
-    --wv-card: rgba(255,255,255,0.03);
-    --wv-card-border: rgba(255,255,255,0.07);
-    --wv-card-hover: rgba(255,255,255,0.06);
-    --wv-glow-purple: rgba(168,85,247,0.15);
-    --wv-glow-cyan: rgba(34,211,238,0.12);
-    --wv-radius-lg: 20px;
-    --wv-radius-md: 14px;
-    --wv-radius-sm: 10px;
-}
-/* Der Seitenkopf (.view-header/.view-title/.view-subtitle) steht in core.css —
-   ihn benutzen auch Jahresansicht, Monatsansicht, Urlaubsplaner und Verlauf. */
-
-/* ── Week navigator ── */
-.wv-nav {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    background: var(--wv-card);
-    border: 1px solid var(--wv-card-border);
-    border-radius: 50px;
-    padding: 6px;
-    backdrop-filter: blur(12px);
-    margin-bottom: 28px;
-    position: relative;
-    overflow: hidden;
-}
-
-.wv-nav::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, var(--wv-glow-purple) 0%, transparent 50%, var(--wv-glow-cyan) 100%);
-    opacity: 0.5;
-    pointer-events: none;
-}
-
-.wv-nav-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 50px;
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
-    font-family: var(--font-main);
-    font-size: 0.9rem;
-    flex-shrink: 0;
-}
-
-.wv-nav-btn:hover {
-    background: rgba(255,255,255,0.08);
-    color: #fff;
-    transform: scale(1.05);
-}
-
-.wv-nav-btn:active {
-    transform: scale(0.95);
-}
-
-.wv-nav-center {
-    flex: 1;
-    text-align: center;
-    padding: 4px 16px;
-}
-
-.wv-kw-display {
-    font-size: 1rem;
-    font-weight: 800;
-    font-family: var(--font-mono);
-    color: var(--wv-accent);
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-}
-
-.wv-date-range-display {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    letter-spacing: 0.02em;
-    margin-top: 2px;
-}
-
-.wv-nav-today {
-    padding: 6px 16px;
-    border-radius: 50px;
-    background: rgba(168,85,247,0.12);
-    border: 1px solid rgba(168,85,247,0.25);
-    color: var(--wv-accent);
-    cursor: pointer;
-    font-size: 0.78rem;
-    font-weight: 700;
-    font-family: var(--font-main);
-    transition: all 0.2s;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-}
-
-.wv-nav-today:hover {
-    background: rgba(168,85,247,0.22);
-    border-color: rgba(168,85,247,0.5);
-}
-
-/* ── KPI strip ── */
-.wv-kpi-strip {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-}
-
-.wv-kpi-tile {
-    background: var(--wv-card);
-    border: 1px solid var(--wv-card-border);
-    border-radius: var(--wv-radius-md);
-    padding: 18px 16px;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
-    animation: wvFadeUp 0.4s ease both;
-}
-
-.wv-kpi-tile:nth-child(1) { animation-delay: 0.05s; }
-.wv-kpi-tile:nth-child(2) { animation-delay: 0.1s; }
-.wv-kpi-tile:nth-child(3) { animation-delay: 0.15s; }
-.wv-kpi-tile:nth-child(4) { animation-delay: 0.2s; }
-
-.wv-kpi-tile::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    border-radius: var(--wv-radius-md) var(--wv-radius-md) 0 0;
-    background: var(--wv-tile-accent, var(--wv-accent));
-    opacity: 0.8;
-}
-
-.wv-kpi-tile:hover {
-    background: var(--wv-card-hover);
-    border-color: rgba(255,255,255,0.12);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-}
-
-.wv-kpi-label {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-muted);
-    font-weight: 700;
-    margin-bottom: 10px;
-}
-
-.wv-kpi-value {
-    font-size: 1.9rem;
-    font-weight: 900;
-    font-family: var(--font-mono);
-    letter-spacing: -0.04em;
-    line-height: 1;
-    color: var(--wv-tile-accent, var(--wv-accent));
-}
-
-.wv-kpi-sub {
-    font-size: 0.68rem;
-    color: var(--text-muted);
-    margin-top: 8px;
-}
-
-.wv-kpi-progress {
-    height: 3px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 3px;
-    margin-top: 12px;
-    overflow: hidden;
-}
-
-.wv-kpi-progress-bar {
-    height: 100%;
-    border-radius: 3px;
-    background: linear-gradient(90deg, var(--wv-tile-accent, var(--wv-accent)), var(--wv-emerald));
-    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
-}
-
-/* ── Section cards ── */
-.wv-section {
-    background: var(--wv-card);
-    border: 1px solid var(--wv-card-border);
-    border-radius: var(--wv-radius-lg);
-    padding: 24px;
-    margin-bottom: 16px;
-    animation: wvFadeUp 0.5s ease both;
-    position: relative;
-    overflow: hidden;
-}
-
-.wv-section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 20px;
-}
-
-.wv-section-title {
-    font-size: 0.8rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.wv-section-title-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--wv-accent);
-    box-shadow: 0 0 8px var(--wv-accent);
-}
-
-/* ── Comparison block ── */
-.wv-comparison {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 16px;
-    align-items: center;
-}
-
-.wv-cmp-side {
-    padding: 16px;
-    background: rgba(255,255,255,0.02);
-    border-radius: var(--wv-radius-md);
-    border: 1px solid rgba(255,255,255,0.05);
-}
-
-.wv-cmp-side.is-current {
-    background: var(--wv-glow-purple);
-    border-color: rgba(168,85,247,0.2);
-}
-
-.wv-cmp-label {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-    font-weight: 700;
-    margin-bottom: 8px;
-}
-
-.wv-cmp-hours {
-    font-size: 2rem;
-    font-weight: 900;
-    font-family: var(--font-mono);
-    letter-spacing: -0.04em;
-    line-height: 1;
-}
-
-.wv-cmp-meta {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    margin-top: 6px;
-    font-family: var(--font-mono);
-}
-
-.wv-cmp-delta-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
-
-.wv-delta-arrow {
-    font-size: 1.5rem;
-    line-height: 1;
-    font-weight: 900;
-}
-
-.wv-delta-pct {
-    font-size: 0.78rem;
-    font-weight: 800;
-    font-family: var(--font-mono);
-    padding: 4px 10px;
-    border-radius: 50px;
-}
-
-/* ── Day list ── */
-.wv-day-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.wv-day-card {
-    display: grid;
-    grid-template-columns: 110px 1fr auto;
-    gap: 16px;
-    align-items: center;
-    padding: 14px 16px;
-    border-radius: var(--wv-radius-md);
-    border: 1px solid rgba(255,255,255,0.04);
-    background: rgba(255,255,255,0.02);
-    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
-    cursor: default;
-    position: relative;
-    overflow: hidden;
-}
-
-.wv-day-card.is-today {
-    background: rgba(168,85,247,0.06);
-    border-color: rgba(168,85,247,0.18);
-}
-
-.wv-day-card.is-today::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--wv-accent);
-    box-shadow: 0 0 10px var(--wv-accent);
-    border-radius: 3px 0 0 3px;
-}
-
-.wv-day-card:hover {
-    background: rgba(255,255,255,0.04);
-    border-color: rgba(255,255,255,0.09);
-    transform: translateX(3px);
-}
-
-.wv-day-card.is-today:hover {
-    background: rgba(168,85,247,0.09);
-}
-
-.wv-day-name {
-    font-size: 0.88rem;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
-.wv-day-card.is-today .wv-day-name {
-    color: var(--wv-accent);
-}
-
-.wv-day-date {
-    font-size: 0.68rem;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    margin-top: 2px;
-}
-
-.wv-day-content {
-    min-width: 0;
-}
-
-.wv-day-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
-    flex-wrap: wrap;
-}
-
-.wv-day-badge {
-    font-size: 0.65rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    padding: 2px 8px;
-    border-radius: 50px;
-}
-
-.wv-day-hours-val {
-    font-size: 1rem;
-    font-weight: 800;
-    font-family: var(--font-mono);
-    letter-spacing: -0.02em;
-}
-
-.wv-day-soll {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-}
-
-.wv-day-diff {
-    font-size: 0.72rem;
-    font-weight: 700;
-    font-family: var(--font-mono);
-    padding: 1px 7px;
-    border-radius: 6px;
-}
-
-.wv-day-bar-wrap {
-    height: 3px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 4px;
-}
-
-.wv-day-bar-fill {
-    height: 100%;
-    border-radius: 3px;
-    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
-}
-
-.wv-day-empty {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    font-style: italic;
-}
-
-.wv-day-times {
-    text-align: right;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    line-height: 1.5;
-    white-space: nowrap;
-}
-
-/* ── Bar chart ── */
-.wv-bars-container {
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
-    height: 180px;
-    padding-top: 24px;
-}
-
-.wv-bar-col {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 6px;
-    height: 100%;
-}
-
-.wv-bar-value {
-    font-size: 0.65rem;
-    font-weight: 700;
-    font-family: var(--font-mono);
-    color: var(--text-muted);
-    min-height: 16px;
-}
-
-.wv-bar-fill-wrap {
-    width: 100%;
-    display: flex;
-    align-items: flex-end;
-    flex: 1;
-}
-
-.wv-bar-fill {
-    width: 100%;
-    min-height: 4px;
-    border-radius: 8px 8px 4px 4px;
-    transition: height 0.5s cubic-bezier(0.4,0,0.2,1);
-    position: relative;
-}
-
-.wv-bar-fill.is-today {
-    box-shadow: 0 0 16px rgba(168,85,247,0.5);
-}
-
-.wv-bar-day-label {
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    letter-spacing: 0.03em;
-}
-
-.wv-bar-day-label.is-today {
-    color: var(--wv-accent);
-    font-weight: 800;
-}
-
-/* ── Trend chart ── */
-.wv-trend-bars {
-    display: flex;
-    gap: 6px;
-    align-items: flex-end;
-    height: 160px;
-}
-
-.wv-trend-col {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 4px;
-    height: 100%;
-}
-
-.wv-trend-val {
-    font-size: 0.6rem;
-    font-family: var(--font-mono);
-    color: var(--text-muted);
-    min-height: 14px;
-}
-
-.wv-trend-fill-wrap {
-    width: 100%;
-    display: flex;
-    align-items: flex-end;
-    flex: 1;
-}
-
-.wv-trend-bar {
-    width: 100%;
-    min-height: 4px;
-    border-radius: 6px 6px 2px 2px;
-    transition: height 0.5s cubic-bezier(0.4,0,0.2,1);
-}
-
-.wv-trend-kw {
-    font-size: 0.6rem;
-    color: var(--text-muted);
-    text-align: center;
-    letter-spacing: 0.02em;
-}
-
-.wv-trend-kw.is-current {
-    color: var(--wv-accent);
-    font-weight: 800;
-}
-
-/* ── Animations ── */
-@keyframes wvFadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ── Responsive ── */
-@media (max-width: 640px) {
-    .wv-kpi-strip {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-
-    .wv-day-card {
-        grid-template-columns: 90px 1fr;
-    }
-
-    .wv-day-times {
-        display: none;
-    }
-
-    .wv-comparison {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
-    .wv-cmp-delta-col {
-        flex-direction: row;
-        justify-content: center;
-    }
-
-    .wv-kpi-value {
-        font-size: 1.5rem;
-    }
-
-    .wv-bars-container {
-        height: 140px;
-    }
-}
-
-@media (max-width: 400px) {
-    .wv-kpi-strip {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .wv-kpi-tile {
-        padding: 14px 12px;
-    }
-
-    .wv-kpi-value {
-        font-size: 1.3rem;
-    }
-}
+        /* ═══ WOCHENANSICHT — „Der Tagesablauf" ════════════════════════════
+           Vierte Ansicht in der Dokumentsprache. These: die Woche ist die
+           einzige Ebene, auf der UHRZEITEN noch hinpassen. Monat und Jahr
+           zeigen Mengen; hier sieht man, wann der Tag begann, wann er endete
+           und wie die sieben Tage gegeneinander verschoben sind.
+
+           🔴 Die alte Fassung zeichnete sieben Tage ZWEIMAL (Karten mit Balken
+           und darunter ein Saeulendiagramm derselben Zahlen), dazu vier
+           Kennzahl-Kacheln mit je eigener Hex-Farbe und leuchtenden Punkten
+           an jeder Ueberschrift. Und sie konnte nur EINEN Eintrag je Tag
+           zeigen — bei geteilten Schichten fiel die zweite unter den Tisch.  */
+
+        #view-weekview {
+            --wv-ink-03:  rgba(255, 255, 255, 0.035);
+            --wv-ink-06:  rgba(255, 255, 255, 0.065);
+            --wv-ink-10:  rgba(255, 255, 255, 0.11);
+            --wv-rule:    var(--border);
+            --wv-gap:     30px;
+        }
+        [data-theme="light"] #view-weekview {
+            --wv-ink-03:  rgba(7, 16, 35, 0.035);
+            --wv-ink-06:  rgba(7, 16, 35, 0.07);
+            --wv-ink-10:  rgba(7, 16, 35, 0.13);
+        }
+
+
+        /* ─── Rubrik + Kopf ────────────────────────────────────────────── */
+        .wv-eyebrow {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--primary);
+            margin: 0 0 6px;
+            line-height: 1;
+        }
+        .wv-head {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding-bottom: 18px;
+        }
+        .wv-head__title {
+            font-size: 1.55rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--text-main);
+            line-height: 1.05;
+            margin: 0;
+            font-variant-numeric: tabular-nums;
+        }
+        .wv-head__sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin: 6px 0 0;
+            line-height: 1.4;
+        }
+
+        .wv-nav {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px;
+            gap: 2px;
+            border: 1px solid var(--wv-rule);
+            border-radius: 10px;
+            background: var(--wv-ink-03);
+        }
+        .wv-nav__btn,
+        .wv-nav__now {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 7px;
+            cursor: pointer;
+            height: 32px;
+            transition: color 0.15s ease, background-color 0.15s ease;
+        }
+        .wv-nav__btn {
+            width: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .wv-nav__now { font-size: 0.75rem; font-weight: 600; padding: 0 13px; }
+        .wv-nav__btn:hover:not(:disabled),
+        .wv-nav__now:hover { color: var(--text-main); background: var(--hover-fill); }
+        .wv-nav__btn:active:not(:disabled),
+        .wv-nav__now:active { transform: scale(0.94); }
+        .wv-nav__btn:focus-visible,
+        .wv-nav__now:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+        .wv-nav__btn:disabled { opacity: 0.3; cursor: default; }
+
+
+        /* ─── 1 · Befund ───────────────────────────────────────────────── */
+        .wv-verdict {
+            display: grid;
+            grid-template-columns: minmax(230px, 320px) 1fr;
+            gap: 40px;
+            align-items: center;
+            padding: 26px 0 30px;
+            border-top: 1px solid var(--wv-rule);
+        }
+        .wv-verdict__kicker {
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 0 0 8px;
+        }
+        .wv-verdict__num {
+            font-family: var(--font-num);
+            font-size: clamp(2.4rem, 5.5vw, 3.4rem);
+            font-weight: 800;
+            letter-spacing: -0.045em;
+            line-height: 0.95;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-main);
+            margin: 0;
+        }
+        .wv-verdict__num .wv-u {
+            font-size: 0.4em;
+            font-weight: 600;
+            margin-left: 0.14em;
+            color: var(--text-muted);
+        }
+        .wv-verdict__num.is-plus  { color: var(--success); }
+        .wv-verdict__num.is-minus { color: var(--danger); }
+        .wv-verdict__say {
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: var(--text-muted);
+            margin: 12px 0 0;
+            max-width: 36ch;
+        }
+
+        .wv-facts {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin: 0;
+            border-top: 1px solid var(--wv-rule);
+        }
+        .wv-fact { padding: 15px 14px 0 0; min-width: 0; }
+        .wv-fact + .wv-fact {
+            padding-left: 16px;
+            border-left: 1px solid var(--wv-rule);
+        }
+        .wv-fact__k {
+            font-size: 0.66rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            line-height: 1.25;
+            margin-bottom: 5px;
+        }
+        .wv-fact__v {
+            font-family: var(--font-num);
+            font-size: 1.05rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.2;
+        }
+        .wv-fact__v small {
+            display: block;
+            font-family: var(--font-main);
+            font-size: 0.63rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0;
+            margin-top: 3px;
+        }
+        .wv-fact__v.is-plus  { color: var(--success); }
+        .wv-fact__v.is-minus { color: var(--danger); }
+
+
+        /* ─── Abschnitt ────────────────────────────────────────────────── */
+        .wv-act {
+            border-top: 1px solid var(--wv-rule);
+            padding: 24px 0 var(--wv-gap);
+        }
+        .wv-act__head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+        .wv-act__id { min-width: 0; }
+        .wv-act__title {
+            font-size: 1rem;
+            font-weight: 650;
+            letter-spacing: -0.018em;
+            color: var(--text-main);
+            line-height: 1.2;
+            margin: 0;
+        }
+        .wv-act__sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            margin: 5px 0 0;
+            max-width: 64ch;
+        }
+
+        .wv-key {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+            font-size: 0.66rem;
+            color: var(--text-muted);
+        }
+        .wv-key__item { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+        .wv-key__sw {
+            width: 10px; height: 10px;
+            border-radius: 3px;
+            background: var(--cat, var(--primary));
+            flex-shrink: 0;
+        }
+
+
+        /* ─── 2 · Tagesablauf auf einer Uhrzeit-Achse (Signature) ──────── */
+        .wv-plan { overflow-x: auto; }
+        .wv-plan__inner { min-width: 560px; }
+
+        .wv-plan__head,
+        .wv-plan__row {
+            display: grid;
+            grid-template-columns: 88px 1fr 104px 76px;
+            align-items: center;
+            gap: 14px;
+        }
+        .wv-plan__head {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--wv-rule);
+            margin-bottom: 2px;
+        }
+        .wv-plan__head-r { text-align: right; }
+        .wv-plan__hours { position: relative; height: 12px; }
+        .wv-plan__hour {
+            position: absolute;
+            top: 0;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .wv-plan__row {
+            padding: 7px 0;
+            border-bottom: 1px solid var(--wv-rule);
+            transition: background-color 0.15s ease;
+            border-radius: 8px;
+        }
+        .wv-plan__row:last-child { border-bottom: 0; }
+        .wv-plan__row.is-today { background: rgba(var(--primary-rgb), 0.05); }
+        .wv-plan__row.is-off .wv-plan__day { opacity: 0.5; }
+
+        .wv-plan__day { min-width: 0; }
+        .wv-plan__wd {
+            font-size: 0.76rem;
+            font-weight: 650;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+        .wv-plan__row.is-today .wv-plan__wd { color: var(--primary); }
+        .wv-plan__date {
+            font-size: 0.66rem;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+            margin-top: 1px;
+        }
+
+        /* Die Spur: Stundenraster als ein Verlauf statt sieben mal zwoelf
+           einzelner Linien-Elemente. --hstep kommt aus dem JS. */
+        .wv-plan__track {
+            position: relative;
+            height: 28px;
+            border-radius: 6px;
+            background-color: var(--wv-ink-03);
+            background-image: repeating-linear-gradient(
+                to right, var(--wv-rule) 0 1px, transparent 1px var(--hstep, 12.5%));
+        }
+
+        .wv-bar {
+            position: absolute;
+            top: 5px; bottom: 5px;
+            border-radius: 4px;
+            background: var(--cat, var(--primary));
+            min-width: 3px;
+        }
+        /* Ganztaegige Arten (Urlaub, Schule, Krank, Feiertag) haben keine
+           Uhrzeit — sie liegen als flaches Band ueber der ganzen Spur. */
+        .wv-bar.is-band {
+            left: 0; right: 0;
+            top: 8px; bottom: 8px;
+            opacity: 0.34;
+            border-radius: 4px;
+        }
+        /* Arbeitstag, der nur als Stundenzahl erfasst ist: gestreift, damit
+           „keine Uhrzeit hinterlegt" nicht wie „den ganzen Tag da" aussieht. */
+        .wv-bar.is-untimed {
+            left: 0; right: 0;
+            top: 8px; bottom: 8px;
+            opacity: 0.5;
+            background-image: repeating-linear-gradient(
+                45deg, rgba(0,0,0,0.28) 0 4px, transparent 4px 8px);
+        }
+        .wv-now {
+            position: absolute;
+            top: -2px; bottom: -2px;
+            width: 2px;
+            margin-left: -1px;
+            background: var(--text-main);
+            opacity: 0.55;
+            border-radius: 1px;
+        }
+
+        .wv-plan__h {
+            font-family: var(--font-num);
+            font-size: 0.76rem;
+            font-weight: 650;
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+        .wv-plan__h small {
+            font-family: var(--font-main);
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-left: 4px;
+        }
+        .wv-plan__s {
+            font-family: var(--font-num);
+            font-size: 0.76rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        .wv-plan__s.is-plus  { color: var(--success); }
+        .wv-plan__s.is-minus { color: var(--danger); }
+
+        .wv-plan__foot {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin: 14px 0 0;
+            padding-top: 12px;
+            border-top: 1px solid var(--wv-rule);
+            max-width: 74ch;
+        }
+
+
+        /* ─── 3 · Acht Wochen ──────────────────────────────────────────── */
+        .wv-trend {
+            display: grid;
+            grid-template-columns: repeat(8, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .wv-week {
+            appearance: none;
+            border: 0;
+            background: transparent;
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            min-width: 0;
+            border-radius: 6px;
+        }
+        .wv-week:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .wv-week__val {
+            font-family: var(--font-num);
+            font-size: 0.66rem;
+            font-weight: 650;
+            font-variant-numeric: tabular-nums;
+            text-align: center;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+        .wv-week:hover .wv-week__val,
+        .wv-week.is-sel .wv-week__val { opacity: 1; color: var(--text-main); }
+        /* Saldo hat ein Vorzeichen — also Ausschlag um eine sichtbare
+           Nulllinie, kein Balken von unten. */
+        .wv-week__plot { position: relative; height: 104px; }
+        .wv-week__zero {
+            position: absolute;
+            left: 0; right: 0; top: 50%;
+            height: 1px;
+            background: var(--wv-ink-10);
+        }
+        .wv-week__bar {
+            position: absolute;
+            left: 12%; right: 12%;
+            height: var(--h, 0%);
+            border-radius: 4px;
+            transition: height 0.45s cubic-bezier(.22,.61,.36,1);
+        }
+        .wv-week__bar.is-plus  { bottom: 50%; background: color-mix(in srgb, var(--success) 55%, transparent); }
+        .wv-week__bar.is-minus { top: 50%;    background: color-mix(in srgb, var(--danger) 55%, transparent); }
+        .wv-week.is-sel .wv-week__bar.is-plus  { background: var(--success); }
+        .wv-week.is-sel .wv-week__bar.is-minus { background: var(--danger); }
+        .wv-week:hover .wv-week__bar { filter: brightness(1.15); }
+        .wv-week__lbl {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-align: center;
+            white-space: nowrap;
+        }
+        .wv-week.is-sel .wv-week__lbl { color: var(--text-main); font-weight: 650; }
+
+
+        /* ─── Leerzustände ─────────────────────────────────────────────── */
+        .wv-empty {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+            padding: 18px;
+            border: 1px dashed var(--wv-ink-10);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+
+        /* ─── Responsive ──────────────────────────────────────────────── */
+        @media (max-width: 1000px) {
+            .wv-verdict { grid-template-columns: 1fr; gap: 26px; }
+        }
+
+        @media (max-width: 640px) {
+            #view-weekview { --wv-gap: 24px; }
+            .wv-head { flex-direction: column; align-items: flex-start; }
+            .wv-head__title { font-size: 1.25rem; }
+            .wv-nav { width: 100%; }
+            .wv-nav__now { flex: 1; }
+            .wv-verdict__num { font-size: 2.4rem; }
+            .wv-facts { grid-template-columns: 1fr 1fr; }
+            .wv-facts .wv-fact:nth-child(3) {
+                padding-left: 0;
+                border-left: 0;
+                border-top: 1px solid var(--wv-rule);
+                margin-top: 14px;
+            }
+            .wv-facts .wv-fact:nth-child(4) {
+                border-top: 1px solid var(--wv-rule);
+                margin-top: 14px;
+            }
+            .wv-plan__head, .wv-plan__row { grid-template-columns: 64px 1fr 88px 64px; gap: 10px; }
+            .wv-plan__h, .wv-plan__s { font-size: 0.7rem; }
+            .wv-trend { gap: 4px; }
+            .wv-week__plot { height: 84px; }
+            .wv-week__lbl { font-size: 0.55rem; }
+            .wv-week__val { display: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .wv-week__bar { transition: none; }
+            .wv-nav__btn:active, .wv-nav__now:active { transform: none; }
+        }

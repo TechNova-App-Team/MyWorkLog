@@ -27,14 +27,9 @@
     // ============================================
     // FEATURE: WOCHENANSICHT TAB (Full Week View)
     // ============================================
-    let weekViewOffset = 0; // 0 = current week, -1 = last week, etc.
-
-    function weekViewNavigate(dir) {
-        if (dir === 0) weekViewOffset = 0;
-        else weekViewOffset += dir;
-        renderWeekView();
-    }
-
+    // Der Wochen-Zustand (weekViewOffset/weekViewNavigate) ist mit v6.3.7 nach
+    // weekview.js gezogen — dort heisst er wvOffset/wvNav und ist an den
+    // Datenbestand gebunden, statt endlos ins Leere zu blaettern.
     function getWeekMonday(offset) {
         const now = new Date();
         const currentDay = now.getDay();
@@ -59,11 +54,6 @@
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const day = String(d.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
-    }
-
-    // Prüft ob ein Wochentag (0=So, 6=Sa) ein Arbeitstag ist (Soll-Stunden > 0)
-    function isConfiguredWorkDay(dayOfWeek) {
-        return (data.settings && data.settings.hours && data.settings.hours[dayOfWeek] > 0);
     }
 
     // Normalisiert Datumsstrings in ISO-Format (YYYY-MM-DD)
@@ -104,15 +94,8 @@
         return entries;
     }
 
-    function calcWeekStats(entries) {
-        let hours = 0, days = 0, saldo = 0, schoolDays = 0, vacDays = 0, sickDays = 0;
-        entries.forEach(e => {
-            hours += e.worked || 0;
-            saldo += e.diff || 0;
-            if (e.type === 'work') days++;
-            if (e.type === 'school') { days++; schoolDays++; }
-            if (e.type === 'vacation') vacDays++;
-            if (e.type === 'sick') sickDays++;
-        });
-        return { hours, days, saldo, schoolDays, vacDays, sickDays };
-    }
+    // calcWeekStats() stand hier bis v6.3.7. Sie zaehlte `days++` je EINTRAG
+    // statt je Tag — ein Tag mit geteilter Schicht galt damit als zwei
+    // Arbeitstage, und Schultage erhoehten den Zaehler zusaetzlich. Die
+    // Wochenansicht aggregiert jetzt ueber calculateMonthStats(), also
+    // dieselbe Quelle wie Monats- und Jahresansicht.

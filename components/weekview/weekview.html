@@ -1,86 +1,68 @@
 <div id="view-weekview" class="view-section">
 
-            <!-- Page header -->
-            <div class="view-header">
-                <div>
-                    <h2 class="view-title">Wochenansicht</h2>
-                    <p class="view-subtitle">Detaillierte Analyse deiner Arbeitswoche — Tag für Tag</p>
+            <!-- ═══ Kopf: Wochenregler ═══ -->
+            <header class="wv-head">
+                <div class="wv-head__id">
+                    <p class="wv-eyebrow">Woche</p>
+                    <h2 class="wv-head__title" id="wvTitle">&mdash;</h2>
+                    <p class="wv-head__sub" id="wvHeadSub">Woche wird geladen.</p>
                 </div>
-            </div>
-
-            <!-- Week navigator -->
-            <div class="wv-nav">
-                <button class="wv-nav-btn" onclick="weekViewNavigate(-1)" aria-label="Vorwoche">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <div class="wv-nav-center">
-                    <div id="wvWeekLabel" class="wv-kw-display">KW --</div>
-                    <div id="wvDateRange" class="wv-date-range-display"></div>
+                <div class="wv-nav">
+                    <button type="button" class="wv-nav__btn" id="wvPrev" onclick="wvNav(-1)" aria-label="Vorherige Woche"></button>
+                    <button type="button" class="wv-nav__now" onclick="wvNav(0)">Heute</button>
+                    <button type="button" class="wv-nav__btn" id="wvNext" onclick="wvNav(1)" aria-label="Nächste Woche"></button>
                 </div>
-                <button class="wv-nav-btn" onclick="weekViewNavigate(1)" aria-label="Nächste Woche">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </button>
-                <button class="wv-nav-today" onclick="weekViewNavigate(0)">Heute</button>
-            </div>
+            </header>
 
-            <!-- KPI metrics strip -->
-            <div class="wv-kpi-strip" id="wvKPIGrid">
-                <!-- filled by JS -->
-            </div>
+            <!-- ═══ 1 · Befund ═══ -->
+            <section class="wv-verdict">
+                <div class="wv-verdict__lead">
+                    <p class="wv-verdict__kicker">Saldo der Woche</p>
+                    <p class="wv-verdict__num" id="wvSaldo">&mdash;</p>
+                    <p class="wv-verdict__say" id="wvSay">&mdash;</p>
+                </div>
+                <dl class="wv-facts">
+                    <div class="wv-fact">
+                        <dt class="wv-fact__k">Geleistet</dt>
+                        <dd class="wv-fact__v" id="wvWorked">&mdash;</dd>
+                    </div>
+                    <div class="wv-fact">
+                        <dt class="wv-fact__k">Arbeitstage</dt>
+                        <dd class="wv-fact__v" id="wvDays">&mdash;</dd>
+                    </div>
+                    <div class="wv-fact">
+                        <dt class="wv-fact__k">Ø Anwesenheit</dt>
+                        <dd class="wv-fact__v" id="wvWindow">&mdash;</dd>
+                    </div>
+                    <div class="wv-fact">
+                        <dt class="wv-fact__k">Pausen</dt>
+                        <dd class="wv-fact__v" id="wvBreaks">&mdash;</dd>
+                    </div>
+                </dl>
+            </section>
 
-            <!-- Week comparison -->
-            <div class="wv-section" style="animation-delay:0.25s;">
-                <div class="wv-section-header">
-                    <div class="wv-section-title">
-                        <span class="wv-section-title-dot"></span>
-                        Wochenvergleich
+            <!-- ═══ 2 · Der Tagesablauf (Signature) ═══ -->
+            <section class="wv-act">
+                <div class="wv-act__head">
+                    <div class="wv-act__id">
+                        <p class="wv-eyebrow">Ablauf</p>
+                        <h3 class="wv-act__title">Wann du diese Woche da warst</h3>
+                        <p class="wv-act__sub" id="wvPlanSub">&mdash;</p>
+                    </div>
+                    <div class="wv-key" id="wvPlanKey"></div>
+                </div>
+                <div class="wv-plan" id="wvPlan"></div>
+            </section>
+
+            <!-- ═══ 3 · Acht Wochen ═══ -->
+            <section class="wv-act">
+                <div class="wv-act__head">
+                    <div class="wv-act__id">
+                        <p class="wv-eyebrow">Einordnung</p>
+                        <h3 class="wv-act__title">Acht Wochen um diese herum</h3>
+                        <p class="wv-act__sub" id="wvTrendSub">&mdash;</p>
                     </div>
                 </div>
-                <div id="wvComparisonContent" class="wv-comparison">
-                    <!-- filled by JS -->
-                </div>
-            </div>
-
-            <!-- Daily breakdown -->
-            <div class="wv-section" style="animation-delay:0.32s;">
-                <div class="wv-section-header">
-                    <div class="wv-section-title">
-                        <span class="wv-section-title-dot" style="background:#22d3ee;box-shadow:0 0 8px #22d3ee;"></span>
-                        Tagesübersicht
-                    </div>
-                </div>
-                <div id="wvDailyBreakdown" class="wv-day-list">
-                    <!-- filled by JS -->
-                </div>
-            </div>
-
-            <!-- Stunden pro Tag -->
-            <div class="wv-section" style="animation-delay:0.38s;">
-                <div class="wv-section-header">
-                    <div class="wv-section-title">
-                        <span class="wv-section-title-dot" style="background:#10b981;box-shadow:0 0 8px #10b981;"></span>
-                        Stunden pro Tag
-                    </div>
-                </div>
-                <div id="wvDayBars" class="wv-bars-container">
-                    <!-- filled by JS -->
-                </div>
-            </div>
-
-            <!-- 8-Wochen Trend -->
-            <div class="wv-section" style="animation-delay:0.44s; margin-bottom:0;">
-                <div class="wv-section-header">
-                    <div class="wv-section-title">
-                        <span class="wv-section-title-dot" style="background:#f59e0b;box-shadow:0 0 8px #f59e0b;"></span>
-                        Wochen-Trend — letzte 8 Wochen
-                    </div>
-                </div>
-                <div id="wvTrendChart" class="wv-trend-bars">
-                    <!-- filled by JS -->
-                </div>
-                <div id="wvTrendLabels" style="display:flex; gap:6px; margin-top:10px;">
-                    <!-- filled by JS -->
-                </div>
-            </div>
-
+                <div class="wv-trend" id="wvTrend"></div>
+            </section>
         </div>
