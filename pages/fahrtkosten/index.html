@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
@@ -10,763 +10,456 @@
 </script>
     <meta name="description" content="Fahrtkosten-Tracker mit echtem Routing, Adresssuche, ÖPNV-Links, Spritkosten & Pendlerpauschale. Komplett kostenlos für Azubis.">
     <meta name="keywords" content="Fahrtkosten, Pendlerpauschale, Azubi, Routing, ÖPNV, Spritkosten, Pendelstrecke, Deutsche Bahn, Fahrtkostenerstattung">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.3.6"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.3.8"></script>
     <title>MyWorkLog | Fahrtkosten</title>
     <link rel="canonical" href="https://myworklog.de/fahrtkosten/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/fahrtkosten/">
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/fahrtkosten/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/fahrtkosten/">
 
+    <!-- Dieselben Familien wie die App. Standen hier jahrelang als 'Inter' im
+         CSS, ohne je geladen zu werden — die Seite lief in der Systemschrift
+         und sah damit fremd aus gegen den Rest von MyWorkLog. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-    <link rel="stylesheet" href="/Assets/css/fahrtkosten.css?v=6.3.6">
+    <link rel="stylesheet" href="/Assets/css/fahrtkosten.css?v=6.3.8">
 
     <style>
+        /* Tokens der App. --primary ist der Vorgabewert aus core.css; steht im
+           Profil ein eigener Akzent, zieht ihn der Sync unten nach. */
         :root {
             --bg-deep: #030305;
-            --primary: #a855f7;
-            --primary-rgb: 168, 85, 247;
+            --primary: #5578a8;
+            --primary-rgb: 85, 120, 168;
+            --primary-dim: rgba(var(--primary-rgb), 0.1);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --success: #10b981;     --success-rgb: 16, 185, 129;
-            --danger: #ef4444;      --danger-rgb: 239, 68, 68;
-            --warning: #f59e0b;     --warning-rgb: 245, 158, 11;
-            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+            --border: rgba(255, 255, 255, 0.06);
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --hover-fill: rgba(var(--primary-rgb), 0.07);
+            --hover-fill-strong: rgba(var(--primary-rgb), 0.12);
+            --hover-border: rgba(var(--primary-rgb), 0.28);
+            --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+            --font-num: 'Plus Jakarta Sans', -apple-system, sans-serif;
         }
 
         [data-theme="light"] {
             --bg-deep: #f8fafc;
             --text-main: #071023;
             --text-muted: #475569;
+            --border: rgba(7, 16, 35, 0.06);
+            --hover-fill: rgba(var(--primary-rgb), 0.08);
+            --hover-fill-strong: rgba(var(--primary-rgb), 0.14);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Ein <button> erbt font-family NICHT. Ohne diese Zeile laufen alle
+           Bedienelemente der Seite in Arial, waehrend der Text daneben in
+           Plus Jakarta Sans steht. */
+        button, input, select, textarea { font-family: inherit; }
 
         body {
             font-family: var(--font-main);
             background: var(--bg-deep);
             color: var(--text-main);
-            min-height: 100vh;
+            min-height: 100dvh;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* Background mesh */
-        .bg-mesh { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-        .bg-orb {
-            position: absolute; border-radius: 50%;
-            filter: blur(140px); opacity: 0.06;
-            animation: orbFloat 28s ease-in-out infinite alternate;
-        }
-        .bg-orb.o1 { width: 700px; height: 700px; background: var(--primary); top: -15%; left: -15%; }
-        .bg-orb.o2 { width: 500px; height: 500px; background: #06b6d4; bottom: -20%; right: -10%; animation-delay: -10s; }
-        .bg-orb.o3 { width: 350px; height: 350px; background: var(--success); top: 45%; left: 55%; animation-delay: -18s; }
-        @keyframes orbFloat {
-            0%   { transform: translate(0,0) scale(1); }
-            100% { transform: translate(50px,-30px) scale(1.12); }
-        }
-
-        .page-wrap {
-            position: relative; z-index: 1;
-            max-width: 980px; margin: 0 auto;
-            padding: 2rem 1.5rem 5rem;
-        }
-
-        /* ════ HEADER ════ */
-        .fk-header {
-            display: flex; justify-content: space-between; align-items: flex-start;
-            flex-wrap: wrap; gap: 1rem;
-            margin-bottom: 1.75rem;
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 16px;
-            padding: 1.5rem 1.75rem;
-        }
-
-        .fk-header-left { min-width: 0; flex: 1; }
-
-        .fk-status-badge {
-            display: inline-flex; align-items: center; gap: 7px;
-            font-size: 0.7rem; font-weight: 600;
-            color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.1);
-            border: 1px solid rgba(var(--primary-rgb), 0.22);
-            padding: 4px 10px;
-            border-radius: 999px;
-            margin-bottom: 12px;
-            letter-spacing: -0.01em;
-        }
-
-        .fk-badge-dot {
-            width: 6px; height: 6px; border-radius: 50%;
-            background: var(--primary);
-            box-shadow: 0 0 6px rgba(var(--primary-rgb), 0.6);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-        .brand {
-            display: flex; align-items: center; gap: 6px;
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-            letter-spacing: -0.01em;
-        }
-
-        .brand-sep { opacity: 0.35; }
-
-        .fk-title-row {
-            display: flex; align-items: center; gap: 12px;
-            margin-bottom: 6px;
-        }
-
-        .fk-title-icon {
-            width: 34px; height: 34px; flex-shrink: 0;
-            color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.1);
-            border: 1px solid rgba(var(--primary-rgb), 0.18);
-            border-radius: 10px;
-            padding: 5px;
-        }
-
-        .page-title {
-            font-size: 1.6rem; font-weight: 700;
-            letter-spacing: -0.025em; color: var(--text-main);
-        }
-
-        .page-subtitle {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            letter-spacing: -0.01em;
-        }
-
-        .header-right {
-            display: flex; align-items: center; gap: 0.6rem;
-        }
-
-        .theme-toggle {
-            width: 38px; height: 38px;
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.08);
-            background: rgba(255,255,255,0.04);
-            color: var(--text-main);
-            font-size: 1.05rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s ease;
-        }
-        .theme-toggle:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.15);
-        }
-
-        .btn-back {
-            display: inline-flex; align-items: center; gap: 7px;
-            padding: 9px 16px;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 10px;
-            color: var(--text-main); text-decoration: none;
-            font-weight: 600; font-size: 0.82rem;
-            transition: all 0.2s ease;
-            font-family: var(--font-main);
-            letter-spacing: -0.01em;
-        }
-        .btn-back:hover {
-            background: rgba(255,255,255,0.08);
-            border-color: rgba(255,255,255,0.15);
-        }
-
-        /* ════ SECTION TITLES (Settings-Style) ════ */
-        .fk-section-title {
-            display: flex; align-items: center; gap: 10px;
-            margin-bottom: 1rem;
-            margin-top: 0.5rem;
-        }
-        .fk-section-title::before {
-            content: '';
-            width: 3px;
-            height: 14px;
-            background: rgba(255,255,255,0.25);
-            border-radius: 2px;
-            flex-shrink: 0;
-        }
-        .fk-section-title-text {
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-        .fk-section-tag {
-            font-size: 0.65rem;
-            font-weight: 600;
-            letter-spacing: 0.02em;
-            color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.1);
-            border: 1px solid rgba(var(--primary-rgb), 0.18);
-            padding: 3px 9px;
-            border-radius: 999px;
-        }
-
-        /* ════ PENDEL RING SECTION ════ */
-        .fk-ring-section {
-            display: grid;
-            grid-template-columns: 220px 1fr;
-            gap: 0.85rem;
-            margin-top: 1rem;
-            align-items: stretch;
-        }
-
-        .fk-ring-panel {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 14px;
-            padding: 1.25rem 1.25rem 1.4rem;
-            display: flex; flex-direction: column; align-items: center;
-            justify-content: center; gap: 0.8rem;
-            transition: border-color 0.2s ease;
-        }
-        .fk-ring-panel:hover { border-color: rgba(255,255,255,0.12); }
-
-        .fk-ring-eyebrow {
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            letter-spacing: -0.01em;
-        }
-
-        .fk-ring-wrap {
-            width: 130px; height: 130px;
-        }
-
-        .fk-ring-svg {
-            width: 100%; height: 100%;
-        }
-
-        .fk-ring-track { stroke: rgba(255,255,255,0.06); stroke-width: 7; }
-        .fk-ring-glow  { stroke: rgba(var(--primary-rgb), 0.08); stroke-width: 10; filter: blur(2px); }
-
-        .fk-ring-progress {
-            stroke: var(--primary); stroke-width: 7;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.75s cubic-bezier(0.4,0,0.2,1);
-        }
-
-        .fk-ring-pct {
-            font-family: var(--font-main); font-size: 22px;
-            font-weight: 700; fill: var(--text-main); text-anchor: middle;
-            letter-spacing: -0.03em;
-        }
-
-        .fk-ring-unit {
-            font-family: var(--font-main); font-size: 9px;
-            font-weight: 600; fill: var(--text-muted);
-            text-anchor: middle; letter-spacing: 0.08em;
-        }
-
-        .fk-ring-meta {
-            font-size: 0.78rem;
-            color: var(--text-muted); text-align: center;
-            letter-spacing: -0.01em;
-        }
-
-        @media (max-width: 700px) {
-            .fk-ring-section { grid-template-columns: 1fr; }
-            .fk-ring-panel { flex-direction: row; justify-content: flex-start; gap: 1.25rem; padding: 1.25rem; }
-            .fk-ring-panel > .fk-ring-eyebrow { display: none; }
-            .fk-ring-wrap { width: 100px; height: 100px; flex-shrink: 0; }
-            .fk-ring-meta { text-align: left; }
-        }
-
-        @media (max-width: 600px) {
-            .page-wrap { padding: 1.25rem 1rem 3.5rem; }
-            .fk-header { padding: 1.25rem; border-radius: 14px; }
-            .page-title { font-size: 1.35rem; }
-            .header-right { width: 100%; justify-content: flex-end; }
-            .btn-back { padding: 8px 14px; }
-        }
+        a { color: var(--primary); }
+        ::selection { background: rgba(var(--primary-rgb), 0.3); }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.3.6"></script>
 </head>
 <body>
-    <div class="bg-mesh">
-        <div class="bg-orb o1"></div>
-        <div class="bg-orb o2"></div>
-        <div class="bg-orb o3"></div>
-    </div>
 
-    <div class="page-wrap">
+<main class="fk-wrap">
 
-        <!-- HEADER -->
-        <div class="fk-header">
-            <div class="fk-header-left">
-                <div class="fk-status-badge">
-                    <span class="fk-badge-dot"></span>
-                    ROUTE ANALYTICS
-                </div>
-                <div class="brand">
-                    <span>MyWorkLog</span>
-                    <span class="brand-sep">/</span>
-                    <span>Fahrtkosten</span>
-                </div>
-                <div class="fk-title-row">
-                    <svg class="fk-title-icon" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M7 22l3.5-10h15L29 22"/>
-                        <rect x="3" y="22" width="30" height="8" rx="2"/>
-                        <circle cx="10" cy="30" r="2.5" fill="currentColor" stroke="none"/>
-                        <circle cx="26" cy="30" r="2.5" fill="currentColor" stroke="none"/>
-                        <path d="M3 22h30" stroke-opacity="0.35"/>
-                        <path d="M11 12h5M20 12h5" stroke-opacity="0.45"/>
-                    </svg>
-                    <h1 class="page-title">Fahrtkosten-Tracker</h1>
-                </div>
-                <p class="page-subtitle">Routing · Adresssuche · ÖPNV · Spritkosten · Pendlerpauschale</p>
-            </div>
-            <div class="header-right">
-                <button class="theme-toggle" id="themeToggle" onclick="fkToggleTheme()" title="Theme wechseln">🌙</button>
-                <a href="/" class="btn-back">← Dashboard</a>
-            </div>
+    <!-- ═══ Kopf ═══════════════════════════════════════════════════ -->
+    <header class="fk-head">
+        <div class="fk-head__id">
+            <p class="fk-eyebrow">MyWorkLog</p>
+            <h1 class="fk-head__title">Fahrtkosten</h1>
+            <p class="fk-head__sub">Was der Weg zur Arbeit kostet und was davon absetzbar ist.</p>
         </div>
-
-        <!-- OFFLINE FALLBACK -->
-        <div class="offline-fallback" id="fk-offline-fallback">
-            <div class="offline-icon">📡</div>
-            <div class="offline-text">Karte & Routing im Offline-Modus nicht verfügbar — gib die Strecke manuell ein:</div>
-            <div class="offline-input-wrap">
-                <label for="fk-offline-km">Einfache Strecke (km)</label>
-                <input type="number" id="fk-offline-km" class="calc-input" min="0" step="0.1" placeholder="z.B. 15.3">
-            </div>
+        <div class="fk-head__acts">
+            <button type="button" class="fk-icon-btn" id="themeToggle" onclick="fkToggleTheme()" aria-label="Helles oder dunkles Design">
+                <svg class="fk-i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                </svg>
+                <svg class="fk-i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                </svg>
+            </button>
+            <a href="/" class="fk-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+                </svg>
+                <span>Zur App</span>
+            </a>
         </div>
+    </header>
 
-        <!-- MAIN CONTENT (online) -->
-        <div id="fk-map-section">
 
-            <!-- TRANSPORT MODE TABS -->
-            <div class="mode-tabs">
-                <button class="mode-tab active" data-mode="car">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 17H3a2 2 0 01-2-2V9l3-6h16l3 6v6a2 2 0 01-2 2h-2"/>
-                        <circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/>
-                    </svg>
-                    Auto
-                </button>
-                <button class="mode-tab" data-mode="bike">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/>
-                        <path d="M15 6h1a2 2 0 010 4h-1l-3 7.5M5.5 17.5L8 13l4-6h3M11 10l3 7.5"/>
-                    </svg>
-                    Fahrrad
-                </button>
-                <button class="mode-tab" data-mode="walk">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="4" r="1"/>
-                        <path d="M6.5 20.5l2.5-6 2.5 2.5 2-6.5M17.5 20.5l-2-5-2.5 2.5-2-5"/>
-                        <path d="M9 11l3-4 3 4"/>
-                    </svg>
-                    Zu Fuß
-                </button>
-                <button class="mode-tab" data-mode="transit">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="4" y="3" width="16" height="13" rx="2"/>
-                        <path d="M4 10h16M9 3v7M15 3v7"/>
-                        <circle cx="9" cy="19" r="2"/><circle cx="15" cy="19" r="2"/>
-                        <path d="M9 21h6M7 17l2 2M17 17l-2 2"/>
-                    </svg>
-                    ÖPNV
-                </button>
-            </div>
-
-            <!-- ADDRESS SEARCH -->
-            <div class="search-row">
-                <div class="search-field">
-                    <label><span class="dot home"></span> Startadresse (Zuhause)</label>
-                    <input type="text" id="fk-search-home" class="search-input" placeholder="Straße, Stadt eingeben..." autocomplete="off">
-                    <button class="search-clear" id="fk-search-home-clear" title="Löschen">✕</button>
-                    <div class="search-results" id="fk-search-home-results"></div>
-                </div>
-                <div class="search-field">
-                    <label><span class="dot work"></span> Zieladresse (Betrieb / Berufsschule)</label>
-                    <input type="text" id="fk-search-work" class="search-input" placeholder="Straße, Stadt eingeben..." autocomplete="off">
-                    <button class="search-clear" id="fk-search-work-clear" title="Löschen">✕</button>
-                    <div class="search-results" id="fk-search-work-results"></div>
-                </div>
-            </div>
-
-            <!-- MAP -->
-            <div class="map-wrapper">
-                <div class="map-overlay-top">
-                    <div class="map-chip route-info" id="fk-map-route-chip" style="display:none;"></div>
-                </div>
-                <div class="map-actions">
-                    <button class="map-action-btn" onclick="fkResetMarkers()" title="Alles zurücksetzen">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-                            <path d="M10 11v6M14 11v6"/>
-                        </svg>
-                        Reset
-                    </button>
-                </div>
-                <div id="fk-map" class="map-container"></div>
-                <div class="marker-legend">
-                    <div class="legend-item">
-                        <span class="legend-dot home"></span>
-                        <span>Zuhause</span>
-                        <span class="legend-coords" id="fk-legend-home-coords">nicht gesetzt</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-dot work"></span>
-                        <span>Ziel</span>
-                        <span class="legend-coords" id="fk-legend-work-coords">nicht gesetzt</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ROUTE LOADING -->
-            <div class="route-loading" id="fk-route-loading">
-                <div class="spinner"></div>
-                <span>Route wird berechnet...</span>
-            </div>
-
-            <!-- PENDEL RING + ROUTE STATS -->
-            <div class="fk-ring-section">
-
-                <!-- Pendel Ring -->
-                <div class="fk-ring-panel">
-                    <div class="fk-ring-eyebrow">Pendel-Distanz</div>
-                    <div class="fk-ring-wrap">
-                        <svg class="fk-ring-svg" viewBox="0 0 120 120">
-                            <circle class="fk-ring-track" cx="60" cy="60" r="52"/>
-                            <circle class="fk-ring-glow"  cx="60" cy="60" r="52"/>
-                            <circle id="fkRingProgress" class="fk-ring-progress"
-                                cx="60" cy="60" r="52"
-                                stroke-dasharray="326.7"
-                                stroke-dashoffset="326.7"/>
-                            <text x="60" y="56" class="fk-ring-pct" id="fkRingKm">—</text>
-                            <text x="60" y="71" class="fk-ring-unit">KM / TAG</text>
-                        </svg>
-                    </div>
-                    <div class="fk-ring-meta" id="fkRingMeta">Setze Start &amp; Ziel</div>
-                </div>
-
-                <!-- 4 Stat Cards -->
-                <div class="route-stats">
-                    <div class="route-stat">
-                        <div class="rs-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 3h18v3H3zM3 18h18v3H3z"/>
-                                <path d="M12 6v12M7 6l-4 6 4 6M17 6l4 6-4 6"/>
-                            </svg>
-                        </div>
-                        <div class="rs-value" id="fk-rs-distance">—</div>
-                        <div class="rs-label">Strecke einfach</div>
-                    </div>
-                    <div class="route-stat">
-                        <div class="rs-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="9"/>
-                                <polyline points="12 7 12 12 15 14"/>
-                            </svg>
-                        </div>
-                        <div class="rs-value" id="fk-rs-duration">—</div>
-                        <div class="rs-label">Fahrzeit</div>
-                    </div>
-                    <div class="route-stat highlight">
-                        <div class="rs-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="16" rx="2"/>
-                                <path d="M16 2v4M8 2v4M3 10h18"/>
-                                <path d="M8 14h2M14 14h2M8 18h2M14 18h2"/>
-                            </svg>
-                        </div>
-                        <div class="rs-value" id="fk-rs-total">—</div>
-                        <div class="rs-label">Gesamt / Monat</div>
-                    </div>
-                    <div class="route-stat">
-                        <div class="rs-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 22V8l3-5h9l3 5v14"/>
-                                <path d="M11 22v-5h2v5"/>
-                                <rect x="6" y="10" width="3" height="3"/><rect x="15" y="10" width="3" height="3"/>
-                                <path d="M18 10h3v5l-3 3"/>
-                            </svg>
-                        </div>
-                        <div class="rs-value" id="fk-rs-fuel">—</div>
-                        <div class="rs-label">Spritkosten / Monat</div>
-                    </div>
-                </div>
-            </div>
+    <!-- ═══ 1 · Befund ═════════════════════════════════════════════ -->
+    <section class="fk-verdict">
+        <div class="fk-verdict__lead">
+            <p class="fk-verdict__kicker">Absetzbar im Jahr</p>
+            <p class="fk-verdict__num" id="fkYearValue">&mdash;</p>
+            <p class="fk-verdict__say" id="fkVerdictSay">Setze Start und Ziel, dann steht hier, was die Pendlerpauschale über zwölf Monate ergibt.</p>
         </div>
+        <dl class="fk-facts">
+            <div class="fk-fact">
+                <dt class="fk-fact__k">Strecke einfach</dt>
+                <dd class="fk-fact__v" id="fkFactDist">&mdash;</dd>
+            </div>
+            <div class="fk-fact">
+                <dt class="fk-fact__k">Fahrzeit einfach</dt>
+                <dd class="fk-fact__v" id="fkFactTime">&mdash;</dd>
+            </div>
+            <div class="fk-fact">
+                <dt class="fk-fact__k">Fahrten je Monat</dt>
+                <dd class="fk-fact__v" id="fkFactTrips">&mdash;</dd>
+            </div>
+            <div class="fk-fact">
+                <dt class="fk-fact__k">Spritkosten je Monat</dt>
+                <dd class="fk-fact__v" id="fkFactFuel">&mdash;</dd>
+            </div>
+        </dl>
+    </section>
 
-        <!-- CALCULATOR -->
-        <div class="calc-panel">
-            <div class="fk-section-title">
-                <span class="fk-section-title-text">Monatsrechner</span>
-                <span class="fk-section-tag">KALKULATION</span>
-            </div>
-            <div class="calc-grid">
-                <div class="calc-field">
-                    <label for="fk-days">Arbeitstage / Monat</label>
-                    <input type="number" id="fk-days" class="calc-input" min="0" max="31" step="1" placeholder="z.B. 20">
-                </div>
-                <div class="calc-field">
-                    <label for="fk-fuel-price">Spritpreis (€/L)</label>
-                    <input type="number" id="fk-fuel-price" class="calc-input" min="0" step="0.01" value="1.75">
-                </div>
-                <div class="calc-field">
-                    <label for="fk-consumption">Verbrauch (L/100km)</label>
-                    <input type="number" id="fk-consumption" class="calc-input" min="0" step="0.1" value="7.0">
-                </div>
-            </div>
+    <!-- Die Annahmen stehen als bedienbarer Satz da, nicht in einem Kasten
+         weiter unten: jede Zahl, die in die Summe oben eingeht, ist damit
+         sichtbar und aenderbar. -->
+    <p class="fk-assume">
+        <span class="fk-assume__lead">Gerechnet mit</span>
+        <input type="number" id="fk-days" class="fk-num-input" min="0" max="31" step="1" value="20" aria-label="Arbeitstage im Monat">
+        <span>Arbeitstagen im Monat</span>
+        <span class="fk-assume__grp" id="fkAssumeFuel">
+            <span class="fk-assume__sep">·</span>
+            <input type="number" id="fk-fuel-price" class="fk-num-input" min="0" step="0.01" value="1.75" aria-label="Spritpreis in Euro je Liter">
+            <span>&euro; je Liter</span>
+            <span class="fk-assume__sep">·</span>
+            <input type="number" id="fk-consumption" class="fk-num-input" min="0" step="0.1" value="7.0" aria-label="Verbrauch in Liter je 100 Kilometer">
+            <span>Liter je 100&nbsp;km</span>
+        </span>
+    </p>
 
-            <div class="result-grid">
-                <div class="result-card">
-                    <div class="rc-label">Gesamtstrecke</div>
-                    <div class="rc-value" id="fk-total-km">—</div>
-                    <div class="rc-sub">Hin + Rück</div>
-                </div>
-                <div class="result-card">
-                    <div class="rc-label">Fahrten</div>
-                    <div class="rc-value" id="fk-total-trips">—</div>
-                    <div class="rc-sub">pro Monat</div>
-                </div>
-                <div class="result-card">
-                    <div class="rc-label">Spritkosten</div>
-                    <div class="rc-value" id="fk-fuel-cost">—</div>
-                    <div class="rc-sub">pro Monat</div>
-                </div>
-                <div class="result-card highlight">
-                    <div class="rc-label">Pendlerpauschale</div>
-                    <div class="rc-value" id="fk-pauschale">—</div>
-                    <div class="rc-sub">absetzbar / Monat</div>
-                </div>
-            </div>
 
-            <div class="save-row">
-                <button class="btn-save" id="fk-save-btn" onclick="fkSaveMonth()">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
-                        <polyline points="17 21 17 13 7 13 7 21"/>
-                        <polyline points="7 3 7 8 15 8"/>
-                    </svg>
-                    Monat speichern
-                </button>
-                <span class="save-hint">Speichert den aktuellen Monat in die Historie</span>
-            </div>
-        </div>
-
-        <!-- CO₂ COMPARISON -->
-        <div class="co2-section">
-            <div class="fk-section-title">
-                <span class="fk-section-title-text">CO₂-Vergleich</span>
-                <span class="fk-section-tag">EINFACHE STRECKE</span>
-            </div>
-            <div class="co2-bar-row">
-                <span class="co2-bar-label">Auto</span>
-                <div class="co2-bar-track"><div class="co2-bar-fill car" id="fk-co2-car" style="width:0%">—</div></div>
-            </div>
-            <div class="co2-bar-row">
-                <span class="co2-bar-label">E-Auto</span>
-                <div class="co2-bar-track"><div class="co2-bar-fill ecar" id="fk-co2-ecar" style="width:0%">—</div></div>
-            </div>
-            <div class="co2-bar-row">
-                <span class="co2-bar-label">Bus</span>
-                <div class="co2-bar-track"><div class="co2-bar-fill bus" id="fk-co2-bus" style="width:0%">—</div></div>
-            </div>
-            <div class="co2-bar-row">
-                <span class="co2-bar-label">Zug</span>
-                <div class="co2-bar-track"><div class="co2-bar-fill train" id="fk-co2-train" style="width:0%">—</div></div>
-            </div>
-            <div class="co2-bar-row">
-                <span class="co2-bar-label">Fahrrad</span>
-                <div class="co2-bar-track"><div class="co2-bar-fill bike" id="fk-co2-bike" style="width:0%">0 g</div></div>
-            </div>
-        </div>
-
-        <!-- TRANSPORT LINKS -->
-        <div class="transport-links">
-            <div class="fk-section-title">
-                <span class="fk-section-title-text">Tickets &amp; Verbindungen</span>
-                <span class="fk-section-tag">EXTERNE LINKS</span>
-            </div>
-            <div class="transport-grid" id="fk-transport-links">
-                <a href="https://www.bahn.de/" target="_blank" rel="noopener noreferrer" class="transport-card">
-                    <div class="tc-icon-wrap">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="4" y="3" width="16" height="13" rx="2"/><path d="M4 10h16M9 3v7M15 3v7"/>
-                            <circle cx="9" cy="19" r="2"/><circle cx="15" cy="19" r="2"/>
-                            <path d="M7 17l2 2M17 17l-2 2"/>
-                        </svg>
-                    </div>
-                    <div class="tc-info"><div class="tc-name">Deutsche Bahn</div><div class="tc-desc">Setze Start &amp; Ziel für Direkt-Link</div></div>
-                    <span class="tc-arrow">→</span>
-                </a>
-                <a href="https://www.google.com/maps" target="_blank" rel="noopener noreferrer" class="transport-card">
-                    <div class="tc-icon-wrap">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-                        </svg>
-                    </div>
-                    <div class="tc-info"><div class="tc-name">Google Maps</div><div class="tc-desc">Alle Verkehrsmittel</div></div>
-                    <span class="tc-arrow">→</span>
-                </a>
-                <a href="https://www.flixbus.de/" target="_blank" rel="noopener noreferrer" class="transport-card">
-                    <div class="tc-icon-wrap">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M5 17H3a2 2 0 01-2-2V9l3-6h16l3 6v6a2 2 0 01-2 2h-2"/>
-                            <circle cx="7.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="17.5" r="2.5"/>
-                        </svg>
-                    </div>
-                    <div class="tc-info"><div class="tc-name">FlixBus</div><div class="tc-desc">Fernbus-Verbindungen</div></div>
-                    <span class="tc-arrow">→</span>
-                </a>
-                <a href="https://www.blablacar.de/" target="_blank" rel="noopener noreferrer" class="transport-card">
-                    <div class="tc-icon-wrap">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                            <circle cx="9" cy="7" r="4"/>
-                            <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>
-                        </svg>
-                    </div>
-                    <div class="tc-info"><div class="tc-name">BlaBlaCar</div><div class="tc-desc">Mitfahrgelegenheit</div></div>
-                    <span class="tc-arrow">→</span>
-                </a>
-                <a href="https://www.komoot.com/" target="_blank" rel="noopener noreferrer" class="transport-card">
-                    <div class="tc-icon-wrap">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/>
-                            <path d="M15 6h1a2 2 0 010 4h-1l-3 7.5M5.5 17.5L8 13l4-6h3M11 10l3 7.5"/>
-                        </svg>
-                    </div>
-                    <div class="tc-info"><div class="tc-name">Komoot</div><div class="tc-desc">Fahrrad-Route planen</div></div>
-                    <span class="tc-arrow">→</span>
-                </a>
-                <a href="https://deutschlandticket.de/" target="_blank" rel="noopener noreferrer" class="transport-card">
-                    <div class="tc-icon-wrap">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="6" width="20" height="14" rx="2"/>
-                            <path d="M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
-                            <line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>
-                        </svg>
-                    </div>
-                    <div class="tc-info"><div class="tc-name">Deutschlandticket</div><div class="tc-desc">49€ Monatsticket</div></div>
-                    <span class="tc-arrow">→</span>
-                </a>
-            </div>
-        </div>
-
-        <!-- INFO BANNER -->
-        <div class="info-banner">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/>
+    <!-- ═══ Offline ════════════════════════════════════════════════ -->
+    <div class="fk-offline" id="fk-offline-fallback">
+        <span class="fk-offline__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/>
+                <path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/>
+                <path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/>
+                <path d="m2 2 20 20"/>
             </svg>
-            <div>
-                <strong>Pendlerpauschale 2024–2026:</strong> 30 ct/km für die ersten 20 km, danach 38 ct/km (einfache Strecke, kürzeste Straßenverbindung).
-                Routing via <strong>OSRM</strong>, Adresssuche via <strong>Nominatim/OpenStreetMap</strong>. CO₂-Werte sind Durchschnitte für Deutschland (UBA).
-            </div>
+        </span>
+        <div class="fk-offline__body">
+            <p class="fk-offline__text">Ohne Netz gibt es weder Karte noch Routing. Trag die einfache Strecke von Hand ein, dann rechnet die Seite weiter.</p>
+            <label class="fk-offline__field" for="fk-offline-km">
+                <span>Einfache Strecke</span>
+                <input type="number" id="fk-offline-km" class="fk-num-input" min="0" step="0.1" placeholder="15,3">
+                <span>km</span>
+            </label>
         </div>
-
-        <!-- HISTORY -->
-        <div class="history-section">
-            <div class="fk-section-title">
-                <span class="fk-section-title-text">Monatshistorie</span>
-                <span class="fk-section-tag">GESPEICHERT</span>
-            </div>
-            <div class="history-wrap">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th>Monat</th>
-                            <th>Modus</th>
-                            <th>Tage</th>
-                            <th>Strecke</th>
-                            <th>Gesamt</th>
-                            <th>Sprit</th>
-                            <th>Pauschale</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="fk-history-body"></tbody>
-                </table>
-                <div class="empty-state" id="fk-history-empty">
-                    <div class="empty-icon">
-                        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.22;">
-                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                        </svg>
-                    </div>
-                    <div>Noch keine Monate gespeichert — berechne oben und klicke "Monat speichern"</div>
-                </div>
-                <div class="history-summary" id="fk-history-summary" style="display:none;"></div>
-            </div>
-        </div>
-
     </div>
 
-    <script src="/Assets/js/fahrtkosten.js?v=6.3.6"></script>
 
-    <!-- Pendel-Ring updater -->
-    <script>
-    (function() {
-        var MAX_KM = 80;
+    <!-- ═══ 2 · Strecke ════════════════════════════════════════════ -->
+    <section class="fk-act" id="fk-map-section">
+        <div class="fk-act__head">
+            <div class="fk-act__id">
+                <p class="fk-eyebrow">Strecke</p>
+                <h2 class="fk-act__title">Von zuhause zum Ziel</h2>
+                <p class="fk-act__sub">Zwei Adressen suchen oder direkt in die Karte tippen. Gerechnet wird auf echten Straßen, nicht in Luftlinie.</p>
+            </div>
+            <div class="fk-seg" role="group" aria-label="Verkehrsmittel">
+                <button type="button" class="fk-seg__btn active" data-mode="car">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/>
+                        <circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>
+                    </svg>
+                    <span>Auto</span>
+                </button>
+                <button type="button" class="fk-seg__btn" data-mode="bike">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/>
+                        <circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/>
+                    </svg>
+                    <span>Fahrrad</span>
+                </button>
+                <button type="button" class="fk-seg__btn" data-mode="walk">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="5" r="1"/><path d="m9 20 3-6 3 6"/>
+                        <path d="m6 8 6 2 6-2"/><path d="M12 10v4"/>
+                    </svg>
+                    <span>Zu Fuß</span>
+                </button>
+                <button type="button" class="fk-seg__btn" data-mode="transit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/>
+                        <path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3"/>
+                        <circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/>
+                    </svg>
+                    <span>ÖPNV</span>
+                </button>
+            </div>
+        </div>
 
-        function fkSetRing(km) {
-            var ring  = document.getElementById('fkRingProgress');
-            var label = document.getElementById('fkRingKm');
-            var meta  = document.getElementById('fkRingMeta');
-            if (!ring || !label) return;
-            var pct    = Math.min(km / MAX_KM, 1);
-            var circ   = 326.7;
-            ring.style.strokeDashoffset = circ - pct * circ;
-            var color = km <= 15 ? '#10b981' : km <= 35 ? '#f59e0b' : '#ef4444';
-            ring.style.stroke = color;
-            ring.style.filter = 'drop-shadow(0 0 10px ' + color + '66)';
-            label.textContent = km % 1 === 0 ? String(km) : km.toFixed(1);
-            label.style.fill = color;
-            if (meta) meta.textContent = km <= 15 ? 'Kurze Pendelstrecke ✓' : km <= 35 ? 'Mittlere Pendelstrecke' : 'Lange Pendelstrecke';
-        }
+        <div class="fk-fields">
+            <div class="fk-field">
+                <label class="fk-field__label" for="fk-search-home">
+                    <span class="fk-pin" aria-hidden="true"></span>
+                    <span>Start &mdash; zuhause</span>
+                </label>
+                <input type="text" id="fk-search-home" class="fk-input" placeholder="Straße und Stadt" autocomplete="off">
+                <button type="button" class="fk-clear" id="fk-search-home-clear" aria-label="Startadresse löschen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                    </svg>
+                </button>
+                <div class="fk-results" id="fk-search-home-results"></div>
+            </div>
+            <div class="fk-field">
+                <label class="fk-field__label" for="fk-search-work">
+                    <span class="fk-pin is-work" aria-hidden="true"></span>
+                    <span>Ziel &mdash; Betrieb oder Berufsschule</span>
+                </label>
+                <input type="text" id="fk-search-work" class="fk-input" placeholder="Straße und Stadt" autocomplete="off">
+                <button type="button" class="fk-clear" id="fk-search-work-clear" aria-label="Zieladresse löschen">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                    </svg>
+                </button>
+                <div class="fk-results" id="fk-search-work-results"></div>
+            </div>
+        </div>
 
-        window.fkUpdatePendelRing = fkSetRing;
+        <div class="fk-map-frame">
+            <div class="fk-map-chip" id="fk-map-route-chip" style="display:none;"></div>
+            <div id="fk-map" class="fk-map"></div>
+            <p class="fk-map-hint">In die Karte tippen setzt einen Punkt. Marker lassen sich ziehen.</p>
+        </div>
 
-        var distEl = document.getElementById('fk-rs-distance');
-        if (distEl) {
-            new MutationObserver(function() {
-                var raw = distEl.textContent.replace(/[^0-9,\.]/g, '').replace(',', '.');
-                var km = parseFloat(raw);
-                if (!isNaN(km) && km > 0) fkSetRing(km);
-            }).observe(distEl, { childList: true, characterData: true, subtree: true });
-        }
-    })();
-    </script>
+        <div class="fk-loading" id="fk-route-loading">
+            <span class="fk-spin" aria-hidden="true"></span>
+            <span>Route wird berechnet</span>
+        </div>
 
-    <!-- Theme-Farbe-Sync: liest User-Akzent aus tg_pro_data.settings.theme -->
-    <script>
-    (function() {
-        function applyTheme(hex) {
-            if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
-            var r = parseInt(hex.slice(1,3), 16);
-            var g = parseInt(hex.slice(3,5), 16);
-            var b = parseInt(hex.slice(5,7), 16);
-            document.documentElement.style.setProperty('--primary', hex);
-            document.documentElement.style.setProperty('--primary-rgb', r + ',' + g + ',' + b);
-            document.documentElement.style.setProperty('--primary-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
-        }
-        function syncTheme() {
-            try {
-                var raw = localStorage.getItem('tg_pro_data');
-                if (!raw) return;
-                var data = JSON.parse(raw);
-                if (data && data.settings && data.settings.theme) applyTheme(data.settings.theme);
-            } catch (e) { /* ignore */ }
-        }
-        syncTheme();
-        window.addEventListener('storage', function(e) { if (e.key === 'tg_pro_data') syncTheme(); });
-        document.addEventListener('visibilitychange', function() { if (!document.hidden) syncTheme(); });
-    })();
-    </script>
+        <!-- Nur bei Fahrrad/Zu Fuß/ÖPNV sichtbar, Text kommt aus fahrtkosten.js -->
+        <p class="fk-mode-note" id="fkModeNote" style="display:none;"></p>
+
+        <div class="fk-map-foot">
+            <div class="fk-marks">
+                <span class="fk-mark">
+                    <span class="fk-pin" aria-hidden="true"></span>
+                    <span>Start</span>
+                    <span class="fk-mark__coords is-unset" id="fk-legend-home-coords">nicht gesetzt</span>
+                </span>
+                <span class="fk-mark">
+                    <span class="fk-pin is-work" aria-hidden="true"></span>
+                    <span>Ziel</span>
+                    <span class="fk-mark__coords is-unset" id="fk-legend-work-coords">nicht gesetzt</span>
+                </span>
+            </div>
+            <button type="button" class="fk-ghost" onclick="fkResetMarkers()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+                </svg>
+                <span>Zurücksetzen</span>
+            </button>
+        </div>
+    </section>
+
+
+    <!-- ═══ 3 · Die Staffel (Signature) ════════════════════════════ -->
+    <!-- Das einzige Fortschrittsbild der Seite. Sein Nenner ist die
+         gesetzliche 20-km-Grenze, nicht eine gegriffene Zahl. -->
+    <section class="fk-act">
+        <div class="fk-act__head">
+            <div class="fk-act__id">
+                <p class="fk-eyebrow">Pendlerpauschale</p>
+                <h2 class="fk-act__title">30 Cent bis Kilometer 20, danach 38</h2>
+                <p class="fk-act__sub">Die Staffel zählt die einfache Strecke, nicht Hin und Zurück. Der Balken zeigt, wie deine Strecke auf die beiden Sätze fällt.</p>
+            </div>
+        </div>
+
+        <div class="fk-tier">
+            <div class="fk-tier__bar" id="fkTierBar">
+                <div class="fk-tier__empty" id="fkTierEmpty">Ohne Strecke gibt es nichts zu staffeln.</div>
+                <div class="fk-tier__seg t1" id="fkTier1" style="display:none;"><span class="fk-tier__cap" id="fkTier1Cap"></span></div>
+                <div class="fk-tier__seg t2" id="fkTier2" style="display:none;"><span class="fk-tier__cap" id="fkTier2Cap"></span></div>
+            </div>
+            <div class="fk-tier__scale">
+                <span class="fk-tier__tick at-start">0</span>
+                <span class="fk-tier__tick at-mark is-off" id="fkTierMark">20 km</span>
+                <span class="fk-tier__tick at-end" id="fkTierEnd">&mdash;</span>
+            </div>
+        </div>
+
+        <p class="fk-tier__note" id="fkTierNote">Die Pauschale ist ein Abzug vom zu versteuernden Einkommen, keine Auszahlung. Was am Ende zurückkommt, hängt vom Steuersatz ab.</p>
+
+        <dl class="fk-facts fk-facts--3">
+            <div class="fk-fact">
+                <dt class="fk-fact__k">Je Arbeitstag</dt>
+                <dd class="fk-fact__v" id="fkPauschaleDay">&mdash;</dd>
+            </div>
+            <div class="fk-fact">
+                <dt class="fk-fact__k">Je Monat</dt>
+                <dd class="fk-fact__v" id="fkPauschaleMonth">&mdash;</dd>
+            </div>
+            <div class="fk-fact">
+                <dt class="fk-fact__k">Gefahren je Monat</dt>
+                <dd class="fk-fact__v" id="fkTotalKm">&mdash;</dd>
+            </div>
+        </dl>
+    </section>
+
+
+    <!-- ═══ 4 · CO₂ ════════════════════════════════════════════════ -->
+    <section class="fk-act">
+        <div class="fk-act__head">
+            <div class="fk-act__id">
+                <p class="fk-eyebrow">CO₂</p>
+                <h2 class="fk-act__title">Dieselbe Strecke, fünf Verkehrsmittel</h2>
+                <p class="fk-act__sub">Gramm CO₂ für die einfache Strecke, nach den Durchschnittswerten des Umweltbundesamtes für Deutschland.</p>
+            </div>
+        </div>
+        <div class="fk-rank" id="fkCo2List"></div>
+        <p class="fk-rank__foot" id="fkCo2Note">Sobald eine Strecke steht, stehen hier die Werte.</p>
+    </section>
+
+
+    <!-- ═══ 5 · Monate ═════════════════════════════════════════════ -->
+    <section class="fk-act">
+        <div class="fk-act__head">
+            <div class="fk-act__id">
+                <p class="fk-eyebrow">Historie</p>
+                <h2 class="fk-act__title">Monat für Monat festhalten</h2>
+                <p class="fk-act__sub">Gespeichert wird der aktuelle Monat mit Strecke, Tagen und Pauschale. Ein zweites Speichern im selben Monat überschreibt den Eintrag.</p>
+            </div>
+        </div>
+
+        <div class="fk-save-row">
+            <button type="button" class="fk-btn" id="fk-save-btn" onclick="fkSaveMonth()" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>
+                    <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/>
+                </svg>
+                <span id="fkSaveLabel">Diesen Monat speichern</span>
+            </button>
+            <span class="fk-save-hint" id="fkSaveHint">Braucht eine Strecke und mindestens einen Arbeitstag.</span>
+        </div>
+
+        <div class="fk-table-wrap">
+            <table class="fk-table">
+                <thead>
+                    <tr>
+                        <th>Monat</th>
+                        <th>Mittel</th>
+                        <th class="num">Tage</th>
+                        <th class="num">Einfach</th>
+                        <th class="num">Gefahren</th>
+                        <th class="num">Sprit</th>
+                        <th class="num">Pauschale</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="fk-history-body"></tbody>
+            </table>
+        </div>
+        <p class="fk-empty" id="fk-history-empty">Noch kein Monat gespeichert. Rechne oben eine Strecke aus und halte sie hier fest.</p>
+        <div class="fk-sum" id="fk-history-summary" style="display:none;"></div>
+    </section>
+
+
+    <!-- ═══ 6 · Verbindungen ═══════════════════════════════════════ -->
+    <section class="fk-act">
+        <div class="fk-act__head">
+            <div class="fk-act__id">
+                <p class="fk-eyebrow">Extern</p>
+                <h2 class="fk-act__title">Tickets und Verbindungen</h2>
+                <p class="fk-act__sub">Öffnet in einem neuen Tab. Sobald Start und Ziel stehen, gehen die ersten Links direkt auf deine Strecke.</p>
+            </div>
+        </div>
+        <div class="fk-links" id="fk-transport-links"></div>
+    </section>
+
+
+    <!-- ═══ Kleingedrucktes ════════════════════════════════════════ -->
+    <section class="fk-notes">
+        <div class="fk-note">
+            <p class="fk-note__k">Pendlerpauschale</p>
+            <p class="fk-note__t">Für 2024 bis 2026 gelten <strong>30 ct/km</strong> für die ersten 20 Kilometer und <strong>38 ct/km</strong> ab dem 21. Kilometer. Maßgeblich ist die kürzeste Straßenverbindung der einfachen Strecke.</p>
+        </div>
+        <div class="fk-note">
+            <p class="fk-note__k">Woher die Zahlen kommen</p>
+            <p class="fk-note__t">Routing über <strong>OSRM</strong>, Adresssuche über <strong>Nominatim</strong> auf OpenStreetMap-Daten. Die CO₂-Werte sind Durchschnitte des Umweltbundesamtes.</p>
+        </div>
+        <div class="fk-note">
+            <p class="fk-note__k">Wo das gespeichert wird</p>
+            <p class="fk-note__t">Adressen, Einstellungen und Monate liegen <strong>nur in diesem Browser</strong>. Adressen gehen zur Suche an Nominatim, sonst verlässt nichts das Gerät.</p>
+        </div>
+    </section>
+
+</main>
+
+<div id="page-footer"></div>
+
+<script src="/Assets/js/fahrtkosten.js?v=6.3.8"></script>
+
+<script>
+    fetch('/pages/footer/footer.html')
+        .then(r => r.text())
+        .then(html => {
+            const ph = document.getElementById('page-footer');
+            if (!ph) return;
+            const tmpl = document.createElement('template');
+            tmpl.innerHTML = html;
+            ph.replaceWith(tmpl.content);
+            if (typeof loadAppVersion === 'function') loadAppVersion();
+        });
+</script>
+
+<!-- Theme-Farbe-Sync: liest User-Akzent aus tg_pro_data.settings.theme -->
+<script>
+(function() {
+    function applyTheme(hex) {
+        if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+        var r = parseInt(hex.slice(1,3), 16);
+        var g = parseInt(hex.slice(3,5), 16);
+        var b = parseInt(hex.slice(5,7), 16);
+        document.documentElement.style.setProperty('--primary', hex);
+        document.documentElement.style.setProperty('--primary-rgb', r + ',' + g + ',' + b);
+        document.documentElement.style.setProperty('--primary-dim', 'rgba(' + r + ',' + g + ',' + b + ',0.15)');
+    }
+    function syncTheme() {
+        try {
+            var raw = localStorage.getItem('tg_pro_data');
+            if (!raw) return;
+            var data = JSON.parse(raw);
+            if (data && data.settings && data.settings.theme) applyTheme(data.settings.theme);
+        } catch (e) { /* ignore */ }
+    }
+    syncTheme();
+    window.addEventListener('storage', function(e) { if (e.key === 'tg_pro_data') syncTheme(); });
+    document.addEventListener('visibilitychange', function() { if (!document.hidden) syncTheme(); });
+})();
+</script>
 
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
-<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
+<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
+</body>
 </html>
