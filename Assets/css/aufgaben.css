@@ -1,0 +1,1020 @@
+/* ═══ AUFGABEN — Dokumentsprache ══════════════════════════════════════
+   Dieselbe Sprache wie Fahrtkosten, Jahres- und Monatsansicht: Rubrik,
+   Titel, Beleg. Haarlinien statt Karten, Tabellenziffern, EIN Bild je
+   Abschnitt, jede Zahl genau einmal.
+
+   These der Seite: eine Aufgabenliste ist keine Sammlung, sondern ein
+   TAG. Oben steht deshalb der Tag als einziger Regler; alles darunter
+   gehorcht ihm. Was nicht zu diesem Tag gehoert, ist nicht da.
+
+   🔴 Was hier bewusst NICHT mehr steht:
+   - Keine Karten (`.cs` war eine Karte pro Kategorie mit eigenem Rahmen,
+     Radius 16 und Hover-Rahmenwechsel). Kategorien sind Rubriken eines
+     Dokuments, keine Objekte — sie bekommen eine Haarlinie, keinen Kasten.
+   - Keine Emoji-Badges. Sieben bunte Trophaeen in einer Reihe ueber der
+     eigentlichen Arbeit; die Farbe kam vom Betriebssystem, nicht vom
+     Theme. Ersetzt durch gemessenen Fortschritt im Abschnitt Verlauf.
+   - Kein schwebender Werkzeugbalken (`.ctrl`, position:fixed + blur).
+     Er lag am Handy ueber der letzten Zeile und trug zwei Knoepfe, die
+     beide "Reset" hiessen und Verschiedenes taten.
+   - Kein zweiter Ansichtsmodus. Es gab `viewMode` (auto/manual) UND
+     `currentWeekDayIndex` — zwei Regler fuer denselben Zustand, siehe
+     CLAUDE.md. Jetzt gibt es die Tagesleiste, sonst nichts.
+   - Kein Fortschrittsring, kein Prozentwert als Ueberschrift. Die Zahl,
+     die zaehlt, ist "wie viele sind noch offen" — die hat einen echten
+     Nenner (die fuer diesen Tag geplanten Aufgaben).                     */
+
+:root {
+    --ag-rule:    var(--border);
+    --ag-ink-03:  rgba(255, 255, 255, 0.035);
+    --ag-ink-06:  rgba(255, 255, 255, 0.065);
+    --ag-ink-10:  rgba(255, 255, 255, 0.11);
+    --ag-gap:     38px;
+    /* Prioritaeten. Bewusst nur drei Toene, und keiner davon ist der
+       Akzent: der Akzent gehoert dem erledigten Haken. */
+    --ag-high:    #ef4444;
+    --ag-mid:     #f59e0b;
+    --ag-low:     #64748b;
+}
+[data-theme="light"] {
+    --ag-ink-03:  rgba(7, 16, 35, 0.035);
+    --ag-ink-06:  rgba(7, 16, 35, 0.07);
+    --ag-ink-10:  rgba(7, 16, 35, 0.13);
+    --ag-low:     #94a3b8;
+}
+
+
+/* ─── Geruest ──────────────────────────────────────────────────────── */
+.ag-wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 34px 24px 72px;
+}
+
+.ag-eyebrow {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--primary);
+    margin: 0 0 7px;
+    line-height: 1;
+}
+
+/* Ein Abschnitt = eine Haarlinie oben. Das ist das ganze Geruest. */
+.ag-act {
+    border-top: 1px solid var(--ag-rule);
+    padding: 26px 0 var(--ag-gap);
+}
+.ag-act__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+.ag-act__id { min-width: 0; }
+.ag-act__title {
+    font-size: 1rem;
+    font-weight: 650;
+    letter-spacing: -0.018em;
+    color: var(--text-main);
+    line-height: 1.2;
+    margin: 0;
+}
+.ag-act__sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+    margin: 5px 0 0;
+    max-width: 62ch;
+}
+
+
+/* ─── Kopf ─────────────────────────────────────────────────────────── */
+.ag-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-bottom: 22px;
+}
+.ag-head__id { min-width: 0; }
+.ag-head__title {
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--text-main);
+    line-height: 1.05;
+    margin: 0;
+}
+.ag-head__sub {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 7px 0 0;
+    line-height: 1.4;
+}
+.ag-head__acts { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.ag-icon-btn {
+    width: 34px; height: 34px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--ag-rule);
+    border-radius: 9px;
+    background: var(--ag-ink-03);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+.ag-icon-btn:hover { color: var(--text-main); background: var(--hover-fill); border-color: var(--hover-border); }
+.ag-icon-btn:active { transform: scale(0.94); }
+.ag-icon-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.ag-icon-btn svg { width: 16px; height: 16px; display: block; }
+/* Genau eines der beiden Symbole ist sichtbar; welches, sagt das Theme. */
+.ag-icon-btn .ag-i-sun  { display: none; }
+[data-theme="light"] .ag-icon-btn .ag-i-sun  { display: block; }
+[data-theme="light"] .ag-icon-btn .ag-i-moon { display: none; }
+
+.ag-link {
+    display: inline-flex; align-items: center; gap: 7px;
+    height: 34px;
+    padding: 0 14px;
+    border: 1px solid var(--ag-rule);
+    border-radius: 9px;
+    background: var(--ag-ink-03);
+    color: var(--text-main);
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.ag-link:hover { background: var(--hover-fill); border-color: var(--hover-border); }
+.ag-link:active { transform: scale(0.97); }
+.ag-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.ag-link svg { width: 14px; height: 14px; display: block; flex-shrink: 0; }
+.ag-link--go { background: var(--primary); border-color: var(--primary); color: #fff; }
+/* filter:brightness rechnet die Schrift mit Richtung Weiss — color-mix
+   faerbt nur die Flaeche. Siehe CLAUDE.md, Hover-Regeln. */
+.ag-link--go:hover { background: color-mix(in srgb, var(--primary) 88%, #fff); border-color: color-mix(in srgb, var(--primary) 88%, #fff); }
+.ag-link--danger { color: var(--danger); }
+.ag-link--danger:hover { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.32); }
+
+
+/* ─── 1 · Die Tagesleiste: DER Regler ──────────────────────────────────
+   Sieben Spalten, eine Woche. Der gewaehlte Tag faerbt sich, der heutige
+   traegt eine Marke. Die Saeule unter der Zahl ist die geplante Last des
+   Tages, gemessen am staerksten Tag der Woche — ein echter Nenner.       */
+.ag-week {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    padding: 0 0 24px;
+}
+.ag-day {
+    appearance: none;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    padding: 9px 2px 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.ag-day:hover { background: var(--hover-fill); border-color: var(--hover-border); color: var(--text-main); }
+.ag-day:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.ag-day__name {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1;
+}
+.ag-day__num {
+    font-family: var(--font-num);
+    font-size: 1.12rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--text-main);
+}
+/* 🔴 Ein <span> ist inline und hat damit Hoehe 0 — dritter Fall dieser
+   Falle im Projekt (.mc-bar, .yv-month__fill). display:block ist Pflicht. */
+.ag-day__load {
+    display: block;
+    width: 22px;
+    height: 3px;
+    border-radius: 99px;
+    background: var(--ag-ink-10);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.ag-day__load i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 99px;
+    background: var(--text-muted);
+    transition: width 0.3s ease;
+}
+.ag-day.is-empty .ag-day__load { background: transparent; }
+.ag-day.is-today .ag-day__name { color: var(--primary); }
+.ag-day.is-sel {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+.ag-day.is-sel .ag-day__num,
+.ag-day.is-sel .ag-day__name { color: #fff; }
+.ag-day.is-sel .ag-day__load { background: rgba(255, 255, 255, 0.28); }
+.ag-day.is-sel .ag-day__load i { background: #fff; }
+
+
+/* ─── 2 · Befund: was heute noch aussteht ───────────────────────────── */
+.ag-verdict {
+    display: grid;
+    grid-template-columns: minmax(200px, 300px) 1fr;
+    gap: 36px;
+    align-items: center;
+    padding: 26px 0;
+    border-top: 1px solid var(--ag-rule);
+}
+.ag-verdict__kicker {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 8px;
+}
+.ag-verdict__num {
+    font-family: var(--font-num);
+    font-size: clamp(2.4rem, 5.5vw, 3.4rem);
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-main);
+    margin: 0;
+}
+.ag-verdict__num .ag-u {
+    font-size: 0.32em;
+    font-weight: 600;
+    margin-left: 0.2em;
+    letter-spacing: -0.01em;
+    color: var(--text-muted);
+}
+.ag-verdict.is-clear .ag-verdict__num { color: var(--success); }
+.ag-verdict__say {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin: 12px 0 0;
+    max-width: 44ch;
+}
+
+/* Der Balken hat einen echten Nenner: die fuer diesen Tag geplanten
+   Aufgaben. Nulllinie und Ende sind beziffert. */
+.ag-meter { min-width: 0; }
+.ag-meter__track {
+    display: block;
+    height: 8px;
+    border-radius: 99px;
+    background: var(--ag-ink-06);
+    overflow: hidden;
+}
+.ag-meter__fill {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 99px;
+    background: var(--primary);
+    transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ag-verdict.is-clear .ag-meter__fill { background: var(--success); }
+.ag-meter__ends {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 9px;
+}
+/* Zahl und Wort sind zwei Knoten, damit der i18n-Walk das Wort sieht. */
+.ag-meter__end { display: inline-flex; align-items: baseline; gap: 5px; }
+.ag-meter__end b {
+    font-family: var(--font-num);
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+}
+.ag-meter__end small { font-size: 0.68rem; font-weight: 500; color: var(--text-muted); }
+/* Ein Tag, der nicht heute ist, traegt keinen Erledigt-Zustand — der
+   wird nicht je Datum gefuehrt. Statt eines Balkens ohne Deckung steht
+   dort ein Satz. */
+.ag-meter.is-plan .ag-meter__track,
+.ag-meter.is-plan .ag-meter__ends { display: none; }
+.ag-meter__note {
+    display: none;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin: 0;
+    padding-left: 15px;
+    border-left: 2px solid var(--ag-ink-10);
+}
+.ag-meter.is-plan .ag-meter__note { display: block; }
+
+
+/* ─── 3 · Filter ───────────────────────────────────────────────────── */
+.ag-tools {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 18px 0 22px;
+    border-top: 1px solid var(--ag-rule);
+}
+.ag-seg {
+    display: inline-flex;
+    padding: 3px;
+    gap: 2px;
+    border: 1px solid var(--ag-rule);
+    border-radius: 10px;
+    background: var(--ag-ink-03);
+    flex-shrink: 0;
+}
+.ag-seg__btn {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 7px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+.ag-seg__btn:hover { color: var(--text-main); background: var(--hover-fill); }
+.ag-seg__btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.ag-seg__btn.is-on { background: var(--primary); color: #fff; }
+
+.ag-search {
+    position: relative;
+    flex: 1 1 200px;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+.ag-search svg {
+    position: absolute;
+    left: 11px;
+    width: 14px; height: 14px;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+.ag-search input {
+    width: 100%;
+    height: 34px;
+    padding: 0 12px 0 32px;
+    border: 1px solid var(--ag-rule);
+    border-radius: 9px;
+    background: var(--ag-ink-03);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.78rem;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.ag-search input::placeholder { color: var(--text-muted); }
+.ag-search input:hover { border-color: var(--hover-border); }
+.ag-search input:focus { outline: none; border-color: var(--primary); background: var(--hover-fill); }
+
+
+/* ─── 4 · Rubriken (Kategorien) ────────────────────────────────────────
+   Eine Kategorie ist eine Rubrik, kein Objekt: Haarlinie oben, Name
+   links, Stand rechts. Kein Kasten, kein Radius, kein Hover-Rahmen.     */
+.ag-cat { border-top: 1px solid var(--ag-rule); padding: 16px 0 4px; }
+.ag-cat:first-child { border-top: 0; }
+
+.ag-cat__head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+.ag-cat__ico {
+    width: 30px; height: 30px;
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+    background: var(--ag-ink-06);
+    color: var(--text-muted);
+}
+.ag-cat__ico svg { width: 15px; height: 15px; display: block; }
+.ag-cat__id { flex: 1; min-width: 0; }
+.ag-cat__name {
+    display: block;
+    width: 100%;
+    border: 0;
+    background: none;
+    padding: 1px 0;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    cursor: pointer;
+    text-overflow: ellipsis;
+}
+.ag-cat__name:focus { outline: none; cursor: text; border-bottom: 1px solid var(--primary); }
+.ag-cat__meta {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.3;
+}
+.ag-cat__stand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.ag-cat__cnt {
+    font-family: var(--font-num);
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    letter-spacing: -0.01em;
+}
+.ag-cat__cnt.is-clear { color: var(--success); }
+.ag-cat__bar {
+    display: block;
+    width: 40px; height: 3px;
+    border-radius: 99px;
+    background: var(--ag-ink-10);
+    overflow: hidden;
+}
+.ag-cat__bar i {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: 99px;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+.ag-cat__bar.is-clear i { background: var(--success); }
+
+.ag-ib {
+    width: 28px; height: 28px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+.ag-ib:hover { color: var(--text-main); background: var(--hover-fill); }
+.ag-ib:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.ag-ib svg { width: 15px; height: 15px; display: block; transition: transform 0.2s ease; }
+.ag-ib.is-folded svg.ag-chev { transform: rotate(-90deg); }
+.ag-ib--danger:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+
+.ag-cat__body { padding: 8px 0 12px; }
+.ag-cat__body.is-folded { display: none; }
+
+
+/* ─── 5 · Zeilen ──────────────────────────────────────────────────────
+   Eine Aufgabe ist eine Zeile mit einer Haarlinie darunter, kein Kaestchen.
+   Die Zeile faerbt sich beim Hover (sie ist klickbar) — die Rubrik nicht. */
+.ag-task { border-bottom: 1px solid var(--ag-ink-03); }
+.ag-task:last-of-type { border-bottom: 0; }
+
+.ag-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 9px 8px 9px 6px;
+    margin: 0 -8px 0 -6px;
+    border-radius: 8px;
+    transition: background-color 0.15s ease;
+}
+.ag-row:hover { background: var(--hover-fill); }
+
+.ag-cb {
+    appearance: none;
+    width: 17px; height: 17px;
+    margin-top: 2px;
+    flex-shrink: 0;
+    border: 1.6px solid var(--ag-ink-10);
+    border-radius: 5px;
+    background: transparent;
+    color: transparent;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.ag-cb svg { width: 11px; height: 11px; display: block; stroke-width: 3; }
+.ag-cb:hover { border-color: var(--primary); }
+.ag-cb:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.ag-row.is-done .ag-cb { background: var(--primary); border-color: var(--primary); color: #fff; }
+/* Ein Plantag traegt keinen Zustand: statt eines Hakens, den niemand
+   auswertet, steht dort eine Marke ohne Zusage. */
+.ag-cb[disabled] { cursor: default; border-style: dashed; opacity: 0.55; }
+.ag-cb[disabled]:hover { border-color: var(--ag-ink-10); }
+
+.ag-row__id { flex: 1; min-width: 0; }
+.ag-row__txt {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.45;
+    color: var(--text-main);
+    word-break: break-word;
+}
+.ag-row.is-done .ag-row__txt {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+.ag-row__note {
+    display: block;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+    margin-top: 3px;
+}
+
+.ag-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.ag-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 19px;
+    padding: 0 7px;
+    border: 1px solid var(--ag-ink-10);
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.ag-tag svg { width: 10px; height: 10px; display: block; flex-shrink: 0; }
+.ag-tag__n { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+/* Nur Prioritaet und Ueberfaellig tragen Farbe. Wiederholung, Tage und
+   Uhrzeit sind neutral — sonst leuchtet die Zeile in vier Farben und
+   keine davon bedeutet noch etwas. */
+.ag-tag--high { color: var(--ag-high); border-color: rgba(239, 68, 68, 0.32); }
+.ag-tag--mid  { color: var(--ag-mid);  border-color: rgba(245, 158, 11, 0.32); }
+.ag-tag--low  { color: var(--ag-low);  border-color: var(--ag-ink-10); }
+.ag-tag--over { color: var(--danger);  border-color: rgba(239, 68, 68, 0.32); }
+
+.ag-row__acts { display: flex; gap: 1px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s ease; }
+.ag-row:hover .ag-row__acts,
+.ag-row:focus-within .ag-row__acts { opacity: 1; }
+/* 🔴 Touch hat kein :hover. Ohne diesen Block sind Bearbeiten und
+   Loeschen am Handy unerreichbar. */
+@media (hover: none) {
+    .ag-row__acts { opacity: 1; }
+}
+
+/* Unteraufgaben: eingerueckt bis unter den Text, nicht unter den Haken. */
+.ag-subs { padding-left: 29px; }
+.ag-sub {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 5px 8px 5px 6px;
+    margin: 0 -8px 0 -6px;
+    border-radius: 7px;
+    transition: background-color 0.15s ease;
+}
+.ag-sub:hover { background: var(--hover-fill); }
+.ag-sub__cb {
+    appearance: none;
+    width: 13px; height: 13px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--ag-ink-10);
+    border-radius: 4px;
+    background: transparent;
+    color: transparent;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.ag-sub__cb svg { width: 9px; height: 9px; display: block; stroke-width: 3.5; }
+.ag-sub__cb:hover { border-color: var(--primary); }
+.ag-sub__cb:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.ag-sub.is-done .ag-sub__cb { background: var(--primary); border-color: var(--primary); color: #fff; }
+.ag-sub__lbl { flex: 1; min-width: 0; font-size: 0.76rem; color: var(--text-muted); line-height: 1.4; }
+.ag-sub.is-done .ag-sub__lbl { text-decoration: line-through; opacity: 0.7; }
+.ag-sub__del { width: 22px; height: 22px; opacity: 0; }
+.ag-sub__del svg { width: 11px; height: 11px; }
+.ag-sub:hover .ag-sub__del, .ag-sub:focus-within .ag-sub__del { opacity: 1; }
+@media (hover: none) { .ag-sub__del { opacity: 1; } }
+
+/* Eingabezeile. Kein Knopf: das Feld IST der Knopf. */
+.ag-add {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 6px;
+    margin: 4px -6px 0;
+    border-radius: 8px;
+    transition: background-color 0.15s ease;
+}
+.ag-add:focus-within { background: var(--hover-fill); }
+.ag-add__ico {
+    width: 17px; height: 17px;
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1.4px dashed var(--ag-ink-10);
+    border-radius: 5px;
+    color: var(--text-muted);
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+.ag-add__ico svg { width: 10px; height: 10px; display: block; }
+.ag-add:focus-within .ag-add__ico { border-color: var(--primary); color: var(--primary); }
+.ag-add input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: none;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.82rem;
+}
+.ag-add input::placeholder { color: var(--text-muted); }
+.ag-add input:focus { outline: none; }
+/* Eine Zeile "Unteraufgabe hinzufuegen" unter JEDER Aufgabe ist Laerm:
+   bei fuenf Aufgaben stehen fuenf identische Aufforderungen untereinander
+   und der Blick findet die echten Zeilen nicht mehr. Sie erscheint deshalb
+   erst, wenn der Zeiger auf der Aufgabe steht.
+   🔴 Touch hat kein :hover — dort bleibt sie sichtbar, sonst waere das
+   Anlegen einer Unteraufgabe am Handy gar nicht erreichbar. */
+.ag-add--sub { display: none; padding-left: 35px; margin-top: 0; }
+.ag-task:hover > .ag-add--sub,
+.ag-task:focus-within > .ag-add--sub { display: flex; }
+.ag-add--sub .ag-add__ico { width: 13px; height: 13px; }
+.ag-add--sub input { font-size: 0.76rem; }
+@media (hover: none) {
+    .ag-add--sub { display: flex; }
+}
+
+
+/* ─── 6 · Verlauf: der Beleg fuer die Serie ────────────────────────────
+   Ersetzt die sieben Emoji-Trophaeen. Ein Feld je Tag der letzten 30
+   Tage, drei Zustaende: erledigt, offen geblieben, kein Eintrag. Tage
+   ohne Aufzeichnung bleiben Umriss — sie als sauber zu zeichnen waere
+   dieselbe Luege wie das feste "OK" im alten Compliance-Audit.           */
+.ag-hist { display: flex; flex-wrap: wrap; gap: 4px; }
+.ag-hist__d {
+    display: block;
+    width: 13px; height: 13px;
+    border-radius: 4px;
+    border: 1px solid var(--ag-ink-06);
+    background: var(--ag-ink-03);
+    flex-shrink: 0;
+}
+/* Zwei Stufen EINER Skala, nicht zwei Farben: der teilweise erledigte Tag
+   ist derselbe Ton, nur schwaecher. Der Abstand muss gross genug sein,
+   dass er bei 13 px noch zu sehen ist — 42 % war es nicht. */
+.ag-hist__d.is-full { background: var(--success); border-color: var(--success); }
+.ag-hist__d.is-part { background: color-mix(in srgb, var(--success) 26%, transparent); border-color: color-mix(in srgb, var(--success) 40%, transparent); }
+.ag-hist__d.is-none { background: transparent; border-style: dashed; }
+.ag-hist__d.is-today { box-shadow: 0 0 0 2px var(--bg-deep), 0 0 0 3px var(--primary); }
+
+.ag-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: 14px;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+}
+.ag-legend span { display: inline-flex; align-items: center; gap: 6px; }
+/* <small> traegt hier nur den i18n-Schluessel, nicht eine kleinere Groesse. */
+.ag-legend small { font-size: inherit; }
+.ag-legend i {
+    display: block;
+    width: 9px; height: 9px;
+    border-radius: 3px;
+    border: 1px solid var(--ag-ink-06);
+    background: var(--ag-ink-03);
+}
+.ag-legend i.is-full { background: var(--success); border-color: var(--success); }
+.ag-legend i.is-part { background: color-mix(in srgb, var(--success) 26%, transparent); border-color: color-mix(in srgb, var(--success) 40%, transparent); }
+.ag-legend i.is-none { background: transparent; border-style: dashed; }
+
+/* Serie + Bestwert als zwei Kennzahlen, nicht als Feuer-Emoji. */
+.ag-streak {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 24px;
+    border-top: 1px solid var(--ag-rule);
+}
+.ag-streak__c { padding: 15px 14px 0 0; min-width: 0; }
+.ag-streak__c + .ag-streak__c { padding-left: 16px; border-left: 1px solid var(--ag-rule); }
+.ag-streak__k { font-size: 0.66rem; color: var(--text-muted); font-weight: 500; line-height: 1.25; margin: 0 0 5px; }
+.ag-streak__v {
+    font-family: var(--font-num);
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+    margin: 0;
+    line-height: 1.2;
+}
+.ag-streak__v small {
+    font-family: var(--font-main);
+    font-size: 0.63rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0;
+    margin-left: 4px;
+}
+
+/* Meilensteine: gemessener Fortschritt statt gesperrter Trophaee. */
+.ag-goals { display: grid; gap: 0; margin-top: 26px; border-top: 1px solid var(--ag-rule); }
+.ag-goal {
+    display: grid;
+    grid-template-columns: 26px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--ag-ink-03);
+}
+.ag-goal:last-child { border-bottom: 0; }
+.ag-goal__ico {
+    width: 26px; height: 26px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 7px;
+    background: var(--ag-ink-06);
+    color: var(--text-muted);
+}
+.ag-goal__ico svg { width: 13px; height: 13px; display: block; }
+.ag-goal.is-done .ag-goal__ico { background: color-mix(in srgb, var(--success) 16%, transparent); color: var(--success); }
+.ag-goal__id { min-width: 0; }
+.ag-goal__n { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-main); line-height: 1.3; }
+.ag-goal__r { display: block; font-size: 0.68rem; color: var(--text-muted); line-height: 1.35; margin-top: 2px; }
+.ag-goal__p {
+    font-family: var(--font-num);
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.ag-goal.is-done .ag-goal__p { color: var(--success); }
+
+
+/* ─── 7 · Daten ────────────────────────────────────────────────────── */
+.ag-data { display: flex; flex-wrap: wrap; gap: 8px; }
+
+
+/* ─── Leerzustaende ───────────────────────────────────────────────── */
+.ag-empty {
+    text-align: center;
+    padding: 54px 20px 58px;
+    border-top: 1px solid var(--ag-rule);
+}
+.ag-empty__ico {
+    width: 44px; height: 44px;
+    margin: 0 auto 16px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px dashed var(--ag-ink-10);
+    border-radius: 12px;
+    color: var(--text-muted);
+}
+.ag-empty__ico svg { width: 20px; height: 20px; display: block; }
+.ag-empty__t { font-size: 0.95rem; font-weight: 650; color: var(--text-main); margin: 0 0 6px; letter-spacing: -0.015em; }
+.ag-empty__s { font-size: 0.78rem; color: var(--text-muted); line-height: 1.55; max-width: 42ch; margin: 0 auto 20px; }
+
+/* Kleiner Hinweis mitten im Fluss (kein Treffer, kein Plan fuer den Tag) */
+.ag-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+    padding: 26px 0 30px;
+    margin: 0;
+    text-align: center;
+}
+
+
+/* ─── Dialoge ──────────────────────────────────────────────────────── */
+.ag-ov {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(3, 3, 5, 0.78);
+}
+[data-theme="light"] .ag-ov { background: rgba(15, 23, 42, 0.42); }
+.ag-ov.is-open { display: flex; }
+/* Bestaetigungen liegen ueber den Formularen — Projektregel:
+   Modal aus Modal braucht z-index >= 100000. */
+.ag-ov--ask { z-index: 100010; }
+
+.ag-modal {
+    width: 100%;
+    max-width: 460px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid var(--ag-ink-10);
+    border-radius: 14px;
+    background: var(--bg-deep);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+}
+[data-theme="light"] .ag-modal { background: #fff; box-shadow: 0 24px 70px rgba(15, 23, 42, 0.16); }
+@media (prefers-reduced-motion: no-preference) {
+    .ag-ov.is-open .ag-modal { animation: agIn 0.18s cubic-bezier(0.22, 1, 0.36, 1); }
+}
+@keyframes agIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.ag-modal__head { padding: 20px 22px 16px; border-bottom: 1px solid var(--ag-rule); }
+.ag-modal__t { font-size: 1rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-main); margin: 0; }
+.ag-modal__s { font-size: 0.74rem; color: var(--text-muted); margin: 4px 0 0; line-height: 1.4; }
+.ag-modal__body { padding: 20px 22px; }
+.ag-modal__foot {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 16px 22px;
+    border-top: 1px solid var(--ag-rule);
+}
+.ag-modal__foot .ag-spacer { margin-right: auto; }
+
+.ag-fld { margin-bottom: 18px; }
+.ag-fld:last-child { margin-bottom: 0; }
+.ag-fld__l {
+    display: block;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+.ag-fld__l em { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 400; opacity: 0.75; }
+.ag-in {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--ag-rule);
+    border-radius: 9px;
+    background: var(--ag-ink-03);
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.82rem;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.ag-in::placeholder { color: var(--text-muted); }
+.ag-in:hover { border-color: var(--hover-border); }
+.ag-in:focus { outline: none; border-color: var(--primary); background: var(--hover-fill); }
+textarea.ag-in { resize: vertical; min-height: 62px; line-height: 1.5; }
+select.ag-in {
+    cursor: pointer;
+    appearance: none;
+    padding-right: 34px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+.ag-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ag-chip {
+    appearance: none;
+    border: 1px solid var(--ag-rule);
+    border-radius: 8px;
+    background: var(--ag-ink-03);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.73rem;
+    font-weight: 600;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+.ag-chip:hover { color: var(--text-main); border-color: var(--hover-border); background: var(--hover-fill); }
+.ag-chip:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.ag-chip.is-on { background: var(--primary); border-color: var(--primary); color: #fff; }
+.ag-chip--day { min-width: 44px; text-align: center; padding: 7px 8px; }
+
+/* Symbolwahl: Lucide-Icons, keine Emojis. Der gespeicherte Wert ist ab
+   jetzt ein NAME; Altbestand haelt noch ein Emoji-Zeichen und wird beim
+   Zeichnen uebersetzt (agIcon in aufgaben.js). */
+.ag-icons { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 6px; }
+.ag-ico-pick {
+    appearance: none;
+    height: 38px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--ag-rule);
+    border-radius: 9px;
+    background: var(--ag-ink-03);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+.ag-ico-pick svg { width: 16px; height: 16px; display: block; }
+.ag-ico-pick:hover { color: var(--text-main); border-color: var(--hover-border); background: var(--hover-fill); }
+.ag-ico-pick:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.ag-ico-pick.is-on { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+/* Bestaetigung / Hinweis */
+.ag-ask { max-width: 400px; }
+.ag-ask__body { padding: 26px 24px 20px; text-align: center; }
+.ag-ask__ico {
+    width: 42px; height: 42px;
+    margin: 0 auto 15px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 11px;
+}
+.ag-ask__ico svg { width: 19px; height: 19px; display: block; }
+.ag-ask__ico.t-primary { background: var(--primary-dim); color: var(--primary); }
+.ag-ask__ico.t-danger  { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
+.ag-ask__t { font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin: 0 0 7px; letter-spacing: -0.015em; }
+.ag-ask__m { font-size: 0.79rem; color: var(--text-muted); line-height: 1.55; margin: 0 auto; max-width: 34ch; }
+.ag-ask__foot { padding: 14px 18px 16px; }
+.ag-ask__foot .ag-link { flex: 1; justify-content: center; }
+.ag-link--solid-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.ag-link--solid-danger:hover { background: color-mix(in srgb, var(--danger) 88%, #fff); border-color: color-mix(in srgb, var(--danger) 88%, #fff); }
+
+
+/* ─── Meldung ──────────────────────────────────────────────────────── */
+.ag-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: calc(100vw - 32px);
+    padding: 11px 16px;
+    border: 1px solid var(--ag-ink-10);
+    border-radius: 10px;
+    background: var(--bg-deep);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.45);
+    font-size: 0.78rem;
+    color: var(--text-main);
+}
+[data-theme="light"] .ag-toast { background: #fff; box-shadow: 0 14px 40px rgba(15, 23, 42, 0.14); }
+.ag-toast svg { width: 15px; height: 15px; display: block; flex-shrink: 0; color: var(--success); }
+.ag-toast b { font-weight: 650; }
+.ag-toast span { color: var(--text-muted); }
+@media (prefers-reduced-motion: no-preference) {
+    .ag-toast { animation: agToast 0.22s cubic-bezier(0.22, 1, 0.36, 1); }
+}
+@keyframes agToast { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+
+/* ─── Schmal ───────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+    .ag-wrap { padding: 24px 16px 56px; }
+    .ag-head { align-items: flex-start; }
+    .ag-head__title { font-size: 1.35rem; }
+    .ag-verdict {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    .ag-week { gap: 2px; }
+    .ag-day { padding: 8px 0 7px; gap: 5px; }
+    .ag-day__num { font-size: 0.95rem; }
+    .ag-day__name { font-size: 0.54rem; letter-spacing: 0.06em; }
+    .ag-day__load { width: 16px; }
+    .ag-streak { grid-template-columns: 1fr; }
+    .ag-streak__c { padding: 13px 0 0; }
+    .ag-streak__c + .ag-streak__c { padding-left: 0; border-left: 0; border-top: 1px solid var(--ag-rule); margin-top: 13px; }
+    .ag-search { flex-basis: 100%; }
+    .ag-modal__foot { flex-wrap: wrap; }
+    .ag-modal__foot .ag-link { flex: 1; justify-content: center; }
+    .ag-modal__foot .ag-spacer { flex-basis: 100%; margin-right: 0; }
+}
+@media (max-width: 420px) {
+    .ag-cat__bar { display: none; }
+    .ag-hist__d { width: 12px; height: 12px; }
+}
+
+::selection { background: rgba(var(--primary-rgb), 0.3); }
