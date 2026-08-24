@@ -215,7 +215,6 @@
             {id:'dashboard', label:'Dashboard', icon:getIconSvgById('dashboard'), visible:true},
             {id:'performance', label:'Performance', icon:getIconSvgById('performance'), visible:true},
             {id:'history', label:'Verlauf', icon:getIconSvgById('history'), visible:true},
-            {id:'fahrtkosten', label:'Fahrtkosten', icon:getIconSvgById('fahrtkosten'), visible:true, external:'/fahrtkosten/'},
             {id:'yearview', label:'Jahresansicht', icon:getIconSvgById('yearview'), visible:true},
             {id:'monthcompare', label:'Monatsansicht', icon:getIconSvgById('monthcompare'), visible:true},
             {id:'weekview', label:'Wochenansicht', icon:getIconSvgById('weekview'), visible:true},
@@ -231,9 +230,10 @@
         // 6: Urlaubsplaner ergaenzt. Ohne Bump landet er bei Bestandsnutzern
         // per Append ganz unten statt bei den Zeitraum-Ansichten — die
         // Sidebar-Reihenfolge steckt in den Nutzerdaten (data.settings.nav).
+        // 7: Fahrtkosten ist jetzt fest in Ausbildung & Lernen.
         // Nur hochzaehlen, wenn sich die Liste oben wirklich aendert: ein Bump
         // ueberschreibt jedem Bestandsnutzer seine selbst sortierte Sidebar.
-        const NAV_VERSION = 6;
+        const NAV_VERSION = 7;
         const navNeedsReset = !Array.isArray(data.settings.nav) || data.settings.navVersion !== NAV_VERSION;
         if (navNeedsReset) {
             // Bestehende visibility-Einstellungen übernehmen, aber neue Reihenfolge erzwingen
