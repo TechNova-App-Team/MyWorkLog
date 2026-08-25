@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
@@ -8,6 +8,8 @@
 /* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
+<script>/* Reveal-Zustaende gelten nur, wenn JS laeuft — sonst bliebe die Seite leer. */
+document.documentElement.className += ' js';</script>
     <title>MyWorkLog | Über uns</title>
     <meta name="description" content="MyWorkLog ist die kostenlose Zeiterfassungs-App für Azubis. Digitales Berichtsheft, Gleitzeitkonto, Überstundenrechner & Arbeitszeitnachweis – 100% offline, DSGVO-konform.">
     <link rel="canonical" href="https://myworklog.de/about/">
@@ -15,11 +17,11 @@
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/about/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/about/">
     <meta name="keywords" content="Azubi Zeiterfassung, Berichtsheft digital, Gleitzeitkonto App, Ausbildung Arbeitszeitnachweis, Überstundenrechner Azubi, IHK Berichtsheft, Stundenkonto, Ausbildungsnachweis, Zeiterfassung Auszubildende, Arbeitszeit App kostenlos">
-    <script defer src="../../../Assets/js/touch-mobile-optimizations.js"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.3.10"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script defer src="/Assets/js/version-loader.js?v=6.3.9"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script defer src="/Assets/js/version-loader.js?v=6.3.10"></script>
 
     <style>
         :root {
@@ -40,12 +42,25 @@
             --white:      #030305;
             --surface:    #0d0d12;
             --surface-2:  #131318;
+            --good:       #34d399;
+            --good-rgb:   52,211,153;
             --ff:         'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             --fm:         'JetBrains Mono', 'Roboto Mono', monospace;
+
+            /* Motion-System: eine Kurve fuer Eintritte, eine fuer Bewegung
+               auf dem Schirm, eine Dauer fuer Reveals. Nichts sonst darf
+               eigene Werte erfinden, sonst laeuft die Seite in vier
+               Geschwindigkeiten gleichzeitig. */
+            --ease-out:   cubic-bezier(.22, 1, .36, 1);
+            --ease-io:    cubic-bezier(.65, 0, .35, 1);
+            --dur-rev:    680ms;
+            --dur-ui:     180ms;
+            --stagger:    70ms;
         }
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
+        button, input, select, textarea { font-family: inherit; }
 
         body {
             font-family: var(--ff);
@@ -56,1244 +71,1701 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        ::selection { background: rgba(var(--primary-rgb),.2); }
+        ::selection { background: rgba(var(--primary-rgb),.25); }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #030305; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
 
-        .scroll-progress {
-            position: fixed; top: 0; left: 0; height: 2px; width: 0;
-            background: var(--accent); z-index: 10001; transform-origin: left;
+        a { color: inherit; }
+        :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+        .skip-link {
+            position: fixed; top: 8px; left: 8px; z-index: 10050;
+            padding: .6rem 1rem; background: var(--accent); color: #fff;
+            border-radius: 6px; font-size: .85rem; font-weight: 600;
+            text-decoration: none; transform: translateY(-250%);
+            transition: transform var(--dur-ui) var(--ease-out);
+        }
+        .skip-link:focus { transform: translateY(0); }
+
+        .shell { max-width: 1200px; margin: 0 auto; width: 100%; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           REVEAL — genau EIN Schreiber pro Element.
+           Die Klasse `.is-in` setzt den Zielzustand; sonst fasst niemand
+           transform/opacity dieser Elemente an. Der Parallax-Lauf weiter
+           unten schreibt ausschliesslich auf Hintergrund-Ebenen, nie auf
+           Inhalt — genau diese Doppelung hat die alte Fassung lahmgelegt.
+           ═══════════════════════════════════════════════════════════════ */
+        .js [data-reveal] {
+            opacity: 0;
+            transform: translate3d(0, 24px, 0);
+            transition: opacity var(--dur-rev) var(--ease-out),
+                        transform var(--dur-rev) var(--ease-out),
+                        clip-path var(--dur-rev) var(--ease-out);
+            transition-delay: calc(var(--i, 0) * var(--stagger));
+            will-change: transform, opacity;
+        }
+        .js [data-reveal="left"]  { transform: translate3d(-32px, 0, 0); }
+        .js [data-reveal="right"] { transform: translate3d(32px, 0, 0); }
+        .js [data-reveal="scale"] { transform: scale(.94); }
+        .js [data-reveal="wipe"]  { transform: translate3d(0, 14px, 0); clip-path: inset(0 0 108% 0); }
+        .js [data-reveal].is-in {
+            opacity: 1;
+            transform: none;
+            clip-path: inset(0 0 -25% 0);
+            will-change: auto;
         }
 
-        /* NAVBAR */
-        .navbar {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
-            padding: 0 5%;
-            background: rgba(3,3,5,.85);
-            border-bottom: 1px solid rgba(255,255,255,.06);
-            backdrop-filter: blur(16px) saturate(1.4);
-            transition: box-shadow .3s;
+        /* ═══════════════════════════════════════════════════════════════
+           TAGES-SCHIENE — die Signatur der Seite.
+           Der Scrollfortschritt wird in der Sprache des Produkts gelesen:
+           als Arbeitstag von 07:30 bis 16:30. Ersetzt den anonymen 2px-
+           Balken. Ab 1180px sichtbar, darunter faellt sie auf den Balken
+           oben zurueck.
+           ═══════════════════════════════════════════════════════════════ */
+        .rail { display: none; }
+        @media (min-width: 1500px) {
+            .rail {
+                display: block; position: fixed; left: 24px; top: 124px; bottom: 100px;
+                width: 112px; z-index: 900; pointer-events: none;
+            }
+            .rail-line { position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: var(--rule-mid); }
+            .rail-fill {
+                position: absolute; left: 0; top: 0; width: 1px; height: 100%;
+                background: linear-gradient(180deg, rgba(var(--primary-rgb),.2), var(--accent));
+                transform: scaleY(0); transform-origin: top;
+            }
+            .rail-head { position: absolute; left: 0; top: 0; width: 112px; transform: translate3d(0,0,0); }
+            .rail-dot {
+                position: absolute; left: -3px; top: -3px; width: 7px; height: 7px;
+                border-radius: 50%; background: var(--accent);
+                box-shadow: 0 0 0 4px rgba(var(--primary-rgb),.14);
+            }
+            .rail-clock {
+                position: absolute; left: 16px; top: -12px;
+                font-family: var(--fm); font-size: .82rem; font-weight: 600;
+                color: var(--ink); letter-spacing: .02em; font-variant-numeric: tabular-nums;
+            }
+            .rail-caption {
+                position: absolute; left: 16px; top: 8px; width: 94px;
+                font-family: var(--fm); font-size: .58rem; letter-spacing: .12em;
+                text-transform: uppercase; color: var(--text-faint);
+            }
+            .rail-ticks { position: absolute; inset: 0; }
+            .rail-tick { position: absolute; left: -3px; width: 7px; height: 1px; background: var(--rule-mid); transition: background 260ms, width 260ms var(--ease-out), left 260ms var(--ease-out); }
+            .rail-tick-label {
+                position: absolute; left: 16px; top: -7px; width: 94px;
+                font-family: var(--fm); font-size: .6rem; letter-spacing: .1em;
+                text-transform: uppercase; color: var(--text-faint);
+                opacity: 0; transform: translate3d(-6px, 0, 0);
+                transition: opacity 260ms var(--ease-out), transform 260ms var(--ease-out), color 260ms;
+            }
+            .rail-tick.on { background: var(--accent); width: 11px; left: -5px; }
+            .rail-tick.on .rail-tick-label { opacity: 1; transform: none; color: var(--ink-soft); }
         }
-        .navbar.scrolled { box-shadow: 0 1px 30px rgba(0,0,0,.4); }
+
+        .scroll-progress {
+            position: fixed; top: 0; left: 0; height: 2px; width: 100%;
+            background: var(--accent); z-index: 10001;
+            transform: scaleX(0); transform-origin: left;
+        }
+        @media (min-width: 1500px) { .scroll-progress { opacity: 0; } }
+
+        /* ═══ NAVBAR ═══ */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 0 5%;
+            background: rgba(3,3,5,.82);
+            border-bottom: 1px solid transparent;
+            backdrop-filter: blur(16px) saturate(1.4);
+            transition: border-color 300ms var(--ease-io), background 300ms var(--ease-io);
+        }
+        .navbar.scrolled { border-bottom-color: var(--rule); background: rgba(3,3,5,.92); }
         .nav-content {
             max-width: 1280px; margin: 0 auto; height: 64px;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .logo { font-family: var(--ff); font-weight: 700; font-size: 1.05rem; letter-spacing: -.01em; color: var(--ink); }
+        .logo { font-weight: 700; font-size: 1.05rem; letter-spacing: -.01em; color: var(--ink); }
         .logo span { color: var(--accent); }
         .nav-links { display: flex; gap: 2rem; list-style: none; }
-        .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 500; font-size: .875rem; transition: color .2s; }
+        .nav-links a {
+            position: relative; color: var(--text-muted); text-decoration: none;
+            font-weight: 500; font-size: .875rem; padding: .35rem 0;
+            transition: color var(--dur-ui) ease;
+        }
+        .nav-links a::after {
+            content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 1px;
+            background: var(--accent); transform: scaleX(0); transform-origin: left;
+            transition: transform 280ms var(--ease-out);
+        }
         .nav-links a:hover { color: var(--text-base); }
-        .nav-links a::after { display: none; }
+        .nav-links a.current { color: var(--ink); }
+        .nav-links a.current::after { transform: scaleX(1); }
         .cta-button {
             padding: .5rem 1.25rem; background: var(--accent); color: #fff;
-            text-decoration: none; border-radius: 6px;
-            font-weight: 600; font-size: .875rem; transition: all .2s; box-shadow: 0 0 16px rgba(var(--primary-rgb),.15);
+            text-decoration: none; border-radius: 6px; font-weight: 600; font-size: .875rem;
+            transition: background var(--dur-ui) ease, transform 140ms var(--ease-out);
         }
-        .cta-button:hover { filter: brightness(0.88); transform: none; box-shadow: 0 0 24px rgba(var(--primary-rgb),.22); }
+        @media (hover: hover) and (pointer: fine) {
+            .cta-button:hover { background: color-mix(in srgb, var(--accent) 86%, #fff); }
+        }
+        .cta-button:active { transform: scale(.97); }
         @media (max-width: 768px) { .nav-links { display: none; } }
 
-        /* HERO */
+        /* ═══ ATMOSPHAERE — die einzigen Ebenen, die der rAF-Lauf bewegt.
+               Bewusst zwei Container statt 60 Einzelknoten: eine Transform-
+               Schreibung pro Frame statt sechzig. ═══ */
+        .atmo { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .atmo-stars { position: absolute; inset: -15% 0; will-change: transform; }
+        .star { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: rgba(255,255,255,.45); }
+        .star.large { width: 3px; height: 3px; background: rgba(var(--primary-rgb),.5); }
+        .atmo-orbs { position: absolute; inset: -25% 0; will-change: transform; }
+        .orb { position: absolute; border-radius: 50%; filter: blur(100px); }
+
+        /* ═══ SECTION-GRUNDLAGE ═══ */
+        .section { position: relative; z-index: 1; padding: 8rem 5%; }
+        .section.tight { padding: 5rem 5%; }
+        .section-eyebrow {
+            display: inline-flex; align-items: center; gap: .5rem;
+            font-family: var(--fm); font-size: .68rem; font-weight: 500;
+            letter-spacing: .16em; text-transform: uppercase; color: var(--accent);
+            margin-bottom: 1.25rem;
+        }
+        .section-eyebrow::before {
+            content: ''; width: 18px; height: 1px; background: var(--accent); opacity: .6;
+        }
+        .section-title {
+            font-size: clamp(2rem, 3.8vw, 3rem); font-weight: 700;
+            line-height: 1.1; letter-spacing: -.03em; color: var(--ink);
+            text-wrap: balance;
+        }
+        .section-description {
+            font-size: 1.02rem; line-height: 1.75; color: var(--text-muted);
+            max-width: 56ch; margin-top: 1.1rem; text-wrap: pretty;
+        }
+        .section-header { max-width: 680px; margin-bottom: 4rem; }
+
+        /* ═══ HERO ═══ */
         .hero {
-            margin-top: 64px; border-bottom: 1px solid rgba(255,255,255,.06);
-            padding: 7rem 5% 6rem; position: relative; overflow: hidden;
-            min-height: auto; display: block; align-items: unset; justify-content: unset;
-            background: linear-gradient(180deg, #030305 0%, #09090f 50%, #030305 100%);
+            position: relative; z-index: 1; margin-top: 64px;
+            padding: 7rem 5% 5.5rem; overflow: hidden;
+            border-bottom: 1px solid var(--rule);
+            background: linear-gradient(180deg, #030305 0%, #09090f 55%, #030305 100%);
         }
         .hero::before {
-            content: ''; position: absolute; inset: 0;
+            content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .6;
             background:
                 linear-gradient(135deg, rgba(var(--primary-rgb),.06) 0%, transparent 55%),
                 repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,.03) 39px, rgba(255,255,255,.03) 40px),
                 repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,.03) 39px, rgba(255,255,255,.03) 40px);
             background-size: 100% 100%, 40px 40px, 40px 40px;
-            opacity: .7; pointer-events: none;
+            mask-image: linear-gradient(180deg, #000 0%, #000 55%, transparent 100%);
         }
-        /* Parallax glow orbs */
-        .hero-orb {
-            position: absolute; border-radius: 50%; pointer-events: none;
-            filter: blur(80px); opacity: .18; will-change: transform;
-        }
-        .hero-orb-1 { width: 500px; height: 500px; background: rgba(var(--primary-rgb),.3); top: -10%; left: -5%; }
-        .hero-orb-2 { width: 400px; height: 400px; background: rgba(var(--primary-rgb),.25); bottom: -15%; right: -5%; }
-        .hero-orb-3 { width: 300px; height: 300px; background: rgba(52,211,153,.15); top: 40%; right: 20%; }
-        /* hide original hero bg decorations */
-        .hero-bg, .hero-ghost-text, .hero-diag { display: none; }
-        .scroll-indicator { display: none; }
-
-        .hero-content {
-            position: relative; z-index: 10; text-align: left; max-width: 1280px; margin: 0 auto;
+        .hero-grid {
+            position: relative; z-index: 2;
+            display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+            gap: 3.5rem; align-items: center;
         }
         .hero-badge {
             display: inline-flex; align-items: center; gap: .5rem;
             padding: .35rem .9rem; background: var(--accent-dim);
             border: 1px solid var(--accent-brd); border-radius: 4px;
             font-family: var(--fm); font-size: .78rem; color: var(--accent);
-            font-weight: 500; letter-spacing: .02em; margin-bottom: 2rem;
-            animation: none; box-shadow: none;
+            font-weight: 500; letter-spacing: .02em; margin-bottom: 1.75rem;
         }
         .hero-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 2.5s ease-in-out infinite; }
-        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:.25;} }
-
+        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
         .hero-title {
-            font-family: var(--ff);
-            font-size: clamp(2.4rem, 5.5vw, 4.5rem);
-            font-weight: 700; line-height: 1.08; letter-spacing: -.035em; color: var(--ink);
-            max-width: 820px; margin-bottom: 1.5rem; animation: none;
+            font-size: clamp(2.1rem, 3.7vw, 3.5rem); font-weight: 700;
+            line-height: 1.08; letter-spacing: -.035em; color: var(--ink);
+            margin-bottom: 1.5rem;
         }
-        .hero-title em { font-style: normal; color: var(--accent); }
-        .gradient-text { background: none; -webkit-text-fill-color: var(--ink); background-clip: unset; color: var(--ink); animation: none; }
-        .hero-title em { font-style: normal; background: linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb),.65)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
+        /* Zeilenweiser Masken-Aufzug: jede Zeile ist ein eigener Block mit
+           overflow:hidden, das Kind faehrt darunter hervor. */
+        .tl-line { display: block; overflow: hidden; padding-bottom: .06em; }
+        .tl-line > span { display: block; text-wrap: balance; }
+        .js .tl-line > span {
+            transform: translate3d(0, 105%, 0);
+            transition: transform 900ms var(--ease-out);
+            transition-delay: calc(var(--i, 0) * 90ms);
+        }
+        .js .hero.ready .tl-line > span { transform: none; }
+        .hero-title em {
+            font-style: normal;
+            background: linear-gradient(120deg, var(--primary), rgba(var(--primary-rgb),.6));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; color: transparent;
+        }
         .hero-description {
             font-size: 1.05rem; line-height: 1.8; color: var(--text-muted);
-            max-width: 540px; margin: 0 0 2.5rem; font-weight: 400; animation: none;
+            max-width: 52ch; margin-bottom: 2.25rem; text-wrap: pretty;
         }
-        .hero-buttons { display: flex; gap: .75rem; flex-wrap: wrap; animation: none; }
-        .btn-primary {
-            padding: .75rem 1.75rem; background: var(--accent); color: #fff;
-            border-radius: 6px; text-decoration: none; font-weight: 600; font-size: .9rem;
-            transition: all .2s; box-shadow: 0 0 18px rgba(var(--primary-rgb),.15);
-            font-family: var(--ff); display: inline-flex; align-items: center;
+        .hero-buttons { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 3rem; }
+        .btn-primary, .btn-secondary {
+            display: inline-flex; align-items: center; gap: .5rem;
+            padding: .8rem 1.6rem; border-radius: 6px; text-decoration: none;
+            font-weight: 600; font-size: .9rem;
+            transition: background var(--dur-ui) ease, border-color var(--dur-ui) ease,
+                        color var(--dur-ui) ease, transform 140ms var(--ease-out);
         }
-        .btn-primary::before { display: none; }
-        .btn-primary:hover { filter: brightness(0.88); transform: translateY(-1px); box-shadow: 0 0 28px rgba(var(--primary-rgb),.22); }
-        .btn-primary span { position: static; }
-        .btn-secondary {
-            padding: .75rem 1.75rem; background: transparent; color: var(--text-base);
-            border: 1px solid rgba(255,255,255,.12); border-radius: 6px; text-decoration: none;
-            font-weight: 500; font-size: .9rem; font-family: var(--ff);
-            transition: border-color .2s, background .2s;
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-secondary { background: transparent; color: var(--ink-soft); border: 1px solid var(--rule-mid); }
+        @media (hover: hover) and (pointer: fine) {
+            .btn-primary:hover { background: color-mix(in srgb, var(--accent) 86%, #fff); }
+            .btn-secondary:hover { border-color: var(--accent-brd); color: var(--ink); background: rgba(var(--primary-rgb),.06); }
         }
-        .btn-secondary:hover { border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.05); transform: none; }
-
+        .btn-primary:active, .btn-secondary:active { transform: scale(.97); }
+        .btn-arrow { transition: transform 260ms var(--ease-out); }
+        @media (hover: hover) and (pointer: fine) {
+            .btn-primary:hover .btn-arrow { transform: translateX(3px); }
+        }
         .hero-meta {
-            margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,.08);
-            display: flex; gap: 3rem; flex-wrap: wrap;
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 1.25rem 2rem; padding-top: 1.75rem; border-top: 1px solid var(--rule);
         }
-        .hero-meta-item { display: flex; flex-direction: column; gap: .2rem; }
-        .hero-meta-label { font-family: var(--fm); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-faint); }
-        .hero-meta-value { font-size: .9rem; font-weight: 600; color: var(--text-base); }
+        .hero-meta-item { display: flex; flex-direction: column; gap: .3rem; }
+        .hero-meta-label {
+            font-family: var(--fm); font-size: .62rem; letter-spacing: .12em;
+            text-transform: uppercase; color: var(--text-faint);
+        }
+        .hero-meta-value { font-size: .86rem; font-weight: 600; color: var(--ink-soft); }
 
-        /* MARQUEE */
+        /* ── Tageskarte: das Produkt in einem Blick ── */
+        .daycard {
+            position: relative; padding: 1.6rem; border-radius: 16px;
+            background: linear-gradient(160deg, rgba(255,255,255,.045), rgba(255,255,255,.015));
+            border: 1px solid var(--rule-mid);
+            box-shadow: 0 24px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);
+        }
+        .daycard::before {
+            content: ''; position: absolute; inset: 0; border-radius: 16px; pointer-events: none;
+            background: radial-gradient(120% 80% at 20% 0%, rgba(var(--primary-rgb),.12), transparent 60%);
+        }
+        .daycard-head {
+            position: relative; display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .daycard-date { font-size: .82rem; font-weight: 600; color: var(--ink-soft); }
+        .daycard-live {
+            display: inline-flex; align-items: center; gap: .4rem;
+            font-family: var(--fm); font-size: .62rem; letter-spacing: .12em;
+            text-transform: uppercase; color: var(--good);
+        }
+        .daycard-live::before {
+            content: ''; width: 5px; height: 5px; border-radius: 50%;
+            background: var(--good); animation: blink 2.5s ease-in-out infinite;
+        }
+        .daycard-scale {
+            position: relative; display: flex; justify-content: space-between;
+            font-family: var(--fm); font-size: .68rem; color: var(--text-faint);
+            margin-bottom: .5rem; font-variant-numeric: tabular-nums;
+        }
+        /* display:block ist Pflicht — ein inline-Kasten traegt weder Groesse
+           noch absolute Kinder (siehe .mc-bar / .yv-month__fill). */
+        .daybar {
+            position: relative; display: block; height: 42px; border-radius: 8px;
+            background: rgba(255,255,255,.04); overflow: hidden;
+            border: 1px solid var(--rule);
+        }
+        .daybar-fill {
+            position: absolute; inset: 0; border-radius: 7px;
+            background: linear-gradient(90deg, rgba(var(--primary-rgb),.85), rgba(var(--primary-rgb),.45));
+            transform: scaleX(0); transform-origin: left;
+            transition: transform 1400ms var(--ease-io) 350ms;
+        }
+        .hero.ready .daybar-fill { transform: scaleX(1); }
+        .daybar-break {
+            position: absolute; top: 0; bottom: 0; left: 50%; width: 5.55%;
+            background: repeating-linear-gradient(45deg, rgba(3,3,5,.85) 0 4px, rgba(3,3,5,.55) 4px 8px);
+            opacity: 0; transition: opacity 500ms var(--ease-out) 1500ms;
+        }
+        .hero.ready .daybar-break { opacity: 1; }
+        .daybar-label {
+            position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
+            font-family: var(--fm); font-size: .6rem; letter-spacing: .1em;
+            text-transform: uppercase; color: var(--text-faint); white-space: nowrap;
+            opacity: 0; transition: opacity 500ms var(--ease-out) 1650ms;
+        }
+        .hero.ready .daybar-label { opacity: 1; }
+        .daycard-rows { position: relative; margin-top: 1.6rem; display: grid; gap: .05rem; }
+        .daycard-row {
+            display: flex; justify-content: space-between; align-items: baseline;
+            padding: .6rem 0; border-top: 1px solid var(--rule);
+        }
+        .daycard-row:first-child { border-top: 0; }
+        .daycard-key { font-size: .82rem; color: var(--text-muted); }
+        .daycard-val {
+            font-family: var(--fm); font-size: .95rem; font-weight: 600; color: var(--ink);
+            font-variant-numeric: tabular-nums;
+        }
+        .daycard-row.is-balance .daycard-val { color: var(--good); }
+        .daycard-note {
+            position: relative; margin-top: 1.1rem; padding-top: 1rem;
+            border-top: 1px solid var(--rule);
+            font-size: .74rem; line-height: 1.6; color: var(--text-faint);
+        }
+
+        @media (max-width: 1100px) {
+            .hero-grid { grid-template-columns: 1fr; gap: 3rem; }
+            .hero-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (max-width: 560px) {
+            .hero { padding: 5rem 5% 4rem; }
+            .hero-buttons { margin-bottom: 2.25rem; }
+            .btn-primary, .btn-secondary { flex: 1 1 100%; justify-content: center; }
+        }
+
+        /* ═══ TICKER — Geschwindigkeit reagiert auf das Scrolltempo.
+               Bewusst per rAF statt CSS-Animation: nur so laesst sich die
+               Scroll-Geschwindigkeit einrechnen, ohne dass ein Wechsel der
+               animation-duration einen Sprung erzeugt. Zwei Schreibungen
+               pro Frame, mehr nicht. ═══ */
         .marquee-wrap {
-            overflow: hidden; border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06);
-            background: rgba(255,255,255,.02); padding: .65rem 0;
+            position: relative; z-index: 1; overflow: hidden;
+            padding: 1.1rem 0; border-block: 1px solid var(--rule);
+            background: rgba(255,255,255,.012);
+            mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
         }
-        .marquee-track { display: flex; width: max-content; animation: marquee-scroll 30s linear infinite; }
-        .marquee-wrap.reverse .marquee-track { animation-direction: reverse; }
-        @keyframes marquee-scroll { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+        .marquee-track { display: flex; width: max-content; will-change: transform; }
         .marquee-item {
-            display: inline-flex; align-items: center; gap: .6rem; padding: 0 2rem; white-space: nowrap;
-            font-family: var(--fm); font-size: .72rem; font-weight: 500;
-            letter-spacing: .07em; text-transform: uppercase; color: var(--text-faint);
+            display: inline-flex; align-items: center; gap: 1.75rem;
+            padding-right: 1.75rem; white-space: nowrap;
+            font-family: var(--fm); font-size: .78rem; font-weight: 500;
+            letter-spacing: .04em; color: var(--text-faint);
         }
-        .marquee-item .mi-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--rule-mid); }
-        .marquee-item.hi { color: var(--accent); }
-        .marquee-item.cyan-i { color: var(--text-muted); }
+        .marquee-item.hi { color: var(--ink-soft); }
+        .marquee-item.acc { color: var(--accent); }
+        .mi-dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .45; }
 
-        /* ENTERPRISE SHOWCASE */
-        .showcase-section { padding: 8rem 5%; }
-        .showcase-header { max-width: 660px; margin-bottom: 4rem; }
-        .showcase-grid {
-            display: grid; grid-template-columns: 1fr 1fr;
-            gap: 1px; max-width: 1280px; margin: 0 auto;
-            border: 1px solid rgba(255,255,255,.06); border-radius: 12px; overflow: hidden;
-            background: rgba(255,255,255,.04);
+        /* ═══ FAKTEN-STREIFEN — fuenf Belege als Zeile, nicht als fuenf Karten.
+               Karten hatten hier nur Rahmen erzeugt, keine Information. ═══ */
+        .facts {
+            position: relative; z-index: 1; padding: 3.5rem 5%;
+            border-bottom: 1px solid var(--rule);
         }
-        .showcase-card {
-            padding: 2.5rem 2.25rem; background: rgba(3,3,5,.9);
-            transition: background .35s, box-shadow .35s; position: relative; overflow: hidden;
+        .facts-grid {
+            display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2rem;
         }
-        .showcase-card::after {
-            content: ''; position: absolute; inset: 0; opacity: 0;
-            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(var(--primary-rgb),.04), transparent 40%);
-            transition: opacity .4s; pointer-events: none;
+        .fact { display: flex; flex-direction: column; gap: .55rem; }
+        .fact-icon { color: var(--accent); opacity: .85; }
+        .fact-label { font-size: .88rem; font-weight: 600; color: var(--ink); letter-spacing: -.01em; }
+        .fact-desc { font-size: .76rem; line-height: 1.55; color: var(--text-faint); }
+        @media (max-width: 900px) { .facts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.75rem; } }
+        @media (max-width: 460px) { .facts-grid { grid-template-columns: 1fr; } }
+
+        /* ═══════════════════════════════════════════════════════════════
+           DER AKT — „Ein Tag mit MyWorkLog"
+           Linke Spalte klebt, rechte Spalte scrollt durch vier Schritte.
+           Der aktive Schritt steht als data-step am Container; alles andere
+           haengt in CSS daran. EIN Schreiber (das Attribut), vier Zustaende.
+           Die Nummerierung 01–04 ist hier echte Reihenfolge (Kommen, Pause,
+           Gehen, Berichtsheft) — kein Dekor.
+           ═══════════════════════════════════════════════════════════════ */
+        .act { position: relative; z-index: 1; padding: 8rem 5% 6rem; }
+        .act-grid {
+            display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr);
+            gap: 5rem; align-items: start;
         }
-        .showcase-card:hover::after { opacity: 1; }
-        .showcase-card:hover { background: rgba(15,17,25,.95); }
-        .showcase-card-hero {
-            grid-column: 1 / -1; padding: 3.5rem 3rem;
-            background: linear-gradient(135deg, rgba(10,12,20,.95), rgba(15,18,30,.9));
-            border-bottom: 1px solid rgba(var(--primary-rgb),.08);
+        .act-sticky { position: sticky; top: max(116px, calc(50vh - 220px)); }
+
+        .act-stage {
+            position: relative; padding: 1.5rem; border-radius: 16px;
+            background: linear-gradient(160deg, rgba(255,255,255,.045), rgba(255,255,255,.012));
+            border: 1px solid var(--rule-mid);
+            box-shadow: 0 24px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);
         }
-        .showcase-card-badge {
-            display: inline-block; padding: .2rem .6rem; margin-bottom: 1.5rem;
-            background: rgba(var(--primary-rgb),.1); border: 1px solid rgba(var(--primary-rgb),.2);
-            border-radius: 4px; font-family: var(--fm); font-size: .65rem;
-            text-transform: uppercase; letter-spacing: .1em; color: var(--accent);
+        .act-stage-head {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 1.1rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--rule);
         }
-        .showcase-card-icon {
-            color: var(--accent); margin-bottom: 1.25rem;
-            width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
-            background: rgba(var(--primary-rgb),.06); border: 1px solid rgba(var(--primary-rgb),.12); border-radius: 10px;
+        .act-stage-title { font-size: .84rem; font-weight: 600; color: var(--ink-soft); }
+        .act-stage-step {
+            position: relative; display: inline-block; min-width: 76px; height: 1.1em;
+            font-family: var(--fm); font-size: .66rem; letter-spacing: .12em;
+            text-transform: uppercase; color: var(--accent);
         }
-        .showcase-card-hero .showcase-card-icon {
-            width: 56px; height: 56px; background: rgba(var(--primary-rgb),.08);
-            border-color: rgba(var(--primary-rgb),.18); border-radius: 12px;
+        .act-stage-step > span {
+            position: absolute; right: 0; top: 0; white-space: nowrap;
+            opacity: 0; transition: opacity 300ms var(--ease-out);
         }
-        .showcase-card-title {
-            font-size: 1.1rem; font-weight: 700; color: #fff; letter-spacing: -.015em; margin-bottom: .6rem;
+        .act[data-step="1"] .act-stage-step > span[data-s="1"],
+        .act[data-step="2"] .act-stage-step > span[data-s="2"],
+        .act[data-step="3"] .act-stage-step > span[data-s="3"],
+        .act[data-step="4"] .act-stage-step > span[data-s="4"] { opacity: 1; }
+        .act-bar {
+            position: relative; display: block; height: 46px; border-radius: 8px;
+            background: rgba(255,255,255,.04); border: 1px solid var(--rule); overflow: hidden;
         }
-        .showcase-card-hero .showcase-card-title { font-size: 1.5rem; letter-spacing: -.02em; }
-        .showcase-card-desc { font-size: .875rem; color: var(--text-muted); line-height: 1.75; }
-        .showcase-card-hero .showcase-card-desc { font-size: .95rem; max-width: 600px; }
-        .showcase-card-metrics {
-            display: flex; gap: 2.5rem; margin-top: 2rem; padding-top: 1.5rem;
-            border-top: 1px solid rgba(255,255,255,.06);
+        .act-bar-fill {
+            position: absolute; inset: 0; border-radius: 7px;
+            background: linear-gradient(90deg, rgba(var(--primary-rgb),.85), rgba(var(--primary-rgb),.45));
+            transform: scaleX(0); transform-origin: left;
+            transition: transform 700ms var(--ease-io);
         }
-        .showcase-metric { display: flex; flex-direction: column; gap: .15rem; }
-        .showcase-metric-value {
-            font-family: var(--fm); font-size: 1.1rem; font-weight: 700; color: #fff;
-            letter-spacing: -.01em;
+        .act-bar-break {
+            position: absolute; top: 0; bottom: 0; left: 50%; width: 5.55%;
+            background: repeating-linear-gradient(45deg, rgba(3,3,5,.88) 0 4px, rgba(3,3,5,.55) 4px 8px);
+            opacity: 0; transition: opacity 420ms var(--ease-out);
         }
-        .showcase-metric-label {
-            font-family: var(--fm); font-size: .65rem; color: var(--text-faint);
-            text-transform: uppercase; letter-spacing: .08em;
+        .act[data-step="1"] .act-bar-fill { transform: scaleX(.06); }
+        .act[data-step="2"] .act-bar-fill { transform: scaleX(.56); }
+        .act[data-step="3"] .act-bar-fill { transform: scaleX(1); }
+        .act[data-step="4"] .act-bar-fill { transform: scaleX(1); }
+        .act[data-step="2"] .act-bar-break,
+        .act[data-step="3"] .act-bar-break,
+        .act[data-step="4"] .act-bar-break { opacity: 1; }
+
+        .act-scale {
+            display: flex; justify-content: space-between; margin-top: .55rem;
+            font-family: var(--fm); font-size: .66rem; color: var(--text-faint);
+            font-variant-numeric: tabular-nums;
         }
-        @media (max-width: 768px) {
-            .showcase-grid { grid-template-columns: 1fr; }
-            .showcase-card-hero { padding: 2.5rem 2rem; }
-            .showcase-card-metrics { flex-wrap: wrap; gap: 1.5rem; }
+        /* Vier Ablesungen liegen alle im DOM (i18n-tauglich), sichtbar ist
+           immer genau eine. Kein ::after-content — der Extraktor sieht das nicht. */
+        .act-reads { position: relative; margin-top: 1.5rem; min-height: 208px; }
+        .act-read {
+            position: absolute; inset: 0; opacity: 0;
+            transform: translate3d(0, 12px, 0); pointer-events: none;
+            transition: opacity 400ms var(--ease-out), transform 400ms var(--ease-out);
+        }
+        .act[data-step="1"] .act-read[data-read="1"],
+        .act[data-step="2"] .act-read[data-read="2"],
+        .act[data-step="3"] .act-read[data-read="3"],
+        .act[data-step="4"] .act-read[data-read="4"] {
+            opacity: 1; transform: none; pointer-events: auto;
+        }
+        .act-read-row {
+            display: flex; justify-content: space-between; align-items: baseline;
+            padding: .55rem 0; border-top: 1px solid var(--rule);
+        }
+        .act-read-row:first-child { border-top: 0; }
+        .act-read-key { font-size: .8rem; color: var(--text-muted); }
+        .act-read-val {
+            font-family: var(--fm); font-size: .92rem; font-weight: 600;
+            color: var(--ink); font-variant-numeric: tabular-nums;
+        }
+        .act-read-row.is-balance .act-read-val { color: var(--good); }
+        .act-read-note {
+            margin-top: .8rem; font-size: .74rem; line-height: 1.6; color: var(--text-faint);
+        }
+        .act-sheet {
+            margin-top: .9rem; padding: .85rem 1rem; border-radius: 8px;
+            background: rgba(var(--primary-rgb),.07); border: 1px solid var(--accent-brd);
+            font-size: .78rem; line-height: 1.65; color: var(--ink-soft);
+        }
+        .act-sheet-label {
+            display: block; font-family: var(--fm); font-size: .58rem; letter-spacing: .14em;
+            text-transform: uppercase; color: var(--accent); margin-bottom: .4rem;
         }
 
-        /* TRUST INDICATORS */
-        .trust-section { padding: 5rem 5%; }
-        .trust-grid {
-            display: flex; justify-content: center; gap: 0;
-            max-width: 1280px; margin: 0 auto;
-            border: 1px solid rgba(255,255,255,.06); border-radius: 10px; overflow: hidden;
+        .act-steps { display: flex; flex-direction: column; }
+        .act-step {
+            min-height: min(62vh, 520px); display: flex; flex-direction: column; justify-content: center;
+            padding: 2rem 0;
         }
-        .trust-item {
-            flex: 1; padding: 2.25rem 1.5rem; text-align: center;
-            border-right: 1px solid rgba(255,255,255,.04);
-            transition: background .3s;
+        .act-step-num {
+            font-family: var(--fm); font-size: .72rem; font-weight: 600; letter-spacing: .14em;
+            color: var(--text-faint); margin-bottom: .9rem;
+            transition: color 400ms var(--ease-out);
         }
-        .trust-item:last-child { border-right: none; }
-        .trust-item:hover { background: rgba(255,255,255,.03); }
-        .trust-icon {
-            color: var(--accent); margin-bottom: .75rem;
-            display: flex; justify-content: center; opacity: .7;
+        .act-step.on .act-step-num { color: var(--accent); }
+        .act-step-title {
+            font-size: clamp(1.6rem, 2.6vw, 2.1rem); font-weight: 700;
+            letter-spacing: -.03em; line-height: 1.15; color: var(--text-faint);
+            margin-bottom: .9rem; transition: color 400ms var(--ease-out);
         }
-        .trust-label { font-size: .85rem; font-weight: 700; color: #fff; margin-bottom: .2rem; }
-        .trust-desc { font-size: .72rem; color: var(--text-faint); font-family: var(--fm); letter-spacing: .02em; }
-        @media (max-width: 900px) { .trust-grid { flex-wrap: wrap; } .trust-item { flex: 0 0 50%; border-bottom: 1px solid rgba(255,255,255,.04); } }
-        @media (max-width: 480px) { .trust-item { flex: 0 0 100%; } }
+        .act-step.on .act-step-title { color: var(--ink); }
+        .act-step-desc {
+            font-size: .98rem; line-height: 1.75; color: var(--text-faint);
+            max-width: 46ch; text-wrap: pretty; transition: color 400ms var(--ease-out);
+        }
+        .act-step.on .act-step-desc { color: var(--text-muted); }
+        .act-step-rule {
+            width: 100%; height: 1px; background: var(--rule); margin-bottom: 1.6rem;
+            position: relative; overflow: hidden;
+        }
+        .act-step-rule::after {
+            content: ''; position: absolute; inset: 0; background: var(--accent);
+            transform: scaleX(0); transform-origin: left;
+            transition: transform 600ms var(--ease-out);
+        }
+        .act-step.on .act-step-rule::after { transform: scaleX(1); }
 
-        /* COMPANY VALUES */
-        .values-section { padding: 8rem 5%; }
-        .values-grid {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
-            max-width: 1280px; margin: 0 auto;
-            border: 1px solid rgba(255,255,255,.06); border-radius: 12px; overflow: hidden;
-            background: rgba(255,255,255,.04);
+        @media (max-width: 980px) {
+            .act { padding: 5rem 5% 4rem; }
+            .act-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+            .act-sticky { position: sticky; top: 76px; z-index: 2; }
+            .act-stage { padding: 1.1rem; }
+            .act-step { min-height: min(58vh, 440px); }
         }
-        .value-card {
-            padding: 3rem 2.5rem; background: rgba(3,3,5,.9);
-            transition: background .3s; position: relative;
-        }
-        .value-card:hover { background: rgba(15,17,25,.95); }
-        .value-number {
-            font-family: var(--fm); font-size: 3rem; font-weight: 700;
-            background: linear-gradient(180deg, rgba(var(--primary-rgb),.2), rgba(var(--primary-rgb),.03));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            line-height: 1; margin-bottom: 1.25rem; letter-spacing: -.04em;
-        }
-        .value-title { font-size: 1.15rem; font-weight: 700; color: #fff; letter-spacing: -.015em; margin-bottom: .6rem; }
-        .value-desc { font-size: .875rem; color: var(--text-muted); line-height: 1.8; }
-        @media (max-width: 768px) { .values-grid { grid-template-columns: 1fr; } }
 
-        /* SECTIONS */
-        .section { padding: 6rem 5%; position: relative; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,.06); background: #030305; }
-        .section.alt { background: #060609; }
-        /* Section parallax bg orbs */
-        .section-parallax-bg {
-            position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+        /* ═══ BENTO — ein Raster statt drei.
+               Showcase, Trust und Features sagten vorher dreimal dasselbe
+               in drei Kartengittern. Hier steht jede Aussage genau einmal,
+               Gewichtung ueber Flaeche statt ueber Wiederholung. ═══ */
+        .bento {
+            display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 1rem;
         }
-        .section-parallax-bg .orb {
-            position: absolute; border-radius: 50%; filter: blur(100px); opacity: .1; will-change: transform;
+        .bcard {
+            position: relative; padding: 1.75rem; border-radius: 14px;
+            background: var(--surface); border: 1px solid var(--rule);
+            overflow: hidden;
+            transition: border-color 300ms var(--ease-out), background 300ms var(--ease-out);
         }
-        .section-inner { position: relative; z-index: 1; }
-        .section-ghost { display: none; }
-        .skew-sep { display: none; }
-        .section-inner { max-width: 1280px; margin: 0 auto; }
-        .section-header { max-width: 820px; margin: 0 0 3.5rem; }
-        .section-badge {
-            display: inline-flex; align-items: center;
-            padding: .3rem .8rem; background: var(--accent-dim); border: 1px solid var(--accent-brd);
-            border-radius: 4px; color: var(--accent); font-family: var(--fm); font-size: .72rem;
-            font-weight: 500; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 1rem;
+        /* Spotlight folgt dem Zeiger — nur auf echten Zeigergeraeten. */
+        .bcard::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+            background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 0%),
+                        rgba(var(--primary-rgb),.10), transparent 65%);
+            transition: opacity 320ms var(--ease-out);
         }
-        .section-title { font-family: var(--ff); font-size: clamp(1.75rem,3.5vw,2.75rem); font-weight: 700; line-height: 1.1; letter-spacing: -.025em; color: var(--ink); margin-bottom: .75rem; }
-        .section-description { font-size: .975rem; color: var(--text-muted); line-height: 1.8; }
+        @media (hover: hover) and (pointer: fine) {
+            .bcard:hover { border-color: var(--accent-brd); background: var(--surface-2); }
+            .bcard:hover::before { opacity: 1; }
+        }
+        .bcard-lg { grid-column: span 3; grid-row: span 2; display: flex; flex-direction: column; }
+        .bcard-md { grid-column: span 3; }
+        .bcard-sm { grid-column: span 2; }
+        .bcard-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px; border-radius: 10px; margin-bottom: 1.1rem;
+            background: rgba(var(--primary-rgb),.10); border: 1px solid var(--accent-brd);
+            color: var(--accent);
+        }
+        .bcard-title {
+            position: relative; font-size: 1.05rem; font-weight: 600;
+            letter-spacing: -.015em; color: var(--ink); margin-bottom: .55rem;
+        }
+        .bcard-lg .bcard-title { font-size: 1.4rem; }
+        .bcard-desc { position: relative; font-size: .88rem; line-height: 1.7; color: var(--text-muted); text-wrap: pretty; }
+        .bcard-metrics {
+            position: relative; display: flex; gap: 2rem; flex-wrap: wrap;
+            margin-top: auto; padding-top: 1.75rem;
+        }
+        .bmetric { display: flex; flex-direction: column; gap: .25rem; }
+        .bmetric-val {
+            font-family: var(--fm); font-size: 1.1rem; font-weight: 600; color: var(--accent);
+            font-variant-numeric: tabular-nums;
+        }
+        .bmetric-label {
+            font-family: var(--fm); font-size: .6rem; letter-spacing: .12em;
+            text-transform: uppercase; color: var(--text-faint);
+        }
+        .bcard-tag {
+            position: absolute; top: 1.25rem; right: 1.25rem;
+            font-family: var(--fm); font-size: .58rem; letter-spacing: .14em;
+            text-transform: uppercase; color: var(--accent);
+            padding: .2rem .5rem; border: 1px solid var(--accent-brd); border-radius: 4px;
+        }
+        /* Der Umschaltpunkt der Spannen MUSS zum Umschaltpunkt der
+           Spaltenzahl passen — sonst legt Grid eine Phantomspalte an. */
+        @media (max-width: 900px) {
+            .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .bcard-lg { grid-column: span 2; grid-row: auto; }
+            .bcard-md, .bcard-sm { grid-column: span 1; }
+        }
+        @media (max-width: 560px) {
+            .bento { grid-template-columns: 1fr; }
+            .bcard-lg, .bcard-md, .bcard-sm { grid-column: span 1; grid-row: auto; }
+        }
 
-        /* STATS */
+        /* ═══ KENNZAHLEN ═══ */
         .stats-grid {
-            display: grid; grid-template-columns: repeat(4,1fr);
-            max-width: 1280px; margin: 0 auto;
-            border: 1px solid rgba(255,255,255,.08); border-radius: 8px; overflow: visible;
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+            border-top: 1px solid var(--rule); border-left: 1px solid var(--rule);
         }
-        @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2,1fr); } }
-        @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } }
         .stat-card {
-            padding: 2.5rem 2rem; text-align: left;
-            border-right: 1px solid rgba(255,255,255,.06); border-radius: 0;
-            background: rgba(255,255,255,.02); transition: background .3s, border-color .3s;
-            position: relative; overflow: visible; will-change: auto;
+            position: relative; padding: 2.25rem 1.75rem;
+            border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+            transition: background 300ms var(--ease-out);
         }
-        .stat-card::before { display: none; }
-        .stat-card:hover { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); box-shadow: 0 0 40px rgba(var(--primary-rgb),.05); }
-        .stat-card:last-child { border-right: none; }
-        @media (max-width: 900px) { .stat-card:nth-child(2n) { border-right: none; } .stat-card { border-bottom: 1px solid rgba(255,255,255,.06); } }
+        @media (hover: hover) and (pointer: fine) {
+            .stat-card:hover { background: rgba(var(--primary-rgb),.035); }
+        }
         .stat-number {
-            font-family: var(--ff); font-size: clamp(2.2rem,3.5vw,3rem); font-weight: 700;
-            color: #fff; line-height: 1; margin-bottom: .4rem;
-            background: none; -webkit-text-fill-color: unset; font-variant-numeric: tabular-nums;
+            font-family: var(--fm); font-size: clamp(1.9rem, 3.4vw, 2.6rem); font-weight: 600;
+            letter-spacing: -.03em; color: var(--ink); line-height: 1;
+            font-variant-numeric: tabular-nums; margin-bottom: .7rem;
         }
-        .stat-label { font-family: var(--fm); font-size: .72rem; color: var(--text-faint); font-weight: 500; text-transform: uppercase; letter-spacing: .08em; display: flex; align-items: center; gap: 6px; }
+        .stat-suffix { font-size: .45em; font-weight: 400; color: var(--text-muted); }
+        .stat-label {
+            display: flex; align-items: center; gap: 6px;
+            font-size: .82rem; color: var(--text-muted);
+        }
+        .stat-info {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0;
+            background: none; border: 1px solid var(--rule-mid); color: var(--text-faint);
+            font-size: 9px; font-weight: 700; cursor: pointer; padding: 0; line-height: 1;
+            transition: border-color var(--dur-ui) ease, color var(--dur-ui) ease;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .stat-info:hover { border-color: var(--accent-brd); color: var(--accent); }
+        }
+        .stat-tip {
+            display: none; position: absolute; width: 280px; z-index: 60;
+            background: #0b0b10; border: 1px solid var(--rule-mid); border-radius: 10px;
+            padding: 1rem 1.05rem; box-shadow: 0 16px 44px rgba(0,0,0,.55);
+            text-align: left; pointer-events: none;
+        }
+        .stat-tip.up { bottom: calc(100% - 1.4rem); left: 1.5rem; }
+        .stat-tip.down { top: calc(100% - 1.4rem); left: 1.5rem; }
+        .stat-tip-title {
+            display: flex; align-items: center; gap: .45rem;
+            font-size: .79rem; font-weight: 600; color: var(--ink); margin-bottom: .8rem;
+        }
+        .stat-tip-title svg { color: var(--accent); flex-shrink: 0; }
+        .stat-formula {
+            background: rgba(var(--primary-rgb),.09); border: 1px solid var(--accent-brd);
+            border-radius: 6px; padding: .45rem .7rem; margin-bottom: .65rem; text-align: center;
+            font-family: var(--fm); font-size: .82rem; color: var(--ink);
+        }
+        .stat-formula b { color: var(--accent); font-weight: 600; }
+        .stat-tip-text { font-size: .72rem; color: var(--text-faint); line-height: 1.7; margin-bottom: .6rem; }
+        .stat-tip-text b { color: var(--ink-soft); font-weight: 600; }
+        .stat-example {
+            font-family: var(--fm); font-size: .72rem; color: var(--good);
+            background: rgba(var(--good-rgb),.07); border: 1px solid rgba(var(--good-rgb),.18);
+            border-radius: 5px; padding: .32rem .65rem; text-align: center;
+        }
+        .stat-metric { margin-bottom: .7rem; }
+        .stat-metric-head {
+            display: flex; justify-content: space-between; align-items: baseline; margin-bottom: .28rem;
+        }
+        .stat-metric-name { font-size: .71rem; color: var(--text-muted); font-weight: 500; }
+        .stat-metric-score { font-family: var(--fm); font-size: .76rem; font-weight: 600; }
+        .stat-metric-track { height: 3px; background: rgba(255,255,255,.07); border-radius: 2px; overflow: hidden; margin-bottom: .22rem; }
+        .stat-metric-bar { height: 100%; border-radius: 2px; width: 0; transition: width 900ms var(--ease-io); }
+        .stat-metric-detail { font-size: .64rem; color: var(--text-faint); }
+        .stat-weights {
+            background: rgba(255,255,255,.03); border: 1px solid var(--rule); border-radius: 6px;
+            padding: .42rem .7rem; text-align: center;
+            font-family: var(--fm); font-size: .67rem; color: var(--text-faint);
+        }
+        .tip-arrow { position: absolute; width: 0; height: 0; border: 6px solid transparent; }
+        .stat-tip.up .tip-arrow { top: 100%; left: 20px; border-top-color: var(--rule-mid); }
+        .stat-tip.down .tip-arrow { bottom: 100%; left: 20px; border-bottom-color: var(--rule-mid); }
+        @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 460px) { .stats-grid { grid-template-columns: 1fr; } .stat-tip { width: min(280px, 78vw); } }
 
-        /* FEATURES */
-        .features-grid {
-            display: grid; grid-template-columns: repeat(3,1fr);
-            max-width: 1280px; margin: 0 auto;
-            border: 1px solid rgba(255,255,255,.08); border-radius: 8px; overflow: hidden;
+        /* ═══ WERTE — Kleinschrift-Schluessel statt 01/02/03.
+               Drei Grundsaetze sind keine Reihenfolge; eine Nummerierung
+               haette eine behauptet, die es nicht gibt. ═══ */
+        .values-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--rule); }
+        .value-card {
+            position: relative; padding: 2.25rem 1.75rem; background: #030305;
+            transition: background 300ms var(--ease-out);
         }
-        @media (max-width: 900px) { .features-grid { grid-template-columns: repeat(2,1fr); } }
-        @media (max-width: 560px) { .features-grid { grid-template-columns: 1fr; } }
-        .feature-card {
-            padding: 2.25rem 2rem; background: rgba(255,255,255,.02);
-            border: none; border-right: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.06);
-            border-radius: 0; transition: background .3s, box-shadow .3s; overflow: visible; transform-style: flat;
+        @media (hover: hover) and (pointer: fine) {
+            .value-card:hover { background: rgba(var(--primary-rgb),.035); }
         }
-        .feature-card::before, .feature-card::after { display: none; }
-        .feature-card:hover { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); box-shadow: 0 0 40px rgba(var(--primary-rgb),.05); }
-        .feature-card:nth-child(3n) { border-right: none; }
-        @media (max-width: 900px) { .feature-card:nth-child(2n) { border-right: none; } }
-        .feature-icon {
-            width: 40px; height: 40px; background: rgba(var(--primary-rgb),.08); border: 1px solid rgba(var(--primary-rgb),.15);
-            border-radius: 8px; display: flex; align-items: center; justify-content: center;
-            font-size: 1.1rem; margin-bottom: 1.1rem; transition: none;
+        .value-key {
+            font-family: var(--fm); font-size: .68rem; letter-spacing: .1em;
+            color: var(--accent); margin-bottom: 1.4rem; display: block;
         }
-        .feature-card:hover .feature-icon { transform: none; }
-        .feature-title { font-family: var(--ff); font-size: .975rem; font-weight: 600; margin-bottom: .5rem; letter-spacing: -.01em; color: var(--ink); }
-        .feature-description { color: var(--text-muted); line-height: 1.75; font-size: .875rem; }
+        .value-title { font-size: 1.15rem; font-weight: 600; letter-spacing: -.02em; color: var(--ink); margin-bottom: .7rem; }
+        .value-desc { font-size: .87rem; line-height: 1.75; color: var(--text-muted); text-wrap: pretty; }
+        @media (max-width: 820px) { .values-grid { grid-template-columns: 1fr; } }
 
-        /* TIMELINE */
-        .timeline { max-width: 1280px; margin: 0 auto; border: 1px solid rgba(255,255,255,.08); border-radius: 8px; overflow: hidden; padding: 0; position: static; }
-        .timeline::before { display: none; }
-        .timeline-item { display: none; }
-        .tl-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.03); }
-        .tl-tab {
-            padding: .9rem 1.5rem; background: none; border: none; cursor: pointer;
-            font-family: var(--ff); font-size: .875rem; font-weight: 500; color: var(--text-muted);
-            border-right: 1px solid rgba(255,255,255,.06); transition: color .2s, background .2s; white-space: nowrap;
+        /* ═══ JOURNEY ═══ */
+        .journey { position: relative; }
+        .jr-rail { position: relative; display: flex; margin-bottom: 2.5rem; }
+        .jr-rail::before {
+            content: ''; position: absolute; left: 0; right: 0; top: 5px; height: 1px; background: var(--rule-mid);
         }
-        .tl-tab:last-child { border-right: none; }
-        .tl-tab:hover { background: rgba(255,255,255,.05); color: var(--text-base); }
-        .tl-tab.active { background: rgba(var(--primary-rgb),.08); color: var(--accent); font-weight: 600; }
-        .tl-pane-wrap { padding: 2.5rem; }
-        .tl-pane { display: none; animation: fadein .3s ease; }
-        .tl-pane.active { display: block; }
-        @keyframes fadein { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
-        .tl-pane-label { font-family: var(--fm); font-size: .72rem; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; margin-bottom: .6rem; }
-        .tl-pane-title { font-size: 1.4rem; font-weight: 700; letter-spacing: -.02em; color: var(--ink); margin-bottom: .6rem; }
-        .tl-pane-desc { font-size: .925rem; color: var(--text-muted); line-height: 1.75; }
-        .tl-tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1.1rem; }
-        .tl-tag { padding: .2rem .65rem; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 4px; font-size: .72rem; color: var(--text-muted); font-family: var(--fm); }
+        .jr-node {
+            position: relative; flex: 1; display: flex; flex-direction: column; align-items: flex-start;
+            gap: .9rem; background: none; border: 0; cursor: pointer; padding: 0 0 .25rem; text-align: left;
+        }
+        .jr-dot {
+            position: relative; width: 11px; height: 11px; border-radius: 50%;
+            background: #030305; border: 1px solid var(--rule-mid); z-index: 1;
+            transition: border-color 300ms var(--ease-out), background 300ms var(--ease-out),
+                        box-shadow 300ms var(--ease-out), transform 300ms var(--ease-out);
+        }
+        .jr-node.active .jr-dot {
+            background: var(--accent); border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(var(--primary-rgb),.16); transform: scale(1.1);
+        }
+        .jr-date {
+            font-family: var(--fm); font-size: .74rem; letter-spacing: .06em;
+            color: var(--text-faint); transition: color 300ms var(--ease-out);
+        }
+        .jr-node.active .jr-date { color: var(--ink); }
+        @media (hover: hover) and (pointer: fine) {
+            .jr-node:hover .jr-date { color: var(--ink-soft); }
+            .jr-node:hover .jr-dot { border-color: var(--accent-brd); }
+        }
+        .jr-panes { position: relative; min-height: 220px; }
+        .jr-pane {
+            position: absolute; inset: 0; opacity: 0; pointer-events: none;
+            transform: translate3d(0, 14px, 0);
+            transition: opacity 420ms var(--ease-out), transform 420ms var(--ease-out);
+        }
+        .jr-pane.active { opacity: 1; transform: none; pointer-events: auto; }
+        .jr-pane-title { font-size: clamp(1.4rem, 2.4vw, 1.9rem); font-weight: 700; letter-spacing: -.03em; color: var(--ink); margin-bottom: .8rem; }
+        .jr-pane-desc { font-size: .97rem; line-height: 1.8; color: var(--text-muted); max-width: 60ch; margin-bottom: 1.4rem; }
+        .jr-tags { display: flex; gap: .5rem; flex-wrap: wrap; }
+        .jr-tag {
+            font-family: var(--fm); font-size: .68rem; letter-spacing: .04em;
+            padding: .3rem .7rem; border-radius: 4px;
+            background: rgba(255,255,255,.035); border: 1px solid var(--rule); color: var(--text-muted);
+        }
+        @media (max-width: 700px) {
+            .jr-rail { flex-wrap: wrap; gap: 1.25rem 0; }
+            .jr-rail::before { display: none; }
+            .jr-node { flex: 0 0 50%; }
+            .jr-panes { min-height: 280px; }
+        }
 
-        /* TEAM */
-        .team-grid {
-            display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
-            max-width: 1280px; margin: 0 auto;
-            border: 1px solid rgba(255,255,255,.08); border-radius: 8px; overflow: hidden;
-        }
+        /* ═══ TEAM ═══ */
         .team-card {
-            padding: 2.25rem 2rem; background: rgba(255,255,255,.02);
-            border: none; border-right: 1px solid rgba(255,255,255,.06); border-radius: 0;
-            text-align: left; transition: background .3s; overflow: visible;
+            display: flex; align-items: center; gap: 1.5rem; max-width: 480px;
+            padding: 1.75rem; border-radius: 14px;
+            background: var(--surface); border: 1px solid var(--rule);
+            transition: border-color 300ms var(--ease-out);
         }
-        .team-card::before { display: none; }
-        .team-card:last-child { border-right: none; }
-        .team-card:hover { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); box-shadow: 0 0 40px rgba(var(--primary-rgb),.05); }
+        @media (hover: hover) and (pointer: fine) { .team-card:hover { border-color: var(--accent-brd); } }
         .team-avatar {
-            width: 48px; height: 48px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb),.65));
-            margin: 0 0 1.25rem; display: flex; align-items: center; justify-content: center;
-            font-family: var(--fm); font-size: .875rem; font-weight: 500; color: #fff;
-            letter-spacing: .04em; box-shadow: 0 0 14px rgba(var(--primary-rgb),.15); transition: none;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            width: 60px; height: 60px; border-radius: 14px;
+            background: rgba(var(--primary-rgb),.12); border: 1px solid var(--accent-brd);
+            font-family: var(--fm); font-weight: 600; font-size: 1.05rem; color: var(--accent);
         }
-        .team-card:hover .team-avatar { transform: none; }
-        .team-name { font-size: 1rem; font-weight: 700; color: var(--ink); margin-bottom: .2rem; position: static; letter-spacing: -.01em; }
-        .team-role { font-family: var(--fm); font-size: .72rem; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; margin-bottom: .8rem; position: static; }
-        .team-bio { font-size: .875rem; color: var(--text-muted); line-height: 1.7; position: static; }
+        .team-name { font-size: 1.05rem; font-weight: 600; letter-spacing: -.015em; color: var(--ink); }
+        .team-role { font-family: var(--fm); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin: .25rem 0 .55rem; }
+        .team-bio { font-size: .84rem; line-height: 1.65; color: var(--text-muted); }
 
-        /* CTA */
-        .section.cta-outer { background: #030305; border-bottom: none; padding: 6rem 5%; }
+        /* ═══ CTA ═══ */
+        .cta-outer { padding: 6rem 5% 8rem; position: relative; z-index: 1; }
         .cta-section {
-            max-width: 1280px; margin: 0 auto;
-            display: flex; align-items: center; justify-content: space-between;
-            gap: 2.5rem; flex-wrap: wrap;
-            background: none; border: none; border-radius: 0; padding: 0;
+            position: relative; overflow: hidden;
+            display: flex; justify-content: space-between; align-items: center; gap: 3rem;
+            padding: 4rem 3.5rem; border-radius: 18px;
+            background: linear-gradient(140deg, rgba(var(--primary-rgb),.14), rgba(var(--primary-rgb),.03) 55%, transparent);
+            border: 1px solid var(--accent-brd);
         }
-        .cta-section::before { display: none; }
-        .cta-ring { display: none; }
-        .cta-title { font-family: var(--ff); font-size: clamp(1.75rem,3.5vw,2.75rem); font-weight: 700; color: #fff; line-height: 1.1; letter-spacing: -.025em; margin-bottom: 0; }
-        .cta-title em { font-style: normal; background: linear-gradient(135deg, var(--primary), rgba(var(--primary-rgb),.65)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .cta-description { font-size: .975rem; color: rgba(255,255,255,.45); line-height: 1.75; max-width: 500px; margin: .75rem 0 0; }
-        .cta-actions { display: flex; gap: .75rem; flex-wrap: wrap; flex-shrink: 0; }
-        .btn-cta-primary { padding: .75rem 1.75rem; background: var(--accent); color: #fff; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: .9rem; transition: all .2s; box-shadow: 0 0 20px rgba(var(--primary-rgb),.18); }
-        .btn-cta-primary:hover { filter: brightness(0.88); box-shadow: 0 0 28px rgba(var(--primary-rgb),.22); }
-        .btn-cta-outline { padding: .75rem 1.75rem; background: transparent; color: rgba(255,255,255,.6); border: 1px solid rgba(255,255,255,.15); border-radius: 6px; text-decoration: none; font-weight: 500; font-size: .9rem; transition: border-color .2s, color .2s; }
-        .btn-cta-outline:hover { border-color: rgba(255,255,255,.35); color: var(--white); }
-
-        /* FOOTER */
-
-        /* SCROLL REVEAL */
-        .px-reveal { opacity: 0; transition: opacity .55s ease, transform .55s cubic-bezier(.22,.68,0,1.1); }
-        .px-reveal.px-from-left  { transform: translateX(-24px); }
-        .px-reveal.px-from-right { transform: translateX(24px); }
-        .px-reveal.px-from-below { transform: translateY(22px); }
-        .px-reveal.px-scale-in   { transform: translateY(12px); }
-        .px-reveal.px-visible { opacity: 1; transform: translateX(0) translateY(0) scale(1); }
-        .px-d1{transition-delay:.07s;} .px-d2{transition-delay:.14s;} .px-d3{transition-delay:.21s;}
-        .px-d4{transition-delay:.28s;} .px-d5{transition-delay:.35s;} .px-d6{transition-delay:.42s;}
-        .parallax-element { will-change: transform; }
-
-        /* PARALLAX FLOATING PARTICLES */
-        .parallax-stars {
-            position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+        .cta-section::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: radial-gradient(80% 120% at 100% 0%, rgba(var(--primary-rgb),.18), transparent 60%);
         }
-        .parallax-stars .star {
-            position: absolute; width: 2px; height: 2px; border-radius: 50%;
-            background: rgba(255,255,255,.12); will-change: transform;
+        .cta-title { position: relative; font-size: clamp(1.9rem, 3.6vw, 2.8rem); font-weight: 700; line-height: 1.12; letter-spacing: -.035em; color: var(--ink); }
+        .cta-title em {
+            font-style: normal;
+            background: linear-gradient(120deg, var(--primary), rgba(var(--primary-rgb),.6));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; color: transparent;
         }
-        .parallax-stars .star:nth-child(odd) { background: rgba(var(--primary-rgb),.12); }
-        .parallax-stars .star.large { width: 3px; height: 3px; background: rgba(var(--primary-rgb),.15); }
-
-        /* Parallax section dividers */
-        .parallax-divider {
-            position: relative; height: 120px; overflow: hidden;
-            background: linear-gradient(180deg, transparent, rgba(var(--primary-rgb),.03), transparent);
+        .cta-description { position: relative; font-size: .98rem; line-height: 1.75; color: var(--text-muted); max-width: 52ch; margin-top: 1.1rem; text-wrap: pretty; }
+        .cta-actions { position: relative; display: flex; flex-direction: column; gap: .75rem; flex-shrink: 0; }
+        .btn-cta-primary, .btn-cta-outline {
+            display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+            padding: .85rem 1.9rem; border-radius: 8px; text-decoration: none;
+            font-weight: 600; font-size: .92rem; white-space: nowrap;
+            transition: background var(--dur-ui) ease, border-color var(--dur-ui) ease,
+                        color var(--dur-ui) ease, transform 140ms var(--ease-out);
         }
-        .parallax-divider::before {
-            content: ''; position: absolute; inset: 0;
-            background: repeating-linear-gradient(
-                90deg, transparent, transparent 49.5%, rgba(255,255,255,.03) 49.5%, rgba(255,255,255,.03) 50.5%, transparent 50.5%
-            );
-            background-size: 60px 100%;
+        .btn-cta-primary { background: var(--accent); color: #fff; }
+        .btn-cta-outline { background: transparent; color: var(--ink-soft); border: 1px solid var(--rule-mid); }
+        @media (hover: hover) and (pointer: fine) {
+            .btn-cta-primary:hover { background: color-mix(in srgb, var(--accent) 86%, #fff); }
+            .btn-cta-outline:hover { border-color: var(--accent-brd); color: var(--ink); background: rgba(var(--primary-rgb),.06); }
+            .btn-cta-primary:hover .btn-arrow { transform: translateX(3px); }
+        }
+        .btn-cta-primary:active, .btn-cta-outline:active { transform: scale(.97); }
+        @media (max-width: 860px) {
+            .cta-section { flex-direction: column; align-items: flex-start; padding: 2.75rem 1.75rem; }
+            .cta-actions { width: 100%; }
+            .cta-outer { padding: 4rem 5% 5rem; }
         }
 
-        @media (max-width: 768px) {
-            .section { padding: 4rem 5%; }
-            .hero { padding: 4rem 5% 3.5rem; }
-            .features-grid { grid-template-columns: 1fr; }
-            .feature-card:nth-child(n) { border-right: none; }
-            .tl-tabs { overflow-x: auto; }
-            .cta-section { flex-direction: column; }
+        @media (max-width: 700px) {
+            .section { padding: 5rem 5%; }
+            .section.tight { padding: 3.5rem 5%; }
+            .section-header { margin-bottom: 2.5rem; }
         }
-        @media (max-width: 480px) {
-            .hero-buttons { flex-direction: column; width: 100%; }
-            .btn-primary, .btn-secondary { width: 100%; text-align: center; justify-content: center; }
-            .stats-grid { grid-template-columns: 1fr; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           REDUZIERTE BEWEGUNG — weniger und sanfter, nicht null.
+           Deckkraft bleibt (sie erklaert, dass etwas neu ist), jede
+           Ortsveraenderung faellt weg. Der rAF-Lauf haelt sich in JS
+           an dieselbe Abfrage.
+           ═══════════════════════════════════════════════════════════════ */
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            .js [data-reveal],
+            .js [data-reveal="left"], .js [data-reveal="right"],
+            .js [data-reveal="scale"], .js [data-reveal="wipe"] {
+                transform: none; clip-path: none;
+                transition: opacity 260ms ease; transition-delay: 0ms;
+            }
+            .js [data-reveal].is-in { clip-path: none; }
+            .js .tl-line > span { transform: none; transition: none; }
+            .daybar-fill, .act-bar-fill { transition: none; transform: scaleX(1); }
+            .daybar-break, .daybar-label { transition: none; opacity: 1; }
+            .hero-badge-dot, .daycard-live::before { animation: none; }
+            .act-read { transition: opacity 260ms ease; transform: none; }
+            .jr-pane { transition: opacity 260ms ease; transform: none; }
+            .stat-metric-bar { transition: none; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.3.9"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.3.10"></script>
 </head>
 <body>
 
-    <nav class="navbar" id="navbar">
-        <div class="nav-content">
-            <div class="logo">My<span>Work</span>Log</div>
-            <ul class="nav-links">
-                <li><a href="#showcase">Produkt</a></li>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#journey">Journey</a></li>
-                <li><a href="#team">Team</a></li>
-            </ul>
-            <a href="/" class="cta-button">App öffnen</a>
-        </div>
-    </nav>
+<a class="skip-link" href="#main">Zum Inhalt springen</a>
 
-    <div class="scroll-progress" id="scrollProgress"></div>
+<nav class="navbar" id="navbar">
+    <div class="nav-content">
+        <div class="logo">My<span>Work</span>Log</div>
+        <ul class="nav-links">
+            <li><a href="#showcase">Produkt</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#journey">Journey</a></li>
+            <li><a href="#team">Team</a></li>
+        </ul>
+        <a href="/" class="cta-button">App öffnen</a>
+    </div>
+</nav>
 
-    <!-- PARALLAX STARS BG -->
-    <div class="parallax-stars" id="parallaxStars"></div>
+<div class="scroll-progress" id="scrollProgress"></div>
 
-    <!-- HERO -->
-    <section class="hero">
-        <div class="hero-orb hero-orb-1" data-parallax-speed="0.03"></div>
-        <div class="hero-orb hero-orb-2" data-parallax-speed="0.05"></div>
-        <div class="hero-orb hero-orb-3" data-parallax-speed="0.04"></div>
-        <div class="hero-content">
-            <div class="hero-badge">
+<!-- TAGES-SCHIENE: Scrollfortschritt als Arbeitstag 07:30–16:30 -->
+<div class="rail" id="rail" aria-hidden="true">
+    <div class="rail-line"></div>
+    <div class="rail-fill" id="railFill"></div>
+    <!-- Beschriftungen stehen als Text im Markup, damit die i18n-Pipeline
+         sie ueberhaupt sieht — JS setzt hier nur `top` und `.on`. -->
+    <div class="rail-ticks" id="railTicks">
+        <div class="rail-tick" data-for="showcase"><span class="rail-tick-label">Ein Tag</span></div>
+        <div class="rail-tick" data-for="features"><span class="rail-tick-label">Features</span></div>
+        <div class="rail-tick" data-for="stats"><span class="rail-tick-label">Kennzahlen</span></div>
+        <div class="rail-tick" data-for="values"><span class="rail-tick-label">Grundsätze</span></div>
+        <div class="rail-tick" data-for="journey"><span class="rail-tick-label">Journey</span></div>
+        <div class="rail-tick" data-for="team"><span class="rail-tick-label">Team</span></div>
+    </div>
+    <div class="rail-head" id="railHead">
+        <div class="rail-dot"></div>
+        <div class="rail-clock" id="railClock">07:30</div>
+        <div class="rail-caption">Scrollfortschritt</div>
+    </div>
+</div>
+
+<!-- ATMOSPHAERE: zwei Ebenen, zwei Transform-Schreibungen pro Frame -->
+<div class="atmo" aria-hidden="true">
+    <div class="atmo-stars" id="atmoStars"></div>
+    <div class="atmo-orbs" id="atmoOrbs">
+        <div class="orb" style="width:560px;height:560px;background:rgba(var(--primary-rgb),.16);top:2%;left:-8%;"></div>
+        <div class="orb" style="width:420px;height:420px;background:rgba(var(--primary-rgb),.12);top:38%;right:-6%;"></div>
+        <div class="orb" style="width:360px;height:360px;background:rgba(var(--good-rgb),.07);top:66%;left:22%;"></div>
+    </div>
+</div>
+
+<main id="main">
+
+<!-- ═══ HERO ═══ -->
+<section class="hero" id="hero">
+    <div class="hero-grid shell">
+        <div class="hero-copy">
+            <div class="hero-badge" data-reveal style="--i:5">
                 <span class="hero-badge-dot"></span>
-                Version <span data-app-version>3.3.3a</span> &mdash; Live
+                <span>Version <span data-app-version>3.3.3a</span> — Live</span>
             </div>
             <h1 class="hero-title">
-                Zeiterfassung &amp; Berichtsheft<br>für <em>Auszubildende.</em>
+                <span class="tl-line" style="--i:0"><span>Zeiterfassung &amp; Berichtsheft</span></span>
+                <span class="tl-line" style="--i:1"><span>für <em>Auszubildende.</em></span></span>
             </h1>
-            <p class="hero-description">
+            <p class="hero-description" data-reveal style="--i:6">
                 Gleitzeitkonto, digitales Berichtsheft, Überstundenrechner &amp; Arbeitszeitnachweis.
                 100% offline, DSGVO-konform, und designed für deine Ausbildung.
             </p>
-            <div class="hero-buttons">
-                <a href="/" class="btn-primary"><span>Jetzt starten →</span></a>
-                <a href="#features" class="btn-secondary">Features ansehen</a>
+            <div class="hero-buttons" data-reveal style="--i:7">
+                <a href="/" class="btn-primary"><span>Jetzt starten</span><span class="btn-arrow" aria-hidden="true">→</span></a>
+                <a href="#features" class="btn-secondary"><span>Features ansehen</span></a>
             </div>
-            <div class="hero-meta">
+            <div class="hero-meta" data-reveal style="--i:8">
                 <div class="hero-meta-item"><span class="hero-meta-label">Lizenz</span><span class="hero-meta-value">Kostenlos</span></div>
                 <div class="hero-meta-item"><span class="hero-meta-label">Datenspeicherung</span><span class="hero-meta-value">Lokal / offline</span></div>
                 <div class="hero-meta-item"><span class="hero-meta-label">Verschlüsselung</span><span class="hero-meta-value">AES-256-GCM</span></div>
                 <div class="hero-meta-item"><span class="hero-meta-label">Plattform</span><span class="hero-meta-value">PWA / Browser</span></div>
             </div>
         </div>
-    </section>
 
-    <!-- TICKER 1 -->
-    <div class="marquee-wrap">
-        <div class="marquee-track">
-            <span class="marquee-item hi">MyWorkLog<span class="mi-dot"></span></span>
-            <span class="marquee-item">Azubi Zeiterfassung<span class="mi-dot"></span></span>
-            <span class="marquee-item cyan-i">100% Offline<span class="mi-dot"></span></span>
-            <span class="marquee-item">Berichtsheft<span class="mi-dot"></span></span>
-            <span class="marquee-item hi">DSGVO-Konform<span class="mi-dot"></span></span>
-            <span class="marquee-item">Gleitzeitkonto<span class="mi-dot"></span></span>
-            <span class="marquee-item cyan-i">AES-256<span class="mi-dot"></span></span>
-            <span class="marquee-item">IHK-Vorlage<span class="mi-dot"></span></span>
-            <span class="marquee-item hi">Open Source<span class="mi-dot"></span></span>
-            <span class="marquee-item">PWA<span class="mi-dot"></span></span>
-            <span class="marquee-item cyan-i">NFC Tap-to-Work<span class="mi-dot"></span></span>
-            <span class="marquee-item">Made in Germany<span class="mi-dot"></span></span>
-            <span class="marquee-item hi">MyWorkLog<span class="mi-dot"></span></span>
-            <span class="marquee-item">Azubi Zeiterfassung<span class="mi-dot"></span></span>
-            <span class="marquee-item cyan-i">100% Offline<span class="mi-dot"></span></span>
-            <span class="marquee-item">Berichtsheft<span class="mi-dot"></span></span>
-            <span class="marquee-item hi">DSGVO-Konform<span class="mi-dot"></span></span>
-            <span class="marquee-item">Gleitzeitkonto<span class="mi-dot"></span></span>
-            <span class="marquee-item cyan-i">AES-256<span class="mi-dot"></span></span>
-            <span class="marquee-item">IHK-Vorlage<span class="mi-dot"></span></span>
-            <span class="marquee-item hi">Open Source<span class="mi-dot"></span></span>
-            <span class="marquee-item">PWA<span class="mi-dot"></span></span>
-            <span class="marquee-item cyan-i">NFC Tap-to-Work<span class="mi-dot"></span></span>
-            <span class="marquee-item">Made in Germany<span class="mi-dot"></span></span>
+        <!-- Tageskarte: ein vollstaendiger Arbeitstag, wie ihn die App zeigt -->
+        <div class="daycard" data-reveal="scale" style="--i:4">
+            <div class="daycard-head">
+                <span class="daycard-date">Mittwoch — Beispieltag</span>
+                <span class="daycard-live">Erfasst</span>
+            </div>
+            <div class="daycard-scale">
+                <span>07:30</span>
+                <span>16:30</span>
+            </div>
+            <div class="daybar">
+                <div class="daybar-fill"></div>
+                <div class="daybar-break"><span class="daybar-label">30 min Pause</span></div>
+            </div>
+            <div class="daycard-rows">
+                <div class="daycard-row">
+                    <span class="daycard-key">Gearbeitet</span>
+                    <span class="daycard-val">8:30 h</span>
+                </div>
+                <div class="daycard-row">
+                    <span class="daycard-key">Tagessoll</span>
+                    <span class="daycard-val">8:00 h</span>
+                </div>
+                <div class="daycard-row is-balance">
+                    <span class="daycard-key">Gleitzeit</span>
+                    <span class="daycard-val">+0:30 h</span>
+                </div>
+            </div>
+            <p class="daycard-note">Beispielwerte. Soll-Stunden, Pausen und Rundung kommen aus deinen eigenen Einstellungen.</p>
         </div>
     </div>
+</section>
 
-    <div class="parallax-divider"></div>
+<!-- ═══ TICKER 1 ═══ -->
+<div class="marquee-wrap">
+    <div class="marquee-track" id="mq1" data-dir="-1">
+        <span class="marquee-item hi"><span class="mi-t">MyWorkLog</span><span class="mi-dot"></span></span>
+        <span class="marquee-item"><span class="mi-t">Azubi Zeiterfassung</span><span class="mi-dot"></span></span>
+        <span class="marquee-item acc"><span class="mi-t">100% Offline</span><span class="mi-dot"></span></span>
+        <span class="marquee-item"><span class="mi-t">Berichtsheft</span><span class="mi-dot"></span></span>
+        <span class="marquee-item hi"><span class="mi-t">DSGVO-Konform</span><span class="mi-dot"></span></span>
+        <span class="marquee-item"><span class="mi-t">Gleitzeitkonto</span><span class="mi-dot"></span></span>
+        <span class="marquee-item acc"><span class="mi-t">AES-256</span><span class="mi-dot"></span></span>
+        <span class="marquee-item"><span class="mi-t">IHK-Vorlage</span><span class="mi-dot"></span></span>
+        <span class="marquee-item hi"><span class="mi-t">Open Source</span><span class="mi-dot"></span></span>
+        <span class="marquee-item"><span class="mi-t">PWA</span><span class="mi-dot"></span></span>
+        <span class="marquee-item acc"><span class="mi-t">NFC Tap-to-Work</span><span class="mi-dot"></span></span>
+        <span class="marquee-item"><span class="mi-t">Made in Germany</span><span class="mi-dot"></span></span>
+    </div>
+</div>
 
-    <!-- ENTERPRISE SHOWCASE -->
-    <section class="section showcase-section" id="showcase">
-        <div class="section-parallax-bg">
-            <div class="orb" data-parallax-speed="0.03" style="width:600px;height:600px;background:rgba(var(--primary-rgb),.08);top:-30%;left:30%;"></div>
-            <div class="orb" data-parallax-speed="0.05" style="width:400px;height:400px;background:rgba(var(--primary-rgb),.06);bottom:-20%;right:10%;"></div>
+<!-- ═══ FAKTEN ═══ -->
+<div class="facts">
+    <div class="facts-grid shell">
+        <div class="fact" data-reveal style="--i:0">
+            <span class="fact-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+            <span class="fact-label">DSGVO-konform</span>
+            <span class="fact-desc">Privacy by Design</span>
         </div>
-        <div class="section-inner">
-            <div class="showcase-header px-reveal px-from-below">
-                <div class="section-badge">Enterprise Grade</div>
-                <h2 class="section-title">Gebaut für höchste<br>Ansprüche.</h2>
-                <p class="section-description">Professionelle Werkzeuge, die sich nahtlos in den Arbeitsalltag integrieren — von der ersten Stunde bis zum Abschlusszeugnis.</p>
-            </div>
-            <div class="showcase-grid">
-                <div class="showcase-card showcase-card-hero parallax-element px-reveal px-from-left" data-speed="0.06">
-                    <div class="showcase-card-badge">Kernprodukt</div>
-                    <div class="showcase-card-icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    </div>
-                    <h3 class="showcase-card-title">Intelligente Zeiterfassung</h3>
-                    <p class="showcase-card-desc">Erfasse Arbeitszeiten mit einem Tap. Das System lernt dein Muster, erkennt Anomalien und optimiert dein Gleitzeitkonto automatisch.</p>
-                    <div class="showcase-card-metrics">
-                        <div class="showcase-metric"><span class="showcase-metric-value">&lt;100ms</span><span class="showcase-metric-label">Ladezeit</span></div>
-                        <div class="showcase-metric"><span class="showcase-metric-value">60fps</span><span class="showcase-metric-label">Rendering</span></div>
-                        <div class="showcase-metric"><span class="showcase-metric-value">0 KB</span><span class="showcase-metric-label">Server-Traffic</span></div>
-                    </div>
-                </div>
-                <div class="showcase-card parallax-element px-reveal px-from-right px-d1" data-speed="0.08">
-                    <div class="showcase-card-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    </div>
-                    <h3 class="showcase-card-title">Security Architecture</h3>
-                    <p class="showcase-card-desc">AES-256-GCM Verschlüsselung, Zero-Knowledge Architektur, keine Datenübertragung. DSGVO by Design.</p>
-                </div>
-                <div class="showcase-card parallax-element px-reveal px-from-right px-d2" data-speed="0.1">
-                    <div class="showcase-card-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                    </div>
-                    <h3 class="showcase-card-title">Offline-First PWA</h3>
-                    <p class="showcase-card-desc">Service Worker cachen die gesamte App. Kein Internet? Kein Problem. Volle Funktionalität — überall.</p>
-                </div>
-                <div class="showcase-card parallax-element px-reveal px-from-left px-d2" data-speed="0.08">
-                    <div class="showcase-card-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    </div>
-                    <h3 class="showcase-card-title">Peer-to-Peer Sync</h3>
-                    <p class="showcase-card-desc">WebRTC-basierter Gerätesync ohne Middleware. Daten fließen direkt von Gerät zu Gerät — verschlüsselt.</p>
-                </div>
-                <div class="showcase-card parallax-element px-reveal px-from-below px-d3" data-speed="0.06">
-                    <div class="showcase-card-icon">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                    </div>
-                    <h3 class="showcase-card-title">Lokale KI-Engine</h3>
-                    <p class="showcase-card-desc">Berichtsheft-Generierung mit on-device Intelligence. Keine Cloud-API, keine Kosten, keine Datenweitergabe.</p>
-                </div>
-            </div>
+        <div class="fact" data-reveal style="--i:1">
+            <span class="fact-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/><line x1="2" y1="2" x2="22" y2="22"/></svg></span>
+            <span class="fact-label">Offline nutzbar</span>
+            <span class="fact-desc">Kein Netz nötig</span>
         </div>
-    </section>
+        <div class="fact" data-reveal style="--i:2">
+            <span class="fact-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+            <span class="fact-label">Cross-Platform</span>
+            <span class="fact-desc">Desktop, Tablet, Mobile</span>
+        </div>
+        <div class="fact" data-reveal style="--i:3">
+            <span class="fact-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+            <span class="fact-label">Made in Germany</span>
+            <span class="fact-desc">Entwickelt in Deutschland</span>
+        </div>
+        <div class="fact" data-reveal style="--i:4">
+            <span class="fact-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+            <span class="fact-label">IHK-Vordrucke</span>
+            <span class="fact-desc">Amtliche Formulare</span>
+        </div>
+    </div>
+</div>
 
-    <!-- TRUST INDICATORS -->
-    <section class="section alt trust-section">
-        <div class="section-parallax-bg">
-            <div class="orb" data-parallax-speed="0.04" style="width:500px;height:500px;background:rgba(52,211,153,.06);top:10%;left:-10%;"></div>
+<!-- ═══════════════════════════════════════════════════════════════════
+     DER AKT — der Tag laeuft mit dem Scrollen ab.
+     Links klebt die Karte, rechts wandern die vier Schritte durch.
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="act" id="showcase" data-step="1">
+    <div class="shell">
+        <div class="section-header" data-reveal>
+            <span class="section-eyebrow">Ein Tag mit MyWorkLog</span>
+            <h2 class="section-title">Vier Handgriffe, und der Tag ist erfasst.</h2>
+            <p class="section-description">Kommen, Pause, Gehen — den Rest rechnet die App. Am Ende der Woche steht das Berichtsheft schon fast fertig da.</p>
         </div>
-        <div class="section-inner">
-            <div class="trust-grid">
-                <div class="trust-item px-reveal px-from-below">
-                    <div class="trust-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                    </div>
-                    <div class="trust-label">DSGVO-konform</div>
-                    <div class="trust-desc">100% Privacy by Design</div>
-                </div>
-                <div class="trust-item px-reveal px-from-below px-d1">
-                    <div class="trust-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                    </div>
-                    <div class="trust-label">99.9% Uptime</div>
-                    <div class="trust-desc">Offline = immer verfügbar</div>
-                </div>
-                <div class="trust-item px-reveal px-from-below px-d2">
-                    <div class="trust-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                    </div>
-                    <div class="trust-label">Cross-Platform</div>
-                    <div class="trust-desc">Desktop, Tablet, Mobile</div>
-                </div>
-                <div class="trust-item px-reveal px-from-below px-d3">
-                    <div class="trust-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                    </div>
-                    <div class="trust-label">Made in Germany</div>
-                    <div class="trust-desc">Deutsche Qualitätsstandards</div>
-                </div>
-                <div class="trust-item px-reveal px-from-below px-d4">
-                    <div class="trust-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    </div>
-                    <div class="trust-label">IHK-konform</div>
-                    <div class="trust-desc">Offizielle Berichtshefte</div>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- COMPANY VALUES -->
-    <section class="section values-section">
-        <div class="section-parallax-bg">
-            <div class="orb" data-parallax-speed="0.05" style="width:450px;height:450px;background:rgba(var(--primary-rgb),.07);bottom:-15%;right:5%;"></div>
-        </div>
-        <div class="section-inner">
-            <div class="section-header" style="text-align:center;max-width:660px;margin:0 auto 4rem;">
-                <div class="section-badge px-reveal px-scale-in">Unsere Werte</div>
-                <h2 class="section-title px-reveal px-from-below px-d1" style="text-align:center;">Was uns antreibt</h2>
-                <p class="section-description px-reveal px-from-below px-d2" style="text-align:center;">Prinzipien, die jede Zeile Code und jede Entscheidung leiten.</p>
-            </div>
-            <div class="values-grid">
-                <div class="value-card px-reveal px-from-below">
-                    <div class="value-number">01</div>
-                    <h3 class="value-title">Privacy First</h3>
-                    <p class="value-desc">Daten gehören dem Nutzer. Deine Einträge bleiben im Browser — keine Werbe-Pixel, keine Profilbildung. Die anonyme Nutzungsstatistik ist cookiefrei und öffentlich einsehbar.</p>
-                </div>
-                <div class="value-card px-reveal px-from-below px-d1">
-                    <div class="value-number">02</div>
-                    <h3 class="value-title">Engineering Excellence</h3>
-                    <p class="value-desc">Jede Codezeile wird reviewed, getestet und optimiert. Wir liefern nicht „gut genug", wir liefern das Beste.</p>
-                </div>
-                <div class="value-card px-reveal px-from-below px-d2">
-                    <div class="value-number">03</div>
-                    <h3 class="value-title">Accessibility</h3>
-                    <p class="value-desc">Kostenlos, Open Source, für jeden zugänglich. Bildung und Werkzeuge sollten keine Paywall kennen.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <div class="parallax-divider"></div>
-
-    <!-- STATS -->
-    <section class="section" style="overflow:visible;">
-        <div class="section-parallax-bg">
-            <div class="orb" data-parallax-speed="0.04" style="width:400px;height:400px;background:rgba(var(--primary-rgb),.15);top:-20%;left:10%;"></div>
-            <div class="orb" data-parallax-speed="0.06" style="width:300px;height:300px;background:rgba(var(--primary-rgb),.1);bottom:-10%;right:15%;"></div>
-        </div>
-        <div class="section-inner">
-            <div class="section-header px-reveal px-from-below">
-                <div class="section-badge">Kennzahlen</div>
-                <h2 class="section-title">Vertrauen in Zahlen</h2>
-            </div>
-            <div class="stats-grid">
-                <div class="stat-card parallax-element px-reveal px-from-below" data-speed="0.1">
-                    <div class="stat-number" id="stat-active-users">0</div>
-                    <div class="stat-label">Aktive Nutzer</div>
-                </div>
-
-                <div class="stat-card parallax-element px-reveal px-from-below px-d1" data-speed="0.15" style="position:relative;z-index:10;overflow:visible;">
-                    <div class="stat-number" id="stat-hours">0</div>
-                    <div class="stat-label" style="display:flex;align-items:center;gap:6px;">
-                        Erfasste Stunden
-                        <button id="hoursInfoBtn" style="
-                            display:inline-flex;align-items:center;justify-content:center;
-                            width:16px;height:16px;border-radius:50%;
-                            background:none;border:1px solid #c9cfd8;
-                            color:#8c95a3;font-size:10px;font-weight:600;
-                            cursor:pointer;flex-shrink:0;padding:0;line-height:1;
-                            font-style:normal;transition:border-color .2s,color .2s;
-                            position:relative;z-index:20;
-                        ">i</button>
+        <div class="act-grid">
+            <div class="act-sticky">
+                <div class="act-stage" data-reveal="left">
+                    <div class="act-stage-head">
+                        <span class="act-stage-title">Mittwoch, 25. Juni</span>
+                        <!-- Alle vier Beschriftungen stehen im Markup; CSS zeigt die
+                             zum aktiven Schritt. Ein per JS gesetzter Text waere fuer
+                             die i18n-Extraktion unsichtbar. -->
+                        <span class="act-stage-step">
+                            <span data-s="1">Schritt 01</span>
+                            <span data-s="2">Schritt 02</span>
+                            <span data-s="3">Schritt 03</span>
+                            <span data-s="4">Schritt 04</span>
+                        </span>
                     </div>
-                    <div id="hoursTooltip" style="
-                        display:none;
-                        position:absolute;
-                        bottom:calc(100% + 10px);
-                        left:0;
-                        width:270px;
-                        background:#0d0f12;
-                        border:1px solid rgba(255,255,255,.1);
-                        border-radius:8px;
-                        padding:1rem 1.1rem;
-                        z-index:9999;
-                        box-shadow:0 8px 32px rgba(0,0,0,.25);
-                        text-align:left;
-                        pointer-events:none;
-                    ">
-                        <div style="font-size:.8rem;font-weight:600;color:#fff;margin-bottom:.5rem;">📐 Wie wird gerechnet?</div>
-                        <div style="background:rgba(26,86,219,.12);border:1px solid rgba(26,86,219,.25);border-radius:6px;padding:.45rem .75rem;margin-bottom:.6rem;text-align:center;">
-                            <span style="font-family:'JetBrains Mono',monospace;font-size:.85rem;color:#fff;">
-                                <span style="color:#6da5ff;font-weight:600;">Nutzer</span>&nbsp;×&nbsp;<span style="color:#6da5ff;font-weight:600;">45h</span>&nbsp;+&nbsp;<span style="color:#6da5ff;font-weight:600;">800h</span>
-                            </span>
+                    <div class="act-bar">
+                        <div class="act-bar-fill"></div>
+                        <div class="act-bar-break"></div>
+                    </div>
+                    <div class="act-scale">
+                        <span>07:30</span>
+                        <span>12:00</span>
+                        <span>16:30</span>
+                    </div>
+
+                    <div class="act-reads">
+                        <div class="act-read" data-read="1">
+                            <div class="act-read-row"><span class="act-read-key">Gestempelt</span><span class="act-read-val">07:30</span></div>
+                            <div class="act-read-row"><span class="act-read-key">Erfasst</span><span class="act-read-val">0:00 h</span></div>
+                            <p class="act-read-note">Ein Tap auf „Kommen" — oder ein NFC-Tag am Arbeitsplatz. Mehr braucht der Start nicht.</p>
                         </div>
-                        <div style="font-size:.72rem;color:rgba(255,255,255,.45);line-height:1.65;margin-bottom:.6rem;">
-                            Ein aktiver Nutzer trackt im Schnitt <strong style="color:rgba(255,255,255,.75);">45 Stunden</strong> (≈ 1 Arbeitswoche+) in MyWorkLog.<br>
-                            Die <strong style="color:rgba(255,255,255,.75);">+800h</strong> sind eine konservative Basis für frühe Nutzer &amp; gelöschte Daten.
+                        <div class="act-read" data-read="2">
+                            <div class="act-read-row"><span class="act-read-key">Pause</span><span class="act-read-val">12:00 – 12:30</span></div>
+                            <div class="act-read-row"><span class="act-read-key">Erfasst</span><span class="act-read-val">4:30 h</span></div>
+                            <p class="act-read-note">Die Pause wird abgezogen, nicht geschätzt. Die gesetzliche Mindestpause kennt die App.</p>
                         </div>
-                        <div id="hoursTooltipExample" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#34d399;background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.18);border-radius:5px;padding:.3rem .65rem;text-align:center;">— × 45 + 800 = —</div>
-                        <div style="position:absolute;top:100%;left:20px;border:6px solid transparent;border-top-color:rgba(255,255,255,.1);width:0;height:0;"></div>
+                        <div class="act-read" data-read="3">
+                            <div class="act-read-row"><span class="act-read-key">Gearbeitet</span><span class="act-read-val">8:30 h</span></div>
+                            <div class="act-read-row"><span class="act-read-key">Tagessoll</span><span class="act-read-val">8:00 h</span></div>
+                            <div class="act-read-row is-balance"><span class="act-read-key">Gleitzeit</span><span class="act-read-val">+0:30 h</span></div>
+                        </div>
+                        <div class="act-read" data-read="4">
+                            <div class="act-read-row"><span class="act-read-key">Woche</span><span class="act-read-val">42:30 h</span></div>
+                            <div class="act-read-row is-balance"><span class="act-read-key">Saldo</span><span class="act-read-val">+2:30 h</span></div>
+                            <div class="act-sheet">
+                                <span class="act-sheet-label">Berichtsheft, Woche 26</span>
+                                <span class="act-sheet-text">Mi — Wartung der Clients im 2. OG, Image-Rollout vorbereitet. 8:30 h</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="stat-card parallax-element px-reveal px-from-below px-d2" data-speed="0.2" style="position:relative;z-index:10;overflow:visible;">
-                    <div class="stat-number"><span id="stat-satisfaction">0</span><span id="sat-pct" style="font-size:1.4rem;font-weight:400;color:var(--text-muted);">%</span></div>
-                    <div class="stat-label" style="display:flex;align-items:center;gap:6px;">
-                        Zufriedenheit
-                        <button id="satisfactionInfoBtn" style="
-                            display:inline-flex;align-items:center;justify-content:center;
-                            width:16px;height:16px;border-radius:50%;
-                            background:none;border:1px solid #c9cfd8;
-                            color:#8c95a3;font-size:10px;font-weight:600;
-                            cursor:pointer;flex-shrink:0;padding:0;line-height:1;
-                            font-style:normal;transition:border-color .2s,color .2s;
-                            position:relative;z-index:20;
-                        ">i</button>
-                    </div>
-                    <div id="satisfactionTooltip" style="
-                        display:none;
-                        position:absolute;
-                        top:calc(100% + 10px);
-                        left:0;
-                        width:295px;
-                        background:#0d0f12;
-                        border:1px solid rgba(255,255,255,.1);
-                        border-radius:10px;
-                        padding:1.1rem 1.1rem .9rem;
-                        z-index:9999;
-                        box-shadow:0 12px 40px rgba(0,0,0,.45);
-                        text-align:left;
-                        pointer-events:none;
-                    ">
-                        <div style="font-size:.8rem;font-weight:600;color:#fff;margin-bottom:.85rem;letter-spacing:-.01em;">📊 Wie wird die Zufriedenheit berechnet?</div>
+            <div class="act-steps" id="actSteps">
+                <article class="act-step" data-step-index="1">
+                    <div class="act-step-rule"></div>
+                    <span class="act-step-num">01 — 07:30</span>
+                    <h3 class="act-step-title">Kommen</h3>
+                    <p class="act-step-desc">Ein Tap startet den Live-Tracker. Kein Formular, keine Anmeldung, kein Warten auf einen Server. Wer lieber tippt, trägt Anfang und Ende von Hand nach.</p>
+                </article>
+                <article class="act-step" data-step-index="2">
+                    <div class="act-step-rule"></div>
+                    <span class="act-step-num">02 — 12:00</span>
+                    <h3 class="act-step-title">Pause</h3>
+                    <p class="act-step-desc">Pausen zieht MyWorkLog nach deinen Einstellungen ab — nicht nach einer festen Zahl im Code. Die gesetzliche Mindestpause ist hinterlegt und meldet sich, wenn sie fehlt.</p>
+                </article>
+                <article class="act-step" data-step-index="3">
+                    <div class="act-step-rule"></div>
+                    <span class="act-step-num">03 — 16:30</span>
+                    <h3 class="act-step-title">Gehen</h3>
+                    <p class="act-step-desc">Der Tag wird gegen dein Tagessoll gerechnet, die Differenz wandert ins Gleitzeitkonto. Überstunden und Minusstunden stehen sofort da — mit Rundung, wenn dein Betrieb rundet.</p>
+                </article>
+                <article class="act-step" data-step-index="4">
+                    <div class="act-step-rule"></div>
+                    <span class="act-step-num">04 — Freitag</span>
+                    <h3 class="act-step-title">Berichtsheft</h3>
+                    <p class="act-step-desc">Aus den Einträgen der Woche entsteht der Ausbildungsnachweis — als PDF im amtlichen Vordruck deiner Kammer. Was du täglich notiert hast, steht schon drin.</p>
+                </article>
+            </div>
+        </div>
+    </div>
+</section>
 
-                        <!-- Metrik 1 -->
-                        <div style="margin-bottom:.7rem;">
-                            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.25rem;">
-                                <span style="font-size:.71rem;color:rgba(255,255,255,.6);font-weight:500;">1. Retention &amp; Bounce</span>
-                                <span id="sat-score-bounce" style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--primary);font-weight:700;">—</span>
-                            </div>
-                            <div style="height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:.2rem;">
-                                <div id="sat-bar-bounce" style="height:100%;background:linear-gradient(90deg,var(--primary),rgba(var(--primary-rgb),.5));border-radius:2px;width:0%;transition:width 1s ease .05s;"></div>
-                            </div>
-                            <span id="sat-detail-bounce" style="font-size:.64rem;color:rgba(255,255,255,.3);">Bounce Rate · Ø Verweildauer</span>
-                        </div>
-
-                        <!-- Metrik 2 -->
-                        <div style="margin-bottom:.7rem;">
-                            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.25rem;">
-                                <span style="font-size:.71rem;color:rgba(255,255,255,.6);font-weight:500;">2. Loyalitäts-Rate</span>
-                                <span id="sat-score-loyalty" style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:#a78bfa;font-weight:700;">—</span>
-                            </div>
-                            <div style="height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:.2rem;">
-                                <div id="sat-bar-loyalty" style="height:100%;background:linear-gradient(90deg,#a78bfa,#c4b5fd);border-radius:2px;width:0%;transition:width 1s ease .15s;"></div>
-                            </div>
-                            <span id="sat-detail-loyalty" style="font-size:.64rem;color:rgba(255,255,255,.3);">Sessions ÷ Besucher</span>
-                        </div>
-
-                        <!-- Metrik 3 -->
-                        <div style="margin-bottom:.85rem;">
-                            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.25rem;">
-                                <span style="font-size:.71rem;color:rgba(255,255,255,.6);font-weight:500;">3. Aktion pro Session</span>
-                                <span id="sat-score-pages" style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:#34d399;font-weight:700;">—</span>
-                            </div>
-                            <div style="height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-bottom:.2rem;">
-                                <div id="sat-bar-pages" style="height:100%;background:linear-gradient(90deg,#34d399,#6ee7b7);border-radius:2px;width:0%;transition:width 1s ease .25s;"></div>
-                            </div>
-                            <span id="sat-detail-pages" style="font-size:.64rem;color:rgba(255,255,255,.3);">Seiten pro Session</span>
-                        </div>
-
-                        <!-- Formel -->
-                        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:.45rem .75rem;text-align:center;">
-                            <span style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.35);">
-                                <span style="color:var(--primary);">40%</span> Bounce &nbsp;+&nbsp; <span style="color:#a78bfa;">40%</span> Loyal. &nbsp;+&nbsp; <span style="color:#34d399;">20%</span> Aktionen
-                            </span>
-                        </div>
-
-                        <div style="position:absolute;bottom:100%;left:24px;border:6px solid transparent;border-bottom-color:rgba(255,255,255,.1);width:0;height:0;"></div>
-                    </div>
+<!-- ═══ FEATURES (Bento) ═══ -->
+<section class="section" id="features">
+    <div class="shell">
+        <div class="section-header" data-reveal>
+            <span class="section-eyebrow">Features</span>
+            <h2 class="section-title">Alles, was Azubis für die Zeiterfassung brauchen</h2>
+            <p class="section-description">Gleitzeitkonto, Berichtsheft, Überstundenrechner — eine App für alles rund um deine Ausbildung.</p>
+        </div>
+        <div class="bento">
+            <article class="bcard bcard-lg" data-reveal style="--i:0">
+                <span class="bcard-tag">Kernprodukt</span>
+                <span class="bcard-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                <h3 class="bcard-title">Zeiterfassung, die mitdenkt</h3>
+                <p class="bcard-desc">Live-Tracker, manueller Eintrag oder NFC-Tag am Arbeitsplatz. Schichten, mehrere Jobs, Berufsschultage und Urlaub kennt die App als eigene Typen — ob Fachinformatiker, kaufmännische oder gewerbliche Ausbildung.</p>
+                <div class="bcard-metrics">
+                    <span class="bmetric"><span class="bmetric-val">&lt;100 ms</span><span class="bmetric-label">Ladezeit</span></span>
+                    <span class="bmetric"><span class="bmetric-val">60 fps</span><span class="bmetric-label">Rendering</span></span>
+                    <span class="bmetric"><span class="bmetric-val">0 KB</span><span class="bmetric-label">Server-Traffic</span></span>
                 </div>
-                <div class="stat-card parallax-element px-reveal px-from-below px-d3" data-speed="0.25">
-                    <div class="stat-number">24/7</div>
-                    <div class="stat-label">Support</div>
+            </article>
+            <article class="bcard bcard-md" data-reveal style="--i:1">
+                <span class="bcard-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                <h3 class="bcard-title">Berichtsheft &amp; IHK-Vordrucke</h3>
+                <p class="bcard-desc">Der Ausbildungsnachweis entsteht aus deinen Einträgen und wird als PDF im amtlichen Vordruck deiner Kammer ausgegeben — DIHK-Muster, Neufassung oder München.</p>
+            </article>
+            <article class="bcard bcard-md" data-reveal style="--i:2">
+                <span class="bcard-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+                <h3 class="bcard-title">DSGVO-konform &amp; sicher</h3>
+                <p class="bcard-desc">Deine Einträge bleiben im Browser deines Geräts. Backups verschlüsselt die App mit AES-256-GCM, bevor sie die Datei überhaupt anbietet.</p>
+            </article>
+            <article class="bcard bcard-sm" data-reveal style="--i:3">
+                <span class="bcard-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+                <h3 class="bcard-title">Offline-First PWA</h3>
+                <p class="bcard-desc">Ein Service Worker hält die ganze App im Cache. Kein Empfang in der Werkhalle? Läuft trotzdem.</p>
+            </article>
+            <article class="bcard bcard-sm" data-reveal style="--i:4">
+                <span class="bcard-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                <h3 class="bcard-title">Geräte-Sync ohne Server</h3>
+                <p class="bcard-desc">Handy und PC gleichen sich per WebRTC direkt ab — Gerät zu Gerät, ohne Zwischenstation.</p>
+            </article>
+            <article class="bcard bcard-sm" data-reveal style="--i:5">
+                <span class="bcard-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/><line x1="2" x2="22" y1="20" y2="20"/></svg></span>
+                <h3 class="bcard-title">Überstundenrechner &amp; Charts</h3>
+                <p class="bcard-desc">Heatmaps, Wochen- und Jahresansicht, Prognosen. Dein Gleitzeitkonto als Bild statt als Tabelle.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ KENNZAHLEN ═══ -->
+<section class="section tight" id="stats">
+    <div class="shell">
+        <div class="section-header" data-reveal>
+            <span class="section-eyebrow">Kennzahlen</span>
+            <h2 class="section-title">Vertrauen in Zahlen</h2>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card" data-reveal style="--i:0">
+                <div class="stat-number" id="stat-active-users">0</div>
+                <div class="stat-label"><span>Aktive Nutzer</span></div>
+            </div>
+
+            <div class="stat-card" data-reveal style="--i:1">
+                <div class="stat-number" id="stat-hours">0</div>
+                <div class="stat-label">
+                    <span>Erfasste Stunden</span>
+                    <button id="hoursInfoBtn" class="stat-info" type="button" aria-label="Berechnung anzeigen">i</button>
+                </div>
+                <div id="hoursTooltip" class="stat-tip up" role="tooltip">
+                    <div class="stat-tip-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="11" x2="8" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="16" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="8" y2="15"/><line x1="12" y1="15" x2="12" y2="15"/><line x1="16" y1="15" x2="16" y2="18"/></svg>
+                        <span>Wie wird gerechnet?</span>
+                    </div>
+                    <div class="stat-formula"><b>Nutzer</b> × <b>45h</b> + <b>800h</b></div>
+                    <p class="stat-tip-text">Ein aktiver Nutzer trackt im Schnitt 45 Stunden, also gut eine Arbeitswoche.</p>
+                    <p class="stat-tip-text">Die 800 Stunden sind eine konservative Basis für frühe Nutzer und gelöschte Daten.</p>
+                    <div id="hoursTooltipExample" class="stat-example">— × 45 + 800 = —</div>
+                    <span class="tip-arrow"></span>
+                </div>
+            </div>
+
+            <div class="stat-card" data-reveal style="--i:2">
+                <div class="stat-number"><span id="stat-satisfaction">0</span><span id="sat-pct" class="stat-suffix">%</span></div>
+                <div class="stat-label">
+                    <span>Zufriedenheit</span>
+                    <button id="satisfactionInfoBtn" class="stat-info" type="button" aria-label="Berechnung anzeigen">i</button>
+                </div>
+                <div id="satisfactionTooltip" class="stat-tip down" role="tooltip">
+                    <div class="stat-tip-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/><line x1="2" x2="22" y1="20" y2="20"/></svg>
+                        <span>Wie wird die Zufriedenheit berechnet?</span>
+                    </div>
+                    <div class="stat-metric">
+                        <div class="stat-metric-head">
+                            <span class="stat-metric-name">1. Retention &amp; Bounce</span>
+                            <span id="sat-score-bounce" class="stat-metric-score" style="color:var(--primary);">—</span>
+                        </div>
+                        <div class="stat-metric-track"><div id="sat-bar-bounce" class="stat-metric-bar" style="background:linear-gradient(90deg,var(--primary),rgba(var(--primary-rgb),.5));"></div></div>
+                        <span id="sat-detail-bounce" class="stat-metric-detail">Bounce Rate · Ø Verweildauer</span>
+                    </div>
+                    <div class="stat-metric">
+                        <div class="stat-metric-head">
+                            <span class="stat-metric-name">2. Loyalitäts-Rate</span>
+                            <span id="sat-score-loyalty" class="stat-metric-score" style="color:#a78bfa;">—</span>
+                        </div>
+                        <div class="stat-metric-track"><div id="sat-bar-loyalty" class="stat-metric-bar" style="background:linear-gradient(90deg,#a78bfa,#c4b5fd);"></div></div>
+                        <span id="sat-detail-loyalty" class="stat-metric-detail">Sessions ÷ Besucher</span>
+                    </div>
+                    <div class="stat-metric">
+                        <div class="stat-metric-head">
+                            <span class="stat-metric-name">3. Aktion pro Session</span>
+                            <span id="sat-score-pages" class="stat-metric-score" style="color:var(--good);">—</span>
+                        </div>
+                        <div class="stat-metric-track"><div id="sat-bar-pages" class="stat-metric-bar" style="background:linear-gradient(90deg,var(--good),#6ee7b7);"></div></div>
+                        <span id="sat-detail-pages" class="stat-metric-detail">Seiten pro Session</span>
+                    </div>
+                    <div class="stat-weights"><span>40% Bounce + 40% Loyalität + 20% Aktionen</span></div>
+                    <span class="tip-arrow"></span>
+                </div>
+            </div>
+
+            <div class="stat-card" data-reveal style="--i:3">
+                <div class="stat-number">0 <span class="stat-suffix">€</span></div>
+                <div class="stat-label"><span>Kosten, dauerhaft</span></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ TICKER 2 ═══ -->
+<div class="marquee-wrap">
+    <div class="marquee-track" id="mq2" data-dir="1">
+        <span class="marquee-item hi"><span class="mi-t">Gleitzeitkonto</span><span class="mi-dot"></span></span>
+        <span class="marquee-item acc"><span class="mi-t">Ausbildungsnachweis</span><span class="mi-dot"></span></span>
+        <span class="marquee-item"><span class="mi-t">Überstundenrechner</span><span class="mi-dot"></span></span>
+        <span class="marquee-item hi"><span class="mi-t">IndexedDB</span><span class="mi-dot"></span></span>
+        <span class="marquee-item"><span class="mi-t">Arbeitszeitnachweis</span><span class="mi-dot"></span></span>
+        <span class="marquee-item acc"><span class="mi-t">Service Worker</span><span class="mi-dot"></span></span>
+        <span class="marquee-item"><span class="mi-t">Tap-to-Work NFC</span><span class="mi-dot"></span></span>
+        <span class="marquee-item hi"><span class="mi-t">Datenschutz First</span><span class="mi-dot"></span></span>
+        <span class="marquee-item"><span class="mi-t">Mehrere Jobs</span><span class="mi-dot"></span></span>
+        <span class="marquee-item acc"><span class="mi-t">IHK Vorlage</span><span class="mi-dot"></span></span>
+        <span class="marquee-item"><span class="mi-t">Fachinformatiker</span><span class="mi-dot"></span></span>
+        <span class="marquee-item hi"><span class="mi-t">Urlaubsplaner</span><span class="mi-dot"></span></span>
+    </div>
+</div>
+
+<!-- ═══ WERTE ═══ -->
+<section class="section" id="values">
+    <div class="shell">
+        <div class="section-header" data-reveal>
+            <span class="section-eyebrow">Grundsätze</span>
+            <h2 class="section-title">Was uns antreibt</h2>
+            <p class="section-description">Drei Entscheidungen, die jede weitere vorgeben.</p>
+        </div>
+        <div class="values-grid">
+            <div class="value-card" data-reveal style="--i:0">
+                <span class="value-key">privacy</span>
+                <h3 class="value-title">Daten gehören dem Nutzer</h3>
+                <p class="value-desc">Deine Einträge bleiben im Browser — kein Konto, keine Werbe-Pixel, keine Profilbildung. Die anonyme Nutzungsstatistik ist cookiefrei und öffentlich einsehbar.</p>
+            </div>
+            <div class="value-card" data-reveal style="--i:1">
+                <span class="value-key">handwerk</span>
+                <h3 class="value-title">Lieber richtig als schnell</h3>
+                <p class="value-desc">Jede Rechnung im Gleitzeitkonto ist durch Tests abgedeckt. Wo eine Zahl unsicher ist, sagt die App das — statt die plausibelste einzusetzen.</p>
+            </div>
+            <div class="value-card" data-reveal style="--i:2">
+                <span class="value-key">zugang</span>
+                <h3 class="value-title">Ohne Paywall</h3>
+                <p class="value-desc">Kostenlos und ohne Anmeldung. Werkzeuge für die Ausbildung sollten nicht davon abhängen, was jemand bezahlen kann.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ JOURNEY ═══ -->
+<section class="section" id="journey">
+    <div class="shell">
+        <div class="section-header" data-reveal>
+            <span class="section-eyebrow">Journey</span>
+            <h2 class="section-title">Unsere Geschichte</h2>
+            <p class="section-description">Von der ersten Idee bis heute.</p>
+        </div>
+        <div class="journey" data-reveal>
+            <div class="jr-rail" id="jrRail" role="tablist">
+                <button class="jr-node active" type="button" role="tab" aria-selected="true" aria-controls="jr-p1" data-pane="jr-p1">
+                    <span class="jr-dot"></span><span class="jr-date">Sep 2025</span>
+                </button>
+                <button class="jr-node" type="button" role="tab" aria-selected="false" aria-controls="jr-p2" data-pane="jr-p2">
+                    <span class="jr-dot"></span><span class="jr-date">Okt 2025</span>
+                </button>
+                <button class="jr-node" type="button" role="tab" aria-selected="false" aria-controls="jr-p3" data-pane="jr-p3">
+                    <span class="jr-dot"></span><span class="jr-date">Dez 2025</span>
+                </button>
+                <button class="jr-node" type="button" role="tab" aria-selected="false" aria-controls="jr-p4" data-pane="jr-p4">
+                    <span class="jr-dot"></span><span class="jr-date">2026</span>
+                </button>
+            </div>
+            <div class="jr-panes">
+                <div class="jr-pane active" id="jr-p1" role="tabpanel">
+                    <h3 class="jr-pane-title">Die Idee entsteht</h3>
+                    <p class="jr-pane-desc">Aus dem Ärger über umständliche Zeiterfassung im Betrieb wurde ein Prototyp: eine Seite, die einen Arbeitstag in zwei Taps festhält.</p>
+                    <div class="jr-tags"><span class="jr-tag">Konzept</span><span class="jr-tag">Prototyp</span><span class="jr-tag">PWA</span></div>
+                </div>
+                <div class="jr-pane" id="jr-p2" role="tabpanel">
+                    <h3 class="jr-pane-title">Launch</h3>
+                    <p class="jr-pane-desc">MyWorkLog geht als Progressive Web App online — offline-first, ohne Konto, ohne Server im Datenweg.</p>
+                    <div class="jr-tags"><span class="jr-tag">Launch</span><span class="jr-tag">Offline-First</span><span class="jr-tag">IndexedDB</span></div>
+                </div>
+                <div class="jr-pane" id="jr-p3" role="tabpanel">
+                    <h3 class="jr-pane-title">Auswertungen</h3>
+                    <p class="jr-pane-desc">Regelbasierte Analysen, Heatmaps und Prognosen kommen dazu — und das Berichtsheft lernt die amtlichen Vordrucke der Kammern.</p>
+                    <div class="jr-tags"><span class="jr-tag">Analysen</span><span class="jr-tag">Berichtsheft</span><span class="jr-tag">IHK-Vordrucke</span></div>
+                </div>
+                <div class="jr-pane" id="jr-p4" role="tabpanel">
+                    <h3 class="jr-pane-title">Heute</h3>
+                    <p class="jr-pane-desc">Über 200 Azubis erfassen ihre Zeiten mit MyWorkLog. Dazu kamen NFC-Stempeln, Geräte-Sync per WebRTC und die Wechsel-Brücke aus anderen Tools.</p>
+                    <div class="jr-tags"><span class="jr-tag">200+ Nutzer</span><span class="jr-tag">NFC</span><span class="jr-tag">WebRTC Sync</span></div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- STATS JS -->
-    <script>
+<!-- ═══ TEAM ═══ -->
+<section class="section tight" id="team">
+    <div class="shell">
+        <div class="section-header" data-reveal>
+            <span class="section-eyebrow">Team</span>
+            <h2 class="section-title">Wer dahintersteckt</h2>
+        </div>
+        <div class="team-card" data-reveal="scale">
+            <span class="team-avatar">SK</span>
+            <div>
+                <h3 class="team-name">Sven Kunz</h3>
+                <div class="team-role">Gründer &amp; Entwickler</div>
+                <p class="team-bio">Schreibt MyWorkLog neben der eigenen Ausbildung — und benutzt es täglich selbst.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ CTA ═══ -->
+<section class="cta-outer">
+    <div class="shell">
+        <div class="cta-section" data-reveal>
+            <div>
+                <h2 class="cta-title">Starte jetzt deine<br><em>Azubi Zeiterfassung</em></h2>
+                <p class="cta-description">Gleitzeitkonto, digitales Berichtsheft &amp; Überstundenrechner — kostenlos, offline, DSGVO-konform. Schließe dich über 200 Azubis an.</p>
+            </div>
+            <div class="cta-actions">
+                <a href="/" class="btn-cta-primary"><span>Kostenlos starten</span><span class="btn-arrow" aria-hidden="true">→</span></a>
+                <a href="#features" class="btn-cta-outline"><span>Features ansehen</span></a>
+            </div>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<div id="page-footer"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MOTION-ENGINE
+     Eine Schleife, klare Zustaendigkeiten:
+       • Klassen-Schreiber  → Reveal, Akt-Schritt, Nav, Journey
+       • Transform-Schreiber → NUR Hintergrund-Ebenen, Schiene, Ticker
+     Kein Element wird von zwei Stellen angefasst. Genau diese Trennung
+     hat der alten Fassung gefehlt: dort haben Inline-Styles aus dem
+     Fade-Observer und dem Parallax-Lauf die CSS-Reveals ueberschrieben,
+     weshalb von den Animationen praktisch nichts uebrig blieb.
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
 (function () {
+    'use strict';
+
+    var mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    var reduce   = mqReduce.matches;
+    mqReduce.addEventListener('change', function (e) { reduce = e.matches; });
+
+    var clamp = function (v, a, b) { return v < a ? a : (v > b ? b : v); };
+
+    /* ── 1. Reveal ──────────────────────────────────────────────────── */
+    var revealed = new WeakSet();
+    var revObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+            if (!e.isIntersecting || revealed.has(e.target)) return;
+            revealed.add(e.target);
+            e.target.classList.add('is-in');
+            revObs.unobserve(e.target);
+            if (e.target.id === 'stats' || e.target.closest('#stats')) startStats();
+        });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    document.querySelectorAll('[data-reveal]').forEach(function (el) { revObs.observe(el); });
+
+    /* ── 2. Hero-Anlauf: Zeilen fahren aus ihrer Maske, danach der Tagesbalken ── */
+    var hero = document.getElementById('hero');
+    function startHero() { if (hero) hero.classList.add('ready'); }
+    if (document.readyState === 'complete') requestAnimationFrame(startHero);
+    else window.addEventListener('load', function () { requestAnimationFrame(startHero); });
+    setTimeout(startHero, 900);   /* Fallback, falls load nie feuert */
+
+    /* ── 3. Der Akt: welcher Schritt steht in der Mitte? ─────────────── */
+    /* Bewusst KEIN IntersectionObserver: der aktive Schritt haengt an einer
+       Leselinie, und die liegt nicht in der Bildschirmmitte. Einspaltig
+       (<=980px) klebt die Tageskarte oben und verdeckt die Mitte — ein
+       mittiges Band aktiviert dort immer den Schritt NACH dem gelesenen.
+       Mit rootMargin ist das nur ueber Prozentbaender nachzubauen, deren
+       Verhalten von der Bandhoehe abhaengt; die Leselinie ist direkt
+       ablesbar und an beiden Layouts nachpruefbar. Die Messung laeuft in
+       der Lesephase von frame(), vor allen Schreibzugriffen. */
+    var act = document.querySelector('.act');
+    var steps = Array.prototype.slice.call(document.querySelectorAll('.act-step'));
+    var mqNarrow = window.matchMedia('(max-width: 980px)');
+    var curStep = -1;
+    if (steps.length) steps[0].classList.add('on');
+
+    var actStage = document.querySelector('.act-stage');
+    function readStep() {
+        if (!act || !steps.length) return;
+        /* Einspaltig liegt die Leselinie mittig im FREIEN Bereich unter der
+           klebenden Karte, nicht bei einem geratenen Prozentwert: bei hohen
+           Fenstern stehen sonst zwei Schritte gleichzeitig im Bild und die
+           Karte zeigt den unteren, waehrend der Leser den oberen liest. */
+        var line;
+        if (mqNarrow.matches && actStage) {
+            var sb = actStage.getBoundingClientRect().bottom;
+            line = Math.min(sb + (window.innerHeight - sb) * 0.35, window.innerHeight * 0.9);
+        } else {
+            line = window.innerHeight * 0.5;
+        }
+        var best = 0, bestD = Infinity;
+        for (var q = 0; q < steps.length; q++) {
+            var r = steps[q].getBoundingClientRect();
+            var dd = Math.abs(r.top + r.height / 2 - line);
+            if (dd < bestD) { bestD = dd; best = q; }
+        }
+        if (best === curStep) return;
+        curStep = best;
+        act.setAttribute('data-step', best + 1);
+        for (var z = 0; z < steps.length; z++) steps[z].classList.toggle('on', z === best);
+    }
+
+    /* ── 4. Journey-Reiter ──────────────────────────────────────────── */
+    var jrNodes = document.querySelectorAll('.jr-node');
+    jrNodes.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var id = btn.getAttribute('data-pane');
+            jrNodes.forEach(function (b) {
+                var on = b === btn;
+                b.classList.toggle('active', on);
+                b.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            document.querySelectorAll('.jr-pane').forEach(function (p) {
+                p.classList.toggle('active', p.id === id);
+            });
+        });
+    });
+
+    /* ── 5. Spotlight auf den Bento-Karten (nur echte Zeigergeraete) ── */
+    if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        document.querySelectorAll('.bcard').forEach(function (card) {
+            card.addEventListener('mousemove', function (e) {
+                var r = card.getBoundingClientRect();
+                card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+                card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+            });
+        });
+    }
+
+    /* ── 6. Sternenfeld: EIN Container, EINE Transform-Schreibung ───── */
+    var starsBox = document.getElementById('atmoStars');
+    if (starsBox) {
+        var frag = document.createDocumentFragment();
+        for (var i = 0; i < 54; i++) {
+            var s = document.createElement('span');
+            s.className = 'star' + (Math.random() > 0.86 ? ' large' : '');
+            s.style.left = (Math.random() * 100).toFixed(2) + '%';
+            s.style.top  = (Math.random() * 100).toFixed(2) + '%';
+            s.style.opacity = (0.25 + Math.random() * 0.5).toFixed(2);
+            frag.appendChild(s);
+        }
+        starsBox.appendChild(frag);
+    }
+
+    /* ── 7. Ticker: Grundtempo plus Scroll-Schwung ──────────────────── */
+    var tracks = [];
+    document.querySelectorAll('.marquee-track').forEach(function (t) {
+        t.innerHTML += t.innerHTML;                       /* nahtlose Schleife */
+        tracks.push({ el: t, dir: parseFloat(t.getAttribute('data-dir')) || -1, pos: 0, w: 0 });
+    });
+    function measureTracks() { tracks.forEach(function (t) { t.w = t.el.scrollWidth / 2; }); }
+    measureTracks();
+    window.addEventListener('resize', measureTracks);
+
+    /* ── 8. Tages-Schiene: Marken aus den Abschnitten ────────────────── */
+    var rail      = document.getElementById('rail');
+    var railFill  = document.getElementById('railFill');
+    var railHead  = document.getElementById('railHead');
+    var railClock = document.getElementById('railClock');
+    var ticks     = Array.prototype.slice.call(document.querySelectorAll('.rail-tick'));
+    var DAY_START = 450;   /* 07:30 in Minuten */
+    var DAY_SPAN  = 540;   /* bis 16:30        */
+
+    function two(n) { return (n < 10 ? '0' : '') + n; }
+    function placeTicks() {
+        if (!rail) return;
+        var h = rail.clientHeight;
+        var docH = document.documentElement.scrollHeight - window.innerHeight;
+        if (docH <= 0) return;
+        ticks.forEach(function (t) {
+            var sec = document.getElementById(t.getAttribute('data-for'));
+            if (!sec) return;
+            var p = clamp((sec.offsetTop - window.innerHeight * 0.35) / docH, 0, 1);
+            t.style.top = (p * h) + 'px';
+            t.dataset.p = p;
+        });
+    }
+
+    /* ── 9. Nav-Scrollspy ───────────────────────────────────────────── */
+    var navbar   = document.getElementById('navbar');
+    var navLinks = Array.prototype.slice.call(document.querySelectorAll('.nav-links a'));
+    var navTargets = navLinks.map(function (a) {
+        return { link: a, sec: document.querySelector(a.getAttribute('href')) };
+    }).filter(function (x) { return x.sec; });
+
+    /* ── 10. Die eine Schleife ──────────────────────────────────────── */
+    var progress = document.getElementById('scrollProgress');
+    var orbs     = document.getElementById('atmoOrbs');
+    var lastY    = window.pageYOffset;
+    var vel      = 0;
+    var lastT    = 0;
+
+    function frame(now) {
+        var dt = lastT ? Math.min((now - lastT) / 1000, 0.05) : 0.016;
+        lastT = now;
+
+        var y     = window.pageYOffset;
+        var docH  = document.documentElement.scrollHeight - window.innerHeight;
+        var t     = docH > 0 ? clamp(y / docH, 0, 1) : 0;
+        var dy    = y - lastY;
+        lastY = y;
+        vel = vel * 0.86 + Math.abs(dy / Math.max(dt, 0.001)) * 0.14;
+
+        readStep();   /* letzte Messung — ab hier wird nur noch geschrieben */
+
+        if (progress) progress.style.transform = 'scaleX(' + t + ')';
+        if (navbar) navbar.classList.toggle('scrolled', y > 24);
+
+        if (rail) {
+            if (railFill) railFill.style.transform = 'scaleY(' + t + ')';
+            if (railHead) railHead.style.transform = 'translate3d(0,' + (t * rail.clientHeight).toFixed(1) + 'px,0)';
+            if (railClock) {
+                var m = Math.round(DAY_START + t * DAY_SPAN);
+                var txt = two(Math.floor(m / 60)) + ':' + two(m % 60);
+                if (railClock.textContent !== txt) railClock.textContent = txt;
+            }
+            for (var k = 0; k < ticks.length; k++) {
+                var tp = parseFloat(ticks[k].dataset.p || '2');
+                var next = k + 1 < ticks.length ? parseFloat(ticks[k + 1].dataset.p || '2') : 2;
+                ticks[k].classList.toggle('on', t >= tp && t < next);
+            }
+        }
+
+        if (!reduce) {
+            if (starsBox) starsBox.style.transform = 'translate3d(0,' + (-y * 0.05).toFixed(1) + 'px,0)';
+            if (orbs)     orbs.style.transform     = 'translate3d(0,' + (-y * 0.11).toFixed(1) + 'px,0)';
+
+            var boost = Math.min(vel * 0.45, 620);
+            for (var j = 0; j < tracks.length; j++) {
+                var tr = tracks[j];
+                if (!tr.w) continue;
+                tr.pos = (tr.pos + (46 + boost) * dt) % tr.w;
+                var x = tr.dir < 0 ? -tr.pos : tr.pos - tr.w;
+                tr.el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,0,0)';
+            }
+        }
+
+        for (var n = 0; n < navTargets.length; n++) {
+            var s = navTargets[n].sec;
+            var on = y >= s.offsetTop - 140 && y < s.offsetTop + s.offsetHeight - 140;
+            navTargets[n].link.classList.toggle('current', on);
+        }
+
+        requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+
+    window.addEventListener('load', placeTicks);
+    window.addEventListener('resize', placeTicks);
+    placeTicks();
+
+    /* ── 11. Ankersprünge mit Rücksicht auf die feste Navigationsleiste ── */
+    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            var href = a.getAttribute('href');
+            if (href === '#' || href === '#main') return;
+            var target = document.querySelector(href);
+            if (!target) return;
+            e.preventDefault();
+            window.scrollTo({
+                top: target.offsetTop - 84,
+                behavior: reduce ? 'auto' : 'smooth'
+            });
+        });
+    });
+
+    /* ══════════════════════════════════════════════════════════════════
+       KENNZAHLEN — laufen erst, wenn der Abschnitt sichtbar wird.
+       ══════════════════════════════════════════════════════════════════ */
+    var statsStarted = false;
     var FALLBACK_VISITORS = 200;
     var FALLBACK_HOURS    = 8900;
-    var FALLBACK_SAT = { score: 86, bounce: 72, loyalty: 94, pages: 100, bounceRaw: '~47% Bounce · 6m 12s', loyaltyRaw: '1.75 Sess./Besucher', ppsRaw: '5.4 Seiten/Session' };
+    var FALLBACK_SAT = {
+        score: 86, bounce: 72, loyalty: 94, pages: 100,
+        bounceRaw: '~47% Bounce · 6m 12s', loyaltyRaw: '1.75 Sess./Besucher', ppsRaw: '5.4 Seiten/Session'
+    };
+
+    function loc() {
+        return window.mwlLocale ? window.mwlLocale()
+             : (document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE');
+    }
+    function fmt(n) { return Number(n).toLocaleString(loc()); }
 
     function animateCount(el, target, duration) {
         if (!el) return;
-        duration = duration || 1800;
+        if (reduce) { el.textContent = fmt(target); return; }
         var start = performance.now();
-        function easeOut(t) { return (t >= 1) ? 1 : 1 - Math.pow(2, -10 * t); }
+        var dur = duration || 1600;
+        function ease(p) { return p >= 1 ? 1 : 1 - Math.pow(2, -10 * p); }
         function tick(now) {
-            var p = Math.min((now - start) / duration, 1);
-            if (p === 1) { el.textContent = Number(target).toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE')); return; }
-            el.textContent = Math.round(easeOut(p) * target).toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'));
+            var p = Math.min((now - start) / dur, 1);
+            el.textContent = fmt(Math.round(ease(p) * target));
             if (p < 1) requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
     }
 
-    function setTooltipExample(visitors, hours) {
-        var el = document.getElementById('hoursTooltipExample');
-        if (el) el.textContent = visitors.toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE')) + ' × 45 + 800 = ' + hours.toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE')) + 'h';
+    function setText(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; }
+    function setBar(id, pct) {
+        var el = document.getElementById(id);
+        if (el) setTimeout(function () { el.style.width = pct + '%'; }, 120);
     }
 
-    function updateSatisfactionUI(sat) {
-        var satEl = document.getElementById('stat-satisfaction');
-        if (!satEl) return;
-
-        var start = performance.now();
-        var target = sat.score;
-        function easeOut(t) { return (t >= 1) ? 1 : 1 - Math.pow(2, -10 * t); }
-        function tick(now) {
-            var p = Math.min((now - start) / 1800, 1);
-            satEl.textContent = Math.round(easeOut(p) * target);
-            if (p < 1) requestAnimationFrame(tick);
-        }
-        requestAnimationFrame(tick);
-
-        function setText(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; }
-        function setBar(id, pct) {
-            var el = document.getElementById(id);
-            if (el) setTimeout(function() { el.style.width = pct + '%'; }, 120);
-        }
-
-        setText('sat-score-bounce',  sat.bounce  + '%');
-        setText('sat-score-loyalty', sat.loyalty + '%');
-        setText('sat-score-pages',   sat.pages   + '%');
-        setText('sat-detail-bounce',  sat.bounceRaw);
-        setText('sat-detail-loyalty', sat.loyaltyRaw);
-        setText('sat-detail-pages',   sat.ppsRaw);
-
-        setBar('sat-bar-bounce',  sat.bounce);
-        setBar('sat-bar-loyalty', sat.loyalty);
-        setBar('sat-bar-pages',   sat.pages);
-    }
-
-    function loadStats() {
+    function startStats() {
+        if (statsStarted) return;
+        statsStarted = true;
         animateCount(document.getElementById('stat-active-users'), FALLBACK_VISITORS);
         animateCount(document.getElementById('stat-hours'), FALLBACK_HOURS);
-        setTooltipExample(FALLBACK_VISITORS, FALLBACK_HOURS);
-        updateSatisfactionUI(FALLBACK_SAT);
+        animateCount(document.getElementById('stat-satisfaction'), FALLBACK_SAT.score);
+
+        var ex = document.getElementById('hoursTooltipExample');
+        if (ex) ex.textContent = fmt(FALLBACK_VISITORS) + ' × 45 + 800 = ' + fmt(FALLBACK_HOURS) + 'h';
+
+        setText('sat-score-bounce',  FALLBACK_SAT.bounce  + '%');
+        setText('sat-score-loyalty', FALLBACK_SAT.loyalty + '%');
+        setText('sat-score-pages',   FALLBACK_SAT.pages   + '%');
+        setText('sat-detail-bounce',  FALLBACK_SAT.bounceRaw);
+        setText('sat-detail-loyalty', FALLBACK_SAT.loyaltyRaw);
+        setText('sat-detail-pages',   FALLBACK_SAT.ppsRaw);
+        setBar('sat-bar-bounce',  FALLBACK_SAT.bounce);
+        setBar('sat-bar-loyalty', FALLBACK_SAT.loyalty);
+        setBar('sat-bar-pages',   FALLBACK_SAT.pages);
     }
 
-    function initTooltip() {
-        var btn = document.getElementById('hoursInfoBtn');
-        var tooltip = document.getElementById('hoursTooltip');
-        if (!btn || !tooltip) return;
+    function bindTip(btnId, tipId) {
+        var btn = document.getElementById(btnId);
+        var tip = document.getElementById(tipId);
+        if (!btn || !tip) return;
         var open = false;
-        function show() { tooltip.style.display = 'block'; open = true; }
-        function hide() { tooltip.style.display = 'none'; open = false; }
-        btn.addEventListener('click', function(e) { e.stopPropagation(); open ? hide() : show(); });
-        btn.addEventListener('mouseenter', function() { show(); });
-        btn.addEventListener('mouseleave', function(e) { if (!tooltip.contains(e.relatedTarget)) hide(); });
-        document.addEventListener('click', function() { hide(); });
+        function show() { tip.style.display = 'block'; open = true; }
+        function hide() { tip.style.display = 'none'; open = false; }
+        btn.addEventListener('click', function (e) { e.stopPropagation(); open ? hide() : show(); });
+        btn.addEventListener('mouseenter', show);
+        btn.addEventListener('mouseleave', function (e) { if (!tip.contains(e.relatedTarget)) hide(); });
+        btn.addEventListener('focus', show);
+        btn.addEventListener('blur', hide);
+        document.addEventListener('click', hide);
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(); });
     }
-
-    function initSatisfactionTooltip() {
-        var btn = document.getElementById('satisfactionInfoBtn');
-        var tooltip = document.getElementById('satisfactionTooltip');
-        if (!btn || !tooltip) return;
-        var open = false;
-        function show() { tooltip.style.display = 'block'; open = true; }
-        function hide() { tooltip.style.display = 'none'; open = false; }
-        btn.addEventListener('click', function(e) { e.stopPropagation(); open ? hide() : show(); });
-        btn.addEventListener('mouseenter', function() { show(); });
-        btn.addEventListener('mouseleave', function(e) { if (!tooltip.contains(e.relatedTarget)) hide(); });
-        document.addEventListener('click', function() { hide(); });
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { loadStats(); initTooltip(); initSatisfactionTooltip(); });
-    } else { loadStats(); initTooltip(); initSatisfactionTooltip(); }
+    bindTip('hoursInfoBtn', 'hoursTooltip');
+    bindTip('satisfactionInfoBtn', 'satisfactionTooltip');
 })();
-    </script>
+</script>
 
-    <div class="parallax-divider"></div>
-
-    <!-- TICKER 2 -->
-    <div class="marquee-wrap reverse">
-        <div class="marquee-track">
-            <span class="marquee-item hi">Gleitzeitkonto<span class="mi-dot"></span></span>
-            <span class="marquee-item cyan-i">Berichtsheft-KI<span class="mi-dot"></span></span>
-            <span class="marquee-item">Überstundenrechner<span class="mi-dot"></span></span>
-            <span class="marquee-item hi">IndexedDB<span class="mi-dot"></span></span>
-            <span class="marquee-item">Arbeitszeitnachweis<span class="mi-dot"></span></span>
-            <span class="marquee-item cyan-i">Service Worker<span class="mi-dot"></span></span>
-            <span class="marquee-item">Tap-to-Work NFC<span class="mi-dot"></span></span>
-            <span class="marquee-item hi">Datenschutz First<span class="mi-dot"></span></span>
-            <span class="marquee-item">LocalStorage<span class="mi-dot"></span></span>
-            <span class="marquee-item cyan-i">IHK Vorlage<span class="mi-dot"></span></span>
-            <span class="marquee-item">Fachinformatiker<span class="mi-dot"></span></span>
-            <span class="marquee-item hi">TechNova<span class="mi-dot"></span></span>
-            <span class="marquee-item hi">Gleitzeitkonto<span class="mi-dot"></span></span>
-            <span class="marquee-item cyan-i">Berichtsheft-KI<span class="mi-dot"></span></span>
-            <span class="marquee-item">Überstundenrechner<span class="mi-dot"></span></span>
-            <span class="marquee-item hi">IndexedDB<span class="mi-dot"></span></span>
-            <span class="marquee-item">Arbeitszeitnachweis<span class="mi-dot"></span></span>
-            <span class="marquee-item cyan-i">Service Worker<span class="mi-dot"></span></span>
-            <span class="marquee-item">Tap-to-Work NFC<span class="mi-dot"></span></span>
-            <span class="marquee-item hi">Datenschutz First<span class="mi-dot"></span></span>
-            <span class="marquee-item">LocalStorage<span class="mi-dot"></span></span>
-            <span class="marquee-item cyan-i">IHK Vorlage<span class="mi-dot"></span></span>
-            <span class="marquee-item">Fachinformatiker<span class="mi-dot"></span></span>
-            <span class="marquee-item hi">TechNova<span class="mi-dot"></span></span>
-        </div>
-    </div>
-
-    <div class="parallax-divider"></div>
-
-    <!-- FEATURES -->
-    <section class="section" id="features">
-        <div class="section-parallax-bg">
-            <div class="orb" data-parallax-speed="0.05" style="width:500px;height:500px;background:rgba(52,211,153,.1);top:10%;right:-10%;"></div>
-            <div class="orb" data-parallax-speed="0.03" style="width:350px;height:350px;background:rgba(var(--primary-rgb),.12);bottom:5%;left:-5%;"></div>
-        </div>
-        <div class="section-inner">
-            <div class="section-header">
-                <div class="section-badge px-reveal px-scale-in">Features</div>
-                <h2 class="section-title px-reveal px-from-below px-d1">Alles was Azubis für die Zeiterfassung brauchen</h2>
-                <p class="section-description px-reveal px-from-below px-d2">Gleitzeitkonto, Berichtsheft, Überstundenrechner – eine App für alles rund um deine Ausbildung.</p>
-            </div>
-            <div class="features-grid">
-                <div class="feature-card parallax-element px-reveal px-from-left" data-speed="0.05">
-                    <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg></div>
-                    <h3 class="feature-title">Sofort einsatzbereit</h3>
-                    <p class="feature-description">Als Progressive Web App lädt MyWorkLog in Millisekunden, funktioniert komplett offline und fühlt sich an wie eine native Azubi Zeiterfassungs-App.</p>
-                </div>
-                <div class="feature-card parallax-element px-reveal px-from-below px-d1" data-speed="0.1">
-                    <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
-                    <h3 class="feature-title">DSGVO-konform &amp; sicher</h3>
-                    <p class="feature-description">Dein Berichtsheft und Gleitzeitkonto bleiben lokal auf deinem Gerät. AES-256 Verschlüsselung, kein Server, kein Cloud-Zwang. Privacy by Design.</p>
-                </div>
-                <div class="feature-card parallax-element px-reveal px-from-right" data-speed="0.15">
-                    <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="4"/><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M7 12H2M22 12h-5M12 7V2M12 22v-5"/></svg></div>
-                    <h3 class="feature-title">Intelligenter Assistent</h3>
-                    <p class="feature-description">Der integrierte Assistent nutzt intelligente Regeln &amp; mathematische Formeln, um Arbeitszeiten automatisch auszuwerten und das Berichtsheft zu unterstützen.</p>
-                </div>
-                <div class="feature-card parallax-element px-reveal px-from-left px-d1" data-speed="0.05">
-                    <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/><line x1="2" x2="22" y1="20" y2="20"/></svg></div>
-                    <h3 class="feature-title">Überstundenrechner &amp; Charts</h3>
-                    <p class="feature-description">Dein Gleitzeitkonto auf einen Blick: Interaktive Charts, Heatmaps, Trend-Analysen – so behältst du Überstunden und Arbeitszeiten im Griff.</p>
-                </div>
-                <div class="feature-card parallax-element px-reveal px-from-below px-d2" data-speed="0.1">
-                    <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-                    <h3 class="feature-title">Geräte-Sync</h3>
-                    <p class="feature-description">Berichtsheft und Zeiterfassung auf Handy und PC: WebRTC Peer-to-Peer Sync überträgt dein Gleitzeitkonto zwischen Geräten – ohne Server.</p>
-                </div>
-                <div class="feature-card parallax-element px-reveal px-from-right px-d1" data-speed="0.15">
-                    <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
-                    <h3 class="feature-title">Für jede Ausbildung</h3>
-                    <p class="feature-description">Ob Fachinformatiker, kaufmännische oder gewerbliche Ausbildung – MyWorkLog passt sich deinem Berichtsheft- und Arbeitszeitmodell an.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- TIMELINE -->
-    <section class="section alt" id="journey">
-        <div class="section-parallax-bg">
-            <div class="orb" data-parallax-speed="0.04" style="width:450px;height:450px;background:rgba(var(--primary-rgb),.1);top:-15%;right:20%;"></div>
-        </div>
-        <div class="section-inner">
-            <div class="section-header">
-                <div class="section-badge px-reveal px-scale-in">Journey</div>
-                <h2 class="section-title px-reveal px-from-below px-d1">Unsere Geschichte</h2>
-                <p class="section-description px-reveal px-from-below px-d2">Von der ersten Idee bis zur führenden Time-Tracking-Lösung.</p>
-            </div>
-            <div class="timeline px-reveal px-from-below px-d2">
-                <div class="tl-tabs">
-                    <button class="tl-tab active" data-pane="tl-p1">Sep 2025</button>
-                    <button class="tl-tab" data-pane="tl-p2">Okt 2025</button>
-                    <button class="tl-tab" data-pane="tl-p3">Dez 2025</button>
-                    <button class="tl-tab" data-pane="tl-p4">2026</button>
-                </div>
-                <div class="tl-pane-wrap">
-                    <div class="tl-pane active" id="tl-p1">
-                        <div class="tl-pane-label">Sep 2025</div>
-                        <div class="tl-pane-title">Die Idee entsteht</div>
-                        <p class="tl-pane-desc">Aus der Frustration über komplizierte und unintuitive Zeiterfassungs-Tools wurde die Vision von MyWorkLog geboren: Zeiterfassung, die Spaß macht.</p>
-                        <div class="tl-tags"><span class="tl-tag">Konzept</span><span class="tl-tag">Prototyp</span><span class="tl-tag">PWA</span></div>
-                    </div>
-                    <div class="tl-pane" id="tl-p2">
-                        <div class="tl-pane-label">Okt 2025</div>
-                        <div class="tl-pane-title">Launch</div>
-                        <p class="tl-pane-desc">Mit Progressive Web App Features wird MyWorkLog zur ersten Wahl für moderne Zeiterfassung. Offline-first Architektur und native App Performance.</p>
-                        <div class="tl-tags"><span class="tl-tag">Launch</span><span class="tl-tag">Offline-First</span><span class="tl-tag">IndexedDB</span></div>
-                    </div>
-                    <div class="tl-pane" id="tl-p3">
-                        <div class="tl-pane-label">Dez 2025</div>
-                        <div class="tl-pane-title">Intelligente Analysen</div>
-                        <p class="tl-pane-desc">Regelbasierte intelligente Analysen und automatisierte Insights helfen Azubis, ihre Arbeitszeiten und ihr Berichtsheft optimal zu verwalten.</p>
-                        <div class="tl-tags"><span class="tl-tag">KI-Regeln</span><span class="tl-tag">Berichtsheft</span><span class="tl-tag">Analysen</span></div>
-                    </div>
-                    <div class="tl-pane" id="tl-p4">
-                        <div class="tl-pane-label">2026 — Jetzt</div>
-                        <div class="tl-pane-title">Die Zukunft beginnt</div>
-                        <p class="tl-pane-desc">Mit über 200 Nutzern weltweit stellen wir für Azubis die nächste Generation von Zeiterfassungs-Tools bereit.</p>
-                        <div class="tl-tags"><span class="tl-tag">200+ Nutzer</span><span class="tl-tag">NFC</span><span class="tl-tag">WebRTC Sync</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- TEAM -->
-    <section class="section" id="team">
-        <div class="section-parallax-bg">
-            <div class="orb" data-parallax-speed="0.05" style="width:350px;height:350px;background:rgba(var(--primary-rgb),.1);top:20%;left:60%;"></div>
-        </div>
-        <div class="section-inner">
-            <div class="section-header">
-                <div class="section-badge px-reveal px-scale-in">Team</div>
-                <h2 class="section-title px-reveal px-from-below px-d1">Die Köpfe hinter MyWorkLog</h2>
-                <p class="section-description px-reveal px-from-below px-d2">Ein Team mit einer gemeinsamen Vision: Zeiterfassung neu erfinden.</p>
-            </div>
-            <div class="team-grid">
-                <div class="team-card parallax-element px-reveal px-scale-in" data-speed="0.05">
-                    <div class="team-avatar">SK</div>
-                    <h3 class="team-name">Sven Kunz</h3>
-                    <div class="team-role">Founder &amp; CEO</div>
-                    <p class="team-bio">Leidenschaft für Privacy-First Lösungen und perfekte User Experience.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CTA -->
-    <section class="section cta-outer">
-        <div class="cta-section">
-            <div>
-                <h2 class="cta-title px-reveal px-from-below">Starte jetzt deine<br><em>Azubi Zeiterfassung</em></h2>
-                <p class="cta-description px-reveal px-from-below px-d1">Gleitzeitkonto, digitales Berichtsheft &amp; Überstundenrechner – kostenlos, offline, DSGVO-konform. Schließe dich über 50 Azubis an.</p>
-            </div>
-            <div class="cta-actions">
-                <a href="/" class="btn-cta-primary px-reveal px-scale-in px-d2">Kostenlos starten →</a>
-                <a href="#features" class="btn-cta-outline">Features ansehen</a>
-            </div>
-        </div>
-    </section>
-
-    <div id="page-footer"></div>
-
-    <!-- ALL ORIGINAL JS — unverändert -->
-    <script>
-        window.addEventListener('scroll', () => {
-            const scrollTop = window.pageYOffset;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const scrollPercent = scrollTop / docHeight;
-            document.getElementById('scrollProgress').style.width = (scrollPercent * 100) + '%';
+<script>
+    fetch('/pages/footer/footer.html')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+            var ph = document.getElementById('page-footer');
+            if (!ph) return;
+            var tmpl = document.createElement('template');
+            tmpl.innerHTML = html;
+            ph.replaceWith(tmpl.content);
+            if (typeof loadAppVersion === 'function') loadAppVersion();
         });
-
-        const navbar = document.getElementById('navbar');
-        window.addEventListener('scroll', () => {
-            if (window.pageYOffset > 100) navbar.classList.add('scrolled');
-            else navbar.classList.remove('scrolled');
-        });
-
-        window.addEventListener('mousemove', (e) => { window.mouseX = e.clientX; window.mouseY = e.clientY; });
-
-        const observerOptions = { threshold: 0.5, rootMargin: '0px' };
-        const counterObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting && entry.target.getAttribute('data-count')) {
-                    const counter = entry.target;
-                    const target = parseInt(counter.getAttribute('data-count'));
-                    animateCounter(counter, target);
-                    counterObserver.unobserve(counter);
-                }
-            });
-        }, observerOptions);
-        document.querySelectorAll('[data-count]').forEach(counter => { counterObserver.observe(counter); });
-        function animateCounter(element, target) {
-            const duration = 2000, increment = target / (duration / 16);
-            let current = 0;
-            const timer = setInterval(() => {
-                current += increment;
-                if (current >= target) { element.textContent = target.toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE')); clearInterval(timer); }
-                else { element.textContent = Math.floor(current).toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE')); }
-            }, 16);
-        }
-
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) { window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' }); }
-            });
-        });
-
-        const fadeObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, { threshold: 0.1 });
-        document.querySelectorAll('.feature-card, .stat-card, .team-card, .showcase-card, .value-card, .trust-item').forEach(el => {
-            el.style.opacity = '0'; el.style.transform = 'translateY(20px)';
-            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-            fadeObserver.observe(el);
-        });
-    </script>
-
-    <script>
-    (function() {
-        'use strict';
-        // Scroll reveal
-        var revealEls = document.querySelectorAll('.px-reveal');
-        var srObs = new IntersectionObserver(function(entries) {
-            entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('px-visible'); srObs.unobserve(e.target); } });
-        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-        revealEls.forEach(function(el) { srObs.observe(el); });
-
-        // Timeline tabs
-        document.querySelectorAll('.tl-tab').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.tl-tab').forEach(function(b) { b.classList.remove('active'); });
-                document.querySelectorAll('.tl-pane').forEach(function(p) { p.classList.remove('active'); });
-                btn.classList.add('active');
-                var pane = document.getElementById(btn.getAttribute('data-pane'));
-                if (pane) pane.classList.add('active');
-            });
-        });
-    })();
-    </script>
-
-    <!-- PARALLAX ENGINE -->
-    <script>
-    (function() {
-        'use strict';
-
-        // Showcase card spotlight effect
-        document.querySelectorAll('.showcase-card').forEach(function(card) {
-            card.addEventListener('mousemove', function(e) {
-                var rect = card.getBoundingClientRect();
-                card.style.setProperty('--mouse-x', (e.clientX - rect.left) + 'px');
-                card.style.setProperty('--mouse-y', (e.clientY - rect.top) + 'px');
-            });
-        });
-
-        // Generate fixed background stars
-        var starsContainer = document.getElementById('parallaxStars');
-        if (starsContainer) {
-            var frag = document.createDocumentFragment();
-            for (var i = 0; i < 60; i++) {
-                var star = document.createElement('div');
-                star.className = 'star' + (Math.random() > 0.85 ? ' large' : '');
-                star.style.left = (Math.random() * 100) + '%';
-                star.style.top = (Math.random() * 100) + '%';
-                star.setAttribute('data-parallax-speed', (0.01 + Math.random() * 0.04).toFixed(3));
-                frag.appendChild(star);
-            }
-            starsContainer.appendChild(frag);
-        }
-
-        // Parallax scroll handler
-        var parallaxEls = document.querySelectorAll('[data-parallax-speed]');
-        var parallaxCards = document.querySelectorAll('.parallax-element');
-        var ticking = false;
-
-        function updateParallax() {
-            var scrollY = window.pageYOffset;
-            var winH = window.innerHeight;
-
-            // Move orbs, stars, and other data-parallax-speed elements
-            for (var i = 0; i < parallaxEls.length; i++) {
-                var el = parallaxEls[i];
-                var speed = parseFloat(el.getAttribute('data-parallax-speed'));
-                var yOffset = scrollY * speed;
-                el.style.transform = 'translate3d(0,' + yOffset + 'px,0)';
-            }
-
-            // Parallax cards — move relative to their section position
-            for (var j = 0; j < parallaxCards.length; j++) {
-                var card = parallaxCards[j];
-                var speed2 = parseFloat(card.getAttribute('data-speed') || '0.1');
-                var rect = card.getBoundingClientRect();
-                var centerOffset = (rect.top + rect.height / 2 - winH / 2);
-                card.style.transform = 'translate3d(0,' + (centerOffset * speed2 * -0.5) + 'px,0)';
-            }
-
-            ticking = false;
-        }
-
-        window.addEventListener('scroll', function() {
-            if (!ticking) {
-                requestAnimationFrame(updateParallax);
-                ticking = true;
-            }
-        }, { passive: true });
-
-        updateParallax();
-    })();
-    </script>
-
-    <script>
-        fetch('/pages/footer/footer.html')
-            .then(r => r.text())
-            .then(html => {
-                const ph = document.getElementById('page-footer');
-                if (!ph) return;
-                const tmpl = document.createElement('template');
-                tmpl.innerHTML = html;
-                ph.replaceWith(tmpl.content);
-                if (typeof loadAppVersion === 'function') loadAppVersion();
-            });
-    </script>
+</script>
 <script>
 (function() {
     function applyTheme(hex) {
@@ -1319,5 +1791,6 @@
 })();
 </script>
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
-<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
+<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
+</body>
 </html>
