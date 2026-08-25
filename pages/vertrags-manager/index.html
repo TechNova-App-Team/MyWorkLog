@@ -774,11 +774,30 @@
             color: var(--success);
             letter-spacing: -0.02em;
         }
+        .calc-rows {
+            display: flex; flex-direction: column; gap: 0.3rem;
+            padding-bottom: 0.85rem; margin-bottom: 0.85rem;
+            border-bottom: 1px solid rgba(var(--success-rgb), 0.18);
+        }
+        .calc-row {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
+            font-size: 0.78rem; color: var(--text-muted);
+        }
+        .calc-row-val { font-family: var(--font-mono); color: var(--text-secondary); }
+        /* Die offene Position traegt keinen Betrag - sie sagt, was FEHLT. */
+        .calc-row--offen .calc-row-val { font-style: italic; color: var(--text-faint); }
         .calc-result-note {
             font-size: 0.74rem;
             color: var(--text-faint);
             margin-top: 0.65rem;
-            display: flex; align-items: center; gap: 0.4rem;
+            line-height: 1.5;
+            /* flex-start, weil der Hinweis mehrzeilig ist: bei center haengt
+               das Icon auf halber Hoehe neben Zeile zwei. */
+            display: flex; align-items: flex-start; gap: 0.45rem;
+        }
+        .calc-result-note svg {
+            flex-shrink: 0;
+            margin-top: 0.2em;   /* auf die Grundlinie der ersten Zeile */
         }
 
         /* ─── TOAST ─── */
@@ -1298,46 +1317,22 @@
                 <label class="form-label">Brutto-Gehalt (Monat)</label>
                 <input type="number" class="form-input" id="bruttoInput" placeholder="1000" oninput="calculateNet()">
             </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Steuerklasse</label>
-                    <select class="form-select" id="taxClass" onchange="calculateNet()">
-                        <option value="1">Klasse I</option>
-                        <option value="2">Klasse II</option>
-                        <option value="3">Klasse III</option>
-                        <option value="4">Klasse IV</option>
-                        <option value="5">Klasse V</option>
-                        <option value="6">Klasse VI</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Bundesland</label>
-                    <select class="form-select" id="state" onchange="calculateNet()">
-                        <option>Baden-Württemberg</option>
-                        <option>Bayern</option>
-                        <option>Berlin</option>
-                        <option>Brandenburg</option>
-                        <option>Bremen</option>
-                        <option>Hamburg</option>
-                        <option>Hessen</option>
-                        <option>Mecklenburg-Vorpommern</option>
-                        <option>Niedersachsen</option>
-                        <option>Nordrhein-Westfalen</option>
-                        <option>Rheinland-Pfalz</option>
-                        <option>Saarland</option>
-                        <option>Sachsen</option>
-                        <option>Sachsen-Anhalt</option>
-                        <option>Schleswig-Holstein</option>
-                        <option>Thüringen</option>
-                    </select>
-                </div>
-            </div>
             <div class="calc-result">
-                <div class="calc-result-lbl">Netto-Gehalt (Schätzung)</div>
-                <div class="calc-result-val" id="nettoResult">0,00 €</div>
+                <div class="calc-rows">
+                    <div class="calc-row">
+                        <span class="calc-row-lbl">Sozialabgaben</span>
+                        <span class="calc-row-val" id="socialResult">0,00 &euro;</span>
+                    </div>
+                    <div class="calc-row calc-row--offen">
+                        <span class="calc-row-lbl">Lohnsteuer</span>
+                        <span class="calc-row-val">nicht gerechnet</span>
+                    </div>
+                </div>
+                <div class="calc-result-lbl">Netto vor Lohnsteuer</div>
+                <div class="calc-result-val" id="nettoResult">0,00 &euro;</div>
                 <div class="calc-result-note">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    Vereinfachte Berechnung — genaue Angaben vom Arbeitgeber.
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>Abgezogen sind rund 20 % Arbeitnehmer-Anteil an der Sozialversicherung. Die Lohnsteuer h&auml;ngt von deiner Steuerklasse ab; bei Ausbildungsverg&uuml;tungen ist sie oft null. Verbindlich ist deine Abrechnung.</span>
                 </div>
             </div>
         </div>
@@ -1592,7 +1587,7 @@
             document.getElementById('jobTitleHero').textContent = c ? (c.jobTitle || '—') : '—';
             if (c) {
                 const cy = getCurrentYear(c);
-                const salNow = (c.salaries[cy - 1] || 0).toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'));
+                const salNow = (c.salaries[cy - 1] || 0).toLocaleString(mwlLoc());
                 const ended = c.endDate && new Date(c.endDate) < new Date();
                 document.getElementById('illuWeekly').textContent = c.weeklyHours + ' h';
                 document.getElementById('illuVacation').textContent = c.vacationDays + ' Tage';
@@ -1613,7 +1608,7 @@
             }
             const cy = getCurrentYear(c);
             const salary = c.salaries[cy - 1] || 0;
-            document.getElementById('currentSalaryDisplay').textContent = salary.toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE')) + ' €';
+            document.getElementById('currentSalaryDisplay').textContent = salary.toLocaleString(mwlLoc()) + ' €';
             document.getElementById('weeklyHoursDisplay').textContent = c.weeklyHours + ' h';
             if (c.endDate) {
                 const months = Math.max(0, Math.floor((new Date(c.endDate) - new Date()) / (1000 * 60 * 60 * 24 * 30)));
@@ -1644,7 +1639,7 @@
                 return `<div class="tl-item ${done ? 'done' : ''}">
                     <div class="tl-head"><span class="tl-year">${y}. Ausbildungsjahr</span>${badge}</div>
                     <div class="tl-cols">
-                        <div><div class="tl-detail-lbl">Gehalt / Monat</div><div class="tl-detail-val">${(c.salaries[i] || 0).toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'))} €</div></div>
+                        <div><div class="tl-detail-lbl">Gehalt / Monat</div><div class="tl-detail-val">${(c.salaries[i] || 0).toLocaleString(mwlLoc())} €</div></div>
                         <div><div class="tl-detail-lbl">Status</div><div class="tl-detail-val">${done ? 'Abgeschlossen' : active ? 'Läuft' : 'Ausstehend'}</div></div>
                     </div>
                 </div>`;
@@ -1663,11 +1658,11 @@
                 Array.from({ length: years }, (_, i) => `
                     <div class="data-cell">
                         <div class="data-cell-lbl">${i + 1}. Jahr</div>
-                        <div class="data-cell-val">${(c.salaries[i] || 0).toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'))} €</div>
+                        <div class="data-cell-val">${(c.salaries[i] || 0).toLocaleString(mwlLoc())} €</div>
                     </div>`).join('') +
                 `<div class="data-cell">
                     <div class="data-cell-lbl">Gesamt (${dur} J.)</div>
-                    <div class="data-cell-val accent">${total.toLocaleString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE'))} €</div>
+                    <div class="data-cell-val accent">${total.toLocaleString(mwlLoc())} €</div>
                 </div>`;
         }
 
@@ -1756,8 +1751,8 @@
 
         function updateDetails(c) {
             const company = c ? (c.company || '—') : '—';
-            const start = c && c.startDate ? new Date(c.startDate).toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE')) : '—';
-            const end = c && c.endDate ? new Date(c.endDate).toLocaleDateString((window.mwlLocale?window.mwlLocale():document.documentElement.lang==='en'?'en-GB':'de-DE')) : '—';
+            const start = c && c.startDate ? new Date(c.startDate).toLocaleDateString(mwlLoc()) : '—';
+            const end = c && c.endDate ? new Date(c.endDate).toLocaleDateString(mwlLoc()) : '—';
             document.getElementById('contractDetailsPanel').innerHTML = `
                 <div class="detail-row"><span class="detail-lbl">Unternehmen</span><span class="detail-val" title="${esc(company)}">${esc(company)}</span></div>
                 <div class="detail-row"><span class="detail-lbl">Start</span><span class="detail-val">${start}</span></div>
@@ -1827,12 +1822,33 @@
         }
         function closeCalculatorModal() { document.getElementById('calculatorModal').classList.remove('active'); }
 
+        // Sprache der Zahlformate. Stand vorher fuenfmal wortgleich im File.
+        const mwlLoc = () => window.mwlLocale ? window.mwlLocale()
+            : (document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE');
+
+        // Betrag mit Tausendertrennung und zwei Nachkommastellen, wie der Rest
+        // der Seite. Kein Vorzeichen auf der Null - "- 0,00 EUR" liest sich wie
+        // ein Fehler.
+        const eur = n => (n < 0 ? String.fromCharCode(0x2212) + String.fromCharCode(0xA0) : '')
+            + Math.abs(n).toLocaleString(mwlLoc(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            + ' €';
+
+        // Arbeitnehmer-Anteil an der Sozialversicherung (RV + KV + PV + ALV),
+        // gerundet. Bewusst EINE Zahl statt einer Aufschluesselung nach Zweigen:
+        // die Beitragssaetze aendern sich jaehrlich, und eine Nachkommastelle mehr
+        // wuerde eine Genauigkeit behaupten, die hier niemand pflegt.
+        const SOZIALABGABEN_ANTEIL = 0.20;
+
+        // Die Lohnsteuer wird NICHT geschaetzt. Sie haengt an der Steuerklasse, und
+        // eine erfundene Formel dafuer ist schlimmer als eine offene Position -
+        // sie sieht aus wie ein Ergebnis. Hier stand frueher 5 % auf alles ueber
+        // 1300 EUR, dazu zwei Auswahlfelder (Steuerklasse, Bundesland), die nie
+        // ausgelesen wurden und den Eindruck erweckten, sie flossen ein.
         function calculateNet() {
             const brutto = parseFloat(document.getElementById('bruttoInput').value) || 0;
-            const social = brutto * 0.20;
-            const tax    = brutto > 1300 ? (brutto - 1300) * 0.05 : 0;
-            const netto  = brutto - social - tax;
-            document.getElementById('nettoResult').textContent = netto.toFixed(2).replace('.', ',') + ' €';
+            const sozial = brutto * SOZIALABGABEN_ANTEIL;
+            document.getElementById('socialResult').textContent = eur(-sozial);
+            document.getElementById('nettoResult').textContent  = eur(brutto - sozial);
         }
 
         // ─── BENEFITS MODAL ───
