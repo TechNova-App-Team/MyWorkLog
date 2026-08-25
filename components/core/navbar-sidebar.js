@@ -591,9 +591,9 @@
                     node.textContent = node.textContent.replace('ArchFlow', 'Graphify');
                 }
             });
-            if (!link.querySelector('.nav-badge')) {
+            if (!link.querySelector('.nav-badge') && !link.querySelector('.nav-badge-new')) {
                 const badge = document.createElement('span');
-                badge.className = 'nav-badge';
+                badge.className = 'nav-badge-new';
                 badge.textContent = 'NEU';
                 link.appendChild(badge);
             }
