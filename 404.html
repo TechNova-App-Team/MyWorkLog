@@ -4,24 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404 – Seite nicht gefunden | MyWorkLog</title>
-    <meta name="theme-color" content="#a855f7">
+    <meta name="robots" content="noindex,follow">
+    <!-- Bewusst NEUTRAL: diese Seite traegt kein Markenlila und kein Theme-Sync.
+         Sie ist der einzige Zustand der Site, in dem es nichts anzuzeigen gibt —
+         Graustufen, Weiss nur dort, wo eine Handlung angeboten wird. -->
+    <meta name="theme-color" content="#0a0a0a">
     <link rel="icon" type="image/jpeg" href="/Grafiken/image.jpg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        button, input, select, textarea { font-family: inherit; }
 
         :root {
-            --bg:      #07070f;
-            --p:       #a855f7;
-            --pl:      #c084fc;
-            --text:    #f9f8ff;
-            --muted:   rgba(249,248,255,.42);
-            --faint:   rgba(249,248,255,.2);
-            --border:  rgba(255,255,255,.07);
-            --card:    rgba(255,255,255,.03);
-            --green:   #10b981;
+            /* Neutrale Graustufen — kein Blaustich, kein Akzentton.
+               --accent ist reines Weiss und bleibt Handlungen vorbehalten. */
+            --bg:      #0a0a0a;
+            --text:    #fafafa;
+            --muted:   rgba(250,250,250,.46);
+            --faint:   rgba(250,250,250,.24);
+            --border:  rgba(255,255,255,.08);
+            --card:    rgba(255,255,255,.04);
+            --accent:  #ffffff;
             --nh:      58px;
             --bh:      42px;
         }
@@ -35,11 +40,17 @@
             text-rendering: optimizeLegibility;
         }
 
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+            border-radius: 6px;
+        }
+
         /* ── GRAIN ────────────────────────────────────────────────────── */
         .grain {
             position: fixed; inset: -50%; z-index: 998;
             width: 200%; height: 200%;
-            pointer-events: none; opacity: .032;
+            pointer-events: none; opacity: .04;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
             background-size: 180px 180px;
             animation: grainMove .35s steps(1) infinite;
@@ -58,15 +69,15 @@
         .bg {
             position: fixed; inset: 0; z-index: 0; pointer-events: none;
             background:
-                radial-gradient(ellipse 55% 50% at 10% 5%,  rgba(168,85,247,.14) 0%, transparent 60%),
-                radial-gradient(ellipse 40% 50% at 90% 95%, rgba(109,40,217,.09) 0%, transparent 55%);
+                radial-gradient(ellipse 55% 50% at 10% 5%,  rgba(255,255,255,.055) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 50% at 90% 95%, rgba(255,255,255,.028) 0%, transparent 55%);
         }
 
         /* ── MOUSE SPOTLIGHT ──────────────────────────────────────────── */
         #mspot {
             position: fixed; z-index: 1; pointer-events: none;
             width: 750px; height: 750px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(168,85,247,.065) 0%, transparent 65%);
+            background: radial-gradient(circle, rgba(255,255,255,.045) 0%, transparent 65%);
             transform: translate(-50%,-50%);
             transition: left .5s ease-out, top .5s ease-out;
             will-change: left, top;
@@ -79,7 +90,7 @@
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 28px;
             border-bottom: 1px solid var(--border);
-            background: rgba(7,7,15,.82);
+            background: rgba(10,10,10,.82);
             backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(18px);
             animation: navIn .55s cubic-bezier(.16,1,.3,1) both;
@@ -94,12 +105,12 @@
             font-size: .92rem; font-weight: 700;
             color: var(--text); text-decoration: none; letter-spacing: -.02em;
         }
+        /* Weisser Akzent 1/3: die Marke. Kein Verlauf, kein Leuchten. */
         .logo-mark {
             width: 25px; height: 25px; border-radius: 7px;
-            background: linear-gradient(140deg, #c084fc 0%, #a855f7 100%);
-            box-shadow: 0 0 12px rgba(168,85,247,.5);
+            background: var(--accent);
             display: grid; place-items: center;
-            font-size: .65rem; font-weight: 800; color: #fff;
+            font-size: .65rem; font-weight: 800; color: var(--bg);
             font-family: 'Bricolage Grotesque', sans-serif;
         }
         .nav-back {
@@ -107,7 +118,7 @@
             font-size: .8rem; font-weight: 500; color: var(--muted);
             text-decoration: none; padding: 5px 12px; border-radius: 8px;
             border: 1px solid transparent;
-            transition: all .16s;
+            transition: color .16s, background .16s, border-color .16s;
         }
         .nav-back:hover {
             color: var(--text); background: var(--card); border-color: var(--border);
@@ -142,6 +153,8 @@
             pointer-events: none;
         }
 
+        /* Die Ziffern sind Grund, nicht Akzent: mittleres Grau, das nach unten
+           wegblendet. Das hellste Element der Seite bleibt der Knopf. */
         .n404 {
             font-family: 'Bricolage Grotesque', sans-serif;
             font-weight: 800;
@@ -149,7 +162,7 @@
             line-height: .88;
             letter-spacing: -.04em;
             user-select: none;
-            background: linear-gradient(175deg, rgba(255,255,255,.92) 0%, rgba(255,255,255,.38) 100%);
+            background: linear-gradient(175deg, rgba(255,255,255,.52) 0%, rgba(255,255,255,.13) 100%);
             -webkit-background-clip: text; background-clip: text; color: transparent;
             animation: wipeIn .9s .15s cubic-bezier(.77,0,.18,1) both;
             will-change: transform;
@@ -159,7 +172,7 @@
             to   { clip-path: inset(0 0%   0 0); opacity: 1; }
         }
         .side-l:hover .n404 {
-            background: linear-gradient(175deg, rgba(255,255,255,1) 0%, rgba(192,132,252,.7) 100%);
+            background: linear-gradient(175deg, rgba(255,255,255,.82) 0%, rgba(255,255,255,.22) 100%);
             -webkit-background-clip: text; background-clip: text;
             transition: background .4s;
         }
@@ -215,38 +228,40 @@
             font-family: 'Hanken Grotesk', sans-serif;
             font-size: .84rem; font-weight: 600;
             text-decoration: none; border: 1px solid transparent;
-            transition: all .18s cubic-bezier(.16,1,.3,1);
+            transition: background .18s cubic-bezier(.16,1,.3,1),
+                        color .18s cubic-bezier(.16,1,.3,1),
+                        border-color .18s cubic-bezier(.16,1,.3,1),
+                        box-shadow .18s cubic-bezier(.16,1,.3,1),
+                        transform .12s ease;
             position: relative; overflow: hidden; cursor: pointer;
         }
+        /* Weisser Akzent 2/3: die eine Handlung, die zaehlt. Umkehr des
+           App-Knopfs — dort farbige Flaeche auf Dunkel, hier Weiss auf Schwarz. */
         .btn-p {
-            background: var(--p); color: #fff;
-            box-shadow:
-                inset 0 1px 0 rgba(255,255,255,.15),
-                0 0 0 1px rgba(168,85,247,.3),
-                0 4px 16px rgba(168,85,247,.3);
+            background: var(--accent); color: var(--bg);
+            box-shadow: 0 4px 18px rgba(0,0,0,.55);
         }
         .btn-p::before {
             content: '';
             position: absolute; inset: 0;
-            background: linear-gradient(110deg, transparent 25%, rgba(255,255,255,.14) 50%, transparent 75%);
+            background: linear-gradient(110deg, transparent 25%, rgba(0,0,0,.07) 50%, transparent 75%);
             transform: translateX(-110%);
             transition: transform .45s ease;
         }
         .btn-p:hover::before { transform: translateX(110%); }
         .btn-p:hover {
-            box-shadow:
-                inset 0 1px 0 rgba(255,255,255,.2),
-                0 0 0 1px rgba(192,132,252,.45),
-                0 6px 28px rgba(168,85,247,.45);
-            transform: translateY(-1px);
+            background: #e8e8e8;
+            box-shadow: 0 6px 26px rgba(0,0,0,.7);
         }
         .btn-o {
             background: transparent; color: var(--muted); border-color: var(--border);
         }
         .btn-o:hover {
             background: var(--card); color: var(--text);
-            border-color: rgba(255,255,255,.12); transform: translateY(-1px);
+            border-color: rgba(255,255,255,.16);
         }
+        /* Bewegung erst beim Druecken, nicht beim Hover. */
+        .btn:active { transform: scale(.985); }
 
         /* ── BOTTOM BAR ───────────────────────────────────────────────── */
         .botbar {
@@ -255,7 +270,7 @@
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 24px;
             border-top: 1px solid var(--border);
-            background: rgba(7,7,15,.82);
+            background: rgba(10,10,10,.82);
             backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(18px);
             font-size: .7rem; color: var(--faint);
@@ -269,22 +284,16 @@
             position: absolute; left: 50%; transform: translateX(-50%);
             letter-spacing: .14em;
         }
-        .stat {
-            display: flex; align-items: center; gap: 6px; color: var(--muted);
-        }
-        .sdot {
-            width: 5px; height: 5px; border-radius: 50%;
-            background: var(--green); box-shadow: 0 0 7px var(--green);
-            animation: sdpulse 2.4s ease-in-out infinite;
-        }
-        @keyframes sdpulse {
-            0%,100% { opacity: 1; transform: scale(1);   }
-            50%     { opacity: .5; transform: scale(1.5); }
-        }
+        /* Links steht die einzige Angabe, die hier nachweislich stimmt:
+           der Pfad, den der Besucher wirklich angefordert hat. */
+        .req { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .req-key { color: var(--faint); letter-spacing: .1em; text-transform: uppercase; }
         #pathEl {
+            color: var(--muted);
             max-width: 300px; overflow: hidden;
             text-overflow: ellipsis; white-space: nowrap;
         }
+        .botbar-r { letter-spacing: .12em; }
 
         /* ── MOBILE ───────────────────────────────────────────────────── */
         @media (max-width: 680px) {
@@ -299,13 +308,34 @@
             }
             .side-l::after { display: none; }
             .n404 { font-size: clamp(5.5rem, 28vw, 9rem); padding-bottom: 1.5rem; }
-            .side-r { padding: 1.8rem 1.5rem; justify-content: flex-start; }
+            /* Auf kurzen Viewports darf der rechte Block scrollen — sonst
+               schneidet das fixe Raster die Knoepfe unten ab. */
+            .side-r {
+                padding: 1.8rem 1.5rem; justify-content: flex-start;
+                overflow-y: auto; -webkit-overflow-scrolling: touch;
+            }
             h1 { font-size: 1.8rem; }
             nav { padding: 0 18px; }
             .botbar { padding: 0 14px; }
             .botbar-mid { display: none; }
             .actions { flex-direction: column; }
             .btn { justify-content: center; }
+        }
+
+        /* ── TOUCH ────────────────────────────────────────────────────── */
+        @media (hover: none) {
+            .n404 { background: linear-gradient(175deg, rgba(255,255,255,.6) 0%, rgba(255,255,255,.16) 100%); }
+        }
+
+        /* ── REDUCED MOTION ───────────────────────────────────────────── */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+            .grain { animation: none; }
+            #mspot { display: none; }
         }
     </style>
 </head>
@@ -316,13 +346,13 @@
 <div id="mspot"></div>
 
 <nav>
-    <a href="/" class="logo">
+    <a href="/" class="logo" id="logoLink">
         <div class="logo-mark">M</div>
         MyWorkLog
     </a>
-    <a href="/" class="nav-back">
+    <a href="/" class="nav-back" id="navBack">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        Startseite
+        <span id="txtHome">Startseite</span>
     </a>
 </nav>
 
@@ -334,64 +364,87 @@
     <div class="side-r" id="sr">
         <div class="label">
             <span class="label-line"></span>
-            Fehler 404
+            <span id="txtLabel">Fehler 404</span>
         </div>
-        <h1>Diese Seite<br>existiert nicht.</h1>
-        <p class="desc">
+        <h1 id="txtH1">Diese Seite<br>existiert nicht.</h1>
+        <p class="desc" id="txtDesc">
             Die angeforderte URL wurde nicht gefunden oder entfernt.
             Deine Zeiteinträge sind davon nicht betroffen.
         </p>
         <div class="actions">
-            <a href="/" class="btn btn-p">
+            <a href="/" class="btn btn-p" id="btnApp">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                Zur App
+                <span id="txtApp">Zur App</span>
             </a>
             <a href="javascript:history.back()" class="btn btn-o">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-                Zurück
+                <span id="txtBack">Zurück</span>
             </a>
         </div>
     </div>
 </main>
 
 <footer class="botbar">
-    <span id="pathEl"></span>
+    <span class="req">
+        <span class="req-key" id="txtReq">Angefragt</span>
+        <span id="pathEl"></span>
+    </span>
     <span class="botbar-mid">MYWORKLOG · 404</span>
-    <div class="stat">
-        <div class="sdot"></div>
-        Alle Systeme betriebsbereit
-    </div>
+    <span class="botbar-r">NOT FOUND</span>
 </footer>
 
 <script>
-    // Path
+    // ── Sprache ──────────────────────────────────────────────────────────
+    // Cloudflare Pages liefert diese EINE Datei fuer jeden nicht gefundenen
+    // Pfad aus — auch fuer /en/*. Eine eigene EN-URL kann es also nicht geben;
+    // die Texte werden hier am Pfad umgeschaltet. Die Seite laeuft NICHT durch
+    // die i18n-Pipeline (tools/i18n kennt nur pages/), deshalb stehen die
+    // englischen Strings bewusst hier.
     const path = window.location.pathname;
+    if (/^\/en(\/|$)/.test(path)) {
+        document.documentElement.lang = 'en';
+        document.title = '404 – Page not found | MyWorkLog';
+        const t = {
+            txtHome:  'Home',
+            txtLabel: 'Error 404',
+            txtDesc:  'The requested URL was not found or has been removed. Your time entries are unaffected.',
+            txtApp:   'Open the app',
+            txtBack:  'Go back',
+            txtReq:   'Requested'
+        };
+        for (const id in t) document.getElementById(id).textContent = t[id];
+        document.getElementById('txtH1').innerHTML = 'This page<br>does not exist.';
+        document.getElementById('logoLink').href = '/en/';
+        document.getElementById('navBack').href  = '/en/';
+        document.getElementById('btnApp').href   = '/en/';
+    }
+
+    // ── Angefragter Pfad ─────────────────────────────────────────────────
     document.getElementById('pathEl').textContent = path.length > 42 ? path.slice(0, 40) + '…' : path;
 
-    // Mouse spotlight
-    const mspot = document.getElementById('mspot');
-    document.addEventListener('mousemove', e => {
-        mspot.style.left = e.clientX + 'px';
-        mspot.style.top  = e.clientY + 'px';
-    });
+    // ── Zeiger-Effekte (nur wenn Bewegung erwuenscht ist) ────────────────
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduce) {
+        const mspot = document.getElementById('mspot');
+        const sl = document.getElementById('sl');
+        const sr = document.getElementById('sr');
+        let tx = 0, ty = 0, lx = 0, ly = 0;
 
-    // Smooth parallax — left moves with mouse, right counters
-    const sl = document.getElementById('sl');
-    const sr = document.getElementById('sr');
-    let tx = 0, ty = 0, lx = 0, ly = 0;
+        document.addEventListener('mousemove', e => {
+            mspot.style.left = e.clientX + 'px';
+            mspot.style.top  = e.clientY + 'px';
+            tx = (e.clientX / innerWidth  - .5) * innerWidth;
+            ty = (e.clientY / innerHeight - .5) * innerHeight;
+        });
 
-    document.addEventListener('mousemove', e => {
-        tx = (e.clientX / innerWidth  - .5) * innerWidth;
-        ty = (e.clientY / innerHeight - .5) * innerHeight;
-    });
-
-    (function raf() {
-        lx += (tx - lx) * .065;
-        ly += (ty - ly) * .065;
-        sl.style.transform = `translate(${(lx * .042).toFixed(2)}px, ${(ly * .028).toFixed(2)}px)`;
-        sr.style.transform = `translate(${(lx * -.022).toFixed(2)}px, ${(ly * -.015).toFixed(2)}px)`;
-        requestAnimationFrame(raf);
-    })();
+        (function raf() {
+            lx += (tx - lx) * .065;
+            ly += (ty - ly) * .065;
+            sl.style.transform = 'translate(' + (lx * .042).toFixed(2) + 'px, ' + (ly * .028).toFixed(2) + 'px)';
+            sr.style.transform = 'translate(' + (lx * -.022).toFixed(2) + 'px, ' + (ly * -.015).toFixed(2) + 'px)';
+            requestAnimationFrame(raf);
+        })();
+    }
 </script>
 </body>
 </html>
