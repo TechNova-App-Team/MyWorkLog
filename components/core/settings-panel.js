@@ -276,7 +276,7 @@
         
         modal.innerHTML = `
             <div style="position: relative; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column;">
-                <button onclick="document.getElementById('graphicModal').remove()" style="position: absolute; top: -40px; right: 0; background: none; border: none; color: var(--text-main); font-size: 2rem; cursor: pointer; padding: 0;">&times;</button>
+                <button onclick="document.getElementById('graphicModal').remove()" style="position: absolute; top: -40px; right: 0; background: none; border: none; color: var(--text-main); font-size: 2rem; cursor: pointer; padding: 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
                 <picture>
                     <source srcset="${webpSrc}" type="image/webp">
                     <img src="${pngSrc}" alt="${imageTitle}" decoding="async" style="max-width: 90vw; max-height: 85vh; object-fit: contain; border-radius: 12px; border: 1px solid var(--border);">

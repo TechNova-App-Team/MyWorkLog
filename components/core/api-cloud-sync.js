@@ -1103,7 +1103,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
             <div class="cloud-sync-prompt-text">In die Cloud sichern?<small>${last ? 'Letzter Upload ' + _formatRelativeTime(last) : 'Noch nie hochgeladen'}</small></div>
             <button class="cloud-sync-prompt-btn" id="cloudSyncPromptGo">Syncen</button>
-            <button class="cloud-sync-prompt-close" id="cloudSyncPromptClose" aria-label="Schließen">×</button>
+            <button class="cloud-sync-prompt-close" id="cloudSyncPromptClose" aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
         `;
         document.body.appendChild(toast);
         _cloudPromptMarkShown();

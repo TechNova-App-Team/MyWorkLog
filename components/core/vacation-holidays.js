@@ -516,7 +516,7 @@
                 <input type="date" data-vp-range="${i}" data-vp-field="start" value="${r.start || ''}">
                 <span class="vp-range-sep">→</span>
                 <input type="date" data-vp-range="${i}" data-vp-field="end" value="${r.end || ''}">
-                ${s.ranges.length > 1 ? `<button class="vp-range-del" data-vp-del="${i}" title="Bereich entfernen">×</button>` : ''}
+                ${s.ranges.length > 1 ? `<button class="vp-range-del" data-vp-del="${i}" title="Bereich entfernen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>` : ''}
             </div>
         `).join('');
         wrap.querySelectorAll('input[type=date]').forEach(inp => {
@@ -657,7 +657,7 @@
                         <h3 class="vp-head-title" id="vpTitle">Urlaub planen</h3>
                         <div class="vp-head-sub">Mehrere Zeiträume oder einzelne Tage auf einmal buchen</div>
                     </div>
-                    <button class="vp-close" id="vpClose" aria-label="Schließen">×</button>
+                    <button class="vp-close" id="vpClose" aria-label="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
                 </div>
                 <div class="vp-tabs">
                     <button class="vp-tab active" data-vp-mode="range">Zeitraum</button>

@@ -655,7 +655,7 @@ function createScannerEl(containerId) {
                 '</svg>' +
                 '<span class="bbig-scanner__title">BBiG-Live-Scanner</span>' +
                 '<span class="bbig-scanner__badge">§ Legal Guard</span>' +
-                '<button class="bbig-scanner__dismiss-all" title="Alle ausblenden" onclick="bbigDismissAll(\'' + containerId + '\')">×</button>' +
+                '<button class="bbig-scanner__dismiss-all" title="Alle ausblenden" onclick="bbigDismissAll(\'' + containerId + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
             '</div>' +
             '<div class="bbig-scanner__alerts"></div>' +
             '<div class="bbig-scanner__footer">' +
@@ -742,7 +742,7 @@ function scanText(rawText, scannerId) {
                 '<div class="bbig-alert__text">' + bbigEsc(match.text) + '</div>' +
             '</div>' +
             '<button class="bbig-alert__close" title="Ausblenden" ' +
-                'onclick="bbigDismissRule(\'' + bbigEsc(scannerId) + '\',\'' + bbigEsc(match.id) + '\',this.closest(\'.bbig-alert\'))">×</button>';
+                'onclick="bbigDismissRule(\'' + bbigEsc(scannerId) + '\',\'' + bbigEsc(match.id) + '\',this.closest(\'.bbig-alert\'))"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
         alertsEl.appendChild(alertEl);
     }
 

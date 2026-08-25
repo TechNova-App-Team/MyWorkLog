@@ -302,7 +302,7 @@
                     <div style="font-weight:650; font-size:0.9rem; color:#fafafa; margin-bottom:3px; line-height:1.3;">${title}</div>
                     <div style="font-size:0.825rem; color:#a1a1aa; line-height:1.45;">${message}</div>
                 </div>
-                <button style="background:none; border:none; color:#52525b; cursor:pointer; font-size:18px; line-height:1; padding:0 0 0 4px; margin:-2px -4px 0 0; transition:color 0.15s;" onmouseover="this.style.color='#d4d4d8'" onmouseout="this.style.color='#52525b'">&times;</button>
+                <button style="background:none; border:none; color:#52525b; cursor:pointer; font-size:18px; line-height:1; padding:0 0 0 4px; margin:-2px -4px 0 0; transition:color 0.15s;" onmouseover="this.style.color='#d4d4d8'" onmouseout="this.style.color='#52525b'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
             </div>
             <div style="position:absolute; bottom:0; left:0; right:0; height:3px; background:rgba(255,255,255,0.04);">
                 <div class="tt-toast-progress" style="height:100%; width:100%; background:${colors.bar}; border-radius:0 0 0 14px; transition:width linear;"></div>
@@ -457,7 +457,7 @@
                     <div style="font-size:0.9rem; margin-bottom:4px; color:var(--text-main);">${alert.message}</div>
                     <div class="alert-item-time">${alert.date} · ${alert.time}</div>
                 </div>
-                <button class="alert-item-dismiss" onclick="dismissAlert(${alert.id})">×</button>
+                <button class="alert-item-dismiss" onclick="dismissAlert(${alert.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
             `;
             container.appendChild(alertEl);
         });
@@ -488,7 +488,7 @@
                             <div style="font-size:0.9rem; margin-bottom:4px;">${alert.message}</div>
                             <div class="alert-item-time">${alert.date} · ${alert.time}</div>
                         </div>
-                        <button class="alert-item-dismiss" onclick="dismissAlert(${alert.id})">×</button>
+                        <button class="alert-item-dismiss" onclick="dismissAlert(${alert.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
                     `;
                     container.appendChild(alertEl);
                 });

@@ -159,7 +159,7 @@
             html += '<input type="color" class="jm-color" data-job="' + job.id + '" value="' + (job.color || '#a855f7') + '" title="Farbe">';
             html += '<input type="text" class="glass-input jm-name" data-job="' + job.id + '" value="' + (typeof esc === 'function' ? esc(job.name) : job.name) + '" placeholder="' + L('Job-Name', 'Job name') + '">';
             if (isPrimary) html += '<span class="jm-badge">' + L('Hauptjob', 'Main job') + '</span>';
-            else html += '<button type="button" class="jm-del" data-job="' + job.id + '" title="' + L('Job löschen', 'Delete job') + '" onclick="removeJob(\'' + job.id + '\')">✕</button>';
+            else html += '<button type="button" class="jm-del" data-job="' + job.id + '" title="' + L('Job löschen', 'Delete job') + '" onclick="removeJob(\'' + job.id + '\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
             html += '</div>';
             // Zeitfenster (für Auto-Zuordnung)
             html += '<div class="jm-window"><span class="jm-lbl">' + L('Zeitfenster (Auto-Zuordnung)', 'Time window (auto-assign)') + '</span>' +

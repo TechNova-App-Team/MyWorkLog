@@ -69,7 +69,7 @@
             var dashOff = achieved ? 0 : circ - (progress / 100) * circ;
 
             html += '<div class="goal-card' + (achieved ? ' achieved' : '') + '" style="border-left-color:' + color + '">'
-                + '<button class="goal-delete-btn" onclick="deleteCustomGoal(' + goal.id + ')">×</button>'
+                + '<button class="goal-delete-btn" onclick="deleteCustomGoal(' + goal.id + ')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>'
                 + '<div class="progress-ring-goal" style="position:relative;">'
                 +   '<svg width="60" height="60" viewBox="0 0 100 100">'
                 +     '<circle cx="50" cy="50" r="' + radius + '" stroke="rgba(255,255,255,0.04)" stroke-width="4"></circle>'

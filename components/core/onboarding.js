@@ -853,7 +853,7 @@ const networkMonitor = (() => {
         const ov = document.createElement('div');
         ov.style.cssText = 'position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;padding:20px;';
         ov.onclick = (ev) => { if (ev.target === ov) ov.remove(); };
-        ov.innerHTML = '<div style="background:rgba(10,10,16,0.96);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:18px;max-width:380px;width:100%;max-height:65vh;overflow-y:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-weight:700;font-size:13px;color:#f1f5f9;">Netzwerk-Verlauf</span><span style="cursor:pointer;color:#64748b;font-size:18px;" onclick="this.closest(\x27[style*=fixed]\x27).remove()">&times;</span></div>' + rows + '</div>';
+        ov.innerHTML = '<div style="background:rgba(10,10,16,0.96);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:18px;max-width:380px;width:100%;max-height:65vh;overflow-y:auto;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-weight:700;font-size:13px;color:#f1f5f9;">Netzwerk-Verlauf</span><span style="cursor:pointer;color:#64748b;font-size:18px;" onclick="this.closest(\x27[style*=fixed]\x27).remove()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></span></div>' + rows + '</div>';
         document.body.appendChild(ov);
     }
 
