@@ -2072,7 +2072,12 @@ a:hover { color: #c4b5fd; }
 .map-ctrl:focus-visible {
     outline: none;
     color: var(--text);
-    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.35);
+    /* --primary-rgb wird auf dieser Seite nirgends definiert (sie hat ihr
+       eigenes Farbsystem und keinen Theme-Sync). Ohne Fallback ist das
+       rgba() ungueltig, der box-shadow faellt auf seinen Initialwert "none"
+       zurueck - zusammen mit outline:none hatte die Kartensteuerung damit
+       ueberhaupt keinen sichtbaren Tastaturfokus. */
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 168, 85, 247), 0.35);
 }
 .map-ctrl:active { transform: translateY(1px); }
 
@@ -2335,6 +2340,18 @@ a:hover { color: #c4b5fd; }
     0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); }
     70%  { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
     100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Der gruene Puls ist eine Zusage: "die Zahlen daneben sind von jetzt".
+   Bis v6.3.13 stand er fest im Markup und pulsierte auch dann weiter, wenn
+   der Abruf scheiterte (Netzfehler, Adblocker, Worker weg) - der Ticker
+   friert still ein und sieht dabei aus wie einer, der laeuft. Faellt der
+   Abruf aus, wird daraus ein ruhender grauer Punkt mit ehrlicher Beschriftung. */
+.live-feed-status.is-stale { color: var(--text-muted, #94a3b8); }
+.live-feed-status.is-stale .live-feed-pulse {
+    background: var(--text-muted, #94a3b8);
+    box-shadow: none;
+    animation: none;
 }
 .live-feed-sub {
     color: var(--text-muted, #94a3b8); font-size: 0.76rem; line-height: 1.5;

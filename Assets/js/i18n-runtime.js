@@ -297,6 +297,7 @@
 
     // ─── Geteilter Footer (wird per fetch nachgeladen → nie in der statischen Pipeline) ───
     'App öffnen': 'Open app',
+    'Daten übernehmen': 'Import your data',
     'Über uns': 'About us',
     'Datenschutz': 'Privacy',
     'Impressum': 'Legal notice',

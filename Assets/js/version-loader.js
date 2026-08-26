@@ -41,8 +41,12 @@ function loadAppVersion() {
     })(0);
 }
 
-// "2026-07-21" -> "21. Juli 2026" (Format der bisher hartcodierten Footer-Angabe)
+// "2026-07-21" -> "21. Juli 2026" bzw. "21 July 2026" auf /en/.
+// Der Footer wird per fetch nachgeladen und laeuft damit an der statischen
+// i18n-Pipeline vorbei; die Beschriftungen uebersetzt i18n-runtime.js, das
+// Datum entsteht aber erst hier und muss die Sprache selbst beruecksichtigen.
 const GERMAN_MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+const ENGLISH_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 function formatGermanDate(iso) {
     if (!iso) return '';
     const parts = String(iso).split('-');
@@ -50,7 +54,10 @@ function formatGermanDate(iso) {
     const day = parseInt(parts[2], 10);
     const monthIdx = parseInt(parts[1], 10) - 1;
     if (isNaN(day) || monthIdx < 0 || monthIdx > 11) return iso;
-    return `${day}. ${GERMAN_MONTHS[monthIdx]} ${parts[0]}`;
+    const isEn = (document.documentElement.lang || '').toLowerCase().startsWith('en');
+    return isEn
+        ? `${day} ${ENGLISH_MONTHS[monthIdx]} ${parts[0]}`
+        : `${day}. ${GERMAN_MONTHS[monthIdx]} ${parts[0]}`;
 }
 
 // Update all elements with [data-version] attribute

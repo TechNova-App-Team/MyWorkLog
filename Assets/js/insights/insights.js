@@ -2171,14 +2171,33 @@ function renderLiveFeed(events) {
     _liveFeedFirstLoad = false;
 }
 
+// Der gruene Puls neben "Live-Aktivitaet" behauptet, die Liste sei von jetzt.
+// Diese Zusage muss am tatsaechlichen Abruf haengen, sonst pulsiert sie auch
+// dann noch, wenn seit Minuten nichts mehr durchkommt.
+function setLiveFeedStatus(ok) {
+    var el = document.getElementById('liveFeedStatus');
+    if (!el) return;
+    var EN = document.documentElement.lang === 'en';
+    var label = el.querySelector('.lf-status-text');
+    if (!label) {
+        label = document.createElement('span');
+        label.className = 'lf-status-text';
+        el.appendChild(label);
+    }
+    el.classList.toggle('is-stale', !ok);
+    label.textContent = ok ? (EN ? 'Live' : 'Echtzeit')
+                           : (EN ? 'No connection' : 'Nicht erreichbar');
+}
+
 async function loadLiveFeed() {
     if (document.hidden) return;   // kein Polling im Hintergrund
     if (!document.getElementById('liveFeed')) return;
     try {
         var res = await fetch(CF_PROXY + '?feed=1', { cache: 'no-store' });
-        if (!res.ok) return;
+        if (!res.ok) { setLiveFeedStatus(false); return; }
         var d = await res.json();
         if (d && Array.isArray(d.events)) {
+            setLiveFeedStatus(true);
             renderLiveFeed(d.events);
         } else if (d && d.summary) {
             // Der deployte Worker kennt den ?feed-Endpunkt noch nicht und liefert
@@ -2189,7 +2208,10 @@ async function loadLiveFeed() {
             if (card) card.style.display = 'none';
         }
     } catch (e) {
-        /* Netzfehler/Adblock: still — der Ticker ist Beiwerk, darf die Seite nie stören */
+        /* Netzfehler/Adblock: keine Meldung, keine Konsole — der Ticker ist
+           Beiwerk und darf die Seite nie stoeren. Der Puls muss aber aufhoeren
+           zu behaupten, die Liste sei aktuell. */
+        setLiveFeedStatus(false);
     }
 }
 

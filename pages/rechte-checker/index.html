@@ -1254,7 +1254,8 @@
             clip: rect(0,0,0,0); white-space: nowrap; border: 0;
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.3.13"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.3.14"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.3.14"></script>
 </head>
 <body>
     <!-- ═══════════════ AMBIENT ═══════════════ -->
@@ -1420,6 +1421,8 @@
             <p>Diese Informationen dienen zur allgemeinen Orientierung und ersetzen keine Rechtsberatung. Bei konkreten Problemen wende dich an deine <strong>Gewerkschaft</strong>, die <strong>IHK/HWK</strong> oder einen <strong>Fachanwalt für Arbeitsrecht</strong>.</p>
         </footer>
     </div>
+
+    <div id="page-footer"></div>
 
     <!-- ═════════════ LLM API KEY MODAL ═════════════ -->
     <div class="llm-key-overlay" id="llmKeyOverlay">
@@ -4542,5 +4545,21 @@ ${scenarioCtx}`;
     </script>
 
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
-<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script></body>
+<script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
+<!-- Gemeinsamer Fussbereich. Traegt die Verweise auf Impressum und
+     Datenschutzerklaerung; die muessen von jeder oeffentlichen Seite aus
+     erreichbar sein (§ 5 DDG). Bis v6.3.13 fehlte er hier. -->
+<script>
+    fetch('/pages/footer/footer.html')
+        .then(r => r.text())
+        .then(html => {
+            const ph = document.getElementById('page-footer');
+            if (!ph) return;
+            const tmpl = document.createElement('template');
+            tmpl.innerHTML = html;
+            ph.replaceWith(tmpl.content);
+            if (typeof loadAppVersion === 'function') loadAppVersion();
+        });
+</script>
+</body>
 </html>

@@ -127,6 +127,14 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
 .sb-more-s{font-size:10.5px;color:var(--t3);line-height:1.4}
 .sb-more-ar{margin-left:auto;flex-shrink:0;color:var(--t3);transition:transform .18s ease,color .18s ease}
 .sb-more:hover .sb-more-ar{color:var(--primary);transform:translateX(2px)}
+/* Rechtsverweise. Muessen von jeder oeffentlichen Seite erreichbar sein (§ 5 DDG);
+   diese Seite scrollt nicht, hat also keinen Platz fuer den gemeinsamen Fussbereich.
+   Steht zusaetzlich im Datei-Sheet, weil die Sidebar unter 768px ausgeblendet ist. */
+.sb-legal{display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  margin-top:10px;padding:0 10px;font-size:10.5px;line-height:1.5}
+.sb-legal a{color:var(--t3);text-decoration:none;transition:color .18s ease}
+.sb-legal a:hover,.sb-legal a:focus-visible{color:var(--primary);outline:none}
+.sb-legal span{color:var(--t3);opacity:.5}
 .grp{margin-bottom:2px}
 .grp-h{display:flex;align-items:center;gap:8px;width:100%;padding:7px 8px;border:none;background:none;
   border-radius:var(--r-chip);cursor:pointer;text-align:left;transition:background .15s ease}
@@ -286,7 +294,7 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
 </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.3.13"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.3.14"></script>
 </head>
 <body>
 <div id="loader">
@@ -335,6 +343,12 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
           </span>
           <svg class="sb-more-ar" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
         </a>
+
+        <div class="sb-legal">
+          <a href="/Impressum/">Impressum</a>
+          <span aria-hidden="true">&middot;</span>
+          <a href="/DSGVO/">Datenschutz</a>
+        </div>
       </div>
     </aside>
 
@@ -862,6 +876,12 @@ function showSheetFiles(){
     +'<span class="sb-more-tx"><span class="sb-more-t">'+L('Code-Graph','Code graph')+'</span>'
     +'<span class="sb-more-s">'+L('Feiner: bis auf Funktionsebene','Finer: down to function level')+'</span></span>'
     +'<svg class="sb-more-ar" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></a>';
+  // Rechtsverweise: die Sidebar mit ihnen ist unter 768px ausgeblendet, ohne
+  // diese Zeile waeren Impressum und Datenschutz am Handy nicht erreichbar.
+  h+='<div class="sb-legal" style="margin:0 0 14px">'
+    +'<a href="/Impressum/">'+L('Impressum','Legal notice')+'</a>'
+    +'<span aria-hidden="true">&middot;</span>'
+    +'<a href="/DSGVO/">'+L('Datenschutz','Privacy')+'</a></div>';
   GROUPS.forEach(g=>{
     const files=g.files.filter(f=>RAW.nodes[f]);if(!files.length)return;
     h+='<div class="bs-g">'+esc(g.label)+' · '+files.length+'</div>';

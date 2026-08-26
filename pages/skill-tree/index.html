@@ -207,7 +207,8 @@ svg{display:block;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
 </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.3.13"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.3.14"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.3.14"></script>
 </head>
 <body>
 
@@ -262,6 +263,8 @@ svg{display:block;}
     <div class="grid" id="grid"></div>
 
 </div>
+
+<div id="page-footer"></div>
 
 <!-- DETAIL SHEET -->
 <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
@@ -701,5 +704,20 @@ window.addEventListener('DOMContentLoaded',function(){
 </script>
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
 <script>(function(){var h=location.hostname;if(h==='localhost'||h==='127.0.0.1'||h==='::1'||h===''||location.protocol==='file:')return;window.addEventListener('load',function(){setTimeout(function(){var s=document.createElement('script');s.defer=true;s.src='https://static.cloudflareinsights.com/beacon.min.js';s.setAttribute('data-cf-beacon','{"token": "3aa3f484545341a0a8a390cd4dc9983a"}');document.body.appendChild(s);},2000);});})();</script>
+<!-- Gemeinsamer Fussbereich. Traegt die Verweise auf Impressum und
+     Datenschutzerklaerung; die muessen von jeder oeffentlichen Seite aus
+     erreichbar sein (§ 5 DDG). Bis v6.3.13 fehlte er hier. -->
+<script>
+    fetch('/pages/footer/footer.html')
+        .then(r => r.text())
+        .then(html => {
+            const ph = document.getElementById('page-footer');
+            if (!ph) return;
+            const tmpl = document.createElement('template');
+            tmpl.innerHTML = html;
+            ph.replaceWith(tmpl.content);
+            if (typeof loadAppVersion === 'function') loadAppVersion();
+        });
+</script>
 </body>
 </html>
