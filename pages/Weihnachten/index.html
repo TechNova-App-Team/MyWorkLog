@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
@@ -9,11 +9,10 @@
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
     <title>MyWorkLog | Frohe Weihnachten</title>
-    <link rel="stylesheet" href="../../../Assets/css/snowflakes.css">
-    <script src="../../../Assets/js/icons.js"></script>
-    <script src="../../../Assets/js/touch-mobile-optimizations.js"></script>
-    <script src="../../../Assets/js/pinch-zoom.js"></script>
-    <script src="../../../Assets/js/snowflakes.js"></script>
+    <link rel="stylesheet" href="/Assets/css/Event/Weihnachten/snowflakes.css?v=6.3.13">
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.3.13"></script>
+    <script defer src="/Assets/js/pinch-zoom.js?v=6.3.13"></script>
+    <script defer src="/Assets/js/Event/Weihnachten/snowflakes.js?v=6.3.13"></script>
     <style>
         * {
             margin: 0;
@@ -162,19 +161,26 @@
         }
 
         .part-btn {
-            padding: 15px;
+            padding: 15px 10px;
             background: linear-gradient(145deg, rgba(60,60,60,0.8), rgba(40,40,40,0.8));
             border: 2px solid rgba(255,255,255,0.15);
             border-radius: 15px;
             color: #ffffff;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            font-size: 1em;
+            /* Gemessen: 89 px nutzbare Breite in der 300-px-Spalte. "SCHNALLE"
+               brauchte bei 1em/1px 96 px und brach als "SCHNALL / E" um. */
+            font-size: 0.9em;
             font-weight: 600;
             position: relative;
             overflow: hidden;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            /* Lange Einzelwoerter ("Handschuhe", "Augenbrauen") passten nicht in die
+               Kachel und wurden von overflow:hidden (noetig fuer den ::before-Ripple)
+               stumm abgeschnitten - "Handschu", "Augenbra". Trennen statt kappen. */
+            hyphens: auto;
+            overflow-wrap: break-word;
         }
 
         .part-btn::before {
@@ -589,7 +595,7 @@
             }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.3.12"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.3.13"></script>
 </head>
 <body>
     <div class="particles" id="particles"></div>
