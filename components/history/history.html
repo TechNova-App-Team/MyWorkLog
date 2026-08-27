@@ -1,109 +1,162 @@
 <div id="view-history" class="view-section">
 
-            <!-- ── TOPBAR ── -->
+            <!-- ── KOPFZEILE ── -->
             <div class="view-header">
                 <div>
                     <h2 class="view-title">Verlauf</h2>
-                    <p class="view-subtitle">Arbeitszeiteinträge · Analyse &amp; Verwaltung</p>
+                    <p class="view-subtitle" id="hlSubtitle">Das gesamte Archiv deiner erfassten Zeit</p>
                 </div>
                 <div class="view-header-actions">
                     <button class="hl-btn hl-btn-ghost" onclick="exportHistoryData('csv')">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        CSV
+                        <span>CSV</span>
                     </button>
                     <button class="hl-btn hl-btn-ghost" onclick="exportHistoryData('json')">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        JSON
+                        <span>JSON</span>
                     </button>
                     <button class="hl-btn hl-btn-danger" onclick="openTrashModal()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-                        Papierkorb
+                        <span>Papierkorb</span>
                         <span class="hl-badge" id="trashCountBadge">0</span>
                     </button>
                 </div>
             </div>
 
-            <!-- ── STATS STRIP ── -->
-            <div class="hl-stats">
-                <div class="hl-stat-card">
-                    <span class="hl-stat-num" id="historyCount">0</span>
-                    <span class="hl-stat-lbl">Einträge gefunden</span>
-                </div>
-                <div class="hl-stat-card">
-                    <span class="hl-stat-num" id="hlStatHours">0h</span>
-                    <span class="hl-stat-lbl">Gesamt gearbeitet</span>
-                </div>
-                <div class="hl-stat-card">
-                    <span class="hl-stat-num" id="hlStatSaldo">+0h</span>
-                    <span class="hl-stat-lbl">Saldo (gefiltert)</span>
-                </div>
-                <div class="hl-stat-card">
-                    <span class="hl-stat-num" id="hlStatAvg">0h</span>
-                    <span class="hl-stat-lbl">Ø pro Tag</span>
-                </div>
-            </div>
-
-            <!-- ── FILTER PANEL ── -->
-            <div class="hl-filter-panel">
-                <!-- Type Pills -->
-                <div class="hl-type-pills">
-                    <!-- Icons füllt refreshTypeAffectedUI() als SVG nach (respektiert User-Overrides). -->
-                    <button class="hl-pill active" onclick="hlSetType('all', this)"><span class="hl-pill-label">Alle</span></button>
-                    <button class="hl-pill hl-pill-work"      onclick="hlSetType('work', this)"><span class="hl-pill-icon" aria-hidden="true"></span><span class="hl-pill-label">Arbeit</span></button>
-                    <button class="hl-pill hl-pill-school"    onclick="hlSetType('school', this)"><span class="hl-pill-icon" aria-hidden="true"></span><span class="hl-pill-label">Schule</span></button>
-                    <button class="hl-pill hl-pill-vacation"  onclick="hlSetType('vacation', this)"><span class="hl-pill-icon" aria-hidden="true"></span><span class="hl-pill-label">Urlaub</span></button>
-                    <button class="hl-pill hl-pill-gleittag"  onclick="hlSetType('gleittag', this)"><span class="hl-pill-icon" aria-hidden="true"></span><span class="hl-pill-label">Gleittag</span></button>
-                    <button class="hl-pill hl-pill-sick"      onclick="hlSetType('sick', this)"><span class="hl-pill-icon" aria-hidden="true"></span><span class="hl-pill-label">Krank</span></button>
-                    <button class="hl-pill hl-pill-holiday"   onclick="hlSetType('holiday', this)"><span class="hl-pill-icon" aria-hidden="true"></span><span class="hl-pill-label">Feiertag</span></button>
-                    <button class="hl-pill hl-pill-korrektur" onclick="hlSetType('korrektur', this)"><span class="hl-pill-icon" aria-hidden="true"></span><span class="hl-pill-label">Korrektur</span></button>
-                </div>
-
-                <!-- Hidden real select (driven by pills) -->
-                <select id="historyFilterType" style="display:none" onchange="renderHistoryView()">
-                    <option value="all">Alle</option>
-                    <option value="work">Arbeit</option>
-                    <option value="school">Berufsschule</option>
-                    <option value="vacation">Urlaub</option>
-                    <option value="gleittag">Gleittag</option>
-                    <option value="sick">Krank</option>
-                    <option value="holiday">Feiertag</option>
-                </select>
-
-                <!-- Date + Search row -->
-                <div class="hl-filter-row">
-                    <div class="hl-filter-field">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        <input type="date" id="historyFilterStart" class="hl-input" onchange="renderHistoryView()">
+            <!-- ══ ZEITBAND ══════════════════════════════════════════════
+                 Der Zeitraum-Filter IST das Diagramm: je Säule eine Woche
+                 (oder ein Monat, sobald der Bestand länger als 180 Wochen ist),
+                 Höhe = gearbeitete Stunden, blasse Spur dahinter = Soll derselben
+                 Woche. Ziehen wählt einen Ausschnitt, die Liste darunter folgt.
+                 Ersetzt die zwei leeren Datumsfelder als Haupt-Bedienelement; die
+                 exakten Daten stehen darunter als Messwert, den man auch tippen kann.
+                 Nenner der Höhe: die höchste Woche im gesamten Bestand — steht als
+                 Zahl links am Plot, sonst wäre die Skala erfunden. -->
+            <section class="hl-band" aria-labelledby="hlBandTitle">
+                <header class="hl-band__head">
+                    <div class="hl-band__title-wrap">
+                        <span class="hl-eyebrow" id="hlBandTitle">Zeitband</span>
+                        <span class="hl-band__hint" id="hlBandHint">Ziehen wählt einen Zeitraum</span>
                     </div>
-                    <span class="hl-filter-sep">→</span>
-                    <div class="hl-filter-field">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        <input type="date" id="historyFilterEnd" class="hl-input" onchange="renderHistoryView()">
+                    <div class="hl-readout">
+                        <div class="hl-readout__item">
+                            <span class="hl-readout__val" id="hlStatSaldo">0h</span>
+                            <span class="hl-readout__lbl">Saldo</span>
+                        </div>
+                        <div class="hl-readout__item">
+                            <span class="hl-readout__val" id="hlStatHours">0h</span>
+                            <span class="hl-readout__lbl">Gearbeitet</span>
+                        </div>
+                        <div class="hl-readout__item">
+                            <span class="hl-readout__val" id="hlStatAvg">0h</span>
+                            <span class="hl-readout__lbl">Schnitt je Eintrag</span>
+                        </div>
+                        <div class="hl-readout__item">
+                            <span class="hl-readout__val" id="historyCount">0</span>
+                            <span class="hl-readout__lbl">Einträge</span>
+                        </div>
                     </div>
-                    <div class="hl-filter-field hl-filter-hours">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        <input type="number" id="historyFilterMinHours" class="hl-input" step="0.5" placeholder="Min. h" oninput="renderHistoryView()">
+                </header>
+
+                <div class="hl-band__wrap">
+                    <span class="hl-band__scale" id="hlBandScale" aria-hidden="true"></span>
+                    <div class="hl-band__plot" id="hlBandPlot">
+                        <div class="hl-band__bars" id="hlBandBars" role="img" aria-label="Zeitband"></div>
+                        <div class="hl-band__mask hl-band__mask--l" id="hlMaskL" aria-hidden="true"></div>
+                        <div class="hl-band__mask hl-band__mask--r" id="hlMaskR" aria-hidden="true"></div>
+                        <div class="hl-band__sel" id="hlBandSel" aria-hidden="true">
+                            <span class="hl-band__grip hl-band__grip--l"></span>
+                            <span class="hl-band__grip hl-band__grip--r"></span>
+                        </div>
+                        <div class="hl-band__tip" id="hlBandTip" aria-hidden="true" hidden></div>
                     </div>
-                    <div class="hl-filter-field hl-filter-search">
+                </div>
+                <div class="hl-band__axis" id="hlBandAxis" aria-hidden="true"></div>
+
+                <footer class="hl-band__foot">
+                    <div class="hl-ranges">
+                        <button class="hl-range active" data-range="all" onclick="hlQuickRange('all', this)">Alles</button>
+                        <button class="hl-range" data-range="year" onclick="hlQuickRange('year', this)">Dieses Jahr</button>
+                        <button class="hl-range" data-range="90" onclick="hlQuickRange('90', this)">90 Tage</button>
+                        <button class="hl-range" data-range="month" onclick="hlQuickRange('month', this)">Dieser Monat</button>
+                    </div>
+                    <!-- Ohne Auswahl steht hier der Zeitraum als Satz statt zweier
+                         leerer tt.mm.jjjj-Felder. Die Felder erscheinen erst, wenn
+                         wirklich ein Zeitraum eingegrenzt ist oder man sie anfordert —
+                         ein leeres Datumsfeld ist die Frage, die diese Ansicht gerade
+                         nicht mehr stellen muss. -->
+                    <button class="hl-rangetext" id="hlRangeText" onclick="hlShowDateInputs()"></button>
+                    <div class="hl-daterange" id="hlDateRange" hidden>
+                        <input type="date" id="historyFilterStart" class="hl-date" aria-label="Zeitraum von" onchange="hlDateInputChanged()">
+                        <span class="hl-daterange__sep" aria-hidden="true">–</span>
+                        <input type="date" id="historyFilterEnd" class="hl-date" aria-label="Zeitraum bis" onchange="hlDateInputChanged()">
+                    </div>
+                </footer>
+            </section>
+
+            <!-- ══ WERKZEUGLEISTE + SPALTENKOPF (kleben gemeinsam) ══
+                 Beides in EINEM Klebeblock: sonst braucht das Monatsband die Summe
+                 zweier wechselnder Hoehen als top-Wert, und die driften auseinander,
+                 sobald die Leiste umbricht. Ein ResizeObserver misst hier genau
+                 einen Kasten und schreibt --hl-stick. -->
+            <div class="hl-stickhead" id="hlToolbar">
+            <div class="hl-toolbar">
+                <!-- Die Typ-Chips baut renderHistoryTypeChips() aus den Typen, die im
+                     gewählten Zeitraum wirklich vorkommen — mit Anzahl daneben. Eigene
+                     Eintragstypen waren in der früheren festen Pillen-Liste gar nicht
+                     filterbar; wer sich einen anlegte, konnte danach nie suchen. -->
+                <div class="hl-chips" id="hlTypeChips"></div>
+                <div class="hl-tools">
+                    <div class="hl-search">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input type="text" id="historyFilterSearch" class="hl-input" placeholder="Suche Notizen, Projekte…" oninput="renderHistoryView()">
+                        <input type="text" id="historyFilterSearch" class="hl-input" placeholder="Suchen …">
+                        <button class="hl-search__clear" id="hlSearchClear" onclick="hlClearSearch()" aria-label="Suche leeren" hidden>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                        <kbd class="hl-search__kbd" aria-hidden="true">/</kbd>
                     </div>
+                    <select id="hlJobFilter" class="hl-select" onchange="renderHistoryView()" hidden aria-label="Job"></select>
+                    <select id="hlSort" class="hl-select" onchange="renderHistoryView()" aria-label="Sortierung">
+                        <option value="date-desc">Neueste zuerst</option>
+                        <option value="date-asc">Älteste zuerst</option>
+                        <option value="hours-desc">Längste Tage</option>
+                        <option value="diff-desc">Größtes Plus</option>
+                        <option value="diff-asc">Größtes Minus</option>
+                    </select>
+                    <button class="hl-icon-btn" id="hlDensityBtn" onclick="hlToggleDensity()" aria-pressed="false" title="Zeilenhöhe umschalten">
+                        <svg class="hl-dens-rows" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                        <svg class="hl-dens-cards" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/></svg>
+                    </button>
                 </div>
             </div>
 
-            <!-- ── TABLE HEADER ── -->
-            <div class="hl-table-head">
+            <!-- Was die Suche verstanden hat. Ohne diese Zeile ist ein Operator wie
+                 ">8" nicht von einem Suchtext ohne Treffer zu unterscheiden. -->
+            <div class="hl-parsed" id="hlParsed" hidden></div>
+
+            <!-- Spaltenkopf. Dieselbe Rasterdefinition wie die Zeile (--hl-cols),
+                 damit die Beschriftung wirklich ueber ihrer Spalte steht. Ohne ihn
+                 waeren "8,0 h" und "+0,44" zwei Zahlen ohne Bedeutung nebeneinander. -->
+            <div class="hl-thead" aria-hidden="true">
+                <span></span><span></span>
                 <span>Datum</span>
-                <span>Notiz / Info</span>
-                <span>Typ</span>
-                <span>Projekt</span>
-                <span style="text-align:right">Saldo</span>
+                <span>Eintrag</span>
+                <span class="hl-thead__c" title="Abweichung vom Tagessoll">Abw.</span>
+                <span class="hl-thead__r">Stunden</span>
+                <span class="hl-thead__r">Saldo</span>
                 <span></span>
             </div>
-
-            <!-- ── ENTRY LIST ── -->
-            <div id="entryListFull">
-                <p class="hl-empty">Lade Einträge…</p>
             </div>
+
+            <!-- Typ-Zustand: bleibt die Wertquelle für allen Bestandscode
+                 (refreshTypeAffectedUI, filterHistoryData). Die Chips schreiben rein. -->
+            <select id="historyFilterType" hidden aria-hidden="true" tabindex="-1">
+                <option value="all">Alle</option>
+            </select>
+
+            <!-- ══ LISTE ══ -->
+            <div id="entryListFull" class="is-compact"></div>
+            <div id="hlSentinel" aria-hidden="true"></div>
+            <div class="hl-listfoot" id="hlListFoot" hidden></div>
 
         </div>

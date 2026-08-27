@@ -1194,27 +1194,15 @@
     // Aktualisiert alle Orte mit hardcoded Type-Emojis/Labels, damit Standard-Overrides
     // sofort sichtbar werden (Historie-Pills, Dashboard-Aktivitäten, History-Filter-Select).
     function refreshTypeAffectedUI() {
-        // History Pills (.hl-type-pills) — Icon als SVG, Label separat (sonst kippt die
-        // i18n-Pipeline: ein Element mit SVG-Kind ist „gemischter Inhalt" und wird still
-        // übersprungen). Das Label NUR anfassen, wenn der User es wirklich umbenannt hat —
-        // sonst würde die englische Übersetzung mit jedem Refresh wieder deutsch.
-        const pillMap = { work: 'Arbeit', school: 'Schule', vacation: 'Urlaub', gleittag: 'Gleittag', sick: 'Krank', holiday: 'Feiertag', korrektur: 'Korrektur' };
-        Object.keys(pillMap).forEach(id => {
-            const pill = document.querySelector(`.hl-pill.hl-pill-${id}`);
-            if (!pill) return;
-            const info = getEntryTypeInfo(id);
-            if (!info) return;
-            // --type-rgb an der PILLE (nicht am Icon) — das Icon erbt es, und der
-            // aktive Zustand färbt Hintergrund/Rahmen daraus.
-            pill.style.setProperty('--type-rgb', getTypeRgb(id));
-            const iconEl = pill.querySelector('.hl-pill-icon');
-            if (iconEl) iconEl.innerHTML = getTypeIconHTML(id, 14);
-            const override = ((data && data.entryTypeOverrides) || {})[id];
-            if (override && override.label) {
-                const labelEl = pill.querySelector('.hl-pill-label');
-                if (labelEl) labelEl.textContent = ctCleanLabel(override.label, pillMap[id]);
-            }
-        });
+        // Die Typ-Chips der Historie baut renderHistoryView() jetzt selbst aus
+        // getAllEntryTypes() — inklusive eigener Typen, die in der früheren festen
+        // Pillen-Liste gar nicht vorkamen. Hier reicht deshalb ein Neu-Rendern,
+        // und zwar nur wenn die Ansicht offen ist (sonst rechnet der Filterlauf
+        // ins Leere).
+        const histView = document.getElementById('view-history');
+        if (histView && histView.classList.contains('active') && typeof renderHistoryView === 'function') {
+            try { renderHistoryView(); } catch (e) { /* Ansicht noch nicht bereit */ }
+        }
 
         // History Filter Select
         const histSel = document.getElementById('historyFilterType');

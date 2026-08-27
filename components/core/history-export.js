@@ -1,35 +1,64 @@
 // ═══ CORE: HISTORY-EXPORT ═══
-    // --- DATEN EXPORT LOGIC (Unverändert) ---
-    // (filterHistoryData, renderHistoryView, exportHistoryData, convertToCSV sind unverändert)
-    
-    function filterHistoryData() {
-        const startStr = document.getElementById('historyFilterStart').value;
-        const endStr = document.getElementById('historyFilterEnd').value;
-        const type = document.getElementById('historyFilterType').value;
-        const minHours = parseFloat(document.getElementById('historyFilterMinHours').value) || 0;
-        const searchText = document.getElementById('historyFilterSearch').value.toLowerCase();
+    // Filterlauf + Export. Die Bedienelemente stehen im Verlauf-View, der Zustand
+    // in genau vier Feldern: historyFilterStart/End (schreibt das Zeitband),
+    // historyFilterType (schreiben die Typ-Chips), historyFilterSearch,
+    // hlJobFilter. Es gibt bewusst KEINE zweite Ablage daneben — zwei Regler auf
+    // denselben Zustand driften garantiert auseinander.
+    //
+    // opts.ignoreType    → Typ weglassen (die Chips brauchen die Anzahl je Typ
+    //                      auf dem Satz, den alle anderen Filter uebrig lassen).
+    // opts.query         → vorgeparste Suche aus hlParseQuery(); fehlt sie,
+    //                      parst der Lauf selbst (Export ruft ohne Argumente).
+    function filterHistoryData(opts) {
+        opts = opts || {};
+        const val = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+        const startStr = val('historyFilterStart');
+        const endStr = val('historyFilterEnd');
+        const type = val('historyFilterType') || 'all';
+        const jobEl = document.getElementById('hlJobFilter');
+        const job = (jobEl && !jobEl.hidden) ? (jobEl.value || 'all') : 'all';
+        const q = opts.query || ((typeof hlParseQuery === 'function')
+            ? hlParseQuery(val('historyFilterSearch'))
+            : { text: val('historyFilterSearch').toLowerCase(), project: '', min: null, max: null });
 
-        let filtered = data.entries;
+        let filtered = Array.isArray(data.entries) ? data.entries : [];
 
-        if (startStr) {
-            filtered = filtered.filter(e => new Date(e.date) >= new Date(startStr));
+        // Datumsvergleich als ISO-String: `new Date(e.date)` legt Mitternacht UTC
+        // an, `new Date(startStr)` ebenso — aber sobald irgendwo eine lokale
+        // Zeitzone dazwischenkommt, kippt der Randtag. Strings sortieren hier
+        // exakt wie Daten und kosten nichts.
+        if (startStr) filtered = filtered.filter(e => e.date >= startStr);
+        if (endStr)   filtered = filtered.filter(e => e.date <= endStr);
+
+        if (!opts.ignoreType && type !== 'all') filtered = filtered.filter(e => e.type === type);
+
+        if (job !== 'all') {
+            filtered = filtered.filter(e => {
+                const jid = (typeof getEntryJobId === 'function') ? getEntryJobId(e) : (e.jobId || 'primary');
+                return jid === job;
+            });
         }
-        if (endStr) {
-            const endDate = new Date(endStr);
-            endDate.setDate(endDate.getDate() + 1); 
-            filtered = filtered.filter(e => new Date(e.date) < endDate);
+
+        if (q.min !== null && q.min !== undefined) {
+            filtered = filtered.filter(e => q.minIncl ? (e.worked || 0) >= q.min : (e.worked || 0) > q.min);
         }
-        if (type !== 'all') {
-            filtered = filtered.filter(e => e.type === type);
+        if (q.max !== null && q.max !== undefined) {
+            filtered = filtered.filter(e => q.maxIncl ? (e.worked || 0) <= q.max : (e.worked || 0) < q.max);
         }
-        if (minHours > 0) {
-            filtered = filtered.filter(e => e.worked >= minHours);
+        if (q.project) {
+            filtered = filtered.filter(e => (e.project || '').toLowerCase().includes(q.project));
         }
-        if (searchText) {
-            filtered = filtered.filter(e => 
-                 (e.info && e.info.toLowerCase().includes(searchText)) || 
-                 (e.project && e.project.toLowerCase().includes(searchText))
-            );
+        if (q.text) {
+            // Der Typ-Name gehoert mit in die Volltextsuche: „urlaub" zu tippen
+            // und nichts zu finden, obwohl die Chips daneben Urlaub anbieten,
+            // wirkt wie ein kaputter Filter.
+            const needle = q.text;
+            filtered = filtered.filter(e => {
+                const label = (typeof getTypeLabel === 'function') ? getTypeLabel(e.type) : e.type;
+                return (e.info && e.info.toLowerCase().includes(needle))
+                    || (e.project && e.project.toLowerCase().includes(needle))
+                    || String(label).toLowerCase().includes(needle);
+            });
         }
 
         return filtered;

@@ -1,604 +1,967 @@
-/* ═══ HISTORY · SAAS REDESIGN ═══ */
+/* ═══════════════════════════════════════════════════════════════════════
+   VERLAUF — Archiv-Ansicht
+   Die Liste ist ein Kontoauszug, keine Sammlung von Karten: eine Zeile je
+   Eintrag, Zahlen in Tabellenziffern untereinander, Trennung durch Linien
+   statt durch Rahmen und Abstand. Darüber das Zeitband, das den Zeitraum
+   NICHT abfragt, sondern zeigt und auswählbar macht.
 
-/* ─── Topbar ───
-   Kopfzeile, Titel und Unterzeile kommen aus core.css
-   (.view-header/.view-title/.view-subtitle) — gemeinsam mit den vier
-   Zeitraum-Ansichten. Hier steht nur noch, was der Verlauf extra hat. */
+   Tokens kommen aus core.css (--primary, --text-*) und dashboard.css
+   (--bg-surface, --border-*, --role-*, --shadow-*, --ease-*, --eyebrow-*).
+   dashboard.css lädt vor dieser Datei, deshalb stehen sie hier zur Verfügung.
+   Keine eigenen Hex-Werte außer den Rollen, die dort schon fix sind.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+#view-history {
+    /* Klebehöhe des Kopfblocks — schreibt ein ResizeObserver in history.js,
+       weil die Leiste je nach Breite ein- oder zweizeilig ist. Der Startwert
+       gilt nur für den ersten Frame. */
+    --hl-stick: 84px;
+    /* EINE Rasterdefinition für Spaltenkopf und Zeile. Zwei getrennte Listen
+       wären dieselbe Falle wie zwei Regler auf einen Zustand: sie driften, und
+       zwar unsichtbar — die Beschriftung stünde neben ihrer Spalte. */
+    --hl-cols: 3px 26px 88px minmax(0, 1fr) 76px 64px 72px 58px;
+}
+
+.hl-eyebrow {
+    font-size: var(--eyebrow-size, 0.6875rem);
+    letter-spacing: var(--eyebrow-tracking, 0.09em);
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+/* ─── Kopfzeilen-Knöpfe ─────────────────────────────────────────────── */
 .hl-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     padding: 8px 14px;
     border-radius: 9px;
     font-size: 0.78rem;
     font-weight: 600;
     font-family: var(--font-main);
     cursor: pointer;
-    border: none;
-    transition: all 0.18s ease;
+    border: 1px solid var(--border-default);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    transition: background-color var(--dur-fast, 140ms) var(--ease-out),
+                border-color var(--dur-fast, 140ms) var(--ease-out),
+                color var(--dur-fast, 140ms) var(--ease-out);
     white-space: nowrap;
 }
-.hl-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
-.hl-btn-ghost {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.08);
-    color: var(--text-muted);
-}
-.hl-btn-ghost:hover {
-    background: rgba(255,255,255,0.09);
-    border-color: rgba(255,255,255,0.15);
-    color: var(--text-main);
-}
-.hl-btn-danger {
-    background: rgba(239,68,68,0.08);
-    border: 1px solid rgba(239,68,68,0.15);
-    color: rgba(239,68,68,0.8);
-}
-.hl-btn-danger:hover {
-    background: rgba(239,68,68,0.15);
-    border-color: rgba(239,68,68,0.3);
-    color: #ef4444;
-}
+.hl-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.hl-btn:hover { background: var(--hover-fill); border-color: var(--hover-border); color: var(--text-main); }
+.hl-btn:active { transform: translateY(1px); }
+.hl-btn:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.hl-btn-danger { color: rgba(239, 68, 68, 0.85); border-color: rgba(239, 68, 68, 0.18); }
+.hl-btn-danger:hover { background: var(--role-neg-soft); border-color: rgba(239, 68, 68, 0.34); color: var(--role-neg); }
 .hl-badge {
-    background: rgba(239,68,68,0.2);
-    color: #f87171;
-    padding: 2px 7px;
+    background: var(--role-neg-soft);
+    color: var(--role-neg);
+    padding: 1px 7px;
     border-radius: 20px;
-    font-size: 0.65rem;
+    font-size: 0.66rem;
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
     min-width: 18px;
     text-align: center;
 }
 
-/* ─── Stats Strip ─── */
-.hl-stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
+/* ═══ ZEITBAND ═══════════════════════════════════════════════════════ */
+.hl-band {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
+    box-shadow: var(--edge-top);
+    padding: 16px 18px 12px;
+    margin-bottom: 14px;
 }
-.hl-stat-card {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 12px;
-    padding: 14px 16px;
+.hl-band[hidden] { display: none; }
+
+.hl-band__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+.hl-band__title-wrap { display: flex; flex-direction: column; gap: 3px; }
+.hl-band__hint { font-size: 0.72rem; color: var(--text-muted); opacity: 0.72; }
+
+/* Messwert-Zeile statt vier gleicher Kacheln: die Zahlen stehen nebeneinander
+   in einer Reihe, getrennt durch Haarlinien — sie gehören zusammen und sind
+   keine vier eigenständigen Karten. */
+.hl-readout { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }
+.hl-readout__item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    transition: border-color 0.2s;
+    align-items: flex-end;
+    gap: 2px;
+    padding: 0 16px;
+    border-left: 1px solid var(--border-subtle);
 }
-.hl-stat-card:hover { border-color: rgba(var(--primary-rgb), 0.2); }
-.hl-stat-num {
-    font-size: 1.5rem;
+.hl-readout__item:first-child { border-left: none; }
+.hl-readout__item:last-child { padding-right: 0; }
+.hl-readout__val {
+    font-family: var(--font-num);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    font-size: 1.3rem;
     font-weight: 700;
-    color: var(--text-main);
-    font-family: var(--font-mono);
     letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--text-main);
+}
+.hl-readout__val[data-sign="pos"] { color: var(--role-pos); }
+.hl-readout__val[data-sign="neg"] { color: var(--role-neg); }
+.hl-readout__lbl {
+    font-size: 0.66rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ─── Plot ─────────────────────────────────────────────────────────── */
+.hl-band__wrap { display: flex; align-items: stretch; gap: 10px; }
+.hl-band__scale {
+    /* Der Nenner der Säulenhöhe, beziffert. Ohne ihn ist die Höhe eine
+       Behauptung: man sieht, dass eine Woche höher ist, aber nicht wie viel. */
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    opacity: 0.6;
+    align-self: flex-start;
+    padding-top: 1px;
+    white-space: nowrap;
+    min-width: 30px;
+    text-align: right;
+}
+.hl-band__plot {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    height: 68px;
+    cursor: crosshair;
+    touch-action: pan-y;
+    border-bottom: 1px solid var(--border-default);
+}
+.hl-band__plot.is-dragging { cursor: ew-resize; }
+
+.hl-band__bars {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    gap: 1px;
+}
+.hl-bar {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+    display: block;
+}
+/* Soll-Spur steht im Markup VOR der Füllung — eine Bezugsgröße gehört hinter
+   die Marke, die sie schneidet, sonst verschwindet sie an jeder langen Woche. */
+.hl-bar__soll,
+.hl-bar__fill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: block;
+    border-radius: 2px 2px 0 0;
+}
+.hl-bar__soll { background: var(--role-track); }
+.hl-bar__fill { background: rgba(var(--primary-rgb), 0.55); }
+.hl-band__plot:not(.is-dragging) .hl-bar:hover .hl-bar__fill { background: rgb(var(--primary-rgb)); }
+
+/* Was außerhalb der Auswahl liegt, wird abgedunkelt statt umgefärbt — Farbe
+   trägt hier die Größe, nicht den Zustand. */
+.hl-band__mask {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: var(--bg-surface);
+    opacity: 0.66;
+    pointer-events: none;
+}
+.hl-band__mask--l { left: 0; }
+.hl-band__mask--r { right: 0; }
+
+.hl-band__sel {
+    position: absolute;
+    top: -3px;
+    bottom: -1px;
+    border-left: 1.5px solid rgb(var(--primary-rgb));
+    border-right: 1.5px solid rgb(var(--primary-rgb));
+    background: rgba(var(--primary-rgb), 0.09);
+    pointer-events: none;
+    border-radius: 2px;
+}
+.hl-band__grip {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 11px;
+    pointer-events: auto;
+    cursor: ew-resize;
+}
+.hl-band__grip::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 16px;
+    margin: -8px 0 0 -1.5px;
+    border-radius: 2px;
+    background: rgb(var(--primary-rgb));
+}
+.hl-band__grip--l { left: -6px; }
+.hl-band__grip--r { right: -6px; }
+
+.hl-band__tip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 7px 10px;
+    border-radius: 9px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    box-shadow: var(--shadow-md);
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    pointer-events: none;
+}
+.hl-band__tip b { color: var(--text-main); font-size: 0.72rem; font-weight: 700; }
+.hl-band__tip[hidden] { display: none; }
+
+.hl-band__axis {
+    position: relative;
+    height: 15px;
+    margin-left: 40px;
+}
+.hl-band__year {
+    position: absolute;
+    top: 2px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    opacity: 0.55;
+    padding-left: 3px;
+    border-left: 1px solid var(--border-default);
     line-height: 1;
 }
-.hl-stat-lbl {
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 500;
-}
 
-/* ─── Filter Panel ─── */
-.hl-filter-panel {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 14px;
-    padding: 14px 16px;
-    margin-bottom: 12px;
+/* ─── Zeitraum-Fuß ─────────────────────────────────────────────────── */
+.hl-band__foot {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
     gap: 12px;
-}
-
-@media (max-width: 768px) {
-    .hl-filter-panel {
-        padding: 12px 14px;
-        gap: 10px;
-    }
-
-    .hl-type-pills {
-        gap: 5px;
-    }
-
-    .hl-pill {
-        padding: 4px 10px;
-        font-size: 0.7rem;
-    }
-
-    .hl-filter-field {
-        padding: 0 8px;
-        min-height: 36px;
-    }
-
-    .hl-input {
-        padding: 6px 0;
-        font-size: 0.75rem;
-    }
-
-    .hl-filter-hours {
-        width: 90px;
-    }
-
-    .hl-filter-search {
-        min-width: 0;
-        grid-column: 1 / -1;
-    }
-}
-
-@media (max-width: 600px) {
-    .hl-btn {
-        padding: 6px 12px;
-        font-size: 0.72rem;
-        flex: 1;
-        min-width: 120px;
-    }
-}
-
-/* Type Pills */
-.hl-type-pills {
-    display: flex;
-    gap: 6px;
     flex-wrap: wrap;
+    margin-top: 4px;
 }
-.hl-pill {
+.hl-ranges { display: flex; gap: 6px; flex-wrap: wrap; }
+.hl-range {
+    padding: 4px 11px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--dur-fast, 140ms) var(--ease-out),
+                color var(--dur-fast, 140ms) var(--ease-out);
+}
+.hl-range:hover { background: var(--hover-fill); color: var(--text-main); }
+.hl-range.active {
+    background: rgba(var(--primary-rgb), 0.16);
+    border-color: rgba(var(--primary-rgb), 0.3);
+    color: var(--text-main);
+}
+.hl-range:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+
+/* Solange nichts eingegrenzt ist, steht hier ein Satz statt zweier leerer
+   tt.mm.jjjj-Felder. Erst wenn ein Zeitraum gewählt ist (oder jemand ausdrücklich
+   tippen will) erscheinen die Felder — dann sind sie gefüllt und lesen sich als
+   Messwert, nicht als Formular. */
+.hl-rangetext {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 7px;
+    padding: 4px 9px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    transition: border-color var(--dur-fast, 140ms) var(--ease-out);
+}
+.hl-rangetext b {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    color: var(--text-main);
+    opacity: 0.85;
+}
+.hl-rangetext:hover { border-color: var(--border-default); }
+.hl-rangetext:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.hl-rangetext[hidden] { display: none; }
+
+.hl-daterange { display: flex; align-items: center; gap: 6px; }
+.hl-daterange[hidden] { display: none; }
+.hl-daterange__sep { color: var(--text-muted); opacity: 0.5; font-size: 0.75rem; }
+.hl-date {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    padding: 3px 6px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+    transition: border-color var(--dur-fast, 140ms) var(--ease-out),
+                color var(--dur-fast, 140ms) var(--ease-out);
+}
+.hl-date:hover { border-color: var(--border-default); color: var(--text-main); }
+.hl-date:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; color: var(--text-main); }
+.hl-date::-webkit-calendar-picker-indicator { filter: invert(0.6); opacity: 0.5; cursor: pointer; }
+[data-theme="light"] .hl-date::-webkit-calendar-picker-indicator { filter: none; }
+
+/* ═══ WERKZEUGLEISTE ═════════════════════════════════════════════════ */
+.hl-stickhead {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--bg-deep);
+    border-bottom: 1px solid var(--border-subtle);
+}
+/* .main hat 8 px oberes Innenmaß, und der Klebeblock hält genau darunter an.
+   In diesem Streifen liefen die Zeilen sonst sichtbar oberhalb der Leiste durch.
+   Ein Deckel darüber statt eines negativen margin — das würde den Block auch im
+   ungeklebten Zustand nach oben ziehen. */
+.hl-stickhead::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 12px;
+    background: var(--bg-deep);
+}
+.hl-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 8px 0 6px;
+}
+
+.hl-chips {
+    display: flex;
+    gap: 5px;
+    flex: 1 1 320px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 1px;
+    /* Weicher Auslauf rechts — sonst sieht die abgeschnittene Reihe aus wie ein
+       Layoutfehler statt wie „hier geht es weiter". */
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent 100%);
+}
+.hl-chips::-webkit-scrollbar { display: none; }
+
+.hl-chip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 0.74rem;
     font-weight: 600;
     font-family: var(--font-main);
     cursor: pointer;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.03);
+    border: 1px solid transparent;
+    background: transparent;
     color: var(--text-muted);
-    transition: all 0.18s ease;
     white-space: nowrap;
+    flex-shrink: 0;
+    transition: background-color var(--dur-fast, 140ms) var(--ease-out),
+                border-color var(--dur-fast, 140ms) var(--ease-out),
+                color var(--dur-fast, 140ms) var(--ease-out);
 }
-/* Typ-Symbol in der Typ-Farbe; im aktiven Zustand liegt es auf farbigem Grund
-   und erbt deshalb das Weiss der Pille. */
-.hl-pill-icon {
-    display: grid;
-    place-items: center;
-    color: rgb(var(--type-rgb, var(--primary-rgb)));
-    margin-left: -2px;
+.hl-chip__ico { display: grid; place-items: center; color: rgb(var(--type-rgb, var(--primary-rgb))); }
+.hl-chip__n {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.66rem;
+    font-weight: 600;
+    opacity: 0.6;
 }
-.hl-pill.active .hl-pill-icon { color: inherit; }
-.hl-pill:hover {
-    background: rgba(255,255,255,0.07);
+.hl-chip:hover { background: var(--hover-fill); color: var(--text-main); }
+.hl-chip.active {
+    background: rgba(var(--type-rgb, var(--primary-rgb)), 0.14);
+    border-color: rgba(var(--type-rgb, var(--primary-rgb)), 0.36);
     color: var(--text-main);
 }
-.hl-pill.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: #fff;
-    box-shadow: 0 2px 10px rgba(var(--primary-rgb), 0.3);
-}
-/* Aktive Pille in der Typ-Farbe — --type-rgb setzt refreshTypeAffectedUI() am Icon,
-   die Pille selbst erbt es über den gemeinsamen Elternwert. Ersetzt die vierte
-   hardcodierte Farbtabelle (Schule war hier cyan, Feiertag pink). */
-.hl-pill[class*="hl-pill-"].active {
-    background: rgb(var(--type-rgb, var(--primary-rgb)));
-    border-color: rgb(var(--type-rgb, var(--primary-rgb)));
-    box-shadow: 0 2px 10px rgba(var(--type-rgb, var(--primary-rgb)), .35);
-}
+.hl-chip.active .hl-chip__n { opacity: 0.85; }
+.hl-chip:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
 
-/* Filter Row */
-.hl-filter-row {
+.hl-tools { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+
+.hl-search {
     display: flex;
     align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-.hl-filter-field {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
+    gap: 7px;
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
     border-radius: 9px;
-    padding: 0 10px;
-    transition: border-color 0.18s;
+    padding: 0 8px 0 10px;
+    height: 34px;
+    width: 230px;
+    transition: border-color var(--dur-fast, 140ms) var(--ease-out);
 }
-.hl-filter-field svg {
-    width: 14px;
-    height: 14px;
-    color: var(--text-muted);
-    flex-shrink: 0;
-}
-.hl-filter-field:focus-within {
-    border-color: rgba(var(--primary-rgb), 0.35);
-    background: rgba(var(--primary-rgb), 0.04);
-}
+.hl-search:focus-within { border-color: var(--border-focus); }
+.hl-search > svg { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
 .hl-input {
     background: transparent;
     border: none;
     outline: none;
     color: var(--text-main);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-family: var(--font-main);
-    padding: 8px 0;
     min-width: 0;
-}
-.hl-input::placeholder { color: var(--text-muted); }
-.hl-filter-hours { width: 110px; }
-.hl-filter-search { flex: 1; min-width: 200px; }
-.hl-filter-sep {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    flex-shrink: 0;
-}
-
-/* ─── Table Header (hidden — card layout now) ─── */
-.hl-table-head { display: none; }
-
-/* ─── Entry List ─── */
-#entryListFull {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 62vh;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-right: 6px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(var(--primary-rgb), 0.15) transparent;
-}
-#entryListFull::-webkit-scrollbar { width: 4px; }
-#entryListFull::-webkit-scrollbar-thumb { background: rgba(var(--primary-rgb), 0.15); border-radius: 4px; }
-#entryListFull::-webkit-scrollbar-thumb:hover { background: rgba(var(--primary-rgb), 0.3); }
-
-/* ─── Entry Row ─── */
-.entry-row {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 14px;
-    overflow: hidden;
-    transition: background 0.18s, border-color 0.18s, box-shadow 0.18s, transform 0.18s;
-    cursor: default;
-    min-height: 72px;
-}
-/* Sanfter Fade nur beim ERSTEN Öffnen der Historie – NICHT bei jedem Filter-Rerender
-   (sonst „flackert"/laggt die ganze Liste bei jeder Interaktion). */
-.entry-list-animate-in .entry-row {
-    animation: hlRowIn 0.28s ease-out both;
-}
-@keyframes hlRowIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-.entry-row:hover {
-    background: rgba(255,255,255,0.05);
-    border-color: rgba(255,255,255,0.13);
-    box-shadow: 0 6px 24px rgba(0,0,0,0.2);
-    transform: translateY(-1px);
-}
-
-/* ── Left section: icon + date ── */
-.er-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
-    min-width: 160px;
-    border-right: 1px solid rgba(255,255,255,0.05);
-    flex-shrink: 0;
-}
-/* Farbe/Hintergrund kommen aus .type-tile + --type-rgb (core.css) — auch für
-   eigene Typen, die vorher durch das Raster der festen Klassen gefallen sind. */
-.er-icon-wrap {
-    width: 40px;
-    height: 40px;
-}
-
-.er-date-col {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-}
-.er-weekday {
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: var(--text-muted);
-}
-.er-date {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text-main);
-    font-family: var(--font-mono);
-    letter-spacing: -0.01em;
-}
-
-/* ── Mid section: info + tags ── */
-.er-mid {
     flex: 1;
-    min-width: 0;
-    padding: 16px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    justify-content: center;
 }
-.er-info {
-    font-size: 0.92rem;
-    font-weight: 500;
+.hl-input::placeholder { color: var(--text-muted); opacity: 0.75; }
+.hl-search__kbd {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+    padding: 0 4px;
+    line-height: 1.5;
+    opacity: 0.6;
+}
+.hl-search:focus-within .hl-search__kbd { display: none; }
+.hl-search__clear {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.hl-search__clear svg { width: 12px; height: 12px; }
+.hl-search__clear:hover { background: var(--hover-fill); color: var(--text-main); }
+.hl-search__clear[hidden] { display: none; }
+
+.hl-select {
+    height: 34px;
+    border-radius: 9px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-inset);
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+    padding: 0 26px 0 10px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 13px;
+    transition: border-color var(--dur-fast, 140ms) var(--ease-out), color var(--dur-fast, 140ms) var(--ease-out);
+}
+.hl-select:hover { color: var(--text-main); border-color: var(--border-default); }
+.hl-select:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.hl-select[hidden] { display: none; }
+.hl-select option { background: var(--bg-elevated); color: var(--text-main); }
+
+.hl-icon-btn {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-inset);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color var(--dur-fast, 140ms) var(--ease-out), border-color var(--dur-fast, 140ms) var(--ease-out);
+}
+.hl-icon-btn svg { width: 15px; height: 15px; }
+.hl-icon-btn:hover { color: var(--text-main); border-color: var(--border-default); }
+.hl-icon-btn:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.hl-icon-btn .hl-dens-cards { display: none; }
+.hl-icon-btn[aria-pressed="true"] .hl-dens-rows { display: none; }
+.hl-icon-btn[aria-pressed="true"] .hl-dens-cards { display: block; }
+
+/* Was die Suche verstanden hat. */
+.hl-parsed {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 8px 0 2px;
+    font-size: 0.7rem;
+}
+.hl-parsed[hidden] { display: none; }
+.hl-parsed__lbl { color: var(--text-muted); opacity: 0.7; }
+.hl-parsed__tok {
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: rgba(var(--primary-rgb), 0.13);
     color: var(--text-main);
-    white-space: nowrap;
+    font-weight: 600;
+}
+.hl-parsed__tok[data-kind="hours"] { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* Spaltenkopf — dieselbe Rasterdefinition wie die Zeile. */
+.hl-thead {
+    display: grid;
+    grid-template-columns: var(--hl-cols);
+    gap: 0 12px;
+    padding: 0 12px 6px 0;
+    font-size: 0.63rem;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    opacity: 0.55;
+}
+.hl-thead > span {
+    /* Ohne das schiebt sich eine zu lange Beschriftung stillschweigend über die
+       Nachbarspalte — aus "Abweichung" + "Stunden" wurde "ABWEICHUNGSTUNDEN". */
     overflow: hidden;
     text-overflow: ellipsis;
-}
-.er-tags {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-    flex-wrap: nowrap;
-}
-.er-badge {
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
     white-space: nowrap;
-    flex-shrink: 0;
 }
-/* Farbe kommt aus --type-rgb der Zeile (= Typ-Farbe aus dem Datenmodell). Vorher
-   stand hier eine dritte, abweichende Farbtabelle: Schule cyan statt blau,
-   Feiertag pink statt amber — und eigene Typen bekamen gar keine Farbe. */
-.er-badge[class*="type-"] {
-    background: rgba(var(--type-rgb, var(--primary-rgb)), .15);
-    color: rgb(var(--type-rgb, var(--primary-rgb)));
-}
-.er-badge--additional {
-    background: rgba(var(--primary-rgb), 0.12);
-    color: var(--primary);
-    text-transform: none;
-    letter-spacing: 0;
-}
-.er-badge--job {
-    text-transform: none;
-    letter-spacing: 0;
-}
+.hl-thead[hidden] { display: none; }
+.hl-thead__r { text-align: right; }
+.hl-thead__c { text-align: center; }
 
-/* Tages-Header (Split-Shift: mehrere Einträge an einem Tag) */
-.entry-day-header {
+/* ═══ LISTE ══════════════════════════════════════════════════════════ */
+#entryListFull { display: block; padding-top: 2px; }
+
+/* ─── Monatsband ───────────────────────────────────────────────────── */
+.hl-mband {
+    position: sticky;
+    top: var(--hl-stick);
+    z-index: 10;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 9px 12px 7px;
+    margin-top: 18px;
+    background: var(--bg-deep);
+    border: none;
+    border-bottom: 1px solid var(--border-default);
+    font-family: var(--font-main);
+    text-align: left;
+    cursor: pointer;
+    transition: background-color var(--dur-fast, 140ms) var(--ease-out);
+}
+.hl-mband:hover { background: var(--hover-fill); }
+.hl-mband:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+/* Ein Kasten je Monat — Begruendung im Kopf von hlAppendChunk(). */
+.hl-month { display: block; }
+#entryListFull > .hl-month:first-child .hl-mband { margin-top: 0; }
+.hl-mband__name {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-main);
+}
+.hl-mband__stats {
+    display: flex;
+    gap: 14px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+}
+.hl-mband__stats i { font-style: normal; opacity: 0.6; font-size: 0.66rem; }
+.hl-mband__diff[data-sign="pos"] { color: var(--role-pos); }
+.hl-mband__diff[data-sign="neg"] { color: var(--role-neg); }
+
+/* ─── Tagesband (nur bei mehreren Einträgen am selben Tag) ─────────── */
+.hl-dband {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    flex-wrap: wrap;
-    margin: 14px 2px 4px;
-    padding: 7px 12px;
-    border-radius: 10px;
-    background: rgba(var(--primary-rgb), 0.05);
-    border: 1px solid rgba(var(--primary-rgb), 0.12);
-}
-.entry-day-header:first-child { margin-top: 2px; }
-.edh-date {
-    font-size: 0.72rem;
-    font-weight: 600;
+    padding: 6px 12px 4px;
+    font-size: 0.68rem;
     color: var(--text-muted);
-    text-transform: capitalize;
 }
-.edh-sum {
-    font-size: 0.75rem;
-    font-weight: 700;
+.hl-dband__sum {
+    font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
-}
-
-.er-project {
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 0.65rem;
     font-weight: 600;
-    background: rgba(var(--primary-rgb), 0.08);
-    color: var(--primary);
+}
+.hl-dband__sum[data-sign="pos"] { color: var(--role-pos); }
+.hl-dband__sum[data-sign="neg"] { color: var(--role-neg); }
+
+/* ─── Zeile ────────────────────────────────────────────────────────── */
+.entry-row {
+    display: grid;
+    grid-template-columns: var(--hl-cols);
+    align-items: center;
+    gap: 0 12px;
+    padding: 0 12px 0 0;
+    border-radius: 10px;
+    /* core.css bringt für .entry-row noch `margin-bottom: 8px` und
+       `border-left: 3px solid transparent` aus der Karten-Fassung mit — beides
+       hier ausdrücklich zurücknehmen, sonst stehen zwischen den Zeilen 8 px Luft
+       und links ein unsichtbarer 3-px-Streifen, den keine Regel erklärt. */
+    margin: 0;
+    border: none;
+    border-bottom: 1px solid var(--border-subtle);
+    background: transparent;
+    cursor: pointer;
+    /* Nur Farben animieren. `padding` oder `transform` beim Hover heißt Layout —
+       der Text bricht neu um und die Liste zappelt beim Überfahren. */
+    transition: background-color var(--dur-fast, 140ms) var(--ease-out);
+}
+.entry-row:last-child { border-bottom: none; }
+.entry-row:hover { background: var(--hover-fill); }
+.entry-row:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; background: var(--hover-fill); }
+
+.is-compact .entry-row { min-height: 40px; }
+.is-cozy .entry-row { min-height: 60px; }
+
+.er-stripe {
+    align-self: stretch;
+    width: 3px;
+    border-radius: 2px;
+    background: rgb(var(--type-rgb, var(--primary-rgb)));
+    opacity: 0.55;
+    margin: 5px 0;
+}
+.entry-row:hover .er-stripe { opacity: 1; }
+
+.er-ico {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    color: rgb(var(--type-rgb, var(--primary-rgb)));
+    background: rgba(var(--type-rgb, var(--primary-rgb)), 0.12);
+}
+.is-cozy .er-ico { width: 32px; height: 32px; border-radius: 9px; }
+
+.er-date {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+}
+.er-date b { color: var(--text-main); font-weight: 600; text-transform: uppercase; font-size: 0.66rem; letter-spacing: 0.04em; }
+
+.er-body { min-width: 0; display: flex; align-items: center; gap: 10px; }
+.is-cozy .er-body { flex-direction: column; align-items: flex-start; gap: 4px; padding: 8px 0; }
+
+.er-title {
+    font-size: 0.82rem;
+    color: var(--text-main);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 120px;
-    flex-shrink: 1;
+    min-width: 0;
+    flex: 1;
 }
-.er-mood { font-size: 0.9rem; flex-shrink: 0; }
-.er-mood-row { display: none; }
-.er-warn {
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: #ef4444;
-    background: rgba(239,68,68,0.1);
-    padding: 3px 8px;
-    border-radius: 20px;
-    flex-shrink: 0;
-}
+.is-cozy .er-title { font-size: 0.88rem; width: 100%; }
 
-/* ── Right section: hours + diff + actions ── */
-.er-right {
-    display: flex;
+.er-tags { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+.er-tag {
+    padding: 1px 7px;
+    border-radius: 5px;
+    font-size: 0.63rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.er-tag--type { background: rgba(var(--type-rgb, var(--primary-rgb)), 0.14); color: rgb(var(--type-rgb, var(--primary-rgb))); }
+.er-tag--job {
+    display: inline-flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
-    border-left: 1px solid rgba(255,255,255,0.05);
+    gap: 5px;
+    background: rgba(var(--job-rgb, var(--primary-rgb)), 0.14);
+    color: rgb(var(--job-rgb, var(--primary-rgb)));
+}
+.er-jobdot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgb(var(--job-rgb, var(--primary-rgb)));
     flex-shrink: 0;
 }
+/* In der kompakten Zeile bleibt vom Job nur der Punkt: der Name des Hauptjobs
+   stünde sonst hunderte Male untereinander, und die Frage ist ja, welche Zeile
+   ANDERS ist. Der volle Name hängt am title und steht in der Detail-Ansicht. */
+.is-compact .er-tag--job { background: transparent; padding: 1px 2px; }
+.is-compact .er-jobname { display: none; }
+.er-tag--project { background: var(--bg-inset); color: var(--text-muted); }
+.er-tag--extra { background: rgba(var(--primary-rgb), 0.13); color: var(--primary); }
+.er-tag--warn { background: var(--role-neg-soft); color: var(--role-neg); }
+/* Auf schmalen Zeilen tragen nur Typ und Zusatzzeit Information, die nicht
+   schon woanders steht — der Rest weicht erst, wenn es eng wird. */
+.is-compact .er-tag--project { display: none; }
+
+/* ─── Abweichungsbalken ────────────────────────────────────────────────
+   Wächst aus einer sichtbaren Nulllinie nach rechts (Plus) oder links (Minus).
+   Maßstab ist die größte Abweichung im gewählten Zeitraum — ein Balken ohne
+   benannten Nenner wäre eine Behauptung. */
+.er-dev {
+    position: relative;
+    display: block;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--role-track);
+}
+.er-dev__zero {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    left: 50%;
+    width: 1px;
+    margin-left: -0.5px;
+    background: var(--role-neutral);
+}
+.er-dev__fill { position: absolute; top: 0; bottom: 0; border-radius: 3px; }
+/* Anschlag-Marke: der Wert liegt außerhalb der Skala. Ohne sie sieht ein Balken
+   am Rand aus wie ein exakt getroffenes Maximum. */
+.er-dev__fill.is-clamped::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--bg-deep);
+}
+.er-dev[data-sign="pos"] .er-dev__fill.is-clamped::after { right: 0; }
+.er-dev[data-sign="neg"] .er-dev__fill.is-clamped::after { left: 0; }
+.er-dev[data-sign="pos"] .er-dev__fill { background: var(--role-pos); }
+.er-dev[data-sign="neg"] .er-dev__fill { background: var(--role-neg); }
+.er-dev[data-sign="none"] { opacity: 0.35; }
+
 .er-hours {
-    font-size: 1.25rem;
+    font-family: var(--font-num);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    font-size: 0.95rem;
     font-weight: 700;
-    color: var(--text-main);
-    font-family: var(--font-mono);
     letter-spacing: -0.02em;
+    color: var(--text-main);
+    text-align: right;
     white-space: nowrap;
 }
-.er-h-unit {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    font-weight: 500;
-    margin-left: 1px;
-}
-.er-diff {
-    padding: 5px 11px;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 700;
-    font-family: var(--font-mono);
-    white-space: nowrap;
-}
-.er-actions {
-    display: flex;
-    gap: 6px;
-    opacity: 0;
-    transition: opacity 0.15s;
-}
-.entry-row:hover .er-actions { opacity: 1; }
+.er-hours i { font-style: normal; font-size: 0.66rem; font-weight: 500; color: var(--text-muted); margin-left: 2px; }
+.is-cozy .er-hours { font-size: 1.1rem; }
 
-/* Chevron: nur auf Touch-Geräten sichtbar (Tap-auf-Zeile öffnet Detail-Sheet). */
-.er-chevron {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    flex-shrink: 0;
+.er-diff {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-align: right;
+    white-space: nowrap;
 }
+.er-diff[data-sign="pos"] { color: var(--role-pos); }
+.er-diff[data-sign="neg"] { color: var(--role-neg); }
+.er-diff[data-sign="zero"] { color: var(--text-muted); }
+.er-diff[data-sign="none"] { color: var(--text-muted); opacity: 0.5; }
+
+.er-end { display: flex; align-items: center; justify-content: flex-end; }
+.er-actions { display: flex; gap: 4px; opacity: 0; transition: opacity var(--dur-fast, 140ms) var(--ease-out); }
+.entry-row:hover .er-actions,
+.entry-row:focus-within .er-actions { opacity: 1; }
 
 .btn-icon {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 8px;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 0.82rem;
-    transition: all 0.15s ease;
-    padding: 0;
-    flex-shrink: 0;
-    color: rgba(255,255,255,0.7);
-}
-
-.btn-icon svg {
-    transition: stroke 0.15s ease, transform 0.15s ease;
-}
-
-.btn-icon:hover {
-    background: rgba(255,255,255,0.1);
-    border-color: rgba(255,255,255,0.18);
-    color: rgba(255,255,255,0.95);
-    transform: scale(1.05);
-}
-
-.btn-icon:hover svg {
-    transform: scale(1.08);
-}
-
-.btn-icon:active {
-    transform: scale(0.95);
-}
-
-.btn-icon.danger {
-    background: rgba(239,68,68,0.08);
-    border-color: rgba(239,68,68,0.15);
-    color: rgba(239,68,68,0.7);
-}
-
-.btn-icon.danger:hover {
-    background: rgba(239,68,68,0.15);
-    border-color: rgba(239,68,68,0.3);
-    color: #ef4444;
-}
-
-.btn-icon.danger:hover svg {
-    transform: scale(1.08);
-}
-
-/* Legacy compat */
-.entry-date { font-size: 0.9rem; font-weight: 600; color: var(--text-main); font-family: var(--font-mono); }
-.entry-meta { font-size: 0.85rem; color: var(--text-muted); }
-.entry-type-badge { display: none; }
-.entry-diff { display: none; }
-.entry-btns { display: none; }
-.project-tag { display: none; }
-
-/* Empty */
-.hl-empty {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-inset);
     color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    transition: color var(--dur-fast, 140ms) var(--ease-out), border-color var(--dur-fast, 140ms) var(--ease-out);
+}
+.btn-icon svg { width: 13px; height: 13px; }
+.btn-icon:hover { color: var(--text-main); border-color: var(--border-default); }
+.btn-icon:active { transform: scale(0.94); }
+.btn-icon:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 1px; }
+.btn-icon.danger:hover { color: var(--role-neg); border-color: rgba(239, 68, 68, 0.3); }
+
+/* Chevron: nur auf Touch — dort ersetzt Antippen der Zeile die Hover-Knöpfe. */
+.er-chevron { display: none; color: var(--text-muted); opacity: 0.4; }
+.er-chevron svg { width: 15px; height: 15px; }
+
+/* ─── Fußzeile der Liste ───────────────────────────────────────────── */
+.hl-listfoot {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 18px 0 6px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+.hl-listfoot[hidden] { display: none; }
+.hl-listfoot span:first-child { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+#hlSentinel { height: 1px; }
+
+/* ─── Leerer Zustand ───────────────────────────────────────────────── */
+.hl-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 56px 20px;
     text-align: center;
-    padding: 4rem 0;
-    font-size: 0.9rem;
+}
+.hl-empty > svg { width: 34px; height: 34px; color: var(--text-muted); opacity: 0.35; }
+.hl-empty__head { font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin: 0; }
+.hl-empty__sub { font-size: 0.8rem; color: var(--text-muted); margin: 0; max-width: 46ch; }
+.hl-empty .hl-btn { margin-top: 6px; }
+
+/* ─── Sprungmarke ──────────────────────────────────────────────────── */
+@keyframes hlPulse {
+    0%   { background: rgba(var(--primary-rgb), 0.24); }
+    70%  { background: rgba(var(--primary-rgb), 0.08); }
+    100% { background: transparent; }
+}
+.entry-highlight { animation: hlPulse 2.5s var(--ease-out) forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+    .entry-highlight { animation: none; background: rgba(var(--primary-rgb), 0.14); }
+    .hl-btn, .entry-row, .hl-chip, .er-actions { transition: none; }
 }
 
-/* ─── Highlight Animation ─── */
-@keyframes highlightPulse {
-    0%  { background: rgba(var(--primary-rgb), 0.2); box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.35); }
-    70% { background: rgba(var(--primary-rgb), 0.08); box-shadow: 0 0 0 1px rgba(var(--primary-rgb), 0.1); }
-    100%{ background: rgba(255,255,255,0.02); box-shadow: none; }
-}
-.entry-highlight {
-    animation: highlightPulse 2.5s ease-out forwards !important;
-    border-color: rgba(var(--primary-rgb), 0.35) !important;
-    transition: none !important;
+/* ═══ RESPONSIV ══════════════════════════════════════════════════════ */
+@media (max-width: 1100px) {
+    #view-history { --hl-cols: 3px 26px 84px minmax(0, 1fr) 58px 60px 68px 58px; }
+    .hl-search { width: 190px; }
 }
 
-/* ─── Responsive ─── */
-@media (max-width: 900px) {
-    .hl-stats { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 860px) {
+    .hl-readout__item { padding: 0 11px; }
+    .hl-readout__val { font-size: 1.1rem; }
+    /* Der Abweichungsbalken sagt dasselbe wie die Saldo-Zahl daneben, nur
+       ungenauer — bei Platzmangel fliegt er, nicht die Zahl. Spalte fällt in
+       BEIDEN Rastern weg, sonst rutscht der Spaltenkopf gegen die Zeile. */
+    #view-history { --hl-cols: 3px 26px 82px minmax(0, 1fr) 60px 66px 58px; }
+    .er-dev, .hl-thead__c { display: none; }
 }
 
-@media (max-width: 600px) {
-    .hl-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .hl-stat-num { font-size: 1.2rem; }
-    .hl-filter-row { flex-direction: column; align-items: stretch; }
-    .hl-filter-search { min-width: 0; }
-}
+@media (max-width: 640px) {
+    .hl-band { padding: 14px 13px 10px; border-radius: 14px; }
+    .hl-band__head { gap: 12px; margin-bottom: 12px; }
+    .hl-band__title-wrap { width: 100%; }
+    /* Vier Messwerte nebeneinander sind bei 390 px zu eng: „+219,1 h" brach
+       zwischen Zahl und Einheit um. Zwei mal zwei statt vier mal eins. */
+    .hl-readout { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 0; }
+    .hl-readout__item { align-items: flex-start; padding: 0 12px; }
+    .hl-readout__item:nth-child(odd) { border-left: none; padding-left: 0; }
+    .hl-readout__val { font-size: 1.05rem; white-space: nowrap; }
+    .hl-readout__lbl { font-size: 0.58rem; }
+    .hl-band__plot { height: 54px; }
+    .hl-band__foot { gap: 8px; }
+    .hl-rangetext { flex-wrap: wrap; padding-left: 0; }
+    .hl-daterange { width: 100%; justify-content: space-between; }
 
-/* ─── Touch-Geräte: keine Hover → ganze Zeile antippbar öffnet das Detail-Sheet ───
-   (die Hover-Only-Action-Buttons wären am Handy nie sichtbar → Bearbeiten/Löschen
-   unerreichbar. Stattdessen tippt man die Zeile an; Edit/Delete liegen im Sheet.) */
-@media (hover: none) {
-    .entry-row { cursor: pointer; -webkit-tap-highlight-color: transparent; }
-    .entry-row:active {
-        background: rgba(var(--primary-rgb), 0.08);
-        border-color: rgba(var(--primary-rgb), 0.2);
-        transform: scale(0.995);
+    .hl-toolbar { gap: 8px; padding: 8px 0 6px; }
+    .hl-tools { width: 100%; }
+    .hl-search { flex: 1; width: auto; }
+    .hl-search__kbd { display: none; }
+    .hl-thead { display: none; }
+
+    /* Zweizeilige Zeile: Datum und Saldo oben, Text und Stunden darunter.
+       Vorher fielen Datum UND Saldo hier ersatzlos weg — bei einer Zeitliste
+       ohne Datum bleibt nichts, was die Zeile identifiziert. */
+    #view-history { --hl-cols: 3px 28px minmax(0, 1fr) 64px 16px; }
+    .entry-row {
+        grid-template-areas:
+            'stripe ico date diff end'
+            'stripe ico body hours end';
+        row-gap: 1px;
+        padding: 7px 8px 7px 0;
+        align-items: center;
     }
-    /* Hover-Reveal greift auf Touch nie → ausblenden, damit kein toter Klickbereich bleibt. */
-    .er-actions { display: none; }
-    .er-chevron { display: flex; }
-    /* Rechte Spalte kompakter, seit die Buttons weg sind. */
-    .er-right { gap: 8px; padding: 14px 14px; }
-    .er-left { min-width: 0; padding: 14px 14px; }
-    .er-mid { padding: 14px 14px; }
+    .er-stripe { grid-area: stripe; }
+    .er-ico    { grid-area: ico; }
+    .er-date   { grid-area: date; }
+    .er-body   { grid-area: body; flex-direction: column; align-items: flex-start; gap: 3px; padding: 0; }
+    .er-hours  { grid-area: hours; }
+    .er-diff   { grid-area: diff; font-size: 0.68rem; }
+    .er-end    { grid-area: end; }
+    .er-dev    { display: none; }
+    .er-tags { flex-wrap: wrap; }
+    .is-compact .er-tag--project { display: inline-block; }
+    .is-compact .er-tag--job { padding: 1px 2px; }
+
+    .hl-mband { padding: 8px 8px 6px; }
+    .hl-mband__stats { gap: 9px; font-size: 0.65rem; }
+    .hl-dband { padding: 6px 8px 3px; }
 }
 
-/* ─── Entry Detail Bottom Sheet ─── */
+/* Touch: keine Hover-Knöpfe, sondern Antippen der Zeile → Detail-Sheet. */
+@media (hover: none) {
+    .entry-row { -webkit-tap-highlight-color: transparent; }
+    .entry-row:active { background: var(--hover-fill-strong); }
+    .er-actions { display: none; }
+    .er-chevron { display: grid; place-items: center; }
+    .hl-band__hint::after { content: ''; }
+    .hl-band__plot { touch-action: none; }
+}
+
+/* ═══ DETAIL-SHEET ═══════════════════════════════════════════════════ */
 .ed-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.65);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(0, 0, 0, 0.62);
     z-index: 1100;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.28s var(--ease-out);
 }
-.ed-backdrop.active {
-    opacity: 1;
-    pointer-events: auto;
-}
+.ed-backdrop.active { opacity: 1; pointer-events: auto; }
 
 .ed-sheet {
     position: fixed;
@@ -606,162 +969,111 @@
     left: 0;
     right: 0;
     z-index: 1101;
-    background: #0e0e18;
-    border-top: 1px solid rgba(168,85,247,0.18);
-    border-radius: 22px 22px 0 0;
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border-default);
+    border-radius: 20px 20px 0 0;
     transform: translateY(100%);
-    transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+    transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1);
     max-height: 88vh;
     overflow-y: auto;
     padding-bottom: env(safe-area-inset-bottom, 16px);
+    box-shadow: var(--shadow-lg);
 }
-.ed-sheet.active {
-    transform: translateY(0);
+.ed-sheet.active { transform: translateY(0); }
+@media (min-width: 720px) {
+    /* Auf breiten Schirmen ist ein Vollbreiten-Blatt am unteren Rand verschenkt:
+       es steht dann als Karte mittig über der Liste. */
+    .ed-sheet { left: 50%; right: auto; width: 520px; margin-left: -260px; border-radius: 18px 18px 0 0; }
 }
 
-.ed-handle {
-    width: 36px;
-    height: 4px;
-    border-radius: 2px;
-    background: rgba(255,255,255,0.12);
-    margin: 12px auto 0;
-}
+.ed-handle { width: 34px; height: 4px; border-radius: 2px; background: var(--border-interactive); margin: 11px auto 0; }
 
 .ed-header {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 18px 20px 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    gap: 13px;
+    padding: 17px 20px 15px;
+    border-bottom: 1px solid var(--border-subtle);
 }
 .ed-type-icon {
-    width: 46px;
-    height: 46px;
-    border-radius: 13px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    color: rgb(var(--type-rgb, var(--primary-rgb)));
+    background: rgba(var(--type-rgb, var(--primary-rgb)), 0.13);
+    border: 1px solid rgba(var(--type-rgb, var(--primary-rgb)), 0.26);
 }
 .ed-header-text { flex: 1; min-width: 0; }
-.ed-type-label {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text-main);
-    line-height: 1.2;
-}
-.ed-date-line {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    margin-top: 2px;
-    font-family: var(--font-mono);
-}
+.ed-type-label { font-size: 1rem; font-weight: 700; color: var(--text-main); line-height: 1.2; }
+.ed-date-line { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; font-family: var(--font-mono); }
 .ed-close-btn {
+    display: grid;
+    place-items: center;
     width: 30px;
     height: 30px;
     border-radius: 8px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.09);
+    background: var(--bg-inset);
+    border: 1px solid var(--border-subtle);
     color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: all 0.15s;
 }
-.ed-close-btn:hover { background: rgba(255,255,255,0.12); color: var(--text-main); }
+.ed-close-btn:hover { color: var(--text-main); border-color: var(--border-default); }
 
-.ed-hero {
-    display: flex;
-    gap: 10px;
-    padding: 16px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.ed-stat-card {
-    flex: 1;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 12px;
-    padding: 14px 16px;
-}
+.ed-hero { display: flex; gap: 10px; padding: 15px 20px; border-bottom: 1px solid var(--border-subtle); }
+.ed-stat-card { flex: 1; background: var(--bg-inset); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 13px 15px; }
 .ed-stat-val {
-    font-size: 1.7rem;
+    font-size: 1.55rem;
     font-weight: 700;
-    font-family: var(--font-mono);
+    font-family: var(--font-num);
+    font-variant-numeric: tabular-nums;
     color: var(--text-main);
     letter-spacing: -0.03em;
     line-height: 1;
 }
-.ed-stat-lbl {
-    font-size: 0.62rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-weight: 600;
-    margin-top: 5px;
-}
+.ed-stat-lbl { font-size: 0.62rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-top: 5px; }
 
-.ed-rows {
-    padding: 8px 20px 16px;
-}
+.ed-rows { padding: 6px 20px 16px; }
 .ed-row {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 16px;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border-subtle);
 }
 .ed-row:last-child { border-bottom: none; }
-.ed-row-key {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    flex-shrink: 0;
-    padding-top: 1px;
-}
-.ed-row-val {
-    font-size: 0.88rem;
-    color: var(--text-main);
-    font-weight: 500;
-    text-align: right;
-    word-break: break-word;
-}
+.ed-row-key { font-size: 0.68rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.07em; flex-shrink: 0; padding-top: 2px; }
+.ed-row-val { font-size: 0.86rem; color: var(--text-main); font-weight: 500; text-align: right; word-break: break-word; }
 
-.ed-footer {
-    display: flex;
-    gap: 10px;
-    padding: 0 20px 20px;
-}
+.ed-footer { display: flex; gap: 10px; padding: 0 20px 20px; }
 .ed-btn {
     flex: 1;
-    padding: 13px;
-    border-radius: 12px;
-    font-size: 0.85rem;
+    padding: 12px;
+    border-radius: 11px;
+    font-size: 0.84rem;
     font-weight: 600;
     font-family: var(--font-main);
     cursor: pointer;
-    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 7px;
-    transition: all 0.15s;
+    border: 1px solid var(--border-default);
+    background: var(--bg-inset);
+    color: var(--text-main);
+    transition: background-color var(--dur-fast, 140ms) var(--ease-out);
 }
 .ed-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
-.ed-btn-edit {
-    background: rgba(168,85,247,0.12);
-    border: 1px solid rgba(168,85,247,0.22);
-    color: #c084fc;
-}
-.ed-btn-edit:hover { background: rgba(168,85,247,0.2); }
-.ed-btn-delete {
-    background: rgba(239,68,68,0.08);
-    border: 1px solid rgba(239,68,68,0.18);
-    color: #f87171;
-}
-.ed-btn-delete:hover { background: rgba(239,68,68,0.16); }
+.ed-btn-edit:hover { background: var(--hover-fill); }
+.ed-btn-delete { color: var(--role-neg); border-color: rgba(239, 68, 68, 0.2); }
+.ed-btn-delete:hover { background: var(--role-neg-soft); }
 
-/* ─── Legacy compat ─── */
-.filter-grid { display: none !important; }
-.filter-header { display: none !important; }
-.tag { padding: 3px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; background: rgba(255,255,255,0.05); color: var(--text-muted); }
+/* ─── Altlasten aus der Karten-Fassung ─────────────────────────────────
+   Diese Klassen stehen noch in fremdem Markup (Dashboard-Aktivitäten,
+   Trash-Modal). Sie hier NICHT auf display:none setzen — das hat früher
+   Listen woanders leer aussehen lassen. */
+.entry-type-badge, .entry-diff, .entry-btns { display: none; }
+.filter-grid, .filter-header { display: none !important; }

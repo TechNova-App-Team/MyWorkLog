@@ -1440,27 +1440,18 @@
         [data-theme="light"] .help-slim { border-color: rgba(0,0,0,0.15); }
 
 
-        /* --- LISTS --- */
-        .entry-row {
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(var(--primary-rgb), 0.02); padding: 16px 20px; border-radius: 14px;
-            margin-bottom: 8px; border-left: 3px solid transparent;
-            transition: background-color 0.18s cubic-bezier(0.16, 1, 0.3, 1),
-                        border-color     0.18s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        /* Vorher wanderte hier `padding-left` von 20 auf 24 px. Padding ist
-           Layout: der Browser rechnet die Zeile neu um, der Text springt,
-           und bei mehreren Zeilen untereinander zappelt die ganze Liste. */
-        .entry-row:hover { background: var(--hover-fill); }
-        /* Rahmenfarbe aus --type-rgb (setzt history.js pro Zeile) — greift damit
-           auch für eigene Eintragstypen, die vorher randlos blieben. */
-        .entry-row[class*="type-"] { border-color: rgb(var(--type-rgb, var(--primary-rgb))); }
-
-        .entry-date { font-weight: 600; color: var(--text-main); font-size: 0.95rem; }
-        .entry-meta { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
+        /* --- LISTS ---
+           `.entry-row` gehoert jetzt vollstaendig history.css. Die Karten-Fassung,
+           die frueher hier stand, hat der neuen Zeile zwei Werte untergeschoben,
+           die keine Regel im Verlauf erklaerte: ein `margin-bottom: 8px` (zusaetzlich
+           zum Listen-Abstand) und `border-left: 3px solid transparent`. Dazu setzte
+           `.entry-row[class*="type-"] { border-color: … }` — gedacht als linker
+           Akzentstreifen — die Farbe auf ALLE VIER Seiten, sobald history.css den
+           `border`-Kurzbefehl benutzte: jede Zeile bekam einen bunten Rahmen.
+           Deshalb steht hier nichts mehr; Zeilen entstehen ausschliesslich in
+           renderHistoryView(), also lange nachdem history.css geladen ist. */
         .tag { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; background: rgba(255,255,255,0.05); }
-        .project-tag { background: rgba(var(--primary-rgb), 0.1); color: var(--primary); }
-        
+
 
         /* --- Smooth number transition --- */
         .counter-animate {
