@@ -10,7 +10,7 @@
 </script>
     <meta name="description" content="Fahrtkosten-Tracker mit echtem Routing, Adresssuche, ÖPNV-Links, Spritkosten & Pendlerpauschale. Komplett kostenlos für Azubis.">
     <meta name="keywords" content="Fahrtkosten, Pendlerpauschale, Azubi, Routing, ÖPNV, Spritkosten, Pendelstrecke, Deutsche Bahn, Fahrtkostenerstattung">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.3.15"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.3.16"></script>
     <title>MyWorkLog | Fahrtkosten</title>
     <link rel="canonical" href="https://myworklog.de/fahrtkosten/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/fahrtkosten/">
@@ -26,7 +26,7 @@
 
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-    <link rel="stylesheet" href="/Assets/css/fahrtkosten.css?v=6.3.15">
+    <link rel="stylesheet" href="/Assets/css/fahrtkosten.css?v=6.3.16">
 
     <style>
         /* Tokens der App. --primary ist der Vorgabewert aus core.css; steht im
@@ -79,7 +79,7 @@
         a { color: var(--primary); }
         ::selection { background: rgba(var(--primary-rgb), 0.3); }
     </style>
-    <script defer src="/Assets/js/version-loader.js?v=6.3.15"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.3.16"></script>
 </head>
 <body>
 
@@ -125,7 +125,8 @@
                 <dd class="fk-fact__v" id="fkFactDist">&mdash;</dd>
             </div>
             <div class="fk-fact">
-                <dt class="fk-fact__k">Fahrzeit einfach</dt>
+                <!-- Wechselt bei "Zu Fuß" auf "Gehzeit" (renderTimeLabel). -->
+                <dt class="fk-fact__k" id="fkFactTimeKey">Fahrzeit einfach</dt>
                 <dd class="fk-fact__v" id="fkFactTime">&mdash;</dd>
             </div>
             <div class="fk-fact">
@@ -184,7 +185,7 @@
             <div class="fk-act__id">
                 <p class="fk-eyebrow">Strecke</p>
                 <h2 class="fk-act__title">Von zuhause zum Ziel</h2>
-                <p class="fk-act__sub">Zwei Adressen suchen oder direkt in die Karte tippen. Gerechnet wird auf echten Straßen, nicht in Luftlinie.</p>
+                <p class="fk-act__sub">Zwei Adressen suchen oder direkt in die Karte tippen. Gerechnet wird auf echten Straßen, nicht in Luftlinie. Wer anders fährt als vorgeschlagen, zieht die Linie auf seinen Weg.</p>
             </div>
             <div class="fk-seg" role="group" aria-label="Verkehrsmittel">
                 <button type="button" class="fk-seg__btn active" data-mode="car">
@@ -251,13 +252,21 @@
         <div class="fk-map-frame">
             <div class="fk-map-chip" id="fk-map-route-chip" style="display:none;"></div>
             <div id="fk-map" class="fk-map"></div>
-            <p class="fk-map-hint">In die Karte tippen setzt einen Punkt. Marker lassen sich ziehen.</p>
+            <!-- Der Satz wechselt mit dem Zustand der Karte (renderMapHint in
+                 fahrtkosten.js). Hier steht der Ausgangstext, damit die
+                 i18n-Pipeline ihn ueberhaupt zu sehen bekommt. -->
+            <p class="fk-map-hint" id="fk-map-hint">In die Karte tippen setzt einen Punkt. Marker lassen sich ziehen.</p>
         </div>
 
         <div class="fk-loading" id="fk-route-loading">
             <span class="fk-spin" aria-hidden="true"></span>
             <span>Route wird berechnet</span>
         </div>
+
+        <!-- Nur bei eigener Strecke sichtbar. Inhalt kommt aus fahrtkosten.js,
+             weil dort die Zahlen liegen — im HTML stuende sonst ein fester
+             Vergleichswert, der nie stimmt. -->
+        <div class="fk-basis" id="fkRouteBasis" style="display:none;"></div>
 
         <!-- Nur bei Fahrrad/Zu Fuß/ÖPNV sichtbar, Text kommt aus fahrtkosten.js -->
         <p class="fk-mode-note" id="fkModeNote" style="display:none;"></p>
@@ -419,7 +428,7 @@
 
 <div id="page-footer"></div>
 
-<script src="/Assets/js/fahrtkosten.js?v=6.3.15"></script>
+<script src="/Assets/js/fahrtkosten.js?v=6.3.16"></script>
 
 <script>
     fetch('/pages/footer/footer.html')

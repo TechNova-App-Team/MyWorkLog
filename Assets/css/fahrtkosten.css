@@ -442,6 +442,91 @@
     padding: 7px 11px;
 }
 
+/* ─── Eigene Strecke ───────────────────────────────────────────────────
+   Wegpunkt und Greifpunkt sind Marker-Elemente von MapLibre und stehen damit
+   ausserhalb des normalen Seitenflusses. Sie brauchen trotzdem Klassen statt
+   Inline-Styles wie die beiden Endpunkt-Marker: hier haengen Zustaende dran
+   (:hover, .is-dragging, .is-active), und die gibt es inline nicht.
+
+   Farbe: derselbe Ton wie die Linie. Ein Wegpunkt ist kein dritter Ort neben
+   Start und Ziel, sondern ein Griff an der Route — und muss auch so aussehen.
+   Deshalb auch kleiner als die 30-px-Marker der Endpunkte. */
+.fk-wp {
+    width: 17px; height: 17px;
+    padding: 0;
+    border: 2.5px solid #fff;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    cursor: grab;
+    transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+.fk-wp:hover        { transform: scale(1.25); box-shadow: 0 3px 12px rgba(0, 0, 0, 0.45); }
+.fk-wp:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.fk-wp.is-dragging  { cursor: grabbing; transform: scale(1.35); }
+
+/* Der Greifpunkt zeigt beim Ueberfahren der Linie, wo ein Punkt entstehen
+   wuerde. Hohl, solange er nur Vorschlag ist; gefuellt, sobald gezogen wird. */
+.fk-wp-ghost {
+    width: 13px; height: 13px;
+    border: 2.5px solid var(--primary);
+    border-radius: 50%;
+    background: var(--bg-deep);
+    pointer-events: none;
+    transition: transform 0.14s ease, background-color 0.14s ease;
+}
+.fk-wp-ghost.is-active { background: var(--primary); transform: scale(1.4); }
+
+/* Der Beleg zur eigenen Strecke: Vergleichswert, Unterschied, und der Satz
+   zu § 9 EStG. Bewusst ruhiger als .fk-mode-note (die warnt) — hier steht
+   zuerst eine Auskunft, die Warnung nur im Text. */
+.fk-basis {
+    margin-top: 13px;
+    padding: 12px 14px;
+    border: 1px solid var(--fk-rule);
+    border-radius: 10px;
+    background: var(--fk-ink-03);
+}
+.fk-basis__head {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.fk-basis__tag {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+    color: var(--primary);
+}
+.fk-basis__cmp { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.fk-basis__k {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+}
+.fk-basis__v {
+    font-family: var(--font-num);
+    font-size: 0.84rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    color: var(--text-main);
+}
+/* Laenger als die kuerzeste Verbindung ist keine Fehlbedienung, aber der
+   einzige Fall, in dem der Abzug an einer Bedingung haengt. */
+.fk-basis__v.is-more { color: #f59e0b; }
+.fk-basis__undo { margin-left: auto; }
+.fk-basis__note {
+    margin: 11px 0 0;
+    font-size: 0.73rem;
+    line-height: 1.55;
+    color: var(--text-muted);
+    max-width: 72ch;
+}
+
 /* Hinweis, wenn die Zahlen nicht zum gewaehlten Verkehrsmittel passen. */
 .fk-mode-note {
     display: flex;
@@ -873,7 +958,21 @@
     .fk-seg { width: 100%; overflow-x: auto; }
     .fk-seg__btn { flex: 1 0 auto; justify-content: center; }
     .fk-rank__row { grid-template-columns: 82px 1fr 72px; gap: 10px; }
-    .fk-map-hint { display: none; }
+    /* Der Hinweis ist hier keine Verzierung mehr, sondern die einzige Stelle,
+       an der steht, wie man die Strecke aendert — auf Touch gibt es kein
+       Ueberfahren und damit keinen Greifpunkt, der es zeigen koennte. Statt
+       ihn auszublenden, wandert er unter die Karte, wo er nichts verdeckt. */
+    .fk-map-hint {
+        position: static;
+        max-width: none;
+        padding: 9px 12px;
+        border: 0;
+        border-top: 1px solid var(--fk-rule);
+        border-radius: 0;
+        background: transparent;
+    }
+    .fk-basis__head { gap: 14px; }
+    .fk-basis__undo { margin-left: 0; }
     /* Der Satz bricht hier ohnehin um; ein Trennpunkt, der dabei an den
        Zeilenanfang rutscht, sieht aus wie ein Tippfehler. */
     .fk-assume { line-height: 2.2; }
@@ -894,6 +993,6 @@
 
 /* ─── Bewegungsarm ─────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-    .fk-tier__seg, .fk-rank__fill { transition: none; }
+    .fk-tier__seg, .fk-rank__fill, .fk-wp, .fk-wp-ghost { transition: none; }
     .fk-spin { animation-duration: 2s; }
 }

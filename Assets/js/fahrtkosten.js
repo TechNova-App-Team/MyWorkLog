@@ -13,6 +13,21 @@
  * - Das Markup der Verbindungs-Liste steht NUR hier, nicht zusaetzlich im
  *   HTML. Zwei Fassungen driften auseinander, und beim ersten Routing
  *   ueberschreibt diese die andere.
+ *
+ * 🔴 Eigene Strecke (Wegpunkte): Der Nutzer zieht die Linie auf seinen Weg.
+ * Was dabei entsteht, sind ZWISCHENPUNKTE fuer OSRM — keine freihaendig
+ * gemalte Linie. Der Unterschied ist der ganze Punkt: eine Kette aus
+ * Klickpunkten waere eine Summe von Luftlinien und wuerde die Strecke
+ * unterschaetzen, waehrend sie wie ein gemessener Wert aussieht. Ueber
+ * Wegpunkte bleibt die Zahl eine Strassenverbindung — nur eben die eigene
+ * statt der kuerzesten.
+ *
+ * 🔴 Und daraus folgt eine Pflicht: § 9 Abs. 1 Satz 3 Nr. 4 EStG will die
+ * KUERZESTE Strassenverbindung. Eine laengere zaehlt nur, wenn sie
+ * offensichtlich verkehrsguenstiger ist und regelmaessig gefahren wird.
+ * Sobald die eigene Strecke laenger ist als der Vorschlag, muss die Seite
+ * beides nebeneinander zeigen (renderRouteBasis) — sonst behauptet die
+ * Jahressumme oben einen Abzug, den es so nicht gibt.
  */
 
 (function () {
@@ -22,8 +37,31 @@
     const STORAGE_KEY    = 'mwl_commute_coords';
     const HISTORY_KEY    = 'mwl_commute_history';
     const SETTINGS_KEY   = 'mwl_commute_settings';
-    const OSRM_BASE      = 'https://router.project-osrm.org/route/v1';
     const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org/search';
+
+    /* 🔴 Ein eigener DIENST je Verkehrsmittel — nicht ein Profil-Parameter.
+       Der OSRM-Demoserver (router.project-osrm.org) hat nur das Auto-Profil
+       geladen: /cycling/ und /foot/ antworten mit code "Ok" und liefern
+       dieselbe Autoroute zurueck. Unter "Fahrrad" kam damit nie ein Radweg
+       vor, und ein eingezeichneter Punkt auf einem Radweg rutschte auf die
+       naechste Autostrasse. Der Fehler ist unsichtbar, weil eine Autoroute
+       auch mit dem Rad plausibel aussieht.
+
+       Die FOSSGIS-Instanzen (dieselben, die openstreetmap.org selbst nutzt)
+       fahren je Profil einen eigenen Host. Der Profilname im Pfad heisst bei
+       allen dreien "driving" — entscheidend ist der Host, nicht der Pfad.
+
+       Gemessen, Stuttgart → Ludwigsburg, dieselben Koordinaten:
+         Auto    15,80 km /  22 min
+         Rad     18,84 km /  59 min   (laenger, weil ueber Radwege)
+         zu Fuss 15,85 km / 210 min
+       Drei verschiedene Zahlen heisst: das Profil wirkt wirklich. Wer den
+       Dienst wechselt, misst das bitte genauso nach. */
+    const OSRM_HOSTS = {
+        car:  'https://routing.openstreetmap.de/routed-car',
+        bike: 'https://routing.openstreetmap.de/routed-bike',
+        walk: 'https://routing.openstreetmap.de/routed-foot'
+    };
 
     /* Pendlerpauschale § 9 EStG. Aendert der Gesetzgeber die Staffel, ist
        das hier EIN Eingriff — und der Satz im Kleingedruckten von
@@ -61,7 +99,8 @@
         ticket:   '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 11v2"/><path d="M13 17v2"/>',
         trash:    '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
         arrowGo:  '<path d="M7 7h10v10"/><path d="M7 17 17 7"/>',
-        check:    '<path d="M20 6 9 17l-5-5"/>'
+        check:    '<path d="M20 6 9 17l-5-5"/>',
+        undo:     '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>'
     };
 
     function svg(path, stroke) {
@@ -104,9 +143,19 @@
     let coords  = { home: null, work: null };
     let addresses = { home: '', work: '' };
     let routeLayer = null;
-    let currentRoute = null;   // { distance: km, duration: s, geometry }
+    let currentRoute = null;   // { distance: km, duration: s, geometry, custom }
     let activeMode = DEFAULTS.mode;
     let searchTimeout = null;
+
+    /* Eigene Strecke. waypoints steht in Fahrtreihenfolge zwischen Start und
+       Ziel; wpMarkers ist die Marker-Liste dazu und wird immer komplett neu
+       gebaut, damit Index und Marker nicht auseinanderlaufen. */
+    let waypoints   = [];
+    let wpMarkers   = [];
+    let suggestedKm = null;    // kuerzeste Verbindung, nur fuer den Vergleich
+    let ghostMarker = null;    // Greifpunkt, der beim Ueberfahren auf der Linie liegt
+    let lineDrag    = null;    // { grab: [lng,lat] } waehrend eines Linienzugs
+    let clickGuard  = 0;       // Zeitstempel: unterdrueckt den Klick nach einem Zug
 
     // ===== INIT =====
     function init() {
@@ -167,6 +216,13 @@
 
         if (!silent) {
             saveSettings();
+            /* 🔴 Jedes Profil hat seine EIGENE kuerzeste Verbindung (Rad
+               18,84 km, wo das Auto 15,80 km faehrt). Bleibt der alte Wert
+               stehen, vergleicht der Beleg unter der Karte die Radstrecke mit
+               der Autostrecke und weist einen Unterschied aus, den es nicht
+               gibt. Vor dem Umstieg auf echte Profile fiel das nicht auf, weil
+               alle drei dieselbe Zahl lieferten. */
+            suggestedKm = null;
             if (coords.home && coords.work) fetchRoute();
             else { recalculate(); renderTransportLinks(); }
         }
@@ -209,6 +265,13 @@
                 addresses[type] = '';
                 if (markers[type]) { markers[type].remove(); markers[type] = null; }
                 coords[type] = null;
+                /* Ohne einen der beiden Endpunkte hat der eingezeichnete Weg
+                   keinen Bezug mehr. Beim blossen VERSCHIEBEN eines Markers
+                   bleiben die Punkte dagegen stehen — dort ist die Strecke
+                   dieselbe geblieben. */
+                waypoints = [];
+                suggestedKm = null;
+                renderWaypoints();
                 clearRoute();
                 saveCoords();
                 updateLegend();
@@ -308,17 +371,213 @@
         }), 'bottom-right');
 
         map.on('click', function (e) {
+            if (Date.now() < clickGuard) return;
             var lngLat = [e.lngLat.lng, e.lngLat.lat];
+
+            /* Ein Treffer auf der Route setzt einen Wegpunkt statt Start oder
+               Ziel zu verschieben. Das ist zugleich der Weg fuer Touch: dort
+               gibt es kein Ueberfahren, also auch keinen Greifpunkt — antippen
+               legt den Punkt auf die Linie, danach zieht man ihn dorthin, wo
+               man wirklich langfaehrt. */
+            if (routeHit(e.point)) { insertWaypoint(lngLat, lngLat); return; }
+
             var type = !coords.home ? 'home' : (!coords.work ? 'work' : 'home');
             setMarker(type, lngLat);
             reverseGeocode(lngLat, type);
             if (coords.home && coords.work) fetchRoute();
         });
 
+        bindLineDrag();
+
         if (coords.home) setMarker('home', coords.home, true);
         if (coords.work) setMarker('work', coords.work, true);
+        renderWaypoints();
 
         if (coords.home && coords.work) { fitMapToBoth(); fetchRoute(); }
+    }
+
+    /* ─── Eigene Strecke: die Linie greifen ────────────────────────────
+       Layer-gebundene Handler haengen an der Layer-ID, nicht am Layer-Objekt.
+       Einmal binden reicht deshalb, auch wenn drawRoute() den Layer bei jedem
+       Routing neu anlegt. */
+    function bindLineDrag() {
+        map.on('mouseenter', 'route-line', function () {
+            if (!lineDrag) map.getCanvas().style.cursor = 'grab';
+        });
+        map.on('mouseleave', 'route-line', function () {
+            if (lineDrag) return;
+            map.getCanvas().style.cursor = '';
+            hideGhost();
+        });
+        map.on('mousemove', 'route-line', function (e) {
+            if (lineDrag) return;
+            showGhost(nearestOnRoute([e.lngLat.lng, e.lngLat.lat]).point);
+        });
+        map.on('mousedown', 'route-line', startLineDrag);
+    }
+
+    function routeHit(point) {
+        if (!map || !routeLayer || !map.getLayer('route-line')) return false;
+        var box = [[point.x - 9, point.y - 9], [point.x + 9, point.y + 9]];
+        try { return map.queryRenderedFeatures(box, { layers: ['route-line'] }).length > 0; }
+        catch (e) { return false; }
+    }
+
+    function startLineDrag(e) {
+        if (!currentRoute || !currentRoute.geometry) return;
+        e.preventDefault();          // haelt die Karte fest, statt sie mitzuziehen
+
+        var grab = nearestOnRoute([e.lngLat.lng, e.lngLat.lat]).point;
+        lineDrag = { grab: grab };
+        map.getCanvas().style.cursor = 'grabbing';
+        showGhost(grab, true);
+
+        function onMove(ev) { showGhost([ev.lngLat.lng, ev.lngLat.lat], true); }
+        function onUp(ev) {
+            map.off('mousemove', onMove);
+            var grabbed = lineDrag.grab;
+            lineDrag = null;
+            map.getCanvas().style.cursor = '';
+            hideGhost();
+            clickGuard = Date.now() + 250;
+            insertWaypoint([ev.lngLat.lng, ev.lngLat.lat], grabbed);
+        }
+
+        map.on('mousemove', onMove);
+        map.once('mouseup', onUp);
+    }
+
+    /* Der Greifpunkt ist ein Marker, kein absolut gesetztes div: so bleibt er
+       beim Verschieben und Zoomen der Karte auf seiner Koordinate. */
+    function showGhost(lngLat, active) {
+        if (!map) return;
+        if (!ghostMarker) {
+            var el = document.createElement('div');
+            el.className = 'fk-wp-ghost';
+            ghostMarker = new maplibregl.Marker({ element: el }).setLngLat(lngLat).addTo(map);
+        } else {
+            ghostMarker.setLngLat(lngLat);
+        }
+        ghostMarker.getElement().classList.toggle('is-active', !!active);
+    }
+
+    function hideGhost() {
+        if (ghostMarker) { ghostMarker.remove(); ghostMarker = null; }
+    }
+
+    /* ─── Geometrie ────────────────────────────────────────────────────
+       Naechster Punkt auf der Route, samt Segment-Index. Der Index sagt, WO
+       auf der Fahrt ein Punkt liegt — daraus folgt, an welche Stelle der
+       Wegpunkt-Liste ein neuer Punkt gehoert. Ohne ihn haenge man jeden
+       neuen Punkt hinten an, und ein Umweg direkt hinter dem Start wuerde die
+       Route erst ans Ziel und dann zurueck schicken.
+
+       Gerechnet wird in einer lokal flachen Naeherung: Laengengrade werden mit
+       cos(Breite) gestaucht. Auf Pendelstrecken ist der Fehler bedeutungslos,
+       und es geht hier ohnehin nur um "welcher Punkt ist naeher". */
+    function nearestOnRoute(p) {
+        var g  = currentRoute && currentRoute.geometry;
+        var cs = g && g.coordinates;
+        if (!cs || cs.length < 2) return { point: p, seg: 0 };
+
+        var kx = Math.cos(p[1] * Math.PI / 180);
+        var best = { point: cs[0], seg: 0 }, bestD = Infinity;
+
+        for (var i = 0; i < cs.length - 1; i++) {
+            var a = cs[i], b = cs[i + 1];
+            var abx = (b[0] - a[0]) * kx, aby = b[1] - a[1];
+            var apx = (p[0] - a[0]) * kx, apy = p[1] - a[1];
+            var len = abx * abx + aby * aby;
+            var t   = len > 0 ? Math.max(0, Math.min(1, (apx * abx + apy * aby) / len)) : 0;
+            var q   = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+            var dx  = (p[0] - q[0]) * kx, dy = p[1] - q[1];
+            var d   = dx * dx + dy * dy;
+            if (d < bestD) { bestD = d; best = { point: q, seg: i }; }
+        }
+        return best;
+    }
+
+    /* ─── Wegpunkte ────────────────────────────────────────────────────
+       refLngLat ist die Stelle, an der GEGRIFFEN wurde, nicht die, an der
+       losgelassen wurde. Nur sie liegt sicher auf der Linie und taugt damit
+       zur Einsortierung; der Ablagepunkt kann weit daneben liegen. */
+    function insertWaypoint(lngLat, refLngLat) {
+        var at = waypoints.length;
+
+        if (waypoints.length && currentRoute && currentRoute.geometry) {
+            var refSeg = nearestOnRoute(refLngLat).seg;
+            for (var i = 0; i < waypoints.length; i++) {
+                if (nearestOnRoute(waypoints[i]).seg > refSeg) { at = i; break; }
+            }
+        }
+
+        waypoints.splice(at, 0, lngLat);
+        saveCoords();
+        renderWaypoints();
+        fetchRoute();
+    }
+
+    function removeWaypoint(index) {
+        waypoints.splice(index, 1);
+        saveCoords();
+        renderWaypoints();
+        fetchRoute();
+    }
+
+    function renderWaypoints() {
+        wpMarkers.forEach(function (m) { m.remove(); });
+        wpMarkers = [];
+        if (!map) return;
+        waypoints.forEach(function (c, i) { wpMarkers.push(makeWaypointMarker(c, i)); });
+    }
+
+    function makeWaypointMarker(lngLat, index) {
+        var el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'fk-wp';
+        el.title = t('Ziehen verschiebt, Klicken entfernt', 'Drag to move, click to remove');
+
+        var marker = new maplibregl.Marker({ element: el, draggable: true })
+            .setLngLat(lngLat)
+            .addTo(map);
+
+        /* 🔴 Erst NACH dem Marker beschriften. Der Konstruktor setzt auf jedes
+           Element ein eigenes aria-label ("Map marker") und ueberschreibt damit
+           alles, was vorher draufstand. */
+        el.setAttribute('aria-label',
+            t('Wegpunkt ' + (index + 1) + ' entfernen', 'Remove waypoint ' + (index + 1)));
+
+        /* Ein Zug endet mit mouseup auf demselben Element und loest deshalb
+           auch ein click aus. Ohne diese Sperre wuerde jeder Verschiebe-Vorgang
+           den Punkt gleich wieder loeschen. Zeitstempel statt Merker-Variable:
+           ein Merker, der nur im click zurueckgesetzt wird, bleibt haengen,
+           wenn der click einmal ausbleibt. */
+        var draggedAt = 0;
+        marker.on('dragstart', function () { el.classList.add('is-dragging'); });
+        marker.on('dragend', function () {
+            el.classList.remove('is-dragging');
+            draggedAt = Date.now();
+            var p = marker.getLngLat();
+            waypoints[index] = [p.lng, p.lat];
+            saveCoords();
+            fetchRoute();
+        });
+
+        el.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (Date.now() - draggedAt < 300) return;
+            removeWaypoint(index);
+        });
+
+        return marker;
+    }
+
+    function resetToSuggestion() {
+        if (!waypoints.length) return;
+        waypoints = [];
+        saveCoords();
+        renderWaypoints();
+        fetchRoute();
     }
 
     function reverseGeocode(lngLat, type) {
@@ -353,11 +612,13 @@
             'border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,0.35);' +
             'display:flex;align-items:center;justify-content:center;color:#fff;cursor:grab;';
         el.innerHTML = svg(icon, 2).replace('<svg ', '<svg width="15" height="15" ');
-        el.setAttribute('aria-label', type === 'home' ? t('Start', 'Start') : t('Ziel', 'Destination'));
 
         var marker = new maplibregl.Marker({ element: el, draggable: true })
             .setLngLat(lngLat)
             .addTo(map);
+
+        // Beschriftung erst nach dem Marker, siehe makeWaypointMarker().
+        el.setAttribute('aria-label', type === 'home' ? t('Start', 'Start') : t('Ziel', 'Destination'));
 
         marker.on('dragend', function () {
             var pos = marker.getLngLat();
@@ -367,6 +628,14 @@
             updateLegend();
             if (coords.home && coords.work) fetchRoute();
         });
+
+        /* Der Vergleichswert gehoert zu genau diesem Start-Ziel-Paar. Bleibt er
+           stehen, vergleicht die Seite die neue Strecke mit einer alten.
+           Auf die tatsaechliche Aenderung pruefen und nicht einfach immer
+           verwerfen: der Theme-Wechsel setzt beide Marker mit denselben
+           Koordinaten neu, und danach stuende der Vergleich ohne Grund leer. */
+        var moved = !coords[type] || coords[type][0] !== lngLat[0] || coords[type][1] !== lngLat[1];
+        if (moved) suggestedKm = null;
 
         markers[type] = marker;
         coords[type] = lngLat;
@@ -380,25 +649,38 @@
     function fitMapToBoth() {
         if (!coords.home || !coords.work || !map) return;
         var bounds = new maplibregl.LngLatBounds();
-        bounds.extend(coords.home);
-        bounds.extend(coords.work);
+        routeChain().forEach(function (c) { bounds.extend(c); });
         map.fitBounds(bounds, { padding: 80, maxZoom: 14, duration: 600 });
     }
 
     // ===== ROUTING =====
+    /* Start, eigene Zwischenpunkte, Ziel — in Fahrtreihenfolge. Ohne
+       Wegpunkte sind das die zwei Punkte wie bisher. */
+    function routeChain() {
+        if (!coords.home || !coords.work) return [];
+        return [coords.home].concat(waypoints, [coords.work]);
+    }
+
+    /* ÖPNV hat hier keine Linienfuehrung — dafuer stehen die Verbindungslinks
+       weiter unten. Als Strecke dient die Strassenverbindung, und
+       renderModeNote() sagt das auch dazu. */
+    function osrmBase() {
+        return (OSRM_HOSTS[activeMode] || OSRM_HOSTS.car) + '/route/v1/driving';
+    }
+
+    function osrmCoords(chain) {
+        return chain.map(function (c) { return c[0] + ',' + c[1]; }).join(';');
+    }
+
     function fetchRoute() {
         if (!coords.home || !coords.work) return;
 
         showLoading(true);
         clearRoute();
 
-        var profile = 'driving';
-        if (activeMode === 'bike') profile = 'cycling';
-        else if (activeMode === 'walk') profile = 'foot';
-
-        var url = OSRM_BASE + '/' + profile + '/' +
-            coords.home[0] + ',' + coords.home[1] + ';' +
-            coords.work[0] + ',' + coords.work[1] +
+        var chain  = routeChain();
+        var custom = waypoints.length > 0;
+        var url = osrmBase() + '/' + osrmCoords(chain) +
             '?overview=full&geometries=geojson';
 
         fetch(url)
@@ -411,24 +693,51 @@
             currentRoute = {
                 distance: route.distance / 1000,
                 duration: route.duration,
-                geometry: route.geometry
+                geometry: route.geometry,
+                custom: custom
             };
+            /* Ohne Wegpunkte IST die gefahrene Route der Vorschlag. Den Wert
+               hier mitzunehmen spart die zweite Anfrage in dem Fall, der am
+               haeufigsten vorkommt. */
+            if (!custom) suggestedKm = currentRoute.distance;
 
             drawRoute(route.geometry);
             recalculate();
             renderTransportLinks();
+            ensureSuggestion();
         })
         .catch(function () {
             showLoading(false);
-            // Rueckfall: Luftlinie. Wird im Befundsatz auch so benannt.
+            // Rueckfall: Luftlinie entlang der Kette. Wird im Befundsatz auch so benannt.
             currentRoute = {
-                distance: haversineKm(coords.home, coords.work),
+                distance: chainHaversineKm(chain),
                 duration: 0,
-                geometry: null
+                geometry: null,
+                custom: custom
             };
             recalculate();
             renderTransportLinks();
         });
+    }
+
+    /* Der Vergleichswert fehlt nach einem Neuladen mit gespeicherten
+       Wegpunkten: dann war die erste Anfrage schon die eigene Strecke. Diese
+       eine Zusatzanfrage holt ihn nach — ohne Geometrie, es geht nur um die
+       Zahl. */
+    function ensureSuggestion() {
+        if (suggestedKm != null || !waypoints.length || !coords.home || !coords.work) return;
+
+        var url = osrmBase() + '/' +
+            osrmCoords([coords.home, coords.work]) + '?overview=false';
+
+        fetch(url)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.code !== 'Ok' || !data.routes || !data.routes[0]) return;
+            suggestedKm = data.routes[0].distance / 1000;
+            renderRouteBasis();
+        })
+        .catch(function () { /* ohne Vergleichswert bleibt der Vergleich weg */ });
     }
 
     function routeColor() { return token('--primary', '#5578a8'); }
@@ -511,6 +820,15 @@
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
+    /* Luftlinie ueber die ganze Kette, nicht nur Start zu Ziel: sonst faellt
+       im Fehlerfall der eingezeichnete Umweg still weg und die Seite zeigt
+       eine kuerzere Strecke, als der Nutzer gerade gesetzt hat. */
+    function chainHaversineKm(chain) {
+        var sum = 0;
+        for (var i = 0; i < chain.length - 1; i++) sum += haversineKm(chain[i], chain[i + 1]);
+        return sum;
+    }
+
     // ===== EINGANGSGROESSEN =====
     function num(id, fallback) {
         var el = document.getElementById(id);
@@ -527,6 +845,9 @@
 
     function getDays()  { return Math.max(0, Math.round(num('fk-days', DEFAULTS.days))); }
     function isCar()    { return activeMode === 'car'; }
+    /* Auto, Rad und zu Fuss werden je von einem eigenen Dienst geroutet, ihre
+       Dauer ist echt. Für ÖPNV gibt es keinen — siehe OSRM_HOSTS. */
+    function hasTravelTime() { return !!OSRM_HOSTS[activeMode]; }
 
     /* Pauschale je Tag in Euro. Gilt fuer die EINFACHE Strecke. */
     function pauschalePerDay(distKm) {
@@ -563,8 +884,14 @@
            Etikett — und sie faellt nicht auf, weil sie plausibel aussieht.
            Nachpruefbar: die drei Profile fuer dieselben Koordinaten
            abfragen, alle drei geben denselben Wert. */
-        setText('fkFactTime',  (isCar() && dur > 0) ? formatDuration(dur) : '—');
+        /* Die Dauer gilt fuer Auto, Rad und zu Fuss — jedes hat seinen eigenen
+           Routing-Dienst. Nur ÖPNV hat keinen: dort waere es eine Autozeit
+           mit falschem Etikett. */
+        setText('fkFactTime',  (hasTravelTime() && dur > 0) ? formatDuration(dur) : '—');
+        renderTimeLabel();
         renderModeNote();
+        renderRouteBasis();
+        renderMapHint();
         setText('fkFactTrips', dist > 0 && days > 0 ? nf(days * 2, 0) : '—');
         setText('fkFactFuel',  isCar() && fuelCost > 0 ? eur(fuelCost) : '—');
         setText('fkVerdictSay', verdictSentence(dist, days, pYear));
@@ -594,19 +921,109 @@
                 'Needs a distance and at least one working day.');
     }
 
+    /* Zu Fuss ist keine Fahrt. Das Feld traegt sonst fuer ein Viertel der
+       Verkehrsmittel das falsche Wort. */
+    function renderTimeLabel() {
+        var el = document.getElementById('fkFactTimeKey');
+        if (!el) return;
+        el.textContent = activeMode === 'walk'
+            ? t('Gehzeit einfach', 'Walking time one way')
+            : t('Fahrzeit einfach', 'Travel time one way');
+    }
+
     function renderModeNote() {
         var el = document.getElementById('fkModeNote');
         if (!el) return;
-        if (isCar()) { el.style.display = 'none'; return; }
+        /* Auto, Rad und zu Fuss haben je einen eigenen Routing-Dienst, ihre
+           Zahlen stehen fuer sich. Nur bei Bus und Bahn bleibt eine Luecke —
+           und die wird benannt statt mit der Autostrecke ueberdeckt. */
+        if (activeMode !== 'transit') { el.style.display = 'none'; return; }
         el.style.display = '';
         el.innerHTML = t(
-            'Die Strecke stammt aus dem Straßennetz und gilt für alle Verkehrsmittel gleich. ' +
-            'Eine <strong>Fahrzeit</strong> steht nur fürs Auto, weil der offene Routing-Dienst ' +
-            'ausschließlich das Auto-Profil kennt.',
-            'The distance comes from the road network and is the same for every mode. ' +
-            'A <strong>travel time</strong> is only shown for the car, because the open routing ' +
-            'service only carries the car profile.'
+            'Für Bus und Bahn gibt es hier keine Linienführung. Als Strecke steht die ' +
+            '<strong>Straßenverbindung</strong>, eine Fahrzeit steht nicht dabei — die ' +
+            'echte Verbindung findest du über die Links weiter unten.',
+            'There is no line routing for buses and trains here. The distance shown is the ' +
+            '<strong>road connection</strong> and no travel time comes with it — you will ' +
+            'find the real connection through the links further down.'
         );
+    }
+
+    /* ─── Eigene Strecke: der Beleg dazu ───────────────────────────────
+       Zwei Zahlen und ein Satz. Die eigene Strecke steht schon oben im Befund
+       und auf der Karte — hier steht deshalb NUR der Vorschlag und die
+       Differenz, sonst haette dieselbe Zahl drei Plaetze. */
+    function renderRouteBasis() {
+        var box = document.getElementById('fkRouteBasis');
+        if (!box) return;
+
+        if (!waypoints.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+        box.style.display = '';
+
+        var n = waypoints.length;
+        var own = currentRoute ? currentRoute.distance : 0;
+        var head = t(
+            n === 1 ? 'Über einen eigenen Zwischenpunkt' : 'Über ' + n + ' eigene Zwischenpunkte',
+            n === 1 ? 'Via one waypoint of your own' : 'Via ' + n + ' waypoints of your own'
+        );
+
+        var cmp = '';
+        var note;
+
+        if (suggestedKm != null && own > 0) {
+            var delta = own - suggestedKm;
+            var longer = delta > 0.05;
+            cmp = '<span class="fk-basis__cmp">' +
+                    '<span class="fk-basis__k">' + t('Kürzeste Verbindung', 'Shortest route') + '</span>' +
+                    '<span class="fk-basis__v">' + km(suggestedKm) + '</span>' +
+                  '</span>' +
+                  '<span class="fk-basis__cmp">' +
+                    '<span class="fk-basis__k">' + t('Unterschied', 'Difference') + '</span>' +
+                    '<span class="fk-basis__v' + (longer ? ' is-more' : '') + '">' +
+                        (Math.abs(delta) < 0.05 ? t('keiner', 'none')
+                            : (delta > 0 ? '+' : '−') + km(Math.abs(delta))) +
+                    '</span>' +
+                  '</span>';
+
+            /* 🔴 Der Satz, ohne den die Jahressumme oben zu viel verspricht.
+               § 9 Abs. 1 Satz 3 Nr. 4 EStG: Massstab ist die kuerzeste
+               Strassenverbindung; eine laengere zaehlt nur unter einer
+               Bedingung, und die kann diese Seite nicht pruefen. */
+            note = longer
+                ? t('Gerechnet wird ab hier mit deiner Strecke. Für die Pendlerpauschale gilt aber die kürzeste Straßenverbindung — eine längere zählt nur, wenn sie offensichtlich verkehrsgünstiger ist und du sie regelmäßig fährst (§ 9 Abs. 1 Satz 3 Nr. 4 EStG). Trifft das nicht zu, ist der Vorschlag der richtige Wert.',
+                    'From here on the calculation uses your route. The commuter allowance, however, is based on the shortest road route — a longer one only counts if it is clearly quicker in practice and you use it regularly (§ 9 (1) sentence 3 no. 4 German Income Tax Act). If that does not apply, the shortest route is the figure to use.')
+                : t('Gerechnet wird mit deiner Strecke. Sie ist nicht länger als die kürzeste Straßenverbindung, für die Pendlerpauschale ändert sich damit nichts.',
+                    'The calculation uses your route. It is no longer than the shortest road route, so nothing changes for the commuter allowance.');
+        } else {
+            note = t('Gerechnet wird mit deiner Strecke. Der Vergleich mit der kürzesten Straßenverbindung steht hier, sobald sie vorliegt.',
+                     'The calculation uses your route. The comparison with the shortest road route appears here as soon as it is available.');
+        }
+
+        box.innerHTML =
+            '<div class="fk-basis__head">' +
+                '<span class="fk-basis__tag">' + escapeHtml(head) + '</span>' +
+                cmp +
+                /* Nicht "Vorschlag" als blosses Substantiv, und im Englischen
+                   nicht noch einmal "Shortest route": das steht zwei Spalten
+                   weiter links schon als Beschriftung des Vergleichswerts. */
+                '<button type="button" class="fk-ghost fk-basis__undo" onclick="fkResetRoute()">' +
+                    svg(ICON.undo, 2) +
+                    '<span>' + t('Zurück zum Vorschlag', 'Back to suggested') + '</span>' +
+                '</button>' +
+            '</div>' +
+            '<p class="fk-basis__note">' + note + '</p>';
+    }
+
+    /* Der Hinweis auf der Karte sagt, was HIER und JETZT geht. Ohne Route ist
+       das Punkte setzen, mit Route das Ziehen der Linie. */
+    function renderMapHint() {
+        var el = document.getElementById('fk-map-hint');
+        if (!el) return;
+        el.textContent = (currentRoute && currentRoute.geometry)
+            ? t('Zieh die Linie auf deinen Weg. Einen gesetzten Punkt verschiebst du durch Ziehen, ein Klick darauf entfernt ihn.',
+                'Drag the line onto the roads you take. Drag a point to move it, click it to remove it.')
+            : t('In die Karte tippen setzt einen Punkt. Marker lassen sich ziehen.',
+                'Tapping the map sets a point. Markers can be dragged.');
     }
 
     function verdictSentence(dist, days, pYear) {
@@ -628,14 +1045,20 @@
            sagen, sonst behauptet der Satz eine Genauigkeit, die es nicht
            gibt. (§ 9 EStG will die kuerzeste Strassenverbindung.) */
         var road = !!(currentRoute && currentRoute.geometry);
+        var own  = waypoints.length > 0;
+        var basisDe = !road ? 'Luftlinie, solange keine Route vorliegt'
+                    : own   ? 'deine eingezeichnete Strecke'
+                            : 'kürzeste Straßenverbindung';
+        var basisEn = !road ? 'straight-line distance, until a route is available'
+                    : own   ? 'route you drew yourself'
+                            : 'shortest road route';
+
         return t(
             nf(pYear, 2) + ' € bei ' + km(dist) + ' einfach und ' + days +
-            ' Arbeitstagen im Monat, gerechnet über zwölf Monate. Grundlage: ' +
-            (road ? 'kürzeste Straßenverbindung' : 'Luftlinie, solange keine Route vorliegt') + '.',
+            ' Arbeitstagen im Monat, gerechnet über zwölf Monate. Grundlage: ' + basisDe + '.',
 
             nf(pYear, 2) + ' € for ' + km(dist) + ' one way and ' + days +
-            ' working days a month, projected over twelve months. Based on the ' +
-            (road ? 'shortest road route' : 'straight-line distance, until a route is available') + '.'
+            ' working days a month, projected over twelve months. Based on the ' + basisEn + '.'
         );
     }
 
@@ -817,10 +1240,16 @@
             },
             {
                 icon: ICON.map, name: 'Google Maps',
-                desc: hasRoute ? t('Route mit allen Verkehrsmitteln', 'Route across all modes')
-                               : t('Alle Verkehrsmittel', 'All modes of transport'),
+                /* Der Link nimmt die Wegpunkte mit: /dir/ kettet beliebig viele
+                   Stationen. Sonst oeffnet sich dort wieder die kuerzeste
+                   Route und widerspricht der Strecke auf dieser Seite. */
+                desc: !hasRoute ? t('Alle Verkehrsmittel', 'All modes of transport')
+                    : waypoints.length ? t('Deine Strecke mit allen Zwischenpunkten', 'Your route with every waypoint')
+                                       : t('Route mit allen Verkehrsmitteln', 'Route across all modes'),
                 url: hasRoute
-                    ? 'https://www.google.com/maps/dir/' + hLat + ',' + hLon + '/' + wLat + ',' + wLon
+                    ? 'https://www.google.com/maps/dir/' + routeChain().map(function (c) {
+                          return c[1] + ',' + c[0];
+                      }).join('/')
                     : 'https://www.google.com/maps'
             },
             {
@@ -863,6 +1292,7 @@
         var payload = { addresses: addresses };
         if (coords.home) payload.home = coords.home;
         if (coords.work) payload.work = coords.work;
+        if (waypoints.length) payload.waypoints = waypoints;
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); } catch (e) {}
     }
 
@@ -876,6 +1306,12 @@
                 if (p.addresses) {
                     addresses.home = p.addresses.home || '';
                     addresses.work = p.addresses.work || '';
+                }
+                if (Array.isArray(p.waypoints)) {
+                    waypoints = p.waypoints.filter(function (c) {
+                        return Array.isArray(c) && c.length === 2 &&
+                               isFinite(c[0]) && isFinite(c[1]);
+                    });
                 }
             }
         } catch (e) {}
@@ -920,6 +1356,9 @@
         });
         coords = { home: null, work: null };
         addresses = { home: '', work: '' };
+        waypoints = [];
+        suggestedKm = null;
+        renderWaypoints();
         clearRoute();
         try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
 
@@ -1091,6 +1530,7 @@
 
     // ===== GLOBALS =====
     window.fkResetMarkers = resetMarkers;
+    window.fkResetRoute   = resetToSuggestion;
     window.fkSaveMonth    = saveMonth;
     window.fkToggleTheme  = toggleTheme;
 
