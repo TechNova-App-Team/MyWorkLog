@@ -882,7 +882,7 @@
         }
         .quick-actions::-webkit-scrollbar { display: none; }
 
-        .quick-actions button {
+        .quick-actions :is(button, a) {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -901,25 +901,25 @@
                 color var(--dur-fast) var(--ease-out),
                 transform var(--dur-fast) var(--ease-out);
         }
-        .quick-actions button:hover:not([disabled]) {
+        .quick-actions :is(button, a):hover:not([disabled]) {
             background: var(--hover-fill);
             color: var(--text-main);
         }
-        .quick-actions button:active:not([disabled]) {
+        .quick-actions :is(button, a):active:not([disabled]) {
             transform: scale(0.97);
             background: rgba(var(--primary-rgb), 0.10);
         }
-        .quick-actions button[disabled] {
+        .quick-actions :is(button, a)[disabled] {
             opacity: 0.28;
             cursor: not-allowed;
         }
-        .quick-actions button[disabled] .cmd-label {
+        .quick-actions :is(button, a)[disabled] .cmd-label {
             text-decoration: line-through;
         }
         /* Das Icon sass in einem eigenen gefuellten Kaestchen — ein Rahmen
            im Knopf im (frueheren) Karten-Rahmen. Drei Ebenen fuer ein
            12-px-Symbol. Es steht jetzt frei neben der Schrift. */
-        .quick-actions button .cmd-icon {
+        .quick-actions :is(button, a) .cmd-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -929,7 +929,7 @@
             background: none;
             flex-shrink: 0;
         }
-        .quick-actions button .cmd-icon svg {
+        .quick-actions :is(button, a) .cmd-icon svg {
             width: 14px;
             height: 14px;
             stroke: currentColor;
@@ -938,7 +938,7 @@
             stroke-linejoin: round;
             fill: none;
         }
-        .quick-actions button:hover:not([disabled]) .cmd-icon {
+        .quick-actions :is(button, a):hover:not([disabled]) .cmd-icon {
             background: rgba(var(--primary-rgb), 0.12);
         }
         .cmd-sep {
@@ -975,9 +975,17 @@
             font-weight: 600;
             margin-left: 2px;
         }
-        .quick-actions button:hover .cmd-kbd {
+        .quick-actions :is(button, a):hover .cmd-kbd {
             color: rgba(var(--primary-rgb), 0.45);
             border-color: rgba(var(--primary-rgb), 0.12);
+        }
+        /* Ein <a> bringt weder Textfarbe noch Unterstreichungs-Reset mit —
+           ohne das steht der Sprachwechsel unterstrichen und blau zwischen
+           lauter Knoepfen. */
+        .quick-actions a { text-decoration: none; color: var(--text-muted); }
+        .quick-actions :is(button, a):focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.5);
         }
         .cmd-label { font-size: inherit; }
 
@@ -2975,7 +2983,7 @@
                 border-radius: 10px;
                 padding: 2px;
             }
-            .quick-actions button {
+            .quick-actions :is(button, a) {
                 padding: 6px 9px;
                 font-size: 0.72rem;
             }

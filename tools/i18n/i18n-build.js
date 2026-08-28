@@ -349,6 +349,17 @@ function cmdRender(src, enJsonPath, outHtml, canonicalEn, canonicalDe, phrasesPa
   // ihre Ziele — auf /en/ wandert nur der aktive Zustand von DE nach EN.
   // (Die Beschriftungen bleiben Endonyme: "Deutsch"/"English" heissen in
   //  beiden Sprachen so und tragen deshalb translate="no".)
+  // Derselbe Umschalter in der Schnellaktions-Leiste des Dashboards. Er zeigt
+  // immer die ANDERE Sprache (ein Knopf in einer Knopfleiste, kein Regler), also
+  // wechseln Ziel und Beschriftung auf /en/ komplett.
+  const cmdLang = doc.getElementById('cmdLangSwitch');
+  if (cmdLang) {
+    cmdLang.setAttribute('href', '/');
+    cmdLang.setAttribute('hreflang', 'de');
+    const lbl = cmdLang.querySelector('.cmd-label');
+    if (lbl) lbl.textContent = 'Deutsch';
+  }
+
   const segDe = doc.getElementById('langSegDe');
   const segEn = doc.getElementById('langSegEn');
   if (segDe && segEn) {
