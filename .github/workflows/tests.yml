@@ -1,0 +1,64 @@
+# Prueft jeden Push und jeden PR.
+#
+# WARUM: Die Abnahme lief bisher nur im lokalen Pre-Commit-Hook. Der greift nicht
+# bei `git commit --no-verify`, nicht bei einem Commit ueber die GitHub-Oberflaeche
+# und nicht, wenn ein zweiter Agent im Arbeitsbaum committet. Cloudflare Pages
+# deployt, was ankommt — ohne einen einzigen Test zu fahren.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Ein neuer Push macht den laufenden Durchgang ueberfluessig.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Baut index.html aus index.template.html + components/**. Schlaegt fehl,
+      # wenn ein Fragment fehlt oder der Include-Name nicht stimmt.
+      # `--check` waere hier sinnlos: index.html ist gitignored, in einem frischen
+      # Clone gibt es sie nicht, und der Vergleich liefe gegen null.
+      - name: index.html bauen
+        run: npm run build:index
+
+      # Die englischen Seiten. `0 fehlend` ist Pflicht — bleibt ein Schluessel
+      # uebrig, fuellt merge-dict ihn still mit Deutsch auf.
+      - name: /en/ bauen und auf fehlende Uebersetzungen pruefen
+        run: |
+          npm run i18n:build 2>&1 | tee i18n.log
+          if grep -qE '[1-9][0-9]* fehlend' i18n.log; then
+            echo "::error::i18n meldet fehlende Uebersetzungen"
+            grep -E '[1-9][0-9]* fehlend' i18n.log
+            exit 1
+          fi
+
+      # Alle Tests aus tools/, inklusive asset-pfade (jeder JS/CSS-Verweis muss
+      # eine Datei treffen und absolut sein). Die Schleife laeuft bewusst durch,
+      # statt beim ersten Fehlschlag abzubrechen — ein Durchgang soll ALLE
+      # kaputten Tests zeigen, nicht nur den ersten.
+      - name: Projekt-Tests
+        run: |
+          fehler=0
+          for t in tools/*.test.mjs; do
+            printf '\n──────── %s\n' "$t"
+            node "$t" || { echo "::error file=$t::$t fehlgeschlagen"; fehler=1; }
+          done
+          exit $fehler

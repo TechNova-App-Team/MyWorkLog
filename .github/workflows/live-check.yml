@@ -1,0 +1,41 @@
+# Prueft die AUSGELIEFERTE Site, taeglich und nach jedem Deploy-Anlass.
+#
+# WARUM DAS DER WICHTIGERE VON BEIDEN WORKFLOWS IST: Das Routing dieser Site
+# steht nicht vollstaendig im Repo. Eine Rewrite-Regel im Cloudflare-Dashboard
+# laeuft am Edge vor `_redirects` und kann jede Zeile darin ueberstimmen. Aendert
+# sie sich, bleibt lokal alles gruen und live faellt etwas aus. Genau so lag die
+# ArchFlow-Karte auf 404, waehrend `_redirects` sich richtig las.
+name: Live-Check
+
+on:
+  schedule:
+    - cron: '0 6 * * *'      # taeglich 06:00 UTC (07:00 bzw. 08:00 in DE)
+  push:
+    branches: [main]
+    paths:                    # nur, wenn sich am Routing oder am Bestand etwas aendert
+      - '_redirects'
+      - '_headers'
+      - 'sitemap.xml'
+      - 'config/version.json'
+  workflow_dispatch:
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Nach einem Push erst dem Cloudflare-Deploy Zeit geben. Ohne das misst der
+      # Lauf die VORIGE Fassung und meldet Fehler, die schon behoben sind.
+      - name: Auf den Deploy warten
+        if: github.event_name == 'push'
+        run: sleep 180
+
+      - name: Sitemap, Dateien und Weiterleitungen pruefen
+        run: node tools/live-check.mjs https://myworklog.de
