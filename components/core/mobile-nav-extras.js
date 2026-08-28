@@ -228,7 +228,13 @@
     // ============================================
 
     // Legacy wrapper — routes to unified toast system
+    // 🔴 Torwaechter fuer AUTOMATISCHE Meldungen. Bewusst hier und nicht in
+    // showToast(): das zeigt auch Rueckmeldungen auf eigene Handlungen
+    // ("Gespeichert", "Kopiert"). Wer die Alerts abschaltet, will keine
+    // ungefragten Hinweise mehr — nicht die Bestaetigung des eigenen Klicks
+    // verlieren.
     function showSmartNotification(title, message, type = 'info') {
+        if (typeof mwlAlertsOn === 'function' && !mwlAlertsOn()) return;
         showToast(title, message, type);
     }
 
@@ -303,7 +309,7 @@
         const deficit = Math.max(0, todayExpected - todayWorked);
 
         // Nachmittag-Erinnerung (15:00 Uhr)
-        if (now.getHours() === 15 && !sessionStorage.getItem('mwl_notif_afternoon')) {
+        if (mwlAlertsOn('dailyReminders') && now.getHours() === 15 && !sessionStorage.getItem('mwl_notif_afternoon')) {
             let message = '';
             if (deficit > 0) {
                 message = `Du brauchst noch ${deficit.toFixed(1)}h heute! (Soll: ${todayExpected.toFixed(2)}h, bisher: ${todayWorked.toFixed(2)}h)`;
@@ -316,7 +322,7 @@
         }
 
         // Feierabend-Erinnerung (17:00 Uhr)
-        if (now.getHours() === 17 && !sessionStorage.getItem('mwl_notif_evening')) {
+        if (mwlAlertsOn('dailyReminders') && now.getHours() === 17 && !sessionStorage.getItem('mwl_notif_evening')) {
             if (deficit > 0) {
                 showSmartNotification('🌆 Feierabend-Reminder', `Noch ${deficit.toFixed(1)}h — möchtest du noch ein bisschen arbeiten?`, 'info');
                 sessionStorage.setItem('mwl_notif_evening', 'shown');
@@ -330,7 +336,7 @@
         }
 
         // Wochenende-Check (Freitag 16:00 Uhr)
-        if (now.getDay() === 5 && now.getHours() === 16 && !sessionStorage.getItem('mwl_notif_friday')) {
+        if (mwlAlertsOn('dailyReminders') && now.getDay() === 5 && now.getHours() === 16 && !sessionStorage.getItem('mwl_notif_friday')) {
             const week = getWeek(now);
             let weekHours = 0;
             data.entries.forEach(e => {
@@ -351,7 +357,7 @@
 
         // Export/Backup Reminder (wenn älter als 7 Tage oder nie exportiert)
         try {
-            if (alertSettings.exportReminder) {
+            if (mwlAlertsOn('exportReminder')) {
                 const lastExport = localStorage.getItem('mwl_last_export');
                 let needsExport = false;
                 if (!lastExport) needsExport = true;
@@ -361,11 +367,27 @@
                 }
                 const exportReminderKey = 'mwl_export_reminder_shown_' + today;
                 if (needsExport && !localStorage.getItem(exportReminderKey)) {
-                    const msg = 'Dein letztes Backup ist älter als 7 Tage (oder nicht vorhanden). Bitte exportiere deine Daten!';
-                    showSmartNotification('💾 Backup Reminder', msg, 'warning');
+                    // Der Text nannte immer nur den Datei-Export. Fuer jemanden,
+                    // der in die Cloud sichert, war das schlicht falsch — und
+                    // die Meldung kam trotzdem taeglich, weil der AutoSync
+                    // seinen Upload nicht vermerkt hat (behoben in
+                    // supabase-integration.js: uploadToCloud).
+                    const nieGesichert = !lastExport;
+                    const en = document.documentElement.lang === 'en';
+                    const msg = nieGesichert
+                        ? (en ? 'There is no backup of your data yet — neither in the cloud nor as a file.'
+                              : 'Von deinen Daten gibt es noch keine Sicherung — weder in der Cloud noch als Datei.')
+                        : (en ? 'Your data was last backed up more than 7 days ago.'
+                              : 'Die letzte Sicherung deiner Daten ist über 7 Tage her.');
+                    const titel = en ? 'No backup' : 'Sicherung fehlt';
+                    showSmartNotification(titel, msg, 'warning');
                     // Füge auch einen persistenten Alert hinzu, sichtbar im Alerts-Panel
                     try {
-                        const a = createAlert('Backup Reminder', msg, 'warning', '💾');
+                        // mwlIconFromEmoji() reicht fertiges SVG unveraendert durch, uebersetzt
+                        // aber nur EMOJIS. Ein blosser Icon-NAME landet im
+                        // Maskierungs-Zweig und stand als Wort "save" in der Karte.
+                        const a = createAlert(titel, msg, 'warning',
+                            (typeof mwlIcon === 'function') ? mwlIcon('save', 18) : '');
                         alertsHistory.unshift(a);
                         persistAlerts();
                         updateAlertBadge();
@@ -380,13 +402,13 @@
         const totalDiff = data.entries.reduce((sum, e) => sum + (e.diff || 0), 0);
         
         // 100h Überstunden
-        if (totalDiff >= 100 && totalDiff < 101 && !localStorage.getItem('mwl_milestone_100h')) {
+        if (mwlAlertsOn('milestones') && totalDiff >= 100 && totalDiff < 101 && !localStorage.getItem('mwl_milestone_100h')) {
             showSmartNotification('🎉 MEGA!', 'Du hast 100h Überstunden erreicht! 🚀', 'success');
             localStorage.setItem('mwl_milestone_100h', 'shown');
         }
 
         // 50h Überstunden
-        if (totalDiff >= 50 && totalDiff < 51 && !localStorage.getItem('mwl_milestone_50h')) {
+        if (mwlAlertsOn('milestones') && totalDiff >= 50 && totalDiff < 51 && !localStorage.getItem('mwl_milestone_50h')) {
             showSmartNotification('🎊 Wow!', '50h Überstunden - Das ist beeindruckend! 💪', 'success');
             localStorage.setItem('mwl_milestone_50h', 'shown');
         }

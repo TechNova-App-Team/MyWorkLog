@@ -347,6 +347,21 @@ class SupabaseCloudSync {
             }
 
             console.log('[Cloud] Daten erfolgreich hochgeladen!');
+
+            // 🔴 Der Zeitstempel gehoert HIERHER, nicht an die Knoepfe.
+            // Vorher schrieben ihn drei Klick-Handler (api-cloud-sync.js x2,
+            // supabase-ui.js x1) je fuer sich. Der AutoSync ruft dieselbe
+            // Funktion, aber keinen dieser Handler — er hat also jahrelang
+            // erfolgreich hochgeladen, ohne dass es irgendwo vermerkt wurde.
+            // Folge: die Backup-Erinnerung meldete taeglich "aelter als 7 Tage
+            // (oder nicht vorhanden)", waehrend die Daten in Wahrheit alle paar
+            // Minuten in der Cloud landeten. Wer sichert, muss das selbst
+            // protokollieren — nicht der, der den Knopf gedrueckt hat.
+            try {
+                localStorage.setItem('mwl_last_export', new Date().toISOString());
+                localStorage.setItem('mwl_last_backup_kind', 'cloud');
+            } catch (e) { /* Speicher voll oder gesperrt - kein Grund, den Upload zu verlieren */ }
+
             return { success: true, data };
         } catch (error) {
             console.error('[Cloud] uploadToCloud Fehler:', error.message || error);

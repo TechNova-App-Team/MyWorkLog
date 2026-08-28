@@ -562,8 +562,6 @@
         try {
             console.log('[Upload] Starte Upload...');
             await window.cloudSync.uploadToCloud();
-            try { localStorage.setItem('mwl_last_export', new Date().toISOString()); } catch(e) {}
-            try { const today = new Date().toISOString().split('T')[0]; localStorage.setItem('mwl_export_reminder_shown_' + today, '1'); } catch(e) {}
             cloudBtnSuccess(uploadBtn, originalHTML);
         } catch (error) {
             console.error('[Upload] Fehler:', error);
@@ -697,8 +695,6 @@
 
         try {
             await window.cloudSync.uploadToCloud();
-            try { localStorage.setItem('mwl_last_export', new Date().toISOString()); } catch (e) {}
-            try { const today = new Date().toISOString().split('T')[0]; localStorage.setItem('mwl_export_reminder_shown_' + today, '1'); } catch (e) {}
 
             if (chip) {
                 chip.classList.remove('is-syncing');
@@ -1083,6 +1079,10 @@
     }
 
     function showCloudSyncPrompt() {
+        // Auch das ist eine ungefragte Meldung und gehoert unter den
+        // Hauptschalter der Alerts — sonst schaltet man "alle Meldungen aus"
+        // und wird weiter angetippt.
+        if (typeof mwlAlertsOn === 'function' && !mwlAlertsOn()) return;
         if (!window.cloudSync || typeof window.cloudSync.isLoggedIn !== 'function' || !window.cloudSync.isLoggedIn()) return;
         // Grace nach Page-Load: filtert das automatische save() beim Initial-Boot
         if (Date.now() - _cloudPromptPageLoadTs < CLOUD_PROMPT_GRACE_MS) return;

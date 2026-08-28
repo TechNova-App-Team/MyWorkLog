@@ -301,8 +301,6 @@ class SupabaseCloudSyncUI {
 
             // Upload Daten
             await this.sync.uploadToCloud();
-            try { localStorage.setItem('mwl_last_export', new Date().toISOString()); } catch(e) {}
-            try { const today = new Date().toISOString().split('T')[0]; localStorage.setItem('mwl_export_reminder_shown_' + today, '1'); } catch(e) {}
 
             // Success Feedback
             syncBtn.innerHTML = '✅';

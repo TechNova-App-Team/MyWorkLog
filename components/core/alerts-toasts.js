@@ -1,13 +1,39 @@
 // ═══ CORE: ALERTS-TOASTS ═══
     // ===== SMART ALERTS SYSTEM (IMPROVED) =====
     let alertsHistory = [];
-    let alertSettings = {
-        saldoPositive: true,
-        saldoNegative: true,
-        shiftMax: true,
-        vacationLow: true,
-        exportReminder: true
-    };
+
+    // 🔴 EINE Liste, drei Verwendungen: Vorgabe, Haken wiederherstellen,
+    // Haken speichern. Vorher standen die Namen an drei Stellen einzeln
+    // ausgeschrieben — der fuenfte Schalter (exportReminder) war deshalb in
+    // zwei davon nur nachtraeglich per try/catch angeflickt. Wer hier eine
+    // Zeile ergaenzt, bekommt Vorgabe, Laden und Speichern geschenkt.
+    //
+    // `master` ist der Hauptschalter: steht er auf false, schweigt das ganze
+    // System. Vorher liess sich genau EINE der zehn automatischen Meldungen
+    // abschalten (die Backup-Erinnerung); die uebrigen neun — Nachmittags-
+    // Check, Feierabend, Freitag, Wochenplan, zwei Meilensteine — feuerten
+    // ohne jede Einstellung und waren nirgends abstellbar.
+    const ALERT_TOGGLES = [
+        { key: 'master',         id: 'alertMaster' },
+        { key: 'saldoPositive',  id: 'alertSaldoPositive' },
+        { key: 'saldoNegative',  id: 'alertSaldoNegative' },
+        { key: 'shiftMax',       id: 'alertShiftMax' },
+        { key: 'vacationLow',    id: 'alertVacationLow' },
+        { key: 'dailyReminders', id: 'alertDailyReminders' },
+        { key: 'milestones',     id: 'alertMilestones' },
+        { key: 'exportReminder', id: 'alertExportReminder' }
+    ];
+
+    let alertSettings = {};
+    ALERT_TOGGLES.forEach(t => { alertSettings[t.key] = true; });
+
+    // Der eine Torwaechter. Ohne Kategorie: fragt nur den Hauptschalter.
+    // Wird auch aus mobile-nav-extras.js gerufen (laedt spaeter, sieht die
+    // Funktion also); der Test haelt beide Seiten zusammen.
+    function mwlAlertsOn(category) {
+        if (alertSettings.master === false) return false;
+        return category ? alertSettings[category] !== false : true;
+    }
     let lastAlertCheck = {};
     const ALERT_STORAGE_KEY = 'timetracker_alerts_v2';
     const ALERT_SETTINGS_KEY = 'timetracker_alert_settings_v2';
@@ -48,16 +74,12 @@
             }
         }
         
-        // Restore UI state
-        document.getElementById('alertSaldoPositive').checked = alertSettings.saldoPositive;
-        document.getElementById('alertSaldoNegative').checked = alertSettings.saldoNegative;
-        document.getElementById('alertShiftMax').checked = alertSettings.shiftMax;
-        document.getElementById('alertVacationLow').checked = alertSettings.vacationLow;
-        // neues Feld: Export/Backup Reminder
-        try {
-            const el = document.getElementById('alertExportReminder');
-            if (el) el.checked = alertSettings.exportReminder;
-        } catch (e) { /* ignore if element not yet present */ }
+        // Haken aus den Einstellungen zurueckschreiben
+        ALERT_TOGGLES.forEach(t => {
+            const el = document.getElementById(t.id);
+            if (el) el.checked = alertSettings[t.key] !== false;
+        });
+        syncAlertMasterUi();
         
         // Zeige Willkommens-Alert nur beim ERSTEN Start (nie wieder danach)
         const welcomeShown = localStorage.getItem(ALERT_WELCOME_SHOWN);
@@ -90,19 +112,42 @@
     }
     
     function saveAlertSettings() {
-        alertSettings.saldoPositive = document.getElementById('alertSaldoPositive').checked;
-        alertSettings.saldoNegative = document.getElementById('alertSaldoNegative').checked;
-        alertSettings.shiftMax = document.getElementById('alertShiftMax').checked;
-        alertSettings.vacationLow = document.getElementById('alertVacationLow').checked;
-        // Export reminder setting
-        try {
-            alertSettings.exportReminder = document.getElementById('alertExportReminder').checked;
-        } catch (e) { /* element might not exist in older builds */ }
+        ALERT_TOGGLES.forEach(t => {
+            const el = document.getElementById(t.id);
+            if (el) alertSettings[t.key] = el.checked;
+        });
         try {
             localStorage.setItem(ALERT_SETTINGS_KEY, JSON.stringify(alertSettings));
         } catch (e) {
             console.error('Failed to save alert settings:', e);
         }
+        syncAlertMasterUi();
+    }
+
+    // Bei ausgeschaltetem Hauptschalter werden die Kategorie-Haken wirklich
+    // gesperrt, nicht nur blass gemalt: ein bedienbarer Schalter ohne Wirkung
+    // ist eine Zusage ohne Deckung.
+    function syncAlertMasterUi() {
+        const on = alertSettings.master !== false;
+        const group = document.getElementById('alertCategoryGroup');
+        if (group) {
+            group.classList.toggle('is-muted', !on);
+            group.querySelectorAll('input[type="checkbox"]').forEach(el => { el.disabled = !on; });
+        }
+        const hint = document.getElementById('alertMasterHint');
+        if (hint) {
+            hint.textContent = on
+                ? mwlAlertL('Einzelne Meldungen lassen sich unten abschalten.',
+                            'Individual notifications can be switched off below.')
+                : mwlAlertL('Aus. Es erscheinen keine automatischen Meldungen mehr.',
+                            'Off. No automatic notifications will appear.');
+        }
+    }
+
+    // JS-erzeugter Text; kurze Begriffe wie "Aus" gehoeren nicht ins globale
+    // MAP in i18n-runtime.js, das sie ueberall sonst mituebersetzen wuerde.
+    function mwlAlertL(de, en) {
+        return (document.documentElement.lang === 'en') ? en : de;
     }
 
     function updateAlertExportInfo() {
@@ -111,10 +156,17 @@
             const el = document.getElementById('lastExportInfo');
             if (!el) return;
             if (!last) {
-                el.textContent = 'Noch kein Backup erstellt';
+                el.textContent = mwlAlertL('Noch kein Backup erstellt', 'No backup yet');
             } else {
-                const d = new Date(last);
-                el.textContent = d.toLocaleString(mwlLocale());
+                // Wohin gesichert wurde, gehoert dazu: sonst steht bei einem
+                // reinen Cloud-Nutzer ein Zeitstempel neben zwei
+                // Datei-Export-Knoepfen und legt nahe, er haette exportiert.
+                const kind = localStorage.getItem('mwl_last_backup_kind');
+                const wohin = kind === 'cloud'     ? mwlAlertL('Cloud', 'Cloud')
+                            : kind === 'encrypted' ? mwlAlertL('Datei, verschlüsselt', 'File, encrypted')
+                            : kind === 'file'      ? mwlAlertL('Datei', 'File')
+                            : '';
+                el.textContent = new Date(last).toLocaleString(mwlLocale()) + (wohin ? ' · ' + wohin : '');
             }
         } catch (e) { console.warn('updateAlertExportInfo failed', e); }
     }
@@ -141,6 +193,7 @@
     }
     
     function checkAlertsThresholds() {
+        if (!mwlAlertsOn()) return;
         const now = new Date();
         const today = now.toLocaleDateString('de-DE');  // bewusst fix: dient als Dedup-Schluessel, darf nicht mit der Sprache wechseln
         let newAlertsCreated = false;
@@ -173,7 +226,14 @@
         
         // 3. Prüfe heute's Schichten-Länge
         if (alertSettings.shiftMax) {
-            const todayEntries = data.entries.filter(e => e.date === today && e.type === 'work');
+            // 🔴 `today` ist der Dedup-Schluessel im Format "28.8.2026" und darf
+            // NICHT gegen e.date gehalten werden — das steht als "2026-08-28"
+            // da. Der Vergleich ging nie auf, die Schicht-Warnung hat seit
+            // jeher kein einziges Mal ausgeloest. Zwei Bedeutungen, zwei
+            // Variablen.
+            const todayIso = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0')
+                           + '-' + String(now.getDate()).padStart(2, '0');
+            const todayEntries = data.entries.filter(e => e.date === todayIso && e.type === 'work');
             let totalToday = 0;
             todayEntries.forEach(e => {
                 const start = parseTime(e.start);

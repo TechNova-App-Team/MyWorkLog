@@ -2013,21 +2013,41 @@
         <div style="padding:1.25rem 1.5rem;flex-shrink:0;">
             <h4 style="font-size:0.7rem;color:rgba(255,255,255,0.35);margin:0 0 1rem 0;text-transform:uppercase;letter-spacing:1.2px;font-weight:600;">Einstellungen</h4>
             
-            <div style="display:flex;flex-direction:column;gap:6px;">
+            <!-- Hauptschalter. Steht bewusst ueber und optisch abgesetzt von den
+                 Kategorien: er regiert sie. Ist er aus, werden die Haken darunter
+                 wirklich gesperrt (syncAlertMasterUi) - ein bedienbarer Schalter
+                 ohne Wirkung waere eine Zusage ohne Deckung. -->
+            <label class="alert-master">
+                <span class="alert-master__text">
+                    <span class="alert-master__title">Benachrichtigungen</span>
+                    <span class="alert-master__hint" id="alertMasterHint">Einzelne Meldungen lassen sich unten abschalten.</span>
+                </span>
+                <input type="checkbox" id="alertMaster" checked onchange="saveAlertSettings()">
+                <span class="alert-switch" aria-hidden="true"></span>
+            </label>
+
+            <div class="alert-cat-group" id="alertCategoryGroup">
+                <p class="alert-cat-head">Wovon</p>
                 <div class="alert-setting-row">
-                    <label><input type="checkbox" id="alertSaldoPositive" checked onchange="saveAlertSettings()"><span>Saldo > +20h</span></label>
+                    <label><input type="checkbox" id="alertSaldoPositive" checked onchange="saveAlertSettings()"><span>Saldo über +20 h</span></label>
                 </div>
                 <div class="alert-setting-row">
-                    <label><input type="checkbox" id="alertSaldoNegative" checked onchange="saveAlertSettings()"><span>Saldo < -5h</span></label>
+                    <label><input type="checkbox" id="alertSaldoNegative" checked onchange="saveAlertSettings()"><span>Saldo unter −5 h</span></label>
                 </div>
                 <div class="alert-setting-row">
-                    <label><input type="checkbox" id="alertShiftMax" checked onchange="saveAlertSettings()"><span>Schicht > 10h</span></label>
+                    <label><input type="checkbox" id="alertShiftMax" checked onchange="saveAlertSettings()"><span>Schicht über 10 h</span></label>
                 </div>
                 <div class="alert-setting-row">
                     <label><input type="checkbox" id="alertVacationLow" checked onchange="saveAlertSettings()"><span>Urlaub fast aufgebraucht</span></label>
                 </div>
                 <div class="alert-setting-row">
-                    <label><input type="checkbox" id="alertExportReminder" onchange="saveAlertSettings()"><span>Backup-Erinnerung (7 Tage)</span></label>
+                    <label><input type="checkbox" id="alertDailyReminders" checked onchange="saveAlertSettings()"><span>Tages-Erinnerungen</span></label>
+                </div>
+                <div class="alert-setting-row">
+                    <label><input type="checkbox" id="alertMilestones" checked onchange="saveAlertSettings()"><span>Meilensteine (50 h, 100 h)</span></label>
+                </div>
+                <div class="alert-setting-row">
+                    <label><input type="checkbox" id="alertExportReminder" checked onchange="saveAlertSettings()"><span>Sicherung fehlt seit 7 Tagen</span></label>
                 </div>
             </div>
 
