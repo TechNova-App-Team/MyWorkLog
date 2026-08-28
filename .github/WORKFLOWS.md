@@ -30,7 +30,24 @@ Laeuft bei **jedem Push auf main und jedem Pull Request**.
 | `npm ci` | Lockfile driftet von `package.json` weg |
 | `npm run build:index` | fehlendes Fragment, falscher Include-Name in `index.template.html` |
 | `npm run i18n:build` + Grep | eine neue deutsche Zeichenkette ohne englische Entsprechung |
-| `npm run test:all` | alle 16 `tools/*.test.mjs` |
+| `npm run test:all` | alle `tools/*.test.mjs` — 15 auf dem Runner, siehe unten |
+
+### Ein Test laeuft in CI bewusst nicht
+
+`umfrage-worker.test.mjs` liest `workers/ai-proxy/worker.js` — und `workers/`
+steht in `.gitignore` (Zeile 167), weil der Worker von Hand deployed wird. Auf
+einem Runner gibt es die Datei also nie. Der erste CI-Lauf ist genau daran
+gescheitert.
+
+Der Test steigt jetzt mit **Exit 2 = uebersprungen** aus, wenn die Datei fehlt
+**und** `CI` gesetzt ist. Fehlt sie lokal, bricht er mit Exit 1 ab — dort ist das
+ein echter Befund, denn ohne die Datei gibt es vor dem naechsten manuellen
+Worker-Deploy keine Absicherung.
+
+`run-tests.mjs` zaehlt Uebersprungene getrennt und schreibt sie namentlich hin:
+`15/15 gelaufene Tests gruen — 1 uebersprungen`. Ein uebersprungener Test darf
+nie als gruen durchgehen, sonst meldet die Zeile am Ende eine Deckung, die es
+nicht gibt.
 
 Der i18n-Schritt greppt die Ausgabe nach `<n> fehlend` mit n > 0. Das ist noetig,
 weil `i18n:build` selbst mit Exit 0 endet und die Luecke still mit Deutsch

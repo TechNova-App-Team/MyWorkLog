@@ -3,7 +3,23 @@
 // einzige Absicherung vor dem Deploy. Aufruf:  node tools/umfrage-worker.test.mjs
 import fs from 'fs';
 
-const src = fs.readFileSync('workers/ai-proxy/worker.js', 'utf8');
+// workers/ ist gitignored (.gitignore:167) — auf einem CI-Runner gibt es die
+// Datei nicht, dort waere dieser Test nur ein Dauerrot ohne Aussage. Lokal fehlt
+// sie dagegen NIE, ausser jemand hat sie geloescht; das ist ein echter Befund und
+// muss knallen. Exit 2 = uebersprungen (run-tests.mjs zaehlt es getrennt).
+const WORKER = 'workers/ai-proxy/worker.js';
+if (!fs.existsSync(WORKER)) {
+  if (process.env.CI) {
+    console.log(`  --   uebersprungen: ${WORKER} ist gitignored, auf dem Runner nicht vorhanden.`);
+    console.log('       Der Worker wird von Hand deployed; diese Tests laufen vor dem Deploy lokal.');
+    process.exit(2);
+  }
+  console.error(`✗ ${WORKER} fehlt. Der Worker ist gitignored und liegt nur lokal —`);
+  console.error('  ohne ihn gibt es vor dem naechsten Deploy keine Absicherung.');
+  process.exit(1);
+}
+
+const src = fs.readFileSync(WORKER, 'utf8');
 // Nur den Umfrage-Teil isolieren (der Rest braucht fetch/OpenRouter)
 const start = src.indexOf('const UMF_FEATURES');
 const end   = src.indexOf('// ── Worker Entry Point');
