@@ -51,14 +51,13 @@ jobs:
           fi
 
       # Alle Tests aus tools/, inklusive asset-pfade (jeder JS/CSS-Verweis muss
-      # eine Datei treffen und absolut sein). Die Schleife laeuft bewusst durch,
-      # statt beim ersten Fehlschlag abzubrechen — ein Durchgang soll ALLE
-      # kaputten Tests zeigen, nicht nur den ersten.
+      # eine Datei treffen und absolut sein).
+      #
+      # Bewusst ueber run-tests.mjs statt einer Shell-Schleife: die Schleife hier
+      # wertete jeden Exit != 0 als Fehlschlag und liess damit umfrage-worker
+      # durchfallen, der auf dem Runner mit Exit 2 = "uebersprungen" aussteigt
+      # (seine Quelle workers/ ist gitignored). run-tests.mjs kennt den
+      # Unterschied, laeuft trotz Fehlschlag bis zum Ende durch und zeigt so ALLE
+      # kaputten Tests in einem Durchgang, nicht nur den ersten.
       - name: Projekt-Tests
-        run: |
-          fehler=0
-          for t in tools/*.test.mjs; do
-            printf '\n──────── %s\n' "$t"
-            node "$t" || { echo "::error file=$t::$t fehlgeschlagen"; fehler=1; }
-          done
-          exit $fehler
+        run: npm run test:all
