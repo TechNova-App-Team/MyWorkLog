@@ -91,6 +91,27 @@
             persistAlerts();
         }
         
+        // Icons erst hier setzen — mwlIcon steht als globale Funktion bereit,
+        // sobald icons.js geladen ist; im Markup waeren es Textzeichen.
+        const setIcon = (id, name, size) => {
+            const el = document.getElementById(id);
+            if (el && typeof mwlIcon === 'function') el.innerHTML = mwlIcon(name, size || 16);
+        };
+        setIcon('alertsSettingsBtn', 'settings');
+        const closeBtn = document.querySelector('#alertsPanel .ap-head__actions .ap-iconbtn:last-child');
+        if (closeBtn && typeof mwlIcon === 'function') closeBtn.innerHTML = mwlIcon('x', 16);
+        document.querySelectorAll('#alertsPanel .ap-btn__icon[data-icon]').forEach(el => {
+            if (typeof mwlIcon === 'function') el.innerHTML = mwlIcon(el.dataset.icon, 14);
+        });
+
+        const setBtn = document.getElementById('alertsSettingsBtn');
+        if (setBtn && !setBtn.dataset.wired) {
+            setBtn.dataset.wired = '1';
+            setBtn.addEventListener('click', () => {
+                showAlertsView(setBtn.getAttribute('aria-expanded') === 'true' ? 'log' : 'settings');
+            });
+        }
+
         // Initiales Rendern
         checkAlertsThresholds();
         updateAlertBadge();
@@ -137,8 +158,8 @@
         const hint = document.getElementById('alertMasterHint');
         if (hint) {
             hint.textContent = on
-                ? mwlAlertL('Einzelne Meldungen lassen sich unten abschalten.',
-                            'Individual notifications can be switched off below.')
+                ? mwlAlertL('Einzelne Meldungen lassen sich in den Einstellungen abschalten.',
+                            'Individual notifications can be switched off in the settings.')
                 : mwlAlertL('Aus. Es erscheinen keine automatischen Meldungen mehr.',
                             'Off. No automatic notifications will appear.');
         }
@@ -172,24 +193,46 @@
     }
     
     function toggleAlertsPanel() {
-        const panel = document.getElementById('alertsPanel');
+        const panel   = document.getElementById('alertsPanel');
         const overlay = document.getElementById('alertsOverlay');
-        const badge = document.getElementById('alertBadge');
-        
-        if (panel.classList.contains('active')) {
-            panel.classList.remove('active');
-            overlay.style.display = 'none';
-            overlay.style.opacity = '0';
-        } else {
-            panel.classList.add('active');
-            overlay.style.display = 'block';
-            overlay.style.opacity = '1';
-            // Markiere alle als gelesen wenn Panel öffnet
-            markAllAlertsAsRead();
+        if (!panel) return;
+        const open = !panel.classList.contains('active');
+
+        panel.classList.toggle('active', open);
+        panel.setAttribute('aria-hidden', String(!open));
+        if (overlay) overlay.classList.toggle('is-open', open);
+
+        if (open) {
+            // Beim Oeffnen immer im Protokoll landen, nie in den Einstellungen:
+            // man oeffnet dieses Schubfach, um zu LESEN.
+            showAlertsView('log');
+            // 🔴 Reihenfolge ist entscheidend: ERST zeichnen, DANN als gelesen
+            // markieren. Andersherum sind beim Zeichnen schon alle gelesen und
+            // die Hervorhebung des Neuen war nie zu sehen — der gefuellte Punkt
+            // haette nie einen einzigen Moment lang existiert. Bewusst KEIN
+            // zweites Rendern danach: die Punkte sollen nicht unter der Hand
+            // ausgehen, waehrend man sie liest. Beim naechsten Oeffnen sind sie
+            // gelesen.
             renderAlertsList();
-            // Aktualisiere Export-Info wenn Panel geöffnet wird
             updateAlertExportInfo();
+            markAllAlertsAsRead();
+            updateAlertBadge();
         }
+    }
+
+    // Zwei Ansichten in einem Schubfach. Der Hauptschalter im Kopf bleibt in
+    // beiden stehen.
+    function showAlertsView(which) {
+        const log = document.getElementById('alertsLogView');
+        const set = document.getElementById('alertsSettingsView');
+        const btn = document.getElementById('alertsSettingsBtn');
+        const foot = document.getElementById('alertsFoot');
+        if (!log || !set) return;
+        const settings = which === 'settings';
+        log.hidden = settings;
+        set.hidden = !settings;
+        if (foot) foot.hidden = settings;
+        if (btn) btn.setAttribute('aria-expanded', String(settings));
     }
     
     function checkAlertsThresholds() {
@@ -287,45 +330,29 @@
         if (_toastContainer && document.body.contains(_toastContainer)) return _toastContainer;
         _toastContainer = document.createElement('div');
         _toastContainer.id = 'toastContainer';
-        _toastContainer.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10001;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: calc(100dvh - 40px);
-            overflow: hidden;
-            pointer-events: none;
-        `;
+        _toastContainer.className = 'tt-toasts';
         document.body.appendChild(_toastContainer);
         return _toastContainer;
     }
 
-    function _getToastColors(type) {
-        switch (type) {
-            case 'danger': case 'error':
-                return { bg: 'rgba(239,68,68,0.12)', border: '#ef4444', icon: '#ef4444', bar: '#ef4444' };
-            case 'warning':
-                return { bg: 'rgba(245,158,11,0.12)', border: '#f59e0b', icon: '#f59e0b', bar: '#f59e0b' };
-            case 'success':
-                return { bg: 'rgba(16,185,129,0.12)', border: '#10b981', icon: '#10b981', bar: '#10b981' };
-            default:
-                return { bg: 'rgba(var(--primary-rgb),0.12)', border: 'var(--primary)', icon: 'var(--primary)', bar: 'var(--primary)' };
-        }
+    // Die Farben liegen in alerts.css, damit sie im hellen Theme mitziehen.
+    // Hier bleibt nur die Zuordnung Typ → Rolle.
+    function _toastRole(type) {
+        if (type === 'danger' || type === 'error') return 'danger';
+        if (type === 'warning' || type === 'success') return type;
+        return 'info';
     }
 
     function showToast(title, message, type = 'info', icon = null, duration = TOAST_DURATION) {
         const container = _ensureToastContainer();
-        const colors = _getToastColors(type);
+        const role = _toastRole(type);
         // Aufrufer reichen teils noch Emoji-Zeichen als `icon` durch (auch aus
         // gespeicherten Alerts) — mwlIconFromEmoji uebersetzt sie an der Ausgabe
         // und laesst fertiges SVG unveraendert durch.
-        const _fallback = (type === 'danger' || type === 'error') ? 'xCircle'
-                        : type === 'warning' ? 'alert'
-                        : type === 'success' ? 'checkCircle' : 'info';
-        const autoIcon = (icon ? mwlIconFromEmoji(icon, 20) : '') || mwlIcon(_fallback, 20);
+        const _fallback = role === 'danger' ? 'xCircle'
+                        : role === 'warning' ? 'alert'
+                        : role === 'success' ? 'checkCircle' : 'info';
+        const autoIcon = (icon ? mwlIconFromEmoji(icon, 18) : '') || mwlIcon(_fallback, 18);
 
         // Limit: max sichtbare Toasts
         const existing = container.querySelectorAll('.tt-toast');
@@ -335,39 +362,18 @@
 
         const toast = document.createElement('div');
         toast.className = 'tt-toast';
-        toast.style.cssText = `
-            pointer-events: auto;
-            background: #18181b;
-            border: 1px solid ${colors.border}33;
-            border-left: 4px solid ${colors.border};
-            border-radius: 14px;
-            padding: 14px 16px 10px;
-            max-width: 380px;
-            min-width: 300px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.45), 0 0 0 0.5px rgba(255,255,255,0.04) inset;
-            backdrop-filter: blur(24px);
-            font-family: var(--font-main, -apple-system, BlinkMacSystemFont, sans-serif);
-            cursor: pointer;
-            transform: translateX(120%);
-            opacity: 0;
-            transition: transform 0.4s cubic-bezier(0.32,0.72,0,1), opacity 0.35s ease;
-            position: relative;
-            overflow: hidden;
-        `;
+        toast.setAttribute('data-role', role);
+        toast.setAttribute('role', role === 'danger' ? 'alert' : 'status');
 
-        toast.innerHTML = `
-            <div style="display:flex; gap:12px; align-items:flex-start;">
-                <div style="flex-shrink:0; margin-top:1px; line-height:0; color:${colors.border};">${autoIcon}</div>
-                <div style="flex:1; min-width:0;">
-                    <div style="font-weight:650; font-size:0.9rem; color:#fafafa; margin-bottom:3px; line-height:1.3;">${title}</div>
-                    <div style="font-size:0.825rem; color:#a1a1aa; line-height:1.45;">${message}</div>
-                </div>
-                <button style="background:none; border:none; color:#52525b; cursor:pointer; font-size:18px; line-height:1; padding:0 0 0 4px; margin:-2px -4px 0 0; transition:color 0.15s;" onmouseover="this.style.color='#d4d4d8'" onmouseout="this.style.color='#52525b'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-            </div>
-            <div style="position:absolute; bottom:0; left:0; right:0; height:3px; background:rgba(255,255,255,0.04);">
-                <div class="tt-toast-progress" style="height:100%; width:100%; background:${colors.bar}; border-radius:0 0 0 14px; transition:width linear;"></div>
-            </div>
-        `;
+        toast.innerHTML =
+            '<span class="tt-toast__icon" aria-hidden="true">' + autoIcon + '</span>'
+          + '<div class="tt-toast__body">'
+          +   '<p class="tt-toast__title">' + apEscape(title) + '</p>'
+          +   '<p class="tt-toast__msg">' + apEscape(message) + '</p>'
+          + '</div>'
+          + '<button type="button" class="tt-toast__x" aria-label="'
+          +   mwlAlertL('Schließen', 'Close') + '">' + mwlIcon('x', 14) + '</button>'
+          + '<span class="tt-toast__track"><i class="tt-toast-progress"></i></span>';
 
         // Click-to-dismiss (close button or whole toast)
         toast.querySelector('button').addEventListener('click', (e) => {
@@ -418,13 +424,13 @@
 
         container.appendChild(toast);
 
-        // Animate in
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                toast.style.transform = 'translateX(0)';
-                toast.style.opacity = '1';
-            });
-        });
+        // 🔴 Einblenden NICHT ueber requestAnimationFrame: das steht still,
+        // solange `document.hidden` wahr ist (Hintergrundtab, Automation) —
+        // der Toast bliebe dann unsichtbar ausserhalb des Bildes stehen. Ein
+        // Layout-Lesezugriff erzwingt den Startwert, danach greift der
+        // Uebergang aus dem Stylesheet.
+        void toast.offsetWidth;
+        toast.classList.add('is-in');
 
         // Progress bar countdown
         const progressBar = toast.querySelector('.tt-toast-progress');
@@ -450,11 +456,13 @@
     function _dismissToast(toast) {
         if (!toast || toast._dismissing) return;
         toast._dismissing = true;
-        toast.style.transform = 'translateX(120%)';
-        toast.style.opacity = '0';
-        toast.style.marginTop = `-${toast.offsetHeight + 10}px`;
-        toast.style.transition = 'transform 0.35s ease, opacity 0.3s ease, margin-top 0.3s ease 0.1s';
-        setTimeout(() => toast.remove(), 400);
+        // Hinausgehen darf schneller sein als hereinkommen: beim Erscheinen
+        // schaut man hin, beim Schliessen will man es weg haben. Die Hoehe
+        // muss inline bleiben — sie haengt am Inhalt.
+        toast.style.marginTop = '-' + (toast.offsetHeight + 10) + 'px';
+        toast.classList.remove('is-in');
+        toast.classList.add('is-out');
+        setTimeout(() => toast.remove(), 280);
     }
 
     // Legacy wrapper for old code
@@ -485,91 +493,140 @@
         const badge = document.getElementById('alertBadge');
         const unreadCount = alertsHistory.filter(a => !a.isRead).length;
         
-        if (unreadCount > 0) {
-            badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
-            badge.style.opacity = '1';
-            badge.style.display = 'flex';
-            badge.style.animation = 'pulse 2s infinite';
-        } else {
-            badge.style.display = 'none';
-            badge.style.animation = 'none';
-        }
+        if (!badge) return;
+        // 🔴 Inline `style.display` schlaegt jede Klassenregel — die Sichtbarkeit
+        // MUSS deshalb weiter ueber style.display laufen (CLAUDE.md). Die
+        // Dauerpulsation ist raus: ein Abzeichen, das ohne Unterlass blinkt,
+        // ist genau die Sorte Unruhe, die diese Ansicht loswerden soll.
+        badge.textContent = unreadCount > 99 ? '99+' : String(unreadCount);
+        badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+        badge.style.animation = 'none';
     }
     
+    // 🔴 EINE Stelle, an der eine Protokollzeile entsteht. Vorher stand
+    // dasselbe Markup zweimal im JS — einmal in renderAlertsList, einmal in
+    // filterAlerts — und die beiden waren bereits auseinandergelaufen (nur
+    // eine Fassung setzte Randbreite und Schriftschnitt fuer Ungelesenes).
+    // Die Filterleiste ist ersatzlos entfallen: sie kannte nur "Warnungen"
+    // und "Erfolge", waehrend das System vier Typen erzeugt — `info` und
+    // `danger` fielen durch beide Raster.
+    function apEscape(v) {
+        return String(v == null ? '' : v)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function apDayLabel(ts) {
+        const d = new Date(ts); d.setHours(0, 0, 0, 0);
+        const heute = new Date(); heute.setHours(0, 0, 0, 0);
+        const diff = Math.round((heute - d) / 86400000);
+        if (diff === 0) return mwlAlertL('Heute', 'Today');
+        if (diff === 1) return mwlAlertL('Gestern', 'Yesterday');
+        return d.toLocaleDateString(mwlLocale(), { weekday: 'long', day: '2-digit', month: '2-digit' });
+    }
+
+    function apEntryHTML(alert) {
+        const zeit = new Date(alert.timestamp || Date.now())
+            .toLocaleTimeString(mwlLocale(), { hour: '2-digit', minute: '2-digit' });
+        const typ = ['warning', 'danger', 'success'].indexOf(alert.type) > -1 ? alert.type : 'info';
+        return '<article class="ap-entry" data-type="' + typ + '" data-unread="' + (alert.isRead ? '0' : '1') + '">'
+             + '<span class="ap-dot" aria-hidden="true"></span>'
+             + '<div class="ap-entry__body">'
+             +   '<div class="ap-entry__head">'
+             +     '<h3 class="ap-entry__title">' + apEscape(alert.title) + '</h3>'
+             +     '<time class="ap-entry__time">' + apEscape(zeit) + '</time>'
+             +   '</div>'
+             +   '<p class="ap-entry__msg">' + apEscape(alert.message) + '</p>'
+             + '</div>'
+             + '<button type="button" class="ap-entry__x" data-dismiss="' + apEscape(alert.id) + '" '
+             +   'aria-label="' + mwlAlertL('Meldung entfernen', 'Dismiss notification') + '">'
+             +   mwlIcon('x', 15) + '</button>'
+             + '</article>';
+    }
+
     function renderAlertsList() {
         const container = document.getElementById('alertsList');
-        container.innerHTML = '';
-        
+        if (!container) return;
+
+        const sub = document.getElementById('alertsHeadSub');
+        if (sub) {
+            const offen = alertsHistory.filter(a => !a.isRead).length;
+            sub.textContent = offen > 0
+                ? mwlAlertL(offen + (offen === 1 ? ' neue Meldung' : ' neue Meldungen'),
+                            offen + (offen === 1 ? ' new notification' : ' new notifications'))
+                : mwlAlertL('Letzte 7 Tage', 'Last 7 days');
+        }
+
         if (alertsHistory.length === 0) {
-            container.innerHTML = '<div style="text-align:center; padding:3rem 1rem; color:var(--text-muted);">✨<br>Keine Alerts – alles läuft perfekt!</div>';
+            container.innerHTML =
+                '<div class="ap-empty">'
+              + '<span class="ap-empty__icon">' + mwlIcon('checkCircle', 28) + '</span>'
+              + '<p class="ap-empty__title">' + mwlAlertL('Keine Meldungen', 'No notifications') + '</p>'
+              + '<p class="ap-empty__text">' + mwlAlertL(
+                    'Hier steht, was die App von sich aus gemeldet hat. Ältere Einträge als sieben Tage werden entfernt.',
+                    'This is what the app reported on its own. Entries older than seven days are removed.') + '</p>'
+              + '</div>';
             return;
         }
-        
-        alertsHistory.forEach(alert => {
-            const alertEl = document.createElement('div');
-            alertEl.className = `alert-item ${alert.type}`;
-            alertEl.style.opacity = alert.isRead ? '0.6' : '1';
-            alertEl.style.borderLeftWidth = alert.isRead ? '2px' : '4px';
-            alertEl.innerHTML = `
-                <div class="alert-item-icon">${mwlIconFromEmoji(alert.icon, 18)}</div>
-                <div class="alert-item-content">
-                    <div class="alert-item-title" style="font-weight: ${alert.isRead ? '400' : '700'};">${alert.title}</div>
-                    <div style="font-size:0.9rem; margin-bottom:4px; color:var(--text-main);">${alert.message}</div>
-                    <div class="alert-item-time">${alert.date} · ${alert.time}</div>
-                </div>
-                <button class="alert-item-dismiss" onclick="dismissAlert(${alert.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-            `;
-            container.appendChild(alertEl);
-        });
-    }
-    
-    function filterAlerts(type) {
-        // Update button states
-        document.querySelectorAll('.alert-filter-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-        
-        const container = document.getElementById('alertsList');
-        if (type === 'all') {
-            renderAlertsList();
-        } else {
-            const filtered = alertsHistory.filter(a => a.type === type);
-            container.innerHTML = '';
-            if (filtered.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-muted);">Keine ${type === 'warning' ? 'Warnungen' : 'Erfolge'} gefunden.</div>`;
-            } else {
-                filtered.forEach(alert => {
-                    const alertEl = document.createElement('div');
-                    alertEl.className = `alert-item ${alert.type}`;
-                    alertEl.style.opacity = alert.isRead ? '0.6' : '1';
-                    alertEl.innerHTML = `
-                        <div class="alert-item-icon">${mwlIconFromEmoji(alert.icon, 18)}</div>
-                        <div class="alert-item-content">
-                            <div class="alert-item-title">${alert.title}</div>
-                            <div style="font-size:0.9rem; margin-bottom:4px;">${alert.message}</div>
-                            <div class="alert-item-time">${alert.date} · ${alert.time}</div>
-                        </div>
-                        <button class="alert-item-dismiss" onclick="dismissAlert(${alert.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-                    `;
-                    container.appendChild(alertEl);
-                });
+
+        // Nach Tagen gruppieren, neueste zuerst. 🔴 Je Tag ein eigener Kasten:
+        // die Tagesueberschrift klebt beim Scrollen, und `position: sticky`
+        // haelt ein Element in seinem ELTERNkasten fest. Laegen alle Zeilen in
+        // einer Liste, stapelten sich die Ueberschriften uebereinander.
+        const sortiert = alertsHistory.slice().sort((x, y) => (y.timestamp || 0) - (x.timestamp || 0));
+        let html = '', letzterTag = null;
+        sortiert.forEach(alert => {
+            const tag = apDayLabel(alert.timestamp || Date.now());
+            if (tag !== letzterTag) {
+                if (letzterTag !== null) html += '</section>';
+                html += '<section class="ap-daygroup"><h2 class="ap-day">' + apEscape(tag) + '</h2>';
+                letzterTag = tag;
             }
-        }
+            html += apEntryHTML(alert);
+        });
+        if (letzterTag !== null) html += '</section>';
+        container.innerHTML = html;
     }
-    
+
     function dismissAlert(id) {
-        alertsHistory = alertsHistory.filter(a => a.id !== id);
+        // 🔴 Die Id kommt aus einem Attribut und ist damit eine ZEICHENKETTE,
+        // gespeichert ist sie als Zahl (Date.now() + Math.random()). Ein
+        // strikter Vergleich trifft nie — der Knopf haette sich bedienen
+        // lassen und nichts getan. Beide Seiten auf Text bringen.
+        const gesucht = String(id);
+        alertsHistory = alertsHistory.filter(a => String(a.id) !== gesucht);
         persistAlerts();
         updateAlertBadge();
         renderAlertsList();
     }
     
     function clearAllAlerts() {
-        if (confirm('Alle Alerts wirklich löschen? Dies kann nicht rückgängig gemacht werden.')) {
+        // `confirm()` ist ein Systemdialog: andere Schrift, andere Farben,
+        // blockiert den Zug. Die App bringt einen eigenen mit.
+        const frage = () => {
             alertsHistory = [];
             lastAlertCheck = {};
             persistAlerts();
             updateAlertBadge();
             renderAlertsList();
-            showCustomMessage('✅ Alle Alerts gelöscht', 'Dein Alert-Verlauf wurde zurückgesetzt.', 'success');
+        };
+        if (typeof showCustomConfirm === 'function') {
+            showCustomConfirm(
+                mwlAlertL('Alle Meldungen löschen?', 'Delete all notifications?'),
+                mwlAlertL('Das Protokoll wird geleert. Rückgängig geht das nicht.',
+                          'The log will be emptied. This cannot be undone.'),
+                frage);
+        } else {
+            frage();
         }
     }
+
+    // Ein Klick-Empfaenger fuer die ganze Liste statt eines onclick je Zeile:
+    // die Zeilen werden bei jedem Rendern neu gebaut, einzelne Handler waeren
+    // jedes Mal neu zu binden.
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest && e.target.closest('.ap-entry__x[data-dismiss]');
+        if (!btn) return;
+        e.stopPropagation();
+        dismissAlert(btn.getAttribute('data-dismiss'));
+    });

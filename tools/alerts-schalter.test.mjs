@@ -233,5 +233,118 @@ console.log('\nEin echter Upload vermerkt die Sicherung selbst');
     ok('… und vermerkt KEINE Sicherung', !store.get('mwl_last_export'));
 }
 
+// ===========================================================================
+console.log('\nProtokoll — Aufbau, Gruppierung, Maskierung');
+
+{
+    const CSS = readFileSync('components/core/alerts.css', 'utf8');
+    const cssNoComments = CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const panel = MODALS.slice(MODALS.indexOf('id="alertsPanel"'), MODALS.indexOf('id="alertsOverlay"'));
+
+    // Das Panel war 30 Inline-Styles lang und damit weder theme- noch
+    // wartbar. Styling gehoert ins Stylesheet.
+    const inline = (panel.match(/ style="/g) || []).length;
+    eq('keine Inline-Styles mehr im Panel', inline, 0);
+    ok('kein Emoji im Panel', !/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/u.test(panel));
+
+    // Eine Zeile entsteht an EINER Stelle. Vorher stand dasselbe Markup in
+    // renderAlertsList UND filterAlerts und war bereits auseinandergelaufen.
+    eq('Zeilen-Markup existiert genau einmal',
+       (ALERTS_C.match(/class="ap-entry"/g) || []).length, 1);
+    ok('filterAlerts ist entfernt', !/function filterAlerts/.test(ALERTS_C));
+    ok('… und wird nirgends mehr aufgerufen', !/filterAlerts\(/.test(strip(MODALS)) && !/filterAlerts\(/.test(ALERTS_C));
+
+    ok('kein backdrop-filter auf dem Panel', !/backdrop-filter/.test(cssNoComments));
+    ok('keine feste Akzentfarbe mehr', !/#818cf8/.test(cssNoComments));
+    ok('helles Theme wird bedient', /\[data-theme="light"\][^{]*\.alerts-panel/.test(cssNoComments));
+    ok('Toasts haengen an Tokens statt an Zinc-Werten',
+       !/#18181b|#a1a1aa|#52525b/.test(cssNoComments));
+    ok('Beruehrung bekommt das Kreuz dauerhaft (kein :hover-only)',
+       /@media \(hover: none\)[\s\S]{0,90}ap-entry__x/.test(cssNoComments));
+    ok('Bewegung wird auf Wunsch abgeschaltet', /prefers-reduced-motion/.test(cssNoComments));
+    ok('kein `transition: all`', !/transition:\s*all/.test(cssNoComments));
+}
+
+{
+    const dom = new JSDOM('<!doctype html><body><span id="alertBadge"></span>' + MODALS + '</body>',
+        { pretendToBeVisual: true });
+    const doc = dom.window.document;
+    const store = new Map();
+    const ls = { getItem: k => (store.has(k) ? store.get(k) : null),
+                 setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) };
+
+    const tag = 86400000, jetzt = Date.now();
+    const mk = (t, m, ty, ts, gelesen) => ({ id: ts, title: t, message: m, type: ty, icon: '',
+        date: '', time: '', timestamp: ts, isRead: gelesen });
+    store.set('timetracker_alerts_v2', JSON.stringify([
+        mk('Heute A', 'x', 'warning', jetzt - 3600000, false),
+        mk('Heute B', 'x', 'danger',  jetzt - 7200000, false),
+        mk('Gestern', 'x', 'success', jetzt - tag,     true),
+        mk('<img src=x onerror=alert(1)>', '<b>fett</b>', 'info', jetzt - tag * 3, true)
+    ]));
+
+    const build = new Function('document', 'window', 'localStorage', 'data', 'mwlLocale',
+        'mwlIcon', 'mwlIconFromEmoji', 'parseTime', 'showCustomMessage', 'showCustomConfirm', 'console',
+        ALERTS + '\nreturn { initializeAlerts, renderAlertsList, dismissAlert, toggleAlertsPanel, alertsRef: () => alertsHistory };');
+    const api = build(doc, dom.window, ls,
+        { entries: [], saldo: 0, vacationUsed: 0, vacationMax: 30, settings: {} },
+        () => 'de-DE', () => '<svg></svg>', () => '<svg></svg>', () => 0, () => {}, () => {},
+        { log() {}, warn() {}, error() {} });
+    api.initializeAlerts();
+
+    const gruppen = [...doc.querySelectorAll('.ap-daygroup')];
+    ok('nach Tagen gruppiert (' + gruppen.length + ' Gruppen)', gruppen.length === 3);
+    // 🔴 Je Gruppe ein eigener Kasten: `position: sticky` haelt ein Element in
+    // seinem ELTERNkasten. Laegen alle Zeilen in einer Liste, stapelten sich
+    // die Tagesueberschriften beim Scrollen uebereinander.
+    ok('jede Gruppe traegt genau eine Ueberschrift',
+       gruppen.every(g => g.querySelectorAll('.ap-day').length === 1));
+    ok('erste Gruppe heisst "Heute"', doc.querySelector('.ap-day').textContent === 'Heute');
+    eq('alle Zeilen gerendert', doc.querySelectorAll('.ap-entry').length, 4);
+    ok('neueste zuerst', doc.querySelector('.ap-entry .ap-entry__title').textContent === 'Heute A');
+
+    ok('ungelesene Zeilen sind als solche gekennzeichnet',
+       doc.querySelectorAll('.ap-entry[data-unread="1"]').length === 2);
+    ok('jede Zeile traegt ihren Schweregrad',
+       [...doc.querySelectorAll('.ap-entry')].every(e => ['info','warning','danger','success'].indexOf(e.dataset.type) > -1));
+
+    // Fremder Text landet per innerHTML in der Seite und muss maskiert sein.
+    ok('Titel wird maskiert', !doc.querySelector('.ap-log img'));
+    ok('… und die Nachricht ebenfalls', !doc.querySelector('.ap-log b'));
+
+    // Die Id kommt als ZEICHENKETTE aus dem Attribut, gespeichert ist sie als
+    // Zahl — ein strikter Vergleich haette nie getroffen.
+    const id = doc.querySelector('.ap-entry__x').getAttribute('data-dismiss');
+    api.dismissAlert(id);
+    eq('Entfernen wirkt trotz Zeichenketten-Id', doc.querySelectorAll('.ap-entry').length, 3);
+
+    // Leerzustand ohne Emoji, mit Erklaerung der sieben Tage.
+    api.alertsRef().length = 0;
+    api.renderAlertsList();
+    ok('Leerzustand vorhanden', !!doc.querySelector('.ap-empty'));
+    ok('… ohne Emoji', !/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/u.test(doc.querySelector('.ap-empty').textContent));
+    ok('… und nennt die Aufbewahrungsfrist', /sieben Tage/.test(doc.querySelector('.ap-empty').textContent));
+}
+
+{
+    // 🔴 Erst zeichnen, dann als gelesen markieren. Andersherum sind beim
+    // Zeichnen schon alle gelesen und die Hervorhebung des Neuen war nie zu
+    // sehen — der gefuellte Punkt haette keinen Moment lang existiert.
+    const i = ALERTS_C.indexOf('function toggleAlertsPanel');
+    const block = ALERTS_C.slice(i, i + 1200);
+    ok('renderAlertsList() steht vor markAllAlertsAsRead()',
+       block.indexOf('renderAlertsList()') > -1
+       && block.indexOf('renderAlertsList()') < block.indexOf('markAllAlertsAsRead()'));
+    ok('Systemdialog confirm() ist ersetzt', !/[^a-zA-Z.]confirm\(/.test(ALERTS_C));
+    // Der Fortschrittsbalken DARF rAF benutzen (dauernde Bewegung, und im
+    // Hintergrundtab sieht den Toast ohnehin niemand). Das EINBLENDEN darf
+    // es nicht: bei `document.hidden` bliebe der Toast unsichtbar
+    // ausserhalb des Bildes stehen.
+    ok('Einblenden erzwingt ein Layout statt auf rAF zu warten',
+       /void toast\.offsetWidth;\s*toast\.classList\.add\('is-in'\)/.test(ALERTS_C));
+    ok('… und steht in keinem rAF-Rumpf',
+       !/requestAnimationFrame\([\s\S]{0,120}is-in/.test(ALERTS_C));
+}
+
 console.log('\n' + pass + ' ok, ' + fail + ' fehlend\n');
 process.exit(fail ? 1 : 0);
