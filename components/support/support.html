@@ -331,109 +331,343 @@
             }
             .sp-emoji-btn:hover { transform: scale(1.18); box-shadow: 0 4px 16px rgba(var(--primary-rgb),.2); }
 
-            /* ── CHANGELOG ── */
-            .sp-changelog-wrap {
-                background: rgba(255,255,255,.02);
-                border: 1px solid rgba(255,255,255,.06);
-                border-radius: 20px;
-                padding: 1.8rem;
-            }
-            #supportChangelog { display: flex; flex-direction: column; gap: 8px; }
+            /* ── CHANGELOG — Release-Ledger ─────────────────────────────
+               Vorher: acht Eintraege à ~880 Zeichen Fliesstext offen unter-
+               einander (Median gemessen, Maximum 3080) — rund 7000 Zeichen am
+               Stueck, ohne Datum, ohne Suche, ohne Struktur. Jetzt EINE Zeile
+               je Version, Volltext auf Klick.
 
-            /* ── Changelog-Zeile: neutral. Farbe traegt genau eine Aussage,
-                  naemlich welche Version gerade laeuft. ── */
-            .sp-cl-row {
-                display: flex;
-                gap: 14px;
-                align-items: flex-start;
-                padding: 11px 13px;
-                border-radius: 10px;
-                background: rgba(255,255,255,.022);
-                border: 1px solid rgba(255,255,255,.055);
-                border-left: 2px solid rgba(255,255,255,.12);
+               🔴 Das Datum kommt aus `changelogDates` (config/version.json,
+               einmalig aus der git-Historie eingefroren, siehe
+               tools/changelog-dates.mjs). Vier der 174 Versionen haben keinen
+               Beleg im Repo — die stehen unter "Ohne Datum" und bekommen KEIN
+               geschaetztes. Die Versionsnummer ist ausdruecklich keine
+               Zeitachse: die Ueberlauf-Regel (Patch max 19) macht 6.4.0
+               mechanisch zum Nachfolger von 6.3.19, nicht zum groesseren
+               Release. Deshalb kodiert hier nichts "Release-Groesse". */
+            .sp-clog {
+                --cl-card:      rgba(255,255,255,.022);
+                --cl-surface:   rgba(255,255,255,.03);
+                --cl-rule:      rgba(255,255,255,.07);
+                --cl-rule-soft: rgba(255,255,255,.045);
+                --cl-empty:     rgba(255,255,255,.055);
+                --cl-daycol:    24px;
+                --cl-gap:       2px;
+
+                background: var(--cl-card);
+                border: 1px solid var(--cl-rule);
+                border-radius: 20px;
+                overflow: hidden;
             }
-            .sp-cl-row.is-current {
-                background: rgba(var(--primary-rgb),.055);
-                border-color: rgba(var(--primary-rgb),.22);
-                border-left-color: var(--primary);
+            [data-theme="light"] .sp-clog {
+                --cl-card:      rgba(7,16,35,.022);
+                --cl-surface:   rgba(7,16,35,.035);
+                --cl-rule:      rgba(7,16,35,.10);
+                --cl-rule-soft: rgba(7,16,35,.06);
+                --cl-empty:     rgba(7,16,35,.07);
             }
-            .sp-cl-ver {
-                font-family: var(--font-mono);
-                font-size: .7rem;
-                font-variant-numeric: tabular-nums;
-                color: var(--text-muted);
-                min-width: 58px;
-                padding-top: 2px;
-                flex-shrink: 0;
+
+            /* ── Kopf: welche Version laeuft, seit wann ── */
+            .cl-head {
+                display: flex; align-items: baseline; flex-wrap: wrap;
+                gap: 6px 12px;
+                padding: 1.4rem 1.5rem 1.1rem;
             }
-            .sp-cl-row.is-current .sp-cl-ver { color: var(--primary); }
-            .sp-cl-main { min-width: 0; }
-            .sp-cl-title {
-                font-weight: 600;
-                font-size: .88rem;
-                color: var(--text-main);
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                flex-wrap: wrap;
-            }
-            .sp-cl-body { font-size: .78rem; color: var(--text-muted); margin-top: 4px; line-height: 1.6; }
-            .sp-cl-now {
-                font-size: .62rem;
-                font-weight: 700;
-                letter-spacing: .07em;
-                text-transform: uppercase;
+            .cl-head__tag {
+                font-size: .62rem; font-weight: 700;
+                letter-spacing: .09em; text-transform: uppercase;
                 color: var(--primary);
                 background: rgba(var(--primary-rgb),.12);
                 border: 1px solid rgba(var(--primary-rgb),.28);
-                border-radius: 5px;
-                padding: 1px 6px;
-                white-space: nowrap;
+                border-radius: 5px; padding: 2px 7px;
             }
-            /* Aufgeklappt: 101 Eintraege wuerden die Seite auf ein Vielfaches
-               strecken — deshalb bekommt die Liste eine eigene Scrollflaeche,
-               statt den Rest der Seite unerreichbar weit nach unten zu schieben. */
-            #supportChangelog.is-open {
-                max-height: min(62vh, 620px);
-                overflow-y: auto;
-                padding-right: 6px;
-                scrollbar-width: thin;
-                scrollbar-color: rgba(255,255,255,.14) transparent;
-                -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
-                mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
+            .cl-head__ver {
+                font-family: var(--font-mono);
+                font-size: 1.35rem; font-weight: 700;
+                font-variant-numeric: tabular-nums;
+                letter-spacing: -.02em;
+                color: var(--text-main);
             }
-            #supportChangelog.is-open::-webkit-scrollbar { width: 6px; }
-            #supportChangelog.is-open::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 3px; }
+            .cl-head__date { font-size: .78rem; color: var(--text-muted); }
 
-            .sp-cl-toggle {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                width: 100%;
-                margin-top: 14px;
-                padding: 11px 16px;
-                background: rgba(255,255,255,.03);
-                border: 1px solid rgba(255,255,255,.08);
-                border-radius: 12px;
-                color: var(--text-muted);
-                font-family: var(--font-main);
-                font-size: .82rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: color .2s ease, border-color .2s ease, background .2s ease;
+            /* ── Release-Kalender ──────────────────────────────────────
+               Ein Feld je Kalendertag, Woche = Spalte, Montag oben. Farbe
+               kodiert genau eine Groesse: wie viele Versionen an dem Tag
+               erschienen sind — EIN Farbton in vier Stufen (sequenziell).
+               Tage ohne Release sind neutral, nicht Stufe null: Abwesenheit
+               ist keine Menge. */
+            .cl-cal-wrap { padding: 0 1.5rem 1.2rem; position: relative; }
+            .cl-cal { overflow-x: auto; scrollbar-width: thin; padding-bottom: 4px; }
+            .cl-cal__inner { min-width: 330px; max-width: 560px; }
+            .cl-cal__months {
+                display: grid; grid-auto-flow: column; grid-auto-columns: minmax(9px, 1fr);
+                gap: var(--cl-gap);
+                margin-left: calc(var(--cl-daycol) + 6px);
+                margin-bottom: 5px; height: 13px;
             }
-            /* display:flex der Klasse schlaegt sonst das [hidden]-Attribut —
-               der Knopf waere bei wenigen Eintraegen trotzdem sichtbar. */
-            .sp-cl-toggle[hidden] { display: none; }
-            .sp-cl-toggle:hover { color: var(--text-main); border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.055); }
-            .sp-cl-toggle:active { transform: scale(.99); }
-            .sp-cl-toggle:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb),.35); }
-            .sp-cl-toggle svg { width: 15px; height: 15px; transition: transform .25s cubic-bezier(.32,.72,0,1); }
-            .sp-cl-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
-            .sp-cl-count { font-family: var(--font-mono); font-size: .74rem; opacity: .7; font-variant-numeric: tabular-nums; }
+            .cl-cal__mo { position: relative; }
+            .cl-cal__mo > span {
+                position: absolute; left: 0; top: 0; white-space: nowrap;
+                font-size: .62rem; font-weight: 600; letter-spacing: .04em;
+                color: var(--text-muted);
+            }
+            .cl-cal__body { display: flex; gap: 6px; align-items: stretch; }
+            .cl-cal__days {
+                display: grid; grid-template-rows: repeat(7, 1fr); gap: var(--cl-gap);
+                width: var(--cl-daycol); flex: 0 0 var(--cl-daycol);
+            }
+            .cl-cal__days span {
+                font-size: .58rem; color: var(--text-muted);
+                display: flex; align-items: center; line-height: 1;
+            }
+            .cl-cal__grid {
+                flex: 1 1 auto; min-width: 0;
+                display: grid; grid-auto-flow: column;
+                /* Die Hoehe steckt als `aspect-ratio` am RASTER (in JS aus der
+                   Zahl der Wochen gesetzt), nicht an der Zelle: `aspect-ratio: 1`
+                   auf einem leeren Grid-Kind loest waehrend der intrinsischen
+                   Messung zu 0 auf — die Felder waren dann 0 x 0 gross. */
+                grid-template-rows: repeat(7, 1fr);
+                grid-auto-columns: minmax(9px, 1fr);
+                gap: var(--cl-gap);
+            }
+            .cl-day {
+                border-radius: 2px;
+                background: var(--cl-empty);
+                border: 0; padding: 0; margin: 0;
+            }
+            .cl-day[data-lvl="1"] { background: rgba(var(--primary-rgb),.30); }
+            .cl-day[data-lvl="2"] { background: rgba(var(--primary-rgb),.55); }
+            .cl-day[data-lvl="3"] { background: rgba(var(--primary-rgb),.78); }
+            .cl-day[data-lvl="4"] { background: var(--primary); }
+            button.cl-day { cursor: pointer; transition: transform .14s ease, box-shadow .14s ease, opacity .14s ease; }
+            button.cl-day:hover { transform: scale(1.35); box-shadow: 0 0 0 1px var(--bg-deep); }
+            button.cl-day:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg-deep), 0 0 0 4px var(--primary); }
+            button.cl-day.is-picked { box-shadow: 0 0 0 1px var(--bg-deep), 0 0 0 2.5px var(--text-main); }
+            /* Der gewaehlte Tag muss im Bild bleiben, statt in 196 gleich hellen
+               Feldern zu verschwinden. */
+            .cl-cal__grid.has-pick .cl-day:not(.is-picked) { opacity: .3; }
+
+            .cl-cal__foot {
+                display: flex; align-items: center; flex-wrap: wrap;
+                gap: 6px 16px; margin-top: 12px;
+                font-size: .72rem; color: var(--text-muted);
+            }
+            .cl-cal__facts { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+            .cl-cal__facts b {
+                font-family: var(--font-mono); font-weight: 700;
+                color: var(--text-main); font-variant-numeric: tabular-nums;
+            }
+            .cl-legend { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+            .cl-legend i {
+                width: 10px; height: 10px; border-radius: 2px;
+                background: var(--cl-empty); display: block;
+            }
+            .cl-legend i[data-lvl="1"] { background: rgba(var(--primary-rgb),.30); }
+            .cl-legend i[data-lvl="2"] { background: rgba(var(--primary-rgb),.55); }
+            .cl-legend i[data-lvl="3"] { background: rgba(var(--primary-rgb),.78); }
+            .cl-legend i[data-lvl="4"] { background: var(--primary); }
+
+            .cl-tip {
+                position: absolute; z-index: 5; pointer-events: none;
+                padding: 5px 9px; border-radius: 7px;
+                background: linear-gradient(var(--bg-glass), var(--bg-glass)), var(--bg-deep);
+                border: 1px solid var(--cl-rule);
+                box-shadow: 0 8px 24px rgba(0,0,0,.35);
+                font-size: .7rem; color: var(--text-main); white-space: nowrap;
+                opacity: 0; transform: translate(-50%, -100%);
+                transition: opacity .12s ease;
+            }
+            .cl-tip.is-on { opacity: 1; }
+            .cl-tip b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+            /* ── Filterzeile ── */
+            .cl-filter {
+                display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+                padding: .9rem 1.5rem;
+                border-top: 1px solid var(--cl-rule-soft);
+                border-bottom: 1px solid var(--cl-rule-soft);
+                background: var(--cl-surface);
+            }
+            .cl-search { position: relative; flex: 1 1 200px; min-width: 0; display: flex; }
+            .cl-search svg {
+                position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+                width: 14px; height: 14px; color: var(--text-muted); pointer-events: none;
+            }
+            .cl-search input {
+                width: 100%; padding: 9px 12px 9px 32px;
+                background: var(--cl-card);
+                border: 1px solid var(--cl-rule);
+                border-radius: 9px;
+                color: var(--text-main); font-family: var(--font-main); font-size: .8rem;
+                outline: none; transition: border-color .18s ease, box-shadow .18s ease;
+            }
+            .cl-search input::placeholder { color: var(--text-muted); }
+            .cl-search input:focus {
+                border-color: rgba(var(--primary-rgb),.45);
+                box-shadow: 0 0 0 3px rgba(var(--primary-rgb),.12);
+            }
+            .cl-count {
+                font-size: .72rem; color: var(--text-muted);
+                font-variant-numeric: tabular-nums; white-space: nowrap;
+            }
+            .cl-reset {
+                display: inline-flex; align-items: center; gap: 5px;
+                padding: 7px 11px; border-radius: 9px;
+                background: var(--cl-card); border: 1px solid var(--cl-rule);
+                color: var(--text-muted); font-family: var(--font-main);
+                font-size: .72rem; font-weight: 600; cursor: pointer;
+                transition: color .18s ease, border-color .18s ease, background .18s ease;
+            }
+            .cl-reset[hidden] { display: none; }
+            .cl-reset:hover { color: var(--text-main); border-color: var(--hover-border); background: var(--hover-fill); }
+            .cl-reset:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(var(--primary-rgb),.35); }
+            .cl-reset svg { width: 12px; height: 12px; }
+
+            /* ── Die Liste ──────────────────────────────────────────────
+               Je Monat ein eigenes <section>: `position: sticky` haelt ein
+               Element in seinem ELTERNkasten. Laegen alle Zeilen in einer
+               Liste, bliebe die Kopfzeile "August" oben kleben, waehrend man
+               schon im Juli liest — nach sieben Monaten sieben Baender. */
+            .cl-list {
+                max-height: min(58vh, 540px);
+                overflow-y: auto;
+                scrollbar-width: thin;
+                scrollbar-color: var(--cl-rule) transparent;
+                overscroll-behavior: contain;
+            }
+            .cl-list::-webkit-scrollbar { width: 8px; }
+            .cl-list::-webkit-scrollbar-thumb { background: var(--cl-rule); border-radius: 4px; }
+
+            .cl-month__head {
+                position: sticky; top: 0; z-index: 2;
+                display: flex; align-items: baseline; justify-content: space-between;
+                gap: 10px; margin: 0;
+                padding: 8px 1.5rem;
+                /* Zwei Ebenen statt eines festen Hexwerts: `--cl-surface` hat Alpha,
+                   sonst laesst die klebende Kopfzeile die Zeilen durchscheinen. */
+                background: linear-gradient(var(--cl-surface), var(--cl-surface)), var(--bg-deep);
+                border-bottom: 1px solid var(--cl-rule-soft);
+                font-size: .66rem; font-weight: 700;
+                letter-spacing: .1em; text-transform: uppercase;
+                color: var(--text-muted);
+            }
+            .cl-month__n { font-family: var(--font-mono); font-weight: 700; letter-spacing: 0; }
+
+            .cl-item { border-bottom: 1px solid var(--cl-rule-soft); }
+            .cl-item:last-child { border-bottom: 0; }
+
+            .cl-row {
+                display: grid;
+                grid-template-columns: auto auto minmax(0,1fr) auto;
+                grid-template-areas: "date ver title chev";
+                align-items: center;
+                gap: 12px;
+                width: 100%;
+                padding: 10px 1.5rem;
+                background: none; border: 0;
+                text-align: left; cursor: pointer;
+                font-family: var(--font-main);
+                transition: background .16s ease;
+            }
+            .cl-row:hover { background: var(--hover-fill); }
+            .cl-row:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--primary); }
+            .cl-row__date {
+                grid-area: date;
+                font-family: var(--font-mono); font-size: .68rem;
+                font-variant-numeric: tabular-nums;
+                color: var(--text-muted); white-space: nowrap;
+            }
+            .cl-row__ver {
+                grid-area: ver;
+                font-family: var(--font-mono); font-size: .7rem; font-weight: 600;
+                font-variant-numeric: tabular-nums;
+                color: var(--text-muted); white-space: nowrap;
+                min-width: 46px;
+            }
+            .cl-row__title {
+                grid-area: title; min-width: 0;
+                display: flex; align-items: center; gap: 8px;
+            }
+            /* 🔴 Eigene Klasse statt `.cl-row__title > span`: der Nachkommen-
+               Selektor haette Spezifitaet (0,1,1) und schluege damit `.cl-now`
+               (0,1,0) — die Marke stand in 13 px Weiss statt in 9 px Akzentfarbe.
+               Beide sind Kinder derselben Zelle. */
+            .cl-row__lead {
+                overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                font-size: .82rem; font-weight: 500; color: var(--text-main);
+            }
+            .cl-row__chev {
+                grid-area: chev; line-height: 0; color: var(--text-muted);
+                transition: transform .25s cubic-bezier(.32,.72,0,1);
+            }
+            .cl-row__chev svg { width: 15px; height: 15px; }
+            .cl-item.is-open .cl-row__chev { transform: rotate(180deg); }
+            .cl-item.is-open .cl-row { background: var(--hover-fill); }
+            .cl-item.is-open .cl-row__lead { white-space: normal; }
+
+            .cl-now {
+                flex-shrink: 0;
+                font-size: .58rem; font-weight: 700;
+                letter-spacing: .07em; text-transform: uppercase;
+                color: var(--primary);
+                background: rgba(var(--primary-rgb),.12);
+                border: 1px solid rgba(var(--primary-rgb),.28);
+                border-radius: 4px; padding: 1px 5px;
+            }
+            .cl-row mark {
+                background: rgba(var(--primary-rgb),.3);
+                color: inherit; border-radius: 2px; padding: 0 1px;
+            }
+
+            /* 0fr → 1fr statt max-height: die Hoehe muss nicht geraten werden.
+               `visibility` nimmt den zugeklappten Text aus Tab- und
+               Vorlesereihenfolge — `hidden` waere richtig, verbietet aber jede
+               Ueberblendung. */
+            .cl-body {
+                display: grid; grid-template-rows: 0fr;
+                transition: grid-template-rows .28s cubic-bezier(.32,.72,0,1);
+            }
+            .cl-item.is-open .cl-body { grid-template-rows: 1fr; }
+            .cl-body > div {
+                overflow: hidden; visibility: hidden;
+                transition: visibility 0s .28s;
+            }
+            .cl-item.is-open .cl-body > div { visibility: visible; transition-delay: 0s; }
+            .cl-body p {
+                margin: 0 0 .7rem;
+                padding: 0 1.5rem 0 calc(1.5rem + 46px + 12px);
+                font-size: .79rem; line-height: 1.7; color: var(--text-muted);
+                max-width: 68ch;
+            }
+            .cl-body p:first-child { padding-top: 2px; }
+            .cl-body p:last-child { margin-bottom: 1rem; }
+
+            .cl-empty-state {
+                padding: 2.2rem 1.5rem; text-align: center;
+                font-size: .82rem; color: var(--text-muted);
+            }
+
+            @media (max-width: 640px) {
+                .cl-head, .cl-cal-wrap, .cl-filter, .cl-month__head, .cl-row { padding-left: 1rem; padding-right: 1rem; }
+                /* 🔴 Wer Grid-Kinder in einer Media Query umsortiert, muss
+                   `grid-template-columns` in derselben Query mitziehen — sonst
+                   stehen drei Kinder in vier Spuren und der Pfeil klebt am Titel. */
+                .cl-row {
+                    grid-template-columns: auto auto 1fr auto;
+                    grid-template-areas: "date ver . chev" "title title title title";
+                    gap: 4px 10px;
+                }
+                .cl-body p { padding-left: 1rem; padding-right: 1rem; }
+                /* Die Marke frisst am Handy die halbe Titelzeile — und steht zwei
+                   Zeilen weiter oben im Kopf ohnehin gross da. Sie ist ein
+                   Flex-Kind der Titelzelle, kein Grid-Kind: Ausblenden veraendert
+                   also keine Spalte. */
+                .cl-now { display: none; }
+            }
             @media (prefers-reduced-motion: reduce) {
-                .sp-cl-toggle, .sp-cl-toggle svg { transition: none; }
+                .cl-body, .cl-row__chev, button.cl-day, .cl-tip { transition: none; }
+                button.cl-day:hover { transform: none; }
             }
 
             /* ── FLOATING CARD (parallax depth) ── */
@@ -623,15 +857,13 @@
         <div class="sp-section">
             <span class="sp-label sp-sr">Changelog</span>
             <h2 class="sp-section-title sp-sr sp-sr-d1">Letzte <em>Updates</em></h2>
-            <p class="sp-section-desc sp-sr sp-sr-d2">Was sich zuletzt getan hat — immer transparent.</p>
+            <p class="sp-section-desc sp-sr sp-sr-d2">Jede Version, die je ausgeliefert wurde — mit Datum, durchsuchbar, im Volltext.</p>
 
-            <div class="sp-changelog-wrap sp-sr sp-sr-d2">
-                <!-- Wird automatisch aus config/version.json (changelog) befüllt — siehe renderSupportChangelog() unten. Nicht hardcoden! -->
-                <div id="supportChangelog">
-                    <div class="sp-cl-empty" style="font-size:.82rem; color:var(--text-muted); padding:10px;">Lädt aktuelle Änderungen…</div>
-                </div>
-                <!-- Aufklappen auf die komplette Historie; Beschriftung setzt renderSupportChangelog(). -->
-                <button type="button" id="supportChangelogToggle" class="sp-cl-toggle" aria-expanded="false" aria-controls="supportChangelog" hidden></button>
+            <!-- Inhalt kommt vollstaendig aus config/version.json (changelog +
+                 changelogDates) — siehe renderSupportChangelog() unten. Nicht
+                 hardcoden: die Datei ist die einzige Quelle. -->
+            <div class="sp-clog sp-sr sp-sr-d2" id="supportChangelog">
+                <div class="cl-empty-state">Lädt Änderungen…</div>
             </div>
         </div>
 
@@ -713,7 +945,13 @@
                 }
             }
 
-            /* ── Changelog aus config/version.json (single source of truth) ── */
+            /* ── Changelog: Release-Ledger aus config/version.json ──────────
+               Einzige Quelle ist die Datei: `changelog` (Text je Version),
+               `changelog_en` (Uebersetzung, wo gepflegt) und `changelogDates`
+               (Veroeffentlichungsdatum, aus der git-Historie eingefroren —
+               tools/changelog-dates.mjs). Hier wird nichts gerechnet, was nicht
+               dort steht: Versionen ohne Datum stehen unter "Ohne Datum" und
+               bekommen keins geschaetzt. */
             function clEsc(s) {
                 return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) {
                     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -727,6 +965,43 @@
                 }
                 return 0;
             }
+            /* 🔴 Nie ueber toISOString() gehen: das rechnet nach UTC und macht aus
+               dem 10.02. lokal den 09.02. Beides hier lokal, wie toLocalISODate(). */
+            function clDay(iso) {
+                var p = String(iso).split('-');
+                return new Date(+p[0], +p[1] - 1, +p[2]);
+            }
+            function clIso(d) {
+                var m = d.getMonth() + 1, t = d.getDate();
+                return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (t < 10 ? '0' : '') + t;
+            }
+            /* Erster Satz = Titel, Rest = Fliesstext. Ab v6.4.2 schreiben neue
+               Eintraege den Titel als eigene erste Zeile mit Leerzeile dahinter
+               (Konvention in CLAUDE.md); die 174 alten haben das nicht, deshalb
+               faellt es auf den ersten Satz und zuletzt auf den Textanfang
+               zurueck — gekuerzt wird per CSS, der Volltext ist einen Klick weit. */
+            function clSplit(text) {
+                var t = String(text == null ? '' : text).replace(/\r\n/g, '\n').trim();
+                if (!t) return { title: '', paras: [] };
+                var paras = t.split(/\n\s*\n/).map(function(s) { return s.replace(/\s+/g, ' ').trim(); }).filter(Boolean);
+                var first = paras[0] || '';
+                var head = t.split('\n')[0].trim();
+                if (paras.length > 1 && head === first && head.length <= 90) {
+                    return { title: head, paras: paras.slice(1) };
+                }
+                var m = first.match(/^(.{10,}?[.!?])\s+(.*)$/);
+                if (m) return { title: m[1], paras: [m[2]].concat(paras.slice(1)) };
+                return { title: first, paras: paras.slice(1) };
+            }
+            function clRegEsc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+            /* Hervorhebung erst NACH dem Escapen, und nur wenn die Suche selbst
+               kein HTML-Sonderzeichen enthaelt — sonst zerlegt ein "a" die
+               Entitaet &amp; in &<mark>a</mark>mp;. */
+            function clMark(escaped, q) {
+                if (!q || /[&<>"]/.test(q)) return escaped;
+                return escaped.replace(new RegExp(clRegEsc(q), 'gi'), function(hit) { return '<mark>' + hit + '</mark>'; });
+            }
+
             function renderSupportChangelog() {
                 var host = document.getElementById('supportChangelog');
                 if (!host) return;
@@ -734,77 +1009,349 @@
                    deshalb ein lokaler Helfer (Vorbild: p2pL() in p2p-sync.js). */
                 var isEN = document.documentElement.lang === 'en';
                 var clL = function(de, en) { return isEN ? en : de; };
-                /* Bewusst KEINE Farbrotation mehr. Vorher lief die Liste ueber sechs
-                   Toene nach Listenposition (accents[i % 6]) — die Farbe kodierte damit
-                   nichts und verschob sich beim Aufklappen. Schlimmer: sie griff in
-                   belegte Tokens (--danger = Fehler/Loeschen, --success = erledigt,
-                   --school/--holiday = Eintragstypen), jede fuenfte Version sah aus wie
-                   ein Fehler. Farbe markiert jetzt genau eine wahre Sache: welche
-                   Version gerade laeuft. Alles andere bleibt neutral. */
+                var loc = isEN ? 'en-GB' : 'de-DE';
+                var fmtLong  = new Intl.DateTimeFormat(loc, { day: 'numeric', month: 'long', year: 'numeric' });
+                var fmtFull  = new Intl.DateTimeFormat(loc, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
+                var fmtMonth = new Intl.DateTimeFormat(loc, { month: 'long', year: 'numeric' });
+                var fmtMoAbbr = new Intl.DateTimeFormat(loc, { month: 'short' });
+                var fmtWd    = new Intl.DateTimeFormat(loc, { weekday: 'short' });
+                var fail = function(msg) { host.innerHTML = '<div class="cl-empty-state">' + msg + '</div>'; };
+
+                var ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+                var ICON_CHEV   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+                var ICON_X      = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+
                 fetch('/config/version.json', { cache: 'no-cache' })
                     .then(function(r) { return r.json(); })
-                    .then(function(data) {
-                        /* Auf /en/ die englische Fassung nehmen, wenn sie fuer die
-                           jeweilige Version gepflegt ist — sonst faellt jeder
-                           einzelne Eintrag auf den deutschen Text zurueck.
-                           So bricht eine fehlende Uebersetzung nie die Liste. */
-                        var clEN = (isEN && data && data.changelog_en) || null;
-                        var cl = data && data.changelog;
-                        if (!cl || typeof cl !== 'object') { host.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">' + clL('Keine Änderungshistorie verfügbar.', 'No change history available.') + '</div>'; return; }
+                    .then(function(cfg) {
+                        var cl = cfg && cfg.changelog;
+                        if (!cl || typeof cl !== 'object') { fail(clL('Keine Änderungshistorie verfügbar.', 'No change history available.')); return; }
+                        /* Auf /en/ die englische Fassung je Eintrag nehmen, wenn sie
+                           gepflegt ist — sonst faellt der EINZELNE Eintrag auf Deutsch
+                           zurueck. So bricht eine fehlende Uebersetzung nie die Liste. */
+                        var clEN = (isEN && cfg.changelog_en) || null;
+                        var dates = cfg.changelogDates || {};
+                        var current = String(cfg.version || '').trim();
+
                         var versions = Object.keys(cl).sort(function(a, b) { return clCmpVer(b, a); });
-                        var MAX = 8;
-                        var current = String(data && data.version || '').trim();
-                        var buildRow = function(v) {
-                            var isCurrent = v === current;
-                            var text = String((clEN && clEN[v]) || cl[v] || '').trim();
-                            /* Erster Satz = Titel (falls kurz genug), Rest = Detail */
-                            var title = 'Version ' + v, body = text;
-                            var dot = text.indexOf('. ');
-                            if (dot > 0 && dot <= 90) { title = text.slice(0, dot); body = text.slice(dot + 2); }
-                            var bodyHtml = body ? '<div class="sp-cl-body">' + clEsc(body) + '</div>' : '';
-                            var badge = isCurrent ? '<span class="sp-cl-now">' + clL('Aktuell', 'Current') + '</span>' : '';
-                            return '<div class="sp-cl-row' + (isCurrent ? ' is-current' : '') + '">'
-                                + '<div class="sp-cl-ver">v' + clEsc(v) + '</div>'
-                                + '<div class="sp-cl-main"><div class="sp-cl-title">' + clEsc(title) + badge + '</div>' + bodyHtml + '</div>'
+                        if (!versions.length) { fail(clL('Keine Änderungshistorie verfügbar.', 'No change history available.')); return; }
+
+                        var releases = versions.map(function(v) {
+                            var split = clSplit((clEN && clEN[v]) || cl[v] || '');
+                            return {
+                                v: v,
+                                date: dates[v] || '',
+                                title: split.title,
+                                paras: split.paras,
+                                isCurrent: v === current,
+                                hay: (v + ' ' + split.title + ' ' + split.paras.join(' ')).toLowerCase()
+                            };
+                        });
+
+                        /* ── Zahlen. Alle gezaehlt, keine geschaetzt. ── */
+                        var byDay = {};
+                        releases.forEach(function(r) { if (r.date) byDay[r.date] = (byDay[r.date] || 0) + 1; });
+                        var activeDays = Object.keys(byDay).sort();
+                        var busiest = activeDays.reduce(function(m, d) { return Math.max(m, byDay[d]); }, 0);
+                        var undated = releases.filter(function(r) { return !r.date; }).length;
+
+                        /* ── Kopf ── */
+                        var curRel = releases.filter(function(r) { return r.isCurrent; })[0];
+                        var headHtml =
+                            '<div class="cl-head">'
+                            + '<span class="cl-head__tag">' + clL('Aktuell', 'Current') + '</span>'
+                            + '<span class="cl-head__ver">v' + clEsc(current || '—') + '</span>'
+                            + (curRel && curRel.date
+                                ? '<span class="cl-head__date">' + clL('veröffentlicht am ', 'released on ') + clEsc(fmtLong.format(clDay(curRel.date))) + '</span>'
+                                : '')
+                            + '</div>';
+
+                        /* ── Release-Kalender ──────────────────────────────────
+                           Ein Feld je Kalendertag, Woche = Spalte, Montag oben.
+                           Farbe kodiert genau eine Groesse: Versionen an diesem
+                           Tag. Tage ohne Release bleiben neutral — Abwesenheit
+                           ist keine Menge und bekommt keine Stufe. */
+                        var calHtml = '';
+                        if (activeDays.length) {
+                            var start = clDay(activeDays[0]);
+                            start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+                            var end = clDay(activeDays[activeDays.length - 1]);
+                            end.setDate(end.getDate() + (6 - ((end.getDay() + 6) % 7)));
+
+                            var cells = [], cursor = new Date(start);
+                            while (cursor <= end) { cells.push(clIso(cursor)); cursor.setDate(cursor.getDate() + 1); }
+                            var weeks = Math.ceil(cells.length / 7);
+
+                            var lvl = function(n) { return n >= 7 ? 4 : n >= 4 ? 3 : n >= 2 ? 2 : n >= 1 ? 1 : 0; };
+                            var gridHtml = cells.map(function(iso) {
+                                var n = byDay[iso] || 0;
+                                if (!n) return '<div class="cl-day" aria-hidden="true"></div>';
+                                var d = clDay(iso);
+                                var label = n + ' ' + (n === 1 ? clL('Version', 'version') : clL('Versionen', 'versions')) + ' — ' + fmtFull.format(d);
+                                return '<button type="button" class="cl-day" data-lvl="' + lvl(n) + '" data-day="' + iso + '"'
+                                     + ' data-n="' + n + '" tabindex="-1" aria-label="' + clEsc(label) + '"></button>';
+                            }).join('');
+
+                            /* Monatsmarken: nur an der Woche, die den Monatsersten
+                               enthaelt, und nie dichter als drei Spalten — sonst
+                               ueberschreiben sich die Beschriftungen bei schmalen
+                               Spalten gegenseitig. */
+                            var lastLabelCol = -99;
+                            var moHtml = '';
+                            /* Die erste Spalte faengt am Montag VOR dem ersten
+                               Release an und enthaelt den Monatsersten meist nicht.
+                               Sie bekommt ihren Monat deshalb selbst — aber nur,
+                               wenn die naechste Marke weit genug weg ist: sonst
+                               stuende "Feb" direkt neben "Mär" und eine der beiden
+                               Beschriftungen faellt weg, was aussieht wie ein
+                               fehlender Monat. */
+                            var firstOfMonthCol = -1;
+                            for (var c0 = 0; c0 < cells.length; c0++) {
+                                if (clDay(cells[c0]).getDate() === 1) { firstOfMonthCol = Math.floor(c0 / 7); break; }
+                            }
+                            if (clDay(cells[0]).getDate() !== 1 && firstOfMonthCol >= 3) {
+                                moHtml += '<div class="cl-cal__mo"><span>' + clEsc(fmtMoAbbr.format(clDay(cells[0]))) + '</span></div>';
+                                lastLabelCol = 0;
+                            }
+                            for (var w = (lastLabelCol === 0 ? 1 : 0); w < weeks; w++) {
+                                var txt = '';
+                                for (var k = 0; k < 7; k++) {
+                                    var iso = cells[w * 7 + k];
+                                    if (!iso) break;
+                                    var dd = clDay(iso);
+                                    if (dd.getDate() === 1 && w - lastLabelCol >= 3) { txt = fmtMoAbbr.format(dd); lastLabelCol = w; break; }
+                                }
+                                moHtml += '<div class="cl-cal__mo">' + (txt ? '<span>' + clEsc(txt) + '</span>' : '') + '</div>';
+                            }
+
+                            var wdRef = clDay('2026-01-05');   // ein Montag
+                            var wdHtml = '';
+                            for (var i = 0; i < 7; i++) {
+                                var wd = new Date(wdRef); wd.setDate(wd.getDate() + i);
+                                wdHtml += '<span>' + (i % 2 === 0 ? clEsc(fmtWd.format(wd).slice(0, 2)) : '') + '</span>';
+                            }
+
+                            var facts = [
+                                '<span><b>' + releases.length + '</b> ' + clL('Versionen', 'versions') + '</span>',
+                                '<span><b>' + activeDays.length + '</b> ' + clL('Tage mit Veröffentlichung', 'days with a release') + '</span>',
+                                '<span><b>' + busiest + '</b> ' + clL('an einem Tag', 'in a single day') + '</span>'
+                            ].join('');
+
+                            calHtml =
+                                '<div class="cl-cal-wrap">'
+                                + '<div class="cl-cal"><div class="cl-cal__inner">'
+                                +   '<div class="cl-cal__months" aria-hidden="true">' + moHtml + '</div>'
+                                +   '<div class="cl-cal__body">'
+                                +     '<div class="cl-cal__days" aria-hidden="true">' + wdHtml + '</div>'
+                                +     '<div class="cl-cal__grid" id="clCal" role="group" style="aspect-ratio: ' + weeks + ' / 7" aria-label="'
+                                +       clEsc(clL('Release-Kalender — Tag auswählen, um die Liste zu filtern', 'Release calendar — pick a day to filter the list')) + '">' + gridHtml + '</div>'
+                                +   '</div>'
+                                + '</div></div>'
+                                + '<div class="cl-cal__foot">'
+                                +   '<div class="cl-cal__facts">' + facts + '</div>'
+                                +   '<div class="cl-legend"><span>' + clL('weniger', 'less') + '</span>'
+                                +     '<i></i><i data-lvl="1"></i><i data-lvl="2"></i><i data-lvl="3"></i><i data-lvl="4"></i>'
+                                +     '<span>' + clL('mehr', 'more') + '</span></div>'
+                                + '</div>'
+                                + '<div class="cl-tip" id="clTip" role="status" aria-live="polite"></div>'
                                 + '</div>';
-                        };
+                        }
 
-                        if (!versions.length) { host.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">' + clL('Keine Änderungshistorie verfügbar.', 'No change history available.') + '</div>'; return; }
+                        var filterHtml =
+                            '<div class="cl-filter">'
+                            + '<label class="cl-search">' + ICON_SEARCH
+                            +   '<input type="search" id="clSearch" autocomplete="off" spellcheck="false"'
+                            +   ' placeholder="' + clEsc(clL('Version oder Stichwort suchen…', 'Search version or keyword…')) + '"'
+                            +   ' aria-label="' + clEsc(clL('Änderungen durchsuchen', 'Search the changelog')) + '">'
+                            + '</label>'
+                            + '<span class="cl-count" id="clCount"></span>'
+                            + '<button type="button" class="cl-reset" id="clReset" hidden>' + ICON_X + '<span>' + clL('Filter zurücksetzen', 'Clear filter') + '</span></button>'
+                            + '</div>';
 
-                        var btn = document.getElementById('supportChangelogToggle');
-                        var expanded = false;
-                        var chevron = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+                        host.innerHTML = headHtml + calHtml + filterHtml + '<div class="cl-list" id="clList"></div>';
+
+                        var list   = document.getElementById('clList');
+                        var search = document.getElementById('clSearch');
+                        var count  = document.getElementById('clCount');
+                        var reset  = document.getElementById('clReset');
+                        var cal    = document.getElementById('clCal');
+                        var tip    = document.getElementById('clTip');
+
+                        var query = '', pickedDay = '', open = {};
+
+                        function rowHtml(r) {
+                            var id = 'clb-' + r.v.replace(/\./g, '-');
+                            var isOpen = !!open[r.v];
+                            var dateTxt = r.date
+                                ? clDay(r.date).getDate() + '.' + (clDay(r.date).getMonth() + 1) + '.'
+                                : '—';
+                            var body = r.paras.length
+                                ? r.paras.map(function(p) { return '<p>' + clEsc(p) + '</p>'; }).join('')
+                                : '<p>' + clEsc(clL('Kein weiterer Text zu dieser Version.', 'No further text for this version.')) + '</p>';
+                            return '<div class="cl-item' + (isOpen ? ' is-open' : '') + '" data-v="' + clEsc(r.v) + '">'
+                                + '<button type="button" class="cl-row" aria-expanded="' + (isOpen ? 'true' : 'false') + '" aria-controls="' + id + '">'
+                                +   '<span class="cl-row__date">' + clEsc(dateTxt) + '</span>'
+                                +   '<span class="cl-row__ver">' + clMark(clEsc(r.v), query) + '</span>'
+                                +   '<span class="cl-row__title"><span class="cl-row__lead">' + clMark(clEsc(r.title), query) + '</span>'
+                                +     (r.isCurrent ? '<span class="cl-now">' + clL('Aktuell', 'Current') + '</span>' : '')
+                                +   '</span>'
+                                +   '<span class="cl-row__chev">' + ICON_CHEV + '</span>'
+                                + '</button>'
+                                + '<div class="cl-body" id="' + id + '"><div>' + body + '</div></div>'
+                                + '</div>';
+                        }
 
                         function paint() {
-                            var list = expanded ? versions : versions.slice(0, MAX);
-                            host.innerHTML = list.map(buildRow).join('');
-                            host.classList.toggle('is-open', expanded);
-                            if (!btn) return;
-                            btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-                            btn.innerHTML = expanded
-                                ? clL('Weniger anzeigen', 'Show less') + chevron
-                                : clL('Alle Versionen anzeigen', 'Show all versions')
-                                  + '<span class="sp-cl-count">' + versions.length + '</span>' + chevron;
+                            var q = query.toLowerCase();
+                            var hits = releases.filter(function(r) {
+                                if (pickedDay && r.date !== pickedDay) return false;
+                                return !q || r.hay.indexOf(q) !== -1;
+                            });
+
+                            /* Nach Monat gruppieren, je Gruppe ein eigenes <section>:
+                               `position: sticky` haelt ein Element in seinem
+                               ELTERNkasten fest. Laegen alle Zeilen in einer Liste,
+                               bliebe die August-Kopfzeile oben kleben, waehrend man
+                               schon im Juli liest. */
+                            var order = [], groups = {};
+                            hits.forEach(function(r) {
+                                var key = r.date ? r.date.slice(0, 7) : 'none';
+                                if (!groups[key]) { groups[key] = []; order.push(key); }
+                                groups[key].push(r);
+                            });
+                            /* Die vier Versionen ohne Beleg im Repo sortieren sich
+                               sonst nach ihrer Versionsnummer ein und stehen dann
+                               mitten zwischen zwei Monaten — als waere "ohne Datum"
+                               ein Zeitpunkt. Sie gehoeren ans Ende. */
+                            order = order.filter(function(k) { return k !== 'none'; })
+                                         .concat(groups.none ? ['none'] : []);
+
+                            if (!hits.length) {
+                                list.innerHTML = '<div class="cl-empty-state">'
+                                    + clL('Keine Version passt zu dieser Suche.', 'No version matches this search.') + '</div>';
+                            } else {
+                                list.innerHTML = order.map(function(key) {
+                                    var label = key === 'none'
+                                        ? clL('Ohne Datum', 'No date')
+                                        : fmtMonth.format(clDay(key + '-01'));
+                                    return '<section class="cl-month">'
+                                        + '<h3 class="cl-month__head"><span>' + clEsc(label) + '</span>'
+                                        +   '<span class="cl-month__n">' + groups[key].length + '</span></h3>'
+                                        + groups[key].map(rowHtml).join('')
+                                        + '</section>';
+                                }).join('');
+                            }
+
+                            count.textContent = (query || pickedDay)
+                                ? clL(hits.length + ' von ' + releases.length, hits.length + ' of ' + releases.length)
+                                : clL(releases.length + ' Versionen', releases.length + ' versions');
+                            reset.hidden = !(query || pickedDay);
+                            if (cal) cal.classList.toggle('has-pick', !!pickedDay);
                         }
 
-                        if (btn && versions.length > MAX) {
-                            btn.hidden = false;
-                            btn.onclick = function() {
-                                expanded = !expanded;
-                                paint();
-                                /* Beim Zuklappen zurueck an den Listenanfang — sonst steht
-                                   man mitten im Nichts, weil die Liste unter einem wegschrumpft. */
-                                if (!expanded) {
-                                    host.scrollTop = 0;
-                                    var wrap = host.closest('.sp-changelog-wrap');
-                                    if (wrap) wrap.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                                }
+                        /* ── Zeile auf-/zuklappen ── */
+                        list.addEventListener('click', function(e) {
+                            var btn = e.target.closest ? e.target.closest('.cl-row') : null;
+                            if (!btn || !list.contains(btn)) return;
+                            var item = btn.parentNode, v = item.getAttribute('data-v');
+                            var isOpen = !item.classList.contains('is-open');
+                            item.classList.toggle('is-open', isOpen);
+                            btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                            if (isOpen) open[v] = true; else delete open[v];
+                        });
+
+                        /* ── Suche ── */
+                        var t = null;
+                        search.addEventListener('input', function() {
+                            clearTimeout(t);
+                            t = setTimeout(function() { query = search.value.trim(); paint(); list.scrollTop = 0; }, 120);
+                        });
+
+                        reset.addEventListener('click', function() {
+                            query = ''; pickedDay = ''; search.value = '';
+                            if (cal) {
+                                var p = cal.querySelector('.is-picked');
+                                if (p) p.classList.remove('is-picked');
+                                var tp = document.getElementById('clTip');
+                                if (tp) tp.classList.remove('is-on');
+                            }
+                            paint(); list.scrollTop = 0; search.focus();
+                        });
+
+                        /* ── Kalender: Tag waehlen, Tag zeigen ──────────────────
+                           🔴 Touch hat kein :hover. Deshalb setzt der KLICK den
+                           Filter (und zeigt den Tag), Hover ist nur die Zugabe fuer
+                           die Maus. Ohne Kalender bleibt trotzdem alles erreichbar:
+                           die Liste zeigt jede Version, die Suche findet sie. */
+                        if (cal) {
+                            var days = [].slice.call(cal.querySelectorAll('button.cl-day'));
+                            if (days.length) days[days.length - 1].tabIndex = 0;
+
+                            var showTip = function(btn) {
+                                if (!tip) return;
+                                var box = cal.closest('.cl-cal-wrap').getBoundingClientRect();
+                                var b = btn.getBoundingClientRect();
+                                tip.textContent = btn.getAttribute('aria-label');
+                                tip.classList.add('is-on');
+                                /* Erst sichtbar, dann messen: unsichtbar ist offsetWidth 0
+                                   und die Klemmung unten rechnet mit der falschen Breite. */
+                                var w = tip.offsetWidth, h = tip.offsetHeight;
+                                /* Der Zeiger sitzt mittig ueber der Zelle (translate -50%).
+                                   Ohne Klemmung laeuft er am linken Rand aus der Karte und
+                                   legt sich ueber die Kopfzeile. */
+                                var x = b.left - box.left + b.width / 2;
+                                tip.style.left = Math.max(w / 2 + 2, Math.min(x, box.width - w / 2 - 2)) + 'px';
+                                /* Fuer die obersten Wochentage ist ueber der Zelle kein Platz
+                                   — dann unter die Zelle. `top` ist wegen translate(-100%)
+                                   die UNTERkante des Zeigers. */
+                                var above = (b.top - box.top) >= h + 8;
+                                tip.style.top = (above ? b.top - box.top - 6 : b.bottom - box.top + 6 + h) + 'px';
                             };
+                            var hideTip = function() { if (tip) tip.classList.remove('is-on'); };
+
+                            cal.addEventListener('pointerover', function(e) {
+                                var b = e.target.closest && e.target.closest('button.cl-day');
+                                if (b) showTip(b);
+                            });
+                            cal.addEventListener('pointerleave', hideTip);
+
+                            cal.addEventListener('click', function(e) {
+                                var b = e.target.closest && e.target.closest('button.cl-day');
+                                if (!b) return;
+                                var day = b.getAttribute('data-day');
+                                var was = cal.querySelector('.is-picked');
+                                if (was) was.classList.remove('is-picked');
+                                pickedDay = (pickedDay === day) ? '' : day;
+                                if (pickedDay) { b.classList.add('is-picked'); showTip(b); } else hideTip();
+                                paint(); list.scrollTop = 0;
+                            });
+
+                            /* Ein Tabstopp fuer 52 Felder statt 52 Tabstopps:
+                               Pfeiltasten wandern zwischen den Tagen mit Release. */
+                            cal.addEventListener('keydown', function(e) {
+                                var i = days.indexOf(document.activeElement);
+                                if (i === -1) return;
+                                var next = -1;
+                                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = Math.min(i + 1, days.length - 1);
+                                else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = Math.max(i - 1, 0);
+                                else if (e.key === 'Home') next = 0;
+                                else if (e.key === 'End') next = days.length - 1;
+                                if (next === -1) return;
+                                e.preventDefault();
+                                days[i].tabIndex = -1;
+                                days[next].tabIndex = 0;
+                                days[next].focus();
+                                showTip(days[next]);
+                            });
+                            cal.addEventListener('focusout', function(e) {
+                                if (!cal.contains(e.relatedTarget)) hideTip();
+                            });
                         }
+
                         paint();
                     })
                     .catch(function() {
-                        host.innerHTML = '<div style="font-size:.82rem;color:var(--text-muted);padding:10px;">' + clL('Änderungshistorie konnte nicht geladen werden.', 'Could not load the change history.') + '</div>';
+                        fail(clL('Änderungshistorie konnte nicht geladen werden.', 'Could not load the change history.'));
                     });
             }
             renderSupportChangelog();
