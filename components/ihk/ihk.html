@@ -1,272 +1,294 @@
-<div id="view-ihk" class="view-section">
+<div id="view-ihk" class="view-section" data-ihk-state="empty">
 
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- MISSION CONTROL HEADER                      -->
-            <!-- ═══════════════════════════════════════════ -->
-            <div class="mc-header">
-                <div class="mc-header-grid">
-                    <div class="mc-header-left">
-                        <div class="mc-status-row">
-                            <span class="mc-badge-live">
-                                <span class="mc-badge-dot"></span>
-                                LIVE
-                            </span>
-                            <span class="mc-breadcrumb">IHK KARRIERE-MONITOR</span>
-                            <span class="mc-sep">/</span>
-                            <span class="mc-breadcrumb-sub">Ausbildungsfortschritt & Audit</span>
-                        </div>
-                        <h1 class="mc-title">Karriere <span class="mc-title-accent">Command</span></h1>
-                        <p class="mc-subtitle">Echtzeitanalyse deiner Ausbildungsperformance</p>
-                    </div>
-                    <div class="mc-header-right">
-                        <div class="mc-ring-wrap">
-                            <svg class="mc-ring-svg" viewBox="0 0 120 120">
-                                <circle class="mc-ring-track" cx="60" cy="60" r="52"/>
-                                <circle class="mc-ring-glow" cx="60" cy="60" r="52"/>
-                                <circle id="ringIHKProgress" class="mc-ring-progress" cx="60" cy="60" r="52"
-                                    stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
-                                <text x="60" y="53" class="mc-ring-pct" id="ihkProgress">0%</text>
-                                <text x="60" y="70" class="mc-ring-label-inner">FORTSCHRITT</text>
-                            </svg>
-                        </div>
-                        <div class="mc-ring-meta" id="ihkStartEndDates">Daten fehlen</div>
-                    </div>
+            <!-- ═══════════════════════════════════════════════════════════
+                 KOPF — eine Aussage statt eines Kennzahlen-Cockpits.
+                 Der Beruf kommt aus `pdf_personal_cfg` (Deckblatt des
+                 Berichtshefts) und hat hier bewusst KEIN eigenes Eingabefeld:
+                 zwei Regler auf denselben Zustand driften auseinander.
+                 ═══════════════════════════════════════════════════════════ -->
+            <header class="ihk-head">
+                <div class="ihk-head__text">
+                    <p class="ihk-head__eyebrow" id="ihkHeadEyebrow">Ausbildung</p>
+                    <h1 class="ihk-head__lede" id="ihkHeadLede">Ausbildungsdaten fehlen</h1>
+                    <p class="ihk-head__meta" id="ihkHeadMeta">Trag unten Beginn und Prüfungstermin ein — den Rest liest diese Seite aus deinen Einträgen.</p>
                 </div>
-
-                <!-- TRAINING TIMELINE -->
-                <div class="mc-timeline-wrap">
-                    <div class="mc-timeline-label">AUSBILDUNGSZEITVERLAUF</div>
-                    <div class="mc-timeline-bar">
-                        <div class="mc-timeline-fill" id="mcTimelineFill"></div>
-                        <div class="mc-timeline-marker mc-marker-zwischen" id="mcMarkerZwischen" style="left:33%">
-                            <div class="mc-marker-dot"></div>
-                            <div class="mc-marker-label">ZP</div>
-                        </div>
-                        <div class="mc-timeline-now" id="mcTimelineNow">
-                            <div class="mc-now-pulse"></div>
-                        </div>
-                    </div>
-                    <div class="mc-timeline-ends">
-                        <span id="mcTimelineStart">—</span>
-                        <span id="mcTimelineEnd">—</span>
-                    </div>
+                <div class="ihk-head__aside" id="ihkHeadAside" hidden>
+                    <span class="ihk-year" id="ihkYearChip">1. Lehrjahr</span>
+                    <span class="ihk-year__sub" id="ihkYearSub">von 3</span>
                 </div>
-            </div>
+            </header>
 
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- PRIMARY KPI ROW                             -->
-            <!-- ═══════════════════════════════════════════ -->
-            <div class="mc-kpi-row">
+            <div class="ihk-stack" id="ihkStack" hidden>
 
-                <div class="mc-kpi-block mc-kpi-primary">
-                    <div class="mc-kpi-eyebrow">TAGE BIS ABSCHLUSS</div>
-                    <div class="mc-kpi-num" id="ihkCountdownEndAudit">---</div>
-                    <div class="mc-kpi-foot" id="ihkExamDateEnd">Datum fehlt</div>
-                    <div class="mc-kpi-bar-wrap">
-                        <div class="mc-kpi-bar-fill" id="mcBarEnd" style="width:0%"></div>
+                <!-- ═══════════════════════════════════════════════════════
+                     ZEITSTRAHL — die eine grosse Geste der Seite.
+                     Das Band traegt die Proportion und bleibt unbeschriftet,
+                     damit nichts kollidiert; die Karten darunter tragen die
+                     Details. Beide zeigen dieselben Stationen.
+                     ═══════════════════════════════════════════════════════ -->
+                <section class="ihk-panel ihk-panel--wide">
+                    <div class="ihk-panel__head">
+                        <h2 class="ihk-panel__title">Ausbildungsverlauf</h2>
+                        <span class="ihk-src ihk-src--own">Deine Daten</span>
                     </div>
-                </div>
 
-                <div class="mc-kpi-block">
-                    <div class="mc-kpi-eyebrow">TAGE BIS ZWISCHENPRÜFUNG</div>
-                    <div class="mc-kpi-num mc-kpi-num-amber" id="ihkCountdownZwischen">---</div>
-                    <div class="mc-kpi-foot" id="ihkExamDateZwischen">Datum fehlt</div>
-                    <div class="mc-kpi-bar-wrap">
-                        <div class="mc-kpi-bar-fill mc-bar-amber" id="mcBarZwischen" style="width:0%"></div>
-                    </div>
-                </div>
-
-                <div class="mc-kpi-block">
-                    <div class="mc-kpi-eyebrow">SOLL-STUNDEN GESAMT</div>
-                    <div class="mc-kpi-num mc-kpi-num-steel" id="ihkTotalExpectedHours">0h</div>
-                    <div class="mc-kpi-foot">Gesamte Ausbildung</div>
-                    <div class="mc-kpi-bar-wrap">
-                        <div class="mc-kpi-bar-fill mc-bar-steel" style="width:100%"></div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- SECONDARY METRICS: ABWESENHEIT & NOTEN     -->
-            <!-- ═══════════════════════════════════════════ -->
-            <div class="mc-secondary-grid">
-
-                <!-- ABSENCE PANEL -->
-                <div class="mc-panel">
-                    <div class="mc-panel-header">
-                        <span class="mc-panel-icon"><svg class="mwl-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>
-                        <span class="mc-panel-title">ABWESENHEITSANALYSE</span>
-                        <span class="mc-panel-tag">IHK-RELEVANT</span>
-                    </div>
-                    <div class="mc-absence-grid">
-                        <div class="mc-absence-cell">
-                            <div class="mc-absence-val" id="ihkSickDays">0</div>
-                            <div class="mc-absence-key">Krankheitstage</div>
-                            <div class="mc-absence-note">Kumuliert</div>
-                        </div>
-                        <div class="mc-absence-divider"></div>
-                        <div class="mc-absence-cell">
-                            <div class="mc-absence-val mc-absence-steel" id="ihkSchoolDays">0</div>
-                            <div class="mc-absence-key">Berufsschultage</div>
-                            <div class="mc-absence-note">Mit Sollzeit</div>
-                        </div>
-                        <div class="mc-absence-divider"></div>
-                        <div class="mc-absence-cell">
-                            <div class="mc-absence-val" id="ihkMissedTimeWarning" style="color:var(--success)">---</div>
-                            <div class="mc-absence-key">Fehlquote</div>
-                            <div class="mc-absence-note">Max. 10% IHK</div>
-                        </div>
-                    </div>
-                    <!-- Fehlquote bar + Info -->
-                    <div class="mc-quota-wrap" id="mcQuotaWrap">
-                        <div class="mc-quota-track">
-                            <div class="mc-quota-fill" id="mcQuotaFill" style="width:0%"></div>
-                            <div class="mc-quota-limit" style="left:10%">
-                                <span class="mc-quota-limit-label">10%</span>
+                    <div class="ihk-band">
+                        <div class="ihk-band__years" id="ihkBandYears"></div>
+                        <div class="ihk-band__track">
+                            <div class="ihk-band__fill" id="ihkBandFill"></div>
+                            <div class="ihk-band__ticks" id="ihkBandTicks"></div>
+                            <div class="ihk-band__now" id="ihkBandNow">
+                                <span class="ihk-band__nowdot"></span>
+                                <span class="ihk-band__nowlabel" id="ihkBandNowLabel">Heute</span>
                             </div>
                         </div>
-                        <button class="mc-quota-info-btn" onclick="toggleAbsenceInfo()" type="button" aria-label="Fehlquoten-Details">
-                            <span class="mc-quota-info-icon">ⓘ</span>
-                            <span class="mc-quota-info-label">Fehlquoten-Zonen ansehen</span>
-                            <span class="mc-quota-info-chevron" id="mcAbsenceChevron">▼</span>
+                        <div class="ihk-band__ends">
+                            <span id="ihkBandStart">—</span>
+                            <span id="ihkBandEnd">—</span>
+                        </div>
+                    </div>
+
+                    <ol class="ihk-stations" id="ihkStations"></ol>
+                </section>
+
+                <!-- ═══════════════════════════════════════════════════════
+                     REIHE A — Zulassung (die eigentliche Nutzlast) + Fehlzeiten
+                     ═══════════════════════════════════════════════════════ -->
+                <div class="ihk-row ihk-row--a">
+
+                    <section class="ihk-panel ihk-panel--adm">
+                        <div class="ihk-panel__head">
+                            <h2 class="ihk-panel__title">Prüfungszulassung</h2>
+                            <button type="button" class="ihk-src ihk-src--law" id="ihkSrcBtn43"
+                                    aria-expanded="false" aria-controls="ihkSrcNote43">§ 43 BBiG</button>
+                        </div>
+                        <p class="ihk-src__note" id="ihkSrcNote43" hidden>Das Berufsbildungsgesetz nennt drei Voraussetzungen für die Zulassung zur Abschlussprüfung. Zulassen tut die Kammer, nicht diese Seite — hier steht nur, was aus deinen Daten ablesbar ist.</p>
+
+                        <p class="ihk-adm__verdict" id="ihkAdmVerdict">—</p>
+
+                        <ol class="ihk-crit">
+                            <li class="ihk-crit__row" id="ihkCrit1" data-state="open">
+                                <span class="ihk-crit__no" aria-hidden="true">1</span>
+                                <div class="ihk-crit__body">
+                                    <p class="ihk-crit__label">Ausbildungszeit zurückgelegt</p>
+                                    <p class="ihk-crit__hint">Erfüllt auch dann, wenn die Ausbildung höchstens zwei Monate nach dem Prüfungstermin endet.</p>
+                                    <p class="ihk-crit__val" id="ihkCrit1Val">—</p>
+                                </div>
+                            </li>
+
+                            <li class="ihk-crit__row" id="ihkCrit2a" data-state="open">
+                                <span class="ihk-crit__no" aria-hidden="true">2</span>
+                                <div class="ihk-crit__body">
+                                    <p class="ihk-crit__label">An der Zwischenprüfung teilgenommen</p>
+                                    <p class="ihk-crit__hint">Es zählt die Teilnahme, nicht das Ergebnis.</p>
+                                    <p class="ihk-crit__val" id="ihkCrit2aVal">—</p>
+                                    <label class="ihk-confirm" id="ihkCrit2aConfirm" hidden>
+                                        <input type="checkbox" id="ihkConfZpTeilgenommen">
+                                        <span>Ich habe teilgenommen</span>
+                                    </label>
+                                </div>
+                            </li>
+
+                            <li class="ihk-crit__row" id="ihkCrit2b" data-state="open">
+                                <span class="ihk-crit__no" aria-hidden="true">2</span>
+                                <div class="ihk-crit__body">
+                                    <p class="ihk-crit__label">Ausbildungsnachweis geführt</p>
+                                    <p class="ihk-crit__hint">Gemessen wird, ob jede Woche seit Ausbildungsbeginn mindestens einen Eintrag hat.</p>
+                                    <p class="ihk-crit__val" id="ihkCrit2bVal">—</p>
+                                    <button type="button" class="ihk-gaps__toggle" id="ihkGapsToggle"
+                                            aria-expanded="false" aria-controls="ihkGapsList" hidden>Wochen ohne Eintrag ansehen</button>
+                                    <ul class="ihk-gaps" id="ihkGapsList" hidden></ul>
+                                    <a class="ihk-crit__link" href="/berichtsheft/">Zum Berichtsheft</a>
+                                </div>
+                            </li>
+
+                            <li class="ihk-crit__row" id="ihkCrit3" data-state="open">
+                                <span class="ihk-crit__no" aria-hidden="true">3</span>
+                                <div class="ihk-crit__body">
+                                    <p class="ihk-crit__label">Im Verzeichnis der Berufsausbildungsverhältnisse eingetragen</p>
+                                    <p class="ihk-crit__hint">Das trägt dein Betrieb bei der Kammer ein. Aus deinen Daten nicht ablesbar.</p>
+                                    <p class="ihk-crit__val" id="ihkCrit3Val">Nicht messbar</p>
+                                    <label class="ihk-confirm">
+                                        <input type="checkbox" id="ihkConfEingetragen">
+                                        <span>Eintragung ist bestätigt</span>
+                                    </label>
+                                </div>
+                            </li>
+                        </ol>
+                    </section>
+
+                    <section class="ihk-panel ihk-panel--abs">
+                        <div class="ihk-panel__head">
+                            <h2 class="ihk-panel__title">Fehlzeiten</h2>
+                            <button type="button" class="ihk-src ihk-src--rule" id="ihkSrcBtnQuota"
+                                    aria-expanded="false" aria-controls="ihkSrcNoteQuota">Richtwert</button>
+                        </div>
+                        <p class="ihk-src__note" id="ihkSrcNoteQuota" hidden>Die Zehn-Prozent-Marke steht in keinem Gesetz. Viele Kammern sehen ab dieser Höhe genauer hin, ob das Ausbildungsziel erreicht ist. Berufsschultage sind keine Fehlzeit — sie stehen in der Zeitverteilung.</p>
+
+                        <p class="ihk-abs__value" id="ihkAbsPct">—</p>
+                        <p class="ihk-abs__base" id="ihkAbsBase">Noch keine Ausbildungstage erfasst</p>
+
+                        <div class="ihk-abs__scale">
+                            <div class="ihk-abs__track">
+                                <div class="ihk-abs__fill" id="ihkAbsFill"></div>
+                                <div class="ihk-abs__limit"><span>10 %</span></div>
+                            </div>
+                            <ul class="ihk-zones" id="ihkZones">
+                                <li data-zone="green"><span class="ihk-zones__dot" aria-hidden="true"></span><b>bis 6,8 %</b><em>unauffällig</em></li>
+                                <li data-zone="amber"><span class="ihk-zones__dot" aria-hidden="true"></span><b>bis 9,9 %</b><em>erhöht</em></li>
+                                <li data-zone="red"><span class="ihk-zones__dot" aria-hidden="true"></span><b>ab 10 %</b><em>Nachfrage möglich</em></li>
+                            </ul>
+                        </div>
+                    </section>
+
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════
+                     REIHE B — Zeitverteilung + Noten. Die Spaltenbreiten
+                     kehren sich gegenueber Reihe A um, damit die Seite nicht
+                     als Raster aus gleich grossen Kaesten liest.
+                     ═══════════════════════════════════════════════════════ -->
+                <div class="ihk-row ihk-row--b">
+
+                    <section class="ihk-panel ihk-panel--split">
+                        <div class="ihk-panel__head">
+                            <h2 class="ihk-panel__title">Zeitverteilung</h2>
+                            <span class="ihk-src ihk-src--own">Deine Daten</span>
+                        </div>
+                        <p class="ihk-split__lede" id="ihkSplitLede">—</p>
+                        <ul class="ihk-split" id="ihkSplitList"></ul>
+                        <dl class="ihk-balance">
+                            <div><dt>Erfasst</dt><dd id="ihkBalWorked">—</dd></div>
+                            <div><dt>Soll bis heute</dt><dd id="ihkBalExpected">—</dd></div>
+                            <div><dt>Saldo</dt><dd id="ihkBalDiff">—</dd></div>
+                        </dl>
+                    </section>
+
+                    <section class="ihk-panel ihk-panel--grades">
+                        <div class="ihk-panel__head">
+                            <h2 class="ihk-panel__title">Prüfungsnoten</h2>
+                            <span class="ihk-src ihk-src--own">Deine Daten</span>
+                        </div>
+
+                        <div class="ihk-grade" id="ihkGradeZ">
+                            <div class="ihk-grade__head">
+                                <p class="ihk-grade__name">Zwischenprüfung</p>
+                                <p class="ihk-grade__date" id="ihkGradeZDate">—</p>
+                            </div>
+                            <div class="ihk-grade__row">
+                                <span class="ihk-grade__val" id="ihkGradeZVal">—</span>
+                                <span class="ihk-grade__word" id="ihkGradeZWord">noch offen</span>
+                            </div>
+                            <div class="ihk-scale">
+                                <div class="ihk-scale__track"></div>
+                                <div class="ihk-scale__pass" data-label="4,0"></div>
+                                <div class="ihk-scale__mark" id="ihkGradeZMark" hidden></div>
+                                <span class="ihk-scale__end ihk-scale__end--l">1</span>
+                                <span class="ihk-scale__end ihk-scale__end--r">6</span>
+                            </div>
+                        </div>
+
+                        <div class="ihk-grade" id="ihkGradeA">
+                            <div class="ihk-grade__head">
+                                <p class="ihk-grade__name">Abschlussprüfung</p>
+                                <p class="ihk-grade__date" id="ihkGradeADate">—</p>
+                            </div>
+                            <div class="ihk-grade__row">
+                                <span class="ihk-grade__val" id="ihkGradeAVal">—</span>
+                                <span class="ihk-grade__word" id="ihkGradeAWord">noch offen</span>
+                            </div>
+                            <div class="ihk-scale">
+                                <div class="ihk-scale__track"></div>
+                                <div class="ihk-scale__pass" data-label="4,0"></div>
+                                <div class="ihk-scale__mark" id="ihkGradeAMark" hidden></div>
+                                <span class="ihk-scale__end ihk-scale__end--l">1</span>
+                                <span class="ihk-scale__end ihk-scale__end--r">6</span>
+                            </div>
+                        </div>
+
+                        <button type="button" class="ihk-schoolref" id="ihkSchoolRef" hidden>
+                            <span class="ihk-schoolref__label">Berufsschule</span>
+                            <span class="ihk-schoolref__val" id="ihkSchoolAvg">—</span>
+                            <span class="ihk-schoolref__hint">Durchschnitt aus der Berufsschule-Ansicht</span>
                         </button>
-                        <div class="mc-absence-popover" id="mcAbsencePopover" aria-hidden="true">
-                            <div class="mc-abspop-inner">
-                                <div class="mc-abspop-header">
-                                    <span class="mc-abspop-title">FEHLQUOTEN-ANALYSE</span>
-                                    <button class="mc-abspop-close" onclick="event.stopPropagation(); toggleAbsenceInfo()" type="button" aria-label="Schließen"><svg class="mwl-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-                                </div>
-                                <div class="mc-abspop-current" id="mcAbspopCurrent">
-                                    <div class="mc-abspop-current-info">
-                                        <span class="mc-abspop-current-label">DEIN AKTUELLER STATUS</span>
-                                        <span class="mc-abspop-current-desc" id="mcAbspopCurrentDesc">—</span>
-                                    </div>
-                                    <span class="mc-abspop-current-val" id="mcAbspopCurrentVal">—</span>
-                                </div>
-                                <div class="mc-abspop-ranges">
-                                    <div class="mc-abspop-range" id="mcAbspopRange0" data-zone="green">
-                                        <div class="mc-abspop-range-dot"></div>
-                                        <div class="mc-abspop-range-body">
-                                            <div class="mc-abspop-range-head">
-                                                <span class="mc-abspop-range-pct">0% – 6,8%</span>
-                                                <span class="mc-abspop-badge">GRÜN</span>
-                                            </div>
-                                            <div class="mc-abspop-range-label">Status: Statistischer Normalbereich</div>
-                                        </div>
-                                    </div>
-                                    <div class="mc-abspop-range" id="mcAbspopRange1" data-zone="amber">
-                                        <div class="mc-abspop-range-dot"></div>
-                                        <div class="mc-abspop-range-body">
-                                            <div class="mc-abspop-range-head">
-                                                <span class="mc-abspop-range-pct">6,9% – 9,9%</span>
-                                                <span class="mc-abspop-badge">GELB</span>
-                                            </div>
-                                            <div class="mc-abspop-range-label">Status: Überdurchschnittlich, aber IHK-technisch absolut sicher</div>
-                                        </div>
-                                    </div>
-                                    <div class="mc-abspop-range" id="mcAbspopRange2" data-zone="red">
-                                        <div class="mc-abspop-range-dot"></div>
-                                        <div class="mc-abspop-range-body">
-                                            <div class="mc-abspop-range-head">
-                                                <span class="mc-abspop-range-pct">Ab 10,0%</span>
-                                                <span class="mc-abspop-badge">ROT</span>
-                                            </div>
-                                            <div class="mc-abspop-range-label">Status: IHK-Prüfungsschwelle (Achtung)</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    </section>
 
-                <!-- GRADES PANEL -->
-                <div class="mc-panel">
-                    <div class="mc-panel-header">
-                        <span class="mc-panel-icon">◈</span>
-                        <span class="mc-panel-title">PRÜFUNGSNOTEN</span>
-                        <span class="mc-panel-tag">ZERTIFIKAT</span>
-                    </div>
-                    <div class="mc-grade-grid">
-                        <div class="mc-grade-card" id="mcGradeCardZwischen">
-                            <div class="mc-grade-label">ZWISCHENPRÜFUNG</div>
-                            <div class="mc-grade-val" id="ihkDisplayNoteZwischen">---</div>
-                            <div class="mc-grade-bar-wrap">
-                                <div class="mc-grade-bar" id="mcGradeBarZwischen" style="width:0%"></div>
-                            </div>
-                            <div class="mc-grade-scale">1.0 ←→ 6.0</div>
-                        </div>
-                        <div class="mc-grade-card" id="mcGradeCardAbschluss">
-                            <div class="mc-grade-label">ABSCHLUSSPRÜFUNG</div>
-                            <div class="mc-grade-val" id="ihkDisplayNoteAbschluss">---</div>
-                            <div class="mc-grade-bar-wrap">
-                                <div class="mc-grade-bar" id="mcGradeBarAbschluss" style="width:0%"></div>
-                            </div>
-                            <div class="mc-grade-scale">1.0 ←→ 6.0</div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- ═══════════════════════════════════════════ -->
-            <!-- CONFIG PANEL                                -->
-            <!-- ═══════════════════════════════════════════ -->
-            <div class="mc-config-panel">
-                <div class="mc-config-header">
-                    <div class="mc-config-title-row">
-                        <span class="mc-config-icon"><svg class="mwl-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>
-                        <span class="mc-config-title">AUSBILDUNGSDATEN KONFIGURATION</span>
-                    </div>
-                    <div class="mc-config-subtitle">Pflege deine Ausbildungsdaten für eine präzise Fortschrittsberechnung</div>
-                </div>
-
-                <div class="mc-config-body">
-                    <!-- SECTION: Ausbildungszeitraum -->
-                    <div class="mc-config-section-label">AUSBILDUNGSZEITRAUM</div>
-                    <div class="mc-config-row">
-                        <div class="mc-field-group">
-                            <label class="mc-field-label">STARTDATUM</label>
-                            <input type="date" id="confIHKStart" class="mc-input">
-                        </div>
-                        <div class="mc-field-group">
-                            <label class="mc-field-label">ABSCHLUSS (ABSCHLUSSPRÜFUNG)</label>
-                            <input type="date" id="confIHKEnd" class="mc-input">
-                        </div>
-                    </div>
-
-                    <!-- SECTION: Prüfungen -->
-                    <div class="mc-config-section-label" style="margin-top:2rem;">PRÜFUNGSDATEN & NOTEN</div>
-                    <div class="mc-config-row">
-                        <div class="mc-field-group">
-                            <label class="mc-field-label">DATUM ZWISCHENPRÜFUNG</label>
-                            <input type="date" id="confIHKExamZwischen" class="mc-input">
-                        </div>
-                        <div class="mc-field-group">
-                            <label class="mc-field-label">NOTE ZWISCHENPRÜFUNG <span class="mc-field-hint">1.0 – 6.0</span></label>
-                            <input type="number" id="confIHKNoteZwischen" class="mc-input" step="0.1" min="1.0" max="6.0" placeholder="z.B. 2.7">
-                        </div>
-                    </div>
-                    <div class="mc-config-row" style="margin-top:1rem;">
-                        <div class="mc-field-group">
-                            <label class="mc-field-label">DATUM ABSCHLUSSPRÜFUNG <span class="mc-field-hint">Aus Enddat. übern.</span></label>
-                            <input type="date" id="confIHKExamAbschluss" class="mc-input mc-input-disabled" disabled>
-                        </div>
-                        <div class="mc-field-group">
-                            <label class="mc-field-label">NOTE ABSCHLUSSPRÜFUNG <span class="mc-field-hint">1.0 – 6.0</span></label>
-                            <input type="number" id="confIHKNoteAbschluss" class="mc-input" step="0.1" min="1.0" max="6.0" placeholder="z.B. 1.3">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mc-config-footer">
-                    <div class="mc-save-hint">Änderungen werden lokal gespeichert</div>
-                    <button id="ihkSaveBtn" class="mc-save-btn" onclick="saveIHKSettings()">
-                        <span class="mc-save-icon" id="ihkSaveBtnIcon">▶</span>
-                        <span id="ihkSaveBtnLabel">Speichern & Berechnen</span>
-                    </button>
                 </div>
             </div>
+
+            <!-- ═══════════════════════════════════════════════════════════
+                 AUSBILDUNGSDATEN — im leeren Zustand die Hauptsache und offen,
+                 sonst zugeklappt am Fuss. EIN Formular, nicht zwei.
+                 ═══════════════════════════════════════════════════════════ -->
+            <section class="ihk-panel ihk-conf" id="ihkConf">
+                <button type="button" class="ihk-conf__toggle" id="ihkConfToggle"
+                        aria-expanded="false" aria-controls="ihkConfBody">
+                    <span class="ihk-conf__icon" id="ihkConfIcon" aria-hidden="true"></span>
+                    <span class="ihk-conf__title">Ausbildungsdaten</span>
+                    <span class="ihk-conf__summary" id="ihkConfSummary">Noch nichts eingetragen</span>
+                    <span class="ihk-conf__chev" id="ihkConfChev" aria-hidden="true"></span>
+                </button>
+
+                <div class="ihk-conf__body" id="ihkConfBody">
+                    <fieldset class="ihk-fs">
+                        <legend class="ihk-fs__legend">Zeitraum</legend>
+                        <div class="ihk-fields">
+                            <label class="ihk-field">
+                                <span class="ihk-field__label">Ausbildungsbeginn</span>
+                                <input type="date" id="confIHKStart" class="ihk-input">
+                            </label>
+                            <label class="ihk-field">
+                                <span class="ihk-field__label">Vertragsende</span>
+                                <input type="date" id="confIHKEnd" class="ihk-input">
+                            </label>
+                            <label class="ihk-field">
+                                <span class="ihk-field__label">Probezeit</span>
+                                <select id="confIHKProbe" class="ihk-input">
+                                    <option value="1">1 Monat</option>
+                                    <option value="2">2 Monate</option>
+                                    <option value="3">3 Monate</option>
+                                    <option value="4">4 Monate</option>
+                                </select>
+                                <span class="ihk-field__hint">Höchstens vier Monate (§ 20 BBiG)</span>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="ihk-fs">
+                        <legend class="ihk-fs__legend">Prüfungen</legend>
+                        <div class="ihk-fields">
+                            <label class="ihk-field">
+                                <span class="ihk-field__label">Zwischenprüfung</span>
+                                <input type="date" id="confIHKExamZwischen" class="ihk-input">
+                            </label>
+                            <label class="ihk-field">
+                                <span class="ihk-field__label">Note Zwischenprüfung</span>
+                                <input type="number" id="confIHKNoteZwischen" class="ihk-input" step="0.1" min="1" max="6" placeholder="z. B. 2,3">
+                            </label>
+                            <label class="ihk-field">
+                                <span class="ihk-field__label">Abschlussprüfung</span>
+                                <input type="date" id="confIHKExamAbschluss" class="ihk-input">
+                                <span class="ihk-field__hint">Der Prüfungstermin, nicht das Vertragsende</span>
+                            </label>
+                            <label class="ihk-field">
+                                <span class="ihk-field__label">Note Abschlussprüfung</span>
+                                <input type="number" id="confIHKNoteAbschluss" class="ihk-input" step="0.1" min="1" max="6" placeholder="z. B. 1,7">
+                            </label>
+                            <label class="ihk-field">
+                                <span class="ihk-field__label">Anmeldeschluss</span>
+                                <input type="date" id="confIHKAnmeldung" class="ihk-input">
+                                <span class="ihk-field__hint">Frist deiner Kammer, falls bekannt</span>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <div class="ihk-conf__foot">
+                        <p class="ihk-conf__note">Wird nur auf diesem Gerät gespeichert.</p>
+                        <button type="button" id="ihkSaveBtn" class="ihk-save" onclick="saveIHKSettings()">
+                            <span id="ihkSaveBtnLabel">Speichern</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
 
         </div>

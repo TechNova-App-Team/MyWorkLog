@@ -1,1090 +1,1081 @@
-        /* ═══════════════════════════════════════════════════════════
-           IHK / KARRIERE — MISSION CONTROL
-           Dark Enterprise · Cold Steel · Command Center Aesthetic
-           ══════════════════════════════════════════════════════════ */
+        /* ═══════════════════════════════════════════════════════════════
+           IHK — AUSBILDUNGSAKTE
+           Aktenmaessige Disziplin auf der Oberflaeche der App: Haarlinien
+           statt Kaesten, eine Aussage statt eines Kennzahlen-Cockpits,
+           Mono nur fuer Messwerte.
 
-        /* ── Custom Font imports for the IHK view ── */
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+           🔴 Was hier bewusst NICHT mehr steht:
+           - kein `@import` von Google Fonts (DM Sans / IBM Plex Mono). Die
+             App laedt Plus Jakarta Sans und JetBrains Mono bereits; ein
+             zweites Schriftpaar nur fuer diese Ansicht war zwei zusaetzliche
+             blockierende Anfragen und ein Bruch im Schriftbild.
+           - kein eigenes Dunkel-Fundament (`--mc-bg: #070810`). Die alte
+             Fassung hatte NULL `[data-theme="light"]`-Regeln: im hellen Theme
+             blieb die ganze Ansicht schwarz. Jetzt liegen alle Flaechen auf
+             den App-Tokens (--bg-surface / --border-default / --edge-top),
+             damit Hell automatisch mitkommt.
+           - keine Textzeichen als Icons (◈ ⓘ ▼ ▶ ✓). Die standen in einer
+             anderen Schrift als der Rest und sassen nie mittig.
+           ═══════════════════════════════════════════════════════════════ */
 
-        /* ── IHK Color Tokens ── */
         #view-ihk {
-            --mc-bg:           #070810;
-            --mc-panel:        rgba(12, 14, 20, 0.95);
-            --mc-border:       rgba(255, 255, 255, 0.07);
-            --mc-border-glow:  rgba(var(--primary-rgb), 0.22);
-            --mc-blue:         var(--primary);
-            --mc-blue-bright:  var(--primary);
-            --mc-amber:        #f59e0b;
-            --mc-amber-dim:    rgba(245, 158, 11, 0.15);
-            --mc-green:        #22c55e;
-            --mc-green-dim:    rgba(34, 197, 94, 0.12);
-            --mc-red:          #ef4444;
-            --mc-red-dim:      rgba(239, 68, 68, 0.12);
-            --mc-steel:        rgba(203, 213, 225, 0.55);
-            --mc-text-main:    #f4f7fb;
-            --mc-text-muted:   rgba(248, 250, 252, 0.68);
-            --mc-text-dim:     rgba(248, 250, 252, 0.34);
-            --mc-mono:         'IBM Plex Mono', 'JetBrains Mono', monospace;
-            --mc-sans:         'DM Sans', var(--font-main);
-            font-family: var(--mc-sans);
+            /* Rollen, nicht Farben. Alles leitet sich aus den App-Tokens ab,
+               damit Theme-Wechsel und Akzentfarbe ohne Zutun greifen. */
+            --ihk-rule:       rgba(255, 255, 255, 0.06);
+            --ihk-rule-soft:  rgba(255, 255, 255, 0.035);
+            --ihk-past:       rgba(255, 255, 255, 0.26);
+            --ihk-ok:         var(--role-pos, #10b981);
+            --ihk-warn:       #f59e0b;
+            --ihk-bad:        var(--role-neg, #ef4444);
+            --ihk-track:      var(--role-track, rgba(255, 255, 255, 0.06));
+
+            font-family: var(--font-main);
+            max-width: 1320px;
+        }
+        [data-theme="light"] #view-ihk {
+            --ihk-rule:       rgba(7, 16, 35, 0.09);
+            --ihk-rule-soft:  rgba(7, 16, 35, 0.055);
+            --ihk-past:       rgba(7, 16, 35, 0.30);
+            /* 🔴 Die globalen Statusfarben sind fuer DUNKEL gewaehlt. Auf der
+               weissen Karte im hellen Theme messen #10b981 und #f59e0b nur
+               2,3 : 1 bzw. 2,2 : 1 — gerade die Zeilen, die den Befund tragen
+               ("erfuellt", "2 Wochen ohne Eintrag"), waeren die am schlechtesten
+               lesbaren der Seite. Dieselben Rollen, dunklere Stufe. */
+            --ihk-ok:         #047857;
+            --ihk-warn:       #b45309;
+            --ihk-bad:        #dc2626;
         }
 
-        /* ═══════════════════════════════════════════
-           HEADER — MISSION CONTROL COCKPIT
-           ═══════════════════════════════════════════ */
-        #view-ihk .mc-header {
+        /* [hidden] muss hier gewinnen: mehrere Kinder sind Flex- oder
+           Grid-Container und wuerden das Attribut sonst ueberfahren. */
+        #view-ihk [hidden] { display: none !important; }
+
+        /* Messwerte laufen in Mono mit Tabellenziffern — sonst wandert beim
+           Hochzaehlen die Breite jeder Ziffer und die Zahlen zappeln.
+           Fliesstext bleibt in der Textschrift; genau umgekehrt zur alten
+           Fassung, die ALLES in Mono setzte. */
+        #view-ihk .ihk-num,
+        #view-ihk .ihk-band__ends,
+        #view-ihk .ihk-station__date,
+        #view-ihk .ihk-crit__val,
+        #view-ihk .ihk-abs__value,
+        #view-ihk .ihk-grade__val,
+        #view-ihk .ihk-grade__date,
+        #view-ihk .ihk-split__h,
+        #view-ihk .ihk-split__p,
+        #view-ihk .ihk-balance dd,
+        #view-ihk .ihk-src,
+        #view-ihk .ihk-crit__no,
+        #view-ihk .ihk-zones b,
+        #view-ihk .ihk-schoolref__val {
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum" 1;
+        }
+
+        /* ─── KOPF ───────────────────────────────────────────────────── */
+        #view-ihk .ihk-head {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: start;
+            gap: 1.5rem;
+            padding: 0.25rem 0 1.75rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--ihk-rule);
+        }
+        #view-ihk .ihk-head__eyebrow {
+            font-size: var(--eyebrow-size, 0.6875rem);
+            letter-spacing: var(--eyebrow-tracking, 0.09em);
+            text-transform: uppercase;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin: 0 0 0.75rem;
+        }
+        #view-ihk .ihk-head__lede {
+            font-size: clamp(1.5rem, 1.1rem + 1.7vw, 2.25rem);
+            line-height: 1.15;
+            letter-spacing: -0.024em;
+            font-weight: 600;
+            color: var(--text-main);
+            margin: 0;
+            text-wrap: balance;
+            max-width: 22ch;
+        }
+        #view-ihk .ihk-head__meta {
+            margin: 0.65rem 0 0;
+            font-size: 0.9375rem;
+            line-height: 1.55;
+            color: var(--text-muted);
+            max-width: 58ch;
+        }
+        #view-ihk .ihk-head__aside {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.2rem;
+            padding-top: 0.15rem;
+        }
+        #view-ihk .ihk-year {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: var(--text-main);
+            padding: 0.4rem 0.75rem;
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            background: var(--bg-inset, rgba(0, 0, 0, 0.2));
+            white-space: nowrap;
+        }
+        #view-ihk .ihk-year__sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            padding-right: 0.15rem;
+        }
+
+        /* ─── GERUEST ────────────────────────────────────────────────── */
+        #view-ihk .ihk-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        #view-ihk .ihk-row {
+            display: grid;
+            gap: 1.25rem;
+            /* Ohne `start` streckt Grid beide Karten auf die Hoehe der
+               laengeren — die Fehlzeiten-Karte bekam dadurch unten ein
+               handbreites leeres Feld, das wie ein Ladefehler aussieht. */
+            align-items: start;
+        }
+        /* Die Spaltenverhaeltnisse kehren sich zwischen den Reihen um.
+           Zwei gleich breite Reihen lesen sich als Raster; so liest sich die
+           Seite als Abfolge mit wechselndem Schwerpunkt. */
+        #view-ihk .ihk-row--a { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); }
+        #view-ihk .ihk-row--b { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
+
+        #view-ihk .ihk-panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
+            border-radius: 18px;
+            box-shadow: var(--edge-top), var(--shadow-sm);
+            padding: 1.4rem 1.6rem 1.6rem;
+            min-width: 0;
+        }
+        #view-ihk .ihk-panel__head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding-bottom: 0.85rem;
+            margin-bottom: 1.15rem;
+            border-bottom: 1px solid var(--ihk-rule);
+        }
+        #view-ihk .ihk-panel__title {
+            margin: 0;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        /* ─── HERKUNFTS-MARKE ────────────────────────────────────────────
+           Das Erkennungszeichen dieser Ansicht. Jede Behauptung sagt, woher
+           sie kommt: Gesetz, Richtwert der Kammern, oder die eigenen Daten.
+           Genau diese Unterscheidung ist der Grund, warum die Seite ueberhaupt
+           vertrauenswuerdig ist — sie gehoert deshalb sichtbar ins Bild und
+           nicht in eine Fussnote. */
+        #view-ihk .ihk-src {
+            font-size: 0.6875rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            line-height: 1;
+            padding: 0.35rem 0.5rem;
+            border: 1px solid var(--ihk-rule);
+            border-radius: 4px;
+            background: transparent;
+            color: var(--text-muted);
+            white-space: nowrap;
+            flex: 0 0 auto;
+        }
+        #view-ihk button.ihk-src {
+            cursor: pointer;
+            transition: border-color var(--dur-fast, 140ms) var(--ease-out),
+                        color var(--dur-fast, 140ms) var(--ease-out),
+                        background-color var(--dur-fast, 140ms) var(--ease-out);
+        }
+        #view-ihk .ihk-src--law {
+            color: var(--primary);
+            border-color: rgba(var(--primary-rgb), 0.32);
+        }
+        #view-ihk .ihk-src--rule {
+            color: var(--ihk-warn);
+            border-color: color-mix(in srgb, var(--ihk-warn) 32%, transparent);
+        }
+        #view-ihk button.ihk-src--law:hover,
+        #view-ihk button.ihk-src--law[aria-expanded="true"] {
+            background: rgba(var(--primary-rgb), 0.1);
+            border-color: rgba(var(--primary-rgb), 0.5);
+        }
+        #view-ihk button.ihk-src--rule:hover,
+        #view-ihk button.ihk-src--rule[aria-expanded="true"] {
+            background: color-mix(in srgb, var(--ihk-warn) 10%, transparent);
+            border-color: color-mix(in srgb, var(--ihk-warn) 50%, transparent);
+        }
+        #view-ihk .ihk-src__note {
+            margin: -0.35rem 0 1.15rem;
+            padding: 0.75rem 0.9rem;
+            border-left: 2px solid var(--ihk-rule);
+            background: var(--bg-inset, rgba(0, 0, 0, 0.2));
+            border-radius: 0 8px 8px 0;
+            font-size: 0.8125rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        /* ─── ZEITBAND ───────────────────────────────────────────────────
+           Traegt die Proportion und bleibt deshalb unbeschriftet: Stationen
+           liegen oft nur Tage auseinander, jede Beschriftung am Band wuerde
+           mit der naechsten kollidieren. Die Namen stehen in der Liste
+           darunter, die Punkte hier sind nur Marken. */
+        #view-ihk .ihk-band { padding: 0.5rem 0 0.25rem; }
+        #view-ihk .ihk-band__years {
             position: relative;
-            background: var(--mc-panel);
-            border: 1px solid var(--mc-border);
-            border-radius: 20px;
-            padding: 2rem 2.5rem 1.5rem;
-            margin-bottom: 1.25rem;
+            height: 1.35rem;
+            margin-bottom: 0.4rem;
+        }
+        #view-ihk .ihk-band__year {
+            position: absolute;
+            top: 0;
+            padding-left: 0.5rem;
+            border-left: 1px solid var(--ihk-rule);
+            font-size: 0.6875rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            white-space: nowrap;
             overflow: hidden;
         }
+        #view-ihk .ihk-band__year:first-child { border-left-color: transparent; padding-left: 0; }
 
-        #view-ihk .mc-header::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(ellipse 60% 50% at 80% 0%, rgba(var(--primary-rgb), 0.14) 0%, transparent 60%),
-                radial-gradient(ellipse 40% 60% at 20% 100%, rgba(var(--primary-rgb), 0.08) 0%, transparent 50%);
-            pointer-events: none;
-        }
-
-        /* Subtle grid texture */
-        #view-ihk .mc-header::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(248, 250, 252, 0.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(248, 250, 252, 0.04) 1px, transparent 1px);
-            background-size: 40px 40px;
-            pointer-events: none;
-        }
-
-        #view-ihk .mc-header-grid {
+        #view-ihk .ihk-band__track {
             position: relative;
-            z-index: 1;
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 2rem;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        /* Status row */
-        #view-ihk .mc-status-row {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            margin-bottom: 1rem;
-        }
-
-        #view-ihk .mc-badge-live {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-family: var(--mc-mono);
-            font-size: 0.6rem;
-            font-weight: 700;
-            letter-spacing: 0.15em;
-            color: var(--mc-green);
-            background: var(--mc-green-dim);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            padding: 3px 8px;
-            border-radius: 3px;
-        }
-
-        #view-ihk .mc-badge-dot {
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: var(--mc-green);
-            box-shadow: 0 0 6px var(--mc-green);
-            animation: mc-pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes mc-pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(0.8); }
-        }
-
-        #view-ihk .mc-breadcrumb {
-            font-family: var(--mc-mono);
-            font-size: 0.65rem;
-            font-weight: 500;
-            letter-spacing: 0.12em;
-            color: var(--mc-blue);
-        }
-
-        #view-ihk .mc-breadcrumb-sub {
-            font-family: var(--mc-mono);
-            font-size: 0.65rem;
-            letter-spacing: 0.08em;
-            color: var(--mc-text-dim);
-        }
-
-        #view-ihk .mc-sep { color: var(--mc-text-dim); font-size: 0.7rem; }
-
-        /* Title */
-        #view-ihk .mc-title {
-            font-family: var(--mc-sans);
-            font-size: clamp(1.6rem, 3vw, 2.2rem);
-            font-weight: 700;
-            color: var(--mc-text-main);
-            letter-spacing: -0.04em;
-            line-height: 1.1;
-            margin: 0 0 0.5rem;
-        }
-
-        #view-ihk .mc-title-accent {
-            color: var(--mc-blue-bright);
-            position: relative;
-        }
-
-        #view-ihk .mc-title-accent::after {
-            content: '';
-            position: absolute;
-            left: 0; right: 0;
-            bottom: 2px;
-            height: 2px;
-            background: linear-gradient(90deg, var(--mc-blue), transparent);
-        }
-
-        #view-ihk .mc-subtitle {
-            font-size: 0.85rem;
-            color: var(--mc-text-muted);
-            margin: 0;
-            font-weight: 400;
-            letter-spacing: 0.01em;
-        }
-
-        /* ── Progress Ring ── */
-        #view-ihk .mc-header-right {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        #view-ihk .mc-ring-wrap {
-            position: relative;
-            width: 130px;
-            height: 130px;
-        }
-
-        #view-ihk .mc-ring-svg {
-            width: 130px;
-            height: 130px;
-            transform: rotate(-90deg);
-        }
-
-        #view-ihk .mc-ring-track {
-            fill: none;
-            stroke: rgba(255, 255, 255, 0.08);
-            stroke-width: 8;
-        }
-
-        #view-ihk .mc-ring-glow {
-            fill: none;
-            stroke: rgba(var(--primary-rgb), 0.12);
-            stroke-width: 14;
-            filter: blur(3px);
-        }
-
-        #view-ihk .mc-ring-progress {
-            fill: none;
-            stroke: var(--mc-blue);
-            stroke-width: 8;
-            stroke-linecap: butt;
-            transition: stroke-dashoffset 1.4s cubic-bezier(0.23, 1, 0.32, 1);
-            filter: drop-shadow(0 0 8px rgba(var(--primary-rgb), 0.35));
-        }
-
-        #view-ihk .mc-ring-pct {
-            transform: rotate(90deg);
-            transform-origin: 60px 60px;
-            font-family: var(--mc-mono);
-            font-size: 18px;
-            font-weight: 700;
-            fill: var(--mc-blue-bright);
-            text-anchor: middle;
-            dominant-baseline: middle;
-        }
-
-        #view-ihk .mc-ring-label-inner {
-            transform: rotate(90deg);
-            transform-origin: 60px 60px;
-            font-family: var(--mc-mono);
-            font-size: 6.5px;
-            font-weight: 500;
-            letter-spacing: 0.15em;
-            fill: var(--mc-text-dim);
-            text-anchor: middle;
-            dominant-baseline: middle;
-        }
-
-        #view-ihk .mc-ring-meta {
-            font-family: var(--mc-mono);
-            font-size: 0.62rem;
-            color: var(--mc-text-muted);
-            text-align: center;
-            letter-spacing: 0.05em;
-        }
-
-        /* ── TIMELINE ── */
-        #view-ihk .mc-timeline-wrap {
-            position: relative;
-            z-index: 1;
-        }
-
-        #view-ihk .mc-timeline-label {
-            font-family: var(--mc-mono);
-            font-size: 0.58rem;
-            font-weight: 500;
-            letter-spacing: 0.15em;
-            color: var(--mc-text-dim);
-            margin-bottom: 0.6rem;
-        }
-
-        #view-ihk .mc-timeline-bar {
-            position: relative;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.06);
-            border-radius: 1px;
+            height: 10px;
+            border-radius: 999px;
+            background: var(--ihk-track);
             overflow: visible;
         }
-
-        #view-ihk .mc-timeline-fill {
+        #view-ihk .ihk-band__fill {
             position: absolute;
-            top: 0; left: 0; bottom: 0;
-            background: linear-gradient(90deg, rgba(var(--primary-rgb), 0.3), var(--mc-blue));
-            border-radius: 1px;
-            width: 0%;
-            transition: width 1.4s cubic-bezier(0.23, 1, 0.32, 1);
+            inset: 0 auto 0 0;
+            width: 0;
+            border-radius: 999px;
+            background: linear-gradient(90deg,
+                        rgba(var(--primary-rgb), 0.45) 0%,
+                        var(--primary) 100%);
+            transition: width 900ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
         }
-
-        #view-ihk .mc-timeline-marker {
+        #view-ihk .ihk-band__tick {
+            position: absolute;
+            top: -3px;
+            bottom: -3px;
+            width: 2px;
+            margin-left: -1px;
+            border-radius: 1px;
+            background: var(--ihk-past);
+        }
+        #view-ihk .ihk-band__tick[data-state="next"]     { background: var(--text-main); }
+        #view-ihk .ihk-band__tick[data-state="upcoming"] { background: var(--ihk-past); }
+        #view-ihk .ihk-band__now {
             position: absolute;
             top: 50%;
+            left: 0;
             transform: translate(-50%, -50%);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            transition: left 900ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
         }
-
-        #view-ihk .mc-marker-dot {
-            width: 10px;
-            height: 10px;
+        #view-ihk .ihk-band__nowdot {
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            background: var(--mc-amber);
-            border: 2px solid #070810;
-            box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
-            position: relative;
-            z-index: 2;
+            background: var(--primary);
+            box-shadow: 0 0 0 3px var(--bg-surface), 0 0 14px rgba(var(--primary-rgb), 0.55);
         }
-
-        #view-ihk .mc-marker-label {
-            font-family: var(--mc-mono);
-            font-size: 0.55rem;
-            font-weight: 700;
-            color: var(--mc-amber);
-            letter-spacing: 0.08em;
-            margin-top: 2px;
-        }
-
-        #view-ihk .mc-timeline-now {
+        /* Die Prozentzahl haengt an der Marke, nicht mittig unter dem Band:
+           dort las sie sich wie eine Beschriftung der Bandmitte. */
+        #view-ihk .ihk-band__nowlabel {
             position: absolute;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 3;
+            top: calc(100% + 0.45rem);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--primary);
+            white-space: nowrap;
         }
-
-        #view-ihk .mc-now-pulse {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: var(--mc-blue-bright);
-            box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.35);
-            animation: mc-now-glow 2.5s ease-in-out infinite;
-        }
-
-        @keyframes mc-now-glow {
-            0%, 100% { box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.28); transform: scale(1); }
-            50% { box-shadow: 0 0 18px rgba(var(--primary-rgb), 0.55); transform: scale(1.15); }
-        }
-
-        #view-ihk .mc-timeline-ends {
+        /* Am Anfang und am Ende der Ausbildung wuerde die zentrierte
+           Beschriftung aus dem Band herauslaufen. */
+        #view-ihk .ihk-band__now[data-edge="start"] .ihk-band__nowlabel { transform: translateX(-8px); left: 0; }
+        #view-ihk .ihk-band__now[data-edge="end"]   .ihk-band__nowlabel { transform: translateX(-100%); left: 8px; }
+        #view-ihk .ihk-band__ends {
             display: flex;
             justify-content: space-between;
-            margin-top: 0.5rem;
-            font-family: var(--mc-mono);
-            font-size: 0.6rem;
-            color: var(--mc-text-dim);
-        }
-
-        /* ═══════════════════════════════════════════
-           PRIMARY KPI ROW
-           ═══════════════════════════════════════════ */
-        #view-ihk .mc-kpi-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            align-items: baseline;
             gap: 1rem;
-            margin-bottom: 1.25rem;
+            margin-top: 1.75rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        #view-ihk .ihk-band__pct {
+            color: var(--text-main);
+            font-weight: 500;
         }
 
-        #view-ihk .mc-kpi-block {
-            background: var(--mc-panel);
-            border: 1px solid var(--mc-border);
-            border-radius: 14px;
-            padding: 1.5rem 1.75rem;
-            position: relative;
-            overflow: hidden;
-            transition: border-color 0.3s ease, transform 0.25s ease;
-        }
-
-        #view-ihk .mc-kpi-block:hover {
-            border-color: var(--mc-border-glow);
-            transform: translateY(-3px);
-        }
-
-        #view-ihk .mc-kpi-block::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.3), transparent);
-        }
-
-        #view-ihk .mc-kpi-primary {
-            border-color: rgba(var(--primary-rgb), 0.18);
-        }
-
-        #view-ihk .mc-kpi-eyebrow {
-            font-family: var(--mc-mono);
-            font-size: 0.58rem;
-            font-weight: 600;
-            letter-spacing: 0.15em;
-            color: var(--mc-text-dim);
-            margin-bottom: 0.75rem;
-        }
-
-        #view-ihk .mc-kpi-num {
-            font-family: var(--mc-mono);
-            font-size: 2.4rem;
-            font-weight: 700;
-            color: var(--mc-blue-bright);
-            line-height: 1;
-            margin-bottom: 0.4rem;
-            letter-spacing: -0.04em;
-        }
-
-        #view-ihk .mc-kpi-num-amber { color: var(--mc-amber); }
-        #view-ihk .mc-kpi-num-steel { color: rgba(248, 250, 252, 0.7); }
-
-        #view-ihk .mc-kpi-foot {
-            font-size: 0.7rem;
-            color: var(--mc-text-muted);
-            margin-bottom: 1rem;
-            font-family: var(--mc-mono);
-            letter-spacing: 0.04em;
-        }
-
-        #view-ihk .mc-kpi-bar-wrap {
-            height: 2px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 1px;
-            overflow: hidden;
-        }
-
-        #view-ihk .mc-kpi-bar-fill {
-            height: 100%;
-            background: var(--mc-blue);
-            border-radius: 1px;
-            transition: width 1.2s ease;
-            box-shadow: 0 0 6px rgba(var(--primary-rgb), 0.35);
-        }
-
-        #view-ihk .mc-bar-amber { background: var(--mc-amber); box-shadow: 0 0 6px rgba(245, 158, 11, 0.5); }
-        #view-ihk .mc-bar-steel { background: rgba(248, 250, 252, 0.18); }
-
-        /* ═══════════════════════════════════════════
-           SECONDARY GRID: ABSENCE + GRADES
-           ═══════════════════════════════════════════ */
-        #view-ihk .mc-secondary-grid {
+        /* ─── STATIONEN ──────────────────────────────────────────────────
+           Kein Kartenraster: jede Station haengt an einer eigenen Oberkante,
+           deren Farbe den Zustand traegt. Das ueberlebt jeden Umbruch — ein
+           Trennstrich links haette in der zweiten Zeile falsch gestanden. */
+        #view-ihk .ihk-stations {
+            list-style: none;
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1.25rem;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0 1.25rem;
+            margin: 1.9rem 0 0;
+            padding: 0;
         }
-
-        #view-ihk .mc-panel {
-            background: var(--mc-panel);
-            border: 1px solid var(--mc-border);
-            border-radius: 14px;
-            padding: 1.5rem;
-            overflow: hidden;
-            transition: border-color 0.3s ease;
+        #view-ihk .ihk-station {
+            padding: 0.85rem 0 0.2rem;
+            border-top: 2px solid var(--ihk-past);
         }
-
-        #view-ihk .mc-panel:hover {
-            border-color: var(--mc-border-glow);
-        }
-
-        #view-ihk .mc-panel-header {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            margin-bottom: 1.5rem;
-        }
-
-        #view-ihk .mc-panel-icon {
-            font-style: normal;
-            font-size: 0.9rem;
-            color: var(--mc-blue);
-            opacity: 0.6;
-            line-height: 1;
-        }
-
-        #view-ihk .mc-panel-title {
-            font-family: var(--mc-mono);
-            font-size: 0.62rem;
+        #view-ihk .ihk-station[data-state="next"] { border-top-color: var(--primary); }
+        #view-ihk .ihk-station__name {
+            margin: 0 0 0.3rem;
+            font-size: 0.8125rem;
             font-weight: 600;
-            letter-spacing: 0.15em;
-            color: var(--mc-text-muted);
-            flex: 1;
+            line-height: 1.35;
+            color: var(--text-main);
+        }
+        #view-ihk .ihk-station[data-state="done"] .ihk-station__name { color: var(--text-muted); }
+        #view-ihk .ihk-station__date {
+            margin: 0;
+            font-size: 0.8125rem;
+            color: var(--text-main);
+        }
+        #view-ihk .ihk-station[data-state="done"] .ihk-station__date { color: var(--text-muted); }
+        #view-ihk .ihk-station__rel {
+            margin: 0.15rem 0 0;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            color: var(--text-muted);
+        }
+        #view-ihk .ihk-station[data-state="next"] .ihk-station__rel {
+            color: var(--primary);
+            font-weight: 500;
         }
 
-        #view-ihk .mc-panel-tag {
-            font-family: var(--mc-mono);
-            font-size: 0.55rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            color: var(--mc-blue);
-            background: rgba(var(--primary-rgb), 0.1);
-            border: 1px solid rgba(var(--primary-rgb), 0.22);
-            padding: 2px 7px;
-            border-radius: 2px;
+        /* ─── ZULASSUNG ──────────────────────────────────────────────── */
+        #view-ihk .ihk-adm__verdict {
+            margin: 0 0 0.4rem;
+            font-size: 1.0625rem;
+            font-weight: 600;
+            letter-spacing: -0.012em;
+            line-height: 1.45;
+            color: var(--text-main);
         }
-
-        /* Absence metrics */
-        #view-ihk .mc-absence-grid {
+        #view-ihk .ihk-crit {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        #view-ihk .ihk-crit__row {
             display: grid;
-            grid-template-columns: 1fr auto 1fr auto 1fr;
-            align-items: center;
-            gap: 0;
-            margin-bottom: 1.25rem;
+            grid-template-columns: 1.75rem minmax(0, 1fr);
+            gap: 0 0.85rem;
+            padding: 1.05rem 0;
+            border-top: 1px solid var(--ihk-rule-soft);
         }
-
-        #view-ihk .mc-absence-divider {
-            width: 1px;
-            height: 50px;
-            background: var(--mc-border);
-            margin: 0 0.75rem;
-        }
-
-        #view-ihk .mc-absence-cell {
+        /* Die Nummer ist nicht dekorativ: § 43 Abs. 1 BBiG zaehlt seine
+           Voraussetzungen selbst mit 1. bis 3. durch, und Nummer 2 enthaelt
+           zwei Bedingungen. Deshalb steht die 2 hier zweimal. */
+        #view-ihk .ihk-crit__no {
+            grid-row: span 1;
+            font-size: 0.75rem;
+            font-weight: 500;
+            line-height: 1.6rem;
             text-align: center;
+            border-radius: 6px;
+            color: var(--text-muted);
+            background: var(--bg-inset, rgba(0, 0, 0, 0.2));
+            border: 1px solid var(--ihk-rule);
+            height: 1.6rem;
         }
-
-        #view-ihk .mc-absence-val {
-            font-family: var(--mc-mono);
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--mc-text-main);
-            line-height: 1;
-            margin-bottom: 0.35rem;
+        #view-ihk .ihk-crit__row[data-state="ok"] .ihk-crit__no {
+            color: var(--ihk-ok);
+            border-color: color-mix(in srgb, var(--ihk-ok) 35%, transparent);
+            background: color-mix(in srgb, var(--ihk-ok) 10%, transparent);
         }
-
-        #view-ihk .mc-absence-steel { color: var(--mc-steel); }
-
-        #view-ihk .mc-absence-key {
-            font-size: 0.65rem;
+        #view-ihk .ihk-crit__row[data-state="warn"] .ihk-crit__no {
+            color: var(--ihk-warn);
+            border-color: color-mix(in srgb, var(--ihk-warn) 35%, transparent);
+            background: color-mix(in srgb, var(--ihk-warn) 10%, transparent);
+        }
+        #view-ihk .ihk-crit__body { min-width: 0; }
+        #view-ihk .ihk-crit__label {
+            margin: 0.1rem 0 0.25rem;
+            font-size: 0.9375rem;
             font-weight: 600;
-            color: var(--mc-text-muted);
-            letter-spacing: 0.04em;
+            line-height: 1.4;
+            letter-spacing: -0.008em;
+            color: var(--text-main);
         }
-
-        #view-ihk .mc-absence-note {
-            font-family: var(--mc-mono);
-            font-size: 0.58rem;
-            color: var(--mc-text-dim);
-            margin-top: 2px;
+        #view-ihk .ihk-crit__hint {
+            margin: 0 0 0.5rem;
+            font-size: 0.8125rem;
+            line-height: 1.55;
+            color: var(--text-muted);
+            max-width: 54ch;
         }
-
-        /* Quota bar */
-        #view-ihk .mc-quota-track {
-            position: relative;
-            height: 3px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 2px;
-            overflow: visible;
-        }
-
-        #view-ihk .mc-quota-fill {
-            position: absolute;
-            top: 0; left: 0; bottom: 0;
-            background: var(--mc-green);
-            border-radius: 2px;
-            transition: width 1s ease, background 0.5s ease;
-        }
-
-        #view-ihk .mc-quota-limit {
-            position: absolute;
-            top: -8px;
-            transform: translateX(-50%);
-        }
-
-        #view-ihk .mc-quota-limit::after {
-            content: '';
-            position: absolute;
-            left: 50%;
-            top: 8px;
-            transform: translateX(-50%);
-            width: 1px;
-            height: 19px;
-            background: rgba(239, 68, 68, 0.5);
-        }
-
-        #view-ihk .mc-quota-limit-label {
-            font-family: var(--mc-mono);
-            font-size: 0.55rem;
-            color: rgba(239, 68, 68, 0.7);
-            white-space: nowrap;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* ── Quota info button ── */
-        #view-ihk .mc-quota-wrap {
-            position: relative;
-        }
-
-        #view-ihk .mc-quota-info-btn {
+        #view-ihk .ihk-crit__val {
             display: flex;
             align-items: center;
             gap: 0.4rem;
-            margin-top: 0.85rem;
-            padding: 0.3rem 0.6rem;
-            width: 100%;
-            background: none;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 6px;
-            color: rgba(255, 255, 255, 0.28);
-            font-family: var(--mc-mono);
-            font-size: 0.55rem;
-            letter-spacing: 0.08em;
-            cursor: pointer;
-            justify-content: center;
-            transition: color 0.2s, border-color 0.2s, background 0.2s;
+            margin: 0;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
         }
+        #view-ihk .ihk-crit__row[data-state="ok"]   .ihk-crit__val { color: var(--ihk-ok); }
+        #view-ihk .ihk-crit__row[data-state="warn"] .ihk-crit__val { color: var(--ihk-warn); }
+        #view-ihk .ihk-crit__val .mwl-icon { flex: 0 0 auto; }
 
-        #view-ihk .mc-quota-info-btn:hover {
-            color: rgba(255, 255, 255, 0.65);
-            border-color: rgba(255, 255, 255, 0.14);
-            background: rgba(255, 255, 255, 0.03);
+        #view-ihk .ihk-crit__link {
+            display: inline-block;
+            margin-top: 0.6rem;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--primary);
+            text-decoration: none;
+            border-bottom: 1px solid rgba(var(--primary-rgb), 0.35);
+            padding-bottom: 1px;
+            transition: border-color var(--dur-fast, 140ms) var(--ease-out);
         }
+        #view-ihk .ihk-crit__link:hover { border-bottom-color: var(--primary); }
 
-        #view-ihk .mc-quota-info-icon {
-            font-size: 0.72rem;
-        }
-
-        #view-ihk .mc-quota-info-chevron {
-            font-size: 0.45rem;
-            margin-left: auto;
-            transition: transform 0.25s ease;
-        }
-
-        #view-ihk .mc-quota-info-btn[aria-expanded="true"] .mc-quota-info-chevron,
-        #view-ihk .mc-absence-popover.is-open ~ .mc-quota-info-chevron {
-            transform: rotate(180deg);
-        }
-
-        /* ── Absence Popover ── */
-        #view-ihk .mc-absence-popover {
-            overflow: hidden;
-            max-height: 0;
-            opacity: 0;
-            pointer-events: none;
-            border: 1px solid transparent;
-            border-radius: 12px;
-            margin-top: 0.5rem;
-            background: rgba(8, 8, 18, 0.97);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            transition: max-height 0.38s ease, opacity 0.22s ease, border-color 0.22s;
-        }
-
-        #view-ihk .mc-absence-popover.is-open {
-            max-height: 520px;
-            opacity: 1;
-            pointer-events: all;
-            border-color: rgba(255, 255, 255, 0.08);
-        }
-
-        #view-ihk .mc-abspop-inner {
-            padding: 1rem;
-        }
-
-        #view-ihk .mc-abspop-header {
-            display: flex;
-            justify-content: space-between;
+        /* Bestaetigung fuer das, was aus den Daten NICHT ablesbar ist.
+           Sie steht bewusst an der Voraussetzung selbst und nicht im
+           Einstellungsformular — dort haette niemand den Zusammenhang. */
+        #view-ihk .ihk-confirm {
+            display: inline-flex;
             align-items: center;
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.6rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        #view-ihk .mc-abspop-title {
-            font-family: var(--mc-mono);
-            font-size: 0.58rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            color: rgba(255, 255, 255, 0.3);
-        }
-
-        #view-ihk .mc-abspop-close {
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.25);
+            gap: 0.5rem;
+            margin-top: 0.65rem;
+            padding: 0.42rem 0.7rem;
+            border: 1px solid var(--ihk-rule);
+            border-radius: 8px;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
             cursor: pointer;
-            font-size: 0.85rem;
-            line-height: 1;
-            padding: 2px 5px;
+            transition: border-color var(--dur-fast, 140ms) var(--ease-out),
+                        background-color var(--dur-fast, 140ms) var(--ease-out);
+        }
+        #view-ihk .ihk-confirm:hover {
+            background: var(--hover-fill);
+            border-color: var(--hover-border);
+        }
+        #view-ihk .ihk-confirm input {
+            width: 15px;
+            height: 15px;
+            margin: 0;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+        #view-ihk .ihk-crit__row[data-state="ok"] .ihk-confirm { color: var(--text-main); }
+
+        #view-ihk .ihk-gaps__toggle {
+            display: block;
+            margin-top: 0.6rem;
+            padding: 0;
+            border: 0;
+            background: none;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--primary);
+            cursor: pointer;
+            text-align: left;
+        }
+        #view-ihk .ihk-gaps__toggle:hover { text-decoration: underline; }
+        #view-ihk .ihk-gaps {
+            list-style: none;
+            margin: 0.7rem 0 0;
+            padding: 0.7rem 0.9rem;
+            border-radius: 8px;
+            background: var(--bg-inset, rgba(0, 0, 0, 0.2));
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem 0.5rem;
+        }
+        #view-ihk .ihk-gaps li {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            padding: 0.2rem 0.45rem;
+            border: 1px solid var(--ihk-rule);
             border-radius: 4px;
-            transition: color 0.2s, background 0.2s;
         }
 
-        #view-ihk .mc-abspop-close:hover {
-            color: rgba(255, 255, 255, 0.8);
-            background: rgba(255, 255, 255, 0.08);
+        /* ─── FEHLZEITEN ─────────────────────────────────────────────── */
+        #view-ihk .ihk-abs__value {
+            margin: 0;
+            font-size: clamp(2rem, 1.5rem + 1.8vw, 2.75rem);
+            font-weight: 500;
+            line-height: 1;
+            letter-spacing: -0.03em;
+            color: var(--ihk-ok);
         }
-
-        /* Current status */
-        #view-ihk .mc-abspop-current {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 0.75rem;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 8px;
-            padding: 0.6rem 0.75rem;
-            margin-bottom: 0.75rem;
+        #view-ihk .ihk-abs__value[data-zone="amber"] { color: var(--ihk-warn); }
+        #view-ihk .ihk-abs__value[data-zone="red"]   { color: var(--ihk-bad); }
+        #view-ihk .ihk-abs__base {
+            margin: 0.7rem 0 0;
+            font-size: 0.8125rem;
+            line-height: 1.55;
+            color: var(--text-muted);
+            max-width: 40ch;
         }
-
-        #view-ihk .mc-abspop-current-info {
-            display: flex;
-            flex-direction: column;
-            gap: 0.2rem;
-            flex: 1;
-            min-width: 0;
+        #view-ihk .ihk-abs__scale { margin-top: 1.6rem; }
+        #view-ihk .ihk-abs__track {
+            position: relative;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--ihk-track);
+            margin-bottom: 1.9rem;
         }
-
-        #view-ihk .mc-abspop-current-label {
-            font-family: var(--mc-mono);
-            font-size: 0.5rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            color: rgba(255, 255, 255, 0.22);
+        #view-ihk .ihk-abs__fill {
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 0;
+            border-radius: 999px;
+            background: var(--ihk-ok);
+            transition: width 700ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)),
+                        background-color var(--dur-normal, 240ms) var(--ease-out);
         }
-
-        #view-ihk .mc-abspop-current-desc {
-            font-size: 0.62rem;
-            color: rgba(255, 255, 255, 0.55);
-            line-height: 1.35;
+        #view-ihk .ihk-abs__fill[data-zone="amber"] { background: var(--ihk-warn); }
+        #view-ihk .ihk-abs__fill[data-zone="red"]   { background: var(--ihk-bad); }
+        /* Die Skala laeuft bis 20 %, damit die Grenze bei 10 % in der Mitte
+           steht und nicht am Rand klebt. */
+        #view-ihk .ihk-abs__limit {
+            position: absolute;
+            top: -4px;
+            bottom: -4px;
+            left: 50%;
+            width: 2px;
+            margin-left: -1px;
+            background: var(--ihk-bad);
+            opacity: 0.65;
         }
-
-        #view-ihk .mc-abspop-current-val {
-            font-family: var(--mc-mono);
-            font-size: 0.82rem;
-            font-weight: 700;
+        #view-ihk .ihk-abs__limit span {
+            position: absolute;
+            top: calc(100% + 0.35rem);
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            color: var(--ihk-bad);
             white-space: nowrap;
-            flex-shrink: 0;
-            transition: color 0.3s;
         }
-
-        /* Range items */
-        #view-ihk .mc-abspop-ranges {
+        #view-ihk .ihk-zones {
+            list-style: none;
+            margin: 0;
+            padding: 0;
             display: flex;
             flex-direction: column;
-            gap: 0.45rem;
+            gap: 0.5rem;
         }
-
-        #view-ihk .mc-abspop-range {
-            display: flex;
-            align-items: flex-start;
+        #view-ihk .ihk-zones li {
+            display: grid;
+            grid-template-columns: 8px auto minmax(0, 1fr);
+            align-items: center;
             gap: 0.6rem;
-            padding: 0.55rem 0.65rem;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            opacity: 0.4;
-            transition: opacity 0.25s, background 0.25s, border-color 0.25s, box-shadow 0.25s;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            opacity: 0.55;
+            transition: opacity var(--dur-normal, 240ms) var(--ease-out);
         }
-
-        #view-ihk .mc-abspop-range.is-active {
-            opacity: 1;
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.1);
-        }
-
-        #view-ihk .mc-abspop-range[data-zone="green"]  .mc-abspop-range-dot { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.8); }
-        #view-ihk .mc-abspop-range[data-zone="amber"]  .mc-abspop-range-dot { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.8); }
-        #view-ihk .mc-abspop-range[data-zone="red"]    .mc-abspop-range-dot { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.8); }
-
-        #view-ihk .mc-abspop-range.is-active[data-zone="green"] { border-color: rgba(34,197,94,0.22);  box-shadow: 0 0 16px rgba(34,197,94,0.07); }
-        #view-ihk .mc-abspop-range.is-active[data-zone="amber"] { border-color: rgba(245,158,11,0.22); box-shadow: 0 0 16px rgba(245,158,11,0.07); }
-        #view-ihk .mc-abspop-range.is-active[data-zone="red"]   { border-color: rgba(239,68,68,0.22);  box-shadow: 0 0 16px rgba(239,68,68,0.07); }
-
-        #view-ihk .mc-abspop-range-dot {
+        #view-ihk .ihk-zones li.is-active { opacity: 1; }
+        #view-ihk .ihk-zones li.is-active b { color: var(--text-main); }
+        #view-ihk .ihk-zones b { font-weight: 500; font-size: 0.75rem; }
+        #view-ihk .ihk-zones em { font-style: normal; }
+        #view-ihk .ihk-zones__dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            flex-shrink: 0;
-            margin-top: 4px;
         }
+        #view-ihk .ihk-zones [data-zone="green"] .ihk-zones__dot { background: var(--ihk-ok); }
+        #view-ihk .ihk-zones [data-zone="amber"] .ihk-zones__dot { background: var(--ihk-warn); }
+        #view-ihk .ihk-zones [data-zone="red"]   .ihk-zones__dot { background: var(--ihk-bad); }
 
-        #view-ihk .mc-abspop-range-body { flex: 1; min-width: 0; }
-
-        #view-ihk .mc-abspop-range-head {
-            display: flex;
-            align-items: center;
-            gap: 0.45rem;
-            margin-bottom: 0.18rem;
+        /* ─── ZEITVERTEILUNG ─────────────────────────────────────────────
+           Bewusst kein gestapelter Balken: die Typfarben aus
+           custom-types-fields.js liegen bei Rot-Gruen-Schwaeche zu dicht
+           beieinander (Arbeit/Berufsschule messen ΔE 2,6 unter Protanopie).
+           Als Liste traegt die Beschriftung die Identitaet, die Farbe ist nur
+           noch Wiedererkennung zur Verlaufs-Ansicht. */
+        #view-ihk .ihk-split__lede {
+            margin: 0 0 1.1rem;
+            font-size: 0.8125rem;
+            line-height: 1.55;
+            color: var(--text-muted);
         }
-
-        #view-ihk .mc-abspop-range-pct {
-            font-family: var(--mc-mono);
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: rgba(255, 255, 255, 0.82);
-        }
-
-        #view-ihk .mc-abspop-badge {
-            font-family: var(--mc-mono);
-            font-size: 0.48rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            padding: 2px 5px;
-            border-radius: 3px;
-            border: 1px solid;
-        }
-
-        #view-ihk .mc-abspop-range[data-zone="green"] .mc-abspop-badge { color: #22c55e; background: rgba(34,197,94,0.12);  border-color: rgba(34,197,94,0.28); }
-        #view-ihk .mc-abspop-range[data-zone="amber"] .mc-abspop-badge { color: #f59e0b; background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.28); }
-        #view-ihk .mc-abspop-range[data-zone="red"]   .mc-abspop-badge { color: #ef4444; background: rgba(239,68,68,0.12);  border-color: rgba(239,68,68,0.28); }
-
-        #view-ihk .mc-abspop-range-label {
-            font-size: 0.6rem;
-            color: rgba(255, 255, 255, 0.38);
-            line-height: 1.4;
-        }
-
-        #view-ihk .mc-abspop-range.is-active .mc-abspop-range-label {
-            color: rgba(255, 255, 255, 0.68);
-        }
-
-        /* Grade cards */
-        #view-ihk .mc-grade-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        #view-ihk .mc-grade-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--mc-border);
-            border-radius: 10px;
-            padding: 1.25rem;
-            transition: border-color 0.3s ease;
-        }
-
-        #view-ihk .mc-grade-card:hover {
-            border-color: rgba(var(--primary-rgb), 0.18);
-        }
-
-        #view-ihk .mc-grade-label {
-            font-family: var(--mc-mono);
-            font-size: 0.58rem;
-            font-weight: 600;
-            letter-spacing: 0.12em;
-            color: var(--mc-text-dim);
-            margin-bottom: 0.6rem;
-        }
-
-        #view-ihk .mc-grade-val {
-            font-family: var(--mc-mono);
-            font-size: 1.9rem;
-            font-weight: 700;
-            color: var(--mc-text-main);
-            line-height: 1;
-            margin-bottom: 0.75rem;
-        }
-
-        #view-ihk .mc-grade-bar-wrap {
-            height: 2px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 1px;
-            overflow: hidden;
-            margin-bottom: 0.4rem;
-        }
-
-        #view-ihk .mc-grade-bar {
-            height: 100%;
-            background: var(--mc-blue);
-            border-radius: 1px;
-            transition: width 1s ease, background 0.5s ease;
-        }
-
-        #view-ihk .mc-grade-scale {
-            font-family: var(--mc-mono);
-            font-size: 0.55rem;
-            color: var(--mc-text-dim);
-            letter-spacing: 0.05em;
-        }
-
-        /* ═══════════════════════════════════════════
-           CONFIG PANEL
-           ═══════════════════════════════════════════ */
-        #view-ihk .mc-config-panel {
-            background: var(--mc-panel);
-            border: 1px solid var(--mc-border);
-            border-radius: 14px;
-            overflow: hidden;
-        }
-
-        #view-ihk .mc-config-header {
-            padding: 1.5rem 2rem 1.25rem;
-            border-bottom: 1px solid var(--mc-border);
-            background: rgba(248, 250, 252, 0.03);
-        }
-
-        #view-ihk .mc-config-title-row {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            margin-bottom: 0.3rem;
-        }
-
-        #view-ihk .mc-config-icon {
-            font-style: normal;
-            font-size: 0.85rem;
-            color: var(--mc-blue);
-            opacity: 0.5;
-        }
-
-        #view-ihk .mc-config-title {
-            font-family: var(--mc-mono);
-            font-size: 0.65rem;
-            font-weight: 600;
-            letter-spacing: 0.15em;
-            color: var(--mc-text-muted);
-        }
-
-        #view-ihk .mc-config-subtitle {
-            font-size: 0.75rem;
-            color: var(--mc-text-dim);
-            padding-left: 1.45rem;
-        }
-
-        #view-ihk .mc-config-body {
-            padding: 1.75rem 2rem;
-        }
-
-        #view-ihk .mc-config-section-label {
-            font-family: var(--mc-mono);
-            font-size: 0.58rem;
-            font-weight: 600;
-            letter-spacing: 0.18em;
-            color: var(--mc-text-dim);
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--mc-border);
-        }
-
-        #view-ihk .mc-config-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.25rem;
-        }
-
-        #view-ihk .mc-field-group {
+        #view-ihk .ihk-split {
+            list-style: none;
+            margin: 0 0 1.4rem;
+            padding: 0;
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.7rem;
+        }
+        #view-ihk .ihk-split__row {
+            display: grid;
+            grid-template-columns: 8px minmax(72px, auto) minmax(0, 1fr) auto auto;
+            align-items: center;
+            gap: 0.7rem;
+        }
+        #view-ihk .ihk-split__sw {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            background: rgb(var(--type-rgb, 148, 163, 184));
+        }
+        #view-ihk .ihk-split__name {
+            font-size: 0.8125rem;
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+        #view-ihk .ihk-split__bar {
+            height: 6px;
+            border-radius: 3px;
+            background: var(--ihk-track);
+            overflow: hidden;
+        }
+        #view-ihk .ihk-split__bar i {
+            display: block;
+            height: 100%;
+            border-radius: 3px;
+            background: rgb(var(--type-rgb, 148, 163, 184));
+            transition: width 700ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+        }
+        #view-ihk .ihk-split__h {
+            font-size: 0.8125rem;
+            color: var(--text-main);
+            text-align: right;
+        }
+        #view-ihk .ihk-split__p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: right;
+            min-width: 3.2rem;
         }
 
-        #view-ihk .mc-field-label {
-            font-family: var(--mc-mono);
-            font-size: 0.6rem;
+        #view-ihk .ihk-balance {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1rem;
+            margin: 0;
+            padding-top: 1.15rem;
+            border-top: 1px solid var(--ihk-rule);
+        }
+        #view-ihk .ihk-balance dt {
+            font-size: 0.6875rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
             font-weight: 600;
-            letter-spacing: 0.12em;
-            color: var(--mc-text-dim);
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+        #view-ihk .ihk-balance dd {
+            margin: 0;
+            font-size: 1.0625rem;
+            font-weight: 500;
+            letter-spacing: -0.015em;
+            color: var(--text-main);
+        }
+        #view-ihk .ihk-balance dd[data-sign="pos"] { color: var(--ihk-ok); }
+        #view-ihk .ihk-balance dd[data-sign="neg"] { color: var(--ihk-bad); }
+
+        /* ─── NOTEN ──────────────────────────────────────────────────────
+           Eine Note ist eine POSITION auf einer Skala, kein aufgefuellter
+           Fortschritt. Die alte Fassung fuellte einen Balken zu
+           (6 - n) / 5 — das las sich wie "73 % erreicht" und war bei einer
+           Fuenf ein fast voller Balken. Jetzt: neutrale Spur, eine Marke. */
+        #view-ihk .ihk-grade {
+            padding: 1.05rem 0;
+            border-top: 1px solid var(--ihk-rule-soft);
+        }
+        #view-ihk .ihk-grade:first-of-type { border-top: 0; padding-top: 0; }
+        #view-ihk .ihk-grade__head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+        #view-ihk .ihk-grade__name {
+            margin: 0;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        #view-ihk .ihk-grade__date {
+            margin: 0;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: right;
+        }
+        #view-ihk .ihk-grade__row {
+            display: flex;
+            align-items: baseline;
+            gap: 0.7rem;
+            margin-top: 0.4rem;
+        }
+        #view-ihk .ihk-grade__val {
+            font-size: 1.875rem;
+            font-weight: 500;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            color: var(--text-muted);
+        }
+        #view-ihk .ihk-grade[data-tone="good"] .ihk-grade__val { color: var(--ihk-ok); }
+        #view-ihk .ihk-grade[data-tone="mid"]  .ihk-grade__val { color: var(--ihk-warn); }
+        #view-ihk .ihk-grade[data-tone="bad"]  .ihk-grade__val { color: var(--ihk-bad); }
+        #view-ihk .ihk-grade__word {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+        #view-ihk .ihk-scale {
+            position: relative;
+            height: 40px;
+            margin-top: 0.75rem;
+        }
+        #view-ihk .ihk-scale__track {
+            position: absolute;
+            left: 1.1rem;
+            right: 1.1rem;
+            top: 9px;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--ihk-track);
+        }
+        /* Marke bei 4,0 — die Grenze zwischen "ausreichend" und "mangelhaft".
+           Position: (4 - 1) / 5 = 60 % der Spur. */
+        #view-ihk .ihk-scale__pass {
+            position: absolute;
+            top: 5px;
+            height: 14px;
+            width: 1px;
+            left: calc(1.1rem + (100% - 2.2rem) * 0.6);
+            background: var(--ihk-past);
+        }
+        #view-ihk .ihk-scale__pass::after {
+            content: attr(data-label);
+            position: absolute;
+            top: calc(100% + 0.3rem);
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: var(--font-mono);
+            font-size: 0.6875rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        #view-ihk .ihk-scale__mark {
+            position: absolute;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            margin-left: -6px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            box-shadow: 0 0 0 2px var(--bg-surface);
+            transition: left 600ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1));
+        }
+        #view-ihk .ihk-grade[data-tone="good"] .ihk-scale__mark { background: var(--ihk-ok); }
+        #view-ihk .ihk-grade[data-tone="mid"]  .ihk-scale__mark { background: var(--ihk-warn); }
+        #view-ihk .ihk-grade[data-tone="bad"]  .ihk-scale__mark { background: var(--ihk-bad); }
+        #view-ihk .ihk-scale__end {
+            position: absolute;
+            top: 5px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        #view-ihk .ihk-scale__end--l { left: 0; }
+        #view-ihk .ihk-scale__end--r { right: 0; }
+
+        #view-ihk .ihk-schoolref {
+            display: grid;
+            grid-template-columns: auto auto minmax(0, 1fr);
+            align-items: baseline;
+            gap: 0.6rem;
+            width: 100%;
+            margin-top: 1.1rem;
+            padding: 0.85rem 0.95rem;
+            border: 1px solid var(--ihk-rule);
+            border-radius: 10px;
+            background: transparent;
+            text-align: left;
+            cursor: pointer;
+            transition: border-color var(--dur-fast, 140ms) var(--ease-out),
+                        background-color var(--dur-fast, 140ms) var(--ease-out);
+        }
+        #view-ihk .ihk-schoolref:hover {
+            background: var(--hover-fill);
+            border-color: var(--hover-border);
+        }
+        #view-ihk .ihk-schoolref__label {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        #view-ihk .ihk-schoolref__val {
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+        #view-ihk .ihk-schoolref__hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: right;
+        }
+
+        /* ─── AUSBILDUNGSDATEN ───────────────────────────────────────── */
+        #view-ihk .ihk-conf { margin-top: 1.25rem; padding: 0; overflow: hidden; }
+        #view-ihk .ihk-conf__toggle {
+            display: grid;
+            grid-template-columns: auto auto minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 1.05rem 1.6rem;
+            border: 0;
+            background: transparent;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color var(--dur-fast, 140ms) var(--ease-out);
+        }
+        #view-ihk .ihk-conf__toggle:hover { background: var(--hover-fill); }
+        #view-ihk .ihk-conf__icon,
+        #view-ihk .ihk-conf__chev {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            color: var(--text-muted);
         }
-
-        #view-ihk .mc-field-hint {
-            font-weight: 400;
-            color: rgba(248, 250, 252, 0.28);
-            letter-spacing: 0.06em;
+        /* Der Icon-Satz kennt kein chevronDown — das nach rechts zeigende
+           Zeichen wird gedreht statt nachgezeichnet (icons.js: Pfade nie
+           von Hand aendern). */
+        #view-ihk .ihk-conf__chev {
+            transform: rotate(90deg);
+            transition: transform var(--dur-normal, 240ms) var(--ease-out);
         }
+        #view-ihk .ihk-conf.is-open .ihk-conf__chev { transform: rotate(270deg); }
+        #view-ihk .ihk-conf__title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        #view-ihk .ihk-conf__summary {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #view-ihk .ihk-conf__body {
+            display: none;
+            padding: 0.4rem 1.6rem 1.6rem;
+            border-top: 1px solid var(--ihk-rule);
+        }
+        #view-ihk .ihk-conf.is-open .ihk-conf__body { display: block; }
 
-        #view-ihk .mc-input {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 8px;
-            color: var(--mc-text-main);
-            font-family: var(--mc-mono);
-            font-size: 0.85rem;
-            padding: 0.65rem 0.9rem;
-            outline: none;
-            transition: border-color 0.25s, background 0.25s;
+        #view-ihk .ihk-fs {
+            border: 0;
+            margin: 0;
+            padding: 1.4rem 0 0;
+        }
+        /* Der Hinweis unter dem letzten Feld der ersten Gruppe stiess sonst
+           direkt an die Ueberschrift der zweiten. */
+        #view-ihk .ihk-fs + .ihk-fs {
+            margin-top: 1.5rem;
+            padding-top: 1.6rem;
+            border-top: 1px solid var(--ihk-rule-soft);
+        }
+        #view-ihk .ihk-fs__legend {
+            padding: 0;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        #view-ihk .ihk-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 1rem 1.25rem;
+            margin-top: 0.9rem;
+        }
+        #view-ihk .ihk-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            min-width: 0;
+        }
+        #view-ihk .ihk-field__label {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+        #view-ihk .ihk-field__hint {
+            font-size: 0.75rem;
+            line-height: 1.45;
+            color: var(--text-muted);
+        }
+        #view-ihk .ihk-input {
             width: 100%;
-            box-sizing: border-box;
-            -webkit-appearance: none;
-            appearance: none;
-            color-scheme: dark;
+            padding: 0.6rem 0.7rem;
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            background: var(--bg-inset, rgba(0, 0, 0, 0.2));
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            transition: border-color var(--dur-fast, 140ms) var(--ease-out),
+                        box-shadow var(--dur-fast, 140ms) var(--ease-out);
         }
-
-        #view-ihk .mc-input:focus {
-            border-color: rgba(var(--primary-rgb), 0.4);
-            background: rgba(var(--primary-rgb), 0.08);
-            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.08);
+        #view-ihk select.ihk-input { font-family: var(--font-main); }
+        #view-ihk .ihk-input:hover { border-color: var(--border-interactive); }
+        #view-ihk .ihk-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.18);
         }
-
-        #view-ihk .mc-input::placeholder { color: var(--mc-text-dim); }
-
-        #view-ihk .mc-input-disabled {
-            opacity: 0.35;
-            cursor: not-allowed;
-            pointer-events: none;
+        #view-ihk .ihk-input::-webkit-calendar-picker-indicator {
+            filter: invert(0.65);
+            cursor: pointer;
         }
+        [data-theme="light"] #view-ihk .ihk-input::-webkit-calendar-picker-indicator { filter: none; }
 
-        #view-ihk .mc-config-footer {
+        #view-ihk .ihk-conf__foot {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 1.25rem 2rem;
-            border-top: 1px solid var(--mc-border);
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1.75rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--ihk-rule);
         }
-
-        #view-ihk .mc-save-hint {
-            font-family: var(--mc-mono);
-            font-size: 0.6rem;
-            color: var(--mc-text-dim);
-            letter-spacing: 0.08em;
+        #view-ihk .ihk-conf__note {
+            margin: 0;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
         }
-
-        #view-ihk .mc-save-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            background: rgba(var(--primary-rgb), 0.12);
-            border: 1px solid rgba(var(--primary-rgb), 0.28);
+        #view-ihk .ihk-save {
+            padding: 0.6rem 1.35rem;
+            border: 0;
             border-radius: 8px;
-            color: var(--mc-blue-bright);
-            font-family: var(--mc-mono);
-            font-size: 0.78rem;
+            background: var(--primary);
+            color: #fff;
+            font-size: 0.875rem;
             font-weight: 600;
-            letter-spacing: 0.06em;
-            padding: 0.65rem 1.4rem;
             cursor: pointer;
-            transition: background 0.25s, border-color 0.25s, transform 0.2s, box-shadow 0.25s;
+            transition: background-color var(--dur-fast, 140ms) var(--ease-out),
+                        transform var(--dur-fast, 140ms) var(--ease-out);
         }
-
-        #view-ihk .mc-save-btn:hover {
-            background: rgba(var(--primary-rgb), 0.18);
-            border-color: rgba(var(--primary-rgb), 0.45);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.14);
-        }
-
-        #view-ihk .mc-save-btn:active {
-            transform: translateY(0);
-        }
-
-        #view-ihk .mc-save-btn.is-saved {
-            background: rgba(34, 197, 94, 0.14);
-            border-color: rgba(34, 197, 94, 0.45);
-            color: #22c55e;
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
-            transform: translateY(0);
+        /* filter: brightness() wuerde die Schrift mit aufhellen —
+           color-mix faerbt nur die Flaeche. */
+        #view-ihk .ihk-save:hover { background: color-mix(in srgb, var(--primary) 86%, #fff); }
+        #view-ihk .ihk-save:active { transform: translateY(1px); }
+        #view-ihk .ihk-save.is-saved {
+            background: var(--ihk-ok);
             cursor: default;
         }
 
-        #view-ihk .mc-save-icon {
-            font-size: 0.7rem;
-            opacity: 0.7;
+        /* ─── ZUSTAND: NOCH NICHTS EINGETRAGEN ───────────────────────────
+           Ein leerer Bildschirm ist eine Aufforderung, keine Fehlermeldung.
+           Das Formular ist dann die Hauptsache und steht offen. */
+        #view-ihk[data-ihk-state="empty"] .ihk-conf {
+            margin-top: 0;
+            max-width: 720px;
+        }
+        #view-ihk[data-ihk-state="empty"] .ihk-conf__toggle { display: none; }
+        #view-ihk[data-ihk-state="empty"] .ihk-conf__body {
+            display: block;
+            border-top: 0;
+            padding-top: 0.6rem;
         }
 
-        /* ═══════════════════════════════════════════
-           RESPONSIVE BREAKPOINTS
-           ═══════════════════════════════════════════ */
-        @media (max-width: 900px) {
-            #view-ihk .mc-kpi-row {
-                grid-template-columns: 1fr 1fr;
-            }
-            #view-ihk .mc-kpi-row .mc-kpi-block:last-child {
-                grid-column: span 2;
-            }
-            #view-ihk .mc-secondary-grid {
-                grid-template-columns: 1fr;
+        /* ─── TASTATUR ───────────────────────────────────────────────── */
+        #view-ihk :focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        /* ─── EINBLENDUNG ────────────────────────────────────────────────
+           Eine gefuehrte Bewegung beim Oeffnen statt Effekten ueberall:
+           die Bloecke laufen von oben nach unten ein, das Band fuellt sich
+           danach (Uebergang oben an .ihk-band__fill). */
+        #view-ihk .ihk-head,
+        #view-ihk .ihk-stack > * {
+            animation: ihkRise var(--dur-slow, 380ms) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+        }
+        #view-ihk .ihk-stack > *:nth-child(1) { animation-delay: 60ms; }
+        #view-ihk .ihk-stack > *:nth-child(2) { animation-delay: 120ms; }
+        #view-ihk .ihk-stack > *:nth-child(3) { animation-delay: 180ms; }
+        @keyframes ihkRise {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #view-ihk *,
+            #view-ihk *::before,
+            #view-ihk *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
             }
         }
 
-        @media (max-width: 640px) {
-            #view-ihk .mc-header {
-                padding: 1.5rem 1.25rem 1.25rem;
+        /* ─── SCHMALE SCHIRME ───────────────────────────────────────────── */
+        @media (max-width: 1080px) {
+            #view-ihk .ihk-row--a,
+            #view-ihk .ihk-row--b { grid-template-columns: minmax(0, 1fr); }
+        }
+
+        @media (max-width: 767px) {
+            #view-ihk .ihk-head {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 1rem;
+                padding-bottom: 1.35rem;
+                margin-bottom: 1.25rem;
             }
-            #view-ihk .mc-header-grid {
-                grid-template-columns: 1fr;
-            }
-            #view-ihk .mc-header-right {
+            #view-ihk .ihk-head__aside {
                 flex-direction: row;
-                justify-content: flex-start;
-                gap: 1rem;
+                align-items: baseline;
+                gap: 0.6rem;
             }
-            #view-ihk .mc-ring-wrap {
-                width: 90px;
-                height: 90px;
-            }
-            #view-ihk .mc-ring-svg {
-                width: 90px;
-                height: 90px;
-            }
-            #view-ihk .mc-kpi-row {
-                grid-template-columns: 1fr;
-            }
-            #view-ihk .mc-kpi-row .mc-kpi-block:last-child {
-                grid-column: span 1;
-            }
-            #view-ihk .mc-config-row {
-                grid-template-columns: 1fr;
-            }
-            #view-ihk .mc-absence-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            #view-ihk .mc-absence-divider {
-                width: 100%;
-                height: 1px;
-                margin: 0;
-            }
-            #view-ihk .mc-grade-grid {
-                grid-template-columns: 1fr;
-            }
-            #view-ihk .mc-config-footer {
-                flex-direction: column;
-                gap: 1rem;
-                align-items: stretch;
-            }
-            #view-ihk .mc-save-btn {
-                justify-content: center;
-            }
+            #view-ihk .ihk-panel { padding: 1.15rem 1.1rem 1.3rem; }
+            #view-ihk .ihk-conf { padding: 0; }
+            #view-ihk .ihk-conf__toggle { padding: 0.95rem 1.1rem; }
+            #view-ihk .ihk-conf__body { padding: 0.4rem 1.1rem 1.3rem; }
+            /* 🔴 Mit `display: none` auf der Zusammenfassung stehen nur noch
+               drei Kinder in vier Spuren — der Pfeil rutscht in die 1fr-Spur
+               und klebt am Titel statt am rechten Rand. Spurenzahl mitziehen. */
+            #view-ihk .ihk-conf__toggle { grid-template-columns: auto minmax(0, 1fr) auto; }
+            #view-ihk .ihk-conf__summary { display: none; }
+            #view-ihk .ihk-stations { grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 0 0.9rem; }
+            #view-ihk .ihk-band__year { font-size: 0.625rem; }
+            #view-ihk .ihk-split__row { grid-template-columns: 8px minmax(64px, auto) minmax(0, 1fr) auto auto; gap: 0.5rem; }
+            #view-ihk .ihk-split__p { min-width: 2.6rem; }
+            #view-ihk .ihk-balance { gap: 0.75rem; }
+            #view-ihk .ihk-schoolref { grid-template-columns: auto minmax(0, 1fr); }
+            #view-ihk .ihk-schoolref__hint { grid-column: 1 / -1; text-align: left; }
         }

@@ -180,30 +180,3 @@
             gradeListHTML
         };
     }
-    function saveIHKSettings() {
-        // **IHK FIX: Sicherstellung, dass alle Daten ins data-Objekt gespeichert werden**
-        data.settings.ihk.start = document.getElementById('confIHKStart').value;
-        data.settings.ihk.end = document.getElementById('confIHKEnd').value;
-        data.settings.ihk.exam_zwischen = document.getElementById('confIHKExamZwischen').value;
-        data.settings.ihk.note_zwischen = document.getElementById('confIHKNoteZwischen').value;
-        data.settings.ihk.note_abschluss = document.getElementById('confIHKNoteAbschluss').value;
-        
-        save();
-        renderIHKView();
-        const btn   = document.getElementById('ihkSaveBtn');
-        const icon  = document.getElementById('ihkSaveBtnIcon');
-        const label = document.getElementById('ihkSaveBtnLabel');
-        if (btn) {
-            btn.classList.add('is-saved');
-            btn.disabled = true;
-            if (icon)  icon.textContent  = '✓';
-            if (label) label.textContent = 'Gespeichert!';
-            setTimeout(() => {
-                btn.classList.remove('is-saved');
-                btn.disabled = false;
-                if (icon)  icon.textContent  = '▶';
-                if (label) label.textContent = 'Speichern & Berechnen';
-            }, 2500);
-        }
-    }
-
