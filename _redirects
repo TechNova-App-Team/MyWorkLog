@@ -57,8 +57,9 @@
 #    /archflow, /Fachinformatiker, /en/about - alle 308 auf /pages/...
 #
 #    Deshalb hier kein 200-Rewrite mehr, sondern ein 301 auf den Canonical.
-#    Ein Rewrite kann diese Datei bei Cloudflare Pages ohnehin nur auf eine
-#    echte Datei, nicht auf ein Verzeichnis (siehe archflow-data.js unten).
+#    Ein 200-Rewrite ist an dieser Stelle ueberhaupt kein Werkzeug: die
+#    Dashboard-Regel greift vorher zu, egal ob das Ziel Datei oder Verzeichnis
+#    ist (nachgemessen 2026-08-28, siehe Abschnitt 4).
 # ========================================================
 
 /about                           /about/                          301
@@ -185,8 +186,9 @@
 
 # ========================================================
 # 4. ECHTE DATEIEN hinter einer Clean URL.
-#    Ein 200-Rewrite funktioniert hier, weil das Ziel eine Datei ist und kein
-#    Verzeichnis - deshalb bleibt die URL stehen statt zu einem 308 zu werden.
+#    Hier stand ein 200-Rewrite /archflow/archflow-data.js -> /pages/... mit der
+#    Begruendung "Ziel ist eine Datei, also bleibt die URL stehen". Gemessen am
+#    2026-08-28: er hat nie gegriffen, die URL lieferte 404. Die Dashboard-Regel
+#    am Edge laeuft vor dieser Datei. Wer eine Datei unter einer Clean URL
+#    braucht, legt sie nach /Assets/ - das wird direkt ausgeliefert.
 # ========================================================
-
-/archflow/archflow-data.js       /pages/archflow/archflow-data.js 200

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * ArchFlow v3 — Vanilla HTML/CSS/JS Workflow Analyzer
- * Usage:  npm run archflow            (Repo scannen, pages/archflow/archflow-data.js neu schreiben)
+ * Usage:  npm run archflow            (Repo scannen, Assets/js/archflow-data.js neu schreiben)
  *         node tools/archflow.js [project-path] [output-dir]
  * Output: NUR archflow-data.js. Der Viewer (pages/archflow/index.html) ist
  *         handgepflegt (Canonical, hreflang, Maintenance-Gate, Footer) und wird
@@ -12,7 +12,9 @@ const fs   = require('fs');
 const path = require('path');
 
 const ROOT     = path.resolve(process.argv[2] || '.');
-const OUTDIR   = path.resolve(process.argv[3] || path.join(ROOT, 'pages', 'archflow'));
+// Nicht nach pages/archflow/: von dort ist die Datei live nicht erreichbar - die
+// Dashboard-Rewrite-Regel laeuft vor _redirects und der 200-Rewrite griff nie.
+const OUTDIR   = path.resolve(process.argv[3] || path.join(ROOT, 'Assets', 'js'));
 const OUT_DATA = path.join(OUTDIR, 'archflow-data.js');
 
 // ─── IGNORE ──────────────────────────────────────────────────────────────────

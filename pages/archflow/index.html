@@ -294,7 +294,7 @@ header{flex-shrink:0;display:flex;align-items:center;flex-wrap:wrap;gap:10px 14p
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
 }
 </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.4.0"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.4.1"></script>
 </head>
 <body>
 <div id="loader">
@@ -475,11 +475,13 @@ const dot=(t,extra)=>'<i class="'+(extra||'')+(RING(t)?' ring':'')+'" style="bac
 function loadData(){
   return new Promise((res,rej)=>{
     const s=document.createElement('script');
-    /* Datenpfad: relativ bricht auf /en/archflow (dort gaebe es /en/archflow-data.js -> 404).
-       Die Datei liegt physisch nur unter pages/archflow/, live erreichbar ueber /archflow/archflow-data.js. */
-    const p=location.pathname;
-    const base=/\/pages\/en\/archflow\//.test(p)?'../../archflow/':(/\/pages\/archflow\//.test(p)?'./':'/archflow/');
-    s.src=base+'archflow-data.js?t='+Date.now();
+    /* Absolut ab Root, und bewusst NICHT unter /pages/: die Cloudflare-Dashboard-Regel
+       laeuft vor _redirects, deshalb hat der 200-Rewrite /archflow/archflow-data.js ->
+       /pages/archflow/archflow-data.js live nie gegriffen (404, gemessen 2026-08-28).
+       /Assets/js/ wird direkt ausgeliefert - eine Regel weniger, die brechen kann.
+       Kein ?t=Date.now(): _headers gibt /Assets/js/* max-age=0, must-revalidate; der
+       Zeitstempel erzwang bei jedem Aufruf 248 KB statt eines 304. */
+    s.src='/Assets/js/archflow-data.js';
     s.onload=()=>window.__ARCHFLOW_DATA__?res(window.__ARCHFLOW_DATA__):rej(new Error(L('archflow-data.js geladen, aber __ARCHFLOW_DATA__ ist nicht definiert.','archflow-data.js loaded, but __ARCHFLOW_DATA__ is not defined.')));
     s.onerror=()=>rej(new Error(L('archflow-data.js konnte nicht geladen werden.','Could not load archflow-data.js.')));
     document.head.appendChild(s);
