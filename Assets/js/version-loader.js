@@ -151,6 +151,62 @@ if ('serviceWorker' in navigator) {
     }
 }
 
+// ===== SPRACHUMSCHALTER IM GETEILTEN FOOTER =====
+// Warum hier: der Footer wird per fetch nachgeladen, sein Markup laeuft damit
+// an der statischen i18n-Pipeline vorbei UND ein <script> darin wuerde nie
+// laufen (per innerHTML eingefuegte Skripte fuehrt der Browser nicht aus).
+// version-loader.js ist die einzige Datei, die JEDE Seite mit geteiltem Footer
+// laedt (gezaehlt: 15 von 15) und die schon heute Footer-Elemente nachtraegt
+// (data-app-version, data-release-date).
+//
+// 🔴 Die Ziele kommen aus den hreflang-Angaben DIESER Seite, nicht aus einer
+// Pfad-Rechnung: `/en` + Pfad waere fuer /umfrage-ergebnis/, /repo-report/ und
+// /legal/* ein Link in einen 404 — die haben keinen englischen Zwilling. Kein
+// hreflang-Paar => der Schalter bleibt weg.
+function wireFooterLangSwitch() {
+    const box = document.getElementById('footerLang');
+    if (!box || box.dataset.wired) return true;
+
+    const linkDe = document.querySelector('link[rel="alternate"][hreflang="de"]');
+    const linkEn = document.querySelector('link[rel="alternate"][hreflang="en"]');
+    if (!linkDe || !linkEn) return true;   // kein Zwilling deklariert -> nichts anzeigen, aber fertig
+
+    const toPath = (l) => { try { return new URL(l.href, location.origin).pathname; } catch (e) { return null; } };
+    const pathDe = toPath(linkDe), pathEn = toPath(linkEn);
+    if (!pathDe || !pathEn) return true;
+
+    const aDe = document.getElementById('footerLangDe');
+    const aEn = document.getElementById('footerLangEn');
+    if (!aDe || !aEn) return true;
+
+    const isEn = (document.documentElement.lang || '').toLowerCase().startsWith('en');
+    aDe.href = pathDe;
+    aEn.href = pathEn;
+    const active = isEn ? aEn : aDe;
+    active.classList.add('is-on');
+    active.setAttribute('aria-current', 'true');
+    box.setAttribute('aria-label', isEn ? 'Language' : 'Sprache');
+    box.dataset.wired = '1';
+    box.hidden = false;
+    return true;
+}
+
+// Der Footer trifft asynchron ein — einmal sofort versuchen, sonst auf sein
+// Erscheinen warten und danach abschalten.
+(function watchForFooter() {
+    if (document.getElementById('footerLang')) { wireFooterLangSwitch(); return; }
+    if (typeof MutationObserver !== 'function') return;
+    const obs = new MutationObserver(() => {
+        if (!document.getElementById('footerLang')) return;
+        wireFooterLangSwitch();
+        obs.disconnect();
+    });
+    const start = () => obs.observe(document.body, { childList: true, subtree: true });
+    if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+    // Nach 20 s kommt kein Footer mehr — Beobachter nicht ewig laufen lassen.
+    setTimeout(() => obs.disconnect(), 20000);
+})();
+
 // Auto-load on DOM ready
 document.addEventListener('DOMContentLoaded', loadAppVersion);
 // Also try on window load as backup

@@ -108,7 +108,17 @@ console.log('\n▶ Keine Emojis im Markup');
         // Kommentare vorher ausblanken (Zeilenzahl bleibt erhalten): sie gehen
         // ueber mehrere Zeilen, und eine Pruefung auf fuehrendes `<!--` uebersieht
         // jede Fortsetzungszeile.
-        const clean = src.replace(/<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, ' '));
+        // 🔴 BEIDE Sorten, nicht nur die HTML-Kommentare: in einer .html-Datei
+        // stecken auch <style>- und <script>-Bloecke mit /* */ und //. Die
+        // Dateikoepfe dieses Projekts markieren ihre Merksaetze mit einem roten
+        // Punkt — der zaehlte hier sonst als Emoji im Markup, und der Test
+        // pruefte damit seine eigenen Kommentare statt der Seite.
+        // `//` nur am Zeilenanfang, sonst faellt jedes `https://` mit.
+        const blank = (m) => m.replace(/[^\n]/g, ' ');
+        const clean = src
+            .replace(/<!--[\s\S]*?-->/g, blank)
+            .replace(/\/\*[\s\S]*?\*\//g, blank)
+            .replace(/^[ \t]*\/\/.*$/gm, blank);
         clean.split('\n').forEach((line, i) => {
             if (!EMO.test(line)) return;
             if (/setMood\(/.test(line)) return;                 // gespeicherter Wert, kein Icon

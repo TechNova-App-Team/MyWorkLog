@@ -411,10 +411,15 @@
             function updateSidebarNet() {
                 const online = navigator.onLine;
                 sidebarNetLabel.textContent = online ? '© MyWorkLog — Online' : '© MyWorkLog — Offline';
-                if (avatarDot) {
-                    const dot = avatarDot.querySelector('::after') || avatarDot;
-                    avatarDot.style.setProperty('--avatar-dot-color', online ? '#22c55e' : '#ef4444');
-                }
+                // Der Punkt sitzt an ZWEI Avataren — Fusszeile und Profil-Menue.
+                // Wird nur einer gefaerbt, behauptet der andere dauerhaft "online",
+                // weil der CSS-Rueckfallwert gruen ist.
+                const online_color = online ? '#22c55e' : '#ef4444';
+                [avatarDot, document.getElementById('popoverAvatar')].forEach(el => {
+                    if (!el) return;
+                    el.style.setProperty('--avatar-dot-color', online_color);
+                    el.title = online ? 'Online' : 'Offline';
+                });
             }
             updateSidebarNet();
             window.addEventListener('online', updateSidebarNet);

@@ -111,10 +111,45 @@
   }
   .footer-legal-links a:hover { color: rgba(255,255,255,.45); }
 
+  /* ── SPRACHUMSCHALTER ─────────────────────────────────
+     Die englische Fassung war fuer Menschen praktisch unauffindbar: Google
+     kennt sie ueber hreflang, im Sichtbaren fuehrte nur ein Eintrag im
+     Profil-Menue der App dorthin. Die 20 Standalone-Seiten hatten NULL Links
+     nach /en/ (gezaehlt auf /about/: 20 Links, keiner davon). Der Schalter
+     steht deshalb im geteilten Footer — eine Datei, jede Seite, beide
+     Richtungen.
+     Bewusst kraeftiger als die Rechtstexte daneben: das hier ist ein
+     Bedienelement, keine Fussnote. */
+  .footer-bottom-end { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+  .footer-lang {
+    display: inline-flex; align-items: center; gap: 2px;
+    padding: 3px; border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.09);
+    background: rgba(255,255,255,.02);
+  }
+  /* display der Klasse schlaegt sonst das [hidden]-Attribut. */
+  .footer-lang[hidden] { display: none; }
+  .footer-lang-globe { width: 13px; height: 13px; margin: 0 2px 0 6px; color: rgba(255,255,255,.32); flex-shrink: 0; }
+  .footer-lang a {
+    padding: 3px 10px; border-radius: 999px;
+    font-size: .72rem; font-weight: 600; white-space: nowrap;
+    color: rgba(255,255,255,.45); text-decoration: none;
+    transition: color .2s, background .2s;
+  }
+  .footer-lang a:hover { color: rgba(255,255,255,.92); background: rgba(255,255,255,.06); }
+  .footer-lang a.is-on {
+    color: var(--primary, #a855f7);
+    background: rgba(var(--primary-rgb, 168,85,247), .12);
+    cursor: default;
+  }
+  .footer-lang a.is-on:hover { color: var(--primary, #a855f7); background: rgba(var(--primary-rgb, 168,85,247), .12); }
+  .footer-lang a:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 168,85,247), .5); }
+
   /* ── RESPONSIVE ───────────────────────────────────── */
   @media (max-width: 680px) {
     .footer-inner { grid-template-columns: 1fr; gap: 2.25rem; }
-    .footer-bottom { flex-direction: column; align-items: flex-start; gap: .6rem; }
+    .footer-bottom { flex-direction: column; align-items: flex-start; gap: .9rem; }
+    .footer-bottom-end { gap: .9rem; }
     .footer-tagline { max-width: 100%; }
   }
 </style>
@@ -159,9 +194,20 @@
   </div>
   <div class="footer-bottom">
     <span class="footer-copy">© 2025–2026 MyWorkLog · Sven Kunz · Zuletzt aktualisiert: <span data-release-date>…</span></span>
-    <div class="footer-legal-links">
-      <a href="/DSGVO/">Datenschutz</a>
-      <a href="/Impressum/">Impressum</a>
+    <div class="footer-bottom-end">
+      <!-- Ziele und aktive Sprache setzt wireFooterLangSwitch() in
+           Assets/js/version-loader.js aus den hreflang-Angaben DIESER Seite.
+           Bis dahin `hidden`: eine Seite ohne deklarierten Zwilling bekommt
+           gar keinen Schalter statt eines Links ins Nichts. -->
+      <div class="footer-lang" id="footerLang" hidden>
+        <svg class="footer-lang-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg>
+        <a id="footerLangDe" hreflang="de" translate="no">Deutsch</a>
+        <a id="footerLangEn" hreflang="en" translate="no">English</a>
+      </div>
+      <div class="footer-legal-links">
+        <a href="/DSGVO/">Datenschutz</a>
+        <a href="/Impressum/">Impressum</a>
+      </div>
     </div>
   </div>
 </footer>

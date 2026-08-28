@@ -41,7 +41,11 @@
                         ? (parts[0][0] + parts[parts.length-1][0]).toUpperCase()
                         : (name || 'U').substring(0, 2).toUpperCase();
                 }
-                if (popStatus) popStatus.textContent = navigator.onLine ? 'Online' : 'Offline';
+                // Die Unterzeile sagt jetzt, was dieses Profil IST (lokal, nur auf
+                // diesem Geraet) — sie stand vorher auf "Online" und las sich wie
+                // eine Chat-Praesenz. Den Netzzustand traegt der Punkt am Avatar,
+                // gesetzt von updateSidebarNet() in navbar-sidebar.js.
+                if (popStatus && !popStatus.textContent.trim()) popStatus.textContent = 'Lokales Profil';
                 updatePopoverThemeBtns();
             } catch(err) {}
             popover.classList.add('active');
@@ -58,10 +62,15 @@
         const btnDark = document.getElementById('ppThemeDark');
         const btnLight = document.getElementById('ppThemeLight');
         const btnSystem = document.getElementById('ppThemeSystem');
-        [btnDark, btnLight, btnSystem].forEach(b => { if(b) b.classList.remove('active-theme'); });
-        if (mode === 'dark' && btnDark) btnDark.classList.add('active-theme');
-        else if (mode === 'light' && btnLight) btnLight.classList.add('active-theme');
-        else if (mode === 'system' && btnSystem) btnSystem.classList.add('active-theme');
+        // `is-on` statt `active-theme`: Erscheinungsbild und Sprache benutzen
+        // denselben Segment-Regler, also auch dieselbe Zustandsklasse.
+        [btnDark, btnLight, btnSystem].forEach(b => {
+            if (!b) return;
+            b.classList.remove('is-on');
+            b.removeAttribute('aria-pressed');
+        });
+        const active = mode === 'light' ? btnLight : mode === 'system' ? btnSystem : btnDark;
+        if (active) { active.classList.add('is-on'); active.setAttribute('aria-pressed', 'true'); }
     }
 
     function startOnboardingTour() {

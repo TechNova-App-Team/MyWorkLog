@@ -345,14 +345,17 @@ function cmdRender(src, enJsonPath, outHtml, canonicalEn, canonicalDe, phrasesPa
     doc.head.appendChild(mapEl);
   }
 
-  // Sprach-Umschalter umdrehen: DE-Quelle zeigt "English → /en/",
-  // die generierte EN-Seite zeigt "Deutsch → /".
-  const langItem = doc.getElementById('langSwitchItem');
-  if (langItem) {
-    langItem.setAttribute('href', '/');
-    langItem.setAttribute('hreflang', 'de');
-    const lbl = doc.getElementById('langSwitchLabel');
-    if (lbl) lbl.textContent = 'Deutsch';
+  // Sprach-Regler umdrehen. Beide Segmente stehen im Markup und behalten
+  // ihre Ziele — auf /en/ wandert nur der aktive Zustand von DE nach EN.
+  // (Die Beschriftungen bleiben Endonyme: "Deutsch"/"English" heissen in
+  //  beiden Sprachen so und tragen deshalb translate="no".)
+  const segDe = doc.getElementById('langSegDe');
+  const segEn = doc.getElementById('langSegEn');
+  if (segDe && segEn) {
+    segDe.classList.remove('is-on');
+    segDe.removeAttribute('aria-current');
+    segEn.classList.add('is-on');
+    segEn.setAttribute('aria-current', 'true');
   }
 
   // Runtime-Übersetzer für JS-generierten Text (nur auf /en/ aktiv, prüft lang="en").

@@ -166,59 +166,68 @@
         <div class="sidebar-footer" id="sidebarFooter" onclick="toggleProfilePopover(event)" style="cursor:pointer;" title="Profil & Einstellungen">
             <div class="sidebar-footer-avatar" id="sidebarAvatar">SK</div>
             <div class="sidebar-footer-info">
-                <div class="sidebar-footer-version"><span data-app-version translate="no">v6.4.2</span><span class="sw-version-badge" title="Service-Worker-Version"></span></div>
+                <div class="sidebar-footer-version"><span data-app-version translate="no">v6.4.3</span><span class="sw-version-badge" title="Service-Worker-Version"></span></div>
                 <div class="sidebar-footer-label" id="sidebarNetLabel">© MyWorkLog</div>
             </div>
-            <!-- Profile Popover -->
-            <div class="profile-popover" id="profilePopover">
+            <!-- Profil-Menü. Kein Konto-Menü: die App kennt keine Konten, der
+                 Name kommt aus data.settings und liegt nur auf diesem Gerät. -->
+            <div class="profile-popover" id="profilePopover" aria-label="Profil & Einstellungen">
                 <div class="profile-popover-header">
-                    <div class="profile-popover-avatar" id="popoverAvatar">SK</div>
+                    <div class="profile-popover-avatar" id="popoverAvatar" aria-hidden="true">SK</div>
                     <div class="profile-popover-user">
                         <div class="profile-popover-name" id="popoverName">Benutzer</div>
-                        <div class="profile-popover-status">
-                            <span class="profile-popover-status-dot"></span>
-                            <span id="popoverStatus">Online</span>
-                        </div>
+                        <div class="profile-popover-status" id="popoverStatus">Lokales Profil</div>
                     </div>
                 </div>
                 <div class="profile-popover-items">
                     <button class="profile-popover-item" onclick="event.stopPropagation(); closeProfilePopover(); openSettings();">
-                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
+                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span>
                         <span class="profile-popover-item-label">Einstellungen</span>
-                        <span class="profile-popover-item-shortcut">Ctrl+,</span>
+                        <span class="profile-popover-item-shortcut" translate="no">Ctrl+,</span>
                     </button>
                     <button class="profile-popover-item" onclick="event.stopPropagation(); closeProfilePopover(); toggleAlertsPanel();">
-                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></span>
+                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></span>
                         <span class="profile-popover-item-label">Benachrichtigungen</span>
                     </button>
                     <button class="profile-popover-item" onclick="event.stopPropagation(); closeProfilePopover(); showExportMenu();">
-                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v6h6"/></svg></span>
+                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v6h6"/></svg></span>
                         <span class="profile-popover-item-label">Backup / Export</span>
                     </button>
                     <button class="profile-popover-item" onclick="event.stopPropagation(); closeProfilePopover(); showBackupMenu();">
-                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="15"/><polyline points="19 8 12 15 5 8"/><line x1="4" y1="20" x2="20" y2="20"/></svg></span>
+                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="3" x2="12" y2="15"/><polyline points="19 8 12 15 5 8"/><line x1="4" y1="20" x2="20" y2="20"/></svg></span>
                         <span class="profile-popover-item-label">Import</span>
                     </button>
                     <div class="profile-popover-divider"></div>
-                    <div class="profile-popover-theme-row">
-                        <button class="profile-popover-theme-btn" id="ppThemeDark" onclick="event.stopPropagation(); setThemeMode('dark'); updatePopoverThemeBtns();" title="Dunkel"><svg class="mwl-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg><span>Dunkel</span></button>
-                        <button class="profile-popover-theme-btn" id="ppThemeLight" onclick="event.stopPropagation(); setThemeMode('light'); updatePopoverThemeBtns();" title="Hell"><svg class="mwl-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg><span>Hell</span></button>
-                        <button class="profile-popover-theme-btn" id="ppThemeSystem" onclick="event.stopPropagation(); setThemeMode('system'); updatePopoverThemeBtns();" title="System"><svg class="mwl-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z"/><path d="M20.054 15.987H3.946"/></svg><span>Auto</span></button>
+                    <div class="pp-field">
+                        <span class="pp-field-label" id="ppThemeLabel">Erscheinungsbild</span>
+                        <div class="pp-seg" role="group" aria-labelledby="ppThemeLabel">
+                            <button type="button" class="pp-seg-btn" id="ppThemeDark" onclick="event.stopPropagation(); setThemeMode('dark'); updatePopoverThemeBtns();"><span>Dunkel</span></button>
+                            <button type="button" class="pp-seg-btn" id="ppThemeLight" onclick="event.stopPropagation(); setThemeMode('light'); updatePopoverThemeBtns();"><span>Hell</span></button>
+                            <button type="button" class="pp-seg-btn" id="ppThemeSystem" onclick="event.stopPropagation(); setThemeMode('system'); updatePopoverThemeBtns();"><span>Auto</span></button>
+                        </div>
+                    </div>
+                    <!-- 🔴 Sprache als Segment-Regler, nicht als Listeneintrag: vorher stand
+                         hier ein unterstrichener Link „English" als letzte Zeile — er sah aus
+                         wie eine Fußnote und niemand hat ihn als Umschalter gelesen. Zwei
+                         sichtbare Segmente sagen ohne Text, dass es die App zweisprachig gibt.
+                         cmdRender() in tools/i18n/i18n-build.js dreht `is-on`/`aria-current`
+                         für die generierte /en/-Fassung um. -->
+                    <div class="pp-field">
+                        <span class="pp-field-label" id="ppLangLabel">Sprache</span>
+                        <div class="pp-seg" id="langSeg" role="group" aria-labelledby="ppLangLabel">
+                            <a class="pp-seg-btn is-on" id="langSegDe" href="/" hreflang="de" aria-current="true" translate="no" onclick="event.stopPropagation();"><span>Deutsch</span></a>
+                            <a class="pp-seg-btn" id="langSegEn" href="/en/" hreflang="en" translate="no" onclick="event.stopPropagation();"><span>English</span></a>
+                        </div>
                     </div>
                     <div class="profile-popover-divider"></div>
                     <button class="profile-popover-item" onclick="event.stopPropagation(); closeProfilePopover(); if(typeof startOnboardingTour==='function') startOnboardingTour();">
-                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
                         <span class="profile-popover-item-label">App-Tour starten</span>
                     </button>
                     <button class="profile-popover-item" onclick="event.stopPropagation(); closeProfilePopover(); if(typeof updateManager!=='undefined' && updateManager.forceUpdate){updateManager.forceUpdate();}else{location.reload();}" title="App-Update erzwingen und neu laden">
-                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
+                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>
                         <span class="profile-popover-item-label">App aktualisieren</span>
                     </button>
-                    <div class="profile-popover-divider"></div>
-                    <a class="profile-popover-item" id="langSwitchItem" href="/en/" hreflang="en" onclick="event.stopPropagation();">
-                        <span class="profile-popover-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
-                        <span class="profile-popover-item-label" id="langSwitchLabel">English</span>
-                    </a>
                 </div>
             </div>
         </div>
