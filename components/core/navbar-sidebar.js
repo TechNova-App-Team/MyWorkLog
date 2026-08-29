@@ -36,7 +36,6 @@
             vertrag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
             rights: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3.5 9.74-7 11-3.5-1.26-7-6-7-11V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>',
             'schatten-berichtsheft': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>',
-            'fi-academy': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="8 6 2 12 8 18"/><polyline points="16 6 22 12 16 18"/></svg>',
             'it-hub': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="14" rx="2.5"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>',
             ghost: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V11a6 6 0 0112 0v9l-2.5-2-2 2-1.5-2-1.5 2-2-2z"/><path d="M9.5 10h.01M14.5 10h.01"/></svg>'
         };
@@ -231,8 +230,14 @@
         // per Append ganz unten statt bei den Zeitraum-Ansichten — die
         // Sidebar-Reihenfolge steckt in den Nutzerdaten (data.settings.nav).
         // 7: Fahrtkosten ist jetzt fest in Ausbildung & Lernen.
-        // Nur hochzaehlen, wenn sich die Liste oben wirklich aendert: ein Bump
+        // Nur hochzaehlen, wenn sich die Liste OBEN wirklich aendert: ein Bump
         // ueberschreibt jedem Bestandsnutzer seine selbst sortierte Sidebar.
+        // 🔴 Gegenbeispiel aus v6.4.9: beim Entfernen der FI Academy war der
+        // Bump schon gesetzt — falsch. Der Eintrag stand in CMD_PALETTE_ITEMS
+        // (Ctrl+K) und war nie Teil von defaultNavItems, steht also auch in
+        // keinem data.settings.nav. Es gab nichts zu resetten, der Bump haette
+        // nur jedem Nutzer die Reihenfolge zerlegt. Vor jedem Bump pruefen:
+        //   git show HEAD:components/core/navbar-sidebar.js | sed -n '213,232p'
         const NAV_VERSION = 7;
         const navNeedsReset = !Array.isArray(data.settings.nav) || data.settings.navVersion !== NAV_VERSION;
         if (navNeedsReset) {
@@ -486,7 +491,6 @@
         { id: 'fahrtkosten',  label: 'Fahrtkosten',       icon: getIconSvgById('fahrtkosten'), group: 'Extern',     action: () => { window.location.href = './fahrtkosten/'; } },
         { id: 'aufgaben',     label: 'Aufgaben Manager', icon: getIconSvgById('aufgaben'), group: 'Extern',     action: () => { window.location.href = './aufgaben/'; } },
         { id: 'skilltree',    label: 'Skill-Baum',       icon: getIconSvgById('skilltree'), group: 'Extern',     action: () => { window.location.href = './skill-tree/'; } },
-        { id: 'fi-academy',   label: 'FI Academy',        icon: getIconSvgById('fi-academy'), group: 'Extern',     action: () => { window.location.href = './Fachinformatiker/'; } },
         { id: 'it-hub',       label: 'IT Professional Hub', icon: getIconSvgById('it-hub'), group: 'Extern',     action: () => { window.location.href = './it-landing/'; } },
         { id: 'rechte-checker', label: 'Rechte-Checker',  icon: getIconSvgById('rights'), group: 'Extern',     action: () => { window.location.href = './rechte-checker/'; } },
         { id: 'vertrag',      label: 'Vertrags-Manager',  icon: getIconSvgById('vertrag'), group: 'Extern',     action: () => { window.location.href = './vertrags-manager/'; } },

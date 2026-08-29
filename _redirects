@@ -69,7 +69,6 @@
 /ausbilder                       /ausbilder/                      301
 /berichtsheft                    /berichtsheft/                   301
 /DSGVO                           /DSGVO/                          301
-/Fachinformatiker                /Fachinformatiker/               301
 /fahrtkosten                     /fahrtkosten/                    301
 /Impressum                       /Impressum/                      301
 /it-landing                      /it-landing/                     301
@@ -132,6 +131,24 @@
 /weihnachten                     /                                301
 /weihnachten/                    /                                301
 
+# Die FI Academy (/Fachinformatiker/) ist in v6.4.9 entfernt: der Skill-Baum
+# deckt dasselbe ab und tut es besser. Wer noch einen Link darauf hat - aus
+# einem Lesezeichen, aus der Suche, aus der alten Sidebar - landet auf dem
+# Skill-Baum statt im 404.
+# 🔴 Die SLASH-Form faengt diese Datei nicht ab: die Dashboard-Regel schreibt
+# /Fachinformatiker/ auf /pages/Fachinformatiker/ um, bevor _redirects gelesen
+# wird (siehe Abschnitt 4). Ohne das Verzeichnis kommt dort jetzt 404. Nach dem
+# Deploy gegen LIVE messen und die Regel im Dashboard nachziehen:
+#   curl -s -o /dev/null -w '%{http_code} -> %{redirect_url}' https://myworklog.de/Fachinformatiker/
+/Fachinformatiker                /skill-tree/                     301
+/Fachinformatiker/               /skill-tree/                     301
+/fachinformatiker                /skill-tree/                     301
+/fachinformatiker/               /skill-tree/                     301
+/en/Fachinformatiker             /en/skill-tree/                  301
+/en/Fachinformatiker/            /en/skill-tree/                  301
+/en/fachinformatiker             /en/skill-tree/                  301
+/en/fachinformatiker/            /en/skill-tree/                  301
+
 # Kleinschreibung der drei Seiten mit Grossbuchstaben im Pfad. URL-Pfade sind
 # case-sensitiv: /Impressum/ lieferte 200, /impressum/ dagegen 404. Beim
 # Impressum und der Datenschutzerklaerung ist das nicht nur unschoen — das
@@ -143,14 +160,10 @@
 /impressum/                      /Impressum/                      301
 /dsgvo                           /DSGVO/                          301
 /dsgvo/                          /DSGVO/                          301
-/fachinformatiker                /Fachinformatiker/               301
-/fachinformatiker/               /Fachinformatiker/               301
 /en/impressum                    /en/Impressum/                   301
 /en/impressum/                   /en/Impressum/                   301
 /en/dsgvo                        /en/DSGVO/                       301
 /en/dsgvo/                       /en/DSGVO/                       301
-/en/fachinformatiker             /en/Fachinformatiker/            301
-/en/fachinformatiker/            /en/Fachinformatiker/            301
 
 # ========================================================
 # 3. ENGLISCH /en/ (statische i18n-Pipeline -> pages/en/<name>/index.html)
@@ -166,7 +179,6 @@
 /en/ausbilder                    /en/ausbilder/                   301
 /en/berichtsheft                 /en/berichtsheft/                301
 /en/DSGVO                        /en/DSGVO/                       301
-/en/Fachinformatiker             /en/Fachinformatiker/            301
 /en/fahrtkosten                  /en/fahrtkosten/                 301
 /en/Impressum                    /en/Impressum/                   301
 /en/it-landing                   /en/it-landing/                  301

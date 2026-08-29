@@ -182,7 +182,6 @@
     'Repo-Analyse': 'Repo analysis',
     'Backup / Export': 'Backup / export',
     'Schatten-Berichtsheft': 'Shadow logbook',
-    'FI Academy': 'FI Academy',
     'IT Professional Hub': 'IT professional hub',
     'IHK': 'IHK',
     'Ghost Mode': 'Ghost mode',
