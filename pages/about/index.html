@@ -17,11 +17,16 @@ document.documentElement.className += ' js';</script>
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/about/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/about/">
     <meta name="keywords" content="Azubi Zeiterfassung, Berichtsheft digital, Gleitzeitkonto App, Ausbildung Arbeitszeitnachweis, Überstundenrechner Azubi, IHK Berichtsheft, Stundenkonto, Ausbildungsnachweis, Zeiterfassung Auszubildende, Arbeitszeit App kostenlos">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.4.9"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.4.10"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <script defer src="/Assets/js/version-loader.js?v=6.4.9"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.4.10"></script>
+    <!-- Bewusst OHNE defer: das Inline-Skript vor </body> ist ein klassisches
+         Skript und laeuft, sobald der Parser es erreicht — also VOR jedem
+         defer-Skript. Mit defer waere window.mwlEngagement dort noch nicht da.
+         Die Datei haengt nichts ans DOM, sie definiert nur ein Objekt. -->
+    <script src="/Assets/js/insights/engagement.js?v=6.4.10"></script>
 
     <style>
         :root {
@@ -101,21 +106,29 @@ document.documentElement.className += ' js';</script>
             opacity: 0;
             transform: translate3d(0, 24px, 0);
             transition: opacity var(--dur-rev) var(--ease-out),
-                        transform var(--dur-rev) var(--ease-out),
-                        clip-path var(--dur-rev) var(--ease-out);
+                        transform var(--dur-rev) var(--ease-out);
             transition-delay: calc(var(--i, 0) * var(--stagger));
             will-change: transform, opacity;
         }
         .js [data-reveal="left"]  { transform: translate3d(-32px, 0, 0); }
         .js [data-reveal="right"] { transform: translate3d(32px, 0, 0); }
         .js [data-reveal="scale"] { transform: scale(.94); }
-        .js [data-reveal="wipe"]  { transform: translate3d(0, 14px, 0); clip-path: inset(0 0 108% 0); }
         .js [data-reveal].is-in {
             opacity: 1;
             transform: none;
-            clip-path: inset(0 0 -25% 0);
             will-change: auto;
         }
+        /* 🔴 HIER STAND clip-path: inset(0 0 -25% 0) — auf JEDEM eingeblendeten
+           Element, und er hat alles beschnitten, was ueber den Kasten
+           hinausragt. Gemessen an der Kennzahlen-Karte: von der 339 px hohen
+           Sprechblase des "i" blieben 61 px sichtbar, der Rest lag hinter der
+           Kante. Bei einer Sprechblase nach OBEN war es noch schlimmer, dort
+           ist der Rand 0. Symptom: es klappt etwas auf, aber man liest nichts.
+           Der clip-path gehoerte zum Wisch-Effekt (data-reveal="wipe") — den
+           traegt kein einziges Element dieser Seite, die Regel war also nie
+           fuer irgendetwas da und hat trotzdem jede Sprechblase gekappt.
+           Wisch-Variante samt clip-path deshalb ganz entfernt. Wer sie
+           zurueckholt, setzt den clip-path NUR auf [data-reveal="wipe"]. */
 
         /* ═══════════════════════════════════════════════════════════════
            TAGES-SCHIENE — die Signatur der Seite.
@@ -693,6 +706,10 @@ document.documentElement.className += ' js';</script>
             display: flex; align-items: center; gap: 6px;
             font-size: .82rem; color: var(--text-muted);
         }
+        .stat-sub {
+            font-size: .68rem; color: var(--text-faint); margin-top: .3rem;
+            font-variant-numeric: tabular-nums;
+        }
         .stat-info {
             display: inline-flex; align-items: center; justify-content: center;
             width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0;
@@ -709,6 +726,14 @@ document.documentElement.className += ' js';</script>
             padding: 1rem 1.05rem; box-shadow: 0 16px 44px rgba(0,0,0,.55);
             text-align: left; pointer-events: none;
         }
+        /* 🔴 Der Abschnitt selbst muss ueber seine Nachbarn, nicht die
+           Sprechblase: #stats ist position:relative mit z-index:1 und damit ein
+           eigener Stapelkontext — die 60 am Tooltip wird darin einsortiert und
+           gilt nach aussen als "1". Alle Abschnitte dieser Seite tragen 1, also
+           gewinnt die DOM-Reihenfolge, und der Lauftext danach lag ueber der
+           Sprechblase. Messen statt lesen: document.elementFromPoint() auf die
+           Blasenmitte. */
+        #stats { z-index: 5; }
         .stat-tip.up { bottom: calc(100% - 1.4rem); left: 1.5rem; }
         .stat-tip.down { top: calc(100% - 1.4rem); left: 1.5rem; }
         .stat-tip-title {
@@ -724,6 +749,10 @@ document.documentElement.className += ' js';</script>
         .stat-formula b { color: var(--accent); font-weight: 600; }
         .stat-tip-text { font-size: .72rem; color: var(--text-faint); line-height: 1.7; margin-bottom: .6rem; }
         .stat-tip-text b { color: var(--ink-soft); font-weight: 600; }
+        /* Betonung am ganzen Absatz statt per <b> im Satz: ein Textknoten neben
+           einem Kind-Element faellt aus der i18n-Pipeline, ohne dass der Build
+           es meldet (siehe CLAUDE.md, "Sprachmix"). */
+        .stat-tip-note { color: var(--text-muted); border-left: 2px solid var(--rule-mid); padding-left: .6rem; }
         .stat-example {
             font-family: var(--fm); font-size: .72rem; color: var(--good);
             background: rgba(var(--good-rgb),.07); border: 1px solid rgba(var(--good-rgb),.18);
@@ -896,11 +925,10 @@ document.documentElement.className += ' js';</script>
             html { scroll-behavior: auto; }
             .js [data-reveal],
             .js [data-reveal="left"], .js [data-reveal="right"],
-            .js [data-reveal="scale"], .js [data-reveal="wipe"] {
-                transform: none; clip-path: none;
+            .js [data-reveal="scale"] {
+                transform: none;
                 transition: opacity 260ms ease; transition-delay: 0ms;
             }
-            .js [data-reveal].is-in { clip-path: none; }
             .js .tl-line > span { transform: none; transition: none; }
             .daybar-fill, .act-bar-fill { transition: none; transform: scaleX(1); }
             .daybar-break, .daybar-label { transition: none; opacity: 1; }
@@ -910,7 +938,7 @@ document.documentElement.className += ' js';</script>
             .stat-metric-bar { transition: none; }
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.4.9"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.4.10"></script>
 </head>
 <body>
 
@@ -1229,72 +1257,68 @@ document.documentElement.className += ' js';</script>
             <div class="stat-card" data-reveal style="--i:0">
                 <div class="stat-number" id="stat-active-users">0</div>
                 <div class="stat-label"><span>Aktive Nutzer</span></div>
+                <div class="stat-sub" id="stat-users-sub">letzte 90 Tage</div>
             </div>
 
             <div class="stat-card" data-reveal style="--i:1">
-                <div class="stat-number" id="stat-hours">0</div>
+                <div class="stat-number" id="stat-duration">&mdash;</div>
                 <div class="stat-label">
-                    <span>Erfasste Stunden</span>
-                    <button id="hoursInfoBtn" class="stat-info" type="button" aria-label="Berechnung anzeigen">i</button>
+                    <span>Verweildauer</span>
+                    <button id="durationInfoBtn" class="stat-info" type="button" aria-label="Herkunft der Zahl anzeigen">i</button>
                 </div>
-                <div id="hoursTooltip" class="stat-tip up" role="tooltip">
+                <div class="stat-sub" id="stat-duration-sub">im Mittel je Sitzung</div>
+                <div id="durationTooltip" class="stat-tip up" role="tooltip">
                     <div class="stat-tip-title">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="11" x2="8" y2="11"/><line x1="12" y1="11" x2="12" y2="11"/><line x1="16" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="8" y2="15"/><line x1="12" y1="15" x2="12" y2="15"/><line x1="16" y1="15" x2="16" y2="18"/></svg>
-                        <span>Wie wird gerechnet?</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>Woher kommt die Zahl?</span>
                     </div>
-                    <div class="stat-formula"><b>Nutzer</b> × <b>45h</b> + <b>800h</b></div>
-                    <p class="stat-tip-text">Ein aktiver Nutzer trackt im Schnitt 45 Stunden, also gut eine Arbeitswoche.</p>
-                    <p class="stat-tip-text">Die 800 Stunden sind eine konservative Basis für frühe Nutzer und gelöschte Daten.</p>
-                    <div id="hoursTooltipExample" class="stat-example">— × 45 + 800 = —</div>
+                    <p class="stat-tip-text">Die mittlere Dauer einer Sitzung auf myworklog.de, gemessen von der Web-Analyse dieser Seite.</p>
+                    <p class="stat-tip-text stat-tip-note">Gezählt wird der Besuch der Website — nicht die Zeit in der App selbst. Die läuft im Browser und meldet nichts nach außen.</p>
+                    <div id="durationExample" class="stat-example">&mdash;</div>
                     <span class="tip-arrow"></span>
                 </div>
             </div>
 
             <div class="stat-card" data-reveal style="--i:2">
-                <div class="stat-number"><span id="stat-satisfaction">0</span><span id="sat-pct" class="stat-suffix">%</span></div>
+                <div class="stat-number"><span id="stat-engagement">0</span><span class="stat-suffix">%</span></div>
                 <div class="stat-label">
-                    <span>Zufriedenheit</span>
-                    <button id="satisfactionInfoBtn" class="stat-info" type="button" aria-label="Berechnung anzeigen">i</button>
+                    <span>Engagement</span>
+                    <button id="engagementInfoBtn" class="stat-info" type="button" aria-label="Berechnung anzeigen">i</button>
                 </div>
-                <div id="satisfactionTooltip" class="stat-tip down" role="tooltip">
+                <div class="stat-sub" id="stat-engagement-sub">&mdash;</div>
+                <div id="engagementTooltip" class="stat-tip up" role="tooltip">
                     <div class="stat-tip-title">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/><line x1="2" x2="22" y1="20" y2="20"/></svg>
-                        <span>Wie wird die Zufriedenheit berechnet?</span>
+                        <span>Wie wird das berechnet?</span>
                     </div>
                     <div class="stat-metric">
                         <div class="stat-metric-head">
-                            <span class="stat-metric-name">1. Retention &amp; Bounce</span>
-                            <span id="sat-score-bounce" class="stat-metric-score" style="color:var(--primary);">—</span>
+                            <span class="stat-metric-name">Sitzungen mit mehr als einer Seite</span>
+                            <span id="eng-score-bounce" class="stat-metric-score" style="color:var(--primary);">&mdash;</span>
                         </div>
-                        <div class="stat-metric-track"><div id="sat-bar-bounce" class="stat-metric-bar" style="background:linear-gradient(90deg,var(--primary),rgba(var(--primary-rgb),.5));"></div></div>
-                        <span id="sat-detail-bounce" class="stat-metric-detail">Bounce Rate · Ø Verweildauer</span>
+                        <div class="stat-metric-track"><div id="eng-bar-bounce" class="stat-metric-bar" style="background:linear-gradient(90deg,var(--primary),rgba(var(--primary-rgb),.5));"></div></div>
+                        <span id="eng-detail-bounce" class="stat-metric-detail">&mdash;</span>
                     </div>
                     <div class="stat-metric">
                         <div class="stat-metric-head">
-                            <span class="stat-metric-name">2. Loyalitäts-Rate</span>
-                            <span id="sat-score-loyalty" class="stat-metric-score" style="color:#a78bfa;">—</span>
+                            <span class="stat-metric-name">Seiten je Sitzung</span>
+                            <span id="eng-score-pages" class="stat-metric-score" style="color:var(--good);">&mdash;</span>
                         </div>
-                        <div class="stat-metric-track"><div id="sat-bar-loyalty" class="stat-metric-bar" style="background:linear-gradient(90deg,#a78bfa,#c4b5fd);"></div></div>
-                        <span id="sat-detail-loyalty" class="stat-metric-detail">Sessions ÷ Besucher</span>
+                        <div class="stat-metric-track"><div id="eng-bar-pages" class="stat-metric-bar" style="background:linear-gradient(90deg,var(--good),#6ee7b7);"></div></div>
+                        <span id="eng-detail-pages" class="stat-metric-detail">&mdash;</span>
                     </div>
-                    <div class="stat-metric">
-                        <div class="stat-metric-head">
-                            <span class="stat-metric-name">3. Aktion pro Session</span>
-                            <span id="sat-score-pages" class="stat-metric-score" style="color:var(--good);">—</span>
-                        </div>
-                        <div class="stat-metric-track"><div id="sat-bar-pages" class="stat-metric-bar" style="background:linear-gradient(90deg,var(--good),#6ee7b7);"></div></div>
-                        <span id="sat-detail-pages" class="stat-metric-detail">Seiten pro Session</span>
-                    </div>
-                    <div class="stat-weights"><span>40% Bounce + 40% Loyalität + 20% Aktionen</span></div>
+                    <div class="stat-weights"><span>Beide Hälften zählen gleich viel</span></div>
+                    <p class="stat-tip-text stat-tip-note" style="margin:.65rem 0 0">Gemessen wird Verhalten, nicht Zufriedenheit: wie viele Sitzungen weiterklicken und wie weit. Niemand wurde befragt, deshalb steht hier auch keine Note dafür.</p>
+                    <div id="engagementSource" class="stat-example">&mdash;</div>
                     <span class="tip-arrow"></span>
                 </div>
             </div>
 
             <div class="stat-card" data-reveal style="--i:3">
-                <div class="stat-number">0 <span class="stat-suffix">€</span></div>
+                <div class="stat-number">0 <span class="stat-suffix">&euro;</span></div>
                 <div class="stat-label"><span>Kosten, dauerhaft</span></div>
+                <div class="stat-sub">kein Konto, kein Abo</div>
             </div>
-        </div>
     </div>
 </section>
 
@@ -1680,11 +1704,28 @@ document.documentElement.className += ' js';</script>
        KENNZAHLEN — laufen erst, wenn der Abschnitt sichtbar wird.
        ══════════════════════════════════════════════════════════════════ */
     var statsStarted = false;
-    var FALLBACK_VISITORS = 200;
-    var FALLBACK_HOURS    = 8900;
-    var FALLBACK_SAT = {
-        score: 86, bounce: 72, loyalty: 94, pages: 100,
-        bounceRaw: '~47% Bounce · 6m 12s', loyaltyRaw: '1.75 Sess./Besucher', ppsRaw: '5.4 Seiten/Session'
+    /* ═══ KENNZAHLEN: LIVE STATT HANDGESCHRIEBEN ═══
+       Bis v6.4.9 standen hier 200 Nutzer, 8900 Stunden und 86 % Zufriedenheit
+       als Konstanten. Drei Zahlen auf einer Seite mit der Ueberschrift
+       "Vertrauen in Zahlen", von denen keine gemessen war — und die 8900 kamen
+       aus "Nutzer x 45 h + 800 h", einer Formel, deren beide Zahlen geraten
+       waren. Die App speichert alles lokal im Browser; erfasste Stunden KANN
+       der Betreiber gar nicht sehen. Die Karte ist deshalb weg, an ihrer
+       Stelle steht die Verweildauer, die wirklich gemessen wird.
+
+       Quelle ist derselbe Proxy wie auf /analytics/, Zeitraum 90 Tage.
+       SNAPSHOT ist kein Platzhalter, sondern die letzte echte Messung mit
+       Datum — er steht da, solange der Abruf laeuft, und bleibt stehen, wenn
+       er scheitert (Adblocker, offline). In dem Fall nennt die Sprechblase
+       den Stand statt "live". */
+    var AN_PROXY = 'https://analytics-proxy.myworklog.workers.dev';
+    var AN_RANGE = 90;
+    var AN_CACHE_KEY = 'mwl_about_stats';
+    var AN_CACHE_MS = 10 * 60 * 1000;
+    var SNAPSHOT = {
+        visitors: 329, pageviews: 1228, sessions: 515,
+        bounceRate: 0.4640776699029126, avgSessionDuration: 444.567,
+        measuredAt: '2026-08-29'
     };
 
     function loc() {
@@ -1713,25 +1754,82 @@ document.documentElement.className += ' js';</script>
         if (el) setTimeout(function () { el.style.width = pct + '%'; }, 120);
     }
 
+    var EN = document.documentElement.lang === 'en';
+    function t(de, en) { return EN ? en : de; }
+
+    /* Eine Dezimalstelle, in der Sprache der Seite: 2.4 gegen 2,4. */
+    function fmt1(n) { return Number(n).toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+
+    function renderStats(sum, live) {
+        var e = window.mwlEngagement ? window.mwlEngagement.parts(sum) : null;
+        if (!e || !e.hasData) return;
+
+        animateCount(document.getElementById('stat-active-users'), e.visitors);
+        animateCount(document.getElementById('stat-engagement'), e.score);
+
+        var dur = window.mwlEngagement.duration(e.avgSessionDuration);
+        setText('stat-duration', dur);
+
+        /* Die Herkunft steht an jeder Zahl. Ohne Zeitraum ist eine Besucherzahl
+           keine Auskunft, und ohne "gemessen am" waere der Snapshot eine
+           Behauptung von heute. */
+        var quelle = live
+            ? t('letzte 90 Tage', 'last 90 days')
+            : t('letzte 90 Tage · Stand ', 'last 90 days · as of ') + SNAPSHOT.measuredAt;
+        setText('stat-users-sub', quelle);
+
+        setText('durationExample', fmt(e.pageviews) + t(' Seiten in ', ' pages across ') + fmt(e.sessions) + t(' Sitzungen', ' sessions'));
+
+        setText('eng-score-bounce', e.bounceScore + '%');
+        setText('eng-detail-bounce', fmt1(e.bounceRate * 100) + t('% springen nach einer Seite ab', '% bounce after one page'));
+        setBar('eng-bar-bounce', e.bounceScore);
+
+        setText('eng-score-pages', e.pagesScore + '%');
+        setText('eng-detail-pages', fmt1(e.pagesPerSession)
+            + t(' Seiten je Sitzung · voll ab ', ' pages per session · full at ') + window.mwlEngagement.PAGES_CAP);
+        setBar('eng-bar-pages', e.pagesScore);
+
+        setText('stat-engagement-sub', e.score >= 75 ? t('hervorragend', 'excellent')
+                                     : e.score >= 50 ? t('gut', 'good')
+                                     : e.score >= 25 ? t('ausbaufähig', 'has room') : t('niedrig', 'low'));
+        setText('engagementSource', live
+            ? t('Live aus der Web-Analyse', 'Live from web analytics')
+            : t('Stand ', 'As of ') + SNAPSHOT.measuredAt);
+    }
+
+    function cachedStats() {
+        try {
+            var raw = sessionStorage.getItem(AN_CACHE_KEY);
+            if (!raw) return null;
+            var c = JSON.parse(raw);
+            return (c && c.ts && Date.now() - c.ts < AN_CACHE_MS && c.sum) ? c.sum : null;
+        } catch (e) { return null; }
+    }
+
     function startStats() {
         if (statsStarted) return;
         statsStarted = true;
-        animateCount(document.getElementById('stat-active-users'), FALLBACK_VISITORS);
-        animateCount(document.getElementById('stat-hours'), FALLBACK_HOURS);
-        animateCount(document.getElementById('stat-satisfaction'), FALLBACK_SAT.score);
 
-        var ex = document.getElementById('hoursTooltipExample');
-        if (ex) ex.textContent = fmt(FALLBACK_VISITORS) + ' × 45 + 800 = ' + fmt(FALLBACK_HOURS) + 'h';
+        var cache = cachedStats();
+        if (cache) { renderStats(cache, true); return; }
 
-        setText('sat-score-bounce',  FALLBACK_SAT.bounce  + '%');
-        setText('sat-score-loyalty', FALLBACK_SAT.loyalty + '%');
-        setText('sat-score-pages',   FALLBACK_SAT.pages   + '%');
-        setText('sat-detail-bounce',  FALLBACK_SAT.bounceRaw);
-        setText('sat-detail-loyalty', FALLBACK_SAT.loyaltyRaw);
-        setText('sat-detail-pages',   FALLBACK_SAT.ppsRaw);
-        setBar('sat-bar-bounce',  FALLBACK_SAT.bounce);
-        setBar('sat-bar-loyalty', FALLBACK_SAT.loyalty);
-        setBar('sat-bar-pages',   FALLBACK_SAT.pages);
+        /* Erst der letzte gemessene Stand, damit die Karten nie leer stehen —
+           dann der Live-Wert obendrauf. */
+        renderStats(SNAPSHOT, false);
+
+        var ctrl = new AbortController();
+        var to = setTimeout(function () { ctrl.abort(); }, 8000);
+        fetch(AN_PROXY + '?range=' + AN_RANGE, { cache: 'no-store', signal: ctrl.signal })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) {
+                var sum = d && d.summary;
+                if (!sum || !sum.sessions) return;
+                try { sessionStorage.setItem(AN_CACHE_KEY, JSON.stringify({ ts: Date.now(), sum: sum })); } catch (e) {}
+                statsStarted = true;
+                renderStats(sum, true);
+            })
+            .catch(function () { /* Snapshot bleibt stehen, die Sprechblase nennt seinen Stand. */ })
+            .then(function () { clearTimeout(to); });
     }
 
     function bindTip(btnId, tipId) {
@@ -1749,8 +1847,16 @@ document.documentElement.className += ' js';</script>
         document.addEventListener('click', hide);
         document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hide(); });
     }
-    bindTip('hoursInfoBtn', 'hoursTooltip');
-    bindTip('satisfactionInfoBtn', 'satisfactionTooltip');
+    bindTip('durationInfoBtn', 'durationTooltip');
+    bindTip('engagementInfoBtn', 'engagementTooltip');
+
+    /* Fallback wie beim Hero-Anlauf weiter oben: startStats() haengt sonst am
+       IntersectionObserver als EINZIGEM Ausloeser. Feuert der nicht — Browser
+       ohne IntersectionObserver, ein Tab der im Hintergrund geladen wird, ein
+       Automations-Browser mit document.hidden === true — bleiben die vier
+       Karten dauerhaft auf 0 stehen. Das sieht nicht nach einem Fehler aus,
+       sondern nach einem Produkt ohne Nutzer. */
+    setTimeout(startStats, 2500);
 })();
 </script>
 

@@ -1923,12 +1923,18 @@ async function loadAll() {
         if (durEl)       durEl.textContent      = durDisplay;
         if (totalTimeEl) totalTimeEl.textContent = 'Ø pro Session';
 
-        // Engagement Score (basiert auf Bounce Rate + Pages/Session)
-        var engScore = Math.min(100, Math.round(((1 - bounce) * 0.5 + Math.min(pps / 5, 1) * 0.5) * 100));
+        // Engagement Score — die Formel steht in Assets/js/insights/engagement.js,
+        // weil /about/ dieselbe Zahl zeigt. Bewusst KEIN Inline-Fallback: eine
+        // zweite Fassung hier waere genau die Dublette, die der Umzug beseitigt
+        // hat. Fehlt die Datei, bleibt die Kachel leer und das faellt auf.
+        var engScore = window.mwlEngagement
+            ? window.mwlEngagement.score({ pageviews: pv, sessions: sessions, bounceRate: bounce })
+            : null;
         var engEl    = document.getElementById('kpiEngagement');
         var engSubEl = document.getElementById('kpiEngagementSub');
-        if (engEl)    engEl.textContent    = engScore + '%';
-        if (engSubEl) engSubEl.textContent = engScore >= 75 ? 'Hervorragend' :
+        if (engEl)    engEl.textContent    = engScore === null ? '–' : engScore + '%';
+        if (engSubEl) engSubEl.textContent = engScore === null ? 'nicht berechnet' :
+                                              engScore >= 75 ? 'Hervorragend' :
                                               engScore >= 50 ? 'Gut' :
                                               engScore >= 25 ? 'Ausbaufähig' : 'Niedrig';
 
