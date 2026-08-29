@@ -1011,5 +1011,16 @@ function main() {
     }
 }
 
-main();
+// 🔴 Dieser Schritt haengt in `npm run build` — und den fuehrt Cloudflare beim
+// Deploy aus (Beleg: index.html und pages/en/ stehen in .gitignore und sind
+// trotzdem live). Ein Absturz hier wuerde also den GANZEN Deploy scheitern
+// lassen, wegen einer Berichtsseite, die niemand zum Arbeiten braucht.
+// Deshalb: Fehler laut ins Build-Log, aber Exit-Code 0. Schlimmstenfalls fehlt
+// /repo-report/ — die Website geht live.
+try {
+    main();
+} catch (err) {
+    console.error('repo-report: FEHLGESCHLAGEN — Seite wird nicht erneuert, Deploy laeuft weiter.');
+    console.error(err && err.stack ? err.stack : err);
+}
 
