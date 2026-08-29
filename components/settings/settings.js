@@ -8,7 +8,10 @@
         document.getElementById('settingsModal').classList.add('active');
         switchSettingsTab('profile'); // Standardmäßig auf Profile Tab
 
-        document.getElementById('confName').value = data.settings.name;
+        // Ohne den Rueckfall schreibt der Browser bei einem frischen Profil
+        // die Zeichenkette "undefined" ins Namensfeld — und speichert sie
+        // beim Schliessen als Namen ab.
+        document.getElementById('confName').value = data.settings.name || '';
         // Job
         const confJobEl = document.getElementById('confJob');
         if (confJobEl) confJobEl.value = data.settings.job || '';

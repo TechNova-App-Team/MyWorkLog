@@ -273,7 +273,15 @@ console.log('\nProtokoll — Aufbau, Gruppierung, Maskierung');
     const ls = { getItem: k => (store.has(k) ? store.get(k) : null),
                  setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) };
 
-    const tag = 86400000, jetzt = Date.now();
+    // 🔴 Zeitanker auf die Tagesmitte, nicht auf Date.now(). Mit "jetzt"
+    // fallen "vor 1 Stunde" und "vor 2 Stunden" zwischen 00:00 und 03:00 auf
+    // GESTERN — der Test sah dann 2 Gruppen statt 3 und keine namens "Heute".
+    // Gemessen am 2026-08-30 um 00:49: genau dieser Fehlschlag, ohne dass am
+    // Code etwas dran war. (CLAUDE.md: `new Date()` in einem Test gehoert
+    // gestellt, sonst wird jede Fristenrechnung irgendwann von allein rot.)
+    const tag = 86400000;
+    const anker = new Date(); anker.setHours(12, 0, 0, 0);
+    const jetzt = anker.getTime();
     const mk = (t, m, ty, ts, gelesen) => ({ id: ts, title: t, message: m, type: ty, icon: '',
         date: '', time: '', timestamp: ts, isRead: gelesen });
     store.set('timetracker_alerts_v2', JSON.stringify([
