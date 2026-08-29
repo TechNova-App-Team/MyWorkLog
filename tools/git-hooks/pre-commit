@@ -31,6 +31,17 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# ═══ 0b. GIT-HISTORIE ═══
+# Cloudflare Pages klont FLACH (--depth 1): im Build-Container kennt git genau
+# EINEN Commit, und tools/repo-report.mjs zog seine Zahlen daraus. Auf
+# /repo-report/ stand deshalb "Commits 1" und "Project Start = heute" bei 830
+# echten Commits seit 2025-12-25. Die Historie faehrt darum als Datei mit —
+# hier bleibt sie frisch. Das Skript steigt in einem flachen Klon selbst aus,
+# ueberschreibt die gute Datei also nie mit einer aus einem Commit.
+if node tools/repo-history.mjs > /dev/null 2>&1; then
+  git add config/repo-history.json 2>/dev/null
+fi
+
 # ═══ 1. INDEX-BUILD ═══
 # Idempotent — schreibt nur bei echter Änderung.
 if ! node tools/build-index.js; then

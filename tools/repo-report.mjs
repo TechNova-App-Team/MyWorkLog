@@ -28,6 +28,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
+import { authors as groupAuthors, branches as branchNames } from './repo-history.mjs';
 
 const ROOT = process.cwd();
 const OUT = path.join(ROOT, 'pages', 'repo-report', 'index.html');
@@ -196,16 +197,28 @@ function scanFiles() {
 // ─────────────────────────────────────────────────────────────────────────
 // GIT
 // ─────────────────────────────────────────────────────────────────────────
-function gitStats() {
+//
+// 🔴 DER BUILD-KLON IST FLACH. Cloudflare Pages klont mit `--depth 1`; dort
+// kennt git genau EINEN Commit. Gemessen am 2026-08-29 stand deshalb live
+// "Commits 1", "Project Start = heute" und ein einzelner Balken bei Samstag,
+// waehrend das Repo 830 Commits seit 2025-12-25 hatte. Die Seite sah nicht
+// kaputt aus, sie sah nach einem neuen Projekt aus.
+//
+// Deshalb liest der Bericht die Historie aus config/repo-history.json, sobald
+// der Klon WENIGER weiss als die Datei (tools/repo-history.mjs schreibt sie,
+// der pre-commit-Hook haelt sie frisch). Was der flache Klon selbst korrekt
+// weiss — HEAD, dessen Nachricht, der Arbeitsbaum — bleibt live.
+function liveGitStats() {
     if (git(['rev-parse', '--is-inside-work-tree']) !== 'true') return { available: false };
     const s = { available: true };
     s.totalCommits = parseInt(git(['rev-list', '--count', 'HEAD']) || '0', 10);
-    s.branches = git(['branch', '-a']).split('\n').map((b) => b.trim().replace(/^\*\s*/, '')).filter(Boolean);
+    s.branches = branchNames();
     s.currentBranch = git(['branch', '--show-current']);
-    s.authors = git(['shortlog', '-sne', 'HEAD']).split('\n').map((l) => {
-        const m = /^\s*(\d+)\s+(.+)$/.exec(l.trim());
-        return m ? { commits: parseInt(m[1], 10), name: m[2].trim() } : null;
-    }).filter(Boolean);
+    // Dieselbe Gruppierung wie im Schnappschuss (eine Person, mehrere
+    // git-Konfigurationen) — und ohne E-Mail-Adresse: die Seite ist oeffentlich,
+    // `shortlog -sne` liefert "Name <adresse>" und das stand hier bis v6.4.x
+    // ungefiltert als Mitwirkender auf der Live-Seite.
+    s.authors = groupAuthors();
     s.lastCommit = git(['log', '-1', '--format=%H|%an|%ae|%ai|%s']);
 
     const since = new Date(Date.now() - 30 * 86400000);
@@ -229,6 +242,61 @@ function gitStats() {
     s.firstCommitDate = first ? first.slice(0, 10) : 'N/A';
     s.uncommitted = git(['status', '--porcelain']).split('\n').filter(Boolean).length;
     s.tags = git(['tag', '--sort=-creatordate']).split('\n').filter(Boolean).slice(0, 10);
+    s.shallow = git(['rev-parse', '--is-shallow-repository']) === 'true';
+    return s;
+}
+
+function readHistorySnapshot() {
+    try {
+        const snap = JSON.parse(fs.readFileSync(path.join(ROOT, 'config', 'repo-history.json'), 'utf8'));
+        return snap && snap.totalCommits > 0 ? snap : null;
+    } catch { return null; }
+}
+
+// Der HEAD des flachen Klons ist genau der Commit, der den Schnappschuss
+// MITBRINGT — in der Datei kann er deshalb nicht enthalten sein. Seine eigenen
+// Angaben kennt auch ein flacher Klon, also wird er hier exakt nachgetragen
+// statt geschaetzt. Wochentag und Stunde kommen aus der Zeichenkette selbst:
+// `new Date(...).getDay()` rechnete auf die Zeitzone des Build-Containers (UTC)
+// um und verschoebe den Balken.
+function addHeadCommit(s, snapHead) {
+    const iso = git(['log', '-1', '--format=%H|%ai']);
+    const [sha, ai] = iso.split('|');
+    if (!sha || !ai || sha === snapHead) return;
+    const date = ai.slice(0, 10);
+    const hour = parseInt(ai.slice(11, 13), 10);
+    const [y, m, d] = date.split('-').map(Number);
+    const wd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+    s.totalCommits += 1;
+    s.dailyCommits[date] = (s.dailyCommits[date] || 0) + 1;
+    s.weekdayCommits[wd] = (s.weekdayCommits[wd] || 0) + 1;
+    if (!Number.isNaN(hour)) s.hourlyCommits[hour] = (s.hourlyCommits[hour] || 0) + 1;
+}
+
+function gitStats() {
+    const live = liveGitStats();
+    const snap = readHistorySnapshot();
+    if (!snap) return live;
+    // Voller Klon: die Datei ist hoechstens einen Commit alt, live ist besser.
+    if (live.available && !live.shallow && live.totalCommits >= snap.totalCommits) return live;
+
+    const s = {
+        ...(live.available ? live : { available: true, uncommitted: 0, lastCommit: '' }),
+        totalCommits: snap.totalCommits,
+        firstCommitDate: snap.firstCommitDate,
+        branches: snap.branches,
+        tags: snap.tags,
+        authors: snap.authors,
+        dailyCommits: { ...snap.dailyCommits },
+        weekdayCommits: { ...snap.weekdayCommits },
+        hourlyCommits: { ...snap.hourlyCommits },
+        // Cloudflare checkt losgeloest aus (`git branch --show-current` ist leer);
+        // den Zweignamen kennt dort nur die Umgebung.
+        currentBranch: live.currentBranch || process.env.CF_PAGES_BRANCH || snap.branch || '',
+        historySource: 'snapshot',
+        snapshotAt: snap.generatedAt || '',
+    };
+    if (live.available) addHeadCommit(s, snap.head);
     return s;
 }
 
@@ -510,6 +578,8 @@ body::before {
 .gv.accent { color:var(--git); }
 .gv.warn { color:#fab219; }
 
+.gr-src { margin-top:0.9rem; font-size:0.66rem; line-height:1.5; color:var(--text-3); }
+.gr-src code { font-family:var(--font-display); font-size:0.64rem; color:var(--text-2); }
 .lc-box { margin-top:1rem; padding:0.85rem 1rem; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r-md); }
 .lc-msg { font-size:0.82rem; font-weight:500; line-height:1.4; margin-bottom:0.45rem; color:var(--text-2); }
 .lc-meta { display:flex; flex-wrap:wrap; gap:0.8rem; font-family:var(--font-display); font-size:0.65rem; }
@@ -689,6 +759,15 @@ function buildHtml(scan, gs, h) {
         const cnt = hourly[hh] || 0;
         hourCells += `<div class="hcell" style="--a:${(0.05 + (cnt / maxH) * 0.85).toFixed(2)}" title="${pad2(hh)}:00 — ${cnt} commits"></div>`;
     }
+
+    // Woher die Historie stammt, steht dran. Der Build-Container hat sie nicht
+    // (flacher Klon) — eine Zahl ohne Herkunft waere hier genau die Sorte
+    // Angabe, die vorher jahrelang falsch war und richtig aussah.
+    const srcHtml = gs.historySource === 'snapshot'
+        ? `<div class="gr-src">Historie aus <code>config/repo-history.json</code>`
+          + `${gs.snapshotAt ? ` &middot; Stand ${esc(gs.snapshotAt)}` : ''}`
+          + ` &middot; der Build-Klon ist flach und kennt nur HEAD</div>`
+        : '';
 
     let lcHtml = '';
     const lraw = gs.lastCommit || '';
@@ -881,6 +960,7 @@ function buildHtml(scan, gs, h) {
       <div class="git-row"><span class="gk">Project Start</span><span class="gv">${esc(gs.firstCommitDate || '—')}</span></div>
       <div class="git-row"><span class="gk">Uncommitted</span><span class="gv warn">${gs.uncommitted || 0}</span></div>
     </div>
+    ${srcHtml}
     ${lcHtml}
   </div>
   <div class="card" style="animation-delay:.06s">
