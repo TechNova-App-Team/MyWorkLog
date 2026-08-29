@@ -101,8 +101,11 @@ console.log('\n── Flacher Klon + Schnappschuss ─────────�
     const wd = [...html.matchAll(/wk-day">(\w+)<\/span>[\s\S]*?wk-val">(\d+)</g)].map((m) => Number(m[2]));
     const summe = wd.reduce((a, v) => a + v, 0);
     ok(summe === 163 + 118 + 1, `Wochentage summieren auf 282 (281 + HEAD), gemessen: ${summe}`);
-    const stunden = [...html.matchAll(/title="(\d\d):00 — (\d+) commits"/g)]
-        .reduce((a, m) => a + Number(m[2]), 0);
+    // Das Stundenraster ist seit v6.4.8 ein Balkendiagramm mit `data-tip`
+    // statt einer Kachelmatrix mit `title` — und die Zahl darin traegt
+    // Tausenderpunkte.
+    const stunden = [...html.matchAll(/data-tip="(\d\d):00 — ([\d.]+) commits/g)]
+        .reduce((a, m) => a + Number(m[2].replace(/\./g, '')), 0);
     ok(stunden === 41, `Stundenraster summiert auf 41 (40 + HEAD), gemessen: ${stunden}`);
 
     ok(!/&lt;[^@\s]+@[^&\s]+&gt;/.test(html), 'keine E-Mail-Adresse in der Ausgabe');

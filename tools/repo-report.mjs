@@ -124,14 +124,28 @@ function walk(dir, out = []) {
     return out;
 }
 
-function scanFiles() {
+// 🔴 GEZAEHLT WIRD, WAS IM REPO STEHT — nicht, was auf der Platte liegt.
+// Bis v6.4.7 lief dieser Scan ueber walk(ROOT) und die Bewertung darunter ueber
+// `git ls-files`. Auf einer Seite standen damit zwei verschiedene Repos: oben
+// "502 files / 262.297 lines", unten "329 versionierte Quelldateien". Die 173
+// Dateien Unterschied waren graphify-out/, .claude/, CLAUDE.md, AGENTS.md,
+// notes.txt und die generierte index.html — alle in .gitignore.
+// Zwei Folgen, beide unsichtbar: die Kopfzahlen der LOKALEN Vorschau wichen um
+// ein Drittel von der Live-Seite ab (der Cloudflare-Klon kennt gitignorierte
+// Dateien gar nicht), und die Dateitabelle listete Pfade aus .claude/ auf einer
+// Seite, die ausgeliefert wird.
+function scanFiles(tracked) {
     const files = [];
     const todos = [];
     const languages = {};
     const hashes = new Map();
     let totalLines = 0, codeLines = 0, commentLines = 0, blankLines = 0, totalSize = 0;
 
-    for (const abs of walk(ROOT)) {
+    const list = (tracked && tracked.length)
+        ? tracked.map((f) => path.join(ROOT, ...f.split('/')))
+        : walk(ROOT);
+
+    for (const abs of list) {
         // Auf / normalisieren: `git ls-files` liefert immer Schraegstriche,
         // path.relative unter Windows Backslashes — sonst findet der Abgleich
         // mit der versionierten Dateiliste keine einzige Uebereinstimmung.
@@ -212,13 +226,17 @@ function liveGitStats() {
     if (git(['rev-parse', '--is-inside-work-tree']) !== 'true') return { available: false };
     const s = { available: true };
     s.totalCommits = parseInt(git(['rev-list', '--count', 'HEAD']) || '0', 10);
-    s.branches = branchNames();
+    // repo-history.mjs laesst `git` absichtlich werfen (dort ist ein Fehler ein
+    // Grund, den Schnappschuss NICHT zu schreiben). Hier ist er das nicht: ein
+    // Repo ohne Commits laesst `shortlog HEAD` scheitern, und das riss bis
+    // v6.4.7 den ganzen Bericht mit — statt nur diese eine Zeile.
+    try { s.branches = branchNames(); } catch { s.branches = []; }
     s.currentBranch = git(['branch', '--show-current']);
     // Dieselbe Gruppierung wie im Schnappschuss (eine Person, mehrere
     // git-Konfigurationen) — und ohne E-Mail-Adresse: die Seite ist oeffentlich,
     // `shortlog -sne` liefert "Name <adresse>" und das stand hier bis v6.4.x
     // ungefiltert als Mitwirkender auf der Live-Seite.
-    s.authors = groupAuthors();
+    try { s.authors = groupAuthors(); } catch { s.authors = []; }
     s.lastCommit = git(['log', '-1', '--format=%H|%an|%ae|%ai|%s']);
 
     const since = new Date(Date.now() - 30 * 86400000);
@@ -451,7 +469,6 @@ const CSS = `:root {
   --text:      #ffffff;
   --text-2:    #c3c2b7;
   --text-3:    #898781;
-  --grid:      #232322;
   --code:      #3987e5;   /* code / file domain */
   --git:       #199e70;   /* git / activity domain */
   --font-display: 'JetBrains Mono', ui-monospace, 'SF Mono', Consolas, monospace;
@@ -543,9 +560,16 @@ body::before {
 .g2  { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
 .g3  { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-bottom:1rem; }
 .g32 { display:grid; grid-template-columns:2.1fr 1fr; gap:1rem; margin-bottom:1rem; }
+/* Ein Rasterkind hat min-width:auto und ist damit nie schmaler als sein
+   Mindestinhalt. Chart.js schreibt dem <canvas> eine Pixelbreite ins
+   style-Attribut — die zaehlt als Mindestinhalt, und die Karte konnte deshalb
+   nicht mitschrumpfen: bei 430 px Viewport war .g2 423 px breit statt 376, und
+   die ganze SEITE scrollte 15 px nach rechts. Gemessen, nicht vermutet. */
+.g2 > *, .g3 > *, .g32 > * { min-width:0; }
 
 /* ─── CHART CANVAS ─── */
 .ch { position:relative; }
+.ch canvas { max-width:100%; }
 .h220 { height:220px; } .h170 { height:170px; }
 
 /* ─── STACKED COMPOSITION BAR (language / lines) ─── */
@@ -594,28 +618,79 @@ body::before {
 .wk-val { font-family:var(--font-display); font-size:0.72rem; color:var(--text); min-width:22px; text-align:right; font-weight:600; }
 
 /* ─── SCORE FACTORS ─── */
-.fct-list {}
-.fct-row { display:flex; align-items:center; gap:0.6rem; padding:0.4rem 0; border-bottom:1px solid var(--border); }
+/* Jede Zeile traegt ihren Nenner unter dem Namen — ohne ihn ist eine
+   Punktzahl eine Behauptung. Deshalb .fct-name als Spalte und .fct-row oben
+   ausgerichtet. (Stand bis v6.4.7 ein zweites Mal am Dateiende und schlug
+   sich selbst; siehe CLAUDE.md zu doppelten Selektoren in EINER Datei.) */
+.fct-row { display:flex; align-items:flex-start; gap:0.6rem; padding:0.4rem 0; border-bottom:1px solid var(--border); }
 .fct-row:last-child { border-bottom:none; }
-.fct-name { flex:1; font-size:0.75rem; color:var(--text-2); }
-.fct-track { width:46px; height:3px; background:var(--border); border-radius:2px; overflow:hidden; flex-shrink:0; }
+.fct-name { flex:1; font-size:0.75rem; color:var(--text-2); display:flex; flex-direction:column; gap:2px; }
+.fct-basis { font-family:var(--font-body); font-size:0.66rem; color:var(--text-3); letter-spacing:0; text-transform:none; }
+.fct-track { width:46px; height:3px; margin-top:4px; background:var(--border); border-radius:2px; overflow:hidden; flex-shrink:0; }
 .fct-fill { height:100%; background:var(--code); border-radius:2px; }
 .fct-val { font-family:var(--font-display); font-size:0.68rem; color:var(--code); min-width:26px; text-align:right; }
 
-/* ─── HOURLY HEATMAP (single sequential hue = git-domain aqua) ─── */
-.hmap { display:grid; grid-template-columns:repeat(12,1fr); gap:5px; margin:0.3rem 0; }
-.hcell {
-  aspect-ratio:1; border-radius:5px; background:rgba(25,158,112,var(--a,0.05));
-  cursor:default; position:relative; transition:transform 0.12s;
+/* ─── TAGESPROFIL: 24 Balken ueber einer ECHTEN Stundenachse ────────────
+   Vorher lag hier eine Kachelmatrix: 12 Spalten x 2 Reihen, Menge als Alpha,
+   darunter eine Beschriftung "00:00 06:00 12:00 18:00 23:00" ueber die volle
+   Breite. Drei Fehler in einem Bild:
+     - Die Achse gab es nicht. Spalte 6 war in Reihe 1 die Stunde 05 und in
+       Reihe 2 die Stunde 17 — "12:00" stand also unter 06:00/18:00.
+     - Alpha 0.05 (keine Commits) und 0.06 (ein Commit) sind nicht
+       unterscheidbar. Eine leere Stunde sah aus wie eine ruhige.
+     - "transform: scale(1.25)" beim Hover liess die Kachel ueber ihre
+       Nachbarn wachsen, und "content: attr(title)" ergab zusaetzlich zur
+       CSS-Sprechblase noch den nativen Titel-Tooltip.
+   Laenge auf einer gemeinsamen Grundlinie ist ablesbar, Alpha nicht — und
+   die Beschriftung sitzt jetzt in DEMSELBEN 24-Spalten-Raster wie die Balken,
+   kann also gar nicht mehr verrutschen. */
+.dayp { position:relative; padding-top:1.6rem; }
+.dayp-plot {
+  display:grid; grid-template-columns:repeat(24,1fr); gap:3px;
+  height:132px; align-items:end; border-bottom:1px solid var(--border);
 }
-.hcell:hover { transform:scale(1.25); z-index:1; }
-.hcell::after {
-  content:attr(title); display:none; position:absolute; bottom:calc(100% + 7px); left:50%; transform:translateX(-50%);
+/* Trefferflaeche = ganze Spaltenhoehe, nicht nur der Balken. */
+.dayp-col { position:relative; height:100%; display:flex; align-items:flex-end; border-radius:4px 4px 0 0; }
+.dayp-col:hover { background:rgba(25,158,112,0.09); }
+.dayp-bar {
+  width:100%; height:var(--h,0%); min-height:3px; background:var(--git);
+  border-radius:4px 4px 0 0; opacity:0.55; transition:opacity 0.12s ease;
+}
+.dayp-col:hover .dayp-bar, .dayp-col.is-peak .dayp-bar { opacity:1; }
+/* Eine Stunde OHNE Commit unterscheidet sich in zwei Kanaelen von einer mit
+   genau einem: grau statt gruen UND einen Pixel flacher. Bei einem Hoechstwert
+   von 120 ist ein einzelner Commit sonst nicht von null zu trennen — genau der
+   Punkt, an dem die alte Deckkraft-Kachel (0.05 gegen 0.06) versagt hat. */
+.dayp-col.is-zero .dayp-bar { height:2px; min-height:2px; background:var(--border-2); opacity:1; }
+/* Die Sprechblase liegt im reservierten Streifen UEBER dem Diagramm: sie kann
+   damit weder einen Balken verdecken noch aus der Karte laufen. An den
+   Raendern haengt sie sich an die Kante statt ueber sie hinaus. */
+.dayp-col::after {
+  content:attr(data-tip); display:none; position:absolute; bottom:calc(100% + 7px); left:50%; transform:translateX(-50%);
   background:var(--surface-2); color:var(--text); font-size:0.62rem; padding:4px 8px; border-radius:6px;
-  white-space:nowrap; font-family:var(--font-display); border:1px solid var(--border-2); pointer-events:none;
+  white-space:nowrap; font-family:var(--font-display); border:1px solid var(--border-2); pointer-events:none; z-index:2;
 }
-.hcell:hover::after { display:block; }
-.hmap-lbl { display:flex; justify-content:space-between; font-family:var(--font-display); font-size:0.6rem; color:var(--text-3); margin-top:6px; }
+.dayp-col:hover::after { display:block; }
+.dayp-col:nth-child(-n+4)::after  { left:0; right:auto; transform:none; }
+.dayp-col:nth-child(n+21)::after  { left:auto; right:0; transform:none; }
+/* Unter ~900 px ist die Sprechblase (rund 170 px) breiter als vier Spalten —
+   an der Spalte ausgerichtet wuerde sie dann an fast jeder Stelle aus der
+   Karte laufen. Sie haengt sich deshalb an die Karte statt an die Spalte;
+   der Streifen ist ohnehin fuer sie reserviert. */
+@media(max-width:900px) {
+  .dayp-col { position:static; }
+  .dayp-col::after { left:0; right:auto; bottom:auto; top:0; transform:none; }
+}
+.dayp-peak {
+  position:absolute; top:0; right:0; font-family:var(--font-display);
+  font-size:0.62rem; color:var(--text-3); transition:opacity 0.12s ease;
+}
+.dayp:has(.dayp-col:hover) .dayp-peak { opacity:0; }
+.dayp-axis {
+  display:grid; grid-template-columns:repeat(24,1fr); gap:3px; margin-top:7px;
+  font-family:var(--font-display); font-size:0.58rem; color:var(--text-3);
+}
+.dayp-axis span { text-align:center; }
 
 /* ─── ACTION ITEMS (TODO scanner) ─── */
 .todo-scroll { max-height:340px; overflow-y:auto; }
@@ -670,6 +745,7 @@ footer .p1 { color:var(--git); }
 :focus-visible { outline:2px solid var(--code); outline-offset:2px; }
 @media (prefers-reduced-motion:reduce) {
   .card { animation:none; }
+  .dayp-bar, .dayp-peak, .kpi { transition:none; }
 }
 
 /* ─── RESPONSIVE ─── */
@@ -683,12 +759,13 @@ footer .p1 { color:var(--git); }
   .masthead .gen { display:none; }
   .hero-num { font-size:3.4rem; }
   .wrap { padding:0 1.1rem 4rem; }
+  /* 24 Balken auf 300 px: Luecke schrumpfen, sonst bleibt vom Balken nichts.
+     Von den Achsenmarken (alle 3 h) bleiben 00/06/12/18 stehen — die
+     Zwischenmarken 03/09/15/21 stossen sonst aneinander. */
+  .dayp-plot, .dayp-axis { gap:2px; }
+  .dayp-plot { height:104px; }
+  .dayp-axis span:nth-child(6n+4) { visibility:hidden; }
 }
-/* Nenner unter jedem Faktor — ohne ihn ist eine Punktzahl eine Behauptung. */
-.fct-name { display:flex; flex-direction:column; gap:2px; }
-.fct-basis { font-family:var(--font-body); font-size:0.66rem; color:var(--text-3); letter-spacing:0; text-transform:none; }
-.fct-row { align-items:flex-start; }
-.fct-track { margin-top:4px; }
 .hero-note { margin-top:1rem; max-width:640px; font-size:0.78rem; line-height:1.65; color:var(--text-3); }
 `;
 
@@ -752,13 +829,28 @@ function buildHtml(scan, gs, h) {
   <span class="wk-val">${wdVals[i]}</span>
 </div>`).join('');
 
+    // Tagesprofil: Menge als LAENGE auf gemeinsamer Grundlinie, nicht als
+    // Deckkraft — und ueber einer echten 24er-Achse statt 12x2 Kacheln.
+    // Kein `title`-Attribut: die Karte hat eine eigene Sprechblase, und beide
+    // zusammen ergaben zwei uebereinanderliegende Tooltips.
     const hourly = gs.hourlyCommits || {};
-    const maxH = Math.max(...Object.values(hourly), 1);
-    let hourCells = '';
-    for (let hh = 0; hh < 24; hh++) {
-        const cnt = hourly[hh] || 0;
-        hourCells += `<div class="hcell" style="--a:${(0.05 + (cnt / maxH) * 0.85).toFixed(2)}" title="${pad2(hh)}:00 — ${cnt} commits"></div>`;
-    }
+    const hourVals = Array.from({ length: 24 }, (_, hh) => hourly[hh] || 0);
+    const hourSum = hourVals.reduce((a, b) => a + b, 0);
+    const maxH = Math.max(...hourVals, 1);
+    const peakH = hourVals.indexOf(maxH);
+    const hourCols = hourVals.map((cnt, hh) => {
+        const cls = cnt === 0 ? ' is-zero' : (hh === peakH ? ' is-peak' : '');
+        const share = hourSum ? ` · ${(cnt / hourSum * 100).toFixed(1)}%` : '';
+        return `<div class="dayp-col${cls}" data-tip="${pad2(hh)}:00 — ${fmtNum(cnt)} commits${share}">`
+            + `<span class="dayp-bar" style="--h:${(cnt / maxH * 100).toFixed(1)}%"></span></div>`;
+    }).join('');
+    // Marke alle 3 Stunden, aber jede in IHRER Rasterzelle: die alte
+    // Beschriftung stand frei ueber der vollen Breite und zeigte deshalb auf
+    // die falschen Spalten.
+    const hourAxis = hourVals.map((_, hh) => `<span>${hh % 3 === 0 ? pad2(hh) : ''}</span>`).join('');
+    const hourAria = hourSum
+        ? `Commits je Stunde, ${fmtNum(hourSum)} insgesamt. Spitze um ${pad2(peakH)}:00 Uhr mit ${fmtNum(maxH)} Commits.`
+        : 'Commits je Stunde: keine Daten.';
 
     // Woher die Historie stammt, steht dran. Der Build-Container hat sie nicht
     // (flacher Klon) — eine Zahl ohne Herkunft waere hier genau die Sorte
@@ -787,7 +879,7 @@ function buildHtml(scan, gs, h) {
   <span class="lg-dot" style="background:${CAT[i % CAT.length]}"></span>
   <span class="lg-name">${esc(a.name)}</span>
   <span class="lg-code">${a.commits}</span>
-  <span class="lg-pct">${(a.commits / tot * 100).toFixed(0)}%</span>
+  <span class="lg-pct">${a.commits && a.commits / tot < 0.005 ? '&lt;1' : (a.commits / tot * 100).toFixed(0)}%</span>
 </div>`;
         });
     }
@@ -850,7 +942,7 @@ function buildHtml(scan, gs, h) {
         const bd = isRgba ? lc : lc + '30';
         const cr = x.lines > 0 ? x.code / x.lines * 100 : 0;
         return `<tr>
-  <td class="td-path">${esc(trunc(x.path, 52))}</td>
+  <td class="td-path" title="${esc(x.path)}">${esc(trunc(x.path, 52))}</td>
   <td><span class="badge" style="color:${fg};background:${bg};border-color:${bd}">${esc(x.language)}</span></td>
   <td class="td-n">${fmtNum(x.lines)}</td>
   <td class="td-n">${fmtNum(x.code)}</td>
@@ -936,15 +1028,18 @@ function buildHtml(scan, gs, h) {
     <div class="ch h220"><canvas id="cTimeline"></canvas></div>
   </div>
   <div class="card" style="animation-delay:.06s">
-    <div class="card-ttl">By Weekday</div>
+    <div class="card-ttl">By Weekday <small>all time</small></div>
     <div class="lg-list" style="margin-top:0">${wdHtml}</div>
   </div>
 </div>
 
 <div class="card" style="margin-bottom:1rem;animation-delay:.08s">
-  <div class="card-ttl">Hourly Commit Heatmap</div>
-  <div class="hmap">${hourCells}</div>
-  <div class="hmap-lbl"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:00</span></div>
+  <div class="card-ttl">Commits by Hour of Day <small>all ${fmtNum(hourSum)} commits</small></div>
+  <div class="dayp" role="img" aria-label="${esc(hourAria)}">
+    <span class="dayp-peak">peak ${pad2(peakH)}:00 · ${fmtNum(maxH)}</span>
+    <div class="dayp-plot">${hourCols}</div>
+    <div class="dayp-axis">${hourAxis}</div>
+  </div>
 </div>
 
 <!-- INTELLIGENCE -->
@@ -1019,9 +1114,10 @@ const TIP = {
 };
 const GR = { color:'rgba(255,255,255,0.05)' };
 const TK = { color:'#898781', font:{family:MN,size:9} };
+const CALM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const BASE = {
   responsive:true, maintainAspectRatio:false,
-  animation:{duration:700,easing:'easeOutQuart'},
+  animation: CALM ? false : {duration:700,easing:'easeOutQuart'},
   plugins:{tooltip:TIP, legend:{display:false}}
 };
 
@@ -1075,9 +1171,9 @@ ${SCRIPT}
 
 // ─────────────────────────────────────────────────────────────────────────
 function main() {
-    const scan = scanFiles();
-    const gs = gitStats();
     const tracked = sourceFiles();
+    const scan = scanFiles(tracked);
+    const gs = gitStats();
     const h = health(scan, tracked);
     const html = buildHtml(scan, gs, h);
 
