@@ -8,12 +8,35 @@
 /* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
-<meta name="description" content="Skill-Baum — verfolge deine IT-Kompetenzen, sammle XP aus dem Berichtsheft und steige Level für Level auf.">
-<title>MyWorkLog | Skill-Baum</title>
+<title>Skill-Baum: IT-Wissen der Ausbildung üben | MyWorkLog</title>
+<meta name="description" content="150 Prüfungsfragen für die IT-Ausbildung: Netzwerk, Linux, Backend, DevOps, Frontend, Soft Skills. Jede Antwort mit Erklärung, Wiederholung nach Vergessenskurve. Kostenlos, ohne Anmeldung.">
+<meta name="keywords" content="Fachinformatiker Prüfungsfragen, IT Ausbildung lernen, IHK Prüfung Fachinformatiker, Systemintegration üben, Anwendungsentwicklung Fragen, Subnetting üben, OSI-Modell Fragen, Azubi IT lernen, Karteikarten IT, spaced repetition IT, Abschlussprüfung Teil 1, IT-Wissen testen">
+<meta name="author" content="MyWorkLog">
+<meta name="robots" content="index, follow">
 <link rel="canonical" href="https://myworklog.de/skill-tree/">
 <link rel="alternate" hreflang="de" href="https://myworklog.de/skill-tree/">
 <link rel="alternate" hreflang="en" href="https://myworklog.de/en/skill-tree/">
 <link rel="alternate" hreflang="x-default" href="https://myworklog.de/skill-tree/">
+<link rel="icon" type="image/png" href="/Grafiken/image.jpg">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_DE">
+<meta property="og:title" content="Skill-Baum — 150 Prüfungsfragen für die IT-Ausbildung">
+<meta property="og:description" content="Übe Netzwerk, Linux, Backend, DevOps, Frontend und Soft Skills mit echten Fragen. Jede Antwort mit Erklärung, Wiederholung nach Vergessenskurve, XP nur für richtige Antworten.">
+<meta property="og:url" content="https://myworklog.de/skill-tree/">
+<meta property="og:site_name" content="MyWorkLog">
+<meta property="og:image" content="https://myworklog.de/Grafiken/icon-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:image:alt" content="Skill-Baum — Lernplattform für die IT-Ausbildung">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Skill-Baum — 150 Prüfungsfragen für die IT-Ausbildung">
+<meta name="twitter:description" content="30 Themen, 150 Fragen mit Erklärung, Wiederholung nach Vergessenskurve. Kostenlos und ohne Anmeldung.">
+<meta name="twitter:image" content="https://myworklog.de/Grafiken/icon-512.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -23,6 +46,7 @@
     --bg-surface:rgba(255,255,255,0.022);
     --bg-card:rgba(255,255,255,0.032);
     --bg-hover:rgba(255,255,255,0.05);
+    --bg-panel:#0b0b12;
     --border:rgba(255,255,255,0.08);
     --border-hover:rgba(255,255,255,0.15);
     --text-main:#f8fafc;
@@ -34,6 +58,7 @@
     --success:#10b981;
     --success-rgb:16,185,129;
     --danger:#ef4444;
+    --danger-rgb:239,68,68;
     --radius:16px;
     --radius-sm:10px;
     --font-main:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
@@ -43,17 +68,20 @@
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{font-family:var(--font-main);background:var(--bg-deep);color:var(--text-main);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+/* Formularelemente erben die Seitenschrift nicht von allein — ohne diese Zeile
+   stehen alle Knoepfe in der Systemschrift neben Inter. */
+button,input,select,textarea{font-family:inherit;}
 .bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 70% 40% at 50% -6%,rgba(var(--primary-rgb),0.09) 0%,transparent 62%);}
 svg{display:block;}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 
 /* ── TOP BAR ── */
-.topbar{position:sticky;top:0;z-index:60;height:58px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 18px;background:rgba(3,3,5,0.82);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);}
+.topbar{position:sticky;top:0;z-index:60;height:58px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 18px;background:linear-gradient(rgba(3,3,5,0.9),rgba(3,3,5,0.9)),var(--bg-deep);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);}
 .tb-left{display:flex;align-items:center;gap:12px;min-width:0;}
-.icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--bg-surface);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s var(--ease);}
+.icon-btn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--bg-surface);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .18s var(--ease),color .18s var(--ease),border-color .18s var(--ease);}
 .icon-btn:hover{background:var(--bg-hover);color:var(--text-main);border-color:var(--border-hover);}
 .icon-btn svg{width:18px;height:18px;}
-.icon-btn.primary{background:var(--primary-dim);border-color:rgba(var(--primary-rgb),0.3);color:var(--primary);}
-.icon-btn.primary:hover{background:rgba(var(--primary-rgb),0.22);}
 .icon-btn.scanning{animation:scanPulse 1.2s ease-in-out infinite;}
 @keyframes scanPulse{0%,100%{box-shadow:0 0 0 0 rgba(var(--primary-rgb),0.5);}50%{box-shadow:0 0 0 5px rgba(var(--primary-rgb),0);}}
 .tb-title{font-size:16px;font-weight:700;letter-spacing:-0.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -62,74 +90,266 @@ svg{display:block;}
 .lvl-badge svg{width:14px;height:14px;color:var(--primary);}
 .lvl-badge .lv{color:var(--primary);font-weight:800;font-variant-numeric:tabular-nums;}
 .lvl-badge .xp{color:var(--text-dim);font-family:var(--font-mono);font-size:11px;}
-@media(max-width:520px){.lvl-badge .xp{display:none;}}
+.tb-practice{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:10px;border:none;background:var(--primary);color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .18s var(--ease);}
+.tb-practice:hover{background:color-mix(in srgb,var(--primary) 88%,#fff);}
+.tb-practice svg{width:15px;height:15px;}
+.tb-practice .due-pill{background:rgba(0,0,0,0.24);border-radius:999px;padding:1px 7px;font-family:var(--font-mono);font-size:11px;}
+@media(max-width:720px){.lvl-badge .xp{display:none;}.tb-title{display:none;}}
+@media(max-width:560px){.tb-practice span.lbl{display:none;}.tb-practice{padding:9px 12px;}}
 
 /* ── PAGE ── */
 .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:26px 20px 120px;}
+.wrap>section{animation:fadeUp .5s ease-out both;}
+
+/* ── HERO ── */
+.hero{margin-bottom:22px;}
+.hero .eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.09em;color:var(--primary);background:var(--primary-dim);border:1px solid rgba(var(--primary-rgb),0.26);padding:5px 11px;border-radius:999px;margin-bottom:14px;}
+.hero .eyebrow svg{width:13px;height:13px;}
+.hero h1{font-size:clamp(26px,4.6vw,40px);font-weight:800;letter-spacing:-0.03em;line-height:1.14;max-width:16ch;margin-bottom:14px;}
+.hero h1 em{font-style:normal;color:var(--primary);}
+.hero .lede{font-size:15.5px;line-height:1.62;color:var(--text-muted);max-width:60ch;}
+.hero .lede strong{color:var(--text-main);font-weight:600;}
+.hero-facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;}
+.fact{display:flex;align-items:baseline;gap:6px;padding:7px 13px;border-radius:999px;background:var(--bg-surface);border:1px solid var(--border);font-size:12.5px;color:var(--text-muted);}
+.fact b{font-size:13.5px;font-weight:800;color:var(--text-main);font-variant-numeric:tabular-nums;}
+
+/* ── DAILY STRIP ── */
+.daily{display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--primary);border-radius:var(--radius);padding:18px 22px;margin-bottom:14px;}
+.daily-main{flex:1;min-width:220px;}
+.daily-main .dh{font-size:15px;font-weight:700;margin-bottom:4px;}
+.daily-main .ds{font-size:13px;color:var(--text-muted);line-height:1.5;}
+.daily-side{display:flex;align-items:center;gap:20px;}
+.streak{text-align:center;}
+.streak .sv{font-size:24px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:5px;justify-content:center;}
+.streak .sv svg{width:17px;height:17px;color:#f59e0b;}
+.streak .sl{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.09em;color:var(--text-dim);font-weight:600;margin-top:4px;}
+.btn-start{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:var(--radius-sm);border:none;background:var(--primary);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:background .18s var(--ease);}
+.btn-start:hover{background:color-mix(in srgb,var(--primary) 88%,#fff);}
+.btn-start:active{transform:translateY(1px);}
+.btn-start svg{width:17px;height:17px;}
+@media(max-width:600px){.daily{padding:16px 18px;}.daily-side{width:100%;justify-content:space-between;}.btn-start{flex:1;justify-content:center;}}
 
 /* ── SUMMARY ── */
-.summary{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px 26px;margin-bottom:26px;animation:fadeUp .5s ease-out both;}
+.summary{display:grid;grid-template-columns:auto 1fr auto;gap:26px;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px 26px;margin-bottom:26px;}
+@media(max-width:820px){.summary{grid-template-columns:auto 1fr;}.summary .forecast{grid-column:1/-1;}}
 @media(max-width:560px){.summary{grid-template-columns:1fr;justify-items:center;text-align:center;gap:18px;}}
 .total-ring{position:relative;width:118px;height:118px;flex-shrink:0;}
 .total-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
 .total-ring .rbg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:8;}
-.total-ring .rfill{fill:none;stroke:var(--primary);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 1s var(--ease);filter:drop-shadow(0 0 6px rgba(var(--primary-rgb),0.5));}
+.total-ring .rfill{fill:none;stroke:var(--primary);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset 1s var(--ease);}
 .total-ring .rlabel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .total-ring .rlv{font-size:34px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;}
 .total-ring .rtx{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin-top:3px;}
 .summary-info{min-width:0;}
-.summary-info h1{font-size:22px;font-weight:800;letter-spacing:-0.02em;margin-bottom:6px;}
+.summary-info h2{font-size:19px;font-weight:800;letter-spacing:-0.02em;margin-bottom:6px;}
 .summary-info p{font-size:13.5px;color:var(--text-muted);line-height:1.55;margin-bottom:14px;}
 .summary-xpbar{height:8px;border-radius:6px;background:rgba(255,255,255,0.06);overflow:hidden;margin-bottom:7px;max-width:420px;}
-.summary-xpfill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--primary),rgba(var(--primary-rgb),0.55));width:0%;transition:width .9s var(--ease);}
+.summary-xpfill{height:100%;border-radius:6px;background:var(--primary);width:0%;transition:width .9s var(--ease);}
 .summary-xptext{font-size:11.5px;color:var(--text-dim);font-family:var(--font-mono);}
+/* Vergessenskurve als 14-Tage-Vorschau. Eine Reihe, eine Farbe, Grundlinie
+   unten — die Zahl steht nur ueber dem hoechsten Balken, sonst wird die
+   Leiste zur Zahlenwand. */
+.forecast{min-width:190px;}
+.forecast .fc-title{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:10px;}
+.forecast .fc-max{font-family:var(--font-mono);font-size:11px;letter-spacing:0;text-transform:none;color:var(--text-muted);white-space:nowrap;}
+.fc-bars{display:flex;align-items:flex-end;gap:2px;height:52px;}
+.fc-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;position:relative;}
+.fc-bar{width:100%;background:var(--primary);border-radius:4px 4px 0 0;min-height:2px;opacity:.85;}
+.fc-col.empty .fc-bar{background:rgba(255,255,255,0.07);}
+.fc-axis{display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);font-family:var(--font-mono);margin-top:6px;}
 
 /* ── TABS ── */
-.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:20px;scrollbar-width:none;animation:fadeUp .5s .06s ease-out both;}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px;scrollbar-width:none;}
 .tabs::-webkit-scrollbar{display:none;}
-.tab{display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;border:1px solid var(--border);background:var(--bg-surface);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .18s var(--ease);}
+.tab{display:flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;border:1px solid var(--border);background:var(--bg-surface);color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .18s var(--ease),color .18s var(--ease);}
 .tab:hover{background:var(--bg-hover);color:var(--text-main);}
 .tab.active{background:var(--primary-dim);border-color:rgba(var(--primary-rgb),0.35);color:var(--primary);}
+.tab[data-branch].active{background:var(--bc-dim);border-color:var(--bc-border);color:var(--bc);}
 .tab-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--bc,var(--primary));}
-.tab svg{width:15px;height:15px;}
 .tab .cnt{font-size:11px;color:var(--text-dim);font-family:var(--font-mono);}
-.tab.active .cnt{color:var(--primary);}
+.tab.active .cnt{color:inherit;opacity:.8;}
 
-/* ── SKILL GRID ── */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
-@media(max-width:560px){.grid{grid-template-columns:1fr;}}
-.branch-head{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:14px 2px 2px;}
-.branch-head:first-child{margin-top:0;}
-.branch-head .bh-ico{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:var(--bc-dim);border:1px solid var(--bc-border);flex-shrink:0;}
-.branch-head .bh-ico svg{width:15px;height:15px;color:var(--bc);}
-.branch-head .bh-name{font-size:13px;font-weight:700;}
-.branch-head .bh-meta{font-size:11.5px;color:var(--text-dim);font-family:var(--font-mono);margin-left:auto;}
+/* ── SKILL KATALOG ── */
+.branch{margin-bottom:26px;}
+.branch[hidden]{display:none;}
+.branch-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.branch-head .bh-ico{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--bc-dim);border:1px solid var(--bc-border);flex-shrink:0;}
+.branch-head .bh-ico svg{width:16px;height:16px;color:var(--bc);}
+.branch-head h2{font-size:14.5px;font-weight:700;}
+.branch-head .bh-meta{font-size:11.5px;color:var(--text-dim);font-family:var(--font-mono);margin-left:auto;white-space:nowrap;}
+.branch-lede{font-size:13px;color:var(--text-muted);line-height:1.6;margin:-4px 0 14px;max-width:70ch;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;}
+@media(max-width:680px){.grid{grid-template-columns:1fr;}}
 
-.skill-card{display:flex;align-items:center;gap:14px;text-align:left;width:100%;padding:15px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);cursor:pointer;transition:border-color .18s var(--ease),transform .18s var(--ease),background .18s var(--ease);animation:fadeUp .45s ease-out both;font-family:inherit;color:inherit;position:relative;overflow:hidden;}
-.skill-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--bc,var(--primary));opacity:.7;}
-.skill-card:hover{border-color:var(--border-hover);transform:translateY(-2px);background:var(--bg-hover);}
-.sc-ico{width:42px;height:42px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bc-dim);border:1px solid var(--bc-border);}
-.sc-ico svg{width:21px;height:21px;color:var(--bc,var(--primary));}
-.sc-body{flex:1;min-width:0;}
-.sc-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;}
-.sc-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sc-lvl{font-size:12px;font-weight:700;color:var(--bc,var(--primary));font-variant-numeric:tabular-nums;flex-shrink:0;}
-.sc-bar{height:6px;border-radius:5px;background:rgba(255,255,255,0.06);overflow:hidden;}
-.sc-fill{height:100%;border-radius:5px;background:var(--bc,var(--primary));width:0%;transition:width .8s var(--ease);}
-.sc-xp{font-size:10.5px;color:var(--text-dim);font-family:var(--font-mono);margin-top:5px;}
+.skill-card{display:block;text-align:left;width:100%;padding:16px 17px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);cursor:pointer;transition:border-color .18s var(--ease),background .18s var(--ease);font-family:inherit;color:inherit;position:relative;overflow:hidden;}
+.skill-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--bc);opacity:.75;}
+.skill-card:hover{border-color:var(--bc-border);background:var(--bg-hover);}
+.sc-head{display:flex;align-items:center;gap:13px;margin-bottom:11px;}
+.sc-ico{width:40px;height:40px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bc-dim);border:1px solid var(--bc-border);}
+.sc-ico svg{width:20px;height:20px;color:var(--bc);}
+.sc-headtx{flex:1;min-width:0;}
+.sc-name{display:block;font-size:14.5px;font-weight:700;letter-spacing:-0.01em;}
+.sc-lvl{display:block;font-size:11.5px;font-weight:700;color:var(--bc);font-variant-numeric:tabular-nums;margin-top:2px;}
+.sc-desc{display:block;font-size:12.5px;line-height:1.55;color:var(--text-muted);margin-bottom:12px;}
+.sc-bar{display:block;height:6px;border-radius:5px;background:rgba(255,255,255,0.06);overflow:hidden;}
+.sc-fill{display:block;height:100%;border-radius:5px;background:var(--bc);width:0%;transition:width .8s var(--ease);}
+.sc-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;}
+.sc-xp{font-size:10.5px;color:var(--text-dim);font-family:var(--font-mono);}
+/* Stufenperlen: gefuellt = Stufe freigeschaltet und mindestens einmal
+   richtig, Umriss = offen, gestrichelt = noch gesperrt. Form UND Fuellung
+   tragen die Aussage, nicht nur die Farbe. */
+.tiers{display:flex;gap:4px;flex-shrink:0;}
+.tier-pip{width:9px;height:9px;border-radius:3px;border:1.5px solid var(--bc);opacity:.45;}
+.tier-pip.done{background:var(--bc);opacity:1;}
+.tier-pip.open{opacity:.8;}
+.tier-pip.locked{border-style:dashed;opacity:.28;}
+
+/* ── STATISCHE INHALTSBEREICHE ── */
+.doc{margin-top:52px;}
+.doc h2{font-size:22px;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px;}
+.doc>p.doc-lede{font-size:14px;color:var(--text-muted);line-height:1.65;max-width:70ch;margin-bottom:22px;}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;}
+.step{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px 19px;}
+/* Die Nummer steht hier, weil die vier Schritte wirklich nacheinander
+   passieren — sie ist Information, keine Verzierung. */
+.step .n{font-family:var(--font-mono);font-size:11px;font-weight:700;color:var(--primary);letter-spacing:0.06em;margin-bottom:9px;}
+.step h3{font-size:14px;font-weight:700;margin-bottom:7px;}
+.step p{font-size:12.8px;color:var(--text-muted);line-height:1.6;}
+.step p code{font-family:var(--font-mono);font-size:11.5px;color:var(--text-main);background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:4px;}
+
+.intervals{margin-top:14px;display:flex;flex-wrap:wrap;gap:7px;}
+.iv{display:flex;align-items:baseline;gap:6px;font-size:12px;color:var(--text-muted);background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:6px 11px;}
+.iv b{font-family:var(--font-mono);font-weight:700;color:var(--text-main);}
+
+/* Beispielfragen */
+.samples{display:grid;gap:12px;}
+.sample{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:19px 20px;}
+.sample .s-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--bc);margin-bottom:10px;}
+.sample .s-meta .s-tier{color:var(--text-dim);border-left:1px solid var(--border);padding-left:8px;}
+.sample h3{font-size:15px;font-weight:700;line-height:1.45;margin-bottom:13px;}
+.sample ol{list-style:none;counter-reset:opt;display:grid;gap:6px;margin-bottom:13px;}
+.sample ol li{counter-increment:opt;position:relative;padding:9px 12px 9px 38px;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-muted);line-height:1.45;}
+.sample ol li::before{content:counter(opt,upper-alpha);position:absolute;left:12px;top:9px;font-family:var(--font-mono);font-size:11.5px;font-weight:700;color:var(--text-dim);}
+.sample ol li.right{border-color:rgba(var(--success-rgb),0.42);background:rgba(var(--success-rgb),0.09);color:var(--text-main);}
+.sample ol li.right::before{color:var(--success);}
+.sample details{border-top:1px solid var(--border);padding-top:12px;}
+/* min-height 24: gemessen waren 15 px, unter dem WCAG-Mindestmass fuer
+   Beruehrflaechen — auf dem Handy kaum sicher zu treffen. */
+.sample summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--primary);list-style:none;display:inline-flex;align-items:center;gap:7px;min-height:24px;padding:4px 0;}
+.sample summary::-webkit-details-marker{display:none;}
+.sample summary::after{content:'';width:6px;height:6px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:rotate(45deg);margin-left:2px;transition:transform .2s var(--ease);}
+.sample details[open] summary::after{transform:rotate(-135deg);}
+.sample details p{font-size:13px;line-height:1.65;color:var(--text-muted);margin-top:11px;}
+.sample details p b{color:var(--success);font-weight:700;}
+
+/* FAQ */
+.faq{display:grid;gap:9px;}
+.faq details{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0;overflow:hidden;}
+.faq summary{cursor:pointer;padding:16px 18px;font-size:14px;font-weight:600;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:14px;transition:background .16s var(--ease);}
+.faq summary::-webkit-details-marker{display:none;}
+.faq summary:hover{background:var(--bg-hover);}
+.faq summary::after{content:'';flex-shrink:0;width:7px;height:7px;border-right:1.7px solid var(--text-dim);border-bottom:1.7px solid var(--text-dim);transform:rotate(45deg);transition:transform .2s var(--ease);}
+.faq details[open] summary::after{transform:rotate(-135deg);}
+.faq details>div{padding:0 18px 17px;font-size:13.4px;line-height:1.68;color:var(--text-muted);}
+.faq details>div p+p{margin-top:9px;}
+.faq a{color:var(--primary);text-decoration:none;border-bottom:1px solid rgba(var(--primary-rgb),0.35);}
+.faq a:hover{border-bottom-color:var(--primary);}
+
+/* Weiterfuehrende Seiten */
+.related{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;}
+.rel-card{display:block;text-decoration:none;color:inherit;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:17px 18px;transition:border-color .18s var(--ease),background .18s var(--ease);}
+.rel-card:hover{border-color:var(--border-hover);background:var(--bg-hover);}
+.rel-card .rc-t{font-size:13.8px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:8px;}
+.rel-card .rc-t svg{width:15px;height:15px;color:var(--primary);flex-shrink:0;}
+.rel-card p{font-size:12.4px;color:var(--text-muted);line-height:1.55;}
+
+/* ── ÜBEN: die zentrale Flaeche ── */
+.pr{position:fixed;inset:0;z-index:400;background:var(--bg-deep);display:none;flex-direction:column;}
+.pr.open{display:flex;}
+.pr-top{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.pr-close{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--bg-surface);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.pr-close:hover{background:var(--bg-hover);color:var(--text-main);}
+.pr-close svg{width:16px;height:16px;}
+.pr-dots{display:flex;gap:4px;flex:1;min-width:0;overflow:hidden;}
+.pr-dot{height:4px;flex:1;max-width:34px;border-radius:3px;background:rgba(255,255,255,0.1);transition:background .3s var(--ease);}
+.pr-dot.ok{background:var(--success);}
+.pr-dot.no{background:var(--danger);}
+.pr-dot.now{background:var(--text-muted);}
+.pr-count{font-size:12px;font-family:var(--font-mono);color:var(--text-dim);white-space:nowrap;flex-shrink:0;}
+.pr-xp{font-size:12.5px;font-weight:800;font-family:var(--font-mono);color:var(--success);white-space:nowrap;flex-shrink:0;font-variant-numeric:tabular-nums;}
+.pr-body{flex:1;overflow-y:auto;display:flex;justify-content:center;padding:26px 18px 140px;}
+.pr-inner{width:100%;max-width:620px;}
+.pr-skill{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.pr-skill .ps-ico{width:42px;height:42px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bc-dim);border:1px solid var(--bc-border);}
+.pr-skill .ps-ico svg{width:21px;height:21px;color:var(--bc);}
+.pr-skill .ps-n{display:block;font-size:14.5px;font-weight:700;}
+.pr-skill .ps-b{display:block;font-size:11.5px;color:var(--text-dim);margin-top:2px;}
+.pr-skill .ps-b b{color:var(--bc);font-weight:700;}
+.pr-q{font-size:clamp(18px,3vw,23px);font-weight:700;line-height:1.4;letter-spacing:-0.015em;margin-bottom:22px;}
+.pr-opts{display:grid;gap:9px;margin-bottom:22px;}
+.pr-opt{display:flex;align-items:flex-start;gap:13px;width:100%;text-align:left;padding:14px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);color:var(--text-main);font-size:14.5px;line-height:1.45;cursor:pointer;font-family:inherit;transition:border-color .16s var(--ease),background .16s var(--ease);}
+.pr-opt:hover:not(:disabled){border-color:var(--border-hover);background:var(--bg-hover);}
+.pr-opt .key{flex-shrink:0;width:22px;height:22px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11.5px;font-weight:700;color:var(--text-dim);}
+.pr-opt.sel{border-color:var(--primary);background:var(--primary-dim);}
+.pr-opt.sel .key{border-color:var(--primary);color:var(--primary);}
+.pr-opt:disabled{cursor:default;}
+.pr-opt.right{border-color:rgba(var(--success-rgb),0.5);background:rgba(var(--success-rgb),0.11);}
+.pr-opt.right .key{border-color:var(--success);color:var(--success);}
+.pr-opt.wrong{border-color:rgba(var(--danger-rgb),0.5);background:rgba(var(--danger-rgb),0.1);}
+.pr-opt.wrong .key{border-color:var(--danger);color:var(--danger);}
+.pr-opt .mark{margin-left:auto;flex-shrink:0;width:19px;height:19px;}
+.pr-opt.right .mark{color:var(--success);}
+.pr-opt.wrong .mark{color:var(--danger);}
+.pr-fb{border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-card);padding:16px 18px;display:none;}
+.pr-fb.show{display:block;animation:fadeUp .32s ease-out both;}
+/* Richtig/falsch traegt Symbol UND Wort — Farbe allein waere fuer
+   Farbfehlsichtige keine Aussage. */
+.pr-fb .fb-h{display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:800;margin-bottom:9px;}
+.pr-fb .fb-h svg{width:18px;height:18px;}
+.pr-fb.ok .fb-h{color:var(--success);}
+.pr-fb.no .fb-h{color:var(--danger);}
+.pr-fb .fb-h .gain{margin-left:auto;font-family:var(--font-mono);font-size:12.5px;color:var(--text-dim);font-weight:700;}
+.pr-fb p{font-size:13.8px;line-height:1.68;color:var(--text-muted);}
+.pr-foot{position:fixed;left:0;right:0;bottom:0;z-index:1;padding:16px 18px calc(16px + env(safe-area-inset-bottom));background:linear-gradient(rgba(3,3,5,0.9),rgba(3,3,5,0.9)),var(--bg-deep);border-top:1px solid var(--border);display:flex;justify-content:center;}
+.pr-foot .inner{width:100%;max-width:620px;display:flex;align-items:center;gap:12px;}
+.pr-hint{font-size:11.5px;color:var(--text-dim);font-family:var(--font-mono);}
+@media(max-width:640px){.pr-hint{display:none;}}
+.btn-next{margin-left:auto;padding:13px 26px;border-radius:var(--radius-sm);border:none;background:var(--primary);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:background .18s var(--ease);}
+.btn-next:hover:not(:disabled){background:color-mix(in srgb,var(--primary) 88%,#fff);}
+.btn-next:disabled{opacity:.4;cursor:default;}
+@media(max-width:640px){.btn-next{flex:1;}}
+
+/* Abschluss */
+.pr-done{text-align:center;padding:20px 0 0;}
+.pr-done .d-ring{width:128px;height:128px;position:relative;margin:0 auto 20px;}
+.pr-done .d-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
+.pr-done .d-ring .rbg{fill:none;stroke:rgba(255,255,255,0.07);stroke-width:9;}
+.pr-done .d-ring .rfill{fill:none;stroke:var(--success);stroke-width:9;stroke-linecap:round;}
+.pr-done .d-ring .lab{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.pr-done .d-ring .lab b{font-size:32px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;}
+.pr-done .d-ring .lab span{font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);font-weight:600;margin-top:4px;}
+.pr-done h2{font-size:22px;font-weight:800;letter-spacing:-0.02em;margin-bottom:8px;}
+.pr-done>p{font-size:14px;color:var(--text-muted);line-height:1.6;max-width:44ch;margin:0 auto 22px;}
+.pr-gains{display:grid;gap:7px;text-align:left;max-width:420px;margin:0 auto 22px;}
+.pr-gain{display:flex;align-items:center;gap:11px;padding:11px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);}
+.pr-gain .g-ico{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bc-dim);border:1px solid var(--bc-border);}
+.pr-gain .g-ico svg{width:15px;height:15px;color:var(--bc);}
+.pr-gain .g-n{font-size:13px;font-weight:600;flex:1;min-width:0;}
+.pr-gain .g-x{font-family:var(--font-mono);font-size:12.5px;font-weight:800;color:var(--success);}
+.pr-done .d-acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
 
 /* ── DETAIL SHEET ── */
 .sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(5px);z-index:190;opacity:0;pointer-events:none;transition:opacity .3s;}
 .sheet-backdrop.open{opacity:1;pointer-events:auto;}
-.sheet{position:fixed;z-index:200;background:#0b0b12;border:1px solid var(--border);border-radius:20px;width:calc(100% - 32px);max-width:440px;left:50%;top:50%;transform:translate(-50%,-46%) scale(.97);opacity:0;pointer-events:none;transition:opacity .32s var(--ease),transform .32s var(--ease);max-height:88vh;overflow-y:auto;}
+.sheet{position:fixed;z-index:200;background:var(--bg-panel);border:1px solid var(--border);border-radius:20px;width:calc(100% - 32px);max-width:460px;left:50%;top:50%;transform:translate(-50%,-46%) scale(.97);opacity:0;pointer-events:none;transition:opacity .32s var(--ease),transform .32s var(--ease);max-height:88vh;overflow-y:auto;}
 .sheet.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1);}
 @media(max-width:560px){.sheet{width:100%;max-width:none;left:0;right:0;bottom:0;top:auto;transform:translateY(100%);border-radius:20px 20px 0 0;border-bottom:none;}.sheet.open{transform:translateY(0);}}
 .sheet-hd{display:flex;align-items:center;gap:14px;padding:22px 22px 16px;border-bottom:1px solid var(--border);}
 .sheet-ico{width:52px;height:52px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--bc-dim);border:1px solid var(--bc-border);}
-.sheet-ico svg{width:26px;height:26px;color:var(--bc,var(--primary));}
+.sheet-ico svg{width:26px;height:26px;color:var(--bc);}
 .sheet-hd-txt{flex:1;min-width:0;}
 .sheet-title{font-size:18px;font-weight:700;letter-spacing:-0.01em;}
-.sheet-branch{font-size:12px;font-weight:600;color:var(--bc,var(--primary));margin-top:2px;}
+.sheet-branch{font-size:12px;font-weight:600;color:var(--bc);margin-top:2px;}
 .sheet-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg-surface);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .sheet-close:hover{background:var(--bg-hover);color:var(--text-main);}
 .sheet-close svg{width:16px;height:16px;}
@@ -137,19 +357,28 @@ svg{display:block;}
 .sheet-ring{position:relative;width:96px;height:96px;flex-shrink:0;}
 .sheet-ring svg{width:100%;height:100%;transform:rotate(-90deg);}
 .sheet-ring .rbg{fill:none;stroke:rgba(255,255,255,0.06);stroke-width:7;}
-.sheet-ring .rfill{fill:none;stroke:var(--bc,var(--primary));stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .8s var(--ease);}
+.sheet-ring .rfill{fill:none;stroke:var(--bc);stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset .8s var(--ease);}
 .sheet-ring .rlabel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .sheet-ring .rlv{font-size:28px;font-weight:800;line-height:1;}
 .sheet-ring .rtx{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em;font-weight:600;}
-.sheet-stats{flex:1;}
+.sheet-stats{flex:1;min-width:0;}
 .sheet-xpbar{height:9px;border-radius:6px;background:rgba(255,255,255,0.06);overflow:hidden;margin-bottom:8px;}
-.sheet-xpfill{height:100%;border-radius:6px;background:var(--bc,var(--primary));width:0%;transition:width .7s var(--ease);}
+.sheet-xpfill{height:100%;border-radius:6px;background:var(--bc);width:0%;transition:width .7s var(--ease);}
 .sheet-xptext{font-size:12px;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:14px;}
-.sheet-addbtn{width:100%;padding:11px;border-radius:var(--radius-sm);border:1px solid var(--bc-border);background:var(--bc-dim);color:var(--bc,var(--primary));font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;transition:all .16s;}
-.sheet-addbtn:hover{filter:brightness(1.2);}
+.sheet-addbtn{width:100%;padding:12px;border-radius:var(--radius-sm);border:none;background:var(--primary);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;transition:background .16s var(--ease);}
+.sheet-addbtn:hover{background:color-mix(in srgb,var(--primary) 88%,#fff);}
 .sheet-addbtn svg{width:16px;height:16px;}
 .sheet-sec{padding:4px 22px 22px;}
 .sheet-sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:10px;}
+/* Stufenliste im Detail: zeigt, was frei ist und was noch fehlt. */
+.tier-row{display:flex;align-items:center;gap:12px;padding:11px 13px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:7px;}
+.tier-row.locked{opacity:.55;}
+.tier-row .tr-n{width:24px;height:24px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:11px;font-weight:700;background:var(--bc-dim);border:1px solid var(--bc-border);color:var(--bc);}
+.tier-row.locked .tr-n{background:rgba(255,255,255,0.05);border-color:var(--border);color:var(--text-dim);}
+.tier-row .tr-b{flex:1;min-width:0;}
+.tier-row .tr-t{display:block;font-size:13px;font-weight:600;}
+.tier-row .tr-s{display:block;font-size:11.5px;color:var(--text-dim);margin-top:2px;}
+.tier-row .tr-c{font-family:var(--font-mono);font-size:11.5px;color:var(--text-muted);flex-shrink:0;}
 .hist-item{display:flex;align-items:flex-start;gap:12px;padding:11px 13px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:7px;}
 .hist-xp{font-size:13px;font-weight:800;font-family:var(--font-mono);color:var(--success);white-space:nowrap;flex-shrink:0;}
 .hist-body{min-width:0;}
@@ -157,22 +386,18 @@ svg{display:block;}
 .hist-date{font-size:10.5px;color:var(--text-dim);margin-top:3px;font-family:var(--font-mono);}
 .sheet-empty{text-align:center;padding:26px 20px;color:var(--text-dim);font-size:13px;line-height:1.6;}
 
-/* ── MODAL (Scan / Manual) ── */
+/* ── MODAL (Scan) ── */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);z-index:210;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .28s;}
 .modal-backdrop.open{opacity:1;pointer-events:auto;}
-.modal{background:#0b0b12;border:1px solid var(--border);border-radius:var(--radius);width:100%;max-width:440px;padding:26px;transform:scale(.96);transition:transform .3s var(--ease);max-height:90vh;overflow-y:auto;}
+.modal{background:var(--bg-panel);border:1px solid var(--border);border-radius:var(--radius);width:100%;max-width:460px;padding:26px;transform:scale(.96);transition:transform .3s var(--ease);max-height:90vh;overflow-y:auto;}
 .modal-backdrop.open .modal{transform:scale(1);}
 .modal-hd{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
 .modal-hd .mh-ico{width:38px;height:38px;border-radius:10px;background:var(--primary-dim);border:1px solid rgba(var(--primary-rgb),0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .modal-hd .mh-ico svg{width:19px;height:19px;color:var(--primary);}
 .modal-hd h2{font-size:17px;font-weight:700;}
 .modal p.modal-sub{color:var(--text-muted);font-size:13px;line-height:1.55;margin-bottom:20px;}
-.field{margin-bottom:14px;}
-.field label{display:block;font-size:12px;color:var(--text-muted);font-weight:500;margin-bottom:6px;}
-.field select,.field input{width:100%;padding:11px 12px;border-radius:var(--radius-sm);background:var(--bg-surface);border:1px solid var(--border);color:var(--text-main);font-size:14px;font-family:inherit;transition:border-color .15s,box-shadow .15s;}
-.field select:focus,.field input:focus{outline:none;border-color:rgba(var(--primary-rgb),0.5);box-shadow:0 0 0 3px rgba(var(--primary-rgb),0.15);}
 .scan-progress{width:100%;height:8px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;margin-bottom:12px;}
-.scan-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--primary),rgba(var(--primary-rgb),0.6));border-radius:6px;transition:width .3s;}
+.scan-progress-fill{height:100%;width:0%;background:var(--primary);border-radius:6px;transition:width .3s;}
 .scan-status{font-size:12.5px;color:var(--text-muted);margin-bottom:16px;min-height:1.3em;line-height:1.5;}
 .scan-results{text-align:left;max-height:210px;overflow-y:auto;margin-bottom:18px;display:none;}
 .scan-res-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;}
@@ -181,16 +406,16 @@ svg{display:block;}
 .scan-res-skill span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .scan-res-xp{font-size:13px;font-weight:800;font-family:var(--font-mono);color:var(--success);flex-shrink:0;}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;}
-.btn{padding:11px 20px;border-radius:var(--radius-sm);border:none;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit;transition:all .18s var(--ease);display:inline-flex;align-items:center;gap:8px;}
+.btn{padding:11px 20px;border-radius:var(--radius-sm);border:none;font-weight:600;font-size:13.5px;cursor:pointer;font-family:inherit;transition:background .18s var(--ease);display:inline-flex;align-items:center;gap:8px;}
 .btn svg{width:16px;height:16px;}
 .btn-primary{background:var(--primary);color:#fff;}
-.btn-primary:hover{filter:brightness(1.1);box-shadow:0 6px 20px rgba(var(--primary-rgb),0.35);}
-.btn-primary:disabled{opacity:.55;cursor:default;box-shadow:none;filter:none;}
+.btn-primary:hover{background:color-mix(in srgb,var(--primary) 88%,#fff);}
+.btn-primary:disabled{opacity:.55;cursor:default;}
 .btn-ghost{background:var(--bg-surface);border:1px solid var(--border);color:var(--text-muted);}
 .btn-ghost:hover{background:var(--bg-hover);color:var(--text-main);}
 
 /* ── TOAST ── */
-.toast{position:fixed;top:72px;right:18px;left:18px;z-index:300;margin-left:auto;max-width:360px;padding:13px 16px;border-radius:var(--radius-sm);background:rgba(var(--success-rgb),0.14);border:1px solid rgba(var(--success-rgb),0.32);color:#6ee7b7;font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:11px;transform:translateX(calc(100% + 24px));transition:transform .4s var(--ease);}
+.toast{position:fixed;top:72px;right:18px;left:18px;z-index:450;margin-left:auto;max-width:360px;padding:13px 16px;border-radius:var(--radius-sm);background:linear-gradient(rgba(var(--success-rgb),0.16),rgba(var(--success-rgb),0.16)),var(--bg-panel);border:1px solid rgba(var(--success-rgb),0.32);color:#6ee7b7;font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:11px;transform:translateX(calc(100% + 24px));transition:transform .4s var(--ease);}
 .toast.show{transform:translateX(0);}
 .toast svg{width:18px;height:18px;flex-shrink:0;}
 
@@ -205,10 +430,179 @@ svg{display:block;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(var(--primary-rgb),0.28);border-radius:4px;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
-@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important;}html{scroll-behavior:auto;}}
 </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.4.6"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.4.6"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.4.7"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.4.7"></script>
+    <script defer src="/Assets/js/skill-tree-data.js?v=6.4.7"></script>
+
+<script type="application/ld+json" data-ld-id="course">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "Skill-Baum — IT-Wissen der Ausbildung üben",
+  "description": "Kostenloser Lernpfad für die IT-Ausbildung: 150 Fragen zu Netzwerk, Linux und Systemadministration, Backend, DevOps, Frontend und Soft Skills. Jede Antwort mit Erklärung, Wiederholung nach der Vergessenskurve.",
+  "url": "https://myworklog.de/skill-tree/",
+  "inLanguage": "de",
+  "isAccessibleForFree": true,
+  "educationalLevel": "Berufsausbildung",
+  "teaches": ["Netzwerktechnik","Linux-Administration","Backend-Entwicklung","DevOps","Frontend-Entwicklung","Dokumentation und Kommunikation"],
+  "provider": { "@type": "Organization", "name": "MyWorkLog", "url": "https://myworklog.de" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR", "category": "Free" },
+  "hasCourseInstance": {
+    "@type": "CourseInstance",
+    "courseMode": "online",
+    "courseWorkload": "PT10M",
+    "inLanguage": "de"
+  }
+}
+</script>
+<script type="application/ld+json" data-ld-id="breadcrumb">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "MyWorkLog", "item": "https://myworklog.de/" },
+    { "@type": "ListItem", "position": 2, "name": "IT-Hub", "item": "https://myworklog.de/it-landing/" },
+    { "@type": "ListItem", "position": 3, "name": "Skill-Baum", "item": "https://myworklog.de/skill-tree/" }
+  ]
+}
+</script>
+<script type="application/ld+json" data-ld-id="quiz">
+{
+  "@context": "https://schema.org",
+  "@type": "Quiz",
+  "name": "Beispielfragen aus dem Skill-Baum",
+  "about": { "@type": "Thing", "name": "IT-Ausbildung" },
+  "educationalLevel": "Berufsausbildung",
+  "inLanguage": "de",
+  "url": "https://myworklog.de/skill-tree/#beispielfragen",
+  "hasPart": [
+    {
+      "@type": "Question",
+      "eduQuestionType": "Multiple choice",
+      "learningResourceType": "Practice problem",
+      "name": "Was unterscheidet einen Container von einer virtuellen Maschine?",
+      "text": "Was unterscheidet einen Container von einer virtuellen Maschine?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Container teilen sich den Kernel des Hosts", "comment": { "@type": "Comment", "text": "Eine VM bringt ein komplettes Gastbetriebssystem samt eigenem Kernel mit. Ein Container nutzt den Kernel des Hosts und isoliert nur Prozesse, Netzwerk und Dateisystem — deshalb startet er in Sekunden statt Minuten." } },
+      "suggestedAnswer": [
+        { "@type": "Answer", "text": "Container laufen nur unter Windows" },
+        { "@type": "Answer", "text": "Container brauchen mehr Arbeitsspeicher" },
+        { "@type": "Answer", "text": "Container haben kein eigenes Dateisystem" }
+      ]
+    },
+    {
+      "@type": "Question",
+      "eduQuestionType": "Multiple choice",
+      "learningResourceType": "Practice problem",
+      "name": "Welches SQL-Schlüsselwort filtert Zeilen vor der Gruppierung?",
+      "text": "Welches SQL-Schlüsselwort filtert Zeilen vor der Gruppierung?",
+      "acceptedAnswer": { "@type": "Answer", "text": "WHERE", "comment": { "@type": "Comment", "text": "WHERE filtert einzelne Zeilen, bevor gruppiert wird. HAVING filtert danach auf den Gruppen — deshalb darf HAVING Aggregatfunktionen wie COUNT verwenden, WHERE nicht." } },
+      "suggestedAnswer": [
+        { "@type": "Answer", "text": "HAVING" },
+        { "@type": "Answer", "text": "ORDER BY" },
+        { "@type": "Answer", "text": "GROUP BY" }
+      ]
+    },
+    {
+      "@type": "Question",
+      "eduQuestionType": "Multiple choice",
+      "learningResourceType": "Practice problem",
+      "name": "Welches Kontrastverhältnis verlangt die WCAG mindestens für normalen Fließtext?",
+      "text": "Welches Kontrastverhältnis verlangt die WCAG mindestens für normalen Fließtext?",
+      "acceptedAnswer": { "@type": "Answer", "text": "4,5 zu 1", "comment": { "@type": "Comment", "text": "Stufe AA verlangt 4,5:1 für normalen Text und 3:1 für große Schrift ab 18,66 px fett oder 24 px normal. Bedienelemente und Grafiken brauchen ebenfalls mindestens 3:1 gegen ihren Hintergrund." } },
+      "suggestedAnswer": [
+        { "@type": "Answer", "text": "2 zu 1" },
+        { "@type": "Answer", "text": "10 zu 1" },
+        { "@type": "Answer", "text": "1,5 zu 1" }
+      ]
+    },
+    {
+      "@type": "Question",
+      "eduQuestionType": "Multiple choice",
+      "learningResourceType": "Practice problem",
+      "name": "Wie viele nutzbare Hostadressen hat ein Netz mit der Maske /29?",
+      "text": "Wie viele nutzbare Hostadressen hat ein Netz mit der Maske /29?",
+      "acceptedAnswer": { "@type": "Answer", "text": "6", "comment": { "@type": "Comment", "text": "/29 lässt 3 Hostbits, also 2 hoch 3 gleich 8 Adressen. Netzadresse und Broadcast fallen weg, es bleiben 6 nutzbare. Die Faustformel lautet 2 hoch (32 minus Präfix) minus 2." } },
+      "suggestedAnswer": [
+        { "@type": "Answer", "text": "4" },
+        { "@type": "Answer", "text": "8" },
+        { "@type": "Answer", "text": "14" }
+      ]
+    },
+    {
+      "@type": "Question",
+      "eduQuestionType": "Multiple choice",
+      "learningResourceType": "Practice problem",
+      "name": "Was bewirkt chmod 755 auf einer Datei?",
+      "text": "Was bewirkt chmod 755 auf einer Datei?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Eigentümer alles, Gruppe und andere lesen und ausführen", "comment": { "@type": "Comment", "text": "Die Ziffern stehen für Eigentümer, Gruppe und andere. 7 ist 4+2+1 also lesen, schreiben, ausführen; 5 ist 4+1 also lesen und ausführen. Bei Verzeichnissen bedeutet das Ausführungsrecht das Betreten." } },
+      "suggestedAnswer": [
+        { "@type": "Answer", "text": "Alle dürfen alles" },
+        { "@type": "Answer", "text": "Niemand darf schreiben" },
+        { "@type": "Answer", "text": "Nur der Eigentümer darf lesen" }
+      ]
+    },
+    {
+      "@type": "Question",
+      "eduQuestionType": "Multiple choice",
+      "learningResourceType": "Practice problem",
+      "name": "Was ist der erste sinnvolle Schritt bei einem gemeldeten Fehler?",
+      "text": "Was ist der erste sinnvolle Schritt bei einem gemeldeten Fehler?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Den Fehler reproduzierbar machen", "comment": { "@type": "Comment", "text": "Was nicht reproduzierbar ist, ist auch nicht überprüfbar behoben. Erst die genauen Schritte, Eingaben und Umgebungsbedingungen klären — sonst repariert man etwas und weiß hinterher nicht, ob es geholfen hat." } },
+      "suggestedAnswer": [
+        { "@type": "Answer", "text": "Sofort den Code ändern" },
+        { "@type": "Answer", "text": "Den Server neu starten" },
+        { "@type": "Answer", "text": "Das Ticket weiterleiten" }
+      ]
+    }
+  ]
+}
+</script>
+<script type="application/ld+json" data-ld-id="faq">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "inLanguage": "de",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Kostet der Skill-Baum etwas und brauche ich ein Konto?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Nein und nein. Alle 150 Fragen sind frei zugänglich, es gibt keine Anmeldung und keine Bezahlschranke. Der Fortschritt liegt im Speicher des Browsers und verlässt das Gerät nicht. Auf einem anderen Gerät oder nach dem Löschen der Browserdaten beginnt der Fortschritt wieder bei null." }
+    },
+    {
+      "@type": "Question",
+      "name": "Kann ich mir selbst XP geben?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Nein. XP entsteht aus richtigen Antworten und aus Tätigkeiten, die im Berichtsheft dokumentiert sind. Eine selbst eingetragene Zahl sagt über Wissen nichts aus, deshalb gibt es diese Möglichkeit seit Version 6.4.6 nicht mehr." }
+    },
+    {
+      "@type": "Question",
+      "name": "Was bedeutet Wiederholung nach der Vergessenskurve?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Neu gelerntes Wissen zerfällt schnell, wiederholtes Wissen deutlich langsamer. Jede richtige Antwort legt fest, wann dieselbe Frage wiederkommt: nach einem Tag, dann nach drei, dann nach einer Woche und so weiter. Eine falsche Antwort setzt den Abstand zurück und die Frage taucht noch in derselben Runde wieder auf. Zehn Minuten täglich bringen dadurch mehr als zwei Stunden am Wochenende." }
+    },
+    {
+      "@type": "Question",
+      "name": "Ersetzt der Skill-Baum die Vorbereitung auf die IHK-Prüfung?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Nein. Die Fragen liegen auf dem Niveau der Ausbildung und decken viele Themen der Abschlussprüfung ab, sind aber keine amtlichen Prüfungsaufgaben und kein vollständiger Lehrplan. Für die Prüfung braucht es zusätzlich den Rahmenlehrplan des Berufsbildes, die Unterlagen der Berufsschule und Übungssätze der Kammer." }
+    },
+    {
+      "@type": "Question",
+      "name": "Wofür sind Level und XP im Skill-Baum gut?",
+      "acceptedAnswer": { "@type": "Answer", "text": "XP misst den Aufwand, also wie viel in einem Thema richtig beantwortet wurde. Das Level ist die daraus abgeleitete Stufe und wächst absichtlich langsamer, je höher es steht. Ob ein Thema behalten wird, zeigt stattdessen die Wiederholungsvorschau mit den fälligen Fragen der nächsten Tage." }
+    },
+    {
+      "@type": "Question",
+      "name": "Was hat das Berichtsheft mit dem Skill-Baum zu tun?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Wer seine Tätigkeiten in MyWorkLog festhält, kann diese Einträge auswerten lassen: erkannte Themen werden mit XP hinterlegt, dokumentierte Praxis zählt also genauso wie beantwortete Fragen. Die Auswertung läuft ausschließlich im Browser über eine Stichwortliste, es wird nichts verschickt." }
+    },
+    {
+      "@type": "Question",
+      "name": "Wie viele Fragen gibt es pro Thema?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Fünf je Thema, verteilt auf drei Stufen: zwei Grundlagen, zwei Fortgeschritten, eine Profi. Bei 30 Themen sind das 150 Fragen. Weil jede Frage über Monate immer wieder fällig wird, reicht der Bestand deutlich länger, als die Zahl vermuten lässt." }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -220,60 +614,567 @@ svg{display:block;}
 <!-- TOP BAR -->
 <div class="topbar">
     <div class="tb-left">
-        <a class="icon-btn" href="/it-landing/" title="Zurück zum Hub" aria-label="Zurück">
+        <a class="icon-btn" href="/it-landing/" title="Zurück zum Hub" aria-label="Zurück zum Hub">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
         </a>
         <span class="tb-title">Skill-Baum</span>
     </div>
     <div class="tb-right">
         <span class="lvl-badge">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-            Lv.<span class="lv" id="totalLevel">1</span>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+            <span>Lv.</span><span class="lv" id="totalLevel">1</span>
             <span class="xp" id="totalXpText">0 XP</span>
         </span>
-        <button class="icon-btn" id="btnScan" onclick="openScanModal()" title="Berichtsheft scannen" aria-label="Scannen">
+        <button class="icon-btn" id="btnScan" onclick="openScanModal()" title="Berichtsheft auswerten" aria-label="Berichtsheft auswerten">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
         </button>
-        <button class="icon-btn primary" onclick="openManualAdd()" title="Manuell XP vergeben" aria-label="XP hinzufügen">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        <button class="tb-practice" onclick="startSession()" id="btnPracticeTop">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+            <span class="lbl">Üben</span>
+            <span class="due-pill" id="duePill" hidden>0</span>
         </button>
     </div>
 </div>
 
 <div class="wrap">
 
-    <!-- SUMMARY -->
-    <section class="summary">
-        <div class="total-ring">
-            <svg viewBox="0 0 120 120"><circle class="rbg" cx="60" cy="60" r="52"/><circle class="rfill" id="totalRingFill" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg>
-            <div class="rlabel"><div class="rlv" id="ringLevel">1</div><div class="rtx">Level</div></div>
-        </div>
-        <div class="summary-info">
-            <h1>Dein Fortschritt</h1>
-            <p>Sammle XP, indem du dein Berichtsheft scannst oder Tätigkeiten manuell einträgst. Jeder Skill steigt eigenständig im Level.</p>
-            <div class="summary-xpbar"><div class="summary-xpfill" id="summaryXpFill"></div></div>
-            <div class="summary-xptext" id="summaryXpText">0 / 100 XP bis Level 2</div>
+    <!-- HERO -->
+    <section class="hero">
+        <span class="eyebrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            <span>Lernpfad für die IT-Ausbildung</span>
+        </span>
+        <h1><span>XP bekommst du hier nur für</span> <em>richtige Antworten</em></h1>
+        <p class="lede"><span>30 Themen aus der IT-Ausbildung,</span> <strong>150 Fragen mit Erklärung</strong> <span>zu jeder Antwort — von Subnetting über Dateirechte bis zur Frage, warum ein Mittelwert bei Antwortzeiten in die Irre führt. Was du richtig beantwortest, kommt nach der Vergessenskurve zurück: erst nach einem Tag, dann nach dreien, dann nach einer Woche. Keine Anmeldung, alles bleibt auf deinem Gerät.</span></p>
+        <div class="hero-facts">
+            <span class="fact"><b>30</b> <span>Themen</span></span>
+            <span class="fact"><b>150</b> <span>Fragen</span></span>
+            <span class="fact"><b>3</b> <span>Schwierigkeitsstufen</span></span>
+            <span class="fact"><b>0 €</b> <span>ohne Konto</span></span>
         </div>
     </section>
 
-    <!-- TABS -->
-    <div class="tabs" id="tabs"></div>
+    <!-- TAGESAUFGABE -->
+    <section class="daily">
+        <div class="daily-main">
+            <div class="dh" id="dailyHead">Erste Runde: 10 Fragen</div>
+            <div class="ds" id="dailySub">Der Baum sucht sich Fragen aus allen Themen zusammen. Richtige Antworten legen fest, wann du dieselbe Frage wiedersiehst.</div>
+        </div>
+        <div class="daily-side">
+            <div class="streak" id="streakBox" hidden>
+                <span class="sv"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c1 4-2 5-2 8a4 4 0 0 0 8 0c0-1-.3-2-1-3 2 1.5 3 4 3 6a8 8 0 1 1-16 0c0-5 5-7 8-11z"/></svg><span id="streakDays">0</span></span>
+                <span class="sl">Tage in Folge</span>
+            </div>
+            <button class="btn-start" onclick="startSession()">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                <span id="startLabel">Übung starten</span>
+            </button>
+        </div>
+    </section>
 
-    <!-- GRID -->
-    <div class="grid" id="grid"></div>
+    <!-- FORTSCHRITT -->
+    <section class="summary">
+        <div class="total-ring">
+            <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="rbg" cx="60" cy="60" r="52"/><circle class="rfill" id="totalRingFill" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg>
+            <div class="rlabel"><div class="rlv" id="ringLevel">1</div><div class="rtx">Level</div></div>
+        </div>
+        <div class="summary-info">
+            <h2>Dein Fortschritt</h2>
+            <p id="summaryLede">Noch keine Frage beantwortet. Das Level steigt mit jeder richtigen Antwort — ein Thema, in dem du nichts beantwortet hast, bleibt auf Level 1 stehen.</p>
+            <div class="summary-xpbar"><div class="summary-xpfill" id="summaryXpFill"></div></div>
+            <div class="summary-xptext" id="summaryXpText">0 / 100 XP bis Level 2</div>
+        </div>
+        <div class="forecast" id="forecast" hidden>
+            <div class="fc-title"><span>Wiederholungen, nächste 14 Tage</span><span class="fc-max" id="fcMax"></span></div>
+            <div class="fc-bars" id="fcBars"></div>
+            <div class="fc-axis"><span>heute</span><span>in 14 Tagen</span></div>
+        </div>
+    </section>
+
+    <!-- FILTER -->
+    <nav class="tabs" id="tabs" aria-label="Themengebiete filtern"></nav>
+
+    <!-- ═══ SKILL-KATALOG ═══
+         Das Markup hier ist die einzige Quelle fuer Namen, Farben und Symbole.
+         Das Skript liest sie beim Start aus dem DOM (captureCatalog) — trag
+         nichts davon zusaetzlich in JS ein, sonst driften die beiden Listen.
+         Die Beschreibungen sind ausserdem der lesbare Teil dieser Seite fuer
+         Suchmaschinen: ohne sie steht hier fuer einen Crawler nichts. ═══ -->
+    <div id="catalog">
+
+    <section class="branch" data-branch="devops" style="--bc:#3b82f6;--bc-dim:rgba(59,130,246,.14);--bc-border:rgba(59,130,246,.3)">
+        <div class="branch-head">
+            <span class="bh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z"/></svg></span>
+            <h2>DevOps</h2>
+            <span class="bh-meta" data-role="branch-meta">Level 1 · 0 XP</span>
+        </div>
+        <p class="branch-lede">Wie Software gebaut, ausgeliefert und im Betrieb beobachtet wird. Die Fragen decken Container, Pipelines, Orchestrierung, Messwerte und Cloud-Modelle ab — die Themen, die im Betrieb den Unterschied zwischen „läuft" und „läuft zuverlässig" ausmachen.</p>
+        <div class="grid">
+            <button class="skill-card" data-skill="docker">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12.5c-1-1-2.5-1-3-.5"/><rect x="3" y="10" width="3" height="3"/><rect x="6.5" y="10" width="3" height="3"/><rect x="10" y="10" width="3" height="3"/><rect x="6.5" y="6.5" width="3" height="3"/><path d="M2 14c0 3 2 5 6 5 7 0 11-4 12-8"/></svg></span><span class="sc-headtx"><span class="sc-name">Docker &amp; Container</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Warum ein Container kein kleiner Server ist, was Volumes von der Container-Schicht trennt und wie der Layer-Cache ein Dockerfile schnell oder langsam macht.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="cicd">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></span><span class="sc-headtx"><span class="sc-name">CI/CD Pipelines</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Was einen Build auslöst, worin sich Continuous Delivery und Deployment unterscheiden und warum ein einmal committetes Passwort für immer in der Historie steht.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="kubernetes">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M12 8v8M8 10v4M16 10v4"/></svg></span><span class="sc-headtx"><span class="sc-name">Kubernetes</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Pods, Services und der Abgleich von Soll- und Ist-Zustand. Dazu Liveness gegen Readiness und was Requests und Limits mit dem OOM-Kill zu tun haben.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="monitoring">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span><span class="sc-headtx"><span class="sc-name">Monitoring &amp; Logging</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Metrik gegen Log, warum p95 mehr sagt als der Mittelwert, was ein SLO von einem SLA trennt und woran man Alarmmüdigkeit erkennt.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="cloud">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 0-9h-1.8A7 7 0 1 0 4 15.7"/></svg></span><span class="sc-headtx"><span class="sc-name">Cloud Services</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">IaaS, PaaS und SaaS auseinanderhalten, das Modell der geteilten Verantwortung verstehen und wissen, warum Egress die Rechnung treibt.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+        </div>
+    </section>
+
+    <section class="branch" data-branch="backend" style="--bc:#10b981;--bc-dim:rgba(16,185,129,.14);--bc-border:rgba(16,185,129,.3)">
+        <div class="branch-head">
+            <span class="bh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="8" rx="2"/><rect x="2" y="12" width="20" height="8" rx="2"/><path d="M6 8h.01M6 16h.01"/></svg></span>
+            <h2>Backend</h2>
+            <span class="bh-meta" data-role="branch-meta">Level 1 · 0 XP</span>
+        </div>
+        <p class="branch-lede">Alles hinter der Oberfläche: Schnittstellen, Datenhaltung, Anmeldung und die Frage, wo eine Prüfung wirklich stattfinden muss. Viele dieser Fragen tauchen in ähnlicher Form in der Abschlussprüfung der Fachinformatiker Anwendungsentwicklung auf.</p>
+        <div class="grid">
+            <button class="skill-card" data-skill="api">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span><span class="sc-headtx"><span class="sc-name">REST APIs</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">HTTP-Methoden und Statuscodes, was Idempotenz für eine abgebrochene Verbindung bedeutet, warum versioniert wird und wo ein CORS-Fehler behoben gehört.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="database">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg></span><span class="sc-headtx"><span class="sc-name">Datenbanken</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Primär- und Fremdschlüssel, WHERE gegen HAVING, die dritte Normalform, ACID — und warum ein zusätzlicher Index eine schreiblastige Tabelle bremst.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="auth">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span><span class="sc-headtx"><span class="sc-name">Auth &amp; Security</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Authentifizierung gegen Autorisierung, Passwörter richtig hashen statt verschlüsseln, was nie in ein JWT gehört und was einen zweiten Faktor ausmacht.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="serverlogic">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/></svg></span><span class="sc-headtx"><span class="sc-name">Server-Logik</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Zustandsloses HTTP, warum die Eingabeprüfung im Browser nichts beweist, parametrisierte Abfragen gegen SQL-Injection und was ein Reverse Proxy abnimmt.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="microservices">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span class="sc-headtx"><span class="sc-name">Microservices</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Fachlicher Schnitt statt technischem, eigene Datenbank je Dienst, Circuit Breaker gegen Kettenreaktionen — und der ehrliche Preis gegenüber einem Monolithen.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+        </div>
+    </section>
+
+    <section class="branch" data-branch="frontend" style="--bc:#db2777;--bc-dim:rgba(219,39,119,.16);--bc-border:rgba(219,39,119,.34)">
+        <div class="branch-head">
+            <span class="bh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 6h.01M6 6h.01"/></svg></span>
+            <h2>Frontend</h2>
+            <span class="bh-meta" data-role="branch-meta">Level 1 · 0 XP</span>
+        </div>
+        <p class="branch-lede">Was der Nutzer sieht und bedient — und was dabei still schiefgeht. Von der Spezifität eines Selektors über Stapelkontexte bis zu Kontrastwerten und der Frage, wann ein ARIA-Attribut die falsche Lösung ist.</p>
+        <div class="grid">
+            <button class="skill-card" data-skill="html_css">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span><span class="sc-headtx"><span class="sc-name">HTML &amp; CSS</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Semantische Elemente, das Box-Modell mit border-box, wie Spezifität wirklich gezählt wird und warum ein z-index von 999 manchmal nichts nützt.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="javascript">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1"/><path d="M16 3h1a2 2 0 0 1 2 2v5a2 2 0 0 0 2 2 2 2 0 0 0-2 2v5a2 2 0 0 1-2 2h-1"/></svg></span><span class="sc-headtx"><span class="sc-name">JavaScript</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">let gegen const, die Altlast typeof null, warum == Typen umwandelt, was beim await wirklich passiert und wofür Closures gebraucht werden.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="frameworks">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"/></svg></span><span class="sc-headtx"><span class="sc-name">Frameworks</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Komponenten und Zustandsfluss, warum der Array-Index als Key beim Sortieren bricht, Server- gegen Client-Rendering und die Kosten von globalem Zustand.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="responsive">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></span><span class="sc-headtx"><span class="sc-name">Responsive Design</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Was das Viewport-Tag wirklich tut, warum Mobile First eine Entscheidung erzwingt, Mindestgrößen für Touch und wann Container Queries die bessere Wahl sind.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="ux">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/><path d="M12 8v4l3 2"/></svg></span><span class="sc-headtx"><span class="sc-name">UX / Barrierefreiheit</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Alternativtexte, das Kontrastminimum 4,5:1, warum Farbe allein keine Information trägt, wozu der Fokusrahmen da ist und die erste Regel von ARIA.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+        </div>
+    </section>
+
+    <section class="branch" data-branch="netzwerk" style="--bc:#06b6d4;--bc-dim:rgba(6,182,212,.14);--bc-border:rgba(6,182,212,.3)">
+        <div class="branch-head">
+            <span class="bh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg></span>
+            <h2>Netzwerk</h2>
+            <span class="bh-meta" data-role="branch-meta">Level 1 · 0 XP</span>
+        </div>
+        <p class="branch-lede">Der Prüfungsschwerpunkt der Systemintegration: OSI-Schichten, Subnetting, Adressbereiche, Firewall-Grundsätze, DNS und DHCP, VLANs und WLAN-Sicherheit. Wer hier sicher ist, erkennt viele Störungen an einer einzigen Adresse.</p>
+        <div class="grid">
+            <button class="skill-card" data-skill="tcp_ip">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3M12 12V8"/></svg></span><span class="sc-headtx"><span class="sc-name">TCP/IP &amp; Protokolle</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">OSI-Schichten zuordnen, TCP gegen UDP, Hostadressen einer Maske ausrechnen, private Bereiche nach RFC 1918 und der Drei-Wege-Handschlag.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="firewall">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span class="sc-headtx"><span class="sc-name">Firewall &amp; VPN</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Default Deny als Grundhaltung, wozu eine DMZ dient, was eine zustandsbehaftete Firewall zusätzlich kann und wogegen sie prinzipiell nicht hilft.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="dns_dhcp">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14M19.07 4.93a10 10 0 0 1 0 14.14M7.76 7.76a6 6 0 0 0 0 8.48M16.24 7.76a6 6 0 0 1 0 8.48"/></svg></span><span class="sc-headtx"><span class="sc-name">DNS &amp; DHCP</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Namensauflösung gegen Adressvergabe, A- und CNAME-Einträge, der DORA-Ablauf, wozu die TTL dient und was eine 169.254-Adresse verrät.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="switching">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"/><path d="m8 8-4 4 4 4"/><path d="m16 16 4-4-4-4"/></svg></span><span class="sc-headtx"><span class="sc-name">Switching &amp; Routing</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">MAC-Tabelle, VLAN-Trennung, Access- gegen Trunk-Port mit 802.1Q, wogegen Spanning Tree schützt und warum ein Layer-3-Switch schneller weiterleitet.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="wlan">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg></span><span class="sc-headtx"><span class="sc-name">WLAN-Konfiguration</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Warum WPA3 und nicht WEP, weshalb nur Kanal 1, 6 und 11 störungsfrei sind, der Preis des 5-GHz-Bandes und was das Verstecken der SSID wirklich bringt.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+        </div>
+    </section>
+
+    <section class="branch" data-branch="linux" style="--bc:#f59e0b;--bc-dim:rgba(245,158,11,.14);--bc-border:rgba(245,158,11,.3)">
+        <div class="branch-head">
+            <span class="bh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></span>
+            <h2>Linux &amp; Systeme</h2>
+            <span class="bh-meta" data-role="branch-meta">Level 1 · 0 XP</span>
+        </div>
+        <p class="branch-lede">Die Kommandozeile und der Betrieb dahinter: Dateirechte, Pipes und Umleitungen, systemd und Rechtevergabe, Virtualisierung, Sicherungsstrategien und die Maßnahmen, die ein System wirklich härten.</p>
+        <div class="grid">
+            <button class="skill-card" data-skill="shell">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg></span><span class="sc-headtx"><span class="sc-name">Shell &amp; Scripting</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">chmod-Zahlen lesen, Pipes verketten, der Unterschied zwischen &gt; und &gt;&gt;, wann find statt grep — und wozu die Shebang-Zeile gebraucht wird.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="admin">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span><span class="sc-headtx"><span class="sc-name">Systemadministration</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">sudo statt Dauer-root, was systemd verwaltet, das Prinzip der geringsten Rechte, Gruppenrichtlinien im Active Directory und warum kein Dienst als root läuft.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="virtualisierung">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg></span><span class="sc-headtx"><span class="sc-name">Virtualisierung</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Hypervisor Typ 1 gegen Typ 2, warum ein Snapshot kein Backup ist, wann Overprovisioning kippt, was Live-Migration leistet und wann ein Container reicht.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="backup">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/></svg></span><span class="sc-headtx"><span class="sc-name">Backup &amp; Recovery</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Die 3-2-1-Regel, inkrementell gegen differenziell, RTO und RPO, warum nur ein getesteter Rückspielversuch zählt und weshalb RAID kein Backup ersetzt.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="hardening">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="sc-headtx"><span class="sc-name">System Hardening</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Angriffsfläche verkleinern, warum Patch-Tempo die wirksamste Maßnahme ist, Defense in Depth, was Festplattenverschlüsselung wirklich abdeckt — und was nicht.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+        </div>
+    </section>
+
+    <section class="branch" data-branch="softskills" style="--bc:#a855f7;--bc-dim:rgba(168,85,247,.15);--bc-border:rgba(168,85,247,.3)">
+        <div class="branch-head">
+            <span class="bh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+            <h2>Soft Skills</h2>
+            <span class="bh-meta" data-role="branch-meta">Level 1 · 0 XP</span>
+        </div>
+        <p class="branch-lede">Der Teil, der in der Prüfung im Fachgespräch abgefragt wird und im Betrieb täglich zählt: verständlich dokumentieren, Fehler brauchbar melden, Ursachen statt Symptome finden, ehrlich schätzen und rechtzeitig Bescheid geben.</p>
+        <div class="grid">
+            <button class="skill-card" data-skill="doku">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg></span><span class="sc-headtx"><span class="sc-name">Dokumentation</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Was in eine Übergabe gehört, warum ein Berichtsheft-Eintrag konkret sein muss, wann ein Kommentar sich lohnt und warum veraltete Doku schlimmer ist als keine.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="teamwork">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="sc-headtx"><span class="sc-name">Teamarbeit</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Wozu ein Standup wirklich da ist, was ein Code Review leisten soll, wie eine brauchbare Rückmeldung aussieht und was psychologische Sicherheit bewirkt.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="problemloesung">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg></span><span class="sc-headtx"><span class="sc-name">Problemlösung</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Erst reproduzieren, dann ändern. Was eine brauchbare Fehlermeldung enthält, wie die Fünf Warum zur Ursache führen und warum immer nur eine Sache geändert wird.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="praesentation">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/></svg></span><span class="sc-headtx"><span class="sc-name">Präsentation</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Mit dem Problem anfangen statt mit der Architektur, Folien nicht vorlesen, mit unbeantwortbaren Fragen umgehen und was ins Fachgespräch zum Auftrag gehört.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+            <button class="skill-card" data-skill="zeitmanagement">
+                <span class="sc-head"><span class="sc-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span class="sc-headtx"><span class="sc-name">Zeitmanagement</span><span class="sc-lvl" data-role="lvl">Level 1</span></span></span>
+                <span class="sc-desc">Wichtig gegen dringend, warum eine Spanne ehrlicher ist als eine Zahl, was paralleles Anfangen kostet und wann eine Verzögerung gemeldet gehört.</span>
+                <span class="sc-bar"><span class="sc-fill" data-role="fill"></span></span>
+                <span class="sc-foot"><span class="sc-xp" data-role="xp">0 XP</span><span class="tiers" data-role="tiers"></span></span>
+            </button>
+        </div>
+    </section>
+
+    </div>
+
+    <!-- ═══ SO FUNKTIONIERT ES (statisch, auch ohne JS lesbar) ═══ -->
+    <section class="doc" id="lernsystem">
+        <h2>So funktioniert das Lernsystem</h2>
+        <p class="doc-lede">Der Baum misst nicht, wie oft du auf einen Knopf gedrückt hast, sondern was du beantworten kannst. Deshalb gibt es hier keine Möglichkeit, sich selbst XP zu geben — jeder Punkt kommt aus einer richtigen Antwort oder aus einer Tätigkeit, die du im Berichtsheft belegt hast.</p>
+        <div class="steps">
+            <div class="step">
+                <div class="n">SCHRITT 1</div>
+                <h3>Fragen kommen zu dir</h3>
+                <p>Eine Runde sind zehn Fragen. Der Baum nimmt zuerst alles, was heute zur Wiederholung ansteht, und füllt den Rest mit Themen auf, in denen du am wenigsten gemacht hast.</p>
+            </div>
+            <div class="step">
+                <div class="n">SCHRITT 2</div>
+                <h3>Jede Antwort wird erklärt</h3>
+                <p>Auch die richtige. Die Erklärung sagt nicht nur, was stimmt, sondern warum die anderen drei Optionen nicht stimmen — das ist der Teil, der in der Prüfung trägt.</p>
+            </div>
+            <div class="step">
+                <div class="n">SCHRITT 3</div>
+                <h3>Wiederholung nach Vergessenskurve</h3>
+                <p>Richtig beantwortet heißt: die Frage kommt später wieder, in wachsenden Abständen. Falsch beantwortet heißt: sie kommt noch in derselben Runde zurück und startet den Abstand neu.</p>
+            </div>
+            <div class="step">
+                <div class="n">SCHRITT 4</div>
+                <h3>Stufen schalten sich frei</h3>
+                <p>Jedes Thema hat Grundlagen, Fortgeschritten und Profi. Die nächste Stufe öffnet sich, wenn die darunter einmal sitzt — nicht nach Zeit und nicht nach Anzahl der Versuche.</p>
+            </div>
+        </div>
+        <div class="intervals">
+            <span class="iv"><span>Erste richtige Antwort</span> <b>+1 Tag</b></span>
+            <span class="iv"><span>zweite</span> <b>+3 Tage</b></span>
+            <span class="iv"><span>dritte</span> <b>+7 Tage</b></span>
+            <span class="iv"><span>danach wachsend bis</span> <b>+180 Tage</b></span>
+            <span class="iv"><span>falsch</span> <b>heute nochmal</b></span>
+        </div>
+    </section>
+
+    <!-- ═══ BEISPIELFRAGEN — echte Fragen aus der Datenbank, im Wortlaut ═══ -->
+    <section class="doc" id="beispielfragen">
+        <h2>Beispielfragen aus dem Baum</h2>
+        <p class="doc-lede">Sechs Fragen im Wortlaut, eine je Themengebiet — damit du vor dem ersten Klick siehst, worauf du dich einlässt. Die richtige Antwort steht jeweils darunter.</p>
+        <div class="samples">
+
+            <article class="sample" style="--bc:#3b82f6">
+                <div class="s-meta"><span>DevOps · Docker &amp; Container</span> <span class="s-tier">Grundlagen</span></div>
+                <h3>Was unterscheidet einen Container von einer virtuellen Maschine?</h3>
+                <ol>
+                    <li>Container laufen nur unter Windows</li>
+                    <li>Container brauchen mehr Arbeitsspeicher</li>
+                    <li class="right">Container teilen sich den Kernel des Hosts</li>
+                    <li>Container haben kein eigenes Dateisystem</li>
+                </ol>
+                <details>
+                    <summary>Erklärung anzeigen</summary>
+                    <p><b>Richtig ist C.</b> <span>Eine VM bringt ein komplettes Gastbetriebssystem samt eigenem Kernel mit. Ein Container nutzt den Kernel des Hosts und isoliert nur Prozesse, Netzwerk und Dateisystem — deshalb startet er in Sekunden statt Minuten.</span></p>
+                </details>
+            </article>
+
+            <article class="sample" style="--bc:#10b981">
+                <div class="s-meta"><span>Backend · Datenbanken</span> <span class="s-tier">Grundlagen</span></div>
+                <h3>Welches SQL-Schlüsselwort filtert Zeilen vor der Gruppierung?</h3>
+                <ol>
+                    <li>HAVING</li>
+                    <li>ORDER BY</li>
+                    <li>GROUP BY</li>
+                    <li class="right">WHERE</li>
+                </ol>
+                <details>
+                    <summary>Erklärung anzeigen</summary>
+                    <p><b>Richtig ist D.</b> <span>WHERE filtert einzelne Zeilen, bevor gruppiert wird. HAVING filtert danach auf den Gruppen — deshalb darf HAVING Aggregatfunktionen wie COUNT verwenden, WHERE nicht.</span></p>
+                </details>
+            </article>
+
+            <article class="sample" style="--bc:#db2777">
+                <div class="s-meta"><span>Frontend · UX / Barrierefreiheit</span> <span class="s-tier">Grundlagen</span></div>
+                <h3>Welches Kontrastverhältnis verlangt die WCAG mindestens für normalen Fließtext?</h3>
+                <ol>
+                    <li class="right">4,5 zu 1</li>
+                    <li>2 zu 1</li>
+                    <li>10 zu 1</li>
+                    <li>1,5 zu 1</li>
+                </ol>
+                <details>
+                    <summary>Erklärung anzeigen</summary>
+                    <p><b>Richtig ist A.</b> <span>Stufe AA verlangt 4,5:1 für normalen Text und 3:1 für große Schrift ab 18,66 px fett oder 24 px normal. Bedienelemente und Grafiken brauchen ebenfalls mindestens 3:1 gegen ihren Hintergrund.</span></p>
+                </details>
+            </article>
+
+            <article class="sample" style="--bc:#06b6d4">
+                <div class="s-meta"><span>Netzwerk · TCP/IP &amp; Protokolle</span> <span class="s-tier">Fortgeschritten</span></div>
+                <h3>Wie viele nutzbare Hostadressen hat ein Netz mit der Maske /29?</h3>
+                <ol>
+                    <li>4</li>
+                    <li>8</li>
+                    <li class="right">6</li>
+                    <li>14</li>
+                </ol>
+                <details>
+                    <summary>Erklärung anzeigen</summary>
+                    <p><b>Richtig ist C.</b> <span>/29 lässt 3 Hostbits, also 2 hoch 3 gleich 8 Adressen. Netzadresse und Broadcast fallen weg, es bleiben 6 nutzbare. Die Faustformel lautet 2 hoch (32 minus Präfix) minus 2.</span></p>
+                </details>
+            </article>
+
+            <article class="sample" style="--bc:#f59e0b">
+                <div class="s-meta"><span>Linux &amp; Systeme · Shell &amp; Scripting</span> <span class="s-tier">Grundlagen</span></div>
+                <h3>Was bewirkt chmod 755 auf einer Datei?</h3>
+                <ol>
+                    <li>Alle dürfen alles</li>
+                    <li>Niemand darf schreiben</li>
+                    <li class="right">Eigentümer alles, Gruppe und andere lesen und ausführen</li>
+                    <li>Nur der Eigentümer darf lesen</li>
+                </ol>
+                <details>
+                    <summary>Erklärung anzeigen</summary>
+                    <p><b>Richtig ist C.</b> <span>Die Ziffern stehen für Eigentümer, Gruppe und andere. 7 ist 4+2+1 also lesen, schreiben, ausführen; 5 ist 4+1 also lesen und ausführen. Bei Verzeichnissen bedeutet das Ausführungsrecht das Betreten.</span></p>
+                </details>
+            </article>
+
+            <article class="sample" style="--bc:#a855f7">
+                <div class="s-meta"><span>Soft Skills · Problemlösung</span> <span class="s-tier">Grundlagen</span></div>
+                <h3>Was ist der erste sinnvolle Schritt bei einem gemeldeten Fehler?</h3>
+                <ol>
+                    <li class="right">Den Fehler reproduzierbar machen</li>
+                    <li>Sofort den Code ändern</li>
+                    <li>Den Server neu starten</li>
+                    <li>Das Ticket weiterleiten</li>
+                </ol>
+                <details>
+                    <summary>Erklärung anzeigen</summary>
+                    <p><b>Richtig ist A.</b> <span>Was nicht reproduzierbar ist, ist auch nicht überprüfbar behoben. Erst die genauen Schritte, Eingaben und Umgebungsbedingungen klären — sonst repariert man etwas und weiß hinterher nicht, ob es geholfen hat.</span></p>
+                </details>
+            </article>
+
+        </div>
+    </section>
+
+    <!-- ═══ FAQ ═══ -->
+    <section class="doc" id="faq">
+        <h2>Häufige Fragen</h2>
+        <div class="faq">
+            <details>
+                <summary>Kostet der Skill-Baum etwas und brauche ich ein Konto?</summary>
+                <div><p>Nein und nein. Alle 150 Fragen sind frei zugänglich, es gibt keine Anmeldung und keine Bezahlschranke. Dein Fortschritt liegt im Speicher deines Browsers und verlässt dieses Gerät nicht — er wird nirgendwo hochgeladen. Das heißt umgekehrt: auf einem anderen Gerät oder nach dem Löschen der Browserdaten fängst du bei null an.</p></div>
+            </details>
+            <details>
+                <summary>Kann ich mir selbst XP geben?</summary>
+                <div><p>Nicht mehr. Bis Version 6.4.6 gab es einen Knopf dafür — eine Zahl, die man sich selbst einträgt, sagt aber über Wissen nichts aus. XP entsteht jetzt aus richtigen Antworten und aus Tätigkeiten, die im Berichtsheft dokumentiert sind. Ein Level ist damit eine Aussage darüber, was du beantworten kannst, nicht darüber, wie großzügig du warst.</p></div>
+            </details>
+            <details>
+                <summary>Was bedeutet Wiederholung nach der Vergessenskurve?</summary>
+                <div><p>Neu gelerntes Wissen zerfällt schnell, wiederholtes Wissen deutlich langsamer. Deshalb legt jede richtige Antwort fest, wann dieselbe Frage wiederkommt: nach einem Tag, dann nach drei, dann nach einer Woche und so weiter. Eine falsche Antwort setzt den Abstand zurück, und die Frage taucht noch in derselben Runde wieder auf.</p><p>Der praktische Effekt: Zehn Minuten täglich bringen mehr als zwei Stunden am Wochenende — und du übst automatisch das, was du gerade zu vergessen beginnst.</p></div>
+            </details>
+            <details>
+                <summary>Ersetzt der Skill-Baum die Vorbereitung auf die IHK-Prüfung?</summary>
+                <div><p>Nein. Die Fragen liegen auf dem Niveau der Ausbildung und decken viele Themen der Abschlussprüfung ab, sind aber keine amtlichen Prüfungsaufgaben und kein vollständiger Lehrplan. Für die Prüfung selbst brauchst du zusätzlich den Rahmenlehrplan deines Berufsbildes, die Unterlagen der Berufsschule und Übungssätze deiner Kammer. Der Baum ist die tägliche Wiederholung dazwischen.</p></div>
+            </details>
+            <details>
+                <summary>Wofür sind Level und XP im Skill-Baum gut?</summary>
+                <div><p>XP misst Aufwand: wie viel du in einem Thema richtig beantwortet hast. Das Level ist die daraus abgeleitete Stufe und wächst absichtlich langsamer, je höher es steht. Beides sagt nichts darüber, ob du ein Thema behältst — dafür steht die Wiederholungsvorschau in der Fortschrittskarte, die zeigt, wie viele Fragen an den nächsten Tagen fällig werden.</p></div>
+            </details>
+            <details>
+                <summary>Was hat das Berichtsheft mit dem Skill-Baum zu tun?</summary>
+                <div><p><span>Wenn du deine Tätigkeiten in</span> <a href="/berichtsheft/">MyWorkLog</a> <span>festhältst, kann der Baum diese Einträge auswerten und erkannte Themen mit XP hinterlegen — dokumentierte Praxis zählt genauso wie beantwortete Fragen. Die Auswertung läuft ausschließlich in deinem Browser über eine Stichwortliste; es wird nichts verschickt und keine KI befragt.</span></p></div>
+            </details>
+            <details>
+                <summary>Wie viele Fragen gibt es pro Thema?</summary>
+                <div><p>Fünf je Thema, verteilt auf drei Stufen: zwei Grundlagen, zwei Fortgeschritten, eine Profi. Bei 30 Themen sind das 150 Fragen. Weil jede Frage über Monate immer wieder fällig wird, reicht der Bestand deutlich länger, als die Zahl vermuten lässt.</p></div>
+            </details>
+        </div>
+    </section>
+
+    <!-- ═══ WEITERFÜHREND ═══ -->
+    <section class="doc" id="weiter">
+        <h2>Passt dazu</h2>
+        <div class="related">
+            <a class="rel-card" href="/berichtsheft/">
+                <span class="rc-t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Berichtsheft</span></span>
+                <p>Wochenberichte schreiben, drucken und als IHK-Vordruck ausgeben — die Grundlage für die Auswertung hier.</p>
+            </a>
+            <a class="rel-card" href="/Fachinformatiker/">
+                <span class="rc-t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg><span>Fachinformatiker</span></span>
+                <p>Fachrichtungen, Ablauf der Ausbildung und was in Teil 1 und Teil 2 der Abschlussprüfung geprüft wird.</p>
+            </a>
+            <a class="rel-card" href="/it-stories/">
+                <span class="rc-t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg><span>Deep Dives</span></span>
+                <p>Lange Erklärstücke mit bedienbaren Diagrammen — wie ein Arbeitsspeicher vergisst, wie eine SSD altert, wie ein Qubit rechnet.</p>
+            </a>
+            <a class="rel-card" href="/aufgaben/">
+                <span class="rc-t"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span>Aufgabenliste</span></span>
+                <p>Wiederkehrende Aufgaben im Ausbildungsalltag festhalten und abhaken.</p>
+            </a>
+        </div>
+    </section>
 
 </div>
 
 <div id="page-footer"></div>
 
-<!-- DETAIL SHEET -->
+<!-- ═══ ÜBEN ═══ -->
+<div class="pr" id="practice" role="dialog" aria-modal="true" aria-label="Übungsrunde">
+    <div class="pr-top">
+        <button class="pr-close" onclick="endSession(true)" aria-label="Runde beenden">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+        <div class="pr-dots" id="prDots" aria-hidden="true"></div>
+        <span class="pr-count" id="prCount">1/10</span>
+        <span class="pr-xp" id="prXp">+0 XP</span>
+    </div>
+    <div class="pr-body">
+        <div class="pr-inner" id="prInner"></div>
+    </div>
+    <div class="pr-foot" id="prFoot">
+        <div class="inner">
+            <span class="pr-hint" id="prHint">1–4 wählen · Enter bestätigen</span>
+            <button class="btn-next" id="prNext" disabled>Antwort prüfen</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══ DETAIL ═══ -->
 <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
-<div class="sheet" id="sheet">
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle">
     <div class="sheet-hd">
         <span class="sheet-ico" id="shIco"></span>
         <div class="sheet-hd-txt">
             <div class="sheet-title" id="shTitle">Skill</div>
-            <div class="sheet-branch" id="shBranch">Branch</div>
+            <div class="sheet-branch" id="shBranch">Gebiet</div>
         </div>
         <button class="sheet-close" onclick="closeSheet()" aria-label="Schließen">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -281,17 +1182,21 @@ svg{display:block;}
     </div>
     <div class="sheet-ring-row">
         <div class="sheet-ring">
-            <svg viewBox="0 0 100 100"><circle class="rbg" cx="50" cy="50" r="44"/><circle class="rfill" id="shRingFill" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="276.46"/></svg>
+            <svg viewBox="0 0 100 100" aria-hidden="true"><circle class="rbg" cx="50" cy="50" r="44"/><circle class="rfill" id="shRingFill" cx="50" cy="50" r="44" stroke-dasharray="276.46" stroke-dashoffset="276.46"/></svg>
             <div class="rlabel"><div class="rlv" id="shLvl">1</div><div class="rtx">Level</div></div>
         </div>
         <div class="sheet-stats">
             <div class="sheet-xpbar"><div class="sheet-xpfill" id="shXpFill"></div></div>
             <div class="sheet-xptext" id="shXpText">0 / 100 XP</div>
             <button class="sheet-addbtn" id="shAddBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                XP eintragen
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                <span id="shAddLabel">Dieses Thema üben</span>
             </button>
         </div>
+    </div>
+    <div class="sheet-sec">
+        <div class="sheet-sec-title">Stufen</div>
+        <div id="shTiers"></div>
     </div>
     <div class="sheet-sec">
         <div class="sheet-sec-title">XP-Verlauf</div>
@@ -299,407 +1204,896 @@ svg{display:block;}
     </div>
 </div>
 
-<!-- SCAN MODAL -->
+<!-- ═══ BERICHTSHEFT-AUSWERTUNG ═══ -->
 <div class="modal-backdrop" id="scanBackdrop">
-    <div class="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Berichtsheft auswerten">
         <div class="modal-hd">
             <span class="mh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg></span>
-            <h2>Berichtsheft-Scan</h2>
+            <h2>Berichtsheft auswerten</h2>
         </div>
-        <p class="modal-sub">Analysiert deine Berichtsheft-Einträge und Notizen aus der Zeiterfassung und vergibt automatisch XP auf erkannte Skills.</p>
+        <p class="modal-sub">Sucht in deinen Berichtsheft-Einträgen und Notizen nach Fachbegriffen und schreibt die erkannten Themen als XP gut. Die Auswertung läuft in deinem Browser; es wird nichts verschickt. Jeder Eintrag zählt nur einmal.</p>
         <div class="scan-progress"><div class="scan-progress-fill" id="scanProgressFill"></div></div>
-        <div class="scan-status" id="scanStatus">Bereit zum Scannen</div>
+        <div class="scan-status" id="scanStatus">Bereit</div>
         <div class="scan-results" id="scanResults"></div>
         <div class="modal-actions">
             <button class="btn btn-ghost" onclick="closeScanModal()">Schließen</button>
-            <button class="btn btn-primary" id="btnStartScan" onclick="startScan()">Scan starten</button>
-        </div>
-    </div>
-</div>
-
-<!-- MANUAL MODAL -->
-<div class="modal-backdrop" id="manualBackdrop">
-    <div class="modal">
-        <div class="modal-hd">
-            <span class="mh-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
-            <h2>XP vergeben</h2>
-        </div>
-        <p class="modal-sub">Wähle einen Skill und trage XP für eine Tätigkeit ein.</p>
-        <div class="field"><label for="manualSkill">Skill</label><select id="manualSkill"></select></div>
-        <div class="field"><label for="manualXp">XP (10–100)</label><input id="manualXp" type="number" min="10" max="100" value="30"></div>
-        <div class="field"><label for="manualDesc">Beschreibung</label><input id="manualDesc" type="text" placeholder="z. B. Docker-Container konfiguriert"></div>
-        <div class="modal-actions">
-            <button class="btn btn-ghost" onclick="closeManualModal()">Abbrechen</button>
-            <button class="btn btn-primary" onclick="submitManualXp()">Vergeben</button>
+            <button class="btn btn-primary" id="btnStartScan" onclick="startScan()">Auswertung starten</button>
         </div>
     </div>
 </div>
 
 <!-- TOAST -->
-<div class="toast" id="toast"><span id="toastIco"></span><span id="toastText"></span></div>
+<div class="toast" id="toast" role="status" aria-live="polite"><span id="toastIco"></span><span id="toastText"></span></div>
 
 <script>
 /* ══════════════════════════════════════════════════════════════
-   SKILL-BAUM  ·  2D  ·  reine Vanilla-Logik, kein 3D/WebGL
+   SKILL-BAUM · Lernpfad mit verteilter Wiederholung
+   Fragen: /Assets/js/skill-tree-data.js (window.SKILL_QUIZ)
+
+   Es gibt hier KEINE Moeglichkeit, sich XP selbst einzutragen. Bis v6.4.6
+   gab es die; eine selbst vergebene Zahl sagt ueber Wissen nichts aus und
+   machte das Level bedeutungslos. XP entsteht jetzt aus einer richtigen
+   Antwort oder aus einem belegten Berichtsheft-Eintrag.
+
+   Katalog (Namen, Farben, Symbole) wird aus dem DOM gelesen, nicht hier
+   gepflegt — sonst driften Markup und Skript auseinander.
    ══════════════════════════════════════════════════════════════ */
 
-/* ─── SVG ICON MAP (Lucide-Stil, currentColor) ─── */
-var ICON_PATHS = {
-    // Branches
-    devops:'<path d="M18.178 8c5.096 0 5.096 8 0 8-5.095 0-7.133-8-12.739-8-4.585 0-4.585 8 0 8 5.606 0 7.644-8 12.74-8z"/>',
-    backend:'<rect x="2" y="4" width="20" height="8" rx="2"/><rect x="2" y="12" width="20" height="8" rx="2"/><path d="M6 8h.01M6 16h.01"/>',
-    frontend:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 6h.01M6 6h.01"/>',
-    netzwerk:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/>',
-    linux:'<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>',
-    softskills:'<path d="M16 7a4 4 0 1 0-8 0"/><path d="M12 11v0"/><path d="M17 21v-2a5 5 0 0 0-10 0v2"/><circle cx="12" cy="7" r="4"/>',
-    // DevOps skills
-    docker:'<path d="M22 12.5c-1-1-2.5-1-3-.5"/><rect x="3" y="10" width="3" height="3"/><rect x="6.5" y="10" width="3" height="3"/><rect x="10" y="10" width="3" height="3"/><rect x="6.5" y="6.5" width="3" height="3"/><path d="M2 14c0 3 2 5 6 5 7 0 11-4 12-8"/>',
-    cicd:'<path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>',
-    kubernetes:'<path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M12 8v8M8 10v4M16 10v4"/>',
-    monitoring:'<path d="M3 12h4l3 8 4-16 3 8h4"/>',
-    cloud:'<path d="M17.5 19a4.5 4.5 0 0 0 0-9h-1.8A7 7 0 1 0 4 15.7"/>',
-    // Backend skills
-    api:'<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
-    database:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>',
-    auth:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
-    serverlogic:'<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v2M15 2v2M9 20v2M15 20v2M2 9h2M2 15h2M20 9h2M20 15h2"/>',
-    microservices:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
-    // Frontend skills
-    html_css:'<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
-    javascript:'<path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5a2 2 0 0 0 2 2h1"/><path d="M16 3h1a2 2 0 0 1 2 2v5a2 2 0 0 0 2 2 2 2 0 0 0-2 2v5a2 2 0 0 1-2 2h-1"/>',
-    frameworks:'<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"/>',
-    responsive:'<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>',
-    ux:'<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/><path d="M12 8v4l3 2"/>',
-    // Netzwerk skills
-    tcp_ip:'<rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3M12 12V8"/>',
-    firewall:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
-    dns_dhcp:'<circle cx="12" cy="12" r="2"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14M19.07 4.93a10 10 0 0 1 0 14.14M7.76 7.76a6 6 0 0 0 0 8.48M16.24 7.76a6 6 0 0 1 0 8.48"/>',
-    switching:'<path d="M4 12h16"/><path d="m8 8-4 4 4 4"/><path d="m16 16 4-4-4-4"/>',
-    wlan:'<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>',
-    // Linux skills
-    shell:'<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>',
-    admin:'<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
-    virtualisierung:'<path d="m12 2 9 5-9 5-9-5z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/>',
-    backup:'<line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/>',
-    hardening:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
-    // Soft skills
-    doku:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
-    teamwork:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
-    problemloesung:'<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
-    praesentation:'<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/>',
-    zeitmanagement:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
-    // fallback / misc
-    star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
-    zap:'<path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/>',
-    target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+var LANG = document.documentElement.lang === 'en' ? 'en' : 'de';
+
+/* Texte, die das Skript erzeugt. Der i18n-Build fasst <script> nicht an,
+   deshalb stehen beide Sprachen hier. */
+var T = (function(){
+    var d = {
+        all:'Alle', level:'Level', xp:'XP',
+        toLevel:function(a,b,l){return a+' / '+b+' XP bis Level '+l;},
+        branchMeta:function(l,x){return 'Level '+l+' · '+x+' XP';},
+        tiers:['Grundlagen','Fortgeschritten','Profi'],
+        tierLocked:'Erst die Stufe darunter sicher beantworten',
+        tierOpen:'freigeschaltet',
+        tierDone:'sitzt',
+        ofQuestions:function(a,b){return a+' von '+b+' beantwortet';},
+        dailyFirst:'Erste Runde: 10 Fragen',
+        dailyFirstSub:'Der Baum sucht sich Fragen aus allen Themen zusammen. Richtige Antworten legen fest, wann du dieselbe Frage wiedersiehst.',
+        dailyDue:function(n){return n===1?'1 Frage ist heute fällig':n+' Fragen sind heute fällig';},
+        dailyDueSub:'Wiederholungen zuerst — danach füllt der Baum mit Themen auf, in denen du am wenigsten gemacht hast.',
+        dailyClear:'Für heute nichts fällig',
+        dailyClearSub:'Alle Wiederholungen sind erledigt. Du kannst trotzdem weiterüben — dann kommen neue Fragen aus den Themen mit dem wenigsten Fortschritt.',
+        dailyDone:'Alle 150 Fragen einmal richtig',
+        dailyDoneSub:'Ab jetzt geht es nur noch um das Behalten. Der Baum meldet sich, wenn eine Frage wieder fällig wird.',
+        start:'Übung starten', startMore:'Weiterüben', startDue:function(n){return n+' wiederholen';},
+        summaryNone:'Noch keine Frage beantwortet. Das Level steigt mit jeder richtigen Antwort — ein Thema, in dem du nichts beantwortet hast, bleibt auf Level 1 stehen.',
+        summarySome:function(a,b,p){return a+' von '+b+' Fragen mindestens einmal richtig beantwortet ('+p+' %). XP misst den Aufwand, die Vorschau rechts zeigt, was zum Behalten ansteht.';},
+        check:'Antwort prüfen', next:'Weiter', finish:'Runde abschließen',
+        right:'Richtig', wrong:'Nicht richtig',
+        rightIs:function(l){return 'Richtig wäre '+l;},
+        gainNew:function(n){return '+'+n+' XP';}, gainRep:function(n){return '+'+n+' XP · Wiederholung';},
+        gainNone:'kein XP', gainRetry:'Übungsversuch, kein XP',
+        qCount:function(a,b){return a+'/'+b;},
+        hint:'1–4 wählen · Enter bestätigen',
+        doneTitle:'Runde geschafft',
+        doneSub:function(a,b){return a+' von '+b+' auf Anhieb richtig.';},
+        doneNext:function(s){return 'Nächste Wiederholung: '+s+'.';},
+        doneNextNone:'Alles Fällige ist erledigt.',
+        tomorrow:'morgen', todayW:'heute', inDays:function(n){return 'in '+n+' Tagen';},
+        fcMax:function(n){return 'Spitze '+n;},
+        again:'Noch eine Runde', close:'Fertig',
+        noHistory:'Noch keine XP in diesem Thema. Beantworte eine Frage richtig oder werte dein Berichtsheft aus.',
+        practiceSkill:'Dieses Thema üben', practiceAll:'Alle Themen üben',
+        levelUp:function(n,l){return n+' ist jetzt Level '+l+'!';},
+        streakOn:function(n){return n+' Tage in Folge — weiter so!';},
+        scanReady:'Bereit', scanNone:'Keine neuen Einträge gefunden. Schreibe zuerst etwas ins Berichtsheft.',
+        scanFound:function(n){return n+' neue Einträge gefunden. Werte aus…';},
+        scanStep:function(a,b){return 'Eintrag '+a+' von '+b+'…';},
+        scanDone:function(a,b){return a+' Einträge ausgewertet · '+b+' XP vergeben';},
+        scanNothing:'Keine Themen erkannt. Beschreibe deine Tätigkeiten mit Fachbegriffen.',
+        scanBtn:'Auswertung starten', scanBtnRun:'Läuft…', scanBtnDone:'Fertig',
+        scanToast:function(n){return '+'+n+' XP aus dem Berichtsheft';},
+        emptyQuiz:'Für dieses Thema sind noch keine Fragen hinterlegt.'
+    };
+    var e = {
+        all:'All', level:'Level', xp:'XP',
+        toLevel:function(a,b,l){return a+' / '+b+' XP to level '+l;},
+        branchMeta:function(l,x){return 'Level '+l+' · '+x+' XP';},
+        tiers:['Basics','Advanced','Pro'],
+        tierLocked:'Answer the tier below correctly first',
+        tierOpen:'unlocked',
+        tierDone:'solid',
+        ofQuestions:function(a,b){return a+' of '+b+' answered';},
+        dailyFirst:'First round: 10 questions',
+        dailyFirstSub:'The tree picks questions across every topic. Correct answers decide when you see the same question again.',
+        dailyDue:function(n){return n===1?'1 question is due today':n+' questions are due today';},
+        dailyDueSub:'Reviews first — then the tree tops up with the topics you have covered least.',
+        dailyClear:'Nothing due today',
+        dailyClearSub:'Every review is done. You can keep going anyway — new questions then come from the topics with the least progress.',
+        dailyDone:'All 150 questions answered correctly once',
+        dailyDoneSub:'From here it is about retention. The tree speaks up when a question falls due again.',
+        start:'Start practising', startMore:'Keep practising', startDue:function(n){return 'Review '+n;},
+        summaryNone:'No question answered yet. The level rises with every correct answer — a topic you have not touched stays at level 1.',
+        summarySome:function(a,b,p){return a+' of '+b+' questions answered correctly at least once ('+p+'%). XP measures effort; the preview on the right shows what is due for retention.';},
+        check:'Check answer', next:'Next', finish:'Finish round',
+        right:'Correct', wrong:'Not correct',
+        rightIs:function(l){return 'The answer is '+l;},
+        gainNew:function(n){return '+'+n+' XP';}, gainRep:function(n){return '+'+n+' XP · review';},
+        gainNone:'no XP', gainRetry:'Practice attempt, no XP',
+        qCount:function(a,b){return a+'/'+b;},
+        hint:'1–4 to choose · Enter to confirm',
+        doneTitle:'Round complete',
+        doneSub:function(a,b){return a+' of '+b+' right first time.';},
+        doneNext:function(s){return 'Next review: '+s+'.';},
+        doneNextNone:'Everything due is done.',
+        tomorrow:'tomorrow', todayW:'today', inDays:function(n){return 'in '+n+' days';},
+        fcMax:function(n){return 'peak '+n;},
+        again:'Another round', close:'Done',
+        noHistory:'No XP in this topic yet. Answer a question correctly or run the training-log scan.',
+        practiceSkill:'Practise this topic', practiceAll:'Practise all topics',
+        levelUp:function(n,l){return n+' is now level '+l+'!';},
+        streakOn:function(n){return n+' days in a row — keep going!';},
+        scanReady:'Ready', scanNone:'No new entries found. Write something in your training log first.',
+        scanFound:function(n){return n+' new entries found. Analysing…';},
+        scanStep:function(a,b){return 'Entry '+a+' of '+b+'…';},
+        scanDone:function(a,b){return a+' entries analysed · '+b+' XP awarded';},
+        scanNothing:'No topics recognised. Describe your work using technical terms.',
+        scanBtn:'Start analysis', scanBtnRun:'Running…', scanBtnDone:'Done',
+        scanToast:function(n){return '+'+n+' XP from your training log';},
+        emptyQuiz:'No questions stored for this topic yet.'
+    };
+    return LANG === 'en' ? e : d;
+})();
+
+/* ─── UI-Symbole. Nur Chrome (Toast, Haken, Kreuz) — Themen-Symbole werden
+       aus dem Katalog-Markup geklont, nicht hier gefuehrt. ─── */
+var UI_ICON = {
     check:'<path d="M20 6 9 17l-5-5"/>',
-    party:'<path d="M5.8 11.3 2 22l10.7-3.79"/><path d="M4 3h.01M22 8h.01M15 2h.01M22 20h.01"/><path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/><path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17"/><path d="M11 2 9.66 2.62a2.9 2.9 0 0 0-1.66 2.9c.03.3-.05.62-.24.86l-.4.5"/>'
+    x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    zap:'<path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/>',
+    flame:'<path d="M12 2c1 4-2 5-2 8a4 4 0 0 0 8 0c0-1-.3-2-1-3 2 1.5 3 4 3 6a8 8 0 1 1-16 0c0-5 5-7 8-11z"/>'
 };
-function ic(id, size) {
-    var p = ICON_PATHS[id] || ICON_PATHS.star;
-    var s = size || 24;
-    var filled = (id === 'zap' || id === 'star');
-    return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 24 24" fill="' + (filled ? 'currentColor' : 'none') + '" stroke="' + (filled ? 'none' : 'currentColor') + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>';
+function uiIcon(id, size){
+    var filled = (id === 'zap' || id === 'flame');
+    return '<svg viewBox="0 0 24 24" width="' + (size||18) + '" height="' + (size||18) + '" fill="' + (filled?'currentColor':'none') +
+        '" stroke="' + (filled?'none':'currentColor') + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + UI_ICON[id] + '</svg>';
 }
 
-/* ─── SKILL DEFINITIONS ─── */
-var SKILL_BRANCHES = [
-    { id:'devops', name:'DevOps', color:'#3b82f6', skills:[
-        {id:'docker',name:'Docker & Container'},{id:'cicd',name:'CI/CD Pipelines'},{id:'kubernetes',name:'Kubernetes'},{id:'monitoring',name:'Monitoring & Logging'},{id:'cloud',name:'Cloud Services'},
-    ]},
-    { id:'backend', name:'Backend', color:'#10b981', skills:[
-        {id:'api',name:'REST APIs'},{id:'database',name:'Datenbanken'},{id:'auth',name:'Auth & Security'},{id:'serverlogic',name:'Server-Logik'},{id:'microservices',name:'Microservices'},
-    ]},
-    { id:'frontend', name:'Frontend', color:'#f472b6', skills:[
-        {id:'html_css',name:'HTML & CSS'},{id:'javascript',name:'JavaScript'},{id:'frameworks',name:'Frameworks'},{id:'responsive',name:'Responsive Design'},{id:'ux',name:'UX / Accessibility'},
-    ]},
-    { id:'netzwerk', name:'Netzwerk', color:'#06b6d4', skills:[
-        {id:'tcp_ip',name:'TCP/IP & Protokolle'},{id:'firewall',name:'Firewall & VPN'},{id:'dns_dhcp',name:'DNS & DHCP'},{id:'switching',name:'Switching & Routing'},{id:'wlan',name:'WLAN-Konfiguration'},
-    ]},
-    { id:'linux', name:'Linux & Sys', color:'#f59e0b', skills:[
-        {id:'shell',name:'Shell & Scripting'},{id:'admin',name:'Systemadministration'},{id:'virtualisierung',name:'Virtualisierung'},{id:'backup',name:'Backup & Recovery'},{id:'hardening',name:'System Hardening'},
-    ]},
-    { id:'softskills', name:'Soft Skills', color:'#a855f7', skills:[
-        {id:'doku',name:'Dokumentation'},{id:'teamwork',name:'Teamarbeit'},{id:'problemloesung',name:'Problemlösung'},{id:'praesentation',name:'Präsentation'},{id:'zeitmanagement',name:'Zeitmanagement'},
-    ]}
-];
-
-/* ─── KEYWORD → SKILL MAPPING (Fallback ohne LLM) ─── */
-var KEYWORD_MAP = {
-    docker:{skills:{docker:50,cicd:10}},container:{skills:{docker:40}},kubernetes:{skills:{kubernetes:50,docker:10,cloud:10}},k8s:{skills:{kubernetes:50,docker:10}},
-    'ci/cd':{skills:{cicd:50}},pipeline:{skills:{cicd:40}},jenkins:{skills:{cicd:40}},'github actions':{skills:{cicd:45}},
-    monitoring:{skills:{monitoring:40}},grafana:{skills:{monitoring:45}},prometheus:{skills:{monitoring:45}},
-    aws:{skills:{cloud:50}},azure:{skills:{cloud:50}},gcloud:{skills:{cloud:50}},cloud:{skills:{cloud:40}},
-    api:{skills:{api:40}},rest:{skills:{api:45}},endpoint:{skills:{api:35}},
-    datenbank:{skills:{database:40}},sql:{skills:{database:45}},mysql:{skills:{database:45}},postgresql:{skills:{database:45}},mongodb:{skills:{database:40}},migration:{skills:{database:30}},
-    authentifizierung:{skills:{auth:45}},login:{skills:{auth:30}},oauth:{skills:{auth:50}},jwt:{skills:{auth:45}},sicherheit:{skills:{auth:35,hardening:20}},
-    server:{skills:{serverlogic:35,admin:15}},backend:{skills:{serverlogic:30}},microservice:{skills:{microservices:45}},
-    html:{skills:{html_css:35}},css:{skills:{html_css:35}},scss:{skills:{html_css:35}},tailwind:{skills:{html_css:40,frameworks:15}},
-    javascript:{skills:{javascript:40}},typescript:{skills:{javascript:45}},react:{skills:{frameworks:45,javascript:15}},vue:{skills:{frameworks:45,javascript:15}},angular:{skills:{frameworks:45,javascript:15}},next:{skills:{frameworks:40}},
-    responsive:{skills:{responsive:40}},'media query':{skills:{responsive:35}},barrierefreiheit:{skills:{ux:45}},accessibility:{skills:{ux:45}},usability:{skills:{ux:35}},
-    netzwerk:{skills:{tcp_ip:30}},tcp:{skills:{tcp_ip:40}},ip:{skills:{tcp_ip:30}},firewall:{skills:{firewall:45}},vpn:{skills:{firewall:40}},dns:{skills:{dns_dhcp:40}},dhcp:{skills:{dns_dhcp:40}},switch:{skills:{switching:35}},router:{skills:{switching:40}},vlan:{skills:{switching:45}},wlan:{skills:{wlan:40}},wifi:{skills:{wlan:35}},
-    linux:{skills:{shell:25,admin:25}},bash:{skills:{shell:45}},shell:{skills:{shell:40}},script:{skills:{shell:30}},powershell:{skills:{shell:35}},'active directory':{skills:{admin:45}},gruppenrichtlinie:{skills:{admin:40}},
-    vm:{skills:{virtualisierung:40}},virtualbox:{skills:{virtualisierung:40}},vmware:{skills:{virtualisierung:45}},'hyper-v':{skills:{virtualisierung:45}},proxmox:{skills:{virtualisierung:45}},
-    backup:{skills:{backup:45}},restore:{skills:{backup:35}},recovery:{skills:{backup:35}},raid:{skills:{backup:30}},hardening:{skills:{hardening:45}},verschl:{skills:{hardening:35}},
-    dokumentation:{skills:{doku:40}},wiki:{skills:{doku:35}},readme:{skills:{doku:30}},protokoll:{skills:{doku:30}},
-    team:{skills:{teamwork:30}},meeting:{skills:{teamwork:25}},besprechung:{skills:{teamwork:25}},pair:{skills:{teamwork:35}},'code.review':{skills:{teamwork:30}},
-    debugging:{skills:{problemloesung:40}},fehler:{skills:{problemloesung:30}},troubleshoot:{skills:{problemloesung:45}},analyse:{skills:{problemloesung:30}},
-    vortrag:{skills:{praesentation:45}},'präsentation':{skills:{praesentation:50}},schulung:{skills:{praesentation:35,teamwork:15}},
-    zeitplan:{skills:{zeitmanagement:40}},deadline:{skills:{zeitmanagement:35}},priorisierung:{skills:{zeitmanagement:40}},sprint:{skills:{zeitmanagement:30,teamwork:10}},ticket:{skills:{zeitmanagement:25}},jira:{skills:{zeitmanagement:30}},scrum:{skills:{zeitmanagement:30,teamwork:20}},agile:{skills:{zeitmanagement:25,teamwork:15}},kanban:{skills:{zeitmanagement:30}},
-    git:{skills:{cicd:20,doku:10}},deploy:{skills:{cicd:30,docker:15}},depl:{skills:{cicd:25,docker:10}},terraform:{skills:{cloud:40,cicd:15}},ansible:{skills:{admin:35,cicd:15}},nginx:{skills:{serverlogic:30,admin:15}},apache:{skills:{serverlogic:30,admin:15}},node:{skills:{serverlogic:35,javascript:15}},python:{skills:{serverlogic:30,shell:15}},java:{skills:{serverlogic:35}},csharp:{skills:{serverlogic:35}},php:{skills:{serverlogic:30}},
-    webseite:{skills:{html_css:20,javascript:10}},website:{skills:{html_css:20,javascript:10}},webapp:{skills:{frameworks:25,javascript:15}}
-};
-
-/* ─── LEVEL SYSTEM ─── */
-function xpForLevel(lvl){return Math.floor(100*Math.pow(1.25,lvl-1));}
-function levelFromXp(xp){var lvl=1,needed=100;while(xp>=needed){xp-=needed;lvl++;needed=xpForLevel(lvl);}return{level:lvl,currentXp:xp,nextXp:needed};}
-
-/* ─── DATA ─── */
-var STORAGE_KEY='mwl_skill_tree', SCAN_HISTORY_KEY='mwl_skill_scanned';
-function loadData(){try{var s=localStorage.getItem(STORAGE_KEY);if(s)return JSON.parse(s);}catch(e){}return createFreshData();}
-function createFreshData(){var d={skills:{},history:[],lastScan:null};SKILL_BRANCHES.forEach(function(b){b.skills.forEach(function(s){d.skills[s.id]={xp:0,history:[]};});});return d;}
-function saveData(d){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(d));}catch(e){}}
-function getScannedIds(){try{var s=localStorage.getItem(SCAN_HISTORY_KEY);return s?JSON.parse(s):[];}catch(e){return[];}}
-function saveScannedIds(a){try{localStorage.setItem(SCAN_HISTORY_KEY,JSON.stringify(a));}catch(e){}}
-function addXp(skillId,amount,source,date){
-    var d=loadData();
-    if(!d.skills[skillId])d.skills[skillId]={xp:0,history:[]};
-    var before=levelFromXp(d.skills[skillId].xp);
-    d.skills[skillId].xp+=amount;
-    d.skills[skillId].history.unshift({xp:amount,source:source,date:date||new Date().toISOString().slice(0,10)});
-    if(d.skills[skillId].history.length>100)d.skills[skillId].history=d.skills[skillId].history.slice(0,100);
-    d.history.unshift({skill:skillId,xp:amount,source:source,date:date||new Date().toISOString().slice(0,10)});
-    if(d.history.length>500)d.history=d.history.slice(0,500);
-    saveData(d);
-    var after=levelFromXp(d.skills[skillId].xp);
-    return{levelUp:after.level>before.level,newLevel:after.level};
+/* ─── KATALOG AUS DEM DOM ─── */
+var BRANCHES = [], SKILL_INDEX = {};
+function captureCatalog(){
+    BRANCHES = [];
+    SKILL_INDEX = {};
+    document.querySelectorAll('#catalog .branch').forEach(function(sec){
+        var b = {
+            id: sec.dataset.branch,
+            name: sec.querySelector('.branch-head h2').textContent.trim(),
+            color: sec.style.getPropertyValue('--bc').trim(),
+            dim: sec.style.getPropertyValue('--bc-dim').trim(),
+            bord: sec.style.getPropertyValue('--bc-border').trim(),
+            icon: sec.querySelector('.bh-ico').innerHTML,
+            el: sec,
+            skills: []
+        };
+        sec.querySelectorAll('.skill-card').forEach(function(card){
+            var s = {
+                id: card.dataset.skill,
+                name: card.querySelector('.sc-name').textContent.trim(),
+                icon: card.querySelector('.sc-ico').innerHTML,
+                el: card,
+                branch: b
+            };
+            b.skills.push(s);
+            SKILL_INDEX[s.id] = s;
+            card.addEventListener('click', function(){ openSkill(s.id); });
+        });
+        BRANCHES.push(b);
+    });
 }
-function findSkillDef(skillId){for(var i=0;i<SKILL_BRANCHES.length;i++){for(var j=0;j<SKILL_BRANCHES[i].skills.length;j++){if(SKILL_BRANCHES[i].skills[j].id===skillId)return{skill:SKILL_BRANCHES[i].skills[j],branch:SKILL_BRANCHES[i]};}}return null;}
-function branchTotals(branch,data){var xp=0;branch.skills.forEach(function(s){xp+=(data.skills[s.id]?data.skills[s.id].xp:0);});return{xp:xp,info:levelFromXp(xp)};}
-function escHtml(s){var d=document.createElement('div');d.appendChild(document.createTextNode(s==null?'':s));return d.innerHTML;}
-function hexRgb(hex){hex=hex.replace('#','');return parseInt(hex.slice(0,2),16)+','+parseInt(hex.slice(2,4),16)+','+parseInt(hex.slice(4,6),16);}
+function questionsOf(id){ return (window.SKILL_QUIZ && window.SKILL_QUIZ[id]) || []; }
+function totalQuestions(){ var n = 0; for (var k in SKILL_INDEX) n += questionsOf(k).length; return n; }
 
-/* ─── STATE ─── */
-var activeTab='all';
+/* ─── LEVEL ─── */
+function xpForLevel(lvl){ return Math.floor(100 * Math.pow(1.25, lvl - 1)); }
+function levelFromXp(xp){
+    var lvl = 1, needed = 100;
+    while (xp >= needed) { xp -= needed; lvl++; needed = xpForLevel(lvl); }
+    return { level: lvl, currentXp: xp, nextXp: needed };
+}
 
-/* ─── RENDER: SUMMARY ─── */
-function renderSummary(){
-    var data=loadData(), total=0;
-    for(var k in data.skills)total+=data.skills[k].xp;
-    var info=levelFromXp(total);
-    document.getElementById('totalLevel').textContent=info.level;
-    document.getElementById('totalXpText').textContent=total+' XP';
-    document.getElementById('ringLevel').textContent=info.level;
-    var pct=info.nextXp?info.currentXp/info.nextXp:0;
-    var circ=326.7;
-    document.getElementById('totalRingFill').style.strokeDashoffset=circ-circ*pct;
-    document.getElementById('summaryXpFill').style.width=(pct*100)+'%';
-    document.getElementById('summaryXpText').textContent=info.currentXp+' / '+info.nextXp+' XP bis Level '+(info.level+1);
+/* ─── DATUM (lokal, nicht ueber toISOString — das rechnet nach UTC und
+       verschiebt in Mitteleuropa jedes Datum um einen Tag) ─── */
+function toLocalISO(d){
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function today(){ return toLocalISO(new Date()); }
+function dayPlus(n){ var d = new Date(); d.setDate(d.getDate() + n); return toLocalISO(d); }
+function daysBetween(a, b){
+    var pa = a.split('-'), pb = b.split('-');
+    var da = new Date(+pa[0], +pa[1] - 1, +pa[2]), db = new Date(+pb[0], +pb[1] - 1, +pb[2]);
+    return Math.round((db - da) / 86400000);
+}
+
+/* ─── SPEICHER ─── */
+var STORAGE_KEY = 'mwl_skill_tree', SCAN_HISTORY_KEY = 'mwl_skill_scanned';
+function freshData(){ return { skills:{}, srs:{}, history:[], streak:{ last:null, days:0, best:0 }, lastScan:null }; }
+function loadData(){
+    var d;
+    try { var s = localStorage.getItem(STORAGE_KEY); d = s ? JSON.parse(s) : null; } catch (e) { d = null; }
+    if (!d || typeof d !== 'object') d = freshData();
+    if (!d.skills) d.skills = {};
+    if (!d.srs) d.srs = {};
+    if (!Array.isArray(d.history)) d.history = [];
+    if (!d.streak) d.streak = { last:null, days:0, best:0 };
+    return d;
+}
+function saveData(d){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (e) {} }
+function skillState(d, id){ if (!d.skills[id]) d.skills[id] = { xp:0, history:[] }; return d.skills[id]; }
+function srsKey(id, i){ return id + '|' + i; }
+
+function addXp(d, skillId, amount, source, date){
+    var st = skillState(d, skillId);
+    var before = levelFromXp(st.xp);
+    st.xp += amount;
+    st.history.unshift({ xp:amount, source:source, date:date || today() });
+    if (st.history.length > 60) st.history = st.history.slice(0, 60);
+    d.history.unshift({ skill:skillId, xp:amount, date:date || today() });
+    if (d.history.length > 300) d.history = d.history.slice(0, 300);
+    var after = levelFromXp(st.xp);
+    return { levelUp: after.level > before.level, newLevel: after.level };
+}
+
+/* ─── STUFEN ─────────────────────────────────────────────────
+   reps zaehlt lebenslang die richtigen Antworten und faellt nie —
+   sonst wuerde eine falsche Antwort eine bereits freigeschaltete Stufe
+   wieder zusperren. Der Abstand haengt an st (Serie), die bei einem
+   Fehler zurueckgeht. Zwei Zaehler, zwei Aufgaben. */
+var TIER_XP = { 1:15, 2:25, 3:40 };
+function tierDone(d, id, tier){
+    var qs = questionsOf(id), any = false;
+    for (var i = 0; i < qs.length; i++) {
+        if (qs[i].t !== tier) continue;
+        any = true;
+        var s = d.srs[srsKey(id, i)];
+        if (!s || !s.reps) return false;
+    }
+    return any;
+}
+function tierUnlocked(d, id, tier){ return tier === 1 ? true : tierDone(d, id, tier - 1); }
+function maxTier(d, id){ return tierUnlocked(d, id, 3) ? 3 : (tierUnlocked(d, id, 2) ? 2 : 1); }
+function answeredCount(d, id){
+    var qs = questionsOf(id), n = 0;
+    for (var i = 0; i < qs.length; i++) { var s = d.srs[srsKey(id, i)]; if (s && s.reps) n++; }
+    return n;
+}
+function answeredTotal(d){ var n = 0; for (var k in SKILL_INDEX) n += answeredCount(d, k); return n; }
+
+/* ─── WIEDERHOLUNGSABSTAND ─── */
+function schedule(s, correct){
+    if (!s) s = { iv:0, ea:2.3, reps:0, st:0, lapses:0, due:today() };
+    if (correct) {
+        s.reps++; s.st++;
+        s.iv = s.st === 1 ? 1 : s.st === 2 ? 3 : s.st === 3 ? 7 : Math.min(180, Math.round(s.iv * s.ea));
+        s.ea = Math.min(2.8, Math.round((s.ea + 0.1) * 100) / 100);
+    } else {
+        s.lapses++; s.st = 0; s.iv = 0;
+        s.ea = Math.max(1.5, Math.round((s.ea - 0.25) * 100) / 100);
+    }
+    s.due = dayPlus(s.iv);
+    return s;
+}
+function dueList(d){
+    var t = today(), out = [];
+    for (var id in SKILL_INDEX) {
+        var qs = questionsOf(id), mt = maxTier(d, id);
+        for (var i = 0; i < qs.length; i++) {
+            if (qs[i].t > mt) continue;
+            var s = d.srs[srsKey(id, i)];
+            if (s && s.due && s.due <= t) out.push({ skill:id, i:i, due:s.due });
+        }
+    }
+    return out;
+}
+
+/* ─── RUNDE ZUSAMMENSTELLEN ─── */
+var SESSION_LEN = 10;
+function buildQueue(d, onlySkill){
+    var t = today(), due = [], fresh = [];
+    var ids = onlySkill ? [onlySkill] : Object.keys(SKILL_INDEX);
+    ids.forEach(function(id){
+        var qs = questionsOf(id), mt = maxTier(d, id), xp = (d.skills[id] || {}).xp || 0;
+        for (var i = 0; i < qs.length; i++) {
+            if (qs[i].t > mt) continue;
+            var s = d.srs[srsKey(id, i)];
+            if (!s) fresh.push({ skill:id, i:i, tier:qs[i].t, fresh:true, w:xp });
+            else if (s.due <= t) due.push({ skill:id, i:i, tier:qs[i].t, fresh:false, due:s.due });
+        }
+    });
+    due.sort(function(a, b){ return a.due < b.due ? -1 : a.due > b.due ? 1 : Math.random() - 0.5; });
+    // Neue Fragen aus den Themen mit dem geringsten Fortschritt zuerst,
+    // damit sich die Runde ueber den Baum verteilt statt in einem Thema zu bleiben.
+    fresh.sort(function(a, b){ return a.w !== b.w ? a.w - b.w : (a.tier - b.tier) || (Math.random() - 0.5); });
+    return due.concat(fresh).slice(0, SESSION_LEN);
+}
+
+/* ─── RENDER: KOPFZAHLEN ─── */
+function renderSummary(d){
+    var total = 0;
+    for (var k in SKILL_INDEX) total += (d.skills[k] || {}).xp || 0;
+    var info = levelFromXp(total);
+    document.getElementById('totalLevel').textContent = info.level;
+    document.getElementById('totalXpText').textContent = total + ' XP';
+    document.getElementById('ringLevel').textContent = info.level;
+    var pct = info.nextXp ? info.currentXp / info.nextXp : 0, circ = 326.7;
+    document.getElementById('totalRingFill').style.strokeDashoffset = circ - circ * pct;
+    document.getElementById('summaryXpFill').style.width = (pct * 100) + '%';
+    document.getElementById('summaryXpText').textContent = T.toLevel(info.currentXp, info.nextXp, info.level + 1);
+    var done = answeredTotal(d), all = totalQuestions();
+    document.getElementById('summaryLede').textContent = done === 0
+        ? T.summaryNone
+        : T.summarySome(done, all, Math.round(done / all * 100));
+}
+
+/* Vorschau der naechsten 14 Tage. Eine Reihe, eine Farbe, Grundlinie unten;
+   beschriftet wird nur der hoechste Balken — mehr Zahlen macht die Leiste
+   unleserlich, weniger macht sie unlesbar. */
+function renderForecast(d){
+    var box = document.getElementById('forecast'), bars = document.getElementById('fcBars');
+    var counts = new Array(14).fill(0), any = false;
+    for (var key in d.srs) {
+        var s = d.srs[key];
+        if (!s || !s.due) continue;
+        var off = daysBetween(today(), s.due);
+        if (off < 0) off = 0;
+        if (off < 14) { counts[off]++; any = true; }
+    }
+    if (!any) { box.hidden = true; return; }
+    box.hidden = false;
+    var max = Math.max.apply(null, counts) || 1, html = '';
+    for (var i = 0; i < 14; i++) {
+        var h = counts[i] ? Math.max(8, Math.round(counts[i] / max * 100)) : 0;
+        html += '<div class="fc-col' + (counts[i] ? '' : ' empty') + '" title="' + (i === 0 ? T.todayW : T.inDays(i)) + ': ' + counts[i] + '">'
+              + '<span class="fc-bar" style="height:' + (counts[i] ? h : 4) + '%"></span></div>';
+    }
+    bars.innerHTML = html;
+    document.getElementById('fcMax').textContent = T.fcMax(max);
+}
+
+function renderDaily(d){
+    var due = dueList(d).length, done = answeredTotal(d), all = totalQuestions();
+    var head = document.getElementById('dailyHead'), sub = document.getElementById('dailySub');
+    var lbl = document.getElementById('startLabel'), pill = document.getElementById('duePill');
+    if (due > 0) {
+        head.textContent = T.dailyDue(due); sub.textContent = T.dailyDueSub;
+        lbl.textContent = T.startDue(Math.min(due, SESSION_LEN));
+        pill.hidden = false; pill.textContent = due;
+    } else if (done === 0) {
+        head.textContent = T.dailyFirst; sub.textContent = T.dailyFirstSub;
+        lbl.textContent = T.start; pill.hidden = true;
+    } else if (done >= all) {
+        head.textContent = T.dailyDone; sub.textContent = T.dailyDoneSub;
+        lbl.textContent = T.startMore; pill.hidden = true;
+    } else {
+        head.textContent = T.dailyClear; sub.textContent = T.dailyClearSub;
+        lbl.textContent = T.startMore; pill.hidden = true;
+    }
+    var box = document.getElementById('streakBox');
+    if (d.streak && d.streak.days > 1) {
+        box.hidden = false;
+        document.getElementById('streakDays').textContent = d.streak.days;
+    } else { box.hidden = true; }
 }
 
 /* ─── RENDER: TABS ─── */
-function renderTabs(){
-    var data=loadData(), tabs=document.getElementById('tabs');
-    var html='<button class="tab'+(activeTab==='all'?' active':'')+'" onclick="setTab(\'all\')">'
-        +'<span class="tab-dot" style="background:var(--primary)"></span>Alle'
-        +'<span class="cnt">'+SKILL_BRANCHES.length*5+'</span></button>';
-    SKILL_BRANCHES.forEach(function(b){
-        var t=branchTotals(b,data);
-        html+='<button class="tab'+(activeTab===b.id?' active':'')+'" style="--bc:'+b.color+'" onclick="setTab(\''+b.id+'\')">'
-            +'<span class="tab-dot"></span>'+escHtml(b.name)
-            +'<span class="cnt">Lv.'+t.info.level+'</span></button>';
+var activeTab = 'all';
+function renderTabs(d){
+    var tabs = document.getElementById('tabs');
+    var html = '<button class="tab' + (activeTab === 'all' ? ' active' : '') + '" data-tab="all">'
+             + '<span class="tab-dot"></span>' + escHtml(T.all)
+             + '<span class="cnt">' + totalQuestions() + '</span></button>';
+    BRANCHES.forEach(function(b){
+        var xp = 0;
+        b.skills.forEach(function(s){ xp += (d.skills[s.id] || {}).xp || 0; });
+        html += '<button class="tab' + (activeTab === b.id ? ' active' : '') + '" data-tab="' + b.id + '" data-branch="' + b.id + '"'
+              + ' style="--bc:' + b.color + ';--bc-dim:' + b.dim + ';--bc-border:' + b.bord + '">'
+              + '<span class="tab-dot"></span>' + escHtml(b.name)
+              + '<span class="cnt">' + T.level + ' ' + levelFromXp(xp).level + '</span></button>';
     });
-    tabs.innerHTML=html;
-}
-function setTab(id){activeTab=id;renderTabs();renderGrid();}
-
-/* ─── RENDER: GRID ─── */
-function skillCardHtml(branch,skill,data){
-    var sd=data.skills[skill.id]||{xp:0};
-    var info=levelFromXp(sd.xp);
-    var pct=info.nextXp?Math.round((info.currentXp/info.nextXp)*100):0;
-    var rgb=hexRgb(branch.color);
-    var style='--bc:'+branch.color+';--bc-dim:rgba('+rgb+',0.14);--bc-border:rgba('+rgb+',0.28)';
-    return '<button class="skill-card" style="'+style+'" onclick="openSkill(\''+skill.id+'\')">'
-        +'<span class="sc-ico">'+ic(skill.id,21)+'</span>'
-        +'<span class="sc-body">'
-        +'<span class="sc-top"><span class="sc-name">'+escHtml(skill.name)+'</span><span class="sc-lvl">Lv.'+info.level+'</span></span>'
-        +'<span class="sc-bar"><span class="sc-fill" style="width:'+pct+'%"></span></span>'
-        +'<span class="sc-xp">'+sd.xp+' XP · '+info.currentXp+'/'+info.nextXp+' bis Lv.'+(info.level+1)+'</span>'
-        +'</span></button>';
-}
-function renderGrid(){
-    var data=loadData(), grid=document.getElementById('grid'), html='';
-    var branches=activeTab==='all'?SKILL_BRANCHES:SKILL_BRANCHES.filter(function(b){return b.id===activeTab;});
-    branches.forEach(function(b){
-        var t=branchTotals(b,data), rgb=hexRgb(b.color);
-        html+='<div class="branch-head" style="--bc:'+b.color+';--bc-dim:rgba('+rgb+',0.14);--bc-border:rgba('+rgb+',0.28)">'
-            +'<span class="bh-ico">'+ic(b.id,15)+'</span>'
-            +'<span class="bh-name">'+escHtml(b.name)+'</span>'
-            +'<span class="bh-meta">Level '+t.info.level+' · '+t.xp+' XP</span></div>';
-        b.skills.forEach(function(s){html+=skillCardHtml(b,s,data);});
+    tabs.innerHTML = html;
+    tabs.querySelectorAll('.tab').forEach(function(t){
+        t.addEventListener('click', function(){ setTab(t.dataset.tab); });
     });
-    grid.innerHTML=html;
+}
+function setTab(id){
+    activeTab = id;
+    BRANCHES.forEach(function(b){ b.el.hidden = (id !== 'all' && b.id !== id); });
+    renderTabs(loadData());
 }
 
-/* ─── DETAIL SHEET ─── */
-var currentSkillId=null;
-function openSkill(skillId){
-    var def=findSkillDef(skillId);if(!def)return;
-    currentSkillId=skillId;
-    var data=loadData(), sd=data.skills[skillId]||{xp:0,history:[]}, info=levelFromXp(sd.xp);
-    var rgb=hexRgb(def.branch.color);
-    var sheet=document.getElementById('sheet');
-    sheet.style.setProperty('--bc',def.branch.color);
-    sheet.style.setProperty('--bc-dim','rgba('+rgb+',0.14)');
-    sheet.style.setProperty('--bc-border','rgba('+rgb+',0.28)');
-    document.getElementById('shIco').innerHTML=ic(skillId,26);
-    document.getElementById('shTitle').textContent=def.skill.name;
-    document.getElementById('shBranch').textContent=def.branch.name;
-    document.getElementById('shLvl').textContent=info.level;
-    var pct=info.nextXp?info.currentXp/info.nextXp:0, circ=276.46;
-    document.getElementById('shRingFill').style.strokeDashoffset=circ-circ*pct;
-    document.getElementById('shXpFill').style.width=(pct*100)+'%';
-    document.getElementById('shXpText').textContent=info.currentXp+' / '+info.nextXp+' XP  ·  Gesamt '+sd.xp;
-    document.getElementById('shAddBtn').onclick=function(){closeSheet();openManualAdd(skillId);};
-    var hist='';
-    if(sd.history&&sd.history.length){
-        sd.history.slice(0,20).forEach(function(h){
-            hist+='<div class="hist-item"><div class="hist-xp">+'+h.xp+'</div><div class="hist-body"><div class="hist-text">'+escHtml(h.source)+'</div><div class="hist-date">'+escHtml(h.date)+'</div></div></div>';
+/* ─── RENDER: KATALOG ─── */
+function renderCatalog(d){
+    BRANCHES.forEach(function(b){
+        var bxp = 0;
+        b.skills.forEach(function(s){
+            var st = d.skills[s.id] || { xp:0 };
+            bxp += st.xp;
+            var info = levelFromXp(st.xp);
+            var pct = info.nextXp ? Math.round(info.currentXp / info.nextXp * 100) : 0;
+            var qs = questionsOf(s.id);
+            s.el.querySelector('[data-role=lvl]').textContent = T.level + ' ' + info.level;
+            s.el.querySelector('[data-role=fill]').style.width = pct + '%';
+            s.el.querySelector('[data-role=xp]').textContent =
+                st.xp + ' XP · ' + T.ofQuestions(answeredCount(d, s.id), qs.length);
+            var pips = '';
+            for (var t = 1; t <= 3; t++) {
+                var cls = !tierUnlocked(d, s.id, t) ? 'locked' : (tierDone(d, s.id, t) ? 'done' : 'open');
+                pips += '<span class="tier-pip ' + cls + '" title="' + escHtml(T.tiers[t - 1]) + '"></span>';
+            }
+            s.el.querySelector('[data-role=tiers]').innerHTML = pips;
+        });
+        b.el.querySelector('[data-role=branch-meta]').textContent = T.branchMeta(levelFromXp(bxp).level, bxp);
+    });
+}
+
+function escHtml(s){ var e = document.createElement('div'); e.appendChild(document.createTextNode(s == null ? '' : s)); return e.innerHTML; }
+function renderAll(){ var d = loadData(); renderSummary(d); renderForecast(d); renderDaily(d); renderTabs(d); renderCatalog(d); }
+
+/* ─── DETAIL ─── */
+var sheetSkill = null;
+function openSkill(id){
+    var s = SKILL_INDEX[id]; if (!s) return;
+    sheetSkill = id;
+    var d = loadData(), st = d.skills[id] || { xp:0, history:[] }, info = levelFromXp(st.xp);
+    var sheet = document.getElementById('sheet');
+    sheet.style.setProperty('--bc', s.branch.color);
+    sheet.style.setProperty('--bc-dim', s.branch.dim);
+    sheet.style.setProperty('--bc-border', s.branch.bord);
+    document.getElementById('shIco').innerHTML = s.icon;
+    document.getElementById('shTitle').textContent = s.name;
+    document.getElementById('shBranch').textContent = s.branch.name;
+    document.getElementById('shLvl').textContent = info.level;
+    var pct = info.nextXp ? info.currentXp / info.nextXp : 0, circ = 276.46;
+    document.getElementById('shRingFill').style.strokeDashoffset = circ - circ * pct;
+    document.getElementById('shXpFill').style.width = (pct * 100) + '%';
+    document.getElementById('shXpText').textContent = info.currentXp + ' / ' + info.nextXp + ' XP · ' + st.xp + ' ' + T.xp;
+
+    var qs = questionsOf(id), tiers = '';
+    for (var t = 1; t <= 3; t++) {
+        var inTier = qs.filter(function(q){ return q.t === t; }).length;
+        var okN = 0;
+        qs.forEach(function(q, i){ if (q.t === t) { var e = d.srs[srsKey(id, i)]; if (e && e.reps) okN++; } });
+        var unlocked = tierUnlocked(d, id, t);
+        tiers += '<div class="tier-row' + (unlocked ? '' : ' locked') + '">'
+               + '<span class="tr-n">' + t + '</span>'
+               + '<span class="tr-b"><span class="tr-t">' + escHtml(T.tiers[t - 1]) + '</span>'
+               + '<span class="tr-s">' + escHtml(unlocked ? (okN === inTier && inTier ? T.tierDone : T.tierOpen) : T.tierLocked) + '</span></span>'
+               + '<span class="tr-c">' + okN + '/' + inTier + '</span></div>';
+    }
+    document.getElementById('shTiers').innerHTML = tiers || '<div class="sheet-empty">' + escHtml(T.emptyQuiz) + '</div>';
+
+    var btn = document.getElementById('shAddBtn');
+    btn.onclick = function(){ closeSheet(); startSession(id); };
+
+    var hist = '';
+    if (st.history && st.history.length) {
+        st.history.slice(0, 15).forEach(function(h){
+            hist += '<div class="hist-item"><div class="hist-xp">+' + h.xp + '</div><div class="hist-body">'
+                  + '<div class="hist-text">' + escHtml(h.source) + '</div>'
+                  + '<div class="hist-date">' + escHtml(h.date) + '</div></div></div>';
         });
     } else {
-        hist='<div class="sheet-empty">Noch keine XP gesammelt.<br>Scanne dein Berichtsheft oder trage XP manuell ein.</div>';
+        hist = '<div class="sheet-empty">' + escHtml(T.noHistory) + '</div>';
     }
-    document.getElementById('shHistory').innerHTML=hist;
+    document.getElementById('shHistory').innerHTML = hist;
     document.getElementById('sheetBackdrop').classList.add('open');
     sheet.classList.add('open');
 }
-function closeSheet(){document.getElementById('sheetBackdrop').classList.remove('open');document.getElementById('sheet').classList.remove('open');}
+function closeSheet(){
+    document.getElementById('sheetBackdrop').classList.remove('open');
+    document.getElementById('sheet').classList.remove('open');
+}
 
 /* ─── TOAST ─── */
-var toastTimer=null;
-function showToast(text,iconId){
-    var t=document.getElementById('toast');
-    document.getElementById('toastText').textContent=text;
-    document.getElementById('toastIco').innerHTML=ic(iconId||'zap',18);
+var toastTimer = null;
+function showToast(text, icon){
+    var t = document.getElementById('toast');
+    document.getElementById('toastText').textContent = text;
+    document.getElementById('toastIco').innerHTML = uiIcon(icon || 'zap', 18);
     t.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer=setTimeout(function(){t.classList.remove('show');},3400);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3400);
 }
 
-/* ─── SCAN ENGINE ─── */
+/* ══════════════════════════════════════════════════════════════
+   ÜBEN — die eigentliche Lernschleife
+   ══════════════════════════════════════════════════════════════ */
+var S = null;
+
+function startSession(onlySkill){
+    var d = loadData();
+    var queue = buildQueue(d, onlySkill || null);
+    if (!queue.length) {
+        showToast(onlySkill ? T.emptyQuiz : T.dailyDoneSub, 'check');
+        return;
+    }
+    S = { queue:queue, base:queue.length, idx:0, chosen:null, answered:false,
+          gained:0, firstRight:0, skill:onlySkill || null, gains:{} };
+    document.getElementById('practice').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('prHint').textContent = T.hint;
+    renderQuestion();
+    if (typeof mwlEvent === 'function') mwlEvent('skill_uebung_gestartet', { fragen: queue.length, einzelthema: !!onlySkill });
+}
+
+function endSession(abort){
+    document.getElementById('practice').classList.remove('open');
+    document.body.style.overflow = '';
+    if (S && !abort && typeof mwlEvent === 'function') {
+        mwlEvent('skill_uebung_beendet', { fragen: S.base, richtig: S.firstRight, xp: S.gained });
+    }
+    S = null;
+    renderAll();
+}
+
+function shuffled(n){
+    var a = []; for (var i = 0; i < n; i++) a.push(i);
+    for (var j = a.length - 1; j > 0; j--) { var k = Math.floor(Math.random() * (j + 1)); var t = a[j]; a[j] = a[k]; a[k] = t; }
+    return a;
+}
+
+function renderQuestion(){
+    var item = S.queue[S.idx];
+    var q = questionsOf(item.skill)[item.i];
+    var loc = q[LANG] || q.de;
+    var sk = SKILL_INDEX[item.skill];
+    if (!item.order) item.order = shuffled(loc.o.length);
+    S.chosen = null; S.answered = false;
+
+    document.getElementById('prCount').textContent = T.qCount(S.idx + 1, S.queue.length);
+    document.getElementById('prXp').textContent = '+' + S.gained + ' XP';
+
+    var dots = '';
+    for (var i = 0; i < S.queue.length; i++) {
+        var r = S.queue[i].result;
+        dots += '<span class="pr-dot' + (r === true ? ' ok' : r === false ? ' no' : i === S.idx ? ' now' : '') + '"></span>';
+    }
+    document.getElementById('prDots').innerHTML = dots;
+
+    var opts = '';
+    item.order.forEach(function(orig, pos){
+        opts += '<button class="pr-opt" data-pos="' + pos + '" data-orig="' + orig + '">'
+              + '<span class="key">' + (pos + 1) + '</span>'
+              + '<span class="txt">' + escHtml(loc.o[orig]) + '</span></button>';
+    });
+
+    document.getElementById('prInner').innerHTML =
+        '<div class="pr-skill" style="--bc:' + sk.branch.color + ';--bc-dim:' + sk.branch.dim + ';--bc-border:' + sk.branch.bord + '">'
+      + '<span class="ps-ico">' + sk.icon + '</span>'
+      + '<span><span class="ps-n">' + escHtml(sk.name) + '</span>'
+      + '<span class="ps-b">' + escHtml(sk.branch.name) + ' · <b>' + escHtml(T.tiers[q.t - 1]) + '</b></span></span></div>'
+      + '<h2 class="pr-q">' + escHtml(loc.q) + '</h2>'
+      + '<div class="pr-opts" id="prOpts">' + opts + '</div>'
+      + '<div class="pr-fb" id="prFb"></div>';
+
+    document.querySelectorAll('#prOpts .pr-opt').forEach(function(b){
+        b.addEventListener('click', function(){ choose(+b.dataset.pos); });
+    });
+
+    var nx = document.getElementById('prNext');
+    nx.textContent = T.check; nx.disabled = true;
+    nx.onclick = confirmAnswer;
+    document.querySelector('.pr-body').scrollTop = 0;
+}
+
+function choose(pos){
+    if (S.answered) return;
+    S.chosen = pos;
+    document.querySelectorAll('#prOpts .pr-opt').forEach(function(b){
+        b.classList.toggle('sel', +b.dataset.pos === pos);
+    });
+    document.getElementById('prNext').disabled = false;
+}
+
+function confirmAnswer(){
+    if (S.answered || S.chosen === null) return;
+    S.answered = true;
+    var item = S.queue[S.idx];
+    var q = questionsOf(item.skill)[item.i];
+    var loc = q[LANG] || q.de;
+    var chosenOrig = item.order[S.chosen];
+    var correct = chosenOrig === q.c;
+    var correctPos = item.order.indexOf(q.c);
+
+    document.querySelectorAll('#prOpts .pr-opt').forEach(function(b){
+        b.disabled = true;
+        var pos = +b.dataset.pos;
+        if (pos === correctPos) { b.classList.add('right'); b.classList.remove('sel'); b.insertAdjacentHTML('beforeend', markSvg(true)); }
+        else if (pos === S.chosen) { b.classList.add('wrong'); b.classList.remove('sel'); b.insertAdjacentHTML('beforeend', markSvg(false)); }
+    });
+
+    var gainTxt = T.gainRetry, gain = 0;
+    if (!item.retry) {
+        var d = loadData();
+        var key = srsKey(item.skill, item.i);
+        var wasNew = !(d.srs[key] && d.srs[key].reps);
+        d.srs[key] = schedule(d.srs[key], correct);
+        if (correct) {
+            gain = wasNew ? TIER_XP[q.t] : Math.round(TIER_XP[q.t] * 0.5);
+            var res = addXp(d, item.skill, gain, loc.q.slice(0, 90), today());
+            S.gained += gain;
+            S.gains[item.skill] = (S.gains[item.skill] || 0) + gain;
+            gainTxt = wasNew ? T.gainNew(gain) : T.gainRep(gain);
+            if (res.levelUp) {
+                var nm = SKILL_INDEX[item.skill].name, lv = res.newLevel;
+                setTimeout(function(){ showToast(T.levelUp(nm, lv), 'zap'); }, 700);
+            }
+        } else {
+            gainTxt = T.gainNone;
+        }
+        saveData(d);
+        if (item.result === undefined) { item.result = correct; if (correct) S.firstRight++; }
+    }
+
+    // Falsch beantwortet: dieselbe Frage kommt am Ende der Runde noch einmal,
+    // ohne XP und ohne den Abstand erneut zu setzen. Reine Wiederholung.
+    if (!correct && !item.retry) {
+        S.queue.push({ skill:item.skill, i:item.i, tier:item.tier, retry:true, result:false });
+    }
+
+    var fb = document.getElementById('prFb');
+    fb.className = 'pr-fb show ' + (correct ? 'ok' : 'no');
+    fb.innerHTML = '<div class="fb-h">' + uiIcon(correct ? 'check' : 'x', 18)
+                 + '<span>' + escHtml(correct ? T.right : T.wrong + ' — ' + T.rightIs(String.fromCharCode(65 + correctPos))) + '</span>'
+                 + '<span class="gain">' + escHtml(gainTxt) + '</span></div>'
+                 + '<p>' + escHtml(loc.e) + '</p>';
+
+    document.getElementById('prXp').textContent = '+' + S.gained + ' XP';
+    var nx = document.getElementById('prNext');
+    nx.textContent = (S.idx + 1 >= S.queue.length) ? T.finish : T.next;
+    nx.disabled = false;
+    nx.onclick = nextQuestion;
+    fb.scrollIntoView({ block:'nearest', behavior:'smooth' });
+}
+
+function markSvg(ok){
+    return '<svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+         + (ok ? '<path d="M20 6 9 17l-5-5"/>' : '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>') + '</svg>';
+}
+
+function nextQuestion(){
+    S.idx++;
+    if (S.idx >= S.queue.length) { renderDone(); return; }
+    renderQuestion();
+}
+
+function renderDone(){
+    var d = loadData();
+    bumpStreak(d);
+    saveData(d);
+
+    var circ = 2 * Math.PI * 54, pct = S.base ? S.firstRight / S.base : 0;
+    var gains = '';
+    Object.keys(S.gains).sort(function(a, b){ return S.gains[b] - S.gains[a]; }).forEach(function(id){
+        var sk = SKILL_INDEX[id];
+        gains += '<div class="pr-gain" style="--bc:' + sk.branch.color + ';--bc-dim:' + sk.branch.dim + ';--bc-border:' + sk.branch.bord + '">'
+               + '<span class="g-ico">' + sk.icon + '</span>'
+               + '<span class="g-n">' + escHtml(sk.name) + '</span>'
+               + '<span class="g-x">+' + S.gains[id] + ' XP</span></div>';
+    });
+
+    var nextDue = null;
+    for (var k in d.srs) { var s = d.srs[k]; if (s && s.due && (!nextDue || s.due < nextDue)) nextDue = s.due; }
+    var whenTxt = T.doneNextNone;
+    if (nextDue) {
+        var off = daysBetween(today(), nextDue);
+        whenTxt = T.doneNext(off <= 0 ? T.todayW : off === 1 ? T.tomorrow : T.inDays(off));
+    }
+
+    document.getElementById('prInner').innerHTML =
+        '<div class="pr-done">'
+      + '<div class="d-ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="rbg" cx="60" cy="60" r="54"/>'
+      + '<circle class="rfill" cx="60" cy="60" r="54" stroke-dasharray="' + circ.toFixed(1) + '" stroke-dashoffset="' + (circ - circ * pct).toFixed(1) + '"/></svg>'
+      + '<div class="lab"><b>+' + S.gained + '</b><span>XP</span></div></div>'
+      + '<h2>' + escHtml(T.doneTitle) + '</h2>'
+      + '<p>' + escHtml(T.doneSub(S.firstRight, S.base) + ' ' + whenTxt) + '</p>'
+      + (gains ? '<div class="pr-gains">' + gains + '</div>' : '')
+      + '<div class="d-acts">'
+      + '<button class="btn btn-ghost" id="prDone">' + escHtml(T.close) + '</button>'
+      + '<button class="btn btn-primary" id="prAgain">' + escHtml(T.again) + '</button>'
+      + '</div></div>';
+
+    document.getElementById('prDots').innerHTML = '';
+    document.getElementById('prCount').textContent = '';
+    document.getElementById('prFoot').style.display = 'none';
+    document.getElementById('prDone').onclick = function(){ document.getElementById('prFoot').style.display = ''; endSession(); };
+    document.getElementById('prAgain').onclick = function(){
+        var sk = S.skill;
+        document.getElementById('prFoot').style.display = '';
+        endSession();
+        startSession(sk);
+    };
+    if (typeof mwlEvent === 'function') mwlEvent('skill_uebung_beendet', { fragen: S.base, richtig: S.firstRight, xp: S.gained });
+}
+
+/* Serie: ein Tag mit mindestens einer Runde. Gestern + heute = Serie laeuft,
+   eine Luecke setzt zurueck. Der Bestwert bleibt stehen. */
+function bumpStreak(d){
+    var t = today();
+    if (!d.streak) d.streak = { last:null, days:0, best:0 };
+    if (d.streak.last === t) return;
+    d.streak.days = (d.streak.last === dayPlus(-1)) ? d.streak.days + 1 : 1;
+    d.streak.last = t;
+    if (d.streak.days > (d.streak.best || 0)) d.streak.best = d.streak.days;
+    if (d.streak.days > 1) setTimeout(function(){ showToast(T.streakOn(d.streak.days), 'flame'); }, 1400);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   BERICHTSHEFT-AUSWERTUNG
+   Belegte Praxis zaehlt, aber weniger als eine beantwortete Frage: ein
+   Stichwort war frueher bis zu 50 XP wert — mehr als die schwerste Frage
+   im Baum. Deshalb halbiert und je Eintrag und Thema bei 25 gedeckelt.
+   ══════════════════════════════════════════════════════════════ */
+var SCAN_SCALE = 0.5, SCAN_CAP = 25;
+var KEYWORD_MAP = {
+    docker:{docker:50,cicd:10},container:{docker:40},kubernetes:{kubernetes:50,docker:10,cloud:10},k8s:{kubernetes:50,docker:10},
+    'ci/cd':{cicd:50},pipeline:{cicd:40},jenkins:{cicd:40},'github actions':{cicd:45},
+    monitoring:{monitoring:40},grafana:{monitoring:45},prometheus:{monitoring:45},
+    aws:{cloud:50},azure:{cloud:50},gcloud:{cloud:50},cloud:{cloud:40},
+    api:{api:40},rest:{api:45},endpoint:{api:35},
+    datenbank:{database:40},sql:{database:45},mysql:{database:45},postgresql:{database:45},mongodb:{database:40},migration:{database:30},
+    authentifizierung:{auth:45},login:{auth:30},oauth:{auth:50},jwt:{auth:45},sicherheit:{auth:35,hardening:20},
+    server:{serverlogic:35,admin:15},backend:{serverlogic:30},microservice:{microservices:45},
+    html:{html_css:35},css:{html_css:35},scss:{html_css:35},tailwind:{html_css:40,frameworks:15},
+    javascript:{javascript:40},typescript:{javascript:45},react:{frameworks:45,javascript:15},vue:{frameworks:45,javascript:15},angular:{frameworks:45,javascript:15},
+    responsive:{responsive:40},'media query':{responsive:35},barrierefreiheit:{ux:45},accessibility:{ux:45},usability:{ux:35},
+    netzwerk:{tcp_ip:30},tcp:{tcp_ip:40},subnet:{tcp_ip:45},firewall:{firewall:45},vpn:{firewall:40},dns:{dns_dhcp:40},dhcp:{dns_dhcp:40},
+    router:{switching:40},vlan:{switching:45},wlan:{wlan:40},wifi:{wlan:35},
+    linux:{shell:25,admin:25},bash:{shell:45},shell:{shell:40},script:{shell:30},powershell:{shell:35},'active directory':{admin:45},gruppenrichtlinie:{admin:40},
+    vm:{virtualisierung:40},virtualbox:{virtualisierung:40},vmware:{virtualisierung:45},'hyper-v':{virtualisierung:45},proxmox:{virtualisierung:45},
+    backup:{backup:45},restore:{backup:35},recovery:{backup:35},raid:{backup:30},hardening:{hardening:45},
+    dokumentation:{doku:40},wiki:{doku:35},readme:{doku:30},protokoll:{doku:30},
+    team:{teamwork:30},meeting:{teamwork:25},besprechung:{teamwork:25},'code review':{teamwork:30},
+    debugging:{problemloesung:40},fehlersuche:{problemloesung:40},troubleshoot:{problemloesung:45},analyse:{problemloesung:30},
+    vortrag:{praesentation:45},'präsentation':{praesentation:50},schulung:{praesentation:35,teamwork:15},
+    zeitplan:{zeitmanagement:40},deadline:{zeitmanagement:35},priorisierung:{zeitmanagement:40},sprint:{zeitmanagement:30,teamwork:10},
+    ticket:{zeitmanagement:25},jira:{zeitmanagement:30},scrum:{zeitmanagement:30,teamwork:20},kanban:{zeitmanagement:30},
+    git:{cicd:20,doku:10},deploy:{cicd:30,docker:15},terraform:{cloud:40,cicd:15},ansible:{admin:35,cicd:15},
+    nginx:{serverlogic:30,admin:15},apache:{serverlogic:30,admin:15},node:{serverlogic:35,javascript:15},python:{serverlogic:30,shell:15},
+    java:{serverlogic:35},php:{serverlogic:30},webseite:{html_css:20,javascript:10},webapp:{frameworks:25,javascript:15}
+};
+function getScannedIds(){ try { var s = localStorage.getItem(SCAN_HISTORY_KEY); return s ? JSON.parse(s) : []; } catch (e) { return []; } }
+function saveScannedIds(a){ try { localStorage.setItem(SCAN_HISTORY_KEY, JSON.stringify(a)); } catch (e) {} }
+function getBerichtsheftEntries(){ try { var r = localStorage.getItem('berichtsheft_reports'); return r ? JSON.parse(r) : []; } catch (e) { return []; } }
+function getTimeTrackerEntries(){
+    try {
+        var r = localStorage.getItem('tg_pro_data'); if (!r) return [];
+        var d = JSON.parse(r);
+        return (d.entries || []).filter(function(e){ return e.info && e.info.trim(); });
+    } catch (e) { return []; }
+}
+function scanText(text){
+    var lower = text.toLowerCase(), out = {};
+    for (var kw in KEYWORD_MAP) {
+        if (lower.indexOf(kw) < 0) continue;
+        var m = KEYWORD_MAP[kw];
+        for (var sid in m) { if (!SKILL_INDEX[sid]) continue; out[sid] = (out[sid] || 0) + m[sid]; }
+    }
+    for (var s in out) out[s] = Math.min(SCAN_CAP, Math.round(out[s] * SCAN_SCALE));
+    return out;
+}
 function openScanModal(){
     document.getElementById('scanBackdrop').classList.add('open');
-    document.getElementById('scanProgressFill').style.width='0%';
-    document.getElementById('scanStatus').textContent='Bereit zum Scannen';
-    document.getElementById('scanResults').style.display='none';
-    document.getElementById('scanResults').innerHTML='';
-    var b=document.getElementById('btnStartScan');b.disabled=false;b.textContent='Scan starten';
+    document.getElementById('scanProgressFill').style.width = '0%';
+    document.getElementById('scanStatus').textContent = T.scanReady;
+    var r = document.getElementById('scanResults'); r.style.display = 'none'; r.innerHTML = '';
+    var b = document.getElementById('btnStartScan'); b.disabled = false; b.textContent = T.scanBtn;
 }
-function closeScanModal(){document.getElementById('scanBackdrop').classList.remove('open');}
-function getBerichtsheftEntries(){try{var raw=localStorage.getItem('berichtsheft_reports');return raw?JSON.parse(raw):[];}catch(e){return[];}}
-function getTimeTrackerEntries(){try{var raw=localStorage.getItem('tg_pro_data');if(!raw)return[];var d=JSON.parse(raw);return(d.entries||[]).filter(function(e){return e.info&&e.info.trim();});}catch(e){return[];}}
-function scanWithKeywords(text){var lower=text.toLowerCase(),results={};for(var kw in KEYWORD_MAP){if(lower.indexOf(kw)>=0){var map=KEYWORD_MAP[kw].skills;for(var sid in map){if(!results[sid])results[sid]=0;results[sid]+=map[sid];}}}return results;}
+function closeScanModal(){ document.getElementById('scanBackdrop').classList.remove('open'); }
 
 async function startScan(){
-    var btn=document.getElementById('btnStartScan');
-    btn.disabled=true;btn.textContent='Scannt…';
+    var btn = document.getElementById('btnStartScan');
+    btn.disabled = true; btn.textContent = T.scanBtnRun;
     document.getElementById('btnScan').classList.add('scanning');
 
-    var reports=getBerichtsheftEntries(), ttEntries=getTimeTrackerEntries(), scannedIds=getScannedIds();
-    var entries=[];
-    reports.forEach(function(r){
-        var id='bh_'+r.id;if(scannedIds.indexOf(id)>=0)return;
-        var text=(r.activities||'');
-        if(r.dailyActivities){for(var day in r.dailyActivities)text+=' '+r.dailyActivities[day];}
-        if(r.school)text+=' '+r.school;
-        if(text.trim())entries.push({id:id,text:text.trim(),date:r.dateFrom||r.createdAt||''});
+    var scanned = getScannedIds(), entries = [];
+    getBerichtsheftEntries().forEach(function(r){
+        var id = 'bh_' + r.id; if (scanned.indexOf(id) >= 0) return;
+        var text = r.activities || '';
+        if (r.dailyActivities) for (var day in r.dailyActivities) text += ' ' + r.dailyActivities[day];
+        if (r.school) text += ' ' + r.school;
+        if (text.trim()) entries.push({ id:id, text:text.trim(), date:r.dateFrom || r.createdAt || '' });
     });
-    ttEntries.forEach(function(e){var id='tt_'+e.id;if(scannedIds.indexOf(id)>=0)return;if(e.info&&e.info.trim())entries.push({id:id,text:e.info.trim(),date:e.date||''});});
+    getTimeTrackerEntries().forEach(function(e){
+        var id = 'tt_' + e.id; if (scanned.indexOf(id) >= 0) return;
+        if (e.info && e.info.trim()) entries.push({ id:id, text:e.info.trim(), date:e.date || '' });
+    });
 
-    if(entries.length===0){
-        document.getElementById('scanStatus').textContent='Keine neuen Einträge gefunden. Schreibe zuerst etwas ins Berichtsheft!';
-        document.getElementById('scanProgressFill').style.width='100%';
-        btn.textContent='Fertig';btn.disabled=false;
+    if (!entries.length) {
+        document.getElementById('scanStatus').textContent = T.scanNone;
+        document.getElementById('scanProgressFill').style.width = '100%';
+        btn.textContent = T.scanBtnDone; btn.disabled = false;
         document.getElementById('btnScan').classList.remove('scanning');
         return;
     }
 
-    document.getElementById('scanStatus').textContent=entries.length+' neue Einträge gefunden. Analysiere…';
-    var allResults={}, newScanned=[];
-    for(var i=0;i<entries.length;i++){
-        var entry=entries[i], pct=Math.round(((i+1)/entries.length)*100);
-        document.getElementById('scanProgressFill').style.width=pct+'%';
-        document.getElementById('scanStatus').textContent='Analysiere Eintrag '+(i+1)+'/'+entries.length+'…';
-        var skillXps=scanWithKeywords(entry.text);
-        for(var sid in skillXps){var xp=skillXps[sid];if(xp<=0)continue;addXp(sid,xp,entry.text.substring(0,120),entry.date);if(!allResults[sid])allResults[sid]=0;allResults[sid]+=xp;}
-        newScanned.push(entry.id);
-        await new Promise(function(r){setTimeout(r,45);});
+    document.getElementById('scanStatus').textContent = T.scanFound(entries.length);
+    var d = loadData(), all = {}, fresh = [];
+    for (var i = 0; i < entries.length; i++) {
+        var entry = entries[i];
+        document.getElementById('scanProgressFill').style.width = Math.round((i + 1) / entries.length * 100) + '%';
+        document.getElementById('scanStatus').textContent = T.scanStep(i + 1, entries.length);
+        var hits = scanText(entry.text);
+        for (var sid in hits) {
+            if (hits[sid] <= 0) continue;
+            addXp(d, sid, hits[sid], entry.text.substring(0, 110), entry.date || today());
+            all[sid] = (all[sid] || 0) + hits[sid];
+        }
+        fresh.push(entry.id);
+        await new Promise(function(r){ setTimeout(r, 35); });
     }
-    scannedIds=scannedIds.concat(newScanned);saveScannedIds(scannedIds);
+    d.lastScan = today();
+    saveData(d);
+    saveScannedIds(scanned.concat(fresh));
 
-    document.getElementById('scanProgressFill').style.width='100%';
-    var resDiv=document.getElementById('scanResults'), resHtml='';
-    var sorted=Object.keys(allResults).sort(function(a,b){return allResults[b]-allResults[a];});
-    sorted.forEach(function(sid){var def=findSkillDef(sid);if(!def)return;resHtml+='<div class="scan-res-item"><span class="scan-res-skill" style="color:'+def.branch.color+'">'+ic(sid,16)+'<span>'+escHtml(def.skill.name)+'</span></span><span class="scan-res-xp">+'+allResults[sid]+' XP</span></div>';});
-    if(sorted.length===0)resHtml='<div class="sheet-empty">Keine Skills erkannt. Versuche detailliertere Einträge!</div>';
-    resDiv.innerHTML=resHtml;resDiv.style.display='block';
-
-    var totalGained=0;for(var s in allResults)totalGained+=allResults[s];
-    document.getElementById('scanStatus').textContent=entries.length+' Einträge gescannt · +'+totalGained+' XP vergeben';
-    btn.textContent='Fertig';btn.disabled=false;
-    document.getElementById('btnScan').classList.remove('scanning');
-
-    renderAll();
-    if(totalGained>0)showToast('+'+totalGained+' XP aus dem Berichtsheft!','target');
-}
-
-/* ─── MANUAL XP ─── */
-function openManualAdd(preselect){
-    var sel=document.getElementById('manualSkill'), opts='';
-    SKILL_BRANCHES.forEach(function(b){
-        opts+='<optgroup label="'+escHtml(b.name)+'">';
-        b.skills.forEach(function(s){opts+='<option value="'+s.id+'"'+(s.id===preselect?' selected':'')+'>'+escHtml(s.name)+'</option>';});
-        opts+='</optgroup>';
+    document.getElementById('scanProgressFill').style.width = '100%';
+    var box = document.getElementById('scanResults'), html = '';
+    Object.keys(all).sort(function(a, b){ return all[b] - all[a]; }).forEach(function(sid){
+        var sk = SKILL_INDEX[sid]; if (!sk) return;
+        html += '<div class="scan-res-item"><span class="scan-res-skill" style="color:' + sk.branch.color + '">'
+              + sk.icon + '<span>' + escHtml(sk.name) + '</span></span>'
+              + '<span class="scan-res-xp">+' + all[sid] + ' XP</span></div>';
     });
-    sel.innerHTML=opts;
-    document.getElementById('manualXp').value=30;
-    document.getElementById('manualDesc').value='';
-    document.getElementById('manualBackdrop').classList.add('open');
-}
-function closeManualModal(){document.getElementById('manualBackdrop').classList.remove('open');}
-function submitManualXp(){
-    var sid=document.getElementById('manualSkill').value;
-    var xp=parseInt(document.getElementById('manualXp').value);
-    var desc=document.getElementById('manualDesc').value.trim()||'Manuell vergeben';
-    if(!sid||isNaN(xp)||xp<1)return;
-    xp=Math.min(100,Math.max(1,xp));
-    var result=addXp(sid,xp,desc);
-    var def=findSkillDef(sid);
-    closeManualModal();
+    var total = 0; for (var s2 in all) total += all[s2];
+    box.innerHTML = html || '<div class="sheet-empty">' + escHtml(T.scanNothing) + '</div>';
+    box.style.display = 'block';
+    document.getElementById('scanStatus').textContent = T.scanDone(entries.length, total);
+    btn.textContent = T.scanBtnDone; btn.disabled = false;
+    document.getElementById('btnScan').classList.remove('scanning');
     renderAll();
-    showToast('+'+xp+' XP · '+(def?def.skill.name:sid),sid);
-    if(result.levelUp)setTimeout(function(){showToast((def?def.skill.name:sid)+' ist jetzt Level '+result.newLevel+'!','party');},1900);
+    if (total > 0) showToast(T.scanToast(total), 'zap');
+    if (typeof mwlEvent === 'function') mwlEvent('skill_berichtsheft_ausgewertet', { eintraege: entries.length, xp: total });
 }
 
-/* ─── RENDER ALL ─── */
-function renderAll(){renderSummary();renderTabs();renderGrid();}
-
-/* ─── INIT ─── */
-window.addEventListener('DOMContentLoaded',function(){
+/* ─── START ─── */
+function boot(){
+    captureCatalog();
+    document.getElementById('shAddLabel').textContent = T.practiceSkill;
     renderAll();
-    document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeSheet();closeScanModal();closeManualModal();}});
-    setTimeout(function(){document.getElementById('loading').classList.add('hide');},400);
+    setTimeout(function(){ document.getElementById('loading').classList.add('hide'); }, 300);
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+
+document.addEventListener('keydown', function(e){
+    if (S && document.getElementById('practice').classList.contains('open')) {
+        if (e.key === 'Escape') { endSession(true); return; }
+        if (!S.answered && e.key >= '1' && e.key <= '4') {
+            var b = document.querySelector('#prOpts .pr-opt[data-pos="' + (+e.key - 1) + '"]');
+            if (b) { choose(+e.key - 1); e.preventDefault(); }
+            return;
+        }
+        if (e.key === 'Enter') {
+            var nx = document.getElementById('prNext');
+            if (nx && !nx.disabled && document.getElementById('prFoot').style.display !== 'none') { nx.click(); e.preventDefault(); }
+        }
+        return;
+    }
+    if (e.key === 'Escape') { closeSheet(); closeScanModal(); }
 });
 </script>
-<!-- Theme-Sync -->
+<!-- Theme-Sync: zieht die Akzentfarbe aus den App-Einstellungen nach. -->
 <script>
 (function(){
-    function applyTheme(hex){if(!hex||typeof hex!=='string'||!/^#[0-9a-fA-F]{6}$/.test(hex))return;var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);document.documentElement.style.setProperty('--primary',hex);document.documentElement.style.setProperty('--primary-rgb',r+','+g+','+b);document.documentElement.style.setProperty('--primary-dim','rgba('+r+','+g+','+b+',0.15)');}
-    function syncTheme(){try{var raw=localStorage.getItem('tg_pro_data');if(!raw)return;var data=JSON.parse(raw);if(data&&data.settings&&data.settings.theme)applyTheme(data.settings.theme);}catch(e){}}
+    function applyTheme(hex){
+        if (!hex || typeof hex !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+        var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+        document.documentElement.style.setProperty('--primary', hex);
+        document.documentElement.style.setProperty('--primary-rgb', r+','+g+','+b);
+        document.documentElement.style.setProperty('--primary-dim', 'rgba('+r+','+g+','+b+',0.15)');
+    }
+    function syncTheme(){
+        try { var raw = localStorage.getItem('tg_pro_data'); if (!raw) return;
+              var data = JSON.parse(raw); if (data && data.settings && data.settings.theme) applyTheme(data.settings.theme); } catch (e) {}
+    }
     syncTheme();
-    window.addEventListener('storage',function(e){if(e.key==='tg_pro_data')syncTheme();});
-    document.addEventListener('visibilitychange',function(){if(!document.hidden)syncTheme();});
+    window.addEventListener('storage', function(e){ if (e.key === 'tg_pro_data') syncTheme(); });
+    document.addEventListener('visibilitychange', function(){ if (!document.hidden) syncTheme(); });
 })();
 </script>
 <!-- Cloudflare Web Analytics (lazy + skip Localhost) -->
