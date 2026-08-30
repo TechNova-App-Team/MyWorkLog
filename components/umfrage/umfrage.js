@@ -15,6 +15,29 @@
     function umfHasVoted()    { try { return !!localStorage.getItem(UMF_LS_VOTED); }     catch (e) { return false; } }
     function umfDismissed()   { try { return !!localStorage.getItem(UMF_LS_DISMISSED); } catch (e) { return false; } }
 
+    // Der Banner fragt nach Zahlungsbereitschaft. Wer die App noch nie benutzt hat,
+    // kann die Frage nicht beantworten - und bei einem Erstbesucher waere sie die
+    // allererste Interaktion ueberhaupt. Also erst, wenn wirklich etwas erfasst ist.
+    //
+    // Bewusst ueber localStorage und ueber BEIDE Bestaende: diese Datei laeuft auf
+    // vier Seiten (App, Berichtsheft, archflow/graph, repo-report). Das `data`-Global
+    // gibt es nur in der App und landet nie auf `window` - ein `window.data`-Guard
+    // waere hier immer falsch.
+    //
+    // Laesst sich der Bestand nicht lesen (kaputtes JSON), gilt "nicht gezeigt".
+    // Bei einer Umfrage ist Stillschweigen der harmlosere Fehlschluss.
+    function umfHatGenutzt() {
+        try {
+            const bh = JSON.parse(localStorage.getItem('berichtsheft_reports') || '[]');
+            if (Array.isArray(bh) && bh.length > 0) return true;
+        } catch (e) {}
+        try {
+            const d = JSON.parse(localStorage.getItem('tg_pro_data') || 'null');
+            if (d && Array.isArray(d.entries) && d.entries.length > 0) return true;
+        } catch (e) {}
+        return false;
+    }
+
     function openUmfrage() {
         const modal = document.getElementById('umfrageModal');
         if (!modal) return;
@@ -123,14 +146,15 @@
 
     // ── Banner (Dashboard + Berichtsheft) ─────────────────────────
     // Sichtbarkeit hat EINE Funktion, die nach jeder Aenderung laeuft —
-    // nicht darauf verlassen, dass ein anderer Pfad das nachholt. Bewusst
-    // ohne Nutzungs-Schwelle: soll sofort sichtbar sein, egal ob neuer
-    // oder bestehender User (und die Berichtsheft-Seite hat kein globales
-    // `data` der SPA, auf das man hier warten koennte).
+    // nicht darauf verlassen, dass ein anderer Pfad das nachholt.
+    //
+    // Die Schwelle (umfHatGenutzt) kam dazu, als die Seite auf TikTok beworben
+    // wurde: vorher lief der Banner bewusst ohne sie, was fuer Bestandsnutzer
+    // richtig war, einem Erstbesucher aber als erstes eine Preisfrage vorlegte.
     function umfApplyBanner() {
         const banner = document.getElementById('umfrageBanner');
         if (!banner) return;
-        const zeigen = !umfHasVoted() && !umfDismissed();
+        const zeigen = umfHatGenutzt() && !umfHasVoted() && !umfDismissed();
         banner.style.display = zeigen ? 'flex' : 'none';
     }
 
