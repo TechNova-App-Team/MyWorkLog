@@ -13,9 +13,9 @@
         content="Berichtsheft Generator: IHK-konformes Berichtsheft erstellen mit lokaler KI. Automatische Einträge, Prüfungsvorbereitung, AES-256 verschlüsselt & DSGVO-konform.">
     <meta name="keywords"
         content="Berichtsheft Generator, IHK-konformes Berichtsheft, digitales Berichtsheft, Berichtsheft erstellen, Berichtsheft App, lokale KI Berichtsheft, Ausbildungsnachweis, IHK Berichtsheft, Auszubildende Berichtsheft, online Berichtsheft, Fachinformatiker Berichtsheft, Berichtsheft offline">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.4.15"></script>
-    <script defer src="/Assets/js/mwl-codec.js?v=6.4.15"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.4.15"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.4.16"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.4.16"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.4.16"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -6815,9 +6815,9 @@
             color: var(--text-main);
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.4.15"></script>
-    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=6.4.15">
-    <script defer src="/Assets/js/version-loader.js?v=6.4.15"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.4.16"></script>
+    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=6.4.16">
+    <script defer src="/Assets/js/version-loader.js?v=6.4.16"></script>
 </head>
 
 <body>
@@ -8023,11 +8023,11 @@ Beispiel:
             </div>
         </div>
     </div>
-    <script defer src="/components/umfrage/umfrage.js?v=6.4.15"></script>
+    <script defer src="/components/umfrage/umfrage.js?v=6.4.16"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="/Assets/js/berichtsheft/ihk-formulare.js?v=6.4.15"></script>
-    <script src="/Assets/js/berichtsheft/foto-import.js?v=6.4.15"></script>
+    <script src="/Assets/js/berichtsheft/ihk-formulare.js?v=6.4.16"></script>
+    <script src="/Assets/js/berichtsheft/foto-import.js?v=6.4.16"></script>
 
     <!-- ===== FOTO-IMPORT — Papier-Berichtsheft abfotografieren ===== -->
     <div class="foto-overlay" id="fotoImport" role="dialog" aria-modal="true" aria-labelledby="fotoTitle">
@@ -10000,7 +10000,13 @@ Beispiel:
                 dailyHours: dailyHours,
                 dailySchool: dailySchool,
                 instruction: document.getElementById('reportInstruction').value,
-                school: document.getElementById('reportSchool').value,
+                // #reportSchool ist das WOECHENTLICHE Berufsschulfeld und im Tagesmodus per
+                // setMode() ausgeblendet. Wer es dort trotzdem ausliest, druckt einen Block
+                // "Berufsschule" in Vorschau und PDF, den im Formular niemand sehen oder
+                // aendern kann. Im Tagesmodus traegt der Schalter je Tag (dailySchool) die
+                // Angabe — ein zweiter Traeger derselben Tatsache waere nur eine Quelle fuer
+                // Widersprueche.
+                school: currentMode === 'daily' ? '' : document.getElementById('reportSchool').value,
                 hours: parseFloat(document.getElementById('reportHours').value) || 0,
                 status: document.getElementById('reportStatus').value,
                 createdAt: editingId ? (reports.find(r => r.id === editingId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
@@ -11596,6 +11602,7 @@ Beispiel:
                 mode: currentMode,
                 dailyActivities: currentMode === 'daily' ? getDailyActivitiesFromForm() : null,
                 dailyHours: currentMode === 'daily' ? getDailyHoursFromForm() : null,
+                dailySchool: currentMode === 'daily' ? getDailySchoolFromForm() : null,
                 savedAt: Date.now()
             };
 
@@ -11634,7 +11641,7 @@ Beispiel:
                         if (draft.mode) {
                             setMode(draft.mode);
                             if (draft.mode === 'daily' && draft.dailyActivities) {
-                                setTimeout(() => setDailyFieldsFromData(draft.dailyActivities, draft.dailyHours), 50);
+                                setTimeout(() => setDailyFieldsFromData(draft.dailyActivities, draft.dailyHours, draft.dailySchool), 50);
                             }
                         }
                     }
@@ -12803,10 +12810,23 @@ Beispiel:
             // SCHOOL TOPIC DATABASE
             // ═══════════════════════════════════════
 
+            // Eigene Berufe (Freitext im Profil) stehen nicht in PROFESSIONS und haben
+            // deshalb keine Faecherliste. Ohne Rueckfallebene gab generateSchoolEntry dort
+            // null zurueck — der Schultag verlor sein Fach und der Tag fiel auf den
+            // generischen Zweig zurueck, also auf Betriebs-Floskeln. Diese Faecher stehen
+            // in JEDEM Rahmenlehrplan, sind also fuer einen unbekannten Beruf keine
+            // Erfindung, sondern die ehrliche Untermenge.
+            const UNIVERSAL_SCHULFAECHER = [
+                'Wirtschafts- und Sozialkunde', 'Fachtheorie', 'Fachrechnen',
+                'Deutsch und Kommunikation', 'Politik und Gesellschaftslehre',
+                'Arbeits- und Tarifrecht', 'Arbeitssicherheit und Gesundheitsschutz',
+                'Qualitätsmanagement', 'Datenschutz und Datensicherheit', 'Englisch im Beruf',
+            ];
+
             function generateSchoolEntry(profession, yearNum, form = 'stichpunkte') {
                 const prof = PROFESSIONS[profession];
-                if (!prof || !prof.schoolTopics) return null;
-                const topic = pickRandom(prof.schoolTopics);
+                const topic = pickRandom((prof && prof.schoolTopics) || UNIVERSAL_SCHULFAECHER);
+                if (!topic) return null;
                 return pickRandom((SCHUL_FORMATE[form] || SCHUL_FORMATE.stichpunkte)(topic));
             }
 
@@ -13349,14 +13369,19 @@ Beispiel:
                 const nurMuster = form !== 'stichpunkte';
 
                 const prof = PROFESSIONS[professionId];
+
+                // Ein Berufsschultag ist ein Schultag, auch wenn der Beruf ein Freitext ist.
+                // Die Abfrage stand frueher NACH `if (!prof) return generateGenericDayEntries()`
+                // — eigene Berufe bekamen an ihren Schultagen deshalb Betriebs-Floskeln aus
+                // dem Universal-Pool, und der Tag kam mit isSchoolDay:false zurueck.
+                if (isSchoolDay) {
+                    return generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases, form, umfang);
+                }
+
                 if (!prof) return generateGenericDayEntries(options);
 
                 const entryCount = UMFANG_COUNT[umfang] || UMFANG_COUNT.mittel;
                 const numEntries = entryCount.min + Math.floor(Math.random() * (entryCount.max - entryCount.min + 1));
-
-                if (isSchoolDay) {
-                    return generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases, form, umfang);
-                }
 
                 const entries = [];
                 const usedVerbs = [];
@@ -14260,7 +14285,12 @@ Beispiel:
                     // Modal closed OR daily fields don't exist yet: open it normally
                     openNewReportModal();
                 }
-                // Modal open and daily fields exist: just fill them
+                // Der Name der Funktion war bisher eine Zusage ohne Deckung: die Tagesfelder
+                // bleiben nach einem Wechsel auf "Woechentlich" im DOM stehen, also war
+                // dailyFieldsExist wahr und der Modus blieb woechentlich. Die AI-Eintraege
+                // landeten dann in ausgeblendeten Feldern, waehrend saveReport den leeren
+                // Wochentext gespeichert hat.
+                if (currentMode !== 'daily') setMode('daily');
 
                 // Wait for daily fields to exist, then fill
                 _waitForDailyFields(callback);
@@ -14309,17 +14339,19 @@ Beispiel:
                             hoursInput.value = day.hours;
                             hoursInput.dispatchEvent(new Event('input'));
                         }
-                    }
-                    if (typeof updateDailyTotalHours === 'function') updateDailyTotalHours();
-
-                    // Fill school
-                    const schoolDay = week.days.find(d => d.isSchoolDay && d.schoolTopic);
-                    if (schoolDay) {
-                        const schoolTextarea = document.getElementById('reportSchool');
-                        if (schoolTextarea && !schoolTextarea.value.trim()) {
-                            schoolTextarea.value = schoolDay.schoolTopic;
+                        // Der Schultag-Schalter des Tages gehoert mit uebertragen. Fehlte er,
+                        // stand der Berufsschultag im Bericht wie ein normaler Arbeitstag da —
+                        // und das Schulthema landete stattdessen im WOECHENTLICHEN Feld
+                        // #reportSchool, das im Tagesmodus ausgeblendet ist. Ergebnis war ein
+                        // unerreichbarer Block "Berufsschule" mit einem einzelnen Satz unter
+                        // dem Bericht. Der Schalter traegt die Angabe jetzt am richtigen Tag.
+                        const schoolCb = document.getElementById(`daily_school_${day.index}`);
+                        if (schoolCb) {
+                            schoolCb.checked = !!day.isSchoolDay;
+                            if (typeof toggleSchoolDay === 'function') toggleSchoolDay(schoolCb);
                         }
                     }
+                    if (typeof updateDailyTotalHours === 'function') updateDailyTotalHours();
 
                     // Set hours
                     const hoursInput = document.getElementById('reportHours');
@@ -14359,6 +14391,11 @@ Beispiel:
                     if (hoursInput) {
                         hoursInput.value = dayData.hours;
                         hoursInput.dispatchEvent(new Event('input'));
+                    }
+                    const schoolCb = document.getElementById(`daily_school_${dayIndex}`);
+                    if (schoolCb) {
+                        schoolCb.checked = !!dayData.isSchoolDay;
+                        if (typeof toggleSchoolDay === 'function') toggleSchoolDay(schoolCb);
                     }
                     if (typeof updateDailyTotalHours === 'function') updateDailyTotalHours();
                     showToast(`${dayData.name} in Tagesfeld eingefügt`, 'success');
@@ -15454,6 +15491,7 @@ Beispiel:
                         '✗ Verboten: "Ich habe…", "Heute war ich…", ganze Sätze, Bewertungen ("viel gelernt").',
                     ],
                     beispiel: '["Wartungsprotokolle der Vorwoche gesichtet","Defekte Baugruppe ausgetauscht","Ergebnisse im Prüfbericht dokumentiert"]',
+                    schulBeispiel: '["Rechtsformen von Unternehmen im Unterricht behandelt","Übungsaufgaben zur Kaufvertragsstörung bearbeitet","Zusammenfassung für die Klassenarbeit erstellt"]',
                     proTag: '3-5 Stichpunkte',
                 },
                 saetze: {
@@ -15465,6 +15503,7 @@ Beispiel:
                         '✗ Verboten: Ich-Form ("Ich habe…"), Stichpunkte ohne Verb, Bewertungen.',
                     ],
                     beispiel: '["Die Wartungsprotokolle der Vorwoche wurden gesichtet und ausgewertet.","Die defekte Baugruppe wurde ausgetauscht.","Die Ergebnisse wurden im Prüfbericht dokumentiert."]',
+                    schulBeispiel: '["Im Unterricht wurden die Rechtsformen von Unternehmen behandelt.","Übungsaufgaben zur Kaufvertragsstörung wurden bearbeitet.","Für die Klassenarbeit wurde eine Zusammenfassung erstellt."]',
                     proTag: '3-5 Sätze',
                 },
                 ichform: {
@@ -15476,6 +15515,7 @@ Beispiel:
                         '✗ Verboten: Passiv, Stichpunkte ohne Verb, Bewertungen ("hat Spaß gemacht"), "Wir haben…".',
                     ],
                     beispiel: '["Ich habe die Wartungsprotokolle der Vorwoche gesichtet.","Ich habe die defekte Baugruppe ausgetauscht.","Ich habe die Ergebnisse im Prüfbericht dokumentiert."]',
+                    schulBeispiel: '["Ich habe im Unterricht die Rechtsformen von Unternehmen behandelt.","Ich habe Übungsaufgaben zur Kaufvertragsstörung bearbeitet.","Ich habe für die Klassenarbeit eine Zusammenfassung erstellt."]',
                     proTag: '3-5 Sätze',
                 },
                 fliesstext: {
@@ -15487,6 +15527,7 @@ Beispiel:
                         '✗ Verboten: Aufzählungen, Zeilenumbrüche, Spiegelstriche, mehr als ein Array-Element.',
                     ],
                     beispiel: '["Am Montag habe ich zunächst die Wartungsprotokolle der Vorwoche gesichtet und ausgewertet. Anschließend habe ich die defekte Baugruppe ausgetauscht und einen Funktionstest durchgeführt. Zum Abschluss habe ich die Ergebnisse im Prüfbericht dokumentiert."]',
+                    schulBeispiel: '["Am Donnerstag habe ich in der Berufsschule zunächst die Rechtsformen von Unternehmen behandelt. Anschließend habe ich Übungsaufgaben zur Kaufvertragsstörung bearbeitet. Zum Abschluss habe ich für die Klassenarbeit eine Zusammenfassung erstellt."]',
                     proTag: 'GENAU 1 Absatz (ein Array-Element)',
                 },
             };
@@ -15515,7 +15556,9 @@ Beispiel:
                         ? '· 2. LJ: eigenständige Routine-Aufgaben, beginnende Verantwortung'
                         : '· 3. LJ: komplexe/eigenverantwortliche Aufgaben, Anleitung von Jüngeren';
 
-                const schoolTopicsHint = (prof?.schoolTopics || []).slice(0, 5).join(', ');
+                // Eigene Berufe haben keine Faecherliste — dann die universellen Faecher
+                // nennen statt "Rahmenlehrplan", sonst erfindet das Modell sich eines.
+                const schoolTopicsHint = ((prof?.schoolTopics?.length ? prof.schoolTopics : UNIVERSAL_SCHULFAECHER) || []).slice(0, 5).join(', ');
 
                 // Wochen-Stimmung (UI: Mood-Cards Normal/Projekt/Schule/Support/Prüfung)
                 const themeMap = {
@@ -15590,6 +15633,19 @@ ${lines.join('\n')}
                     }
                 }
 
+                // 🔴 Ein Schultag-Beispiel im Formatblock wiegt schwerer als jede Regel
+                // weiter unten (siehe .claude/notes/berichtsheft.md). Ohne es hat das Modell
+                // die Schultage regelmaessig mit Betriebs-Taetigkeiten gefuellt: im Beispiel
+                // stand nur ein Tag mit isSchoolDay:false, und danach richtet es sich.
+                const _schulIdxs = (Array.isArray(options.schoolDayIndices) ? options.schoolDayIndices : [])
+                    .filter(i => options.selectedDays.includes(i));
+                const _hatSchule = _schulIdxs.length > 0;
+                const _schulTagName = _hatSchule ? DAY_NAMES[_schulIdxs[0]] : '';
+                const _schulBeispielZeile = _hatSchule
+                    ? `,
+  {"day":"${_schulTagName}","entries":${F.schulBeispiel || F.beispiel},"hours":8,"isSchoolDay":true,"schoolTopic":"Wirtschafts- und Sozialkunde"}`
+                    : '';
+
                 const systemPrompt = `${retryPrefix}Du bist Auszubildender zum ${profName} im ${options.yearNum}. Lehrjahr und schreibst deinen wöchentlichen IHK-Berichtsheft.
 
 [KRITISCH — ANTWORT-FORMAT]
@@ -15597,7 +15653,7 @@ Antwort = JSON-ARRAY mit GENAU ${options.selectedDays.length} VOLLSTÄNDIGEN Tag
 
 ✓ RICHTIG — Schreibform ${F.name}. Nur die STRUKTUR UND DIE FORM nachbauen; der Inhalt ist ein Beispiel eines anderen Berufs und wird NIEMALS wörtlich übernommen:
 [
-  {"day":"Montag","entries":${F.beispiel},"hours":8,"isSchoolDay":false,"schoolTopic":null}
+  {"day":"Montag","entries":${F.beispiel},"hours":8,"isSchoolDay":false,"schoolTopic":null}${_schulBeispielZeile}
 ]
 (Insgesamt ${options.selectedDays.length} Tage — jeder Tag mit EIGENEN, konkreten Tätigkeiten, jeder Tag ${F.proTag}.)
 
@@ -15621,12 +15677,14 @@ ${F.stil.map(r => '- ' + r).join('\n')}
 [INHALT]
 - ${mengeText}, immer hours=8 (Schultag: 8h Schule oder 6h+2h Betrieb).
 - ${options.yearNum}. Lehrjahr. ${ljHint}
-- Kein Tag wiederholt sich. Bleibe strikt im Beruf "${profName}" — kein bereichsfremder Inhalt.
+- Kein Tag wiederholt sich. Bleibe an Betriebstagen strikt im Beruf "${profName}" — kein bereichsfremder Inhalt. An Schultagen zählt stattdessen der Unterrichtsstoff (siehe [SCHULE]).
 - Saison: ${getCurrentSeason()}${options.department ? `. Abteilung: ${options.department}` : ''}${themeBlock}
 
-[SCHULE] ${(Array.isArray(options.schoolDayIndices) && options.schoolDayIndices.length > 0)
-                        ? `Schultage sind EXAKT: ${options.schoolDayIndices.map(i => DAY_NAMES[i]).join(', ')} — keine anderen Tage.
-- An diesen Schultagen: isSchoolDay=true (boolean), schoolTopic="<konkretes Fach z.B. ${schoolTopicsHint || 'Rahmenlehrplan'}>", entries=[Schul-Themen die behandelt wurden, in derselben Schreibform ${F.name} wie oben — NICHT Betriebs-Tätigkeiten]. Verschiedene Fächer pro Schultag.
+[SCHULE] ${_hatSchule
+                        ? `Schultage sind EXAKT: ${_schulIdxs.map(i => DAY_NAMES[i]).join(', ')} — keine anderen Tage. Der User hat das selbst eingestellt; es ist keine Empfehlung.
+- An diesen Schultagen: isSchoolDay=true (boolean), schoolTopic="<EIN konkretes Fach aus dieser Liste: ${schoolTopicsHint}>", pro Schultag ein ANDERES Fach.
+- entries eines Schultages beschreiben ausschließlich UNTERRICHT: behandelter Lernstoff, Lernfelder, Übungsaufgaben, Fachrechnen, Gruppenarbeit, Referat, Klassenarbeitsvorbereitung, Nachbereitung im Berufsschulheft. Dieselbe Schreibform ${F.name} wie oben.
+- ✗ An einem Schultag verboten: Betrieb, Abteilung, Kunden, Aufträge, Werkstatt, Werkzeuge, Maschinen, Tickets, Kollegen, betriebliche Dokumentation. Wer im Betrieb war, war nicht in der Schule.
 - Alle anderen Tage: isSchoolDay=false (IMMER boolean, NIEMALS null), schoolTopic=null, entries=[normale Betriebs-Tätigkeiten]`
                         : `Kein Schultag diese Woche. Alle Tage: isSchoolDay=false (IMMER boolean, NIEMALS null), schoolTopic=null.`}
 ${options.customPrompt ? `
@@ -16018,6 +16076,17 @@ ${trackingBlock}${aufgabenBlock}
                     totalHours: 0,
                 };
 
+                // 🔴 Welche Tage Berufsschule sind, hat der Nutzer in den Einstellungen
+                // festgelegt — das ist keine Frage, die das Modell beantwortet. Es hielt
+                // sich aber nicht zuverlaessig daran: mal kam isSchoolDay=false auf einem
+                // gewaehlten Tag samt Betriebs-Taetigkeiten, mal ein Schultag auf einem Tag,
+                // den niemand gewaehlt hatte. Beides sah in der Vorschau plausibel aus.
+                // Die Wahl des Nutzers gewinnt; passt der gelieferte Text nicht dazu, baut
+                // die lokale Engine den Tag neu — lieber weniger Sprachwitz als ein Tag,
+                // der das Gegenteil der Einstellung behauptet.
+                const _schulGewollt = new Set(_validSchoolIdxs);
+                let _schulKorrigiert = 0;
+
                 for (const dayData of daysData) {
                     const dayName = dayData.day || '';
                     const dayIdx = DAY_NAMES.indexOf(dayName);
@@ -16031,17 +16100,53 @@ ${trackingBlock}${aufgabenBlock}
                         cloudEntries = [cloudEntries.map(e => /[.!?]$/.test(e) ? e : e + '.').join(' ')];
                     }
 
+                    const _sollSchule = _schulGewollt.has(dayIdx);
+                    const _cloudTopic = String(dayData.schoolTopic || '').trim();
+                    // Hat das Modell den Tag ueberhaupt als Schultag verstanden? Eines der
+                    // beiden Felder reicht — wer schoolTopic setzt, hat Schulstoff geschrieben,
+                    // auch wenn das Flag fehlt. Nur wenn BEIDE fehlen, ist der Text Betrieb.
+                    const _cloudSchule = !!dayData.isSchoolDay || !!_cloudTopic;
+                    let schoolTopic = _sollSchule ? (_cloudTopic || null) : null;
+
+                    if (_sollSchule !== _cloudSchule) {
+                        const _ersatz = generateDayEntries(professionId, {
+                            yearNum: options.yearNum,
+                            umfang: options.umfang,
+                            form: options.form,
+                            dayIndex: dayIdx,
+                            isSchoolDay: _sollSchule,
+                            season: getCurrentSeason(),
+                            excludePhrases: [],
+                            department: week.department,
+                            activeTheme: options.activeTheme || null,
+                            customPrompt: options.customPrompt || '',
+                        });
+                        cloudEntries = options.form === 'fliesstext'
+                            ? alsFliesstext(_ersatz.entries, dayName)
+                            : _ersatz.entries;
+                        schoolTopic = _ersatz.schoolTopic || null;
+                        _schulKorrigiert++;
+                    } else if (_sollSchule && !schoolTopic) {
+                        // Schulstoff kam, nur die Fachbezeichnung fehlt — die traegt die
+                        // Vorschau und das Wochenfeld, also lokal nachziehen statt leer lassen.
+                        schoolTopic = generateSchoolEntry(professionId, options.yearNum, options.form) || null;
+                    }
+
                     const day = {
                         index: dayIdx,
                         name: dayName,
                         entries: cloudEntries,
                         // Echte erfasste Stunden schlagen den Schätzwert der KI
                         hours: _trackingHoursForDay(dayIdx) || dayData.hours || 8,
-                        isSchoolDay: !!dayData.isSchoolDay,
-                        schoolTopic: dayData.schoolTopic || null,
+                        isSchoolDay: _sollSchule,
+                        schoolTopic,
                     };
                     week.days.push(day);
                     week.totalHours += day.hours;
+                }
+
+                if (_schulKorrigiert > 0) {
+                    console.warn(`[AIStudio] ${_schulKorrigiert} Tag(e) wichen von der Schultag-Einstellung ab — lokal neu gebaut`);
                 }
 
                 if (week.days.length === 0) {
@@ -16094,6 +16199,14 @@ ${trackingBlock}${aufgabenBlock}
                     // Quellen-Tag: Hybrid statt rein cloud
                     week.source = 'cloud+local';
                     week.partialAI = { aiDays: week.days.length - missingDayIndices.length, localDays: missingDayIndices.length };
+                }
+
+                // Lokal neu gebaute Schultage zaehlen genauso wie nachgefuellte Tage: die
+                // Quellenangabe soll nicht "Cloud KI" behaupten, wo lokaler Text steht.
+                if (_schulKorrigiert > 0) {
+                    week.source = 'cloud+local';
+                    const _lokal = (week.partialAI?.localDays || 0) + _schulKorrigiert;
+                    week.partialAI = { aiDays: Math.max(0, week.days.length - _lokal), localDays: _lokal };
                 }
 
                 // ✦ Status-Tage (Krank/Urlaub/Feiertag) am Ende injizieren + Woche sortieren
@@ -16597,8 +16710,8 @@ ${trackingBlock}${aufgabenBlock}
     </script>
 
     <!-- BBiG-Live-Scanner -->
-    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=6.4.15">
-    <script src="/components/bbig-scanner/bbig-scanner.js?v=6.4.15"></script>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=6.4.16">
+    <script src="/components/bbig-scanner/bbig-scanner.js?v=6.4.16"></script>
     <script>
         if (typeof initBbigBerichtsheft === 'function') {
             if (document.readyState === 'loading') {
