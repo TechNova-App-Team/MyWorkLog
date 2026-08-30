@@ -67,6 +67,7 @@
             --cyan: #67e8f9;
             --cyan-rgb: 103, 232, 249;
             --border: rgba(255, 255, 255, 0.06);
+            --border-light: rgba(255, 255, 255, 0.09);
             --border-hover: rgba(255, 255, 255, 0.1);
             --border-active: rgba(139, 92, 246, 0.3);
             --font-main: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -100,6 +101,7 @@
             --text-muted: #71717a;
             --text-dim: #a1a1aa;
             --border: rgba(0, 0, 0, 0.06);
+            --border-light: rgba(0, 0, 0, 0.09);
             --border-hover: rgba(0, 0, 0, 0.1);
             --border-active: rgba(139, 92, 246, 0.25);
             --primary-dim: rgba(139, 92, 246, 0.05);
@@ -116,6 +118,18 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        /* Formularelemente erben font-family nicht — ohne diese Zeile stehen sie in der
+           Systemschrift des Betriebssystems. Element-Selektor (0,0,0,1), damit jede Klasse
+           ihn schlägt. Bewusst NUR font-family: font-size erbt hier nicht mit, sonst bricht
+           alles, was sich still auf die ~13,33 px Browser-Voreinstellung verlässt. */
+        button,
+        input,
+        select,
+        textarea,
+        optgroup {
+            font-family: inherit;
         }
 
         body {
@@ -395,20 +409,20 @@
             gap: 2px;
         }
 
+        /* Breite und Position kommen aus syncModeSliders() — die beiden Reiter sind
+           inhaltsbreit ("Wöchentlich" ist länger als "Täglich"), ein fester 50-%-Schieber
+           lag deshalb immer schief. Startwert 0, bis gemessen ist. */
         .mode-toggle-slider {
             position: absolute;
             top: 3px;
-            left: 3px;
-            width: calc(50% - 4px);
+            left: 0;
+            width: 0;
             height: calc(100% - 6px);
             background: var(--primary);
             border-radius: 6px;
-            transition: transform 0.25s var(--ease-out);
+            transition: transform 0.25s var(--ease-out), width 0.25s var(--ease-out);
             opacity: 0.12;
-        }
-
-        .mode-toggle-slider.right {
-            transform: translateX(calc(100% + 2px));
+            pointer-events: none;
         }
 
         .mode-toggle-btn {
@@ -433,16 +447,6 @@
 
         .mode-toggle-btn.active {
             color: var(--primary-light);
-        }
-
-        .mode-badge {
-            font-size: 0.58rem;
-            padding: 1px 5px;
-            background: rgba(var(--success-rgb), 0.12);
-            color: var(--success);
-            border-radius: 3px;
-            font-weight: 700;
-            letter-spacing: 0.02em;
         }
 
         /* --- TOP BAR (Streak + Progress) --- */
@@ -649,26 +653,93 @@
             color: var(--primary);
         }
 
+        /* Monatsblöcke statt eines durchlaufenden Rasters: die Beschriftung steht im
+           SELBEN Container wie die Zellen, die sie beschriftet — damit kann sie bei keiner
+           Breite gegen die Daten verrutschen. Bewusst ohne Scroll-Container, der würde
+           die Sprechblasen der Zellen kappen. */
         .calendar-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+            grid-template-columns: repeat(6, max-content);
+            justify-content: space-between;
+            gap: 16px 12px;
+            margin-bottom: 16px;
+        }
+
+        /* Eigene Grenzen statt der allgemeinen Breakpoints: die Spaltenzahl haengt
+           allein daran, wie viele Monatsbloecke nebeneinander passen. */
+        @media (max-width: 900px) {
+            .calendar-grid {
+                grid-template-columns: repeat(4, max-content);
+            }
+        }
+
+        @media (max-width: 620px) {
+            .calendar-grid {
+                grid-template-columns: repeat(3, max-content);
+                gap: 14px 10px;
+            }
+        }
+
+        /* Gemessen: bei 360 px ragen drei Monatsspalten 27 px aus der Karte, bei
+           320 px sind es 39 px. Ab hier also zwei. */
+        @media (max-width: 400px) {
+            .calendar-grid {
+                grid-template-columns: repeat(2, max-content);
+            }
+        }
+
+        /* Feste Zellengröße statt flex-grow: bricht der Streifen um, bekäme der letzte
+           Monat sonst die ganze Restbreite und seine Zellen würden (aspect-ratio: 1)
+           riesig. So sind alle Zellen in jeder Zeile gleich groß. */
+        .cal-month {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            flex: 0 0 auto;
+        }
+
+        .cal-month-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            font-weight: 600;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            line-height: 1;
+        }
+
+        .cal-month-weeks {
+            display: flex;
             gap: 3px;
-            margin-bottom: 14px;
         }
 
         .cal-cell {
-            aspect-ratio: 1;
+            flex: 0 0 auto;
+            width: 18px;
+            height: 18px;
+            padding: 0;
             border-radius: 4px;
             background: rgba(var(--primary-rgb), 0.03);
-            border: 1px solid transparent;
+            border: 1px solid var(--border);
             cursor: pointer;
             position: relative;
-            transition: all 0.15s var(--ease);
+            transition: border-color 0.15s var(--ease), transform 0.15s var(--ease);
         }
 
         .cal-cell:hover {
             border-color: var(--border-hover);
             transform: scale(1.15);
+        }
+
+        .cal-cell:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+            transform: scale(1.15);
+        }
+
+        /* Laufende Woche: Ring, damit man im Streifen sieht, wo man steht. */
+        .cal-cell.is-now {
+            box-shadow: 0 0 0 1px var(--primary-light);
         }
 
         .cal-cell.draft {
@@ -700,7 +771,8 @@
             backdrop-filter: blur(12px);
         }
 
-        .cal-cell:hover .cal-cell-tooltip {
+        .cal-cell:hover .cal-cell-tooltip,
+        .cal-cell:focus-visible .cal-cell-tooltip {
             display: block;
         }
 
@@ -6567,13 +6639,13 @@
                 border-radius: 0;
             }
 
-            .calendar-grid {
-                grid-template-columns: repeat(auto-fill, minmax(24px, 1fr));
+            .cal-cell {
+                width: 14px;
+                height: 14px;
             }
 
             .actions-row {
                 gap: 4px;
-                padding: 0 -8px;
             }
 
             .actions-row .btn {
@@ -6745,8 +6817,9 @@
                 padding: 14px;
             }
 
-            .calendar-grid {
-                grid-template-columns: repeat(auto-fill, minmax(26px, 1fr));
+            .cal-cell {
+                width: 16px;
+                height: 16px;
             }
 
             .actions-row {
@@ -7333,8 +7406,120 @@
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
         </symbol>
+        <symbol id="i-list" viewBox="0 0 24 24">
+            <line x1="8" x2="21" y1="6" y2="6" />
+            <line x1="8" x2="21" y1="12" y2="12" />
+            <line x1="8" x2="21" y1="18" y2="18" />
+            <line x1="3" x2="3.01" y1="6" y2="6" />
+            <line x1="3" x2="3.01" y1="12" y2="12" />
+            <line x1="3" x2="3.01" y1="18" y2="18" />
+        </symbol>
         <symbol id="i-dash" viewBox="0 0 24 24">
             <line x1="5" y1="12" x2="19" y2="12" />
+        </symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24">
+            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+        </symbol>
+        <symbol id="i-bulb" viewBox="0 0 24 24">
+            <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+            <path d="M9 18h6" />
+            <path d="M10 22h4" />
+        </symbol>
+        <symbol id="i-code" viewBox="0 0 24 24">
+            <path d="m16 18 6-6-6-6" />
+            <path d="m8 6-6 6 6 6" />
+        </symbol>
+        <symbol id="i-server" viewBox="0 0 24 24">
+            <rect width="20" height="8" x="2" y="2" rx="2" />
+            <rect width="20" height="8" x="2" y="14" rx="2" />
+            <line x1="6" x2="6.01" y1="6" y2="6" />
+            <line x1="6" x2="6.01" y1="18" y2="18" />
+        </symbol>
+        <symbol id="i-car" viewBox="0 0 24 24">
+            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+            <circle cx="7" cy="17" r="2" />
+            <path d="M9 17h6" />
+            <circle cx="17" cy="17" r="2" />
+        </symbol>
+        <symbol id="i-chefhat" viewBox="0 0 24 24">
+            <path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.457.316-.844.727-1.041a4 4 0 0 0-2.134-7.589 5 5 0 0 0-9.186 0 4 4 0 0 0-2.134 7.588c.411.198.727.585.727 1.041V20a1 1 0 0 0 1 1Z" />
+            <path d="M6 17h12" />
+        </symbol>
+        <symbol id="i-pulse" viewBox="0 0 24 24">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+        </symbol>
+        <symbol id="i-cart" viewBox="0 0 24 24">
+            <circle cx="8" cy="21" r="1" />
+            <circle cx="19" cy="21" r="1" />
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+        </symbol>
+        <symbol id="i-wall" viewBox="0 0 24 24">
+            <rect width="18" height="18" x="3" y="3" rx="2" />
+            <path d="M3 9h18" />
+            <path d="M3 15h18" />
+            <path d="M12 3v6" />
+            <path d="M8 9v6" />
+            <path d="M16 9v6" />
+            <path d="M12 15v6" />
+        </symbol>
+        <symbol id="i-hammer" viewBox="0 0 24 24">
+            <path d="m15 12-8.4 8.4a2.1 2.1 0 1 1-3-3L12 9" />
+            <path d="M17.6 6.8a1 1 0 0 0 0-1.4l-2-2a1 1 0 0 0-1.4 0l-2.4 2.4a1 1 0 0 0 0 1.4l2 2a1 1 0 0 0 1.4 0z" />
+            <path d="m17 8 4.5 4.5a1 1 0 0 1 0 1.4l-1.6 1.6a1 1 0 0 1-1.4 0L14 11" />
+        </symbol>
+        <symbol id="i-scissors" viewBox="0 0 24 24">
+            <circle cx="6" cy="6" r="3" />
+            <path d="M8.12 8.12 12 12" />
+            <path d="M20 4 8.12 15.88" />
+            <circle cx="6" cy="18" r="3" />
+            <path d="M14.8 14.8 20 20" />
+        </symbol>
+        <symbol id="i-package" viewBox="0 0 24 24">
+            <path d="m7.5 4.27 9 5.15" />
+            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+            <path d="m3.3 7 8.7 5 8.7-5" />
+            <path d="M12 22V12" />
+        </symbol>
+        <symbol id="i-leaf" viewBox="0 0 24 24">
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+        </symbol>
+        <symbol id="i-flask" viewBox="0 0 24 24">
+            <path d="M10 2v7.5a2 2 0 0 1-.2.9L4.7 20.5a1 1 0 0 0 .9 1.5h12.8a1 1 0 0 0 .9-1.5l-5.1-10.1a2 2 0 0 1-.2-.9V2" />
+            <path d="M8.5 2h7" />
+            <path d="M7 16h10" />
+        </symbol>
+        <symbol id="i-heartpulse" viewBox="0 0 24 24">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+            <path d="M3.22 13H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" />
+        </symbol>
+        <symbol id="i-hotel" viewBox="0 0 24 24">
+            <rect width="16" height="20" x="4" y="2" rx="2" />
+            <path d="M9 22v-4h6v4" />
+            <path d="M8 6h.01" />
+            <path d="M12 6h.01" />
+            <path d="M16 6h.01" />
+            <path d="M8 10h.01" />
+            <path d="M12 10h.01" />
+            <path d="M16 10h.01" />
+            <path d="M8 14h.01" />
+            <path d="M12 14h.01" />
+            <path d="M16 14h.01" />
+        </symbol>
+        <symbol id="i-home" viewBox="0 0 24 24">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <path d="M9 22V12h6v10" />
+        </symbol>
+        <symbol id="i-palette" viewBox="0 0 24 24">
+            <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+            <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+            <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+            <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
         </symbol>
     </svg>
 
@@ -7365,34 +7550,10 @@
                 <p class="page-subtitle">IHK-konforme Ausbildungsnachweise erstellen &amp; verwalten</p>
             </div>
             <div class="header-right">
-                <a href="/schatten-berichtsheft/" class="btn-vault" aria-label="Privater Bereich">
-                    <svg viewBox="0 0 512 512" id="Layer_1" version="1.1" xml:space="preserve"
-                        xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" fill="#000000">
-                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                        <g id="SVGRepo_iconCarrier">
-                            <style type="text/css">
-                                .st0 {
-                                    fill: #2a2a2a;
-                                }
-
-                                .st1 {
-                                    fill: #4a5662;
-                                }
-
-                                .st2 {
-                                    fill: #2a2a2a;
-                                }
-                            </style>
-                            <g>
-                                <path class="st1"
-                                    d="M194.1,244.1v-30.2c0-10.8-8.8-19.6-19.7-19.6H147c-9.4,0-17.5,6.7-19.3,15.9c-0.2,1.2-0.4,2.5-0.4,3.7v30.2c-3,1.3-5.1,4.3-5.1,7.8v49.4c0,4.7,3.8,8.5,8.5,8.5h60.1c4.7,0,8.5-3.8,8.5-8.5v-49.4c0-0.8-0.1-1.5-0.3-2.2C198.3,247.2,196.5,245.1,194.1,244.1z M178.1,243.5h-34.8v-29.6c0-0.2,0-0.5,0.1-0.7c0.3-1.7,1.8-3,3.6-3h27.5c2,0,3.7,1.6,3.7,3.6V243.5z">
-                                </path>
-                                <path class="st0"
-                                    d="M394.1,312.5c-30.6,0-57.4,15.8-72.9,39.6c-0.1-0.1-0.2-0.1-0.3-0.2l-50.4-26.5c12.7-20.1,20.1-43.9,20.1-69.4c0-18.9-4-36.9-11.3-53.1c0.4-0.2,0.8-0.4,1.1-0.7l47.2-33.2c0.1-0.1,0.2-0.2,0.3-0.2c2.9,3.4,6,6.6,9.4,9.5l33.1-30.8c-11.8-10.5-19.6-28.1-19.6-45.7c0-27.9,19.4-41.7,43.4-41.7c23.9,0,43.3,13.8,43.3,41.7c0,17.6-7.8,35.2-19.5,45.7l33.1,30.8c18.4-16,30.1-39.5,30.1-65.8c0-48.1-39-87-87-87c-48.1,0-87,38.9-87,87c0,15.8,4.2,30.6,11.5,43.3c-0.1,0.1-0.2,0.1-0.3,0.2l-46.5,32.7c-22.8-37.5-64-62.6-111.1-62.6C89,126.2,30.9,184.3,30.9,256S89,385.9,160.7,385.9c40.4,0,76.6-18.5,100.4-47.5c0.4,0.3,0.7,0.5,1.2,0.8l51.1,26.9c0.1,0.1,0.2,0.1,0.3,0.1c-4.3,10.3-6.6,21.5-6.6,33.3c0,48,39,87,87,87s87-39,87-87S442.2,312.5,394.1,312.5z M234.1,315.3c-17.3,21.4-43.8,35.1-73.4,35.1c-52.1,0-94.3-42.2-94.3-94.3s42.2-94.3,94.3-94.3c37.9,0,70.7,22.4,85.6,54.7c5.6,12,8.7,25.5,8.7,39.6C255.1,278.4,247.2,299.1,234.1,315.3z M382.5,391.5h23.2c11.5,0,20.8,10.8,20.8,24.2c0,13.3-9.3,24.2-20.8,24.2h-3.2v13.5c0,4.4-3.6,8-8,8s-8-3.6-8-8v-13.5h-16.9c-4.4,0-8-3.6-8-8s3.6-8,8-8h36.1c2.2,0,4.8-3.6,4.8-8.2s-2.6-8.2-4.8-8.2h-23.2c-11.5,0-20.8-10.8-20.8-24.2c0-13.3,9.3-24.2,20.8-24.2h4v-13.5c0-4.4,3.6-8,8-8s8,3.6,8,8v13.5h16c4.4,0,8,3.6,8,8s-3.6,8-8,8h-36.1c-2.2,0-4.8,3.6-4.8,8.2S380.3,391.5,382.5,391.5z">
-                                </path>
-                            </g>
-                        </g>
+                <a href="/schatten-berichtsheft/" class="btn-vault" aria-label="Schatten-Berichtsheft öffnen"
+                    title="Schatten-Berichtsheft">
+                    <svg class="icon">
+                        <use href="#i-lock" />
                     </svg>
                 </a>
                 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Theme wechseln">
@@ -7442,12 +7603,12 @@
                     <button class="mode-toggle-btn active" id="btnWeekly" onclick="setMode('weekly')">
                         <svg class="icon icon-sm">
                             <use href="#i-calendar" />
-                        </svg> Wöchentlich <span class="mode-badge">IHK</span>
+                        </svg> <span>Wöchentlich</span>
                     </button>
                     <button class="mode-toggle-btn" id="btnDaily" onclick="setMode('daily')">
                         <svg class="icon icon-sm">
-                            <use href="#i-calendar" />
-                        </svg> Täglich <span class="mode-badge">IHK</span>
+                            <use href="#i-list" />
+                        </svg> <span>Täglich</span>
                     </button>
                 </div>
             </div>
@@ -7488,10 +7649,10 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <span class="stat-icon"><svg class="icon">
-                            <use href="#i-file" />
+                            <use href="#i-pen" />
                         </svg></span>
-                    <div class="stat-value" id="totalReports" data-target="0">0</div>
-                    <div class="stat-label">Berichte erstellt</div>
+                    <div class="stat-value" id="signedReports" data-target="0">0</div>
+                    <div class="stat-label">Unterschrieben</div>
                 </div>
                 <div class="stat-card">
                     <span class="stat-icon"><svg class="icon">
@@ -7509,7 +7670,7 @@
                 </div>
                 <div class="stat-card">
                     <span class="stat-icon"><svg class="icon">
-                            <use href="#i-edit" />
+                            <use href="#i-file" />
                         </svg></span>
                     <div class="stat-value" id="avgWordsPerWeek" data-target="0">0</div>
                     <div class="stat-label">&Oslash; Wörter/Woche</div>
@@ -7528,16 +7689,19 @@
                             style="color:var(--text-muted);font-weight:400;font-size:0.82rem;"></span>
                     </div>
                     <div class="calendar-grid" id="calendarGrid"></div>
+                    <!-- Die Farbwerte müssen mit .cal-cell / .draft / .complete / .signed
+                         übereinstimmen — vorher stand hier 0.04/0.25/0.35 gegen 0.03/0.2/0.3
+                         in den Zellen, die Legende zeigte also andere Töne als der Streifen. -->
                     <div class="cal-legend">
                         <span class="cal-legend-item"><span class="cal-legend-dot"
-                                style="background: rgba(var(--primary-rgb), 0.04); border: 1px solid var(--border);"></span>
-                            Keine Daten</span>
+                                style="background: rgba(var(--primary-rgb), 0.03); border: 1px solid var(--border);"></span>
+                            <span>Kein Bericht</span></span>
                         <span class="cal-legend-item"><span class="cal-legend-dot"
-                                style="background: rgba(var(--primary-rgb), 0.25);"></span> Entwurf</span>
+                                style="background: rgba(var(--primary-rgb), 0.2);"></span> <span>Entwurf</span></span>
                         <span class="cal-legend-item"><span class="cal-legend-dot"
-                                style="background: rgba(var(--success-rgb), 0.35);"></span> Vollständig</span>
+                                style="background: rgba(var(--success-rgb), 0.3);"></span> <span>Vollständig</span></span>
                         <span class="cal-legend-item"><span class="cal-legend-dot"
-                                style="background: var(--success);"></span> Unterschrieben</span>
+                                style="background: var(--success);"></span> <span>Unterschrieben</span></span>
                     </div>
                 </div>
             </div>
@@ -7620,31 +7784,31 @@
                         <button class="btn-ghost" id="bulkToggle" onclick="toggleBulkMode()" style="display:none;">
                             <svg class="icon icon-sm">
                                 <use href="#i-checksq" />
-                            </svg> Mehrfachauswahl
+                            </svg> <span>Mehrfachauswahl</span>
                         </button>
                     </div>
                 </div>
                 <div id="bulkBar"
                     style="display:none; padding: 0.75rem 1rem; margin-bottom: 1rem; background: rgba(var(--primary-rgb),0.06); border: 1px solid rgba(var(--primary-rgb),0.15); border-radius: var(--radius-sm); align-items: center; gap: 1rem; flex-wrap: wrap;">
-                    <span style="font-size: 0.82rem; font-weight: 600;"><span id="bulkCount">0</span> ausgewählt</span>
+                    <span style="font-size: 0.82rem; font-weight: 600;"><span id="bulkCount">0</span> <span>ausgewählt</span></span>
                     <div id="bulkActionsNormal" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                         <button class="btn btn-ghost" onclick="toggleSelectAll()"
                             style="padding: 5px 12px; font-size: 0.78rem;">
                             <svg class="icon icon-sm">
                                 <use href="#i-checksq" />
-                            </svg> Alle
+                            </svg> <span>Alle</span>
                         </button>
                         <button class="btn btn-danger" onclick="showBulkDeleteConfirm()"
                             style="padding: 5px 12px; font-size: 0.78rem;">
                             <svg class="icon icon-sm">
                                 <use href="#i-trash" />
-                            </svg> Löschen
+                            </svg> <span>Löschen</span>
                         </button>
                         <button class="btn btn-success" onclick="bulkExportPDF()"
                             style="padding: 5px 12px; font-size: 0.78rem;">
                             <svg class="icon icon-sm">
                                 <use href="#i-file" />
-                            </svg> PDF Export
+                            </svg> <span>PDF Export</span>
                         </button>
                         <button class="btn btn-ghost" onclick="toggleBulkMode()">Abbrechen</button>
                     </div>
@@ -7668,7 +7832,7 @@
                     <button class="btn btn-primary" onclick="openNewReportModal()">
                         <svg class="icon">
                             <use href="#i-plus" />
-                        </svg> Ersten Bericht erstellen
+                        </svg> <span>Ersten Bericht erstellen</span>
                     </button>
                 </div>
             </div>
@@ -7716,7 +7880,7 @@
                             <rect x="3" y="11" width="18" height="11" rx="2" />
                             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                         </svg>
-                        Schatten-Berichtsheft öffnen
+                        <span>Schatten-Berichtsheft öffnen</span>
                     </a>
                     <p class="sb-entry-note">Beim ersten Öffnen legst du ein Passwort fest. Alles wird damit auf deinem
                         Gerät verschlüsselt — vergisst du es, sind die Einträge weg.</p>
@@ -7737,7 +7901,7 @@
     <!-- ===== NEW/EDIT REPORT MODAL ===== -->
     <div class="modal" id="reportModal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeReportModal()"><svg viewBox="0 0 24 24" fill="none"
+            <button class="modal-close" onclick="closeReportModal()" aria-label="Bericht-Dialog schließen"><svg viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18"
                     height="18" aria-hidden="true">
                     <path d="M18 6L6 18M6 6l12 12" />
@@ -7789,12 +7953,12 @@
                         <button type="button" class="mode-toggle-btn" id="btnWeeklyModal" onclick="setMode('weekly')">
                             <svg class="icon icon-sm">
                                 <use href="#i-calendar" />
-                            </svg> Wöchentlich
+                            </svg> <span>Wöchentlich</span>
                         </button>
                         <button type="button" class="mode-toggle-btn" id="btnDailyModal" onclick="setMode('daily')">
                             <svg class="icon icon-sm">
-                                <use href="#i-calendar" />
-                            </svg> Täglich <span class="mode-badge">IHK</span>
+                                <use href="#i-list" />
+                            </svg> <span>Täglich</span>
                         </button>
                     </div>
                 </div>
@@ -7824,11 +7988,11 @@ Beispiel:
                     <!-- AI SUGGESTIONS (Weekly) -->
                     <div class="ai-suggestions" id="aiSuggestionsWeekly">
                         <div class="ai-header">
-                            <span class="ai-title"><span class="ai-pulse"></span> AI Vorschläge</span>
+                            <span class="ai-title"><span class="ai-pulse"></span> <span>AI Vorschläge</span></span>
                             <button class="ai-refresh-btn" onclick="refreshAISuggestions('weekly')">
                                 <svg class="icon icon-sm">
                                     <use href="#i-refresh" />
-                                </svg> Neu
+                                </svg> <span>Neu</span>
                             </button>
                         </div>
                         <div class="ai-chips" id="aiChipsWeekly"></div>
@@ -7846,7 +8010,7 @@ Beispiel:
                             <svg class="icon icon-sm">
                                 <use href="#i-clock" />
                             </svg>
-                            Aus Zeiterfassung füllen
+                            <span>Aus Zeiterfassung füllen</span>
                         </button>
                     </div>
                     <div id="dailyFieldsContainer"></div>
@@ -7857,11 +8021,11 @@ Beispiel:
                     <!-- AI SUGGESTIONS (Daily) -->
                     <div class="ai-suggestions" id="aiSuggestionsDaily">
                         <div class="ai-header">
-                            <span class="ai-title"><span class="ai-pulse"></span> AI Vorschläge</span>
+                            <span class="ai-title"><span class="ai-pulse"></span> <span>AI Vorschläge</span></span>
                             <button class="ai-refresh-btn" onclick="refreshAISuggestions('daily')">
                                 <svg class="icon icon-sm">
                                     <use href="#i-refresh" />
-                                </svg> Neu
+                                </svg> <span>Neu</span>
                             </button>
                         </div>
                         <div class="ai-chips" id="aiChipsDaily"></div>
@@ -7901,7 +8065,7 @@ Beispiel:
                     <button type="submit" class="btn btn-success" style="flex: 1; min-width: 180px;">
                         <svg class="icon">
                             <use href="#i-save" />
-                        </svg> Speichern
+                        </svg> <span>Speichern</span>
                         <span class="kbd-hint"><span class="kbd">Strg</span>+<span class="kbd">S</span></span>
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="closeReportModal()">
@@ -7915,7 +8079,7 @@ Beispiel:
     <!-- ===== VIEW REPORT MODAL ===== -->
     <div class="modal" id="viewModal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeViewModal()"><svg viewBox="0 0 24 24" fill="none"
+            <button class="modal-close" onclick="closeViewModal()" aria-label="Ansicht schließen"><svg viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18"
                     height="18" aria-hidden="true">
                     <path d="M18 6L6 18M6 6l12 12" />
@@ -7927,7 +8091,7 @@ Beispiel:
     <!-- ===== TEMPLATES MODAL ===== -->
     <div class="modal" id="templatesModal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeTemplatesModal()"><svg viewBox="0 0 24 24" fill="none"
+            <button class="modal-close" onclick="closeTemplatesModal()" aria-label="Vorlagen schließen"><svg viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18"
                     height="18" aria-hidden="true">
                     <path d="M18 6L6 18M6 6l12 12" />
@@ -7947,7 +8111,7 @@ Beispiel:
     <!-- ===== FREIGABE DURCH AUSBILDER ===== -->
     <div class="modal" id="freigabeModal">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeFreigabeModal()"><svg viewBox="0 0 24 24" fill="none"
+            <button class="modal-close" onclick="closeFreigabeModal()" aria-label="Freigabe-Dialog schließen"><svg viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18"
                     height="18" aria-hidden="true">
                     <path d="M18 6L6 18M6 6l12 12" />
@@ -8340,7 +8504,7 @@ Beispiel:
                     <span style="color:var(--text-dim);font-size:0.7rem;">→</span>
                     <span class="pdf-step-badge">Export</span>
                 </div>
-                <button class="pdf-modal-close" onclick="closePDFModal()"><svg viewBox="0 0 24 24" fill="none"
+                <button class="pdf-modal-close" onclick="closePDFModal()" aria-label="PDF-Export schließen"><svg viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18"
                         height="18" aria-hidden="true">
                         <path d="M18 6L6 18M6 6l12 12" />
@@ -8495,19 +8659,19 @@ Beispiel:
                                 <svg class="icon">
                                     <use href="#i-file" />
                                 </svg>
-                                Als PDF herunterladen
+                                <span>Als PDF herunterladen</span>
                             </button>
                             <div class="pdf-export-multi-row">
                                 <button class="pdf-export-multi-btn" onclick="window.print()">
                                     <svg class="icon icon-sm">
                                         <use href="#i-file" />
-                                    </svg> Drucken
+                                    </svg> <span>Drucken</span>
                                 </button>
                                 <button class="pdf-export-multi-btn" id="pdfExportAllBtn"
                                     onclick="executePDFExportAll()">
                                     <svg class="icon icon-sm">
                                         <use href="#i-copy" />
-                                    </svg> Alle KWs
+                                    </svg> <span>Alle KWs</span>
                                 </button>
                             </div>
                         </div>
@@ -8558,9 +8722,9 @@ Beispiel:
             </div>
             <div class="ais-header-text">
                 <h2>Berichtsheft-Assistent</h2>
-                <p>Erstelle dein Berichtsheft in Sekunden ✨</p>
+                <p>Erstelle dein Berichtsheft in Sekunden</p>
             </div>
-            <button class="ais-close" onclick="AIStudio.close()"><svg viewBox="0 0 24 24" fill="none"
+            <button class="ais-close" onclick="AIStudio.close()" aria-label="AI Studio schließen"><svg viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18"
                     height="18" aria-hidden="true">
                     <path d="M18 6L6 18M6 6l12 12" />
@@ -8572,17 +8736,17 @@ Beispiel:
             <button class="ais-tab active" data-tab="generate" onclick="AIStudio.switchTab('generate')">
                 <svg class="icon icon-sm">
                     <use href="#i-zap" />
-                </svg> Generieren
+                </svg> <span>Generieren</span>
             </button>
             <button class="ais-tab" data-tab="preview" onclick="AIStudio.switchTab('preview')">
                 <svg class="icon icon-sm">
                     <use href="#i-eye" />
-                </svg> Vorschau
+                </svg> <span>Vorschau</span>
             </button>
             <button class="ais-tab" data-tab="history" onclick="AIStudio.switchTab('history')">
                 <svg class="icon icon-sm">
                     <use href="#i-scroll" />
-                </svg> Verlauf
+                </svg> <span>Verlauf</span>
             </button>
         </div>
 
@@ -8636,7 +8800,7 @@ Beispiel:
 
                 <!-- 3. Was hast du gemacht? (Activity Quick-Picks) -->
                 <div class="ais-section" id="aisActivitySection">
-                    <div class="ais-sec-lbl">Was hast du gemacht? <span
+                    <div class="ais-sec-lbl"><span>Was hast du gemacht?</span> <span
                             style="font-weight:400;text-transform:none;font-size:0.7rem;">(mehreres wählbar)</span>
                     </div>
                     <div class="ais-act-grid" id="aisActivityGrid">
@@ -8696,12 +8860,12 @@ Beispiel:
                     <div class="ais-section" style="border-top:none;">
                         <div class="ais-sec-lbl">Ausbildungsberuf</div>
                         <div class="ais-beruf-display" id="aisBerufDisplay" onclick="AIStudio.toggleBerufPicker()">
-                            <span class="ais-beruf-icon" id="aisBerufIcon">🎓</span>
+                            <span class="ais-beruf-icon" id="aisBerufIcon"><svg class="icon"><use href="#i-grad"/></svg></span>
                             <span class="ais-beruf-name" id="aisBerufName">Beruf wählen...</span>
                             <span class="ais-beruf-change">ändern</span>
                         </div>
                         <div class="ais-beruf-picker" id="aisBerufPicker">
-                            <input class="ais-beruf-search" id="aisBerufSearch" placeholder="🔍 Beruf suchen..."
+                            <input class="ais-beruf-search" id="aisBerufSearch" placeholder="Beruf suchen..."
                                 oninput="AIStudio.filterBeruf(this.value)">
                             <div class="ais-beruf-grid2" id="aisBerufGrid"></div>
                             <input class="ais-custom-input" id="aisCustomProf"
@@ -8720,7 +8884,7 @@ Beispiel:
                         </div>
                     </div>
                     <div class="ais-section" style="border-top:none;padding-bottom:4px;">
-                        <div class="ais-sec-lbl">Abteilung <span
+                        <div class="ais-sec-lbl"><span>Abteilung</span> <span
                                 style="font-weight:400;text-transform:none;">(optional)</span></div>
                         <input class="ais-custom-input" id="aisDepartment"
                             placeholder="z.B. IT-Abteilung, Kundenservice..."
@@ -8889,7 +9053,7 @@ Beispiel:
                             <div class="ais-reminder-row-text">
                                 <div class="ais-reminder-row-title"><svg class="ais-inline-icon">
                                         <use href="#i-bell" />
-                                    </svg> Sonntag-Reminder</div>
+                                    </svg> <span>Sonntag-Reminder</span></div>
                                 <div class="ais-reminder-row-sub">Erinnerung Sonntag 18 Uhr falls Berichtsheft noch
                                     nicht generiert</div>
                             </div>
@@ -8905,10 +9069,10 @@ Beispiel:
                                     <use href="#i-warning" />
                                 </svg> Browser hat Benachrichtigungen für myworklog.de blockiert</div>
                             <div class="ais-reminder-help-body">
-                                <strong>Chrome / Edge:</strong> Klick auf das <strong>🔒 Schloss-Symbol</strong> links
+                                <strong>Chrome / Edge:</strong> Klick auf das <strong><svg class="icon"><use href="#i-lock"/></svg> <span>Schloss-Symbol</span></strong> links
                                 in der Adressleiste → <strong>Berechtigungen / Site settings</strong> →
                                 <strong>Benachrichtigungen</strong> → <em>Zulassen</em>. Danach Seite neu laden.<br>
-                                <strong>Firefox:</strong> Klick auf das <strong>🛡️ Symbol</strong> →
+                                <strong>Firefox:</strong> Klick auf das <strong><svg class="icon"><use href="#i-shield"/></svg> <span>Schild-Symbol</span></strong> →
                                 <strong>Berechtigungen verwalten</strong> → <strong>Benachrichtigungen
                                     empfangen</strong> → <em>Zulassen</em>.<br>
                                 <strong>Safari (Mac):</strong> Safari → Einstellungen → Websites → Benachrichtigungen →
@@ -9007,8 +9171,8 @@ Beispiel:
                         <div id="aisEngineNormal">
                             <div
                                 style="background:var(--primary-dim);border:1px solid var(--primary);border-radius:8px;padding:8px 10px;margin-bottom:10px;">
-                                <div style="font-size:0.75rem;font-weight:700;color:var(--primary-light);">✨ Cloud KI —
-                                    kein Setup nötig</div>
+                                <div style="font-size:0.75rem;font-weight:700;color:var(--primary-light);"><svg class="icon"><use href="#i-sparkles"/></svg> <span>Cloud KI —
+                                    kein Setup nötig</span></div>
                                 <div style="font-size:0.68rem;color:var(--text-dim);margin-top:2px;">Läuft automatisch
                                     für alle Nutzer. Kein eigener API Key erforderlich.</div>
                             </div>
@@ -9097,7 +9261,7 @@ Beispiel:
                     <span class="ais-mega-fill" aria-hidden="true"></span>
                     <span class="ais-mega-content">
                         <span class="ais-mega-pulse" aria-hidden="true"></span>
-                        <span class="ais-mega-text">✨ Berichtsheft generieren</span>
+                        <span class="ais-mega-text">Berichtsheft generieren</span>
                         <span class="ais-mega-status" aria-live="polite">
                             <span class="ais-mega-message">KI denkt nach…</span>
                             <span class="ais-mega-percent">0%</span>
@@ -9115,17 +9279,17 @@ Beispiel:
                 <button class="ais-toolbar-btn" onclick="AIStudio.regenerateAll()">
                     <svg class="icon icon-sm">
                         <use href="#i-refresh" />
-                    </svg> Neu generieren
+                    </svg> <span>Neu generieren</span>
                 </button>
                 <button class="ais-toolbar-btn" onclick="AIStudio.shuffleEntries()">
                     <svg class="icon icon-sm">
                         <use href="#i-shuffle" />
-                    </svg> Mischen
+                    </svg> <span>Mischen</span>
                 </button>
                 <button class="ais-toolbar-btn primary" onclick="AIStudio.insertAll()">
                     <svg class="icon icon-sm">
                         <use href="#i-download" />
-                    </svg> Alle einfügen
+                    </svg> <span>Alle einfügen</span>
                 </button>
                 <div class="ais-preview-score" id="aisPreviewScore"></div>
             </div>
@@ -9143,7 +9307,7 @@ Beispiel:
             </div>
             <div class="ais-compliance" id="aisCompliance" style="display:none;">
                 <div class="ais-compliance-badge pass" id="aisComplianceBadge">
-                    <span>&#10003;</span> IHK-Konform
+                    <svg class="icon icon-sm"><use href="#i-check"/></svg> <span>IHK-Konform</span>
                 </div>
                 <div class="ais-compliance-text" id="aisComplianceText">Alle Einträge erfüllen die IHK-Richtlinien.
                 </div>
@@ -9361,7 +9525,7 @@ Beispiel:
                 showAutoSave();
             } catch (e) {
                 console.error('Fehler beim Speichern:', e);
-                showToast('Fehler beim Speichern!', 'error');
+                showToast('Speichern fehlgeschlagen', 'error');
             }
         }
 
@@ -9413,10 +9577,13 @@ Beispiel:
                 const words = (r.activities + ' ' + (r.school || '')).split(/\s+/).filter(w => w.length > 0).length;
                 return sum + words;
             }, 0);
-            const avgWords = totalReports > 0 ? Math.round(totalWords / totalReports) : 0;
+            // Die Karte heißt "Ø Wörter/Woche" — also durch Wochen teilen, nicht durch
+            // Berichte. Bei zwei Berichten für dieselbe Woche wich das vorher ab.
+            const avgWords = uniqueWeeks > 0 ? Math.round(totalWords / uniqueWeeks) : 0;
+            const signedReports = reports.filter(r => r.status === 'signed').length;
 
             // Animate counters
-            animateCounter(document.getElementById('totalReports'), totalReports);
+            animateCounter(document.getElementById('signedReports'), signedReports);
             animateCounter(document.getElementById('totalWeeks'), uniqueWeeks);
             animateCounter(document.getElementById('completionRate'), completionRate, '%');
             animateCounter(document.getElementById('avgWordsPerWeek'), avgWords);
@@ -9496,50 +9663,102 @@ Beispiel:
         // CALENDAR HEATMAP
         // ═══════════════════════════════════════
 
+        // Ein Jahr hat 52 ODER 53 ISO-Wochen: 53, wenn der 1. Januar ein Donnerstag ist
+        // oder in einem Schaltjahr ein Mittwoch. 2026 hat 53 — mit der festen 52 fiel
+        // die letzte Woche des Jahres aus dem Streifen.
+        function isoWeeksInYear(year) {
+            const jan1 = new Date(year, 0, 1).getDay();
+            const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+            return (jan1 === 4 || (leap && jan1 === 3)) ? 53 : 52;
+        }
+
+        // Montag der ISO-Woche. Bewusst über lokale Datumsteile — toISOString()
+        // rechnet nach UTC und verschiebt in Mitteleuropa jedes Datum um einen Tag.
+        function isoWeekMonday(year, week) {
+            const jan4 = new Date(year, 0, 4);
+            const shift = (jan4.getDay() + 6) % 7;
+            return new Date(year, 0, 4 - shift + (week - 1) * 7);
+        }
+
+        // report.year ist das AUSBILDUNGSjahr (1/2/3), nicht das Kalenderjahr — der
+        // Streifen muss das Kalenderjahr aus dateFrom lesen, sonst leuchtet KW 35 aus 2025
+        // im Jahr 2026 mit.
+        function reportCalendarYear(r) {
+            const y = parseInt(String(r.dateFrom || '').slice(0, 4), 10);
+            return Number.isFinite(y) ? y : null;
+        }
+
         function renderCalendarHeatmap() {
             const grid = document.getElementById('calendarGrid');
-            const year = new Date().getFullYear();
+            const nowYear = new Date().getFullYear();
+
+            // Standard ist das laufende Jahr. Liegt darin nichts, aber in einem früheren,
+            // wird das jüngste Jahr mit Berichten gezeigt — die Überschrift nennt es.
+            const years = [...new Set(reports.map(reportCalendarYear).filter(Boolean))];
+            const year = (years.includes(nowYear) || !years.length) ? nowYear : Math.max(...years);
             document.getElementById('calendarYear').textContent = year;
 
-            // Create a map of week -> status
             const weekMap = {};
             reports.forEach(r => {
-                const key = r.week;
-                const existing = weekMap[key];
+                const ry = reportCalendarYear(r);
+                if (ry !== null && ry !== year) return;
+                const existing = weekMap[r.week];
                 if (!existing || statusPriority(r.status) > statusPriority(existing)) {
-                    weekMap[key] = r.status;
+                    weekMap[r.week] = r.status;
                 }
             });
 
-            let html = '';
-            for (let w = 1; w <= 52; w++) {
-                const status = weekMap[w] || null;
-                let cls = 'cal-cell';
-                if (status === 'signed') cls += ' signed';
-                else if (status === 'complete') cls += ' complete';
-                else if (status === 'incomplete') cls += ' has-report';
+            const STATUS_TEXT = { signed: 'Unterschrieben', complete: 'Vollständig', incomplete: 'Entwurf' };
+            const STATUS_CLASS = { signed: 'signed', complete: 'complete', incomplete: 'draft' };
+            const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+            const totalWeeks = isoWeeksInYear(year);
+            const currentWeek = year === nowYear ? getWeekNumber(new Date()) : -1;
 
-                const tooltip = status
-                    ? `KW ${w}: ${status === 'signed' ? 'Unterschrieben' : status === 'complete' ? 'Vollständig' : 'Entwurf'}`
-                    : `KW ${w}: Keine Daten`;
-
-                html += `<div class="${cls}" data-tooltip="${tooltip}" data-week="${w}" onclick="filterByWeek(${w})"></div>`;
+            // Jede Woche gehört zu dem Monat, in dem ihr Donnerstag liegt (ISO-Regel).
+            const buckets = MONTHS.map(() => []);
+            for (let w = 1; w <= totalWeeks; w++) {
+                const thursday = isoWeekMonday(year, w);
+                thursday.setDate(thursday.getDate() + 3);
+                buckets[thursday.getMonth()].push(w);
             }
-            grid.innerHTML = html;
+
+            grid.innerHTML = buckets.map((weeks, m) => {
+                if (!weeks.length) return '';
+                const cells = weeks.map(w => {
+                    const status = weekMap[w] || null;
+                    const mon = isoWeekMonday(year, w);
+                    const label = `KW ${w} (ab ${mon.getDate()}.${mon.getMonth() + 1}.) — ${status ? STATUS_TEXT[status] : 'kein Bericht'}`;
+                    return `<button type="button" class="cal-cell${status ? ' ' + STATUS_CLASS[status] : ''}${w === currentWeek ? ' is-now' : ''}" data-week="${w}" tabindex="-1" aria-label="${label}" onclick="openWeek(${w})"><span class="cal-cell-tooltip">${label}</span></button>`;
+                }).join('');
+                return `<div class="cal-month" style="flex-grow:${weeks.length}"><span class="cal-month-label">${MONTHS[m]}</span><div class="cal-month-weeks">${cells}</div></div>`;
+            }).join('');
+
+            // Rollender Fokus: nur EINE Zelle liegt in der Tab-Reihenfolge, innerhalb wird
+            // mit den Pfeiltasten gewandert. 53 Tabstopps vor dem ersten Knopf wären
+            // sonst für Tastaturnutzer eine Zumutung.
+            const cells = [...grid.querySelectorAll('.cal-cell')];
+            const start = cells.find(c => c.classList.contains('is-now')) || cells[0];
+            if (start) start.tabIndex = 0;
+            grid.onkeydown = (e) => {
+                const step = { ArrowRight: 1, ArrowLeft: -1, Home: -Infinity, End: Infinity }[e.key];
+                if (step === undefined) return;
+                const i = cells.indexOf(document.activeElement);
+                if (i < 0) return;
+                e.preventDefault();
+                const next = cells[Math.max(0, Math.min(cells.length - 1, i + step))];
+                cells.forEach(c => { c.tabIndex = -1; });
+                next.tabIndex = 0;
+                next.focus();
+            };
         }
 
         function statusPriority(status) {
             return { 'incomplete': 1, 'complete': 2, 'signed': 3 }[status] || 0;
         }
 
-        function filterByWeek(week) {
-            document.getElementById('searchInput').value = '';
-            const yearFilter = document.getElementById('yearFilter');
-            yearFilter.value = '';
-            const statusFilter = document.getElementById('statusFilter');
-            statusFilter.value = '';
-
-            // Filter to show only this week
+        // Hieß filterByWeek und filterte nichts: die Funktion öffnete einen Bericht
+        // und leerte dabei Suchfeld, Jahr- und Status-Filter des Nutzers als Nebenwirkung.
+        function openWeek(week) {
             const filtered = reports.filter(r => r.week === week);
             if (filtered.length > 0) {
                 viewReport(filtered[0].id);
@@ -10260,7 +10479,7 @@ Beispiel:
             closeReportModal();
             clearDraft();
 
-            showToast(editingId ? 'Bericht aktualisiert!' : 'Bericht erstellt!', 'success');
+            showToast(editingId ? 'Bericht aktualisiert' : 'Bericht erstellt', 'success');
 
             // Confetti on new complete report
             if (!editingId && (report.status === 'complete' || report.status === 'signed')) {
@@ -10387,7 +10606,7 @@ Beispiel:
 
                 return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${isSchool ? 'rgba(var(--primary-rgb), 0.4)' : 'var(--border)'};border-radius:var(--radius-sm);overflow:hidden;${isSchool ? 'border-left:3px solid var(--primary);' : ''}">
                                     <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 1rem;background:${isSchool ? 'rgba(var(--primary-rgb), 0.05)' : 'rgba(255,255,255,0.02)'};border-bottom:1px solid var(--border);font-size:0.82rem;font-weight:700;">
-                                        <span>${day.icon} ${day.name}</span>
+                                        <span>${day.name}</span>
                                         ${hrs ? `<span style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);">${hrs} Std.</span>` : ''}
                                     </div>
                                     <div style="padding:0.75rem 1rem;white-space:pre-wrap;line-height:1.7;font-size:0.88rem;">${escapeHtml(displayText)}</div>
@@ -10425,6 +10644,30 @@ Beispiel:
             document.getElementById('viewContent').innerHTML = content;
             document.getElementById('viewModal').classList.add('active');
             document.body.style.overflow = 'hidden';
+        }
+
+        // Brücke für den Altbestand: professionIcon wird im Verlauf gespeichert, dort
+        // stehen bei Bestandsnutzern noch Emojis. Fertiges <svg> geht durch, bekannte
+        // Zeichen werden übersetzt, alles andere maskiert — der Wert kommt aus
+        // localStorage und ist damit Fremdeingabe.
+        const EMOJI_ICONS = {
+            '💻': 'i-code', '🖥️': 'i-server', '🖥': 'i-server',
+            '📊': 'i-chart', '⚡': 'i-zap', '🚗': 'i-car',
+            '👨‍🍳': 'i-chefhat', '🏥': 'i-pulse',
+            '🛒': 'i-cart', '🏗️': 'i-wall', '🏗': 'i-wall',
+            '🪚': 'i-hammer', '💇': 'i-scissors', '📦': 'i-package',
+            '🎨': 'i-palette', '⚙️': 'i-gear', '⚙': 'i-gear',
+            '🌿': 'i-leaf', '🧪': 'i-flask', '🩺': 'i-heartpulse',
+            '🏨': 'i-hotel', '🏠': 'i-home', '🔧': 'i-wrench',
+            '🎓': 'i-grad', '📋': 'i-clipboard', '🤖': 'i-clipboard',
+            '💡': 'i-bulb', '✨': 'i-sparkles', '📖': 'i-bookopen',
+        };
+        function bhIcon(value, fallback) {
+            const v = (value == null ? '' : String(value)).trim();
+            if (v.startsWith('<svg')) return v;
+            const id = EMOJI_ICONS[v] || (v ? null : (fallback || 'i-bulb'));
+            if (id) return `<svg class="icon"><use href="#${id}"/></svg>`;
+            return typeof escapeHtml === 'function' ? escapeHtml(v) : '';
         }
 
         function escapeHtml(text) {
@@ -11370,7 +11613,7 @@ Beispiel:
             }
 
             doc.save(`Ausbildungsnachweis_KW${report.week}_${report.year}.pdf`);
-            showToast('PDF exportiert! ✓', 'success');
+            showToast('PDF exportiert', 'success');
         }
 
         function exportAllPDF() {
@@ -11465,8 +11708,10 @@ Beispiel:
             doc.setFont(undefined, 'normal');
             let tocY = 30;
             sorted.forEach((report, idx) => {
-                const statusEmoji = { 'incomplete': '-', 'complete': '✓', 'signed': '✓' }[report.status];
-                const line = `${statusEmoji} KW ${String(report.week).padStart(2, '0')} — ${report.department || 'Keine Abteilung angegeben'} — ${report.hours || 0} Std.`;
+                // Wortlaut statt Zeichen: 'complete' und 'signed' waren beide '✓' (nicht unterscheidbar),
+                // und U+2713 liegt nicht in WinAnsiEncoding — jsPDF setzt dafür ein falsches Glyph.
+                const statusLabel = { 'incomplete': 'Entwurf', 'complete': 'Vollständig', 'signed': 'Unterschrieben' }[report.status] || 'Entwurf';
+                const line = `KW ${String(report.week).padStart(2, '0')} — ${report.department || 'Keine Abteilung angegeben'} — ${report.hours || 0} Std. — ${statusLabel}`;
                 doc.text(line, 20, tocY);
                 tocY += 6;
                 if (tocY > 270) { doc.addPage(); tocY = 20; }
@@ -11589,7 +11834,7 @@ Beispiel:
             doc.text('MyWorkLog • Professionelle Ausbildungsdokumentation', pageWidth / 2, pageHeight - 10, { align: 'center' });
 
             doc.save(`Ausbildungsnachweis_Jahresbericht_${year}.pdf`);
-            showToast('Jahresbericht als PDF exportiert!', 'success');
+            showToast('Jahresbericht als PDF exportiert', 'success');
         }
 
         // ═══════════════════════════════════════
@@ -11750,7 +11995,7 @@ Beispiel:
             if (imported > 0) {
                 saveToStorage();
                 updateUI();
-                showToast(`${imported} Berichte importiert!`, 'success');
+                showToast(`${imported} Berichte importiert`, 'success');
                 launchConfetti();
             } else {
                 showToast('Alle Wochen bereits dokumentiert.', 'info');
@@ -11948,7 +12193,7 @@ Beispiel:
 
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            toast.innerHTML = message;
+            toast.textContent = message;
             document.body.appendChild(toast);
 
             setTimeout(() => {
@@ -12218,9 +12463,9 @@ Beispiel:
                 const nameMap = { software: 'IT-Entwicklung', sysadmin: 'Systemadministration', kaufmann: 'Kaufmännisch', handwerk_bau: 'Bau/Handwerk', handwerk_holz: 'Holztechnik/Tischlerei', elektro: 'Elektrotechnik', gastronomie: 'Gastronomie/Bäckerei', pflege: 'Pflege/Gesundheit', kfz: 'KFZ-Technik', friseur: 'Friseurhandwerk', einzelhandel: 'Einzelhandel', lager: 'Lagerlogistik', medien: 'Mediengestaltung', garten: 'Garten-/Landschaftsbau', metall: 'Metalltechnik', chemie: 'Chemie/Labor' };
                 contextNote.innerHTML = `AI erkennt: <strong>${nameMap[profName] || profName}</strong> — Vorschläge werden generiert, nie wiederholt.`;
             } else if (department) {
-                contextNote.textContent = `💡 Tippe z.B. deinen Beruf oder Tätigkeiten — die AI erkennt es automatisch.`;
+                contextNote.innerHTML = `${bhIcon('')} Tippe z.B. deinen Beruf oder Tätigkeiten — die AI erkennt es automatisch.`;
             } else {
-                contextNote.textContent = '💡 Gib eine Abteilung ein (z.B. "Bäckerei", "Maurer", "IT") — die AI denkt mit.';
+                contextNote.innerHTML = `${bhIcon('')} Gib eine Abteilung ein (z.B. &quot;Bäckerei&quot;, &quot;Maurer&quot;, &quot;IT&quot;) — die AI denkt mit.`;
             }
         }
 
@@ -12260,12 +12505,30 @@ Beispiel:
         // ═══════════════════════════════════════
 
         const DAYS = [
-            { key: 'monday', name: 'Montag', short: 'Mo', icon: '🟣' },
-            { key: 'tuesday', name: 'Dienstag', short: 'Di', icon: '🔵' },
-            { key: 'wednesday', name: 'Mittwoch', short: 'Mi', icon: '🟢' },
-            { key: 'thursday', name: 'Donnerstag', short: 'Do', icon: '🟡' },
-            { key: 'friday', name: 'Freitag', short: 'Fr', icon: '🟠' }
+            { key: 'monday', name: 'Montag', short: 'Mo' },
+            { key: 'tuesday', name: 'Dienstag', short: 'Di' },
+            { key: 'wednesday', name: 'Mittwoch', short: 'Mi' },
+            { key: 'thursday', name: 'Donnerstag', short: 'Do' },
+            { key: 'friday', name: 'Freitag', short: 'Fr' }
         ];
+
+        // Legt den Schieber exakt unter den aktiven Reiter. Bei Breite 0 (Dialog noch
+        // zu) wird nichts gesetzt — der ResizeObserver holt es nach, sobald er sichtbar ist.
+        function syncModeSliders() {
+            document.querySelectorAll('.mode-toggle').forEach(toggle => {
+                const slider = toggle.querySelector('.mode-toggle-slider');
+                const active = toggle.querySelector('.mode-toggle-btn.active');
+                if (!slider || !active || !active.offsetWidth) return;
+                slider.style.width = active.offsetWidth + 'px';
+                slider.style.transform = `translateX(${active.offsetLeft}px)`;
+            });
+        }
+
+        if (window.ResizeObserver) {
+            const _modeRO = new ResizeObserver(syncModeSliders);
+            document.querySelectorAll('.mode-toggle').forEach(t => _modeRO.observe(t));
+        }
+        window.addEventListener('resize', syncModeSliders);
 
         function setMode(mode) {
             currentMode = mode;
@@ -12288,10 +12551,8 @@ Beispiel:
             if (mode === 'daily') {
                 if (btnDaily) btnDaily.classList.add('active');
                 if (btnWeekly) btnWeekly.classList.remove('active');
-                if (slider) slider.classList.add('right');
                 if (btnDailyM) btnDailyM.classList.add('active');
                 if (btnWeeklyM) btnWeeklyM.classList.remove('active');
-                if (sliderM) sliderM.classList.add('right');
                 if (weeklyGroup) weeklyGroup.style.display = 'none';
                 if (schoolGroup) schoolGroup.style.display = 'none'; // Hide in daily
                 if (dailyGroup) dailyGroup.classList.add('active');
@@ -12303,10 +12564,8 @@ Beispiel:
             } else {
                 if (btnWeekly) btnWeekly.classList.add('active');
                 if (btnDaily) btnDaily.classList.remove('active');
-                if (slider) slider.classList.remove('right');
                 if (btnWeeklyM) btnWeeklyM.classList.add('active');
                 if (btnDailyM) btnDailyM.classList.remove('active');
-                if (sliderM) sliderM.classList.remove('right');
                 if (weeklyGroup) weeklyGroup.style.display = '';
                 if (schoolGroup) schoolGroup.style.display = ''; // Show in weekly
                 if (dailyGroup) dailyGroup.classList.remove('active');
@@ -12315,6 +12574,8 @@ Beispiel:
                 if (weeklyTA) weeklyTA.setAttribute('required', '');
                 renderAISuggestions('weekly');
             }
+
+            syncModeSliders();
         }
 
         function renderDailyFields() {
@@ -12334,7 +12595,7 @@ Beispiel:
                 return `
                     <div class="daily-day-block">
                         <div class="daily-day-header">
-                            <span class="day-name">${day.icon} ${day.name}</span>
+                            <span class="day-name">${day.name}</span>
                             <span class="day-date">${dateStr}</span>
                             <label class="daily-school-toggle">
                                 Schultag
@@ -12478,7 +12739,13 @@ Beispiel:
             }
 
             // Don't trigger letter shortcuts in inputs
-            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.target.isContentEditable) return;
+
+            // Ein Kürzel darf keinen zweiten Dialog über den offenen legen.
+            if (inModal
+                || document.getElementById('pdfModal')?.classList.contains('active')
+                || document.getElementById('aiStudioPanel')?.classList.contains('open')
+                || document.getElementById('fotoImport')?.classList.contains('active')) return;
 
             switch (e.key.toLowerCase()) {
                 case 'n':
@@ -12659,7 +12926,7 @@ Beispiel:
 
             const PROFESSIONS = {
                 software: {
-                    id: 'software', icon: '💻', name: 'Fachinformatiker AE',
+                    id: 'software', icon: '<svg class="icon"><use href="#i-code"/></svg>', name: 'Fachinformatiker AE',
                     category: 'IT',
                     verbs: ['entwickeln', 'implementieren', 'testen', 'debuggen', 'deployen', 'refactoren', 'dokumentieren', 'reviewen', 'optimieren', 'automatisieren', 'migrieren', 'analysieren', 'konzipieren', 'programmieren', 'integrieren'],
                     objects: ['Webanwendung', 'REST-API', 'Datenbankmodul', 'Frontend-Komponente', 'Backend-Service', 'Unit-Tests', 'Microservice', 'UI-Feature', 'Schnittstelle', 'Algorithmus', 'Login-System', 'Dashboard-Widget', 'CI/CD-Pipeline', 'Docker-Container', 'Serverless-Funktion', 'GraphQL-Endpoint', 'Websocket-Handler', 'Caching-Layer', 'ORM-Modell', 'Middleware', 'Auth-Service', 'Webhook-Integration', 'Batch-Prozess', 'Responsive Layout', 'PWA-Feature'],
@@ -12674,7 +12941,7 @@ Beispiel:
                 },
 
                 sysadmin: {
-                    id: 'sysadmin', icon: '🖥️', name: 'Fachinformatiker SI',
+                    id: 'sysadmin', icon: '<svg class="icon"><use href="#i-server"/></svg>', name: 'Fachinformatiker SI',
                     category: 'IT',
                     verbs: ['konfigurieren', 'installieren', 'warten', 'überwachen', 'administrieren', 'sichern', 'patchen', 'troubleshooten', 'migrieren', 'automatisieren', 'provisionieren', 'härten', 'dokumentieren', 'skalieren', 'replizieren'],
                     objects: ['Server', 'Netzwerk', 'Firewall', 'Active Directory', 'Backup-System', 'VPN-Tunnel', 'DHCP/DNS-Dienst', 'Virtualisierungs-Cluster', 'Storage-System', 'Mail-Server', 'Monitoring-System', 'WLAN-Infrastruktur', 'Client-PCs', 'Druckerumgebung', 'Load-Balancer', 'Proxy-Server', 'Zertifikats-Infrastruktur', 'Ticketsystem', 'Patch-Management', 'Group Policies'],
@@ -12689,7 +12956,7 @@ Beispiel:
                 },
 
                 kaufmann: {
-                    id: 'kaufmann', icon: '📊', name: 'Kaufmann/-frau',
+                    id: 'kaufmann', icon: '<svg class="icon"><use href="#i-chart"/></svg>', name: 'Kaufmann/-frau',
                     category: 'Büro',
                     verbs: ['bearbeiten', 'prüfen', 'verbuchen', 'erstellen', 'pflegen', 'koordinieren', 'kalkulieren', 'archivieren', 'abgleichen', 'kommunizieren', 'auswerten', 'organisieren', 'vorbereiten', 'recherchieren', 'kontrollieren'],
                     objects: ['Rechnungen', 'Aufträge', 'Kundenanfragen', 'Angebote', 'Buchhaltungsbelege', 'Personalakten', 'Lieferscheine', 'Stammdaten', 'Monatsbericht', 'Kostenrechnung', 'Bestellungen', 'Gesprächsprotokoll', 'Präsentation', 'Mahnungen', 'Gutschriften', 'Reisekostenabrechnungen', 'Statistiken', 'Verträge', 'Inventurlisten', 'Newsletter'],
@@ -12704,7 +12971,7 @@ Beispiel:
                 },
 
                 elektro: {
-                    id: 'elektro', icon: '⚡', name: 'Elektroniker/in',
+                    id: 'elektro', icon: '<svg class="icon"><use href="#i-zap"/></svg>', name: 'Elektroniker/in',
                     category: 'Handwerk',
                     verbs: ['installieren', 'verdrahten', 'prüfen', 'messen', 'programmieren', 'inbetriebnehmen', 'warten', 'reparieren', 'konfigurieren', 'dokumentieren', 'planen', 'verlegen', 'anschließen', 'dimensionieren', 'parametrieren'],
                     objects: ['Schaltschrank', 'Elektroverteiler', 'Beleuchtungsanlage', 'Steckdosen/Schalter', 'SPS-Steuerung', 'Kabeltrasse', 'Sicherungskasten', 'Brandmeldeanlage', 'Sprechanlage', 'Photovoltaikanlage', 'Ladestation', 'KNX-Bustechnologie', 'Netzersatzanlage', 'Potentialausgleich', 'Blitzschutzanlage', 'Antriebstechnik', 'Frequenzumrichter', 'Schaltplan', 'Erdungsanlage', 'Energiemessgerät'],
@@ -12719,7 +12986,7 @@ Beispiel:
                 },
 
                 kfz: {
-                    id: 'kfz', icon: '🚗', name: 'KFZ-Mechatroniker/in',
+                    id: 'kfz', icon: '<svg class="icon"><use href="#i-car"/></svg>', name: 'KFZ-Mechatroniker/in',
                     category: 'Handwerk',
                     verbs: ['diagnostizieren', 'reparieren', 'warten', 'prüfen', 'austauschen', 'einstellen', 'montieren', 'programmieren', 'auslesen', 'lackieren', 'schweißen', 'vermessen', 'instandsetzen', 'kalibrieren', 'befüllen'],
                     objects: ['Bremsanlage', 'Motorsteuerung', 'Fahrwerk', 'Klimaanlage', 'Getriebe', 'Abgasanlage', 'Beleuchtungssystem', 'Reifen/Räder', 'Ölwechsel', 'Inspektion', 'AU/HU-Vorbereitung', 'Karosserie-Teil', 'Steuergerät', 'Batterie/Akku', 'Keilriemen', 'Kupplungssatz', 'Achslager', 'Stoßdämpfer', 'Zündkerzen', 'Kraftstoffsystem'],
@@ -12734,7 +13001,7 @@ Beispiel:
                 },
 
                 gastronomie: {
-                    id: 'gastronomie', icon: '👨‍🍳', name: 'Koch/Köchin',
+                    id: 'gastronomie', icon: '<svg class="icon"><use href="#i-chefhat"/></svg>', name: 'Koch/Köchin',
                     category: 'Gastronomie',
                     verbs: ['zubereiten', 'kochen', 'backen', 'anrichten', 'dekorieren', 'portionieren', 'einlagern', 'kontrollieren', 'reinigen', 'bestellen', 'servieren', 'beraten', 'kalkulieren', 'marinieren', 'filetieren'],
                     objects: ['Vorspeisen', 'Hauptgerichte', 'Desserts', 'Beilagen', 'Saucen', 'Fonds', 'Suppen', 'Menüfolge', 'Buffet-Aufbau', 'Mise en Place', 'Vorratsbestand', 'Tagesmenü', 'Salatkreation', 'Fleischgericht', 'Fischgericht', 'Vegetarisches Gericht', 'Garnitur', 'Patisserie', 'Kalte Platte', 'Mittagsmenü'],
@@ -12749,7 +13016,7 @@ Beispiel:
                 },
 
                 pflege: {
-                    id: 'pflege', icon: '🏥', name: 'Pflegefachkraft',
+                    id: 'pflege', icon: '<svg class="icon"><use href="#i-pulse"/></svg>', name: 'Pflegefachkraft',
                     category: 'Gesundheit',
                     verbs: ['pflegen', 'betreuen', 'dokumentieren', 'assistieren', 'mobilisieren', 'messen', 'verabreichen', 'beraten', 'begleiten', 'überwachen', 'anleiten', 'versorgen', 'lagern', 'unterstützen', 'evaluieren'],
                     objects: ['Patient/in', 'Vitalzeichen', 'Wundversorgung', 'Medikamente', 'Pflegeplanung', 'Körperpflege', 'Mobilisation', 'Ernährungsplan', 'Inkontinenzversorgung', 'Verbandswechsel', 'Lagerungshilfe', 'Pflegedokumentation', 'Infusionstherapie', 'Sondenernährung', 'Prophylaxen', 'Sturzprophylaxe', 'Dekubitusprophylaxe', 'Schmerzmanagement', 'Biografie-Arbeit', 'Beschäftigungsangebot'],
@@ -12764,7 +13031,7 @@ Beispiel:
                 },
 
                 einzelhandel: {
-                    id: 'einzelhandel', icon: '🛒', name: 'Einzelhandelskaufmann/-frau',
+                    id: 'einzelhandel', icon: '<svg class="icon"><use href="#i-cart"/></svg>', name: 'Einzelhandelskaufmann/-frau',
                     category: 'Handel',
                     verbs: ['beraten', 'verkaufen', 'kassieren', 'einräumen', 'dekorieren', 'bestellen', 'kontrollieren', 'präsentieren', 'inventurisieren', 'umtauschen', 'etikettieren', 'kommissionieren', 'platzieren', 'disponieren', 'stornieren'],
                     objects: ['Wareneingang', 'Schaufensterdekoration', 'Kassenabrechnung', 'Kundenberatung', 'Reklamation', 'Warenbestellung', 'Lagerbestand', 'Preisauszeichnung', 'Produktpräsentation', 'Inventurliste', 'Sonderaktion', 'Umtauschvorgang', 'Regalbestückung', 'Warenbeschaffung', 'Kundenbindungsaktion'],
@@ -12779,7 +13046,7 @@ Beispiel:
                 },
 
                 handwerk_bau: {
-                    id: 'handwerk_bau', icon: '🏗️', name: 'Maurer/in / Bau',
+                    id: 'handwerk_bau', icon: '<svg class="icon"><use href="#i-wall"/></svg>', name: 'Maurer/in / Bau',
                     category: 'Handwerk',
                     verbs: ['mauern', 'betonieren', 'verputzen', 'verlegen', 'montieren', 'messen', 'schneiden', 'schleifen', 'abdichten', 'verschalen', 'fundamentieren', 'armieren', 'schütten', 'stampfen', 'verfugen'],
                     objects: ['Backsteinmauer', 'Fundament', 'Deckenplatte', 'Estrichboden', 'Treppenanlage', 'Schalungssystem', 'Bewehrungskorb', 'Drainagesystem', 'Mauerwerk', 'Fassade', 'Innenputz', 'Außenwand', 'Stützpfeiler', 'Fensterbänke', 'Bodenplatte', 'Ringbalken', 'Sturzschalung', 'Sockelbreich', 'Dachsparren', 'Trennwand'],
@@ -12794,7 +13061,7 @@ Beispiel:
                 },
 
                 handwerk_holz: {
-                    id: 'handwerk_holz', icon: '🪚', name: 'Tischler/Schreiner',
+                    id: 'handwerk_holz', icon: '<svg class="icon"><use href="#i-hammer"/></svg>', name: 'Tischler/Schreiner',
                     category: 'Handwerk',
                     verbs: ['sägen', 'hobeln', 'fräsen', 'schleifen', 'leimen', 'montieren', 'konstruieren', 'furnieren', 'lackieren', 'messen', 'zeichnen', 'zusammenbauen', 'profilieren', 'dübeln', 'verleimen'],
                     objects: ['Möbelstück', 'Türrahmen', 'Fensterrahmen', 'Schranksystem', 'Tischplatte', 'Holztreppe', 'Einbauküche', 'Regalwand', 'Werkstück', 'Dachstuhl', 'Holzverbindung', 'Innenausbau', 'Schubladenführung', 'Beschlag', 'Furnierarbeit', 'Massivholzplatte', 'Arbeitsplatte', 'Schiebetür'],
@@ -12809,7 +13076,7 @@ Beispiel:
                 },
 
                 friseur: {
-                    id: 'friseur', icon: '💇', name: 'Friseur/in',
+                    id: 'friseur', icon: '<svg class="icon"><use href="#i-scissors"/></svg>', name: 'Friseur/in',
                     category: 'Handwerk',
                     verbs: ['schneiden', 'färben', 'föhnen', 'beraten', 'waschen', 'stylen', 'pflegen', 'hochstecken', 'ondulieren', 'rasieren', 'tönen', 'blondieren', 'strähnchen setzen', 'modellieren', 'frisieren'],
                     objects: ['Damenhaarschnitt', 'Herrenhaarschnitt', 'Coloration', 'Balayage', 'Dauerwelle', 'Hochsteckfrisur', 'Bartpflege', 'Haarpflegebehandlung', 'Strähnen-Technik', 'Kinderhaarschnitt', 'Brautfrisur', 'Typberatung', 'Kopfhautbehandlung', 'Extensions', 'Farbberatung'],
@@ -12824,7 +13091,7 @@ Beispiel:
                 },
 
                 lager: {
-                    id: 'lager', icon: '📦', name: 'Fachkraft für Lagerlogistik',
+                    id: 'lager', icon: '<svg class="icon"><use href="#i-package"/></svg>', name: 'Fachkraft für Lagerlogistik',
                     category: 'Logistik',
                     verbs: ['kommissionieren', 'einlagern', 'auslagern', 'verpacken', 'verladen', 'scannen', 'kontrollieren', 'inventarisieren', 'transportieren', 'sortieren', 'buchen', 'etikettieren', 'disponieren', 'palettieren', 'optimieren'],
                     objects: ['Wareneingang', 'Warenausgang', 'Lieferung', 'Palette', 'Sendung', 'Kommissionierauftrag', 'Retourenbearbeitung', 'Bestandsliste', 'Versandpapiere', 'Gefahrgut-Ladung', 'Tourenplanung', 'Lagerplatz', 'Ladungsträger', 'Frachtbrief', 'Zollpapiere'],
@@ -12839,7 +13106,7 @@ Beispiel:
                 },
 
                 medien: {
-                    id: 'medien', icon: '🎨', name: 'Mediengestalter/in',
+                    id: 'medien', icon: '<svg class="icon"><use href="#i-palette"/></svg>', name: 'Mediengestalter/in',
                     category: 'Kreativ',
                     verbs: ['gestalten', 'entwerfen', 'layouten', 'bearbeiten', 'animieren', 'schneiden', 'retouchieren', 'exportieren', 'drucken', 'präsentieren', 'konzipieren', 'illustrieren', 'rendern', 'prototypen', 'optimieren'],
                     objects: ['Printlayout', 'Social-Media-Grafik', 'Webdesign-Mockup', 'Video-Clip', 'Banner-Animation', 'Firmenlogo', 'Broschüre', 'Flyer', 'Corporate-Design-Manual', 'Druckauftrag', 'E-Mail-Template', 'Bildbearbeitung', 'Infografik', 'Plakat', 'Verpackungsdesign', 'UI/UX-Design', 'Präsentationsvorlage'],
@@ -12854,7 +13121,7 @@ Beispiel:
                 },
 
                 metall: {
-                    id: 'metall', icon: '⚙️', name: 'Industriemechaniker/in',
+                    id: 'metall', icon: '<svg class="icon"><use href="#i-gear"/></svg>', name: 'Industriemechaniker/in',
                     category: 'Industrie',
                     verbs: ['drehen', 'fräsen', 'bohren', 'schweißen', 'schleifen', 'biegen', 'stanzen', 'programmieren', 'messen', 'montieren', 'entgraten', 'härten', 'justieren', 'zerspanen', 'polieren'],
                     objects: ['Werkstück', 'CNC-Drehteil', 'Fräsbauteil', 'Schweißkonstruktion', 'Blechzuschnitt', 'Gewindebohrung', 'Passbohrung', 'Metallrahmen', 'Edelstahlgehäuse', 'Rohrkonstruktion', 'Prototyp', 'Serienbauteil', 'Pneumatik-Baugruppe', 'Hydraulik-Zylinder', 'Getriebebauteil', 'Vorrichtung'],
@@ -12869,7 +13136,7 @@ Beispiel:
                 },
 
                 garten: {
-                    id: 'garten', icon: '🌿', name: 'Gärtner/in',
+                    id: 'garten', icon: '<svg class="icon"><use href="#i-leaf"/></svg>', name: 'Gärtner/in',
                     category: 'Handwerk',
                     verbs: ['pflanzen', 'schneiden', 'mähen', 'pflegen', 'gestalten', 'bewässern', 'mulchen', 'düngen', 'jäten', 'vermessen', 'pflastern', 'ausheben', 'roden', 'säen', 'pikieren'],
                     objects: ['Rasenfläche', 'Hecke', 'Beet', 'Baumbestand', 'Pflasterweg', 'Teichanlage', 'Gewächshaus', 'Blumen-Arrangement', 'Grabpflege', 'Sträucher', 'Staudenbeet', 'Rollrasen', 'Natursteinmauer', 'Pflanzgefäß', 'Bewässerungssystem'],
@@ -12884,7 +13151,7 @@ Beispiel:
                 },
 
                 chemie: {
-                    id: 'chemie', icon: '🧪', name: 'Chemielaborant/in',
+                    id: 'chemie', icon: '<svg class="icon"><use href="#i-flask"/></svg>', name: 'Chemielaborant/in',
                     category: 'Industrie',
                     verbs: ['analysieren', 'mischen', 'prüfen', 'messen', 'destillieren', 'filtrieren', 'dokumentieren', 'kalibrieren', 'titrieren', 'synthetisieren', 'extrahieren', 'zentrifugieren', 'wiegen', 'protokollieren', 'chromatographieren'],
                     objects: ['Probe', 'Lösung', 'Reaktionsgemisch', 'Analyseergebnis', 'Versuchsreihe', 'Prüfprotokoll', 'Reinheitsgrad', 'Produktionsbatch', 'Stoffgemisch', 'Kalibrierlösung', 'Reagenz', 'Standardlösung', 'Umweltprobe', 'Qualitätsprobe', 'Titration'],
@@ -12899,7 +13166,7 @@ Beispiel:
                 },
 
                 mfa: {
-                    id: 'mfa', icon: '🩺', name: 'Med. Fachangestellte/r',
+                    id: 'mfa', icon: '<svg class="icon"><use href="#i-heartpulse"/></svg>', name: 'Med. Fachangestellte/r',
                     category: 'Gesundheit',
                     verbs: ['assistieren', 'vorbereiten', 'dokumentieren', 'messen', 'desinfizieren', 'sterilisieren', 'beraten', 'koordinieren', 'abrechnen', 'aufklären', 'kontrollieren', 'durchführen', 'anmelden', 'organisieren', 'untersuchen'],
                     objects: ['Patientenaufnahme', 'Blutentnahme', 'EKG-Ableitung', 'Wundversorgung', 'Impfassistenz', 'Abrechnung (KV)', 'Sprechstundenplanung', 'Medikamentenausgabe', 'Hygieneplan', 'Laborprobe', 'Verbandswechsel', 'Sterilisation', 'Patientenakte', 'Recall-System', 'Terminmanagement'],
@@ -12914,7 +13181,7 @@ Beispiel:
                 },
 
                 hotel: {
-                    id: 'hotel', icon: '🏨', name: 'Hotelfachmann/-frau',
+                    id: 'hotel', icon: '<svg class="icon"><use href="#i-hotel"/></svg>', name: 'Hotelfachmann/-frau',
                     category: 'Gastronomie',
                     verbs: ['empfangen', 'beraten', 'servieren', 'organisieren', 'reservieren', 'dekorieren', 'kontrollieren', 'koordinieren', 'kommunizieren', 'kalkulieren', 'eindecken', 'abrechnen', 'pflegen', 'reinigen', 'planen'],
                     objects: ['Check-in/Check-out', 'Zimmerreinigung', 'Frühstücksbuffet', 'Tischgedeck', 'Reservierungssystem', 'Veranstaltung', 'Bankettplanung', 'Beschwerdemanagement', 'Housekeeping-Kontrolle', 'Minibar-Abrechnung', 'Wäscheservice', 'Gästebetreuung', 'Konferenzraum-Setup', 'Nachtschicht-Übergabe'],
@@ -12929,7 +13196,7 @@ Beispiel:
                 },
 
                 dachdecker: {
-                    id: 'dachdecker', icon: '🏠', name: 'Dachdecker/in',
+                    id: 'dachdecker', icon: '<svg class="icon"><use href="#i-home"/></svg>', name: 'Dachdecker/in',
                     category: 'Handwerk',
                     verbs: ['eindecken', 'abdichten', 'dämmen', 'verlegen', 'montieren', 'reparieren', 'aufbauen', 'sichern', 'messen', 'schneiden', 'kleben', 'schrauben', 'löten', 'schweißen', 'gestalten'],
                     objects: ['Dacheindeckung', 'Flachdachaufbau', 'Dachdämmung', 'Dachrinne', 'Dachfenster', 'Firstziegel', 'Unterspannbahn', 'Abdichtungsbahn', 'Schornsteineinfassung', 'Solaranlage', 'Dachgaube', 'Fassadenbekleidung', 'Blitzschutzanlage', 'Schneefanggitter'],
@@ -12944,7 +13211,7 @@ Beispiel:
                 },
 
                 sanitaer: {
-                    id: 'sanitaer', icon: '🔧', name: 'Anlagenmechaniker SHK',
+                    id: 'sanitaer', icon: '<svg class="icon"><use href="#i-wrench"/></svg>', name: 'Anlagenmechaniker SHK',
                     category: 'Handwerk',
                     verbs: ['installieren', 'montieren', 'verlegen', 'löten', 'schweißen', 'pressen', 'dämmen', 'prüfen', 'reparieren', 'warten', 'einstellen', 'inbetriebnehmen', 'spülen', 'entlüften', 'messen'],
                     objects: ['Heizungsanlage', 'Sanitärinstallation', 'Trinkwasserleitung', 'Abwasserleitung', 'Wärmepumpe', 'Solarthermieanlage', 'Badezimmer-Ausstattung', 'Fußbodenheizung', 'Heizkörper', 'Lüftungsanlage', 'Gasleitung', 'Thermostatventil', 'Zirkulation', 'Speicher', 'Regelungstechnik'],
@@ -13804,7 +14071,7 @@ Beispiel:
                 const week = {
                     profession: professionId,
                     professionName: PROFESSIONS[professionId]?.name || professionId,
-                    professionIcon: PROFESSIONS[professionId]?.icon || '📋',
+                    professionIcon: PROFESSIONS[professionId]?.icon || bhIcon(''),
                     yearNum,
                     complexity,
                     calendarWeek: calendarWeek || getCalendarWeek(),
@@ -14017,8 +14284,8 @@ Beispiel:
                         // Akzeptiert auch alten 'gemini'-Tag aus History vor dem Rename.
                         const isCloud = week.source === 'cloud' || week.source === 'gemini';
                         score.innerHTML = isCloud
-                            ? `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(6,182,212,0.2));border:1px solid rgba(139,92,246,0.4);font-size:0.7rem;font-weight:700;color:#a78bfa;">✨ Cloud KI</span>`
-                            : `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid var(--border-light);font-size:0.7rem;font-weight:700;color:var(--text-dim);">⚡ Lokal</span>`;
+                            ? `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:linear-gradient(135deg,rgba(139,92,246,0.2),rgba(6,182,212,0.2));border:1px solid rgba(139,92,246,0.4);font-size:0.7rem;font-weight:700;color:#a78bfa;"><svg class="icon"><use href="#i-sparkles"/></svg> Cloud KI</span>`
+                            : `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid var(--border-light);font-size:0.7rem;font-weight:700;color:var(--text-dim);"><svg class="icon"><use href="#i-zap"/></svg> Lokal</span>`;
                     }
                 }
 
@@ -14054,7 +14321,7 @@ Beispiel:
                             </div>
                         </div>
                     </div>
-                    ${day.isSchoolDay && day.schoolTopic ? `<div class="ais-day-school"><strong>📖</strong> ${day.schoolTopic}</div>` : ''}
+                    ${day.isSchoolDay && day.schoolTopic ? `<div class="ais-day-school"><strong><svg class="icon"><use href="#i-bookopen"/></svg></strong> ${escapeHtml(day.schoolTopic)}</div>` : ''}
                     <ul class="ais-day-entries">
                         ${day.entries.map((entry, j) => `
                             <li>
@@ -14073,7 +14340,7 @@ Beispiel:
                     const text = document.getElementById('aisComplianceText');
                     if (badge) {
                         badge.className = `ais-compliance-badge ${ihk.status}`;
-                        badge.innerHTML = `<span>${ihk.status === 'pass' ? '✓' : ihk.status === 'warn' ? '⚠' : '✗'}</span> ${ihk.statusText}`;
+                        badge.innerHTML = `<span>${ihk.status === 'pass' ? '<svg class="icon"><use href="#i-check"/></svg>' : ihk.status === 'warn' ? '<svg class="icon"><use href="#i-warning"/></svg>' : '<svg class="icon"><use href="#i-x"/></svg>'}</span> ${ihk.statusText}`;
                     }
                     if (text) {
                         text.textContent = ihk.issues.length > 0
@@ -14118,7 +14385,7 @@ Beispiel:
                         return `
                         <div class="ais-history-item" id="ais-hist-${origIdx}" onclick="AIStudio.loadFromHistory(${origIdx})">
                             <div class="ais-history-item-header">
-                                <span class="ais-history-item-prof">${item.professionIcon || '📋'} ${item.professionName || item.profession}</span>
+                                <span class="ais-history-item-prof">${bhIcon(item.professionIcon)} ${escapeHtml(item.professionName || item.profession)}</span>
                                 <span class="ais-history-item-date">${dateStr}</span>
                                 <button class="ais-del-trigger" onclick="event.stopPropagation(); AIStudio.deleteFromHistory(${origIdx});" title="Löschen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
                             </div>
@@ -14200,7 +14467,7 @@ Beispiel:
                             let text;
                             if (day.dayStatus && DAY_STATUS_LABELS[day.dayStatus]) {
                                 const st = DAY_STATUS_LABELS[day.dayStatus];
-                                text = `${st.icon} ${st.short.toUpperCase()} — keine Tätigkeiten`;
+                                text = `${st.short} — keine Tätigkeiten`;
                             } else {
                                 text = day.entries.join('\n');
                             }
@@ -14230,7 +14497,7 @@ Beispiel:
                         hoursInput.value = week.totalHours || (week.days.length * 8);
                     }
 
-                    showToast('Alle Einträge in Tagesfelder eingefügt!', 'success');
+                    showToast('Alle Einträge in Tagesfelder eingefügt', 'success');
                 });
             }
 
@@ -14250,7 +14517,7 @@ Beispiel:
                         // ✦ Status-Tag: schreibe Status-Label statt Tätigkeiten
                         if (dayData.dayStatus && DAY_STATUS_LABELS[dayData.dayStatus]) {
                             const st = DAY_STATUS_LABELS[dayData.dayStatus];
-                            textarea.value = `${st.icon} ${st.short.toUpperCase()} — keine Tätigkeiten`;
+                            textarea.value = `${st.short} — keine Tätigkeiten`;
                         } else {
                             textarea.value = dayData.entries.join('\n');
                         }
@@ -14264,7 +14531,7 @@ Beispiel:
                         hoursInput.dispatchEvent(new Event('input'));
                     }
                     if (typeof updateDailyTotalHours === 'function') updateDailyTotalHours();
-                    showToast(`${dayData.name} in Tagesfeld eingefügt!`, 'success');
+                    showToast(`${dayData.name} in Tagesfeld eingefügt`, 'success');
                 });
             }
 
@@ -14376,7 +14643,7 @@ Beispiel:
                             const displayIcon = document.getElementById('aisBerufIcon');
                             const displayName = document.getElementById('aisBerufName');
                             const displayEl = document.getElementById('aisBerufDisplay');
-                            if (displayIcon) displayIcon.textContent = prof.icon;
+                            if (displayIcon) displayIcon.innerHTML = prof.icon;
                             if (displayName) displayName.textContent = prof.name + ' (erkannt)';
                             if (displayEl) displayEl.classList.add('has-prof');
                             _renderActivityChips(state.selectedProfession);
@@ -14386,7 +14653,7 @@ Beispiel:
                         const displayName = document.getElementById('aisBerufName');
                         const displayIcon = document.getElementById('aisBerufIcon');
                         if (displayEl) displayEl.classList.add('has-prof');
-                        if (displayIcon) displayIcon.textContent = '🎓';
+                        if (displayIcon) displayIcon.innerHTML = '<svg class="icon"><use href="#i-grad"/></svg>';
                         if (displayName) displayName.textContent = value.trim();
                     }
                     _saveProfile();
@@ -15046,7 +15313,7 @@ Beispiel:
                         return;
                     }
                     if (Notification.permission === 'denied') {
-                        showToast('🔔 Browser hat Notifications blockiert — siehe Anleitung unter dem Toggle', 'error');
+                        showToast('Browser hat Notifications blockiert — siehe Anleitung unter dem Toggle', 'error');
                         if (chk) chk.checked = false;
                         _updateReminderHelp();
                         return;
@@ -15054,7 +15321,7 @@ Beispiel:
                     const enable = () => {
                         state.sundayReminder = true;
                         try { localStorage.setItem(STORAGE_KEYS.sundayReminder, '1'); } catch (e) { }
-                        showToast('🔔 Reminder aktiviert — Sonntag 18 Uhr', 'success');
+                        showToast('Reminder aktiviert — Sonntag 18 Uhr', 'success');
                         _scheduleSundayCheck();
                         _updateReminderHelp();
                     };
@@ -15066,7 +15333,7 @@ Beispiel:
                             if (p === 'granted') {
                                 enable();
                             } else if (p === 'denied') {
-                                showToast('🔔 Du hast Benachrichtigungen abgelehnt — siehe Anleitung unter dem Toggle', 'warning');
+                                showToast('Du hast Benachrichtigungen abgelehnt — siehe Anleitung unter dem Toggle', 'warning');
                                 if (chk) chk.checked = false;
                                 _updateReminderHelp();
                             } else {
@@ -15160,7 +15427,7 @@ Beispiel:
                 const displayIcon = document.getElementById('aisBerufIcon');
                 const displayName = document.getElementById('aisBerufName');
                 const displayEl = document.getElementById('aisBerufDisplay');
-                if (displayIcon) displayIcon.textContent = prof.icon;
+                if (displayIcon) displayIcon.innerHTML = prof.icon;
                 if (displayName) displayName.textContent = prof.name;
                 if (displayEl) displayEl.classList.add('has-prof');
                 _renderActivityChips(id);
@@ -15276,7 +15543,7 @@ Beispiel:
                         const displayIcon = document.getElementById('aisBerufIcon');
                         const displayName = document.getElementById('aisBerufName');
                         const displayEl = document.getElementById('aisBerufDisplay');
-                        if (displayIcon) displayIcon.textContent = prof.icon;
+                        if (displayIcon) displayIcon.innerHTML = prof.icon;
                         if (displayName) displayName.textContent = prof.name;
                         if (displayEl) displayEl.classList.add('has-prof');
                         _renderActivityChips(profile.profession);
@@ -15314,7 +15581,7 @@ Beispiel:
                 const prof = state.selectedProfession ? PROFESSIONS[state.selectedProfession]?.name : null;
                 const lj = state.lehrjahr || 2;
                 if (prof) {
-                    el.innerHTML = `<span class="ais-prof-badge">${PROFESSIONS[state.selectedProfession]?.icon || ''} ${prof} · ${lj}. Lehrjahr</span>`;
+                    el.innerHTML = `<span class="ais-prof-badge">${bhIcon(PROFESSIONS[state.selectedProfession]?.icon)} ${prof} · ${lj}. Lehrjahr</span>`;
                 } else {
                     el.textContent = 'Beruf & Lehrjahr einrichten';
                 }
@@ -15324,23 +15591,23 @@ Beispiel:
                 const input = document.getElementById('aisApiKeyInput');
                 const key = input?.value?.trim();
                 if (!key) {
-                    showToast('Bitte API Key eingeben!', 'warning');
+                    showToast('Bitte einen API Key eingeben', 'warning');
                     return;
                 }
                 state.apiKey = key;
                 input.value = '';
                 input.placeholder = '••••••••' + key.slice(-4);
                 _updateApiStatus(true);
-                showToast('API Key gespeichert! 🔑', 'success');
+                showToast('API Key gespeichert', 'success');
                 const btnText = document.querySelector('#aisGenerateBtn .ais-mega-text');
-                if (btnText && state.useCloud) btnText.textContent = '✨ Mit Cloud KI generieren';
+                if (btnText && state.useCloud) btnText.textContent = 'Mit Cloud KI generieren';
             }
 
             function _updateApiStatus(connected) {
                 const el = document.getElementById('aisApiStatus');
                 if (!el) return;
                 el.className = 'ais-api-status ' + (connected ? 'connected' : 'disconnected');
-                el.innerHTML = `<div class="ais-api-status-dot"></div><span>${connected ? 'API Key gespeichert ✓' : 'Kein API Key gespeichert'}</span>`;
+                el.innerHTML = `<div class="ais-api-status-dot"></div><span>${connected ? 'API Key gespeichert' : 'Kein API Key gespeichert'}</span>`;
             }
 
             function _restoreApiSettings() {
@@ -15616,7 +15883,7 @@ ${trackingBlock}${aufgabenBlock}
                     const week = {
                         profession: professionId,
                         professionName: prof?.name || state.customProfession || professionId,
-                        professionIcon: prof?.icon || '🤖',
+                        professionIcon: prof?.icon || bhIcon(''),
                         yearNum: options.yearNum,
                         complexity: options.complexity,
                         calendarWeek: options.calendarWeek || getCalendarWeek(),
@@ -15881,7 +16148,7 @@ ${trackingBlock}${aufgabenBlock}
                 const week = {
                     profession: professionId,
                     professionName: prof?.name || state.customProfession || professionId,
-                    professionIcon: prof?.icon || '🤖',
+                    professionIcon: prof?.icon || bhIcon(''),
                     yearNum: options.yearNum,
                     complexity: options.complexity,
                     calendarWeek: options.calendarWeek || getCalendarWeek(),
@@ -16071,7 +16338,7 @@ ${trackingBlock}${aufgabenBlock}
                     // Schnapp zu 100% + Grün-Pulse für 700ms
                     if (fill) fill.style.width = '100%';
                     if (percentEl) percentEl.textContent = '100%';
-                    if (msgEl) { msgEl.classList.remove('fading'); msgEl.textContent = 'Fertig! ✓'; }
+                    if (msgEl) { msgEl.classList.remove('fading'); msgEl.textContent = 'Fertig'; }
                     btn.classList.add('success-pulse');
                     setTimeout(() => {
                         btn.classList.remove('loading', 'success-pulse');
@@ -16096,11 +16363,11 @@ ${trackingBlock}${aufgabenBlock}
                         profileBody.classList.add('open');
                         profileHdr?.classList.add('open');
                     }
-                    showToast('Bitte wähle zuerst deinen Beruf im Profil aus! 👆', 'warning');
+                    showToast('Bitte wähle zuerst deinen Beruf im Profil', 'warning');
                     return;
                 }
                 if (state.selectedDays.length === 0) {
-                    showToast('Bitte wähle mindestens einen Tag aus!', 'warning');
+                    showToast('Bitte wähle mindestens einen Tag', 'warning');
                     return;
                 }
 
@@ -16180,11 +16447,11 @@ ${trackingBlock}${aufgabenBlock}
                             } catch (apiErr) {
                                 console.warn('[AIStudio] Cloud-KI failed, using local engine:', apiErr.message);
                                 if (apiErr.message.includes('Tageslimit')) {
-                                    showToast('Tageslimit erreicht — nutze lokale Engine 🔄', 'warning');
+                                    showToast('Tageslimit erreicht — es läuft die lokale Engine', 'warning');
                                 } else if (apiErr.message.includes('Burst-Limit')) {
                                     showToast(apiErr.message + ' Nutze solange die lokale Engine.', 'warning');
                                 } else if (apiErr.message.includes('Proxy nicht erreichbar')) {
-                                    showToast('Cloud-KI Proxy offline — nutze lokale Engine 🔄', 'warning');
+                                    showToast('Cloud-KI Proxy offline — es läuft die lokale Engine', 'warning');
                                 }
                                 await new Promise(r => setTimeout(r, 300));
                                 week = generateWeek(state.selectedProfession, genOptions);
@@ -16209,7 +16476,7 @@ ${trackingBlock}${aufgabenBlock}
                     switchTab('preview');
                     renderPreview(week);
 
-                    showToast(usedCloud ? `✨ ${week.days.length} Tage mit Cloud KI generiert!` : `⚡ ${week.days.length} Tage lokal generiert`, 'success');
+                    showToast(usedCloud ? `${week.days.length} Tage mit Cloud KI generiert` : `${week.days.length} Tage lokal generiert`, 'success');
                     _genSuccess = true;
                 } catch (e) {
                     console.error('[AIStudio] Generation error:', e);
@@ -16251,7 +16518,7 @@ ${trackingBlock}${aufgabenBlock}
                 if (result.schoolTopic) state.generatedEntries.days[dayArrayIndex].schoolTopic = result.schoolTopic;
 
                 renderPreview(state.generatedEntries);
-                showToast(`⚡ ${day.name} lokal neu generiert`, 'info');
+                showToast(`${day.name} lokal neu generiert`, 'info');
             }
 
             // Cloud-Variante: zählt gegen das Rate-Limit (Cooldown + 1/20),
@@ -16292,7 +16559,7 @@ ${trackingBlock}${aufgabenBlock}
 
                 state.isGenerating = true;
                 _updateRateLimitUI();
-                showToast(`✨ ${day.name} wird neu generiert…`, 'info');
+                showToast(`${day.name} wird neu generiert…`, 'info');
 
                 try {
                     // Counter VOR dem Call hochzählen — Fehlversuche zählen mit (Pool-Schutz)
@@ -16324,7 +16591,7 @@ ${trackingBlock}${aufgabenBlock}
                         schoolTopic: newDay.schoolTopic ?? state.generatedEntries.days[dayArrayIndex].schoolTopic,
                     };
                     renderPreview(state.generatedEntries);
-                    showToast(`✨ ${day.name} mit Cloud-KI neu generiert`, 'success');
+                    showToast(`${day.name} mit Cloud-KI neu generiert`, 'success');
                 } catch (e) {
                     console.warn('[AIStudio] regenerateDayCloud failed:', e.message);
                     showToast('Cloud-KI Fehler: ' + e.message + ' — versuche "Lokal neu" daneben.', 'error');
@@ -16346,12 +16613,12 @@ ${trackingBlock}${aufgabenBlock}
                     day.entries = shuffleArray(day.entries);
                 }
                 renderPreview(state.generatedEntries);
-                showToast('Einträge gemischt!', 'info');
+                showToast('Einträge gemischt', 'info');
             }
 
             function insertAll() {
                 if (!state.generatedEntries) {
-                    showToast('Keine Einträge zum Einfügen vorhanden!', 'warning');
+                    showToast('Keine Einträge zum Einfügen vorhanden', 'warning');
                     return;
                 }
                 fillFormWithGeneratedWeek(state.generatedEntries);
@@ -16371,7 +16638,7 @@ ${trackingBlock}${aufgabenBlock}
                 switchTab('preview');
                 renderPreview(state.generatedEntries);
                 renderHistory();
-                showToast('Verlaufs-Eintrag geladen!', 'info');
+                showToast('Verlaufs-Eintrag geladen', 'info');
             }
 
             function deleteFromHistory(idx) {
@@ -16505,7 +16772,7 @@ ${trackingBlock}${aufgabenBlock}
             padding: 16px;
             opacity: 0;
             transition: opacity 0.28s ease;
-            font-family: 'Inter', system-ui, sans-serif;
+            font-family: var(--font-main);
         }
 
         .cv2-modal.show {
@@ -16516,7 +16783,7 @@ ${trackingBlock}${aufgabenBlock}
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(ellipse at top, rgba(168, 85, 247, 0.10), transparent 55%),
+                radial-gradient(ellipse at top, rgba(var(--primary-rgb), 0.10), transparent 55%),
                 rgba(3, 3, 5, 0.86);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -16549,7 +16816,7 @@ ${trackingBlock}${aufgabenBlock}
             border-radius: 20px;
             box-shadow:
                 0 24px 64px rgba(0, 0, 0, 0.55),
-                0 0 0 1px rgba(168, 85, 247, 0.10),
+                0 0 0 1px rgba(var(--primary-rgb), 0.10),
                 inset 0 1px 0 rgba(255, 255, 255, 0.04);
             transform: translateY(14px) scale(0.97);
             transition: transform 0.36s cubic-bezier(0.22, 1, 0.36, 1);
@@ -16568,7 +16835,7 @@ ${trackingBlock}${aufgabenBlock}
             left: 16px;
             right: 16px;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.55), transparent);
+            background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.55), transparent);
         }
 
         /* Head: PATCH NOTES Tag */
@@ -16586,9 +16853,9 @@ ${trackingBlock}${aufgabenBlock}
 
         .cv2-tag {
             padding: 3px 9px;
-            border: 1px solid rgba(168, 85, 247, 0.4);
-            background: rgba(168, 85, 247, 0.08);
-            color: #c4b5fd;
+            border: 1px solid rgba(var(--primary-rgb), 0.4);
+            background: rgba(var(--primary-rgb), 0.08);
+            color: var(--primary-light);
             border-radius: 6px;
             font-weight: 700;
         }
@@ -16610,7 +16877,7 @@ ${trackingBlock}${aufgabenBlock}
             font-size: 14.5px;
             line-height: 1.58;
             scrollbar-width: thin;
-            scrollbar-color: rgba(168, 85, 247, 0.3) transparent;
+            scrollbar-color: rgba(var(--primary-rgb), 0.3) transparent;
         }
 
         .cv2-body::-webkit-scrollbar {
@@ -16618,7 +16885,7 @@ ${trackingBlock}${aufgabenBlock}
         }
 
         .cv2-body::-webkit-scrollbar-thumb {
-            background: rgba(168, 85, 247, 0.3);
+            background: rgba(var(--primary-rgb), 0.3);
             border-radius: 3px;
         }
 
@@ -16660,8 +16927,8 @@ ${trackingBlock}${aufgabenBlock}
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #a855f7;
-            box-shadow: 0 0 12px rgba(168, 85, 247, 0.6);
+            background: var(--primary);
+            box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.6);
             flex: 0 0 auto;
         }
 
@@ -16682,13 +16949,13 @@ ${trackingBlock}${aufgabenBlock}
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 5px;
-            color: #c4b5fd;
+            color: var(--primary-light);
         }
 
         .cv2-num {
             font-family: 'JetBrains Mono', ui-monospace, monospace;
             font-weight: 700;
-            color: #a855f7;
+            color: var(--primary);
             margin-right: 4px;
         }
 
@@ -16700,10 +16967,10 @@ ${trackingBlock}${aufgabenBlock}
             font-variant-numeric: tabular-nums;
             padding: 1px 8px;
             margin: 0 2px;
-            background: rgba(168, 85, 247, 0.12);
-            border: 1px solid rgba(168, 85, 247, 0.3);
+            background: rgba(var(--primary-rgb), 0.12);
+            border: 1px solid rgba(var(--primary-rgb), 0.3);
             border-radius: 5px;
-            color: #ddd6fe;
+            color: var(--primary-light);
         }
 
         /* Times list */
@@ -16759,8 +17026,8 @@ ${trackingBlock}${aufgabenBlock}
             margin-top: 22px;
             padding: 14px 16px;
             background:
-                linear-gradient(135deg, rgba(168, 85, 247, 0.06), rgba(99, 102, 241, 0.04));
-            border: 1px solid rgba(168, 85, 247, 0.22);
+                linear-gradient(135deg, rgba(var(--primary-rgb), 0.06), rgba(99, 102, 241, 0.04));
+            border: 1px solid rgba(var(--primary-rgb), 0.22);
             border-radius: 12px;
             cursor: pointer;
             transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
@@ -16769,8 +17036,8 @@ ${trackingBlock}${aufgabenBlock}
         }
 
         .cv2-callout:hover {
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(99, 102, 241, 0.08));
-            border-color: rgba(168, 85, 247, 0.4);
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.12), rgba(99, 102, 241, 0.08));
+            border-color: rgba(var(--primary-rgb), 0.4);
         }
 
         .cv2-callout:active {
@@ -16793,11 +17060,11 @@ ${trackingBlock}${aufgabenBlock}
             font-family: 'JetBrains Mono', ui-monospace, monospace;
             font-size: 14.5px;
             font-weight: 600;
-            color: #ddd6fe;
+            color: var(--primary-light);
         }
 
         .cv2-arrow {
-            color: #a855f7;
+            color: var(--primary);
         }
 
         .cv2-mail {
@@ -16806,7 +17073,7 @@ ${trackingBlock}${aufgabenBlock}
 
         .cv2-copy-hint {
             margin-left: auto;
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-main);
             font-size: 11px;
             font-weight: 500;
             color: rgba(255, 255, 255, 0.4);
@@ -16847,10 +17114,10 @@ ${trackingBlock}${aufgabenBlock}
             min-height: 48px;
             padding: 0 18px;
             border-radius: 12px;
-            border: 1px solid rgba(168, 85, 247, 0.3);
-            background: rgba(168, 85, 247, 0.06);
+            border: 1px solid rgba(var(--primary-rgb), 0.3);
+            background: rgba(var(--primary-rgb), 0.06);
             color: rgba(255, 255, 255, 0.72);
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-main);
             font-size: 14.5px;
             font-weight: 600;
             cursor: not-allowed;
@@ -16863,8 +17130,8 @@ ${trackingBlock}${aufgabenBlock}
             top: 0;
             bottom: 0;
             width: 0%;
-            background: linear-gradient(90deg, rgba(168, 85, 247, 0.18), rgba(168, 85, 247, 0.32));
-            border-right: 1px solid rgba(168, 85, 247, 0.5);
+            background: linear-gradient(90deg, rgba(var(--primary-rgb), 0.18), rgba(var(--primary-rgb), 0.32));
+            border-right: 1px solid rgba(var(--primary-rgb), 0.5);
             transition: width 0.1s linear;
             pointer-events: none;
         }
@@ -16890,15 +17157,15 @@ ${trackingBlock}${aufgabenBlock}
 
         .cv2-cta.cv2-ready {
             cursor: pointer;
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6366f1 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 80%, #000) 100%);
             border-color: transparent;
             color: white;
-            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
+            box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.35);
         }
 
         .cv2-cta.cv2-ready:hover {
             transform: translateY(-1px);
-            box-shadow: 0 10px 28px rgba(139, 92, 246, 0.5);
+            box-shadow: 0 10px 28px rgba(var(--primary-rgb), 0.5);
         }
 
         .cv2-cta.cv2-ready .cv2-cta-counting {
@@ -16918,7 +17185,7 @@ ${trackingBlock}${aufgabenBlock}
         #cv2Sec {
             font-family: 'JetBrains Mono', ui-monospace, monospace;
             font-weight: 700;
-            color: #c4b5fd;
+            color: var(--primary-light);
             min-width: 14px;
             display: inline-block;
             text-align: center;
