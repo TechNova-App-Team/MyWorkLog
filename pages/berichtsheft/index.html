@@ -1655,7 +1655,7 @@
         .daily-school-toggle {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             font-size: 0.75rem;
             color: var(--text-muted);
             cursor: pointer;
@@ -1663,8 +1663,45 @@
             font-weight: 600;
         }
 
-        .daily-school-toggle input {
-            cursor: pointer;
+        /* Hide the native checkbox but keep it accessible */
+        .daily-school-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* The custom toggle track */
+        .daily-school-toggle .toggle-track {
+            position: relative;
+            width: 34px;
+            height: 20px;
+            background-color: var(--border);
+            border-radius: 20px;
+            transition: background-color 0.3s var(--ease);
+            display: inline-block;
+        }
+
+        /* The custom toggle thumb */
+        .daily-school-toggle .toggle-track::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s var(--ease);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Checked state */
+        .daily-school-input:checked + .toggle-track {
+            background-color: var(--primary);
+        }
+
+        .daily-school-input:checked + .toggle-track::after {
+            transform: translateX(14px);
         }
 
         .daily-day-name {
@@ -7828,13 +7865,13 @@ Beispiel:
                     </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="instructionFieldGroup">
                     <label class="form-label">Unterweisungen &amp; Schulungen (optional)</label>
                     <textarea class="form-textarea" id="reportInstruction" rows="3"
                         placeholder="Unterweisungen, betrieblicher Unterricht, sonstige Schulungen — eigener Block im IHK-Vordruck"></textarea>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="schoolFieldGroup">
                     <label class="form-label">Berufsschule (optional)</label>
                     <textarea class="form-textarea" id="reportSchool" rows="4"
                         placeholder="Themen und Inhalte der Berufsschule in dieser Woche..."></textarea>
@@ -10334,15 +10371,21 @@ Beispiel:
                     ${report.mode === 'daily' && report.dailyActivities ? `
                         <div style="display:flex;flex-direction:column;gap:0.75rem;">
                             ${DAYS.map(day => {
+                const isSchool = report.dailySchool && report.dailySchool[day.key];
                 const text = report.dailyActivities[day.key];
                 const hrs = report.dailyHours ? report.dailyHours[day.key] : null;
-                if (!text) return '';
-                return `<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 1rem;background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border);font-size:0.82rem;font-weight:700;">
+                if (!text && !isSchool) return '';
+                
+                let displayText = text || '';
+                if (isSchool && text) displayText = '[Berufsschule] ' + text;
+                else if (isSchool) displayText = 'Berufsschule';
+
+                return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${isSchool ? 'rgba(var(--primary-rgb), 0.4)' : 'var(--border)'};border-radius:var(--radius-sm);overflow:hidden;${isSchool ? 'border-left:3px solid var(--primary);' : ''}">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 1rem;background:${isSchool ? 'rgba(var(--primary-rgb), 0.05)' : 'rgba(255,255,255,0.02)'};border-bottom:1px solid var(--border);font-size:0.82rem;font-weight:700;">
                                         <span>${day.icon} ${day.name}</span>
                                         ${hrs ? `<span style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);">${hrs} Std.</span>` : ''}
                                     </div>
-                                    <div style="padding:0.75rem 1rem;white-space:pre-wrap;line-height:1.7;font-size:0.88rem;">${escapeHtml(text)}</div>
+                                    <div style="padding:0.75rem 1rem;white-space:pre-wrap;line-height:1.7;font-size:0.88rem;">${escapeHtml(displayText)}</div>
                                 </div>`;
             }).join('')}
                         </div>
@@ -12235,6 +12278,8 @@ Beispiel:
             const weeklyGroup = document.getElementById('weeklyFieldGroup');
             const dailyGroup = document.getElementById('dailyFieldsGroup');
 
+            const schoolGroup = document.getElementById('schoolFieldGroup');
+
             if (mode === 'daily') {
                 if (btnDaily) btnDaily.classList.add('active');
                 if (btnWeekly) btnWeekly.classList.remove('active');
@@ -12243,6 +12288,7 @@ Beispiel:
                 if (btnWeeklyM) btnWeeklyM.classList.remove('active');
                 if (sliderM) sliderM.classList.add('right');
                 if (weeklyGroup) weeklyGroup.style.display = 'none';
+                if (schoolGroup) schoolGroup.style.display = 'none'; // Hide in daily
                 if (dailyGroup) dailyGroup.classList.add('active');
                 // Remove required from weekly textarea so form can submit
                 const weeklyTA = document.getElementById('reportActivities');
@@ -12257,6 +12303,7 @@ Beispiel:
                 if (btnDailyM) btnDailyM.classList.remove('active');
                 if (sliderM) sliderM.classList.remove('right');
                 if (weeklyGroup) weeklyGroup.style.display = '';
+                if (schoolGroup) schoolGroup.style.display = ''; // Show in weekly
                 if (dailyGroup) dailyGroup.classList.remove('active');
                 // Restore required
                 const weeklyTA = document.getElementById('reportActivities');
@@ -12285,7 +12332,9 @@ Beispiel:
                             <span class="day-name">${day.icon} ${day.name}</span>
                             <span class="day-date">${dateStr}</span>
                             <label class="daily-school-toggle">
-                                <input type="checkbox" id="daily_school_${i}" class="daily-school-input" data-day="${day.key}" onchange="toggleSchoolDay(this)"> Schultag
+                                Schultag
+                                <input type="checkbox" id="daily_school_${i}" class="daily-school-input" data-day="${day.key}" onchange="toggleSchoolDay(this)">
+                                <span class="toggle-track"></span>
                             </label>
                             <div class="day-hours">
                                 <input type="number" step="0.5" min="0" max="12" value="8" 
