@@ -13,9 +13,9 @@
         content="Berichtsheft Generator: IHK-konformes Berichtsheft erstellen mit lokaler KI. Automatische Einträge, Prüfungsvorbereitung, AES-256 verschlüsselt & DSGVO-konform.">
     <meta name="keywords"
         content="Berichtsheft Generator, IHK-konformes Berichtsheft, digitales Berichtsheft, Berichtsheft erstellen, Berichtsheft App, lokale KI Berichtsheft, Ausbildungsnachweis, IHK Berichtsheft, Auszubildende Berichtsheft, online Berichtsheft, Fachinformatiker Berichtsheft, Berichtsheft offline">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.4.14"></script>
-    <script defer src="/Assets/js/mwl-codec.js?v=6.4.14"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.4.14"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.4.15"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.4.15"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.4.15"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -4824,69 +4824,152 @@
             font-style: italic;
         }
 
-        /* Ausbilder strenge */
-        .ais-strenge-row {
+        /* Schreibform */
+        .ais-form-row {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 6px;
         }
 
-        .ais-strenge-btn {
-            padding: 10px 4px;
-            border-radius: 10px;
-            border: 1.5px solid var(--border-light);
-            background: var(--bg-hover);
+        .ais-form-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 9px 4px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
             cursor: pointer;
             text-align: center;
-            transition: all 0.15s;
-            user-select: none;
+            transition: border-color 0.15s, background 0.15s;
         }
 
-        .ais-strenge-btn:hover {
-            border-color: var(--border-hover);
-        }
-
-        .ais-strenge-btn.sel {
+        .ais-form-card:hover {
             border-color: var(--primary);
+        }
+
+        .ais-form-card.sel {
             background: var(--primary-dim);
+            border-color: var(--primary);
         }
 
-        .ais-strenge-icon {
-            font-size: 1.1rem;
-            display: block;
-            margin-bottom: 3px;
-        }
-
-        .ais-strenge-icon-svg {
-            width: 20px;
-            height: 20px;
-            stroke: currentColor;
-            stroke-width: 1.5;
+        .ais-form-card-icon {
+            width: 16px;
+            height: 16px;
+            stroke: var(--text-muted);
+            stroke-width: 1.7;
             fill: none;
             stroke-linecap: round;
             stroke-linejoin: round;
-            color: var(--text-muted);
-            display: block;
-            margin: 0 auto 4px;
-            transition: color 0.2s ease;
         }
 
-        .ais-strenge-btn.sel .ais-strenge-icon-svg {
-            color: var(--primary-light);
+        .ais-form-card.sel .ais-form-card-icon {
+            stroke: var(--primary-light);
         }
 
-        .ais-strenge-label {
-            font-size: 0.6rem;
+        .ais-form-card-name {
+            font-size: 0.72rem;
             font-weight: 600;
-            color: var(--text-dim);
-            display: block;
+            color: var(--text-main);
+            line-height: 1.2;
         }
 
-        .ais-strenge-btn.sel .ais-strenge-label {
+        .ais-form-card.sel .ais-form-card-name {
             color: var(--primary-light);
         }
 
-        /* Collapsible sections */
+        .ais-form-card-desc {
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            line-height: 1.2;
+        }
+
+        /* Live-Beispiel: laeuft durch dieselbe Engine wie die echte Generierung */
+        .ais-form-bsp {
+            margin-top: 8px;
+            padding: 9px 11px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 2px solid var(--primary);
+            border-radius: var(--radius-xs);
+        }
+
+        .ais-form-bsp-lbl {
+            font-size: 0.62rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+        }
+
+        .ais-form-bsp-zeile {
+            margin: 0 0 3px;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        .ais-form-bsp-zeile:last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 480px) {
+            .ais-form-row {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        /* Umfang */
+        .ais-umfang-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        .ais-umfang-chip {
+            flex: 1;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s, background 0.15s;
+        }
+
+        .ais-umfang-chip:hover {
+            border-color: var(--primary);
+        }
+
+        .ais-umfang-chip.sel {
+            background: var(--primary-dim);
+            border-color: var(--primary);
+            color: var(--primary-light);
+        }
+
+        .ais-form-hint {
+            width: 100%;
+            padding: 8px 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xs);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            font-size: 0.8rem;
+            line-height: 1.5;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .ais-form-hint:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
         .ais-collapse-hdr {
             display: flex;
             align-items: center;
@@ -6732,9 +6815,9 @@
             color: var(--text-main);
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.4.14"></script>
-    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=6.4.14">
-    <script defer src="/Assets/js/version-loader.js?v=6.4.14"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.4.15"></script>
+    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=6.4.15">
+    <script defer src="/Assets/js/version-loader.js?v=6.4.15"></script>
 </head>
 
 <body>
@@ -6949,6 +7032,16 @@
         <symbol id="i-x" viewBox="0 0 24 24">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
+        </symbol>
+        <symbol id="i-align-left" viewBox="0 0 24 24">
+            <line x1="21" x2="3" y1="6" y2="6" />
+            <line x1="15" x2="3" y1="12" y2="12" />
+            <line x1="17" x2="3" y1="18" y2="18" />
+        </symbol>
+        <symbol id="i-pilcrow" viewBox="0 0 24 24">
+            <path d="M13 4v16" />
+            <path d="M17 4v16" />
+            <path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13" />
         </symbol>
         <symbol id="i-list" viewBox="0 0 24 24">
             <line x1="8" x2="21" y1="6" y2="6" />
@@ -7930,11 +8023,11 @@ Beispiel:
             </div>
         </div>
     </div>
-    <script defer src="/components/umfrage/umfrage.js?v=6.4.14"></script>
+    <script defer src="/components/umfrage/umfrage.js?v=6.4.15"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="/Assets/js/berichtsheft/ihk-formulare.js?v=6.4.14"></script>
-    <script src="/Assets/js/berichtsheft/foto-import.js?v=6.4.14"></script>
+    <script src="/Assets/js/berichtsheft/ihk-formulare.js?v=6.4.15"></script>
+    <script src="/Assets/js/berichtsheft/foto-import.js?v=6.4.15"></script>
 
     <!-- ===== FOTO-IMPORT — Papier-Berichtsheft abfotografieren ===== -->
     <div class="foto-overlay" id="fotoImport" role="dialog" aria-modal="true" aria-labelledby="fotoTitle">
@@ -8352,38 +8445,61 @@ Beispiel:
                     </div>
                 </div>
 
-                <!-- 4. Wie streng ist dein Ausbilder? -->
+                <!-- 4. Schreibform. Die Karten benennen das Ergebnis, nicht eine
+                     Eigenschaft des Ausbilders — darunter steht ein echtes Beispiel aus
+                     derselben Engine, die auch generiert. -->
                 <div class="ais-section">
-                    <div class="ais-sec-lbl">Wie streng ist dein Ausbilder?</div>
-                    <div class="ais-strenge-row">
-                        <div class="ais-strenge-btn" data-strenge="entspannt"
-                            onclick="AIStudio.setStrenge('entspannt',this)">
-                            <svg class="ais-strenge-icon-svg">
-                                <use href="#i-smile" />
-                            </svg>
-                            <span class="ais-strenge-label">Entspannt</span>
+                    <div class="ais-sec-lbl">Schreibform</div>
+                    <div class="ais-form-row" id="aisFormRow">
+                        <div class="ais-form-card sel" data-form="stichpunkte"
+                            onclick="AIStudio.setForm('stichpunkte',this)">
+                            <svg class="ais-form-card-icon"><use href="#i-list" /></svg>
+                            <span class="ais-form-card-name">Stichpunkte</span>
+                            <span class="ais-form-card-desc">IHK-Standard</span>
                         </div>
-                        <div class="ais-strenge-btn sel" data-strenge="normal"
-                            onclick="AIStudio.setStrenge('normal',this)">
-                            <svg class="ais-strenge-icon-svg">
-                                <use href="#i-clipboard" />
-                            </svg>
-                            <span class="ais-strenge-label">Normal</span>
+                        <div class="ais-form-card" data-form="saetze" onclick="AIStudio.setForm('saetze',this)">
+                            <svg class="ais-form-card-icon"><use href="#i-align-left" /></svg>
+                            <span class="ais-form-card-name">Ganze Sätze</span>
+                            <span class="ais-form-card-desc">3. Person</span>
                         </div>
-                        <div class="ais-strenge-btn" data-strenge="streng" onclick="AIStudio.setStrenge('streng',this)">
-                            <svg class="ais-strenge-icon-svg">
-                                <use href="#i-tie" />
-                            </svg>
-                            <span class="ais-strenge-label">Streng</span>
+                        <div class="ais-form-card" data-form="ichform" onclick="AIStudio.setForm('ichform',this)">
+                            <svg class="ais-form-card-icon"><use href="#i-user" /></svg>
+                            <span class="ais-form-card-name">Ich-Form</span>
+                            <span class="ais-form-card-desc">Ich habe …</span>
                         </div>
-                        <div class="ais-strenge-btn" data-strenge="sehr_streng"
-                            onclick="AIStudio.setStrenge('sehr_streng',this)">
-                            <svg class="ais-strenge-icon-svg">
-                                <use href="#i-grad" />
-                            </svg>
-                            <span class="ais-strenge-label">Sehr streng</span>
+                        <div class="ais-form-card" data-form="fliesstext"
+                            onclick="AIStudio.setForm('fliesstext',this)">
+                            <svg class="ais-form-card-icon"><use href="#i-pilcrow" /></svg>
+                            <span class="ais-form-card-name">Fließtext</span>
+                            <span class="ais-form-card-desc">Ein Absatz</span>
                         </div>
                     </div>
+                    <div class="ais-form-bsp">
+                        <div class="ais-form-bsp-lbl"><span>So sieht ein Montag damit aus</span></div>
+                        <div class="ais-form-bsp-body" id="aisFormBeispiel"></div>
+                    </div>
+                </div>
+
+                <div class="ais-section">
+                    <div class="ais-sec-lbl">Umfang pro Tag</div>
+                    <div class="ais-umfang-row" id="aisUmfangRow">
+                        <div class="ais-umfang-chip" data-umfang="kurz" onclick="AIStudio.setUmfang('kurz',this)">Kurz
+                        </div>
+                        <div class="ais-umfang-chip sel" data-umfang="mittel"
+                            onclick="AIStudio.setUmfang('mittel',this)">Mittel</div>
+                        <div class="ais-umfang-chip" data-umfang="ausfuehrlich"
+                            onclick="AIStudio.setUmfang('ausfuehrlich',this)">Ausführlich</div>
+                    </div>
+                </div>
+
+                <div class="ais-section">
+                    <div class="ais-sec-lbl"><span>Eigene Vorgabe</span> <span
+                            style="font-weight:400;text-transform:none;">(optional)</span></div>
+                    <textarea class="ais-form-hint" id="aisFormHint" rows="2" maxlength="300"
+                        placeholder="z.B. &quot;Präsens statt Perfekt&quot; oder &quot;jeder Tag genau 4 Zeilen&quot;"
+                        oninput="AIStudio.onFormHint(this.value)"></textarea>
+                    <div class="ais-sec-hint">Was hier steht, hat Vorrang vor der Schreibform oben. Wirkt nur mit
+                        Cloud-KI.</div>
                 </div>
 
                 <!-- 5. Collapsible: Mein Profil -->
@@ -12315,10 +12431,10 @@ Beispiel:
                 usedPhrases: new Set(),
                 isGenerating: false,
                 useCloud: false,
-                writeStyle: 'ihk',        // wird ausschliesslich von setStrenge() gesetzt
+                form: 'stichpunkte',      // Schreibform: stichpunkte|saetze|ichform|fliesstext
+                umfang: 'mittel',         // Textmenge pro Tag: kurz|mittel|ausfuehrlich
+                formHint: '',             // "So will es mein Ausbilder" — Freitext, geht in den Prompt
                 activeTheme: null,
-                humanStyle: false,
-                ausbilderStrenge: 'normal',
                 selectedActivities: [],
                 dayNotes: {},
                 lehrjahr: 2,
@@ -12339,11 +12455,6 @@ Beispiel:
             // Reihenfolge für Cycle-Button: '' → krank → urlaub → feiertag → '' …
             const DAY_STATUS_CYCLE = ['', 'krank', 'urlaub', 'feiertag'];
 
-            // "Wie streng ist dein Ausbilder?" bestimmt, wie viele und wie tiefe
-            // Einträge pro Tag entstehen. Daneben stand bis v6.4.13 ein Select
-            // "Komplexität"; das wurde in der Auswertung VOR dieser Tabelle
-            // gelesen und hat sie damit nie zum Zug kommen lassen.
-            const STRENGE_COMPLEXITY = { entspannt: 'simple', normal: 'medium', streng: 'complex', sehr_streng: 'complex' };
 
             // ═══════════════════════════════════════
             // PROFESSION DATABASE — 20+ Berufe mit Deep Knowledge
@@ -12474,7 +12585,7 @@ Beispiel:
                     id: 'handwerk_bau', icon: '<svg class="icon"><use href="#i-wall"/></svg>', name: 'Maurer/in / Bau',
                     category: 'Handwerk',
                     verbs: ['mauern', 'betonieren', 'verputzen', 'verlegen', 'montieren', 'messen', 'schneiden', 'schleifen', 'abdichten', 'verschalen', 'fundamentieren', 'armieren', 'schütten', 'stampfen', 'verfugen'],
-                    objects: ['Backsteinmauer', 'Fundament', 'Deckenplatte', 'Estrichboden', 'Treppenanlage', 'Schalungssystem', 'Bewehrungskorb', 'Drainagesystem', 'Mauerwerk', 'Fassade', 'Innenputz', 'Außenwand', 'Stützpfeiler', 'Fensterbänke', 'Bodenplatte', 'Ringbalken', 'Sturzschalung', 'Sockelbreich', 'Dachsparren', 'Trennwand'],
+                    objects: ['Backsteinmauer', 'Fundament', 'Deckenplatte', 'Estrichboden', 'Treppenanlage', 'Schalungssystem', 'Bewehrungskorb', 'Drainagesystem', 'Mauerwerk', 'Fassade', 'Innenputz', 'Außenwand', 'Stützpfeiler', 'Fensterbänke', 'Bodenplatte', 'Ringbalken', 'Sturzschalung', 'Sockelbereich', 'Dachsparren', 'Trennwand'],
                     tools: ['Wasserwaage', 'Kelle', 'Mischmaschine', 'Rüttler', 'Nivelliergerät', 'Betonmischer', 'Kreissäge', 'Flex', 'Bohrmaschine', 'Bauplan', 'Schnurgerüst', 'Fluchtstab', 'Richtlatte'],
                     departments: ['Baustelle', 'Rohbau', 'Ausbau', 'Tiefbau', 'Werkstatt'],
                     yearTasks: {
@@ -12692,23 +12803,11 @@ Beispiel:
             // SCHOOL TOPIC DATABASE
             // ═══════════════════════════════════════
 
-            function generateSchoolEntry(profession, yearNum) {
+            function generateSchoolEntry(profession, yearNum, form = 'stichpunkte') {
                 const prof = PROFESSIONS[profession];
                 if (!prof || !prof.schoolTopics) return null;
-
-                const topics = prof.schoolTopics;
-                const topic = pickRandom(topics);
-
-                const schoolFormats = [
-                    `Berufsschule: ${topic} — Unterrichtsinhalte nachbereitet`,
-                    `Berufsschulunterricht: ${topic}. Aufgaben bearbeitet und Zusammenfassung erstellt`,
-                    `Berufsschultag: Thema "${topic}" behandelt. Übungen durchgeführt und Notizen gemacht`,
-                    `${topic} im Berufsschulunterricht. Lernstoff zusammengefasst und Übungsaufgaben gelöst`,
-                    `Berufsschule: Klassenarbeitsvorbereitung zum Thema ${topic}`,
-                    `Berufsschultag: ${topic} — Gruppenarbeit und Präsentation vorbereitet`
-                ];
-
-                return pickRandom(schoolFormats);
+                const topic = pickRandom(prof.schoolTopics);
+                return pickRandom((SCHUL_FORMATE[form] || SCHUL_FORMATE.stichpunkte)(topic));
             }
 
             // ═══════════════════════════════════════
@@ -12968,50 +13067,6 @@ Beispiel:
             };
 
             // Human-style sentence wrappers (add personal voice)
-            const HUMAN_PREFIXES = [
-                '', '', '', // Empty = no prefix (keep default, weighted more)
-                'Heute habe ich ',
-                'Im Laufe des Tages ',
-                'Zusammen mit einem Kollegen ',
-                'Eigenständig ',
-                'Nach einer kurzen Einweisung ',
-                'Auf Anweisung des Ausbilders ',
-            ];
-            const HUMAN_SUFFIXES = [
-                '', '', '', '', // Empty = no suffix (weighted more)
-                ' — hat gut geklappt',
-                ' und dabei einiges gelernt',
-                ' (erstmals eigenständig)',
-                ' nach kurzer Rücksprache',
-                ' und das Ergebnis besprochen',
-            ];
-
-            function applyWriteStyle(entries, writeStyle, humanStyle) {
-                if (writeStyle === 'detailed') {
-                    // Add context to some entries
-                    return entries.map(e => {
-                        if (Math.random() > 0.5 && e.length < 90) {
-                            const contexts = [' und Ergebnis dokumentiert', ' gemäß Ausbildungsplan', ' im Rahmen des laufenden Projekts', ' unter Anleitung des Ausbilders'];
-                            return e + pickRandom(contexts);
-                        }
-                        return e;
-                    });
-                }
-                if (humanStyle || writeStyle === 'human') {
-                    return entries.map(e => {
-                        // Remove bullet prefix temporarily
-                        const core = e.replace(/^[•\-]\s*/, '');
-                        const prefix = pickRandom(HUMAN_PREFIXES);
-                        const suffix = pickRandom(HUMAN_SUFFIXES);
-                        if (prefix || suffix) {
-                            const modified = prefix + core.toLowerCase() + suffix;
-                            return '• ' + modified.charAt(0).toUpperCase() + modified.slice(1);
-                        }
-                        return e;
-                    });
-                }
-                return entries; // ihk = default
-            }
 
             // ═══════════════════════════════════════
             // AUFGABEN-PIPE: Tasks aus Wochenansicht lesen
@@ -13266,35 +13321,41 @@ Beispiel:
             function generateDayEntries(professionId, options = {}) {
                 const {
                     yearNum = 2,
-                    complexity = 'medium',
+                    umfang = 'mittel',
+                    form = 'stichpunkte',
                     dayIndex = 0,
                     isSchoolDay = false,
                     season = getCurrentSeason(),
                     excludePhrases = [],
                     department = '',
-                    writeStyle = 'ihk',
                     activeTheme = null,
-                    humanStyle = false,
                     customPrompt = '',
                     aufgabenForDay = null,  // ✦ Aufgaben-Pipe: ["Switch konfigurieren", ...] für diesen Tag
                     trackingForDay = null,  // ✦ Tracking-Pipe: ["Projekt: Alpha", "Notiz: Bugfix …"] für diesen Tag
                 } = options;
 
+                // Nur Stichpunkte tragen ein Aufzaehlungszeichen; ein Satz mit "• " davor
+                // sieht im Berichtsheft-Feld aus wie ein Formatfehler.
+                const bullet = form === 'stichpunkte' ? '• ' : '';
+                // Fliesstext entsteht aus Ich-Form-Saetzen, die generateWeek danach
+                // zu EINEM Absatz zusammenzieht (alsFliesstext).
+                const musterForm = form === 'fliesstext' ? 'ichform' : form;
+                const rahmen = FAKT_RAHMEN[form] || FAKT_RAHMEN.stichpunkte;
+                // Die fertigen Phrasen-Pools (Lehrjahr, Saison, Wochenthema) stehen alle in
+                // Stichpunkt-Form und liessen sich ohne Genus-Wissen nicht sauber in Saetze
+                // umbiegen. In den Satzformen bleibt die Engine deshalb beim Musterpfad, wo
+                // sie die Grammatik vollstaendig kontrolliert. Lieber weniger Abwechslung
+                // als halb falsches Deutsch.
+                const nurMuster = form !== 'stichpunkte';
+
                 const prof = PROFESSIONS[professionId];
                 if (!prof) return generateGenericDayEntries(options);
 
-                const entryCount = {
-                    'simple': { min: 3, max: 4 },
-                    'medium': { min: 4, max: 5 },
-                    'complex': { min: 5, max: 7 }
-                }[complexity] || { min: 4, max: 5 };
-
-                // Detailed style = more entries
-                const extraEntries = writeStyle === 'detailed' ? 1 : 0;
-                const numEntries = entryCount.min + Math.floor(Math.random() * (entryCount.max - entryCount.min + 1)) + extraEntries;
+                const entryCount = UMFANG_COUNT[umfang] || UMFANG_COUNT.mittel;
+                const numEntries = entryCount.min + Math.floor(Math.random() * (entryCount.max - entryCount.min + 1));
 
                 if (isSchoolDay) {
-                    return generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases);
+                    return generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases, form, umfang);
                 }
 
                 const entries = [];
@@ -13309,7 +13370,7 @@ Beispiel:
                         const txt = String(fact).replace(/^(Projekt|Notiz|Job):\s*/, '').trim();
                         if (!txt) return;
                         if (entries.some(e => e.toLowerCase().includes(txt.toLowerCase()))) return;
-                        entries.push('• ' + txt);
+                        entries.push(bullet + rahmen(txt));
                         excludePhrases.push(txt);
                     });
                 }
@@ -13322,14 +13383,14 @@ Beispiel:
                     for (let i = 0; i < take; i++) {
                         const t = shuffled[i];
                         if (!entries.some(e => e.toLowerCase().includes(t.toLowerCase()))) {
-                            entries.push('• ' + t);
+                            entries.push(bullet + rahmen(t));
                             excludePhrases.push(t);
                         }
                     }
                 }
 
                 // 1. Add year-appropriate task (50% chance)
-                if (Math.random() > 0.5 && prof.yearTasks && prof.yearTasks[yearNum]) {
+                if (!nurMuster && Math.random() > 0.5 && prof.yearTasks && prof.yearTasks[yearNum]) {
                     const yearTask = pickRandom(prof.yearTasks[yearNum], excludePhrases);
                     if (yearTask) {
                         entries.push('• ' + yearTask);
@@ -13338,7 +13399,7 @@ Beispiel:
                 }
 
                 // 2. Add seasonal activity (30% chance for applicable professions)
-                if (Math.random() > 0.7 && SEASONAL_ACTIVITIES[professionId]) {
+                if (!nurMuster && Math.random() > 0.7 && SEASONAL_ACTIVITIES[professionId]) {
                     const seasonalActivities = SEASONAL_ACTIVITIES[professionId][season];
                     if (seasonalActivities) {
                         const seasonal = pickRandom(seasonalActivities, excludePhrases);
@@ -13358,12 +13419,21 @@ Beispiel:
                     usedVerbs.push(verb);
                     usedObjects.push(obj);
 
-                    const pattern = pickRandom(SENTENCE_PATTERNS);
-                    let sentence = pattern(verb, obj, tool);
+                    const muster = FORM_PATTERNS[musterForm] || FORM_PATTERNS.stichpunkte;
+                    const partizip = conjugateVerb(verb);
+                    let sentence = null;
+                    // Bis zu drei Muster durchprobieren, bevor eines mit doppeltem
+                    // Partizip akzeptiert wird — sonst haengt die Schleife bei Verben,
+                    // die in JEDEM Muster kollidieren.
+                    for (let versuch = 0; versuch < 3; versuch++) {
+                        const kandidat = pickRandom(muster)(verb, obj, tool);
+                        if (!partizipDoppelt(kandidat, partizip)) { sentence = kandidat; break; }
+                        sentence = sentence || kandidat;
+                    }
 
                     // Ensure no duplicates
-                    if (!entries.includes('• ' + sentence) && !excludePhrases.includes(sentence)) {
-                        entries.push('• ' + sentence);
+                    if (!entries.includes(bullet + sentence) && !excludePhrases.includes(sentence)) {
+                        entries.push(bullet + sentence);
                         excludePhrases.push(sentence);
                     }
                 }
@@ -13393,7 +13463,7 @@ Beispiel:
                 }
 
                 // 5. Add theme activity (if activeTheme set, 60% chance)
-                if (activeTheme && THEME_ACTIVITIES[activeTheme] && Math.random() > 0.4) {
+                if (!nurMuster && activeTheme && THEME_ACTIVITIES[activeTheme] && Math.random() > 0.4) {
                     const themeAct = pickRandom(THEME_ACTIVITIES[activeTheme], excludePhrases);
                     if (themeAct && !entries.some(e => e.includes(themeAct.substring(0, 20)))) {
                         entries.unshift('• ' + themeAct); // Put theme activity first
@@ -13402,7 +13472,7 @@ Beispiel:
                 }
 
                 // 6. Add universal activity (40% chance)
-                if (entries.length < numEntries + 1 && Math.random() > 0.6) {
+                if (!nurMuster && entries.length < numEntries + 1 && Math.random() > 0.6) {
                     const universal = pickRandom(UNIVERSAL_ACTIVITIES_EXTENDED, excludePhrases);
                     if (universal) {
                         entries.push('• ' + universal);
@@ -13410,35 +13480,39 @@ Beispiel:
                     }
                 }
 
-                const finalEntries = applyWriteStyle(entries.slice(0, numEntries), writeStyle, humanStyle);
-
                 return {
-                    entries: finalEntries,
+                    entries: entries.slice(0, numEntries),
                     hours: isSchoolDay ? 0 : 8,
                     isSchoolDay: false,
                     excludePhrases
                 };
             }
 
-            function generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases) {
-                const schoolEntry = generateSchoolEntry(professionId, yearNum);
+            function generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases, form = 'stichpunkte', umfang = 'mittel') {
+                const bullet = form === 'stichpunkte' ? '• ' : '';
+                const schoolEntry = generateSchoolEntry(professionId, yearNum, form);
                 const entries = [];
-                if (schoolEntry) {
-                    entries.push('• ' + schoolEntry);
+                if (schoolEntry) entries.push(bullet + schoolEntry);
+
+                // Der Schultag traegt denselben Umfang wie jeder andere Tag. Vorher waren
+                // es fest zwei Eintraege — bei "Ausfuehrlich" stach er als duenner Tag
+                // heraus und der Validator meldete ihn zu Recht an.
+                const lern = LERN_AKTIVITAETEN[form] || LERN_AKTIVITAETEN.stichpunkte;
+                const cnt = UMFANG_COUNT[umfang] || UMFANG_COUNT.mittel;
+                const ziel = cnt.min + Math.floor(Math.random() * (cnt.max - cnt.min + 1));
+                const benutzt = [];
+                while (entries.length < ziel && benutzt.length < lern.length) {
+                    const a = pickRandom(lern, benutzt);
+                    if (!a) break;
+                    benutzt.push(a);
+                    if (!entries.some(e => e.includes(a))) entries.push(bullet + a);
                 }
-
-                // Add 1-2 study-related entries
-                const studyActivities = [
-                    'Berufsschulheft nachgeführt und Lernstoff zusammengefasst',
-                    'Übungsaufgaben aus dem Unterricht bearbeitet',
-                    'Mit Mitschülern Gruppenarbeit durchgeführt',
-                    'Hausaufgaben für nächsten Berufsschultag erledigt',
-                    'Lernmaterial für bevorstehende Prüfung organisiert',
-                    'Fachbegriffe und Definitionen wiederholt',
-                    'Online-Lernplattform genutzt und Aufgaben bearbeitet',
-                ];
-
-                entries.push('• ' + pickRandom(studyActivities, excludePhrases));
+                // Reichen die Lern-Phrasen nicht, fuellt ein weiteres Schulthema auf.
+                let schutz = 0;
+                while (entries.length < ziel && schutz++ < 8) {
+                    const w = generateSchoolEntry(professionId, yearNum, form);
+                    if (w && !entries.some(e => e.includes(w))) entries.push(bullet + w);
+                }
 
                 return {
                     entries,
@@ -13450,11 +13524,34 @@ Beispiel:
             }
 
             function generateGenericDayEntries(options) {
-                const { complexity = 'medium', excludePhrases = [] } = options;
-                const numEntries = complexity === 'simple' ? 3 : complexity === 'complex' ? 6 : 4;
+                const { umfang = 'mittel', form = 'stichpunkte', excludePhrases = [] } = options;
+                const cnt = UMFANG_COUNT[umfang] || UMFANG_COUNT.mittel;
+                const numEntries = cnt.min + Math.floor(Math.random() * (cnt.max - cnt.min + 1));
 
-                const entries = pickMultipleUnique(UNIVERSAL_ACTIVITIES_EXTENDED, numEntries, excludePhrases)
-                    .map(e => '• ' + e);
+                // Stichpunkte kommen aus dem fertigen Phrasen-Pool. Fuer die Satzformen
+                // gibt es dort keinen Artikel, also baut die Engine aus UNIVERSAL_OBJEKTE
+                // (mit Genus) und den universellen Verben eigene Saetze.
+                let entries;
+                if (form === 'stichpunkte') {
+                    entries = pickMultipleUnique(UNIVERSAL_ACTIVITIES_EXTENDED, numEntries, excludePhrases)
+                        .map(e => '• ' + e);
+                } else {
+                    const musterForm = form === 'fliesstext' ? 'ichform' : form;
+                    const muster = FORM_PATTERNS[musterForm] || FORM_PATTERNS.stichpunkte;
+                    const verben = (typeof AI_BRAIN !== 'undefined' && AI_BRAIN.universalVerbs)
+                        ? AI_BRAIN.universalVerbs
+                        : ['durchführen', 'bearbeiten', 'vorbereiten', 'kontrollieren', 'dokumentieren'];
+                    entries = [];
+                    const benutzteObjekte = [];
+                    let schutz = 0;
+                    while (entries.length < numEntries && schutz++ < 60) {
+                        const obj = pickRandom(UNIVERSAL_OBJEKTE, benutzteObjekte);
+                        if (!obj) break;
+                        benutzteObjekte.push(obj);
+                        const satz = pickRandom(muster)(pickRandom(verben), obj, 'den üblichen Arbeitsmitteln');
+                        if (!entries.includes(satz) && !excludePhrases.includes(satz)) entries.push(satz);
+                    }
+                }
 
                 return {
                     entries,
@@ -13464,6 +13561,290 @@ Beispiel:
                 };
             }
 
+
+            // ═══════════════════════════════════════
+            // SCHREIBFORMEN — Genus, Artikel, Satzmuster
+            // ═══════════════════════════════════════
+            // Warum ein Genus-Lexikon: "Ich habe Bremsanlage geprueft" ist falsch, die
+            // Satzformen brauchen den Artikel. Deutsches Genus ist nicht ableitbar
+            // (der Server, die Firewall, das Netzwerk enden alle anders), also steht es
+            // hier als Datum. m/f/n = der/die/das, p = Plural.
+            // Vollstaendigkeit sichert tools/berichtsheft-formen.test.mjs: jedes Objekt
+            // aus PROFESSIONS MUSS hier stehen, sonst faellt der Test durch.
+            const OBJ_GENUS = (() => {
+                const g = {};
+                const put = (genus, list) => list.split('|').forEach(o => {
+                    const k = o.trim(); if (k) g[k] = genus;
+                });
+
+                put('m', `Backend-Service|Microservice|Algorithmus|Docker-Container|GraphQL-Endpoint|
+                    Websocket-Handler|Caching-Layer|Auth-Service|Batch-Prozess|Server|VPN-Tunnel|
+                    DHCP/DNS-Dienst|Virtualisierungs-Cluster|Mail-Server|Load-Balancer|Proxy-Server|
+                    Monatsbericht|Newsletter|Schaltschrank|Elektroverteiler|Sicherungskasten|
+                    Potentialausgleich|Frequenzumrichter|Schaltplan|Ölwechsel|Keilriemen|Kupplungssatz|
+                    Stoßdämpfer|Buffet-Aufbau|Vorratsbestand|Ernährungsplan|Verbandswechsel|Wareneingang|
+                    Lagerbestand|Umtauschvorgang|Estrichboden|Bewehrungskorb|Innenputz|Stützpfeiler|
+                    Ringbalken|Sockelbereich|Dachsparren|Türrahmen|Fensterrahmen|Dachstuhl|Innenausbau|
+                    Beschlag|Damenhaarschnitt|Herrenhaarschnitt|Kinderhaarschnitt|Warenausgang|
+                    Kommissionierauftrag|Lagerplatz|Ladungsträger|Frachtbrief|Video-Clip|Flyer|
+                    Druckauftrag|Blechzuschnitt|Metallrahmen|Prototyp|Hydraulik-Zylinder|Baumbestand|
+                    Pflasterweg|Rollrasen|Reinheitsgrad|Produktionsbatch|Hygieneplan|Check-in/Check-out|
+                    Wäscheservice|Flachdachaufbau|Firstziegel|Heizkörper|Speicher`);
+
+                put('f', `Webanwendung|REST-API|Frontend-Komponente|Schnittstelle|CI/CD-Pipeline|
+                    Serverless-Funktion|Middleware|Webhook-Integration|Firewall|WLAN-Infrastruktur|
+                    Druckerumgebung|Zertifikats-Infrastruktur|Kostenrechnung|Präsentation|
+                    Beleuchtungsanlage|SPS-Steuerung|Kabeltrasse|Brandmeldeanlage|Sprechanlage|
+                    Photovoltaikanlage|Ladestation|KNX-Bustechnologie|Netzersatzanlage|Blitzschutzanlage|
+                    Antriebstechnik|Erdungsanlage|Bremsanlage|Motorsteuerung|Klimaanlage|Abgasanlage|
+                    Inspektion|AU/HU-Vorbereitung|Batterie/Akku|Menüfolge|Salatkreation|Garnitur|
+                    Patisserie|Wundversorgung|Pflegeplanung|Körperpflege|Mobilisation|
+                    Inkontinenzversorgung|Lagerungshilfe|Pflegedokumentation|Infusionstherapie|
+                    Sondenernährung|Sturzprophylaxe|Dekubitusprophylaxe|Biografie-Arbeit|
+                    Schaufensterdekoration|Kassenabrechnung|Kundenberatung|Reklamation|Warenbestellung|
+                    Preisauszeichnung|Produktpräsentation|Inventurliste|Sonderaktion|Regalbestückung|
+                    Warenbeschaffung|Kundenbindungsaktion|Backsteinmauer|Deckenplatte|Treppenanlage|
+                    Fassade|Außenwand|Bodenplatte|Sturzschalung|Trennwand|Tischplatte|Holztreppe|
+                    Einbauküche|Regalwand|Holzverbindung|Schubladenführung|Furnierarbeit|
+                    Massivholzplatte|Arbeitsplatte|Schiebetür|Coloration|Balayage|Dauerwelle|
+                    Hochsteckfrisur|Bartpflege|Haarpflegebehandlung|Strähnen-Technik|Brautfrisur|
+                    Typberatung|Kopfhautbehandlung|Farbberatung|Lieferung|Palette|Sendung|
+                    Retourenbearbeitung|Bestandsliste|Gefahrgut-Ladung|Tourenplanung|Social-Media-Grafik|
+                    Banner-Animation|Broschüre|Bildbearbeitung|Infografik|Präsentationsvorlage|
+                    Schweißkonstruktion|Gewindebohrung|Passbohrung|Rohrkonstruktion|Pneumatik-Baugruppe|
+                    Vorrichtung|Rasenfläche|Hecke|Teichanlage|Grabpflege|Natursteinmauer|Probe|Lösung|
+                    Versuchsreihe|Kalibrierlösung|Standardlösung|Umweltprobe|Qualitätsprobe|Titration|
+                    Patientenaufnahme|Blutentnahme|EKG-Ableitung|Impfassistenz|Abrechnung (KV)|
+                    Sprechstundenplanung|Medikamentenausgabe|Laborprobe|Sterilisation|Patientenakte|
+                    Zimmerreinigung|Veranstaltung|Bankettplanung|Housekeeping-Kontrolle|
+                    Minibar-Abrechnung|Gästebetreuung|Nachtschicht-Übergabe|Dacheindeckung|Dachdämmung|
+                    Dachrinne|Unterspannbahn|Abdichtungsbahn|Schornsteineinfassung|Solaranlage|Dachgaube|
+                    Fassadenbekleidung|Heizungsanlage|Sanitärinstallation|Trinkwasserleitung|
+                    Abwasserleitung|Wärmepumpe|Solarthermieanlage|Badezimmer-Ausstattung|
+                    Fußbodenheizung|Lüftungsanlage|Gasleitung|Zirkulation|Regelungstechnik`);
+
+                put('n', `Datenbankmodul|UI-Feature|Login-System|Dashboard-Widget|ORM-Modell|
+                    Responsive Layout|PWA-Feature|Netzwerk|Active Directory|Backup-System|Storage-System|
+                    Monitoring-System|Ticketsystem|Patch-Management|Gesprächsprotokoll|Energiemessgerät|
+                    Fahrwerk|Getriebe|Beleuchtungssystem|Karosserie-Teil|Steuergerät|Achslager|
+                    Kraftstoffsystem|Mise en Place|Tagesmenü|Fleischgericht|Fischgericht|Mittagsmenü|
+                    Schmerzmanagement|Beschäftigungsangebot|Fundament|Schalungssystem|Drainagesystem|
+                    Mauerwerk|Möbelstück|Schranksystem|Werkstück|Printlayout|Webdesign-Mockup|Firmenlogo|
+                    Corporate-Design-Manual|E-Mail-Template|Plakat|Verpackungsdesign|UI/UX-Design|
+                    CNC-Drehteil|Fräsbauteil|Edelstahlgehäuse|Serienbauteil|Getriebebauteil|Beet|
+                    Gewächshaus|Blumen-Arrangement|Staudenbeet|Pflanzgefäß|Bewässerungssystem|
+                    Reaktionsgemisch|Analyseergebnis|Prüfprotokoll|Stoffgemisch|Reagenz|Recall-System|
+                    Terminmanagement|Frühstücksbuffet|Tischgedeck|Reservierungssystem|
+                    Beschwerdemanagement|Konferenzraum-Setup|Dachfenster|Schneefanggitter|
+                    Thermostatventil`);
+
+                put('p', `Unit-Tests|Client-PCs|Group Policies|Rechnungen|Aufträge|Kundenanfragen|Angebote|
+                    Buchhaltungsbelege|Personalakten|Lieferscheine|Stammdaten|Bestellungen|Mahnungen|
+                    Gutschriften|Reisekostenabrechnungen|Statistiken|Verträge|Inventurlisten|
+                    Steckdosen/Schalter|Reifen/Räder|Zündkerzen|Vorspeisen|Hauptgerichte|Desserts|
+                    Beilagen|Saucen|Fonds|Suppen|Vitalzeichen|Medikamente|Prophylaxen|Fensterbänke|
+                    Extensions|Versandpapiere|Zollpapiere|Sträucher`);
+
+                return g;
+            })();
+
+            // Sonderfaelle, bei denen der Artikel das Wort selbst veraendert:
+            // schwache Deklination (der Patient → den Patienten) und vorangestellte
+            // Adjektive, die mit Artikel ihre Endung wechseln (ein vegetarisches
+            // Gericht → das vegetarische Gericht).
+            const OBJ_SONDERFORM = {
+                'Patient/in':            { nom: 'die Patientin',            akk: 'die Patientin' },
+                'Vegetarisches Gericht': { nom: 'das vegetarische Gericht',  akk: 'das vegetarische Gericht' },
+                'Kalte Platte':          { nom: 'die kalte Platte',          akk: 'die kalte Platte' },
+                'Batterie/Akku':         { nom: 'die Batterie',              akk: 'die Batterie' },
+            };
+
+            const ART_NOM = { m: 'der', f: 'die', n: 'das', p: 'die' };
+            const ART_AKK = { m: 'den', f: 'die', n: 'das', p: 'die' };
+
+            // Objekt mit bestimmtem Artikel. kasus: 'nom' | 'akk'.
+            // Unbekanntes Objekt → ohne Artikel zurueckgeben statt zu raten; ein falscher
+            // Artikel faellt dem Leser staerker auf als ein fehlender.
+            function mitArtikel(obj, kasus) {
+                const sonder = OBJ_SONDERFORM[obj];
+                if (sonder) return sonder[kasus] || sonder.nom;
+                const g = OBJ_GENUS[obj];
+                if (!g) return obj;
+                return (kasus === 'akk' ? ART_AKK : ART_NOM)[g] + ' ' + obj;
+            }
+
+            // Verb-Kongruenz im Passiv: Plural-Objekte brauchen "wurden".
+            function wurde(obj) {
+                return OBJ_GENUS[obj] === 'p' ? 'wurden' : 'wurde';
+            }
+
+            // Satzmuster je Schreibform. Jede Funktion bekommt (verb, objekt, werkzeug)
+            // und liefert einen fertigen Eintrag OHNE Aufzaehlungszeichen.
+            // 'stichpunkte' ist die alte SENTENCE_PATTERNS-Liste und bleibt wortgleich —
+            // die Vorgabe darf sich durch den Umbau nicht aendern.
+            const FORM_PATTERNS = {
+                stichpunkte: SENTENCE_PATTERNS,
+
+                saetze: [
+                    (v, o, t) => `${cap(mitArtikel(o, 'nom'))} ${wurde(o)} ${conjugateVerb(v)}.`,
+                    (v, o, t) => `${cap(mitArtikel(o, 'nom'))} ${wurde(o)} ${conjugateVerb(v)} (${t}).`,
+                    (v, o, t) => `${cap(mitArtikel(o, 'nom'))} ${wurde(o)} fachgerecht ${conjugateVerb(v)} und dokumentiert.`,
+                    (v, o, t) => `Im Team ${wurde(o)} ${mitArtikel(o, 'nom')} ${conjugateVerb(v)}.`,
+                    (v, o, t) => `${cap(mitArtikel(o, 'nom'))} ${wurde(o)} selbstständig ${conjugateVerb(v)}.`,
+                    (v, o, t) => `Nach Anleitung ${wurde(o)} ${mitArtikel(o, 'nom')} ${conjugateVerb(v)}.`,
+                    (v, o, t) => `${cap(mitArtikel(o, 'nom'))} ${wurde(o)} ${conjugateVerb(v)} und anschließend geprüft (${t}).`,
+                    (v, o, t) => `${cap(mitArtikel(o, 'nom'))} ${wurde(o)} vorbereitet, ${conjugateVerb(v)} und kontrolliert.`,
+                    (v, o, t) => `Unter Aufsicht ${wurde(o)} ${mitArtikel(o, 'nom')} ${conjugateVerb(v)}.`,
+                ],
+
+                ichform: [
+                    (v, o, t) => `Ich habe ${mitArtikel(o, 'akk')} ${conjugateVerb(v)}.`,
+                    (v, o, t) => `Ich habe ${mitArtikel(o, 'akk')} ${conjugateVerb(v)} (${t}).`,
+                    (v, o, t) => `Ich habe ${mitArtikel(o, 'akk')} selbstständig ${conjugateVerb(v)} und dokumentiert.`,
+                    (v, o, t) => `Gemeinsam mit einem Kollegen habe ich ${mitArtikel(o, 'akk')} ${conjugateVerb(v)}.`,
+                    (v, o, t) => `Nach einer kurzen Einweisung habe ich ${mitArtikel(o, 'akk')} ${conjugateVerb(v)}.`,
+                    (v, o, t) => `Ich habe ${mitArtikel(o, 'akk')} vorbereitet und anschließend ${conjugateVerb(v)}.`,
+                    (v, o, t) => `Auf Anweisung meines Ausbilders habe ich ${mitArtikel(o, 'akk')} ${conjugateVerb(v)}.`,
+                    (v, o, t) => `Ich habe ${mitArtikel(o, 'akk')} ${conjugateVerb(v)} und das Ergebnis geprüft (${t}).`,
+                    (v, o, t) => `Im Team habe ich ${mitArtikel(o, 'akk')} ${conjugateVerb(v)}.`,
+                ],
+            };
+            // Fliesstext nutzt dieselben Ich-Form-Kerne und verbindet sie zu einem Absatz,
+            // siehe alsFliesstext().
+            FORM_PATTERNS.fliesstext = FORM_PATTERNS.ichform;
+
+            function cap(str) {
+                return str.charAt(0).toUpperCase() + str.slice(1);
+            }
+
+            // Etliche Muster enthalten ein festes Partizip ("… und dokumentiert",
+            // "… und anschließend geprüft"). Trifft das zufaellig gewaehlte Verb
+            // genau darauf, steht dasselbe Wort zweimal im Satz — "Das Getriebe
+            // wurde geprüft und anschließend geprüft." Solche Treffer werden
+            // verworfen und ein anderes Muster gezogen.
+            function partizipDoppelt(satz, partizip) {
+                if (!partizip) return false;
+                const treffer = satz.toLowerCase().split(partizip.toLowerCase()).length - 1;
+                return treffer > 1;
+            }
+
+            // Bindewoerter fuer den Fliesstext. Reihenfolge ist die Erzaehlreihenfolge des
+            // Tages, deshalb feste Positionen statt Zufall — "zum Abschluss" darf nicht
+            // vor "zunaechst" stehen.
+            // Alle Bindewoerter enden auf "habe ich " und halten damit Hauptsatzstellung.
+            // Ein Nebensatz ("Der Montag begann damit, dass ich …") braeuchte das Hilfsverb
+            // am Satzende ("… repariert habe") — die Kerne liefern es aber vorn.
+            const FLIESS_ANFANG = ['Am {tag} habe ich zunächst ', 'Am {tag} habe ich als Erstes ', 'Zu Beginn des {tag}s habe ich '];
+            const FLIESS_MITTE = ['Anschließend habe ich ', 'Danach habe ich ', 'Im weiteren Verlauf habe ich ', 'Außerdem habe ich '];
+            const FLIESS_ENDE = ['Zum Abschluss habe ich ', 'Am Ende des Tages habe ich '];
+
+            // Baut aus Ich-Form-Saetzen EINEN Absatz. Erwartet Saetze der Form
+            // "Ich habe X gemacht." und schneidet das fuehrende "Ich habe " ab, damit
+            // das Bindewort davor passt.
+            function alsFliesstext(saetze, tagName) {
+                const kerne = saetze
+                    .map(s => s.replace(/^Ich habe /, '').replace(/\.$/, '').trim())
+                    .filter(Boolean);
+                if (kerne.length === 0) return [];
+                const teile = [];
+                kerne.forEach((kern, i) => {
+                    let bind;
+                    if (i === 0) bind = pickRandom(FLIESS_ANFANG).replace(/\{tag\}/g, tagName);
+                    else if (i === kerne.length - 1 && kerne.length > 2) bind = pickRandom(FLIESS_ENDE);
+                    else bind = pickRandom(FLIESS_MITTE);
+                    teile.push(bind + kern + '.');
+                });
+                return [teile.join(' ')];
+            }
+
+            // Eigene Berufe (Freitext im Profil) haben keine Objektliste. Damit auch sie
+            // Saetze statt nur Stichpunkte bekommen, gibt es diesen berufsneutralen Satz —
+            // mit Genus, wie alle anderen auch.
+            const UNIVERSAL_OBJEKTE = ['Arbeitsauftrag', 'Arbeitsplatz', 'Dokumentation', 'Materialliste',
+                'Werkzeug', 'Arbeitsbericht', 'Kundenanfrage', 'Bestellung', 'Qualitätskontrolle',
+                'Arbeitsablauf', 'Übergabe', 'Checkliste', 'Terminplan', 'Protokoll', 'Arbeitsschritt'];
+            OBJ_GENUS['Arbeitsauftrag'] = 'm'; OBJ_GENUS['Arbeitsplatz'] = 'm';
+            OBJ_GENUS['Dokumentation'] = 'f'; OBJ_GENUS['Materialliste'] = 'f';
+            OBJ_GENUS['Werkzeug'] = 'n'; OBJ_GENUS['Arbeitsbericht'] = 'm';
+            OBJ_GENUS['Kundenanfrage'] = 'f'; OBJ_GENUS['Bestellung'] = 'f';
+            OBJ_GENUS['Qualitätskontrolle'] = 'f'; OBJ_GENUS['Arbeitsablauf'] = 'm';
+            OBJ_GENUS['Übergabe'] = 'f'; OBJ_GENUS['Checkliste'] = 'f';
+            OBJ_GENUS['Terminplan'] = 'm'; OBJ_GENUS['Protokoll'] = 'n';
+            OBJ_GENUS['Arbeitsschritt'] = 'm';
+
+            // Nutzer-eigene Angaben (Zeiterfassung, Wochenplanung) werden NIE umformuliert —
+            // die lokale Engine kann das nicht, und der Originalwortlaut ist ehrlicher als
+            // eine generierte Floskel. Damit sie trotzdem in jede Form passen, bekommen sie
+            // einen Rahmen, der mit beliebigem Text grammatisch bleibt.
+            const FAKT_RAHMEN = {
+                stichpunkte: t => t,
+                saetze: t => `Bearbeitet wurde: ${t}.`,
+                ichform: t => `Ich habe an folgender Aufgabe gearbeitet: ${t}.`,
+            };
+            FAKT_RAHMEN.fliesstext = FAKT_RAHMEN.ichform;
+
+            // Berufsschule je Form. Das Thema ist ein blosser Fachbegriff ("Netzwerktechnik"),
+            // steht also artikellos richtig — hier braucht es kein Genus.
+            const SCHUL_FORMATE = {
+                stichpunkte: t => [
+                    `Berufsschule: ${t} — Unterrichtsinhalte nachbereitet`,
+                    `Berufsschulunterricht: ${t}. Aufgaben bearbeitet und Zusammenfassung erstellt`,
+                    `Berufsschultag: Thema "${t}" behandelt. Übungen durchgeführt und Notizen gemacht`,
+                    `${t} im Berufsschulunterricht. Lernstoff zusammengefasst und Übungsaufgaben gelöst`,
+                    `Berufsschule: Klassenarbeitsvorbereitung zum Thema ${t}`,
+                    `Berufsschultag: ${t} — Gruppenarbeit und Präsentation vorbereitet`,
+                ],
+                saetze: t => [
+                    `Im Berufsschulunterricht wurde das Thema ${t} behandelt.`,
+                    `In der Berufsschule wurde ${t} durchgenommen und der Lernstoff zusammengefasst.`,
+                    `Der Berufsschultag behandelte ${t}; dazu wurden Übungsaufgaben gelöst.`,
+                    `Zum Thema ${t} wurde im Unterricht eine Gruppenarbeit durchgeführt.`,
+                ],
+                ichform: t => [
+                    `In der Berufsschule habe ich das Thema ${t} behandelt.`,
+                    `Ich habe im Berufsschulunterricht ${t} durchgenommen und den Lernstoff zusammengefasst.`,
+                    `Am Berufsschultag habe ich zu ${t} Übungsaufgaben gelöst.`,
+                    `Ich habe zum Thema ${t} eine Gruppenarbeit vorbereitet.`,
+                ],
+            };
+            SCHUL_FORMATE.fliesstext = SCHUL_FORMATE.ichform;
+
+            const LERN_AKTIVITAETEN = {
+                stichpunkte: [
+                    'Berufsschulheft nachgeführt und Lernstoff zusammengefasst',
+                    'Übungsaufgaben aus dem Unterricht bearbeitet',
+                    'Mit Mitschülern Gruppenarbeit durchgeführt',
+                    'Hausaufgaben für nächsten Berufsschultag erledigt',
+                    'Lernmaterial für bevorstehende Prüfung organisiert',
+                    'Fachbegriffe und Definitionen wiederholt',
+                    'Online-Lernplattform genutzt und Aufgaben bearbeitet',
+                ],
+                saetze: [
+                    'Das Berufsschulheft wurde nachgeführt und der Lernstoff zusammengefasst.',
+                    'Übungsaufgaben aus dem Unterricht wurden bearbeitet.',
+                    'Mit Mitschülern wurde eine Gruppenarbeit durchgeführt.',
+                    'Die Hausaufgaben für den nächsten Berufsschultag wurden erledigt.',
+                    'Fachbegriffe und Definitionen wurden wiederholt.',
+                ],
+                ichform: [
+                    'Ich habe mein Berufsschulheft nachgeführt und den Lernstoff zusammengefasst.',
+                    'Ich habe Übungsaufgaben aus dem Unterricht bearbeitet.',
+                    'Ich habe mit Mitschülern eine Gruppenarbeit durchgeführt.',
+                    'Ich habe die Hausaufgaben für den nächsten Berufsschultag erledigt.',
+                    'Ich habe Fachbegriffe und Definitionen wiederholt.',
+                ],
+            };
+            LERN_AKTIVITAETEN.fliesstext = LERN_AKTIVITAETEN.ichform;
+
+            // Umfang → Anzahl Eintraege pro Tag. Frueher hiess das "complexity" und
+            // bediente zwei Bedeutungen gleichzeitig (Menge UND Anspruch); der Anspruch
+            // haengt jetzt allein am Lehrjahr.
+            const UMFANG_COUNT = {
+                kurz: { min: 3, max: 3 },
+                mittel: { min: 4, max: 5 },
+                ausfuehrlich: { min: 6, max: 7 },
+            };
+
             // ═══════════════════════════════════════
             // FULL WEEK GENERATION
             // ═══════════════════════════════════════
@@ -13471,14 +13852,13 @@ Beispiel:
             function generateWeek(professionId, options = {}) {
                 const {
                     yearNum = 2,
-                    complexity = 'medium',
+                    umfang = 'mittel',
+                    form = 'stichpunkte',
                     selectedDays = [0, 1, 2, 3, 4],
                     schoolDayIndices: optSchoolDayIndices = [],
                     department = '',
                     calendarWeek = null,
-                    writeStyle = 'ihk',
                     activeTheme = null,
-                    humanStyle = false,
                     customPrompt = '',
                 } = options;
 
@@ -13499,7 +13879,8 @@ Beispiel:
                     professionName: PROFESSIONS[professionId]?.name || professionId,
                     professionIcon: PROFESSIONS[professionId]?.icon || bhIcon(''),
                     yearNum,
-                    complexity,
+                    umfang,
+                    form,
                     calendarWeek: calendarWeek || getCalendarWeek(),
                     department: department || (PROFESSIONS[professionId]?.departments ? pickRandom(PROFESSIONS[professionId].departments) : ''),
                     season,
@@ -13511,7 +13892,11 @@ Beispiel:
 
                 // Custom-Entries WOCHEN-WEIT berechnen und auf max 2 zufällige Tage verteilen.
                 // Sonst landet die User-Notiz ("War kurz im Einkauf") in JEDEM Tag.
-                const _weekCustomEntries = _customContextEntries(customPrompt, week.department);
+                // _customContextEntries liefert Stichpunkte ('• …'); in den Satzformen
+                // bekommt der Text denselben Rahmen wie andere Nutzerangaben.
+                const _rahmenWoche = FAKT_RAHMEN[form] || FAKT_RAHMEN.stichpunkte;
+                const _weekCustomEntries = _customContextEntries(customPrompt, week.department)
+                    .map(e => form === 'stichpunkte' ? e : _rahmenWoche(e.replace(/^•\s*/, '')));
                 const _customAssignment = new Map(); // dayIdx → custom entry string
                 if (_weekCustomEntries.length > 0 && selectedDays.length > 0) {
                     const _shuffledDays = [...selectedDays].sort(() => Math.random() - 0.5);
@@ -13548,7 +13933,8 @@ Beispiel:
                     const isSchoolDay = schoolDaySet.has(dayIdx);
                     const result = generateDayEntries(professionId, {
                         yearNum,
-                        complexity,
+                        umfang,
+                        form,
                         dayIndex: dayIdx,
                         isSchoolDay,
                         season,
@@ -13558,15 +13944,20 @@ Beispiel:
                         injectedCustomEntry: _customAssignment.get(dayIdx) || null,
                         aufgabenForDay: aufgabenData ? aufgabenData.perDay[dayIdx] : null,
                         trackingForDay: trackingData ? trackingData.perDay[dayIdx] : null,
-                        writeStyle,
                         activeTheme,
-                        humanStyle,
                     });
+
+                    // Fliesstext: die Ich-Form-Saetze des Tages werden zu EINEM Absatz.
+                    // Muss hier passieren und nicht in generateDayEntries, weil erst hier
+                    // der Tagesname feststeht ("Am Montag habe ich zunaechst …").
+                    const eintraege = form === 'fliesstext'
+                        ? alsFliesstext(result.entries, DAY_NAMES[dayIdx])
+                        : result.entries;
 
                     const day = {
                         index: dayIdx,
                         name: DAY_NAMES[dayIdx],
-                        entries: result.entries,
+                        entries: eintraege,
                         // Echte erfasste Stunden schlagen den 8h-Default der Engine
                         hours: _trackingHoursForDay(dayIdx) || result.hours || 8,
                         isSchoolDay: result.isSchoolDay,
@@ -13611,11 +14002,22 @@ Beispiel:
                 let score = 0;
                 const maxScore = 100;
 
-                // 1. Check minimum entries per day (3+)
+                // 1. Genug Inhalt pro Tag. Der Massstab haengt an der Schreibform:
+                //    Fliesstext hat bauartbedingt EIN entries-Element, eine Mindestzahl
+                //    an Eintraegen waere dort immer rot.
+                const istFliess = week.form === 'fliesstext';
+                const minProTag = (UMFANG_COUNT[week.umfang] || UMFANG_COUNT.mittel).min;
                 let allDaysHaveMin = true;
                 for (const day of week.days) {
-                    if (day.entries.length < 3) {
-                        issues.push(`${day.name}: Weniger als 3 Einträge (min. 3 empfohlen)`);
+                    if (day.dayStatus) continue;   // krank/Urlaub/Feiertag hat keine Taetigkeiten
+                    if (istFliess) {
+                        const laenge = (day.entries[0] || '').length;
+                        if (laenge < 120) {
+                            issues.push(`${day.name}: Absatz sehr kurz (${laenge} Zeichen)`);
+                            allDaysHaveMin = false;
+                        }
+                    } else if (day.entries.length < minProTag) {
+                        issues.push(`${day.name}: ${day.entries.length} statt ${minProTag} Einträge`);
                         allDaysHaveMin = false;
                     }
                 }
@@ -13635,14 +14037,18 @@ Beispiel:
                 if (Math.abs(week.totalHours - expectedHours) <= 2) score += 15;
                 else { score += 5; issues.push(`Stundenzahl (${week.totalHours}h) weicht von ${expectedHours}h ab`); }
 
-                // 4. Check if school day is included (important for IHK)
+                // 4. Berufsschultag. Wer in den Optionen ausdruecklich "Kein" gewaehlt hat,
+                //    bekommt dafuer keinen Abzug — die Meldung waere ein Vorwurf fuer eine
+                //    bewusste Angabe (Umschueler, Teilzeit, Ferienwoche).
                 const hasSchoolDay = week.days.some(d => d.isSchoolDay);
-                if (hasSchoolDay) score += 15;
+                const schultagGewollt = !Array.isArray(state.schoolDayIndices) || state.schoolDayIndices.length > 0;
+                if (hasSchoolDay || !schultagGewollt) score += 15;
                 else { score += 5; issues.push('Kein Berufsschultag — IHK empfiehlt Berufsschuleinträge'); }
 
                 // 5. Check entry length (not too short)
                 let goodLength = true;
                 for (const day of week.days) {
+                    if (day.dayStatus) continue;
                     for (const entry of day.entries) {
                         if (entry.replace('• ', '').length < 15) {
                             goodLength = false;
@@ -14024,6 +14430,10 @@ Beispiel:
                 _updateAufgabenBadge();
                 // ✦ Zeiterfassung neu einlesen — der User hat seit dem letzten Öffnen ggf. gebucht
                 _refreshTracking();
+                // Beispiel beim Oeffnen fuellen. Ohne das steht der Kasten leer da, bis
+                // jemand eine Form anklickt — und gerade beim ERSTEN Blick soll er zeigen,
+                // was die Vorgabe bedeutet.
+                _renderFormBeispiel();
             }
 
             function close() {
@@ -14054,6 +14464,8 @@ Beispiel:
                 document.querySelectorAll('.ais-beruf-opt').forEach(c => {
                     c.classList.toggle('sel', c.dataset.prof === id);
                 });
+                // Das Beispiel nutzt das Vokabular des Berufs — nach dem Wechsel neu bauen
+                _renderFormBeispiel();
             }
 
             function onCustomProf(value) {
@@ -14309,17 +14721,59 @@ Beispiel:
                 // `if (cb)` hat das vollstaendig verborgen.
             }
 
-            function setStrenge(strenge, el) {
-                document.querySelectorAll('.ais-strenge-btn').forEach(b => b.classList.remove('sel'));
-                el.classList.add('sel');
-                state.ausbilderStrenge = strenge;
-                // Einziger Regler auf Schreibstil und Komplexitaet — es gab bis v6.4.13
-                // daneben einen zweiten ("Schreibstil" in den erweiterten Optionen), der
-                // dieselbe Groesse gesetzt hat und dabei stumm auseinandergelaufen ist.
-                const styleMap = { entspannt: 'human', normal: 'ihk', streng: 'ihk', sehr_streng: 'detailed' };
-                state.writeStyle = styleMap[strenge] || 'ihk';
-                state.humanStyle = strenge === 'entspannt';
+            // Schreibform waehlen. Ein Regler, eine Groesse — und die Wirkung steht
+            // direkt darunter als echtes Beispiel, damit niemand raten muss.
+            function setForm(form, el) {
+                if (!FORM_PATTERNS[form]) return;
+                document.querySelectorAll('.ais-form-card').forEach(c => c.classList.remove('sel'));
+                if (el) el.classList.add('sel');
+                state.form = form;
                 _saveProfile();
+                _renderFormBeispiel();
+            }
+
+            function setUmfang(umfang, el) {
+                if (!UMFANG_COUNT[umfang]) return;
+                document.querySelectorAll('.ais-umfang-chip').forEach(c => c.classList.remove('sel'));
+                if (el) el.classList.add('sel');
+                state.umfang = umfang;
+                _saveProfile();
+                _renderFormBeispiel();
+            }
+
+            function onFormHint(wert) {
+                state.formHint = String(wert || '').slice(0, 300);
+                _saveProfile();
+            }
+
+            // Das Live-Beispiel laeuft durch DIESELBE Engine wie die echte Generierung.
+            // Ein handgeschriebenes Musterbeispiel wuerde beim naechsten Umbau abdriften,
+            // ohne dass es jemand merkt — genau die Falle, die dieses Projekt schon
+            // einmal mit widgetLibrary hatte.
+            function _renderFormBeispiel() {
+                const box = document.getElementById('aisFormBeispiel');
+                if (!box) return;
+                const prof = state.selectedProfession && PROFESSIONS[state.selectedProfession]
+                    ? state.selectedProfession : 'software';
+                let zeilen;
+                try {
+                    const res = generateDayEntries(prof, {
+                        yearNum: state.lehrjahr || 2,
+                        umfang: state.umfang,
+                        form: state.form,
+                        dayIndex: 0,
+                        excludePhrases: [],
+                    });
+                    zeilen = state.form === 'fliesstext'
+                        ? alsFliesstext(res.entries, 'Montag')
+                        : res.entries;
+                } catch (e) {
+                    console.warn('[AIStudio] Beispiel fehlgeschlagen:', e);
+                    box.innerHTML = '';
+                    return;
+                }
+                const kurz = zeilen.slice(0, state.form === 'fliesstext' ? 1 : 3);
+                box.innerHTML = kurz.map(z => `<p class="ais-form-bsp-zeile">${escapeHtml(z)}</p>`).join('');
             }
 
             function toggleCollapse(bodyId, hdrId) {
@@ -14886,8 +15340,9 @@ Beispiel:
                     const profile = {
                         profession: state.selectedProfession,
                         lehrjahr: state.lehrjahr,
-                        ausbilderStrenge: state.ausbilderStrenge,
-                        writeStyle: state.writeStyle,
+                        form: state.form,
+                        umfang: state.umfang,
+                        formHint: state.formHint,
                         department: document.getElementById('aisDepartment')?.value?.trim() || '',
                     };
                     localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(profile));
@@ -14916,16 +15371,33 @@ Beispiel:
                             b.classList.toggle('sel', parseInt(b.dataset.lj) === profile.lehrjahr);
                         });
                     }
-                    if (profile.ausbilderStrenge) {
-                        state.ausbilderStrenge = profile.ausbilderStrenge;
-                        document.querySelectorAll('.ais-strenge-btn').forEach(b => {
-                            b.classList.toggle('sel', b.dataset.strenge === profile.ausbilderStrenge);
-                        });
-                        // Sync writeStyle
-                        const styleMap = { entspannt: 'human', normal: 'ihk', streng: 'ihk', sehr_streng: 'detailed' };
-                        state.writeStyle = profile.writeStyle || styleMap[profile.ausbilderStrenge] || 'ihk';
-                        state.humanStyle = profile.ausbilderStrenge === 'entspannt';
-                    }
+                    // Bestandsprofile trugen "ausbilderStrenge" (entspannt|normal|streng|
+                    // sehr_streng). Der Regler steuerte in Wahrheit Form UND Menge; beim
+                    // Umstieg werden beide daraus abgeleitet, damit niemand seine
+                    // Einstellung verliert.
+                    const ALT_STRENGE = {
+                        entspannt:   { form: 'ichform',     umfang: 'kurz' },
+                        normal:      { form: 'stichpunkte', umfang: 'mittel' },
+                        streng:      { form: 'stichpunkte', umfang: 'ausfuehrlich' },
+                        sehr_streng: { form: 'saetze',      umfang: 'ausfuehrlich' },
+                    };
+                    if (FORM_PATTERNS[profile.form]) state.form = profile.form;
+                    else if (ALT_STRENGE[profile.ausbilderStrenge]) state.form = ALT_STRENGE[profile.ausbilderStrenge].form;
+
+                    if (UMFANG_COUNT[profile.umfang]) state.umfang = profile.umfang;
+                    else if (ALT_STRENGE[profile.ausbilderStrenge]) state.umfang = ALT_STRENGE[profile.ausbilderStrenge].umfang;
+
+                    if (typeof profile.formHint === 'string') state.formHint = profile.formHint.slice(0, 300);
+
+                    document.querySelectorAll('.ais-form-card').forEach(c => {
+                        c.classList.toggle('sel', c.dataset.form === state.form);
+                    });
+                    document.querySelectorAll('.ais-umfang-chip').forEach(c => {
+                        c.classList.toggle('sel', c.dataset.umfang === state.umfang);
+                    });
+                    const hintEl = document.getElementById('aisFormHint');
+                    if (hintEl) hintEl.value = state.formHint;
+                    _renderFormBeispiel();
                     if (profile.department) {
                         const depEl = document.getElementById('aisDepartment');
                         if (depEl) depEl.value = profile.department;
@@ -14965,13 +15437,77 @@ Beispiel:
                 }
             }
 
+            // Regelwerk je Schreibform fuer den Cloud-Prompt.
+            // stil      = die harten Formregeln (ersetzen den frueher fest verdrahteten
+            //             Block "max 10 Woerter / Partizip / keine Ich-Form")
+            // beispiel  = ein JSON-Beispiel IN DIESER FORM. Das Beispiel wiegt beim Modell
+            //             schwerer als jede Regel — stand dort ein Stichpunkt, kamen
+            //             Stichpunkte zurueck, egal was daneben steht.
+            // proTag    = wie viele entries-Elemente ein Tag hat
+            const CLOUD_FORM = {
+                stichpunkte: {
+                    name: 'STICHPUNKTE (IHK-Standard)',
+                    stil: [
+                        'Jeder Eintrag startet DIREKT mit der Tätigkeit. Max 10 Wörter. EINE Tätigkeit, keine "und"-Verkettung.',
+                        'Form: "<Substantiv/Objekt> <Partizip>" — z.B. "<Komponente> konfiguriert", "<Dokument> erstellt".',
+                        'KEIN Satzzeichen am Ende. Keine Ich-Form. Keine Artikel am Satzanfang nötig.',
+                        '✗ Verboten: "Ich habe…", "Heute war ich…", ganze Sätze, Bewertungen ("viel gelernt").',
+                    ],
+                    beispiel: '["Wartungsprotokolle der Vorwoche gesichtet","Defekte Baugruppe ausgetauscht","Ergebnisse im Prüfbericht dokumentiert"]',
+                    proTag: '3-5 Stichpunkte',
+                },
+                saetze: {
+                    name: 'GANZE SÄTZE (3. Person, Passiv)',
+                    stil: [
+                        'Jeder Eintrag ist EIN vollständiger deutscher Satz mit Punkt am Ende.',
+                        'Passiv oder unpersönlich, 3. Person: "Die Baugruppe wurde ausgetauscht." — Artikel gehören dazu.',
+                        'Max 20 Wörter pro Satz. Eine Tätigkeit pro Satz.',
+                        '✗ Verboten: Ich-Form ("Ich habe…"), Stichpunkte ohne Verb, Bewertungen.',
+                    ],
+                    beispiel: '["Die Wartungsprotokolle der Vorwoche wurden gesichtet und ausgewertet.","Die defekte Baugruppe wurde ausgetauscht.","Die Ergebnisse wurden im Prüfbericht dokumentiert."]',
+                    proTag: '3-5 Sätze',
+                },
+                ichform: {
+                    name: 'ICH-FORM',
+                    stil: [
+                        'Jeder Eintrag ist EIN vollständiger Satz in der Ich-Form mit Punkt am Ende.',
+                        'Perfekt: "Ich habe … <Partizip>." Artikel gehören dazu ("die Baugruppe", nicht "Baugruppe").',
+                        'Max 20 Wörter pro Satz. Eine Tätigkeit pro Satz.',
+                        '✗ Verboten: Passiv, Stichpunkte ohne Verb, Bewertungen ("hat Spaß gemacht"), "Wir haben…".',
+                    ],
+                    beispiel: '["Ich habe die Wartungsprotokolle der Vorwoche gesichtet.","Ich habe die defekte Baugruppe ausgetauscht.","Ich habe die Ergebnisse im Prüfbericht dokumentiert."]',
+                    proTag: '3-5 Sätze',
+                },
+                fliesstext: {
+                    name: 'FLIESSTEXT',
+                    stil: [
+                        'entries enthält GENAU EIN Element: einen zusammenhängenden Absatz für den ganzen Tag.',
+                        'Ich-Form, Perfekt, 3-5 Sätze, durch Bindewörter verbunden ("zunächst", "anschließend", "zum Abschluss").',
+                        'Der Absatz nennt den Wochentag am Anfang. Artikel gehören dazu.',
+                        '✗ Verboten: Aufzählungen, Zeilenumbrüche, Spiegelstriche, mehr als ein Array-Element.',
+                    ],
+                    beispiel: '["Am Montag habe ich zunächst die Wartungsprotokolle der Vorwoche gesichtet und ausgewertet. Anschließend habe ich die defekte Baugruppe ausgetauscht und einen Funktionstest durchgeführt. Zum Abschluss habe ich die Ergebnisse im Prüfbericht dokumentiert."]',
+                    proTag: 'GENAU 1 Absatz (ein Array-Element)',
+                },
+            };
+
+            const CLOUD_UMFANG = {
+                kurz: { stichpunkte: '3 Einträge pro Tag', fliesstext: '2-3 Sätze im Absatz' },
+                mittel: { stichpunkte: '4-5 Einträge pro Tag', fliesstext: '3-4 Sätze im Absatz' },
+                ausfuehrlich: { stichpunkte: '6-7 Einträge pro Tag', fliesstext: '5-6 Sätze im Absatz' },
+            };
+
             function _buildCloudPrompt(professionId, options) {
                 const prof = PROFESSIONS[professionId];
                 const DAY_NAMES = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
                 const daysList = options.selectedDays.map(d => DAY_NAMES[d]).join(', ');
                 const profName = prof?.name || state.customProfession || professionId;
-                const complexityMap = { simple: 'einfach', medium: 'mittel', complex: 'fortgeschritten' };
-                const cplx = complexityMap[options.complexity] || 'mittel';
+                const formId = CLOUD_FORM[options.form] ? options.form : 'stichpunkte';
+                const F = CLOUD_FORM[formId];
+                const umfangId = CLOUD_UMFANG[options.umfang] ? options.umfang : 'mittel';
+                const mengeText = formId === 'fliesstext'
+                    ? CLOUD_UMFANG[umfangId].fliesstext
+                    : CLOUD_UMFANG[umfangId].stichpunkte;
 
                 const ljHint = options.yearNum === 1
                     ? '· 1. LJ: Grundlagen, unter Anleitung, einfache Routine-Aufgaben'
@@ -14980,14 +15516,6 @@ Beispiel:
                         : '· 3. LJ: komplexe/eigenverantwortliche Aufgaben, Anleitung von Jüngeren';
 
                 const schoolTopicsHint = (prof?.schoolTopics || []).slice(0, 5).join(', ');
-
-                // Schreibstil-Variante (UI: IHK Präzise / Ausführlich / Menschlich)
-                const writeStyleHint = (function () {
-                    const s = options.writeStyle || 'ihk';
-                    if (s === 'detailed') return 'Ausführlich-Modus: 4-5 Einträge pro Tag statt 3-5, jeder Eintrag etwas detaillierter (aber WEITER max 10 Wörter, Stichpunkt-Form).';
-                    if (s === 'human' || options.humanStyle) return 'Menschlich-Modus: natürlicher Tonfall, weniger steif als reine IHK-Form. Verben dürfen am Anfang stehen ("Konfiguriert…", "Behoben…"). Trotzdem: keine Ich-Form, keine Floskeln, keine Sätze.';
-                    return 'IHK-Präzise: maximal sachlich, Partizip-Konstruktion ("X konfiguriert"), keine Pronomen, keine wertenden Adjektive.';
-                })();
 
                 // Wochen-Stimmung (UI: Mood-Cards Normal/Projekt/Schule/Support/Prüfung)
                 const themeMap = {
@@ -15001,6 +15529,12 @@ Beispiel:
                 };
                 const themeBlock = (options.activeTheme && themeMap[options.activeTheme])
                     ? `\n[WOCHEN-THEMA] ${themeMap[options.activeTheme]} — mindestens 2-3 Einträge in diese Richtung über die Woche verteilen.`
+                    : '';
+
+                // Eigene Vorgabe ("So will es mein Ausbilder"). Steht bewusst NACH den
+                // Formregeln und darf sie ueberschreiben — der Nutzer kennt seine Kammer.
+                const formHintBlock = (options.formHint || '').trim()
+                    ? `\n- ⚠️ VORRANG vor allen Formregeln oben — eigene Vorgabe des Nutzers: ${String(options.formHint).trim()}`
                     : '';
 
                 const retryPrefix = options._retryHint
@@ -15061,12 +15595,11 @@ ${lines.join('\n')}
 [KRITISCH — ANTWORT-FORMAT]
 Antwort = JSON-ARRAY mit GENAU ${options.selectedDays.length} VOLLSTÄNDIGEN Tag-Objekten. Jedes Element MUSS alle 5 Felder enthalten: day, entries, hours, isSchoolDay, schoolTopic.
 
-✓ RICHTIG (nur die STRUKTUR nachbauen — der Inhalt ist ein Beispiel eines anderen Berufs und wird NIEMALS wörtlich übernommen):
+✓ RICHTIG — Schreibform ${F.name}. Nur die STRUKTUR UND DIE FORM nachbauen; der Inhalt ist ein Beispiel eines anderen Berufs und wird NIEMALS wörtlich übernommen:
 [
-  {"day":"Montag","entries":["Wartungsprotokolle der Vorwoche gesichtet und ausgewertet","Defekte Baugruppe ausgetauscht und Funktionstest durchgeführt","Ergebnisse im Prüfbericht dokumentiert"],"hours":8,"isSchoolDay":false,"schoolTopic":null},
-  {"day":"Dienstag","entries":["Bauteile nach technischer Zeichnung vorbereitet","Montage der Baugruppe unter Anleitung durchgeführt","Maßhaltigkeit mit Messschieber kontrolliert"],"hours":8,"isSchoolDay":false,"schoolTopic":null}
+  {"day":"Montag","entries":${F.beispiel},"hours":8,"isSchoolDay":false,"schoolTopic":null}
 ]
-(Insgesamt ${options.selectedDays.length} Tage — jeder Tag mit 3-5 EIGENEN, konkreten Tätigkeiten.)
+(Insgesamt ${options.selectedDays.length} Tage — jeder Tag mit EIGENEN, konkreten Tätigkeiten, jeder Tag ${F.proTag}.)
 
 ✗ VERBOTEN: Platzhalter als Inhalt. Kein "…", kein "...", kein "Tätigkeit 1", kein "TODO", kein leerer String.
    Jeder entries-Eintrag ist ein vollständiger, konkreter Satz in Partizip-Form.
@@ -15078,25 +15611,22 @@ Antwort = JSON-ARRAY mit GENAU ${options.selectedDays.length} VOLLSTÄNDIGEN Tag
 
 Kein Markdown. Kein Text drumherum. Antwort beginnt mit [ und endet mit ].
 
-[STIL]
-- Jeder Eintrag startet DIREKT mit der Tätigkeit. Max 10 Wörter. EINE Tätigkeit, keine "und"-Verkettung.
-- Form: "<Substantiv/Objekt> <Partizip>" — z.B. "<Komponente> konfiguriert", "<Dokument> erstellt", "<Prozess> durchgeführt".
-- ⚠️ Diese Form-Beispiele sind PLATZHALTER — übernimm sie NIEMALS wörtlich. Generiere für jeden Tag KONKRETE, UNTERSCHIEDLICHE Tätigkeiten passend zum Beruf "${profName}".
-- ✗ Verboten: Ich-Form ("Ich habe…"), Tag-Verweise ("Heute war ich…"), Bewertungen ("Viel gelernt", "Hat Spaß gemacht"), mehrere Sätze pro Eintrag.
-- ${writeStyleHint}
-- Korrekte Fachbegriffe. Keine Einleitung/Fazit/Bewertung.
+[SCHREIBFORM — ${F.name}]
+${F.stil.map(r => '- ' + r).join('\n')}
+- ⚠️ Die Beispiele oben sind PLATZHALTER — übernimm sie NIEMALS wörtlich. Generiere für jeden Tag KONKRETE, UNTERSCHIEDLICHE Tätigkeiten passend zum Beruf "${profName}".
+- Korrekte Fachbegriffe. Keine Einleitung, kein Fazit, keine Bewertung.${formHintBlock}
 
 [ANTI-HALLUZINATION] Niemals erfinden: IP-Adressen, Personennamen (Herr/Frau X), Firmennamen (XY GmbH), Geldbeträge, Ticket-Nummern, konkrete Versions-/Modellnummern. Ausnahme: was unten in [VORGABEN] oder [ECHTE ZEITERFASSUNG] steht — das sind echte Angaben des Users und darf wörtlich übernommen werden.
 
 [INHALT]
-- 3-5 Einträge/Tag, immer hours=8 (Schultag: 8h Schule oder 6h+2h Betrieb).
-- ${options.yearNum}. Lehrjahr (${cplx}). ${ljHint}
+- ${mengeText}, immer hours=8 (Schultag: 8h Schule oder 6h+2h Betrieb).
+- ${options.yearNum}. Lehrjahr. ${ljHint}
 - Kein Tag wiederholt sich. Bleibe strikt im Beruf "${profName}" — kein bereichsfremder Inhalt.
 - Saison: ${getCurrentSeason()}${options.department ? `. Abteilung: ${options.department}` : ''}${themeBlock}
 
 [SCHULE] ${(Array.isArray(options.schoolDayIndices) && options.schoolDayIndices.length > 0)
                         ? `Schultage sind EXAKT: ${options.schoolDayIndices.map(i => DAY_NAMES[i]).join(', ')} — keine anderen Tage.
-- An diesen Schultagen: isSchoolDay=true (boolean), schoolTopic="<konkretes Fach z.B. ${schoolTopicsHint || 'Rahmenlehrplan'}>", entries=[3-5 Schul-Themen die behandelt wurden, ✓ "Subnetting geübt" "Active Directory besprochen" — NICHT Betriebs-Tätigkeiten]. Verschiedene Fächer pro Schultag.
+- An diesen Schultagen: isSchoolDay=true (boolean), schoolTopic="<konkretes Fach z.B. ${schoolTopicsHint || 'Rahmenlehrplan'}>", entries=[Schul-Themen die behandelt wurden, in derselben Schreibform ${F.name} wie oben — NICHT Betriebs-Tätigkeiten]. Verschiedene Fächer pro Schultag.
 - Alle anderen Tage: isSchoolDay=false (IMMER boolean, NIEMALS null), schoolTopic=null, entries=[normale Betriebs-Tätigkeiten]`
                         : `Kein Schultag diese Woche. Alle Tage: isSchoolDay=false (IMMER boolean, NIEMALS null), schoolTopic=null.`}
 ${options.customPrompt ? `
@@ -15211,7 +15741,8 @@ ${trackingBlock}${aufgabenBlock}
                         professionName: prof?.name || state.customProfession || professionId,
                         professionIcon: prof?.icon || bhIcon(''),
                         yearNum: options.yearNum,
-                        complexity: options.complexity,
+                        umfang: options.umfang,
+                        form: options.form,
                         calendarWeek: options.calendarWeek || getCalendarWeek(),
                         department: options.department || '',
                         season: getCurrentSeason(),
@@ -15476,7 +16007,8 @@ ${trackingBlock}${aufgabenBlock}
                     professionName: prof?.name || state.customProfession || professionId,
                     professionIcon: prof?.icon || bhIcon(''),
                     yearNum: options.yearNum,
-                    complexity: options.complexity,
+                    umfang: options.umfang,
+                    form: options.form,
                     calendarWeek: options.calendarWeek || getCalendarWeek(),
                     department: options.department || (prof?.departments ? pickRandom(prof.departments) : ''),
                     season: getCurrentSeason(),
@@ -15491,10 +16023,18 @@ ${trackingBlock}${aufgabenBlock}
                     const dayIdx = DAY_NAMES.indexOf(dayName);
                     if (dayIdx === -1) continue;
 
+                    // Fliesstext ist EIN Absatz. Liefert das Modell trotz Prompt mehrere
+                    // Elemente, werden sie zusammengezogen statt als Liste durchgereicht —
+                    // sonst steht im Berichtsheft eine Aufzaehlung, wo Fliesstext gewaehlt war.
+                    let cloudEntries = Array.isArray(dayData.entries) ? dayData.entries.map(e => String(e).trim()).filter(Boolean) : [];
+                    if (options.form === 'fliesstext' && cloudEntries.length > 1) {
+                        cloudEntries = [cloudEntries.map(e => /[.!?]$/.test(e) ? e : e + '.').join(' ')];
+                    }
+
                     const day = {
                         index: dayIdx,
                         name: dayName,
-                        entries: Array.isArray(dayData.entries) ? dayData.entries : [],
+                        entries: cloudEntries,
                         // Echte erfasste Stunden schlagen den Schätzwert der KI
                         hours: _trackingHoursForDay(dayIdx) || dayData.hours || 8,
                         isSchoolDay: !!dayData.isSchoolDay,
@@ -15524,21 +16064,22 @@ ${trackingBlock}${aufgabenBlock}
                         try {
                             const result = generateDayEntries(professionId, {
                                 yearNum: options.yearNum,
-                                complexity: options.complexity,
+                                umfang: options.umfang,
+                                form: options.form,
                                 dayIndex: dayIdx,
                                 isSchoolDay: usedSchoolSet.has(dayIdx),
                                 season,
                                 excludePhrases: [],
                                 department: week.department,
-                                writeStyle: options.writeStyle || 'ihk',
                                 activeTheme: options.activeTheme || null,
-                                humanStyle: options.humanStyle || false,
                                 customPrompt: options.customPrompt || '',
                             });
                             week.days.push({
                                 index: dayIdx,
                                 name: DAY_NAMES[dayIdx],
-                                entries: result.entries,
+                                entries: options.form === 'fliesstext'
+                                    ? alsFliesstext(result.entries, DAY_NAMES[dayIdx])
+                                    : result.entries,
                                 hours: result.hours || 8,
                                 isSchoolDay: result.isSchoolDay,
                                 schoolTopic: result.schoolTopic || null,
@@ -15717,7 +16258,8 @@ ${trackingBlock}${aufgabenBlock}
                     // Use lehrjahr from state (set via profile), fall back to hidden select if still present
                     const yearNum = state.lehrjahr || 2;
 
-                    const complexity = STRENGE_COMPLEXITY[state.ausbilderStrenge] || 'medium';
+                    const umfang = UMFANG_COUNT[state.umfang] ? state.umfang : 'mittel';
+                    const form = FORM_PATTERNS[state.form] ? state.form : 'stichpunkte';
 
                     const calendarWeek = parseInt(document.getElementById('aisCalendarWeek')?.value) || null;
                     const department = document.getElementById('aisDepartment')?.value?.trim() || '';
@@ -15727,15 +16269,15 @@ ${trackingBlock}${aufgabenBlock}
 
                     const genOptions = {
                         yearNum,
-                        complexity,
+                        umfang,
+                        form,
+                        formHint: state.formHint || '',
                         selectedDays: state.selectedDays,
                         schoolDayIndices: [...state.schoolDayIndices], // ✦ Multi-Select
                         department,
                         calendarWeek,
                         customPrompt,
-                        writeStyle: state.writeStyle || 'ihk',
                         activeTheme: state.activeTheme || null,
-                        humanStyle: state.humanStyle || false,
                         // ✦ Aufgaben-Pipe + Tracking-Pipe + Krank/Urlaub: an Cloud + Local weiterreichen
                         useAufgaben: !!state.useAufgaben,
                         useTracking: !!state.useTracking,
@@ -15821,18 +16363,22 @@ ${trackingBlock}${aufgabenBlock}
                 const day = state.generatedEntries.days[dayArrayIndex];
 
                 const yearNum = state.lehrjahr || 2;
-                const complexity = STRENGE_COMPLEXITY[state.ausbilderStrenge] || 'medium';
+                const umfang = UMFANG_COUNT[state.umfang] ? state.umfang : 'mittel';
+                const form = FORM_PATTERNS[state.form] ? state.form : 'stichpunkte';
 
                 const result = generateDayEntries(state.selectedProfession, {
                     yearNum,
-                    complexity,
+                    umfang,
+                    form,
                     dayIndex: day.index,
                     isSchoolDay: day.isSchoolDay,
                     excludePhrases: [...state.usedPhrases],
                     trackingForDay: state.useTracking ? (_buildTrackingPayload()?.perDay[day.index] || null) : null,
                 });
 
-                state.generatedEntries.days[dayArrayIndex].entries = result.entries;
+                state.generatedEntries.days[dayArrayIndex].entries = form === 'fliesstext'
+                    ? alsFliesstext(result.entries, day.name)
+                    : result.entries;
                 if (result.schoolTopic) state.generatedEntries.days[dayArrayIndex].schoolTopic = result.schoolTopic;
 
                 renderPreview(state.generatedEntries);
@@ -15871,7 +16417,8 @@ ${trackingBlock}${aufgabenBlock}
                 }
 
                 const yearNum = state.lehrjahr || 2;
-                const complexity = STRENGE_COMPLEXITY[state.ausbilderStrenge] || 'medium';
+                const umfang = UMFANG_COUNT[state.umfang] ? state.umfang : 'mittel';
+                const form = FORM_PATTERNS[state.form] ? state.form : 'stichpunkte';
 
                 state.isGenerating = true;
                 _updateRateLimitUI();
@@ -15884,15 +16431,15 @@ ${trackingBlock}${aufgabenBlock}
 
                     const result = await generateWithCloud(state.selectedProfession, {
                         yearNum,
-                        complexity,
+                        umfang,
+                        form,
+                        formHint: state.formHint || '',
                         selectedDays: [dayIdx],
                         schoolDayIndices: day.isSchoolDay ? [dayIdx] : [],
                         department: state.generatedEntries.department || '',
                         calendarWeek: state.generatedEntries.calendarWeek,
                         customPrompt: _buildEnrichedPrompt(),
-                        writeStyle: state.writeStyle || 'ihk',
                         activeTheme: state.activeTheme || null,
-                        humanStyle: state.humanStyle || false,
                         useTracking: !!state.useTracking,
                     });
 
@@ -16003,7 +16550,9 @@ ${trackingBlock}${aufgabenBlock}
                 toggleLocalOnly,
                 // v2 Azubi-First API
                 selectMood,
-                setStrenge,
+                setForm,
+                setUmfang,
+                onFormHint,
                 toggleCollapse,
                 setLehrjahr,
                 updateDayNote,
@@ -16048,8 +16597,8 @@ ${trackingBlock}${aufgabenBlock}
     </script>
 
     <!-- BBiG-Live-Scanner -->
-    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=6.4.14">
-    <script src="/components/bbig-scanner/bbig-scanner.js?v=6.4.14"></script>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=6.4.15">
+    <script src="/components/bbig-scanner/bbig-scanner.js?v=6.4.15"></script>
     <script>
         if (typeof initBbigBerichtsheft === 'function') {
             if (document.readyState === 'loading') {
