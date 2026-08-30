@@ -1637,11 +1637,34 @@
             border-bottom: none;
         }
 
+        .daily-day-block.is-school-day {
+            background: rgba(var(--primary-rgb), 0.03);
+            border-left: 3px solid var(--primary);
+            padding-left: 10px; /* Optional, for visual inset */
+            border-radius: var(--radius-sm);
+        }
+
         .daily-day-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 12px;
             margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .daily-school-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            margin-left: auto; /* pushes it to the right */
+            font-weight: 600;
+        }
+
+        .daily-school-toggle input {
+            cursor: pointer;
         }
 
         .daily-day-name {
@@ -10151,10 +10174,12 @@ Beispiel:
             let activities = '';
             let dailyActivities = null;
             let dailyHours = null;
+            let dailySchool = null;
 
             if (currentMode === 'daily') {
                 dailyActivities = getDailyActivitiesFromForm();
                 dailyHours = getDailyHoursFromForm();
+                dailySchool = getDailySchoolFromForm();
                 // Combine daily texts into a single string for backward compat & search
                 activities = combineDailyToWeeklyText(dailyActivities);
             } else {
@@ -10172,6 +10197,7 @@ Beispiel:
                 mode: currentMode,
                 dailyActivities: dailyActivities,
                 dailyHours: dailyHours,
+                dailySchool: dailySchool,
                 instruction: document.getElementById('reportInstruction').value,
                 school: document.getElementById('reportSchool').value,
                 hours: parseFloat(document.getElementById('reportHours').value) || 0,
@@ -10242,7 +10268,7 @@ Beispiel:
             if (reportMode === 'daily' && report.dailyActivities) {
                 // Small delay to ensure daily fields are rendered
                 setTimeout(() => {
-                    setDailyFieldsFromData(report.dailyActivities, report.dailyHours);
+                    setDailyFieldsFromData(report.dailyActivities, report.dailyHours, report.dailySchool);
                     renderAISuggestions('daily');
                 }, 50);
                 document.getElementById('reportActivities').value = report.activities || '';
@@ -10742,11 +10768,18 @@ Beispiel:
         // PDF greifen beide hierauf zu.
         function buildIhkCtx(report) {
             const v = id => (document.getElementById(id)?.value || '').trim();
-            const days = DAYS_ORDER.map(k => ({
-                label: DAYS_MAP[k],
-                text: report.dailyActivities ? (report.dailyActivities[k] || '') : '',
-                hours: report.dailyHours ? (report.dailyHours[k] || '') : ''
-            }));
+            const days = DAYS_ORDER.map(k => {
+                const isSchool = report.dailySchool && report.dailySchool[k];
+                let text = report.dailyActivities ? (report.dailyActivities[k] || '') : '';
+                if (isSchool && text) text = '[Berufsschule] ' + text;
+                else if (isSchool) text = 'Berufsschule';
+                
+                return {
+                    label: DAYS_MAP[k],
+                    text: text,
+                    hours: report.dailyHours ? (report.dailyHours[k] || '') : ''
+                };
+            });
             // Wochenmodus: der zusammengefasste Text steht im Taetigkeits-Block.
             // Im Tagesmodus fuellt derselbe Text die Tageszeilen.
             return {
@@ -10757,8 +10790,14 @@ Beispiel:
                 bis: formatDate(report.dateTo),
                 nr: report.week ? String(report.week) : '',
                 activities: report.mode === 'daily' && report.dailyActivities
-                    ? DAYS_ORDER.filter(k => report.dailyActivities[k])
-                        .map(k => DAYS_MAP[k] + ':\n' + report.dailyActivities[k]).join('\n\n')
+                    ? DAYS_ORDER.filter(k => report.dailyActivities[k] || (report.dailySchool && report.dailySchool[k]))
+                        .map(k => {
+                            const isSchool = report.dailySchool && report.dailySchool[k];
+                            let t = report.dailyActivities[k] || '';
+                            if (isSchool && t) t = '[Berufsschule] ' + t;
+                            else if (isSchool) t = 'Berufsschule';
+                            return DAYS_MAP[k] + ':\n' + t;
+                        }).join('\n\n')
                     : (report.activities || ''),
                 instruction: report.instruction || '',
                 school: report.school || '',
@@ -12245,6 +12284,9 @@ Beispiel:
                         <div class="daily-day-header">
                             <span class="day-name">${day.icon} ${day.name}</span>
                             <span class="day-date">${dateStr}</span>
+                            <label class="daily-school-toggle">
+                                <input type="checkbox" id="daily_school_${i}" class="daily-school-input" data-day="${day.key}" onchange="toggleSchoolDay(this)"> Schultag
+                            </label>
                             <div class="day-hours">
                                 <input type="number" step="0.5" min="0" max="12" value="8" 
                                        id="daily_hours_${i}" class="daily-hours-input" data-day="${day.key}" 
@@ -12304,13 +12346,40 @@ Beispiel:
             return result;
         }
 
-        function setDailyFieldsFromData(dailyActivities, dailyHours) {
+        function getDailySchoolFromForm() {
+            const result = {};
+            DAYS.forEach(day => {
+                const cb = document.querySelector(`.daily-school-input[data-day="${day.key}"]`);
+                result[day.key] = cb ? cb.checked : false;
+            });
+            return result;
+        }
+
+        function toggleSchoolDay(checkbox) {
+            const block = checkbox.closest('.daily-day-block');
+            if (block) {
+                if (checkbox.checked) {
+                    block.classList.add('is-school-day');
+                } else {
+                    block.classList.remove('is-school-day');
+                }
+            }
+        }
+
+        function setDailyFieldsFromData(dailyActivities, dailyHours, dailySchool) {
             if (!dailyActivities) return;
             DAYS.forEach(day => {
                 const ta = document.querySelector(`.daily-textarea[data-day="${day.key}"]`);
                 if (ta && dailyActivities[day.key]) ta.value = dailyActivities[day.key];
+                
                 const inp = document.querySelector(`.daily-hours-input[data-day="${day.key}"]`);
                 if (inp && dailyHours && dailyHours[day.key] !== undefined) inp.value = dailyHours[day.key];
+
+                const cb = document.querySelector(`.daily-school-input[data-day="${day.key}"]`);
+                if (cb && dailySchool) {
+                    cb.checked = !!dailySchool[day.key];
+                    toggleSchoolDay(cb); // Update UI class
+                }
             });
             updateDailyTotalHours();
         }
