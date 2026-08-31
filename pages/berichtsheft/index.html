@@ -13,9 +13,9 @@
         content="Berichtsheft Generator: IHK-konformes Berichtsheft erstellen mit lokaler KI. Automatische Einträge, Prüfungsvorbereitung, AES-256 verschlüsselt & DSGVO-konform.">
     <meta name="keywords"
         content="Berichtsheft Generator, IHK-konformes Berichtsheft, digitales Berichtsheft, Berichtsheft erstellen, Berichtsheft App, lokale KI Berichtsheft, Ausbildungsnachweis, IHK Berichtsheft, Auszubildende Berichtsheft, online Berichtsheft, Fachinformatiker Berichtsheft, Berichtsheft offline">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.4.17"></script>
-    <script defer src="/Assets/js/mwl-codec.js?v=6.4.17"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.4.17"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.4.18"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.4.18"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.4.18"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -6815,9 +6815,9 @@
             color: var(--text-main);
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.4.17"></script>
-    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=6.4.17">
-    <script defer src="/Assets/js/version-loader.js?v=6.4.17"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.4.18"></script>
+    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=6.4.18">
+    <script defer src="/Assets/js/version-loader.js?v=6.4.18"></script>
 </head>
 
 <body>
@@ -8023,11 +8023,11 @@ Beispiel:
             </div>
         </div>
     </div>
-    <script defer src="/components/umfrage/umfrage.js?v=6.4.17"></script>
+    <script defer src="/components/umfrage/umfrage.js?v=6.4.18"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="/Assets/js/berichtsheft/ihk-formulare.js?v=6.4.17"></script>
-    <script src="/Assets/js/berichtsheft/foto-import.js?v=6.4.17"></script>
+    <script src="/Assets/js/berichtsheft/ihk-formulare.js?v=6.4.18"></script>
+    <script src="/Assets/js/berichtsheft/foto-import.js?v=6.4.18"></script>
 
     <!-- ===== FOTO-IMPORT — Papier-Berichtsheft abfotografieren ===== -->
     <div class="foto-overlay" id="fotoImport" role="dialog" aria-modal="true" aria-labelledby="fotoTitle">
@@ -15660,7 +15660,7 @@ Beispiel:
                 saetze: {
                     name: 'GANZE SÄTZE (3. Person, Passiv)',
                     stil: [
-                        'Jeder Eintrag ist EIN vollständiger deutscher Satz mit Punkt am Ende.',
+                        'Jeder Eintrag ist EIN vollständiger Satz mit Punkt am Ende (Sprache siehe [SPRACHE]).',
                         'Passiv oder unpersönlich, 3. Person: "Die Baugruppe wurde ausgetauscht." — Artikel gehören dazu.',
                         'Max 20 Wörter pro Satz. Eine Tätigkeit pro Satz.',
                         '✗ Verboten: Ich-Form ("Ich habe…"), Stichpunkte ohne Verb, Bewertungen.',
@@ -15796,6 +15796,14 @@ ${lines.join('\n')}
                     }
                 }
 
+                // 🔴 Der Bericht ist in der Sprache der Seite. Ohne diese Angabe
+                // entscheidet das Modell selbst — und ein freies Modell hat einen
+                // deutschen Wochenplan wortweise ins Englische uebersetzt und einen
+                // englischen Ausbildungsnachweis geliefert. Der Prompt war komplett auf
+                // Deutsch; das allein reicht nachweislich nicht.
+                const _zielSprache = (typeof document !== 'undefined' && document.documentElement.lang === 'en')
+                    ? 'ENGLISCH' : 'DEUTSCH';
+
                 // 🔴 Ein Schultag-Beispiel im Formatblock wiegt schwerer als jede Regel
                 // weiter unten (siehe .claude/notes/berichtsheft.md). Ohne es hat das Modell
                 // die Schultage regelmaessig mit Betriebs-Taetigkeiten gefuellt: im Beispiel
@@ -15829,6 +15837,11 @@ Antwort = JSON-ARRAY mit GENAU ${options.selectedDays.length} VOLLSTÄNDIGEN Tag
 ✗ FALSCH:  [["Tätigkeit 1","Tätigkeit 2"]]    ← nur entries ohne day-Feld
 
 Kein Markdown. Kein Text drumherum. Antwort beginnt mit [ und endet mit ].
+
+[SPRACHE — NICHT VERHANDELBAR]
+- Jeder entries-Eintrag und jedes schoolTopic ist auf ${_zielSprache}. Kein einziger Eintrag in einer anderen Sprache.
+- Der Wert von "day" bleibt trotzdem der deutsche Wochentagsname aus der Liste unten — das ist ein Schlüssel, keine Anzeige.
+- 🔴 Was in [VORGABEN] steht, hat der User selbst geschrieben. Übersetze es NIEMALS und tausche seine Fachbegriffe nicht aus ("Active Directory" bleibt "Active Directory"). Seine Wortwahl bleibt erhalten; sie wird höchstens in die geforderte Schreibform gebracht.
 
 [SCHREIBFORM — ${F.name}]
 ${F.stil.map(r => '- ' + r).join('\n')}
@@ -16252,7 +16265,13 @@ ${trackingBlock}${aufgabenBlock}
 
                 for (const dayData of daysData) {
                     const dayName = dayData.day || '';
-                    const dayIdx = DAY_NAMES.indexOf(dayName);
+                    // Das Modell soll den deutschen Namen liefern, tut es aber nicht
+                    // immer — auf /en/ kommt schon mal "Monday" zurueck. Ein -1 hier
+                    // haette den Tag stillschweigend fallen lassen.
+                    const _direkt = DAY_NAMES.indexOf(dayName);
+                    const dayIdx = _direkt >= 0
+                        ? _direkt
+                        : (PLAN_TAG_INDEX[String(dayName).trim().toLowerCase()] ?? -1);
                     if (dayIdx === -1) continue;
 
                     // Fliesstext ist EIN Absatz. Liefert das Modell trotz Prompt mehrere
@@ -16889,8 +16908,8 @@ ${trackingBlock}${aufgabenBlock}
     </script>
 
     <!-- BBiG-Live-Scanner -->
-    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=6.4.17">
-    <script src="/components/bbig-scanner/bbig-scanner.js?v=6.4.17"></script>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=6.4.18">
+    <script src="/components/bbig-scanner/bbig-scanner.js?v=6.4.18"></script>
     <script>
         if (typeof initBbigBerichtsheft === 'function') {
             if (document.readyState === 'loading') {

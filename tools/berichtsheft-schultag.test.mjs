@@ -77,6 +77,9 @@ const vorspann = `
     function _customContextEntries() { return []; }
     function showToast() {}
     function _updateRateLimitUI() {}
+    // Die Zielsprache haengt an document.documentElement.lang. Voreinstellung hier:
+    // deutsche Seite; der Sprachtest unten schaltet sie um.
+    const document = { documentElement: { lang: 'de' } };
     globalThis.__fetchAntwort = null;
     async function fetch() {
         return {
@@ -92,7 +95,7 @@ const vorspann = `
 const ctx = createContext({ console });
 runInContext(
     vorspann + src +
-    '\n;globalThis.__x = { generateWithCloud, generateDayEntries, CLOUD_FORM, _buildCloudPrompt, PROFESSIONS };',
+    '\n;globalThis.__x = { generateWithCloud, generateDayEntries, CLOUD_FORM, _buildCloudPrompt, PROFESSIONS, doc: document };',
     ctx
 );
 const X = ctx.__x;
@@ -295,6 +298,71 @@ gruppe('Der Einfüge-Weg erzwingt wirklich den Tagesmodus');
 const ensure = ohneKommentare(schnitt('function _ensureModalDailyMode(callback) {', 'function _doFillForm('));
 ok(/if \(currentMode !== 'daily'\) setMode\('daily'\)/.test(ensure),
     'die Funktion hält, was ihr Name verspricht');
+
+gruppe('Der Prompt legt die Sprache fest');
+// 🔴 Ohne diese Angabe hat ein freies Modell einen deutschen Wochenplan wortweise
+// ins Englische uebersetzt und einen englischen Ausbildungsnachweis geliefert —
+// ein Dokument nach §14 BBiG, das in dieser Form wertlos ist. Der Prompt war
+// komplett auf Deutsch; das allein reicht nachweislich nicht.
+const pDe = X._buildCloudPrompt('sysadmin', { ...BASIS });
+ok(pDe.includes('[SPRACHE'), 'es gibt überhaupt einen Sprachblock');
+ok(/entries-Eintrag und jedes schoolTopic ist auf DEUTSCH/.test(pDe),
+    'auf der deutschen Seite steht DEUTSCH im Prompt');
+ok(!/ist auf ENGLISCH/.test(pDe), 'und nicht gleichzeitig ENGLISCH');
+
+// Jede Schreibform muss die Sprache mitbekommen — der gemeldete Fall lief über
+// "stichpunkte", und genau diese Form nannte vorher als einzige gar keine.
+for (const form of ['stichpunkte', 'saetze', 'ichform', 'fliesstext']) {
+    const p = X._buildCloudPrompt('sysadmin', { ...BASIS, form });
+    ok(/ist auf DEUTSCH/.test(p), `Schreibform "${form}" bekommt die Sprache mit`);
+}
+// Gegenprobe: der alte Widerspruch ist weg. "vollständiger deutscher Satz" stand
+// fest in der Satz-Form und haette auf /en/ gegen den Sprachblock gearbeitet.
+ok(!/vollständiger deutscher Satz/.test(X._buildCloudPrompt('sysadmin', { ...BASIS, form: 'saetze' })),
+    'die Satz-Form schreibt die Sprache nicht mehr selbst fest');
+
+// Der Wortlaut des Users darf nicht übersetzt werden — auch nicht innerhalb
+// derselben Sprache umgedeutet ("Active Directory" bleibt stehen).
+ok(/Übersetze es NIEMALS/.test(pDe), 'der Prompt verbietet das Übersetzen der Nutzer-Vorgaben');
+
+// Auf /en/ dreht sich die Sprache, der day-Schlüssel aber NICHT: er wird gegen
+// die deutsche Namensliste aufgelöst.
+X.doc.documentElement.lang = 'en';
+const pEn = X._buildCloudPrompt('sysadmin', { ...BASIS });
+X.doc.documentElement.lang = 'de';
+ok(/ist auf ENGLISCH/.test(pEn), 'auf /en/ steht ENGLISCH im Prompt');
+ok(/"day" bleibt trotzdem der deutsche Wochentagsname/.test(pEn),
+    'der day-Schlüssel bleibt deutsch — sonst findet der Parser den Tag nicht');
+
+gruppe('Englischer Wochentagsname wirft den Tag nicht weg');
+// Der Selbstschuss, der ohne diese Zeile entstuende: sobald der Prompt "antworte
+// auf ENGLISCH" sagt, liefert ein Modell irgendwann auch "Monday" im day-Feld.
+// DAY_NAMES.indexOf('Monday') ist -1 — der Tag waere still verschwunden und
+// lokal nachgefuellt worden. Aus einem Sprachfehler waere Datenverlust geworden.
+antwortMit([
+    { day: 'Monday', entries: ['Switches getauscht'], hours: 8, isSchoolDay: false, schoolTopic: null },
+    { day: 'Tuesday', entries: ['Tickets bearbeitet'], hours: 8, isSchoolDay: false, schoolTopic: null },
+]);
+const wEn = await X.generateWithCloud('sysadmin', {
+    ...BASIS, selectedDays: [0, 1], schoolDayIndices: [],
+});
+ok(wEn.days.length === 2, 'beide Tage kommen an', JSON.stringify(wEn.days.map(d => d.name)));
+ok(wEn.days.some(d => d.index === 0 && d.entries.join().includes('Switches')),
+    '"Monday" landet auf Montag', JSON.stringify(wEn.days.find(d => d.index === 0)));
+ok(wEn.source === 'cloud', 'nichts musste lokal nachgefüllt werden', wEn.source);
+
+// Gegenprobe: ein echter Unsinns-Tagesname wird weiterhin verworfen, sonst
+// prueft die Zeile oben nur, dass irgendetwas durchkommt. Bleibt danach kein
+// gueltiger Tag uebrig, ist das ein Fehler und keine leere Woche — der Aufrufer
+// faellt dann auf die lokale Engine zurueck, statt dem Nutzer nichts zu zeigen.
+antwortMit([{ day: 'Blursday', entries: ['x y z'], hours: 8, isSchoolDay: false, schoolTopic: null }]);
+let muellFehler = null;
+try {
+    await X.generateWithCloud('sysadmin', { ...BASIS, selectedDays: [0], schoolDayIndices: [] });
+} catch (e) { muellFehler = e.message; }
+ok(muellFehler !== null, 'ein unbekannter Tagesname wird nicht geraten', 'kein Fehler geworfen');
+ok(/Keine gültigen Tage/.test(muellFehler || ''),
+    'und der Fehler sagt, was los ist', String(muellFehler));
 
 console.log(`\n${bestanden} bestanden, ${fehlgeschlagen} fehlgeschlagen`);
 process.exit(fehlgeschlagen > 0 ? 1 : 0);
