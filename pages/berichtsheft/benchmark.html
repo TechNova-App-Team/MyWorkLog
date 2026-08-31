@@ -274,6 +274,16 @@
     <h2>3. Ausführen</h2>
     <div class="row">
       <button id="runBtn">▶ Benchmark starten</button>
+      <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted);">
+        parallel
+        <select id="poolSize" style="font: 12px var(--font-mono);">
+          <option value="1">1 (seriell)</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+          <option value="5">5</option>
+        </select>
+      </label>
       <button class="ghost" id="cancelBtn" disabled>Abbrechen</button>
       <span class="status-row" style="margin-left: auto;" id="globalProgress"></span>
     </div>
@@ -326,6 +336,15 @@ const MODELS = [
   { id: 'nvidia/nemotron-3.5-lightning:free',                 label: 'Nemotron Lightning', role: 'Fallback 11' },
   { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',       role: 'Last Resort' },
 ];
+
+// Wie viele MODELLE gleichzeitig laufen. Bewusst ueber die Modelle und nicht
+// ueber die Tests eines Modells: zwoelf gleichzeitige Anfragen an dasselbe Modell
+// laufen in dessen Rate-Limit und verzerren die Zeitmessung.
+// 🔴 Obergrenze 5, nicht mehr: der Browser haelt pro Host nur ~6 Verbindungen
+// offen. Darueber warten die Anfragen IM BROWSER, und die Wartezeit landet in
+// der gemessenen Antwortzeit — der Benchmark wuerde dann sich selbst messen.
+const POOL_MAX = 5;
+let POOL_SIZE = 4;
 
 const PROD_TEMPERATURE = 0.9;
 const PROD_TOP_P       = 0.95;
@@ -896,13 +915,30 @@ const TESTS = [
 ];
 
 // ─── API Call ─────────────────────────────────────────────────────────────
+// 🔴 Die Funktion MUSS nach spaetestens HTTP_TIMEOUT_MS zurueckkommen — egal was
+// die Gegenstelle tut. Ein `signal` allein reicht dafuer nicht: es bricht die
+// Anfrage ab, aber ob ein bereits laufendes Body-Lesen davon wirklich stirbt,
+// haengt an Server, Proxy und Browser. Der Lauf blieb real minutenlang auf
+// "Test 7/12" stehen. Deshalb zusaetzlich ein Wettrennen gegen eine harte Uhr:
+// wer nicht rechtzeitig fertig ist, verliert, und der Benchmark laeuft weiter.
 async function callModel(modelId, prompt, apiKey, signal) {
   const start = performance.now();
   const ac = new AbortController();
-  const timer = setTimeout(() => ac.abort(), HTTP_TIMEOUT_MS);
-  if (signal) signal.addEventListener('abort', () => ac.abort());
+  let timer = null;
+  const uhr = new Promise(resolve => {
+    timer = setTimeout(() => {
+      ac.abort();
+      resolve({ ok: false, ms: HTTP_TIMEOUT_MS, error: `TIMEOUT (>${HTTP_TIMEOUT_MS / 1000}s)` });
+    }, HTTP_TIMEOUT_MS);
+  });
+  // Erst pruefen, dann lauschen: war das Aussen-Signal beim Eintritt schon
+  // abgebrochen, feuert der Listener nie und der Call liefe trotzdem los.
+  if (signal) {
+    if (signal.aborted) ac.abort();
+    else signal.addEventListener('abort', () => ac.abort(), { once: true });
+  }
 
-  try {
+  const arbeit = (async () => {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       signal: ac.signal,
@@ -925,16 +961,30 @@ async function callModel(modelId, prompt, apiKey, signal) {
         messages: [{ role: 'user', content: prompt }],
       }),
     });
+    // 🔴 clearTimeout stand hier VOR dem Body-Lesen. Der Abbruch-Timer war damit
+    // schon weg, sobald die HEADER da waren — und OpenRouter schickt 200 + Header
+    // sofort und generiert danach. Bleibt das Modell mitten im Stream stehen,
+    // haengt `res.json()` unbegrenzt: kein Timeout, kein Fehler, der Lauf steht.
+    // Genau so blieb Nemotron 3 Super minutenlang auf "Test 7/12" stehen.
+    // Der Timer laeuft jetzt, bis der Body vollstaendig gelesen ist.
+    const bodyText = await res.text();
     clearTimeout(timer);
     const ms = Math.round(performance.now() - start);
-    const data = await res.json();
+    let data;
+    try { data = JSON.parse(bodyText); }
+    catch (e) { return { ok: false, ms, error: `Antwort kein JSON (HTTP ${res.status})` }; }
     if (!res.ok) return { ok: false, ms, error: data?.error?.message || `HTTP ${res.status}` };
     const text = data.choices?.[0]?.message?.content?.trim() || '';
     return { ok: true, ms, text };
-  } catch (e) {
-    clearTimeout(timer);
-    return { ok: false, ms: Math.round(performance.now() - start), error: e.name === 'AbortError' ? `TIMEOUT (>${HTTP_TIMEOUT_MS/1000}s)` : e.message };
-  }
+  })().catch(e => ({
+    ok: false,
+    ms: Math.round(performance.now() - start),
+    error: e.name === 'AbortError' ? `TIMEOUT (>${HTTP_TIMEOUT_MS / 1000}s)` : e.message,
+  }));
+
+  const ergebnis = await Promise.race([arbeit, uhr]);
+  clearTimeout(timer);
+  return ergebnis;
 }
 
 function scoreResult(result, test) {
@@ -1125,7 +1175,9 @@ async function runBenchmark(modelFilter) {
   let globalDone = 0;
   const globalTotal = models.length * TESTS.length;
 
-  for (const model of models) {
+  // Ein Modell komplett durchfahren. Frueher stand das als for-Schleife hier;
+  // als eigene Funktion kann der Pool unten mehrere davon gleichzeitig starten.
+  async function runModel(model) {
     updateModelCard(model.id, { status: 'running', meta: 'Läuft…' });
     const results = [];
     let totalScore = 0, totalWeight = 0, totalMs = 0, okCount = 0;
@@ -1156,7 +1208,11 @@ async function runBenchmark(modelFilter) {
             ? `Items im Array waren keine vollständigen Tag-Objekte (es fehlte "day").`
             : `Antwort enthielt nur ${ex.json.length} statt ${expectedLen} Tage.`;
           const retryHint = `${reason} Diesmal MUSS die Antwort ein JSON-ARRAY mit GENAU ${expectedLen} VOLLSTÄNDIGEN Tag-Objekten sein — jedes Element {"day":"…","entries":[…],"hours":8,"isSchoolDay":…,"schoolTopic":…}.`;
-          const retryPrompt = buildProdPrompt({ ...test.options, _retryHint: retryHint });
+          // buildProdPrompt gibt es seit dem Umbau auf den Live-Prompt nicht mehr
+          // (heisst jetzt buildProdPromptFallback). Der Aufruf hier war ein
+          // ReferenceError — und zwar nur auf dem Retry-Pfad, also genau dann,
+          // wenn ein Modell schlechtes JSON liefert und man den Retry braucht.
+          const retryPrompt = buildPrompt({ ...test.options, _retryHint: retryHint });
           const retry = await callModel(model.id, retryPrompt, apiKey, CANCEL.signal);
           if (retry.ok && retry.text) {
             const ex2 = extractJSON(retry.text);
@@ -1207,10 +1263,32 @@ async function runBenchmark(modelFilter) {
     });
 
     allScores.push({ model, finalScore, avgMs, failCount, wrapCount, retryCount, results });
-
-    if (CANCEL.signal.aborted) break;
-    await new Promise(r => setTimeout(r, 800));
   }
+
+  // ── Pool: mehrere Modelle gleichzeitig ──────────────────────────────────
+  // Jeder Arbeiter nimmt sich das naechste freie Modell und faehrt es komplett
+  // durch. Bei 13 Modellen und POOL_SIZE=4 dauert der Lauf rund ein Viertel.
+  const warteschlange = models[Symbol.iterator]();
+  const arbeiter = async () => {
+    for (;;) {
+      if (CANCEL.signal.aborted) return;
+      const { value: model, done } = warteschlange.next();
+      if (done) return;
+      try { await runModel(model); }
+      catch (e) {
+        // Ein einzelnes Modell darf den ganzen Lauf nicht mitreissen.
+        console.error('[Bench]', model.id, e);
+        updateModelCard(model.id, { status: 'failed', meta: 'Abbruch: ' + e.message, progress: 1 });
+      }
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(POOL_SIZE, models.length) }, arbeiter)
+  );
+
+  // Die Reihenfolge im Ergebnis richtet sich sonst danach, wer zufaellig zuerst
+  // fertig war — die Matrix soll aber der Modell-Liste folgen.
+  allScores.sort((a, b) => MODELS.indexOf(a.model) - MODELS.indexOf(b.model));
 
   if (allScores.length > 1) {
     renderMatrix(allScores);
@@ -1236,6 +1314,9 @@ $('clearKeyBtn').addEventListener('click', () => {
   clrKey();
   $('apiKeyInput').value = '';
 });
+$('poolSize').addEventListener('change', e => {
+  POOL_SIZE = Math.min(POOL_MAX, Math.max(1, parseInt(e.target.value, 10) || 1));
+});
 $('runBtn').addEventListener('click', () => runBenchmark());
 $('cancelBtn').addEventListener('click', () => { if (CANCEL) CANCEL.abort(); });
 
@@ -1258,6 +1339,7 @@ ladeEchtenPrompt().then(() => {
 $('cfgModels').textContent = MODELS.length;
 $('cfgTests').textContent = TESTS.length;
 $('cfgCalls').textContent = MODELS.length * TESTS.length;
+POOL_SIZE = Math.min(POOL_MAX, Math.max(1, parseInt($('poolSize').value, 10) || 4));
 
 // ─── Console-Hook ─────────────────────────────────────────────────────────
 window.MWLBench = {
