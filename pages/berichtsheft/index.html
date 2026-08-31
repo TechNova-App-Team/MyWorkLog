@@ -13,9 +13,9 @@
         content="Berichtsheft Generator: IHK-konformes Berichtsheft erstellen mit lokaler KI. Automatische Einträge, Prüfungsvorbereitung, AES-256 verschlüsselt & DSGVO-konform.">
     <meta name="keywords"
         content="Berichtsheft Generator, IHK-konformes Berichtsheft, digitales Berichtsheft, Berichtsheft erstellen, Berichtsheft App, lokale KI Berichtsheft, Ausbildungsnachweis, IHK Berichtsheft, Auszubildende Berichtsheft, online Berichtsheft, Fachinformatiker Berichtsheft, Berichtsheft offline">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.4.16"></script>
-    <script defer src="/Assets/js/mwl-codec.js?v=6.4.16"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.4.16"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.4.17"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.4.17"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.4.17"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -6815,9 +6815,9 @@
             color: var(--text-main);
         }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.4.16"></script>
-    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=6.4.16">
-    <script defer src="/Assets/js/version-loader.js?v=6.4.16"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.4.17"></script>
+    <link rel="stylesheet" href="/components/umfrage/umfrage.css?v=6.4.17">
+    <script defer src="/Assets/js/version-loader.js?v=6.4.17"></script>
 </head>
 
 <body>
@@ -8023,11 +8023,11 @@ Beispiel:
             </div>
         </div>
     </div>
-    <script defer src="/components/umfrage/umfrage.js?v=6.4.16"></script>
+    <script defer src="/components/umfrage/umfrage.js?v=6.4.17"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="/Assets/js/berichtsheft/ihk-formulare.js?v=6.4.16"></script>
-    <script src="/Assets/js/berichtsheft/foto-import.js?v=6.4.16"></script>
+    <script src="/Assets/js/berichtsheft/ihk-formulare.js?v=6.4.17"></script>
+    <script src="/Assets/js/berichtsheft/foto-import.js?v=6.4.17"></script>
 
     <!-- ===== FOTO-IMPORT — Papier-Berichtsheft abfotografieren ===== -->
     <div class="foto-overlay" id="fotoImport" role="dialog" aria-modal="true" aria-labelledby="fotoTitle">
@@ -8395,7 +8395,7 @@ Beispiel:
                 <div class="ais-section">
                     <div class="ais-sec-lbl">Was ist diese Woche passiert?</div>
                     <textarea class="ais-week-textarea" id="aisCustomPrompt" rows="2"
-                        placeholder="Einfach hinschreiben — z.B. &quot;Montag Teammeeting, Donnerstag Berufsschule, Deployment am Freitag&quot;..."></textarea>
+                        placeholder="Einfach hinschreiben — z.B. &quot;Mo: alte Rechner getauscht, Windows aufgesetzt. Di: Tickets bearbeitet. Fr: Berufsschule, Thema Netzwerktechnik&quot;"></textarea>
                 </div>
 
                 <!-- 2. Wie war die Woche? -->
@@ -13352,6 +13352,7 @@ Beispiel:
                     customPrompt = '',
                     aufgabenForDay = null,  // ✦ Aufgaben-Pipe: ["Switch konfigurieren", ...] für diesen Tag
                     trackingForDay = null,  // ✦ Tracking-Pipe: ["Projekt: Alpha", "Notiz: Bugfix …"] für diesen Tag
+                    planForDay = null,      // ✦ Wochenplan: was der Nutzer FÜR DIESEN TAG geschrieben hat
                 } = options;
 
                 // Nur Stichpunkte tragen ein Aufzaehlungszeichen; ein Satz mit "• " davor
@@ -13375,7 +13376,7 @@ Beispiel:
                 // — eigene Berufe bekamen an ihren Schultagen deshalb Betriebs-Floskeln aus
                 // dem Universal-Pool, und der Tag kam mit isSchoolDay:false zurueck.
                 if (isSchoolDay) {
-                    return generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases, form, umfang);
+                    return generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases, form, umfang, planForDay);
                 }
 
                 if (!prof) return generateGenericDayEntries(options);
@@ -13386,6 +13387,19 @@ Beispiel:
                 const entries = [];
                 const usedVerbs = [];
                 const usedObjects = [];
+
+                // ✦ Wochenplan: was der Nutzer selbst für diesen Tag aufgeschrieben hat,
+                //   steht ganz oben und kommt WÖRTLICH rein. Keine Stichwortliste davor —
+                //   die hat jahrelang alles verworfen, was nicht nach Büro klang.
+                if (Array.isArray(planForDay) && planForDay.length > 0) {
+                    planForDay.forEach(fakt => {
+                        const txt = _planEintrag(fakt, form, rahmen);
+                        if (!txt) return;
+                        if (entries.some(e => e.toLowerCase() === (bullet + txt).toLowerCase())) return;
+                        entries.push(bullet + txt);
+                        excludePhrases.push(String(fakt).trim());
+                    });
+                }
 
                 // ✦ Tracking-Pipe: was wirklich erfasst wurde, steht ganz oben und kommt vollständig rein.
                 //   Die lokale Engine kann nicht umformulieren — der Original-Wortlaut ist hier
@@ -13513,11 +13527,32 @@ Beispiel:
                 };
             }
 
-            function generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases, form = 'stichpunkte', umfang = 'mittel') {
+            function generateSchoolDayEntries(prof, professionId, yearNum, season, excludePhrases, form = 'stichpunkte', umfang = 'mittel', planForDay = null) {
                 const bullet = form === 'stichpunkte' ? '• ' : '';
-                const schoolEntry = generateSchoolEntry(professionId, yearNum, form);
                 const entries = [];
-                if (schoolEntry) entries.push(bullet + schoolEntry);
+
+                // Hat der Nutzer das Fach selbst genannt ("Fr: Berufsschule, Thema
+                // Subnetting und VLAN"), ist das die bessere Angabe als ein gewuerfeltes
+                // aus schoolTopics — es ist die, die wirklich dran war.
+                //
+                // 🔴 Der Wortlaut geht dabei durch SCHUL_FORMATE, nicht durch FAKT_RAHMEN:
+                // dessen Rahmen ("Bearbeitet wurde: …", "Ich habe an folgender Aufgabe
+                // gearbeitet: …") beschreibt BETRIEBSarbeit und liest sich an einem
+                // Schultag falsch. Das Fach des Nutzers steht unveraendert darin.
+                const planTexte = Array.isArray(planForDay) ? planForDay.filter(Boolean) : [];
+                const schulRahmen = SCHUL_FORMATE[form] || SCHUL_FORMATE.stichpunkte;
+                const eigenesFach = planTexte.length > 0
+                    ? (t => t.charAt(0).toUpperCase() + t.slice(1))(String(planTexte[0]).trim())
+                    : '';
+                planTexte.forEach(fakt => {
+                    const thema = String(fakt).trim();
+                    if (!thema) return;
+                    const satz = pickRandom(schulRahmen(thema.charAt(0).toUpperCase() + thema.slice(1)));
+                    if (satz && !entries.some(e => e.includes(satz))) entries.push(bullet + satz);
+                });
+
+                const schoolEntry = eigenesFach || generateSchoolEntry(professionId, yearNum, form);
+                if (!eigenesFach && schoolEntry) entries.push(bullet + schoolEntry);
 
                 // Der Schultag traegt denselben Umfang wie jeder andere Tag. Vorher waren
                 // es fest zwei Eintraege — bei "Ausfuehrlich" stach er als duenner Tag
@@ -13871,6 +13906,109 @@ Beispiel:
             };
 
             // ═══════════════════════════════════════
+            // WOCHENPLAN AUS DEM FREITEXT
+            // ═══════════════════════════════════════
+            // 🔴 Der Freitext ist die beste Quelle, die es gibt — er beschreibt echte
+            // Arbeit. Bis v6.4.16 hat ihn nur der Cloud-Prompt gelesen; die lokale
+            // Engine schickte ihn durch eine Stichwortliste mit zwoelf Buero-Begriffen
+            // (Rechnung, Lieferschein, Lager, Kunde …) und VERWARF alles andere. Ein
+            // Fachinformatiker, der "Mo: alte PCs abgebaut, 3 neue aufgebaut" schrieb,
+            // bekam davon null Eintraege, ohne jeden Hinweis — gemessen: 8 Fragmente
+            // rein, 0 raus. Eine laengere Liste waere dieselbe Falle fuer den naechsten
+            // Beruf, deshalb gibt es gar keine mehr: was der Nutzer schreibt, steht im
+            // Bericht (vgl. "Nutzerangaben werden nie umformuliert" in der Notiz).
+
+            // Lange Formen zuerst, sonst schluckt "mo" den Anfang von "montag".
+            // Bewusst NUR die zweibuchstabigen deutschen Kuerzel: "mit", "die", "don"
+            // und "fre" waeren als Marke katastrophal — "Die Server wurden geprueft"
+            // ist kein Dienstag. Die Wortgrenze haelt "Montage" von "Montag" fern,
+            // dieselbe Falle wie beim Foto-Import.
+            const PLAN_MARKE = /(^|[\n\r;,.!?]\s*)(montag|monday|dienstag|tuesday|mittwoch|wednesday|donnerstag|thursday|freitag|friday|mon|tue|wed|thu|fri|mo|di|mi|do|fr)\b\s*[:.\-–—]?\s*/gi;
+
+            const PLAN_TAG_INDEX = {
+                montag: 0, monday: 0, mon: 0, mo: 0,
+                dienstag: 1, tuesday: 1, tue: 1, di: 1,
+                mittwoch: 2, wednesday: 2, wed: 2, mi: 2,
+                donnerstag: 3, thursday: 3, thu: 3, do: 3,
+                freitag: 4, friday: 4, fri: 4, fr: 4,
+            };
+
+            // "Schulung" enthaelt kein "schule" — faellt hier also nicht hinein.
+            // Die englischen Formen braucht /en/; "vocational school" steht vor
+            // "school", damit beim Fach-Ausschneiden nicht "vocational" stehenbleibt.
+            const PLAN_SCHULE = /\b(berufs?schul(e|tag)|blockunterricht|schultag|schule|vocational\s+school|school)\b/i;
+
+            function _parseWochenplan(text) {
+                const perDay = {};
+                const schoolDays = [];
+                const rest = [];
+                if (!text || typeof text !== 'string') return { perDay, schoolDays, rest };
+
+                // Eine Tagesmarke zaehlt nur am Anfang oder direkt hinter einem
+                // Trenner. "Deployment am Freitag" macht deshalb keinen neuen Tag auf,
+                // sondern bleibt beim vorigen — raten waere hier schlechter als lassen.
+                const treffer = [];
+                PLAN_MARKE.lastIndex = 0;
+                let m;
+                while ((m = PLAN_MARKE.exec(text)) !== null) {
+                    treffer.push({
+                        tag: PLAN_TAG_INDEX[m[2].toLowerCase()],
+                        markeAb: m.index + m[1].length,
+                        textAb: m.index + m[0].length,
+                    });
+                    if (m.index === PLAN_MARKE.lastIndex) PLAN_MARKE.lastIndex++;
+                }
+
+                const vorErsterMarke = treffer.length > 0 ? text.slice(0, treffer[0].markeAb) : text;
+                _planStuecke(vorErsterMarke).forEach(t => rest.push(t));
+
+                treffer.forEach((tr, i) => {
+                    const bis = i + 1 < treffer.length ? treffer[i + 1].markeAb : text.length;
+                    let abschnitt = text.slice(tr.textAb, bis);
+
+                    if (PLAN_SCHULE.test(abschnitt)) {
+                        if (!schoolDays.includes(tr.tag)) schoolDays.push(tr.tag);
+                        // Das Fach steht im Rest des Abschnitts ("Berufsschule, Thema
+                        // Subnetting und VLAN" → "Subnetting und VLAN"). Ein gewuerfeltes
+                        // Fach waere schlechter als das, was der Nutzer selbst nennt.
+                        abschnitt = abschnitt
+                            .replace(PLAN_SCHULE, ' ')
+                            .replace(/^[\s,;:.\-–—]+/, '')
+                            .replace(/^thema\s*:?\s*/i, '');
+                    }
+
+                    const stuecke = _planStuecke(abschnitt);
+                    if (stuecke.length === 0) return;
+                    perDay[tr.tag] = (perDay[tr.tag] || []).concat(stuecke);
+                });
+
+                schoolDays.sort((a, b) => a - b);
+                return { perDay, schoolDays, rest };
+            }
+
+            // Zerlegt an Kommas und Zeilenumbruechen, NICHT an "und": "eingerichtet und
+            // getestet" gehoert zusammen, sonst steht "getestet" als eigener Eintrag im
+            // Berichtsheft. Genau daran ist die alte Stichwort-Zerlegung gescheitert.
+            function _planStuecke(abschnitt) {
+                return String(abschnitt || '')
+                    .split(/[,;\n\r]|\s+•\s*|\s+-\s+/)
+                    .map(t => t.replace(/^[\s.\-–—:]+/, '').replace(/[\s.]+$/, '').trim())
+                    .filter(t => t.length > 2)
+                    .slice(0, 6);
+            }
+
+            // Der Stichpunkt kommt woertlich in den Bericht; nur der erste Buchstabe
+            // wird gross, weil "• alte pcs abgebaut" im IHK-Heft nach Versehen
+            // aussieht. Kein Umformulieren — die Engine koennte es nicht, und der
+            // Originalwortlaut ist ohnehin ehrlicher als eine generierte Floskel.
+            function _planEintrag(text, form, rahmen) {
+                const t = String(text || '').trim();
+                if (!t) return '';
+                if (form === 'stichpunkte') return t.charAt(0).toUpperCase() + t.slice(1);
+                return rahmen(t);
+            }
+
+            // ═══════════════════════════════════════
             // FULL WEEK GENERATION
             // ═══════════════════════════════════════
 
@@ -13915,12 +14053,16 @@ Beispiel:
                     totalHours: 0,
                 };
 
-                // Custom-Entries WOCHEN-WEIT berechnen und auf max 2 zufällige Tage verteilen.
-                // Sonst landet die User-Notiz ("War kurz im Einkauf") in JEDEM Tag.
-                // _customContextEntries liefert Stichpunkte ('• …'); in den Satzformen
-                // bekommt der Text denselben Rahmen wie andere Nutzerangaben.
+                // ✦ Wochenplan: "Mo: … Di: … Fr: Berufsschule" wird gelesen und Tag für
+                //   Tag zugeordnet. Vorher konnte das NUR der Cloud-Prompt; lokal wurden
+                //   die Tagesmarken ignoriert und der Text auf zwei Zufallstage gestreut.
+                const _plan = _parseWochenplan(customPrompt);
+
+                // Was OHNE Tagesmarke dasteht, gilt weiter für die ganze Woche und wird
+                // auf max 2 zufällige Tage verteilt — sonst steht "War kurz im Einkauf"
+                // in JEDEM Tag.
                 const _rahmenWoche = FAKT_RAHMEN[form] || FAKT_RAHMEN.stichpunkte;
-                const _weekCustomEntries = _customContextEntries(customPrompt, week.department)
+                const _weekCustomEntries = _customContextEntries(_plan.rest.join(', '), week.department)
                     .map(e => form === 'stichpunkte' ? e : _rahmenWoche(e.replace(/^•\s*/, '')));
                 const _customAssignment = new Map(); // dayIdx → custom entry string
                 if (_weekCustomEntries.length > 0 && selectedDays.length > 0) {
@@ -13967,6 +14109,7 @@ Beispiel:
                         department: '',                                  // blockt Re-Injection
                         customPrompt: '',                                // im day-fn (Wochenebene erledigt)
                         injectedCustomEntry: _customAssignment.get(dayIdx) || null,
+                        planForDay: _plan.perDay[dayIdx] || null,
                         aufgabenForDay: aufgabenData ? aufgabenData.perDay[dayIdx] : null,
                         trackingForDay: trackingData ? trackingData.perDay[dayIdx] : null,
                         activeTheme,
@@ -14180,7 +14323,7 @@ Beispiel:
                     <ul class="ais-day-entries">
                         ${day.entries.map((entry, j) => `
                             <li>
-                                <span class="entry-text" contenteditable="true" onblur="AIStudio.updateEntry(${day.index}, ${j}, this.textContent)">${entry.replace('• ', '')}</span>
+                                <span class="entry-text" contenteditable="true" onblur="AIStudio.updateEntry(${day.index}, ${j}, this.textContent)">${escapeHtml(entry.replace('• ', ''))}</span>
                             </li>
                         `).join('')}
                     </ul>
@@ -15334,42 +15477,62 @@ Beispiel:
                 return parts.join('. ');
             }
 
-            // Extract keywords from customPrompt/department and turn into IHK entries
+            // Fertige IHK-Formulierung fuer bekannte Begriffe. Das ist eine ZUGABE,
+            // kein Filter: was hier nicht steht, kommt woertlich durch.
+            function _kontextTemplate(kw) {
+                const lower = String(kw).toLowerCase();
+                if (lower.includes('rechnung')) return 'Rechnungen kontrolliert und gebucht';
+                if (lower.includes('lieferschein')) return 'Lieferscheine geprüft und abgeheftet';
+                if (lower.includes('sendung')) return 'Sendungsverfolgung durchgeführt und nachgehalten';
+                if (lower.includes('einkauf')) return 'Einkaufsvorgänge bearbeitet und dokumentiert';
+                if (lower.includes('bestellung')) return 'Bestellungen aufgegeben und verfolgt';
+                if (lower.includes('lager')) return 'Lagerbestand kontrolliert und aktualisiert';
+                if (lower.includes('abrechnung')) return 'Abrechnungen erstellt und geprüft';
+                if (lower.includes('meeting') || lower.includes('besprechung')) return 'Teambesprechung vorbereitet und teilgenommen';
+                if (lower.includes('kunde')) return 'Kundenkontakt gepflegt und Anfragen bearbeitet';
+                if (lower.includes('mail') || lower.includes('e-mail')) return 'E-Mail-Korrespondenz bearbeitet';
+                if (lower.includes('doku')) return 'Dokumentation erstellt und aktualisiert';
+                if (lower.includes('schulung') || lower.includes('training')) return 'Schulungsunterlagen vorbereitet und Einarbeitung begleitet';
+                return null;
+            }
+
+            // Text ohne Tagesmarke ("diese Woche viel Netzwerkkram") gilt fuer die ganze
+            // Woche. Frueher stand am Ende dieser Funktion ein `return null` fuer alles,
+            // was nicht auf einer Liste mit zwoelf Buero-Begriffen stand — Rechnung,
+            // Lieferschein, Lager, Kunde … Fuer einen Fachinformatiker, einen
+            // Kfz-Mechatroniker oder eine Pflegekraft hiess das: der ganze Text war weg,
+            // ohne eine einzige Meldung. Der Abschnitt kommt jetzt woertlich durch.
+            //
+            // Die ABTEILUNG geht bewusst NUR ueber die Begriffe: "Frontend-Team" ist ein
+            // Ort, keine Taetigkeit, und stuende als "• Frontend-Team" sinnlos im Heft.
             function _customContextEntries(customPrompt, department) {
-                const combined = [department, customPrompt].filter(Boolean).join(', ');
-                if (!combined.trim()) return [];
+                const eintraege = [];
 
-                // Split by common separators: comma, newline, "und", "mit", "sowie"
-                const raw = combined.split(/[,\n;]/);
-                const fragments = [];
-                raw.forEach(part => {
-                    part.split(/\s+und\s+|\s+mit\s+|\s+sowie\s+/i).forEach(sp => {
-                        const kw = sp.replace(/Abteilung\s*\/?\s*Tätigkeiten:\s*/i, '').trim();
-                        if (kw.length > 2) fragments.push(kw);
+                const abschnitte = (txt, woertlich) => {
+                    String(txt || '').split(/[,\n;]/).forEach(part => {
+                        const segment = part.replace(/Abteilung\s*\/?\s*Tätigkeiten:\s*/i, '').trim();
+                        if (segment.length < 3) return;
+
+                        const treffer = [];
+                        segment.split(/\s+und\s+|\s+mit\s+|\s+sowie\s+/i).forEach(sp => {
+                            const t = _kontextTemplate(sp.trim());
+                            if (t && !treffer.includes(t) && !eintraege.includes(t)) treffer.push(t);
+                        });
+                        if (treffer.length > 0) { treffer.forEach(t => eintraege.push(t)); return; }
+
+                        // Der Abschnitt bleibt GANZ, nicht in "und"-Stuecken:
+                        // "eingerichtet und getestet" gehoert zusammen, sonst steht
+                        // "getestet" als eigener Eintrag im Berichtsheft.
+                        if (woertlich && !eintraege.includes(segment)) {
+                            eintraege.push(segment.charAt(0).toUpperCase() + segment.slice(1));
+                        }
                     });
-                });
+                };
 
-                // Turn each fragment into a past-tense IHK entry.
-                // WICHTIG: nur erkannte Keywords → konkrete Templates. Unbekannte Fragmente
-                // werden verworfen (lieber kein Eintrag als "Rechenzentrum bearbeitet und
-                // dokumentiert"-Müll, der sonst die Wochenoptik zerstört).
-                return fragments.slice(0, 6).map(kw => {
-                    const lower = kw.toLowerCase();
-                    if (lower.includes('rechnung')) return 'Rechnungen kontrolliert und gebucht';
-                    if (lower.includes('lieferschein')) return 'Lieferscheine geprüft und abgeheftet';
-                    if (lower.includes('sendung')) return 'Sendungsverfolgung durchgeführt und nachgehalten';
-                    if (lower.includes('einkauf')) return 'Einkaufsvorgänge bearbeitet und dokumentiert';
-                    if (lower.includes('bestellung')) return 'Bestellungen aufgegeben und verfolgt';
-                    if (lower.includes('lager')) return 'Lagerbestand kontrolliert und aktualisiert';
-                    if (lower.includes('abrechnung')) return 'Abrechnungen erstellt und geprüft';
-                    if (lower.includes('meeting') || lower.includes('besprechung')) return 'Teambesprechung vorbereitet und teilgenommen';
-                    if (lower.includes('kunde')) return 'Kundenkontakt gepflegt und Anfragen bearbeitet';
-                    if (lower.includes('mail') || lower.includes('e-mail')) return 'E-Mail-Korrespondenz bearbeitet';
-                    if (lower.includes('doku')) return 'Dokumentation erstellt und aktualisiert';
-                    if (lower.includes('schulung') || lower.includes('training')) return 'Schulungsunterlagen vorbereitet und Einarbeitung begleitet';
-                    // KEIN generischer Fallback mehr — unbekannte Keywords ignorieren.
-                    return null;
-                }).filter(Boolean).map(e => '• ' + e);
+                abschnitte(department, false);
+                abschnitte(customPrompt, true);
+
+                return eintraege.slice(0, 6).map(e => '• ' + e);
             }
 
             function _saveProfile() {
@@ -16380,6 +16543,22 @@ ${trackingBlock}${aufgabenBlock}
                     // Build enriched prompt from user text + activity chips + day notes
                     const customPrompt = _buildEnrichedPrompt();
 
+                    // 🔴 Steht "Fr: Berufsschule" im Freitext, ist das eine Ansage — der
+                    // Tag muss auch als Schultag gelten. Zwei Bedienelemente auf denselben
+                    // Zustand driften garantiert auseinander (der Text sagte Freitag, die
+                    // Chips standen auf Donnerstag, nichts glich das ab). Der Text schreibt
+                    // deshalb NICHT am Regler vorbei, sondern SETZT ihn — sichtbar, damit
+                    // der Nutzer den Zustand am selben Ort sieht wie sonst auch.
+                    const _planSchule = _parseWochenplan(customPrompt).schoolDays
+                        .filter(i => state.selectedDays.includes(i));
+                    if (_planSchule.length > 0 && _planSchule.join() !== state.schoolDayIndices.join()) {
+                        const DAY_NAMES_P = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag'];
+                        state.schoolDayIndices = [..._planSchule];
+                        updateSchoolDayChips();
+                        _saveAiSettings();
+                        showToast('Berufsschultag laut deinem Text: ' + _planSchule.map(i => DAY_NAMES_P[i]).join(', '), 'info');
+                    }
+
                     const genOptions = {
                         yearNum,
                         umfang,
@@ -16710,8 +16889,8 @@ ${trackingBlock}${aufgabenBlock}
     </script>
 
     <!-- BBiG-Live-Scanner -->
-    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=6.4.16">
-    <script src="/components/bbig-scanner/bbig-scanner.js?v=6.4.16"></script>
+    <link rel="stylesheet" href="/components/bbig-scanner/bbig-scanner.css?v=6.4.17">
+    <script src="/components/bbig-scanner/bbig-scanner.js?v=6.4.17"></script>
     <script>
         if (typeof initBbigBerichtsheft === 'function') {
             if (document.readyState === 'loading') {

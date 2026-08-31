@@ -15,7 +15,11 @@
 import { readFileSync } from 'node:fs';
 import { createContext, runInContext } from 'node:vm';
 
-const HTML = readFileSync(new URL('../pages/berichtsheft/index.html', import.meta.url), 'utf8');
+// Zeilenenden vereinheitlichen: git liefert die Datei je nach autocrlf mit CRLF
+// aus, und die mehrzeiligen Marker unten wuerden dann keinen Treffer finden —
+// der Test faellt aus, ohne dass am Code etwas falsch ist.
+const HTML = readFileSync(new URL('../pages/berichtsheft/index.html', import.meta.url), 'utf8')
+    .split('\r\n').join('\n');
 
 let bestanden = 0, fehlgeschlagen = 0;
 const gruppe = (t) => console.log('\n▶ ' + t);
