@@ -237,7 +237,7 @@
 
   <header>
     <h1>Berichtsheft AI Benchmark <span class="badge">DEV</span></h1>
-    <p class="sub">Browser-Variante von <code>pages/berichtsheft/ai.js</code> — fährt die exakt gleiche 10er-Test-Suite gegen OpenRouter.</p>
+    <p class="sub">Fährt die Test-Suite gegen OpenRouter — mit dem Prompt, den <code>pages/berichtsheft/index.html</code> live baut, nicht mit einer Kopie davon.</p>
   </header>
 
   <div class="card">
@@ -261,6 +261,12 @@
       <span><b id="cfgTests">10</b> Tests</span>
       <span><b id="cfgCalls">40</b> Gesamt-Calls</span>
       <span style="font: 11px var(--font-mono); color: var(--text-dim);">temp=0.9 · top_p=0.95 · max=4096</span>
+    </div>
+    <!-- Ohne diese Zeile misst der Benchmark irgendwann still gegen eine veraltete
+         Prompt-Kopie — genau das war bis 31.08.2026 der Fall. -->
+    <div class="status-row" style="padding: 4px 0; font: 11px var(--font-mono);">
+      <span style="color: var(--text-dim);">Prompt-Quelle:</span>
+      <b id="cfgPromptSrc" style="color: var(--text-dim);">wird geladen…</b>
     </div>
   </div>
 
@@ -294,17 +300,31 @@
 'use strict';
 
 // ═══════════════════════════════════════════════════════════
-//  Spiegelt 1:1 die Test-Suite aus pages/berichtsheft/ai.js
+//  Die Test-Suite steht hier; der Prompt wird zur Laufzeit aus
+//  pages/berichtsheft/index.html geholt (ladeEchtenPrompt).
 // ═══════════════════════════════════════════════════════════
 
 const STORAGE_KEY = 'mwlbench_or_key';
 
-// Reihenfolge & Rollen identisch zur Produktions-Fallback-Chain im Worker
+// Reihenfolge & Rollen identisch zur Produktions-Fallback-Chain im Worker (v3.6).
+// Am 31.08.2026 gegen https://openrouter.ai/api/v1/models geprueft: alle 13 leben.
+// Die drei alten Eintraege Nemotron-Nano-30b-a3b / Laguna-M.1 / GPT-OSS-20B gab es
+// zu dem Zeitpunkt schon nicht mehr — der Benchmark hat also drei Viertel seiner
+// Laeufe gegen 404 gefahren und das als "Fehler" statt als "Modell weg" gezaehlt.
 const MODELS = [
-  { id: 'cohere/north-mini-code:free',         label: 'North Mini Code',     role: 'Primary' },
-  { id: 'nvidia/nemotron-3-nano-30b-a3b:free', label: 'Nemotron 3 Nano 30B', role: 'Fallback 1' },
-  { id: 'poolside/laguna-m.1:free',            label: 'Laguna M.1',          role: 'Fallback 2' },
-  { id: 'openai/gpt-oss-20b:free',             label: 'GPT-OSS 20B',         role: 'Fallback 3' },
+  { id: 'google/gemma-4-31b-it:free',                         label: 'Gemma 4 31B',        role: 'Primary'     },
+  { id: 'thinkingmachines/inkling:free',                      label: 'Inkling',            role: 'Fallback 1'  },
+  { id: 'z-ai/glm-5.2:free',                                  label: 'GLM 5.2',            role: 'Fallback 2'  },
+  { id: 'nvidia/nemotron-3-ultra-550b-a55b:free',             label: 'Nemotron 3 Ultra',   role: 'Fallback 3'  },
+  { id: 'minimax/minimax-m3:free',                            label: 'MiniMax M3',         role: 'Fallback 4'  },
+  { id: 'nvidia/nemotron-3-super-120b-a12b:free',             label: 'Nemotron 3 Super',   role: 'Fallback 5'  },
+  { id: 'cohere/north-mini-code:free',                        label: 'North Mini Code',    role: 'Fallback 6'  },
+  { id: 'google/gemma-4-26b-a4b-it:free',                     label: 'Gemma 4 26B A4B',    role: 'Fallback 7'  },
+  { id: 'thinkingmachines/inkling-small:free',                label: 'Inkling Small',      role: 'Fallback 8'  },
+  { id: 'minimax/minimax-m2.7:free',                          label: 'MiniMax M2.7',       role: 'Fallback 9'  },
+  { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', label: 'Nemotron 3 Nano',    role: 'Fallback 10' },
+  { id: 'nvidia/nemotron-3.5-lightning:free',                 label: 'Nemotron Lightning', role: 'Fallback 11' },
+  { id: 'poolside/laguna-s-2.1:free',                         label: 'Laguna S 2.1',       role: 'Last Resort' },
 ];
 
 const PROD_TEMPERATURE = 0.9;
@@ -337,8 +357,46 @@ const PROFESSIONS = {
 
 const DAY_NAMES = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag'];
 
-// ─── Production-Prompt (gleich wie in index.html _buildGeminiPrompt) ──────
-function buildProdPrompt(opts) {
+// ─── Production-Prompt: kommt aus der ECHTEN Seite ───────────────────────
+// Wird beim Laden aus /berichtsheft/ herausgeschnitten und ausgewertet. Damit
+// kann die Vorlage nicht mehr abdriften; die Handkopie darunter ist nur noch
+// Notnagel und meldet sich sichtbar, wenn sie benutzt wird.
+let PROMPT_QUELLE = 'Kopie (veraltet!)';
+let buildPrompt = (opts) => buildProdPromptFallback(opts);
+
+async function ladeEchtenPrompt() {
+    const schnitt = (html, von, bis) => {
+        const i = html.indexOf(von);
+        const j = html.indexOf(bis, i);
+        if (i < 0 || j < 0) throw new Error('Marker nicht gefunden: ' + von);
+        return html.slice(i, j);
+    };
+    const res = await fetch('/berichtsheft/', { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const html = (await res.text()).split('\r\n').join('\n');
+
+    // CLOUD_FORM … bis kurz vor _repairJSON deckt CLOUD_FORM, CLOUD_UMFANG und
+    // _buildCloudPrompt ab. PROFESSIONS und getCurrentSeason gibt der Benchmark dazu.
+    const src = schnitt(html, 'const CLOUD_FORM = {', 'function _repairJSON(');
+    const f = new Function('PROFESSIONS', 'getCurrentSeason',
+        src + '\n; return { _buildCloudPrompt, CLOUD_FORM };');
+    const mod = f(PROFESSIONS, () => 'Sommer');
+    if (typeof mod._buildCloudPrompt !== 'function') throw new Error('_buildCloudPrompt fehlt');
+
+    // Gegenprobe: der Prompt muss die Bloecke tragen, die die App heute schickt.
+    // Ohne diese Zeile wuerde eine halb geladene Quelle unbemerkt durchgehen.
+    const probe = mod._buildCloudPrompt('sysadmin', {
+        yearNum: 2, umfang: 'mittel', form: 'stichpunkte',
+        selectedDays: [0,1,2,3,4], schoolDayIndices: [4], calendarWeek: 35,
+    });
+    for (const block of ['[KRITISCH', '[SPRACHE', '[SCHREIBFORM', '[INHALT]', '[SCHULE]', '[AUFTRAG]']) {
+        if (!probe.includes(block)) throw new Error('Block fehlt im geladenen Prompt: ' + block);
+    }
+    buildPrompt = (opts) => mod._buildCloudPrompt(opts.professionId, opts);
+    PROMPT_QUELLE = 'Live aus /berichtsheft/';
+}
+
+function buildProdPromptFallback(opts) {
   const {
     professionId, yearNum = 2, complexity = 'medium',
     selectedDays = [0,1,2,3,4], schoolDayIndex = null,
@@ -621,12 +679,100 @@ function checkSchultag(json, expectedSchoolDayIdx) {
   return issues;
 }
 
-// ─── TESTS (gleich wie ai.js) ─────────────────────────────────────────────
+// ─── TESTS ────────────────────────────────────────────────────────────────
 const TESTS = [
+  {
+    // 🔴 Der Fall, der die letzten drei Fixes ausgeloest hat: ein Azubi tippt
+    // seine Woche in Stichworten hin — klein geschrieben, mit Tagesmarken, mit
+    // Umgangssprache ("linux kisten"), und am Freitag Berufsschule mitten im
+    // Satz. Genau daran ist die App nacheinander an drei Stellen gescheitert:
+    // der Text kam gar nicht an, der Schultag stand auf dem falschen Tag, und
+    // die Cloud hat das Ganze ins Englische uebersetzt. Ein Modell, das diesen
+    // Test besteht, taugt fuer den echten Betrieb.
+    name: 'Echter Wochenplan (Stichworte, Tagesmarken, Schultag im Text)',
+    weight: 6,
+    options: {
+      professionId: 'sysadmin', yearNum: 2, umfang: 'mittel', form: 'stichpunkte',
+      selectedDays: [0,1,2,3,4], schoolDayIndices: [4], department: 'IT-Infrastruktur',
+      customPrompt: 'Mo: alte pcs abgebaut, 3 neue aufgebaut und windows 11 draufgemacht. '
+        + 'Di: support tickets abgearbeitet, viel passwort resets und active directory zeug. '
+        + 'Mi: server updates bei ein paar linux kisten gemacht. '
+        + 'Do: neues backup konzept für abteilung x eingerichtet und getestet. '
+        + 'Fr: berufsschule, thema subnetting und vlan.',
+    },
+    check: (text, o) => {
+      const { json } = extractJSON(text);
+      if (!json) return ['JSON unparsbar'];
+      const issues = [...checkStructure(json, o.selectedDays), ...checkSchultag(json, 4)];
+
+      // Jeder Tag muss SEINEN Inhalt tragen — nicht irgendeinen aus der Woche.
+      const proTag = {
+        Montag:     ['pc', 'rechner', 'windows'],
+        Dienstag:   ['ticket', 'passwor', 'active directory', 'benutzer'],
+        Mittwoch:   ['update', 'linux', 'patch', 'server'],
+        Donnerstag: ['backup', 'sicherung', 'wiederherstell'],
+        Freitag:    ['subnet', 'vlan', 'netz'],
+      };
+      for (const [tag, woerter] of Object.entries(proTag)) {
+        const d = json.find(x => x?.day === tag);
+        if (!d) continue;
+        const t = (d.entries || []).join(' ').toLowerCase();
+        if (!woerter.some(w => t.includes(w))) issues.push(`${tag}: Vorgabe des Users fehlt`);
+      }
+
+      // Und der Inhalt darf nicht wandern: Backup gehoert an den Donnerstag.
+      const mo = (json.find(x => x?.day === 'Montag')?.entries || []).join(' ').toLowerCase();
+      if (mo.includes('subnet') || mo.includes('vlan')) issues.push('Schulstoff am Montag');
+      return issues;
+    },
+  },
+  {
+    // 🔴 Am 31.08.2026 real passiert: ein freies Modell hat den deutschen
+    // Wochenplan wortweise ins Englische uebersetzt und einen komplett
+    // englischen Ausbildungsnachweis geliefert ("old PCs dismantled"). Nach
+    // §14 BBiG ist das wertlos. Der Prompt war durchgehend deutsch — das allein
+    // hat nicht gereicht, deshalb gibt es seit v6.4.18 einen [SPRACHE]-Block.
+    // Dieser Test misst, welche Modelle sich daran halten.
+    name: 'Sprache: Bericht bleibt deutsch',
+    weight: 6,
+    options: {
+      professionId: 'sysadmin', yearNum: 2, umfang: 'mittel', form: 'stichpunkte',
+      selectedDays: [0,1,2,3,4], schoolDayIndices: [],
+      customPrompt: 'Mo: server gepatcht. Di: tickets abgearbeitet. Mi: backup geprüft.',
+    },
+    check: (text) => {
+      const { json } = extractJSON(text);
+      if (!json) return ['JSON unparsbar'];
+      const issues = [];
+      const entries = collectEntries(json);
+      if (entries.length === 0) return ['keine Einträge'];
+
+      // Englische Partizipien/Funktionswoerter, die im deutschen Bericht nichts
+      // zu suchen haben. Bewusst als ganze Woerter — "installed" darf nicht in
+      // "Installation" treffen, und Fachbegriffe wie "Update" bleiben erlaubt.
+      const EN = /\b(the|was|were|been|performed|completed|reviewed|updated|installed|configured|created|dismantled|assembled|checked|processed|verified|documented|applied|studied|practiced)\b/i;
+      const englisch = entries.filter(e => EN.test(e));
+      if (englisch.length > 0) {
+        issues.push(`${englisch.length}/${entries.length} Einträge englisch: "${englisch[0].slice(0, 45)}"`);
+        if (englisch.length > entries.length / 2) issues.push('Bericht überwiegend englisch — unbrauchbar');
+      }
+      // Gegenprobe: es muss ueberhaupt deutscher Text da sein, sonst meldet die
+      // Pruefung oben "alles gut" fuer eine leere oder kryptische Antwort.
+      // 🔴 Umlaute und Funktionswoerter reichen dafuer NICHT: ein IHK-Stichpunkt
+      // heisst "Server gepatcht" — kein Umlaut, kein "der/die/das", und die
+      // Gegenprobe haette einen tadellos deutschen Bericht angemeckert (im
+      // Trockenlauf genau so passiert). Das Partizip ist das verlaessliche
+      // Merkmal: "gepatcht", "kontrolliert", "bearbeitet". Englisch endet auf
+      // "-ed"/"-ing" und faellt nicht darunter.
+      const DE = /[äöüß]|\b(und|der|die|das|dem|den|im|für|mit|von|auf|bei|wurde|wurden)\b|\w{4,}(et|ert|elt|iert|ung|heit|keit)\b/i;
+      if (!entries.some(e => DE.test(e))) issues.push('kein einziger erkennbar deutscher Eintrag');
+      return issues;
+    },
+  },
   {
     name: 'JSON-Struktur (FISI-SI 2.Lj, Mo-Fr, kein Schultag)',
     weight: 5,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null, department: 'IT-Infrastruktur' },
+    options: { professionId: 'sysadmin', yearNum: 2, umfang: 'mittel', form: 'stichpunkte', selectedDays: [0,1,2,3,4], schoolDayIndices: [], department: 'IT-Infrastruktur' },
     check: (text, o) => {
       const { json, err, repaired } = extractJSON(text);
       if (!json) return [`JSON unparsbar: ${err}`];
@@ -638,7 +784,7 @@ const TESTS = [
   {
     name: 'Stichpunkt-Stil (max 10 Wörter, keine Subjekt-Sätze)',
     weight: 4,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null },
+    options: { professionId: 'sysadmin', yearNum: 2, umfang: 'mittel', form: 'stichpunkte', selectedDays: [0,1,2,3,4], schoolDayIndices: [] },
     check: (text) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar — Stil nicht prüfbar'];
@@ -648,7 +794,7 @@ const TESTS = [
   {
     name: 'Tagesvariation (keine Wiederholung)',
     weight: 3,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null },
+    options: { professionId: 'sysadmin', yearNum: 2, umfang: 'mittel', form: 'stichpunkte', selectedDays: [0,1,2,3,4], schoolDayIndices: [] },
     check: (text) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar'];
@@ -658,7 +804,7 @@ const TESTS = [
   {
     name: 'Fachvokabular (FISI-SI Tools)',
     weight: 3,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null },
+    options: { professionId: 'sysadmin', yearNum: 2, umfang: 'mittel', form: 'stichpunkte', selectedDays: [0,1,2,3,4], schoolDayIndices: [] },
     check: (text, o) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar'];
@@ -668,7 +814,7 @@ const TESTS = [
   {
     name: 'Custom-Prompt-Priorität (Lager-Woche)',
     weight: 5,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null,
+    options: { professionId: 'sysadmin', yearNum: 2, umfang: 'mittel', form: 'stichpunkte', selectedDays: [0,1,2,3,4], schoolDayIndices: [],
                customPrompt: 'Diese Woche AUSSCHLIESSLICH im Lager: Hardware ausgepackt, inventarisiert, auf Bestellscheine geprüft, Asset-Tags angebracht. KEIN Server, KEIN Netzwerk, KEIN Ticket, KEIN AD, KEIN Firewall.' },
     check: (text) => {
       const { json } = extractJSON(text);
@@ -688,17 +834,17 @@ const TESTS = [
   {
     name: 'Schultag-Handling (Mittwoch = Schule)',
     weight: 4,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: 2 },
+    options: { professionId: 'sysadmin', yearNum: 2, umfang: 'mittel', form: 'stichpunkte', selectedDays: [0,1,2,3,4], schoolDayIndices: [2] },
     check: (text, o) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar'];
-      return [...checkStructure(json, o.selectedDays), ...checkSchultag(json, o.schoolDayIndex)];
+      return [...checkStructure(json, o.selectedDays), ...checkSchultag(json, (o.schoolDayIndices || [])[0] ?? null)];
     },
   },
   {
     name: 'Anti-Halluzination',
     weight: 4,
-    options: { professionId: 'sysadmin', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null,
+    options: { professionId: 'sysadmin', yearNum: 2, umfang: 'mittel', form: 'stichpunkte', selectedDays: [0,1,2,3,4], schoolDayIndices: [],
                customPrompt: 'Erfinde NICHTS Konkretes — keine IP-Adressen, keine Namen, keine Firmennamen, keine Geldbeträge, keine Ticket-Nummern.' },
     check: (text) => {
       const { json } = extractJSON(text);
@@ -709,7 +855,7 @@ const TESTS = [
   {
     name: '1. Lehrjahr-Niveau',
     weight: 2,
-    options: { professionId: 'sysadmin', yearNum: 1, complexity: 'low', selectedDays: [0,1,2,3,4], schoolDayIndex: null },
+    options: { professionId: 'sysadmin', yearNum: 1, umfang: 'kurz', form: 'stichpunkte', selectedDays: [0,1,2,3,4], schoolDayIndices: [] },
     check: (text) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar'];
@@ -724,7 +870,7 @@ const TESTS = [
   {
     name: 'Multi-Beruf: Koch 2.Lj',
     weight: 3,
-    options: { professionId: 'gastronomie', yearNum: 2, complexity: 'medium', selectedDays: [0,1,2,3,4], schoolDayIndex: null, department: 'Küche' },
+    options: { professionId: 'gastronomie', yearNum: 2, umfang: 'mittel', form: 'stichpunkte', selectedDays: [0,1,2,3,4], schoolDayIndices: [], department: 'Küche' },
     check: (text, o) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar'];
@@ -740,7 +886,7 @@ const TESTS = [
   {
     name: 'Teilwoche (Mo/Mi/Fr, Kaufmann)',
     weight: 2,
-    options: { professionId: 'kaufmann', yearNum: 2, complexity: 'medium', selectedDays: [0,2,4], schoolDayIndex: null, department: 'Buchhaltung' },
+    options: { professionId: 'kaufmann', yearNum: 2, umfang: 'mittel', form: 'stichpunkte', selectedDays: [0,2,4], schoolDayIndices: [], department: 'Buchhaltung' },
     check: (text, o) => {
       const { json } = extractJSON(text);
       if (!json) return ['JSON unparsbar'];
@@ -771,7 +917,11 @@ async function callModel(modelId, prompt, apiKey, signal) {
         max_tokens: PROD_MAX_TOKENS,
         temperature: PROD_TEMPERATURE,
         top_p: PROD_TOP_P,
-        response_format: { type: 'json_object' },
+        // KEIN response_format:'json_object' — der Worker hat das in v3.3 entfernt,
+        // weil der JSON-Mode ein OBJEKT erzwingt, der Prompt aber ein ARRAY verlangt.
+        // Kleine Modelle loesen den Widerspruch, indem sie das Array als String ins
+        // Objekt packen. Stand es hier noch drin, hat der Benchmark unter einer
+        // Konfiguration gemessen, die es in Produktion nicht mehr gibt.
         messages: [{ role: 'user', content: prompt }],
       }),
     });
@@ -938,13 +1088,13 @@ function renderRecommendations(scores) {
     cont.appendChild(el('div', { class: 'rec-item', style: 'color: var(--danger);' },
       'Kein Modell erreicht die Mindest-Qualität (30%).'));
   } else {
-    const labels = ['Primary', 'Fallback 1', 'Fallback 2', 'Last Resort'];
+    const labels = (i, n) => i === 0 ? 'Primary' : (i === n - 1 ? 'Last Resort' : 'Fallback ' + i);
     usable.forEach((s, i) => {
       cont.appendChild(el('div', { class: 'rec-item' }, [
         el('span', { class: 'rec-rank' }, String(i+1)),
         el('span', { style: 'flex:1;' }, s.model.id),
         el('span', { style: 'color: var(--text-muted);' }, `${s.finalScore.toFixed(0)}% · ${s.avgMs.toFixed(0)}ms`),
-        el('span', { style: 'color: var(--text-dim); font-size: 11px;' }, labels[i] || ''),
+        el('span', { style: 'color: var(--text-dim); font-size: 11px;' }, labels(i, usable.length)),
       ]));
     });
   }
@@ -984,7 +1134,7 @@ async function runBenchmark(modelFilter) {
     for (let i = 0; i < TESTS.length; i++) {
       if (CANCEL.signal.aborted) break;
       const test = TESTS[i];
-      const prompt = buildProdPrompt(test.options);
+      const prompt = buildPrompt(test.options);
       const result = await callModel(model.id, prompt, apiKey, CANCEL.signal);
 
       // Smart-Retry: prüfen ob Antwort komplett & strukturell korrekt ist
@@ -1090,6 +1240,21 @@ $('runBtn').addEventListener('click', () => runBenchmark());
 $('cancelBtn').addEventListener('click', () => { if (CANCEL) CANCEL.abort(); });
 
 updateKeyStatus();
+
+// Prompt aus der echten Seite holen. Klappt das nicht, laeuft der Benchmark auf
+// der Handkopie weiter — dann aber sichtbar rot, nicht stillschweigend.
+ladeEchtenPrompt().then(() => {
+    const e = $('cfgPromptSrc');
+    e.textContent = PROMPT_QUELLE;
+    e.style.color = 'var(--success)';
+}).catch(err => {
+    console.warn('[Bench] Live-Prompt nicht ladbar:', err.message);
+    const e = $('cfgPromptSrc');
+    e.textContent = PROMPT_QUELLE + ' — ' + err.message;
+    e.style.color = 'var(--danger)';
+    $('runBtn').title = 'Achtung: misst gegen eine veraltete Prompt-Kopie.';
+});
+
 $('cfgModels').textContent = MODELS.length;
 $('cfgTests').textContent = TESTS.length;
 $('cfgCalls').textContent = MODELS.length * TESTS.length;
@@ -1101,7 +1266,13 @@ window.MWLBench = {
   cancel: () => { if (CANCEL) CANCEL.abort(); },
   setKey, getKey, clrKey,
   MODELS, TESTS, PROFESSIONS,
-  buildProdPrompt,
+  // 🔴 buildPrompt wird von ladeEchtenPrompt() NACH diesem Objektliteral
+  // umgehaengt. Als Wert kopiert waere hier fuer immer die veraltete Kopie
+  // gelandet — der Runner haette den Live-Prompt benutzt, die Konsole einen
+  // anderen, und man haette es an nichts gemerkt. Deshalb ein Getter.
+  get buildPrompt() { return buildPrompt; },
+  buildProdPromptFallback, ladeEchtenPrompt,
+  get promptQuelle() { return PROMPT_QUELLE; },
   last: null,
 };
 
