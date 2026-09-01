@@ -100,6 +100,17 @@
             titleEl.textContent = name.charAt(0).toUpperCase() + name.slice(1);
         }
 
+        var nowBtn = document.getElementById('mcNow');
+        if (nowBtn) {
+            var now = new Date();
+            var isCurrent = mcYear === now.getFullYear() && mcMonth === now.getMonth();
+            var mName = mcMonthName(mcYear, mcMonth, true);
+            nowBtn.textContent = mName.charAt(0).toUpperCase() + mName.slice(1);
+            nowBtn.title = isCurrent
+                ? (en ? 'Current month' : 'Aktueller Monat')
+                : (en ? 'Jump to current month' : 'Zum aktuellen Monat springen');
+        }
+
         // Blaettern nur so weit, wie Daten reichen — ein Knopf, der ins Leere
         // fuehrt, ist kein Knopf.
         var b = mcBounds();

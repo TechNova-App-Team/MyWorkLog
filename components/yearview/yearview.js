@@ -137,6 +137,14 @@
         var titleEl = document.getElementById('yvTitle');
         if (titleEl) titleEl.textContent = year;
 
+        var nowBtn = document.getElementById('yvNow');
+        if (nowBtn) {
+            nowBtn.textContent = year;
+            nowBtn.title = isCurrent
+                ? (en ? 'Current year (' + year + ')' : 'Aktuelles Jahr (' + year + ')')
+                : (en ? 'Jump to current year (' + now.getFullYear() + ')' : 'Zum aktuellen Jahr springen (' + now.getFullYear() + ')');
+        }
+
         var b = yvBounds();
         var prev = document.getElementById('yvPrev'), next = document.getElementById('yvNext');
         if (prev) {

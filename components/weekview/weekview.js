@@ -106,6 +106,20 @@
                 + sunday.toLocaleDateString(loc, { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
+        var nowBtn = document.getElementById('wvNow');
+        if (nowBtn) {
+            var kwNum = getISOWeekNumber(monday);
+            var kwStr = (en ? 'Week ' : 'KW ') + kwNum;
+            var now = new Date();
+            if (monday.getFullYear() !== now.getFullYear()) {
+                kwStr += ' \'' + String(monday.getFullYear()).slice(-2);
+            }
+            nowBtn.textContent = kwStr;
+            nowBtn.title = wvOffset === 0
+                ? (en ? 'Current week' : 'Aktuelle Woche')
+                : (en ? 'Jump to current week' : 'Zur aktuellen Woche springen');
+        }
+
         var b = wvBounds();
         var prev = document.getElementById('wvPrev'), next = document.getElementById('wvNext');
         if (prev) {
