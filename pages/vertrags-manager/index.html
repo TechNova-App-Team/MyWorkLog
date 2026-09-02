@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
@@ -8,47 +8,56 @@
 /* Maintenance-Gate: prueft /config/maintenance.json, leitet bei active:true auf /maintenance/ um. */
 (function(){if(/^\/maintenance/.test(location.pathname))return;document.documentElement.style.visibility='hidden';var r=false;function re(){if(!r){r=true;document.documentElement.style.visibility='';}}fetch('/config/maintenance.json?t='+Date.now(),{cache:'no-store'}).then(function(x){return x.ok?x.json():null;}).then(function(c){if(c && c.active===true){location.replace('/maintenance/');}else{re();}}).catch(re);setTimeout(re,1200);})();
 </script>
-    <meta name="description" content="Vertrags-Manager: Professionelle Verwaltung deines Ausbildungsvertrags, Gehalt & Urlaub. SaaS-Standard.">
-    <title>MyWorkLog | Vertrags-Manager</title>
+    <meta name="description" content="Vertrags-Manager: Professionelle Verwaltung deines Ausbildungsvertrags, digitale Lohnabrechnung mit Benefit-Kostenverrechnung (Leasingbike, Jobticket), Gehalt & Urlaub.">
+    <title>MyWorkLog | Vertrags-Manager & Digitale Lohnabrechnung</title>
     <link rel="canonical" href="https://myworklog.de/vertrags-manager/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/vertrags-manager/">
     <link rel="alternate" hreflang="en" href="https://myworklog.de/en/vertrags-manager/">
     <link rel="alternate" hreflang="x-default" href="https://myworklog.de/vertrags-manager/">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.4.19"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.4.19"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.5.0"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.5.0"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
+            color-scheme: dark;
             --bg-deep:        #030305;
-            --bg-card:        rgba(255,255,255,0.022);
-            --bg-card-hover:  rgba(255,255,255,0.04);
+            --bg-card:        rgba(255,255,255,0.024);
+            --bg-card-hover:  rgba(255,255,255,0.045);
             --bg-cell:        rgba(255,255,255,0.018);
-            --bg-modal:       #0c0c12;
+            --bg-modal:       #0c0c14;
             --primary:        #a855f7;
             --primary-rgb:    168, 85, 247;
-            --primary-dim:    rgba(var(--primary-rgb), 0.10);
-            --primary-fade:   rgba(var(--primary-rgb), 0.06);
+            --primary-dim:    rgba(var(--primary-rgb), 0.12);
+            --primary-fade:   rgba(var(--primary-rgb), 0.05);
             --success:        #10b981;
             --success-rgb:    16, 185, 129;
+            --success-dim:    rgba(var(--success-rgb), 0.12);
             --warning:        #f59e0b;
+            --warning-rgb:    245, 158, 11;
             --danger:         #ef4444;
+            --danger-rgb:     239, 68, 68;
             --info:           #06b6d4;
+            --info-rgb:       6, 182, 212;
             --text-main:      #f8fafc;
+            --text-secondary: #cbd5e1;
             --text-muted:     #94a3b8;
             --text-faint:     #64748b;
             --text-ghost:     #475569;
-            --border:         rgba(255,255,255,0.06);
-            --border-hover:   rgba(255,255,255,0.10);
-            --border-primary: rgba(var(--primary-rgb), 0.22);
+            --border:         rgba(255,255,255,0.065);
+            --border-hover:   rgba(255,255,255,0.12);
+            --border-primary: rgba(var(--primary-rgb), 0.28);
+            --radius-xl:      20px;
             --radius-lg:      16px;
             --radius-md:      12px;
             --radius-sm:      8px;
+            --radius-xs:      5px;
             --font-main:      'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono:      'JetBrains Mono', 'Roboto Mono', monospace;
             --ease:           cubic-bezier(.16,1,.3,1);
+            --shadow-card:    0 18px 40px -10px rgba(0,0,0,0.45);
         }
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -65,7 +74,7 @@
             line-height: 1.5;
         }
 
-        ::selection { background: rgba(var(--primary-rgb), 0.25); color: var(--text-main); }
+        ::selection { background: rgba(var(--primary-rgb), 0.3); color: var(--text-main); }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
@@ -78,24 +87,24 @@
         .bg-atmos::before,
         .bg-atmos::after {
             content: ''; position: absolute; border-radius: 50%;
-            filter: blur(140px); opacity: 0.07;
+            filter: blur(140px); opacity: 0.08;
         }
         .bg-atmos::before {
-            width: 720px; height: 720px;
+            width: 780px; height: 780px;
             background: var(--primary);
-            top: -22%; right: -12%;
+            top: -24%; right: -12%;
         }
         .bg-atmos::after {
-            width: 480px; height: 480px;
+            width: 520px; height: 520px;
             background: var(--info);
-            bottom: -18%; left: -8%;
-            opacity: 0.04;
+            bottom: -20%; left: -8%;
+            opacity: 0.05;
         }
 
         /* ─── SCROLL PROGRESS ─── */
         .scroll-prog {
             position: fixed; top: 0; left: 0; height: 2px; width: 0;
-            background: linear-gradient(90deg, var(--primary), rgba(var(--primary-rgb), 0.4));
+            background: linear-gradient(90deg, var(--primary), var(--info));
             z-index: 10001; transition: width 0.1s linear;
         }
 
@@ -111,7 +120,7 @@
         }
         .navbar.scrolled {
             border-bottom-color: var(--border);
-            background: rgba(3,3,5,0.86);
+            background: rgba(3,3,5,0.88);
         }
         .nav-inner {
             max-width: 1280px; margin: 0 auto; height: 60px;
@@ -125,7 +134,7 @@
         .nav-logo-dot {
             width: 7px; height: 7px; border-radius: 50%;
             background: var(--primary);
-            box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.6);
+            box-shadow: 0 0 12px rgba(var(--primary-rgb), 0.7);
         }
         .nav-links { display: flex; gap: 1.75rem; list-style: none; }
         .nav-links a {
@@ -134,7 +143,7 @@
         }
         .nav-links a:hover { color: var(--text-main); }
         .nav-back {
-            display: inline-flex; align-items: center; gap: 0.4rem;
+            display: inline-flex; align-items: center; gap: 0.45rem;
             padding: 0.42rem 0.9rem;
             background: rgba(255,255,255,0.04); color: var(--text-main);
             border: 1px solid var(--border);
@@ -152,31 +161,29 @@
         .page {
             position: relative; z-index: 1;
             max-width: 1280px; margin: 0 auto;
-            padding: 100px 5% 4rem;
+            padding: 95px 5% 4.5rem;
         }
 
-        /* ─── REVEAL ANIM ─── */
+        /* ─── ANIMATION ─── */
         .reveal { opacity: 0; transform: translateY(14px); animation: fadeUp 0.65s var(--ease) forwards; }
         .reveal-1 { animation-delay: 0.04s; }
-        .reveal-2 { animation-delay: 0.10s; }
-        .reveal-3 { animation-delay: 0.16s; }
-        .reveal-4 { animation-delay: 0.22s; }
-        .reveal-5 { animation-delay: 0.28s; }
-        .reveal-6 { animation-delay: 0.34s; }
-        @keyframes fadeUp {
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .reveal-2 { animation-delay: 0.09s; }
+        .reveal-3 { animation-delay: 0.15s; }
+        .reveal-4 { animation-delay: 0.21s; }
+        .reveal-5 { animation-delay: 0.27s; }
+        .reveal-6 { animation-delay: 0.33s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
 
         /* ─── CHIP ─── */
         .chip {
             display: inline-flex; align-items: center; gap: 0.45rem;
-            padding: 0.3rem 0.8rem;
+            padding: 0.32rem 0.85rem;
             background: var(--primary-dim);
             border: 1px solid var(--border-primary);
             border-radius: 100px;
             font-family: var(--font-mono);
             font-size: 0.68rem; font-weight: 600;
-            letter-spacing: 0.1em; text-transform: uppercase;
+            letter-spacing: 0.09em; text-transform: uppercase;
             color: var(--primary);
         }
         .chip-dot {
@@ -187,93 +194,93 @@
 
         /* ─── HERO ─── */
         .hero {
-            display: grid; grid-template-columns: 1fr 380px;
+            display: grid; grid-template-columns: 1.15fr 400px;
             gap: 3rem; align-items: center;
-            padding: 2.5rem 0 3.5rem;
+            padding: 2.2rem 0 3rem;
             border-bottom: 1px solid var(--border);
-            margin-bottom: 3rem;
+            margin-bottom: 2.5rem;
         }
-        .hero-eyebrow { margin-bottom: 1.5rem; }
+        .hero-eyebrow { margin-bottom: 1.25rem; }
         .hero-title {
-            font-size: clamp(2rem, 4vw, 3.1rem);
-            font-weight: 700; line-height: 1.08;
+            font-size: clamp(2.1rem, 4.2vw, 3.2rem);
+            font-weight: 800; line-height: 1.08;
             letter-spacing: -0.035em; margin-bottom: 1rem;
             color: var(--text-main);
         }
         .hero-title em {
             font-style: normal;
-            background: linear-gradient(120deg, var(--primary), rgba(var(--primary-rgb), 0.55));
+            background: linear-gradient(120deg, var(--primary), #c084fc);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             background-clip: text;
         }
         .hero-sub {
-            font-size: 1rem; color: var(--text-muted);
-            line-height: 1.7; max-width: 540px; margin-bottom: 2rem;
+            font-size: 1.02rem; color: var(--text-muted);
+            line-height: 1.68; max-width: 580px; margin-bottom: 1.75rem;
         }
         .hero-meta {
-            display: flex; gap: 2.5rem; flex-wrap: wrap; margin-bottom: 2rem;
+            display: flex; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem;
+            padding: 0.85rem 1.1rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            max-width: fit-content;
         }
-        .hero-meta-item { display: flex; flex-direction: column; gap: 0.35rem; }
+        .hero-meta-item { display: flex; flex-direction: column; gap: 0.25rem; }
         .hero-meta-lbl {
             font-family: var(--font-mono);
-            font-size: 0.65rem; font-weight: 600;
+            font-size: 0.62rem; font-weight: 600;
             letter-spacing: 0.12em; text-transform: uppercase;
-            color: var(--text-ghost);
+            color: var(--text-faint);
         }
         .hero-meta-val {
-            font-size: 1.05rem; font-weight: 600;
+            font-size: 0.95rem; font-weight: 600;
             color: var(--text-main);
         }
-        .hero-actions { display: flex; gap: 0.7rem; flex-wrap: wrap; }
+        .hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 
-        /* Hero illustration — clean SaaS card mock */
+        /* Hero Live Statement Card */
         .hero-illu {
             position: relative;
-            background: linear-gradient(160deg, rgba(255,255,255,0.025), rgba(255,255,255,0.005));
+            background: linear-gradient(165deg, rgba(255,255,255,0.035), rgba(255,255,255,0.008));
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem 1.4rem 1.4rem;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            box-shadow: 0 24px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(var(--primary-rgb), 0.04);
+            border-top: 1px solid rgba(var(--primary-rgb), 0.3);
+            border-radius: var(--radius-xl);
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(var(--primary-rgb), 0.05);
             overflow: hidden;
         }
         .hero-illu::before {
             content: ''; position: absolute;
             top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.4), transparent);
+            background: linear-gradient(90deg, transparent, rgba(var(--primary-rgb), 0.6), transparent);
         }
         .illu-head {
             display: flex; align-items: center; justify-content: space-between;
             margin-bottom: 1.25rem;
+            padding-bottom: 0.9rem;
+            border-bottom: 1px solid var(--border);
         }
-        .illu-head-left {
-            display: flex; align-items: center; gap: 0.6rem;
-        }
+        .illu-head-left { display: flex; align-items: center; gap: 0.65rem; }
         .illu-doc-icon {
-            width: 32px; height: 32px; border-radius: var(--radius-sm);
+            width: 34px; height: 34px; border-radius: var(--radius-sm);
             background: var(--primary-dim);
             border: 1px solid var(--border-primary);
             display: flex; align-items: center; justify-content: center;
             color: var(--primary);
         }
-        .illu-doc-title {
-            font-size: 0.85rem; font-weight: 600; color: var(--text-main);
-        }
-        .illu-doc-meta {
-            font-family: var(--font-mono);
-            font-size: 0.62rem; color: var(--text-faint);
-            letter-spacing: 0.06em;
-        }
+        .illu-doc-title { font-size: 0.88rem; font-weight: 600; color: var(--text-main); }
+        .illu-doc-meta { font-family: var(--font-mono); font-size: 0.64rem; color: var(--text-faint); }
         .illu-badge {
-            display: inline-flex; align-items: center; gap: 0.3rem;
-            padding: 0.18rem 0.55rem;
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.2rem 0.6rem;
             background: rgba(var(--success-rgb), 0.12);
-            border: 1px solid rgba(var(--success-rgb), 0.25);
+            border: 1px solid rgba(var(--success-rgb), 0.28);
             border-radius: 6px;
             font-family: var(--font-mono);
-            font-size: 0.6rem; font-weight: 700;
-            letter-spacing: 0.1em; text-transform: uppercase;
+            font-size: 0.62rem; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
             color: var(--success);
         }
         .illu-badge-dot {
@@ -282,24 +289,41 @@
             animation: badgePulse 2.2s ease-in-out infinite;
         }
         @keyframes badgePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-        .illu-rows { display: flex; flex-direction: column; gap: 0.65rem; }
+        .illu-rows { display: flex; flex-direction: column; gap: 0.55rem; }
         .illu-row {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0.55rem 0;
-            border-bottom: 1px solid var(--border);
+            padding: 0.45rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.035);
         }
         .illu-row:last-child { border-bottom: none; }
-        .illu-row-lbl {
-            font-size: 0.72rem; color: var(--text-muted);
-        }
+        .illu-row-lbl { font-size: 0.74rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.35rem; }
         .illu-row-val {
             font-family: var(--font-mono);
-            font-size: 0.78rem; font-weight: 600;
+            font-size: 0.82rem; font-weight: 600;
             color: var(--text-main);
         }
         .illu-row-val.accent { color: var(--primary); }
+        .illu-row-val.success { color: var(--success); }
+        .illu-row-val.subtle { color: var(--text-faint); }
+        .illu-payout-box {
+            margin-top: 0.85rem;
+            padding: 0.85rem 1rem;
+            background: rgba(var(--success-rgb), 0.08);
+            border: 1px solid rgba(var(--success-rgb), 0.24);
+            border-radius: var(--radius-md);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .illu-payout-lbl {
+            font-family: var(--font-mono); font-size: 0.66rem;
+            text-transform: uppercase; letter-spacing: 0.06em;
+            color: var(--success); font-weight: 700;
+        }
+        .illu-payout-val {
+            font-family: var(--font-mono); font-size: 1.25rem;
+            font-weight: 800; color: #fff;
+        }
 
-        @media (max-width: 900px) {
+        @media (max-width: 960px) {
             .hero { grid-template-columns: 1fr; gap: 2rem; }
             .hero-illu { display: none; }
         }
@@ -307,7 +331,7 @@
         /* ─── BUTTONS ─── */
         .btn {
             display: inline-flex; align-items: center; gap: 0.45rem;
-            padding: 0.6rem 1.1rem;
+            padding: 0.6rem 1.15rem;
             border-radius: var(--radius-sm);
             font-family: inherit; font-weight: 600; font-size: 0.84rem;
             cursor: pointer; border: 1px solid transparent;
@@ -318,59 +342,78 @@
         .btn-primary {
             background: var(--primary); color: #fff;
             border-color: var(--primary);
+            box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.3);
         }
         .btn-primary:hover {
-            background: rgba(var(--primary-rgb), 0.85);
+            background: rgba(var(--primary-rgb), 0.88);
             transform: translateY(-1px);
-            box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.25);
+            box-shadow: 0 8px 22px rgba(var(--primary-rgb), 0.35);
         }
         .btn-ghost {
-            background: rgba(255,255,255,0.03); color: var(--text-main);
+            background: rgba(255,255,255,0.035); color: var(--text-main);
             border-color: var(--border);
         }
         .btn-ghost:hover {
-            background: rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.065);
             border-color: var(--border-hover);
         }
-        .btn-sm { padding: 0.42rem 0.85rem; font-size: 0.78rem; }
+        .btn-success {
+            background: rgba(var(--success-rgb), 0.15); color: var(--success);
+            border-color: rgba(var(--success-rgb), 0.3);
+        }
+        .btn-success:hover {
+            background: rgba(var(--success-rgb), 0.25);
+        }
+        .btn-sm { padding: 0.4rem 0.85rem; font-size: 0.78rem; }
+        .btn-xs { padding: 0.25rem 0.6rem; font-size: 0.72rem; }
         .btn-block { width: 100%; justify-content: center; }
-        .btn svg { stroke-width: 1.8; }
 
         /* ─── STATS ─── */
         .stats {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
+            gap: 1.1rem;
             margin-bottom: 2.5rem;
         }
-        @media (max-width: 1024px) { .stats { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 480px)  { .stats { grid-template-columns: 1fr; } }
+        @media (max-width: 1080px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 540px)  { .stats { grid-template-columns: 1fr; } }
 
         .stat {
             position: relative;
-            padding: 1.25rem 1.25rem 1.1rem;
+            padding: 1.3rem 1.3rem 1.15rem;
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
             overflow: hidden;
         }
         .stat:hover {
             border-color: var(--border-primary);
             background: var(--bg-card-hover);
             transform: translateY(-2px);
+            box-shadow: var(--shadow-card);
         }
         .stat-head {
             display: flex; align-items: center; justify-content: space-between;
             margin-bottom: 0.85rem;
         }
         .stat-icon {
-            width: 32px; height: 32px;
+            width: 34px; height: 34px;
             border-radius: var(--radius-sm);
             background: var(--primary-dim);
             border: 1px solid var(--border-primary);
             display: flex; align-items: center; justify-content: center;
             color: var(--primary);
+        }
+        .stat-icon.green {
+            background: rgba(var(--success-rgb), 0.12);
+            border-color: rgba(var(--success-rgb), 0.3);
+            color: var(--success);
+        }
+        .stat-icon.blue {
+            background: rgba(var(--info-rgb), 0.12);
+            border-color: rgba(var(--info-rgb), 0.3);
+            color: var(--info);
         }
         .stat-trend {
             font-family: var(--font-mono);
@@ -378,6 +421,9 @@
             letter-spacing: 0.05em;
             color: var(--success);
             display: flex; align-items: center; gap: 0.25rem;
+            background: rgba(255,255,255,0.03);
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
         }
         .stat-trend.warn { color: var(--warning); }
         .stat-trend.neutral { color: var(--text-faint); }
@@ -385,54 +431,462 @@
             font-size: 0.74rem;
             color: var(--text-muted);
             margin-bottom: 0.3rem;
-            letter-spacing: 0.01em;
+            display: flex; justify-content: space-between; align-items: center;
         }
         .stat-val {
             font-family: var(--font-mono);
-            font-size: 1.65rem; font-weight: 700;
+            font-size: 1.7rem; font-weight: 700;
             color: var(--text-main);
-            line-height: 1.1;
+            line-height: 1.15;
             letter-spacing: -0.02em;
+        }
+        .stat-val.accent { color: #fff; }
+        .stat-sub {
+            font-size: 0.74rem; color: var(--text-faint);
+            margin-top: 0.45rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .stat-toggle-pill {
+            display: inline-flex;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2px;
+            gap: 2px;
+        }
+        .stat-toggle-btn {
+            background: transparent; border: none;
+            color: var(--text-muted); font-size: 0.62rem;
+            font-family: var(--font-mono); font-weight: 600;
+            padding: 0.12rem 0.42rem; border-radius: 12px;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .stat-toggle-btn.active {
+            background: var(--primary); color: #fff;
         }
 
         /* ─── LAYOUT ─── */
         .layout {
             display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 1.75rem;
+            grid-template-columns: 1fr 340px;
+            gap: 2rem;
             align-items: start;
         }
-        @media (max-width: 1100px) { .layout { grid-template-columns: 1fr; } }
+        @media (max-width: 1140px) { .layout { grid-template-columns: 1fr; } }
 
         /* ─── CARDS ─── */
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem 1.5rem 1.6rem;
-            transition: border-color 0.2s ease;
-            margin-bottom: 1.25rem;
+            border-radius: var(--radius-xl);
+            padding: 1.6rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 1.5rem;
+            position: relative;
         }
         .card:hover { border-color: var(--border-hover); }
         .card:last-child { margin-bottom: 0; }
 
         .card-hd {
             display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 1.25rem; gap: 1rem;
+            margin-bottom: 1.35rem; gap: 1rem; flex-wrap: wrap;
         }
         .card-title {
-            display: flex; align-items: center; gap: 0.6rem;
-            font-size: 0.95rem; font-weight: 600;
-            letter-spacing: -0.01em;
+            display: flex; align-items: center; gap: 0.65rem;
+            font-size: 1rem; font-weight: 700;
+            letter-spacing: -0.015em;
             color: var(--text-main);
         }
         .card-title-icon {
-            width: 28px; height: 28px;
-            border-radius: 7px;
+            width: 32px; height: 32px;
+            border-radius: 8px;
             background: var(--primary-dim);
             border: 1px solid var(--border-primary);
             display: flex; align-items: center; justify-content: center;
             color: var(--primary);
+        }
+
+        /* ════ DIGITALE LOHNABRECHNUNG (PAY SLIP) ════ */
+        .payslip-card {
+            background: linear-gradient(175deg, rgba(255,255,255,0.038), rgba(255,255,255,0.012));
+            border: 1px solid var(--border);
+            border-top: 2px solid var(--primary);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+        }
+        .payslip-meta-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            margin-bottom: 1.35rem;
+            flex-wrap: wrap; gap: 0.75rem;
+        }
+        .payslip-tabs {
+            display: flex; gap: 0.35rem;
+        }
+        .payslip-tab-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 0.32rem 0.7rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem; font-weight: 600;
+            cursor: pointer; transition: all 0.15s ease;
+            font-family: var(--font-mono);
+        }
+        .payslip-tab-btn:hover { color: var(--text-main); border-color: var(--border-hover); }
+        .payslip-tab-btn.active {
+            background: var(--primary-dim);
+            border-color: var(--border-primary);
+            color: var(--primary);
+        }
+        .payslip-controls {
+            display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+        }
+        .payslip-stkl-select {
+            background: #111119;
+            border: 1px solid var(--border-hover);
+            border-radius: var(--radius-sm);
+            color: var(--text-main);
+            padding: 0.38rem 0.75rem;
+            font-size: 0.78rem;
+            font-family: var(--font-main);
+            cursor: pointer;
+            color-scheme: dark;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .payslip-stkl-select:hover {
+            border-color: var(--border-primary);
+            background: #171724;
+        }
+        .payslip-stkl-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.25);
+        }
+        .payslip-stkl-select option,
+        select option {
+            background-color: #10101a !important;
+            color: #f8fafc !important;
+            padding: 8px 10px;
+        }
+
+        /* Statement Sheet */
+        .payslip-sheet {
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        .payslip-section-title {
+            padding: 0.65rem 1.1rem;
+            background: rgba(255,255,255,0.025);
+            border-bottom: 1px solid var(--border);
+            border-top: 1px solid var(--border);
+            font-family: var(--font-mono);
+            font-size: 0.68rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--text-muted);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .payslip-section-title:first-child { border-top: none; }
+        .payslip-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.7rem 1.1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.035);
+            transition: background 0.15s ease;
+            gap: 1rem;
+        }
+        .payslip-row:hover { background: rgba(255,255,255,0.015); }
+        .payslip-row:last-child { border-bottom: none; }
+        .payslip-row-desc {
+            display: flex; align-items: baseline; gap: 0.55rem;
+            font-size: 0.84rem; color: var(--text-main);
+            flex: 1; min-width: 0;
+        }
+        .payslip-row-icon { font-size: 0.95rem; line-height: 1; }
+        .payslip-row-tag {
+            font-family: var(--font-mono); font-size: 0.65rem;
+            padding: 0.12rem 0.45rem; border-radius: 4px;
+            letter-spacing: 0.04em;
+        }
+        .tag-gross-deduction {
+            background: rgba(var(--primary-rgb), 0.12);
+            border: 1px solid rgba(var(--primary-rgb), 0.28);
+            color: #c084fc;
+        }
+        .tag-employer-grant {
+            background: rgba(var(--success-rgb), 0.12);
+            border: 1px solid rgba(var(--success-rgb), 0.28);
+            color: var(--success);
+        }
+        .tag-net-deduction {
+            background: rgba(var(--warning-rgb), 0.12);
+            border: 1px solid rgba(var(--warning-rgb), 0.28);
+            color: var(--warning);
+        }
+        .payslip-row-note {
+            font-size: 0.72rem; color: var(--text-faint); margin-left: 0.25rem;
+        }
+        .payslip-row-calc {
+            font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-faint);
+            white-space: nowrap;
+        }
+        .payslip-row-val {
+            font-family: var(--font-mono); font-size: 0.9rem; font-weight: 600;
+            color: var(--text-main); text-align: right; min-width: 100px;
+        }
+        .payslip-row-val.minus { color: #f87171; }
+        .payslip-row-val.plus { color: var(--success); }
+        .payslip-row-val.neutral { color: var(--text-muted); }
+
+        .payslip-subtotal-row {
+            background: rgba(255,255,255,0.03);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+        .payslip-subtotal-row .payslip-row-desc { font-weight: 600; }
+        .payslip-subtotal-row .payslip-row-val { font-size: 0.95rem; font-weight: 700; }
+
+        /* Payout Box */
+        .payslip-payout-box {
+            padding: 1.35rem 1.4rem;
+            background: linear-gradient(135deg, rgba(var(--success-rgb), 0.12), rgba(var(--success-rgb), 0.03));
+            border-top: 1px solid rgba(var(--success-rgb), 0.3);
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 1rem;
+        }
+        .payslip-payout-meta { display: flex; flex-direction: column; gap: 0.2rem; }
+        .payslip-payout-title {
+            font-family: var(--font-mono); font-size: 0.75rem;
+            font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; color: var(--success);
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .payslip-payout-sub { font-size: 0.76rem; color: var(--text-muted); }
+        .payslip-payout-amount {
+            font-family: var(--font-mono); font-size: 2.1rem;
+            font-weight: 800; color: #fff;
+            letter-spacing: -0.03em;
+            text-shadow: 0 0 20px rgba(var(--success-rgb), 0.35);
+        }
+
+        /* Distribution bar */
+        .payslip-distribution {
+            padding: 1rem 1.4rem 1.25rem;
+            border-top: 1px solid var(--border);
+            background: rgba(0,0,0,0.18);
+        }
+        .dist-label-row {
+            display: flex; justify-content: space-between; font-size: 0.72rem;
+            color: var(--text-faint); margin-bottom: 0.45rem;
+        }
+        .dist-bar-track {
+            height: 10px; width: 100%;
+            background: rgba(255,255,255,0.06);
+            border-radius: 100px;
+            display: flex; overflow: hidden;
+            gap: 2px;
+        }
+        .dist-segment {
+            height: 100%; transition: width 0.4s var(--ease);
+            position: relative;
+        }
+        .dist-seg-netto { background: var(--success); }
+        .dist-seg-social { background: #f87171; }
+        .dist-seg-tax { background: var(--warning); }
+        .dist-seg-benefits { background: var(--primary); }
+
+        .dist-legend {
+            display: flex; gap: 1.25rem; margin-top: 0.65rem; flex-wrap: wrap;
+        }
+        .dist-leg-item {
+            display: flex; align-items: center; gap: 0.35rem;
+            font-size: 0.72rem; color: var(--text-muted);
+        }
+        .dist-leg-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        /* Leasingbike Callout */
+        .payslip-bike-callout {
+            margin-top: 1.25rem;
+            padding: 0.95rem 1.2rem;
+            background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.12), rgba(var(--primary-rgb), 0.04));
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            display: flex; align-items: flex-start; gap: 0.75rem;
+        }
+        .bike-callout-icon {
+            font-size: 1.4rem; line-height: 1; flex-shrink: 0;
+        }
+        .bike-callout-title {
+            font-size: 0.82rem; font-weight: 700; color: #fff; margin-bottom: 0.2rem;
+        }
+        .bike-callout-text {
+            font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;
+        }
+        .bike-callout-text strong { color: var(--text-main); }
+
+        /* ─── BENEFITS GRID ─── */
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1rem;
+        }
+        .benefit-card {
+            background: var(--bg-cell);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.15rem;
+            display: flex; flex-direction: column; justify-content: space-between;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .benefit-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+        .benefit-card-top {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            gap: 0.65rem; margin-bottom: 0.75rem;
+        }
+        .benefit-card-left { display: flex; align-items: center; gap: 0.65rem; }
+        .benefit-card-icon {
+            font-size: 1.6rem; line-height: 1;
+            width: 40px; height: 40px; border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .benefit-card-title {
+            font-size: 0.88rem; font-weight: 700; color: var(--text-main);
+        }
+        .benefit-card-actions {
+            display: flex; gap: 0.25rem;
+        }
+        .benefit-action-btn {
+            background: transparent; border: none;
+            color: var(--text-ghost); cursor: pointer;
+            width: 26px; height: 26px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s ease;
+        }
+        .benefit-action-btn:hover {
+            background: rgba(255,255,255,0.06); color: var(--text-main);
+        }
+        .benefit-action-btn.del:hover {
+            background: rgba(239,68,68,0.15); color: var(--danger);
+        }
+        .benefit-card-mid { margin-bottom: 0.85rem; }
+        .benefit-card-desc {
+            font-size: 0.76rem; color: var(--text-muted); line-height: 1.45;
+            margin-top: 0.35rem;
+        }
+        .benefit-card-bot {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-top: 0.65rem;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        .benefit-badge {
+            font-family: var(--font-mono); font-size: 0.64rem; font-weight: 600;
+            padding: 0.18rem 0.5rem; border-radius: 5px;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .benefit-badge.gross {
+            background: rgba(var(--primary-rgb), 0.15);
+            border: 1px solid rgba(var(--primary-rgb), 0.3);
+            color: #d8b4fe;
+        }
+        .benefit-badge.grant {
+            background: rgba(var(--success-rgb), 0.15);
+            border: 1px solid rgba(var(--success-rgb), 0.3);
+            color: var(--success);
+        }
+        .benefit-badge.net {
+            background: rgba(var(--warning-rgb), 0.15);
+            border: 1px solid rgba(var(--warning-rgb), 0.3);
+            color: var(--warning);
+        }
+        .benefit-badge.free {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text-faint);
+        }
+        .benefit-amount {
+            font-family: var(--font-mono); font-size: 0.95rem; font-weight: 700;
+        }
+        .benefit-amount.minus { color: #f87171; }
+        .benefit-amount.plus { color: var(--success); }
+        .benefit-amount.free { color: var(--text-faint); font-size: 0.8rem; }
+
+        /* ─── DATA GRID ─── */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.75rem;
+        }
+        .data-cell {
+            padding: 1rem 1rem 1.1rem;
+            background: var(--bg-cell);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+        .data-cell:hover {
+            background: var(--primary-fade);
+            border-color: var(--border-primary);
+        }
+        .data-cell-lbl {
+            font-family: var(--font-mono);
+            font-size: 0.62rem; font-weight: 600;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--text-faint);
+            margin-bottom: 0.4rem;
+        }
+        .data-cell-val {
+            font-family: var(--font-mono);
+            font-size: 1.25rem; font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+        }
+        .data-cell-val.accent { color: var(--primary); }
+        .data-cell-sub {
+            font-size: 0.72rem; color: var(--text-faint); margin-top: 0.25rem;
+        }
+
+        /* ─── VACATION ─── */
+        .vac-stats {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem; margin-bottom: 1.5rem;
+        }
+        .prog-wrap { margin-top: 1.5rem; }
+        .prog-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 0.55rem;
+        }
+        .prog-lbl { font-size: 0.78rem; color: var(--text-muted); }
+        .prog-val {
+            font-family: var(--font-mono);
+            font-size: 0.78rem; font-weight: 600;
+            color: var(--primary);
+        }
+        .prog-val.warn { color: var(--warning); }
+        .prog-track {
+            height: 6px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+        .prog-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), rgba(var(--primary-rgb), 0.55));
+            border-radius: 100px;
+            transition: width 0.6s var(--ease);
+        }
+        .prog-fill.warn {
+            background: linear-gradient(90deg, var(--warning), var(--danger));
         }
 
         /* ─── TIMELINE ─── */
@@ -462,13 +916,9 @@
         }
         .tl-head {
             display: flex; align-items: center; gap: 0.6rem;
-            margin-bottom: 0.6rem;
-            flex-wrap: wrap;
+            margin-bottom: 0.6rem; flex-wrap: wrap;
         }
-        .tl-year {
-            font-size: 0.88rem; font-weight: 600;
-            color: var(--text-main);
-        }
+        .tl-year { font-size: 0.88rem; font-weight: 600; color: var(--text-main); }
         .tl-badge {
             display: inline-block;
             padding: 0.15rem 0.55rem;
@@ -494,147 +944,41 @@
             display: grid; grid-template-columns: 1fr 1fr;
             gap: 0.75rem;
         }
-        .tl-detail-lbl {
-            font-size: 0.7rem;
-            color: var(--text-faint);
-            margin-bottom: 0.2rem;
-        }
-        .tl-detail-val {
-            font-family: var(--font-mono);
-            font-size: 0.85rem; font-weight: 600;
-            color: var(--text-main);
-        }
-
-        /* ─── DATA GRID ─── */
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 0.75rem;
-        }
-        .data-cell {
-            padding: 1rem 1rem 1.1rem;
-            background: var(--bg-cell);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            transition: all 0.2s ease;
-        }
-        .data-cell:hover {
-            background: var(--primary-fade);
-            border-color: var(--border-primary);
-        }
-        .data-cell-lbl {
-            font-family: var(--font-mono);
-            font-size: 0.62rem; font-weight: 600;
-            letter-spacing: 0.1em; text-transform: uppercase;
-            color: var(--text-faint);
-            margin-bottom: 0.5rem;
-        }
-        .data-cell-val {
-            font-family: var(--font-mono);
-            font-size: 1.2rem; font-weight: 700;
-            color: var(--text-main);
-            letter-spacing: -0.01em;
-        }
-        .data-cell-val.accent { color: var(--primary); }
-
-        /* ─── VACATION ─── */
-        .vac-stats {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            gap: 0.75rem; margin-bottom: 1.5rem;
-        }
-        .prog-wrap { margin-top: 1.5rem; }
-        .prog-row {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 0.55rem;
-        }
-        .prog-lbl {
-            font-size: 0.78rem; color: var(--text-muted);
-        }
-        .prog-val {
-            font-family: var(--font-mono);
-            font-size: 0.78rem; font-weight: 600;
-            color: var(--primary);
-        }
-        .prog-val.warn { color: var(--warning); }
-        .prog-track {
-            height: 6px;
-            background: rgba(255,255,255,0.04);
-            border-radius: 100px;
-            overflow: hidden;
-        }
-        .prog-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), rgba(var(--primary-rgb), 0.55));
-            border-radius: 100px;
-            transition: width 0.6s var(--ease);
-        }
-        .prog-fill.warn {
-            background: linear-gradient(90deg, var(--warning), var(--danger));
-        }
-
-        /* ─── BENEFITS ─── */
-        .benefits-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 0.75rem;
-        }
-        .benefit-tile {
-            padding: 1.1rem 0.75rem;
-            text-align: center;
-            background: var(--bg-cell);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .benefit-tile:hover {
-            background: var(--primary-fade);
-            border-color: var(--border-primary);
-            transform: translateY(-2px);
-        }
-        .benefit-tile-icon {
-            font-size: 1.6rem;
-            margin-bottom: 0.45rem;
-            line-height: 1;
-        }
-        .benefit-tile-name {
-            font-size: 0.76rem; font-weight: 600;
-            color: var(--text-muted); line-height: 1.3;
-        }
+        .tl-detail-lbl { font-size: 0.7rem; color: var(--text-faint); margin-bottom: 0.2rem; }
+        .tl-detail-val { font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
 
         /* ─── SIDEBAR ─── */
         .sidebar { position: sticky; top: 80px; }
-        @media (max-width: 1100px) { .sidebar { position: static; } }
+        @media (max-width: 1140px) { .sidebar { position: static; } }
         .side-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 1.4rem;
-            margin-bottom: 1rem;
+            border-radius: var(--radius-xl);
+            padding: 1.35rem;
+            margin-bottom: 1.25rem;
             transition: border-color 0.2s ease;
         }
         .side-card:hover { border-color: var(--border-hover); }
         .side-card:last-child { margin-bottom: 0; }
         .side-card-title {
             font-family: var(--font-mono);
-            font-size: 0.65rem; font-weight: 700;
+            font-size: 0.66rem; font-weight: 700;
             letter-spacing: 0.13em; text-transform: uppercase;
             color: var(--text-faint);
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
+            margin-bottom: 0.9rem;
+            padding-bottom: 0.7rem;
             border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
         }
         .detail-row {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0.6rem 0;
+            padding: 0.55rem 0;
             border-bottom: 1px solid var(--border);
             gap: 0.75rem;
         }
         .detail-row:last-child { border-bottom: none; padding-bottom: 0; }
         .detail-row:first-child { padding-top: 0; }
-        .detail-lbl {
-            font-size: 0.74rem; color: var(--text-faint);
-        }
+        .detail-lbl { font-size: 0.74rem; color: var(--text-faint); }
         .detail-val {
             font-size: 0.82rem; font-weight: 600;
             color: var(--text-main);
@@ -645,48 +989,46 @@
         .action-stack { display: flex; flex-direction: column; gap: 0.55rem; }
 
         .tips-card {
-            background: linear-gradient(135deg, var(--primary-dim), var(--primary-fade));
+            background: linear-gradient(145deg, rgba(var(--primary-rgb), 0.1), rgba(var(--primary-rgb), 0.02));
             border-color: var(--border-primary);
         }
         .tips-text {
-            font-size: 0.83rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
-            line-height: 1.65;
+            line-height: 1.6;
         }
+        .tips-text strong { color: var(--text-main); }
 
-        /* ─── MODAL ─── */
+        /* ─── MODALS ─── */
         .modal {
             display: none; position: fixed; inset: 0;
-            background: rgba(3,3,5,0.78);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            background: rgba(3,3,5,0.82);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             z-index: 2000;
             align-items: center; justify-content: center;
             padding: 1.5rem;
         }
-        .modal.active {
-            display: flex;
-            animation: modalFade 0.18s ease;
-        }
+        .modal.active { display: flex; animation: modalFade 0.2s ease; }
         @keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
         .modal-box {
             background: var(--bg-modal);
             border: 1px solid var(--border);
-            border-top: 1px solid var(--border-primary);
-            border-radius: var(--radius-lg);
-            padding: 2rem 2rem 1.75rem;
-            max-width: 560px; width: 100%; max-height: 92vh;
+            border-top: 2px solid var(--primary);
+            border-radius: var(--radius-xl);
+            padding: 2rem;
+            max-width: 580px; width: 100%; max-height: 92vh;
             overflow-y: auto;
             position: relative;
-            box-shadow: 0 32px 70px rgba(0,0,0,0.55), 0 0 0 1px rgba(var(--primary-rgb), 0.04);
-            animation: modalSlide 0.3s var(--ease);
+            box-shadow: 0 32px 70px rgba(0,0,0,0.65);
+            animation: modalSlide 0.28s var(--ease);
         }
         @keyframes modalSlide {
             from { opacity: 0; transform: translateY(20px) scale(0.98); }
             to   { opacity: 1; transform: translateY(0) scale(1); }
         }
         .modal-close {
-            position: absolute; top: 1rem; right: 1rem;
+            position: absolute; top: 1.15rem; right: 1.15rem;
             width: 32px; height: 32px;
             border-radius: 8px;
             background: rgba(255,255,255,0.04);
@@ -703,13 +1045,13 @@
         }
         .modal-title {
             display: flex; align-items: center; gap: 0.65rem;
-            font-size: 1.15rem; font-weight: 700;
+            font-size: 1.18rem; font-weight: 700;
             letter-spacing: -0.02em;
             margin-bottom: 1.5rem;
             color: var(--text-main);
         }
         .modal-title-icon {
-            width: 30px; height: 30px;
+            width: 32px; height: 32px;
             border-radius: 8px;
             background: var(--primary-dim);
             border: 1px solid var(--border-primary);
@@ -717,18 +1059,55 @@
             color: var(--primary);
         }
 
+        /* ─── PRESET CHIPS ─── */
+        .preset-section {
+            margin-bottom: 1.35rem;
+            padding: 0.9rem;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+        }
+        .preset-lbl {
+            font-family: var(--font-mono); font-size: 0.64rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--text-faint); margin-bottom: 0.65rem;
+        }
+        .preset-chips {
+            display: flex; gap: 0.45rem; flex-wrap: wrap;
+        }
+        .preset-chip {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            padding: 0.35rem 0.65rem;
+            border-radius: 8px;
+            font-size: 0.74rem; font-weight: 500;
+            color: var(--text-main);
+            cursor: pointer; transition: all 0.18s ease;
+            display: inline-flex; align-items: center; gap: 0.35rem;
+        }
+        .preset-chip:hover {
+            background: var(--primary-dim);
+            border-color: var(--border-primary);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
         /* ─── FORMS ─── */
-        .form-group { margin-bottom: 1.1rem; }
+        .form-group { margin-bottom: 1.15rem; }
         .form-label {
             display: block;
             margin-bottom: 0.4rem;
-            font-size: 0.78rem; font-weight: 500;
-            color: var(--text-muted);
+            font-size: 0.78rem; font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .form-hint {
+            font-size: 0.72rem; color: var(--text-faint);
+            margin-top: 0.35rem; line-height: 1.4;
         }
         .form-input, .form-select {
             width: 100%;
-            padding: 0.65rem 0.85rem;
-            background: rgba(255,255,255,0.025);
+            padding: 0.68rem 0.9rem;
+            background: rgba(255,255,255,0.028);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
             color: var(--text-main);
@@ -740,74 +1119,23 @@
         .form-input:focus, .form-select:focus {
             outline: none;
             border-color: var(--primary);
-            background: rgba(var(--primary-rgb), 0.05);
+            background: rgba(var(--primary-rgb), 0.06);
             box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
         }
-        .form-select option { background: var(--bg-modal); color: var(--text-main); }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
-        .form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem; }
-        @media (max-width: 500px) {
-            .form-row, .form-row-3 { grid-template-columns: 1fr; }
-        }
-        .form-actions {
-            display: flex; gap: 0.6rem;
-            margin-top: 1.5rem;
-        }
-
-        /* ─── CALC RESULT ─── */
-        .calc-result {
-            margin-top: 1.25rem; padding: 1.25rem;
-            background: rgba(var(--success-rgb), 0.06);
-            border: 1px solid rgba(var(--success-rgb), 0.2);
-            border-radius: var(--radius-md);
-        }
-        .calc-result-lbl {
-            font-family: var(--font-mono);
-            font-size: 0.65rem; font-weight: 600;
-            letter-spacing: 0.1em; text-transform: uppercase;
-            color: var(--text-faint);
-            margin-bottom: 0.4rem;
-        }
-        .calc-result-val {
-            font-family: var(--font-mono);
-            font-size: 1.95rem; font-weight: 700;
-            color: var(--success);
-            letter-spacing: -0.02em;
-        }
-        .calc-rows {
-            display: flex; flex-direction: column; gap: 0.3rem;
-            padding-bottom: 0.85rem; margin-bottom: 0.85rem;
-            border-bottom: 1px solid rgba(var(--success-rgb), 0.18);
-        }
-        .calc-row {
-            display: flex; align-items: baseline; justify-content: space-between; gap: 1rem;
-            font-size: 0.78rem; color: var(--text-muted);
-        }
-        .calc-row-val { font-family: var(--font-mono); color: var(--text-secondary); }
-        /* Die offene Position traegt keinen Betrag - sie sagt, was FEHLT. */
-        .calc-row--offen .calc-row-val { font-style: italic; color: var(--text-faint); }
-        .calc-result-note {
-            font-size: 0.74rem;
-            color: var(--text-faint);
-            margin-top: 0.65rem;
-            line-height: 1.5;
-            /* flex-start, weil der Hinweis mehrzeilig ist: bei center haengt
-               das Icon auf halber Hoehe neben Zeile zwei. */
-            display: flex; align-items: flex-start; gap: 0.45rem;
-        }
-        .calc-result-note svg {
-            flex-shrink: 0;
-            margin-top: 0.2em;   /* auf die Grundlinie der ersten Zeile */
-        }
+        .form-select, select { color-scheme: dark; }
+        .form-select option, select option { background-color: #10101a !important; color: #f8fafc !important; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+        .form-actions { display: flex; gap: 0.65rem; margin-top: 1.6rem; }
 
         /* ─── TOAST ─── */
         .toast {
             position: fixed; top: 5rem; right: 1.25rem; z-index: 3000;
-            padding: 0.7rem 1.1rem;
+            padding: 0.75rem 1.15rem;
             border-radius: var(--radius-sm);
             font-size: 0.84rem; font-weight: 600;
-            display: flex; align-items: center; gap: 0.5rem;
-            box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+            display: flex; align-items: center; gap: 0.55rem;
+            box-shadow: 0 16px 36px rgba(0,0,0,0.5);
             animation: toastIn 0.3s var(--ease);
         }
         @keyframes toastIn {
@@ -816,24 +1144,24 @@
         }
         .toast-success {
             background: var(--bg-modal);
-            border: 1px solid rgba(var(--success-rgb), 0.3);
+            border: 1px solid rgba(var(--success-rgb), 0.35);
             color: var(--success);
         }
         .toast-error {
             background: var(--bg-modal);
-            border: 1px solid rgba(239,68,68,0.3);
+            border: 1px solid rgba(239,68,68,0.35);
             color: var(--danger);
         }
 
         /* ─── EMPTY ─── */
         .empty {
             text-align: center;
-            padding: 2.5rem 1rem;
+            padding: 2.5rem 1.5rem;
             color: var(--text-faint);
         }
         .empty-icon {
             display: inline-flex;
-            width: 44px; height: 44px;
+            width: 48px; height: 48px;
             margin-bottom: 0.9rem;
             border-radius: 12px;
             background: rgba(255,255,255,0.03);
@@ -845,40 +1173,40 @@
             font-size: 0.85rem;
             color: var(--text-muted);
             line-height: 1.55;
-            max-width: 320px;
+            max-width: 360px;
             margin: 0 auto;
         }
 
         /* ─── JOBS SWITCHER ─── */
         .job-item {
-            display: flex; align-items: center; gap: 0.6rem;
-            padding: 0.6rem 0.7rem;
+            display: flex; align-items: center; gap: 0.65rem;
+            padding: 0.65rem 0.75rem;
             border-radius: var(--radius-sm);
             cursor: pointer;
             transition: all 0.2s ease;
             border: 1px solid transparent;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.35rem;
         }
         .job-item:last-child { margin-bottom: 0; }
         .job-item:hover { background: rgba(255,255,255,0.04); border-color: var(--border); }
         .job-item.active { background: var(--primary-dim); border-color: var(--border-primary); }
         .job-dot {
-            width: 7px; height: 7px; border-radius: 50%;
+            width: 8px; height: 8px; border-radius: 50%;
             background: var(--text-faint); flex-shrink: 0;
             transition: background 0.2s, box-shadow 0.2s;
         }
         .job-item.active .job-dot {
             background: var(--primary);
-            box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.5);
+            box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.6);
         }
         .job-info { flex: 1; min-width: 0; }
         .job-company {
-            font-size: 0.8rem; font-weight: 600;
+            font-size: 0.82rem; font-weight: 600;
             color: var(--text-main);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .job-title-label {
-            font-size: 0.68rem; color: var(--text-muted);
+            font-size: 0.69rem; color: var(--text-muted);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .job-item.active .job-company { color: var(--primary); }
@@ -890,13 +1218,10 @@
             transition: all 0.2s; flex-shrink: 0; padding: 0;
         }
         .job-del:hover { background: rgba(239,68,68,0.15); color: var(--danger); }
-        .jobs-empty {
-            font-size: 0.78rem; color: var(--text-faint);
-            text-align: center; padding: 0.5rem 0 0.25rem;
-        }
+        .jobs-empty { font-size: 0.78rem; color: var(--text-faint); text-align: center; padding: 0.5rem 0; }
         .jobs-add-btn {
-            width: 100%; margin-top: 0.65rem;
-            padding: 0.5rem; border-radius: var(--radius-sm);
+            width: 100%; margin-top: 0.75rem;
+            padding: 0.55rem; border-radius: var(--radius-sm);
             font-size: 0.78rem; font-weight: 600;
             background: rgba(255,255,255,0.03);
             border: 1px dashed var(--border);
@@ -913,13 +1238,13 @@
 
         /* ─── VAC SYNC STATUS ─── */
         .vac-sync-row {
-            display: flex; align-items: center; gap: 0.45rem;
+            display: flex; align-items: center; gap: 0.5rem;
             margin-bottom: 1rem;
-            padding: 0.45rem 0.8rem;
+            padding: 0.48rem 0.85rem;
             border-radius: var(--radius-sm);
             font-size: 0.72rem; font-weight: 500;
-            background: rgba(var(--success-rgb), 0.07);
-            border: 1px solid rgba(var(--success-rgb), 0.2);
+            background: rgba(var(--success-rgb), 0.08);
+            border: 1px solid rgba(var(--success-rgb), 0.22);
             color: var(--success);
         }
         .vac-sync-row.disconnected {
@@ -927,8 +1252,35 @@
             border-color: var(--border);
             color: var(--text-faint);
         }
+
+        /* ─── PRINT STYLING ─── */
+        @media print {
+            body { background: #fff !important; color: #000 !important; }
+            .bg-atmos, .scroll-prog, .navbar, #page-footer, .hero-actions, .stat-toggle-pill,
+            .sidebar, .card:not(.payslip-card), .modal, .hero, .stats, .payslip-tabs, .btn {
+                display: none !important;
+            }
+            .page { padding: 0 !important; max-width: 100% !important; }
+            .layout { display: block !important; }
+            .payslip-card {
+                box-shadow: none !important;
+                border: 2px solid #000 !important;
+                color: #000 !important;
+                background: #fff !important;
+            }
+            .payslip-sheet { background: #fff !important; border: 1px solid #ccc !important; }
+            .payslip-row { border-bottom: 1px solid #ddd !important; }
+            .payslip-row-desc, .payslip-row-val, .payslip-payout-title, .payslip-payout-amount {
+                color: #000 !important;
+            }
+            .payslip-payout-box {
+                background: #f0f0f0 !important;
+                border-top: 2px solid #000 !important;
+            }
+            .payslip-payout-amount { color: #000 !important; text-shadow: none !important; }
+        }
     </style>
-    <script defer src="/Assets/js/ph-init.js?v=6.4.19"></script>
+    <script defer src="/Assets/js/ph-init.js?v=6.5.0"></script>
 </head>
 <body>
     <!-- Background -->
@@ -944,6 +1296,8 @@
             </a>
             <ul class="nav-links">
                 <li><a href="/">Dashboard</a></li>
+                <li><a href="/pages/berichtsheft/">Berichtsheft</a></li>
+                <li><a href="/pages/skill-tree/">Skill-Tree</a></li>
                 <li><a href="/about/">Über uns</a></li>
             </ul>
             <a href="/" class="nav-back">
@@ -960,22 +1314,26 @@
         <section class="hero">
             <div>
                 <div class="hero-eyebrow reveal reveal-1">
-                    <span class="chip"><span class="chip-dot"></span>Ausbildung</span>
+                    <span class="chip"><span class="chip-dot"></span>Ausbildung · Vertrags-Manager</span>
                 </div>
                 <h1 class="hero-title reveal reveal-2">
-                    Vertrags-<em>Manager</em>
+                    Vertrags-<em>Manager</em> & Gehalt
                 </h1>
                 <p class="hero-sub reveal reveal-3">
-                    Behalte den Überblick über deinen Ausbildungsvertrag. Gehalt, Urlaub, Benefits und Laufzeit — an einem Ort, klar visualisiert.
+                    Behalte den vollen Überblick über Ausbildungsvergütung, Benefits, Urlaub und deine Laufzeit. Mit automatischer Verrechnung von z.B. Leasingbike-Gehaltsumwandlungen & Zuschüssen in deiner digitalen Lohnabrechnung.
                 </p>
                 <div class="hero-meta reveal reveal-4">
                     <div class="hero-meta-item">
-                        <span class="hero-meta-lbl">Unternehmen</span>
+                        <span class="hero-meta-lbl">Ausbildungsbetrieb</span>
                         <span class="hero-meta-val" id="companyNameHero">—</span>
                     </div>
                     <div class="hero-meta-item">
-                        <span class="hero-meta-lbl">Position</span>
+                        <span class="hero-meta-lbl">Ausbildungsberuf</span>
                         <span class="hero-meta-val" id="jobTitleHero">—</span>
+                    </div>
+                    <div class="hero-meta-item">
+                        <span class="hero-meta-lbl">Auszahlungsbetrag (Netto)</span>
+                        <span class="hero-meta-val" id="heroNetSalary" style="color:var(--success)">—</span>
                     </div>
                 </div>
                 <div class="hero-actions reveal reveal-5">
@@ -983,95 +1341,117 @@
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         Vertrag bearbeiten
                     </button>
-                    <button class="btn btn-ghost" onclick="openCalculatorModal()">
+                    <a href="#lohn-abrechnung" class="btn btn-ghost">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
-                        Gehaltsrechner
+                        Lohnabrechnung ansehen
+                    </a>
+                    <button class="btn btn-ghost" onclick="openBenefitsModal()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Benefit hinzufügen
                     </button>
                 </div>
             </div>
 
-            <!-- Hero Illustration -->
+            <!-- Hero Pay Slip Preview Card -->
             <div class="hero-illu reveal reveal-3">
                 <div class="illu-head">
                     <div class="illu-head-left">
                         <div class="illu-doc-icon">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
                         </div>
                         <div>
-                            <div class="illu-doc-title">Ausbildungsvertrag</div>
-                            <div class="illu-doc-meta">ID #AZ-001 · 3 J.</div>
+                            <div class="illu-doc-title">Entgeltabrechnung</div>
+                            <div class="illu-doc-meta" id="illuDocMeta">Ausbildungsjahr 1 · Aktiv</div>
                         </div>
                     </div>
-                    <span class="illu-badge"><span class="illu-badge-dot"></span>Aktiv</span>
+                    <span class="illu-badge"><span class="illu-badge-dot"></span>Live</span>
                 </div>
                 <div class="illu-rows">
                     <div class="illu-row">
-                        <span class="illu-row-lbl">Wochenarbeitszeit</span>
-                        <span class="illu-row-val" id="illuWeekly">40 h</span>
+                        <span class="illu-row-lbl">Grundvergütung (Brutto)</span>
+                        <span class="illu-row-val" id="illuGrossBase">1.100,00 €</span>
+                    </div>
+                    <div class="illu-row" id="illuBikeRow" style="display:none">
+                        <span class="illu-row-lbl">🚲 Leasingbike (Umwandlung)</span>
+                        <span class="illu-row-val accent" id="illuBikeDeduction">− 0,00 €</span>
                     </div>
                     <div class="illu-row">
-                        <span class="illu-row-lbl">Urlaubsanspruch</span>
-                        <span class="illu-row-val" id="illuVacation">30 Tage</span>
+                        <span class="illu-row-lbl">Gesetzliche Abgaben (SV ca. 21%)</span>
+                        <span class="illu-row-val subtle" id="illuSocialDeduction">− 230,45 €</span>
                     </div>
-                    <div class="illu-row">
-                        <span class="illu-row-lbl">Aktuelle Vergütung</span>
-                        <span class="illu-row-val accent" id="illuSalary">1.180 €</span>
+                    <div class="illu-row" id="illuGrantsRow" style="display:none">
+                        <span class="illu-row-lbl">🎁 AG-Zuschüsse (steuerfrei)</span>
+                        <span class="illu-row-val success" id="illuGrantsTotal">+ 0,00 €</span>
                     </div>
-                    <div class="illu-row">
-                        <span class="illu-row-lbl">Status</span>
-                        <span class="illu-row-val" id="illuStatus" style="color:var(--success)">Läuft</span>
+                </div>
+                <div class="illu-payout-box">
+                    <div>
+                        <div class="illu-payout-lbl">Auszahlungsbetrag</div>
+                        <div style="font-size:0.68rem;color:var(--text-faint)">Auf dein Bankkonto</div>
                     </div>
+                    <div class="illu-payout-val" id="illuNetPayout">869,55 €</div>
                 </div>
             </div>
         </section>
 
-        <!-- Stats Grid -->
+        <!-- Top Stats Grid -->
         <div class="stats">
+            <!-- Stat 1: Monatliche Vergütung & Auszahlung -->
             <div class="stat reveal reveal-1">
                 <div class="stat-head">
-                    <div class="stat-icon">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
+                    <div class="stat-icon green">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
                     </div>
-                    <span class="stat-trend">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        Gültig
-                    </span>
+                    <div class="stat-toggle-pill">
+                        <button class="stat-toggle-btn active" id="statToggleNet" onclick="toggleSalaryStatMode('net')">Netto</button>
+                        <button class="stat-toggle-btn" id="statToggleGross" onclick="toggleSalaryStatMode('gross')">Brutto</button>
+                    </div>
                 </div>
-                <div class="stat-lbl">Aktuelles Gehalt</div>
-                <div class="stat-val" id="currentSalaryDisplay">0 €</div>
+                <div class="stat-lbl">
+                    <span id="statSalaryTitle">Netto-Auszahlung</span>
+                    <span class="stat-trend" id="statSalaryTrend">Gültig</span>
+                </div>
+                <div class="stat-val accent" id="currentSalaryDisplay">0,00 €</div>
+                <div class="stat-sub" id="salarySubDisplay">Berechnungsgrundlage</div>
             </div>
 
+            <!-- Stat 2: Benefits & Abzüge -->
             <div class="stat reveal reveal-2">
                 <div class="stat-head">
                     <div class="stat-icon">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
                     </div>
-                    <span class="stat-trend neutral" id="remainingStatus">bis Abschluss</span>
+                    <span class="stat-trend neutral" id="benefitsTrendBadge">0 Benefits</span>
                 </div>
-                <div class="stat-lbl">Verbleibende Monate</div>
-                <div class="stat-val" id="remainingMonths">0</div>
+                <div class="stat-lbl">Monatlicher Benefit-Effekt</div>
+                <div class="stat-val" id="benefitsStatValue">0,00 €</div>
+                <div class="stat-sub" id="benefitsStatSub">Keine Gehaltsumwandlung aktiv</div>
             </div>
 
+            <!-- Stat 3: Urlaubsanspruch -->
             <div class="stat reveal reveal-3">
                 <div class="stat-head">
-                    <div class="stat-icon">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                    <div class="stat-icon blue">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
                     </div>
                     <span class="stat-trend warn" id="vacationPercent">0% genutzt</span>
                 </div>
                 <div class="stat-lbl">Urlaubstage frei</div>
                 <div class="stat-val" id="vacationFree">0</div>
+                <div class="stat-sub" id="vacationSubDisplay">30 Tage Gesamtanspruch</div>
             </div>
 
+            <!-- Stat 4: Restdauer & Arbeitszeit -->
             <div class="stat reveal reveal-4">
                 <div class="stat-head">
                     <div class="stat-icon">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     </div>
-                    <span class="stat-trend neutral">pro Woche</span>
+                    <span class="stat-trend neutral" id="remainingStatus">bis Abschluss</span>
                 </div>
-                <div class="stat-lbl">Wochenarbeitszeit</div>
-                <div class="stat-val" id="weeklyHoursDisplay">0 h</div>
+                <div class="stat-lbl">Verbleibende Monate</div>
+                <div class="stat-val" id="remainingMonths">0</div>
+                <div class="stat-sub" id="weeklyHoursDisplay">40 h pro Woche</div>
             </div>
         </div>
 
@@ -1079,50 +1459,220 @@
         <div class="layout">
             <!-- Left Column -->
             <div>
-                <!-- Timeline -->
-                <div class="card reveal reveal-3">
+
+                <!-- ════ CARD: DIGITALE LOHNABRECHNUNG (THE STAR FEATURE) ════ -->
+                <div class="card payslip-card reveal reveal-3" id="lohn-abrechnung">
                     <div class="card-hd">
                         <div class="card-title">
                             <span class="card-title-icon">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
                             </span>
-                            Ausbildungsverlauf
+                            Digitale Lohnabrechnung
+                        </div>
+                        <div class="payslip-controls">
+                            <button class="btn btn-ghost btn-sm" onclick="printPayslip()" title="Abrechnung drucken oder als PDF speichern">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                                Drucken / PDF
+                            </button>
                         </div>
                     </div>
-                    <div class="timeline" id="contractTimeline">
-                        <div class="empty">
-                            <div class="empty-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+
+                    <!-- Meta / Controls Bar -->
+                    <div class="payslip-meta-bar">
+                        <div class="payslip-tabs" id="payslipYearTabs">
+                            <!-- Injected by JS: 1. Jahr, 2. Jahr, 3. Jahr -->
+                        </div>
+                        <div style="display:flex;align-items:center;gap:0.5rem">
+                            <label class="payslip-row-calc" style="color:var(--text-muted)">Steuerklasse:</label>
+                            <select class="payslip-stkl-select" id="stklSelect" onchange="changeTaxClass(this.value)">
+                                <option value="1" selected>StKl 1 (ledig/kinderlos)</option>
+                                <option value="2">StKl 2 (alleinerziehend)</option>
+                                <option value="3">StKl 3 (verheiratet/Alleinverdiener)</option>
+                                <option value="4">StKl 4 (Standard verheiratet)</option>
+                                <option value="5">StKl 5 (Zweitverdiener)</option>
+                                <option value="6">StKl 6 (Zweitjob)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Statement Sheet -->
+                    <div class="payslip-sheet">
+                        <!-- Section 1: Grundbrutto -->
+                        <div class="payslip-section-title">
+                            <span>1. Vergütung & Gehaltsumwandlung</span>
+                            <span id="payslipSection1Note">Abrechnungsmonat</span>
+                        </div>
+                        <div class="payslip-row">
+                            <div class="payslip-row-desc">
+                                <span>Ausbildungsvergütung (Grundbrutto)</span>
+                                <span class="payslip-row-note" id="payslipGrossBaseNote">Monatlicher Festbetrag</span>
                             </div>
-                            <p>Vertragsdaten erforderlich. Klicke auf „Vertrag bearbeiten" um zu starten.</p>
+                            <div class="payslip-row-val" id="payslipGrossBaseVal">0,00 €</div>
+                        </div>
+
+                        <!-- Dynamic Gross Deductions (e.g. Leasingbike) -->
+                        <div id="payslipGrossDeductionsList">
+                            <!-- Injected by JS -->
+                        </div>
+
+                        <!-- Subtotal: Steuer- & SV-Brutto -->
+                        <div class="payslip-row payslip-subtotal-row">
+                            <div class="payslip-row-desc">
+                                <span>= Steuer- &amp; Sozialversicherungs-Brutto</span>
+                                <span class="payslip-row-note">Berechnungsgrundlage für Abgaben</span>
+                            </div>
+                            <div class="payslip-row-val accent" id="payslipTaxableGrossVal">0,00 €</div>
+                        </div>
+
+                        <!-- Section 2: Gesetzliche Abzüge -->
+                        <div class="payslip-section-title">
+                            <span>2. Gesetzliche Abzüge (Arbeitnehmer-Anteil)</span>
+                            <span>Satz</span>
+                        </div>
+                        <div class="payslip-row">
+                            <div class="payslip-row-desc">
+                                <span>Rentenversicherung (RV)</span>
+                                <span class="payslip-row-calc">9,30 %</span>
+                            </div>
+                            <div class="payslip-row-val minus" id="payslipRvVal">− 0,00 €</div>
+                        </div>
+                        <div class="payslip-row">
+                            <div class="payslip-row-desc">
+                                <span>Krankenversicherung (KV)</span>
+                                <span class="payslip-row-calc">8,15 % (inkl. ZB)</span>
+                            </div>
+                            <div class="payslip-row-val minus" id="payslipKvVal">− 0,00 €</div>
+                        </div>
+                        <div class="payslip-row">
+                            <div class="payslip-row-desc">
+                                <span>Pflegeversicherung (PV)</span>
+                                <span class="payslip-row-calc">2,20 %</span>
+                            </div>
+                            <div class="payslip-row-val minus" id="payslipPvVal">− 0,00 €</div>
+                        </div>
+                        <div class="payslip-row">
+                            <div class="payslip-row-desc">
+                                <span>Arbeitslosenversicherung (ALV)</span>
+                                <span class="payslip-row-calc">1,30 %</span>
+                            </div>
+                            <div class="payslip-row-val minus" id="payslipAlvVal">− 0,00 €</div>
+                        </div>
+                        <div class="payslip-row">
+                            <div class="payslip-row-desc">
+                                <span>Lohnsteuer</span>
+                                <span class="payslip-row-calc" id="payslipTaxCalc">nach StKl 1</span>
+                            </div>
+                            <div class="payslip-row-val minus" id="payslipTaxVal">− 0,00 €</div>
+                        </div>
+
+                        <!-- Subtotal Deductions -->
+                        <div class="payslip-row payslip-subtotal-row">
+                            <div class="payslip-row-desc">
+                                <span>Summe gesetzliche Abgaben</span>
+                            </div>
+                            <div class="payslip-row-val minus" id="payslipTotalDeductionsVal">− 0,00 €</div>
+                        </div>
+
+                        <!-- Section 3: Zuschüsse & Netto-Abzüge (optional/dynamisch) -->
+                        <div id="payslipGrantsSection" style="display:none">
+                            <div class="payslip-section-title">
+                                <span>3. Zuschüsse &amp; Netto-Verrechnung</span>
+                                <span>Effekt</span>
+                            </div>
+                            <div id="payslipGrantsList">
+                                <!-- Injected by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Final Payout Box -->
+                        <div class="payslip-payout-box">
+                            <div class="payslip-payout-meta">
+                                <div class="payslip-payout-title">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    Auszahlungsbetrag (Netto-Verdienst)
+                                </div>
+                                <div class="payslip-payout-sub" id="payslipPayoutSub">Wird zum Monatsende auf dein Konto überwiesen</div>
+                            </div>
+                            <div class="payslip-payout-amount" id="payslipPayoutAmount">0,00 €</div>
+                        </div>
+
+                        <!-- Visual Distribution Bar -->
+                        <div class="payslip-distribution">
+                            <div class="dist-label-row">
+                                <span>Gehalts-Aufteilung</span>
+                                <span id="payslipDistNetPercent">0% Netto</span>
+                            </div>
+                            <div class="dist-bar-track">
+                                <div class="dist-segment dist-seg-netto" id="distSegNetto" style="width:75%" title="Netto-Auszahlung"></div>
+                                <div class="dist-segment dist-seg-social" id="distSegSocial" style="width:20%" title="Sozialabgaben"></div>
+                                <div class="dist-segment dist-seg-tax" id="distSegTax" style="width:0%" title="Lohnsteuer"></div>
+                                <div class="dist-segment dist-seg-benefits" id="distSegBenefits" style="width:5%" title="Gehaltsumwandlung (z.B. Bike)"></div>
+                            </div>
+                            <div class="dist-legend">
+                                <div class="dist-leg-item"><span class="dist-leg-dot" style="background:var(--success)"></span> Netto-Auszahlung (<span id="distLegNettoVal">0 €</span>)</div>
+                                <div class="dist-leg-item"><span class="dist-leg-dot" style="background:#f87171"></span> Gesetzliche Abgaben (<span id="distLegSocialVal">0 €</span>)</div>
+                                <div class="dist-leg-item" id="distLegBikeItem" style="display:none"><span class="dist-leg-dot" style="background:var(--primary)"></span> Gehaltsumwandlung (<span id="distLegBikeVal">0 €</span>)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Smart Insight: Bike Leasing Tax Saving Callout -->
+                    <div class="payslip-bike-callout" id="payslipBikeCallout" style="display:none">
+                        <div class="bike-callout-icon">🚲</div>
+                        <div>
+                            <div class="bike-callout-title">Dein Gehaltsumwandlungs-Vorteil (Leasingbike)</div>
+                            <div class="bike-callout-text" id="payslipBikeCalloutText">
+                                Durch die Brutto-Entgeltumwandlung sinkt dein sozialversicherungspflichtiges Brutto. Dadurch sparst du jeden Monat Sozialabgaben!
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Salary -->
+                <!-- ════ CARD: GEHALTSENTWICKLUNG ════ -->
                 <div class="card reveal reveal-4">
                     <div class="card-hd">
                         <div class="card-title">
                             <span class="card-title-icon">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                             </span>
-                            Gehaltsentwicklung
+                            Gehaltsentwicklung (Ausbildungsjahre)
                         </div>
                     </div>
                     <div class="data-grid" id="salaryGrid">
-                        <div class="data-cell"><div class="data-cell-lbl">1. Jahr</div><div class="data-cell-val">0 €</div></div>
-                        <div class="data-cell"><div class="data-cell-lbl">2. Jahr</div><div class="data-cell-val">0 €</div></div>
-                        <div class="data-cell"><div class="data-cell-lbl">3. Jahr</div><div class="data-cell-val">0 €</div></div>
-                        <div class="data-cell"><div class="data-cell-lbl">Gesamt (3 J.)</div><div class="data-cell-val accent">0 €</div></div>
+                        <!-- Injected by JS -->
                     </div>
                 </div>
 
-                <!-- Vacation -->
+                <!-- ════ CARD: BENEFITS & EXTRAS ════ -->
+                <div class="card reveal reveal-5">
+                    <div class="card-hd">
+                        <div>
+                            <div class="card-title">
+                                <span class="card-title-icon">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                                </span>
+                                Benefits &amp; Gehaltsumwandlung
+                            </div>
+                            <div style="font-size:0.75rem;color:var(--text-faint);margin-top:0.25rem">
+                                Trage Leasingräder, Jobtickets oder Zuschüsse ein — sie fließen direkt in deine Abrechnung ein.
+                            </div>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="openBenefitsModal()">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Benefit hinzufügen
+                        </button>
+                    </div>
+                    <div class="benefits-grid" id="benefitsGrid">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+
+                <!-- ════ CARD: URLAUBSPLAN ════ -->
                 <div class="card reveal reveal-5">
                     <div class="card-hd">
                         <div class="card-title">
                             <span class="card-title-icon">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
                             </span>
                             Urlaubsplan
                         </div>
@@ -1132,7 +1682,7 @@
                         </button>
                     </div>
                     <div class="vac-sync-row disconnected" id="vacSyncRow">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="vacSyncIcon"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="vacSyncIcon"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         <span id="vacSyncLabel">Kein Dashboard verbunden — manuelle Eingabe aktiv</span>
                     </div>
                     <div class="vac-stats">
@@ -1160,40 +1710,35 @@
                     </div>
                 </div>
 
-                <!-- Benefits -->
+                <!-- ════ CARD: TIMELINE ════ -->
                 <div class="card reveal reveal-6">
                     <div class="card-hd">
                         <div class="card-title">
                             <span class="card-title-icon">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                             </span>
-                            Benefits
+                            Ausbildungsverlauf
                         </div>
-                        <button class="btn btn-ghost btn-sm" onclick="openBenefitsModal()">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                            Hinzufügen
-                        </button>
                     </div>
-                    <div class="benefits-grid" id="benefitsGrid">
-                        <div class="empty" style="grid-column:1/-1">
-                            <div class="empty-icon">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg>
-                            </div>
-                            <p>Noch keine Benefits hinterlegt — füge z.B. Jobticket, Essenszuschuss oder VWL hinzu.</p>
-                        </div>
+                    <div class="timeline" id="contractTimeline">
+                        <!-- Injected by JS -->
                     </div>
                 </div>
+
             </div>
 
             <!-- Sidebar -->
             <aside class="sidebar reveal reveal-4">
                 <!-- Jobs Switcher -->
                 <div class="side-card">
-                    <div class="side-card-title">Meine Jobs</div>
+                    <div class="side-card-title">
+                        <span>Meine Jobs &amp; Verträge</span>
+                        <span id="jobsCountBadge" class="stat-trend neutral">1 Vertrag</span>
+                    </div>
                     <div id="jobsList"></div>
                     <button class="jobs-add-btn" onclick="addNewJob()">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Neuer Job
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Neuen Vertrag anlegen
                     </button>
                 </div>
 
@@ -1208,7 +1753,7 @@
                     </div>
                 </div>
 
-                <!-- Actions -->
+                <!-- Quick Actions -->
                 <div class="side-card">
                     <div class="side-card-title">Aktionen</div>
                     <div class="action-stack">
@@ -1216,18 +1761,29 @@
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             Vertrag bearbeiten
                         </button>
+                        <button class="btn btn-ghost btn-block" onclick="openBenefitsModal()">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/></svg>
+                            Benefit verwalten
+                        </button>
+                        <button class="btn btn-ghost btn-block" onclick="printPayslip()">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                            Abrechnung drucken / PDF
+                        </button>
                         <button class="btn btn-ghost btn-block" onclick="exportData()">
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            Daten exportieren
+                            Vertrag als JSON sichern
                         </button>
                     </div>
                 </div>
 
-                <!-- Tips -->
+                <!-- Useful Tips for Apprentices -->
                 <div class="side-card tips-card">
-                    <div class="side-card-title" style="border-color:var(--border-primary)">Hinweise</div>
+                    <div class="side-card-title" style="border-color:var(--border-primary)">Wissenswertes für Azubis</div>
                     <p class="tips-text">
-                        Trage deine Vertragsdaten ein, um Gehaltsverläufe, Resturlaubstage und die verbleibende Ausbildungszeit automatisch zu berechnen.
+                        <strong>Gehaltsumwandlung (Leasingbike):</strong><br>
+                        Wird die Leasingrate direkt vom Brutto abgezogen, sinken deine Sozialabgaben. Wichtig: Die reduzierte Vergütung darf nicht unter die gesetzliche <em>Mindestausbildungsvergütung (BBiG)</em> fallen.<br><br>
+                        <strong>Steuerfreier Sachbezug:</strong><br>
+                        Gutscheine oder Jobtickets bis 50 €/Monat bleiben für dich völlig abgabenfrei.
                     </p>
                 </div>
             </aside>
@@ -1237,7 +1793,7 @@
     <!-- Footer (shared) -->
     <div id="page-footer"></div>
 
-    <!-- Modal: Vertrag bearbeiten -->
+    <!-- ════ MODAL: VERTRAG BEARBEITEN ════ -->
     <div class="modal" id="contractModal">
         <div class="modal-box">
             <button class="modal-close" onclick="closeContractModal()" aria-label="Schließen">
@@ -1245,17 +1801,17 @@
             </button>
             <div class="modal-title">
                 <span class="modal-title-icon">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </span>
-                Vertragsdaten
+                Vertragsdaten bearbeiten
             </div>
             <form id="contractForm" onsubmit="saveContract(event)">
                 <div class="form-group">
-                    <label class="form-label">Unternehmen</label>
-                    <input type="text" class="form-input" id="company" placeholder="z.B. TechCorp GmbH" required>
+                    <label class="form-label">Ausbildungsbetrieb / Unternehmen</label>
+                    <input type="text" class="form-input" id="company" placeholder="z.B. TechNova Solutions GmbH" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Position / Ausbildungsberuf</label>
+                    <label class="form-label">Ausbildungsberuf / Position</label>
                     <input type="text" class="form-input" id="jobTitle" placeholder="z.B. Fachinformatiker/-in Anwendungsentwicklung" required>
                 </div>
                 <div class="form-row">
@@ -1283,11 +1839,13 @@
                     <select class="form-select" id="durationYears" onchange="renderSalaryFields()">
                         <option value="2">2 Jahre</option>
                         <option value="3" selected>3 Jahre</option>
+                        <option value="3.5">3,5 Jahre</option>
                         <option value="4">4 Jahre</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Gehalt (€ / Monat)</label>
+                    <label class="form-label">Brutto-Vergütung pro Ausbildungsjahr (€ / Monat)</label>
+                    <div class="form-hint" style="margin-bottom:0.6rem">Grundbrutto laut Vertrag ohne Benefits-Abzüge:</div>
                     <div id="salaryFieldsWrap"></div>
                 </div>
                 <div class="form-actions">
@@ -1301,44 +1859,7 @@
         </div>
     </div>
 
-    <!-- Modal: Gehaltsrechner -->
-    <div class="modal" id="calculatorModal">
-        <div class="modal-box">
-            <button class="modal-close" onclick="closeCalculatorModal()" aria-label="Schließen">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
-            <div class="modal-title">
-                <span class="modal-title-icon">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
-                </span>
-                Netto-Gehaltsrechner
-            </div>
-            <div class="form-group">
-                <label class="form-label">Brutto-Gehalt (Monat)</label>
-                <input type="number" class="form-input" id="bruttoInput" placeholder="1000" oninput="calculateNet()">
-            </div>
-            <div class="calc-result">
-                <div class="calc-rows">
-                    <div class="calc-row">
-                        <span class="calc-row-lbl">Sozialabgaben</span>
-                        <span class="calc-row-val" id="socialResult">0,00 &euro;</span>
-                    </div>
-                    <div class="calc-row calc-row--offen">
-                        <span class="calc-row-lbl">Lohnsteuer</span>
-                        <span class="calc-row-val">nicht gerechnet</span>
-                    </div>
-                </div>
-                <div class="calc-result-lbl">Netto vor Lohnsteuer</div>
-                <div class="calc-result-val" id="nettoResult">0,00 &euro;</div>
-                <div class="calc-result-note">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    <span>Abgezogen sind rund 20 % Arbeitnehmer-Anteil an der Sozialversicherung. Die Lohnsteuer h&auml;ngt von deiner Steuerklasse ab; bei Ausbildungsverg&uuml;tungen ist sie oft null. Verbindlich ist deine Abrechnung.</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Benefit hinzufügen -->
+    <!-- ════ MODAL: BENEFIT HINZUFÜGEN / BEARBEITEN ════ -->
     <div class="modal" id="benefitsModal">
         <div class="modal-box">
             <button class="modal-close" onclick="closeBenefitsModal()" aria-label="Schließen">
@@ -1346,23 +1867,74 @@
             </button>
             <div class="modal-title">
                 <span class="modal-title-icon">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg>
                 </span>
-                Benefit hinzufügen
+                <span id="benefitModalTitle">Benefit hinzufügen</span>
             </div>
+
+            <!-- Schnellauswahl Presets -->
+            <div class="preset-section">
+                <div class="preset-lbl">Schnellauswahl Vorlagen</div>
+                <div class="preset-chips">
+                    <button type="button" class="preset-chip" onclick="applyBenefitPreset('bike')">
+                        🚲 JobRad / Leasingbike
+                    </button>
+                    <button type="button" class="preset-chip" onclick="applyBenefitPreset('ticket')">
+                        🚆 Deutschlandticket (AG)
+                    </button>
+                    <button type="button" class="preset-chip" onclick="applyBenefitPreset('vwl')">
+                        💰 VWL Arbeitgeber
+                    </button>
+                    <button type="button" class="preset-chip" onclick="applyBenefitPreset('food')">
+                        🥗 Essenszuschuss
+                    </button>
+                    <button type="button" class="preset-chip" onclick="applyBenefitPreset('gym')">
+                        🏋️ Fitness / Urban Sports
+                    </button>
+                    <button type="button" class="preset-chip" onclick="applyBenefitPreset('laptop')">
+                        💻 Arbeits-Hardware
+                    </button>
+                </div>
+            </div>
+
             <form id="benefitsForm" onsubmit="saveBenefit(event)">
-                <div class="form-group">
-                    <label class="form-label">Name</label>
-                    <input type="text" class="form-input" id="benefitName" placeholder="z.B. Jobticket" required>
+                <input type="hidden" id="benefitEditId" value="">
+
+                <div class="form-row">
+                    <div class="form-group" style="flex:2">
+                        <label class="form-label">Bezeichnung</label>
+                        <input type="text" class="form-input" id="benefitName" placeholder="z.B. JobRad Dienstrad" required>
+                    </div>
+                    <div class="form-group" style="flex:1">
+                        <label class="form-label">Icon / Emoji</label>
+                        <input type="text" class="form-input" id="benefitIcon" placeholder="🚲" maxlength="4" style="text-align:center">
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label class="form-label">Beschreibung (optional)</label>
-                    <input type="text" class="form-input" id="benefitDesc" placeholder="z.B. Kostenlose ÖPNV-Fahrkarte">
+                    <label class="form-label">Abrechnungs-Typ (Auswirkung auf dein Gehalt)</label>
+                    <select class="form-select" id="benefitCategory" onchange="updateBenefitHint()">
+                        <option value="gross_deduction" selected>Gehaltsumwandlung (vom Brutto abgezogen — spart Steuern &amp; SV)</option>
+                        <option value="employer_grant">Arbeitgeber-Zuschuss (steuerfrei auf Netto drauf)</option>
+                        <option value="net_deduction">Netto-Abzug (Eigenanteil vom Netto abgezogen)</option>
+                        <option value="non_monetary">Kostenloses Extra / Sachbezug (kein Geldabzug)</option>
+                    </select>
+                    <div class="form-hint" id="benefitTypeHint">
+                        💡 <strong>Gehaltsumwandlung:</strong> Ideal für Leasingbikes (JobRad). Die monatliche Rate wird vom Brutto abgezogen, wodurch sich deine Sozialabgaben reduzieren!
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label class="form-label">Icon (Emoji)</label>
-                    <input type="text" class="form-input" id="benefitIcon" placeholder="🚌" maxlength="2">
+                    <label class="form-label">Monatlicher Betrag (€ / Monat)</label>
+                    <input type="number" class="form-input" id="benefitAmount" step="0.01" min="0" placeholder="z.B. 45.00">
+                    <div class="form-hint">Bei Sachleistungen (z.B. Laptop) einfach 0 eintragen.</div>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label">Notiz / Beschreibung (optional)</label>
+                    <input type="text" class="form-input" id="benefitDesc" placeholder="z.B. 36 Monate Leasing, inkl. Vollkasko-Inspektion">
+                </div>
+
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
@@ -1374,7 +1946,7 @@
         </div>
     </div>
 
-    <!-- Modal: Urlaub anpassen -->
+    <!-- ════ MODAL: URLAUB ANPASSEN ════ -->
     <div class="modal" id="vacationModal">
         <div class="modal-box" style="max-width:380px">
             <button class="modal-close" onclick="closeVacationModal()" aria-label="Schließen">
@@ -1382,7 +1954,7 @@
             </button>
             <div class="modal-title">
                 <span class="modal-title-icon">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/></svg>
                 </span>
                 Urlaub anpassen
             </div>
@@ -1437,11 +2009,17 @@
         });
     </script>
 
-    <!-- ════ MAIN MODULE ════ -->
+    <!-- ════ MAIN JAVASCRIPT MODULE ════ -->
     <script>
-        // ═══ VERTRAGS-MANAGER MODULE ═══
+        // ═══ VERTRAGS-MANAGER V3 MODULE ═══
         const STORAGE_KEY = 'contract_manager_v2';
-        let appData = { contracts: [], activeContractId: null };
+        let appData = {
+            contracts: [],
+            activeContractId: null,
+            selectedPayslipYear: 1,
+            taxClass: 1,
+            statDisplayMode: 'net' // 'net' or 'gross'
+        };
 
         // ─── UTILS ───
         function esc(s) {
@@ -1450,13 +2028,25 @@
                 .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
+        const mwlLoc = () => window.mwlLocale ? window.mwlLocale()
+            : (document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE');
+
+        const eur = (n, forceSign = false) => {
+            const val = Math.abs(n || 0);
+            const str = val.toLocaleString(mwlLoc(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+            if (forceSign) {
+                if (n > 0) return '+ ' + str;
+                if (n < 0) return '− ' + str;
+            }
+            return (n < 0 ? '− ' : '') + str;
+        };
+
         function getActive() {
             if (!appData.contracts.length) return null;
-            return appData.contracts.find(c => c.id === appData.activeContractId)
-                || appData.contracts[0];
+            return appData.contracts.find(c => c.id === appData.activeContractId) || appData.contracts[0];
         }
 
-        function getContractDur(c) { return parseFloat(c.durationYears) || 3; }
+        function getContractDur(c) { return parseFloat(c ? c.durationYears : 3) || 3; }
         function getContractYears(c) { return Math.ceil(getContractDur(c)); }
 
         function getCurrentYear(c) {
@@ -1467,22 +2057,24 @@
             return Math.max(1, Math.min(getContractYears(c), Math.floor(months / 12) + 1));
         }
 
-        // ─── SCROLL EFFECTS ───
+        // ─── SCROLL & HEADER PROGRESS ───
         window.addEventListener('scroll', () => {
             const scrollTop = window.scrollY;
             const docH = document.documentElement.scrollHeight - window.innerHeight;
-            document.getElementById('scrollProg').style.width = (docH > 0 ? (scrollTop / docH) * 100 : 0) + '%';
-            document.getElementById('navbar').classList.toggle('scrolled', scrollTop > 20);
+            const prog = document.getElementById('scrollProg');
+            if (prog) prog.style.width = (docH > 0 ? (scrollTop / docH) * 100 : 0) + '%';
+            const nav = document.getElementById('navbar');
+            if (nav) nav.classList.toggle('scrolled', scrollTop > 20);
         });
 
-        // ─── DATA ───
+        // ─── DATA PERSISTENCE & MIGRATION ───
         function loadData() {
             const stored = localStorage.getItem(STORAGE_KEY);
             if (stored) {
                 try {
                     const parsed = JSON.parse(stored);
                     if (parsed.company !== undefined) {
-                        // migrate old single-contract format
+                        // migrate legacy single-contract schema
                         const c = {
                             id: 'c_migrated',
                             company: parsed.company || '',
@@ -1492,178 +2084,688 @@
                             weeklyHours: parsed.weeklyHours || 40,
                             vacationDays: parsed.vacationDays || 30,
                             durationYears: 3,
-                            salaries: parsed.salaries || [0, 0, 0],
-                            benefits: parsed.benefits || [],
+                            salaries: parsed.salaries || [1100, 1180, 1260],
+                            benefits: normalizeBenefits(parsed.benefits || []),
                             vacationUsed: parsed.vacationUsed || 0
                         };
-                        appData = { contracts: [c], activeContractId: c.id };
+                        appData = { contracts: [c], activeContractId: c.id, selectedPayslipYear: 1, taxClass: 1, statDisplayMode: 'net' };
                         saveData();
                     } else if (parsed.contracts) {
-                        appData = parsed;
+                        appData.contracts = (parsed.contracts || []).map(c => {
+                            c.benefits = normalizeBenefits(c.benefits || []);
+                            return c;
+                        });
+                        appData.activeContractId = parsed.activeContractId || (appData.contracts[0] ? appData.contracts[0].id : null);
+                        appData.taxClass = parsed.taxClass || 1;
                     }
-                } catch (e) { /* ignore corrupt data */ }
+                } catch (e) {
+                    console.error('Data load error', e);
+                }
+            }
+
+            // Ensure at least one initial demonstration contract if completely empty
+            if (!appData.contracts.length) {
+                const sampleContract = {
+                    id: 'c_' + Date.now(),
+                    company: 'TechNova Solutions GmbH',
+                    jobTitle: 'Fachinformatiker/-in Anwendungsentwicklung',
+                    startDate: new Date().toISOString().split('T')[0],
+                    endDate: new Date(Date.now() + 3 * 365 * 86400000).toISOString().split('T')[0],
+                    weeklyHours: 40,
+                    vacationDays: 30,
+                    durationYears: 3,
+                    salaries: [1100, 1180, 1260],
+                    benefits: [
+                        {
+                            id: 'b_1',
+                            name: 'JobRad Leasingbike',
+                            category: 'gross_deduction',
+                            amount: 45.00,
+                            icon: '🚲',
+                            description: 'Gehaltsumwandlung — mindert Steuer- & SV-Brutto'
+                        },
+                        {
+                            id: 'b_2',
+                            name: 'Deutschlandticket',
+                            category: 'employer_grant',
+                            amount: 49.00,
+                            icon: '🚆',
+                            description: 'Arbeitgeber-Zuschuss für den ÖPNV'
+                        }
+                    ],
+                    vacationUsed: 0
+                };
+                appData.contracts = [sampleContract];
+                appData.activeContractId = sampleContract.id;
+                saveData();
+            }
+
+            const c = getActive();
+            if (c) {
+                appData.selectedPayslipYear = getCurrentYear(c);
             }
             updateUI();
+        }
+
+        function normalizeBenefits(list) {
+            if (!Array.isArray(list)) return [];
+            return list.map(b => {
+                if (typeof b === 'string') {
+                    return { id: 'b_' + Math.random(), name: b, category: 'non_monetary', amount: 0, icon: '🎁' };
+                }
+                return {
+                    id: b.id || 'b_' + Math.random(),
+                    name: b.name || 'Benefit',
+                    category: b.category || (b.amount > 0 ? 'gross_deduction' : 'non_monetary'),
+                    amount: parseFloat(b.amount) || 0,
+                    icon: b.icon || '🎁',
+                    description: b.description || ''
+                };
+            });
         }
 
         function saveData() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-        }
-
-        // ─── JOB MANAGEMENT ───
-        function addNewJob() {
-            const c = {
-                id: 'c_' + Date.now(),
-                company: '', jobTitle: '',
-                startDate: '', endDate: '',
-                weeklyHours: 40, vacationDays: 30,
-                durationYears: 3,
-                salaries: [0, 0, 0],
-                benefits: [], vacationUsed: 0
-            };
-            appData.contracts.push(c);
-            appData.activeContractId = c.id;
-            saveData();
-            updateUI();
-            openContractModal();
-        }
-
-        function setActiveContract(id) {
-            appData.activeContractId = id;
-            saveData();
-            updateUI();
-        }
-
-        function deleteContract(id, e) {
-            e.stopPropagation();
-            if (appData.contracts.length <= 1) {
-                showToast('Mindestens ein Job muss bestehen bleiben', 'error');
-                return;
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            } catch (e) {
+                console.error('Save failed', e);
             }
-            if (!confirm('Diesen Job und alle zugehörigen Daten unwiderruflich löschen?')) return;
-            appData.contracts = appData.contracts.filter(c => c.id !== id);
-            if (appData.activeContractId === id) appData.activeContractId = appData.contracts[0].id;
-            saveData();
-            updateUI();
-            showToast('Job gelöscht', 'success');
         }
 
-        // ─── UI UPDATE ───
+        // ─── SALARY & PAY SLIP CALCULATION ENGINE ───
+        function calculatePayslip(grossBase, benefits = [], taxClass = 1) {
+            grossBase = parseFloat(grossBase) || 0;
+            let grossDeductions = 0; // Gehaltsumwandlung (Leasingbike)
+            let employerGrants = 0;  // AG-Zuschuss (Jobticket etc.)
+            let netDeductions = 0;   // Netto-Abzug
+
+            const grossDeductionsList = [];
+            const employerGrantsList = [];
+            const netDeductionsList = [];
+
+            (benefits || []).forEach(b => {
+                const amt = parseFloat(b.amount) || 0;
+                if (b.category === 'gross_deduction' && amt > 0) {
+                    grossDeductions += amt;
+                    grossDeductionsList.push({ name: b.name, icon: b.icon || '🚲', amount: amt, desc: b.description });
+                } else if (b.category === 'employer_grant' && amt > 0) {
+                    employerGrants += amt;
+                    employerGrantsList.push({ name: b.name, icon: b.icon || '🎁', amount: amt, desc: b.description });
+                } else if (b.category === 'net_deduction' && amt > 0) {
+                    netDeductions += amt;
+                    netDeductionsList.push({ name: b.name, icon: b.icon || '💳', amount: amt, desc: b.description });
+                }
+            });
+
+            // Bemessungsgrundlage (Steuer- & SV-Brutto nach Gehaltsumwandlung)
+            const taxableGross = Math.max(0, grossBase - grossDeductions);
+
+            // Sozialabgaben Arbeitnehmer (Stand 2024-2026)
+            const rv = Math.round(taxableGross * 0.0930 * 100) / 100; // Rentenversicherung 9.3%
+            const kv = Math.round(taxableGross * 0.0815 * 100) / 100; // KV 7.3% + 0.85% Zusatzbeitrag
+            const pv = Math.round(taxableGross * 0.0220 * 100) / 100; // Pflegeversicherung 2.2%
+            const alv = Math.round(taxableGross * 0.0130 * 100) / 100; // Arbeitslosenversicherung 1.3%
+            const totalSocial = rv + kv + pv + alv;
+
+            // Lohnsteuer-Schätzung nach Steuerklasse
+            let wageTax = 0;
+            const tc = parseInt(taxClass) || 1;
+            if (tc === 1 || tc === 4) {
+                // Grundfreibetrag ~11.784€/Jahr + Vorsorgepauschale + AN-Pauschbetrag -> bis ~1.350€ steuerfrei
+                if (taxableGross > 1350) wageTax = Math.round((taxableGross - 1350) * 0.18 * 100) / 100;
+            } else if (tc === 2) {
+                // Alleinerziehend
+                if (taxableGross > 1650) wageTax = Math.round((taxableGross - 1650) * 0.16 * 100) / 100;
+            } else if (tc === 3) {
+                // Hoher Grundfreibetrag
+                if (taxableGross > 2250) wageTax = Math.round((taxableGross - 2250) * 0.15 * 100) / 100;
+            } else if (tc === 5 || tc === 6) {
+                // Nebentätigkeit oder StKl 5
+                if (taxableGross > 500) wageTax = Math.round((taxableGross - 500) * 0.18 * 100) / 100;
+            }
+
+            const totalDeductions = totalSocial + wageTax;
+            const netBeforeGrants = taxableGross - totalDeductions;
+            const netPayout = Math.max(0, netBeforeGrants + employerGrants - netDeductions);
+
+            // Ersparnisberechnung durch Gehaltsumwandlung
+            const normalSocial = Math.round(grossBase * (0.093 + 0.0815 + 0.022 + 0.013) * 100) / 100;
+            const svSavings = Math.max(0, normalSocial - totalSocial);
+
+            return {
+                grossBase,
+                grossDeductions,
+                taxableGross,
+                rv, kv, pv, alv, totalSocial,
+                wageTax, totalDeductions,
+                employerGrants, netDeductions,
+                netPayout: Math.round(netPayout * 100) / 100,
+                svSavings: Math.round(svSavings * 100) / 100,
+                grossDeductionsList,
+                employerGrantsList,
+                netDeductionsList
+            };
+        }
+
+        // ─── UI UPDATE MASTER ───
         function updateUI() {
-            updateJobsList();
             const c = getActive();
+            updateJobsList();
             updateHero(c);
             updateStats(c);
-            updateTimeline(c);
+            updatePayslip(c);
             updateSalary(c);
-            updateVacation(c);
             updateBenefits(c);
+            updateVacation(c);
+            updateTimeline(c);
             updateDetails(c);
         }
 
-        function updateJobsList() {
-            const list = document.getElementById('jobsList');
-            if (!appData.contracts.length) {
-                list.innerHTML = '<div class="jobs-empty">Noch kein Job erfasst.</div>';
+        // ─── HERO UPDATE ───
+        function updateHero(c) {
+            const company = c ? (c.company || '—') : '—';
+            const title = c ? (c.jobTitle || '—') : '—';
+            document.getElementById('companyNameHero').textContent = company;
+            document.getElementById('jobTitleHero').textContent = title;
+
+            if (!c) {
+                document.getElementById('heroNetSalary').textContent = '—';
                 return;
             }
-            const activeId = appData.activeContractId || appData.contracts[0].id;
-            const canDelete = appData.contracts.length > 1;
-            list.innerHTML = appData.contracts.map(c => `
-                <div class="job-item ${c.id === activeId ? 'active' : ''}" onclick="setActiveContract('${c.id}')">
-                    <div class="job-dot"></div>
-                    <div class="job-info">
-                        <div class="job-company">${esc(c.company || 'Neuer Job')}</div>
-                        <div class="job-title-label">${esc(c.jobTitle || '—')}</div>
-                    </div>
-                    ${canDelete ? `<button class="job-del" onclick="deleteContract('${c.id}',event)" title="Job löschen">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>` : ''}
-                </div>`).join('');
-        }
 
-        function updateHero(c) {
-            document.getElementById('companyNameHero').textContent = c ? (c.company || '—') : '—';
-            document.getElementById('jobTitleHero').textContent = c ? (c.jobTitle || '—') : '—';
-            if (c) {
-                const cy = getCurrentYear(c);
-                const salNow = (c.salaries[cy - 1] || 0).toLocaleString(mwlLoc());
-                const ended = c.endDate && new Date(c.endDate) < new Date();
-                document.getElementById('illuWeekly').textContent = c.weeklyHours + ' h';
-                document.getElementById('illuVacation').textContent = c.vacationDays + ' Tage';
-                document.getElementById('illuSalary').textContent = salNow + ' €';
-                const statusEl = document.getElementById('illuStatus');
-                statusEl.textContent = ended ? 'Beendet' : 'Läuft';
-                statusEl.style.color = ended ? 'var(--text-muted)' : 'var(--success)';
+            const cy = getCurrentYear(c);
+            const gross = c.salaries[cy - 1] || 0;
+            const payslip = calculatePayslip(gross, c.benefits, appData.taxClass);
+
+            document.getElementById('heroNetSalary').textContent = eur(payslip.netPayout);
+            document.getElementById('illuDocMeta').textContent = `${cy}. Ausbildungsjahr · ${c.durationYears} J.`;
+            document.getElementById('illuGrossBase').textContent = eur(payslip.grossBase);
+            document.getElementById('illuSocialDeduction').textContent = '− ' + eur(payslip.totalDeductions);
+            document.getElementById('illuNetPayout').textContent = eur(payslip.netPayout);
+
+            // Hero live rows for benefits
+            const bikeRow = document.getElementById('illuBikeRow');
+            if (payslip.grossDeductions > 0) {
+                bikeRow.style.display = 'flex';
+                document.getElementById('illuBikeDeduction').textContent = '− ' + eur(payslip.grossDeductions);
+            } else {
+                bikeRow.style.display = 'none';
+            }
+
+            const grantsRow = document.getElementById('illuGrantsRow');
+            if (payslip.employerGrants > 0) {
+                grantsRow.style.display = 'flex';
+                document.getElementById('illuGrantsTotal').textContent = '+ ' + eur(payslip.employerGrants);
+            } else {
+                grantsRow.style.display = 'none';
             }
         }
 
+        // ─── TOP STATS UPDATE ───
         function updateStats(c) {
             if (!c) {
                 ['currentSalaryDisplay','weeklyHoursDisplay','remainingMonths','vacationFree'].forEach(id => {
-                    document.getElementById(id).textContent = '—';
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = '—';
                 });
-                document.getElementById('vacationPercent').textContent = '0% genutzt';
                 return;
             }
+
             const cy = getCurrentYear(c);
-            const salary = c.salaries[cy - 1] || 0;
-            document.getElementById('currentSalaryDisplay').textContent = salary.toLocaleString(mwlLoc()) + ' €';
-            document.getElementById('weeklyHoursDisplay').textContent = c.weeklyHours + ' h';
+            const gross = c.salaries[cy - 1] || 0;
+            const payslip = calculatePayslip(gross, c.benefits, appData.taxClass);
+
+            // Stat 1: Gehalt (Netto vs Brutto)
+            const salDisplay = document.getElementById('currentSalaryDisplay');
+            const salSub = document.getElementById('salarySubDisplay');
+            const salTitle = document.getElementById('statSalaryTitle');
+
+            if (appData.statDisplayMode === 'gross') {
+                salDisplay.textContent = eur(gross);
+                salTitle.textContent = 'Brutto-Vergütung';
+                salSub.textContent = `${eur(payslip.netPayout)} Netto-Auszahlung`;
+            } else {
+                salDisplay.textContent = eur(payslip.netPayout);
+                salTitle.textContent = 'Netto-Auszahlung';
+                salSub.textContent = `${eur(gross)} Brutto · − ${eur(payslip.totalDeductions)} Abgaben`;
+            }
+
+            // Stat 2: Benefits
+            const bCount = (c.benefits || []).length;
+            const bBadge = document.getElementById('benefitsTrendBadge');
+            bBadge.textContent = bCount === 1 ? '1 Benefit' : `${bCount} Benefits`;
+
+            const bVal = document.getElementById('benefitsStatValue');
+            const bSub = document.getElementById('benefitsStatSub');
+
+            if (payslip.grossDeductions > 0 && payslip.employerGrants > 0) {
+                bVal.textContent = `+${Math.round(payslip.employerGrants)} € / −${Math.round(payslip.grossDeductions)} €`;
+                bSub.textContent = `Leasingbike & Zuschüsse aktiv`;
+            } else if (payslip.grossDeductions > 0) {
+                bVal.textContent = `− ${eur(payslip.grossDeductions)}`;
+                bSub.textContent = `spart ca. ${eur(payslip.svSavings)} Abgaben/Mo`;
+            } else if (payslip.employerGrants > 0) {
+                bVal.textContent = `+ ${eur(payslip.employerGrants)}`;
+                bSub.textContent = `Steuerfreies Netto-Plus`;
+            } else if (bCount > 0) {
+                bVal.textContent = `${bCount} aktiv`;
+                bSub.textContent = `Sachbezüge ohne Abzug`;
+            } else {
+                bVal.textContent = `0,00 €`;
+                bSub.textContent = `Kein Benefit hinterlegt`;
+            }
+
+            // Stat 3: Urlaub
+            const dash = getDashboardVacation();
+            const totalVac = dash ? dash.total : (c.vacationDays || 30);
+            const usedVac = dash ? dash.used : (c.vacationUsed || 0);
+            const freeVac = Math.max(0, totalVac - usedVac);
+            document.getElementById('vacationFree').textContent = freeVac;
+            document.getElementById('vacationSubDisplay').textContent = `${totalVac} Tage Gesamtanspruch`;
+
+            const pct = totalVac > 0 ? Math.round((usedVac / totalVac) * 100) : 0;
+            document.getElementById('vacationPercent').textContent = `${pct}% genutzt`;
+
+            // Stat 4: Dauer
             if (c.endDate) {
-                const months = Math.max(0, Math.floor((new Date(c.endDate) - new Date()) / (1000 * 60 * 60 * 24 * 30)));
-                document.getElementById('remainingMonths').textContent = months;
+                const months = Math.max(0, Math.floor((new Date(c.endDate) - new Date()) / (1000 * 60 * 60 * 24 * 30.4)));
+                document.getElementById('remainingMonths').textContent = months + ' Mon.';
             } else {
                 document.getElementById('remainingMonths').textContent = '—';
             }
-            const remaining = (c.vacationDays || 0) - (c.vacationUsed || 0);
-            document.getElementById('vacationFree').textContent = remaining;
-            const pct = c.vacationDays > 0 ? Math.round((c.vacationUsed / c.vacationDays) * 100) : 0;
-            document.getElementById('vacationPercent').textContent = pct + '% genutzt';
+            document.getElementById('weeklyHoursDisplay').textContent = `${c.weeklyHours || 40} h pro Woche`;
         }
 
-        function updateTimeline(c) {
-            const el = document.getElementById('contractTimeline');
-            if (!c || !c.startDate) {
-                el.innerHTML = '<div class="empty"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><p>Bitte fülle deine Vertragsdaten aus, um den Verlauf zu sehen.</p></div>';
-                return;
-            }
-            const totalYears = getContractYears(c);
-            const cy = getCurrentYear(c);
-            el.innerHTML = Array.from({ length: totalYears }, (_, i) => {
+        function toggleSalaryStatMode(mode) {
+            appData.statDisplayMode = mode;
+            document.getElementById('statToggleNet').classList.toggle('active', mode === 'net');
+            document.getElementById('statToggleGross').classList.toggle('active', mode === 'gross');
+            saveData();
+            updateStats(getActive());
+        }
+
+        // ─── DIGITAL PAY SLIP (LOHNABRECHNUNG) COMPONENT ───
+        function updatePayslip(c) {
+            if (!c) return;
+            const years = getContractYears(c);
+            let selYear = appData.selectedPayslipYear || 1;
+            if (selYear > years) selYear = years;
+
+            // Render Year Tabs
+            const tabsWrap = document.getElementById('payslipYearTabs');
+            tabsWrap.innerHTML = Array.from({ length: years }, (_, i) => {
                 const y = i + 1;
-                const done = y < cy, active = y === cy;
-                const badge = active ? '<span class="tl-badge active">Aktuell</span>'
-                    : done ? '<span class="tl-badge done">Abgeschlossen</span>'
-                    : '<span class="tl-badge">Geplant</span>';
-                return `<div class="tl-item ${done ? 'done' : ''}">
-                    <div class="tl-head"><span class="tl-year">${y}. Ausbildungsjahr</span>${badge}</div>
-                    <div class="tl-cols">
-                        <div><div class="tl-detail-lbl">Gehalt / Monat</div><div class="tl-detail-val">${(c.salaries[i] || 0).toLocaleString(mwlLoc())} €</div></div>
-                        <div><div class="tl-detail-lbl">Status</div><div class="tl-detail-val">${done ? 'Abgeschlossen' : active ? 'Läuft' : 'Ausstehend'}</div></div>
-                    </div>
-                </div>`;
+                const isCur = y === getCurrentYear(c);
+                return `<button class="payslip-tab-btn ${y === selYear ? 'active' : ''}" onclick="selectPayslipYear(${y})">
+                    ${y}. Jahr ${isCur ? '★' : ''}
+                </button>`;
             }).join('');
+
+            // Select tax class in dropdown
+            const stklSelect = document.getElementById('stklSelect');
+            if (stklSelect) stklSelect.value = appData.taxClass || 1;
+
+            const grossBase = (c.salaries && c.salaries[selYear - 1]) || 0;
+            const p = calculatePayslip(grossBase, c.benefits, appData.taxClass);
+
+            document.getElementById('payslipSection1Note').textContent = `${selYear}. Ausbildungsjahr`;
+            document.getElementById('payslipGrossBaseVal').textContent = eur(p.grossBase);
+            document.getElementById('payslipGrossBaseNote').textContent = `Grundvergütung im ${selYear}. Lehrjahr`;
+
+            // Render Gross Deductions (e.g. Leasingbike)
+            const grossDedWrap = document.getElementById('payslipGrossDeductionsList');
+            if (p.grossDeductionsList.length > 0) {
+                grossDedWrap.innerHTML = p.grossDeductionsList.map(item => `
+                    <div class="payslip-row">
+                        <div class="payslip-row-desc">
+                            <span class="payslip-row-icon">${item.icon}</span>
+                            <span>${esc(item.name)}</span>
+                            <span class="payslip-row-tag tag-gross-deduction">Gehaltsumwandlung</span>
+                            ${item.desc ? `<span class="payslip-row-note">${esc(item.desc)}</span>` : ''}
+                        </div>
+                        <div class="payslip-row-val minus">− ${eur(item.amount)}</div>
+                    </div>
+                `).join('');
+            } else {
+                grossDedWrap.innerHTML = '';
+            }
+
+            document.getElementById('payslipTaxableGrossVal').textContent = eur(p.taxableGross);
+
+            // Social & Tax
+            document.getElementById('payslipRvVal').textContent  = '− ' + eur(p.rv);
+            document.getElementById('payslipKvVal').textContent  = '− ' + eur(p.kv);
+            document.getElementById('payslipPvVal').textContent  = '− ' + eur(p.pv);
+            document.getElementById('payslipAlvVal').textContent = '− ' + eur(p.alv);
+            document.getElementById('payslipTaxVal').textContent = p.wageTax > 0 ? ('− ' + eur(p.wageTax)) : '0,00 €';
+            document.getElementById('payslipTaxCalc').textContent = p.wageTax > 0 ? `nach StKl ${appData.taxClass}` : `StKl ${appData.taxClass} (unter Freibetrag)`;
+            document.getElementById('payslipTotalDeductionsVal').textContent = '− ' + eur(p.totalDeductions);
+
+            // Grants & Net Deductions
+            const grantsSection = document.getElementById('payslipGrantsSection');
+            const grantsWrap = document.getElementById('payslipGrantsList');
+            const hasGrants = p.employerGrantsList.length > 0 || p.netDeductionsList.length > 0;
+
+            if (hasGrants) {
+                grantsSection.style.display = 'block';
+                let html = '';
+                p.employerGrantsList.forEach(item => {
+                    html += `
+                        <div class="payslip-row">
+                            <div class="payslip-row-desc">
+                                <span class="payslip-row-icon">${item.icon}</span>
+                                <span>${esc(item.name)}</span>
+                                <span class="payslip-row-tag tag-employer-grant">AG-Zuschuss</span>
+                                ${item.desc ? `<span class="payslip-row-note">${esc(item.desc)}</span>` : ''}
+                            </div>
+                            <div class="payslip-row-val plus">+ ${eur(item.amount)}</div>
+                        </div>`;
+                });
+                p.netDeductionsList.forEach(item => {
+                    html += `
+                        <div class="payslip-row">
+                            <div class="payslip-row-desc">
+                                <span class="payslip-row-icon">${item.icon}</span>
+                                <span>${esc(item.name)}</span>
+                                <span class="payslip-row-tag tag-net-deduction">Netto-Abzug</span>
+                                ${item.desc ? `<span class="payslip-row-note">${esc(item.desc)}</span>` : ''}
+                            </div>
+                            <div class="payslip-row-val minus">− ${eur(item.amount)}</div>
+                        </div>`;
+                });
+                grantsWrap.innerHTML = html;
+            } else {
+                grantsSection.style.display = 'none';
+            }
+
+            // Payout amount
+            document.getElementById('payslipPayoutAmount').textContent = eur(p.netPayout);
+            document.getElementById('payslipPayoutSub').textContent = `Überweisungsbetrag (${selYear}. Lehrjahr)`;
+
+            // Distribution bar
+            const totalForDist = p.grossBase + p.employerGrants;
+            if (totalForDist > 0) {
+                const netPct = Math.round((p.netPayout / totalForDist) * 100);
+                const socPct = Math.round((p.totalSocial / totalForDist) * 100);
+                const taxPct = Math.round((p.wageTax / totalForDist) * 100);
+                const bikePct = Math.max(0, 100 - netPct - socPct - taxPct);
+
+                document.getElementById('distSegNetto').style.width = netPct + '%';
+                document.getElementById('distSegSocial').style.width = socPct + '%';
+                document.getElementById('distSegTax').style.width = taxPct + '%';
+                document.getElementById('distSegBenefits').style.width = (p.grossDeductions > 0 ? bikePct : 0) + '%';
+                document.getElementById('payslipDistNetPercent').textContent = `${netPct}% Auszahlung`;
+
+                document.getElementById('distLegNettoVal').textContent = eur(p.netPayout);
+                document.getElementById('distLegSocialVal').textContent = eur(p.totalDeductions);
+
+                const bikeLeg = document.getElementById('distLegBikeItem');
+                if (p.grossDeductions > 0) {
+                    bikeLeg.style.display = 'flex';
+                    document.getElementById('distLegBikeVal').textContent = eur(p.grossDeductions);
+                } else {
+                    bikeLeg.style.display = 'none';
+                }
+            }
+
+            // Bike savings callout
+            const bikeCallout = document.getElementById('payslipBikeCallout');
+            if (p.grossDeductions > 0) {
+                bikeCallout.style.display = 'flex';
+                document.getElementById('payslipBikeCalloutText').innerHTML = `
+                    Durch die Gehaltsumwandlung von <strong>${eur(p.grossDeductions)}</strong> sinkt dein steuer- und SV-pflichtiges Brutto auf <strong>${eur(p.taxableGross)}</strong>.
+                    Dadurch sparst du rund <strong>${eur(p.svSavings)} an Sozialabgaben jeden Monat</strong>! Reale monatliche Belastung für dich: <strong>nur ${eur(p.grossDeductions - p.svSavings)}</strong> statt ${eur(p.grossDeductions)}.
+                `;
+            } else {
+                bikeCallout.style.display = 'none';
+            }
         }
 
+        function selectPayslipYear(year) {
+            appData.selectedPayslipYear = year;
+            saveData();
+            updatePayslip(getActive());
+        }
+
+        function changeTaxClass(stkl) {
+            appData.taxClass = parseInt(stkl) || 1;
+            saveData();
+            updateUI();
+        }
+
+        function printPayslip() {
+            window.print();
+        }
+
+        // ─── SALARY DEVELOPMENT GRID ───
         function updateSalary(c) {
+            const grid = document.getElementById('salaryGrid');
             if (!c) {
-                document.getElementById('salaryGrid').innerHTML = '<div class="data-cell"><div class="data-cell-lbl">Keine Daten</div><div class="data-cell-val">—</div></div>';
+                grid.innerHTML = '<div class="data-cell"><div class="data-cell-lbl">Keine Daten</div><div class="data-cell-val">—</div></div>';
                 return;
             }
             const dur = getContractDur(c);
             const years = getContractYears(c);
-            const total = (c.salaries || []).slice(0, years).reduce((a, b) => a + (b * 12), 0);
-            document.getElementById('salaryGrid').innerHTML =
-                Array.from({ length: years }, (_, i) => `
-                    <div class="data-cell">
-                        <div class="data-cell-lbl">${i + 1}. Jahr</div>
-                        <div class="data-cell-val">${(c.salaries[i] || 0).toLocaleString(mwlLoc())} €</div>
-                    </div>`).join('') +
-                `<div class="data-cell">
-                    <div class="data-cell-lbl">Gesamt (${dur} J.)</div>
-                    <div class="data-cell-val accent">${total.toLocaleString(mwlLoc())} €</div>
-                </div>`;
+            const totalGross = (c.salaries || []).slice(0, years).reduce((a, b) => a + (b * 12), 0);
+
+            grid.innerHTML = Array.from({ length: years }, (_, i) => {
+                const y = i + 1;
+                const gross = c.salaries[i] || 0;
+                const p = calculatePayslip(gross, c.benefits, appData.taxClass);
+                const isCur = y === getCurrentYear(c);
+                return `
+                    <div class="data-cell" style="${isCur ? 'border-color:var(--border-primary);background:var(--primary-fade)' : ''}">
+                        <div class="data-cell-lbl">${y}. Jahr ${isCur ? '(Aktuell)' : ''}</div>
+                        <div class="data-cell-val accent">${eur(p.netPayout)}</div>
+                        <div class="data-cell-sub">${eur(gross)} Brutto</div>
+                    </div>`;
+            }).join('') +
+            `<div class="data-cell">
+                <div class="data-cell-lbl">Gesamt (${dur} J.)</div>
+                <div class="data-cell-val">${eur(totalGross)}</div>
+                <div class="data-cell-sub">Brutto-Summe</div>
+            </div>`;
+        }
+
+        // ─── BENEFITS SYSTEM ───
+        function updateBenefits(c) {
+            const grid = document.getElementById('benefitsGrid');
+            if (!c || !c.benefits || !c.benefits.length) {
+                grid.innerHTML = `
+                    <div class="empty" style="grid-column:1/-1">
+                        <div class="empty-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg>
+                        </div>
+                        <p>Noch keine Benefits hinterlegt. Füge z.B. dein <strong>JobRad Leasingbike</strong>, das <strong>Deutschlandticket</strong> oder vermögenswirksame Leistungen hinzu.</p>
+                        <button class="btn btn-primary btn-sm" style="margin-top:1rem" onclick="openBenefitsModal()">Erstes Benefit anlegen</button>
+                    </div>`;
+                return;
+            }
+
+            grid.innerHTML = c.benefits.map((b, i) => {
+                let badgeClass = 'free';
+                let badgeText = 'Extra';
+                let amountClass = 'free';
+                let amountText = '0,00 €';
+
+                if (b.category === 'gross_deduction') {
+                    badgeClass = 'gross';
+                    badgeText = 'Gehaltsumwandlung';
+                    amountClass = 'minus';
+                    amountText = b.amount > 0 ? `− ${eur(b.amount)}` : '0,00 €';
+                } else if (b.category === 'employer_grant') {
+                    badgeClass = 'grant';
+                    badgeText = 'AG-Zuschuss';
+                    amountClass = 'plus';
+                    amountText = b.amount > 0 ? `+ ${eur(b.amount)}` : '0,00 €';
+                } else if (b.category === 'net_deduction') {
+                    badgeClass = 'net';
+                    badgeText = 'Netto-Abzug';
+                    amountClass = 'minus';
+                    amountText = b.amount > 0 ? `− ${eur(b.amount)}` : '0,00 €';
+                }
+
+                return `
+                    <div class="benefit-card">
+                        <div>
+                            <div class="benefit-card-top">
+                                <div class="benefit-card-left">
+                                    <div class="benefit-card-icon">${esc(b.icon || '🎁')}</div>
+                                    <div>
+                                        <div class="benefit-card-title">${esc(b.name)}</div>
+                                        <span class="benefit-badge ${badgeClass}">${badgeText}</span>
+                                    </div>
+                                </div>
+                                <div class="benefit-card-actions">
+                                    <button class="benefit-action-btn" onclick="editBenefit(${i})" title="Bearbeiten">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                    </button>
+                                    <button class="benefit-action-btn del" onclick="removeBenefit(${i})" title="Entfernen">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="benefit-card-mid">
+                                <div class="benefit-card-desc">${esc(b.description || 'Keine Beschreibung')}</div>
+                            </div>
+                        </div>
+                        <div class="benefit-card-bot">
+                            <span style="font-size:0.72rem;color:var(--text-faint)">Monatlich</span>
+                            <span class="benefit-amount ${amountClass}">${amountText}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openBenefitsModal() {
+            document.getElementById('benefitsForm').reset();
+            document.getElementById('benefitEditId').value = '';
+            document.getElementById('benefitModalTitle').textContent = 'Benefit hinzufügen';
+            document.getElementById('benefitCategory').value = 'gross_deduction';
+            document.getElementById('benefitIcon').value = '🚲';
+            updateBenefitHint();
+            document.getElementById('benefitsModal').classList.add('active');
+        }
+
+        function editBenefit(index) {
+            const c = getActive();
+            if (!c || !c.benefits[index]) return;
+            const b = c.benefits[index];
+            document.getElementById('benefitEditId').value = b.id || index;
+            document.getElementById('benefitModalTitle').textContent = 'Benefit bearbeiten';
+            document.getElementById('benefitName').value = b.name || '';
+            document.getElementById('benefitIcon').value = b.icon || '🎁';
+            document.getElementById('benefitCategory').value = b.category || 'gross_deduction';
+            document.getElementById('benefitAmount').value = b.amount || '';
+            document.getElementById('benefitDesc').value = b.description || '';
+            updateBenefitHint();
+            document.getElementById('benefitsModal').classList.add('active');
+        }
+
+        function closeBenefitsModal() {
+            document.getElementById('benefitsModal').classList.remove('active');
+        }
+
+        function applyBenefitPreset(type) {
+            if (type === 'bike') {
+                document.getElementById('benefitName').value = 'JobRad Leasingbike';
+                document.getElementById('benefitIcon').value = '🚲';
+                document.getElementById('benefitCategory').value = 'gross_deduction';
+                document.getElementById('benefitAmount').value = '45.00';
+                document.getElementById('benefitDesc').value = 'Gehaltsumwandlung — mindert Steuer- & SV-Brutto';
+            } else if (type === 'ticket') {
+                document.getElementById('benefitName').value = 'Deutschlandticket (Jobticket)';
+                document.getElementById('benefitIcon').value = '🚆';
+                document.getElementById('benefitCategory').value = 'employer_grant';
+                document.getElementById('benefitAmount').value = '49.00';
+                document.getElementById('benefitDesc').value = 'Steuerfreier Fahrtkostenzuschuss vom Betrieb';
+            } else if (type === 'vwl') {
+                document.getElementById('benefitName').value = 'VWL (Vermögenswirksame Leistungen)';
+                document.getElementById('benefitIcon').value = '💰';
+                document.getElementById('benefitCategory').value = 'employer_grant';
+                document.getElementById('benefitAmount').value = '26.59';
+                document.getElementById('benefitDesc').value = 'Zuschuss zum Bauspar- oder ETF-Sparplan';
+            } else if (type === 'food') {
+                document.getElementById('benefitName').value = 'Essenszuschuss';
+                document.getElementById('benefitIcon').value = '🥗';
+                document.getElementById('benefitCategory').value = 'employer_grant';
+                document.getElementById('benefitAmount').value = '50.00';
+                document.getElementById('benefitDesc').value = 'Steuerfreier Sachbezug für Kantine/Verpflegung';
+            } else if (type === 'gym') {
+                document.getElementById('benefitName').value = 'Fitness & Urban Sports';
+                document.getElementById('benefitIcon').value = '🏋️';
+                document.getElementById('benefitCategory').value = 'employer_grant';
+                document.getElementById('benefitAmount').value = '30.00';
+                document.getElementById('benefitDesc').value = 'Zuschuss zur sportlichen Gesundheitsförderung';
+            } else if (type === 'laptop') {
+                document.getElementById('benefitName').value = 'Arbeits-Laptop & Hardware';
+                document.getElementById('benefitIcon').value = '💻';
+                document.getElementById('benefitCategory').value = 'non_monetary';
+                document.getElementById('benefitAmount').value = '0';
+                document.getElementById('benefitDesc').value = 'Kostenloses modernes Arbeitsgerät';
+            }
+            updateBenefitHint();
+        }
+
+        function updateBenefitHint() {
+            const cat = document.getElementById('benefitCategory').value;
+            const hint = document.getElementById('benefitTypeHint');
+            if (cat === 'gross_deduction') {
+                hint.innerHTML = '💡 <strong>Gehaltsumwandlung:</strong> Ideal für Leasingbikes (JobRad). Die monatliche Rate wird vom Brutto abgezogen, wodurch sich deine Sozialabgaben reduzieren!';
+            } else if (cat === 'employer_grant') {
+                hint.innerHTML = '🟢 <strong>Arbeitgeber-Zuschuss:</strong> Zahlt dein Betrieb steuer- und abgabenfrei zusätzlich aus (z.B. Jobticket, Fahrtkostenzuschuss, VWL).';
+            } else if (cat === 'net_deduction') {
+                hint.innerHTML = '🔻 <strong>Netto-Abzug:</strong> Wird nach Steuern und Abgaben direkt von deinem Auszahlungsbetrag abgezogen (z.B. Kantinenabrechnung, privater Sparanteil).';
+            } else {
+                hint.innerHTML = '🎁 <strong>Kostenloses Extra / Sachbezug:</strong> Keine monetäre Verrechnung auf deiner Abrechnung (z.B. Firmenlaptop, Gleitzeit).';
+            }
+        }
+
+        function saveBenefit(e) {
+            e.preventDefault();
+            const c = getActive();
+            if (!c) return;
+
+            const editId = document.getElementById('benefitEditId').value;
+            const name = document.getElementById('benefitName').value.trim();
+            const category = document.getElementById('benefitCategory').value;
+            const amount = parseFloat(document.getElementById('benefitAmount').value) || 0;
+            const icon = document.getElementById('benefitIcon').value.trim() || '🎁';
+            const desc = document.getElementById('benefitDesc').value.trim();
+
+            if (editId) {
+                // Update existing
+                const idx = c.benefits.findIndex(b => b.id === editId);
+                if (idx !== -1) {
+                    c.benefits[idx] = { id: editId, name, category, amount, icon, description: desc };
+                } else if (c.benefits[parseInt(editId)]) {
+                    c.benefits[parseInt(editId)] = { id: 'b_' + Date.now(), name, category, amount, icon, description: desc };
+                }
+                showToast('Benefit aktualisiert', 'success');
+            } else {
+                // Add new
+                c.benefits.push({
+                    id: 'b_' + Date.now(),
+                    name, category, amount, icon, description: desc
+                });
+                showToast('Benefit hinzugefügt', 'success');
+            }
+
+            saveData();
+            updateUI();
+            closeBenefitsModal();
+        }
+
+        function removeBenefit(index) {
+            const c = getActive();
+            if (!c) return;
+            const b = c.benefits[index];
+            if (!confirm(`Benefit "${b.name}" wirklich entfernen?`)) return;
+            c.benefits.splice(index, 1);
+            saveData();
+            updateUI();
+            showToast('Benefit entfernt', 'success');
         }
 
         // ─── DASHBOARD VACATION SYNC ───
@@ -1677,7 +2779,6 @@
                 const mode = v.mode || 'days';
                 const currentYear = new Date().getFullYear();
 
-                // Direkt aus Einträgen berechnen (kein Stale-Cache-Problem)
                 const vacEntries = (data.entries || []).filter(e =>
                     e.type === 'vacation' &&
                     e.expected > 0 &&
@@ -1697,28 +2798,26 @@
 
         function updateVacation(c) {
             const dash = getDashboardVacation();
-            const total = dash ? dash.total : (c ? (c.vacationDays || 0) : 0);
+            const total = dash ? dash.total : (c ? (c.vacationDays || 30) : 30);
             const used  = dash ? dash.used  : (c ? (c.vacationUsed || 0) : 0);
-            const available = total - used;
+            const available = Math.max(0, total - used);
             const pct = total > 0 ? Math.round((used / total) * 100) : 0;
 
-            document.getElementById('vacationTotal').textContent    = total;
-            document.getElementById('vacationUsedVal').textContent  = used;
-            document.getElementById('vacationAvailable').textContent = Math.max(0, available);
+            document.getElementById('vacationTotal').textContent = total;
+            document.getElementById('vacationUsedVal').textContent = used;
+            document.getElementById('vacationAvailable').textContent = available;
             document.getElementById('vacationProgressPercent').textContent = pct + '%';
             document.getElementById('vacationProgressBar').style.width = Math.min(100, pct) + '%';
 
-            // Sync status badge
             const row  = document.getElementById('vacSyncRow');
             const icon = document.getElementById('vacSyncIcon');
             const lbl  = document.getElementById('vacSyncLabel');
-            const btn  = document.getElementById('vacActionBtn');
             const btnLbl = document.getElementById('vacActionLabel');
 
             if (dash) {
                 row.className = 'vac-sync-row';
                 icon.innerHTML = '<polyline points="20 6 9 17 4 12"/>';
-                lbl.textContent = 'Live aus Dashboard ' + dash.year + ' — ' + (dash.mode === 'hours' ? 'Stunden-Modus' : 'Tage-Modus');
+                lbl.textContent = `Live aus Dashboard (${dash.year}) — ${dash.mode === 'hours' ? 'Stunden-Modus' : 'Tage-Modus'}`;
                 if (btnLbl) btnLbl.textContent = 'Im Dashboard buchen';
             } else {
                 row.className = 'vac-sync-row disconnected';
@@ -1736,47 +2835,157 @@
             }
         }
 
-        function updateBenefits(c) {
-            const grid = document.getElementById('benefitsGrid');
-            if (!c || !c.benefits.length) {
-                grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/></svg></div><p>Noch keine Benefits hinterlegt — füge z.B. Jobticket, Essenszuschuss oder VWL hinzu.</p></div>';
-                return;
-            }
-            grid.innerHTML = c.benefits.map((b, i) => `
-                <div class="benefit-tile" title="${esc(b.description || '')}" onclick="removeBenefit(${i})">
-                    <div class="benefit-tile-icon">${b.icon || '🎁'}</div>
-                    <div class="benefit-tile-name">${esc(b.name)}</div>
-                </div>`).join('');
+        function adjustVacation() {
+            const c = getActive();
+            document.getElementById('vacationUsedInput').value = c ? (c.vacationUsed || 0) : 0;
+            document.getElementById('vacationModal').classList.add('active');
+        }
+        function closeVacationModal() {
+            document.getElementById('vacationModal').classList.remove('active');
+        }
+        function saveVacation() {
+            const c = getActive();
+            if (!c) return;
+            const val = parseInt(document.getElementById('vacationUsedInput').value) || 0;
+            c.vacationUsed = Math.max(0, Math.min(val, c.vacationDays || 30));
+            saveData(); updateUI(); closeVacationModal();
+            showToast('Urlaub aktualisiert', 'success');
         }
 
+        // ─── TIMELINE UPDATE ───
+        function updateTimeline(c) {
+            const el = document.getElementById('contractTimeline');
+            if (!c || !c.startDate) {
+                el.innerHTML = '<div class="empty"><p>Bitte fülle deine Vertragsdaten aus, um den Ausbildungsverlauf zu sehen.</p></div>';
+                return;
+            }
+            const totalYears = getContractYears(c);
+            const cy = getCurrentYear(c);
+
+            el.innerHTML = Array.from({ length: totalYears }, (_, i) => {
+                const y = i + 1;
+                const done = y < cy, active = y === cy;
+                const badge = active ? '<span class="tl-badge active">Aktuell</span>'
+                    : done ? '<span class="tl-badge done">Abgeschlossen</span>'
+                    : '<span class="tl-badge">Geplant</span>';
+                const gross = c.salaries[i] || 0;
+                const p = calculatePayslip(gross, c.benefits, appData.taxClass);
+
+                return `
+                    <div class="tl-item ${done ? 'done' : ''}">
+                        <div class="tl-head">
+                            <span class="tl-year">${y}. Ausbildungsjahr</span>
+                            ${badge}
+                        </div>
+                        <div class="tl-cols">
+                            <div>
+                                <div class="tl-detail-lbl">Auszahlungsbetrag (Netto)</div>
+                                <div class="tl-detail-val accent">${eur(p.netPayout)}</div>
+                            </div>
+                            <div>
+                                <div class="tl-detail-lbl">Grundvergütung (Brutto)</div>
+                                <div class="tl-detail-val">${eur(gross)}</div>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        // ─── DETAILS SIDEBAR ───
         function updateDetails(c) {
             const company = c ? (c.company || '—') : '—';
             const start = c && c.startDate ? new Date(c.startDate).toLocaleDateString(mwlLoc()) : '—';
             const end = c && c.endDate ? new Date(c.endDate).toLocaleDateString(mwlLoc()) : '—';
             document.getElementById('contractDetailsPanel').innerHTML = `
                 <div class="detail-row"><span class="detail-lbl">Unternehmen</span><span class="detail-val" title="${esc(company)}">${esc(company)}</span></div>
+                <div class="detail-row"><span class="detail-lbl">Position</span><span class="detail-val" title="${esc(c ? c.jobTitle : '')}">${esc(c ? c.jobTitle : '—')}</span></div>
                 <div class="detail-row"><span class="detail-lbl">Start</span><span class="detail-val">${start}</span></div>
                 <div class="detail-row"><span class="detail-lbl">Ende</span><span class="detail-val">${end}</span></div>
-                <div class="detail-row"><span class="detail-lbl">Arbeitszeit</span><span class="detail-val">${c ? c.weeklyHours : 0} h/Wo</span></div>
-                <div class="detail-row"><span class="detail-lbl">Urlaub</span><span class="detail-val">${c ? c.vacationDays : 0} Tage/Jahr</span></div>`;
+                <div class="detail-row"><span class="detail-lbl">Arbeitszeit</span><span class="detail-val">${c ? c.weeklyHours : 0} h/Woche</span></div>
+                <div class="detail-row"><span class="detail-lbl">Urlaub</span><span class="detail-val">${c ? c.vacationDays : 0} Tage/Jahr</span></div>
+                <div class="detail-row"><span class="detail-lbl">Dauer</span><span class="detail-val">${c ? c.durationYears : 3} Jahre</span></div>`;
         }
 
-        // ─── SALARY FIELDS (DYNAMIC) ───
+        // ─── JOBS LIST SWITCHER ───
+        function updateJobsList() {
+            const list = document.getElementById('jobsList');
+            const badge = document.getElementById('jobsCountBadge');
+            if (!appData.contracts.length) {
+                list.innerHTML = '<div class="jobs-empty">Noch kein Job erfasst.</div>';
+                badge.textContent = '0 Verträge';
+                return;
+            }
+            badge.textContent = appData.contracts.length === 1 ? '1 Vertrag' : `${appData.contracts.length} Verträge`;
+            const activeId = appData.activeContractId || appData.contracts[0].id;
+            const canDelete = appData.contracts.length > 1;
+
+            list.innerHTML = appData.contracts.map(c => `
+                <div class="job-item ${c.id === activeId ? 'active' : ''}" onclick="setActiveContract('${c.id}')">
+                    <div class="job-dot"></div>
+                    <div class="job-info">
+                        <div class="job-company">${esc(c.company || 'Neuer Vertrag')}</div>
+                        <div class="job-title-label">${esc(c.jobTitle || 'Ausbildung')}</div>
+                    </div>
+                    ${canDelete ? `<button class="job-del" onclick="deleteContract('${c.id}',event)" title="Löschen">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>` : ''}
+                </div>`).join('');
+        }
+
+        function addNewJob() {
+            const c = {
+                id: 'c_' + Date.now(),
+                company: '', jobTitle: '',
+                startDate: '', endDate: '',
+                weeklyHours: 40, vacationDays: 30,
+                durationYears: 3,
+                salaries: [1100, 1180, 1260],
+                benefits: [], vacationUsed: 0
+            };
+            appData.contracts.push(c);
+            appData.activeContractId = c.id;
+            saveData();
+            updateUI();
+            openContractModal();
+        }
+
+        function setActiveContract(id) {
+            appData.activeContractId = id;
+            const c = getActive();
+            if (c) appData.selectedPayslipYear = getCurrentYear(c);
+            saveData();
+            updateUI();
+        }
+
+        function deleteContract(id, e) {
+            e.stopPropagation();
+            if (appData.contracts.length <= 1) {
+                showToast('Mindestens ein Vertrag muss bestehen bleiben', 'error');
+                return;
+            }
+            if (!confirm('Diesen Vertrag und alle zugehörigen Daten unwiderruflich löschen?')) return;
+            appData.contracts = appData.contracts.filter(c => c.id !== id);
+            if (appData.activeContractId === id) appData.activeContractId = appData.contracts[0].id;
+            saveData();
+            updateUI();
+            showToast('Vertrag gelöscht', 'success');
+        }
+
+        // ─── CONTRACT MODAL ───
         function renderSalaryFields(savedValues) {
             const sel = document.getElementById('durationYears');
             const dur = parseFloat(sel ? sel.value : 3) || 3;
             const years = Math.ceil(dur);
             const wrap = document.getElementById('salaryFieldsWrap');
             if (!wrap) return;
-            const cols = years <= 2 ? 'repeat(2,1fr)' : 'repeat(3,1fr)';
-            wrap.style.cssText = `display:grid;gap:0.7rem;grid-template-columns:${cols}`;
+            const cols = years <= 2 ? 'repeat(2,1fr)' : (years === 3 ? 'repeat(3,1fr)' : 'repeat(4,1fr)');
+            wrap.style.cssText = `display:grid;gap:0.75rem;grid-template-columns:${cols}`;
             wrap.innerHTML = Array.from({ length: years }, (_, i) => {
                 const val = (savedValues && savedValues[i] != null && savedValues[i] !== 0) ? savedValues[i] : '';
-                return `<input type="number" class="form-input" id="salary_y_${i + 1}" placeholder="${i + 1}. Jahr" value="${val}" min="0">`;
+                return `<input type="number" class="form-input" id="salary_y_${i + 1}" placeholder="${i + 1}. Jahr (€)" value="${val}" min="0">`;
             }).join('');
         }
 
-        // ─── CONTRACT MODAL ───
         function openContractModal() {
             const c = getActive();
             document.getElementById('company').value      = c ? (c.company || '') : '';
@@ -1790,7 +2999,10 @@
             renderSalaryFields(c ? c.salaries : []);
             document.getElementById('contractModal').classList.add('active');
         }
-        function closeContractModal() { document.getElementById('contractModal').classList.remove('active'); }
+
+        function closeContractModal() {
+            document.getElementById('contractModal').classList.remove('active');
+        }
 
         function saveContract(e) {
             e.preventDefault();
@@ -1809,91 +3021,10 @@
                 const el = document.getElementById('salary_y_' + (i + 1));
                 return el ? (parseFloat(el.value) || 0) : 0;
             });
-            saveData(); updateUI(); closeContractModal();
+            saveData();
+            updateUI();
+            closeContractModal();
             showToast('Vertragsdaten gespeichert', 'success');
-        }
-
-        // ─── CALCULATOR MODAL ───
-        function openCalculatorModal() {
-            const c = getActive();
-            document.getElementById('bruttoInput').value = c ? (c.salaries[getCurrentYear(c) - 1] || 0) : 0;
-            calculateNet();
-            document.getElementById('calculatorModal').classList.add('active');
-        }
-        function closeCalculatorModal() { document.getElementById('calculatorModal').classList.remove('active'); }
-
-        // Sprache der Zahlformate. Stand vorher fuenfmal wortgleich im File.
-        const mwlLoc = () => window.mwlLocale ? window.mwlLocale()
-            : (document.documentElement.lang === 'en' ? 'en-GB' : 'de-DE');
-
-        // Betrag mit Tausendertrennung und zwei Nachkommastellen, wie der Rest
-        // der Seite. Kein Vorzeichen auf der Null - "- 0,00 EUR" liest sich wie
-        // ein Fehler.
-        const eur = n => (n < 0 ? String.fromCharCode(0x2212) + String.fromCharCode(0xA0) : '')
-            + Math.abs(n).toLocaleString(mwlLoc(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-            + ' €';
-
-        // Arbeitnehmer-Anteil an der Sozialversicherung (RV + KV + PV + ALV),
-        // gerundet. Bewusst EINE Zahl statt einer Aufschluesselung nach Zweigen:
-        // die Beitragssaetze aendern sich jaehrlich, und eine Nachkommastelle mehr
-        // wuerde eine Genauigkeit behaupten, die hier niemand pflegt.
-        const SOZIALABGABEN_ANTEIL = 0.20;
-
-        // Die Lohnsteuer wird NICHT geschaetzt. Sie haengt an der Steuerklasse, und
-        // eine erfundene Formel dafuer ist schlimmer als eine offene Position -
-        // sie sieht aus wie ein Ergebnis. Hier stand frueher 5 % auf alles ueber
-        // 1300 EUR, dazu zwei Auswahlfelder (Steuerklasse, Bundesland), die nie
-        // ausgelesen wurden und den Eindruck erweckten, sie flossen ein.
-        function calculateNet() {
-            const brutto = parseFloat(document.getElementById('bruttoInput').value) || 0;
-            const sozial = brutto * SOZIALABGABEN_ANTEIL;
-            document.getElementById('socialResult').textContent = eur(-sozial);
-            document.getElementById('nettoResult').textContent  = eur(brutto - sozial);
-        }
-
-        // ─── BENEFITS MODAL ───
-        function openBenefitsModal() {
-            document.getElementById('benefitsForm').reset();
-            document.getElementById('benefitsModal').classList.add('active');
-        }
-        function closeBenefitsModal() { document.getElementById('benefitsModal').classList.remove('active'); }
-
-        function saveBenefit(e) {
-            e.preventDefault();
-            const c = getActive();
-            if (!c) return;
-            c.benefits.push({
-                id: Date.now().toString(),
-                name:        document.getElementById('benefitName').value,
-                description: document.getElementById('benefitDesc').value,
-                icon:        document.getElementById('benefitIcon').value || '🎁'
-            });
-            saveData(); updateUI(); closeBenefitsModal();
-            showToast('Benefit hinzugefügt', 'success');
-        }
-
-        function removeBenefit(index) {
-            const c = getActive();
-            if (!c || !confirm('Benefit entfernen?')) return;
-            c.benefits.splice(index, 1);
-            saveData(); updateUI();
-        }
-
-        // ─── VACATION MODAL ───
-        function adjustVacation() {
-            const c = getActive();
-            document.getElementById('vacationUsedInput').value = c ? (c.vacationUsed || 0) : 0;
-            document.getElementById('vacationModal').classList.add('active');
-        }
-        function closeVacationModal() { document.getElementById('vacationModal').classList.remove('active'); }
-
-        function saveVacation() {
-            const c = getActive();
-            if (!c) return;
-            const val = parseInt(document.getElementById('vacationUsedInput').value) || 0;
-            c.vacationUsed = Math.max(0, Math.min(val, c.vacationDays));
-            saveData(); updateUI(); closeVacationModal();
-            showToast('Urlaub aktualisiert', 'success');
         }
 
         // ─── EXPORT ───
@@ -1907,33 +3038,34 @@
             a.download = `vertrag-${(c && c.company ? c.company.toLowerCase().replace(/\s+/g,'-') : 'export')}-${new Date().toISOString().split('T')[0]}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            showToast('Daten exportiert', 'success');
+            showToast('Vertragsdaten exportiert', 'success');
         }
 
-        // ─── TOAST ───
+        // ─── TOAST NOTIFICATION ───
         function showToast(msg, type = 'success') {
             const el = document.createElement('div');
             el.className = `toast toast-${type}`;
             const icon = type === 'success'
-                ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
-                : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+                ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+                : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
             el.innerHTML = icon + esc(msg);
             document.body.appendChild(el);
-            setTimeout(() => el.remove(), 3000);
+            setTimeout(() => el.remove(), 3200);
         }
 
-        // ─── KEYBOARD / BACKDROP ───
+        // ─── KEYBOARD & MODAL CLICKS ───
         document.addEventListener('keydown', e => {
             if (e.key === 'Escape') {
-                closeContractModal(); closeCalculatorModal();
-                closeBenefitsModal(); closeVacationModal();
+                closeContractModal();
+                closeBenefitsModal();
+                closeVacationModal();
             }
         });
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('active'); });
         });
 
-        // Live-Sync: tg_pro_data Änderungen (Urlaub im Dashboard gebucht) sofort übernehmen
+        // ─── LIVE REACTION TO STORAGE & VISIBILITY ───
         window.addEventListener('storage', function(e) {
             if (e.key === 'tg_pro_data') updateVacation(getActive());
         });
@@ -1941,6 +3073,7 @@
             if (!document.hidden) updateVacation(getActive());
         });
 
+        // Initialize
         loadData();
     </script>
 </body>
