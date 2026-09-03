@@ -19,93 +19,38 @@
 // Schultag-Vorgabe verletzt. Punkt 2 und 3 sind Quelltext-Behauptungen; sie tragen
 // jeweils eine Gegenprobe, damit ein leerer Lauf nicht als bestanden durchgeht.
 
-import { readFileSync } from 'node:fs';
-import { createContext, runInContext } from 'node:vm';
+import { ladeEngine, pruefrahmen, quelltext, funktion, ohneKommentare } from './berichtsheft-laden.mjs';
 
-// Zeilenenden vereinheitlichen: git liefert die Datei je nach autocrlf mit CRLF
-// aus, und die mehrzeiligen Marker unten wuerden dann keinen Treffer finden —
-// der Test faellt aus, ohne dass am Code etwas falsch ist.
-const HTML = readFileSync(new URL('../pages/berichtsheft/index.html', import.meta.url), 'utf8')
-    .split('\r\n').join('\n');
-
-let bestanden = 0, fehlgeschlagen = 0;
-const gruppe = (t) => console.log('\n▶ ' + t);
-function ok(bed, name, detail) {
-    if (bed) { bestanden++; console.log('  ok    ' + name); }
-    else { fehlgeschlagen++; console.log('  FEHL  ' + name + (detail ? '\n        ' + detail : '')); }
-}
-
-function schnitt(startMarker, endMarker) {
-    const i = HTML.indexOf(startMarker);
-    if (i < 0) throw new Error('Marker nicht gefunden: ' + startMarker);
-    const j = HTML.indexOf(endMarker, i);
-    if (j < 0) throw new Error('Endmarker nicht gefunden: ' + endMarker);
-    return HTML.slice(i, j);
-}
-
-// ── Kommentare strippen, bevor irgendetwas ueber den Quelltext behauptet wird ──
-// Die Dateikoepfe hier erklaeren ausdruecklich, was NICHT mehr drinsteht. Ein
-// Test auf den Wortlaut wuerde sonst seine eigene Erklaerung finden.
-function ohneKommentare(js) {
-    return js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^[ \t]*\/\/.*$/gm, '');
-}
+const { gruppe, ok, abschluss } = pruefrahmen();
 
 // ═══════════════════════════════════════════════════════════════════════
 // 1. Cloud-Pfad: die Einstellung des Nutzers gewinnt gegen die Antwort
 // ═══════════════════════════════════════════════════════════════════════
 
-const src = [
-    schnitt('const PROFESSIONS = {', '// ═══════════════════════════════════════\n            // FULL WEEK GENERATION'),
-    schnitt('const CLOUD_FORM = {', '// ═══════════════════════════════════════\n            // GENERATE-BUTTON PROGRESS-UI'),
-].join('\n');
-
-// Was der Ausschnitt nicht mitbringt. Bewusst duenn: alles, was der Schultag-Pfad
-// wirklich braucht, soll aus der Quelle kommen und nicht aus einer Attrappe.
-const vorspann = `
-    const DAY_STATUS_LABELS = { krank: { short: 'Krank' }, urlaub: { short: 'Urlaub' }, feiertag: { short: 'Feiertag' } };
-    const AI_BRAIN = { universalVerbs: ['durchführen', 'bearbeiten', 'vorbereiten', 'kontrollieren', 'dokumentieren'] };
-    const CLOUD_PROXY = 'https://example.invalid';
-    const RATE_LIMIT_STORAGE_KEY = 'rl';
-    const RATE_LIMIT_DAILY = 20;
-    const state = { customProfession: '', usedPhrases: new Set(), dayStatus: {} };
-    const localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
-    function bhIcon() { return ''; }
-    function getCalendarWeek() { return 35; }
-    function _trackingHoursForDay() { return 0; }
-    function _loadAufgabenForWeek() { return null; }
-    function _buildTrackingPayload() { return null; }
-    function _customContextEntries() { return []; }
-    function showToast() {}
-    function _updateRateLimitUI() {}
-    // Die Zielsprache haengt an document.documentElement.lang. Voreinstellung hier:
-    // deutsche Seite; der Sprachtest unten schaltet sie um.
-    const document = { documentElement: { lang: 'de' } };
-    globalThis.__fetchAntwort = null;
-    async function fetch() {
-        return {
-            ok: true,
-            status: 200,
-            headers: { get: () => null },
-            json: async () => globalThis.__fetchAntwort,
-            text: async () => JSON.stringify(globalThis.__fetchAntwort),
-        };
-    }
-`;
-
-const ctx = createContext({ console });
-runInContext(
-    vorspann + src +
-    '\n;globalThis.__x = { generateWithCloud, generateDayEntries, CLOUD_FORM, _buildCloudPrompt, PROFESSIONS, doc: document };',
-    ctx
-);
-const X = ctx.__x;
-
 // Die Attrappe antwortet im Gemini-Umschlag; so kommt sie auch vom Worker zurueck.
+let fetchAntwort = null;
 function antwortMit(daysData) {
-    ctx.__fetchAntwort = {
-        candidates: [{ content: { parts: [{ text: JSON.stringify(daysData) }] } }],
-    };
+    fetchAntwort = { candidates: [{ content: { parts: [{ text: JSON.stringify(daysData) }] } }] };
 }
+
+const E = ladeEngine({
+    fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: async () => fetchAntwort,
+        text: async () => JSON.stringify(fetchAntwort),
+    }),
+});
+
+const X = {
+    ...E.CLOUD,          // generateWithCloud, _buildCloudPrompt, CLOUD_FORM
+    ...E.intern,         // generateDayEntries
+    PROFESSIONS: E.BERUFE.PROFESSIONS,
+    // Die Zielsprache haengt an document.documentElement.lang; der Sprachtest
+    // unten schaltet sie um.
+    doc: E.sandbox.document,
+};
 
 const BASIS = {
     yearNum: 2,
@@ -253,8 +198,9 @@ ok(ohneSchulBeispiel.length === 0,
 
 gruppe('Einfügen setzt den Schultag-Schalter des Tages');
 
-const fillForm = ohneKommentare(schnitt('function _doFillForm(week) {', 'function fillSingleDay('));
-const fillDay = ohneKommentare(schnitt('function _fillSingleDay(dayData, dayIndex) {', '// ═══════════════════════════════════════\n            // PUBLIC API'));
+const fillForm = ohneKommentare(funktion('ais-studio.js', '_doFillForm'));
+const fillDay = ohneKommentare(funktion('ais-studio.js', '_fillSingleDay'));
+const tagesmodus = ohneKommentare(quelltext('bh-tagesmodus.js'));
 
 ok(/daily_school_\$\{day\.index\}/.test(fillForm) && /\.checked = !!day\.isSchoolDay/.test(fillForm),
     '_doFillForm hakt daily_school_<i> nach day.isSchoolDay an');
@@ -262,9 +208,9 @@ ok(/daily_school_\$\{dayIndex\}/.test(fillDay) && /\.checked = !!dayData\.isScho
     '_fillSingleDay tut dasselbe für den Einzeltag');
 // Gegenprobe: die Schalter-Id existiert ueberhaupt im Markup, sonst haken die
 // Zeilen oben ins Leere — genau die Falle aus CLAUDE.md ("KEIN ELEMENT").
-ok(HTML.includes('id="daily_school_${i}"'),
+ok(tagesmodus.includes('id="daily_school_${i}"'),
     'renderDailyFields legt daily_school_<i> wirklich an');
-ok(/function toggleSchoolDay\(/.test(HTML),
+ok(/function toggleSchoolDay\(/.test(tagesmodus),
     'toggleSchoolDay existiert (die Klasse is-school-day kommt von dort)');
 
 gruppe('Das ausgeblendete Wochenfeld schreibt nichts mehr in den Bericht');
@@ -273,10 +219,10 @@ ok(!fillForm.includes('reportSchool'),
     '_doFillForm fasst #reportSchool nicht mehr an');
 // Gegenprobe: das Feld ist im Tagesmodus wirklich ausgeblendet — nur deshalb ist
 // ein Schreibzugriff dort ein Fehler.
-ok(/schoolGroup\.style\.display = 'none'/.test(ohneKommentare(HTML)),
+ok(/schoolGroup\.style\.display = 'none'/.test(tagesmodus),
     'setMode blendet #schoolFieldGroup im Tagesmodus wirklich aus');
 
-const saveReport = ohneKommentare(schnitt('function saveReport(event) {', 'function editReport('));
+const saveReport = ohneKommentare(funktion('bh-bericht.js', 'saveReport'));
 ok(/school: currentMode === 'daily' \? '' :/.test(saveReport),
     'saveReport übernimmt das Wochenfeld nur im Wochenmodus');
 ok(/dailySchool: dailySchool/.test(saveReport),
@@ -284,18 +230,19 @@ ok(/dailySchool: dailySchool/.test(saveReport),
 
 gruppe('Entwurf verliert die Schultage nicht');
 
-const draft = ohneKommentare(schnitt('function saveDraft() {', 'function clearDraft()'));
+const draft = ohneKommentare(funktion('bh-ui-helfer.js', 'saveDraft'));
+const restore = ohneKommentare(funktion('bh-ui-helfer.js', 'restoreDraft'));
 ok(/dailySchool: currentMode === 'daily' \? getDailySchoolFromForm\(\) : null/.test(draft),
     'saveDraft sichert die Schultag-Schalter');
-ok(/setDailyFieldsFromData\(draft\.dailyActivities, draft\.dailyHours, draft\.dailySchool\)/.test(draft),
+ok(/setDailyFieldsFromData\(draft\.dailyActivities, draft\.dailyHours, draft\.dailySchool\)/.test(restore),
     'restoreDraft gibt sie an setDailyFieldsFromData weiter');
 // Gegenprobe: setDailyFieldsFromData wertet das dritte Argument auch aus.
-const setFields = ohneKommentare(schnitt('function setDailyFieldsFromData(', 'function combineDailyToWeeklyText'));
+const setFields = ohneKommentare(funktion('bh-tagesmodus.js', 'setDailyFieldsFromData'));
 ok(/dailySchool\[day\.key\]/.test(setFields) && /toggleSchoolDay\(cb\)/.test(setFields),
     'setDailyFieldsFromData hakt die Schalter an und aktualisiert die Optik');
 
 gruppe('Der Einfüge-Weg erzwingt wirklich den Tagesmodus');
-const ensure = ohneKommentare(schnitt('function _ensureModalDailyMode(callback) {', 'function _doFillForm('));
+const ensure = ohneKommentare(funktion('ais-studio.js', '_ensureModalDailyMode'));
 ok(/if \(currentMode !== 'daily'\) setMode\('daily'\)/.test(ensure),
     'die Funktion hält, was ihr Name verspricht');
 
@@ -364,5 +311,4 @@ ok(muellFehler !== null, 'ein unbekannter Tagesname wird nicht geraten', 'kein F
 ok(/Keine gültigen Tage/.test(muellFehler || ''),
     'und der Fehler sagt, was los ist', String(muellFehler));
 
-console.log(`\n${bestanden} bestanden, ${fehlgeschlagen} fehlgeschlagen`);
-process.exit(fehlgeschlagen > 0 ? 1 : 0);
+abschluss('Berufsschultage');

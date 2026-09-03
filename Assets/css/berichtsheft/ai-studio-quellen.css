@@ -1,0 +1,552 @@
+/* ai-studio-quellen.css — Teil von /berichtsheft/
+   Aufgaben-Pipe, Tracking-Streifen aus der Zeiterfassung, Tag-Status,
+   Sonntags-Erinnerung.
+   Herausgeloest aus pages/berichtsheft/index.html. */
+
+/* ═══ Aufgaben-Pipe Banner (Wochenansicht → Berichtsheft) ═══ */
+/* Zahl im Sub-Text der Quellen-Karten (Aufgaben-Anzahl) */
+.ais-track-hdr-sub span {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.ais-aufgaben-toggle {
+    position: relative;
+    flex-shrink: 0;
+    display: inline-block;
+    width: 38px;
+    height: 22px;
+    cursor: pointer;
+}
+
+.ais-aufgaben-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.ais-aufgaben-toggle-sw {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 22px;
+    transition: background 0.2s ease;
+}
+
+.ais-aufgaben-toggle-sw::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    left: 3px;
+    top: 3px;
+    background: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.ais-aufgaben-toggle input:checked+.ais-aufgaben-toggle-sw {
+    background: var(--primary);
+}
+
+.ais-aufgaben-toggle input:checked+.ais-aufgaben-toggle-sw::before {
+    transform: translateX(16px);
+}
+
+.ais-aufgaben-toggle input:focus-visible+.ais-aufgaben-toggle-sw {
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.35);
+}
+
+/* ═══ Tracking-Pipe: Wochen-Strip aus der echten Zeiterfassung ═══ */
+.ais-track {
+    margin: 10px 16px 0;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.ais-track.active {
+    border-color: rgba(var(--primary-rgb), 0.35);
+}
+
+.ais-track-hdr {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+}
+
+.ais-track-hdr-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--primary-rgb), 0.12);
+    border-radius: 10px;
+    color: var(--primary);
+}
+
+.ais-track-hdr-svg {
+    width: 19px;
+    height: 19px;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ais-track-hdr-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.ais-track-hdr-title {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.3;
+}
+
+.ais-track-kw {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.66rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+}
+
+.ais-track-hdr-sub {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    line-height: 1.35;
+}
+
+.ais-track-body {
+    display: none;
+    border-top: 1px solid var(--border-light);
+}
+
+.ais-track.active .ais-track-body {
+    display: block;
+}
+
+/* Ein Tag = eine Zeile: Kürzel · Stunden · Chips */
+.ais-track-day {
+    display: grid;
+    grid-template-columns: 78px 1fr;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ais-track-day:last-child {
+    border-bottom: none;
+}
+
+.ais-track-day.is-empty {
+    opacity: 0.45;
+}
+
+.ais-track-day-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-top: 2px;
+}
+
+.ais-track-day-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.ais-track-day-date {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--text-dim);
+}
+
+.ais-track-day-hours {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.ais-track-day-badge {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ais-track-day-badge.st-urlaub {
+    background: rgba(16, 185, 129, 0.14);
+    color: #6ee7b7;
+}
+
+.ais-track-day-badge.st-krank {
+    background: rgba(239, 68, 68, 0.14);
+    color: #fca5a5;
+}
+
+.ais-track-day-badge.st-feiertag {
+    background: rgba(251, 191, 36, 0.14);
+    color: #fcd34d;
+}
+
+.ais-track-day-badge.st-schule {
+    background: rgba(59, 130, 246, 0.14);
+    color: #93c5fd;
+}
+
+.ais-track-day-badge.st-frei {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-dim);
+}
+
+.ais-track-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: flex-start;
+}
+
+.ais-track-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 5px 9px 5px 7px;
+    background: rgba(var(--primary-rgb), 0.1);
+    border: 1px solid rgba(var(--primary-rgb), 0.3);
+    border-radius: 8px;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.ais-track-chip:hover {
+    border-color: rgba(var(--primary-rgb), 0.55);
+}
+
+.ais-track-chip:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.25);
+}
+
+.ais-track-chip.off {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: var(--border-light);
+    color: var(--text-dim);
+    text-decoration: line-through;
+    text-decoration-color: rgba(255, 255, 255, 0.25);
+}
+
+.ais-track-chip-mark {
+    flex-shrink: 0;
+    width: 13px;
+    height: 13px;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    color: var(--primary);
+}
+
+.ais-track-chip.off .ais-track-chip-mark {
+    color: var(--text-dim);
+    opacity: 0.5;
+}
+
+.ais-track-chip-lbl {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    flex-shrink: 0;
+}
+
+.ais-track-chip-txt {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 26ch;
+}
+
+.ais-track-none {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    font-style: italic;
+    padding-top: 4px;
+}
+
+.ais-track-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 14px;
+    border-top: 1px solid var(--border-light);
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.ais-track-foot-txt {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    line-height: 1.35;
+}
+
+.ais-track-foot-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--border-light);
+    border-radius: 7px;
+    padding: 4px 9px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 0.68rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.ais-track-foot-btn:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+    color: var(--text-main);
+}
+
+.ais-track-foot-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.25);
+}
+
+@media (max-width: 480px) {
+    .ais-track-day {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    .ais-track-day-meta {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .ais-track-chip-txt {
+        max-width: 20ch;
+    }
+}
+
+/* ═══ Tag-Status Cycle-Button (Krank/Urlaub/Feiertag) ═══ */
+.ais-day-note {
+    position: relative;
+}
+
+.ais-day-status-btn {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    cursor: pointer;
+    outline: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+}
+
+.ais-day-status-btn:hover {
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+.ais-day-status-btn:active {
+    transform: scale(0.94);
+}
+
+.ais-day-status-svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ais-day-status-btn.status-krank {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.ais-day-status-btn.status-urlaub {
+    background: rgba(16, 185, 129, 0.15);
+    color: #6ee7b7;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.ais-day-status-btn.status-feiertag {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fcd34d;
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+.ais-day-note-inp:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    font-style: italic;
+}
+
+/* ═══ Day-Card Status-Block (im Preview) ═══ */
+.ais-day-status-block {
+    padding: 14px 16px;
+    margin: 8px 0;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+}
+
+.ais-status-icon-svg {
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ais-day-status-block.status-krank {
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.04);
+}
+
+.ais-day-status-block.status-urlaub {
+    color: #6ee7b7;
+    border-color: rgba(16, 185, 129, 0.25);
+    background: rgba(16, 185, 129, 0.04);
+}
+
+.ais-day-status-block.status-feiertag {
+    color: #fcd34d;
+    border-color: rgba(251, 191, 36, 0.25);
+    background: rgba(251, 191, 36, 0.04);
+}
+
+/* ═══ Sonntag-Reminder Toggle (in Erweiterte Optionen) ═══ */
+.ais-reminder-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-top: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+}
+
+.ais-reminder-row-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.ais-reminder-row-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.ais-reminder-row-sub {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.ais-reminder-help {
+    margin-top: 6px;
+    padding: 10px 12px;
+    background: rgba(251, 191, 36, 0.06);
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: 10px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+}
+
+.ais-reminder-help-head {
+    color: #fcd34d;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 0.76rem;
+}
+
+.ais-reminder-help-body {
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 5px;
+}
+
+.ais-reminder-help-body b {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.ais-inline-icon {
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: -2px;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    margin-right: 4px;
+}
+

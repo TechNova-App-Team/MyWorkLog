@@ -9,48 +9,19 @@
 //   3. Kein Satz enthaelt einen doppelten oder falsch kongruenten Artikel
 //      ("die die Palette", "Die Rechnungen wurde ...").
 //
-// Laeuft ohne Browser: die relevanten Bloecke werden aus der HTML-Datei
-// herausgeschnitten und in einem vm-Kontext ausgewertet.
+// Laeuft ohne Browser: Assets/js/berichtsheft/ais-berufe.js und ais-sprache.js
+// werden in einem vm-Kontext geladen (siehe tools/berichtsheft-laden.mjs).
+// Geprueft wird damit genau das, was auch der Browser laedt.
 
-import { readFileSync } from 'node:fs';
-import { createContext, runInContext } from 'node:vm';
+import { ladeEngine, pruefrahmen } from './berichtsheft-laden.mjs';
 
-// Zeilenenden vereinheitlichen: git liefert die Datei je nach autocrlf mit CRLF
-// aus, und die mehrzeiligen Marker unten wuerden dann keinen Treffer finden —
-// der Test faellt aus, ohne dass am Code etwas falsch ist.
-const HTML = readFileSync(new URL('../pages/berichtsheft/index.html', import.meta.url), 'utf8')
-    .split('\r\n').join('\n');
+const { gruppe, ok, abschluss } = pruefrahmen();
 
-let bestanden = 0, fehlgeschlagen = 0;
-const gruppe = (t) => console.log('\n▶ ' + t);
-function ok(bed, name, detail) {
-    if (bed) { bestanden++; console.log('  ok    ' + name); }
-    else { fehlgeschlagen++; console.log('  FEHL  ' + name + (detail ? '\n        ' + detail : '')); }
-}
-
-// ── Quelltext-Ausschnitte holen ─────────────────────────────────────────
-function schnitt(startMarker, endMarker) {
-    const i = HTML.indexOf(startMarker);
-    if (i < 0) throw new Error('Marker nicht gefunden: ' + startMarker);
-    const j = HTML.indexOf(endMarker, i);
-    if (j < 0) throw new Error('Endmarker nicht gefunden: ' + endMarker);
-    return HTML.slice(i, j);
-}
-
-const src = [
-    schnitt('const PROFESSIONS = {', 'const SEASONAL_ACTIVITIES'),
-    schnitt('function conjugateVerb(', '// ═══════════════════════════════════════\n            // ADVANCED SENTENCE GENERATION ENGINE'),
-    schnitt('const SENTENCE_PATTERNS = [', 'const UNIVERSAL_ACTIVITIES_EXTENDED'),
-    schnitt('// SCHREIBFORMEN — Genus, Artikel, Satzmuster', '// ═══════════════════════════════════════\n            // FULL WEEK GENERATION'),
-].join('\n');
-
-const ctx = createContext({ console });
-runInContext(
-    'function pickRandom(arr, exclude) { return Array.isArray(arr) ? arr[0] : arr; }\n' + src +
-    '\n;globalThis.__x = { PROFESSIONS, OBJ_GENUS, OBJ_SONDERFORM, FORM_PATTERNS, UNIVERSAL_OBJEKTE, FLIESS_ANFANG, FLIESS_MITTE, FLIESS_ENDE, mitArtikel, wurde, alsFliesstext, conjugateVerb, partizipDoppelt, UMFANG_COUNT };',
-    ctx
-);
-const X = ctx.__x;
+// `deterministisch` nagelt Math.random fest, damit pickRandom immer das erste
+// Element liefert. Frueher stand dafuer eine eigene pickRandom-Attrappe im Test —
+// jetzt laeuft die echte Funktion, nur mit einem berechenbaren Wuerfel.
+const E = ladeEngine({ deterministisch: true });
+const X = { ...E.BERUFE, ...E.SPRACHE };
 
 // ── 1. Genus-Abdeckung ──────────────────────────────────────────────────
 gruppe('Genus-Lexikon deckt jedes Objekt ab');
@@ -232,5 +203,4 @@ ok(u.kurz.max < u.mittel.min || u.kurz.max <= u.mittel.min, 'kurz < mittel');
 ok(u.mittel.max < u.ausfuehrlich.min, 'mittel < ausfuehrlich');
 ok(Object.values(u).every(x => x.min <= x.max && x.min >= 1), 'jede Stufe hat sinnvolle Grenzen');
 
-console.log(`\n${bestanden} bestanden, ${fehlgeschlagen} fehlgeschlagen\n`);
-process.exit(fehlgeschlagen ? 1 : 0);
+abschluss('Schreibformen');

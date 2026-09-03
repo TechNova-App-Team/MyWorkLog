@@ -1,0 +1,427 @@
+/* basis.css — Teil von /berichtsheft/
+   Farb- und Masstokens, Reset, Icon-Regeln, Grundlayout, Kopfzeile, Modus-Umschalter.
+   Die Tokens hier sind die einzige Quelle der Seite: components/core/core.css laedt eine Standalone-Seite NICHT.
+   Herausgeloest aus pages/berichtsheft/index.html. */
+
+/* ══════════════════════════════════════════════════════════════
+   BERICHTSHEFT — "SLATE" DESIGN SYSTEM
+   Obsidian enterprise aesthetic. Zero decoration.
+   ══════════════════════════════════════════════════════════════ */
+
+/* --- DESIGN TOKENS --- */
+:root {
+    --bg-deep: #09090b;
+    --bg-surface: #0f0f13;
+    --bg-card: #131318;
+    --bg-glass: rgba(15, 15, 21, 0.82);
+    --bg-glass-heavy: rgba(9, 9, 11, 0.95);
+    --bg-sidebar: rgba(13, 13, 17, 0.98);
+    --bg-elevated: rgba(22, 22, 30, 0.55);
+    --bg-hover: rgba(255, 255, 255, 0.03);
+    --bg-input: rgba(255, 255, 255, 0.025);
+    --primary: #8b5cf6;
+    --primary-rgb: 139, 92, 246;
+    --primary-dim: rgba(139, 92, 246, 0.07);
+    --primary-light: #a78bfa;
+    --primary-glow: rgba(139, 92, 246, 0.12);
+    --secondary: #c084fc;
+    --secondary-rgb: 192, 132, 252;
+    --accent: #7dd3fc;
+    --accent-rgb: 125, 211, 252;
+    --text-main: #e4e4e7;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --text-dim: #52525b;
+    --success: #34d399;
+    --success-rgb: 52, 211, 153;
+    --danger: #f87171;
+    --danger-rgb: 248, 113, 113;
+    --warning: #fbbf24;
+    --warning-rgb: 251, 191, 36;
+    --info: #60a5fa;
+    --info-rgb: 96, 165, 250;
+    --cyan: #67e8f9;
+    --cyan-rgb: 103, 232, 249;
+    --border: rgba(255, 255, 255, 0.06);
+    --border-light: rgba(255, 255, 255, 0.09);
+    --border-hover: rgba(255, 255, 255, 0.1);
+    --border-active: rgba(139, 92, 246, 0.3);
+    --font-main: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: 'Sora', 'DM Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Menlo', monospace;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 5px;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-glow: 0 0 20px rgba(var(--primary-rgb), 0.06);
+    --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --transition-bounce: cubic-bezier(0.34, 1.2, 0.64, 1);
+    --transition-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+[data-theme="light"] {
+    --bg-deep: #f8f8fa;
+    --bg-surface: #ffffff;
+    --bg-card: #ffffff;
+    --bg-glass: rgba(255, 255, 255, 0.9);
+    --bg-glass-heavy: rgba(255, 255, 255, 0.96);
+    --bg-sidebar: rgba(255, 255, 255, 0.98);
+    --bg-elevated: rgba(255, 255, 255, 0.7);
+    --bg-hover: rgba(0, 0, 0, 0.025);
+    --bg-input: rgba(0, 0, 0, 0.025);
+    --text-main: #18181b;
+    --text-secondary: #52525b;
+    --text-muted: #71717a;
+    --text-dim: #a1a1aa;
+    --border: rgba(0, 0, 0, 0.06);
+    --border-light: rgba(0, 0, 0, 0.09);
+    --border-hover: rgba(0, 0, 0, 0.1);
+    --border-active: rgba(139, 92, 246, 0.25);
+    --primary-dim: rgba(139, 92, 246, 0.05);
+    --primary-glow: rgba(139, 92, 246, 0.06);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* --- RESET --- */
+*,
+*::before,
+*::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Formularelemente erben font-family nicht — ohne diese Zeile stehen sie in der
+   Systemschrift des Betriebssystems. Element-Selektor (0,0,0,1), damit jede Klasse
+   ihn schlägt. Bewusst NUR font-family: font-size erbt hier nicht mit, sonst bricht
+   alles, was sich still auf die ~13,33 px Browser-Voreinstellung verlässt. */
+button,
+input,
+select,
+textarea,
+optgroup {
+    font-family: inherit;
+}
+
+body {
+    font-family: var(--font-main);
+    background: var(--bg-deep);
+    color: var(--text-main);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.011em;
+    line-height: 1.55;
+    font-size: 15px;
+}
+
+/* --- SVG ICONS --- */
+.icon {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.icon-sm {
+    width: 14px;
+    height: 14px;
+}
+
+.icon-lg {
+    width: 22px;
+    height: 22px;
+}
+
+.icon-xl {
+    width: 40px;
+    height: 40px;
+    stroke-width: 1.5;
+}
+
+/* --- BACKGROUND --- */
+.bg-mesh {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.bg-grad {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(var(--primary-rgb), 0.04) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(var(--accent-rgb), 0.02) 0%, transparent 50%);
+}
+
+[data-theme="light"] .bg-mesh {
+    display: none;
+}
+
+/* --- LAYOUT --- */
+.page-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 20px;
+    width: 100%;
+    overflow-x: hidden;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 80px;
+    width: 100%;
+}
+
+/* --- HEADER --- */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 24px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.brand-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--primary);
+}
+
+.page-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.6rem;
+    letter-spacing: -0.03em;
+    color: var(--text-main);
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.page-title .icon {
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.page-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.secret-hint {
+    display: none;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    font-weight: 400;
+    font-family: var(--font-mono);
+}
+
+.page-title-wrap:hover .secret-hint {
+    display: inline;
+}
+
+.page-subtitle {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    word-wrap: break-word;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    padding-top: 4px;
+}
+
+.theme-toggle {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s var(--ease);
+    font-size: 0;
+}
+
+.theme-toggle:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-hover);
+    color: var(--text-main);
+}
+
+.theme-toggle .icon {
+    width: 18px;
+    height: 18px;
+}
+
+.btn-vault {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s var(--ease);
+    text-decoration: none;
+}
+
+.btn-vault:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-hover);
+    color: var(--text-main);
+}
+
+.btn-vault svg {
+    width: 18px;
+    height: 18px;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: all 0.15s var(--ease);
+}
+
+.btn-back:hover {
+    color: var(--text-main);
+    background: var(--bg-hover);
+    border-color: var(--border-hover);
+}
+
+.btn-back .icon {
+    width: 14px;
+    height: 14px;
+}
+
+/* --- MODE TOGGLE --- */
+.mode-toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.mode-toggle-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.mode-toggle {
+    position: relative;
+    display: inline-flex;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    gap: 2px;
+}
+
+/* Breite und Position kommen aus syncModeSliders() — die beiden Reiter sind
+   inhaltsbreit ("Wöchentlich" ist länger als "Täglich"), ein fester 50-%-Schieber
+   lag deshalb immer schief. Startwert 0, bis gemessen ist. */
+.mode-toggle-slider {
+    position: absolute;
+    top: 3px;
+    left: 0;
+    width: 0;
+    height: calc(100% - 6px);
+    background: var(--primary);
+    border-radius: 6px;
+    transition: transform 0.25s var(--ease-out), width 0.25s var(--ease-out);
+    opacity: 0.12;
+    pointer-events: none;
+}
+
+.mode-toggle-btn {
+    position: relative;
+    z-index: 1;
+    padding: 7px 16px;
+    border: none;
+    background: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: color 0.15s var(--ease);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 6px;
+    font-family: var(--font-main);
+}
+
+.mode-toggle-btn.active {
+    color: var(--primary-light);
+}
+

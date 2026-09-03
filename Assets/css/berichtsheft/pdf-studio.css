@@ -1,0 +1,838 @@
+/* pdf-studio.css — Teil von /berichtsheft/
+   PDF-Export-Dialog: Konfigurationsspalte, Stil-Auswahl, Schalter, Vorschau,
+   Grundform des Dokuments, amtlicher Vordruck.
+   Herausgeloest aus pages/berichtsheft/index.html. */
+
+/* ═══════════════════════════════════════════════════════════
+   PDF EXPORT MODAL — IHK STUDIO
+   ═══════════════════════════════════════════════════════════ */
+.pdf-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    background: rgba(0, 0, 0, 0.88);
+    backdrop-filter: blur(16px) saturate(0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pdf-modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.pdf-modal-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 1020px;
+    max-height: 93vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    transform: translateY(16px) scale(0.97);
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pdf-modal-overlay.active .pdf-modal-container {
+    transform: translateY(0) scale(1);
+}
+
+.pdf-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.04) 0%, transparent 60%);
+}
+
+.pdf-modal-title-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(0, 52, 120, 0.2));
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+}
+
+.pdf-modal-title-area {
+    flex: 1;
+    min-width: 0;
+}
+
+.pdf-modal-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+}
+
+.pdf-modal-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.pdf-modal-step-badges {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.pdf-step-badge {
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    font-family: var(--font-mono);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    background: transparent;
+}
+
+.pdf-step-badge.active {
+    background: var(--primary-dim);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: var(--primary-light);
+}
+
+.pdf-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1;
+    transition: all 0.15s;
+}
+
+.pdf-modal-close:hover {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.3);
+    color: var(--danger);
+}
+
+.pdf-modal-body {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* LEFT CONFIG */
+.pdf-config-panel {
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.07) transparent;
+}
+
+.pdf-cfg-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pdf-cfg-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding-bottom: 7px;
+    border-bottom: 1px solid var(--border);
+}
+
+.pdf-cfg-input,
+.pdf-cfg-select {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 11px;
+    color: var(--text-main);
+    font-size: 0.84rem;
+    font-family: var(--font-main);
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+}
+
+.pdf-cfg-input:focus,
+.pdf-cfg-select:focus {
+    border-color: var(--border-active);
+}
+
+.pdf-cfg-input::placeholder {
+    color: var(--text-dim);
+}
+
+.pdf-cfg-select {
+    cursor: pointer;
+}
+
+.pdf-field-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.pdf-field-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* STYLE PICKER */
+.pdf-style-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 7px;
+}
+
+/* Miniatur des amtlichen Vordrucks: Kaesten auf Weiss, keine Farbe —
+   genau das unterscheidet ihn von den drei freien Vorlagen. */
+.pdf-style-thumb.form {
+    background: #fff;
+}
+
+.pdf-style-thumb.form::before {
+    content: '';
+    position: absolute;
+    inset: 5px 6px auto 6px;
+    height: 9px;
+    border: 1px solid #555;
+    border-bottom: none;
+    box-shadow: 0 10px 0 -1px #fff, 0 10px 0 0 #555, 0 20px 0 -1px #fff, 0 20px 0 0 #555;
+}
+
+.pdf-style-thumb.form::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    height: 1px;
+    background: #555;
+    box-shadow: 0 -6px 0 0 #999;
+}
+
+.pdf-form-note {
+    font-size: 0.68rem;
+    line-height: 1.45;
+    color: var(--text-dim);
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+}
+
+.pdf-form-note.checked {
+    border-color: rgba(74, 222, 128, 0.25);
+}
+
+.pdf-form-note strong {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.pdf-style-card {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0 0 8px;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.18s;
+    background: transparent;
+    text-align: center;
+}
+
+.pdf-style-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-1px);
+}
+
+.pdf-style-card.selected {
+    border-color: var(--primary);
+}
+
+.pdf-style-thumb {
+    width: 100%;
+    height: 44px;
+    position: relative;
+    overflow: hidden;
+}
+
+.pdf-style-thumb.ihk {
+    background: linear-gradient(160deg, #003478 60%, #0052a3);
+}
+
+.pdf-style-thumb.ihk::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: white;
+    border-top: 2px solid #ffd700;
+}
+
+.pdf-style-thumb.ihk::before {
+    content: 'IHK';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.15em;
+    font-family: Arial, sans-serif;
+}
+
+.pdf-style-thumb.modern {
+    background: #0d0b1a;
+}
+
+.pdf-style-thumb.modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #a855f7, #06b6d4);
+}
+
+.pdf-style-thumb.modern::after {
+    content: 'MW';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 11px;
+    font-weight: 900;
+    color: rgba(168, 85, 247, 0.4);
+    font-family: Arial, sans-serif;
+}
+
+.pdf-style-thumb.clean {
+    background: #f5f5f5;
+    border-bottom: 2px solid #1a1a1a;
+}
+
+.pdf-style-thumb.clean::before {
+    content: 'Akt.Nachr.';
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 6px;
+    color: #555;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    font-family: Arial, sans-serif;
+}
+
+.pdf-style-name {
+    font-size: 0.71rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-top: 7px;
+    display: block;
+}
+
+.pdf-style-card.selected .pdf-style-name {
+    color: var(--primary-light);
+}
+
+.pdf-style-card.selected .pdf-style-thumb {
+    outline: 2px solid rgba(139, 92, 246, 0.5);
+    outline-offset: -2px;
+}
+
+/* TOGGLES */
+.pdf-toggle-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pdf-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 11px;
+    border-radius: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: border-color 0.15s;
+    user-select: none;
+}
+
+.pdf-toggle-row:hover {
+    border-color: var(--border-hover);
+}
+
+.pdf-toggle-text {
+    flex: 1;
+}
+
+.pdf-toggle-label {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.pdf-toggle-sub {
+    font-size: 0.68rem;
+    color: var(--text-dim);
+    margin-top: 1px;
+}
+
+.pdf-sw {
+    width: 34px;
+    height: 18px;
+    border-radius: 9px;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    position: relative;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.pdf-sw::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    transition: all 0.2s;
+}
+
+.pdf-toggle-row.on .pdf-sw {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.pdf-toggle-row.on .pdf-sw::after {
+    transform: translateX(16px);
+    background: white;
+}
+
+/* EXPORT BUTTONS */
+.pdf-export-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.pdf-export-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-family: var(--font-main);
+    background: linear-gradient(135deg, var(--primary) 0%, #6d28d9 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35);
+    transition: all 0.2s;
+}
+
+.pdf-export-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
+}
+
+.pdf-export-primary:active {
+    transform: translateY(0);
+}
+
+.pdf-export-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 11px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.84rem;
+    font-weight: 600;
+    font-family: var(--font-main);
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+}
+
+.pdf-export-secondary:hover {
+    border-color: var(--border-hover);
+    color: var(--text-main);
+}
+
+.pdf-export-multi-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.pdf-export-multi-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: var(--font-main);
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    transition: all 0.15s;
+}
+
+.pdf-export-multi-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary-light);
+    background: var(--primary-dim);
+}
+
+/* RIGHT PREVIEW */
+.pdf-preview-panel {
+    background: #1e1e2a;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.pdf-preview-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
+}
+
+.pdf-preview-topbar-dots {
+    display: flex;
+    gap: 5px;
+}
+
+.pdf-topbar-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.pdf-topbar-dot:nth-child(1) {
+    background: #ff5f57;
+}
+
+.pdf-topbar-dot:nth-child(2) {
+    background: #ffbd2e;
+}
+
+.pdf-topbar-dot:nth-child(3) {
+    background: #28c840;
+}
+
+.pdf-preview-topbar-label {
+    flex: 1;
+    text-align: center;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-family: var(--font-mono);
+}
+
+.pdf-preview-topbar-badge {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(139, 92, 246, 0.15);
+    color: #a78bfa;
+    font-family: var(--font-mono);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.pdf-preview-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+}
+
+/* THE PDF DOCUMENT */
+.pdf-doc {
+    width: 100%;
+    max-width: 460px;
+    background: white;
+    color: #1a1a1a;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+    border-radius: 2px;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    transform-origin: top center;
+}
+
+/* ── AMTLICHER VORDRUCK ──────────────────────────────────────────────
+   Bewusst die haessliche Variante: Haarlinien, Grauton, Arial. Die
+   Vorschau soll aussehen wie das Blatt, das der Ausbilder kennt — jede
+   Verschoenerung hier waere eine Luege ueber das spaetere PDF. */
+.pdf-doc.style-form {
+    padding: 14px 12px 16px;
+    font-size: 7px;
+    color: #000;
+}
+
+.fm-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.fm-subtitle {
+    font-size: 7.5px;
+    margin-top: 3px;
+}
+
+.fm-head {
+    margin-top: 8px;
+}
+
+.fm-row {
+    display: flex;
+}
+
+.fm-cell {
+    border: 1px solid #000;
+    border-bottom: none;
+    box-sizing: border-box;
+    padding: 2px 3px 3px;
+    min-height: 22px;
+}
+
+.fm-cell+.fm-cell {
+    border-left: none;
+}
+
+.fm-row:last-child .fm-cell {
+    border-bottom: 1px solid #000;
+}
+
+.fm-cell .fm-lab {
+    display: block;
+    font-size: 6px;
+    line-height: 1.25;
+}
+
+.fm-cell .fm-val {
+    display: block;
+    font-size: 8.5px;
+    line-height: 1.3;
+    min-height: 10px;
+    word-break: break-word;
+}
+
+.fm-cell-cap {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.fm-cell-cap .fm-val {
+    font-size: 9px;
+}
+
+.fm-cell-cap .fm-lab {
+    font-size: 5.8px;
+}
+
+.fm-block {
+    margin-top: 7px;
+}
+
+.fm-block-head {
+    display: flex;
+    border: 1px solid #000;
+    background: #eee;
+    font-weight: 700;
+    font-size: 7px;
+}
+
+.fm-block-title {
+    flex: 1;
+    padding: 3px 4px;
+    line-height: 1.25;
+}
+
+.fm-block-hours {
+    width: 46px;
+    flex: 0 0 46px;
+    border-left: 1px solid #000;
+    padding: 3px 0;
+    text-align: center;
+    font-weight: 400;
+}
+
+.fm-block-body {
+    display: flex;
+    border: 1px solid #000;
+    border-top: none;
+}
+
+.fm-block-text {
+    flex: 1;
+    padding: 3px 4px;
+    font-size: 7.5px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.fm-block-hval {
+    width: 46px;
+    flex: 0 0 46px;
+    border-left: 1px solid #000;
+    padding: 3px 0;
+    text-align: center;
+    font-size: 8px;
+}
+
+.fm-days {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.fm-days th,
+.fm-days td {
+    border: 1px solid #000;
+    padding: 3px 4px;
+    vertical-align: top;
+    font-size: 7px;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.fm-days th {
+    background: #eee;
+    font-weight: 700;
+    text-align: left;
+    font-size: 6.5px;
+}
+
+.fm-days th.fm-d-h,
+.fm-days th.fm-d-x {
+    text-align: center;
+}
+
+.fm-d-day {
+    width: 52px;
+    font-weight: 700;
+}
+
+.fm-d-h {
+    width: 40px;
+    text-align: center;
+}
+
+.fm-d-x {
+    width: 34px;
+    text-align: center;
+}
+
+.fm-days tbody td {
+    height: 34px;
+}
+
+.fm-d-sum td {
+    height: auto;
+    font-weight: 700;
+}
+
+.fm-foot {
+    margin-top: 6px;
+    font-size: 6.5px;
+}
+
+.fm-confirm {
+    margin-top: 8px;
+    font-size: 7px;
+    line-height: 1.4;
+}
+
+.fm-sigs {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.fm-sig {
+    box-sizing: border-box;
+    padding-right: 14px;
+    margin-top: 12px;
+}
+
+.fm-sig-date {
+    font-size: 7px;
+    margin-bottom: 14px;
+}
+
+.fm-sig-line {
+    border-top: 1px solid #000;
+}
+
+.fm-sig-lab {
+    font-size: 6.2px;
+    margin-top: 2px;
+    line-height: 1.3;
+}
+

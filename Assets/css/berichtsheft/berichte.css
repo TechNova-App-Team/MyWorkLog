@@ -1,0 +1,361 @@
+/* berichte.css — Teil von /berichtsheft/
+   Karten-Grundform, Berichtsliste, Leerzustand, Einstiegskarte Schatten-Berichtsheft.
+   Herausgeloest aus pages/berichtsheft/index.html. */
+
+/* --- CARD --- */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.card-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-display);
+}
+
+.card-title .icon {
+    color: var(--primary);
+    width: 18px;
+    height: 18px;
+}
+
+/* --- REPORT LIST & ITEMS --- */
+.report-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.report-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s var(--ease);
+    opacity: 0;
+    transform: translateY(6px);
+    position: relative;
+    overflow: hidden;
+}
+
+.report-item.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.report-item:hover {
+    background: var(--bg-hover);
+    border-color: var(--border);
+}
+
+.report-week {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--primary);
+    text-align: center;
+    min-width: 56px;
+    padding: 8px 10px;
+    background: var(--primary-dim);
+    border-radius: var(--radius-sm);
+    line-height: 1.3;
+}
+
+.report-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.report-title {
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text-main);
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.report-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.report-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.report-meta .icon {
+    width: 12px;
+    height: 12px;
+}
+
+.report-actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: var(--radius-xs);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.badge-warning {
+    background: rgba(var(--warning-rgb), 0.1);
+    color: var(--warning);
+}
+
+.badge-success {
+    background: rgba(var(--success-rgb), 0.1);
+    color: var(--success);
+}
+
+.badge-signed {
+    background: rgba(var(--success-rgb), 0.15);
+    color: var(--success);
+}
+
+/* --- EMPTY STATE --- */
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+}
+
+.empty-icon {
+    margin-bottom: 16px;
+    color: var(--text-dim);
+}
+
+.empty-icon .icon {
+    width: 48px;
+    height: 48px;
+    stroke-width: 1.2;
+}
+
+.empty-title {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.empty-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    max-width: 380px;
+    margin: 0 auto 20px;
+    line-height: 1.6;
+}
+
+/* --- SCHATTEN-BERICHTSHEFT: EINSTIEGSKARTE ---
+   Erklaert per Gegenueberstellung, warum es zwei Hefte gibt: links das
+   unterschriebene, rechts das versiegelte. Die Crimson-Toene sind die
+   Identitaetsfarbe der Zielseite (/schatten-berichtsheft/) — die Karte
+   sieht damit aus wie das, wohin sie fuehrt. Nur hier lokal definiert,
+   nicht als globales Token, weil sie sonst mit --danger konkurriert. */
+.sb-entry {
+    --sb: 255, 45, 85;
+    margin-top: 20px;
+    padding: 26px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    border-left: 2px solid rgba(var(--sb), 0.45);
+}
+
+.sb-entry-title {
+    font-family: var(--font-display);
+    font-size: 1.18rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--text-main);
+    margin: 0 0 6px;
+}
+
+.sb-entry-lead {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin: 0 0 20px;
+    line-height: 1.6;
+}
+
+/* Gegenueberstellung */
+.sb-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.sb-doc {
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+}
+
+.sb-doc-sealed {
+    background: rgba(var(--sb), 0.045);
+    border-color: rgba(var(--sb), 0.18);
+}
+
+.sb-doc-tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+}
+
+.sb-doc-sealed .sb-doc-tag {
+    color: rgba(var(--sb), 0.85);
+}
+
+.sb-doc-name {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0 0 5px;
+}
+
+.sb-doc-desc {
+    font-size: 0.81rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin: 0 0 14px;
+}
+
+/* Die Zeilen sind die eigentliche Aussage: links lesbar, rechts geschwaerzt. */
+.sb-doc-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sb-line {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.sb-line-short {
+    width: 55%;
+}
+
+.sb-doc-sealed .sb-line {
+    background: rgba(var(--sb), 0.30);
+    filter: blur(1.5px);
+}
+
+.sb-entry-body {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 20px 0 0;
+    max-width: 62ch;
+}
+
+.sb-entry-foot {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+.sb-entry-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    background: rgba(var(--sb), 0.12);
+    border: 1px solid rgba(var(--sb), 0.35);
+    color: #ff8fa6;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.sb-entry-btn:hover {
+    background: rgba(var(--sb), 0.2);
+    border-color: rgba(var(--sb), 0.55);
+    color: #ffb3c2;
+}
+
+.sb-entry-btn:focus-visible {
+    outline: 2px solid rgba(var(--sb), 0.7);
+    outline-offset: 2px;
+}
+
+.sb-entry-note {
+    font-size: 0.76rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+    margin: 0;
+    flex: 1 1 260px;
+}
+
+@media (max-width: 640px) {
+    .sb-entry {
+        padding: 18px;
+    }
+
+    .sb-split {
+        grid-template-columns: 1fr;
+    }
+
+    .sb-entry-foot {
+        gap: 12px;
+    }
+
+    .sb-entry-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sb-entry-btn {
+        transition: none;
+    }
+}
+

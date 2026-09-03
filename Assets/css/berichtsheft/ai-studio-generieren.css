@@ -1,0 +1,322 @@
+/* ai-studio-generieren.css — Teil von /berichtsheft/
+   Mega-Generier-Knopf mit Fortschritt als Fuellung, Rate-Limit-Anzeige,
+   Schnellwahl, Profil-Plakette.
+   Herausgeloest aus pages/berichtsheft/index.html. */
+
+/* Mega generate button */
+/* ═══ Mega-Generate-Button — Progress-as-Fill ═══ */
+.ais-mega-btn {
+    margin: 10px 16px 16px;
+    width: calc(100% - 32px);
+    min-height: 52px;
+    padding: 0 20px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6366f1 100%);
+    color: white;
+    font-size: 0.97rem;
+    font-weight: 700;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.18s var(--ease), box-shadow 0.18s var(--ease), background 0.3s ease;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ais-mega-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.45);
+}
+
+.ais-mega-btn:active {
+    transform: translateY(0);
+}
+
+/* Content-Layer (über dem Fill) */
+.ais-mega-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 52px;
+    padding: 14px 0;
+}
+
+.ais-mega-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ais-mega-pulse {
+    display: none;
+}
+
+/* === LOADING STATE === */
+.ais-mega-btn.loading {
+    background: linear-gradient(135deg, #0d0d18 0%, #131322 100%);
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.18),
+        inset 0 0 0 1px rgba(168, 85, 247, 0.28);
+    cursor: progress;
+    transform: none;
+}
+
+.ais-mega-btn.loading:hover {
+    transform: none;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.18), inset 0 0 0 1px rgba(168, 85, 247, 0.28);
+}
+
+.ais-mega-btn.loading .ais-mega-text {
+    display: none;
+}
+
+.ais-mega-btn.loading .ais-mega-status {
+    display: flex;
+}
+
+.ais-mega-btn.loading .ais-mega-content {
+    justify-content: flex-start;
+    padding: 12px 4px;
+}
+
+/* Der eigentliche Fill — wandert von 0 → 90% während Wartezeit */
+.ais-mega-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    z-index: 1;
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 55%, #6366f1 100%);
+    transition: width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+        background 0.4s ease;
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: inset -1px 0 0 rgba(168, 85, 247, 0.4);
+}
+
+.ais-mega-btn.loading .ais-mega-fill {
+    opacity: 1;
+}
+
+/* Shimmer-Streifen der durch den Fill wandert */
+.ais-mega-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.0) 40%,
+            rgba(255, 255, 255, 0.22) 50%,
+            rgba(255, 255, 255, 0.0) 60%,
+            transparent 100%);
+    animation: ais-mega-shimmer 1.8s linear infinite;
+    transform: translateX(-100%);
+}
+
+@keyframes ais-mega-shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Pulsing Dot links — Lebenszeichen */
+.ais-mega-btn.loading .ais-mega-pulse {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.55);
+    animation: ais-mega-dot 1.4s ease-in-out infinite;
+    flex: 0 0 auto;
+    margin-left: 4px;
+}
+
+@keyframes ais-mega-dot {
+
+    0%,
+    100% {
+        opacity: 0.55;
+        transform: scale(0.85);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.45);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.15);
+        box-shadow: 0 0 0 5px rgba(255, 255, 255, 0);
+    }
+}
+
+/* Status-Block: Message links, Percent rechts */
+.ais-mega-status {
+    display: none;
+    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+}
+
+.ais-mega-message {
+    font-size: 0.91rem;
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    color: #ffffff;
+    opacity: 1;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.ais-mega-message.fading {
+    opacity: 0;
+    transform: translateY(-3px);
+}
+
+.ais-mega-percent {
+    font-family: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.94);
+    padding: 3px 10px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-width: 54px;
+    text-align: right;
+    flex: 0 0 auto;
+    margin-right: 6px;
+    backdrop-filter: blur(4px);
+}
+
+/* Success-Pulse — kurzer Grün-Flash am Ende */
+.ais-mega-btn.success-pulse .ais-mega-fill {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.ais-mega-btn.success-pulse {
+    box-shadow: 0 4px 24px rgba(16, 185, 129, 0.45),
+        inset 0 0 0 1px rgba(16, 185, 129, 0.55);
+    animation: ais-mega-success 0.6s ease-out;
+}
+
+@keyframes ais-mega-success {
+    0% {
+        transform: scale(1);
+    }
+
+    40% {
+        transform: scale(1.012);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Rate-Limit Info (Quota + Cooldown) */
+.ais-ratelimit-info {
+    text-align: center;
+    font: 11px/1.4 var(--font-mono, ui-monospace, monospace);
+    color: var(--text-muted);
+    margin: 6px 0 -2px;
+    min-height: 14px;
+    transition: color 0.2s ease;
+    letter-spacing: 0.02em;
+}
+
+.ais-ratelimit-info.warning {
+    color: #f59e0b;
+}
+
+.ais-ratelimit-info.cooldown {
+    color: var(--primary, #a855f7);
+}
+
+.ais-ratelimit-info.limit {
+    color: var(--danger, #ef4444);
+    font-weight: 600;
+}
+
+.ais-mega-btn.rl-blocked {
+    opacity: 0.55;
+    cursor: not-allowed;
+    filter: grayscale(0.4);
+}
+
+.ais-mega-btn.rl-blocked:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Quick-generate presets */
+.ais-quick-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.ais-quick-btn {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-hover);
+    color: var(--text-dim);
+    font-size: 0.73rem;
+    cursor: pointer;
+    transition: all 0.14s;
+    white-space: nowrap;
+}
+
+.ais-quick-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary-light);
+    background: var(--primary-dim);
+}
+
+/* Profile summary badge */
+.ais-prof-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--primary-dim);
+    border: 1px solid var(--primary);
+    font-size: 0.68rem;
+    color: var(--primary-light);
+    font-weight: 600;
+}
+
+@media (max-width: 720px) {
+    .pdf-modal-body {
+        grid-template-columns: 1fr;
+    }
+
+    .pdf-preview-panel {
+        display: none;
+    }
+
+    .pdf-modal-container {
+        border-radius: 16px;
+        max-height: 96vh;
+    }
+
+    .pdf-modal-step-badges {
+        display: none;
+    }
+}
+

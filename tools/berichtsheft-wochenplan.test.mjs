@@ -17,54 +17,14 @@
 // Negativ-Pruefung traegt eine Gegenprobe, damit ein leerer Lauf nicht als
 // bestanden durchgeht.
 
-import { readFileSync } from 'node:fs';
-import { createContext, runInContext } from 'node:vm';
+import { ladeEngine, pruefrahmen } from './berichtsheft-laden.mjs';
 
-// Zeilenenden vereinheitlichen: git liefert die Datei je nach autocrlf mit CRLF
-// aus, und die mehrzeiligen Marker unten wuerden dann keinen Treffer finden —
-// der Test faellt aus, ohne dass am Code etwas falsch ist.
-const HTML = readFileSync(new URL('../pages/berichtsheft/index.html', import.meta.url), 'utf8')
-    .split('\r\n').join('\n');
+const { gruppe, ok, abschluss } = pruefrahmen();
 
-let bestanden = 0, fehlgeschlagen = 0;
-const gruppe = (t) => console.log('\n▶ ' + t);
-function ok(bed, name, detail) {
-    if (bed) { bestanden++; console.log('  ok    ' + name); }
-    else { fehlgeschlagen++; console.log('  FEHL  ' + name + (detail ? '\n        ' + detail : '')); }
-}
-
-function schnitt(startMarker, endMarker) {
-    const i = HTML.indexOf(startMarker);
-    if (i < 0) throw new Error('Marker nicht gefunden: ' + startMarker);
-    const j = HTML.indexOf(endMarker, i);
-    if (j < 0) throw new Error('Endmarker nicht gefunden: ' + endMarker);
-    return HTML.slice(i, j);
-}
-
-const src = [
-    schnitt('const PROFESSIONS = {', '            function getCalendarWeek() {'),
-    schnitt('function _kontextTemplate(kw) {', '            function _saveProfile() {'),
-].join('\n');
-
-const vorspann = `
-    const DAY_STATUS_LABELS = { krank: { short: 'Krank' }, urlaub: { short: 'Urlaub' }, feiertag: { short: 'Feiertag' } };
-    const AI_BRAIN = { universalVerbs: ['durchführen', 'bearbeiten', 'vorbereiten', 'kontrollieren', 'dokumentieren'] };
-    const state = { customProfession: '', usedPhrases: new Set(), dayStatus: {}, useAufgaben: false, useTracking: false };
-    const localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
-    function bhIcon() { return ''; }
-    function _trackingHoursForDay() { return 0; }
-    function _loadAufgabenForWeek() { return null; }
-    function _buildTrackingPayload() { return null; }
-    function getCalendarWeek() { return 35; }
-`;
-
-const ctx = createContext({ console });
-runInContext(
-    vorspann + src +
-    '\n;globalThis.__x = { _parseWochenplan, _planStuecke, _planEintrag, generateWeek, _customContextEntries, _kontextTemplate };',
-    ctx
-);
-const X = ctx.__x;
+// Die echten Dateien, kein Ausschnitt: _parseWochenplan/_planStuecke/_planEintrag
+// stehen in ais-sprache.js, generateWeek und der Kontext-Zweig in ais-studio.js.
+const E = ladeEngine();
+const X = { ...E.SPRACHE, ...E.intern };
 
 // Der gemeldete Text, unveraendert.
 const PROMPT = 'Mo: alte pcs abgebaut, 3 neue aufgebaut und windows 11 draufgemacht. '
@@ -193,5 +153,4 @@ ok(abt.length === 0, 'die Abteilung wird kein Stichpunkt', JSON.stringify(abt));
 ok(X._customContextEntries('', 'Lagerlogistik').length === 1,
     'Gegenprobe: eine Abteilung mit bekanntem Begriff schon');
 
-console.log(`\n${bestanden} bestanden, ${fehlgeschlagen} fehlgeschlagen`);
-process.exit(fehlgeschlagen > 0 ? 1 : 0);
+abschluss('Wochenplan');
