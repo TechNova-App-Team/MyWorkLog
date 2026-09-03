@@ -111,7 +111,7 @@ function renderDailyFields() {
                                 <span>Std.</span>
                             </div>
                         </div>
-                        <textarea class="daily-textarea" id="daily_${i}" data-day="${day.key}" rows="2"
+                        <textarea class="daily-textarea" id="daily_${i}" data-day="${day.key}" rows="4"
                                   placeholder="${day.name}: Tätigkeiten beschreiben..."
                                   onfocus="activeDailyField = this"
                                   oninput="onDailyInput()"></textarea>

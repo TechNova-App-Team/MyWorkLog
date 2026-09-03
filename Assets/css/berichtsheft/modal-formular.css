@@ -454,10 +454,23 @@
     font-family: var(--font-mono);
 }
 
+/* Gemessen: bei 60px min-height und 20,4px Zeilenhoehe passten 1,97 Zeilen ins
+   Feld — ab der dritten Zeile scrollt es intern, und die erste verschwindet
+   beim Schreiben. Ein Tag hat je nach Umfang aber 3 (kurz) bis 7
+   (ausfuehrlich) Eintraege, siehe UMFANG_COUNT in ais-sprache.js. 104px sind
+   vier volle Zeilen; darueber waechst das Feld mit dem Text (field-sizing) bis
+   zu ~14 Zeilen und scrollt erst dann.
+
+   `field-sizing` kennen noch nicht alle Browser. Das ist Absicht und kein
+   Mangel: wer es nicht kann, bekommt die vier festen Zeilen — also genau das,
+   was vorher fehlte — und kann wie bisher am Griff ziehen (resize: vertical).
+   Deshalb steht die Grundhoehe als min-height da und nicht als Zeilenzahl. */
 .daily-textarea {
     width: 100%;
     padding: 9px 12px;
-    min-height: 60px;
+    min-height: 104px;
+    max-height: 320px;
+    field-sizing: content;
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
