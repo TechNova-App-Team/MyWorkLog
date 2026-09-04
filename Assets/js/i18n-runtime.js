@@ -461,6 +461,22 @@
     [/^(\[\d\d:\d\d:\d\d\] )?Netzwerk: (.+)$/g, '$1Network: $2'],
     [/^(\[\d\d:\d\d:\d\d\] )?Fehler: (.+)$/g, '$1Error: $2'],
     [/^(\[\d\d:\d\d:\d\d\] )?Relay-Test fehlgeschlagen: (.+)$/g, '$1Relay test failed: $2'],
+    // Anmelde-Meldungen aus supabase-ui.js (authFehlerText). JS-generiert, also
+    // hier und nirgends sonst - der i18n-Build sieht diese Zeichenketten nie.
+    [/^Gerade wurden zu viele Anmelde-Mails verschickt\. Versuch es in etwa einer Stunde noch einmal — oder melde dich mit Google, GitHub oder Discord an, dafür braucht es keine E-Mail\.$/g,
+      'Too many sign-in emails have just been sent. Try again in about an hour \u2014 or sign in with Google, GitHub or Discord, which needs no email.'],
+    [/^Dieser Anmelde-Link ist abgelaufen oder wurde schon benutzt\. Fordere einen neuen an\.$/g,
+      'This sign-in link has expired or has already been used. Request a new one.'],
+    [/^Diese E-Mail-Adresse sieht nicht gültig aus\. Bitte prüfe die Schreibweise\.$/g,
+      'That email address does not look valid. Please check the spelling.'],
+    [/^Neue Anmeldungen sind gerade abgeschaltet\.$/g, 'New sign-ups are currently disabled.'],
+    [/^Keine Verbindung zum Server\. Prüfe deine Internetverbindung\.$/g,
+      'No connection to the server. Check your internet connection.'],
+    [/^Anmeldung fehlgeschlagen: (.+)$/g, 'Sign-in failed: $1'],
+    [/^Anmeldung fehlgeschlagen\.$/g, 'Sign-in failed.'],
+    [/^(Discord|GitHub|Google)-Anmeldung fehlgeschlagen: (.+)$/g, '$1 sign-in failed: $2'],
+    [/^Magic Link versendet! Bitte überprüfe deine E-Mail und klicke auf den Link\.$/g,
+      'Magic link sent! Please check your email and click the link.'],
     // Statuszeilen ausserhalb des Logs (kein Zeitstempel)
     [/^Suche Netzwerkwege …\s+([\d.,]+)s$/g, 'Looking for network routes …  $1s'],
     [/^Netzwerkwege gefunden: (\d+)\s+·\s+([\d.,]+)s$/g, 'Network routes found: $1  ·  $2s'],

@@ -7,6 +7,51 @@
  * @version 1.0.0
  */
 
+/* ══════════════════════════════════════════════════════════════════════════
+   ANMELDE-FEHLER IN KLARTEXT
+
+   Bisher stand hier `Fehler: ${error.message}` — also der englische Rohtext von
+   GoTrue. Bei "email rate limit exceeded" liest ein Nutzer damit eine Meldung,
+   die weder sagt, was los ist, noch was er tun kann.
+
+   🔴 Und genau dieser Fall ist NICHT selten: der eingebaute Mailversand von
+   Supabase erlaubt auf dem Free-Plan zwei Mails pro Stunde — fuer das ganze
+   PROJEKT, nicht pro Nutzer. Am 04.09.2026 standen in den Auth-Logs zwischen
+   19:27 und 19:31 fuenf aufeinanderfolgende 429 auf /otp, nachdem um 19:22 und
+   19:23 zwei Links rausgegangen waren. Wer danach kam, bekam nie eine Mail und
+   meldete "meine Adresse geht nicht" — der Verdacht fiel auf den Mailanbieter
+   (GMX), obwohl gar keine Mail losgeschickt wurde.
+
+   Deshalb nennt die Meldung beides: den Grund UND den Weg, der sofort
+   funktioniert (OAuth verschickt keine Mail und faellt nie unter das Limit).
+   ══════════════════════════════════════════════════════════════════════════ */
+function authFehlerText(error) {
+    const roh = String((error && (error.message || error.error_description)) || '');
+    const code = (error && (error.status || error.code)) || 0;
+    const s = roh.toLowerCase();
+
+    if (code === 429 || s.includes('rate limit') || s.includes('too many requests')) {
+        return 'Gerade wurden zu viele Anmelde-Mails verschickt. Versuch es in etwa einer '
+             + 'Stunde noch einmal — oder melde dich mit Google, GitHub oder Discord an, '
+             + 'dafür braucht es keine E-Mail.';
+    }
+    if (s.includes('expired') || s.includes('invalid or has expired') || s.includes('token not found')) {
+        return 'Dieser Anmelde-Link ist abgelaufen oder wurde schon benutzt. '
+             + 'Fordere einen neuen an.';
+    }
+    if (s.includes('invalid email') || s.includes('unable to validate email')) {
+        return 'Diese E-Mail-Adresse sieht nicht gültig aus. Bitte prüfe die Schreibweise.';
+    }
+    if (s.includes('signups not allowed') || s.includes('signup is disabled')) {
+        return 'Neue Anmeldungen sind gerade abgeschaltet.';
+    }
+    /* fetch() wirft bei fehlender Verbindung ein TypeError ohne brauchbaren Text. */
+    if (s.includes('failed to fetch') || s.includes('networkerror') || s.includes('load failed')) {
+        return 'Keine Verbindung zum Server. Prüfe deine Internetverbindung.';
+    }
+    return roh ? 'Anmeldung fehlgeschlagen: ' + roh : 'Anmeldung fehlgeschlagen.';
+}
+
 class SupabaseCloudSyncUI {
     constructor(cloudSyncInstance) {
         this.sync = cloudSyncInstance;
@@ -207,18 +252,14 @@ class SupabaseCloudSyncUI {
 
             // Success Message
             this.showMessage(
-                '✅ Magic Link versendet! Bitte überprüfe deine E-Mail und klicke auf den Link.',
+                'Magic Link versendet! Bitte überprüfe deine E-Mail und klicke auf den Link.',
                 'success'
             );
 
             // Form clearnen
             this.emailInput.value = '';
         } catch (error) {
-            // Error Message
-            this.showMessage(
-                `❌ Fehler: ${error.message}`,
-                'error'
-            );
+            this.showMessage(authFehlerText(error), 'error');
             console.error('Login error:', error);
         } finally {
             // UI zurücksetzen
@@ -241,7 +282,7 @@ class SupabaseCloudSyncUI {
             localStorage.setItem('_showCloudTabAfterOAuth', 'true');
             await this.sync.loginWithDiscord();
         } catch (error) {
-            this.showMessage(`❌ Discord Login fehlgeschlagen: ${error.message}`, 'error');
+            this.showMessage('Discord-Anmeldung fehlgeschlagen: ' + authFehlerText(error), 'error');
             discordBtn.disabled = false;
             discordBtn.innerHTML = originalText;
             localStorage.removeItem('_showCloudTabAfterOAuth');
@@ -261,7 +302,7 @@ class SupabaseCloudSyncUI {
             localStorage.setItem('_showCloudTabAfterOAuth', 'true');
             await this.sync.loginWithGitHub();
         } catch (error) {
-            this.showMessage(`❌ GitHub Login fehlgeschlagen: ${error.message}`, 'error');
+            this.showMessage('GitHub-Anmeldung fehlgeschlagen: ' + authFehlerText(error), 'error');
             githubBtn.disabled = false;
             githubBtn.innerHTML = originalText;
             localStorage.removeItem('_showCloudTabAfterOAuth');
@@ -281,7 +322,7 @@ class SupabaseCloudSyncUI {
             localStorage.setItem('_showCloudTabAfterOAuth', 'true');
             await this.sync.loginWithGoogle();
         } catch (error) {
-            this.showMessage(`❌ Google Login fehlgeschlagen: ${error.message}`, 'error');
+            this.showMessage('Google-Anmeldung fehlgeschlagen: ' + authFehlerText(error), 'error');
             googleBtn.disabled = false;
             googleBtn.innerHTML = originalText;
             localStorage.removeItem('_showCloudTabAfterOAuth');
