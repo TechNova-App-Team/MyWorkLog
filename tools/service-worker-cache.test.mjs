@@ -17,6 +17,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 // CRLF normalisieren: der Arbeitsbaum liegt wegen core.autocrlf=true mit CRLF da.
 const QUELLE = readFileSync(join(ROOT, 'service-worker.js'), 'utf8').split('\r\n').join('\n');
 
+// Inhalt einer Antwort, egal ob der Koerper noch die Zeichenkette ist oder
+// schon durch blob() gelaufen (legeAb baut die Antwort daraus neu auf).
+const inhaltVon = res => (res && typeof res.body === 'object' && res.body !== null)
+  ? res.body.text : (res ? res.body : undefined);
+
 let fehler = 0, geprueft = 0;
 const ok = (bedingung, was) => {
   geprueft++;
@@ -29,6 +34,7 @@ const ok = (bedingung, was) => {
 class FakeHeaders {
   constructor(init = {}) { this.m = new Map(Object.entries(init).map(([k, v]) => [k.toLowerCase(), v])); }
   get(k) { return this.m.get(k.toLowerCase()) ?? null; }
+  set(k, v) { this.m.set(k.toLowerCase(), v); }
   has(k) { return this.m.has(k.toLowerCase()); }
 }
 
@@ -43,8 +49,25 @@ class FakeRequest {
 }
 
 class FakeResponse {
-  constructor(body, opt = {}) { this.body = body; this.status = opt.status ?? 200; this.marke = opt.marke; }
-  clone() { return new FakeResponse(this.body, { status: this.status, marke: this.marke }); }
+  constructor(body, opt = {}) {
+    this.body = body;
+    this.status = opt.status ?? 200;
+    this.statusText = opt.statusText || '';
+    this.marke = opt.marke;
+    this.headers = opt.headers instanceof FakeHeaders ? opt.headers : new FakeHeaders(opt.headers || {});
+  }
+  clone() {
+    return new FakeResponse(this.body, { status: this.status, marke: this.marke,
+                                         headers: new FakeHeaders(Object.fromEntries(this.headers.m)) });
+  }
+  // legeAb() liest den Koerper als blob und baut die Antwort neu auf.
+  async blob() {
+    const b = this.body;
+    if (b && typeof b.slice === 'function' && typeof b.size === 'number') return b;
+    // Zeichenkette als Ersatz-Blob: size + slice reichen teilAntwort() aus.
+    const txt = String(b ?? '');
+    return { size: txt.length, slice: (a, e) => txt.slice(a, e), text: txt };
+  }
 }
 
 class FakeCache {
@@ -169,31 +192,180 @@ console.log('\n3. Medien');
      'intro.mp4 landet im Cache — landing.js holt ihn per fetch() am Stueck');
 }
 {
+  // Nichts im Cache: das Netz uebernimmt, damit die Wiedergabe nie haengt.
   const a = await anfrage('https://myworklog.de/Grafiken/intro.mp4?v=6.5.3',
                           { headers: { Range: 'bytes=0-' } });
-  ok(!a.abgefangen, 'Range-Anfrage laeuft am SW vorbei (sonst 200 auf 206-Frage)');
+  ok(a.netzAufrufe.length === 1, 'Range ohne Cache-Treffer geht ans Netz');
+}
+{
+  // Mit Cache-Treffer: echte 206-Teilantwort, KEIN Netz. Das ist der Unterschied
+  // zwischen "Video offline nicht abspielbar" und "laeuft".
+  const film = new FakeResponse('0123456789', { marke: 'cache' });
+  const a = await anfrage('https://myworklog.de/Grafiken/intro.mp4?v=6.5.3',
+                          { headers: { Range: 'bytes=2-5' } }, {
+    cacheVorbelegt: { 'https://myworklog.de/Grafiken/intro.mp4?v=6.5.3': film },
+  });
+  ok(a.res?.status === 206, 'Range mit Cache-Treffer liefert 206, nicht 200');
+  ok(a.res?.body === '2345', 'der geschnittene Bereich stimmt');
+  ok(a.res?.headers.get('content-range') === 'bytes 2-5/10', 'Content-Range ist korrekt');
+  ok(a.res?.headers.get('content-length') === '4', 'Content-Length ist korrekt');
+  ok(a.netzAufrufe.length === 0, 'kein Netz — das Video kommt offline aus dem Cache');
+}
+{
+  // Offenes Ende, wie es <video preload="metadata"> stellt.
+  const film = new FakeResponse('0123456789', { marke: 'cache' });
+  const a = await anfrage('https://myworklog.de/Grafiken/intro.mp4?v=6.5.3',
+                          { headers: { Range: 'bytes=7-' } }, {
+    cacheVorbelegt: { 'https://myworklog.de/Grafiken/intro.mp4?v=6.5.3': film },
+  });
+  ok(a.res?.body === '789' && a.res?.headers.get('content-range') === 'bytes 7-9/10',
+     'offenes Ende (bytes=7-) wird bis zum Dateiende bedient');
+}
+{
+  // Suffix-Form.
+  const film = new FakeResponse('0123456789', { marke: 'cache' });
+  const a = await anfrage('https://myworklog.de/Grafiken/intro.mp4?v=6.5.3',
+                          { headers: { Range: 'bytes=-3' } }, {
+    cacheVorbelegt: { 'https://myworklog.de/Grafiken/intro.mp4?v=6.5.3': film },
+  });
+  ok(a.res?.body === '789', 'Suffix-Form (bytes=-3) liefert die letzten Bytes');
+}
+{
+  // Unsinniger Kopf: nicht raten, ans Netz geben.
+  const film = new FakeResponse('0123456789', { marke: 'cache' });
+  const a = await anfrage('https://myworklog.de/Grafiken/intro.mp4?v=6.5.3',
+                          { headers: { Range: 'bytes=50-99' } }, {
+    cacheVorbelegt: { 'https://myworklog.de/Grafiken/intro.mp4?v=6.5.3': film },
+  });
+  ok(a.netzAufrufe.length === 1 && a.res?.status !== 206,
+     'Bereich ausserhalb der Datei wird nicht erfunden, sondern ans Netz gegeben');
+}
+{
+  const a = await anfrage('https://myworklog.de/Grafiken/intro.mp4?v=6.5.3',
+                          { headers: { Range: 'bytes=0-' } },
+                          { netz: async () => { throw new Error('offline'); } });
+  ok(a.res?.status === 503, 'Range offline ohne Cache → 503 statt haengender Abruf');
 }
 
-// ── 4. Die Ausstiege, ohne die sich die App nicht mehr aktualisiert ──────────
-console.log('\n4. Ausstiege');
+// ── 4. Stale-While-Revalidate fuer die Dateien ohne ?v= ──────────────────────
+console.log('\n4. Stale-While-Revalidate');
 {
-  // Der harte Fall: version.json liegt bereits im Cache. Wuerde der SW ihn
-  // ausliefern, bliebe die SW-Registrierungs-URL fuer immer auf der alten
-  // Version — es kaeme nie wieder ein neuer Worker an.
+  // Der Kern: Treffer kommt SOFORT aus dem Cache, das Netz laeuft daneben.
   const alt = new FakeResponse('{"version":"6.5.2"}', { marke: 'cache' });
   const a = await anfrage('https://myworklog.de/config/version.json', { cache: 'no-store' }, {
     cacheVorbelegt: { 'https://myworklog.de/config/version.json': alt },
   });
-  ok(!a.abgefangen, 'version.json wird NIE aus dem Cache beantwortet');
+  ok(a.abgefangen, 'version.json wird abgefangen');
+  ok(a.res?.marke === 'cache', 'Antwort kommt sofort aus dem Cache (offline-fest)');
+  await new Promise(r => setTimeout(r, 10));
+  ok(a.netzAufrufe.length === 1, 'im Hintergrund wird genau einmal aufgefrischt');
+  ok(inhaltVon(a.cache.eintraege.get('https://myworklog.de/config/version.json')) === 'inhalt',
+     'die frische Fassung liegt danach im Cache — naechster Aufruf sieht die neue Version');
 }
 {
-  const a = await anfrage('https://myworklog.de/config/maintenance.json?t=1757000000000',
-                          { cache: 'no-store' });
-  ok(!a.abgefangen, 'maintenance.json (?t=…) laeuft vorbei, statt den Cache vollzuschreiben');
+  // Ohne Cache-Buster-Strippen waeren das drei Schluessel und drei Downloads
+  // derselben 334-KB-Datei pro Seitenaufruf.
+  const a = await anfrage('https://myworklog.de/config/version.json?cb=99887766');
+  await new Promise(r => setTimeout(r, 10));
+  ok([...a.cache.eintraege.keys()].includes('https://myworklog.de/config/version.json'),
+     '?cb= wird aus dem Cache-Schluessel gestrippt (version-loader.js)');
+  ok(![...a.cache.eintraege.keys()].some(k => k.includes('cb=')),
+     'kein Eintrag mit Buster im Schluessel');
+}
+{
+  // Offline mit Cache-Treffer: muss die alte Fassung liefern, nicht 503.
+  const alt = new FakeResponse('{"version":"6.5.2"}', { marke: 'cache' });
+  const a = await anfrage('https://myworklog.de/config/version.json', {}, {
+    netz: async () => { throw new Error('offline'); },
+    cacheVorbelegt: { 'https://myworklog.de/config/version.json': alt },
+  });
+  ok(a.res?.marke === 'cache', 'offline: version.json kommt aus dem Cache');
+  await new Promise(r => setTimeout(r, 10));
+  ok(inhaltVon(a.cache.eintraege.get('https://myworklog.de/config/version.json')) === '{"version":"6.5.2"}',
+     'gescheiterte Auffrischung laesst den Cache-Eintrag stehen (kein Datenverlust)');
 }
 {
   const a = await anfrage('https://myworklog.de/pages/footer/footer.html');
-  ok(!a.abgefangen, '/pages/ bleibt ausgenommen');
+  await new Promise(r => setTimeout(r, 10));
+  ok(a.abgefangen, 'footer.html wird trotz /pages/ abgefangen');
+  ok(a.cache.eintraege.has('https://myworklog.de/pages/footer/footer.html'),
+     'footer.html liegt im Cache — die Standalone-Seiten haben ihn offline');
+}
+{
+  const a = await anfrage('https://myworklog.de/config/supabase-config.js');
+  await new Promise(r => setTimeout(r, 10));
+  ok(a.cache.eintraege.has('https://myworklog.de/config/supabase-config.js'),
+     'supabase-config.js wird gecacht');
+}
+{
+  const a = await anfrage('https://myworklog.de/manifest.json');
+  ok(a.abgefangen, 'manifest.json wird abgefangen');
+}
+{
+  // Miss + offline: hier ist 503 richtig, es gibt nichts auszuliefern.
+  const a = await anfrage('https://myworklog.de/config/version.json', {}, {
+    netz: async () => { throw new Error('offline'); },
+  });
+  ok(a.res?.status === 503, 'SWR ohne Cache-Treffer und ohne Netz → 503');
+}
+
+// -- 4b. Das Auffrisch-Fenster: der eigentliche Traffic-Gewinn ---------------
+console.log('\n4b. Auffrisch-Fenster');
+{
+  // Frischer Eintrag (gerade eben gecacht): darf das Netz NICHT anfassen.
+  const frisch = new FakeResponse('{"version":"6.5.2"}', {
+    marke: 'cache', headers: { 'x-mwl-gecacht': String(Date.now()) } });
+  const a = await anfrage('https://myworklog.de/config/version.json', {}, {
+    cacheVorbelegt: { 'https://myworklog.de/config/version.json': frisch },
+  });
+  ok(a.res?.marke === 'cache', 'frischer Eintrag kommt aus dem Cache');
+  await new Promise(r => setTimeout(r, 15));
+  ok(a.netzAufrufe.length === 0,
+     'im Fenster KEINE Hintergrund-Anfrage — das spart die 334 KB mal drei');
+}
+{
+  // Abgelaufener Eintrag (6 Minuten alt): muss auffrischen.
+  const alt = new FakeResponse('{"version":"6.5.2"}', {
+    marke: 'cache', headers: { 'x-mwl-gecacht': String(Date.now() - 6 * 60 * 1000) } });
+  const a = await anfrage('https://myworklog.de/config/version.json', {}, {
+    cacheVorbelegt: { 'https://myworklog.de/config/version.json': alt },
+  });
+  ok(a.res?.marke === 'cache', 'abgelaufener Eintrag wird trotzdem sofort geliefert');
+  await new Promise(r => setTimeout(r, 15));
+  ok(a.netzAufrufe.length === 1, 'nach Ablauf des Fensters wird aufgefrischt');
+}
+{
+  // Ein Eintrag ohne Zeitstempel (z. B. aus einer aelteren Fassung) gilt als alt.
+  const ohne = new FakeResponse('{"version":"6.5.2"}', { marke: 'cache' });
+  const a = await anfrage('https://myworklog.de/config/version.json', {}, {
+    cacheVorbelegt: { 'https://myworklog.de/config/version.json': ohne },
+  });
+  await new Promise(r => setTimeout(r, 15));
+  ok(a.netzAufrufe.length === 1, 'Eintrag ohne Zeitstempel wird aufgefrischt, nicht ewig behalten');
+}
+{
+  // Frisch gecachter Miss traegt den Zeitstempel, sonst greift das Fenster nie.
+  const a = await anfrage('https://myworklog.de/config/version.json');
+  await new Promise(r => setTimeout(r, 15));
+  const e = a.cache.eintraege.get('https://myworklog.de/config/version.json');
+  ok(!!e && Number(e.headers.get('x-mwl-gecacht')) > 0,
+     'neu gecachter Eintrag bekommt einen Zeitstempel');
+}
+
+// ── 5. Was bewusst NICHT gecacht wird ────────────────────────────────────────
+console.log('\n5. Ausstiege');
+{
+  // Der Wartungs-Schalter. Ein Schalter, der eine Runde hinterherhinkt, waere
+  // keiner — und zu sparen gibt es bei 1 KB nichts.
+  const alt = new FakeResponse('{"active":false}', { marke: 'cache' });
+  const a = await anfrage('https://myworklog.de/config/maintenance.json?t=1757000000000',
+                          { cache: 'no-store' },
+                          { cacheVorbelegt: { 'https://myworklog.de/config/maintenance.json': alt } });
+  ok(!a.abgefangen, 'maintenance.json laeuft immer ans Netz, auch mit Cache-Eintrag');
+}
+{
+  const a = await anfrage('https://myworklog.de/pages/berichtsheft/index.html');
+  ok(!a.abgefangen, 'andere /pages/-Pfade bleiben ausgenommen');
 }
 {
   const a = await anfrage('https://static.cloudflareinsights.com/beacon.min.js');
@@ -208,8 +380,8 @@ console.log('\n4. Ausstiege');
   ok(!a.abgefangen, 'POST laeuft vorbei');
 }
 
-// ── 5. navigate bleibt Network-First ─────────────────────────────────────────
-console.log('\n5. Navigation');
+// ── 6. navigate bleibt Network-First ─────────────────────────────────────────
+console.log('\n6. Navigation');
 {
   const alt = new FakeResponse('<html>alt</html>', { marke: 'cache' });
   const a = await anfrage('https://myworklog.de/', { mode: 'navigate' }, {
@@ -229,5 +401,5 @@ console.log('\n5. Navigation');
 
 // ── Ergebnis ─────────────────────────────────────────────────────────────────
 console.log(`\n${geprueft - fehler}/${geprueft} bestanden`);
-if (geprueft < 20) { console.log('ZU WENIG PRUEFUNGEN — der Lauf hat nichts getan'); process.exit(1); }
+if (geprueft < 52) { console.log('ZU WENIG PRUEFUNGEN — der Lauf hat nichts getan'); process.exit(1); }
 process.exit(fehler ? 1 : 0);
