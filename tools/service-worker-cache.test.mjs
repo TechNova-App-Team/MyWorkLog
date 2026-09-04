@@ -116,7 +116,8 @@ async function anfrage(url, opt = {}, umgebung = {}) {
   let netzAufrufe = [];
   const netz = umgebung.netz || (async (req) => {
     netzAufrufe.push(typeof req === 'string' ? req : req.url);
-    return new FakeResponse('inhalt', { status: umgebung.status ?? 200, marke: 'netz' });
+    return new FakeResponse(umgebung.koerper ?? 'inhalt',
+                            { status: umgebung.status ?? 200, marke: 'netz' });
   });
 
   const { hoerer, cache } = ladeSW({ netz, cacheVorbelegt: umgebung.cacheVorbelegt });
@@ -192,10 +193,34 @@ console.log('\n3. Medien');
      'intro.mp4 landet im Cache — landing.js holt ihn per fetch() am Stueck');
 }
 {
-  // Nichts im Cache: das Netz uebernimmt, damit die Wiedergabe nie haengt.
+  // Nichts im Cache: der SW holt das GANZE, legt es ab und schneidet daraus.
+  // Ohne diesen Zweig kaeme eine nur-per-Range angefragte Datei nie in den Cache.
   const a = await anfrage('https://myworklog.de/Grafiken/intro.mp4?v=6.5.3',
-                          { headers: { Range: 'bytes=0-' } });
-  ok(a.netzAufrufe.length === 1, 'Range ohne Cache-Treffer geht ans Netz');
+                          { headers: { Range: 'bytes=0-' } }, { koerper: '0123456789' });
+  ok(a.netzAufrufe.length === 1, 'Range ohne Cache-Treffer holt einmal vom Netz');
+  ok(a.netzAufrufe[0] === 'https://myworklog.de/Grafiken/intro.mp4?v=6.5.3',
+     'und zwar OHNE Range — die ganze Datei');
+  ok(a.cache.eintraege.has('https://myworklog.de/Grafiken/intro.mp4?v=6.5.3'),
+     'das Ganze landet im Cache, nicht der Schnipsel');
+  ok(a.res?.status === 206 && a.res?.body === '0123456789',
+     'die Antwort ist trotzdem eine 206-Teilantwort');
+}
+{
+  // Der zweite Aufruf darf das Netz nicht mehr anfassen.
+  const film = new FakeResponse('0123456789', { marke: 'cache' });
+  const a = await anfrage('https://myworklog.de/Grafiken/intro.mp4?v=6.5.3',
+                          { headers: { Range: 'bytes=0-' } }, {
+    cacheVorbelegt: { 'https://myworklog.de/Grafiken/intro.mp4?v=6.5.3': film },
+  });
+  ok(a.netzAufrufe.length === 0, 'ab dem zweiten Mal kein Netz mehr — das war der Zweck');
+}
+{
+  // Was der Server ablehnt, gehoert ihm: nicht cachen, nicht erfinden.
+  const a = await anfrage('https://myworklog.de/Grafiken/weg.mp4?v=6.5.3',
+                          { headers: { Range: 'bytes=0-' } }, { status: 404 });
+  ok(a.res?.status === 404, 'ein 404 beim Nachladen wird durchgereicht');
+  ok(!a.cache.eintraege.has('https://myworklog.de/Grafiken/weg.mp4?v=6.5.3'),
+     '404 landet nicht im Cache');
 }
 {
   // Mit Cache-Treffer: echte 206-Teilantwort, KEIN Netz. Das ist der Unterschied
@@ -401,5 +426,5 @@ console.log('\n6. Navigation');
 
 // ── Ergebnis ─────────────────────────────────────────────────────────────────
 console.log(`\n${geprueft - fehler}/${geprueft} bestanden`);
-if (geprueft < 52) { console.log('ZU WENIG PRUEFUNGEN — der Lauf hat nichts getan'); process.exit(1); }
+if (geprueft < 58) { console.log('ZU WENIG PRUEFUNGEN — der Lauf hat nichts getan'); process.exit(1); }
 process.exit(fehler ? 1 : 0);

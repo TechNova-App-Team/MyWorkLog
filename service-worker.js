@@ -328,7 +328,27 @@ self.addEventListener('fetch', event => {
   if (bereich) {
     event.respondWith((async () => {
       const cache = await caches.open(CACHE_NAME);
-      const voll = await cache.match(request);
+      let voll = await cache.match(request.url);
+
+      // 🔴 Beim Miss das GANZE holen, nicht den erfragten Schnipsel. Eine Datei,
+      // die ausschliesslich per Range angefragt wird, kaeme sonst NIE in den Cache:
+      // `<video preload="metadata">` fragt immer mit Range, und landing.js holt den
+      // Film nur am Stueck, wenn das Intro auch laeuft (`pro_intro_seen`). Bei einem
+      // Bestandsnutzer nach einem Versions-Bump traf beides nicht zu — der Film war
+      // offline nicht da und kostete bei JEDEM Aufruf eine Netz-Anfrage.
+      // Preis: einmal je Version die volle Datei statt nur der Kopfdaten.
+      if (!voll) {
+        try {
+          const ganz = await fetch(request.url, { credentials: 'same-origin' });
+          if (ganz.status === 200) {
+            await cache.put(request.url, ganz.clone());
+            voll = ganz;
+          } else {
+            return ganz;   // 404/403 gehoert dem Server, nicht uns
+          }
+        } catch (e) { /* offline — faellt unten auf 503 */ }
+      }
+
       if (voll) {
         const teil = await teilAntwort(voll, bereich);
         if (teil) return teil;
