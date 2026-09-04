@@ -2,9 +2,13 @@
  * ============================================================
  * TimeTracker Service Worker — Version aus ?v=<version.json> (siehe SW_VERSION unten)
  * ============================================================
- * Strategie: Network-First für alle eigenen Assets (JS/CSS/HTML).
- * → Immer frisch vom Server (ETag-Prüfung via cache:'no-cache')
- * → SW-Cache nur als Offline-Fallback
+ * Strategie:
+ * → HTML-Navigation: Network-First (cache:'reload') — die Seite muss die neuen
+ *   ?v=-Nummern mitbringen, sonst greift unten nie ein Miss.
+ * → Eigene Assets (JS/CSS/Bilder/Medien): Cache-First. Die Referenzen tragen
+ *   ?v=<version> (tools/stamp-assets.js), eine neue Version ist also eine neue URL
+ *   und im versionsgebundenen CACHE_NAME zwangsläufig ein Miss.
+ * → /config/ und /pages/: nie aus dem Cache (siehe Begründung am Fetch-Handler)
  * → CDN-Scripts (supabase, emailjs etc.): nicht cachen
  * ============================================================
  */
@@ -29,7 +33,11 @@ const warn = (...a) => DEBUG && console.warn('[SW]', ...a);
 // Dateitypen die gecacht werden (nur eigener Origin)
 const CACHEABLE_EXTS = new Set(['js', 'css', 'html', 'png', 'svg', 'jpg',
                                  'jpeg', 'webp', 'ico', 'woff', 'woff2',
-                                 'json', 'txt']);   // kein 'mp4': Medien laufen am SW vorbei
+                                 'json', 'txt',
+                                 // Medien laufen mit durch den Cache-First-Zweig unten.
+                                 // /Grafiken/*.mp4|webm bekommt von stamp-assets.js ein ?v=,
+                                 // ist also genauso versioniert wie JS/CSS.
+                                 'mp4', 'webm', 'm4v', 'mov', 'ogg', 'mp3', 'wav']);
 
 // Analytics/Tracking-Domains NICHT cachen (dynamische Responses)
 // Versioned CDN-Libraries (jsdelivr, cdnjs) werden gecacht — sie ändern sich nie
@@ -54,8 +62,9 @@ self.addEventListener('install', event => {
   log('Install', SW_VERSION);
   // KEIN skipWaiting() hier — würde sonst jeden neuen SW automatisch aktivieren,
   // controllerchange feuert, der Update-Banner erkennt das fälschlich als "neues Update"
-  // und zeigt sich nach jedem Apply wieder an (Endlosloop). Cache-Strategie ist sowieso
-  // cache:'reload' → bypassed Browser-Cache komplett, also keine Version-Mismatch-Gefahr.
+  // und zeigt sich nach jedem Apply wieder an (Endlosloop). Ein Version-Mismatch droht
+  // dadurch nicht: der alte SW bedient weiter seinen alten CACHE_NAME, und die
+  // Asset-Adressen darin tragen die alten ?v=-Nummern — alt zu alt, neu zu neu.
   // skipWaiting wird vom Banner-Apply-Flow via postMessage SKIP_WAITING getriggert.
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -91,7 +100,7 @@ self.addEventListener('activate', event => {
 });
 
 // ─────────────────────────────────────────────
-// FETCH — Network-First für alle eigenen Assets
+// FETCH — Network-First für HTML, Cache-First für eigene Assets
 // ─────────────────────────────────────────────
 
 self.addEventListener('fetch', event => {
@@ -125,43 +134,57 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Medien (Video/Audio) NICHT abfangen — durchreichen an den Browser.
-  //
-  // Der Zweig darunter holt jedes Asset mit `cache: 'reload'`, also unter
-  // Umgehung des HTTP-Caches. Fuer JS/CSS ist das gewollt (frischer Stand nach
-  // Deploy, ein paar KB). Fuer das 2,4-MB-Intro-Video heisst es: bei JEDEM
-  // Seitenaufruf komplett neu aus dem Netz, und beim Scroll-Scrubben sendet
-  // das <video> laufend Range-Anfragen, die alle einzeln am Cache vorbeigehen.
-  // Der Medienstack des Browsers kann Teilbereiche puffern und wiederverwenden,
-  // ein Service Worker im Weg kann das nur verschlechtern. Die Frische regelt
-  // hier ohnehin die ?v=<version>-Query in der URL.
-  const pfad = new URL(request.url).pathname;
-  if (/\.(mp4|webm|m4v|mov|ogg|mp3|wav)$/i.test(pfad)) return;
-
   // CDN und nicht-cacheable: direkt ans Netz
   if (!isCacheable(request.url)) return;
-  // /pages/-Pfade nie cachen (werden von Cloudflare umgeschrieben)
-  if (new URL(request.url).pathname.startsWith('/pages/')) return;
 
-  // Eigene Assets: Network-First, Browser-HTTP-Cache komplett umgehen.
-  // cache:'reload' = ignoriert HTTP-Cache total → holt immer frisch vom Netz/CDN.
-  // Wichtig: Bisheriger 'no-cache' respektiert "immutable"-Header in einigen Browsern
-  // und liefert dann jahrelang Stale-Content. 'reload' bricht das auf.
-  // SW-Cache wird nur als Offline-Fallback genutzt.
-  event.respondWith(
-    fetch(new Request(request, { cache: 'reload' }))
-      .then(response => {
-        if (response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(c => c.put(request, clone)).catch(() => {});
-        }
-        return response;
-      })
-      .catch(async () => {
-        const cache = await caches.open(CACHE_NAME);
-        return (await cache.match(request)) ?? new Response('', { status: 503 });
-      })
-  );
+  const pfad = new URL(request.url).pathname;
+
+  // /pages/-Pfade nie cachen (werden von Cloudflare umgeschrieben)
+  if (pfad.startsWith('/pages/')) return;
+
+  // 🔴 /config/ ist die EINZIGE Stelle, an der sich Inhalt ohne Adresswechsel
+  // aendert — Cache-First waere hier kein veralteter Treffer, sondern eine
+  // Sackgasse:
+  //   • version.json ist die Quelle des Cache-Busters, mit dem onboarding.js
+  //     `service-worker.js?v=<version>` registriert. Aus dem Cache beantwortet
+  //     bliebe die Registrierungs-URL fuer immer die alte, es kaeme nie wieder
+  //     ein neuer SW an, und damit auch nie ein neuer CACHE_NAME. Ein einziger
+  //     Treffer wuerde jedes weitere Update abschneiden.
+  //   • maintenance.json haengt ein ?t=Date.now() an: jeder Seitenaufruf waere
+  //     ein neuer Cache-Eintrag, der nie wieder gelesen wird.
+  // Beide rufen bewusst mit cache:'no-store' — das gilt fuer den HTTP-Cache,
+  // nicht fuer uns. Der Ausstieg muss hier stehen.
+  if (pfad.startsWith('/config/')) return;
+
+  // Range-Anfragen (das <video> stellt sie beim Puffern und beim Springen) nicht
+  // aus dem Cache beantworten: cache.match() ignoriert den Range-Header und gaebe
+  // die volle 200er-Antwort auf eine 206er-Frage zurueck — Chrome verkraftet das,
+  // Safari bricht die Wiedergabe ab. Der Film landet trotzdem im Cache, weil
+  // landing.js ihn per fetch() am Stueck holt (200, kein Range) und von der
+  // Blob-Fassung scrubbt.
+  if (request.headers.has('range')) return;
+
+  // Eigene Assets: Cache-First.
+  // Jede Referenz traegt ?v=<version> (stamp-assets.js) und CACHE_NAME haengt an
+  // derselben Version — ein Treffer kann deshalb nicht veraltet sein, und ein
+  // Deploy ist automatisch ein Miss. Netz-Antworten mit Status 200 wandern in den
+  // Cache, alles andere (206, 3xx, 404, Opaque) wird nur durchgereicht.
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+
+    const treffer = await cache.match(request);
+    if (treffer) return treffer;
+
+    try {
+      const response = await fetch(request);
+      if (response.status === 200) {
+        cache.put(request, response.clone()).catch(() => {});
+      }
+      return response;
+    } catch (e) {
+      return new Response('', { status: 503 });
+    }
+  })());
 });
 
 // ─────────────────────────────────────────────
