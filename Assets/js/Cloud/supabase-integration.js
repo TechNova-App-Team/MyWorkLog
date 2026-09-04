@@ -18,9 +18,27 @@
    Solche Schluessel fahren deshalb nur mit, wenn ihr Freigabe-Flag gesetzt ist.
    Das Flag wird im Tresor selbst gesetzt (mit Passwort-Bestaetigung).
    ══════════════════════════════════════════════════════════════════════════ */
-const CLOUD_OPT_IN_KEYS = { 'schatten_vault': 'schatten_cloud_sync' };
+const CLOUD_OPT_IN_KEYS = {};
+
+/* 🔴 Der Schatten-Tresor faehrt hier NICHT mehr mit — weder hoch noch runter.
+   Er hat seit v6.5.4 einen eigenen Weg auf eine eigene Tabelle
+   (Assets/js/berichtsheft/vault-cloud.js, Tabelle `schatten_vault`).
+
+   Warum er hier RAUS muss und nicht einfach zusaetzlich mitfahren kann: dieser
+   Sync laedt den KOMPLETTEN localStorage als einen Blob hoch, alle fuenf
+   Minuten automatisch (AutoSyncManager) — und laedt nie von selbst herunter.
+   Zwei angemeldete Geraete ueberschreiben sich damit gegenseitig. Liefe der
+   Tresor auf beiden Wegen, wuerde der Blob den frisch abgeglichenen Stand des
+   anderen Geraets beim naechsten Durchlauf wieder ueberbuegeln — zwei Wege auf
+   denselben Zustand driften, und der langsamere gewinnt zufaellig.
+
+   Der Eintrag steht als leere Liste da, weil das Freigabe-Verfahren selbst
+   bleibt: `cloudKeyAllowed` ist weiterhin die Stelle, an der ein Schluessel
+   vom Sync ausgenommen wird. */
+const CLOUD_BLOCKED_KEYS = new Set(['schatten_vault']);
 
 function cloudKeyAllowed(key) {
+    if (CLOUD_BLOCKED_KEYS.has(key)) return false;
     const flagKey = CLOUD_OPT_IN_KEYS[key];
     if (!flagKey) return true;
     try {
@@ -425,6 +443,15 @@ class SupabaseCloudSync {
                 const gated = [];
 
                 for (const [key, value] of entriesAll) {
+                    /* Gesperrte Schluessel auch beim Herunterladen ueberspringen.
+                       In alten Cloud-Zeilen liegt noch ein `schatten_vault` aus
+                       der Zeit vor dem eigenen Sync-Weg. Wuerde er hier
+                       zurueckgeschrieben, koennte ein Monate alter Spiegel den
+                       frischen Stand aus der Tabelle `schatten_vault` schlagen —
+                       bootVault nimmt den neueren der beiden, und ein alter Blob
+                       traegt einen alten Zeitstempel, aber der lokale Spiegel
+                       waere dann eben auch alt. Nicht anfassen ist hier richtig. */
+                    if (CLOUD_BLOCKED_KEYS.has(key)) continue;
                     if (CLOUD_OPT_IN_KEYS[key]) { gated.push([key, value]); continue; }
                     localStorage.setItem(key, value);
                 }
