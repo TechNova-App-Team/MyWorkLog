@@ -223,7 +223,12 @@ function buildIhkCtx(report) {
         ausbilder: v('pdfAusbilder'),
         heftNr: v('pdfHeftNr'),
         beginn: v('pdfBeginn') ? formatDate(v('pdfBeginn')) : '',
-        ende: v('pdfEnde') ? formatDate(v('pdfEnde')) : ''
+        ende: v('pdfEnde') ? formatDate(v('pdfEnde')) : '',
+        // Die Freigabe des Ausbilders. Bis v6.5.2 endete sie in der App und kam
+        // im PDF nicht vor — eine freigegebene Woche druckte exakt wie eine, die
+        // nie jemand gesehen hat. Genau die Information, fuer die der ganze
+        // Freigabe-Weg existiert, fiel beim Ausdruck weg.
+        approval: report.approval || null
     };
 }
 

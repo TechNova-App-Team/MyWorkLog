@@ -219,5 +219,81 @@ check('HTML aus Nutzertext wird maskiert',
 check('Vorschau enthaelt die Kastenstruktur',
     boese.html.includes('fm-block-head') && boese.html.includes('fm-sig-line'), '');
 
+// ═══ 8. Digitale Freigabe steht auf dem Blatt ═══════════════════════════════
+// Bis v6.5.2 kam `approval` im ganzen PDF-Pfad nicht vor: eine freigegebene
+// Woche druckte exakt wie eine, die nie jemand gesehen hat — genau die
+// Information, fuer die der Freigabe-Weg ueberhaupt existiert, fiel beim
+// Ausdruck weg. Das faellt in einer Vorfuehrung sofort auf und in der App nie.
+console.log('\nDigitale Freigabe im Vordruck');
+
+// Gegenprobe zur Seitenzaehlung oben: mit genug Text MUSS der Bogen ueberlaufen.
+// Ohne diese Zeile waere eine Messung, die immer 1 liefert, nicht von einer
+// funktionierenden zu unterscheiden.
+{
+    const viel = Array.from({ length: 80 }, (_, i) => 'Zeile ' + i + ' der Woche.').join('\n');
+    const r = render('dihk-w', { activities: viel });
+    const inhalt = r.rec.pages - (r.model.cover ? 1 : 0);
+    check('Gegenprobe: sehr viel Text laeuft auf Seite 2 ueber', inhalt > 1,
+        'Inhaltsseiten: ' + inhalt);
+}
+
+const FREIGABE = {
+    state: 'approved', by: 'Maria Musterfrau',
+    at: '2026-09-03T10:15:00.000Z',
+    note: '', pub: 'PUBKEY', sig: 'a1b2-c3d4_e5f6g7h8i9', trust: 'known',
+};
+
+const ohne = render('dihk-w');
+const mit = render('dihk-w', { approval: FREIGABE });
+
+check('ohne Freigabe steht nichts davon auf dem Blatt',
+    !ohne.pdf.includes('Digital freigegeben') && !ohne.html.includes('fm-sig-appr'),
+    ohne.pdf.slice(0, 120));
+check('mit Freigabe steht der Name im PDF', mit.pdf.includes('Maria Musterfrau'), mit.pdf);
+check('mit Freigabe steht das Datum im PDF (lokal, nicht per toISOString verschoben)',
+    mit.pdf.includes('Digital freigegeben 03.09.2026'), mit.pdf);
+check('die Kennung ist kurz und alphanumerisch',
+    mit.model.approval.kennung === 'A1B2C3D4E5F6', mit.model.approval.kennung);
+check('der Hinweis wertet die Freigabe nicht zur Unterschrift auf',
+    mit.pdf.includes('ersetzt die eigenhändige Unterschrift nicht'), '');
+check('die Vorschau zeigt dasselbe wie das PDF',
+    mit.html.includes('Maria Musterfrau') && mit.html.includes('fm-sig-appr')
+    && mit.html.includes('fm-sig-note'), '');
+
+// Eine Rueckgabe ist ein Zwischenstand und gehoert nicht in ein Dokument, das
+// abgeheftet wird.
+const zurueck = render('dihk-w', { approval: { ...FREIGABE, state: 'rejected' } });
+check('eine Rueckgabe erscheint NICHT auf dem Blatt',
+    zurueck.model.approval === null && !zurueck.pdf.includes('Digital freigegeben'), '');
+
+// 🔴 jsPDF-Standardschriften koennen nur WinAnsi (CP1252). Ein Haken oder Pfeil
+// kaeme als falsches Glyph heraus — im Browser sieht der String richtig aus,
+// der Fehler entsteht erst beim Schreiben ins PDF.
+const ueberWinAnsi = [...mit.pdf].filter(c => c.codePointAt(0) > 0xFF);
+check('kein Zeichen ueber U+00FF im PDF-Text',
+    ueberWinAnsi.length === 0, 'gefunden: ' + [...new Set(ueberWinAnsi)].join(' '));
+// Gegenprobe: der Lauf sieht ueberhaupt Text, sonst prueft die Zeile darueber nichts.
+check('es gibt ueberhaupt PDF-Text zu pruefen', mit.pdf.length > 500, String(mit.pdf.length));
+
+// Der Vermerk landet an der Zeile des AUSBILDERS, nicht an der des Azubis.
+// Ueber den Wortlaut gesucht, weil die Vordrucke 2 bis 4 Zeilen in
+// unterschiedlicher Reihenfolge haben.
+for (const formId of ['dihk-w', 'dihk-t', 'neufassung-w', 'ihk-muenchen']) {
+    const r = render(formId, { approval: FREIGABE });
+    const idx = r.model.signatures.findIndex(s => s.indexOf('Ausbilder') >= 0);
+    check(`${formId}: es gibt eine Ausbilder-Zeile`, idx >= 0, r.model.signatures.join(' | '));
+    check(`${formId}: die Freigabe steht im PDF`, r.pdf.includes('Digital freigegeben'), '');
+    // Eine Woche muss weiterhin auf EIN Blatt passen — der Vermerk darf den
+    // Bogen nicht auf Seite 2 schieben.
+    //
+    // 🔴 Das Deckblatt abziehen. `drawCover()` ruft `addPage()`, jedes Modell
+    // traegt eines — `rec.pages` ist damit NIE 1, und eine Zusicherung auf 1 faellt
+    // durch, ohne dass am Layout etwas falsch ist. Gemessen wird die Zahl der
+    // INHALTSSEITEN.
+    const inhalt = r.rec.pages - (r.model.cover ? 1 : 0);
+    check(`${formId}: eine Woche bleibt eine Seite`, inhalt === 1,
+        'Inhaltsseiten: ' + inhalt + ' (gesamt ' + r.rec.pages + ')');
+}
+
 console.log(fails ? `\n${fails} Pruefung(en) fehlgeschlagen\n` : '\nAlle Pruefungen bestanden\n');
 process.exit(fails ? 1 : 0);

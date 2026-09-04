@@ -54,7 +54,15 @@
         sigAusbilder:   'Datum, Unterschrift Ausbildende/r oder Ausbilder/in',
         sigVertreter:   'Datum, Unterschrift gesetzliche/r Vertreter/in',
         sigWeitere:     'Datum, weitere Sichtvermerke (z. B. Lehrer/in)',
-        fortsetzung:    'Raum für zusätzliche Berichte'
+        fortsetzung:    'Raum für zusätzliche Berichte',
+        // Digitale Freigabe. Der Wortlaut wertet bewusst NICHT auf: die Freigabe
+        // ist im Berichtsheft erfasst und nachvollziehbar, aber sie ist keine
+        // eigenhändige Unterschrift und kein Identitätsnachweis (der Schlüssel
+        // des Ausbilders ist nirgends beglaubigt — siehe Kopf von mwl-sign.js).
+        // Diese Ehrlichkeit steht so auch in der Oberfläche und bleibt.
+        freigabeKopf:   'Digital freigegeben',
+        freigabeKennung: 'Kennung',
+        freigabeHinweis: 'Digitale Freigabe im Berichtsheft erfasst. Sie ersetzt die eigenhändige Unterschrift nicht.'
     };
 
     const TAGE = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
@@ -263,6 +271,36 @@
         return out;
     }
 
+    // Aus report.approval wird das, was aufs Blatt kann.
+    //
+    // Bewusst NUR bei state === 'approved'. Eine Rueckgabe ist ein Zwischenstand
+    // und gehoert nicht in ein Dokument, das abgeheftet wird — sie steht in der
+    // App, wo der Azubi sie bearbeiten kann.
+    //
+    // 🔴 Keine Zeichen ueber U+00FF: jsPDF-Standardschriften koennen nur WinAnsi,
+    // ein Haken oder Pfeil kaeme als falsches Glyph heraus. Deshalb Wortlaut
+    // statt Symbol, und als Trenner ein Komma statt eines Mittelpunkts.
+    function normalizeApproval(a) {
+        if (!a || a.state !== 'approved') return null;
+        let datum = '';
+        if (a.at) {
+            const d = new Date(a.at);
+            // Lokale Datumsteile: toISOString() rechnet nach UTC und schiebt ein
+            // mitteleuropaeisches Mitternachtsdatum auf den Vortag.
+            if (!isNaN(d.getTime())) {
+                datum = String(d.getDate()).padStart(2, '0') + '.' +
+                    String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
+            }
+        }
+        return {
+            by: String(a.by || '').trim(),
+            datum: datum,
+            // Kurzkennung der Signatur: genug, um einen Ausdruck dem Eintrag in
+            // der App zuzuordnen, ohne eine 90-Zeichen-Zeile aufs Blatt zu setzen.
+            kennung: String(a.sig || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 12).toUpperCase()
+        };
+    }
+
     function buildIhkFormModel(formId, ctx) {
         const tpl = IHK_FORMS[formId] || IHK_FORMS['dihk-w'];
         const val = k => (ctx && ctx[k] != null && ctx[k] !== '') ? String(ctx[k]) : '';
@@ -287,6 +325,7 @@
             confirmLine: tpl.confirmLine || null,
             sigStyle: tpl.sigStyle || 'line',
             signatures: tpl.signatures.slice(),
+            approval: normalizeApproval(ctx && ctx.approval),
             continueTitle: T.fortsetzung,
             sections: []
         };
@@ -421,13 +460,25 @@
 
         const per = model.sigStyle === 'dated' ? model.signatures.length : 2;
         const wPct = (100 / per).toFixed(4) + '%';
+        // Vorschau und PDF lesen dasselbe Modell — sie koennen nicht
+        // auseinanderlaufen. Was hier steht, muss auch drawSignatures() zeigen.
+        const slot = model.approval ? ausbilderSlot(model) : -1;
+        const a = model.approval;
         h += '<div class="fm-sigs' + (model.sigStyle === 'dated' ? ' fm-sigs-dated' : '') + '">' +
-             model.signatures.map(s =>
+             model.signatures.map((s, i) =>
                 '<div class="fm-sig" style="width:' + wPct + '">' +
                 (model.sigStyle === 'dated' ? '<div class="fm-sig-date">Datum:</div>' : '') +
+                (i === slot
+                    ? '<div class="fm-sig-appr">' +
+                      esc(T.freigabeKopf + (a.datum ? ' ' + a.datum : '')) +
+                      (a.by ? '<br>' + esc(a.by) : '') +
+                      (a.kennung ? '<br>' + esc(T.freigabeKennung + ' ' + a.kennung) : '') +
+                      '</div>'
+                    : '') +
                 '<div class="fm-sig-line"></div>' +
                 '<div class="fm-sig-lab">' + esc(s) + '</div></div>').join('') +
              '</div>';
+        if (model.approval) h += '<div class="fm-sig-note">' + esc(T.freigabeHinweis) + '</div>';
 
         h += '</div>';
         return h;
@@ -794,14 +845,40 @@
         return y;
     }
 
+    // Welche Unterschriftszeile gehoert dem Ausbilder? Ueber den Wortlaut statt
+    // ueber den Index 1: die Vordrucke haben 2 bis 4 Zeilen in verschiedener
+    // Reihenfolge, und ein fester Index waere still falsch, sobald eine Kammer
+    // dazukommt. "Auszubildende/-r" enthaelt "Ausbilder" nicht — die Woerter
+    // trennen sauber.
+    function ausbilderSlot(model) {
+        const i = model.signatures.findIndex(s => s.indexOf('Ausbilder') >= 0);
+        return i >= 0 ? i : 0;
+    }
+
     function sigBlockHeight(model) {
-        if (model.sigStyle === 'dated') return 26;
-        return Math.ceil(model.signatures.length / 2) * 17;
+        // Der Hinweis unter dem Block braucht eine eigene Zeile. Ohne diese
+        // Reserve schoebe er sich in die Fusszeile — feste mm-Hoehen sind hier
+        // genau die Falle, gegen die allocateBlocks() gebaut wurde.
+        const extra = model.approval ? 6 : 0;
+        if (model.sigStyle === 'dated') return 26 + extra;
+        return Math.ceil(model.signatures.length / 2) * 17 + extra;
     }
 
     function drawSignatures(doc, model, y, CW) {
         doc.setLineWidth(0.3);
         doc.setFont('helvetica', 'normal');
+        const slot = model.approval ? ausbilderSlot(model) : -1;
+
+        // Die drei Zeilen der Freigabe stehen UEBER der Linie, in dem Raum, der
+        // sonst leer bleibt. Deshalb waechst die Zeilenhoehe nicht.
+        const freigabe = (x, oben) => {
+            doc.setFontSize(6);
+            const a = model.approval;
+            doc.text(T.freigabeKopf + (a.datum ? ' ' + a.datum : ''), x, oben);
+            if (a.by) doc.text(a.by, x, oben + 3);
+            if (a.kennung) doc.text(T.freigabeKennung + ' ' + a.kennung, x, oben + 6);
+        };
+
         if (model.sigStyle === 'dated') {
             const n = model.signatures.length;
             const w = CW / n;
@@ -809,6 +886,7 @@
                 const x = PDF.ML + i * w;
                 doc.setFontSize(8);
                 doc.text('Datum:', x, y + 4);
+                if (i === slot) freigabe(x, y + 8);
                 doc.line(x, y + 16, x + w - 6, y + 16);
                 doc.setFontSize(7.5);
                 doc.text(s, x, y + 20);
@@ -818,10 +896,16 @@
             model.signatures.forEach((s, i) => {
                 const x = PDF.ML + (i % 2) * w;
                 const ry = y + Math.floor(i / 2) * 17;
+                if (i === slot) freigabe(x, ry + 2.5);
                 doc.line(x, ry + 10, x + w - 8, ry + 10);
                 doc.setFontSize(7.5);
                 doc.text(s, x, ry + 13.6);
             });
+        }
+
+        if (model.approval) {
+            doc.setFontSize(6);
+            doc.text(T.freigabeHinweis, PDF.ML, y + sigBlockHeight(model) - 1.5);
         }
     }
 
