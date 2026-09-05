@@ -180,6 +180,10 @@ function saveReport(event) {
 
     showToast(editingId ? 'Bericht aktualisiert' : 'Bericht erstellt', 'success');
 
+    // B2B: bei einem Azubi den Bericht in die Betriebs-Tabelle spiegeln.
+    // Guard, weil bh-b2b-ui.js nur mit geladenem Supabase-Config etwas tut.
+    if (typeof b2bOnReportSaved === 'function') b2bOnReportSaved(report);
+
     // Confetti on new complete report
     if (!editingId && (report.status === 'complete' || report.status === 'signed')) {
         launchConfetti();
@@ -194,11 +198,20 @@ function editReport(id) {
     const report = reports.find(r => r.id === id);
     if (!report) return;
 
-    // Bestaetigte Wochen sind gesperrt. Die Sperre liegt in den eigenen
-    // Daten des Nutzers, er kann sie also aufheben — sie soll ihn davor
-    // bewahren, eine abgezeichnete Woche versehentlich zu veraendern,
-    // nicht ihn aussperren. Wer sie aufhebt, verliert die Freigabe.
+    // Bestaetigte Wochen sind gesperrt.
     if (bhIsLocked(report)) {
+        // Eine SERVERSEITIGE Freigabe (Betriebs-Anbindung) liegt nicht in den
+        // eigenen Daten — der Azubi kann sie hier nicht aufheben. Zurueckgeben
+        // muss der Ausbilder. Das ist der Kern der Revisionssicherheit und
+        // bewusst so: sonst waere die Sperre nur ein Vorschlag.
+        if (report.approval && report.approval.server) {
+            alert('Diese Woche wurde von ' + (report.approval.by || 'deinem Ausbilder') +
+                ' abgezeichnet.\n\nZum Ändern muss dein Ausbilder sie zurückgeben.');
+            return;
+        }
+        // Lokale Freigabe (Link-/QR-Weg): die liegt in den eigenen Daten, der
+        // Nutzer kann sie aufheben — die Warnung soll ihn nur davor bewahren,
+        // das versehentlich zu tun.
         if (!confirm('Diese Woche wurde von ' + (report.approval.by || 'dem Ausbilder') +
             ' bestätigt und ist deshalb gesperrt.\n\n' +
             'Wenn Sie sie jetzt bearbeiten, entfällt die Bestätigung und die Woche muss erneut freigegeben werden.\n\n' +

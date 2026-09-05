@@ -174,18 +174,24 @@
             if (!u) return null;
             const { data, error } = await sb
                 .from('betrieb_mitglieder')
-                .select('betrieb_id, rolle, anzeige_name, betriebe(name)')
+                .select('betrieb_id, rolle, anzeige_name')
                 .eq('user_id', u.id)
                 .order('angelegt_at', { ascending: true })
                 .limit(1);
             if (error) { console.warn('[B2B] Status:', error.message); return null; }
             const row = data && data[0];
-            const wert = row ? {
+            if (!row) { statusCache = { at: Date.now(), wert: null }; return null; }
+
+            let name = '';
+            const bt = await sb.from('betriebe').select('name').eq('id', row.betrieb_id).maybeSingle();
+            if (bt && bt.data) name = bt.data.name || '';
+
+            const wert = {
                 betriebId: row.betrieb_id,
-                name: (row.betriebe && row.betriebe.name) || '',
+                name: name,
                 rolle: row.rolle,
                 anzeigeName: row.anzeige_name || ''
-            } : null;
+            };
             statusCache = { at: Date.now(), wert: wert };
             return wert;
         } catch (e) {
@@ -342,6 +348,11 @@
      * Neueste Freigabe je Bericht. → { [clientId]: approval }.
      * Der Aufrufer traegt das in `report.approval` ein — von dort holen es
      * Badge, bhIsLocked() und der PDF-Renderer.
+     *
+     * Bewusst ZWEI schlichte Abfragen statt eines PostgREST-Embeds: die RLS
+     * gibt dem Azubi ohnehin nur die eigenen Zeilen, und zwei `.select('*')`
+     * sind robuster als eine Embed-Syntax, die bei einer FK-Umbenennung
+     * stillschweigend kippt.
      */
     async function bhb2bFreigabenRunter() {
         const st = await bhb2bStatus();
@@ -350,15 +361,24 @@
             const sb = await client();
             const u = await benutzer(sb);
             if (!u) return {};
-            const { data, error } = await sb.from('freigaben')
-                .select('entscheidung, ausbilder_name, anmerkung, pruefsumme, signatur, erstellt_at, berichte!inner(client_id, azubi_id)')
-                .order('erstellt_at', { ascending: true });   // aeltere zuerst → neuere gewinnt
-            if (error) { console.warn('[B2B] Freigaben:', error.message); return {}; }
+
+            const [{ data: fr, error: e1 }, { data: be, error: e2 }] = await Promise.all([
+                sb.from('freigaben')
+                    .select('bericht_id, entscheidung, ausbilder_name, anmerkung, pruefsumme, signatur, erstellt_at')
+                    .order('erstellt_at', { ascending: true }),   // aeltere zuerst → neuere gewinnt
+                sb.from('berichte')
+                    .select('id, client_id')
+                    .eq('azubi_id', u.id)
+            ]);
+            if (e1 || e2) { console.warn('[B2B] Freigaben:', (e1 || e2).message); return {}; }
+
+            const idZuClient = {};
+            (be || []).forEach(b => { if (b.client_id) idZuClient[b.id] = b.client_id; });
+
             const out = {};
-            (data || []).forEach(f => {
-                const b = f.berichte;
-                if (!b || b.azubi_id !== u.id || !b.client_id) return;
-                out[b.client_id] = zeileZuApproval(f);
+            (fr || []).forEach(f => {
+                const clientId = idZuClient[f.bericht_id];
+                if (clientId) out[clientId] = zeileZuApproval(f);
             });
             return out;
         } catch (e) {

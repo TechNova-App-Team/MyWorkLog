@@ -138,6 +138,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Entscheidung zugeordnet werden soll.
     bhHandleHash();
 
+    // B2B: Betriebs-Anbindung. Zieht bei einem Azubi die serverseitigen
+    // Freigaben in report.approval — nach bhHandleHash, damit der Link-Weg
+    // (falls gleichzeitig genutzt) zuerst greift.
+    if (typeof b2bUiInit === 'function') b2bUiInit();
+
     // Initialize AI Studio
     AIStudio.init();
 });

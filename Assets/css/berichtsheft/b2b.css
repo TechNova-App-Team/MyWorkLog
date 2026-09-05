@@ -1,0 +1,217 @@
+/* ═══ B2B — Betrieb / IHK-Anbindung ═══
+   Der Inhalt der Karte wird komplett von bh-b2b-ui.js erzeugt (wie bei
+   bh-freigabe.js laeuft die Sprache ueber b2bL(de,en), nicht ueber die
+   i18n-Pipeline). Hier nur die Form.
+   Tokens: alle aus basis.css :root — kein eigener Hexwert, sonst faellt die
+   Regel im Standalone-Kontext auf ihren Initialwert zurueck. */
+
+#b2bCard {
+    /* wie .card, aber die fadeUp-Animation der .card-Regel stoert hier nicht */
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 20px;
+}
+
+.b2b-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 12px;
+}
+
+.b2b-head .icon {
+    width: 17px;
+    height: 17px;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.b2b-title {
+    font-family: var(--font-display);
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.b2b-pill {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.b2b-pill::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.b2b-pill.is-on {
+    background: rgba(var(--success-rgb), 0.12);
+    color: var(--success);
+}
+
+.b2b-pill.is-off {
+    background: var(--bg-hover);
+    color: var(--text-muted);
+}
+
+.b2b-body {
+    font-size: 0.86rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.b2b-body strong {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.b2b-body .b2b-muted {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+/* Segment-Umschalter Azubi / Ausbilder */
+.b2b-seg {
+    display: inline-flex;
+    padding: 3px;
+    gap: 3px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin: 14px 0 12px;
+}
+
+.b2b-seg button {
+    appearance: none;
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: var(--radius-xs);
+    font-family: var(--font-main);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.15s var(--ease);
+}
+
+.b2b-seg button.is-active {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* Formzeile: Eingaben nebeneinander, ab schmal gestapelt */
+.b2b-form {
+    display: grid;
+    gap: 10px;
+    max-width: 440px;
+}
+
+.b2b-form .form-input {
+    font-size: 0.86rem;
+}
+
+.b2b-form .b2b-hint {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.b2b-form .b2b-fehler {
+    font-size: 0.8rem;
+    color: var(--danger);
+    line-height: 1.5;
+}
+
+.b2b-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+/* Einladungscodes des Ausbilders */
+.b2b-codes {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 12px 0;
+}
+
+.b2b-code {
+    display: flex;
+    align-items: center;
+    gap: 8px 10px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+}
+
+.b2b-code code {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    color: var(--text-main);
+    min-width: 0;
+}
+
+.b2b-code .b2b-code-state {
+    margin-left: auto;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.b2b-code.is-used code {
+    color: var(--text-dim);
+    text-decoration: line-through;
+}
+
+.b2b-copy {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px 9px;
+    border-radius: var(--radius-xs);
+    font-family: var(--font-main);
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.b2b-copy:hover {
+    color: var(--text-main);
+    border-color: var(--border-hover);
+}
+
+@media (max-width: 520px) {
+    #b2bCard {
+        padding: 16px;
+    }
+
+    .b2b-pill {
+        /* auf sehr schmal unter den Titel */
+        margin-left: 0;
+    }
+
+    .b2b-head {
+        flex-wrap: wrap;
+    }
+}
