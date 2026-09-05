@@ -2203,19 +2203,75 @@ function _restoreApiSettings() {
 // ═══════════════════════════════════════
 // GENERATE-BUTTON PROGRESS-UI
 // ═══════════════════════════════════════
-// Status-Messages werden mit der Zeit "ungeduldiger" und am Ende witzig.
-// Erster Eintrag (t=0) ist Default beim Start.
-const BTN_STATUS_MESSAGES = [
-    { t: 0, msg: 'KI denkt nach…' },
-    { t: 3000, msg: 'Tätigkeiten werden ausgewählt…' },
-    { t: 6500, msg: 'Verben mit Substantiven verkuppelt…' },
-    { t: 10000, msg: 'Berichtsheft formuliert…' },
-    { t: 14000, msg: 'Letzter Schliff am Wortlaut…' },
-    { t: 18000, msg: 'KI poliert noch ein bisschen…' },
-    { t: 23000, msg: 'Hmm, das Modell sucht das perfekte Verb…' },
-    { t: 30000, msg: 'KI hat kurz Kaffee geholt…' },
-    { t: 40000, msg: 'Jetzt aber wirklich gleich…' },
+// Waehrend das Modell arbeitet, laeuft im Knopf Quatsch. Das ist Absicht:
+// die Wartezeit liegt je nach Modell zwischen 5 und 45 Sekunden, und ein
+// Kasten, der nur "Bitte warten" sagt, fuehlt sich doppelt so lang an.
+//
+// 🔴 Der Quatsch darf nichts BEHAUPTEN. Die ehrliche Angabe ist die Prozentzahl
+// daneben; die Sprueche sagen nur "es passiert was". Deshalb steht hier nichts
+// wie "Schritt 3 von 5" oder "gleich fertig" — das waere erfunden, weil die
+// Antwortzeit des Modells nicht vorhersagbar ist. Die drei GEDULD-Sprueche am
+// Ende sind die einzigen mit Aussage, und die stimmt: es dauert dann wirklich
+// laenger als ueblich.
+//
+// Reihenfolge ueber einen Beutel statt Math.random() je Wechsel: sonst kommt
+// derselbe Spruch zweimal hintereinander, und genau das faellt auf.
+const BTN_SPRUECHE = [
+    ['Blubbert…',                        'Bubbling…'],
+    ['Rührt um…',                        'Stirring…'],
+    ['Kramt in der Werkzeugkiste…',      'Rummaging in the toolbox…'],
+    ['Sortiert Verben nach Sympathie…',  'Sorting verbs by likeability…'],
+    ['Verkuppelt Substantive…',          'Matchmaking nouns…'],
+    ['Legt die Stirn in Falten…',        'Furrowing brow…'],
+    ['Kaut auf dem Bleistift…',          'Chewing the pencil…'],
+    ['Blättert im Duden…',               'Leafing through the dictionary…'],
+    ['Schiebt Kommas hin und her…',      'Nudging commas around…'],
+    ['Streicht alles wieder durch…',     'Crossing it all out again…'],
+    ['Fängt nochmal von vorne an…',      'Starting over…'],
+    ['Räuspert sich…',                   'Clearing throat…'],
+    ['Holt einmal tief Luft…',           'Taking a deep breath…'],
+    ['Nickt bedeutungsvoll…',            'Nodding meaningfully…'],
+    ['Sucht das perfekte Verb…',         'Hunting the perfect verb…'],
+    ['Macht kurz die Augen zu…',         'Closing eyes for a sec…'],
+    ['Zählt bis drei…',                  'Counting to three…'],
+    ['Erinnert sich an Dienstag…',       'Remembering Tuesday…'],
+    ['Poliert die Fugen…',               'Polishing the joints…'],
+    ['Sucht Ausreden für Montag…',       'Inventing excuses for Monday…'],
+    ['Wärmt sich auf…',                  'Warming up…'],
+    ['Fragt kurz einen Kollegen…',       'Asking a colleague…'],
+    ['Sortiert den Wochenrückblick…',    'Sorting the week…'],
+    ['Denkt an früher…',                 'Reminiscing…'],
 ];
+
+// Nach dieser Zeit wird zugegeben, dass es laenger dauert. Diese drei duerfen
+// etwas behaupten, weil es dann auch stimmt.
+const BTN_GEDULD_AB_MS = 25000;
+const BTN_GEDULD = [
+    ['Dauert heute länger als sonst…',   'Taking longer than usual…'],
+    ['Gleich, versprochen…',             'Almost there, promise…'],
+    ['Das Modell lässt sich Zeit…',      'The model is taking its time…'],
+];
+
+/** Mischt einen Beutel, damit sich kein Spruch wiederholt, bevor alle dran waren. */
+function _beutelFuellen() {
+    const b = BTN_SPRUECHE.slice();
+    for (let i = b.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [b[i], b[j]] = [b[j], b[i]];
+    }
+    return b;
+}
+let _spruchBeutel = [];
+
+function naechsterSpruch(elapsed) {
+    if (elapsed >= BTN_GEDULD_AB_MS) {
+        const g = BTN_GEDULD[Math.floor(Math.random() * BTN_GEDULD.length)];
+        return L(g[0], g[1]);
+    }
+    if (!_spruchBeutel.length) _spruchBeutel = _beutelFuellen();
+    const s = _spruchBeutel.pop();
+    return L(s[0], s[1]);
+}
 
 let _btnProgress = { rafId: null, msgTimer: null, startTs: 0, finished: true };
 
@@ -2231,7 +2287,8 @@ function startBtnProgress() {
     btn.classList.add('loading');
     if (fill) fill.style.width = '0%';
     if (percentEl) percentEl.textContent = '0%';
-    if (msgEl) { msgEl.textContent = BTN_STATUS_MESSAGES[0].msg; msgEl.classList.remove('fading'); }
+    _spruchBeutel = [];
+    if (msgEl) { msgEl.textContent = naechsterSpruch(0); msgEl.classList.remove('fading'); }
 
     _btnProgress.startTs = Date.now();
     _btnProgress.finished = false;
@@ -2254,10 +2311,7 @@ function startBtnProgress() {
     const cycleMessage = () => {
         if (_btnProgress.finished) return;
         const elapsed = Date.now() - _btnProgress.startTs;
-        let chosen = BTN_STATUS_MESSAGES[0].msg;
-        for (const item of BTN_STATUS_MESSAGES) {
-            if (elapsed >= item.t) chosen = item.msg;
-        }
+        const chosen = naechsterSpruch(elapsed);
         if (msgEl && msgEl.textContent !== chosen) {
             msgEl.classList.add('fading');
             setTimeout(() => {
@@ -2287,7 +2341,7 @@ function stopBtnProgress(success) {
         // Schnapp zu 100% + Grün-Pulse für 700ms
         if (fill) fill.style.width = '100%';
         if (percentEl) percentEl.textContent = '100%';
-        if (msgEl) { msgEl.classList.remove('fading'); msgEl.textContent = 'Fertig'; }
+        if (msgEl) { msgEl.classList.remove('fading'); msgEl.textContent = L('Fertig', 'Done'); }
         btn.classList.add('success-pulse');
         setTimeout(() => {
             btn.classList.remove('loading', 'success-pulse');
