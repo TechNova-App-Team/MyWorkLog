@@ -72,6 +72,20 @@ console.log('\n3. Projekt- und Inhaltsregeln');
 console.log('\n4. Robustheit');
 {
     ok('Vorschauzeile (Preheader) vorhanden', /max-height:0/.test(h) && /Anmelde-Link/.test(h));
+
+    // Das Logo darf Beiwerk sein, nie Traeger: Outlook laedt Bilder nie
+    // automatisch. Faellt es aus, muss die Absenderkennung trotzdem dastehen.
+    const bilder = [...h.matchAll(/<img[^>]*>/g)].map(m => m[0]);
+    ok('hoechstens ein Bild', bilder.length <= 1, bilder.length + ' Bild(er)');
+    if (bilder.length) {
+        ok('Bild absolut verlinkt', /src="https:\/\//.test(bilder[0]));
+        ok('Bild hat width UND height als Attribut (Outlook ignoriert CSS)',
+           /width="\d+"/.test(bilder[0]) && /height="\d+"/.test(bilder[0]));
+        ok('Bild ist dekorativ (leeres alt), die Wortmarke steht als Text daneben',
+           /alt=""/.test(bilder[0]) && />MyWorkLog</.test(h));
+    }
+    ok('Wortmarke existiert als Text, nicht nur im Bild',
+       (h.match(/>MyWorkLog</g) || []).length >= 1);
     ok('lange Token-URL bricht um', /word-break:\s*break-all/.test(h));
     ok('Dunkelmodus behandelt', /prefers-color-scheme:\s*dark/.test(h));
     ok('color-scheme angemeldet', /name="color-scheme"/.test(h));
@@ -96,5 +110,5 @@ console.log('\n4. Robustheit');
 }
 
 console.log(`\n${geprueft - fehler}/${geprueft} bestanden`);
-if (geprueft < 20) { console.log('ZU WENIG PRUEFUNGEN — der Lauf hat nichts getan'); process.exit(1); }
+if (geprueft < 25) { console.log('ZU WENIG PRUEFUNGEN — der Lauf hat nichts getan'); process.exit(1); }
 process.exit(fehler ? 1 : 0);
