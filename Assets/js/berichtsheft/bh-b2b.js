@@ -149,15 +149,25 @@
             inhalt: kern.inhalt,
             status: STATUS_ERLAUBT.indexOf(report.status) !== -1 ? report.status : 'incomplete',
             quelle: QUELLE_ERLAUBT.indexOf(report.source) !== -1 ? report.source : 'local',
-            ki_erzeugt: !!(report.aiGenerated || report.source === 'cloud'),
-            updated_at: report.updatedAt || new Date().toISOString()
+            ki_erzeugt: !!(report.aiGenerated || report.source === 'cloud')
+            // created_at / updated_at setzt der Trigger berichte_serverzeit auf
+            // Serverzeit — hier NICHTS mitschicken (ein kaputter Client-Wert
+            // liesse sonst den ganzen Upsert an der Typpruefung scheitern).
         };
+    }
+
+    // Der von der Ausbilder-Seite signierte String: deckt Bericht (client_id),
+    // Entscheidung und Inhalts-Pruefsumme ab. Beide Seiten bauen ihn identisch —
+    // der Trenner U+001F kommt in keinem der Felder vor.
+    function freigabeSignaturText(clientId, entscheidung, pruefsumme) {
+        return ['mwl-freigabe-konto/1', String(clientId || ''),
+            String(entscheidung || ''), String(pruefsumme || '')].join('\u001f');
     }
 
     // Eine Freigabe-Zeile in die `report.approval`-Form bringen, die der
     // Rest der Seite schon kennt (Badge, bhIsLocked, PDF-Unterschrift).
     // `trust: 'server'` grenzt sie vom Link-Weg ab ('first'/'known'/…).
-    function zeileZuApproval(f) {
+    function zeileZuApproval(f, clientId) {
         if (!f) return null;
         return {
             state: f.entscheidung,               // 'approved' | 'rejected'
@@ -167,6 +177,7 @@
             pruefsumme: f.pruefsumme || '',
             sig: (f.signatur && f.signatur.g) || '',
             pub: (f.signatur && f.signatur.k) || '',
+            clientId: clientId || '',            // fuer die Signaturpruefung auf der Azubi-Seite
             trust: 'server',
             server: true
         };
@@ -398,7 +409,7 @@
             const out = {};
             (fr || []).forEach(f => {
                 const clientId = idZuClient[f.bericht_id];
-                if (clientId) out[clientId] = zeileZuApproval(f);
+                if (clientId) out[clientId] = zeileZuApproval(f, clientId);
             });
             return out;
         } catch (e) {
@@ -430,6 +441,41 @@
         const bytes = new TextEncoder().encode(kanonisch(kern));
         const hash = await (crypto || window.crypto).subtle.digest('SHA-256', bytes);
         return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Prueft die ECDSA-Signatur einer Server-Freigabe und die
+    // Trust-on-first-use-Bindung an den gemerkten Ausbilder-Schluessel.
+    // → { sig: 'gueltig'|'ungueltig'|'keine', trust: 'first'|'known'|'other-device'|'unsigniert' }
+    // oder null, wenn keine Server-Freigabe vorliegt.
+    // Der localStorage-Schluessel ist derselbe wie im Link-Weg (bh-freigabe.js):
+    // ein Ausbilder, der beide Wege nutzt, hat EINEN Schluessel.
+    const AUSBILDER_PUB_KEY = 'berichtsheft_ausbilder_pub';
+
+    async function bhb2bFreigabePruefen(report) {
+        const a = report && report.approval;
+        if (!a || !a.server) return null;
+
+        let sig = 'keine';
+        if (a.sig && a.pub && window.MWLSign && MWLSign.verifyString) {
+            const clientId = a.clientId || String(report.id);
+            const txt = freigabeSignaturText(clientId, a.state, a.pruefsumme || '');
+            try {
+                sig = (await MWLSign.verifyString(txt, { k: a.pub, g: a.sig })) ? 'gueltig' : 'ungueltig';
+            } catch (e) { sig = 'ungueltig'; }
+        }
+
+        let trust = 'unsigniert';
+        if (a.pub) {
+            let known = null;
+            try { known = localStorage.getItem(AUSBILDER_PUB_KEY); } catch (e) { /* Privatmodus */ }
+            if (!known) {
+                try { localStorage.setItem(AUSBILDER_PUB_KEY, a.pub); } catch (e) { /* Privatmodus */ }
+                trust = 'first';
+            } else {
+                trust = known === a.pub ? 'known' : 'other-device';
+            }
+        }
+        return { sig: sig, trust: trust };
     }
 
     /**
@@ -528,11 +574,44 @@
         }
     }
 
+    /**
+     * Voller Freigabe-Verlauf EINES Berichts (fuer die Azubi-Seite —
+     * `azubiBerichte()` liefert ihn dem Ausbilder schon mit).
+     * → { eintraege: [...], ketteOk, befund } oder null.
+     */
+    async function bhb2bFreigabeVerlauf(clientId) {
+        const st = await bhb2bStatus();
+        if (!st) return null;
+        try {
+            const sb = await client();
+            const be = await sb.from('berichte').select('id')
+                .eq('client_id', String(clientId)).limit(1);
+            if (be.error || !be.data || !be.data[0]) return null;
+            const fr = await sb.from('freigaben')
+                .select('entscheidung, ausbilder_name, anmerkung, pruefsumme, prev_pruefsumme, erstellt_at')
+                .eq('bericht_id', be.data[0].id)
+                .order('erstellt_at', { ascending: true });
+            if (fr.error) return null;
+            const liste = fr.data || [];
+            const kette = ketteVerifizieren(liste);
+            return { eintraege: liste, ketteOk: kette.ok, befund: kette.befund };
+        } catch (e) {
+            console.warn('[B2B] Verlauf:', e && e.message);
+            return null;
+        }
+    }
+
     // ── Freigabe schreiben (Ausbilder) ──────────────────────────────
     /**
      * Eine Entscheidung des Ausbilders in `freigaben` schreiben (append-only).
      * `bericht` ist die volle Zeile — daraus entstehen Pruefsumme und, aus
      * der letzten Freigabe desselben Berichts, `prev_pruefsumme` (Kettenkopf).
+     *
+     * Wenn mwl-sign.js da ist, wird die Entscheidung zusaetzlich mit dem
+     * ECDSA-Schluessel des Geraets signiert (`signatur: {k, g}`). Das ist ein
+     * TRAGBARER Beweis: er ueberlebt einen Export und laesst sich ohne Supabase
+     * pruefen. Grenzen wie beim Link-Weg — Trust-on-first-use, keine
+     * Identitaets-Bestaetigung (steht so in mwl-sign.js).
      */
     async function bhb2bFreigabeSchreiben(berichtId, entscheidung, anmerkung, bericht) {
         const st = await bhb2bStatus(true);
@@ -551,6 +630,15 @@
             .eq('bericht_id', berichtId).order('erstellt_at', { ascending: false }).limit(1);
         if (vor && vor.data && vor.data[0]) prev = vor.data[0].pruefsumme || null;
 
+        let signatur = null;
+        const clientId = bericht && bericht.client_id;
+        if (clientId && window.MWLSign && MWLSign.available() && MWLSign.signString) {
+            try {
+                signatur = await MWLSign.signString(
+                    freigabeSignaturText(clientId, entscheidung, pruefsumme));
+            } catch (e) { /* ohne Signatur bleibt die Freigabe gueltig */ }
+        }
+
         const { error } = await sb.from('freigaben').insert({
             bericht_id: berichtId,
             betrieb_id: st.betriebId,
@@ -560,7 +648,7 @@
             anmerkung: anmerkung || '',
             pruefsumme: pruefsumme,
             prev_pruefsumme: prev,
-            signatur: null
+            signatur: signatur
         });
         if (error) throw new Error(error.message);
         return true;
@@ -596,8 +684,10 @@
         freigabeSchreiben: bhb2bFreigabeSchreiben,
         pruefsumme: bhb2bPruefsumme,
         berichtVeraendert: bhb2bBerichtVeraendert,
+        freigabePruefen: bhb2bFreigabePruefen,
+        freigabeVerlauf: bhb2bFreigabeVerlauf,
         austreten: bhb2bAustreten,
         // fuer Tests
-        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren }
+        _intern: { berichtZuZeile, berichtKern, berichtInhalt, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch, ketteVerifizieren, freigabeSignaturText }
     };
 })();

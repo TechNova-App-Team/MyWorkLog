@@ -273,10 +273,18 @@
                     a.stale = await BHB2B.berichtVeraendert(Object.assign({}, r, { approval: a }));
                 } catch (e) { a.stale = false; }
             }
+            // Signatur des Ausbilder-Geraets pruefen (falls vorhanden) + TOFU.
+            if (a.state === 'approved' && BHB2B.freigabePruefen) {
+                try {
+                    const p = await BHB2B.freigabePruefen(Object.assign({}, r, { approval: a }));
+                    if (p) { a.sigStatus = p.sig; a.sigTrust = p.trust; }
+                } catch (e) { /* ohne Pruefung */ }
+            }
             const vorher = JSON.stringify(r.approval || null);
             r.approval = a;
-            // status spiegeln wie im Link-Weg (bh-freigabe.js)
-            if (a.state === 'approved' && !a.stale) r.status = 'signed';
+            // status spiegeln wie im Link-Weg (bh-freigabe.js). Eine ungueltige
+            // Signatur ist der staerkste Manipulationshinweis — dann NICHT sperren.
+            if (a.state === 'approved' && !a.stale && a.sigStatus !== 'ungueltig') r.status = 'signed';
             else if (r.status === 'signed') r.status = 'complete';
             if (JSON.stringify(r.approval) !== vorher) n++;
         }
@@ -288,6 +296,56 @@
         if (typeof reports === 'undefined' || !Array.isArray(reports) || !reports.length) return;
         try { await BHB2B.berichteHoch(reports); } catch (e) { /* still, Geraet bleibt Wahrheit */ }
     }
+
+    // Von viewReport() gerufen: den Freigabe-Verlauf vom Server in die
+    // Detailansicht nachladen. Zeigt nichts, wenn kein Betrieb verbunden ist
+    // oder es keine Freigaben gibt.
+    window.b2bFuelleFreigabeVerlauf = async function (report) {
+        const box = document.getElementById('viewFreigabeVerlauf');
+        if (!box || typeof BHB2B === 'undefined' || !BHB2B || !BHB2B.angemeldet() || !BHB2B.freigabeVerlauf) return;
+        let d;
+        try { d = await BHB2B.freigabeVerlauf(report.id); } catch (e) { return; }
+        if (!d || !d.eintraege || !d.eintraege.length) return;
+
+        const zeilen = d.eintraege.map(function (f) {
+            const wann = new Date(f.erstellt_at).toLocaleDateString(mwlLocaleSafe(),
+                { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const was = f.entscheidung === 'approved'
+                ? b2bL('bestätigt', 'approved') : b2bL('zurückgegeben', 'sent back');
+            const wer = f.ausbilder_name ? ' · ' + esc(f.ausbilder_name) : '';
+            const note = f.anmerkung ? ': ' + esc(f.anmerkung) : '';
+            return '<li style="margin-bottom:4px;">' + esc(wann) + ' — ' + was + wer + note + '</li>';
+        }).join('');
+
+        const p = report.approval && BHB2B.freigabePruefen
+            ? await BHB2B.freigabePruefen(report).catch(function () { return null; })
+            : null;
+        let sigZeile = '';
+        if (p && p.sig === 'gueltig') {
+            sigZeile = '<p style="margin-top:8px;font-size:0.78rem;color:var(--success);">' +
+                b2bL('Signatur des Ausbilder-Geräts gültig.', 'Trainer device signature valid.') +
+                (p.trust === 'other-device'
+                    ? ' ' + b2bL('(anderes Gerät als beim ersten Mal)', '(different device than the first time)') : '') +
+                '</p>';
+        } else if (p && p.sig === 'ungueltig') {
+            sigZeile = '<p style="margin-top:8px;font-size:0.78rem;color:var(--danger);font-weight:600;">' +
+                b2bL('Die Signatur dieser Freigabe stimmt nicht.', 'The signature of this approval does not match.') + '</p>';
+        }
+
+        box.innerHTML = '<div style="margin-bottom:2rem;">' +
+            '<h3 style="font-size:1rem;margin-bottom:0.75rem;color:var(--primary);display:flex;align-items:center;gap:8px;">' +
+            '<svg class="icon" style="width:16px;height:16px"><use href="#i-shield"/></svg> ' +
+            b2bL('Freigabe-Verlauf', 'Approval history') + '</h3>' +
+            '<div style="background:rgba(255,255,255,0.03);padding:1.25rem 1.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);font-size:0.88rem;line-height:1.6;">' +
+            '<ul style="margin:0;padding-left:18px;">' + zeilen + '</ul>' +
+            (d.ketteOk
+                ? '<p style="margin-top:8px;font-size:0.78rem;color:var(--text-muted);">' +
+                  b2bL('Reihenfolge über Prüfsummen verkettet und stimmig.', 'Order is checksum-linked and consistent.') + '</p>'
+                : '<p style="margin-top:8px;font-size:0.78rem;color:var(--danger);font-weight:600;">' +
+                  b2bL('Die verkettete Reihenfolge stimmt nicht.', 'The linked order does not hold.') + '</p>') +
+            sigZeile +
+            '</div></div>';
+    };
 
     // Von saveReport() gerufen (bh-bericht.js). Einzelner Bericht, sofort.
     window.b2bOnReportSaved = async function (report) {

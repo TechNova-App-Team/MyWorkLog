@@ -337,6 +337,8 @@ function viewReport(id) {
                 </div>
                 ` : ''}
 
+                <div id="viewFreigabeVerlauf"></div>
+
                 <div style="display: flex; gap: 0.75rem; margin-top: 2rem; flex-wrap: wrap;">
                     <button class="btn btn-primary" onclick="editReport('${report.id}'); closeViewModal();">
                         <svg class="icon"><use href="#i-edit"/></svg> Bearbeiten
@@ -356,6 +358,10 @@ function viewReport(id) {
     document.getElementById('viewContent').innerHTML = content;
     document.getElementById('viewModal').classList.add('active');
     document.body.style.overflow = 'hidden';
+
+    // B2B: Freigabe-Verlauf vom Server nachladen (nur wenn mit einem Betrieb
+    // verbunden). Guard, weil bh-b2b-ui.js nur mit Supabase-Config laeuft.
+    if (typeof b2bFuelleFreigabeVerlauf === 'function') b2bFuelleFreigabeVerlauf(report);
 }
 
 // Brücke für den Altbestand: professionIcon wird im Verlauf gespeichert, dort

@@ -28,6 +28,7 @@ const SRC = readFileSync(
     new URL('../Assets/js/berichtsheft/bh-b2b.js', import.meta.url), 'utf8'
 ).split('\r\n').join('\n');
 
+const lsStore = new Map();
 const sandbox = {
     console,
     SUPABASE_CONFIG: { URL: 'https://example.supabase.co', ANON_KEY: 'x' },
@@ -36,7 +37,18 @@ const sandbox = {
         subtle: webcrypto.subtle,
     },
     TextEncoder,
-    localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    localStorage: {
+        getItem: (k) => (lsStore.has(k) ? lsStore.get(k) : null),
+        setItem: (k, v) => lsStore.set(k, String(v)),
+        removeItem: (k) => lsStore.delete(k),
+    },
+    // Attrappe fuer mwl-sign.js: signString echt (Round-Trip), verifyString
+    // vergleicht nur den Text — reicht fuer die freigabePruefen-Logik.
+    MWLSign: {
+        available: () => true,
+        signString: async (str) => ({ k: 'PUB-A', g: 'sig:' + str }),
+        verifyString: async (str, sig) => !!sig && sig.g === 'sig:' + str,
+    },
     document: { createElement: () => ({}), head: { appendChild: () => {} } },
 };
 sandbox.window = sandbox;
@@ -62,10 +74,11 @@ const bsp = {
 };
 const zeile = I.berichtZuZeile(bsp, 'B-1', 'AZ-1');
 
+// created_at / updated_at kommen aus dem Server-Trigger, NICHT aus der Zeile.
 const SOLL_KEYS = ['betrieb_id', 'azubi_id', 'client_id', 'jahr', 'kw', 'datum_von',
-    'datum_bis', 'inhalt', 'status', 'quelle', 'ki_erzeugt', 'updated_at'].sort();
+    'datum_bis', 'inhalt', 'status', 'quelle', 'ki_erzeugt'].sort();
 ok(Object.keys(zeile).sort().join() === SOLL_KEYS.join(),
-    'Zeile hat genau die erwarteten Spalten',
+    'Zeile hat genau die erwarteten Spalten (ohne updated_at — Trigger)',
     'ist: ' + Object.keys(zeile).sort().join());
 
 ok(zeile.client_id === '12345' && typeof zeile.client_id === 'string',
@@ -248,9 +261,40 @@ const bruch = I.ketteVerifizieren([
 ok(bruch.ok === false && bruch.befund === 'kette-unterbrochen' && bruch.bei === 2,
     'Bruch an Position 2 wird erkannt');
 
+// ── freigabeSignaturText ──────────────────────────────────────────────
+gruppe('freigabeSignaturText — beide Seiten bauen ihn gleich');
+const t1 = I.freigabeSignaturText('c-7', 'approved', 'abc');
+ok(t1 === I.freigabeSignaturText('c-7', 'approved', 'abc'), 'deterministisch');
+ok(t1 !== I.freigabeSignaturText('c-7', 'rejected', 'abc'), 'Entscheidung geht ein');
+ok(t1 !== I.freigabeSignaturText('c-7', 'approved', 'xyz'), 'Pruefsumme geht ein');
+ok(t1 !== I.freigabeSignaturText('c-8', 'approved', 'abc'), 'client_id geht ein');
+ok(t1.indexOf(String.fromCharCode(31)) !== -1, 'Trenner ist der Unit Separator (U+001F)');
+ok(t1.startsWith('mwl-freigabe-konto/1'), 'Versionskopf steht vorn');
+
+// ── freigabePruefen — Signatur + Trust-on-first-use ───────────────────
+gruppe('freigabePruefen');
+lsStore.clear();
+const rep2 = { id: 'c-9', approval: { state: 'approved', server: true, pruefsumme: 'ps1', clientId: 'c-9' } };
+// gueltige Signatur erzeugen wie die Ausbilder-Seite es taete
+rep2.approval.sig = 'sig:' + I.freigabeSignaturText('c-9', 'approved', 'ps1');
+rep2.approval.pub = 'PUB-A';
+const p1 = await B.freigabePruefen(rep2);
+ok(p1.sig === 'gueltig', 'korrekte Signatur → gueltig');
+ok(p1.trust === 'first', 'erster Kontakt → first, Schluessel wird gemerkt');
+const p2 = await B.freigabePruefen(rep2);
+ok(p2.trust === 'known', 'zweiter Kontakt, gleicher Schluessel → known');
+const rep3 = Object.assign({}, rep2, { approval: Object.assign({}, rep2.approval, { pub: 'PUB-B' }) });
+const p3 = await B.freigabePruefen(rep3);
+ok(p3.trust === 'other-device', 'anderer Schluessel → other-device');
+const rep4 = { id: 'c-9', approval: { state: 'approved', server: true, pruefsumme: 'ps1', clientId: 'c-9', sig: 'sig:FALSCH', pub: 'PUB-A' } };
+ok((await B.freigabePruefen(rep4)).sig === 'ungueltig', 'manipulierte Signatur → ungueltig');
+ok(await B.freigabePruefen({ approval: { state: 'approved' } }) === null
+    || (await B.freigabePruefen({ approval: { state: 'approved' } })).sig === 'keine',
+    'ohne server-Flag → null, sonst keine Signatur');
+
 // ── Gegenprobe: es wurde ueberhaupt etwas geprueft ───────────────────────
 gruppe('Gegenprobe');
-ok(bestanden >= 62, `es sind genug Pruefungen gelaufen (${bestanden})`);
+ok(bestanden >= 70, `es sind genug Pruefungen gelaufen (${bestanden})`);
 
 console.log(`\nbh-b2b: ${bestanden} ok, ${fehlgeschlagen} fehlgeschlagen`);
 process.exit(fehlgeschlagen ? 1 : 0);

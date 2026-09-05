@@ -142,6 +142,29 @@
         }
     }
 
+    // ── Freie Signatur ueber einen fertigen String ──────────────────────
+    // Der kontobasierte Weg (bh-b2b.js) baut seine kanonische Form selbst —
+    // sie muss die Pruefsumme des Berichts abdecken, die canonical() oben
+    // (fuer den Link-Weg) nicht kennt. Damit die Link-Signatur unberuehrt
+    // bleibt, laeuft das ueber diese generische Variante statt ueber ein
+    // weiteres Feld in canonical(). → { k, g }.
+    async function signString(str) {
+        const pair = await getKeypair();
+        const sig = await crypto.subtle.sign(SIGN_ALGO, pair.privateKey, new TextEncoder().encode(String(str)));
+        return { k: await publicKeyId(pair), g: b64url(sig) };
+    }
+
+    async function verifyString(str, sigObj) {
+        if (!sigObj || !sigObj.k || !sigObj.g) return false;
+        try {
+            const pub = await crypto.subtle.importKey('raw', unb64url(sigObj.k), ALGO, false, ['verify']);
+            return await crypto.subtle.verify(SIGN_ALGO, pub, unb64url(sigObj.g),
+                new TextEncoder().encode(String(str)));
+        } catch (e) {
+            return false;
+        }
+    }
+
     function available() {
         return typeof crypto !== 'undefined' && !!crypto.subtle && typeof indexedDB !== 'undefined';
     }
@@ -151,6 +174,8 @@
         publicKeyId: publicKeyId,
         sign: sign,
         verify: verify,
+        signString: signString,
+        verifyString: verifyString,
         available: available
     };
 

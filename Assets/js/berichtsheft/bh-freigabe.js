@@ -20,15 +20,23 @@ function bhL(de, en) { return document.documentElement.lang === 'en' ? en : de; 
 
 function bhIsLocked(report) {
     // Eine „veraltete" Freigabe (Server-Pruefsumme passt nicht mehr zum
-    // Inhalt — die Woche wurde nach dem Abzeichnen geaendert) sperrt NICHT:
-    // der Inhalt ist ohnehin schon ein anderer, die Woche muss neu freigegeben
-    // werden. Siehe freigabenEinspielen() in bh-b2b-ui.js.
-    return !!(report && report.approval && report.approval.state === 'approved' && !report.approval.stale);
+    // Inhalt — die Woche wurde nach dem Abzeichnen geaendert) oder eine mit
+    // ungueltiger Signatur sperrt NICHT: im ersten Fall ist der Inhalt schon
+    // ein anderer, im zweiten ist die Freigabe nicht vertrauenswuerdig. Siehe
+    // freigabenEinspielen() in bh-b2b-ui.js.
+    const a = report && report.approval;
+    return !!(a && a.state === 'approved' && !a.stale && a.sigStatus !== 'ungueltig');
 }
 
 function bhApprovalBadge(report) {
     const a = report && report.approval;
     if (!a) return '';
+    if (a.state === 'approved' && a.sigStatus === 'ungueltig') {
+        return '<span class="badge badge-danger" title="' +
+            escapeHtml(bhL('Die Signatur dieser Freigabe stimmt nicht. Bitte den Ausbilder um eine neue Freigabe bitten.',
+                'The signature of this approval does not match. Please ask your trainer to approve again.')) + '">' +
+            escapeHtml(bhL('Signatur ungültig', 'Signature invalid')) + '</span>';
+    }
     if (a.state === 'approved' && a.stale) {
         return '<span class="badge badge-warning" title="' +
             escapeHtml(bhL('Diese Woche wurde nach der Freigabe geändert und muss erneut freigegeben werden.',
