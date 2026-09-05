@@ -1,0 +1,200 @@
+<!--
+  ═══════════════════════════════════════════════════════════════════════════
+  MAGIC-LINK-MAIL — einzufuegen in Supabase unter
+  Authentication → Emails → Magic Link (Message body)
+
+  🔴 HTML-MAIL IST NICHT WEB. Was hier bewusst NICHT drinsteht und warum:
+
+  • KEIN inline-SVG. Die Projektregel "Icons als SVG, nie Emojis" gilt fuer die
+    App — Gmail entfernt <svg> vollstaendig aus jeder Mail. Ein SVG-Logo waere
+    bei einem grossen Teil der Empfaenger ein Loch. Deshalb eine Wortmarke aus
+    Text: die kommt ueberall an, auch bei blockierten Bildern.
+  • KEIN flex/grid, keine externen Schriften, keine Klassen fuer das Layout.
+    Tabellen und inline-Styles, sonst faellt Outlook auseinander.
+  • KEINE Angabe "gilt 24 Stunden". Die alte Fassung behauptete das; die
+    Voreinstellung von Supabase ist 1 Stunde. Eine Zahl, die man nicht aus dem
+    Template heraus garantieren kann, gehoert nicht hinein.
+  • KEINE Jahreszahl im Fuss. Die alte stand auf "© 2025" — eine feste Zahl in
+    einer Vorlage ist ab dem 1. Januar falsch und faellt niemandem auf.
+  • KEINE Schritt-Nummerierung (STEP 01/02/03). Der Empfaenger macht genau
+    EINEN Schritt; drei Kaesten behaupten einen Ablauf, den es nicht gibt.
+
+  TON: Die alte Fassung schrieb "Unauthorized access attempts are logged and
+  monitored" und "Your account has been provisioned" — auf Englisch, an
+  deutsche Azubis. Das klingt nach Drohung und nach Phishing, also genau nach
+  dem, wovor man bei einem Anmelde-Link warnt. Jetzt: deutsch, ruhig, und der
+  Sicherheitshinweis sagt, was der Empfaenger TUN kann (nichts tun reicht).
+
+  Variablen von Supabase: {{ .ConfirmationURL }} ist der fertige Anmelde-Link.
+  ═══════════════════════════════════════════════════════════════════════════
+-->
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="supported-color-schemes" content="light dark">
+<title>Anmelden bei MyWorkLog</title>
+<style>
+  /* Nur Ergaenzungen. Alles Tragende steht inline — Gmail wirft <style> in
+     manchen Ansichten weg, das Layout darf davon nicht abhaengen. */
+  body { margin:0 !important; padding:0 !important; width:100% !important; }
+  table { border-collapse:collapse; }
+  img { border:0; line-height:100%; outline:none; text-decoration:none; -ms-interpolation-mode:bicubic; }
+  a { color:#3d5c85; }
+
+  @media (max-width:620px) {
+    .wrap { width:100% !important; }
+    .pad  { padding-left:24px !important; padding-right:24px !important; }
+    .h1   { font-size:24px !important; }
+  }
+
+  /* Dunkelmodus — Apple Mail und iOS halten sich daran, Gmail invertiert
+     selbst. Deshalb hier nur die Flaechen, keine feinen Abstufungen. */
+  @media (prefers-color-scheme: dark) {
+    .bg    { background-color:#101216 !important; }
+    .card  { background-color:#181b21 !important; }
+    .txt   { color:#e6e8ec !important; }
+    .muted { color:#9aa1ad !important; }
+    .rule  { border-color:#2a2f38 !important; }
+    .url   { background-color:#101216 !important; color:#9aa1ad !important; border-color:#2a2f38 !important; }
+  }
+</style>
+</head>
+<body class="bg" style="margin:0; padding:0; background-color:#f4f5f7;">
+
+<!-- Vorschauzeile: was im Posteingang neben dem Betreff steht. Ohne sie zeigt
+     der Client die ersten Woerter des Textes, hier also die Wortmarke. Die
+     unsichtbaren Zeichen dahinter verhindern, dass Gmail den Folgetext
+     anhaengt. -->
+<div style="display:none; font-size:1px; color:#f4f5f7; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">
+  Dein Anmelde-Link für MyWorkLog — gültig für eine einmalige Anmeldung.
+  &#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;&#8203;
+</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="bg" style="background-color:#f4f5f7;">
+  <tr>
+    <td align="center" style="padding:32px 12px 40px;">
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" class="wrap" style="width:600px; max-width:600px;">
+
+        <!-- Wortmarke, links. Zentriert waere der Vorgabewert jeder Vorlage;
+             linksbuendig liest sich wie Post von einer Firma. -->
+        <tr>
+          <td class="pad" style="padding:0 40px 16px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+            <span class="txt" style="font-size:16px; font-weight:700; letter-spacing:-0.2px; color:#1a1d23;">MyWorkLog</span>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="card" style="background-color:#ffffff; border-radius:14px; overflow:hidden;">
+
+            <!-- Der einzige Farbakzent ausser dem Knopf: eine 3-px-Kante.
+                 Sie traegt die Marke, ohne dass ein Bild geladen werden muss. -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr><td style="height:3px; line-height:3px; font-size:0; background-color:#5578a8;">&nbsp;</td></tr>
+            </table>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td class="pad" style="padding:36px 40px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                  <h1 class="h1 txt" style="margin:0 0 12px; font-size:26px; line-height:1.25; font-weight:700; letter-spacing:-0.4px; color:#1a1d23;">
+                    Anmelden bei MyWorkLog
+                  </h1>
+                  <p class="txt" style="margin:0; font-size:15px; line-height:1.65; color:#3f454f;">
+                    Klick auf den Knopf, dann bist du angemeldet. Ein Passwort brauchst du nicht.
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Knopf. Farbe dunkler als --primary (#5578a8): Weiss darauf
+                   kommt auf 6.8:1 statt 4.5:1, und in einer Mail laesst sich
+                   nichts nachtraeglich korrigieren. -->
+              <tr>
+                <td class="pad" style="padding:28px 40px 0;">
+                  <table role="presentation" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" bgcolor="#3d5c85" style="border-radius:10px;">
+                        <a href="{{ .ConfirmationURL }}"
+                           style="display:inline-block; padding:14px 30px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; font-size:15px; font-weight:600; line-height:1; color:#ffffff; text-decoration:none; border-radius:10px;">
+                          Jetzt anmelden
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="pad" style="padding:26px 40px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                  <p class="muted" style="margin:0 0 8px; font-size:12.5px; line-height:1.6; color:#6b7280;">
+                    Falls der Knopf nicht reagiert, kopier diese Adresse in deinen Browser:
+                  </p>
+                  <!-- word-break MUSS mit: eine Token-URL ist ueber 200 Zeichen
+                       lang und sprengt sonst die Kartenbreite. -->
+                  <p class="url" style="margin:0; padding:12px 14px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:11.5px; line-height:1.6; color:#6b7280; background-color:#f7f8fa; border:1px solid #e6e8ec; border-radius:8px; word-break:break-all;">
+                    {{ .ConfirmationURL }}
+                  </p>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="pad" style="padding:26px 40px 0;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                    <tr><td class="rule" style="height:1px; line-height:1px; font-size:0; border-top:1px solid #ebedf0;">&nbsp;</td></tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Sicherheitshinweis. Sagt, was zu tun ist (nichts), statt zu
+                   drohen. Eine Mail, die mit Ueberwachung droht, sieht selbst
+                   aus wie der Betrug, vor dem sie warnt. -->
+              <tr>
+                <td class="pad" style="padding:20px 40px 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                  <p class="muted" style="margin:0; font-size:12.5px; line-height:1.65; color:#6b7280;">
+                    Der Link funktioniert nur einmal und läuft danach ab. Hast du dich nicht
+                    angemeldet, kannst du diese Nachricht einfach löschen — ohne den Link
+                    passiert nichts.
+                  </p>
+                </td>
+              </tr>
+
+              <!-- Englisch kompakt, weil die App unter /en/ auch englisch
+                   laeuft. Supabase kennt nur EINE Vorlage je Typ, eine
+                   Umschaltung nach Sprache gibt es nicht. -->
+              <tr>
+                <td class="pad" style="padding:16px 40px 36px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                  <p class="muted" style="margin:0; font-size:12.5px; line-height:1.65; color:#9aa1ad;">
+                    <span style="font-weight:600;">English:</span> Use the button above to sign in to
+                    MyWorkLog — no password needed. The link works once and then expires. If you did
+                    not request it, you can delete this message.
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+
+        <!-- Fuss ohne Jahreszahl: eine feste Zahl in einer Vorlage ist ab
+             Januar falsch. -->
+        <tr>
+          <td class="pad" style="padding:20px 40px 0; text-align:center; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+            <p class="muted" style="margin:0; font-size:11.5px; line-height:1.7; color:#9aa1ad;">
+              MyWorkLog &nbsp;·&nbsp;
+              <a href="https://myworklog.de/" style="color:#9aa1ad; text-decoration:underline;">myworklog.de</a> &nbsp;·&nbsp;
+              <a href="https://myworklog.de/Impressum/" style="color:#9aa1ad; text-decoration:underline;">Impressum</a> &nbsp;·&nbsp;
+              <a href="https://myworklog.de/DSGVO/" style="color:#9aa1ad; text-decoration:underline;">Datenschutz</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
