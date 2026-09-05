@@ -14,6 +14,7 @@
 
 import { readFileSync } from 'node:fs';
 import { createContext, runInContext } from 'node:vm';
+import { webcrypto } from 'node:crypto';
 
 let bestanden = 0, fehlgeschlagen = 0;
 const gruppe = (t) => console.log('\n▶ ' + t);
@@ -30,7 +31,11 @@ const SRC = readFileSync(
 const sandbox = {
     console,
     SUPABASE_CONFIG: { URL: 'https://example.supabase.co', ANON_KEY: 'x' },
-    crypto: { getRandomValues: (a) => { for (let i = 0; i < a.length; i++) a[i] = (i * 37 + 11) % 256; return a; } },
+    crypto: {
+        getRandomValues: (a) => { for (let i = 0; i < a.length; i++) a[i] = (i * 37 + 11) % 256; return a; },
+        subtle: webcrypto.subtle,
+    },
+    TextEncoder,
     localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
     document: { createElement: () => ({}), head: { appendChild: () => {} } },
 };
@@ -166,9 +171,31 @@ ok(I.ganzzahl(undefined, 1, 5, 2) === 2, 'undefined -> Fallback');
 ok(I.ganzzahl('abc', 1, 5, 1) === 1, 'Unsinn -> Fallback');
 ok(I.ganzzahl(10, 1, 5, 1) === 5, 'ueber max -> max');
 
+// ── kanonisch / pruefsumme ──────────────────────────────────────────────
+gruppe('kanonisch — stabile Serialisierung');
+ok(I.kanonisch({ b: 1, a: 2 }) === I.kanonisch({ a: 2, b: 1 }),
+    'Schluesselreihenfolge egal');
+ok(I.kanonisch({ x: { d: 1, c: 2 } }) === '{"x":{"c":2,"d":1}}',
+    'auch verschachtelte Objekte werden sortiert');
+ok(I.kanonisch(undefined) === 'null' && I.kanonisch(null) === 'null',
+    'undefined und null werden beide zu null');
+ok(I.kanonisch([3, 1, 2]) === '[3,1,2]', 'Array-Reihenfolge bleibt (kein Sortieren)');
+
+gruppe('pruefsumme — reproduzierbar und inhaltsabhaengig');
+const ber1 = { jahr: 2, kw: 10, datum_von: '2026-03-02', datum_bis: '2026-03-06', inhalt: { activities: 'x', hours: 38 } };
+const ber1b = { kw: 10, jahr: 2, datum_bis: '2026-03-06', datum_von: '2026-03-02', inhalt: { hours: 38, activities: 'x' } };
+const s1 = await B.pruefsumme(ber1);
+const s1b = await B.pruefsumme(ber1b);
+const s2 = await B.pruefsumme(Object.assign({}, ber1, { inhalt: { activities: 'y', hours: 38 } }));
+ok(/^[0-9a-f]{64}$/.test(s1), 'SHA-256 als 64 Hexzeichen');
+ok(s1 === s1b, 'gleiche Daten, andere Feldreihenfolge → gleiche Summe');
+ok(s1 !== s2, 'geaenderter Inhalt → andere Summe (Schritt-2-Fundament)');
+ok(await B.pruefsumme({ jahr: 1, kw: 1 }) === await B.pruefsumme({ jahr: 1, kw: 1, inhalt: {} }),
+    'fehlendes inhalt zaehlt wie leeres Objekt');
+
 // ── Gegenprobe: es wurde ueberhaupt etwas geprueft ───────────────────────
 gruppe('Gegenprobe');
-ok(bestanden > 40, `es sind genug Pruefungen gelaufen (${bestanden})`);
+ok(bestanden > 50, `es sind genug Pruefungen gelaufen (${bestanden})`);
 
 console.log(`\nbh-b2b: ${bestanden} ok, ${fehlgeschlagen} fehlgeschlagen`);
 process.exit(fehlgeschlagen ? 1 : 0);

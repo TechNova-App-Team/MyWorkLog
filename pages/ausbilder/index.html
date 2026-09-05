@@ -10,8 +10,8 @@
 </script>
     <meta name="description" content="Ausbildungsnachweis eines Azubis ansehen und bestätigen oder zurückgeben — ohne Konto, ohne Anmeldung. Die Woche steht im Link selbst, es wird nichts hochgeladen.">
     <meta name="keywords" content="Ausbildungsnachweis bestätigen, Berichtsheft unterschreiben, Ausbilder, Azubi, Wochenbericht freigeben">
-    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.6.0"></script>
-    <script defer src="/Assets/js/version-loader.js?v=6.6.0"></script>
+    <script defer src="/Assets/js/touch-mobile-optimizations.js?v=6.7.0"></script>
+    <script defer src="/Assets/js/version-loader.js?v=6.7.0"></script>
     <title>MyWorkLog | Ausbildungsnachweis freigeben</title>
     <link rel="canonical" href="https://myworklog.de/ausbilder/">
     <link rel="alternate" hreflang="de" href="https://myworklog.de/ausbilder/">
@@ -194,6 +194,27 @@
             border-left: 2px solid var(--warning);
             font-size: 0.82rem; color: var(--text-muted);
         }
+
+        /* ── Kontobasierter Weg (Sammelansicht) ──────────────────── */
+        .abk-head { margin-bottom: 22px; }
+        .abk-load, .abk-empty {
+            font-size: 0.92rem; color: var(--text-muted); line-height: 1.6;
+            padding: 14px 0;
+        }
+        .abk-azubi { margin-top: 26px; }
+        .abk-azubi:first-of-type { margin-top: 20px; }
+        .abk-azubi-head {
+            display: flex; align-items: baseline; gap: 10px;
+            padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+        }
+        .abk-azubi-name { font-size: 1.05rem; font-weight: 650; letter-spacing: -0.01em; }
+        .abk-azubi-count { margin-left: auto; font-size: 0.78rem; color: var(--text-faint); }
+        .abk-hint { margin-top: 12px; font-size: 0.83rem; color: var(--text-faint); }
+        .abk-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+        .abk-actions .ab-btn { padding: 10px 14px; font-size: 0.86rem; }
+        .abk-reject { margin-top: 12px; }
+        .abk-reject .ab-textarea { min-height: 66px; }
+        .abk-reject .abk-actions { margin-top: 8px; }
 
         /* ── Entscheidungsleiste ─────────────────────────────────── */
         /* Fest am unteren Rand: der Ausbilder soll nicht ans Ende eines
@@ -394,6 +415,12 @@
             </div>
         </section>
 
+        <!-- ══ Kontobasierter Weg (angemeldeter Ausbilder, kein #w=) ══
+             Inhalt komplett aus dem Skript unten (abL(de,en)) — kein
+             statischer Text, damit die i18n-Pipeline hier nichts anfassen
+             muss. -->
+        <section id="abKonto" style="display:none"></section>
+
         <!-- ══ Die Woche(n) ══════════════════════════════════════════ -->
         <section id="abWeek" style="display:none">
             <p class="ab-eyebrow">Ausbildungsnachweis</p>
@@ -487,8 +514,13 @@
 
     <div id="page-footer"></div>
 
-    <script defer src="/Assets/js/mwl-codec.js?v=6.6.0"></script>
-    <script defer src="/Assets/js/mwl-sign.js?v=6.6.0"></script>
+    <script defer src="/Assets/js/mwl-codec.js?v=6.7.0"></script>
+    <script defer src="/Assets/js/mwl-sign.js?v=6.7.0"></script>
+    <!-- Kontobasierter Weg: ein angemeldeter Ausbilder sieht hier die offenen
+         Wochen seiner Azubis. supabase-config.js OHNE ?v= (SWR-Datei);
+         bh-b2b.js laedt die Supabase-Bibliothek nur bei vorhandener Sitzung. -->
+    <script defer src="/config/supabase-config.js"></script>
+    <script defer src="/Assets/js/berichtsheft/bh-b2b.js?v=6.7.0"></script>
 
     <script>
     (function () {
@@ -953,6 +985,212 @@
             setTimeout(function () { label.textContent = abL('Link kopieren', 'Copy link'); }, 2200);
         }
 
+        // ── Kontobasierter Weg (Schritt 3) ──────────────────────────
+        // Ein angemeldeter Ausbilder ohne #w= sieht hier die offenen Wochen
+        // aller zugeordneten Azubis und zeichnet sie direkt ab. Der
+        // Fragment-Weg oben bleibt fuer alle ohne Konto unveraendert.
+
+        function b2bDa() { return typeof BHB2B !== 'undefined' && BHB2B; }
+
+        // Server-Zeile (berichte) → das w-Objekt, das weekBodyHTML erwartet.
+        function zeileZuWoche(b) {
+            var inh = b.inhalt || {};
+            return {
+                r: b.id, w: b.kw, y: b.jahr, df: b.datum_von, dt: b.datum_bis,
+                h: inh.hours, dep: inh.department,
+                da: inh.dailyActivities, dh: inh.dailyHours,
+                a: inh.activities, sch: inh.school
+            };
+        }
+
+        var kontoDaten = null;
+        var kontoGebunden = false;
+
+        function findeBericht(bid) {
+            for (var i = 0; i < (kontoDaten ? kontoDaten.azubis.length : 0); i++) {
+                var arr = kontoDaten.azubis[i].berichte;
+                for (var j = 0; j < arr.length; j++) if (String(arr[j].id) === String(bid)) return arr[j];
+            }
+            return null;
+        }
+
+        // Wartet auf den ersten Blick des Ausbilders: abgeschlossen und noch
+        // gar keine Entscheidung. Eine zurueckgegebene Woche liegt beim Azubi,
+        // zaehlt hier also nicht mit — sie bleibt aber bedienbar (die Knoepfe
+        // stehen weiter da), damit der Ausbilder sie nach der Ueberarbeitung
+        // abzeichnen kann.
+        function istOffen(b) {
+            return b.status !== 'incomplete' && !b.freigabe;
+        }
+
+        function kontoKarte(b) {
+            var f = b.freigabe;
+            var st = f && f.entscheidung === 'approved' ? 'approved'
+                : f && f.entscheidung === 'rejected' ? 'rejected' : 'open';
+            var stL = stateLabel(st === 'open' ? '' : st);
+            var chev = '<svg class="ab-wk-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+
+            var fuss;
+            if (b.status === 'incomplete') {
+                fuss = '<p class="abk-hint">' + abL(
+                    'Noch nicht abgeschlossen — der Azubi arbeitet daran.',
+                    'Not finished yet — the apprentice is still working on it.') + '</p>';
+            } else if (st === 'approved') {
+                var wann = f && f.erstellt_at ? ' ' + abL('am ', 'on ') + fmtDate(String(f.erstellt_at).slice(0, 10)) : '';
+                fuss = '<p class="abk-hint">' + abL('Von Ihnen abgezeichnet', 'Signed off by you') + wann + '.</p>';
+            } else {
+                fuss = '<div class="abk-actions">' +
+                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject">' + abL('Zurückgeben', 'Send back') + '</button>' +
+                    '<button type="button" class="ab-btn ab-btn-primary" data-k="approve">' + abL('Bestätigen', 'Approve') + '</button>' +
+                    '</div>' +
+                    '<div class="abk-reject" hidden>' +
+                    '<textarea class="ab-textarea abk-note" placeholder="' +
+                    abL('Was soll geändert werden?', 'What needs changing?') + '"></textarea>' +
+                    '<div class="abk-actions">' +
+                    '<button type="button" class="ab-btn ab-btn-ghost" data-k="reject-cancel">' + abL('Abbrechen', 'Cancel') + '</button>' +
+                    '<button type="button" class="ab-btn ab-btn-primary" data-k="reject-do">' + abL('Zurückgeben', 'Send back') + '</button>' +
+                    '</div></div>';
+            }
+
+            return '<div class="ab-wk abk-card" data-bid="' + esc(b.id) + '">' +
+                '<div class="ab-wk-card' + (st !== 'open' ? ' is-' + st : '') + '">' +
+                '<div class="ab-wk-head" role="button" tabindex="0" aria-expanded="false">' +
+                '<span class="ab-wk-kw">' + abL('KW ', 'Week ') + b.kw + '</span>' +
+                '<span class="ab-wk-sub">' + esc(fmtRange(b.datum_von, b.datum_bis)) + '</span>' +
+                '<span class="ab-wk-state ' + stL[0] + '">' + stL[1] + '</span>' +
+                chev +
+                '</div>' +
+                '<div class="ab-wk-body">' +
+                '<hr class="ab-rule" style="margin:16px 0;">' +
+                weekBodyHTML(zeileZuWoche(b)) +
+                (f && f.anmerkung ? '<p class="ab-wk-note">' + esc(f.anmerkung) + '</p>' : '') +
+                fuss +
+                '</div></div></div>';
+        }
+
+        function renderKonto() {
+            var d = kontoDaten;
+            var offenGesamt = 0;
+            d.azubis.forEach(function (a) { a.berichte.forEach(function (b) { if (istOffen(b)) offenGesamt++; }); });
+
+            var kopf = '<div class="abk-head">' +
+                '<p class="ab-eyebrow">' + abL('Ausbildungsbetrieb', 'Training company') + '</p>' +
+                '<h1 class="ab-title">' + esc(d.betrieb || abL('Ihr Betrieb', 'Your company')) + '</h1>' +
+                '<p class="ab-lead">' + (offenGesamt
+                    ? abL(offenGesamt + (offenGesamt === 1 ? ' Woche wartet' : ' Wochen warten') + ' auf Ihre Freigabe.',
+                          offenGesamt + (offenGesamt === 1 ? ' week is' : ' weeks are') + ' waiting for your approval.')
+                    : abL('Alle eingereichten Wochen sind abgezeichnet.', 'All submitted weeks are signed off.')) +
+                '</p></div>';
+
+            var koerper;
+            if (!d.azubis.length) {
+                koerper = '<p class="abk-empty">' + abL(
+                    'Noch keine Azubis. Ihre Azubis treten mit einem Einladungscode bei — den erzeugen Sie im Berichtsheft unter „Betrieb & IHK".',
+                    'No apprentices yet. They join with an invite code, which you create in the report book under "Company & chamber".') + '</p>';
+            } else {
+                koerper = d.azubis.map(function (az) {
+                    var offen = az.berichte.filter(istOffen).length;
+                    var karten = az.berichte.length
+                        ? az.berichte.map(kontoKarte).join('')
+                        : '<p class="abk-empty">' + abL('Noch keine Berichte eingereicht.', 'No reports submitted yet.') + '</p>';
+                    return '<section class="abk-azubi">' +
+                        '<div class="abk-azubi-head">' +
+                        '<span class="abk-azubi-name">' + esc(az.name || abL('Azubi ohne Namen', 'Apprentice, no name')) + '</span>' +
+                        '<span class="abk-azubi-count">' + (offen
+                            ? abL(offen + ' offen', offen + ' open')
+                            : abL('nichts offen', 'nothing open')) + '</span>' +
+                        '</div>' + karten + '</section>';
+                }).join('');
+            }
+            $('abKonto').innerHTML = kopf + koerper;
+        }
+
+        function kontoBusy(card, on) {
+            card.querySelectorAll('button').forEach(function (b) { b.disabled = on; });
+            card.style.opacity = on ? '0.6' : '';
+        }
+
+        async function kontoEntscheiden(bid, entscheidung, note, card) {
+            var bericht = findeBericht(bid);
+            if (!bericht) return;
+            kontoBusy(card, true);
+            try {
+                await BHB2B.freigabeSchreiben(bid, entscheidung, note || '', bericht);
+                bericht.freigabe = {
+                    bericht_id: bid, entscheidung: entscheidung,
+                    anmerkung: note || '', erstellt_at: new Date().toISOString()
+                };
+                renderKonto();
+            } catch (e) {
+                kontoBusy(card, false);
+                var box = document.createElement('p');
+                box.className = 'abk-hint';
+                box.style.color = 'var(--danger)';
+                box.textContent = (e && e.message) || abL('Konnte nicht gespeichert werden.', 'Could not be saved.');
+                card.querySelector('.ab-wk-body').appendChild(box);
+            }
+        }
+
+        function bindeKonto() {
+            if (kontoGebunden) return;
+            kontoGebunden = true;
+            var wrap = $('abKonto');
+
+            wrap.addEventListener('click', function (e) {
+                var head = e.target.closest('.ab-wk-head');
+                if (head) {
+                    var wk = head.closest('.ab-wk');
+                    var offen = wk.classList.toggle('is-open');
+                    head.setAttribute('aria-expanded', String(offen));
+                    return;
+                }
+                var btn = e.target.closest('button[data-k]');
+                if (!btn) return;
+                var card = btn.closest('.abk-card');
+                var bid = card.getAttribute('data-bid');
+                var k = btn.getAttribute('data-k');
+
+                if (k === 'approve') { kontoEntscheiden(bid, 'approved', '', card); return; }
+                if (k === 'reject') {
+                    card.querySelector('.abk-reject').hidden = false;
+                    var t = card.querySelector('.abk-note'); if (t) t.focus();
+                    return;
+                }
+                if (k === 'reject-cancel') { card.querySelector('.abk-reject').hidden = true; return; }
+                if (k === 'reject-do') {
+                    var note = (card.querySelector('.abk-note') || {}).value || '';
+                    kontoEntscheiden(bid, 'rejected', note.trim(), card);
+                }
+            });
+
+            wrap.addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter' && e.key !== ' ') return;
+                var head = e.target.closest('.ab-wk-head');
+                if (!head) return;
+                e.preventDefault();
+                head.click();
+            });
+        }
+
+        async function bootKonto() {
+            show('abIntro', false);
+            show('abKonto', true);
+            $('abHeadNote').textContent = abL('Betrieb', 'Company');
+            $('abKonto').innerHTML = '<p class="abk-load">' + abL('Wird geladen …', 'Loading …') + '</p>';
+
+            try { kontoDaten = await BHB2B.azubiBerichte(); }
+            catch (e) { kontoDaten = null; }
+
+            if (!kontoDaten) {
+                $('abKonto').innerHTML = '<p class="abk-load">' + abL(
+                    'Konnte nicht geladen werden. Bitte laden Sie die Seite neu.',
+                    'Could not load. Please reload the page.') + '</p>';
+                return;
+            }
+            bindeKonto();
+            renderKonto();
+        }
+
         // ── Start ────────────────────────────────────────────────────
         async function boot() {
             $('abRejectBtn').addEventListener('click', function () { openSheet('rejected', 0); });
@@ -1006,7 +1244,16 @@
             });
 
             var m = /[#&]w=([A-Za-z0-9\-_]+)/.exec(location.hash || '');
-            if (!m) return;
+            if (!m) {
+                // Kein Fragment: kontobasierter Weg, wenn ein Ausbilder
+                // angemeldet ist. Sonst bleibt der Intro-Zustand stehen.
+                if (b2bDa() && BHB2B.angemeldet()) {
+                    var stt = null;
+                    try { stt = await BHB2B.status(); } catch (e) { /* Netzfehler → Intro */ }
+                    if (stt && stt.rolle === 'ausbilder') { await bootKonto(); }
+                }
+                return;
+            }
 
             var nutzlast;
             try {
@@ -1039,6 +1286,12 @@
 
             decisions = new Array(weeks.length);
             renderWeeks();
+        }
+
+        // Test-Sichtfenster auf den kontobasierten Weg — nur lokal, damit er
+        // sich mit gestubbtem BHB2B im Browser gegenpruefen laesst.
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            window.__abKonto = { bootKonto: bootKonto, renderKonto: renderKonto, zeileZuWoche: zeileZuWoche };
         }
 
         if (document.readyState === 'loading') {

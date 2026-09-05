@@ -387,12 +387,80 @@
         }
     }
 
-    // ── Freigabe schreiben (Ausbilder) ──────────────────────────────
-    // Wird vom kontobasierten Ausbilder-Weg gebraucht (Schritt 3). Die
-    // Pruefsumme deckt den Berichtsinhalt zum Zeitpunkt der Freigabe ab;
-    // die Ketten-Verkettung (prev_pruefsumme) kommt in Schritt 2 dazu.
+    // ── Pruefsumme ueber einen Bericht ──────────────────────────────
+    // Deckt den Inhalt zum Zeitpunkt der Freigabe ab. Muss reproduzierbar
+    // sein — deshalb kanonisches JSON (Schluessel rekursiv sortiert), nicht
+    // JSON.stringify. Schritt 2 (Ketten-Journal) baut darauf auf: eine
+    // spaeter geaenderte Woche ergibt eine andere Summe als die, die in der
+    // Freigabe steht.
+    function kanonisch(v) {
+        if (v === null || typeof v !== 'object') return JSON.stringify(v === undefined ? null : v);
+        if (Array.isArray(v)) return '[' + v.map(kanonisch).join(',') + ']';
+        return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + kanonisch(v[k])).join(',') + '}';
+    }
 
-    async function bhb2bFreigabeSchreiben(berichtId, entscheidung, anmerkung, pruefsumme, signatur) {
+    async function bhb2bPruefsumme(bericht) {
+        const kern = {
+            jahr: bericht.jahr != null ? Number(bericht.jahr) : null,
+            kw: bericht.kw != null ? Number(bericht.kw) : null,
+            datum_von: bericht.datum_von || null,
+            datum_bis: bericht.datum_bis || null,
+            inhalt: bericht.inhalt || {}
+        };
+        const bytes = new TextEncoder().encode(kanonisch(kern));
+        const hash = await (crypto || window.crypto).subtle.digest('SHA-256', bytes);
+        return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // ── Sammelansicht fuer den Ausbilder ────────────────────────────
+    /**
+     * Alle Azubis des Betriebs mit ihren Berichten und der jeweils neuesten
+     * Freigabe. → { betrieb, azubis: [{ userId, name, berichte: [{ …zeile, freigabe }] }] }
+     * oder null, wenn das Konto kein Ausbilder ist.
+     */
+    async function bhb2bAzubiBerichte() {
+        const st = await bhb2bStatus();
+        if (!st || st.rolle !== 'ausbilder') return null;
+        try {
+            const sb = await client();
+            const [mitg, ber, fr] = await Promise.all([
+                sb.from('betrieb_mitglieder').select('user_id, anzeige_name')
+                    .eq('betrieb_id', st.betriebId).eq('rolle', 'azubi'),
+                sb.from('berichte').select('*')
+                    .eq('betrieb_id', st.betriebId)
+                    .order('jahr', { ascending: true }).order('kw', { ascending: true }),
+                sb.from('freigaben').select('bericht_id, entscheidung, anmerkung, ausbilder_name, pruefsumme, erstellt_at')
+                    .eq('betrieb_id', st.betriebId)
+                    .order('erstellt_at', { ascending: true })   // aeltere zuerst → neuere ueberschreibt
+            ]);
+            if (mitg.error || ber.error || fr.error) {
+                console.warn('[B2B] Sammelansicht:', (mitg.error || ber.error || fr.error).message);
+                return null;
+            }
+            const letzte = {};
+            (fr.data || []).forEach(f => { letzte[f.bericht_id] = f; });
+
+            const azubis = (mitg.data || []).map(m => ({
+                userId: m.user_id,
+                name: m.anzeige_name || '',
+                berichte: (ber.data || [])
+                    .filter(b => b.azubi_id === m.user_id)
+                    .map(b => Object.assign({}, b, { freigabe: letzte[b.id] || null }))
+            }));
+            return { betrieb: st.name, azubis: azubis };
+        } catch (e) {
+            console.warn('[B2B] Sammelansicht:', e && e.message);
+            return null;
+        }
+    }
+
+    // ── Freigabe schreiben (Ausbilder) ──────────────────────────────
+    /**
+     * Eine Entscheidung des Ausbilders in `freigaben` schreiben (append-only).
+     * `bericht` ist die volle Zeile — daraus entstehen Pruefsumme und, aus
+     * der letzten Freigabe desselben Berichts, `prev_pruefsumme` (Kettenkopf).
+     */
+    async function bhb2bFreigabeSchreiben(berichtId, entscheidung, anmerkung, bericht) {
         const st = await bhb2bStatus(true);
         if (!st || st.rolle !== 'ausbilder') throw new Error('Nur ein Ausbilder kann freigeben.');
         if (entscheidung !== 'approved' && entscheidung !== 'rejected') {
@@ -400,6 +468,15 @@
         }
         const sb = await client();
         const u = await benutzer(sb);
+
+        let pruefsumme = '';
+        if (bericht) { try { pruefsumme = await bhb2bPruefsumme(bericht); } catch (e) { /* ohne */ } }
+
+        let prev = null;
+        const vor = await sb.from('freigaben').select('pruefsumme')
+            .eq('bericht_id', berichtId).order('erstellt_at', { ascending: false }).limit(1);
+        if (vor && vor.data && vor.data[0]) prev = vor.data[0].pruefsumme || null;
+
         const { error } = await sb.from('freigaben').insert({
             bericht_id: berichtId,
             betrieb_id: st.betriebId,
@@ -407,8 +484,9 @@
             ausbilder_name: st.anzeigeName || kontoName(u),
             entscheidung: entscheidung,
             anmerkung: anmerkung || '',
-            pruefsumme: pruefsumme || '',
-            signatur: signatur || null
+            pruefsumme: pruefsumme,
+            prev_pruefsumme: prev,
+            signatur: null
         });
         if (error) throw new Error(error.message);
         return true;
@@ -437,12 +515,14 @@
         einladungErstellen: bhb2bEinladungErstellen,
         einladungenListe: bhb2bEinladungenListe,
         azubiListe: bhb2bAzubiListe,
+        azubiBerichte: bhb2bAzubiBerichte,
         berichtHoch: bhb2bBerichtHoch,
         berichteHoch: bhb2bBerichteHoch,
         freigabenRunter: bhb2bFreigabenRunter,
         freigabeSchreiben: bhb2bFreigabeSchreiben,
+        pruefsumme: bhb2bPruefsumme,
         austreten: bhb2bAustreten,
         // fuer Tests
-        _intern: { berichtZuZeile, zeileZuApproval, neuerCode, ganzzahl, freundlich }
+        _intern: { berichtZuZeile, zeileZuApproval, neuerCode, ganzzahl, freundlich, kanonisch }
     };
 })();
